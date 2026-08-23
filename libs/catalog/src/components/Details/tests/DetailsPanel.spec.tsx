@@ -1,21 +1,31 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PublicationRule,
   PublicationRuleFunction,
   PublishFolderNode,
 } from '@epam/ai-dial-publish-panel';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
-import { CatalogEntityType } from '../../../types/entity-type';
+import type {
+  CatalogContentFilePreview,
+  CatalogContentTreeNode,
+} from '../../../models/item-details-data';
 import {
+  CatalogContentNodeType,
+  CatalogContentPreviewType,
+} from '../../../types/catalog-content-type';
+import {
+  CredentialsLevel,
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '../../../types/toolset-auth';
 import { DetailsPanel } from '../DetailsPanel';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   Tabs: ({
     tabs,
     onTabChange,
@@ -55,8 +65,29 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     ariaLabel: string;
   }) => <button onClick={onClose}>{ariaLabel}</button>,
   Skeleton: () => <div>skeleton</div>,
+  InlineSelectTrigger: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
+  Dropdown: ({
+    children,
+    open,
+    renderOverlay,
+  }: {
+    children: React.ReactNode;
+    open?: boolean;
+    renderOverlay?: () => React.ReactNode;
+  }) => (
+    <div>
+      {children}
+      {open && renderOverlay?.()}
+    </div>
+  ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  ElementSize: { Standard: 'standard' },
+  ElementSize: { Small: 'small', Standard: 'standard' },
   Spinner: () => <svg />,
   DangerButton: ({
     label,
@@ -114,6 +145,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconChevronLeft: () => <svg />,
   IconChevronDown: () => <svg />,
   IconCopy: () => <svg />,
+  IconFolder: () => <svg />,
   IconKey: () => <svg />,
   IconLogin: () => <svg />,
   IconLogout: () => <svg />,
@@ -122,7 +154,8 @@ vi.mock('@tabler/icons-react', () => ({
   IconShare: () => <svg />,
   IconTrashX: () => <svg />,
 }));
-vi.mock('../../EntityHeader/EntityHeader', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
 }));
 vi.mock('../../StarToggleButton/StarToggleButton', () => ({
@@ -139,6 +172,7 @@ vi.mock('../Header/Header', () => ({
     onRevokeShare,
     isRevokeShareVisible,
     onRequestLogout,
+    onOpenCredentialsManagement,
   }: {
     item: CatalogItem;
     onOpenPublish?: () => void;
@@ -149,6 +183,7 @@ vi.mock('../Header/Header', () => ({
     onRevokeShare?: () => void;
     isRevokeShareVisible?: (item: CatalogItem) => boolean;
     onRequestLogout?: () => void;
+    onOpenCredentialsManagement?: () => void;
   }) => (
     <>
       <button onClick={onOpenPublish}>Publish</button>
@@ -163,9 +198,47 @@ vi.mock('../Header/Header', () => ({
       {onRequestLogout && (
         <button onClick={onRequestLogout}>LogoutTrigger</button>
       )}
+      {onOpenCredentialsManagement && (
+        <button onClick={onOpenCredentialsManagement}>
+          ManageCredentialsTrigger
+        </button>
+      )}
     </>
   ),
 }));
+vi.mock('../Credentials/CredentialsBanner/CredentialsBanner', () => ({
+  CredentialsBanner: ({ state }: { state: string }) => (
+    <div>CredentialsBanner:{state}</div>
+  ),
+}));
+vi.mock(
+  '../Credentials/CredentialsManagementPanel/CredentialsManagementPanel',
+  () => ({
+    CredentialsManagementPanel: ({
+      onRequestDeleteApiKey,
+      onRequestLogout,
+    }: {
+      onRequestDeleteApiKey?: (level: CredentialsLevel) => void;
+      onRequestLogout?: (level: CredentialsLevel) => void;
+    }) => (
+      <div>
+        CredentialsManagementPanel
+        {onRequestDeleteApiKey && (
+          <button
+            onClick={() => onRequestDeleteApiKey(CredentialsLevel.Global)}
+          >
+            DeleteApiKeyTrigger
+          </button>
+        )}
+        {onRequestLogout && (
+          <button onClick={() => onRequestLogout(CredentialsLevel.Global)}>
+            ManagementLogoutTrigger
+          </button>
+        )}
+      </div>
+    ),
+  }),
+);
 vi.mock('../TabsContent/About', () => ({
   AboutTab: () => <div>about content</div>,
 }));
@@ -308,15 +381,15 @@ describe('DetailsPanel — Content tab', () => {
       }),
     });
 
-    const tabLabels = Array.from(
-      screen.getByRole('tablist').querySelectorAll('button'),
-    ).map((button) => button.textContent);
+    const tabLabels = within(screen.getByRole('tablist'))
+      .getAllByRole('button')
+      .map((tab) => tab.textContent);
     expect(tabLabels).toEqual(['Details', 'Overview']);
   });
 
   /* Without this the stylesheet reads a variable nothing ever sets, so the host override is silently inert. */
   it('sets the placeholder colour variable on the panel root from styles.colors.variableText', () => {
-    const { container } = renderPanel({
+    renderPanel({
       item: makeItem({
         type: CatalogEntityType.Prompt,
         details: { promptContent: { content: 'Hi {{name}}' } },
@@ -324,7 +397,7 @@ describe('DetailsPanel — Content tab', () => {
       styles: { colors: { variableText: '#3730b7' } },
     });
 
-    const panel = container.querySelector('[role="dialog"]') as HTMLElement;
+    const panel = screen.getByRole('dialog');
     expect(panel.style.getPropertyValue('--cat-details-variable-text')).toBe(
       '#3730b7',
     );
@@ -340,7 +413,7 @@ describe('DetailsPanel — Content tab', () => {
     });
 
     expect(
-      screen.getByRole('tablist').querySelector('button')?.textContent,
+      within(screen.getByRole('tablist')).getAllByRole('button')[0].textContent,
     ).toBe('About');
   });
 
@@ -356,9 +429,9 @@ describe('DetailsPanel — Content tab', () => {
       }),
     });
 
-    const tabLabels = Array.from(
-      screen.getByRole('tablist').querySelectorAll('button'),
-    ).map((button) => button.textContent);
+    const tabLabels = within(screen.getByRole('tablist'))
+      .getAllByRole('button')
+      .map((tab) => tab.textContent);
     expect(tabLabels).toEqual(['Details', 'Overview']);
   });
 
@@ -372,7 +445,7 @@ describe('DetailsPanel — Content tab', () => {
     });
 
     expect(
-      screen.getByRole('tablist').querySelector('button')?.textContent,
+      within(screen.getByRole('tablist')).getAllByRole('button')[0].textContent,
     ).toBe('Details');
     /* Overview shows only as a tab button, so Details is still the active tab. */
     expect(screen.getAllByText('Overview')).toHaveLength(1);
@@ -411,7 +484,7 @@ describe('DetailsPanel — Content tab', () => {
     expect(screen.getByText('Summarize:')).toBeTruthy();
     expect(screen.getAllByText('Overview')).toHaveLength(1);
     expect(
-      screen.getByRole('tablist').querySelector('button')?.textContent,
+      within(screen.getByRole('tablist')).getAllByRole('button')[0].textContent,
     ).toBe('Details');
   });
 
@@ -438,10 +511,513 @@ describe('DetailsPanel — Content tab', () => {
     });
 
     expect(
-      screen.getByRole('tablist').querySelector('button')?.textContent,
+      within(screen.getByRole('tablist')).getAllByRole('button')[0].textContent,
     ).toBe('Details');
     /* Overview shows only as a tab button, so Details is still the active tab. */
     expect(screen.getAllByText('Overview')).toHaveLength(1);
+  });
+
+  it('prefers the fetched promptContent description over the item description', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Skill,
+        description: 'stale list description',
+        details: {
+          promptContent: {
+            content: '# Body',
+            description: 'Finds and cites sources',
+          },
+        },
+      }),
+    });
+
+    expect(screen.getByText('Finds and cites sources')).toBeTruthy();
+    expect(screen.queryByText('stale list description')).toBeNull();
+  });
+
+  it('falls back to the item description when promptContent carries none', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        description: 'A prompt summary',
+        details: { promptContent: { content: 'Summarize:' } },
+      }),
+    });
+
+    expect(screen.getByText('A prompt summary')).toBeTruthy();
+  });
+});
+
+describe('DetailsPanel — Content file selector', () => {
+  const files: CatalogContentTreeNode[] = [
+    { type: CatalogContentNodeType.File, id: 'SKILL.md', name: 'SKILL.md' },
+    {
+      type: CatalogContentNodeType.File,
+      id: 'analyzer.md',
+      name: 'analyzer.md',
+    },
+  ];
+  const nestedFiles: CatalogContentTreeNode[] = [
+    { type: CatalogContentNodeType.File, id: 'SKILL.md', name: 'SKILL.md' },
+    {
+      type: CatalogContentNodeType.Folder,
+      id: 'scripts',
+      name: 'scripts',
+      items: [
+        {
+          type: CatalogContentNodeType.File,
+          id: 'scripts/run.py',
+          name: 'run.py',
+        },
+      ],
+    },
+  ];
+
+  const skillWithFiles = (
+    treeFiles: CatalogContentTreeNode[] = files,
+  ): CatalogItem =>
+    makeItem({
+      type: CatalogEntityType.Skill,
+      details: {
+        promptContent: {
+          content: '# Manifest body',
+          files: treeFiles,
+          selectedFileId: 'SKILL.md',
+        },
+      },
+    });
+
+  const openSelector = async (label = 'SKILL.md') =>
+    userEvent.click(screen.getByRole('button', { name: label }));
+
+  it('loads a picked file and shows it as the body', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('# Analyzer body');
+    renderPanel({ item: skillWithFiles(), onLoadContentFile });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Analyzer body' }),
+    ).toBeTruthy();
+    expect(onLoadContentFile).toHaveBeenCalledWith('analyzer.md');
+    expect(screen.getByRole('button', { name: 'analyzer.md' })).toBeTruthy();
+  });
+
+  /* The base body is already in hand — reselecting it must not re-request. */
+  it('restores the base body without a request when the base file is reselected', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('# Analyzer body');
+    renderPanel({ item: skillWithFiles(), onLoadContentFile });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await waitFor(() => expect(onLoadContentFile).toHaveBeenCalledOnce());
+
+    await openSelector('analyzer.md');
+    await userEvent.click(screen.getByText('SKILL.md'));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Manifest body' }),
+    ).toBeTruthy();
+    expect(onLoadContentFile).toHaveBeenCalledOnce();
+  });
+
+  it('shows the error text when a picked file cannot be read', async () => {
+    const onLoadContentFile = vi.fn().mockRejectedValue(new Error('404'));
+    renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+      texts: { contentFileErrorLabel: 'Failed to load this file.' },
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+
+    expect(await screen.findByText('Failed to load this file.')).toBeTruthy();
+  });
+
+  it('shows the error text when a picked file resolves undefined', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue(undefined);
+    renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+      texts: { contentFileErrorLabel: 'Failed to load this file.' },
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+
+    expect(await screen.findByText('Failed to load this file.')).toBeTruthy();
+  });
+
+  it('drops a picked file when the panel switches to another item', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('# Analyzer body');
+    const { rerender } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    expect(
+      await screen.findByRole('button', { name: 'analyzer.md' }),
+    ).toBeTruthy();
+
+    rerender(
+      <DetailsPanel
+        item={{ ...skillWithFiles(), id: 'other-skill' }}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+        onLoadContentFile={onLoadContentFile}
+      />,
+    );
+
+    expect(
+      await screen.findByRole('button', { name: 'SKILL.md' }),
+    ).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Manifest body' })).toBeTruthy();
+  });
+
+  it('opens the selector with every folder expanded by default', async () => {
+    renderPanel({ item: skillWithFiles(nestedFiles) });
+
+    await openSelector();
+
+    expect(screen.getByText('run.py')).toBeTruthy();
+  });
+
+  it('resets the expanded folders and closes the selector when the item switches', async () => {
+    const { rerender } = renderPanel({ item: skillWithFiles(nestedFiles) });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('scripts'));
+    expect(screen.queryByText('run.py')).toBeNull();
+
+    rerender(
+      <DetailsPanel
+        item={{ ...skillWithFiles(nestedFiles), id: 'other-skill' }}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.queryByText('run.py')).toBeNull();
+    await openSelector();
+    expect(screen.getByText('run.py')).toBeTruthy();
+  });
+});
+
+describe('DetailsPanel — file preview', () => {
+  const files: CatalogContentTreeNode[] = [
+    { type: CatalogContentNodeType.File, id: 'SKILL.md', name: 'SKILL.md' },
+    {
+      type: CatalogContentNodeType.File,
+      id: 'analyzer.md',
+      name: 'analyzer.md',
+    },
+    { type: CatalogContentNodeType.File, id: 'run.py', name: 'run.py' },
+  ];
+
+  const skillWithFiles = (): CatalogItem =>
+    makeItem({
+      type: CatalogEntityType.Skill,
+      details: {
+        promptContent: {
+          content: '# Manifest body',
+          files,
+          selectedFileId: 'SKILL.md',
+        },
+      },
+    });
+
+  const openSelector = async (label = 'SKILL.md') =>
+    userEvent.click(screen.getByRole('button', { name: label }));
+
+  /** Creates a promise whose resolution the test controls explicitly. */
+  const deferred = <T,>() => {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((r) => {
+      resolve = r;
+    });
+    return { promise, resolve };
+  };
+
+  it('prefers a host-owned renderer and passes it the opaque id and basename', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('ignored');
+    const onLoadContentFilePreview = vi.fn().mockResolvedValue({
+      type: CatalogContentPreviewType.Text,
+      text: 'ignored',
+    } satisfies CatalogContentFilePreview);
+    const renderContentFilePreview = vi.fn(
+      (fileId: string, fileName: string) => (
+        <div>{`Attachment canvas: ${fileId}:${fileName}`}</div>
+      ),
+    );
+    renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+      onLoadContentFilePreview,
+      renderContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('run.py'));
+
+    expect(screen.getByText('Attachment canvas: run.py:run.py')).toBeTruthy();
+    expect(renderContentFilePreview).toHaveBeenCalledWith('run.py', 'run.py');
+    expect(onLoadContentFilePreview).not.toHaveBeenCalled();
+    expect(onLoadContentFile).not.toHaveBeenCalled();
+  });
+
+  it('does not invoke the host-owned renderer for the base manifest', () => {
+    const renderContentFilePreview = vi.fn(() => <div>Supporting file</div>);
+    renderPanel({ item: skillWithFiles(), renderContentFilePreview });
+
+    expect(screen.getByRole('heading', { name: 'Manifest body' })).toBeTruthy();
+    expect(renderContentFilePreview).not.toHaveBeenCalled();
+  });
+
+  it('prefers onLoadContentFilePreview over onLoadContentFile when both are supplied', async () => {
+    const onLoadContentFile = vi.fn().mockResolvedValue('ignored');
+    const onLoadContentFilePreview = vi.fn().mockResolvedValue({
+      type: CatalogContentPreviewType.Text,
+      text: 'print(1)',
+      language: 'python',
+    } satisfies CatalogContentFilePreview);
+    const { container } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFile,
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('run.py'));
+
+    await waitFor(() => expect(container.textContent).toContain('print(1)'));
+    expect(onLoadContentFilePreview).toHaveBeenCalledWith('run.py');
+    expect(onLoadContentFile).not.toHaveBeenCalled();
+  });
+
+  it('an older request resolving after a newer one does not override it', async () => {
+    const analyzerDeferred = deferred<CatalogContentFilePreview>();
+    const onLoadContentFilePreview = vi
+      .fn()
+      .mockImplementation((fileId: string) =>
+        fileId === 'analyzer.md'
+          ? analyzerDeferred.promise
+          : Promise.resolve({
+              type: CatalogContentPreviewType.Text,
+              text: 'run.py body',
+            } satisfies CatalogContentFilePreview),
+      );
+    const { container } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await openSelector('analyzer.md');
+    await userEvent.click(screen.getByText('run.py'));
+
+    await waitFor(() => expect(container.textContent).toContain('run.py body'));
+
+    analyzerDeferred.resolve({
+      type: CatalogContentPreviewType.Text,
+      text: 'stale analyzer body',
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain('run.py body');
+
+    expect(container.textContent).not.toContain('stale analyzer body');
+  });
+
+  it('discards a pending preview request when the panel switches to a different item', async () => {
+    const pending = deferred<CatalogContentFilePreview>();
+    const onLoadContentFilePreview = vi.fn().mockReturnValue(pending.promise);
+    const { rerender } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+
+    rerender(
+      <DetailsPanel
+        item={{ ...skillWithFiles(), id: 'other-skill' }}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+        onLoadContentFilePreview={onLoadContentFilePreview}
+      />,
+    );
+
+    pending.resolve({
+      type: CatalogContentPreviewType.Text,
+      text: 'stale content',
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole('heading', { name: 'Manifest body' })).toBeTruthy();
+  });
+
+  it('revokes a blob: image preview url when a different file is picked', async () => {
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    const onLoadContentFilePreview = vi
+      .fn()
+      .mockResolvedValueOnce({
+        type: CatalogContentPreviewType.Image,
+        url: 'blob:image-url',
+      } satisfies CatalogContentFilePreview)
+      .mockResolvedValueOnce({
+        type: CatalogContentPreviewType.Text,
+        text: 'next file',
+      } satisfies CatalogContentFilePreview);
+    renderPanel({ item: skillWithFiles(), onLoadContentFilePreview });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await screen.findByRole('img');
+
+    await openSelector('analyzer.md');
+    await userEvent.click(screen.getByText('run.py'));
+
+    await waitFor(() =>
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:image-url'),
+    );
+    revokeObjectURL.mockRestore();
+  });
+
+  it('never revokes a non-blob image preview url', async () => {
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    const onLoadContentFilePreview = vi
+      .fn()
+      .mockResolvedValueOnce({
+        type: CatalogContentPreviewType.Image,
+        url: 'https://example.com/image.png',
+      } satisfies CatalogContentFilePreview)
+      .mockResolvedValueOnce({
+        type: CatalogContentPreviewType.Text,
+        text: 'next file',
+      } satisfies CatalogContentFilePreview);
+    renderPanel({ item: skillWithFiles(), onLoadContentFilePreview });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await screen.findByRole('img');
+
+    await openSelector('analyzer.md');
+    await userEvent.click(screen.getByText('run.py'));
+
+    expect(await screen.findByText('next file')).toBeTruthy();
+    expect(revokeObjectURL).not.toHaveBeenCalledWith(
+      'https://example.com/image.png',
+    );
+    revokeObjectURL.mockRestore();
+  });
+
+  it('revokes a stale image preview url that resolves after a newer pick, even though it was never displayed', async () => {
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    const staleDeferred = deferred<CatalogContentFilePreview>();
+    const onLoadContentFilePreview = vi
+      .fn()
+      .mockImplementation((fileId: string) =>
+        fileId === 'analyzer.md'
+          ? staleDeferred.promise
+          : Promise.resolve({
+              type: CatalogContentPreviewType.Text,
+              text: 'run.py body',
+            } satisfies CatalogContentFilePreview),
+      );
+    const { container } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await openSelector('analyzer.md');
+    await userEvent.click(screen.getByText('run.py'));
+
+    await waitFor(() => expect(container.textContent).toContain('run.py body'));
+
+    staleDeferred.resolve({
+      type: CatalogContentPreviewType.Image,
+      url: 'blob:discarded-url',
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:discarded-url');
+    revokeObjectURL.mockRestore();
+  });
+
+  it('discards a stale item-switch preview resolution, revoking its blob: image url', async () => {
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    const pending = deferred<CatalogContentFilePreview>();
+    const onLoadContentFilePreview = vi.fn().mockReturnValue(pending.promise);
+    const { rerender } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+
+    rerender(
+      <DetailsPanel
+        item={{ ...skillWithFiles(), id: 'other-skill' }}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+        onLoadContentFilePreview={onLoadContentFilePreview}
+      />,
+    );
+
+    pending.resolve({
+      type: CatalogContentPreviewType.Image,
+      url: 'blob:switched-away-url',
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:switched-away-url');
+    revokeObjectURL.mockRestore();
+  });
+
+  it('revokes a still-displayed blob: image preview url on unmount', async () => {
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    const onLoadContentFilePreview = vi.fn().mockResolvedValue({
+      type: CatalogContentPreviewType.Image,
+      url: 'blob:unmount-url',
+    } satisfies CatalogContentFilePreview);
+    const { unmount } = renderPanel({
+      item: skillWithFiles(),
+      onLoadContentFilePreview,
+    });
+
+    await openSelector();
+    await userEvent.click(screen.getByText('analyzer.md'));
+    await screen.findByRole('img');
+
+    unmount();
+
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:unmount-url');
+    revokeObjectURL.mockRestore();
   });
 });
 
@@ -458,6 +1034,60 @@ describe('DetailsPanel', () => {
     renderPanel();
     expect(screen.getByRole('tablist')).toBeTruthy();
     expect(screen.queryByText('Publish panel')).toBeNull();
+  });
+
+  it('shows the org-credentials banner for a non-admin using org fallback credentials', () => {
+    renderPanel({
+      item: makeItem({
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.OAuth,
+          isPublic: true,
+          globalStatus: CredentialStatus.SignedIn,
+        },
+      }),
+    });
+    expect(
+      screen.getByText('CredentialsBanner:USING_ORG_CREDENTIALS'),
+    ).toBeTruthy();
+  });
+
+  it('shows the org-credentials-active banner for an admin once org credentials are set', () => {
+    renderPanel({
+      item: makeItem({
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.OAuth,
+          isManageableByAdmin: true,
+          globalStatus: CredentialStatus.SignedIn,
+        },
+      }),
+    });
+    expect(
+      screen.getByText('CredentialsBanner:ORG_CREDENTIALS_ACTIVE'),
+    ).toBeTruthy();
+  });
+
+  it('shows the personal-credentials-active banner for an admin once personal credentials are set', () => {
+    renderPanel({
+      item: makeItem({
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.OAuth,
+          isManageableByAdmin: true,
+          userStatus: CredentialStatus.SignedIn,
+        },
+      }),
+    });
+    expect(
+      screen.getByText('CredentialsBanner:PERSONAL_CREDENTIALS_ACTIVE'),
+    ).toBeTruthy();
+  });
+
+  it('omits the banner when no organization credentials are active', () => {
+    renderPanel({
+      item: makeItem({
+        credentials: { authenticationType: ToolsetAuthenticationType.OAuth },
+      }),
+    });
+    expect(screen.queryByText(/^CredentialsBanner:/)).toBeNull();
   });
 
   it('shows the Star toggle and hides the back button by default', () => {
@@ -529,7 +1159,19 @@ describe('DetailsPanel', () => {
     expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
   });
 
-  it('hides the Connect tab when the api data carries no endpoint URL, as for a model', () => {
+  it('hides the Connect tab when the api data is only a resource identifier, as for a model with no endpoints', () => {
+    renderPanel({
+      item: makeItem({
+        details: {
+          api: { resource: { modelId: 'gpt-4o' } },
+        },
+      }),
+    });
+
+    expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
+  });
+
+  it('shows the Connect tab when the api data carries a multi-endpoint list, as for a model', async () => {
     renderPanel({
       item: makeItem({
         details: {
@@ -543,7 +1185,9 @@ describe('DetailsPanel', () => {
       }),
     });
 
-    expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Connect' }));
+
+    expect(screen.getByText('Api')).toBeTruthy();
   });
 
   it('replaces the details content with the publish panel when Publish is clicked', async () => {
@@ -1226,6 +1870,250 @@ describe('DetailsPanel', () => {
         />,
       );
       expect(screen.getByRole('tablist')).toBeTruthy();
+    });
+  });
+
+  describe('Credentials management sub-view', () => {
+    const MANAGE_TRIGGER = 'ManageCredentialsTrigger';
+
+    const openCredentialsManagement = async () => {
+      await userEvent.click(
+        screen.getByRole('button', { name: MANAGE_TRIGGER }),
+      );
+    };
+
+    it('replaces the details content with the credentials management panel', async () => {
+      renderPanel({
+        item: makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            isManageableByAdmin: true,
+          },
+        }),
+      });
+      await openCredentialsManagement();
+      expect(screen.queryByRole('tablist')).toBeNull();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
+    });
+
+    it('titles the sub-view "Toolset credentials" for OAuth authentication', async () => {
+      renderPanel({
+        item: makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            isManageableByAdmin: true,
+          },
+        }),
+      });
+      await openCredentialsManagement();
+      expect(
+        screen.getByRole('dialog', { name: 'Toolset credentials' }),
+      ).toBeTruthy();
+    });
+
+    it('titles the sub-view "Toolset API keys" for API-key authentication', async () => {
+      renderPanel({
+        item: makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            isManageableByAdmin: true,
+          },
+        }),
+      });
+      await openCredentialsManagement();
+      expect(
+        screen.getByRole('dialog', { name: 'Toolset API keys' }),
+      ).toBeTruthy();
+    });
+
+    it('returns to the details content when the back button is clicked', async () => {
+      renderPanel({
+        item: makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            isManageableByAdmin: true,
+          },
+        }),
+      });
+      await openCredentialsManagement();
+      await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+      expect(screen.getByRole('tablist')).toBeTruthy();
+      expect(screen.queryByText('CredentialsManagementPanel')).toBeNull();
+    });
+
+    it('uses texts.credentialsManagementTitle when provided', async () => {
+      renderPanel({
+        item: makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            isManageableByAdmin: true,
+          },
+        }),
+        texts: { credentialsManagementTitle: () => 'Custom title' },
+      });
+      await openCredentialsManagement();
+      expect(screen.getByRole('dialog', { name: 'Custom title' })).toBeTruthy();
+    });
+  });
+
+  describe('Delete API key sub-view', () => {
+    const MANAGE_TRIGGER = 'ManageCredentialsTrigger';
+    const DELETE_API_KEY_TRIGGER = 'DeleteApiKeyTrigger';
+    const DELETE_CONFIRM = 'Delete';
+
+    const apiKeyItem = () =>
+      makeItem({
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.ApiKey,
+          isManageableByAdmin: true,
+          globalStatus: CredentialStatus.SignedIn,
+        },
+      });
+
+    const openDeleteApiKeyConfirmation = async () => {
+      await userEvent.click(
+        screen.getByRole('button', { name: MANAGE_TRIGGER }),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: DELETE_API_KEY_TRIGGER }),
+      );
+    };
+
+    it('replaces the credentials management panel with a full-page confirmation', async () => {
+      renderPanel({ item: apiKeyItem() });
+      await openDeleteApiKeyConfirmation();
+      expect(screen.queryByText('CredentialsManagementPanel')).toBeNull();
+      expect(screen.getByRole('dialog', { name: DELETE_CONFIRM })).toBeTruthy();
+    });
+
+    it('keeps the toolset card in the default palette even though Delete stays danger', async () => {
+      const item = apiKeyItem();
+      renderPanel({ item });
+      await openDeleteApiKeyConfirmation();
+
+      /* The info card root carries no role, so its palette class is only
+       * reachable by traversal — a CSS-level assertion with no semantic query. */
+      // eslint-disable-next-line testing-library/no-node-access
+      const card = screen.getByText(item.name).parentElement;
+      expect(card?.className).not.toContain('danger');
+      expect(
+        screen.getByRole('button', { name: DELETE_CONFIRM }).className,
+      ).toContain('danger');
+    });
+
+    it('calls onLogout with the requested level and returns to the management panel on confirm', async () => {
+      const onLogout = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+      renderPanel({ item: apiKeyItem(), onLogout, onClose });
+      await openDeleteApiKeyConfirmation();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: DELETE_CONFIRM }),
+      );
+
+      expect(onLogout).toHaveBeenCalledWith(apiKeyItem(), {
+        level: CredentialsLevel.Global,
+      });
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
+    });
+
+    it('returns to the management panel without calling onLogout when Cancel is clicked', async () => {
+      const onLogout = vi.fn();
+      renderPanel({ item: apiKeyItem(), onLogout });
+      await openDeleteApiKeyConfirmation();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(onLogout).not.toHaveBeenCalled();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
+    });
+
+    it('returns to the management panel without calling onLogout when the back button is clicked', async () => {
+      const onLogout = vi.fn();
+      renderPanel({ item: apiKeyItem(), onLogout });
+      await openDeleteApiKeyConfirmation();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+      expect(onLogout).not.toHaveBeenCalled();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
+    });
+
+    it('names the organization key in the confirmation message, since the trigger requests the Global level', async () => {
+      renderPanel({ item: apiKeyItem() });
+      await openDeleteApiKeyConfirmation();
+
+      expect(
+        screen.getByText(
+          'Are you sure you want to delete the organization API key?',
+        ),
+      ).toBeTruthy();
+    });
+  });
+
+  describe('Logout sub-view (admin)', () => {
+    const MANAGE_TRIGGER = 'ManageCredentialsTrigger';
+    const MANAGEMENT_LOGOUT_TRIGGER = 'ManagementLogoutTrigger';
+    const LOGOUT_CONFIRM = 'Log out';
+
+    const oauthItem = () =>
+      makeItem({
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.OAuth,
+          isManageableByAdmin: true,
+          userStatus: CredentialStatus.SignedIn,
+          globalStatus: CredentialStatus.SignedIn,
+        },
+      });
+
+    const openManagementLogoutConfirmation = async () => {
+      await userEvent.click(
+        screen.getByRole('button', { name: MANAGE_TRIGGER }),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: MANAGEMENT_LOGOUT_TRIGGER }),
+      );
+    };
+
+    it('replaces the credentials management panel with a full-page confirmation', async () => {
+      renderPanel({ item: oauthItem() });
+      await openManagementLogoutConfirmation();
+      expect(screen.queryByText('CredentialsManagementPanel')).toBeNull();
+      expect(screen.getByRole('dialog', { name: LOGOUT_CONFIRM })).toBeTruthy();
+    });
+
+    it('calls onLogout with the requested level (not getSignedInLevel) and returns to the management panel', async () => {
+      const onLogout = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+      renderPanel({ item: oauthItem(), onLogout, onClose });
+      await openManagementLogoutConfirmation();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: LOGOUT_CONFIRM }),
+      );
+
+      /*
+       * The mock trigger requests Global specifically. getSignedInLevel would
+       * have picked User (it is checked first), so this proves the panel's
+       * own request — not the top-level fallback — decided the level.
+       */
+      expect(onLogout).toHaveBeenCalledWith(oauthItem(), {
+        level: CredentialsLevel.Global,
+      });
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
+    });
+
+    it('returns to the management panel without calling onLogout when Cancel is clicked', async () => {
+      const onLogout = vi.fn();
+      renderPanel({ item: oauthItem(), onLogout });
+      await openManagementLogoutConfirmation();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(onLogout).not.toHaveBeenCalled();
+      expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
     });
   });
 });

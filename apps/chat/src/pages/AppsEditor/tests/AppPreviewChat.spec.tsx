@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -192,9 +192,7 @@ describe('AppPreviewChat', () => {
 
     render(<AppPreviewChat appId="applications/bucket/My App" />);
 
-    await act(async () => {
-      screen.getByRole('button', { name: 'Draft' }).click();
-    });
+    await userEvent.click(screen.getByRole('button', { name: 'Draft' }));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(

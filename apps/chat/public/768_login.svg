@@ -1,0 +1,33 @@
+<svg width="768" height="1024" viewBox="0 0 768 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_41_9384)">
+<g opacity="0.2" filter="url(#filter0_f_41_9384)">
+<path d="M309.968 531.107C637.623 584.346 878.773 882.047 847.717 1073.18C816.661 1264.31 568.562 1315.96 240.907 1262.72C78.5386 1236.33 -87.1362 1404.4 -264.579 1277.87C-445.209 1149.08 -358.2 895.656 -342.534 799.24C-311.478 608.11 -17.6862 477.868 309.968 531.107Z" fill="url(#paint0_radial_41_9384)"/>
+</g>
+<g opacity="0.2" filter="url(#filter1_f_41_9384)">
+<path d="M352.712 252.855C133.08 33.2225 143.512 -355.369 294.911 -506.768C446.311 -658.168 724.742 -707.079 944.375 -487.446C1053.21 -378.608 1243.14 -304.237 1297.06 -99.534C1351.94 108.847 1115.52 285.406 1039.15 361.779C887.748 513.179 572.345 472.488 352.712 252.855Z" fill="url(#paint1_radial_41_9384)"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_f_41_9384" x="-552.306" y="344.017" width="1577.82" height="1156.69" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="87.55" result="effect1_foregroundBlur_41_9384"/>
+</filter>
+<filter id="filter1_f_41_9384" x="9.00449" y="-811.564" width="1471.34" height="1438.76" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="87.55" result="effect1_foregroundBlur_41_9384"/>
+</filter>
+<radialGradient id="paint0_radial_41_9384" cx="0" cy="0" r="1" gradientTransform="matrix(444.776 -483.846 510.115 385.402 33.1857 1095)" gradientUnits="userSpaceOnUse">
+<stop stop-color="#8F5FF1" stop-opacity="0.8"/>
+<stop offset="1" stop-color="#8F5FF1" stop-opacity="0"/>
+</radialGradient>
+<radialGradient id="paint1_radial_41_9384" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(960.352 -261.424) rotate(152.585) scale(771.815 655.302)">
+<stop stop-color="#0097CA"/>
+<stop offset="1" stop-color="#0097CA" stop-opacity="0"/>
+</radialGradient>
+<clipPath id="clip0_41_9384">
+<rect width="1896" height="1024" fill="white" transform="translate(-564)"/>
+</clipPath>
+</defs>
+</svg>

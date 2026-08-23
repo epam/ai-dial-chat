@@ -42,6 +42,8 @@ export interface ApiDetailsProps {
   responseSchemaLabel?: string;
   /** Accessible label for the copy button. Default: `'Copy'`. */
   copyAriaLabel?: string;
+  /** Message announced through each code block's live region once a copy completes. Default: `'Copied!'`. */
+  copiedStatusLabel?: string;
   /** CSS class for row labels. Defaults to `'dial-small-semi-text'`. */
   labelClassName?: string;
   /** CSS class for row values. Defaults to `'dial-small-text'`. */
@@ -58,6 +60,7 @@ interface SnippetBlockProps {
   snippets: CodeSnippet[];
   sectionLabel?: string;
   copyAriaLabel?: string;
+  copiedStatusLabel?: string;
   codeClassName?: string;
   codeTitleClassName?: string;
   sectionClassName?: string;
@@ -67,6 +70,7 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
   snippets,
   sectionLabel,
   copyAriaLabel = 'Copy',
+  copiedStatusLabel = 'Copied!',
   codeClassName = 'dial-code-text',
   codeTitleClassName = 'dial-tiny-semi-text',
   sectionClassName = 'dial-caption-text',
@@ -119,6 +123,7 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
         title={LANGUAGE_LABELS[activeSnippet as CodeLanguage] ?? activeSnippet}
         value={activeCode}
         copyLabel={copyAriaLabel}
+        copiedLabel={copiedStatusLabel}
         codeClassName={codeClassName}
         languageLabelClassName={codeTitleClassName}
         hideDownload
@@ -149,6 +154,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
   requestExampleLabel = 'Request example',
   responseSchemaLabel = 'Response schema',
   copyAriaLabel = 'Copy',
+  copiedStatusLabel = 'Copied!',
   labelClassName = 'dial-small-semi-text',
   valueClassName = 'dial-small-text',
   codeClassName = 'dial-code-text',
@@ -203,6 +209,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
           language={endpointLabel}
           value={singleEndpointUrl}
           copyLabel={copyAriaLabel}
+          copiedLabel={copiedStatusLabel}
           codeClassName={codeClassName}
           languageLabelClassName={codeTitleClassName}
           hideDownload
@@ -227,6 +234,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
               language={activeEndpoint.label}
               value={activeEndpoint.url}
               copyLabel={copyAriaLabel}
+              copiedLabel={copiedStatusLabel}
               codeClassName={codeClassName}
               languageLabelClassName={codeTitleClassName}
               hideDownload
@@ -251,6 +259,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
                   key={activeEndpointIdx}
                   snippets={activeEndpoint.snippets}
                   copyAriaLabel={copyAriaLabel}
+                  copiedStatusLabel={copiedStatusLabel}
                   codeClassName={codeClassName}
                   codeTitleClassName={codeTitleClassName}
                   sectionClassName={sectionClassName}
@@ -265,6 +274,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
           snippets={api.snippets ?? []}
           sectionLabel={snippetSectionLabel}
           copyAriaLabel={copyAriaLabel}
+          copiedStatusLabel={copiedStatusLabel}
           codeClassName={codeClassName}
           codeTitleClassName={codeTitleClassName}
           sectionClassName={sectionClassName}
@@ -286,6 +296,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
             language="bash"
             value={api.requestExample ?? ''}
             copyLabel={copyAriaLabel}
+            copiedLabel={copiedStatusLabel}
             codeClassName={codeClassName}
             hideDownload
           />
@@ -307,6 +318,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
             language="json"
             value={api.responseSchema ?? ''}
             copyLabel={copyAriaLabel}
+            copiedLabel={copiedStatusLabel}
             codeClassName={codeClassName}
             hideDownload
           />

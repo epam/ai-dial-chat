@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   cloneElement,
@@ -8,8 +9,8 @@ import {
 } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
-import { CatalogEntityType } from '../../../../types/entity-type';
 import {
+  CredentialsLevel,
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '../../../../types/toolset-auth';
@@ -22,11 +23,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   PrimaryButton: ({
     label,
     onClick,
+    disabled,
+    'aria-busy': ariaBusy,
   }: {
     label: string;
     onClick: () => void;
+    disabled?: boolean;
+    'aria-busy'?: boolean;
   }) => (
-    <button className="primary" onClick={onClick}>
+    <button
+      className="primary"
+      onClick={onClick}
+      disabled={disabled}
+      aria-busy={ariaBusy}
+    >
       {label}
     </button>
   ),
@@ -38,6 +48,17 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onClick: () => void;
   }) => (
     <button className="neutral" onClick={onClick}>
+      {label}
+    </button>
+  ),
+  DangerButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick: () => void;
+  }) => (
+    <button className="danger" onClick={onClick}>
       {label}
     </button>
   ),
@@ -62,28 +83,33 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Dropdown: ({
     children,
     items,
+    open,
     onOpenChange,
+    renderOverlay,
   }: {
     children: ReactElement<{ onClick?: () => void }>;
-    items: Array<{
+    items?: Array<{
       key: string;
       label: ReactNode;
       disabled?: boolean;
       onClick?: () => void;
     }>;
-    onOpenChange?: (isOpen: boolean) => void;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    renderOverlay?: () => ReactNode;
   }) => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isOpen = open ?? internalOpen;
+    const toggle = () => {
+      const next = !isOpen;
+      setInternalOpen(next);
+      onOpenChange?.(next);
+    };
     return (
       <div>
-        {cloneElement(children, {
-          onClick: () => {
-            setIsOpen(!isOpen);
-            onOpenChange?.(!isOpen);
-          },
-        })}
+        {cloneElement(children, { onClick: toggle })}
         {isOpen &&
-          items.map((item) => (
+          items?.map((item) => (
             <button
               key={item.key}
               disabled={item.disabled}
@@ -92,11 +118,14 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
               {item.label}
             </button>
           ))}
+        {isOpen && renderOverlay?.()}
       </div>
     );
   },
 }));
 vi.mock('@tabler/icons-react', () => ({
+  IconArrowRight: () => <svg />,
+  IconChevronDown: () => <svg />,
   IconDots: () => <svg />,
   IconDownload: () => <svg />,
   IconKey: () => <svg />,
@@ -108,13 +137,21 @@ vi.mock('@tabler/icons-react', () => ({
   IconUserOff: () => <svg />,
   IconWorldShare: () => <svg />,
 }));
-vi.mock('../../../EntityHeader/EntityHeader', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
 }));
 vi.mock('../ShareButton/ShareButton', () => ({
   ShareButton: ({ label }: { label?: string }) => (
     <button>{label ?? 'Share'}</button>
   ),
+}));
+vi.mock('../CredentialsApiKeyOverlay/CredentialsApiKeyOverlay', () => ({
+  CredentialsApiKeyOverlay: ({
+    status,
+  }: {
+    status?: 'SIGNED_IN' | 'SIGNED_OUT' | 'FAILED';
+  }) => <div>{status === 'SIGNED_IN' ? 'Delete' : 'Add'} popover content</div>,
 }));
 
 const makeItem = (type: CatalogEntityType): CatalogItem => ({
@@ -128,6 +165,10 @@ const makeItem = (type: CatalogEntityType): CatalogItem => ({
   topics: [],
   isMyApp: true,
 });
+
+const openManage = async (label = 'Manage') => {
+  await userEvent.click(screen.getByRole('button', { name: label }));
+};
 
 describe('Header', () => {
   it('renders Use in chat for a Model item', () => {
@@ -210,10 +251,6 @@ describe('Header', () => {
     );
     expect(screen.getByRole('button', { name: 'Share this' })).toBeTruthy();
   });
-
-  const openManage = async (label = 'Manage') => {
-    await userEvent.click(screen.getByRole('button', { name: label }));
-  };
 
   it('does not render the Manage button for a Model item the user cannot edit, publish, or delete', () => {
     render(
@@ -367,7 +404,225 @@ describe('Header', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Download' }));
     expect(onDownload).toHaveBeenCalledWith(item);
   });
+});
 
+describe('Header — Download as primary action', () => {
+  it('defaults to Download as the primary action for a Skill', async () => {
+    render(
+      <Header item={makeItem(CatalogEntityType.Skill)} onDownload={vi.fn()} />,
+    );
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
+  });
+
+  it('does not promote Download for a Model regardless of onDownload', () => {
+    render(
+      <Header item={makeItem(CatalogEntityType.Model)} onDownload={vi.fn()} />,
+    );
+    expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
+  });
+
+  it("Toolset's credentials swap takes precedence over Download", () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            userStatus: CredentialStatus.SignedOut,
+          },
+        }}
+        onDownload={vi.fn()}
+        isDownloadPrimary={() => true}
+        onLogin={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'API key' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+  });
+
+  it('a host can suppress the default Skill promotion', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={vi.fn()}
+        isDownloadPrimary={() => false}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+  });
+
+  it('a host can promote Download for a non-Skill type', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Prompt)}
+        onDownload={vi.fn()}
+        isDownloadPrimary={(item) => item.type === CatalogEntityType.Prompt}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+  });
+
+  it('never renders Download in both the primary slot and the Manage menu', async () => {
+    render(
+      <Header item={makeItem(CatalogEntityType.Skill)} onDownload={vi.fn()} />,
+    );
+    await openManage();
+    expect(screen.getAllByRole('button', { name: 'Download' })).toHaveLength(1);
+  });
+
+  it('disables the button and announces progress while a download is pending', async () => {
+    let resolveDownload!: () => void;
+    const onDownload = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDownload = resolve;
+        }),
+    );
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={onDownload}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+
+    const button = screen.getByRole('button', {
+      name: 'Download',
+    }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute('aria-busy')).toBe('true');
+    expect(screen.getByRole('status').textContent).toBe('Downloading');
+
+    resolveDownload();
+    await waitFor(() =>
+      expect(
+        (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
+    );
+  });
+
+  it('ignores a second click while a download is already pending', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function -- a promise that never settles by design
+    const onDownload = vi.fn(() => new Promise<void>(() => {}));
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={onDownload}
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: 'Download' });
+    await userEvent.click(button);
+    await userEvent.click(button);
+
+    expect(onDownload).toHaveBeenCalledOnce();
+  });
+
+  it('re-enables the button after a successful download', async () => {
+    const onDownload = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={onDownload}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+
+    await waitFor(() =>
+      expect(
+        (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
+    );
+  });
+
+  it('re-enables the button after a failed download', async () => {
+    const onDownload = vi.fn().mockRejectedValue(new Error('failed'));
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={onDownload}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+
+    await waitFor(() =>
+      expect(
+        (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
+    );
+  });
+
+  it('resets pending state when the item changes, without a stale call resurrecting it', async () => {
+    let resolveDownload!: () => void;
+    const onDownload = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDownload = resolve;
+        }),
+    );
+    const { rerender } = render(
+      <Header
+        item={makeItem(CatalogEntityType.Skill)}
+        onDownload={onDownload}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+    expect(
+      (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+
+    rerender(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Skill), id: 'other-skill' }}
+        onDownload={onDownload}
+      />,
+    );
+    expect(
+      (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+
+    resolveDownload();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(
+      (screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+  });
+
+  it("the Manage-menu Download entry's fire-and-forget contract is unchanged", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function -- a promise that never settles by design
+    const onDownload = vi.fn(() => new Promise<void>(() => {}));
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Prompt)}
+        onDownload={onDownload}
+      />,
+    );
+
+    await openManage();
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+
+    expect(onDownload).toHaveBeenCalledOnce();
+    /* No pending/disabled state exists for the Manage-menu path. */
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+});
+
+describe('Header', () => {
   it('renders Delete in the Manage menu', async () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
     await openManage();
@@ -828,150 +1083,339 @@ describe('Header', () => {
     expect(screen.queryByRole('button', { name: 'Log in' })).toBeNull();
   });
 
-  it('renders Log in when not signed in at any level', () => {
-    render(
-      <Header
-        item={{
-          ...makeItem(CatalogEntityType.Toolset),
-          credentials: {
-            authenticationType: ToolsetAuthenticationType.ApiKey,
-            userStatus: CredentialStatus.SignedOut,
-          },
-        }}
-        onLogin={vi.fn()}
-      />,
-    );
-    expect(screen.getByRole('button', { name: 'Log in' })).toBeTruthy();
+  describe('OAuth authentication', () => {
+    it('renders Log in when not signed in at any level', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.OAuth,
+              userStatus: CredentialStatus.SignedOut,
+            },
+          }}
+          onLogin={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole('button', { name: 'Log in' })).toBeTruthy();
+    });
+
+    it('renders Log out when signed in at USER level', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.OAuth,
+              userStatus: CredentialStatus.SignedIn,
+            },
+          }}
+          onLogout={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole('button', { name: 'Log out' })).toBeTruthy();
+    });
+
+    it('renders Log out with a danger style', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.OAuth,
+              userStatus: CredentialStatus.SignedIn,
+            },
+          }}
+          onLogout={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole('button', { name: 'Log out' }).className).toBe(
+        'danger',
+      );
+    });
+
+    it('still renders plain "Log in" for a public item not signed in at USER level (org fallback is conveyed by the banner, not the button)', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.OAuth,
+              isPublic: true,
+              globalStatus: CredentialStatus.SignedIn,
+            },
+          }}
+          onLogin={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole('button', { name: 'Log in' })).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: 'Login with my creds' }),
+      ).toBeNull();
+    });
+
+    it('renders Manage credentials when isManageableByAdmin is true', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.OAuth,
+              isManageableByAdmin: true,
+            },
+          }}
+          onLogin={vi.fn()}
+        />,
+      );
+      expect(
+        screen.getByRole('button', { name: 'Manage credentials' }),
+      ).toBeTruthy();
+    });
+
+    it('calls onOpenCredentialsManagement when Manage credentials is clicked', async () => {
+      const onOpenCredentialsManagement = vi.fn();
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.OAuth,
+              isManageableByAdmin: true,
+            },
+          }}
+          onLogin={vi.fn()}
+          onOpenCredentialsManagement={onOpenCredentialsManagement}
+        />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Manage credentials' }),
+      );
+      expect(onOpenCredentialsManagement).toHaveBeenCalledOnce();
+    });
+
+    it('calls onLogin directly at USER level when Log in is clicked', async () => {
+      const onLogin = vi.fn();
+      const item = {
+        ...makeItem(CatalogEntityType.Toolset),
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.OAuth,
+          userStatus: CredentialStatus.SignedOut,
+        },
+      };
+      render(<Header item={item} onLogin={onLogin} />);
+      await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+      expect(onLogin).toHaveBeenCalledWith(item, {
+        level: CredentialsLevel.User,
+      });
+    });
+
+    it('renders the credentials button as the primary action, first in the action row, for a Toolset item', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.OAuth,
+              userStatus: CredentialStatus.SignedOut,
+            },
+          }}
+          onLogin={vi.fn()}
+        />,
+      );
+
+      const buttons = screen.getAllByRole('button');
+      expect(buttons[0].textContent).toBe('Log in');
+      expect(buttons[0].className).toContain('primary');
+    });
+
+    it('keeps the credentials button as a non-primary, non-leading action for a non-Toolset item', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Agent),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.OAuth,
+              userStatus: CredentialStatus.SignedOut,
+            },
+          }}
+          onLogin={vi.fn()}
+        />,
+      );
+
+      const logInButton = screen.getByRole('button', { name: 'Log in' });
+      expect(logInButton.className).toBe('neutral');
+    });
+
+    it('calls onRequestLogout instead of logging in directly when signed in', async () => {
+      const onLogin = vi.fn();
+      const onRequestLogout = vi.fn();
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.OAuth,
+              userStatus: CredentialStatus.SignedIn,
+            },
+          }}
+          onLogout={vi.fn()}
+          onLogin={onLogin}
+          onRequestLogout={onRequestLogout}
+        />,
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Log out' }));
+      expect(onRequestLogout).toHaveBeenCalledOnce();
+      expect(onLogin).not.toHaveBeenCalled();
+    });
   });
 
-  it('renders Log out when signed in at USER level', () => {
-    render(
-      <Header
-        item={{
-          ...makeItem(CatalogEntityType.Toolset),
-          credentials: {
-            authenticationType: ToolsetAuthenticationType.ApiKey,
-            userStatus: CredentialStatus.SignedIn,
-          },
-        }}
-        onLogout={vi.fn()}
-      />,
-    );
-    expect(screen.getByRole('button', { name: 'Log out' })).toBeTruthy();
-  });
+  describe('API-key authentication', () => {
+    it('renders "API key" when not signed in, instead of generic Log in wording', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.ApiKey,
+              userStatus: CredentialStatus.SignedOut,
+            },
+          }}
+          onLogin={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole('button', { name: 'API key' })).toBeTruthy();
+    });
 
-  it('renders Login with my creds for a public item not signed in at USER level', () => {
-    render(
-      <Header
-        item={{
-          ...makeItem(CatalogEntityType.Toolset),
-          credentials: {
-            authenticationType: ToolsetAuthenticationType.ApiKey,
-            isPublic: true,
-            globalStatus: CredentialStatus.SignedIn,
-          },
-        }}
-        onLogin={vi.fn()}
-      />,
-    );
-    expect(
-      screen.getByRole('button', { name: 'Login with my creds' }),
-    ).toBeTruthy();
-  });
+    it('renders "Change API key" when signed in', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.ApiKey,
+              userStatus: CredentialStatus.SignedIn,
+            },
+          }}
+          onLogout={vi.fn()}
+        />,
+      );
+      expect(
+        screen.getByRole('button', { name: 'Change API key' }),
+      ).toBeTruthy();
+    });
 
-  it('renders Manage credentials when isManageableByAdmin is true', () => {
-    render(
-      <Header
-        item={{
-          ...makeItem(CatalogEntityType.Toolset),
-          credentials: {
-            authenticationType: ToolsetAuthenticationType.ApiKey,
-            isManageableByAdmin: true,
-          },
-        }}
-        onLogin={vi.fn()}
-      />,
-    );
-    expect(
-      screen.getByRole('button', { name: 'Manage credentials' }),
-    ).toBeTruthy();
-  });
+    it('renders the "API key" trigger as the primary (call-to-action) style before a key is added', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.ApiKey,
+              userStatus: CredentialStatus.SignedOut,
+            },
+          }}
+          onLogin={vi.fn()}
+        />,
+      );
+      expect(
+        screen.getByRole('button', { name: 'API key' }).className,
+      ).toContain('primary');
+    });
 
-  it('calls onToggleCredentials when the credentials button is clicked in a non-logout state', async () => {
-    const onToggleCredentials = vi.fn();
-    render(
-      <Header
-        item={{
-          ...makeItem(CatalogEntityType.Toolset),
-          credentials: {
-            authenticationType: ToolsetAuthenticationType.ApiKey,
-            userStatus: CredentialStatus.SignedOut,
-          },
-        }}
-        onLogin={vi.fn()}
-        onToggleCredentials={onToggleCredentials}
-      />,
-    );
-    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
-    expect(onToggleCredentials).toHaveBeenCalledOnce();
-  });
+    it('drops the "Change API key" trigger to the low-emphasis style once a key is configured', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.ApiKey,
+              userStatus: CredentialStatus.SignedIn,
+            },
+          }}
+          onLogout={vi.fn()}
+        />,
+      );
+      const trigger = screen.getByRole('button', { name: 'Change API key' });
+      expect(trigger.className).not.toContain('primary');
+      expect(trigger.className).toContain('neutral');
+    });
 
-  it('renders the credentials button as the primary action, first in the action row, for a Toolset item', () => {
-    const { container } = render(
-      <Header
-        item={{
-          ...makeItem(CatalogEntityType.Toolset),
-          credentials: {
-            authenticationType: ToolsetAuthenticationType.ApiKey,
-            userStatus: CredentialStatus.SignedOut,
-          },
-        }}
-        onLogin={vi.fn()}
-      />,
-    );
+    it('opens the personal API-key popover instead of calling onLogin directly', async () => {
+      const onLogin = vi.fn();
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.ApiKey,
+              userStatus: CredentialStatus.SignedOut,
+            },
+          }}
+          onLogin={onLogin}
+        />,
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'API key' }));
+      expect(onLogin).not.toHaveBeenCalled();
+      expect(screen.getByText('Add popover content')).toBeTruthy();
+    });
 
-    const buttons = screen.getAllByRole('button');
-    expect(buttons[0].textContent).toBe('Log in');
-    expect(container.querySelector('.primary')?.textContent).toBe('Log in');
-  });
+    it('opens the popover showing the delete affordance when already signed in', async () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.ApiKey,
+              userStatus: CredentialStatus.SignedIn,
+            },
+          }}
+          onLogout={vi.fn()}
+        />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Change API key' }),
+      );
+      expect(screen.getByText('Delete popover content')).toBeTruthy();
+    });
 
-  it('keeps the credentials button as a non-primary, non-leading action for a non-Toolset item', () => {
-    render(
-      <Header
-        item={{
-          ...makeItem(CatalogEntityType.Agent),
-          credentials: {
-            authenticationType: ToolsetAuthenticationType.ApiKey,
-            userStatus: CredentialStatus.SignedOut,
-          },
-        }}
-        onLogin={vi.fn()}
-      />,
-    );
+    it('renders Manage API keys when isManageableByAdmin is true', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.ApiKey,
+              isManageableByAdmin: true,
+            },
+          }}
+          onLogin={vi.fn()}
+        />,
+      );
+      expect(
+        screen.getByRole('button', { name: 'Manage API keys' }),
+      ).toBeTruthy();
+    });
 
-    const logInButton = screen.getByRole('button', { name: 'Log in' });
-    expect(logInButton.className).toBe('neutral');
-  });
-
-  it('calls onRequestLogout instead of onToggleCredentials when signed in', async () => {
-    const onToggleCredentials = vi.fn();
-    const onRequestLogout = vi.fn();
-    render(
-      <Header
-        item={{
-          ...makeItem(CatalogEntityType.Toolset),
-          credentials: {
-            authenticationType: ToolsetAuthenticationType.ApiKey,
-            userStatus: CredentialStatus.SignedIn,
-          },
-        }}
-        onLogout={vi.fn()}
-        onToggleCredentials={onToggleCredentials}
-        onRequestLogout={onRequestLogout}
-      />,
-    );
-    await userEvent.click(screen.getByRole('button', { name: 'Log out' }));
-    expect(onRequestLogout).toHaveBeenCalledOnce();
-    expect(onToggleCredentials).not.toHaveBeenCalled();
+    it('calls onOpenCredentialsManagement instead of opening a popover for Manage API keys', async () => {
+      const onOpenCredentialsManagement = vi.fn();
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.ApiKey,
+              isManageableByAdmin: true,
+            },
+          }}
+          onLogin={vi.fn()}
+          onOpenCredentialsManagement={onOpenCredentialsManagement}
+        />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Manage API keys' }),
+      );
+      expect(onOpenCredentialsManagement).toHaveBeenCalledOnce();
+      expect(screen.queryByText('Add popover content')).toBeNull();
+    });
   });
 });

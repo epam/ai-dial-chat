@@ -316,9 +316,13 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     expect(historyButton.getAttribute('aria-expanded')).toBe('true');
     expect(detailsButton.getAttribute('aria-expanded')).toBe('false');
 
-    const historyControlsId = historyButton.getAttribute('aria-controls');
-    expect(historyControlsId).toBeTruthy();
-    expect(document.getElementById(historyControlsId as string)).toBeTruthy();
+    expect(historyButton.getAttribute('aria-controls')).toBeTruthy();
+    expect(
+      screen.getByRole('region', {
+        name: 'scheduledTasks.detail.historyTitle',
+        hidden: true,
+      }),
+    ).toBeTruthy();
   });
 
   it('does not render search or download-all when only task sections are present', () => {

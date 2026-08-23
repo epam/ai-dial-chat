@@ -42,6 +42,7 @@ import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
+import { isQuickAppSchema } from '../../utils/application-schema';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -211,6 +212,9 @@ const NewConversationComposer: FC<Props> = ({
     values: chatSettingsValues,
     onValuesChange: setChatSettingsValues,
     deploymentFeatures: selectedDeployment?.features,
+    isQuickApp: isQuickAppSchema({
+      id: selectedDeployment?.applicationTypeSchemaId,
+    }),
   });
 
   const modelSelectorLabels = useModelSelectorLabels({
@@ -221,9 +225,14 @@ const NewConversationComposer: FC<Props> = ({
 
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   const isEmptyChatSettingsEnabled = useUiFeature(
     OverlayFeature.EmptyChatSettings,
   );
+  /* `chat-settings` is the master switch for the settings entry on every screen;
+     `empty-chat-settings` narrows it to this one. Both must be on here. */
+  const isComposerChatSettingsEnabled =
+    isChatSettingsEnabled && isEmptyChatSettingsEnabled;
   const isHideEmptyChatChangeAgentEnabled = useUiFeature(
     OverlayFeature.HideEmptyChatChangeAgent,
   );
@@ -383,7 +392,9 @@ const NewConversationComposer: FC<Props> = ({
             VoiceRecordingI18nKeys.DiscardRecordingLabel,
           )}
           sendOnEnter={sendOnEnter}
-          chatSettings={isEmptyChatSettingsEnabled ? chatSettings : undefined}
+          chatSettings={
+            isComposerChatSettingsEnabled ? chatSettings : undefined
+          }
           pendingDropFiles={pendingFiles}
           onDropFilesConsumed={onFilesConsumed}
           pendingAttachments={pendingDialAttachments}

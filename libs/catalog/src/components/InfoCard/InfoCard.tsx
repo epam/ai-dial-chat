@@ -1,8 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { ResourceSummary } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
 import { DetailsConfirmationVariant } from '../../types/details-confirmation';
-import { EntityHeader } from '../EntityHeader/EntityHeader';
 import styles from './InfoCard.module.scss';
 
 /** Props for `InfoCard`. */
@@ -21,14 +20,14 @@ export const InfoCard: FC<InfoCardProps> = ({
   variant = DetailsConfirmationVariant.Info,
   iconSize = 40,
 }) => (
-  <div
-    className={mergeClasses(
-      'rounded-xl p-3',
+  <ResourceSummary
+    item={item}
+    iconSize={iconSize}
+    hasVersionTag={false}
+    className={
       variant === DetailsConfirmationVariant.Danger
         ? styles.danger
-        : styles.info,
-    )}
-  >
-    <EntityHeader item={item} iconSize={iconSize} hasFeaturedTag={false} />
-  </div>
+        : styles.info
+    }
+  />
 );

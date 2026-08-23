@@ -42,3 +42,13 @@ export enum CredentialsUiState {
 export enum CredentialsBadgeState {
   LoggedOut = 'LOGGED_OUT',
 }
+
+/** Resolved state for the informational banner shown below the details header about which credentials are active. */
+export enum CredentialsBannerState {
+  /** Non-admin, not signed in personally, but organization-wide credentials are active — the item is usable meanwhile via those. */
+  UsingOrgCredentials = 'USING_ORG_CREDENTIALS',
+  /** Admin managing a public item whose organization-wide credentials are active. */
+  OrgCredentialsActive = 'ORG_CREDENTIALS_ACTIVE',
+  /** Admin managing a public item whose own personal credentials are active (and take precedence over any organization-wide credentials). */
+  PersonalCredentialsActive = 'PERSONAL_CREDENTIALS_ACTIVE',
+}

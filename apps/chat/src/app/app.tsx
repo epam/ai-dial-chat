@@ -43,6 +43,7 @@ import {
   ButtonsI18nKeys,
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
+import { useFeatureFlag } from '../context/AppConfigContext';
 import { useConversationPanel } from '../context/ConversationPanelContext';
 import { useDeployments } from '../context/DeploymentsContext';
 import { useOptionalOverlay } from '../context/overlay/OverlayContext';
@@ -64,6 +65,7 @@ const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
 );
+const SettingsPage = lazy(() => import('../pages/SettingsPage/SettingsPage'));
 const ScheduledTasksPage = lazy(
   () => import('../pages/ScheduledTasksPage/ScheduledTasksPage'),
 );
@@ -177,6 +179,7 @@ const App: FC = () => {
     OverlayFeature.AttachmentsManager,
   );
   const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
+  const isSettingsPageEnabled = useFeatureFlag('settingsPageEnabled');
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
@@ -380,6 +383,21 @@ const App: FC = () => {
                 }
               />
               <Route
+                path={ROUTES.Settings}
+                element={
+                  isSettingsPageEnabled ? (
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <SettingsPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  ) : (
+                    /* Keeps a direct /settings URL from bypassing the hidden gear icon. */
+                    <Navigate to={ROUTES.Root} replace />
+                  )
+                }
+              />
+              <Route
                 path={ROUTES.FileManager}
                 element={
                   isFileManagerEnabled ? (
@@ -554,6 +572,18 @@ const App: FC = () => {
               htmlViewSourceLabel: t(AttachmentCanvasI18nKeys.HtmlViewSource),
               htmlViewRenderedLabel: t(
                 AttachmentCanvasI18nKeys.HtmlViewRendered,
+              ),
+              pdfThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfThumbnailsLabel,
+              ),
+              pdfShowThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfShowThumbnailsLabel,
+              ),
+              pdfHideThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfHideThumbnailsLabel,
+              ),
+              pdfPageNumberLabel: t(
+                AttachmentCanvasI18nKeys.PdfPageNumberLabel,
               ),
             }}
             isMobile={isMobile}

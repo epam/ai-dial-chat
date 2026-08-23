@@ -78,6 +78,47 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   };
 });
 
+/*
+ * The file input is intentionally aria-hidden and sr-only, triggered only by
+ * clicking the Add button — it exposes no accessible role or label to query
+ * by, so a structural lookup is the only option here.
+ */
+const getFileInput = (): HTMLInputElement =>
+  // eslint-disable-next-line testing-library/no-node-access
+  document.querySelector('input[type="file"]') as HTMLInputElement;
+
+/*
+ * The Input root wrapper only carries CSS custom properties / merged class
+ * names — it has no semantic role or text of its own to query by.
+ */
+const getWrapper = (container: HTMLElement): HTMLElement =>
+  // eslint-disable-next-line testing-library/no-node-access
+  container.firstElementChild as HTMLElement;
+
+/*
+ * The disabled-state marker around the model selector chip carries no
+ * accessible role/label of its own — only the nested trigger button does.
+ */
+const getModelSelectorDisabledMarker = (
+  container: HTMLElement,
+): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access
+  container.querySelector('[aria-disabled="true"]');
+
+/*
+ * Skeleton is mocked to a bare <span data-variant> for this test file; it has
+ * no role or text to query, so counting by the mock's own attribute is the
+ * only way to verify how many of each variant rendered.
+ */
+const getSkeletonsByVariant = (
+  container: HTMLElement,
+  variant: string,
+): HTMLElement[] =>
+  Array.from(
+    // eslint-disable-next-line testing-library/no-node-access
+    container.querySelectorAll<HTMLElement>(`[data-variant="${variant}"]`),
+  );
+
 describe('Input', () => {
   it('should hide send button when textarea is empty', () => {
     render(<Input />);
@@ -85,94 +126,78 @@ describe('Input', () => {
   });
 
   it('should show send button when user types non-whitespace text', () => {
-    const { container } = render(<Input />);
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: 'Hello' } });
-      expect(container.querySelector('button')).toBeTruthy();
-    }
+    render(<Input />);
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'Hello' } });
+    expect(screen.getByLabelText('Send message')).toBeTruthy();
   });
 
   it('should keep send button hidden for whitespace-only input', () => {
-    const { container } = render(<Input />);
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: '   ' } });
-      expect(screen.queryByLabelText('Send message')).toBeNull();
-    }
+    render(<Input />);
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: '   ' } });
+    expect(screen.queryByLabelText('Send message')).toBeNull();
   });
 
   it('should pre-populate textarea with initialMessage', () => {
-    const { container } = render(<Input message="Hello" />);
-    const textarea = container.querySelector('textarea');
-    expect(textarea?.value).toBe('Hello');
+    render(<Input message="Hello" />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    expect(textarea.value).toBe('Hello');
   });
 
   it('should clear textarea when message changes to an empty string', () => {
-    const { container, rerender } = render(<Input message="Hello" />);
-    const textarea = container.querySelector('textarea');
+    const { rerender } = render(<Input message="Hello" />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
 
     rerender(<Input message="" />);
 
-    expect(textarea?.value).toBe('');
+    expect(textarea.value).toBe('');
   });
 
   it('should re-apply the same message when messageRevision changes', () => {
-    const { container, rerender } = render(
-      <Input message="Draft" messageRevision={1} />,
-    );
-    const textarea = container.querySelector('textarea');
-    expect(textarea?.value).toBe('Draft');
+    const { rerender } = render(<Input message="Draft" messageRevision={1} />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    expect(textarea.value).toBe('Draft');
 
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: 'User edited draft' } });
-    }
+    fireEvent.change(textarea, { target: { value: 'User edited draft' } });
     rerender(<Input message="Draft" messageRevision={2} />);
 
-    expect(textarea?.value).toBe('Draft');
+    expect(textarea.value).toBe('Draft');
   });
 
   it('should call onSend with message text and clear textarea on Enter', () => {
     const handleSend = vi.fn();
-    const { container } = render(<Input onSend={handleSend} />);
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: 'Test message' } });
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-      expect(handleSend).toHaveBeenCalledWith('Test message', []);
-      expect(textarea.value).toBe('');
-    }
+    render(<Input onSend={handleSend} />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'Test message' } });
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    expect(handleSend).toHaveBeenCalledWith('Test message', []);
+    expect(textarea.value).toBe('');
   });
 
   it('should not call onSend on Shift+Enter', () => {
     const handleSend = vi.fn();
-    const { container } = render(<Input onSend={handleSend} />);
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: 'Test message' } });
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: true });
-      expect(handleSend).not.toHaveBeenCalled();
-      expect(textarea.value).toBe('Test message');
-    }
+    render(<Input onSend={handleSend} />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'Test message' } });
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: true });
+    expect(handleSend).not.toHaveBeenCalled();
+    expect(textarea.value).toBe('Test message');
   });
 
   it('should call onChange on each keystroke', () => {
     const handleChange = vi.fn();
-    const { container } = render(<Input onChange={handleChange} />);
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: 'Hi' } });
-      expect(handleChange).toHaveBeenCalledWith('Hi');
-    }
+    render(<Input onChange={handleChange} />);
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'Hi' } });
+    expect(handleChange).toHaveBeenCalledWith('Hi');
   });
 
   it('should call onSend when send button is clicked', () => {
     const handleSend = vi.fn();
-    const { container } = render(<Input onSend={handleSend} />);
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: 'Click send' } });
-    }
+    render(<Input onSend={handleSend} />);
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'Click send' } });
     const sendButton = screen.getByLabelText('Send message');
     fireEvent.click(sendButton);
     expect(handleSend).toHaveBeenCalledWith('Click send', []);
@@ -192,13 +217,9 @@ describe('Input', () => {
 
   it('should not show stop or send while streaming when onStop is omitted', () => {
     const handleSend = vi.fn();
-    const { container } = render(
-      <Input isStreaming message="Draft" onSend={handleSend} />,
-    );
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-    }
+    render(<Input isStreaming message="Draft" onSend={handleSend} />);
+    const textarea = screen.getByRole('textbox');
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
 
     expect(screen.queryByLabelText('Stop streaming')).toBeNull();
     expect(screen.queryByLabelText('Send message')).toBeNull();
@@ -209,50 +230,50 @@ describe('Input', () => {
     const { container } = render(
       <Input colors={{ background: '#fff', text: '#000' }} />,
     );
-    const wrapper = container.firstElementChild as HTMLElement;
+    const wrapper = getWrapper(container);
     expect(wrapper.style.getPropertyValue('--ci-bg')).toBe('#fff');
     expect(wrapper.style.getPropertyValue('--ci-text')).toBe('#000');
   });
 
   it('should not set CSS variable for omitted color fields', () => {
     const { container } = render(<Input colors={{ background: '#fff' }} />);
-    const wrapper = container.firstElementChild as HTMLElement;
+    const wrapper = getWrapper(container);
     expect(wrapper.style.getPropertyValue('--ci-text')).toBe('');
   });
 
   it('should apply the typography fontClassName to the textarea', () => {
-    const { container } = render(
+    render(
       <Input typography={{ fontClassName: 'dial-body-paragraph-text' }} />,
     );
-    expect(container.querySelector('textarea')?.className).toContain(
+    expect(screen.getByRole('textbox').className).toContain(
       'dial-body-paragraph-text',
     );
   });
 
   it('should use custom placeholder when provided', () => {
-    const { container } = render(<Input placeholder="Ask anything" />);
-    expect(container.querySelector('textarea')?.placeholder).toBe(
-      'Ask anything',
-    );
+    render(<Input placeholder="Ask anything" />);
+    expect(
+      (screen.getByRole('textbox') as HTMLTextAreaElement).placeholder,
+    ).toBe('Ask anything');
   });
 
   it('should use default placeholder when prop is omitted', () => {
-    const { container } = render(<Input />);
-    expect(container.querySelector('textarea')?.placeholder).toBe(
-      'Type a message...',
-    );
+    render(<Input />);
+    expect(
+      (screen.getByRole('textbox') as HTMLTextAreaElement).placeholder,
+    ).toBe('Type a message...');
   });
 
   it('should merge className onto the wrapper element', () => {
     const { container } = render(<Input className="mt-4" />);
-    expect(container.firstElementChild?.classList.contains('mt-4')).toBe(true);
+    expect(getWrapper(container).classList.contains('mt-4')).toBe(true);
   });
 
   it('should set aria-label on textarea when ariaLabel prop is provided', () => {
-    const { container } = render(<Input ariaLabel="Message input" />);
-    expect(
-      container.querySelector('textarea')?.getAttribute('aria-label'),
-    ).toBe('Message input');
+    render(<Input ariaLabel="Message input" />);
+    expect(screen.getByRole('textbox').getAttribute('aria-label')).toBe(
+      'Message input',
+    );
   });
 
   it('should render the add menu button', () => {
@@ -262,25 +283,19 @@ describe('Input', () => {
 
   it('should set the accept attribute on the file input when fileAccept is provided', () => {
     render(<Input fileAccept="image/*,application/pdf" />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getFileInput();
     expect(fileInput.getAttribute('accept')).toBe('image/*,application/pdf');
   });
 
   it('should not set the accept attribute when fileAccept is absent', () => {
     render(<Input />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getFileInput();
     expect(fileInput.hasAttribute('accept')).toBe(false);
   });
 
   it('should show an attachment card after a file is picked', () => {
     render(<Input />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getFileInput();
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
     expect(screen.getByText('doc')).toBeTruthy();
@@ -289,9 +304,7 @@ describe('Input', () => {
   it('should show send button when only an attachment is present and no text', () => {
     render(<Input />);
     expect(screen.queryByLabelText('Send message')).toBeNull();
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getFileInput();
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
     expect(screen.getByLabelText('Send message')).toBeTruthy();
@@ -299,13 +312,11 @@ describe('Input', () => {
 
   it('should call onSend with empty text and the attachment on Enter when no text is typed', () => {
     const handleSend = vi.fn();
-    const { container } = render(<Input onSend={handleSend} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    render(<Input onSend={handleSend} />);
+    const fileInput = getFileInput();
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
-    const textarea = container.querySelector('textarea')!;
+    const textarea = screen.getByRole('textbox');
     fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
     expect(handleSend).toHaveBeenCalledWith(
       '',
@@ -360,9 +371,7 @@ describe('Input', () => {
   it('should call onAttachmentsChange when a file is added', () => {
     const onAttachmentsChange = vi.fn();
     render(<Input onAttachmentsChange={onAttachmentsChange} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getFileInput();
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
     expect(onAttachmentsChange).toHaveBeenCalledWith(
@@ -380,9 +389,7 @@ describe('Input', () => {
         onAttachmentsChange={onAttachmentsChange}
       />,
     );
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getFileInput();
 
     fireEvent.change(fileInput, {
       target: {
@@ -407,9 +414,7 @@ describe('Input', () => {
         onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
       />,
     );
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getFileInput();
 
     fireEvent.change(fileInput, {
       target: {
@@ -439,10 +444,8 @@ describe('Input', () => {
   });
 
   it('should show mic button when isAudioMessageSupported is true and message is not empty', () => {
-    const { container } = render(
-      <Input isAudioMessageSupported micLabel="Record voice message" />,
-    );
-    const textarea = container.querySelector('textarea')!;
+    render(<Input isAudioMessageSupported micLabel="Record voice message" />);
+    const textarea = screen.getByRole('textbox');
     fireEvent.change(textarea, { target: { value: 'Hello' } });
     expect(screen.getByLabelText('Record voice message')).toBeTruthy();
   });
@@ -508,15 +511,8 @@ describe('Input — model selector', () => {
     );
     const loadingItem = screen.getByText('Loading models…');
     expect(loadingItem).toBeTruthy();
-    const skeletons = Array.from(
-      container.querySelectorAll<HTMLElement>('[data-variant]'),
-    );
-    expect(
-      skeletons.filter((skeleton) => skeleton.dataset.variant === 'circular'),
-    ).toHaveLength(8);
-    expect(
-      skeletons.filter((skeleton) => skeleton.dataset.variant === 'text'),
-    ).toHaveLength(7);
+    expect(getSkeletonsByVariant(container, 'circular')).toHaveLength(8);
+    expect(getSkeletonsByVariant(container, 'text')).toHaveLength(7);
     expect(
       screen
         .getAllByRole('button')
@@ -539,17 +535,15 @@ describe('Input — model selector', () => {
   });
 
   it('disables send button when deployments is defined and selectedDeploymentId is null', () => {
-    const { container } = render(
+    render(
       <Input
         deployments={mockItems}
         selectedDeploymentId={null}
         onDeploymentChange={vi.fn()}
       />,
     );
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: 'Hello' } });
-    }
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'Hello' } });
     const sendButton = screen.getByLabelText(
       'Send message',
     ) as HTMLButtonElement;
@@ -558,7 +552,7 @@ describe('Input — model selector', () => {
 
   it('does not fire onSend on Enter when selectedDeploymentId is null', () => {
     const handleSend = vi.fn();
-    const { container } = render(
+    render(
       <Input
         onSend={handleSend}
         deployments={mockItems}
@@ -566,11 +560,9 @@ describe('Input — model selector', () => {
         onDeploymentChange={vi.fn()}
       />,
     );
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: 'Hello' } });
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-    }
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'Hello' } });
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
     expect(handleSend).not.toHaveBeenCalled();
   });
 
@@ -591,7 +583,7 @@ describe('Input — isModelSelectorDisabled', () => {
       />,
     );
     expect(screen.getByLabelText(/Select model/)).toBeTruthy();
-    expect(container.querySelector('[aria-disabled="true"]')).toBeTruthy();
+    expect(getModelSelectorDisabledMarker(container)).toBeTruthy();
   });
 
   it('does not mark the chip aria-disabled when isModelSelectorDisabled is false', () => {
@@ -603,12 +595,12 @@ describe('Input — isModelSelectorDisabled', () => {
         isModelSelectorDisabled={false}
       />,
     );
-    expect(container.querySelector('[aria-disabled="true"]')).toBeNull();
+    expect(getModelSelectorDisabledMarker(container)).toBeNull();
   });
 
   it('keeps typing and sending enabled while the model selector is disabled', () => {
     const handleSend = vi.fn();
-    const { container } = render(
+    render(
       <Input
         onSend={handleSend}
         deployments={mockItems}
@@ -617,12 +609,10 @@ describe('Input — isModelSelectorDisabled', () => {
         isModelSelectorDisabled
       />,
     );
-    const textarea = container.querySelector('textarea');
-    expect(textarea?.disabled).toBe(false);
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: 'Hello' } });
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-    }
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    expect(textarea.disabled).toBe(false);
+    fireEvent.change(textarea, { target: { value: 'Hello' } });
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
     expect(handleSend).toHaveBeenCalledWith('Hello', []);
   });
 });
@@ -630,7 +620,7 @@ describe('Input — isModelSelectorDisabled', () => {
 describe('Input — isSendDisabled', () => {
   it('disables the send button without disabling typing', () => {
     const handleSend = vi.fn();
-    const { container } = render(
+    render(
       <Input
         message="Hello"
         onSend={handleSend}
@@ -643,13 +633,13 @@ describe('Input — isSendDisabled', () => {
     expect(screen.getByLabelText('Send message').hasAttribute('disabled')).toBe(
       true,
     );
-    const textarea = container.querySelector('textarea');
-    expect(textarea?.disabled).toBe(false);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    expect(textarea.disabled).toBe(false);
   });
 
   it('does not fire onSend on Enter when send is disabled', () => {
     const handleSend = vi.fn();
-    const { container } = render(
+    render(
       <Input
         message="Hello"
         onSend={handleSend}
@@ -659,11 +649,9 @@ describe('Input — isSendDisabled', () => {
         isSendDisabled
       />,
     );
-    const textarea = container.querySelector('textarea');
+    const textarea = screen.getByRole('textbox');
 
-    if (textarea) {
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-    }
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
 
     expect(handleSend).not.toHaveBeenCalled();
   });
@@ -711,15 +699,15 @@ describe('Input — isSendDisabled', () => {
 
 describe('Input — isInputDisabled', () => {
   it('textarea has disabled attribute when isInputDisabled is true', () => {
-    const { container } = render(<Input isInputDisabled />);
-    const textarea = container.querySelector('textarea');
-    expect(textarea?.disabled).toBe(true);
+    render(<Input isInputDisabled />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    expect(textarea.disabled).toBe(true);
   });
 
   it('textarea is enabled when isInputDisabled is false', () => {
-    const { container } = render(<Input isInputDisabled={false} />);
-    const textarea = container.querySelector('textarea');
-    expect(textarea?.disabled).toBe(false);
+    render(<Input isInputDisabled={false} />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    expect(textarea.disabled).toBe(false);
   });
 
   /*
@@ -754,25 +742,19 @@ describe('Input — isInputDisabled', () => {
 
   it('does not call onSend on Enter when isInputDisabled is true', () => {
     const handleSend = vi.fn();
-    const { container } = render(<Input onSend={handleSend} isInputDisabled />);
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: 'Hello' } });
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-    }
+    render(<Input onSend={handleSend} isInputDisabled />);
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'Hello' } });
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
     expect(handleSend).not.toHaveBeenCalled();
   });
 
   it('calls onSend on Enter when isInputDisabled is false', () => {
     const handleSend = vi.fn();
-    const { container } = render(
-      <Input onSend={handleSend} isInputDisabled={false} />,
-    );
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.change(textarea, { target: { value: 'Hello' } });
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-    }
+    render(<Input onSend={handleSend} isInputDisabled={false} />);
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'Hello' } });
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
     expect(handleSend).toHaveBeenCalledWith('Hello', []);
   });
 
@@ -802,7 +784,7 @@ describe('Input — isInputDisabled', () => {
         isInputDisabled
       />,
     );
-    expect(container.querySelector('[aria-disabled="true"]')).toBeNull();
+    expect(getModelSelectorDisabledMarker(container)).toBeNull();
   });
 
   it('keeps the model picker closed when the selector is explicitly disabled', () => {
@@ -864,9 +846,7 @@ describe('Input — attachment status transitions', () => {
     const handleUploadAttachment = vi.fn(() => uploadPromise);
 
     render(<Input onUploadAttachment={handleUploadAttachment} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getFileInput();
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
 
@@ -891,16 +871,13 @@ describe('Input — attachment status transitions', () => {
   it('restores message text and attachment tray when onSend rejects', async () => {
     const handleSend = vi.fn().mockRejectedValue(new Error('upload failed'));
 
-    const { container } = render(<Input onSend={handleSend} />);
-    const textarea = container.querySelector('textarea');
-    expect(textarea).toBeTruthy();
-    fireEvent.change(textarea as HTMLTextAreaElement, {
+    render(<Input onSend={handleSend} />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.change(textarea, {
       target: { value: 'Please send this file' },
     });
 
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getFileInput();
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
 
@@ -911,19 +888,15 @@ describe('Input — attachment status transitions', () => {
     await waitFor(() => {
       expect(handleSend).toHaveBeenCalled();
     });
-    expect((textarea as HTMLTextAreaElement).value).toBe(
-      'Please send this file',
-    );
-    expect(screen.queryByText('doc')).toBeTruthy();
+    expect(textarea.value).toBe('Please send this file');
+    expect(screen.getByText('doc')).toBeTruthy();
   });
 
   it('tray clears after onSend resolves', async () => {
     const handleSend = vi.fn().mockResolvedValue(undefined);
 
     render(<Input onSend={handleSend} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getFileInput();
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
 
@@ -987,33 +960,33 @@ describe('Input — pasted attachment expand', () => {
   };
 
   it('clicking a pasted card appends its text to the textarea and removes the card', async () => {
-    const { container } = render(<Input pasteTextThreshold={5} />);
+    render(<Input pasteTextThreshold={5} />);
     const text = 'This is long enough to become a pasted attachment';
 
-    pasteText(container.querySelector('textarea')!, text);
+    pasteText(screen.getByRole('textbox'), text);
 
-    const card = screen.getByText(text).closest('[role="button"]')!;
+    const card = screen.getByRole('button', { name: 'Download attachment' });
     fireEvent.click(card);
 
     await waitFor(() => {
-      expect(container.querySelector('textarea')?.value).toBe(text);
+      expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe(
+        text,
+      );
     });
     expect(screen.queryByRole('list', { name: 'Attached files' })).toBeNull();
   });
 
   it('clicking a pasted card appends with newline when textarea already has text', async () => {
-    const { container } = render(
-      <Input pasteTextThreshold={5} message="existing" />,
-    );
+    render(<Input pasteTextThreshold={5} message="existing" />);
     const text = 'This is long enough to become a pasted attachment';
 
-    pasteText(container.querySelector('textarea')!, text);
+    pasteText(screen.getByRole('textbox'), text);
 
-    const card = screen.getByText(text).closest('[role="button"]')!;
+    const card = screen.getByRole('button', { name: 'Download attachment' });
     fireEvent.click(card);
 
     await waitFor(() => {
-      expect(container.querySelector('textarea')?.value).toBe(
+      expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe(
         `existing\n${text}`,
       );
     });

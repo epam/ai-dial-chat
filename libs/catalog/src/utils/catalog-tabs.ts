@@ -1,6 +1,6 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { TabModel } from '@epam/ai-dial-ui-kit';
 import type { CatalogItem } from '../models/catalog-item';
-import { CatalogEntityType } from '../types/entity-type';
 
 /**
  * English-language fallback labels for each known entity type.
@@ -19,8 +19,8 @@ const TAB_ORDER: CatalogEntityType[] = [
   CatalogEntityType.Model,
   CatalogEntityType.Agent,
   CatalogEntityType.Toolset,
-  CatalogEntityType.Prompt,
   CatalogEntityType.Skill,
+  CatalogEntityType.Prompt,
 ];
 
 /** Derives entity-type tabs from items present in the catalog, sorted by canonical order. */

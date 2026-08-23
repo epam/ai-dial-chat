@@ -42,7 +42,7 @@ context: |
   - Frontend dev: `npm start` (localhost:4207, proxies /api → localhost:5000)
   - Backend dev:  `npm run start:api` (localhost:5000)
   - Both:         `npm run start:all`
-  - Affected build / lint / typecheck / test: `npm exec nx affected --target=<t> --base=origin/development-1.0`
+  - Affected build / lint / typecheck / test: `npm exec nx affected --target=<t> --base=origin/development`
   - Single-project (preferred for slice verification, see CLAUDE.md per project):
     - `npm exec nx test chat-api`
     - `npm exec nx lint chat-api`
@@ -50,7 +50,7 @@ context: |
   - All tests:    `npm test`
   - Dep graph:    `npm run graph`
 
-  Default base branch for `nx affected` is `origin/development-1.0`. Do NOT use `origin/main`.
+  Default base branch for `nx affected` is `origin/development`. Do NOT use `origin/main`.
 
   ## Architecture
 
@@ -248,4 +248,4 @@ rules:
           `base.ts` helpers, unless the task documents a generator gap
     - Verify per slice — run lint + typecheck + tests after each slice using
       `npm exec nx <target> chat-api` for single-project checks, then close with one final
-      `npm exec nx affected --target=<t> --base=origin/development-1.0` run over the affected set
+      `npm exec nx affected --target=<t> --base=origin/development` run over the affected set

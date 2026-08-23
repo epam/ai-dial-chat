@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { SkillsDownloadService } from '../download/skills-download.service';
+import type { SkillsImportService } from '../import/skills-import.service';
 import type { SkillsListingService } from '../listing/skills-listing.service';
 import type { SkillsMutationService } from '../mutation/skills-mutation.service';
 import { SkillsService } from '../skills.service';
@@ -15,6 +16,7 @@ describe('SkillsService', () => {
   const makeService = () => {
     const listingService = {
       listSkills: vi.fn().mockResolvedValue('listSkills-result'),
+      listCatalogSkills: vi.fn().mockResolvedValue('listCatalogSkills-result'),
       listSkillFiles: vi.fn().mockResolvedValue('listSkillFiles-result'),
     } as unknown as SkillsListingService;
     const downloadService = {
@@ -36,12 +38,18 @@ describe('SkillsService', () => {
         .fn()
         .mockResolvedValue('deleteSkillGroupingFolder-result'),
     } as unknown as SkillsMutationService;
+    const importService = {
+      importSkillArchive: vi
+        .fn()
+        .mockResolvedValue('importSkillArchive-result'),
+    } as unknown as SkillsImportService;
 
     const service = new SkillsService(
       listingService,
       downloadService,
       uploadService,
       mutationService,
+      importService,
     );
 
     return {
@@ -50,6 +58,7 @@ describe('SkillsService', () => {
       downloadService,
       uploadService,
       mutationService,
+      importService,
     };
   };
 
@@ -63,6 +72,16 @@ describe('SkillsService', () => {
       'token',
     );
     expect(result).toBe('listSkills-result');
+  });
+
+  it('delegates listCatalogSkills to SkillsListingService', async () => {
+    const { service, listingService } = makeService();
+    const result = await service.listCatalogSkills('bucket', 'token');
+    expect(listingService.listCatalogSkills).toHaveBeenCalledWith(
+      'bucket',
+      'token',
+    );
+    expect(result).toBe('listCatalogSkills-result');
   });
 
   it('delegates listSkillFiles to SkillsListingService', async () => {
@@ -176,6 +195,23 @@ describe('SkillsService', () => {
       '"etag"',
     );
     expect(result).toBe('uploadSkillFile-result');
+  });
+
+  it('delegates importSkillArchive to SkillsImportService', async () => {
+    const { service, importService } = makeService();
+    const result = await service.importSkillArchive(
+      'bucket',
+      'archive.zip',
+      '/tmp/archive.zip',
+      'token',
+    );
+    expect(importService.importSkillArchive).toHaveBeenCalledWith(
+      'bucket',
+      'archive.zip',
+      '/tmp/archive.zip',
+      'token',
+    );
+    expect(result).toBe('importSkillArchive-result');
   });
 
   it('delegates deleteSkill to SkillsMutationService', async () => {

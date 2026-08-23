@@ -263,6 +263,6 @@ export class PromptsFolderService {
       );
     }
 
-    return mapPromptToResponse(movedPrompt, targetId, metadata);
+    return mapPromptToResponse(movedPrompt, targetId, metadata, bucket);
   }
 }

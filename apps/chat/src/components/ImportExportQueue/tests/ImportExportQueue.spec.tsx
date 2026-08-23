@@ -166,6 +166,9 @@ describe('ImportExportQueue', () => {
 
   it('renders job rows without divider borders between them', () => {
     renderQueue([makeJob({ id: 'a' }), makeJob({ id: 'b' })]);
+    /* CSS-level assertion (class/attribute presence, not text or role) —
+       no semantic query applies. */
+    // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelector('.divide-y')).toBeNull();
   });
 
@@ -177,6 +180,9 @@ describe('ImportExportQueue', () => {
       makeJob({ id: 'd', status: ExportJobStatus.InProgress }),
     ]);
     // 2 of 4 jobs finished (success or failed) = 50%
+    /* CSS-level assertion (class/attribute presence, not text or role) —
+       no semantic query applies. */
+    // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelector('[data-progress="50"]')).toBeTruthy();
   });
 
@@ -442,6 +448,9 @@ describe('ImportExportQueue', () => {
     renderQueue([makeJob({ label: 'My Chat' })]);
 
     expect(screen.getByText('My Chat')).toBeTruthy();
+    /* CSS-level assertion (class/attribute presence, not text or role) —
+       no semantic query applies. */
+    // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelectorAll('.text-secondary').length).toBe(0);
   });
 });

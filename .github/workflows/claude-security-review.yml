@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, ready_for_review, reopened] # Allowed types: https://github.com/anthropics/claude-code-action/blob/4481e6d3c7bbb88db2a928ca3444c536f589c7c1/src/modes/detector.ts#L101
     branches:
       - development
-      - development-1.0
+      - development-0.x
       - release-*.*
 
 concurrency:
@@ -57,7 +57,7 @@ jobs:
           use_sticky_comment: true
           claude_args: |
             --verbose
-            --model dial,anthropic.claude-sonnet-4-6
+            --model anthropic.claude-sonnet-4-6
             --max-turns 50
             --allowedTools "Glob,Grep,LS,Read,Task,Skill,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh pr checks:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:--comment*),Bash(gh pr comment:*),mcp__github_comment__update_claude_comment,mcp__github_inline_comment__create_inline_comment"
         env:

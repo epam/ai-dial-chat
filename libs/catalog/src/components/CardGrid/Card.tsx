@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  FeaturedChip,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   CardShell,
   DIAL_ICON_SIZE,
@@ -18,7 +22,6 @@ import type { CardProps } from '../../models/card-props';
 import { DeploymentSize } from '../../types/deployment-icon-size';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
-import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { TopicsLine } from '../TopicTag/TopicTag';
 import styles from './CardGrid.module.scss';
@@ -140,6 +143,12 @@ export const Card: FC<CardProps> = ({
         size={DeploymentSize.SM}
         query={query}
         iconClassName={styles.cardIcon}
+        iconOverlay={
+          <CredentialsBadge
+            credentials={item.credentials}
+            loggedOutLabel={credentialsBadgeLoggedOutLabel}
+          />
+        }
       />
 
       <p
@@ -161,12 +170,8 @@ export const Card: FC<CardProps> = ({
 
       {/* `mt-auto` pins the topics row and footer to the card bottom — the job
        * `flex-1` on the description used to do before it broke the clamp. */}
-      <div className="mt-auto flex items-center justify-between gap-2">
+      <div className="mt-auto flex items-center gap-2">
         <TopicsLine topics={item.topics} />
-        <CredentialsBadge
-          credentials={item.credentials}
-          loggedOutLabel={credentialsBadgeLoggedOutLabel}
-        />
       </div>
 
       <div className={mergeClasses('border-t pt-3', styles.footer)}>

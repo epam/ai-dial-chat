@@ -54,7 +54,7 @@ The extraction of today's cookie-decrypt, transparent-refresh, CSRF-token-stabil
 
 ### Requirement: Header bearer token authentication
 
-When `AUTH_HEADER_TOKEN_ENABLED` is `true`, the system SHALL authenticate requests carrying an `Authorization: Bearer <token>` header by verifying the token's signature locally against the JWKS of a registered OIDC provider matching the token's `iss` claim, and checking `exp`, `nbf`, and `aud` with the configured clock tolerance. The token's issuer MUST also be present in `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`.
+When `AUTH_HEADER_TOKEN_ENABLED` is `true`, the system SHALL authenticate requests carrying an `Authorization: Bearer <token>` header by verifying the token's signature locally against the JWKS of a registered OIDC provider matching the token's `iss` claim, and checking `exp`, `nbf`, and `aud` with the configured clock tolerance. The token's issuer MUST also be present in `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`. When resolving the registered provider for an Azure AD tenant, an `iss` claim in the Azure AD v1 format (`https://sts.windows.net/{tenant}/`) SHALL be treated as equivalent to the same tenant's v2 format (`https://login.microsoftonline.com/{tenant}/v2.0`) if no provider is registered under the exact issuer string presented.
 
 #### Scenario: Valid token from a registered, allowlisted issuer authenticates the request
 
@@ -71,10 +71,20 @@ When `AUTH_HEADER_TOKEN_ENABLED` is `true`, the system SHALL authenticate reques
 - **WHEN** a request carries an `Authorization` header whose token fails signature verification against the matched provider's JWKS
 - **THEN** the response is `401` with error code `AUTH_HEADER_TOKEN_INVALID`
 
-#### Scenario: Token from an unregistered or non-allowlisted issuer is rejected
+#### Scenario: Token from a non-allowlisted issuer is rejected
 
-- **WHEN** a request carries an `Authorization` header whose token's `iss` claim does not match any registered provider, or matches a registered provider not present in `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`
+- **WHEN** a request carries an `Authorization` header whose token's `iss` claim is not present in `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`
 - **THEN** the response is `401` with error code `AUTH_HEADER_TOKEN_UNTRUSTED_ISSUER`
+
+#### Scenario: Allowlisted issuer with no matching registered provider is rejected with a distinct error code
+
+- **WHEN** a request carries an `Authorization` header whose token's `iss` claim is present in `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`, but no registered provider's issuer matches it exactly, and (for an Azure AD v1-shaped `iss`) no registered Azure AD provider matches the corresponding v2 issuer either
+- **THEN** the response is `401` with error code `AUTH_HEADER_PROVIDER_NOT_FOUND`, distinct from `AUTH_HEADER_TOKEN_UNTRUSTED_ISSUER`
+
+#### Scenario: Azure AD v1 issuer resolves to the registered v2 Azure AD provider for the same tenant
+
+- **WHEN** a request carries an `Authorization: Bearer <token>` header where `<token>`'s `iss` claim is `https://sts.windows.net/{tenant}/`, `https://sts.windows.net/{tenant}/` is present in `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`, no provider is registered with that exact issuer string, and an Azure AD provider is registered with issuer `https://login.microsoftonline.com/{tenant}/v2.0` for the same `{tenant}`
+- **THEN** the request is authenticated using that Azure AD provider's JWKS, `req.user.providerId` is the Azure AD provider's id, and the token's signature/claims are verified with `issuer` equal to the token's own `https://sts.windows.net/{tenant}/` value
 
 #### Scenario: Malformed Authorization header is rejected as 401, not 400
 

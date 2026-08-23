@@ -1,5 +1,5 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import type { PublishHistoryEntryDto } from '@epam/ai-dial-chat-api-client';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import { CatalogPublishEntityType } from '../../server-api/publish.api';
 import { mapPublishHistoryEntryDto, toPublishEntityType } from '../publish';
@@ -26,6 +26,12 @@ describe('toPublishEntityType', () => {
   it('maps Prompt to the publish API prompt enum value', () => {
     expect(toPublishEntityType(CatalogEntityType.Prompt)).toBe(
       CatalogPublishEntityType.Prompt,
+    );
+  });
+
+  it('maps Skill to the publish API skill enum value', () => {
+    expect(toPublishEntityType(CatalogEntityType.Skill)).toBe(
+      CatalogPublishEntityType.Skill,
     );
   });
 });

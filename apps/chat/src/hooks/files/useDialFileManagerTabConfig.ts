@@ -1,10 +1,13 @@
-import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
+import {
+  DialFileManagerTabs,
+  type ToolbarOptions,
+} from '@epam/ai-dial-react-file-manager';
 import type { TabModel } from '@epam/ai-dial-ui-kit';
 import { useEffect, useMemo } from 'react';
 import { useAppConfig } from '../../context/AppConfigContext';
 
 export interface UseDialFileManagerTabConfigResult {
-  tabs: TabModel[] | undefined;
+  tabs: ToolbarOptions['tabs'];
 }
 
 /*
@@ -28,7 +31,12 @@ export const useDialFileManagerTabConfig = (
   } = useAppConfig();
 
   const tabs = useMemo(
-    () => allTabs?.filter((tab) => fileManagerTabs.includes(tab.id)),
+    () =>
+      allTabs
+        ?.filter((tab) => fileManagerTabs.includes(tab.id))
+        .flatMap(({ id, label, disabled }) =>
+          typeof label === 'string' ? [{ id, label, disabled }] : [],
+        ),
     [allTabs, fileManagerTabs],
   );
 

@@ -31,7 +31,7 @@ export class PublishController {
     operationId: 'publishCatalogEntity',
     summary: 'Publish a catalog entity to an Organization folder',
     description:
-      'Publishes a catalog entity (Toolset, Application, or Prompt) to a folder under the Organization/public ' +
+      'Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public ' +
       "bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no " +
       'publish records of its own — DIAL Core is the sole source of truth.',
   })
@@ -44,7 +44,7 @@ export class PublishController {
   @ApiResponse({
     status: 400,
     description:
-      'Validation error — invalid entityType, entityId, or folderPath',
+      'Validation error — invalid entityType, entityId, folderPath, version, or rules',
   })
   @ApiResponse({
     status: 401,

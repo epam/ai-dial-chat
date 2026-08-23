@@ -4,9 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Toolbar } from '../Toolbar';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  ElementSize: { Small: 'small', Regular: 'regular' },
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   DialSearch: ({
     value,
     onChange,
@@ -67,15 +66,6 @@ vi.mock('@tabler/icons-react', () => ({
   IconLayoutGrid: () => null,
   IconLayoutList: () => null,
   IconSearch: () => null,
-}));
-
-vi.mock('@epam/ai-dial-chat-shared', () => ({
-  mergeClasses: (...args: (string | undefined)[]) =>
-    args.filter(Boolean).join(' '),
-  buildCssVars: (vars: Record<string, string | undefined>) =>
-    Object.fromEntries(
-      Object.entries(vars).filter(([, v]) => v !== undefined),
-    ) as React.CSSProperties,
 }));
 
 const renderToolbar = (props?: Partial<React.ComponentProps<typeof Toolbar>>) =>

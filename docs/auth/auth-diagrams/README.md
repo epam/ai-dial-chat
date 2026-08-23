@@ -73,15 +73,15 @@ From the repo root:
 
 ```bash
 npx -y @mermaid-js/mermaid-cli \
-  -i docs/auth-diagrams/01-high-level-architecture.mmd \
-  -o docs/auth-diagrams/01-high-level-architecture.svg \
+  -i docs/auth/auth-diagrams/01-high-level-architecture.mmd \
+  -o docs/auth/auth-diagrams/01-high-level-architecture.svg \
   -b transparent
 ```
 
 ### Render all at once
 
 ```bash
-cd docs/auth-diagrams
+cd docs/auth/auth-diagrams
 for f in *.mmd; do
   npx -y @mermaid-js/mermaid-cli -i "$f" -o "${f%.mmd}.svg" -b transparent
 done
@@ -94,7 +94,7 @@ Add to the workspace `package.json`:
 ```json
 {
   "scripts": {
-    "docs:diagrams": "for f in docs/auth-diagrams/*.mmd; do npx -y @mermaid-js/mermaid-cli -i \"$f\" -o \"${f%.mmd}.svg\" -b transparent; done"
+    "docs:diagrams": "for f in docs/auth/auth-diagrams/*.mmd; do npx -y @mermaid-js/mermaid-cli -i \"$f\" -o \"${f%.mmd}.svg\" -b transparent; done"
   }
 }
 ```
@@ -148,7 +148,7 @@ To prevent stale SVGs, add a pre-commit hook or CI check that re-renders all `.m
 
 ```bash
 npm run docs:diagrams
-git diff --exit-code docs/auth-diagrams/*.svg
+git diff --exit-code docs/auth/auth-diagrams/*.svg
 ```
 
 Run it from `lint-staged`, a Husky hook, or a workflow step before merge.

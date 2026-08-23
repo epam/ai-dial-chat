@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import type { PromptListResponseDto } from './dto/prompt-list-response.dto';
 import { PromptsFolderService } from './folder/prompts-folder.service';
 import { PromptsPersonalService } from './personal/prompts-personal.service';
 import { PromptsPublicService } from './public/prompts-public.service';
@@ -13,6 +14,8 @@ import { PromptsPublicService } from './public/prompts-public.service';
  */
 @Injectable()
 export class PromptService {
+  private readonly logger = new Logger(PromptService.name);
+
   constructor(
     private readonly personalService: PromptsPersonalService,
     private readonly publicService: PromptsPublicService,
@@ -20,7 +23,41 @@ export class PromptService {
   ) {}
 
   // Personal
-  listPrompts = this.personalService.listPrompts.bind(this.personalService);
+  async listPrompts(
+    token: string,
+    bucket: string,
+  ): Promise<PromptListResponseDto> {
+    const [personalResult, organisationResult] = await Promise.allSettled([
+      this.personalService.listPrompts(token, bucket),
+      this.publicService.listPublicPrompts(token),
+    ]);
+    if (
+      personalResult.status === 'rejected' &&
+      organisationResult.status === 'rejected'
+    ) {
+      throw personalResult.reason;
+    }
+    if (personalResult.status === 'rejected') {
+      this.logger.warn('Personal prompt catalog listing failed');
+    }
+    if (organisationResult.status === 'rejected') {
+      this.logger.warn('Public prompt catalog listing failed');
+    }
+
+    const personal =
+      personalResult.status === 'fulfilled'
+        ? personalResult.value
+        : { prompts: [], folders: [], sharedWithMe: [] };
+    const organisation =
+      organisationResult.status === 'fulfilled'
+        ? organisationResult.value
+        : { prompts: [], folders: [] };
+    return {
+      ...personal,
+      publicPrompts: organisation.prompts,
+      publicFolders: organisation.folders,
+    };
+  }
   getSharedPrompts = this.personalService.getSharedPrompts.bind(
     this.personalService,
   );

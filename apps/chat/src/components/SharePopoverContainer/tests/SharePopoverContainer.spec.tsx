@@ -1,4 +1,5 @@
-import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
+import { type CatalogItem } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { ShareLinkAccess, type SharePopoverProps } from '@epam/ai-dial-share';
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -129,7 +130,44 @@ describe('SharePopoverContainer', () => {
     );
   });
 
-  it('passes canEditAccess false for a prompt', () => {
+  it('omits the nested-items note by default', () => {
+    mockUseShareLink();
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Agent)}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        labels: expect.objectContaining({ nestedItemsNote: undefined }),
+      }),
+      undefined,
+    );
+  });
+
+  it('passes the nested-items note when isQuickApp is true', () => {
+    mockUseShareLink();
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Agent)}
+        isQuickApp
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        labels: expect.objectContaining({
+          nestedItemsNote: ShareI18nKeys.NestedItemsNote,
+        }),
+      }),
+      undefined,
+    );
+  });
+
+  it('passes canEditAccess true for a prompt', () => {
     mockUseShareLink();
     render(
       <SharePopoverContainer
@@ -139,7 +177,7 @@ describe('SharePopoverContainer', () => {
     );
 
     expect(mockSharePopover).toHaveBeenCalledWith(
-      expect.objectContaining({ canEditAccess: false }),
+      expect.objectContaining({ canEditAccess: true }),
       undefined,
     );
   });

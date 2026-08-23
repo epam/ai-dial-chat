@@ -62,6 +62,12 @@ describe('useFavicon', () => {
 
     renderHook(() => useFavicon(faviconUrl));
 
+    /*
+     * The favicon <link> lives in document.head, which Testing Library's
+     * `screen` (bound to document.body) never reaches and which has no
+     * accessible role for a semantic query — raw DOM access is the only way.
+     */
+    // eslint-disable-next-line testing-library/no-node-access
     const link = document.querySelector("link[rel~='icon']");
     expect(link).toBeTruthy();
     expect(link?.getAttribute('rel')).toBe('icon');
@@ -76,6 +82,7 @@ describe('useFavicon', () => {
     renderHook(() => useFavicon(faviconUrl));
 
     // Should still only have one link element
+    // eslint-disable-next-line testing-library/no-node-access
     const links = document.querySelectorAll("link[rel~='icon']");
     expect(links.length).toBe(1);
   });

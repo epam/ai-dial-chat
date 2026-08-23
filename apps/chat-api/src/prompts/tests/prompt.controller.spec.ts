@@ -148,6 +148,26 @@ describe('PromptController (integration)', () => {
       expect(service.listPrompts).not.toHaveBeenCalled();
     });
 
+    it('reads from the bucket query when one is given, not the caller bucket', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/prompts/item?path=Shared/greeting&bucket=owner-bucket')
+        .expect(200);
+
+      expect(service.getPrompt).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'owner-bucket',
+        'Shared/greeting',
+      );
+    });
+
+    it('returns 400 for an unsafe bucket query', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/prompts/item?path=my-prompt&bucket=../other')
+        .expect(400);
+
+      expect(service.getPrompt).not.toHaveBeenCalled();
+    });
+
     it('returns 404 when getPrompt throws NotFoundException', async () => {
       service.getPrompt.mockRejectedValue(new NotFoundException());
       await request(app.getHttpServer())

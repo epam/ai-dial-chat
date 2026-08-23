@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-deployment-creation-form",
+  "description": "Shared General-step field set for creating and editing a DIAL deployment",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

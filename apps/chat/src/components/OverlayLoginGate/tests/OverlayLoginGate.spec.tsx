@@ -71,6 +71,10 @@ describe('OverlayLoginGate', () => {
     expect(
       screen.getByText(AuthI18nKeys.OverlayProviderPickerLoading),
     ).toBeTruthy();
+    // The root <section> has no accessible name/role of its own (it's a plain
+    // wrapper), so there is no semantic query that can reach its aria-busy
+    // attribute; falling back to container access is the only option here.
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     expect(container.querySelector('section')?.getAttribute('aria-busy')).toBe(
       'true',
     );
@@ -165,10 +169,9 @@ describe('OverlayLoginGate', () => {
       externalLoginStatus: OverlayExternalLoginStatus.TakingLonger,
     });
 
-    const { container } = render(<OverlayLoginGate />);
+    render(<OverlayLoginGate />);
 
-    expect(container.querySelector('[aria-live="polite"]')?.textContent).toBe(
-      AuthI18nKeys.OverlayLoginTakingLonger,
-    );
+    const message = screen.getByText(AuthI18nKeys.OverlayLoginTakingLonger);
+    expect(message.getAttribute('aria-live')).toBe('polite');
   });
 });

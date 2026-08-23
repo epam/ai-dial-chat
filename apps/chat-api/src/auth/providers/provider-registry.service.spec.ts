@@ -264,6 +264,54 @@ describe('ProviderRegistryService', () => {
     });
   });
 
+  describe('findByIssuer', () => {
+    const AZURE_AD_ENV = {
+      AUTH_AZURE_AD_CLIENT_ID: 'azure-client',
+      AUTH_AZURE_AD_SECRET: 'azure-secret',
+      AUTH_AZURE_AD_TENANT_ID: 'tenant-123',
+    };
+
+    it('matches a non-Azure-AD provider by exact issuer', async () => {
+      const module = await buildModule(KEYCLOAK_ENV);
+      await module.init();
+      const svc = module.get(ProviderRegistryService);
+      const { config } = svc.getProvider('keycloak');
+      // eslint-disable-next-line testing-library/await-async-queries -- ProviderRegistryService.findByIssuer is synchronous, not an async testing-library query
+      const entry = svc.findByIssuer(config.issuer);
+      expect(entry?.config.id).toBe('keycloak');
+    });
+
+    it('resolves an Azure AD v1 issuer to the registered v2 provider for the same tenant', async () => {
+      const module = await buildModule(AZURE_AD_ENV);
+      await module.init();
+      const svc = module.get(ProviderRegistryService);
+      // eslint-disable-next-line testing-library/await-async-queries -- ProviderRegistryService.findByIssuer is synchronous, not an async testing-library query
+      const entry = svc.findByIssuer('https://sts.windows.net/tenant-123/');
+      expect(entry?.config.id).toBe('azure-ad');
+      expect(entry?.config.issuer).toBe(
+        'https://login.microsoftonline.com/tenant-123/v2.0',
+      );
+    });
+
+    it('does not match a v1 issuer for a different tenant than the registered v2 provider', async () => {
+      const module = await buildModule(AZURE_AD_ENV);
+      await module.init();
+      const svc = module.get(ProviderRegistryService);
+      // eslint-disable-next-line testing-library/await-async-queries -- ProviderRegistryService.findByIssuer is synchronous, not an async testing-library query
+      const entry = svc.findByIssuer('https://sts.windows.net/other-tenant/');
+      expect(entry).toBeUndefined();
+    });
+
+    it('returns undefined for a v1 issuer when no Azure AD provider is registered', async () => {
+      const module = await buildModule(KEYCLOAK_ENV);
+      await module.init();
+      const svc = module.get(ProviderRegistryService);
+      // eslint-disable-next-line testing-library/await-async-queries -- ProviderRegistryService.findByIssuer is synchronous, not an async testing-library query
+      const entry = svc.findByIssuer('https://sts.windows.net/tenant-123/');
+      expect(entry).toBeUndefined();
+    });
+  });
+
   describe('header-token auth config validation', () => {
     it('boots successfully when the feature is disabled (default) and no allowlist is set', async () => {
       const module = await buildModule({});

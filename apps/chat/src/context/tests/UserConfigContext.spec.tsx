@@ -193,13 +193,11 @@ describe('UserConfigContext', () => {
       mockGetUserConfig.mockReturnValueOnce(refetchPromise);
       contextMocks.userSub = 'user-2';
 
-      act(() => {
-        rerender(
-          <UserConfigProvider>
-            <Consumer />
-          </UserConfigProvider>,
-        );
-      });
+      rerender(
+        <UserConfigProvider>
+          <Consumer />
+        </UserConfigProvider>,
+      );
 
       // While the identity-triggered refetch is in flight, UserConfigProvider
       // shows its loading spinner (per the existing "loading spinner"
@@ -263,7 +261,7 @@ describe('UserConfigContext', () => {
           <div data-testid="child" />
         </UserConfigProvider>,
       );
-      await waitFor(() => expect(screen.getByTestId('child')).toBeTruthy());
+      expect(await screen.findByTestId('child')).toBeTruthy();
       expect(screen.queryByTestId('dial-spinner')).toBeNull();
     });
 
@@ -274,7 +272,7 @@ describe('UserConfigContext', () => {
           <div data-testid="child" />
         </UserConfigProvider>,
       );
-      await waitFor(() => expect(screen.getByTestId('child')).toBeTruthy());
+      expect(await screen.findByTestId('child')).toBeTruthy();
     });
   });
 

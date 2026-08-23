@@ -43,6 +43,14 @@ export enum MIMEType {
   BMP = 'image/bmp',
   /** SVG vector image. */
   SVG = 'image/svg+xml',
+
+  // Audio
+  /** MPEG audio (`.mp3`). */
+  MP3 = 'audio/mpeg',
+  /** WAV audio. */
+  WAV = 'audio/wav',
+  /** Ogg audio. */
+  OGG = 'audio/ogg',
 }
 
 /** Well-known file extension constants used as fallback when a MIME type is unavailable. */

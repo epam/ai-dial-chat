@@ -44,15 +44,26 @@ When `onFetchDetails` resolves data, it SHALL take precedence over any staticall
 
 ### Requirement: `CatalogView` wires `onFetchDetails` to the new backend endpoint
 
-`apps/chat/src/components/CatalogView/CatalogView.tsx` SHALL implement `onFetchDetails` by calling a new `apps/chat/src/server-api` wrapper (e.g. `getDeploymentDetails(id)` in `apps/chat/src/server-api/deployments.ts`, following the same pattern as the existing `getDeploymentConfiguration` wrapper) that in turn calls the generated `@epam/chat-api-client` `DeploymentsApi.getDeploymentDetails` method — never `fetch` directly and never a new `base.ts` helper.
+`apps/chat/src/components/CatalogView/CatalogView.tsx` SHALL implement `onFetchDetails` by dispatching on the opened item's `type` to the wrapper appropriate for that entity kind. All wrappers live in `apps/chat/src/server-api` and call generated `@epam/ai-dial-chat-api-client` methods — never `fetch` directly and never a new `base.ts` helper.
+
+**Deployment-backed items (`Model`, `Agent`, `Toolset`).** `CatalogView.tsx` SHALL call `getDeploymentDetails(id)` in `apps/chat/src/server-api/deployments.ts`, following the same pattern as the existing `getDeploymentConfiguration` wrapper, which in turn calls the generated `DeploymentsApi.getDeploymentDetails` method.
 
 `CatalogView.tsx` SHALL convert the returned `DeploymentDetailsDto` into the appropriate `EntitySpecificDetails` variant (`apps/chat/src/types/entity-details.ts`) via `mapDeploymentDetailsDtoToEntityDetails(dto: DeploymentDetailsDto): EntitySpecificDetails`, which switches on `dto.type` — the discriminator the backend has already resolved server-side — not on the `CatalogItem`'s own `type` field. The result is then passed through the existing `mapEntityDetailsToCatalogDetails` (`apps/chat/src/utils/map-entity-details-to-catalog.ts`) to produce the core `CatalogItemTabData`.
 
 For model catalog items only, `CatalogView.tsx` SHALL also call the existing `getDeploymentLimits(item.id)` wrapper from `apps/chat/src/server-api/deployment-limits.ts` in parallel with `getDeploymentDetails(item.id)`. The returned `DeploymentLimitsResponseDto` SHALL be converted by an app-level mapper (for example `mapDeploymentLimitsDtoToCatalogLimits`) into `CatalogItemLimits` and merged into the returned `CatalogItemTabData` as `limits`. This mapper is the only place that knows DIAL Core's limit-stat field names (`minuteTokenStats`, `dayCostStats`, etc.); `libs/catalog` receives only resolved display data and numeric progress values.
 
+**Prompt items (`CatalogEntityType.Prompt`).** `CatalogView.tsx` SHALL branch before the deployment path and resolve the item's body through the prompts wrappers in `apps/chat/src/server-api/prompts.api.ts`: `getPublicPrompt(item.id)` when the item's source is the organisation bucket, `getPrompt(item.id)` otherwise. The result SHALL be returned as `{ promptContent: { content: dto.content } }`. A prompt MUST NOT trigger `getDeploymentDetails` or `getDeploymentLimits`, since neither endpoint accepts a prompt path.
+
+**Skill items (`CatalogEntityType.Skill`).** `CatalogView.tsx` SHALL branch before the deployment path, parse `{ bucket, path }` out of `item.id` with `parseSkillResourceUrl` (`apps/chat/src/types/skill.ts`), and resolve the panel's data through the skills wrappers in `apps/chat/src/server-api/skills.api.ts` with `Promise.allSettled`:
+
+- `downloadSkillFile(bucket, path, 'SKILL.md')` — read as text, size-capped, mapped to `{ promptContent: { content } }`;
+- `listSkillFiles(bucket, path, { recursive: true })` — mapped to an `overview` section carrying author, last-updated, file count, and one row per file.
+
+Each result is independently optional: either may be omitted when its request fails, and both failing resolves `undefined`. An `item.id` that `parseSkillResourceUrl` rejects SHALL resolve `undefined` with no request issued. A skill MUST NOT trigger `getDeploymentDetails` or `getDeploymentLimits`, since neither endpoint accepts a skill resource URL.
+
 The `onFetchDetails` callback SHALL be wrapped in `useCallback` (dependencies: app-level adapter inputs such as `isAdmin` and `t`) to satisfy the design's memoisation requirement and avoid re-triggering `Catalog`'s fetch effect on unrelated `CatalogView` re-renders.
 
-If the details server-api call rejects (network error or a mapped HTTP exception surfaced by the base client), `onFetchDetails` SHALL catch the error, resolve `undefined`, and log nothing beyond what the shared API client already logs — it MUST NOT throw out of the callback and break the details panel. If the model limits call rejects, the details result SHALL still be returned without `limits`; a limits-specific failure MUST NOT hide Overview/Pricing/API data.
+If a details server-api call rejects (network error or a mapped HTTP exception surfaced by the base client), `onFetchDetails` SHALL catch the error, resolve `undefined`, and log nothing beyond what the shared API client already logs — it MUST NOT throw out of the callback and break the details panel. If the model limits call rejects, the details result SHALL still be returned without `limits`; a limits-specific failure MUST NOT hide Overview/Pricing/API data. For a prompt, resolving `undefined` leaves the panel showing the `promptContent` the list mapper already seeded, so a failed refresh degrades to slightly stale content rather than an empty tab. For a skill, a partial failure returns whichever half succeeded rather than discarding both.
 
 #### Scenario: Successful detail fetch renders structured tabs
 
@@ -90,6 +101,46 @@ If the details server-api call rejects (network error or a mapped HTTP exception
 - **AND** the additional `getDeploymentLimits(item.id)` call is made only for `CatalogEntityType.Model`
 - **THEN** `onFetchDetails` calls the same `getDeploymentDetails(item.id)` wrapper regardless of type, and only the DTO → `EntitySpecificDetails` mapping branches on type
 
+#### Scenario: Personal prompt detail fetch renders the Content tab
+
+- **WHEN** a user opens a personal prompt's details panel
+- **THEN** `onFetchDetails` calls `getPrompt(item.id)` and resolves `{ promptContent: { content } }`, and the panel renders the `Content` tab with the prompt's body
+
+#### Scenario: Organisation prompt detail fetch uses the public wrapper
+
+- **WHEN** a user opens the details panel for a prompt from the organisation bucket
+- **THEN** `onFetchDetails` calls `getPublicPrompt(item.id)` and no personal-prompt request is dispatched
+
+#### Scenario: Prompt fetch never reaches the deployment endpoints
+
+- **WHEN** the opened item's `type` is `CatalogEntityType.Prompt`
+- **THEN** neither `getDeploymentDetails` nor `getDeploymentLimits` is called
+
+#### Scenario: Prompt fetch failure degrades to seeded content
+
+- **WHEN** `getPrompt` rejects and the list mapper had already seeded `details.promptContent`
+- **THEN** `onFetchDetails` resolves `undefined`, the panel keeps rendering the seeded body, and nothing throws
+
+#### Scenario: Skill detail fetch renders Content and Overview
+
+- **WHEN** a user opens a skill's details panel and both `downloadSkillFile('SKILL.md')` and `listSkillFiles` resolve
+- **THEN** `onFetchDetails` resolves `{ promptContent: { content }, overview }` and the panel renders the manifest text and the file inventory
+
+#### Scenario: Skill fetch never reaches the deployment endpoints
+
+- **WHEN** the opened item's `type` is `CatalogEntityType.Skill`
+- **THEN** neither `getDeploymentDetails` nor `getDeploymentLimits` is called
+
+#### Scenario: Skill partial failure returns the half that succeeded
+
+- **WHEN** `downloadSkillFile` rejects with a 404 and `listSkillFiles` resolves
+- **THEN** `onFetchDetails` resolves an `overview` with no `promptContent`, and nothing throws
+
+#### Scenario: Unparseable skill id issues no request
+
+- **WHEN** a skill item's `id` is not a well-formed `skills/{bucket}/{path}` URL
+- **THEN** `onFetchDetails` resolves `undefined` without calling any skills wrapper
+
 ---
 
 ### Requirement: Generated-client and state-ownership contract for the new endpoint
@@ -110,6 +161,162 @@ The `getDeploymentDetails` endpoint SHALL satisfy the following generated-client
 - **WHEN** the details panel closes
 - **THEN** no fetched detail data persists outside `Catalog`'s local component state — reopening re-fetches; deployment details may be subject to the backend's 60s cache, while model limits follow the no-cache deployment-limits API contract
 
+### Requirement: Model catalog properties are exposed in Overview Specification
+
+The BFF SHALL support DIAL Core model details that contain `catalog_properties`. The installed
+`@epam/ai-dial-typescript-sdk` represents this field as
+`ModelData.catalog_properties?: MapStringObject`, where `MapStringObject` is
+`Record<string, unknown>`; the meaning of its keys is schema-specific and is identified by
+`catalog_schema_id`. The BFF MUST therefore treat this object as untrusted, open-ended input
+and allow-list only the following string-valued model properties:
+
+- `provider`
+- `vendor`
+- `license`
+- `knowledgeCutoffDate`
+- `parameters` — the model's parameter count for catalog display (e.g. `"100B"`); a free-form
+  string, not parsed or validated as a number/unit pair
+
+`GET /api/v1/deployments/:deployment/details` SHALL expose the recognized values as the
+optional `modelDetails.catalogProperties` object in `DeploymentDetailsDto`, using
+`ModelCatalogPropertiesDto` with the same five optional camelCase string fields. Unknown keys
+and recognized keys with non-string values MUST be omitted. When no recognized string value
+remains, `catalogProperties` MUST be omitted rather than returned as an empty object.
+
+This is an additive response change. OpenAPI `operationId: getDeploymentDetails`, its path
+parameter, authentication, status codes, rate limit, and the normal (non-`Raw`) generated
+`DeploymentsApi.getDeploymentDetails({ deployment })` call remain unchanged. Regenerating
+`@epam/chat-api-client` SHALL add `ModelCatalogPropertiesDto` and the optional
+`ModelDetailsDto.catalogProperties` property. A representative successful response fragment is:
+
+```json
+{
+  "id": "als-regre-19-adapter",
+  "type": "model",
+  "modelDetails": {
+    "catalogProperties": {
+      "provider": "Provider",
+      "vendor": "Vendor",
+      "license": "License",
+      "knowledgeCutoffDate": "2026-08-17",
+      "parameters": "100B"
+    }
+  }
+}
+```
+
+The app-level DTO mapper in `apps/chat/src/utils/map-entity-details-to-catalog.ts` SHALL copy
+these values into `ModelSpecification`. `mapEntityDetailsToCatalogDetails` SHALL render every
+present value as a separate row in the model details panel under `Overview` → `Specification`,
+in this order: Provider, Vendor, License, Knowledge cutoff date, Parameters. Missing values
+SHALL NOT create empty rows.
+
+The five labels MUST use these i18n keys through `CatalogI18nKeys`:
+
+- `catalog.details.modelSpecification.provider`
+- `catalog.details.modelSpecification.vendor`
+- `catalog.details.modelSpecification.license`
+- `catalog.details.modelSpecification.knowledgeCutoffDate`
+- `catalog.details.modelSpecification.parameters`
+
+A valid date-only `knowledgeCutoffDate` in `YYYY-MM-DD` form SHALL be parsed as a local calendar
+date and formatted with the same locale-sensitive `toLocaleDateString()` path as the existing
+Release date row. It MUST NOT be parsed as UTC, which could shift the displayed calendar day in
+negative-offset time zones. A non-date or invalid date string SHALL remain visible verbatim
+rather than being dropped or normalized to an invalid date.
+
+This metadata is not gated by `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. It uses the existing
+user-scoped deployment-details cache (`deployments:details:<userSub>:<deployment>`, 60-second TTL)
+and existing invalidation behavior. It introduces no new metrics, analytics, or targeted raw
+deployment-payload debug logging. The rows are non-interactive and reuse the existing Overview
+semantics and responsive layout; they add no keyboard interaction or ARIA contract. The content
+is direction-agnostic, requires no directional icons, and MUST inherit the existing LTR/RTL
+layout without physical-direction overrides. No new React state or memoisation is required.
+
+#### Scenario: All supported properties render in Specification
+
+- **WHEN** DIAL Core returns the five recognized string values shown in the example above for a model
+- **THEN** the BFF returns them under `modelDetails.catalogProperties`
+- **AND** the model details panel renders Provider, Vendor, License, Knowledge cutoff date, and Parameters as five rows under `Overview` → `Specification`
+
+#### Scenario: Knowledge cutoff date uses the Release date display format
+
+- **WHEN** `knowledgeCutoffDate` is `2026-08-17`
+- **THEN** it is displayed through the same locale-sensitive date formatter as Release date, without changing the calendar day because of timezone conversion
+
+#### Scenario: Unknown and non-string properties are ignored
+
+- **WHEN** `catalog_properties` contains `provider: "Provider"`, `schemaSpecificExtra: true`, and `license: { "name": "License" }`
+- **THEN** `modelDetails.catalogProperties` contains only `provider: "Provider"`
+- **AND** no rows are rendered for `schemaSpecificExtra` or the non-string `license`
+
+#### Scenario: Existing clients remain compatible
+
+- **WHEN** a client ignores the optional `modelDetails.catalogProperties` field
+- **THEN** all pre-existing deployment-details response fields and behavior remain unchanged
+
+### Requirement: Input/Output modalities render as friendly labels, and internal-only capability flags are hidden
+
+`apps/chat/src/utils/map-entity-details-to-catalog.ts` SHALL render a model's and application's
+`inputAttachmentTypes`/`outputAttachmentTypes` (surfaced as `ModelSpecification.inputTypes`/
+`outputTypes` and `AgentConfiguration.inputAttachmentTypes`/`outputAttachmentTypes`) as
+human-readable labels via `mimeTypesToExtensionLabels` (`@epam/ai-dial-attachment-input`) rather
+than the raw MIME type strings DIAL Core returns. A wildcard major type (`image/*`, `audio/*`,
+`video/*`, `text/*`) SHALL render as `"<Major> files"` (e.g. `"Image files"`); the catch-all
+wildcard `*/*` SHALL render as `"All files"` rather than falling through to the generic
+`"<major> files"` template (which would otherwise render the nonsensical `"* files"`); a
+concrete MIME type (e.g. `application/pdf`) SHALL render as its uppercased subtype (`"PDF"`).
+The `Specification` section's row labels for these two fields SHALL use the i18n keys
+`catalog.details.modelSpecification.inputModalities` / `.outputModalities`
+(`CatalogI18nKeys.DetailsModelInputModalities` / `DetailsModelOutputModalities`), replacing the
+previous untranslated `'Input type'`/`'Output type'` literals. The `Configuration` section's
+`Input attachments`/`Output attachments` rows (Agent only) SHALL use the same
+`mimeTypesToExtensionLabels` formatting for their values, keeping their existing labels.
+
+The model, application, and toolset `Capabilities` sections built by `mapModelDetails`/
+`mapAgentDetails`/`mapToolsetDetails` SHALL NOT render rows for `hasMcp`, `hasCaching`,
+`hasUrlAttachments`, `hasFolderAttachments`, `hasSeed`, `hasSystemPrompt`, or `hasResume`, even
+though the backend continues to return these flags (`DeploymentFeaturesDetailsDto.mcp`/`cache`/
+`urlAttachments`/`folderAttachments`/`seed`/`systemPrompt`/`allowResume`) and the frontend
+`ModelCapabilities`/`AgentCapabilities`/`ToolsetCapabilities` types continue to carry them —
+they are collected but intentionally unrendered, kept for a future or other consumer. A
+toolset's `Capabilities` section — which, before this change, only ever rendered a subset of
+these now-hidden flags — SHALL therefore never render at all (its `specs` array is always
+empty). Model and application `Capabilities` sections continue to render `Tools`, `Parallel
+tool calls`, `Reasoning efforts` (model only), and `Configuration schema` (application only).
+
+**Feature flag:** Not gated. **RTL impact:** None (label text only). **i18n impact:** New keys
+`catalog.details.modelSpecification.inputModalities`/`.outputModalities` added to
+`translation-keys.ts`/`en.json`; the seven hidden capability rows had no i18n keys to remove
+(they were untranslated string literals).
+
+#### Scenario: Wildcard MIME types render as group labels
+
+- **WHEN** a model's `input_attachment_types` is `["text/*", "image/*"]`
+- **THEN** the `Specification` section's Input modalities row renders `"Text files, Image files"`
+
+#### Scenario: The catch-all wildcard renders as "All files"
+
+- **WHEN** a model's `input_attachment_types` is `["*/*"]`
+- **THEN** the Input modalities row renders `"All files"`, not `"* files"`
+
+#### Scenario: A concrete MIME type renders as its uppercased subtype
+
+- **WHEN** an application's `input_attachment_types` is `["application/pdf"]`
+- **THEN** the `Configuration` section's Input attachments row renders `"PDF"`
+
+#### Scenario: Toolset Capabilities section never renders
+
+- **WHEN** a toolset's `features` includes `mcp: true`, `cache: false`, and `systemPrompt: true`
+- **THEN** the toolset's Overview tab data contains no `Capabilities` section at all
+
+#### Scenario: Model Capabilities section omits the seven hidden flags
+
+- **WHEN** a model's `features` includes `mcp`, `cache`, `urlAttachments`, `folderAttachments`,
+  `seed`, `systemPrompt`, `allowResume`, `tools: true`, and `parallelToolCalls: true`
+- **THEN** the model's `Capabilities` section renders only `Tools` and `Parallel tool calls`
+  (plus `Reasoning efforts` when present), with no rows for the seven hidden flags
+
 ### Requirement: Only the About tab reads `item.description`; the Summary section shows topics and usage limits
 
 `CatalogItem` (`libs/catalog/src/models/catalog-item.ts`) SHALL NOT define an `intro` field.
@@ -119,6 +326,16 @@ SHALL display `item.description` via the shared `AboutTab` component
 `content: string` prop rather than deriving its own fallback. The `About` tab is the only
 `DetailsPanel` surface that renders `item.description`; it uses no async fetch, callback prop,
 or loading state for this content.
+
+`AboutTab` SHALL render `content` as Markdown via the shared `MarkdownRenderer`
+(`@epam/ai-dial-chat-shared`) — the same renderer used for chat message content — rather than
+a bespoke plain-text/bullet parser. Heading elements (`h1`–`h6`) and body elements (`p`/`ul`/`ol`)
+SHALL use `detailsStyles?.typography?.contentHeadingClassName` (default `'dial-small-semi-text'`)
+and `detailsStyles?.typography?.contentClassName` (default `'dial-small-text'`) respectively,
+matching the typography this tab already exposed before switching renderers. This applies
+uniformly to every entity type that supplies a description (models, applications, toolsets,
+guardrails, prompts, skills) since `content` is the same `item.description` string regardless
+of type.
 
 The details panel's always-visible Summary section (rendered by `Summary`) SHALL NOT render
 `item.description` or any `AboutTab` content. `Summary` SHALL render only the item's topics
@@ -137,6 +354,13 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
 - **WHEN** the details panel opens for any `CatalogItem`
 - **THEN** the About tab renders `item.description`, and the Summary section does not render
   `item.description` anywhere
+
+#### Scenario: Description renders as Markdown, not plain text
+- **WHEN** `item.description` contains Markdown syntax (e.g. `**bold**`, a `-`/`*` bullet list,
+  a fenced code block, or a link)
+- **THEN** the About tab renders it through `MarkdownRenderer` with full formatting (bold text,
+  a real `<ul>`/`<ol>` list, a syntax-highlighted code block, a clickable link) rather than the
+  raw Markdown source or a heuristic bullet-only parse
 
 #### Scenario: Summary section renders topics and usage limits only
 - **WHEN** the details panel opens for a `CatalogItem` with a non-empty `topics` array and a
@@ -166,4 +390,3 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
 - **WHEN** `mapDeploymentToCatalogItem`/`mapToolsetToCatalogItem` map a
   `DeploymentItemDto`/`DialToolsetDto` into a `CatalogItem`
 - **THEN** the resulting `CatalogItem` has no `intro` property
-

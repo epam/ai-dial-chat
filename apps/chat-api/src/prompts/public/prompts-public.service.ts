@@ -64,6 +64,11 @@ export class PromptsPublicService {
           ),
         )
       ).filter((p): p is PromptResponseDto => p != null);
+      for (const prompt of prompts) {
+        prompt.isMy = false;
+        prompt.canEdit = false;
+        prompt.sharedWithMe = false;
+      }
 
       const folders = deriveFolders([
         ...prompts.map((p) => p.id),
@@ -107,6 +112,6 @@ export class PromptsPublicService {
     if (metadata == null) {
       throw new NotFoundException(`Public prompt metadata not found: ${path}`);
     }
-    return mapPromptToResponse(data, path, metadata);
+    return mapPromptToResponse(data, path, metadata, PUBLIC_BUCKET);
   }
 }

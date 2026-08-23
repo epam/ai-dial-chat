@@ -52,6 +52,11 @@ export class ScheduledTaskDto {
   @IsBoolean()
   isActive?: boolean;
 
+  @ApiPropertyOptional({ example: false })
+  @IsOptional()
+  @IsBoolean()
+  isDeleted?: boolean;
+
   @ApiPropertyOptional({ example: 'dial-oauth' })
   @IsOptional()
   @IsString()

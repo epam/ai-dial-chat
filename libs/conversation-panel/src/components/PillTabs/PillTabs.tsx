@@ -25,6 +25,16 @@ export interface PillTabsColors {
   tabTextHover?: string;
   /** Label color of the active tab. Defaults to `--text-secondary`. */
   activeTabText?: string;
+  /** Border color of every tab. Defaults to `transparent`. */
+  tabBorder?: string;
+  /** Background color of an inactive tab. Defaults to `transparent`. */
+  tabBackground?: string;
+  /** Background color of an inactive tab on hover. Defaults to `--bg-control-accent-alpha`. */
+  tabBackgroundHover?: string;
+  /** Background color of the active tab. Defaults to `--bg-control-accent-alpha`. */
+  activeTabBackground?: string;
+  /** Background color of the active tab on hover. Defaults to `--bg-control-accent-alpha-hover`. */
+  activeTabBackgroundHover?: string;
 }
 
 /** Style overrides for the {@link PillTabs} component. */
@@ -52,10 +62,16 @@ export const PillTabs: FC<PillTabsProps> = memo(
   ({ tabs, activeTabId, onTabChange, styles: pillTabsStyles }) => {
     const { tabClassName = 'dial-tiny-semi-text' } =
       pillTabsStyles?.typography ?? {};
+    const colors = pillTabsStyles?.colors;
     const cssVars = buildCssVars({
-      '--pt-tab-text': pillTabsStyles?.colors?.tabText,
-      '--pt-tab-text-hover': pillTabsStyles?.colors?.tabTextHover,
-      '--pt-tab-active-text': pillTabsStyles?.colors?.activeTabText,
+      '--pt-tab-text': colors?.tabText,
+      '--pt-tab-text-hover': colors?.tabTextHover,
+      '--pt-tab-active-text': colors?.activeTabText,
+      '--pt-tab-border': colors?.tabBorder,
+      '--pt-tab-bg': colors?.tabBackground,
+      '--pt-tab-bg-hover': colors?.tabBackgroundHover,
+      '--pt-tab-active-bg': colors?.activeTabBackground,
+      '--pt-tab-active-bg-hover': colors?.activeTabBackgroundHover,
     });
 
     return (

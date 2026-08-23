@@ -23,6 +23,10 @@ export const safeDecodeURI = (path: string): string => {
 
 export const safeDecodeURIComponent = safeDecodeURI;
 
+/** Strips leading and trailing slashes from a path segment. */
+export const stripSurroundingSlashes = (path: string): string =>
+  path.replace(/^\/+|\/+$/g, '');
+
 export const formatFileSize = (bytes: number): string => {
   const GB = 1024 * 1024 * 1024;
   const MB = 1024 * 1024;

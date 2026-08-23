@@ -10,6 +10,7 @@ import {
   IconAlertTriangle,
   IconCircleCheck,
   IconCircleX,
+  IconClipboardX,
 } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent } from 'react';
 import type { ScheduledTaskRunHistoryListProps } from '../../models/scheduled-task-run-history-list-props';
@@ -154,7 +155,11 @@ export const ScheduledTaskRunHistoryList: FC<
 
   if (isLoading && items.length === 0) {
     return (
-      <ul style={cssVars} aria-label={labels.historyTitle}>
+      <ul
+        style={cssVars}
+        aria-label={labels.historyTitle}
+        className="flex flex-col gap-0.5"
+      >
         {renderSkeletons(skeletonCount)}
       </ul>
     );
@@ -176,18 +181,29 @@ export const ScheduledTaskRunHistoryList: FC<
 
   if (items.length === 0) {
     return (
-      <p
-        role="status"
+      <div
         style={cssVars}
-        className={mergeClasses(subtitleClassName, styles.subtitleText)}
+        className="flex w-full flex-col items-center justify-center gap-2 py-4"
       >
-        {labels.emptyLabel}
-      </p>
+        <IconClipboardX
+          size={44}
+          stroke={1.5}
+          className={styles.subtitleText}
+          aria-hidden
+        />
+        <p role="status" className={runTimestampClassName}>
+          {labels.emptyLabel}
+        </p>
+      </div>
     );
   }
 
   return (
-    <ul style={cssVars} aria-label={labels.historyTitle}>
+    <ul
+      style={cssVars}
+      aria-label={labels.historyTitle}
+      className="flex flex-col gap-0.5"
+    >
       {items.map(renderRow)}
       {isLoadingMore && renderSkeletons(skeletonCount)}
       {error ? (

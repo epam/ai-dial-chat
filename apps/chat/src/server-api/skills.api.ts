@@ -3,11 +3,16 @@ import type {
   SkillFileListResponseDto,
   SkillFileUploadResponseDto,
   SkillGroupingFolderResponseDto,
+  SkillCatalogListResponseDto,
+  SkillImportResponseDto,
   SkillListResponseDto,
   SkillOperationResultDto,
   SkillUploadResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { skillsApi } from './api-client';
+
+export const listCatalogSkills = (): Promise<SkillCatalogListResponseDto> =>
+  skillsApi.listCatalogSkills();
 
 export const listSkills = (
   params: {
@@ -118,6 +123,18 @@ export const updateSkill = (
     },
     signal ? { signal } : undefined,
   );
+
+/**
+ * Uploads one Skill ZIP archive for server-side extraction, validation, and
+ * atomic creation via `POST /api/v1/skills/import`. The BFF derives the
+ * destination path from the archive manifest's `name` and always uses the
+ * authenticated user's own bucket — this wrapper never sends one.
+ */
+export const importSkillArchive = (
+  file: Blob,
+  signal?: AbortSignal,
+): Promise<SkillImportResponseDto> =>
+  skillsApi.importSkillArchive({ file }, signal ? { signal } : undefined);
 
 export const uploadSkillFile = (
   bucket: string,

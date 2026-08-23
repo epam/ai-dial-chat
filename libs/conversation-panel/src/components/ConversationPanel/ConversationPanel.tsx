@@ -2,11 +2,10 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   PanelEmpty,
   PanelNoResults,
-  SearchInput,
   SidebarOrientation,
   SidebarPanel,
 } from '@epam/ai-dial-sidebar';
-import { Skeleton } from '@epam/ai-dial-ui-kit';
+import { Search, Skeleton } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   memo,
@@ -73,6 +72,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       colors,
       typography,
       newChatButton: newChatButtonColors,
+      filterTabs: filterTabsColors,
     } = panelStyles ?? {};
 
     const {
@@ -119,6 +119,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
 
     const handleListResize = useCallback(({ height }: { height: number }) => {
       setOverscanCount(Math.ceil((height / ITEM_ROW_HEIGHT) * 2));
+    }, []);
+
+    const handleSearchChange = useCallback((value?: string) => {
+      setSearchQuery(value ?? '');
     }, []);
 
     const handleToggleGroup = useCallback((key: string) => {
@@ -400,14 +404,16 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           colors={newChatButtonColors}
         />
 
-        <SearchInput
-          value={searchQuery}
-          onChange={setSearchQuery}
-          labels={{
-            placeholder: searchPlaceholder,
-            clearLabel: searchClearLabel,
-          }}
-        />
+        <div role="search" className="px-3 py-2">
+          <Search
+            wrapperClassName="rounded-full"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder={searchPlaceholder}
+            clearLabel={searchClearLabel}
+            aria-label={searchPlaceholder}
+          />
+        </div>
 
         {!isFilterTabsHidden && (
           <FilterTabs
@@ -418,6 +424,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
               onActiveFilterChange?.(tab);
             }}
             tabClassName={typography?.tabClassName}
+            colors={filterTabsColors}
           />
         )}
 

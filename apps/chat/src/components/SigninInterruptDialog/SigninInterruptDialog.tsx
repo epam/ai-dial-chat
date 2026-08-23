@@ -110,9 +110,6 @@ const SigninRow: FC<SigninRowProps> = ({
           {info.displayName}
           {info.displayVersion ? ` (${info.displayVersion})` : ''}
         </span>
-        {isProcessing && (
-          <Spinner size={16} ariaLabel={t(ButtonsI18nKeys.LogIn)} />
-        )}
       </div>
 
       {isApiKey && (
@@ -155,7 +152,13 @@ const SigninRow: FC<SigninRowProps> = ({
             onClick={() => onDecline(event.id)}
           />
           <PrimaryButton
-            label={t(ButtonsI18nKeys.LogIn)}
+            label={isProcessing ? undefined : t(ButtonsI18nKeys.LogIn)}
+            aria-label={isProcessing ? t(ButtonsI18nKeys.LogIn) : undefined}
+            iconBefore={
+              isProcessing ? (
+                <Spinner size={16} ariaLabel={t(ButtonsI18nKeys.LogIn)} />
+              ) : undefined
+            }
             disabled={isProcessing || !canSubmitLogin}
             onClick={() => onLogin(event, info)}
           />

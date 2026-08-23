@@ -1,4 +1,4 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import { FavoriteEntityType } from '../../context/FavoriteApplicationsContext';
 import { resolveFavoriteEntityType } from '../favorites';

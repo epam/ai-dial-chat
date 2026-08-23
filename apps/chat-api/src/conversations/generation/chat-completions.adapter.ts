@@ -44,8 +44,14 @@ export class ChatCompletionsAdapter {
     startConversation: ConversationResponseDto;
     messagesForCompletion: ConversationMessageDto[];
     customContent: MessageCustomContentDto | undefined;
+    temperatureSupported: boolean;
   }): unknown {
-    const { startConversation, messagesForCompletion, customContent } = params;
+    const {
+      startConversation,
+      messagesForCompletion,
+      customContent,
+      temperatureSupported,
+    } = params;
 
     const configuration =
       customContent?.configuration_value ??
@@ -81,9 +87,10 @@ export class ChatCompletionsAdapter {
     return {
       messages: [...systemMessages, ...dialMessages],
       stream: true,
-      ...(startConversation.temperature != null && {
-        temperature: startConversation.temperature,
-      }),
+      ...(temperatureSupported &&
+        startConversation.temperature != null && {
+          temperature: startConversation.temperature,
+        }),
       ...(configuration ? { custom_fields: { configuration } } : {}),
     };
   }

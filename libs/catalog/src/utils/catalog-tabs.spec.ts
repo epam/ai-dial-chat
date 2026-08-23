@@ -1,6 +1,6 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../models/catalog-item';
-import { CatalogEntityType } from '../types/entity-type';
 import { buildCatalogTabs } from './catalog-tabs';
 
 const makeItem = (
@@ -41,7 +41,7 @@ describe('buildCatalogTabs', () => {
     expect(tabs.some((tab) => tab.id === CatalogEntityType.Prompt)).toBe(false);
   });
 
-  it('orders the Prompts tab after Toolsets and before Skills', () => {
+  it('orders the Prompts tab after Toolsets and Skills, as the last tab', () => {
     const tabs = buildCatalogTabs([
       makeItem({ id: 'skill', name: 'Skill', type: CatalogEntityType.Skill }),
       makeItem({
@@ -58,8 +58,8 @@ describe('buildCatalogTabs', () => {
 
     expect(tabs.map((tab) => tab.id)).toEqual([
       CatalogEntityType.Toolset,
-      CatalogEntityType.Prompt,
       CatalogEntityType.Skill,
+      CatalogEntityType.Prompt,
     ]);
   });
 

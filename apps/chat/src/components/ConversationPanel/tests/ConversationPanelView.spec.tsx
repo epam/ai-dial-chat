@@ -62,44 +62,53 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
     }) => (
       <div role="region" aria-label="conversation panel" className={className}>
         {headerActions}
-        {panelConversations?.map((item) => (
-          <div key={item.id}>
-            <button
-              id={`action-trigger-${item.id}`}
-              aria-label={`action trigger ${item.id}`}
-              onClick={(event) => onActionMenuOpen?.(item, event.currentTarget)}
-            />
-            {item.isUnread && (
-              <span aria-label={`unread indicator ${item.id}`} />
-            )}
-            {(getActions?.(item) ?? []).map((action) =>
-              action.children ? (
-                // Simulates the hover-revealed submenu: children render as sibling buttons.
-                <div key={action.key}>
-                  <span>{action.label}</span>
-                  {action.children.map((child) => (
-                    <button key={child.key} onClick={child.onClick}>
-                      {child.label}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <button
-                  key={action.key}
-                  onClick={() => {
-                    const trigger = document.getElementById(
-                      `action-trigger-${item.id}`,
-                    ) as HTMLButtonElement | null;
-                    if (trigger) onActionMenuOpen?.(item, trigger);
-                    action.onClick?.();
-                  }}
-                >
-                  {action.label}
-                </button>
-              ),
-            )}
-          </div>
-        ))}
+        {panelConversations?.map((item) => {
+          /* Captures the trigger button via a ref callback instead of looking
+             it up through the DOM, so the mock stays within React APIs. */
+          let triggerRef: HTMLButtonElement | null = null;
+
+          return (
+            <div key={item.id}>
+              <button
+                ref={(node) => {
+                  triggerRef = node;
+                }}
+                id={`action-trigger-${item.id}`}
+                aria-label={`action trigger ${item.id}`}
+                onClick={(event) =>
+                  onActionMenuOpen?.(item, event.currentTarget)
+                }
+              />
+              {item.isUnread && (
+                <span aria-label={`unread indicator ${item.id}`} />
+              )}
+              {(getActions?.(item) ?? []).map((action) =>
+                // eslint-disable-next-line testing-library/no-node-access -- `action.children` is this mock's own action-data shape, not a DOM node
+                action.children ? (
+                  // Simulates the hover-revealed submenu: children render as sibling buttons.
+                  <div key={action.key}>
+                    <span>{action.label}</span>
+                    {action.children.map((child) => (
+                      <button key={child.key} onClick={child.onClick}>
+                        {child.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <button
+                    key={action.key}
+                    onClick={() => {
+                      if (triggerRef) onActionMenuOpen?.(item, triggerRef);
+                      action.onClick?.();
+                    }}
+                  >
+                    {action.label}
+                  </button>
+                ),
+              )}
+            </div>
+          );
+        })}
       </div>
     ),
   };
@@ -376,6 +385,13 @@ const EXPORT_LABEL = 'conversationExport.exportLabel';
 const EXPORT_ALL_LABEL = 'conversationExport.exportAllLabel';
 const IMPORT_LABEL = 'conversationImport.importLabel';
 
+/* The import file input is `aria-hidden` and `sr-only` by design (it is only
+   ever triggered programmatically via the Import button), so it has no
+   accessible role, label, or text a Testing Library query could target. */
+const getImportFileInput = () =>
+  // eslint-disable-next-line testing-library/no-node-access
+  document.querySelector('input[type="file"]') as HTMLInputElement;
+
 const baseContextValue = {
   conversations: [
     {
@@ -506,9 +522,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -531,9 +545,7 @@ describe('ConversationPanelView — delete-all header action', () => {
       />,
     );
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -556,9 +568,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeTruthy();
@@ -582,9 +592,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -603,9 +611,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeTruthy();
@@ -654,9 +660,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -717,9 +721,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -840,11 +842,9 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
     );
 
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
@@ -876,11 +876,9 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
     fireEvent.click(deleteButtons[1]);
 
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -920,11 +918,9 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
     );
 
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
@@ -945,13 +941,11 @@ describe('ConversationPanelView — rename', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
-    await act(async () => {
-      fireEvent.click(
-        screen.getByRole('button', { name: 'buttons.duplicate' }),
-      );
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'buttons.duplicate' }));
 
-    expect(mockDuplicateConversation).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockDuplicateConversation).toHaveBeenCalled();
+    });
     expect(mockShowNotification).toHaveBeenCalledWith({
       variant: 'success',
       title: 'entityNotifications.conversation.duplicatedTitle',
@@ -983,9 +977,7 @@ describe('ConversationPanelView — rename', () => {
     const dialog = screen.getByRole('dialog', {
       name: 'rename conversation',
     });
-    await act(async () => {
-      fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
-    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     expect(mockRenameConversation).toHaveBeenCalledWith('conv1', 'New Title');
     expect(mockNavigate).not.toHaveBeenCalled();
@@ -1011,9 +1003,7 @@ describe('ConversationPanelView — rename', () => {
     const dialog = screen.getByRole('dialog', {
       name: 'rename conversation',
     });
-    await act(async () => {
-      fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
-    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(mockShowNotification).not.toHaveBeenCalledWith(
@@ -1295,9 +1285,7 @@ describe('ConversationPanelView — import header action', () => {
 
   it('clicking Import triggers the hidden file input', () => {
     render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getImportFileInput();
     const clickSpy = vi.spyOn(fileInput, 'click');
 
     openDropdown();
@@ -1308,9 +1296,7 @@ describe('ConversationPanelView — import header action', () => {
 
   it('accepts .json, .dial, and .zip files', () => {
     render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getImportFileInput();
     expect(fileInput.accept).toBe(
       '.json,.dial,.zip,application/json,application/zip',
     );
@@ -1319,17 +1305,13 @@ describe('ConversationPanelView — import header action', () => {
   it('leaves the import picker unfiltered on mobile', () => {
     mockUseIsMobile.mockReturnValue(true);
     render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getImportFileInput();
     expect(fileInput.hasAttribute('accept')).toBe(false);
   });
 
   it('selecting a file calls importConversations with that file', () => {
     render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getImportFileInput();
     const file = new File(['{}'], 'export.json', {
       type: 'application/json',
     });
@@ -1341,9 +1323,7 @@ describe('ConversationPanelView — import header action', () => {
 
   it('resets the file input value after selection so the same file can be re-picked', () => {
     render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getImportFileInput();
     const file = new File(['{}'], 'export.json');
 
     fireEvent.change(fileInput, { target: { files: [file] } });
@@ -1596,11 +1576,9 @@ describe('ConversationPanelView — unshare (Remove from My List)', () => {
     /* sharedConversation is listed first, so its Remove from My List button is the first match. */
     fireEvent.click(screen.getAllByRole('button', { name: UNSHARE_BUTTON })[0]);
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+    );
 
     expect(discardSharedCatalogItem).toHaveBeenCalledWith('conv1');
     await waitFor(() => {
@@ -1627,11 +1605,9 @@ describe('ConversationPanelView — unshare (Remove from My List)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+    );
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
@@ -1650,11 +1626,9 @@ describe('ConversationPanelView — unshare (Remove from My List)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+    );
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -1675,13 +1649,13 @@ describe('ConversationPanelView — unshare (Remove from My List)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+    );
 
-    expect(within(dialog).getByText(UNSHARE_ERROR)).toBeTruthy();
+    await waitFor(() => {
+      expect(within(dialog).getByText(UNSHARE_ERROR)).toBeTruthy();
+    });
     expect(mockRefresh).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
@@ -1892,13 +1866,13 @@ describe('ConversationPanelView — revoke access', () => {
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
     const dialog = openRevokeConfirmation();
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+    );
 
-    expect(mockRefresh).toHaveBeenCalledOnce();
+    await waitFor(() => {
+      expect(mockRefresh).toHaveBeenCalledOnce();
+    });
     expect(mockShowNotification).toHaveBeenCalledOnce();
     expect(mockNavigate).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -1914,13 +1888,13 @@ describe('ConversationPanelView — revoke access', () => {
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
     const dialog = openRevokeConfirmation();
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+    );
 
-    expect(mockShowNotification).toHaveBeenCalledOnce();
+    await waitFor(() => {
+      expect(mockShowNotification).toHaveBeenCalledOnce();
+    });
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
@@ -1935,13 +1909,13 @@ describe('ConversationPanelView — revoke access', () => {
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
     const dialog = openRevokeConfirmation();
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+    );
 
-    expect(within(dialog).getByText(REVOKE_ERROR)).toBeTruthy();
+    await waitFor(() => {
+      expect(within(dialog).getByText(REVOKE_ERROR)).toBeTruthy();
+    });
     expect(mockRefresh).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
   });

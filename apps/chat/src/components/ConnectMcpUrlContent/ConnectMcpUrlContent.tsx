@@ -1,5 +1,5 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import {
+  CatalogEntityType,
   CopyButton,
   mergeClasses,
   useCodeCopy,

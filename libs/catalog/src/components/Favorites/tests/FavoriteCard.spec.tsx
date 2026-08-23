@@ -1,7 +1,7 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
-import { CatalogEntityType } from '../../../types/entity-type';
 import {
   CredentialStatus,
   ToolsetAuthenticationType,
@@ -27,6 +27,8 @@ describe('FavoriteCard — selected state', () => {
     const card = screen.getByLabelText('Claude');
     expect(card.className).toContain('border-transparent');
     expect(card.className).not.toContain('selectedCard');
+    // Checkmark icon is aria-hidden with no accessible role, so no semantic query can find it.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(card.querySelector('svg[aria-hidden]')).toBeNull();
   });
 
@@ -35,12 +37,13 @@ describe('FavoriteCard — selected state', () => {
 
     const card = screen.getByLabelText('Claude');
     expect(card.className).toContain('selectedCard');
+    // eslint-disable-next-line testing-library/no-node-access
     expect(card.querySelector('svg[aria-hidden]')).toBeTruthy();
   });
 });
 
 describe('FavoriteCard — credentials badge', () => {
-  it('shows the LOGGED OUT badge for a signed-out API_KEY toolset', () => {
+  it('shows the logged-out warning icon for a signed-out API_KEY toolset', () => {
     render(
       <FavoriteCard
         item={makeItem({
@@ -50,14 +53,16 @@ describe('FavoriteCard — credentials badge', () => {
             globalStatus: CredentialStatus.SignedOut,
           },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
 
-    expect(screen.getByText('LOGGED OUT')).toBeTruthy();
+    expect(
+      screen.getByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeTruthy();
   });
 
-  it('shows the LOGGED OUT badge for a signed-out OAUTH toolset', () => {
+  it('shows the logged-out warning icon for a signed-out OAUTH toolset', () => {
     render(
       <FavoriteCard
         item={makeItem({
@@ -67,14 +72,16 @@ describe('FavoriteCard — credentials badge', () => {
             globalStatus: CredentialStatus.SignedOut,
           },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
 
-    expect(screen.getByText('LOGGED OUT')).toBeTruthy();
+    expect(
+      screen.getByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeTruthy();
   });
 
-  it('shows no badge when signed in', () => {
+  it('shows no warning icon when signed in', () => {
     render(
       <FavoriteCard
         item={makeItem({
@@ -84,14 +91,16 @@ describe('FavoriteCard — credentials badge', () => {
             globalStatus: CredentialStatus.SignedOut,
           },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
 
-    expect(screen.queryByText('LOGGED OUT')).toBeNull();
+    expect(
+      screen.queryByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeNull();
   });
 
-  it('shows no badge for authenticationType NONE', () => {
+  it('shows no warning icon for authenticationType NONE', () => {
     render(
       <FavoriteCard
         item={makeItem({
@@ -99,10 +108,12 @@ describe('FavoriteCard — credentials badge', () => {
             authenticationType: ToolsetAuthenticationType.None,
           },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
 
-    expect(screen.queryByText('LOGGED OUT')).toBeNull();
+    expect(
+      screen.queryByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeNull();
   });
 });

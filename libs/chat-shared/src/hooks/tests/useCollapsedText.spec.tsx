@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useCollapsedText } from '../useCollapsedText';
 
@@ -72,16 +72,12 @@ describe('useCollapsedText', () => {
       expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
     });
 
-    act(() => {
-      screen.getByRole('button', { name: 'Toggle' }).click();
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle' }));
 
     expect(screen.getByLabelText('Collapsed').textContent).toBe('false');
     expect(screen.getByLabelText('Text collapsed').textContent).toBe('false');
 
-    act(() => {
-      screen.getByRole('button', { name: 'Toggle' }).click();
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle' }));
 
     expect(screen.getByLabelText('Collapsed').textContent).toBe('true');
     expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
@@ -109,9 +105,7 @@ describe('useCollapsedText', () => {
       expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
     });
 
-    act(() => {
-      screen.getByRole('button', { name: 'Toggle' }).click();
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle' }));
 
     expect(screen.getByLabelText('Collapsed').textContent).toBe('false');
 
@@ -176,9 +170,7 @@ describe('useCollapsedText', () => {
       expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
     });
 
-    act(() => {
-      screen.getByRole('button', { name: 'Toggle' }).click();
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle' }));
 
     expect(screen.getByLabelText('Overflowing').textContent).toBe('true');
     expect(screen.getByLabelText('Collapsed').textContent).toBe('false');
@@ -196,9 +188,7 @@ describe('useCollapsedText', () => {
       expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
     });
 
-    act(() => {
-      screen.getByRole('button', { name: 'Toggle' }).click();
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle' }));
 
     expect(screen.getByLabelText('Collapsed').textContent).toBe('false');
 

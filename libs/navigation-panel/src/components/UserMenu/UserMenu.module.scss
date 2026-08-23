@@ -1,0 +1,26 @@
+.wrapper {
+  font-family: var(--np-font-family, inherit);
+}
+
+.trigger {
+  &:hover {
+    background: var(
+      --np-trigger-hover-bg,
+      var(--bg-control-accent-alpha-hover, #2764d924)
+    );
+  }
+
+  &:focus-visible {
+    background: var(
+      --np-trigger-hover-bg,
+      var(--bg-control-accent-alpha-hover, #2764d924)
+    );
+    outline: 1px solid
+      var(--np-focus-outline, var(--stroke-focus-black, #161b2d));
+    outline-offset: -1px;
+  }
+}
+
+.identityText {
+  color: var(--np-menu-text, var(--text-primary, #161b2d));
+}

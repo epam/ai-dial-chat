@@ -14,10 +14,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  SkillCatalogListResponseDto,
   SkillFileDeleteResponseDto,
   SkillFileListResponseDto,
   SkillFileUploadResponseDto,
   SkillGroupingFolderResponseDto,
+  SkillImportResponseDto,
   SkillListResponseDto,
   SkillOperationResultDto,
   SkillUploadResponseDto,
@@ -64,6 +66,10 @@ export interface DownloadSkillFileRequest {
   bucket: string;
   path: string;
   filePath: string;
+}
+
+export interface ImportSkillArchiveRequest {
+  file: Blob;
 }
 
 export interface ListSkillFilesRequest {
@@ -630,6 +636,113 @@ export class SkillsApi extends runtime.BaseAPI {
       requestParameters,
       initOverrides,
     );
+    return await response.value();
+  }
+
+  /**
+   * Accepts either a whole-skill ZIP archive or a standalone file named exactly (case-sensitive) SKILL.md in the file field, safely extracts and validates it server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. The two forms are told apart by the field\'s exact filename, never by its declared content type. Uses the authenticated user\'s own bucket; a client-supplied bucket is never trusted.
+   * Create a new skill from an uploaded ZIP archive or a standalone SKILL.md
+   */
+  async importSkillArchiveRaw(
+    requestParameters: ImportSkillArchiveRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<SkillImportResponseDto>> {
+    if (requestParameters['file'] == null) {
+      throw new runtime.RequiredError(
+        'file',
+        'Required parameter "file" was null or undefined when calling importSkillArchive().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const consumes: runtime.Consume[] = [
+      { contentType: 'multipart/form-data' },
+    ];
+    // @ts-ignore: canConsumeForm may be unused
+    const canConsumeForm = runtime.canConsumeForm(consumes);
+
+    let formParams: { append(name: string, value: string | Blob): void };
+    let useForm = false;
+    // use FormData to transmit files using content-type "multipart/form-data"
+    useForm = canConsumeForm;
+    if (useForm) {
+      formParams = new FormData();
+    } else {
+      formParams = new URLSearchParams();
+    }
+
+    if (requestParameters['file'] != null) {
+      formParams.append('file', requestParameters['file']);
+    }
+
+    let urlPath = `/api/v1/skills/import`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: formParams,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<SkillImportResponseDto>(response);
+  }
+
+  /**
+   * Accepts either a whole-skill ZIP archive or a standalone file named exactly (case-sensitive) SKILL.md in the file field, safely extracts and validates it server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. The two forms are told apart by the field\'s exact filename, never by its declared content type. Uses the authenticated user\'s own bucket; a client-supplied bucket is never trusted.
+   * Create a new skill from an uploaded ZIP archive or a standalone SKILL.md
+   */
+  async importSkillArchive(
+    requestParameters: ImportSkillArchiveRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<SkillImportResponseDto> {
+    const response = await this.importSkillArchiveRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns all catalog-visible skills in one response. Organisation skills are always marked read-only.
+   * List personal, shared, and organisation skills
+   */
+  async listCatalogSkillsRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<SkillCatalogListResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/skills/catalog`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<SkillCatalogListResponseDto>(response);
+  }
+
+  /**
+   * Returns all catalog-visible skills in one response. Organisation skills are always marked read-only.
+   * List personal, shared, and organisation skills
+   */
+  async listCatalogSkills(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<SkillCatalogListResponseDto> {
+    const response = await this.listCatalogSkillsRaw(initOverrides);
     return await response.value();
   }
 

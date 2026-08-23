@@ -193,24 +193,20 @@ describe('ScheduledTaskEditPage', () => {
     getApiErrorStatusMock.mockReturnValue(404);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('region', { name: NotFoundI18nKeys.Title }),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('region', { name: NotFoundI18nKeys.Title }),
+    ).toBeTruthy();
   });
 
   it('shows a retryable error state on a non-404 task fetch failure', async () => {
     getScheduledTaskMock.mockRejectedValue(new Error('network down'));
     renderEditPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('button', {
-          name: 'scheduledTasks.list.retryLabel',
-        }),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('button', {
+        name: 'scheduledTasks.list.retryLabel',
+      }),
+    ).toBeTruthy();
 
     getScheduledTaskMock.mockResolvedValue(baseTask);
     await userEvent.click(
@@ -224,9 +220,7 @@ describe('ScheduledTaskEditPage', () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     expect(screen.getByText('modelId:gpt-4o')).toBeTruthy();
     expect(screen.getByText('prompt:Summarize my inbox')).toBeTruthy();
   });
@@ -235,9 +229,7 @@ describe('ScheduledTaskEditPage', () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
 
     const modelLabelId = screen.getByLabelText('modelLabelId').textContent;
     const triggerLabelledById = screen.getByLabelText(
@@ -252,9 +244,7 @@ describe('ScheduledTaskEditPage', () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
 
     const select = screen.getByRole('combobox', {
       name: 'modelId',
@@ -267,9 +257,7 @@ describe('ScheduledTaskEditPage', () => {
     updateScheduledTaskMock.mockResolvedValue({ id: 'sched_123' });
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
 
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: 'modelId' }),
@@ -286,9 +274,7 @@ describe('ScheduledTaskEditPage', () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     expect(screen.getByText('minute:0')).toBeTruthy();
   });
 
@@ -299,11 +285,9 @@ describe('ScheduledTaskEditPage', () => {
     });
     renderEditPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByText('scheduledTasks.edit.unsupportedTriggerMessage'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('scheduledTasks.edit.unsupportedTriggerMessage'),
+    ).toBeTruthy();
     expect(screen.queryByText(/displayName:/)).not.toBeTruthy();
   });
 
@@ -311,20 +295,16 @@ describe('ScheduledTaskEditPage', () => {
     getScheduledTaskMock.mockResolvedValue({ ...baseTask, model: undefined });
     renderEditPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByText('scheduledTasks.edit.unsupportedTriggerMessage'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('scheduledTasks.edit.unsupportedTriggerMessage'),
+    ).toBeTruthy();
   });
 
   it('navigates to the detail route without a network call when Back is activated', async () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'back' }));
 
     expect(screen.getByText('scheduled task detail page')).toBeTruthy();
@@ -335,9 +315,7 @@ describe('ScheduledTaskEditPage', () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(
       screen.getByRole('button', { name: 'buttons.cancel' }),
     );
@@ -351,9 +329,7 @@ describe('ScheduledTaskEditPage', () => {
     updateScheduledTaskMock.mockResolvedValue({ id: 'sched_123' });
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
@@ -367,9 +343,7 @@ describe('ScheduledTaskEditPage', () => {
     updateScheduledTaskMock.mockReturnValue(new Promise(() => undefined));
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     const saveButton = screen.getByRole('button', { name: 'buttons.save' });
     await userEvent.click(saveButton);
     await userEvent.click(saveButton);
@@ -384,9 +358,7 @@ describe('ScheduledTaskEditPage', () => {
     getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-1' });
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.type(
       screen.getByRole('textbox', { name: 'displayName' }),
       ' edited',
@@ -411,15 +383,11 @@ describe('ScheduledTaskEditPage', () => {
     getApiErrorStatusMock.mockReturnValue(404);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('region', { name: NotFoundI18nKeys.Title }),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('region', { name: NotFoundI18nKeys.Title }),
+    ).toBeTruthy();
   });
 });

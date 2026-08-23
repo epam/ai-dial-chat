@@ -1,5 +1,4 @@
 import {
-  CatalogEntityType,
   CredentialStatus,
   ToolsetAuthenticationType,
   type CatalogItem,
@@ -10,7 +9,7 @@ import type {
   DialToolsetAuthSettingsDto,
   DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
-import { formatLastUsed } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType, formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
 import type { EntitySpecificDetails } from '../types/entity-details';
@@ -69,16 +68,32 @@ export const mapToolsetCredentials = (
     isPublic &&
     userStatus !== CredentialStatus.SignedIn &&
     globalStatus === CredentialStatus.SignedIn;
+  const authenticationType = isCoveredByGlobalAuth
+    ? ToolsetAuthenticationType.None
+    : AUTHENTICATION_TYPE_MAP[authSettings.authenticationType];
+  // const isApiKey = authenticationType === ToolsetAuthenticationType.ApiKey;
 
   return {
-    authenticationType: isCoveredByGlobalAuth
-      ? ToolsetAuthenticationType.None
-      : AUTHENTICATION_TYPE_MAP[authSettings.authenticationType],
+    authenticationType,
     userStatus,
     globalStatus,
     isPublic,
     isManageableByAdmin: isAdmin && isPublic,
     apiKeyHeader: authSettings.apiKeyHeader,
+    /*
+     * MOCK DATA: the backend does not yet expose when an API key was added
+     * (`DialToolsetAuthSettingsDto` has no timestamp field). Hardcoded here
+     * so the "Added X ago" support text has something to show in the
+     * details panel; replace with the real value once the API adds one.
+     */
+    // userApiKeyAddedWhen:
+    //   isApiKey && userStatus === CredentialStatus.SignedIn
+    //     ? '3 weeks ago'
+    //     : undefined,
+    // globalApiKeyAddedWhen:
+    //   isApiKey && globalStatus === CredentialStatus.SignedIn
+    //     ? '1 week ago'
+    //     : undefined,
   };
 };
 
@@ -202,7 +217,7 @@ export const mapDeploymentToCatalogItem = (
     folder: resolveDeploymentFolder(deployment, t),
     details:
       entityDetails != null
-        ? mapEntityDetailsToCatalogDetails(entityDetails)
+        ? mapEntityDetailsToCatalogDetails(entityDetails, t)
         : undefined,
     supportsMcp: deployment.features?.mcp === true,
     supportsChat:

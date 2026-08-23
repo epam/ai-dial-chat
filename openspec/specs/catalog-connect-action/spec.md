@@ -2,15 +2,15 @@
 
 ## Purpose
 
-A Connect tab in the catalog details panel exposing MCP endpoint details for toolsets and MCP-capable applications.
+A Connect tab in the catalog details panel exposing MCP endpoint details for toolsets and MCP-capable applications, and OpenAI-compatible generation endpoint details (Chat Completions / Responses) for models and applications that support them.
 
 ## Requirements
 
 ### Requirement: `libs/catalog` renders Connect as a details-panel tab
 
-`libs/catalog`'s `DetailsPanel` (`Details/DetailsPanel.tsx`) SHALL render a `Connect` tab in the item details tab row (alongside `About`/`Overview`/`Pricing`/`Limits`/`Tools`), driven purely by data: the tab appears whenever `item.details?.api?.resource?.endpointUrl != null`, positioned last in the tab row regardless of the item's `type` and regardless of which other tabs are present.
+`libs/catalog`'s `DetailsPanel` (`Details/DetailsPanel.tsx`) SHALL render a `Connect` tab in the item details tab row (alongside `About`/`Overview`/`Pricing`/`Limits`/`Tools`), driven purely by data: the tab appears whenever `item.details?.api` is "connectable" per `hasConnectableApi(api)`, positioned last in the tab row regardless of the item's `type` and regardless of which other tabs are present.
 
-A connectable endpoint URL — not the mere presence of `api` — is the gate. Items whose `api` data is only a resource identifier plus per-endpoint-type call examples (a model's `resource.modelId` + `endpoints`) have nothing to connect to, so they get no `Connect` tab. The rule is expressed in data, not in `item.type`, so the lib stays type-agnostic; the app decides which items carry an `endpointUrl`.
+`hasConnectableApi(api)` SHALL return `true` when `api?.resource?.endpointUrl != null` OR `api?.endpoints` is a non-empty array, and `false` otherwise. A resource identifier alone (a model's or application's `resource.modelId` with no `endpointUrl` and no `endpoints`) has nothing to connect to, so it gets no `Connect` tab. The rule is expressed in data, not in `item.type`, so the lib stays type-agnostic; the app decides which items carry a connectable `api`.
 
 There is no standalone `Connect` button or popover component. `Details/Header/ConnectButton/` and any app-level `ConnectPopoverContainer` SHALL NOT exist; Connect is reached exclusively by selecting the tab.
 
@@ -42,14 +42,19 @@ None of these sections render a download action; every `MarkdownCodeBlock` insta
 - **WHEN** `item.details?.api?.resource?.endpointUrl` is set
 - **THEN** the `Connect` tab renders as the last tab, after `About`/`Overview`/`Pricing`/`Limits`/`Tools` (whichever of those are also present for that item)
 
+#### Scenario: Connect tab renders last when a non-empty endpoint list is present
+
+- **WHEN** `item.details?.api?.resource?.endpointUrl` is absent but `item.details?.api?.endpoints` has one or more entries
+- **THEN** the `Connect` tab renders as the last tab, exactly as it would with an `endpointUrl`
+
 #### Scenario: Connect tab is absent when api data is not supplied
 
 - **WHEN** `item.details?.api` is `undefined`
 - **THEN** no `Connect` tab renders for that item
 
-#### Scenario: Connect tab is absent for a model
+#### Scenario: Connect tab is absent for a model or application with no connectable endpoint
 
-- **WHEN** `item.details.api` holds only `resource.modelId` and `endpoints` — the shape `mapEntityDetailsToCatalogDetails` produces for Models — with no `resource.endpointUrl`
+- **WHEN** `item.details.api` holds only `resource.modelId`, with no `resource.endpointUrl` and an absent or empty `endpoints` array
 - **THEN** no `Connect` tab renders for that item, and selecting the tab is impossible
 
 #### Scenario: Single endpoint renders one copyable code block
@@ -88,7 +93,9 @@ None of these sections render a download action; every `MarkdownCodeBlock` insta
 
 The kind selects the URL shape: toolsets get `/v1/toolset/{id}/mcp`, MCP-capable applications get `/v1/deployments/{id}/mcp`. The two are not interchangeable — building an application's endpoint from the toolset shape yields a URL DIAL Core does not serve.
 
-For every other item, `api` is left as returned by `mapEntityDetailsToCatalogDetails` (backend-provided endpoint/snippet data for Agents in general, `{ modelId }` plus `endpoints` for Models). Since that mapped shape carries `resource.endpointUrl` only when the backend supplies one, Models never satisfy the Connect tab's gate and never show the tab.
+For every other item whose resolved entity type is `MODEL` or `AGENT`, `handleFetchDetails` SHALL additionally call `buildDeploymentConnectApi(dialCoreExternalUrl ?? '', item.id, { hasChatCompletion, hasResponsesApi })` (see the requirement below) using that item's mapped `capabilities.hasChatCompletion`/`capabilities.hasResponsesApi`, and use the result in place of `mapEntityDetailsToCatalogDetails`'s `api` whenever it is non-`undefined` (i.e. whenever at least one of the two flags is `true`). This makes Models and non-MCP Applications that support Chat Completions and/or the Responses API satisfy the Connect tab's gate via `endpoints`, even though they carry no `resource.endpointUrl`.
+
+For a `TOOLSET` item, or a `MODEL`/`AGENT` item where neither generation-API flag is `true`, `api` is left as returned by `mapEntityDetailsToCatalogDetails` (backend-provided endpoint/snippet data for Agents in general, `{ modelId }` for Models with neither flag set).
 
 Unlike a UI-triggered popover, this override is unconditional: it runs regardless of whether the DIAL Core external URL is configured. When `dialCoreExternalUrl` is not configured, `buildConnectApi` is called with an empty base URL and the endpoint renders as a base-relative path (no absolute host).
 
@@ -110,10 +117,20 @@ Unlike a UI-triggered popover, this override is unconditional: it runs regardles
 - **WHEN** an item has `type: CatalogEntityType.Agent` and `supportsMcp: true`
 - **THEN** `handleFetchDetails` sets `api` to `buildConnectApi(dialCoreExternalUrl ?? '', item.id, McpResourceKind.Application)`, and the endpoint URL uses the `/v1/deployments/` shape rather than the toolset one
 
-#### Scenario: Non-MCP application keeps its backend-provided api data
+#### Scenario: Non-MCP application with no generation-API support keeps its backend-provided api data
 
-- **WHEN** an item has `type: CatalogEntityType.Agent` and `supportsMcp: false` (or `undefined`)
+- **WHEN** an item has `type: CatalogEntityType.Agent`, `supportsMcp: false` (or `undefined`), and its mapped `capabilities.hasChatCompletion`/`hasResponsesApi` are both falsy
 - **THEN** `handleFetchDetails` leaves `api` as returned by `mapEntityDetailsToCatalogDetails`
+
+#### Scenario: Non-MCP model or application with Chat Completions support gets a generation-API Connect endpoint
+
+- **WHEN** an item has `type: CatalogEntityType.Model` (or `type: CatalogEntityType.Agent` with `supportsMcp: false`), and its mapped `capabilities.hasChatCompletion` is `true`
+- **THEN** `handleFetchDetails` sets `api` to `buildDeploymentConnectApi(dialCoreExternalUrl ?? '', item.id, { hasChatCompletion: true, hasResponsesApi })`, whose `endpoints` includes a `Chat Completions` entry built from `buildChatCompletionsUrl`
+
+#### Scenario: Model or application with Responses API support gets a generation-API Connect endpoint
+
+- **WHEN** an item's mapped `capabilities.hasResponsesApi` is `true`
+- **THEN** the resulting `api.endpoints` includes a `Responses` entry built from `buildResponsesUrl`, in addition to any `Chat Completions` entry
 
 #### Scenario: Connect endpoint is still built when the external URL is not configured
 
@@ -182,6 +199,46 @@ Unlike a UI-triggered popover, this override is unconditional: it runs regardles
 
 - **WHEN** `resolveMcpResourceKind` is called with `CatalogEntityType.Toolset`, with `CatalogEntityType.Agent` + `supportsMcp: true`, with `CatalogEntityType.Agent` + `supportsMcp: false`, and with `CatalogEntityType.Model`
 - **THEN** it returns `McpResourceKind.Toolset`, `McpResourceKind.Application`, `null`, and `null` respectively
+
+---
+
+### Requirement: Generation-API (Chat Completions / Responses) endpoint URL helper
+
+`apps/chat` SHALL provide a URL-building utility (`apps/chat/src/utils/deployment-endpoint-url.ts`), separate from the MCP endpoint helper above, for the OpenAI-compatible generation endpoints DIAL Core exposes uniformly for models and applications. The utility SHALL:
+
+- Expose `buildChatCompletionsUrl(baseUrl, id)` returning `` `${trimmedBaseUrl}/openai/deployments/${encodedId}/chat/completions` ``, where `encodedId` is built by the same decode-then-encode-per-segment rule as the MCP helper (each `/`-separated segment is defensively decoded, then re-encoded with `encodeURIComponent`, preserving `/` as a structural separator and avoiding double-encoding an already-percent-encoded segment).
+- Expose `buildResponsesUrl(baseUrl)` returning `` `${trimmedBaseUrl}/openai/v1/responses` `` — this endpoint is not deployment-scoped in its path; the target deployment id is instead carried in the `model` field of the JSON request body.
+- Expose `buildDeploymentConnectApi(baseUrl, id, { hasChatCompletion, hasResponsesApi })` returning a `CatalogItemApiDetails` whose `resource.modelId` is `id` and whose `endpoints` array contains, in order:
+  - a `Chat Completions` entry (`buildChatCompletionsUrl` result, with a single `CodeLanguage.Curl` snippet POSTing a `messages` body) when `hasChatCompletion` is `true`;
+  - a `Responses` entry (`buildResponsesUrl` result, with a single `CodeLanguage.Curl` snippet POSTing a JSON body containing `"model": id` and an `input` field) when `hasResponsesApi` is `true`.
+- Return `undefined` from `buildDeploymentConnectApi` when both flags are falsy, so the caller falls back to the backend-provided `api` data instead of an empty `endpoints` array.
+
+**Feature flag:** Not gated. **RTL impact:** None (URL string, not rendered UI). **i18n impact:** None (the snippet text is a code sample, not localized UI copy).
+
+#### Scenario: Chat Completions endpoint shape
+
+- **WHEN** `buildChatCompletionsUrl(baseUrl, id)` is called
+- **THEN** the result matches `` `${trimmedBaseUrl}/openai/deployments/${encodedId}/chat/completions` ``
+
+#### Scenario: Responses endpoint is not deployment-scoped in the URL
+
+- **WHEN** `buildResponsesUrl(baseUrl)` is called
+- **THEN** the result matches `` `${trimmedBaseUrl}/openai/v1/responses` ``, with no deployment id in the path
+
+#### Scenario: Both endpoints included when both flags are true
+
+- **WHEN** `buildDeploymentConnectApi(baseUrl, id, { hasChatCompletion: true, hasResponsesApi: true })` is called
+- **THEN** the result's `endpoints` contains exactly two entries, `Chat Completions` then `Responses`, and `resource.modelId` equals `id`
+
+#### Scenario: No endpoints built when neither flag is true
+
+- **WHEN** `buildDeploymentConnectApi(baseUrl, id, { hasChatCompletion: false, hasResponsesApi: false })` is called
+- **THEN** the result is `undefined`
+
+#### Scenario: A deployment id with reserved characters is encoded once, not twice
+
+- **WHEN** `buildChatCompletionsUrl(baseUrl, 'applications/public/qa 2.0 with presales 19.08__0.0.3')` is called
+- **THEN** the space in each segment is encoded as a single `%20`, not `%2520`, and the `/` separators between segments are preserved
 
 ---
 

@@ -8,6 +8,7 @@ import {
   EditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { createApplication } from '../../../server-api/applications';
+import { PRIMARY_LOCALE } from '../../../utils/locale';
 import type { GeneralFormHandle } from '../GeneralForm';
 import GeneralForm from '../GeneralForm';
 
@@ -295,6 +296,8 @@ describe('GeneralForm', () => {
         description: undefined,
         iconUrl: undefined,
         topics: ['a', 'b'],
+        locales: undefined,
+        primaryLocale: undefined,
       });
     });
 
@@ -322,7 +325,44 @@ describe('GeneralForm', () => {
         display_version: '1.0.0',
         iconUrl: undefined,
         topics: undefined,
+        locales: undefined,
+        primaryLocale: undefined,
       });
+    });
+
+    it('includes locales and primaryLocale when additional locales are configured', () => {
+      const ref = createRef<GeneralFormHandle>();
+
+      renderForm(
+        {
+          appId: 'users/u/apps/existing',
+          initialValues: {
+            name: 'My App',
+            otherLocales: [
+              {
+                id: 'row-1',
+                language: 'de',
+                name: 'Meine App',
+                description: 'Meine Beschreibung',
+              },
+            ],
+          },
+        },
+        ref,
+      );
+
+      expect(ref.current?.getValues()).toEqual(
+        expect.objectContaining({
+          locales: [
+            {
+              language: 'de',
+              name: 'Meine App',
+              description: 'Meine Beschreibung',
+            },
+          ],
+          primaryLocale: PRIMARY_LOCALE,
+        }),
+      );
     });
   });
 

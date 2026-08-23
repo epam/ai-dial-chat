@@ -5,6 +5,7 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ShareI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useSkills } from '../../context/SkillsContext';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { acceptInvitation } from '../../server-api/share.api';
 import { CatalogQuery } from '../../types/catalog';
@@ -38,6 +39,7 @@ const SharedInvitationPage: FC<Props> = ({
   const { showErrorNotification } = useNotification();
   const { refetchDeployments, refetchToolsets, mergeSharedItem } =
     useDeployments();
+  const { refetchSkills, mergeSharedSkill } = useSkills();
   const { invitationId } = useParams<{ invitationId: string }>();
   const hasStartedRef = useRef(false);
 
@@ -47,21 +49,27 @@ const SharedInvitationPage: FC<Props> = ({
 
     const accept = async () => {
       try {
-        const { itemId, sharedDeployment, sharedToolset } =
+        const { itemId, sharedDeployment, sharedToolset, sharedSkill } =
           await acceptInvitation(invitationId);
         /*
          * The catalog's details panel only opens for `itemId` if it can find
-         * a matching entry in the already-loaded deployments/toolsets list
-         * (see `Catalog`'s `initialDetailsItemId` effect). DIAL Core doesn't
-         * guarantee a bulk list refresh already reflects a just-granted
-         * share, so the refetch below can still come back without the new
-         * item. `mergeSharedItem` runs after it (not before/in parallel) so
-         * the backend-resolved item always wins over a stale refetch instead
-         * of being overwritten by it.
+         * a matching entry in the already-loaded deployments/toolsets/skills
+         * list (see `Catalog`'s `initialDetailsItemId` effect). DIAL Core
+         * doesn't guarantee a bulk list refresh already reflects a
+         * just-granted share, so the refetch below can still come back
+         * without the new item. `mergeSharedItem`/`mergeSharedSkill` run
+         * after it (not before/in parallel) so the backend-resolved item
+         * always wins over a stale refetch instead of being overwritten by
+         * it.
          */
-        await Promise.all([refetchDeployments(), refetchToolsets()]);
+        await Promise.all([
+          refetchDeployments(),
+          refetchToolsets(),
+          refetchSkills(),
+        ]);
         const sharedItem = sharedDeployment ?? sharedToolset;
         if (sharedItem) mergeSharedItem(sharedItem);
+        if (sharedSkill) mergeSharedSkill(sharedSkill);
         navigate(getTargetRoute(itemId), { replace: true });
       } catch (err) {
         const { message: errorMessage, traceId } =
@@ -85,6 +93,8 @@ const SharedInvitationPage: FC<Props> = ({
     refetchDeployments,
     refetchToolsets,
     mergeSharedItem,
+    refetchSkills,
+    mergeSharedSkill,
   ]);
 
   return <RouteFallback />;

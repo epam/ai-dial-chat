@@ -45,7 +45,7 @@ describe('RequireAuth', () => {
       </RequireAuth>,
     );
 
-    expect(container.firstChild).not.toBeNull();
+    expect(container.innerHTML).not.toBe('');
     expect(screen.queryByText('Protected content')).toBeNull();
   });
 
@@ -63,7 +63,7 @@ describe('RequireAuth', () => {
       </RequireAuth>,
     );
 
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
     expect(mockUseAuthRedirect).toHaveBeenCalledWith({ disabled: false });
   });
 
@@ -102,7 +102,7 @@ describe('RequireAuth', () => {
       </RequireAuth>,
     );
 
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
     expect(screen.queryByText('Protected content')).toBeNull();
   });
 

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SkillsDownloadService } from './download/skills-download.service';
+import { SkillsImportService } from './import/skills-import.service';
 import { SkillsListingService } from './listing/skills-listing.service';
 import { SkillsMutationService } from './mutation/skills-mutation.service';
 import { SkillsUploadService } from './upload/skills-upload.service';
@@ -18,10 +19,14 @@ export class SkillsService {
     private readonly downloadService: SkillsDownloadService,
     private readonly uploadService: SkillsUploadService,
     private readonly mutationService: SkillsMutationService,
+    private readonly importService: SkillsImportService,
   ) {}
 
   // Listing
   listSkills = this.listingService.listSkills.bind(this.listingService);
+  listCatalogSkills = this.listingService.listCatalogSkills.bind(
+    this.listingService,
+  );
   listSkillFiles = this.listingService.listSkillFiles.bind(this.listingService);
 
   // Download
@@ -34,6 +39,11 @@ export class SkillsService {
   createSkill = this.uploadService.createSkill.bind(this.uploadService);
   updateSkill = this.uploadService.updateSkill.bind(this.uploadService);
   uploadSkillFile = this.uploadService.uploadSkillFile.bind(this.uploadService);
+
+  // Import
+  importSkillArchive = this.importService.importSkillArchive.bind(
+    this.importService,
+  );
 
   // Mutation
   deleteSkill = this.mutationService.deleteSkill.bind(this.mutationService);

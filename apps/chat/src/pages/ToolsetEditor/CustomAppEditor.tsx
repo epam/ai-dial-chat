@@ -418,15 +418,21 @@ const CustomAppEditor: FC = () => {
       });
       return;
     }
-    setSettingsErrors({});
-
     const hasMimeError = settingsForm.inputAttachmentTypes.some(
       (tag) => !MIME_TYPE_REGEX.test(tag),
     );
+    if (hasMimeError) {
+      setSettingsErrors({
+        inputAttachmentTypes: t(CustomAppI18nKeys.InvalidMimeType),
+      });
+      return;
+    }
+    setSettingsErrors({});
+
     const hasFeaturesDataError = !isValidFeaturesData(
       settingsForm.featuresData,
     );
-    if (hasMimeError || hasFeaturesDataError) {
+    if (hasFeaturesDataError) {
       setIsConfirmSaveOpen(true);
       return;
     }
@@ -450,7 +456,7 @@ const CustomAppEditor: FC = () => {
     !isValidAbsoluteUrl(settingsForm.completionUrl.trim());
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <ToolsetEditorHeader
         step={step}
         isSaving={isSaving}

@@ -57,14 +57,14 @@ describe('StageCodeBlock', () => {
   });
 
   it('applies codeClassName to the code element', () => {
-    const { container } = render(
+    render(
       <StageCodeBlock copyAriaLabel="Copy" codeClassName="language-json">
         {'{}'}
       </StageCodeBlock>,
     );
 
-    const code = container.querySelector('code');
-    expect(code?.className).toContain('language-json');
+    const code = screen.getByText('{}');
+    expect(code.className).toContain('language-json');
   });
 
   it('calls copyToClipboard with the code text when copy is clicked', async () => {

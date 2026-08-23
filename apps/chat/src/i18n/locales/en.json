@@ -8,6 +8,7 @@
     "urlPlaceholder": "https://...",
     "preview": "Preview",
     "settings": "Settings",
+    "usage": "Usage",
     "attachFiles": "Attach files",
     "deleteConfirmDescription": "Are you sure you want to delete",
     "canView": "Can view",
@@ -102,6 +103,7 @@
       "tabContent": "Details",
       "promptLoadError": "Couldn't load this prompt. Please try again.",
       "promptDownloadError": "Couldn't download this prompt. Please try again.",
+      "skillDownloadError": "Couldn't download this skill. Please try again.",
       "tabLimits": "Limits",
       "api": {
         "resourceSection": "Resource",
@@ -113,6 +115,15 @@
       "pricing": {
         "pricesSection": "Token pricing",
         "limitsSection": "Usage limits"
+      },
+      "modelSpecification": {
+        "provider": "Provider",
+        "vendor": "Vendor",
+        "license": "License",
+        "knowledgeCutoffDate": "Knowledge cutoff date",
+        "parameters": "Parameters",
+        "inputModalities": "Input modalities",
+        "outputModalities": "Output modalities"
       },
       "limits": {
         "requestsPerHour": "Requests per hour",
@@ -132,12 +143,34 @@
       "credentials": {
         "signedInLabel": "Signed in",
         "signedOutLabel": "Signed out",
-        "apiKeyFieldHint": "Enter your API key value for \"{{header}}\" header",
-        "loginWithMyCredsLabel": "Login with my creds",
         "manageLabel": "Manage credentials",
-        "mySectionLabel": "My credentials",
-        "orgSectionLabel": "Entire organization credentials",
-        "badgeLoggedOut": "LOGGED OUT",
+        "manageApiKeysLabel": "Manage API keys",
+        "changeApiKeyActionLabel": "Change API key",
+        "personalApiKeyPanelTitle": "Personal API key",
+        "personalApiKeyAddedMessage": "Personal key has been added",
+        "apiKeyConfiguredMessage": "Key has been configured",
+        "apiKeyAddedLabel": "Added {{when}}",
+        "addingApiKeyStatusLabel": "Adding",
+        "apiKeyRequiredErrorMessage": "API key is required.",
+        "deleteApiKeyConfirmMessagePersonal": "Are you sure you want to delete your personal API key?",
+        "deleteApiKeyConfirmMessageOrg": "Are you sure you want to delete the organization API key?",
+        "orgFallbackBannerTitleCredentials": "You are currently using organization credentials to access this toolset.",
+        "orgFallbackBannerTitleApiKey": "You are currently using organization API key to access this toolset.",
+        "orgFallbackBannerDescriptionCredentials": "Login using personal account to have access to your data.",
+        "orgFallbackBannerDescriptionApiKey": "Configure your personal API key to have access to your data.",
+        "orgActiveBannerTitleCredentials": "Signed in with organization credentials.",
+        "orgActiveBannerTitleApiKey": "Signed in with organization API key.",
+        "personalActiveBannerTitleCredentials": "Signed in with personal credentials.",
+        "personalActiveBannerTitleApiKey": "Signed in with personal API key.",
+        "managementTitleCredentials": "Toolset credentials",
+        "managementTitleApiKey": "Toolset API keys",
+        "managementDescriptionCredentials": "Select which account to use with this toolset — personal or organization. If both are configured, personal credentials will be used by default.",
+        "managementDescriptionApiKey": "Select which account to use with this toolset — personal or organization. If both are configured, personal credentials will be used by default for toolset access.",
+        "personalLabel": "Personal credentials",
+        "personalDescription": "These credentials apply only to your account.",
+        "organizationLabel": "Organization credentials",
+        "organizationDescription": "Once added, these credentials will grant all users in your organization access to this toolset.",
+        "badgeLoggedOut": "Authorize to use this toolset.",
         "loginSuccessTitle": "Successful login",
         "loginSuccessOrg": "You have successfully logged into the \"{{name}}\" version {{version}} with credentials to entire organization.",
         "loginSuccessGlobal": "You have successfully logged into the \"{{name}}\" version {{version}}.",
@@ -145,7 +178,15 @@
         "logoutSuccessTitle": "Successful logout",
         "logoutSuccessOrg": "You have successfully logged out of the \"{{name}}\" version {{version}} with credentials to entire organization.",
         "logoutSuccessGlobal": "You have successfully logged out of the \"{{name}}\" version {{version}}.",
-        "logoutSuccessUser": "You have successfully logged out of the \"{{name}}\" version {{version}} using your personal credentials."
+        "logoutSuccessUser": "You have successfully logged out of the \"{{name}}\" version {{version}} using your personal credentials.",
+        "apiKeyAddedSuccessTitle": "API key added",
+        "apiKeyAddedSuccessOrg": "The organization API key for \"{{name}}\" version {{version}} has been added, granting access to everyone in your organization.",
+        "apiKeyAddedSuccessGlobal": "The API key for \"{{name}}\" version {{version}} has been added.",
+        "apiKeyAddedSuccessUser": "Your personal API key for \"{{name}}\" version {{version}} has been added.",
+        "apiKeyDeletedSuccessTitle": "API key deleted",
+        "apiKeyDeletedSuccessOrg": "The organization API key for \"{{name}}\" version {{version}} has been deleted.",
+        "apiKeyDeletedSuccessGlobal": "The API key for \"{{name}}\" version {{version}} has been deleted.",
+        "apiKeyDeletedSuccessUser": "Your personal API key for \"{{name}}\" version {{version}} has been deleted."
       },
       "delete": {
         "confirmTitle": "Delete",
@@ -194,8 +235,18 @@
         "section": "Skill",
         "author": "Author",
         "updated": "Last updated",
-        "fileCount": "Files"
-      }
+        "fileCount": "Files",
+        "specificationSection": "Specification",
+        "whenToUse": "When to use",
+        "allowedTools": "Allowed tools",
+        "bundledResources": "Bundled resources"
+      },
+      "contentFileSelectorAriaLabel": "Select file",
+      "contentFileCount": "{{count}} files",
+      "contentFileLoading": "Loading file",
+      "contentFileError": "Failed to load this file.",
+      "contentFileUnsupported": "Preview is not supported for this file",
+      "downloadingStatus": "Downloading"
     },
     "create": {
       "menuCaption": "Create new",
@@ -203,7 +254,9 @@
       "toolset": "Toolset",
       "customApp": "Custom App",
       "prompt": "Prompt",
-      "skill": "Skill"
+      "skill": "Skill",
+      "skillWriteInstructions": "Write instructions",
+      "skillUpload": "Upload"
     },
     "publishFolderSearchPlaceholder": "Search folders",
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
@@ -234,7 +287,9 @@
     "empty": "No models available",
     "closeLabel": "Close model selector",
     "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date.",
-    "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date."
+    "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date.",
+    "browseCatalogLabel": "Catalog",
+    "unavailableTooltip": "This deployment is no longer available"
   },
   "promptSelector": {
     "addMenuLabel": "Prompts",
@@ -299,7 +354,8 @@
     "manage": "Manage",
     "removeFromMyList": "Remove from My List",
     "revokeAccess": "Revoke access",
-    "revokeAccessWithCount": "Revoke access ({{count}})"
+    "revokeAccessWithCount": "Revoke access ({{count}})",
+    "replace": "Replace"
   },
   "sidebar": {
     "base": {
@@ -422,6 +478,9 @@
     "functionLabel": "Function",
     "targetsLabel": "Targets",
     "targetsPlaceholder": "Add a target",
+    "targetsHintLabel": "Press Enter or comma to add a target.",
+    "requiredFieldError": "This field is required.",
+    "targetsRequiredError": "Add at least one target.",
     "patternLabel": "Pattern",
     "patternPlaceholder": "Enter a regular expression",
     "invalidRegexError": "Enter a valid regular expression.",
@@ -634,7 +693,15 @@
       "activeStatusLabel": "Active",
       "pauseSuccess": "Task paused",
       "resumeSuccess": "Task resumed",
-      "activeStatusUpdateError": "Failed to update the task's active status"
+      "activeStatusUpdateError": "Failed to update the task's active status",
+      "deleteConfirmTitle": "Confirm Deleting Task",
+      "deleteConfirmDescription": "Are you sure you want to delete the task \"{{taskName}}\"? All run conversations will still be accessible.",
+      "deleteConfirmingLabel": "Deleting…",
+      "deleteSuccess": "Scheduled task deleted",
+      "deleteNotFoundError": "This task has already been deleted or could not be found",
+      "deleteRetryableError": "Couldn't delete the task — it hasn't been removed and you can safely try again",
+      "deleteGenericError": "Failed to delete the scheduled task",
+      "deletedStateLabel": "Deleted"
     },
     "edit": {
       "pageTitle": "Edit scheduled task",
@@ -820,7 +887,11 @@
     "htmlFrameBlocked": "This page cannot be displayed in preview",
     "htmlOpenInNewTab": "Open in new tab",
     "htmlViewSource": "View source",
-    "htmlViewRendered": "View rendered"
+    "htmlViewRendered": "View rendered",
+    "pdfThumbnailsLabel": "Thumbnails",
+    "pdfShowThumbnailsLabel": "Show thumbnails",
+    "pdfHideThumbnailsLabel": "Hide thumbnails",
+    "pdfPageNumberLabel": "Page number"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
@@ -864,6 +935,7 @@
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
     "visibilityNoteConversation": "This conversation and its updates will be visible to users with the link.",
+    "nestedItemsNote": "Nested items such as prompts and files aren't shared automatically — share them separately so the app works correctly.",
     "copiedButtonLabel": "Copied",
     "linkAriaLabel": "Share link",
     "expiryNote": "This link is active for {{days}} days.",
@@ -875,6 +947,8 @@
   "editor": {
     "stepGeneral": "General",
     "stepsNavAriaLabel": "Editor steps",
+    "stepOfTotal": "Step {{current}} of {{total}}",
+    "moreActionsLabel": "More actions",
     "saveButton": "Save & Exit",
     "nextButton": "Next",
     "nameLabel": "Name",
@@ -1051,38 +1125,28 @@
   "promptEditor": {
     "createTitle": "New prompt",
     "editTitle": "Edit prompt",
+    "backButtonLabel": "Back",
     "nameLabel": "Name",
     "namePlaceholder": "Give your prompt a short name",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "What is this prompt for?",
-    "contentLabel": "Prompt",
-    "contentPlaceholder": "Write the prompt text you want to reuse",
-    "folderLabel": "Folder",
-    "folderRootOption": "No folder",
-    "folderEmptyState": "You have no folders yet.",
+    "contentLabel": "Instructions",
+    "contentPlaceholder": "Write the prompt instructions you want to reuse",
     "error": {
       "required": "This field is required.",
       "nameTooLong": "Use 256 characters or fewer.",
       "nameInvalid": "Use only letters, digits, spaces, and _ . -",
       "descriptionTooLong": "Use 2000 characters or fewer.",
       "contentTooLong": "Use 50000 characters or fewer.",
-      "nameConflict": "A prompt with this name already exists in this folder.",
-      "folderConflict": "A folder with this name already exists here."
+      "nameConflict": "A prompt with this name already exists in this folder."
     },
     "charactersRemaining": "{{count}} characters left",
     "loadError": "Couldn't load this prompt.",
     "retryLabel": "Try again",
     "savingStatus": "Saving",
     "saveError": "Couldn't save this prompt. Please try again.",
-    "moveError": "The prompt was saved but couldn't be moved to the selected folder.",
-    "folderCreateLabel": "New folder",
-    "folderRenameLabel": "Rename folder",
-    "folderDeleteLabel": "Delete folder",
-    "folderNameLabel": "Folder name",
-    "folderDeleteConfirmTitle": "Delete folder",
-    "folderDeleteConfirmMessage": "Delete \"{{name}}\" and every prompt inside it? This cannot be undone.",
-    "folderError": "Couldn't update folders. Please try again.",
-    "loadingAriaLabel": "Loading prompt"
+    "loadingAriaLabel": "Loading prompt",
+    "contentLoadingAriaLabel": "Loading prompt editor"
   },
   "skillEditor": {
     "title": "Create skill",
@@ -1091,10 +1155,6 @@
     "filesTreeAriaLabel": "Skill files",
     "addUploadLabel": "Upload from device",
     "removeLabel": "Remove",
-    "removeConfirmTitle": "Remove file",
-    "removeConfirmMessage": "Remove \"{{path}}\"? This cannot be undone.",
-    "removeConfirmLabel": "Remove",
-    "removeCancelLabel": "Cancel",
     "editingFileLabel": "Editing file",
     "nameLabel": "Name",
     "namePlaceholder": "good-morning-breakfast",
@@ -1120,9 +1180,18 @@
       "fileTooLarge": "This file exceeds the maximum size of {{maxSize}}.",
       "archiveTooLarge": "This skill package is too large to upload.",
       "serviceUnavailable": "The service is temporarily unavailable. Please try again.",
-      "save": "Couldn't create this skill. Please try again."
+      "save": "Couldn't create this skill. Please try again.",
+      "manifestCasingInvalid": "The manifest filename must be exactly \"SKILL.md\".",
+      "manifestDuplicate": "Only one SKILL.md is allowed per upload.",
+      "manifestInvalidUtf8": "SKILL.md isn't valid UTF-8 text.",
+      "manifestInvalidFrontmatter": "SKILL.md must have valid YAML frontmatter with a name and description.",
+      "manifestNameMismatch": "This SKILL.md's name doesn't match this skill. Renaming a skill isn't supported.",
+      "totalSizeExceeded": "This would make the skill package too large to upload.",
+      "totalCountExceeded": "This would exceed the maximum number of files allowed in a skill.",
+      "manifestImportDeclined": "Manifest import cancelled, staged files kept."
     },
     "saveSuccessTitle": "Skill created",
+    "updateSuccessTitle": "Skill updated",
     "createSuccess": "\"{{name}}\" has been created.",
     "editTitle": "Edit skill",
     "saveLabel": "Save",
@@ -1138,7 +1207,35 @@
     "unsavedChangesTitle": "Discard unsaved changes?",
     "unsavedChangesMessage": "You have unsaved changes. Leaving now will discard them.",
     "unsavedChangesConfirmLabel": "Discard changes",
-    "unsavedChangesCancelLabel": "Keep editing"
+    "unsavedChangesCancelLabel": "Keep editing",
+    "uploadDialogTitle": "Upload files from device",
+    "uploadDropZoneLabel": "Drag and drop it or click here to upload",
+    "uploadDropZoneMobileLabel": "Click here to upload",
+    "uploadDropZoneAriaLabel": "Upload files",
+    "uploadManifestRowNote": "Will replace this Skill's name, description, and instructions",
+    "uploadBatchErrorAriaPrefix": "Upload error: ",
+    "uploadRemoveCandidateLabel": "Remove {{path}}",
+    "dropOverlayTitle": "Upload files",
+    "dropOverlaySubtitle": "Drop files here to add them to this skill",
+    "manifestImportConfirmTitle": "Replace Skill metadata?",
+    "manifestImportConfirmMessage": "Importing this SKILL.md will replace the Name, Description, and Instructions fields. This cannot be undone."
+  },
+  "skillArchiveImport": {
+    "fileInputAriaLabel": "Upload a skill ZIP archive or a SKILL.md file",
+    "status": {
+      "uploading": "Uploading skill…",
+      "success": "Skill uploaded successfully.",
+      "error": "Skill upload failed."
+    },
+    "error": {
+      "title": "Skill import failed",
+      "validation": "This archive isn't a valid skill package. Please check its contents and try again.",
+      "unsupportedFilename": "Please select a ZIP archive or a file named exactly \"SKILL.md\".",
+      "collision": "A skill with this name already exists.",
+      "rateLimited": "Too many attempts. Please wait a moment and try again.",
+      "serviceUnavailable": "The service is temporarily unavailable. Please try again.",
+      "generic": "Couldn't import this skill. Please try again."
+    }
   },
   "entityNotifications": {
     "prompt": {
@@ -1200,8 +1297,12 @@
       "publishRequested": "Publish request for model \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
     },
     "skill": {
+      "createdTitle": "Skill created successfully",
+      "created": "You can now see skill \"{{name}}\" in the catalog and My collection.",
       "deletedTitle": "Skill deleted successfully",
       "deleted": "Skill \"{{name}}\" is not available anymore.",
+      "downloadedTitle": "Skill downloaded successfully",
+      "downloaded": "Skill \"{{name}}\" is saved on your device.",
       "publishRequestedTitle": "Skill publish requested",
       "publishRequested": "Publish request for skill \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
     },
@@ -1231,5 +1332,39 @@
       "downloadedTitle": "Folder downloaded successfully",
       "downloaded": "Folder \"{{name}}\" is saved on your device."
     }
+  },
+  "usage": {
+    "pageTitle": "Usage",
+    "pageDescription": "Cost, tokens and requests are metered independently — each can carry its own limit per day, week and month.",
+    "todayTitle": "Today",
+    "todayPeriodDescription": "Last 24 hours",
+    "thisWeekTitle": "This week",
+    "thisWeekPeriodDescription": "Last 7 days",
+    "thisMonthTitle": "This month",
+    "thisMonthPeriodDescription": "Last 30 days",
+    "defaultBadgeLabel": "Within limits",
+    "runningLowBadgeLabel": "Running low",
+    "limitReachedBadgeLabel": "Limit reached",
+    "usedOfTotalLabel": "used of {{total}}",
+    "remainingCaptionLabel": "{{remaining}} left",
+    "usedPercentLabel": "{{percent}}%",
+    "unlimitedProgressAriaLabel": "{{used}} used, unlimited",
+    "progressAriaLabel": "{{used}} of {{total}}, {{percent}}% used",
+    "fullLoadError": "We couldn't load your usage data. Please try again later.",
+    "loading": "Loading usage data…",
+    "modelLimitsHeading": "Model limits",
+    "modelLimitsEmptyState": "No models to show yet.",
+    "periodSelectorAriaLabel": "Select usage period",
+    "itemColumnLabel": "Item",
+    "costColumnLabel": "Cost",
+    "tokensColumnLabel": "Tokens",
+    "requestsColumnLabel": "Requests",
+    "statusColumnLabel": "Status",
+    "modelTypeLabel": "Model",
+    "periodLastMinuteLabel": "Last minute",
+    "periodLastHourLabel": "Last hour",
+    "noLimitLabel": "No limit",
+    "unavailableLabel": "Not available",
+    "unavailableBadgeLabel": "Unavailable"
   }
 }

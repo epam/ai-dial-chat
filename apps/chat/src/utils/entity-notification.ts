@@ -1,4 +1,4 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { EntityNotificationsI18nKeys } from '../constants/translation-keys';
 import {
   EntityOperation,
@@ -125,9 +125,17 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
     },
   },
   [NotifiableEntity.Skill]: {
+    [EntityOperation.Created]: {
+      titleKey: EntityNotificationsI18nKeys.SkillCreatedTitle,
+      messageKey: EntityNotificationsI18nKeys.SkillCreated,
+    },
     [EntityOperation.Deleted]: {
       titleKey: EntityNotificationsI18nKeys.SkillDeletedTitle,
       messageKey: EntityNotificationsI18nKeys.SkillDeleted,
+    },
+    [EntityOperation.Downloaded]: {
+      titleKey: EntityNotificationsI18nKeys.SkillDownloadedTitle,
+      messageKey: EntityNotificationsI18nKeys.SkillDownloaded,
     },
     [EntityOperation.PublishRequested]: {
       titleKey: EntityNotificationsI18nKeys.SkillPublishRequestedTitle,

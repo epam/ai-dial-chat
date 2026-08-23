@@ -1,4 +1,5 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import { useConversationScroll } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DisplayAttachment,
@@ -59,12 +60,12 @@ import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentVal
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
-import { useConversationScroll } from '../../hooks/conversation/useConversationScroll';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { isQuickAppSchema } from '../../utils/application-schema';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import {
@@ -219,6 +220,7 @@ const ConversationView: FC<Props> = ({
     OverlayFeature.SkipFocusChatInputOnload,
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
+  const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -523,6 +525,9 @@ const ConversationView: FC<Props> = ({
     conversation,
     onConversationChange,
     deploymentFeatures: selectedDeployment?.features,
+    isQuickApp: isQuickAppSchema({
+      id: selectedDeployment?.applicationTypeSchemaId,
+    }),
   });
 
   const handleAttachDialFiles = useCallback(
@@ -631,6 +636,7 @@ const ConversationView: FC<Props> = ({
                     index={index}
                     totalCount={messages.length}
                     isAssistantTyping={isAssistantTyping}
+                    isCompactTypography={isMobile}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
                     onStartEdit={isReadOnly ? undefined : onStartEdit}
@@ -796,7 +802,7 @@ const ConversationView: FC<Props> = ({
                 )}
                 messageHistory={messageHistory}
                 sendOnEnter={sendOnEnter}
-                chatSettings={chatSettings}
+                chatSettings={isChatSettingsEnabled ? chatSettings : undefined}
                 toolsMenuItems={toolsMenuItems}
                 onToolToggle={onToolToggle}
                 toolsMenuTitle={toolsMenuTitle}

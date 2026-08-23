@@ -200,9 +200,9 @@ describe('AnnouncementBanner — structured layout', () => {
     expect(title.className).toContain('truncate');
     expect(title.className).toContain('min-w-0');
 
-    const paragraph = title.parentElement;
-    expect(paragraph?.className).toContain('min-w-0');
-    expect(paragraph?.textContent).toContain(
+    const paragraph = screen.getByRole('paragraph');
+    expect(paragraph.className).toContain('min-w-0');
+    expect(paragraph.textContent).toContain(
       'A description long enough that it would overrun the banner width.',
     );
   });
@@ -227,17 +227,17 @@ describe('AnnouncementBanner — structured layout', () => {
     const closeButton = screen.getByRole('button', {
       name: 'announcementBanner.closeLabel',
     });
-    const paragraph = screen.getByText('Welcome to DIAL').parentElement;
-    expect(paragraph?.contains(closeButton)).toBe(false);
+    const paragraph = screen.getByRole('paragraph');
+    expect(paragraph.contains(closeButton)).toBe(false);
   });
 
   it('starts the text at the leading edge rather than centering it', () => {
     mockAppConfigState.announcementTitle = 'Welcome to DIAL';
     render(<AnnouncementBanner />);
 
-    const paragraph = screen.getByText('Welcome to DIAL').parentElement;
-    expect(paragraph?.className).toContain('text-start');
-    expect(paragraph?.className).not.toContain('text-center');
+    const paragraph = screen.getByRole('paragraph');
+    expect(paragraph.className).toContain('text-start');
+    expect(paragraph.className).not.toContain('text-center');
   });
 });
 
@@ -269,20 +269,23 @@ describe('AnnouncementBanner — announcements pill', () => {
     mockAppConfigState.announcements = [makeAnnouncement('Upgraded to 1.43')];
     render(<AnnouncementBanner />);
 
-    const region = screen.getByRole('region');
-    const paragraph = screen.getByText('Welcome to DIAL').closest('p');
+    const paragraph = screen.getByRole('paragraph');
     const pill = screen.getByRole('button', { name: PILL_NAME });
     const closeButton = screen.getByRole('button', {
       name: 'announcementBanner.closeLabel',
     });
 
-    const order = Array.from(region.children);
-    expect(order.indexOf(paragraph as Element)).toBeLessThan(
-      order.findIndex((child) => child.contains(pill)),
-    );
-    expect(order.findIndex((child) => child.contains(pill))).toBeLessThan(
-      order.findIndex((child) => child.contains(closeButton)),
-    );
+    /* `compareDocumentPosition` reports document order without walking the
+       DOM tree, so it establishes the pill sits between the text and the
+       close control regardless of intermediate wrapper markup. */
+    expect(
+      paragraph.compareDocumentPosition(pill) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      pill.compareDocumentPosition(closeButton) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('keeps the pill outside the truncating text container', () => {
@@ -290,9 +293,9 @@ describe('AnnouncementBanner — announcements pill', () => {
     mockAppConfigState.announcements = [makeAnnouncement('Upgraded to 1.43')];
     render(<AnnouncementBanner />);
 
-    const paragraph = screen.getByText('Welcome to DIAL').closest('p');
+    const paragraph = screen.getByRole('paragraph');
     const pill = screen.getByRole('button', { name: PILL_NAME });
-    expect(paragraph?.contains(pill)).toBe(false);
+    expect(paragraph.contains(pill)).toBe(false);
   });
 
   it('renders no pill in the legacy layout', () => {
@@ -369,6 +372,10 @@ describe('AnnouncementBanner — RTL', () => {
     mockAppConfigState.announcementDescription = 'Explore our AI offerings.';
     const { container } = render(<AnnouncementBanner />);
 
+    /* Scanning every rendered element's className for a physical-direction
+       Tailwind utility is CSS-level behavior with no semantic query
+       equivalent (this repo's spec conventions carve out this exact case). */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const classNames = Array.from(container.querySelectorAll('*'))
       .map((element) => element.className)
       .filter((name): name is string => typeof name === 'string');
@@ -460,7 +467,8 @@ describe('AnnouncementBanner — sanitization', () => {
     mockAppConfigState.announcementHtml = '<a href="javascript:alert(1)">x</a>';
     render(<AnnouncementBanner />);
 
-    expect(screen.getByText('x').getAttribute('href')).toBeNull();
+    const link = screen.getByText('x');
+    expect(link.getAttribute('href')).toBeNull();
   });
 
   it('renders nothing when the legacy message sanitizes away entirely', () => {

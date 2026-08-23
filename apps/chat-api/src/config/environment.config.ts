@@ -781,6 +781,26 @@ export class EnvironmentVariables {
   SCHEDULED_TASKS_ENABLED_ROLES?: string[] = [];
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'boolean') return value;
+    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  })
+  @IsBoolean()
+  SETTINGS_PAGE_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  SETTINGS_PAGE_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
   @IsString()
   SCHEDULER_APP_ID?: string;
 
@@ -843,4 +863,21 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1000)
   SKILL_TRANSFER_TIMEOUT_MS?: number = 60_000;
+
+  /*
+   * Compressed-ZIP ingress cap for `POST /api/v1/skills/import` (see
+   * openspec/changes/add-skill-archive-import/design.md D8). Distinct from
+   * the retired `SKILL_UPLOAD_MAX_BYTES`: that variable capped a ZIP upload
+   * on the create/update path, which no longer accepts ZIP at all; this one
+   * bounds the new, additive archive-import endpoint's compressed upload
+   * before extraction. Default (20 MiB) is deliberately larger than
+   * `SKILL_UPLOAD_MAX_TOTAL_BYTES` (16 MiB decompressed) since ZIP container
+   * overhead and poorly-compressible content (Markdown, scripts) mean the
+   * compressed size can approach the uncompressed total.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  SKILL_ARCHIVE_UPLOAD_MAX_BYTES?: number = 20_971_520;
 }

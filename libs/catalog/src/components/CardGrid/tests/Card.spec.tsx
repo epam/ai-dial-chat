@@ -1,8 +1,8 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
-import { CatalogEntityType } from '../../../types/entity-type';
 import {
   CredentialStatus,
   ToolsetAuthenticationType,
@@ -35,7 +35,29 @@ describe('Card — selected state', () => {
 
     const card = screen.getByRole('article', { hidden: true });
     expect(card.className).toContain('selectedCard');
+    // Checkmark icon is aria-hidden with no accessible role, so no semantic query can find it.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(card.querySelector('svg')).toBeTruthy();
+  });
+});
+
+describe('Card — long version', () => {
+  it('caps the version at 30% of the row so it cannot overlap the name', () => {
+    render(
+      <Card item={makeItem({ version: 'With Google Search Grounding' })} />,
+    );
+
+    const version = screen.getByText('With Google Search Grounding');
+    expect(version.className).toContain('max-w-[30%]');
+    expect(version.className).toContain('shrink-0');
+  });
+
+  it('lets the name truncate instead of being pushed out', () => {
+    render(<Card item={makeItem()} />);
+
+    const name = screen.getByText('Claude');
+    expect(name.className).toContain('min-w-0');
+    expect(name.className).toContain('truncate');
   });
 });
 
@@ -72,7 +94,7 @@ describe('Card — favorite revert', () => {
 });
 
 describe('Card — credentials badge', () => {
-  it('shows the LOGGED OUT badge for a signed-out toolset, for both API_KEY and OAUTH', () => {
+  it('shows the logged-out warning icon for a signed-out toolset, for both API_KEY and OAUTH', () => {
     for (const authenticationType of [
       ToolsetAuthenticationType.ApiKey,
       ToolsetAuthenticationType.OAuth,
@@ -86,15 +108,17 @@ describe('Card — credentials badge', () => {
               globalStatus: CredentialStatus.SignedOut,
             },
           })}
-          credentialsBadgeLoggedOutLabel="LOGGED OUT"
+          credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
         />,
       );
-      expect(screen.getByText('LOGGED OUT')).toBeTruthy();
+      expect(
+        screen.getByRole('img', { name: 'Authorize to use this toolset.' }),
+      ).toBeTruthy();
       unmount();
     }
   });
 
-  it('shows no badge when signed in or when authenticationType is NONE', () => {
+  it('shows no warning icon when signed in or when authenticationType is NONE', () => {
     const { unmount } = render(
       <Card
         item={makeItem({
@@ -103,10 +127,12 @@ describe('Card — credentials badge', () => {
             userStatus: CredentialStatus.SignedIn,
           },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
-    expect(screen.queryByText('LOGGED OUT')).toBeNull();
+    expect(
+      screen.queryByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeNull();
     unmount();
 
     render(
@@ -114,9 +140,11 @@ describe('Card — credentials badge', () => {
         item={makeItem({
           credentials: { authenticationType: ToolsetAuthenticationType.None },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
-    expect(screen.queryByText('LOGGED OUT')).toBeNull();
+    expect(
+      screen.queryByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeNull();
   });
 });

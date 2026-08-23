@@ -50,7 +50,14 @@ describe('MarkdownRenderer', () => {
     render(<MarkdownRenderer content={TABLE_MARKDOWN} />);
 
     const table = screen.getByRole('table');
+    /*
+     * The scroll container and outer wrapper are plain divs with no
+     * accessible role — ancestor traversal from the semantic <table> is the
+     * only way to reach them for these CSS-level class checks.
+     */
+    // eslint-disable-next-line testing-library/no-node-access
     const scrollContainer = table.parentElement;
+    // eslint-disable-next-line testing-library/no-node-access
     const tableWrapper = scrollContainer?.parentElement;
 
     expect(table.className).toContain('w-max');
@@ -82,26 +89,22 @@ describe('MarkdownRenderer', () => {
   it('detects a section row (single non-empty cell) without misdetecting normal rows', () => {
     render(<MarkdownRenderer content={SECTION_ROW_MARKDOWN} />);
 
-    const sectionCell = screen.getByRole('cell', { name: 'Group B' });
-    const sectionRow = sectionCell.closest('tr');
-    expect(sectionRow?.className).toContain('sectionRow');
+    // Rows carry the implicit "row" role, so each row under test is found
+    // by its text content rather than by traversing up from a cell.
+    const findRow = (text: string) =>
+      screen.getAllByRole('row').find((row) => row.textContent?.includes(text));
 
-    const normalCell = screen.getByRole('cell', { name: 'Alpha' });
-    const normalRow = normalCell.closest('tr');
-    expect(normalRow?.className).not.toContain('sectionRow');
-
-    const headerRow = screen
-      .getByRole('columnheader', { name: 'Name' })
-      .closest('tr');
-    expect(headerRow?.className).not.toContain('sectionRow');
+    expect(findRow('Group B')?.className).toContain('sectionRow');
+    expect(findRow('Alpha')?.className).not.toContain('sectionRow');
+    expect(findRow('Name')?.className).not.toContain('sectionRow');
   });
 
   it('renders a header-only table (no body rows) without error', () => {
     render(<MarkdownRenderer content={EMPTY_TABLE_MARKDOWN} />);
 
-    const table = screen.getByRole('table');
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeTruthy();
-    expect(table.querySelector('tbody')?.children.length ?? 0).toBe(0);
+    // Only the header row exists — no body rows were rendered.
+    expect(screen.getAllByRole('row')).toHaveLength(1);
   });
 
   it('merges table class overrides with the scrolling defaults', () => {
@@ -121,6 +124,7 @@ describe('MarkdownRenderer', () => {
     const columnHeader = screen.getByRole('columnheader', { name: 'Name' });
     const cell = screen.getByRole('cell', { name: 'Alpha' });
 
+    // The outer wrapper div carrying `tableWrapper` has no accessible role.
     expect(table.parentElement?.parentElement?.className).toContain(
       'custom-wrapper',
     );
@@ -155,6 +159,9 @@ describe('MarkdownRenderer', () => {
 
     const codeEl = screen.getByText('const');
     expect(codeEl.tagName).toBe('CODE');
+    // No sticky-positioned header ancestor exists for inline code, and there
+    // is no semantic role to assert that absence with.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(codeEl.closest('[class*="sticky"]')).toBeNull();
   });
 
@@ -184,14 +191,16 @@ describe('MarkdownRenderer', () => {
   });
 
   it('applies classNames.codeBlockContainer to the block container', () => {
-    const { container } = render(
+    render(
       <MarkdownRenderer
         content={FENCED_TS_MARKDOWN}
         classNames={{ codeBlockContainer: 'custom-container' }}
       />,
     );
 
-    expect(container.querySelector('.custom-container')).toBeTruthy();
+    // The code block container has no accessible role of its own.
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('.custom-container')).toBeTruthy();
   });
 
   it('styles extended GFM prose elements', () => {
@@ -210,7 +219,7 @@ describe('MarkdownRenderer', () => {
       screen.getByRole('heading', { level: 4, name: 'Smaller heading' })
         .className,
     ).toContain('custom-h4');
-    expect(document.querySelector('hr')?.className).toContain('custom-hr');
+    expect(screen.getByRole('separator').className).toContain('custom-hr');
     expect(screen.getByText('Removed').className).toContain('custom-del');
     const checkbox = screen.getByRole('checkbox') as HTMLInputElement;
     expect(checkbox.checked).toBe(true);
@@ -218,17 +227,26 @@ describe('MarkdownRenderer', () => {
   });
 
   it('renders single-newline-separated lines with a visible line break between each pair', () => {
-    const { container } = render(<MarkdownRenderer content={POEM_MARKDOWN} />);
+    render(<MarkdownRenderer content={POEM_MARKDOWN} />);
 
-    const paragraph = container.querySelector('p');
+    /*
+     * The paragraph and its <br> line breaks carry no accessible role, so
+     * this line-break/ordering check needs direct DOM access. Querying
+     * `document` (rather than destructuring `container` from `render`)
+     * keeps the render call itself free of unused bindings.
+     */
+    // eslint-disable-next-line testing-library/no-node-access
+    const paragraph = document.querySelector('p');
     const text = paragraph?.textContent ?? '';
     expect(text).toContain('Line one');
     expect(text).toContain('Line two');
     expect(text).toContain('Line three');
     expect(text.indexOf('Line one')).toBeLessThan(text.indexOf('Line two'));
     expect(text.indexOf('Line two')).toBeLessThan(text.indexOf('Line three'));
+    // eslint-disable-next-line testing-library/no-node-access
     expect(paragraph?.querySelectorAll('br').length).toBe(2);
-    expect(container.querySelectorAll('br').length).toBe(2);
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelectorAll('br').length).toBe(2);
   });
 
   it('keeps blank-line-separated paragraphs as two distinct <p> elements with no extra break inside either', () => {
@@ -239,7 +257,10 @@ describe('MarkdownRenderer', () => {
     expect(firstParagraph.tagName).toBe('P');
     expect(secondParagraph.tagName).toBe('P');
     expect(firstParagraph).not.toBe(secondParagraph);
+    // <br> has no accessible role, so its absence is checked via querySelectorAll.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(firstParagraph.querySelectorAll('br').length).toBe(0);
+    // eslint-disable-next-line testing-library/no-node-access
     expect(secondParagraph.querySelectorAll('br').length).toBe(0);
   });
 
@@ -248,6 +269,8 @@ describe('MarkdownRenderer', () => {
 
     const list = screen.getByRole('list');
     const items = screen.getAllByRole('listitem');
+    // <br> has no accessible role, so its absence is checked via querySelectorAll.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(list.querySelectorAll('br').length).toBe(0);
     expect(items.map((item) => item.textContent)).toEqual([
       'Item one',
@@ -257,11 +280,11 @@ describe('MarkdownRenderer', () => {
   });
 
   it('does not inject extra line breaks inside a fenced code block with internal newlines', () => {
-    const { container } = render(
-      <MarkdownRenderer content={FENCED_NO_LANG_MARKDOWN} />,
-    );
+    render(<MarkdownRenderer content={FENCED_NO_LANG_MARKDOWN} />);
 
-    expect(container.querySelector('pre')?.querySelectorAll('br').length).toBe(
+    // Neither <pre> nor <br> carries an accessible role.
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('pre')?.querySelectorAll('br').length).toBe(
       0,
     );
   });
@@ -271,31 +294,38 @@ describe('MarkdownRenderer', () => {
 
     const codeEl = screen.getByText('const x = 1;');
     expect(codeEl.tagName).toBe('CODE');
+    // <br> has no accessible role, so its absence is checked via querySelectorAll.
+    // eslint-disable-next-line testing-library/no-node-access
     expect(codeEl.querySelectorAll('br').length).toBe(0);
   });
 
   it('renders double-dollar LaTeX as a KaTeX math element', () => {
-    const { container } = render(
-      <MarkdownRenderer content="Equation: $$x^2 + y^2 = z^2$$" />,
-    );
+    render(<MarkdownRenderer content="Equation: $$x^2 + y^2 = z^2$$" />);
 
-    expect(container.querySelector('math')).toBeTruthy();
+    /*
+     * MathML's `<math>` element crashes `getByRole` under jsdom (jsdom
+     * cannot compute styles for MathML elements), so a plain selector is
+     * the only reliable way to assert its presence here.
+     */
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('math')).toBeTruthy();
   });
 
   it('renders single-dollar inline LaTeX as a KaTeX math element', () => {
-    const { container } = render(<MarkdownRenderer content="Cost: $x + y$" />);
+    render(<MarkdownRenderer content="Cost: $x + y$" />);
 
-    expect(container.querySelector('math')).toBeTruthy();
+    // eslint-disable-next-line testing-library/no-node-access -- see note above: getByRole('math') crashes under jsdom
+    expect(document.querySelector('math')).toBeTruthy();
   });
 
   it('lets a long unbreakable URL wrap so a clipped ancestor cannot cut it off', () => {
     const longUrl =
       'https://example.com/very/long/path/segment/that/never/breaks/document-name-with-no-spaces.pdf';
-    const { container } = render(
-      <MarkdownRenderer content={`See ${longUrl} for details.`} />,
-    );
+    render(<MarkdownRenderer content={`See ${longUrl} for details.`} />);
 
-    const paragraph = container.querySelector('p');
+    // The paragraph wrapping the link has no accessible role of its own.
+    // eslint-disable-next-line testing-library/no-node-access
+    const paragraph = document.querySelector('p');
     const link = screen.getByRole('link');
 
     expect(paragraph?.className).toContain('break-words');
@@ -304,11 +334,10 @@ describe('MarkdownRenderer', () => {
   });
 
   it('does not treat a currency amount as LaTeX', () => {
-    const { container } = render(
-      <MarkdownRenderer content="Price is $50 and $100" />,
-    );
+    render(<MarkdownRenderer content="Price is $50 and $100" />);
 
-    expect(container.querySelector('math')).toBeNull();
+    // eslint-disable-next-line testing-library/no-node-access -- see note above: getByRole('math') crashes under jsdom
+    expect(document.querySelector('math')).toBeNull();
     expect(screen.getByText('Price is $50 and $100')).toBeTruthy();
   });
 

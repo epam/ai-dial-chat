@@ -3,7 +3,7 @@ name: security-review
 # Wraps the pre-existing BUILT-IN Claude Code `security-review` skill (no
 # .claude/skills/ file is authored for it). The composite action resolves
 # `/security-review` at runtime. This mirrors the deployed
-# ai-dial-chat@development-1.0/.github/workflows/claude-security-review.yml,
+# ai-dial-chat@development/.github/workflows/claude-security-review.yml,
 # which moved off the specialized claude-code-security-review Action onto this
 # built-in skill. See security/ satellite for sourcing rationale.
 skill: security-review

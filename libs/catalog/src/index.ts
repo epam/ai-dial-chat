@@ -5,9 +5,7 @@ export {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
 } from './types/details-confirmation';
-export { CatalogEntityType } from './types/entity-type';
 export { DeploymentSize } from './types/deployment-icon-size';
-export { CatalogSortKey } from './types/sort';
 export {
   CredentialsBadgeState,
   CredentialsLevel,
@@ -16,6 +14,11 @@ export {
   ToolsetAuthenticationType,
 } from './types/toolset-auth';
 export { CatalogViewMode } from './types/view-mode';
+export { CatalogSortKey } from './types/sort';
+export {
+  CatalogContentNodeType,
+  CatalogContentPreviewType,
+} from './types/catalog-content-type';
 
 // Models
 export type { CatalogItem } from './models/catalog-item';
@@ -29,6 +32,14 @@ export type {
 export type { EndpointOption } from './models/item-details-data';
 export type {
   ApiResource,
+  CatalogContentFileNode,
+  CatalogContentFolderNode,
+  CatalogContentTreeNode,
+  CatalogContentFilePreview,
+  CatalogContentMarkdownPreview,
+  CatalogContentTextPreview,
+  CatalogContentImagePreview,
+  CatalogContentUnsupportedPreview,
   CatalogItemApiDetails,
   CatalogItemDetailsFetchResult,
   CatalogItemLimits,
@@ -109,9 +120,6 @@ export type {
   ListViewTypography,
 } from './models/list-props';
 
-export { EntityTypeLabel } from './components/EntityTypeLabel/EntityTypeLabel';
-export type { EntityTypeLabelProps } from './components/EntityTypeLabel/EntityTypeLabel';
-
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
 
@@ -128,7 +136,10 @@ export { InfoCard } from './components/InfoCard/InfoCard';
 export type { InfoCardProps } from './components/InfoCard/InfoCard';
 
 export { CredentialsBadge } from './components/CredentialsBadge/CredentialsBadge';
-export type { CredentialsBadgeProps } from './components/CredentialsBadge/CredentialsBadge';
+export type {
+  CredentialsBadgeColors,
+  CredentialsBadgeProps,
+} from './components/CredentialsBadge/CredentialsBadge';
 
 export { ContentTab } from './components/Details/TabsContent/Content';
 export type { ContentTabProps } from './components/Details/TabsContent/Content';

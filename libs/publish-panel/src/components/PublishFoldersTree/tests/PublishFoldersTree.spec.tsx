@@ -369,15 +369,24 @@ describe('PublishFoldersTree', () => {
     ).toBeNull();
   });
 
-  it('cancels inline folder creation without calling onCreateFolder', async () => {
+  it('cancels inline folder creation through the public cancel action', async () => {
     const onCreateFolder = vi.fn();
     renderTree({ onCreateFolder });
     await userEvent.click(
       screen.getByRole('button', { name: 'Create new folder' }),
     );
-    act(() => capturedProps.current?.onCreateFolderCancel?.());
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(capturedProps.current?.createdFolderPath).toBeNull();
     expect(onCreateFolder).not.toHaveBeenCalled();
+  });
+
+  it('supports a custom folder-creation cancel label', async () => {
+    renderTree({ cancelCreatingFolderLabel: 'Discard folder' });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create new folder' }),
+    );
+
+    expect(screen.getByRole('button', { name: 'Discard folder' })).toBeTruthy();
   });
 
   it('disables the create-folder trigger when disabled', () => {

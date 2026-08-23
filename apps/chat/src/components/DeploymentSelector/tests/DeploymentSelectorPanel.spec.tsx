@@ -1,4 +1,5 @@
-import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
+import { type CatalogItem } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
@@ -33,6 +34,31 @@ const renderPanel = (
       {...props}
     />,
   );
+
+describe('DeploymentSelectorPanel — long version', () => {
+  it('caps the version at 30% of the row so it cannot overlap the name', () => {
+    renderPanel([
+      {
+        ...makeItem('model-1', CatalogEntityType.Model),
+        version: 'With Google Search Grounding',
+      },
+    ]);
+
+    const version = screen.getByText('With Google Search Grounding');
+    expect(version.className).toContain('max-w-[30%]');
+    expect(version.className).toContain('shrink-0');
+  });
+
+  it('renders no version element when the item has an empty version', () => {
+    renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
+
+    /* Asserting the absence of a CSS-level styling class (not text/role) has
+       no semantic query equivalent — this repo's spec conventions carve out
+       this exact case for container/document.querySelector. */
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('.max-w-\\[30\\%\\]')).toBeNull();
+  });
+});
 
 describe('DeploymentSelectorPanel', () => {
   it('shows a favorited Application in the list', () => {

@@ -38,6 +38,10 @@ const makeService = (
   const sdkClient = {
     listSkillMetadata: vi.fn().mockResolvedValue(listSkillMetadataResult),
     listSkillFileMetadata: vi.fn().mockResolvedValue(listSkillMetadataResult),
+    getSharedResources: vi.fn().mockResolvedValue({
+      data: { resources: [] },
+      error: undefined,
+    }),
   };
 
   const configService = {
@@ -81,6 +85,28 @@ describe('SkillsListingService', () => {
       expect(item?.createdAt).toBe(1000);
       expect(item?.updatedAt).toBe(2000);
       expect(item?.permissions).toEqual(['READ', 'WRITE']);
+    });
+
+    it('rebuilds a skill item URL when Core returns a folder-shaped URL', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: {
+          items: [
+            {
+              ...skillItem,
+              url: 'skills/my-bucket/team-a/docs-helper/',
+            },
+          ],
+        },
+      });
+
+      const result = await service.listSkills('my-bucket', '', {}, 'token');
+
+      expect(result.items[0]).toMatchObject({
+        path: 'team-a/docs-helper',
+        url: 'skills/my-bucket/team-a/docs-helper',
+      });
     });
 
     it('round-trips the pagination token', async () => {
@@ -202,6 +228,100 @@ describe('SkillsListingService', () => {
     });
   });
 
+  describe('listCatalogSkills', () => {
+    it('returns personal, writable shared, and read-only public skills', async () => {
+      const { service, sdkClient } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: { items: [skillItem] },
+      });
+      sdkClient.getSharedResources.mockResolvedValue({
+        data: {
+          resources: [
+            {
+              ...skillItem,
+              bucket: 'owner-bucket',
+              url: 'skills/owner-bucket/team-a/docs-helper',
+              permissions: ['READ', 'WRITE'],
+            },
+          ],
+        },
+        error: undefined,
+      });
+
+      const result = await service.listCatalogSkills('my-bucket', 'token');
+
+      expect(result.skills[0]).toMatchObject({
+        isMy: true,
+        canEdit: true,
+        sharedWithMe: false,
+      });
+      expect(result.sharedWithMe[0]).toMatchObject({
+        isMy: false,
+        canEdit: true,
+        sharedWithMe: true,
+      });
+      expect(result.publicSkills[0]).toMatchObject({
+        isMy: false,
+        canEdit: false,
+        sharedWithMe: false,
+      });
+      expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: { resourceTypes: ['SKILL'], with: 'me' },
+        }),
+      );
+    });
+
+    it('normalizes a writable shared skill URL with a trailing slash', async () => {
+      const { service, sdkClient } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: { items: [] },
+      });
+      sdkClient.getSharedResources.mockResolvedValue({
+        data: {
+          resources: [
+            {
+              ...skillItem,
+              bucket: 'owner-bucket',
+              url: 'skills/owner-bucket/team-a/docs-helper/',
+              permissions: ['READ', 'WRITE'],
+            },
+          ],
+        },
+        error: undefined,
+      });
+
+      const result = await service.listCatalogSkills('my-bucket', 'token');
+
+      expect(result.sharedWithMe[0]).toMatchObject({
+        name: 'docs-helper',
+        path: 'team-a/docs-helper',
+        url: 'skills/owner-bucket/team-a/docs-helper',
+        canEdit: true,
+      });
+    });
+
+    it('keeps personal skills when the public namespace is unavailable', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listSkillMetadata.mockImplementation(async (bucket: string) =>
+        bucket === 'public'
+          ? { error: true, response: { status: 502 }, data: undefined }
+          : {
+              error: undefined,
+              response: { status: 200 },
+              data: { items: [skillItem] },
+            },
+      );
+
+      const result = await service.listCatalogSkills('my-bucket', 'token');
+
+      expect(result.skills).toHaveLength(1);
+      expect(result.publicSkills).toEqual([]);
+    });
+  });
+
   describe('listSkillFiles', () => {
     it('calls listSkillFileMetadata with bucket/path/filePath', async () => {
       const { service, sdkClient } = makeService();
@@ -222,6 +342,36 @@ describe('SkillsListingService', () => {
           },
         }),
       );
+    });
+
+    it('joins a file parentPath without requiring a trailing slash', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: {
+          items: [
+            {
+              bucket: 'my-bucket',
+              name: 'SKILL.md',
+              nodeType: 'ITEM',
+              parentPath: 'asdasdasd/files',
+            },
+          ],
+        },
+      });
+
+      const result = await service.listSkillFiles(
+        'my-bucket',
+        'asdasdasd',
+        '',
+        {},
+        'token',
+      );
+
+      expect(result.items[0]).toMatchObject({
+        path: 'asdasdasd/files/SKILL.md',
+        url: 'skills/my-bucket/asdasdasd/files/SKILL.md',
+      });
     });
 
     it('maps a 404 to NotFoundException', async () => {

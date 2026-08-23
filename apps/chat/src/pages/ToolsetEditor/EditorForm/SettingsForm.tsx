@@ -1,4 +1,4 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   ElementSize,

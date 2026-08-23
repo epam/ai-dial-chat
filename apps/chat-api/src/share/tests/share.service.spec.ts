@@ -27,6 +27,7 @@ function makeService(callbackBaseUrl = 'https://example.com/callback') {
   const dialClient = {
     client: {
       shareResource: vi.fn(),
+      getConversation: vi.fn().mockResolvedValue(okResponse({ messages: [] })),
       getInvitation: vi.fn(),
       discardSharedResources: vi.fn(),
       revokeSharedResources: vi.fn(),
@@ -131,7 +132,7 @@ describe('ShareService', () => {
     });
 
     it('routes conversation itemIds to the conversation accept-invitation path', async () => {
-      const { service } = makeService();
+      const { service, dialClient } = makeService();
       vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
         okResponse({ invitationLink: '/v1/invitations/conv-abc' }),
       );
@@ -144,6 +145,160 @@ describe('ShareService', () => {
       expect(result.url).toBe(
         'https://example.com/conversations/shared/conv-abc',
       );
+      expect(dialClient.client.getConversation).toHaveBeenCalledWith(
+        'bucket',
+        'my-chat.json',
+        { headers: { Authorization: 'Bearer token-abc' } },
+      );
+    });
+
+    it('shares unique DIAL file attachments referenced by a conversation', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({
+          messages: [
+            {
+              custom_content: {
+                attachments: [
+                  { url: 'files/owner-bucket/report.pdf' },
+                  { url: 'https://example.com/public.pdf' },
+                  { data: 'aW5saW5l' },
+                ],
+                annotations: [
+                  {
+                    body: {
+                      source: {
+                        attachment: {
+                          url: 'files/owner-bucket/citation.pdf',
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              custom_content: {
+                attachments: [
+                  { url: 'files/owner-bucket/report.pdf' },
+                  {
+                    reference_url: 'files/owner-bucket/source.pdf#page=2',
+                  },
+                ],
+                stages: [
+                  {
+                    attachments: [{ url: 'files/owner-bucket/generated.csv' }],
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/conv' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'conversations/owner-bucket/Planning/My%20conversation.json',
+        access: [ShareAccess.View, ShareAccess.Edit],
+      });
+
+      expect(dialClient.client.getConversation).toHaveBeenCalledWith(
+        'owner-bucket',
+        'Planning/My%20conversation.json',
+        { headers: { Authorization: 'Bearer token-abc' } },
+      );
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'conversations/owner-bucket/Planning/My%20conversation.json',
+              permissions: ['READ', 'WRITE'],
+            },
+            {
+              url: 'files/owner-bucket/report.pdf',
+              permissions: ['READ', 'WRITE'],
+            },
+            {
+              url: 'files/owner-bucket/citation.pdf',
+              permissions: ['READ', 'WRITE'],
+            },
+            {
+              url: 'files/owner-bucket/source.pdf',
+              permissions: ['READ', 'WRITE'],
+            },
+            {
+              url: 'files/owner-bucket/generated.csv',
+              permissions: ['READ', 'WRITE'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('does not share partial resources when the conversation lookup rejects', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+      const shareSpy = vi.spyOn(dialClient.client, 'shareResource');
+
+      await expect(
+        service.createShareLink('token-abc', 'session-bucket', {
+          itemId: 'conversations/owner-bucket/my-chat.json',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(ServiceUnavailableException);
+      expect(shareSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not share partial resources when the conversation lookup returns an upstream error', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        errResponse(HttpStatus.NOT_FOUND),
+      );
+      const shareSpy = vi.spyOn(dialClient.client, 'shareResource');
+
+      await expect(
+        service.createShareLink('token-abc', 'session-bucket', {
+          itemId: 'conversations/owner-bucket/my-chat.json',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(NotFoundException);
+      expect(shareSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not share partial resources when the conversation lookup returns no data', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse(null),
+      );
+      const shareSpy = vi.spyOn(dialClient.client, 'shareResource');
+
+      await expect(
+        service.createShareLink('token-abc', 'session-bucket', {
+          itemId: 'conversations/owner-bucket/my-chat.json',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(BadGatewayException);
+      expect(shareSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not load related resources for a non-conversation item', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'shareResource').mockResolvedValue(
+        okResponse({ invitationLink: '/invite/app' }),
+      );
+
+      await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'applications/my-bucket/my-app',
+        access: [ShareAccess.View],
+      });
+
+      expect(dialClient.client.getConversation).not.toHaveBeenCalled();
     });
 
     it('creates a share link for a skills/{bucket}/{path} itemId', async () => {
@@ -175,7 +330,7 @@ describe('ShareService', () => {
     });
 
     it("qualifies a prompt itemId with the caller's bucket", async () => {
-      const { service } = makeService();
+      const { service, dialClient } = makeService();
       const spy = vi
         .spyOn(service['dialClient'].client, 'shareResource')
         .mockResolvedValue(okResponse({ invitationLink: '/invite/p1' }));
@@ -200,6 +355,34 @@ describe('ShareService', () => {
       });
       /* Prompts live in the catalog, so they use the catalog accept route. */
       expect(result.url).toBe('https://example.com/catalog/shared/p1');
+      expect(dialClient.client.getConversation).not.toHaveBeenCalled();
+    });
+
+    it('percent-encodes a prompt itemId nested inside a folder with a space in its name', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/p2' }));
+
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'New folder 1/Prompt 1',
+        access: [ShareAccess.View],
+        resourceKind: ShareResourceKind.Prompt,
+      });
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'prompts/my-bucket/New%20folder%201/Prompt%201',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+      expect(result.url).toBe('https://example.com/catalog/shared/p2');
     });
 
     it('leaves itemId untouched when no resourceKind is given', async () => {
@@ -823,6 +1006,33 @@ describe('ShareService', () => {
       expect(result).toEqual({ success: true });
     });
 
+    it('revokes a skills/{bucket}/{path} resource url unchanged', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'revokeSharedResources')
+        .mockResolvedValue(okResponse(undefined));
+
+      const result = await service.revokeShared(
+        'skills/owner-bucket/team-a/docs-helper',
+        'token-abc',
+        'user-sub-1',
+      );
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          resources: [{ url: 'skills/owner-bucket/team-a/docs-helper' }],
+        },
+      });
+      expect(result).toEqual({ success: true });
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+      expect(toolsetsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+    });
+
     it('succeeds without checking whether the resource currently has recipients', async () => {
       const { service } = makeService();
       const sharedSpy = vi.spyOn(
@@ -986,6 +1196,40 @@ describe('ShareService', () => {
           body: expect.objectContaining({ resourceTypes: ['TOOL_SET'] }),
         }),
       );
+    });
+
+    it('counts the accepted recipients of a shared skill', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'getSharedResources')
+        .mockResolvedValue(
+          okResponse({
+            resources: [
+              {
+                url: 'skills/owner-bucket/team-a/docs-helper',
+                sharedWith: [{ user: 'a' }],
+              },
+            ],
+          }),
+        );
+
+      const result = await service.getRecipientsCount(
+        'skills/owner-bucket/team-a/docs-helper',
+        'token-abc',
+      );
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          resourceTypes: ['SKILL'],
+          with: 'others',
+          includeUserInfo: true,
+        },
+      });
+      expect(result).toEqual({
+        itemId: 'skills/owner-bucket/team-a/docs-helper',
+        recipientsCount: 1,
+      });
     });
 
     it('reports 0 for a resource a successful response does not mention', async () => {

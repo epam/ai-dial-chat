@@ -22,21 +22,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
-  SearchBar: ({
-    onChange,
-    placeholder,
-    value,
-  }: {
-    onChange: (v: string) => void;
-    placeholder: string;
-    value: string;
-  }) => (
-    <input
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  ),
   DialRoundedButton: ({
     onClick,
     label,
@@ -69,6 +54,27 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Skeleton: () => null,
   SkeletonVariant: { Circular: 'circular' },
+  Search: ({
+    onChange,
+    placeholder,
+    value,
+    clearLabel,
+  }: {
+    onChange?: (v?: string) => void;
+    placeholder?: string;
+    value?: string;
+    clearLabel?: string;
+  }) => (
+    <>
+      <input
+        type="search"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+      />
+      <button aria-label={clearLabel} onClick={() => onChange?.(undefined)} />
+    </>
+  ),
 
   Button: ({
     onClick,
@@ -98,27 +104,6 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
   PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
   SidebarOrientation: { Left: 'left', Right: 'right' },
-  SearchInput: ({
-    onChange,
-    placeholder,
-    value,
-    clearLabel,
-  }: {
-    onChange: (v: string) => void;
-    placeholder: string;
-    value: string;
-    clearLabel: string;
-  }) => (
-    <>
-      <input
-        type="search"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <button aria-label={clearLabel} onClick={() => onChange('')} />
-    </>
-  ),
   SidebarPanel: ({
     children,
     isOpen,
@@ -296,6 +281,11 @@ describe('ConversationPanel', () => {
     render(
       <ConversationPanel {...BASE_PROPS} conversations={[]} isOpen={false} />,
     );
+    /*
+     * A backdrop overlay would be a plain div with no accessible role, so
+     * there is no semantic query that can assert its absence.
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
     expect(document.querySelector('div[aria-hidden="true"]')).toBeNull();
   });
 
@@ -350,10 +340,15 @@ describe('ConversationPanel', () => {
 
   it('collapses a group when its header is clicked', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
-    const pinnedHeader = screen.getByText('Pinned').closest('button');
-    expect(pinnedHeader).toBeTruthy();
+    /*
+     * The mocked IconCaretDownFilled doesn't forward aria-hidden, so the
+     * header button's accessible name includes the icon's mock text.
+     */
+    const pinnedHeader = screen.getByRole('button', {
+      name: 'caret-down-filled Pinned',
+    });
     expect(screen.getByText('Pinned chat')).toBeTruthy();
-    fireEvent.click(pinnedHeader!);
+    fireEvent.click(pinnedHeader);
     expect(screen.queryByText('Pinned chat')).toBeNull();
   });
 

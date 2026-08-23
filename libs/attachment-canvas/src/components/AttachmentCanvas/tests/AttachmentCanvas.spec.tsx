@@ -149,6 +149,7 @@ describe('AttachmentCanvas', () => {
     const { container } = render(
       <AttachmentCanvas {...defaultProps} content={jsonContent} />,
     );
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- dir="ltr" is a plain DOM attribute with no accessible role/text to query
     expect(container.querySelector('[dir="ltr"]')).toBeTruthy();
   });
 

@@ -1,4 +1,4 @@
-import { Dropdown, NeutralButton } from '@epam/ai-dial-ui-kit';
+import { Dropdown, LinkButton, NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -47,10 +47,15 @@ const AnnouncementsPopover: FC<Props> = ({ announcements }) => {
   }
 
   const renderOverlay = () => (
+    /* tabIndex makes the region focusable so a keyboard-only user can reach the
+     * scroll container and page through rows with the arrow keys. Rows are not
+     * guaranteed to contain a link, so tabbing between links is not a
+     * sufficient way to scroll the list. */
     <section
       id={overlayId}
       aria-label={t(AnnouncementsPopoverI18nKeys.ListAriaLabel)}
       className="max-w-[420px]"
+      tabIndex={0}
     >
       {/* `divide-y` puts the rule on every item but the first, so no separator
           hangs at the top or bottom of the list. Vertical borders need no
@@ -80,17 +85,19 @@ const AnnouncementsPopover: FC<Props> = ({ announcements }) => {
               </div>
 
               {announcement.link && (
-                <a
+                <LinkButton
                   href={announcement.link.href}
                   target="_blank"
-                  rel="noopener noreferrer"
-                  className="dial-small-paragraph-semi-text shrink-0 text-accent hover:underline focus-visible:underline"
-                >
-                  {announcement.link.label}
-                  <span className="sr-only">
-                    {` ${t(AnnouncementsPopoverI18nKeys.OpensInNewTab)}`}
-                  </span>
-                </a>
+                  className="h-auto shrink-0"
+                  label={
+                    <>
+                      {announcement.link.label}
+                      <span className="sr-only">
+                        {` ${t(AnnouncementsPopoverI18nKeys.OpensInNewTab)}`}
+                      </span>
+                    </>
+                  }
+                />
               )}
             </li>
           );
@@ -107,6 +114,13 @@ const AnnouncementsPopover: FC<Props> = ({ announcements }) => {
         placement="bottom-end"
         matchReferenceWidth={false}
         maxDropdownHeight={MAX_POPOVER_HEIGHT}
+        /* `maxDropdownHeight` only caps the floating panel — the ui-kit's 2.0
+         * Dropdown leaves that panel's overflow at the default, so without this
+         * every row past the cap renders outside the panel, on top of the page.
+         * The class has to land on the floating overlay itself, because that is
+         * the element carrying the max height, and `listClassName` is the prop
+         * that targets it. */
+        listClassName="overflow-y-auto"
         renderOverlay={renderOverlay}
       >
         <NeutralButton

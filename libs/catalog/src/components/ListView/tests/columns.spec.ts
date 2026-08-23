@@ -1,5 +1,5 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { CatalogEntityType } from '../../../types/entity-type';
 import { CATALOG_COLUMNS } from '../columns';
 
 describe('CATALOG_COLUMNS', () => {

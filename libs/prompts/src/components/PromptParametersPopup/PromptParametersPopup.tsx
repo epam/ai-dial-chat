@@ -1,10 +1,9 @@
+import { AppIdentity, ContentTab, DeploymentSize } from '@epam/ai-dial-catalog';
 import {
-  AppIdentity,
   CatalogEntityType,
-  ContentTab,
-  DeploymentSize,
-} from '@epam/ai-dial-catalog';
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+  buildCssVars,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   GhostIconButton,
   NeutralButton,

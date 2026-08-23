@@ -4,8 +4,8 @@ import { FileDndOverlay } from '../FileDndOverlay';
 
 describe('FileDndOverlay', () => {
   it('renders nothing when isVisible is false', () => {
-    const { container } = render(<FileDndOverlay isVisible={false} />);
-    expect(container.firstChild).toBeNull();
+    render(<FileDndOverlay isVisible={false} />);
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('renders default title and subtitle when isVisible is true', () => {
@@ -36,18 +36,14 @@ describe('FileDndOverlay', () => {
   });
 
   it('applies cursor-not-allowed when isAttachmentsAllowed is false', () => {
-    const { container } = render(
-      <FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />,
-    );
-    const overlay = container.firstChild as HTMLElement;
+    render(<FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />);
+    const overlay = screen.getByRole('status');
     expect(overlay.className).toContain('cursor-not-allowed');
   });
 
   it('calls preventDefault on drop when isAttachmentsAllowed is false', () => {
-    const { container } = render(
-      <FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />,
-    );
-    const overlay = container.firstChild as HTMLElement;
+    render(<FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />);
+    const overlay = screen.getByRole('status');
     const dropEvent = new MouseEvent('drop', {
       bubbles: true,
       cancelable: true,
