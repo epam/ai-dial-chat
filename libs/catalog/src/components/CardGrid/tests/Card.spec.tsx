@@ -94,7 +94,7 @@ describe('Card — favorite revert', () => {
 });
 
 describe('Card — credentials badge', () => {
-  it('shows the LOGGED OUT badge for a signed-out toolset, for both API_KEY and OAUTH', () => {
+  it('shows the logged-out warning icon for a signed-out toolset, for both API_KEY and OAUTH', () => {
     for (const authenticationType of [
       ToolsetAuthenticationType.ApiKey,
       ToolsetAuthenticationType.OAuth,
@@ -108,15 +108,17 @@ describe('Card — credentials badge', () => {
               globalStatus: CredentialStatus.SignedOut,
             },
           })}
-          credentialsBadgeLoggedOutLabel="LOGGED OUT"
+          credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
         />,
       );
-      expect(screen.getByText('LOGGED OUT')).toBeTruthy();
+      expect(
+        screen.getByRole('img', { name: 'Authorize to use this toolset.' }),
+      ).toBeTruthy();
       unmount();
     }
   });
 
-  it('shows no badge when signed in or when authenticationType is NONE', () => {
+  it('shows no warning icon when signed in or when authenticationType is NONE', () => {
     const { unmount } = render(
       <Card
         item={makeItem({
@@ -125,10 +127,12 @@ describe('Card — credentials badge', () => {
             userStatus: CredentialStatus.SignedIn,
           },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
-    expect(screen.queryByText('LOGGED OUT')).toBeNull();
+    expect(
+      screen.queryByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeNull();
     unmount();
 
     render(
@@ -136,9 +140,11 @@ describe('Card — credentials badge', () => {
         item={makeItem({
           credentials: { authenticationType: ToolsetAuthenticationType.None },
         })}
-        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+        credentialsBadgeLoggedOutLabel="Authorize to use this toolset."
       />,
     );
-    expect(screen.queryByText('LOGGED OUT')).toBeNull();
+    expect(
+      screen.queryByRole('img', { name: 'Authorize to use this toolset.' }),
+    ).toBeNull();
   });
 });

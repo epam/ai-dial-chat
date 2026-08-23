@@ -127,7 +127,7 @@ export interface ItemDetailsTexts {
   apiKeyFieldLabel?: string;
   /** Validation error shown under the API key input when "Add" is submitted with an empty value. Default: `'API key is required.'`. */
   apiKeyRequiredErrorMessage?: string;
-  /** Credentials-status badge label shown on catalog cards when signed out. Default: `'LOGGED OUT'`. */
+  /** Accessible label for the logged-out warning icon on catalog card avatars, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
   /**
    * Top action button label when the item requires an API key and the
