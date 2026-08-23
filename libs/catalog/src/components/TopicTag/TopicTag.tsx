@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialTooltip } from '@epam/ai-dial-ui-kit';
+import { Tooltip } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   useCallback,
@@ -169,7 +169,7 @@ export const TopicsLine: FC<TopicsLineProps> = ({
         </div>
       ))}
       {overflow > 0 && (
-        <DialTooltip tooltip={topics.slice(visibleCount).join(', ')}>
+        <Tooltip tooltip={topics.slice(visibleCount).join(', ')}>
           <span
             aria-label={
               overflowAriaLabel?.(overflow) ?? `and ${overflow} more topics`
@@ -177,7 +177,7 @@ export const TopicsLine: FC<TopicsLineProps> = ({
           >
             <TopicTag label={`+${overflow}`} />
           </span>
-        </DialTooltip>
+        </Tooltip>
       )}
       <div
         ref={badgeRef}

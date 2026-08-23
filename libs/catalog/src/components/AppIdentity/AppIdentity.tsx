@@ -5,7 +5,7 @@ import {
   EntityTypeLabel,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { DialEllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
+import { EllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import { AppIdentityStyles } from '../../models/app-identity-styles';
 import { DeploymentSize } from '../../types/deployment-icon-size';
@@ -109,7 +109,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
             {version && (
               /* Capped at 30% of the row so a long version truncates instead of
                  squeezing the name out of the card. */
-              <DialEllipsisTooltip
+              <EllipsisTooltip
                 text={version}
                 className={mergeClasses(
                   'max-w-[30%] shrink-0 tabular-nums',

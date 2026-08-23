@@ -2,7 +2,7 @@ import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  DialEllipsisTooltip,
+  EllipsisTooltip,
   ElementSize,
   GhostIconButton,
   ProgressBar,
@@ -67,13 +67,13 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
     <div className="flex items-center gap-2 px-3 py-2">
       <div className="min-w-0 flex-1">
         {job.description && (
-          <DialEllipsisTooltip
+          <EllipsisTooltip
             text={job.description}
             className="dial-caption-text text-secondary"
             contentClassName="!z-[80]"
           />
         )}
-        <DialEllipsisTooltip
+        <EllipsisTooltip
           text={job.label}
           className="dial-small-text text-primary"
           contentClassName="!z-[80]"

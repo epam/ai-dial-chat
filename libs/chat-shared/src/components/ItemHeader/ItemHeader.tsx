@@ -1,4 +1,4 @@
-import { DialEllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
+import { EllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
@@ -62,7 +62,7 @@ export const ItemHeader: FC<ItemHeaderProps> = ({
     if (!shouldTruncateTitle) {
       return title;
     }
-    return <DialEllipsisTooltip text={title} />;
+    return <EllipsisTooltip text={title} />;
   };
 
   return (
@@ -85,7 +85,7 @@ export const ItemHeader: FC<ItemHeaderProps> = ({
       {postfix != null && (
         /* Capped at 30% of the row so a long version truncates instead of
            squeezing the title out of the header. */
-        <DialEllipsisTooltip
+        <EllipsisTooltip
           className={mergeClasses(
             'max-w-[30%] shrink-0',
             postfixClassName,

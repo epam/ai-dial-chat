@@ -8,7 +8,7 @@ import {
   DIAL_ICON_SIZE,
   GhostButton,
   GhostIconButton,
-  DialEllipsisTooltip,
+  EllipsisTooltip,
   Highlight,
   Search,
 } from '@epam/ai-dial-ui-kit';
@@ -267,7 +267,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
                 className="dial-small-text min-w-0 !flex-initial"
               />
             ) : (
-              <DialEllipsisTooltip
+              <EllipsisTooltip
                 text={item.name}
                 className="dial-small-text min-w-0 !flex-initial"
               />
@@ -275,7 +275,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
             {item.version && (
               /* Capped at 30% of the row so a long version truncates instead of
                  squeezing the name out of the option. */
-              <DialEllipsisTooltip
+              <EllipsisTooltip
                 text={item.version}
                 className="dial-tiny-text max-w-[30%] shrink-0 text-secondary"
               />

@@ -1,4 +1,4 @@
-import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import type { EntityHeaderItem } from '../../models/entity';
 import { buildCssVars } from '../../utils/build-css-vars';
@@ -69,11 +69,11 @@ export const ResourceSummary: FC<ResourceSummaryProps> = ({
       {hasVersionTag && item.version && (
         <span
           className={mergeClasses(
-            'inline-flex h-[24px] max-w-[45%] shrink-0 items-center gap-1 rounded-lg border px-2 dial-tiny-text',
+            'dial-tiny-text inline-flex h-[24px] max-w-[45%] shrink-0 items-center gap-1 rounded-lg border px-2',
             styles.versionTag,
           )}
         >
-          <DialEllipsisTooltip
+          <EllipsisTooltip
             text={versionLabel.replace('{version}', item.version)}
           />
         </span>

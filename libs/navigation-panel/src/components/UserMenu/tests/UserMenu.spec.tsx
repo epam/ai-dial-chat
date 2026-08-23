@@ -17,8 +17,8 @@ interface MockDropdownItem {
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16 },
   DropdownItemType: { PlainText: 'plainText', Divider: 'divider' },
-  DialTooltip: ({ children }: { children: ReactNode }) => children,
-  DialEllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
+  Tooltip: ({ children }: { children: ReactNode }) => children,
+  EllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
   Dropdown: ({
     children,
     items,

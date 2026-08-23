@@ -40,7 +40,7 @@ className={mergeClasses(nameClassName, styles.nameText)}
 | **2.0** (use)   | no prefix — `Button`, `Input`, `Select` | current design system             |
 | **1.0** (avoid) | `Dial*` — `DialButton`, `DialInput`     | legacy, kept for back-compat only |
 
-**Always import the 2.0 component.** Reach for a `Dial*` component only when the MCP lookup shows it has no 2.0 replacement (e.g. `DialCheckbox`, `DialTooltip`, `DialPagination`, `DialEllipsisTooltip`, `DialFileManager` currently have none).
+**Always import the 2.0 component.** Reach for a `Dial*` component only when the MCP lookup shows it has no 2.0 replacement (e.g. `DialPagination`, `DialSlider`, `DialGrid`, `DialFormPopup`, `DialNoDataContent`, `DialFileManager` currently have none). `DialTooltip`, `DialEllipsisTooltip`, `DialCheckbox` and `DialRadioGroup` gained 2.0 counterparts in ui-kit 0.14 — use `Tooltip`, `EllipsisTooltip`, `Checkbox`, `RadioGroup`.
 
 ```tsx
 // Correct — generation 2.0
