@@ -60,7 +60,7 @@
   color: var(--mls-secondary-value, var(--text-secondary, #57647a));
 }
 
-/* !important overrides ProgressBar's own `bg-control-disable` track utility class,
+/* !important overrides ProgressBar's own `bg-control-disable-primary` track utility class,
  * which has equal CSS specificity and is not otherwise reliably out-cascaded. */
 .progressTrack {
   background: var(
@@ -73,7 +73,7 @@
 .progressFillDefault > div {
   background: var(
     --mls-progress-default,
-    var(--text-control-blue-hover, #5976e9)
+    var(--text-control-accent-hover, var(--text-control-blue-hover, #5976e9))
   ) !important;
 }
 

@@ -64,7 +64,7 @@ export interface UsageLimitCardGroupColors {
    */
   /** Prominent amount text color in the default status. Fallback: `--text-info` (`#1D4ED8`). */
   defaultAccentColor?: string;
-  /** Progress-fill color in the default status. Fallback: `--text-control-blue-hover` (`#5976E9`). */
+  /** Progress-fill color in the default status. Fallback: `--text-control-accent-hover` (`#5976E9`). */
   defaultProgressColor?: string;
   /** Prominent amount text color in the running-low status. Fallback: `--text-warning` (`#7F6300`). */
   warningAccentColor?: string;
