@@ -38,6 +38,8 @@ export interface AppIdentityProps {
   lastUsedTrailing?: ReactNode;
   /** Additional CSS class applied to the icon wrapper div (e.g. for hover-scale animations). */
   iconClassName?: string;
+  /** Element anchored to the icon's bottom-end corner, overlapping its edge (e.g. a status badge). */
+  iconOverlay?: ReactNode;
 }
 
 /** Shared identity block: logo + type + name + version + optional last-used row. */
@@ -53,6 +55,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   styles: appIdentityStyles,
   lastUsedTrailing,
   iconClassName,
+  iconOverlay,
 }) => {
   const colors = appIdentityStyles?.colors;
   const typography = appIdentityStyles?.typography ?? {};
@@ -75,21 +78,24 @@ export const AppIdentity: FC<AppIdentityProps> = ({
     >
       <div
         className={mergeClasses(
-          'flex-shrink-0 overflow-hidden',
+          'relative flex-shrink-0',
           logoClass,
           iconClassName,
         )}
       >
-        <DeploymentIcon
-          src={icon ?? undefined}
-          size={logoSize}
-          initialsName={name}
-          styles={{
-            badgeClassName: mergeClasses(
-              isLg ? 'rounded-[14px]' : 'rounded-[12px]',
-            ),
-          }}
-        />
+        <div className="size-full overflow-hidden rounded-[inherit]">
+          <DeploymentIcon
+            src={icon ?? undefined}
+            size={logoSize}
+            initialsName={name}
+            styles={{
+              badgeClassName: mergeClasses(
+                isLg ? 'rounded-[14px]' : 'rounded-[12px]',
+              ),
+            }}
+          />
+        </div>
+        {iconOverlay}
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
