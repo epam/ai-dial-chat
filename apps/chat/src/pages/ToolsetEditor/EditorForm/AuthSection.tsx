@@ -7,7 +7,7 @@ import {
   DIAL_ICON_SIZE,
   ConfirmationPopup,
   Input,
-  DialRadioButton,
+  Radio,
   TagInput,
   ElementSize,
   mergeClasses,
@@ -353,21 +353,21 @@ const AuthSection: FC<Props> = ({
   const renderOAuthContent = () => (
     <div className="flex flex-col gap-3 pb-3 ps-4">
       <div className="flex flex-col gap-2">
-        <DialRadioButton
+        <Radio
           name="oauth-login-mode"
-          inputId="oauth-with-login"
+          id="oauth-with-login"
           value={WithLogin.WithLogin}
-          label={t(ToolsetEditorI18nKeys.WithLoginLabel)}
-          checked={auth.withLogin === WithLogin.WithLogin}
+          labelProps={{ label: t(ToolsetEditorI18nKeys.WithLoginLabel) }}
+          isSelected={auth.withLogin === WithLogin.WithLogin}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
         />
-        <DialRadioButton
+        <Radio
           name="oauth-login-mode"
-          inputId="oauth-with-config"
+          id="oauth-with-config"
           value={WithLogin.WithConfig}
-          label={t(ToolsetEditorI18nKeys.WithConfigLabel)}
-          checked={auth.withLogin === WithLogin.WithConfig}
+          labelProps={{ label: t(ToolsetEditorI18nKeys.WithConfigLabel) }}
+          isSelected={auth.withLogin === WithLogin.WithConfig}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
         />
@@ -443,21 +443,21 @@ const AuthSection: FC<Props> = ({
   const renderApiKeyContent = () => (
     <div className="flex flex-col gap-3 pb-3 ps-4">
       <div className="flex flex-col gap-2">
-        <DialRadioButton
+        <Radio
           name="apikey-login-mode"
-          inputId="apikey-with-login"
+          id="apikey-with-login"
           value={WithLogin.WithLogin}
-          label={t(ToolsetEditorI18nKeys.WithLoginLabel)}
-          checked={auth.withLogin === WithLogin.WithLogin}
+          labelProps={{ label: t(ToolsetEditorI18nKeys.WithLoginLabel) }}
+          isSelected={auth.withLogin === WithLogin.WithLogin}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
         />
-        <DialRadioButton
+        <Radio
           name="apikey-login-mode"
-          inputId="apikey-without-login"
+          id="apikey-without-login"
           value={WithLogin.WithoutLogin}
-          label={t(ToolsetEditorI18nKeys.WithoutLoginLabel)}
-          checked={auth.withLogin === WithLogin.WithoutLogin}
+          labelProps={{ label: t(ToolsetEditorI18nKeys.WithoutLoginLabel) }}
+          isSelected={auth.withLogin === WithLogin.WithoutLogin}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
         />

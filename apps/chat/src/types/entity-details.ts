@@ -187,60 +187,6 @@ export interface ToolsetEntityDetails {
   capabilities?: ToolsetCapabilities;
 }
 
-// ---- Guardrail entity ----
-
-export enum GuardrailStage {
-  Input = 'INPUT',
-  Output = 'OUTPUT',
-  Both = 'BOTH',
-}
-
-export enum GuardrailType {
-  PiiRedaction = 'PII_REDACTION',
-  ContentModeration = 'CONTENT_MODERATION',
-  PromptInjectionGuard = 'PROMPT_INJECTION_GUARD',
-  CostRateControl = 'COST_RATE_CONTROL',
-  Logging = 'LOGGING',
-  Transformation = 'TRANSFORMATION',
-}
-
-export enum GuardrailAction {
-  Block = 'BLOCK',
-  Redact = 'REDACT',
-  Mask = 'MASK',
-  Flag = 'FLAG',
-  Fallback = 'FALLBACK',
-  Allow = 'ALLOW',
-}
-
-export enum GuardrailSensitivity {
-  None = 'NONE',
-  Low = 'LOW',
-  Medium = 'MEDIUM',
-  High = 'HIGH',
-}
-
-export enum GuardrailFailureMode {
-  FailOpen = 'FAIL_OPEN',
-  FailClosed = 'FAIL_CLOSED',
-}
-
-export interface GuardrailSpecification {
-  stage?: GuardrailStage;
-  type?: GuardrailType;
-  checks?: string[];
-  actionOnMatch?: GuardrailAction;
-  sensitivity?: GuardrailSensitivity;
-  compliance?: string[];
-  appliesTo?: string[];
-  failureMode?: GuardrailFailureMode;
-  hasLogging?: boolean;
-}
-
-export interface GuardrailEntityDetails {
-  specification?: GuardrailSpecification;
-}
-
 // ---- Discriminated union ----
 
 /*
@@ -251,5 +197,4 @@ export interface GuardrailEntityDetails {
 export type EntitySpecificDetails =
   | { type: 'MODEL'; data: ModelEntityDetails }
   | { type: 'AGENT'; data: AgentEntityDetails }
-  | { type: 'TOOLSET'; data: ToolsetEntityDetails }
-  | { type: 'GUARDRAIL'; data: GuardrailEntityDetails };
+  | { type: 'TOOLSET'; data: ToolsetEntityDetails };

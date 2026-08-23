@@ -70,8 +70,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   /* Rendered by the real EntityHeader (via ItemHeader/DeploymentIcon) that
    * CredentialsManagementPanel pulls in from @epam/ai-dial-chat-shared. */
-  DialEllipsisTooltip: ({ text }: { text?: ReactNode }) => <span>{text}</span>,
-  DialTooltip: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  EllipsisTooltip: ({ text }: { text?: ReactNode }) => <span>{text}</span>,
+  Tooltip: ({ children }: { children?: ReactNode }) => <>{children}</>,
   Highlight: ({ text }: { text?: ReactNode }) => <span>{text}</span>,
 }));
 vi.mock('@tabler/icons-react', () => ({

@@ -5,7 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialEllipsisTooltip,
+  EllipsisTooltip,
   LinkButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
@@ -146,7 +146,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
               styles.executedLabel,
             )}
           >
-            <DialEllipsisTooltip text={liveName} />
+            <EllipsisTooltip text={liveName} />
           </span>
         )}
       </span>

@@ -5,7 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialSearch,
+  Search,
   DropdownItem,
   ElementSize,
   Highlight,
@@ -212,12 +212,12 @@ export const useModelSelector = ({
             searchHeaderClassName,
           )}
         >
-          <DialSearch
+          <Search
             value={searchQuery}
             placeholder={modelSelectorLabels?.searchPlaceholder ?? 'Search'}
             size={ElementSize.Small}
             wrapperClassName="border-0"
-            onChange={setSearchQuery}
+            onChange={(value) => setSearchQuery(value ?? '')}
           />
         </div>
       ) : undefined,

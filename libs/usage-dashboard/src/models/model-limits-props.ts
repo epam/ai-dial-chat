@@ -132,7 +132,7 @@ export interface ModelLimitsColors {
   secondaryValueColor?: string;
   /** Progress-bar track color. Fallback: `--bg-layer-sunken`. */
   progressTrackColor?: string;
-  /** Progress-fill / accent color for `WithinLimits`. Fallback: `--text-control-blue-hover`. */
+  /** Progress-fill / accent color for `WithinLimits`. Fallback: `--text-control-accent-hover`. */
   defaultProgressColor?: string;
   /** Progress-fill / accent color for `RunningLow`. Fallback: `--text-warning-icon`. */
   warningProgressColor?: string;

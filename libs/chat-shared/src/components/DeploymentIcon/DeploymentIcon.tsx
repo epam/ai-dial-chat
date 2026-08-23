@@ -1,4 +1,4 @@
-import { DialTooltip } from '@epam/ai-dial-ui-kit';
+import { Tooltip } from '@epam/ai-dial-ui-kit';
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
@@ -129,9 +129,9 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
 
   if (tooltip) {
     return (
-      <DialTooltip tooltip={tooltip} triggerClassName="flex shrink-0">
+      <Tooltip tooltip={tooltip} triggerClassName="flex shrink-0">
         {badge}
-      </DialTooltip>
+      </Tooltip>
     );
   }
 

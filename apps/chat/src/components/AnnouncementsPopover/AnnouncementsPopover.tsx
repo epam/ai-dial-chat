@@ -1,6 +1,6 @@
 import { Dropdown, LinkButton, NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useEffect, useId, useState } from 'react';
+import { memo, useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnnouncementsPopoverI18nKeys } from '../../constants/translation-keys';
 import type { AnnouncementItem } from '../../models/announcement';
@@ -17,6 +17,21 @@ const AnnouncementsPopover: FC<Props> = ({ announcements }) => {
   const [isOpen, setIsOpen] = useState(false);
   const overlayId = useId();
   const pillId = useId();
+
+  /* The ui-kit Dropdown mounts its overlay with Floating UI's `initialFocus`
+   * disabled, so opening the panel leaves focus on the pill: the rows and their
+   * links stay out of reach until the user tabs past the trigger, and the
+   * Escape handler below has nothing inside the panel to return from. Focusing
+   * the region rather than the first link keeps the whole list one step ahead in
+   * the reading order, which is what the scroll container is focusable for.
+   *
+   * Done from a ref callback rather than an effect on `isOpen`: the overlay
+   * renders inside a `FloatingPortal`, whose portal node is itself created in an
+   * effect, so the section is still unmounted on the commit that opens the
+   * popover. The callback runs when the node actually attaches. */
+  const handleOverlayRef = useCallback((node: HTMLElement | null) => {
+    node?.focus();
+  }, []);
 
   /* Escape is handled here rather than left to the overlay so focus lands back
    * on the pill — Floating UI closes the panel but does not restore focus to a
@@ -52,6 +67,7 @@ const AnnouncementsPopover: FC<Props> = ({ announcements }) => {
      * guaranteed to contain a link, so tabbing between links is not a
      * sufficient way to scroll the list. */
     <section
+      ref={handleOverlayRef}
       id={overlayId}
       aria-label={t(AnnouncementsPopoverI18nKeys.ListAriaLabel)}
       className="max-w-[420px]"

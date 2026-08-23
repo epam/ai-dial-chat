@@ -6,7 +6,7 @@ import {
   MIMEType,
 } from '@epam/ai-dial-chat-shared';
 import {
-  DialEllipsisTooltip,
+  EllipsisTooltip,
   GhostIconButton,
   ElementSize,
   PrimaryButton,
@@ -138,7 +138,7 @@ export const CitationCard: FC<CitationCardProps> = ({
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1">
           {headerIcon}
-          <DialEllipsisTooltip
+          <EllipsisTooltip
             text={group.sourceName}
             className={mergeClasses(
               sourceNameClassName,
