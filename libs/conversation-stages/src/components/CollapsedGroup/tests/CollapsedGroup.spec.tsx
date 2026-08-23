@@ -9,7 +9,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
     <span role="status" aria-label={ariaLabel} />
   ),
-  DialEllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,
+  EllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,
   LinkButton: ({
     label,
     onClick,

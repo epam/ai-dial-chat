@@ -46,7 +46,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       ))}
     </div>
   ),
-  DialEllipsisTooltip: ({
+  EllipsisTooltip: ({
     text,
     className,
   }: {

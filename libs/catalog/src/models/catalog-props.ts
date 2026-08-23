@@ -53,7 +53,7 @@ export interface CatalogTitles {
   /**
    * Display labels for entity-type filter tabs. Only types present in `items`
    * are shown. Defaults: Model → 'Model', Agent → 'Agent', Toolset → 'Toolset',
-   * Guardrail → 'Guardrail', Skill → 'Skill', Mcp → 'MCP'.
+   * Skill → 'Skill', Mcp → 'MCP'.
    */
   tabLabels?: Partial<Record<CatalogEntityType, string>>;
   /** Label for the filter button when nothing is filtered. Default: 'From'. */

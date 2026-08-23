@@ -48,7 +48,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {iconAfter}
     </button>
   ),
-  DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
+  EllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
   Dropdown: ({
     children,
     onOpenChange,

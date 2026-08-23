@@ -63,7 +63,7 @@ export interface LimitsTabColors {
   value?: string;
   /** Progress-bar track color for capped rows. Fallback: `--bg-layer-sunken`. */
   progressTrack?: string;
-  /** Progress-bar fill color below 75% usage. Fallback: `--text-control-blue-hover`. */
+  /** Progress-bar fill color below 75% usage. Fallback: `--text-control-accent-hover`. */
   progressFillDefault?: string;
   /** Progress-bar fill color once usage reaches 75% of the limit. Fallback: `--text-warning-icon`. */
   progressFillWarning?: string;

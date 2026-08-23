@@ -238,6 +238,15 @@ describe('AnnouncementsPopover — height and scrolling', () => {
     region.focus();
     expect(region.matches(':focus')).toBe(true);
   });
+
+  it('moves focus into the region when the popover opens', async () => {
+    await openPopover(manyAnnouncements);
+
+    const region = screen.getByRole('region', {
+      name: 'announcementsPopover.listAriaLabel',
+    });
+    expect(region.matches(':focus')).toBe(true);
+  });
 });
 
 describe('AnnouncementsPopover — sanitization', () => {

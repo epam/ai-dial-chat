@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { BASE_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { BASE_ICON_SIZE, EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronRight, IconLogout } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { useSheetNavigation } from '../../hooks/useSheetNavigation';
@@ -51,7 +51,7 @@ export const ProfilePage: FC<ProfilePageProps> = memo(
       <>
         <div className="flex h-[56px] items-center gap-3 px-4 py-2">
           <UserAvatar profile={profile} alt="" />
-          <DialEllipsisTooltip
+          <EllipsisTooltip
             text={profile.displayName}
             className={mergeClasses(
               styles.mutedText,
