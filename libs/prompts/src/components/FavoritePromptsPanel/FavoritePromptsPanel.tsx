@@ -5,11 +5,10 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  Tooltip,
   ElementSize,
   GhostButton,
-  GhostIconButton,
   ToggleIconButton,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconStarFilled } from '@tabler/icons-react';
 import type { FC, KeyboardEvent } from 'react';
