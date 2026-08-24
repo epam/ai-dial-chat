@@ -95,7 +95,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     );
   },
   ConfirmationPopupVariant: { Danger: 'danger', Info: 'info' },
-  DialEllipsisTooltip: ({
+  EllipsisTooltip: ({
     text,
     className,
   }: {

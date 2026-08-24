@@ -156,16 +156,23 @@ bg-info           bg-success
 **Controls**
 
 ```text
-bg-control-accent              bg-control-accent-alpha
-bg-control-accent-alpha-hover  bg-control-accent-alpha-active
-bg-control-neutral             bg-control-neutral-default
-bg-control-neutral-hover-muted bg-control-neutral-hover-strong
-bg-control-neutral-active      bg-control-error
-bg-control-error-hover         bg-control-error-active
-bg-control-error-alpha-hover   bg-control-error-alpha-active
-bg-control-disable-primary     bg-control-disable-secondary
-bg-control-inverted
+bg-control-accent               bg-control-accent-hover
+bg-control-accent-alpha         bg-control-accent-alpha-hover
+bg-control-accent-alpha-active
+bg-control-neutral              bg-control-neutral-default
+bg-control-neutral-hover-muted  bg-control-neutral-hover-strong
+bg-control-neutral-active       bg-control-inverted
+bg-control-error                bg-control-error-hover
+bg-control-error-active         bg-control-error-alpha-hover
+bg-control-error-alpha-active
+bg-control-disable-primary      bg-control-disable-secondary
+bg-gradient-1                   bg-gradient-1-hover
+bg-gradient-1-active            bg-gradient-2
+bg-gradient-2-hover             bg-gradient-2-active
 ```
+
+The `bg-gradient-*` stops paint the accent gradient behind primary buttons and
+the selected tab's underline.
 
 **Decorative fills**
 
@@ -182,9 +189,9 @@ text-primary       text-secondary       text-tertiary
 text-accent
 text-error         text-warning         text-warning-icon
 text-info          text-success
-text-control-permanent          text-control-accent-hover
-text-control-accent-active      text-control-disable-primary
-text-control-disable-secondary  text-control-inverted
+text-control-permanent        text-control-inverted
+text-control-accent-hover     text-control-accent-active
+text-control-disable-primary  text-control-disable-secondary
 text-visual-blue     text-visual-brown-1   text-visual-brown-2
 text-visual-green-1  text-visual-green-2   text-visual-green-3
 text-visual-red      text-visual-violet-1  text-visual-violet-2
@@ -193,41 +200,55 @@ text-visual-red      text-visual-violet-1  text-visual-violet-2
 **Strokes**
 
 ```text
-stroke-primary     stroke-secondary    stroke-tertiary
-stroke-error       stroke-error-alpha  stroke-warning
-stroke-info        stroke-success      stroke-accent-alpha
-stroke-focus-black stroke-focus-blue
+stroke-primary      stroke-secondary     stroke-tertiary
+stroke-error        stroke-error-alpha   stroke-warning
+stroke-info         stroke-success       stroke-accent
+stroke-accent-alpha stroke-default       stroke-focus-black
+stroke-focus-blue   stroke-gradient-1    stroke-gradient-2
+stroke-control-disable-primary
 ```
 
 **Shadows**
 
 ```text
-shadow-default   shadow-blue-500   shadow-grey-1000
+shadow-default           shadow-grey-1000
+shadow-blue-500          shadow-blue-500-alpha-20
+shadow-blue-500-alpha-4  shadow-blue-500-alpha-8
 ```
 
-**Renamed in ui-kit 0.14.0 — the old names still resolve**
+`shadow-blue-500` is the fallback for all three alpha steps, so a theme that
+sets only it still tints every shadow size — at one opacity instead of three.
 
-Six control tokens were renamed after the role they fill rather than their
-opacity or hue. Each new name resolves through its old name before reaching the
-built-in light value, so a theme written against the previous names keeps its
-colors — but new themes should use the names listed above.
+### Renamed in ui-kit 0.14
 
-| Previous name                | Current name                     |
-| ---------------------------- | -------------------------------- |
-| `bg-control-disable`         | `bg-control-disable-primary`     |
-| `bg-control-neutral-hover`   | `bg-control-neutral-hover-muted` |
-| `text-control-disable-alpha` | `text-control-disable-primary`   |
-| `text-control-disable-beta`  | `text-control-disable-secondary` |
-| `text-control-blue-hover`    | `text-control-accent-hover`      |
-| `text-control-blue-active`   | `text-control-accent-active`     |
+The control tokens were renamed for the role they fill instead of their opacity
+or their literal hue. **A theme that sets the old variable names keeps its
+colors** — each one is still the next link in the new token's fallback chain:
 
-`stroke-hover-alpha` is the exception: it was removed rather than renamed and is
-in no fallback chain. It held the same color as `stroke-accent-alpha`, so move
-its value there — a theme that still sets only `stroke-hover-alpha` loses its
-accent hover border to the light default.
+| Pre-0.14 variable                                   | Preferred now                                 |
+| --------------------------------------------------- | --------------------------------------------- |
+| `bg-control-disable`                                | `bg-control-disable-primary`                  |
+| `bg-control-neutral-hover`                          | `bg-control-neutral-hover-muted`              |
+| `text-control-disable-alpha`                        | `text-control-disable-primary`                |
+| `text-control-disable-beta`                         | `text-control-disable-secondary`              |
+| `text-control-blue-hover` / `-active`               | `text-control-accent-hover` / `-active`       |
+| `bg-control-accent-gradient-from` / `-to`           | `bg-gradient-1` / `bg-gradient-2`             |
+| `bg-control-accent-gradient-hover-from`             | `bg-gradient-1-hover`                         |
+| `bg-control-accent-gradient-active-to`              | `bg-gradient-2-active`                        |
+| `stroke-control-accent-gradient-from` / `-to`       | `stroke-gradient-1` / `stroke-gradient-2`     |
+| `stroke-control-accent-gradient-hover-from` / `-to` | `bg-gradient-1-hover` / `bg-gradient-2-hover` |
 
-The focus stroke tokens (`stroke-focus-black`, `stroke-focus-blue`) were **not**
-renamed; only the Tailwind class names built on them changed.
+Two exceptions where the old name is **not** honored, so a theme setting it
+loses the color:
+
+- `stroke-hover-alpha` was removed — it held the same value as
+  `stroke-accent-alpha`. Move the value there.
+- The `stroke-control-accent-gradient-*` stops behind the selected tab's
+  underline have no fallback chain. Rename them as in the table above.
+
+`stroke-focus-black` and `stroke-focus-blue` are unchanged as variables; only
+the Tailwind class names moved (`outline-focus-black` → `outline-focus`,
+`border-focus-blue` → `border-accent-focus`).
 
 **Transitional — do not build a theme on these**
 
@@ -278,7 +299,7 @@ same role) are omitted: `bg-error`, `bg-warning`, `bg-info`, `bg-success`,
 | `controls-text-disable`, `controls-text-primary-disable`, `controls-text-accent-disable`                                 | `text-control-disable-primary`, `text-control-disable-secondary` — three states collapsed into two |
 | `text-accent-primary`                                                                                                    | `text-accent`                                                                                      |
 | `stroke-hover`                                                                                                           | `stroke-accent-alpha`                                                                              |
-| `stroke-accent-primary`                                                                                                  | `stroke-accent-alpha`, plus `stroke-focus-blue` for focus rings                                    |
+| `stroke-accent-primary`                                                                                                  | `stroke-accent`, plus `stroke-focus-blue` for accent focus rings                                   |
 | `bg-accent-secondary`, `bg-accent-tertiary`, `stroke-accent-secondary`, `stroke-accent-tertiary`, `text-accent-tertiary` | No equivalent — the three-accent scheme became a single accent                                     |
 | `bg-auth-layer-0`, `bg-auth-layer-1`                                                                                     | No equivalent — the login page uses the shared surface tokens                                      |
 | `bg-model-icon`                                                                                                          | No equivalent                                                                                      |

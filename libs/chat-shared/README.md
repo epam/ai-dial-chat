@@ -244,6 +244,7 @@ import {
   buildCssVars,
   copyToClipboard,
   copyMarkdownAsRichText,
+  markdownToRichTextHtml,
   formatLastUsed,
   formatFileSize,
   formatCost,
@@ -263,6 +264,13 @@ const className = mergeClasses('base-class', isActive && 'active');
 
 // Map a *Colors object to CSS custom property declarations; undefined values are dropped
 const cssVars = buildCssVars({ '--cs-text': colors?.text });
+
+// Copy markdown as both flavours: rich text for Word/Gmail/Slack, raw markdown for plain-text targets.
+// Styling travels inline, so a pasted table keeps its border, header band, dividers, and zebra rows.
+copyMarkdownAsRichText(message.content);
+
+// The same HTML on its own, for a caller that writes the clipboard itself or renders an export
+const html = markdownToRichTextHtml(message.content);
 
 // Format a USD amount, keeping decimals for sub-dollar values
 formatPrice(0.3); // '$0.3'

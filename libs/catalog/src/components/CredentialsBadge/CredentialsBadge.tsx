@@ -1,5 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialTooltip } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, Tooltip } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangleFilled } from '@tabler/icons-react';
 import { FC } from 'react';
 import type { CatalogItemCredentials } from '../../models/catalog-item-credentials';
@@ -44,7 +44,7 @@ export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
   });
 
   return (
-    <DialTooltip tooltip={loggedOutLabel}>
+    <Tooltip tooltip={loggedOutLabel} asChild>
       <span
         role="img"
         aria-label={loggedOutLabel}
@@ -60,6 +60,6 @@ export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
           aria-hidden
         />
       </span>
-    </DialTooltip>
+    </Tooltip>
   );
 };

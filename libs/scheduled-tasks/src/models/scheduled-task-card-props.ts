@@ -15,13 +15,13 @@ export interface ScheduledTaskCardLabels {
 export interface ScheduledTaskCardColors {
   /** Card title text color. Fallback: `--text-primary`. */
   titleText?: string;
-  /** Description/prompt-preview text color. Fallback: `--text-control-disable-secondary`. */
+  /** Description/prompt-preview text color. Fallback: `--text-control-disable-primary`. */
   descriptionText?: string;
   /** Schedule pill background. Fallback: `--bg-layer-sunken`. */
   schedulePillBackground?: string;
   /** Schedule pill border color. Fallback: `--stroke-tertiary`. */
   schedulePillBorder?: string;
-  /** Schedule pill label text color. Fallback: `--text-control-disable-secondary`. */
+  /** Schedule pill label text color. Fallback: `--text-control-disable-primary`. */
   scheduleLabelText?: string;
   /** Non-leaf location breadcrumb segment text color. Fallback: `--text-secondary`. */
   locationLabelText?: string;
@@ -37,7 +37,7 @@ export interface ScheduledTaskCardColors {
   pausedBadgeBackground?: string;
   /** "Paused" badge border color. Fallback: `--stroke-tertiary`. */
   pausedBadgeBorder?: string;
-  /** "Paused" badge icon and text color. Fallback: `--text-control-disable-secondary`. */
+  /** "Paused" badge icon and text color. Fallback: `--text-control-disable-primary`. */
   pausedBadgeText?: string;
 }
 

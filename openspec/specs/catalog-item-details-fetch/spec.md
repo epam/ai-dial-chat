@@ -334,7 +334,7 @@ SHALL use `detailsStyles?.typography?.contentHeadingClassName` (default `'dial-s
 and `detailsStyles?.typography?.contentClassName` (default `'dial-small-text'`) respectively,
 matching the typography this tab already exposed before switching renderers. This applies
 uniformly to every entity type that supplies a description (models, applications, toolsets,
-guardrails, prompts, skills) since `content` is the same `item.description` string regardless
+prompts, skills) since `content` is the same `item.description` string regardless
 of type.
 
 The details panel's always-visible Summary section (rendered by `Summary`) SHALL NOT render

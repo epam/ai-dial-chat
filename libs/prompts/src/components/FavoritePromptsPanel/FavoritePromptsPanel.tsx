@@ -5,7 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialTooltip,
+  Tooltip,
   ElementSize,
   GhostButton,
   GhostIconButton,
@@ -102,9 +102,9 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
     return (
       <li key={item.id}>
         {hasDescription ? (
-          <DialTooltip tooltip={item.description} triggerClassName="block">
+          <Tooltip tooltip={item.description} triggerClassName="block">
             {row}
-          </DialTooltip>
+          </Tooltip>
         ) : (
           row
         )}

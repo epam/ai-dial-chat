@@ -6,8 +6,8 @@
   color: var(
     --stc-desc-text,
     var(
-      --text-control-disable-secondary,
-      var(--text-control-disable-beta, #848e9c)
+      --text-control-disable-primary,
+      var(--text-control-disable-alpha, #848e9c)
     )
   );
 }
@@ -21,8 +21,8 @@
   color: var(
     --stc-schedule-label-text,
     var(
-      --text-control-disable-secondary,
-      var(--text-control-disable-beta, #848e9c)
+      --text-control-disable-primary,
+      var(--text-control-disable-alpha, #848e9c)
     )
   );
 }
@@ -49,8 +49,8 @@
   color: var(
     --stc-paused-text,
     var(
-      --text-control-disable-secondary,
-      var(--text-control-disable-beta, #848e9c)
+      --text-control-disable-primary,
+      var(--text-control-disable-alpha, #848e9c)
     )
   );
 }

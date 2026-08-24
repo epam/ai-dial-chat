@@ -6,7 +6,7 @@ import {
 import {
   Button,
   DIAL_ICON_SIZE,
-  DialSearch,
+  Search,
   ElementSize,
   Highlight,
 } from '@epam/ai-dial-ui-kit';
@@ -205,11 +205,11 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
         {hasDeployments && !isLoading && (
           <>
             <div className="flex-shrink-0 px-4 py-[10px]">
-              <DialSearch
+              <Search
                 value={query}
                 placeholder={searchPlaceholder}
                 size={ElementSize.Standard}
-                onChange={setQuery}
+                onChange={(value) => setQuery(value ?? '')}
               />
             </div>
             <div

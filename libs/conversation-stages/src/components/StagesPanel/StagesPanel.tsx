@@ -3,7 +3,7 @@ import {
   mergeClasses,
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import { StageRow } from '../../models/stage-grouping';
@@ -84,7 +84,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
             hasFailed && styles.stageNameFailed,
           )}
         >
-          <DialEllipsisTooltip text={row.name} />
+          <EllipsisTooltip text={row.name} />
         </span>
         <span
           className={mergeClasses(

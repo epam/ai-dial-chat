@@ -83,6 +83,7 @@ const UsageTab: FC = () => {
       limitReachedBadgeLabel: t(UsageI18nKeys.LimitReachedBadgeLabel),
       noLimitBadgeLabel: t(UsageI18nKeys.NoLimitLabel),
       unavailableBadgeLabel: t(UsageI18nKeys.UnavailableBadgeLabel),
+      emptyStateLabel: t(UsageI18nKeys.ModelLimitsEmptyState),
     }),
     [t],
   );
@@ -117,18 +118,12 @@ const UsageTab: FC = () => {
         ) : (
           <>
             <UsageLimitCardGroup cards={cards} labels={labels} />
-            {modelLimitRows.length > 0 ? (
-              <ModelLimitsSection
-                rows={modelLimitRows}
-                period={period}
-                onPeriodChange={setPeriod}
-                labels={modelLimitsLabels}
-              />
-            ) : (
-              <p className="dial-small-text text-secondary">
-                {t(UsageI18nKeys.ModelLimitsEmptyState)}
-              </p>
-            )}
+            <ModelLimitsSection
+              rows={modelLimitRows}
+              period={period}
+              onPeriodChange={setPeriod}
+              labels={modelLimitsLabels}
+            />
           </>
         )}
       </div>

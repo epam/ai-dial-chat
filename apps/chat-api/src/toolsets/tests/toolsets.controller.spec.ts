@@ -144,6 +144,13 @@ describe('ToolsetsController (integration)', () => {
       expect(service.getToolset).not.toHaveBeenCalled();
     });
 
+    it('returns 400 for a double-encoded path-traversal payload, without calling the service', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/toolsets/..%252Fetc%252Fpasswd')
+        .expect(400);
+      expect(service.getToolset).not.toHaveBeenCalled();
+    });
+
     it('returns 404 when service throws NotFoundException', async () => {
       service.getToolset.mockRejectedValue(
         new NotFoundException('Toolset not found'),

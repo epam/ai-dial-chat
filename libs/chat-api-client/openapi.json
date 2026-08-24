@@ -1232,9 +1232,8 @@
             "name": "toolsetName",
             "required": true,
             "in": "path",
-            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1289,9 +1288,8 @@
             "name": "toolsetName",
             "required": true,
             "in": "path",
-            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1353,9 +1351,8 @@
             "name": "toolsetName",
             "required": true,
             "in": "path",
-            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1402,9 +1399,8 @@
             "name": "toolsetName",
             "required": true,
             "in": "path",
-            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1465,9 +1461,8 @@
             "name": "toolsetName",
             "required": true,
             "in": "path",
-            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
