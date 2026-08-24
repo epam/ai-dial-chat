@@ -28,65 +28,40 @@ This is an overlay feature key, not an `ENABLED_FEATURES` / `ENABLED_FEATURES_RO
 
 ### Requirement: Skills merge into `CatalogView`'s item list
 
-`apps/chat/src/components/CatalogView/CatalogView.tsx` SHALL read `skills` and `publicSkills` from `useSkills()` and, when `OverlayFeature.Skills` is enabled, append them to the `catalogItems` memo through `mapSkillToCatalogItem` — personal entries with `SkillSource.Personal`, organisation entries with `SkillSource.Public` — alongside the existing deployment, toolset, and prompt branches.
+When Skills are enabled, `CatalogView` SHALL append personal `skills`, `sharedWithMe`, and `publicSkills` from `useSkills()` through `mapSkillToCatalogItem` with their matching `SkillSource`. All three arrays and the feature flag SHALL be memo dependencies. The shared array SHALL also participate in metadata lookup when details are fetched.
 
-`skills`, `publicSkills`, and the feature flag SHALL be listed in the `catalogItems` `useMemo` dependency array.
+#### Scenario: All skill sources are listed
 
-`CatalogView`'s `isLoading` SHALL additionally include the skills context's `isLoading`, so the catalog's existing skeleton covers the skill listing.
+- **WHEN** the context exposes one personal, one shared, and one public skill
+- **THEN** the catalog contains all three under their Personal, Shared, and Public source folders
 
-Skill items SHALL flow through the catalog's existing search, sort, topic filter, folder grouping, card view, and list view with no per-type branching, since `filterCatalogItems`, `buildCatalogTabs`, and the list-view columns already key off `item.type` generically.
+#### Scenario: Selector mode still excludes skills
 
-#### Scenario: Personal and organisation skills both listed
-
-- **WHEN** the context exposes two personal skills and one organisation skill and the feature is enabled
-- **THEN** `catalogItems` contains three `CatalogEntityType.Skill` items, two with `isMyApp: true` and one with `isMyApp: false`
-
-#### Scenario: Skills participate in search
-
-- **WHEN** the user types a query matching a skill's name
-- **THEN** that skill appears in the filtered results with its match highlighted by the catalog's existing result rendering
-
-#### Scenario: Loading state covers the skill listing
-
-- **WHEN** deployments and favourites have resolved but the skill listings have not
-- **THEN** `CatalogView` still reports a loading state
-
-#### Scenario: Selector mode excludes skills
-
-- **WHEN** `CatalogView` renders in `isSelectorMode`
-- **THEN** no skill item is shown, because `PICKER_VISIBLE_TYPES` contains only `Model` and `Agent`
+- **WHEN** the catalog renders in deployment-selector mode
+- **THEN** no skill item is shown
 
 ---
 
-### Requirement: Every mutating and runtime action is hidden for a skill
+### Requirement: Unsupported actions are hidden for a skill
 
-`CatalogView` SHALL extend its existing action-visibility predicates so that, for an item whose `type` is `CatalogEntityType.Skill`:
+Skills SHALL continue to hide Use in chat, Share, Download, Delete, Unshare, and Revoke access. No Skill entry is added to the Create dropdown by this capability. Edit is available when `item.isEditable` is true. Publish is available only when `item.isMyApp` is true; shared-with-me and public skills SHALL remain unpublishable even when `canEdit` is true. `CatalogView.handleEdit` SHALL navigate to `/skill-editor?id=<full skill resource URL>&returnUrl=/catalog`.
 
-- `isPrimaryActionVisible(item)` returns `false` — a skill is not a runtime a conversation can target.
-- `isPublishVisible(item)` returns `false`.
-- `isShareVisible(item)` returns `false`.
-- `isDownloadVisible(item)` returns `false`.
+The decision remains at the app edge through `CatalogItem.isEditable` and `CatalogView`'s callbacks; `libs/catalog` gains no bucket, permission, route, or generated-client knowledge.
 
-No `Skill` entry SHALL be added to the Create dropdown, and no skill route or editor SHALL be registered. `mapSkillToCatalogItem` sets `isEditable: false`, so the Edit affordance is absent.
+#### Scenario: Personal skill exposes Edit and Publish
 
-All four decisions live in the host predicates already declared on `CatalogProps`; `libs/catalog`'s built-in defaults in `Header.tsx` SHALL NOT be changed to know about `Skill`.
+- **WHEN** a user opens their personal skill
+- **THEN** Edit and Publish are present while every unsupported mutating/runtime action remains absent
 
-The skill's DIAL Core `permissions` array is carried through the mapping but SHALL NOT enable any action.
+#### Scenario: Writable shared skill exposes Edit
 
-#### Scenario: Details panel for a skill shows no mutating actions
+- **WHEN** a shared skill has `canEdit: true`
+- **THEN** Edit navigates with its full `skills/{ownerBucket}/{path}` id and Publish remains absent
 
-- **WHEN** a user opens the details panel for any skill, personal or organisation
-- **THEN** no primary action, publish, share, download, edit, or delete control is rendered
+#### Scenario: Public skill remains read-only
 
-#### Scenario: A `WRITE` permission does not unlock actions
-
-- **WHEN** a personal skill's `permissions` include `WRITE`
-- **THEN** the details panel still renders no mutating action
-
-#### Scenario: Create dropdown is unchanged
-
-- **WHEN** the Create dropdown is opened with `OverlayFeature.Skills` enabled
-- **THEN** it offers exactly the entries it offered before skills were listed, with no Skill option
+- **WHEN** a public skill is opened, even if metadata contains `WRITE`
+- **THEN** no Edit, Publish, or other mutation action is rendered
 
 ---
 
