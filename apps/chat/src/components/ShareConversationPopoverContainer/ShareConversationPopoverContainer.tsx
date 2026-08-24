@@ -1,3 +1,4 @@
+import { useShareLink } from '@epam/ai-dial-chat-hooks';
 import { ShareLinkAccess, SharePopover } from '@epam/ai-dial-share';
 import type { FC } from 'react';
 import { memo } from 'react';
@@ -7,7 +8,7 @@ import {
   ButtonsI18nKeys,
   ShareI18nKeys,
 } from '../../constants/translation-keys';
-import { useShareLink } from '../../hooks/useShareLink/useShareLink';
+import { shareApi } from '../../server-api/api-client';
 
 /** Props for `ShareConversationPopoverContainer`. */
 interface Props {
@@ -33,7 +34,7 @@ const ShareConversationPopoverContainer: FC<Props> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
-  const { data, isLoading, error } = useShareLink(conversationPath);
+  const { data, isLoading, error } = useShareLink(shareApi, conversationPath);
 
   const labels = {
     title: t(ShareI18nKeys.Title),

@@ -1,4 +1,14 @@
-import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import {
+  useAttachmentAction,
+  useConversationSources,
+  usePanelMaxWidth,
+  isDownloadableAttachment,
+  downloadAttachment as triggerAttachmentDownload,
+} from '@epam/ai-dial-chat-hooks';
+import type {
+  AttachmentDisplayResolvers,
+  DisplayAttachment,
+} from '@epam/ai-dial-chat-shared';
 import {
   MDMessageViewer,
   AttachmentType,
@@ -20,6 +30,7 @@ import {
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MIN_CONTENT_AREA_WIDTH } from '../../constants/layout';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
@@ -30,24 +41,21 @@ import {
 import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
-import {
-  downloadAttachment as triggerAttachmentDownload,
-  isDownloadableAttachment,
-  useAttachmentAction,
-} from '../../hooks/attachment/useAttachmentAction';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
-import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import usePanelMaxWidth from '../../hooks/usePanelMaxWidth';
 import {
   ActiveScheduledTaskDetailState,
   ActiveScheduledTaskStatus,
 } from '../../types/active-scheduled-task';
 import { StorageKey } from '../../types/storage-key';
 import { isExternalSourcePreviewable } from '../../utils/attachment-canvas';
-import { isDialFileId } from '../../utils/dial-file';
+import {
+  isDialFileId,
+  resolveDialFileDownloadUrl,
+} from '../../utils/dial-file';
+import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
 
@@ -56,12 +64,23 @@ const DEFAULT_PANEL_WIDTH = 360;
 /** Delay between successive triggered downloads so browsers don't block a burst of anchor clicks. */
 const DOWNLOAD_ALL_STAGGER_MS = 150;
 
+/* Stable references so useConversationSources'/useAttachmentAction's memoization isn't defeated by a new object/function each render. */
+const attachmentDisplayResolvers: AttachmentDisplayResolvers = {
+  resolvePreviewUrl: (dto) => resolveCatalogIconUrl(dto.url),
+  resolvePlayUrl: (dto) => dto.url && resolveDialFileDownloadUrl(dto.url),
+};
+
 const ConversationSourcesPanelContainer: FC = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { handleClose, isOpen, messages } = useSourcesSidebar();
-  const { uploaded, generated, sources } = useConversationSources(messages);
-  const { handleAttachmentClick: downloadAttachment } = useAttachmentAction();
+  const { uploaded, generated, sources } = useConversationSources(
+    messages,
+    attachmentDisplayResolvers,
+  );
+  const { handleAttachmentClick: downloadAttachment } = useAttachmentAction({
+    resolveDownloadUrl: resolveDialFileDownloadUrl,
+  });
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
   const activeScheduledTask = useActiveScheduledTask();
   const { items: deploymentItems } = useDeployments();
@@ -243,14 +262,14 @@ const ConversationSourcesPanelContainer: FC = () => {
   const handleDownloadAll = useCallback(() => {
     downloadableAttachments.forEach((attachment, index) => {
       setTimeout(
-        () => triggerAttachmentDownload(attachment),
+        () => triggerAttachmentDownload(attachment, resolveDialFileDownloadUrl),
         index * DOWNLOAD_ALL_STAGGER_MS,
       );
     });
   }, [downloadableAttachments]);
 
   const isMobile = useIsMobile();
-  const maxPanelWidth = usePanelMaxWidth();
+  const maxPanelWidth = usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH);
   const [storedWidth, setStoredWidth] = useLocalStorage(
     StorageKey.ConversationSourcesWidth,
     DEFAULT_PANEL_WIDTH,
