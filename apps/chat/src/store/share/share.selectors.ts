@@ -23,6 +23,10 @@ const selectShareResourceId = (state: RootState) =>
 const selectShareResourceName = (state: RootState) =>
   rootSelector(state).shareResourceName;
 
+const selectShareResourceDisplayName = (state: RootState) =>
+  rootSelector(state).shareResourceDisplayName ??
+  rootSelector(state).shareResourceName;
+
 const selectShareFeatureType = (state: RootState) =>
   rootSelector(state).shareFeatureType;
 
@@ -60,6 +64,7 @@ export const ShareSelectors = {
   selectShareModalOpened,
   selectShareResourceId,
   selectShareResourceName,
+  selectShareResourceDisplayName,
   selectShareFeatureType,
   selectShareIsFolder,
   selectAcceptedEntityInfo,

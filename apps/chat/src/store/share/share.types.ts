@@ -15,15 +15,20 @@ export interface UnshareFileManagerItem {
   isShared?: boolean;
 }
 
+export type UnshareEntity = Omit<ShareEntity, 'folderId'> & {
+  displayName?: string;
+};
+
 export interface ShareState {
   status: UploadStatus;
   error: ErrorMessage | undefined;
   invitationId: string | undefined;
   writeInvitationId: string | undefined;
   shareResourceName: string | undefined;
+  shareResourceDisplayName: string | undefined;
   shareResourceId: string | undefined;
   shareModalState: ModalState;
-  unshareEntity?: Omit<ShareEntity, 'folderId'>;
+  unshareEntity?: UnshareEntity;
   acceptedId: string | undefined;
   isFolderAccepted: boolean | undefined;
   shareFeatureType?: FeatureType;
