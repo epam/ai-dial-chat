@@ -1,24 +1,28 @@
+import type { ShareApi } from '@epam/ai-dial-chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getShareRecipientsCount } from '../../../server-api/share.api';
-import { RecipientsCountStatus } from '../../../types/share-recipients';
-import { useShareRecipientsCount } from '../useShareRecipientsCount';
+import {
+  RecipientsCountStatus,
+  useShareRecipientsCount,
+} from '../useShareRecipientsCount';
 
-vi.mock('../../../server-api/share.api', () => ({
-  getShareRecipientsCount: vi.fn(),
-}));
+const getShareRecipientsCount = vi.fn();
+const fakeShareApi = { getShareRecipientsCount } as unknown as Pick<
+  ShareApi,
+  'getShareRecipientsCount'
+>;
 
 describe('useShareRecipientsCount', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+    getShareRecipientsCount.mockResolvedValue({
       itemId: 'conversations/bucket/chat',
       recipientsCount: 3,
     });
   });
 
   it('reports Idle and issues no request until asked', () => {
-    const { result } = renderHook(() => useShareRecipientsCount());
+    const { result } = renderHook(() => useShareRecipientsCount(fakeShareApi));
 
     expect(
       result.current.getRecipientsCount('conversations/bucket/chat').status,
@@ -27,7 +31,7 @@ describe('useShareRecipientsCount', () => {
   });
 
   it('resolves the count for the requested resource', async () => {
-    const { result } = renderHook(() => useShareRecipientsCount());
+    const { result } = renderHook(() => useShareRecipientsCount(fakeShareApi));
 
     act(() => {
       result.current.requestRecipientsCount('conversations/bucket/chat');
@@ -38,13 +42,13 @@ describe('useShareRecipientsCount', () => {
         result.current.getRecipientsCount('conversations/bucket/chat'),
       ).toEqual({ status: RecipientsCountStatus.Resolved, count: 3 }),
     );
-    expect(getShareRecipientsCount).toHaveBeenCalledWith(
-      'conversations/bucket/chat',
-    );
+    expect(getShareRecipientsCount).toHaveBeenCalledWith({
+      itemId: 'conversations/bucket/chat',
+    });
   });
 
   it('requests a given resource only once', async () => {
-    const { result } = renderHook(() => useShareRecipientsCount());
+    const { result } = renderHook(() => useShareRecipientsCount(fakeShareApi));
 
     act(() => {
       result.current.requestRecipientsCount('conversations/bucket/chat');
@@ -55,13 +59,13 @@ describe('useShareRecipientsCount', () => {
   });
 
   it('keeps resources independent of one another', async () => {
-    vi.mocked(getShareRecipientsCount).mockImplementation((itemId) =>
+    getShareRecipientsCount.mockImplementation(({ itemId }) =>
       Promise.resolve({
         itemId,
         recipientsCount: itemId.endsWith('other') ? 1 : 3,
       }),
     );
-    const { result } = renderHook(() => useShareRecipientsCount());
+    const { result } = renderHook(() => useShareRecipientsCount(fakeShareApi));
 
     act(() => {
       result.current.requestRecipientsCount('conversations/bucket/chat');
@@ -79,8 +83,8 @@ describe('useShareRecipientsCount', () => {
   });
 
   it('reports Unknown when the lookup fails', async () => {
-    vi.mocked(getShareRecipientsCount).mockRejectedValue(new Error('503'));
-    const { result } = renderHook(() => useShareRecipientsCount());
+    getShareRecipientsCount.mockRejectedValue(new Error('503'));
+    const { result } = renderHook(() => useShareRecipientsCount(fakeShareApi));
 
     act(() => {
       result.current.requestRecipientsCount('conversations/bucket/chat');
@@ -94,7 +98,7 @@ describe('useShareRecipientsCount', () => {
   });
 
   it('re-fetches a resource after its count is invalidated', async () => {
-    const { result } = renderHook(() => useShareRecipientsCount());
+    const { result } = renderHook(() => useShareRecipientsCount(fakeShareApi));
 
     act(() => {
       result.current.requestRecipientsCount('conversations/bucket/chat');
@@ -112,7 +116,7 @@ describe('useShareRecipientsCount', () => {
       result.current.getRecipientsCount('conversations/bucket/chat').status,
     ).toBe(RecipientsCountStatus.Idle);
 
-    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+    getShareRecipientsCount.mockResolvedValue({
       itemId: 'conversations/bucket/chat',
       recipientsCount: 0,
     });

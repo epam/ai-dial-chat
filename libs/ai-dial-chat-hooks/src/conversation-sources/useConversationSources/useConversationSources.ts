@@ -1,24 +1,46 @@
-import type { DisplayAttachment, Message } from '@epam/ai-dial-chat-shared';
-import { MessageRole } from '@epam/ai-dial-chat-shared';
+import type {
+  AttachmentDisplayResolvers,
+  DisplayAttachment,
+  Message,
+} from '@epam/ai-dial-chat-shared';
+import {
+  messageAttachmentToDisplayAttachment,
+  MessageRole,
+} from '@epam/ai-dial-chat-shared';
 import {
   isReferenceOnlyAttachment,
   resolveMessageAnnotations,
 } from '@epam/ai-dial-quotations';
 import type { QuotationSource } from '@epam/ai-dial-source-panel';
 import { useMemo } from 'react';
-import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
+
+/*
+ * Stable empty-object reference so omitting `resolvers` doesn't create a new
+ * object on every render, which would defeat the `useMemo` below.
+ */
+const EMPTY_RESOLVERS: AttachmentDisplayResolvers = {};
+
+/** Return value of {@link useConversationSources}. */
+export interface UseConversationSourcesResult {
+  /** Deduplicated attachments the user uploaded across the conversation. */
+  uploaded: DisplayAttachment[];
+  /** Deduplicated attachments the assistant generated across the conversation. */
+  generated: DisplayAttachment[];
+  /** Quotation sources referenced by assistant messages, deduplicated by URL. */
+  sources: QuotationSource[];
+}
 
 /**
- * Derives uploaded (user), generated (assistant) attachment lists, and quotation sources
- * from a conversation's message array. All lists are memoised on the `messages` reference.
+ * Derives uploaded (user), generated (assistant) attachment lists, and
+ * quotation sources from a conversation's message array. All lists are
+ * memoised on the `messages` reference. `resolvers` are forwarded to
+ * `@epam/ai-dial-chat-shared`'s attachment mapper for preview/play URL
+ * resolution — pass an empty object when the host has no such resolution.
  */
 export const useConversationSources = (
   messages: Message[],
-): {
-  uploaded: DisplayAttachment[];
-  generated: DisplayAttachment[];
-  sources: QuotationSource[];
-} => {
+  resolvers: AttachmentDisplayResolvers = EMPTY_RESOLVERS,
+): UseConversationSourcesResult => {
   return useMemo(() => {
     const uploaded: DisplayAttachment[] = [];
     const generated: DisplayAttachment[] = [];
@@ -30,7 +52,8 @@ export const useConversationSources = (
     for (const msg of messages) {
       const dtos = msg.custom_content?.attachments;
       if (msg.role === MessageRole.User) {
-        for (const att of attachmentDtosToDisplayAttachments(dtos)) {
+        for (const dto of dtos ?? []) {
+          const att = messageAttachmentToDisplayAttachment(dto, resolvers);
           if (seenUploadedIds.has(att.id)) continue;
           seenUploadedIds.add(att.id);
           uploaded.push(att);
@@ -39,7 +62,8 @@ export const useConversationSources = (
         const regularDtos = dtos?.filter(
           (dto) => !isReferenceOnlyAttachment(dto),
         );
-        for (const att of attachmentDtosToDisplayAttachments(regularDtos)) {
+        for (const dto of regularDtos ?? []) {
+          const att = messageAttachmentToDisplayAttachment(dto, resolvers);
           if (seenGeneratedIds.has(att.id)) continue;
           seenGeneratedIds.add(att.id);
           generated.push(att);
@@ -74,5 +98,5 @@ export const useConversationSources = (
     }
 
     return { uploaded, generated, sources };
-  }, [messages]);
+  }, [messages, resolvers]);
 };

@@ -21,7 +21,6 @@ import { useConversationImport } from '../../../hooks/useConversationImport';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import {
   discardSharedCatalogItem,
-  getShareRecipientsCount,
   revokeSharedAccess,
 } from '../../../server-api/share.api';
 import {
@@ -227,6 +226,10 @@ vi.mock('react-router', () => ({
 vi.mock('../../../context/ConversationsContext');
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../server-api/share.api');
+const getShareRecipientsCount = vi.hoisted(() => vi.fn());
+vi.mock('../../../server-api/api-client', () => ({
+  shareApi: { getShareRecipientsCount },
+}));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({ items: [] }),
 }));
@@ -1720,7 +1723,7 @@ describe('ConversationPanelView — revoke access', () => {
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
 
-    expect(getShareRecipientsCount).toHaveBeenCalledWith('conv1');
+    expect(getShareRecipientsCount).toHaveBeenCalledWith({ itemId: 'conv1' });
     expect(
       screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
     ).toBeTruthy();

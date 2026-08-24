@@ -18,7 +18,13 @@
     }
   },
   "peerDependencies": {
-    "react": "^19.2.6"
+    "react": "^19.2.6",
+    "@epam/ai-dial-attachment-canvas": "*",
+    "@epam/ai-dial-chat-api-client": "*",
+    "@epam/ai-dial-chat-shared": "*",
+    "@epam/ai-dial-quotations": "*",
+    "@epam/ai-dial-share": "*",
+    "@epam/ai-dial-source-panel": "*"
   },
   "nx": {
     "tags": [

@@ -10,14 +10,26 @@ import {
 
 const mockOpenCanvas = vi.fn();
 
-vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
-  return {
-    ...actual,
-    useAttachmentCanvas: () => ({ openCanvas: mockOpenCanvas }),
-  };
-});
+/*
+ * Mocked without `importOriginal` — the real module transitively pulls in
+ * @epam/pdf-highlighter-kit's compiled dist, whose internal relative import
+ * doesn't resolve outside a bundler. Only `AttachmentContentType.Pdf` and
+ * `useAttachmentCanvas` are actually used by the hook under test.
+ */
+vi.mock('@epam/ai-dial-attachment-canvas', () => ({
+  AttachmentContentType: { Pdf: 'pdf' },
+  useAttachmentCanvas: () => ({ openCanvas: mockOpenCanvas }),
+}));
+
+/* Mirrors the DIAL Core file-id-to-download-URL convention used in `apps/chat`. */
+const resolveDownloadUrl = (fileId: string): string | undefined => {
+  const withoutPrefix = fileId.slice('files/'.length);
+  const slashIdx = withoutPrefix.indexOf('/');
+  if (slashIdx < 0) return undefined;
+  const bucket = withoutPrefix.slice(0, slashIdx);
+  const path = withoutPrefix.slice(slashIdx + 1);
+  return `/api/v1/files/download?bucket=${bucket}&path=${path}`;
+};
 
 const makeAttachment = (
   overrides?: Partial<DisplayAttachment>,
@@ -61,7 +73,9 @@ describe('useAttachmentAction', () => {
   });
 
   it('triggers an anchor download for a DIAL file attachment', () => {
-    const { result } = renderHook(() => useAttachmentAction());
+    const { result } = renderHook(() =>
+      useAttachmentAction({ resolveDownloadUrl }),
+    );
     const attachment = makeAttachment({
       url: 'files/my-bucket/folder/file.pdf',
     });
@@ -74,7 +88,9 @@ describe('useAttachmentAction', () => {
   });
 
   it('downloads an inline attachment that carries its content in data', () => {
-    const { result } = renderHook(() => useAttachmentAction());
+    const { result } = renderHook(() =>
+      useAttachmentAction({ resolveDownloadUrl }),
+    );
     const attachment = makeAttachment({
       name: 'report.md',
       contentType: 'text/markdown',
@@ -89,7 +105,9 @@ describe('useAttachmentAction', () => {
   });
 
   it('is a no-op for an attachment without a DIAL file URL', () => {
-    const { result } = renderHook(() => useAttachmentAction());
+    const { result } = renderHook(() =>
+      useAttachmentAction({ resolveDownloadUrl }),
+    );
     const attachment = makeAttachment({ url: 'https://external.com/file.pdf' });
 
     result.current.handleAttachmentClick(attachment);
@@ -98,7 +116,9 @@ describe('useAttachmentAction', () => {
   });
 
   it('is a no-op for an attachment with no URL', () => {
-    const { result } = renderHook(() => useAttachmentAction());
+    const { result } = renderHook(() =>
+      useAttachmentAction({ resolveDownloadUrl }),
+    );
     const attachment = makeAttachment({ url: undefined });
 
     result.current.handleAttachmentClick(attachment);
@@ -107,7 +127,9 @@ describe('useAttachmentAction', () => {
   });
 
   it('opens the canvas scrolled to the page for a PDF referenceUrl with a page anchor', () => {
-    const { result } = renderHook(() => useAttachmentAction());
+    const { result } = renderHook(() =>
+      useAttachmentAction({ resolveDownloadUrl }),
+    );
     const attachment = makeAttachment({
       url: undefined,
       referenceUrl: 'files/my-bucket/report.pdf#page=5',
@@ -116,12 +138,18 @@ describe('useAttachmentAction', () => {
     result.current.handleAttachmentClick(attachment);
 
     expect(mockOpenCanvas).toHaveBeenCalledOnce();
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({ selectedHighlightId: expect.any(String) }),
+      attachment.name,
+    );
     expect(anchorClickSpy).not.toHaveBeenCalled();
     expect(windowOpenSpy).not.toHaveBeenCalled();
   });
 
   it('downloads a DIAL-file referenceUrl that is not a PDF', () => {
-    const { result } = renderHook(() => useAttachmentAction());
+    const { result } = renderHook(() =>
+      useAttachmentAction({ resolveDownloadUrl }),
+    );
     const attachment = makeAttachment({
       url: undefined,
       referenceUrl: 'files/my-bucket/notes.md',
@@ -134,7 +162,9 @@ describe('useAttachmentAction', () => {
   });
 
   it('opens an external referenceUrl in a new tab', () => {
-    const { result } = renderHook(() => useAttachmentAction());
+    const { result } = renderHook(() =>
+      useAttachmentAction({ resolveDownloadUrl }),
+    );
     const attachment = makeAttachment({
       url: undefined,
       referenceUrl: 'https://example.com/source',
@@ -151,7 +181,9 @@ describe('useAttachmentAction', () => {
   });
 
   it('returns a stable callback reference across re-renders', () => {
-    const { result, rerender } = renderHook(() => useAttachmentAction());
+    const { result, rerender } = renderHook(() =>
+      useAttachmentAction({ resolveDownloadUrl }),
+    );
     const first = result.current.handleAttachmentClick;
     rerender();
     expect(result.current.handleAttachmentClick).toBe(first);
@@ -163,7 +195,7 @@ describe('useAttachmentAction', () => {
         url: 'files/my-bucket/folder/file.pdf',
       });
 
-      const result = downloadAttachment(attachment);
+      const result = downloadAttachment(attachment, resolveDownloadUrl);
 
       expect(result).toBe(true);
       expect(anchorClickSpy).toHaveBeenCalledOnce();
@@ -179,7 +211,7 @@ describe('useAttachmentAction', () => {
         data: btoa('# Report'),
       });
 
-      const result = downloadAttachment(attachment);
+      const result = downloadAttachment(attachment, resolveDownloadUrl);
 
       expect(result).toBe(true);
       expect(anchorClickSpy).toHaveBeenCalledOnce();
@@ -191,7 +223,7 @@ describe('useAttachmentAction', () => {
         url: 'https://external.com/file.pdf',
       });
 
-      const result = downloadAttachment(attachment);
+      const result = downloadAttachment(attachment, resolveDownloadUrl);
 
       expect(result).toBe(false);
       expect(anchorClickSpy).not.toHaveBeenCalled();
@@ -200,7 +232,7 @@ describe('useAttachmentAction', () => {
     it('returns false and does not download for an attachment with no URL', () => {
       const attachment = makeAttachment({ url: undefined });
 
-      const result = downloadAttachment(attachment);
+      const result = downloadAttachment(attachment, resolveDownloadUrl);
 
       expect(result).toBe(false);
       expect(anchorClickSpy).not.toHaveBeenCalled();

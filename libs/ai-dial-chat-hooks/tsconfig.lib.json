@@ -13,7 +13,26 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "references": [],
+  "references": [
+    {
+      "path": "../source-panel/tsconfig.lib.json"
+    },
+    {
+      "path": "../share/tsconfig.lib.json"
+    },
+    {
+      "path": "../quotations/tsconfig.lib.json"
+    },
+    {
+      "path": "../chat-shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../chat-api-client/tsconfig.lib.json"
+    },
+    {
+      "path": "../attachment-canvas/tsconfig.lib.json"
+    }
+  ],
   "exclude": [
     "vite.config.ts",
     "vite.config.mts",

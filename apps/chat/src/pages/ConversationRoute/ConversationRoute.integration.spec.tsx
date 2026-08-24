@@ -12,11 +12,11 @@ import * as NotificationContextModule from '../../context/NotificationContext';
 import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import * as apiClient from '../../server-api/api-client';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
 import * as conversationsApi from '../../server-api/conversations.api';
 import * as deploymentConfigurationApi from '../../server-api/deployments';
 import * as deploymentsApi from '../../server-api/deployments.api';
-import * as filesApi from '../../server-api/files.api';
 import * as toolsetsApi from '../../server-api/toolsets';
 import { AuthStatus } from '../../types/auth-status';
 import * as attachmentToDtoModule from '../../utils/attachment-to-dto';
@@ -96,11 +96,12 @@ vi.mock('../../server-api/application-schemas');
 vi.mock('../../server-api/toolsets');
 vi.mock('../../server-api/deployments');
 vi.mock('../../server-api/conversations.api');
-vi.mock('../../server-api/files.api');
+vi.mock('../../server-api/api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../server-api/api-client')>();
+  return { ...actual, filesApi: { ...actual.filesApi, uploadFile: vi.fn() } };
+});
 vi.mock('../../utils/attachment-to-dto');
-vi.mock('../../utils/build-upload-path', () => ({
-  buildUploadPath: vi.fn((fileName: string) => `uploads/${fileName}`),
-}));
 vi.mock('../../components/StarterButtons/StarterButtons', () => ({
   default: () => <div />,
 }));
@@ -207,7 +208,7 @@ describe('ConversationRoute — new chat model inheritance (issue #8150 Case 3)'
   const mockAttachmentsToDtos = vi.mocked(
     attachmentToDtoModule.attachmentsToDtos,
   );
-  const mockUploadFile = vi.mocked(filesApi.uploadFile);
+  const mockUploadFile = vi.mocked(apiClient.filesApi.uploadFile);
 
   beforeEach(() => {
     vi.clearAllMocks();

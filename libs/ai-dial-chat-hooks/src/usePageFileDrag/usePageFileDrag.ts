@@ -6,16 +6,25 @@ import {
   useState,
 } from 'react';
 
-interface PageFileDragState {
+/** Return value of {@link usePageFileDrag}. */
+export interface UsePageFileDragResult {
+  /** Whether a file drag is currently over the page. */
   isDragging: boolean;
+  /** Files dropped on the page, pending consumption by the caller. */
   pendingFiles: File[];
+  /** Clears `pendingFiles` after the caller has processed them. */
   onFilesConsumed: () => void;
 }
 
+/**
+ * Detects files being dragged over the whole page and exposes the dropped
+ * files, using only `document`-level drag events with an enter/leave
+ * counter to avoid flicker from child-element boundary crossings.
+ */
 export const usePageFileDrag = (
   isAttachmentsAllowed = true,
   isEnabled = true,
-): PageFileDragState => {
+): UsePageFileDragResult => {
   const [isDragging, setIsDragging] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const enterCountRef = useRef(0);

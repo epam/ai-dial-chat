@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 const getInnerWidth = (): number =>
   typeof window !== 'undefined' ? window.innerWidth : 1024;
 
-const useViewportWidth = (): number => {
+/** Tracks `window.innerWidth`, updating on the browser `resize` event. */
+export const useViewportWidth = (): number => {
   const [width, setWidth] = useState(getInnerWidth);
 
   useEffect(() => {
@@ -16,5 +17,3 @@ const useViewportWidth = (): number => {
 
   return width;
 };
-
-export default useViewportWidth;

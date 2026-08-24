@@ -1,12 +1,17 @@
+import type { ShareApi } from '@epam/ai-dial-chat-api-client';
+import { ShareLinkResponseDtoAccessEnum } from '@epam/ai-dial-chat-api-client';
 import { ShareLinkAccess } from '@epam/ai-dial-share';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getShareLink } from '../../../utils/share-link';
 import { useShareLink } from '../useShareLink';
 
-vi.mock('../../../utils/share-link', () => ({
-  getShareLink: vi.fn(),
-}));
+const createShareLink = vi.fn();
+const fakeShareApi = { createShareLink } as unknown as Pick<
+  ShareApi,
+  'createShareLink'
+>;
+
+const ORIGIN = 'https://example.com';
 
 describe('useShareLink', () => {
   beforeEach(() => {
@@ -14,13 +19,15 @@ describe('useShareLink', () => {
   });
 
   it('resolves share-link data after loading', async () => {
-    vi.mocked(getShareLink).mockResolvedValue({
-      url: 'https://example.com/marketplace/share/gpt-4o',
+    createShareLink.mockResolvedValue({
+      url: '/marketplace/share/gpt-4o',
       expiresInDays: 3,
-      access: [ShareLinkAccess.View],
+      access: [ShareLinkResponseDtoAccessEnum.View],
     });
 
-    const { result } = renderHook(() => useShareLink('gpt-4o'));
+    const { result } = renderHook(() =>
+      useShareLink(fakeShareApi, 'gpt-4o', undefined, ORIGIN),
+    );
 
     expect(result.current.isLoading).toBe(true);
     expect(result.current.data).toBeUndefined();
@@ -36,9 +43,11 @@ describe('useShareLink', () => {
   });
 
   it('sets an error when the share link could not be created', async () => {
-    vi.mocked(getShareLink).mockRejectedValue(new Error('network down'));
+    createShareLink.mockRejectedValue(new Error('network down'));
 
-    const { result } = renderHook(() => useShareLink('gpt-4o'));
+    const { result } = renderHook(() =>
+      useShareLink(fakeShareApi, 'gpt-4o', undefined, ORIGIN),
+    );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -47,19 +56,24 @@ describe('useShareLink', () => {
   });
 
   it('requests a new share link with the new access via setAccess', async () => {
-    vi.mocked(getShareLink).mockResolvedValue({
-      url: 'https://example.com/marketplace/share/gpt-4o?access=view',
+    createShareLink.mockResolvedValue({
+      url: '/marketplace/share/gpt-4o?access=view',
       expiresInDays: 3,
-      access: [ShareLinkAccess.View],
+      access: [ShareLinkResponseDtoAccessEnum.View],
     });
 
-    const { result } = renderHook(() => useShareLink('gpt-4o'));
+    const { result } = renderHook(() =>
+      useShareLink(fakeShareApi, 'gpt-4o', undefined, ORIGIN),
+    );
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    vi.mocked(getShareLink).mockResolvedValue({
-      url: 'https://example.com/marketplace/share/gpt-4o?access=edit',
+    createShareLink.mockResolvedValue({
+      url: '/marketplace/share/gpt-4o?access=edit',
       expiresInDays: 3,
-      access: [ShareLinkAccess.View, ShareLinkAccess.Edit],
+      access: [
+        ShareLinkResponseDtoAccessEnum.View,
+        ShareLinkResponseDtoAccessEnum.Edit,
+      ],
     });
 
     act(() => {
@@ -67,12 +81,13 @@ describe('useShareLink', () => {
     });
 
     expect(result.current.isLoading).toBe(true);
-    expect(getShareLink).toHaveBeenCalledWith(
-      'gpt-4o',
-      [ShareLinkAccess.View, ShareLinkAccess.Edit],
-      window.location.origin,
-      undefined,
-    );
+    expect(createShareLink).toHaveBeenCalledWith({
+      createShareLinkDto: {
+        itemId: 'gpt-4o',
+        resourceKind: undefined,
+        access: [ShareLinkAccess.View, ShareLinkAccess.Edit],
+      },
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -86,22 +101,22 @@ describe('useShareLink', () => {
   });
 
   it('refetches when itemId changes', async () => {
-    vi.mocked(getShareLink).mockResolvedValue({
-      url: 'https://example.com/marketplace/share/gpt-4o',
+    createShareLink.mockResolvedValue({
+      url: '/marketplace/share/gpt-4o',
       expiresInDays: 3,
-      access: [ShareLinkAccess.View],
+      access: [ShareLinkResponseDtoAccessEnum.View],
     });
 
     const { result, rerender } = renderHook(
-      ({ itemId }) => useShareLink(itemId),
+      ({ itemId }) => useShareLink(fakeShareApi, itemId, undefined, ORIGIN),
       { initialProps: { itemId: 'gpt-4o' } },
     );
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    vi.mocked(getShareLink).mockResolvedValue({
-      url: 'https://example.com/marketplace/share/claude',
+    createShareLink.mockResolvedValue({
+      url: '/marketplace/share/claude',
       expiresInDays: 3,
-      access: [ShareLinkAccess.View],
+      access: [ShareLinkResponseDtoAccessEnum.View],
     });
     rerender({ itemId: 'claude' });
 

@@ -1,3 +1,4 @@
+import type { FilesApi } from '@epam/ai-dial-chat-api-client';
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentErrorReason,
@@ -6,17 +7,10 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { uploadFile } from '../../../server-api/files.api';
 import { useAttachmentUpload } from '../useAttachmentUpload';
 
-vi.mock('../../../server-api/files.api', () => ({
-  uploadFile: vi.fn(),
-}));
-vi.mock('../../../utils/build-upload-path', () => ({
-  buildUploadPath: vi.fn((fileName: string) => `uploads/${fileName}`),
-}));
-
-const mockUploadFile = vi.mocked(uploadFile);
+const uploadFile = vi.fn();
+const fakeFilesApi = { uploadFile } as unknown as Pick<FilesApi, 'uploadFile'>;
 
 const makeAttachment = (name = 'file.pdf'): Attachment => ({
   id: 'att-1',
@@ -39,20 +33,32 @@ describe('useAttachmentUpload', () => {
   });
 
   it('uploads a file via the files API while online', async () => {
-    mockUploadFile.mockResolvedValue({ url: 'https://example.com/file.pdf' });
+    uploadFile.mockResolvedValue({ url: 'https://example.com/file.pdf' });
     const { result } = renderHook(() =>
-      useAttachmentUpload({ bucket: 'user-bucket' }),
+      useAttachmentUpload({ filesApi: fakeFilesApi, bucket: 'user-bucket' }),
     );
 
     await expect(
       result.current.handleUploadAttachment(makeAttachment()),
     ).resolves.toBe('https://example.com/file.pdf');
 
-    expect(mockUploadFile).toHaveBeenCalledWith(
-      'user-bucket',
-      'uploads/file.pdf',
-      expect.any(File),
+    expect(uploadFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bucket: 'user-bucket',
+        file: expect.any(File),
+      }),
     );
+  });
+
+  it('rejects when no bucket is available', async () => {
+    const { result } = renderHook(() =>
+      useAttachmentUpload({ filesApi: fakeFilesApi, bucket: undefined }),
+    );
+
+    await expect(
+      result.current.handleUploadAttachment(makeAttachment()),
+    ).rejects.toThrow('User bucket is not available');
+    expect(uploadFile).not.toHaveBeenCalled();
   });
 
   it('batches offline failures and notifies once after the debounce window', async () => {
@@ -60,10 +66,14 @@ describe('useAttachmentUpload', () => {
       value: false,
       configurable: true,
     });
-    mockUploadFile.mockRejectedValue(new Error('network down'));
+    uploadFile.mockRejectedValue(new Error('network down'));
     const onNetworkError = vi.fn();
     const { result } = renderHook(() =>
-      useAttachmentUpload({ bucket: 'user-bucket', onNetworkError }),
+      useAttachmentUpload({
+        filesApi: fakeFilesApi,
+        bucket: 'user-bucket',
+        onNetworkError,
+      }),
     );
 
     const first = result.current.handleUploadAttachment(
@@ -95,9 +105,9 @@ describe('useAttachmentUpload', () => {
       value: false,
       configurable: true,
     });
-    mockUploadFile.mockRejectedValue(new Error('network down'));
+    uploadFile.mockRejectedValue(new Error('network down'));
     const { result } = renderHook(() =>
-      useAttachmentUpload({ bucket: 'user-bucket' }),
+      useAttachmentUpload({ filesApi: fakeFilesApi, bucket: 'user-bucket' }),
     );
 
     await expect(
