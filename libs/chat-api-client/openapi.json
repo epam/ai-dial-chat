@@ -2660,6 +2660,71 @@
         ]
       }
     },
+    "/api/v1/conversations/unpublish": {
+      "post": {
+        "description": "Submits a removal request for one already-published folder of an owned conversation by proxying DIAL Core's Publication API (`createPublication`) with a single `DELETE`-action resource. **The removal takes effect only after an administrator approves the request.** Until then the published copy stays visible to everyone who could already see it, and the folder continues to appear in the conversation’s publish history. The conversation title is re-fetched server-side and used as the publication name, so the request is legible in the admin queue.",
+        "operationId": "unpublishConversation",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnpublishConversationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unpublish request submitted for administrator approval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnpublishConversationResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid path or folderPath"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks write access to the target folder"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Request removal of a published conversation from a folder",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
     "/api/v1/conversations/publish-history": {
       "get": {
         "description": "Returns every folder this conversation has been published to, most recent first, derived from DIAL Core's Publication API (`getPublications`) — never from chat-api-side storage.",
@@ -5761,6 +5826,88 @@
           }
         },
         "summary": "Publish a catalog entity to an Organization folder",
+        "tags": [
+          "publish"
+        ]
+      }
+    },
+    "/api/v1/catalog/{entityType}/{entityId}/unpublish": {
+      "post": {
+        "description": "Submits a removal request for one already-published folder of a catalog entity (Toolset, Application, Prompt, or Skill) by proxying DIAL Core's Publication API (`createPublication`) with a single `DELETE`-action resource. **The removal takes effect only after an administrator approves the request.** Until then the published copy stays visible to everyone who could already see it, and the folder continues to appear in the entity’s publish history. This endpoint keeps no records of its own — DIAL Core is the sole source of truth.",
+        "operationId": "unpublishCatalogEntity",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill"
+              ]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnpublishCatalogEntityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unpublish request submitted for administrator approval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnpublishResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType, entityId, folderPath, or version"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks write access to the target folder"
+          },
+          "404": {
+            "description": "DIAL Core reports the entity or target folder as unknown"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Request removal of a published catalog entity from a folder",
         "tags": [
           "publish"
         ]
@@ -10178,6 +10325,46 @@
           "publishedBy"
         ]
       },
+      "UnpublishConversationDto": {
+        "type": "object",
+        "properties": {
+          "folderPath": {
+            "type": "string",
+            "description": "Published folder to submit the removal request for, in the same plain form the publish endpoint accepts. Empty means the public root.",
+            "example": "Organization/Data Science/Shared chats"
+          }
+        },
+        "required": [
+          "folderPath"
+        ]
+      },
+      "UnpublishConversationResultDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "example": "conversations/bucket-123/my-conversation-abc"
+          },
+          "folderPath": {
+            "type": "string",
+            "example": "Organization/Data Science/Shared chats"
+          },
+          "requestedAt": {
+            "type": "string",
+            "example": "2026-08-13T10:00:00.000Z"
+          },
+          "requestedBy": {
+            "type": "string",
+            "example": "Test User"
+          }
+        },
+        "required": [
+          "path",
+          "folderPath",
+          "requestedAt",
+          "requestedBy"
+        ]
+      },
       "PromptResponseDto": {
         "type": "object",
         "properties": {
@@ -11819,6 +12006,69 @@
           "version",
           "publishedAt",
           "publishedBy"
+        ]
+      },
+      "UnpublishCatalogEntityDto": {
+        "type": "object",
+        "properties": {
+          "folderPath": {
+            "type": "string",
+            "description": "Published folder to submit the removal request for, in the same plain form the publish endpoint accepts. Empty means the public root.",
+            "example": "Organization/Data Science/Published models"
+          },
+          "version": {
+            "type": "string",
+            "description": "Optional version label, echoed in the response and in DIAL Core's request name so the admin queue shows which version's publication is being reversed. When omitted, versioned resource ids recover it from their {name}__{version} suffix; unversioned Prompt and Skill resources use an empty version.",
+            "example": "1.2.0"
+          }
+        },
+        "required": [
+          "folderPath"
+        ]
+      },
+      "UnpublishResultDto": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "example": "toolsets/bucket-123/tool-abc123__1.2.0"
+          },
+          "entityType": {
+            "type": "string",
+            "enum": [
+              "model",
+              "toolset",
+              "application",
+              "prompt",
+              "skill"
+            ],
+            "example": "toolset"
+          },
+          "folderPath": {
+            "type": "string",
+            "example": "Organization/Data Science/Published models"
+          },
+          "version": {
+            "type": "string",
+            "description": "Empty for unversioned Prompt and Skill resources.",
+            "example": "1.2.0"
+          },
+          "requestedAt": {
+            "type": "string",
+            "example": "2026-08-13T10:00:00.000Z"
+          },
+          "requestedBy": {
+            "type": "string",
+            "example": "user@example.com"
+          }
+        },
+        "required": [
+          "entityId",
+          "entityType",
+          "folderPath",
+          "version",
+          "requestedAt",
+          "requestedBy"
         ]
       },
       "PublishHistoryEntryDto": {

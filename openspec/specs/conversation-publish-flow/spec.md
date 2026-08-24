@@ -1,9 +1,7 @@
 ## Purpose
 
 Define the conversation publishing UI flow, including eligibility, destination selection, approval-request submission, feedback, internationalization, RTL behavior, and accessibility.
-
 ## Requirements
-
 ### Requirement: Publish action is offered only for owned, writable conversations
 
 `ConversationPanelView.getActions` SHALL add a "Publish" `DropdownItem` to the row action menu, positioned after "Share" and before "Delete", using the same `isReadonlyItem` gate already computed for Share (`rawItem.isReadonly || rawItem.sharedWithMe || rawItem.publishedWithMe`) — the action SHALL be omitted entirely (not shown disabled) when `isReadonlyItem` is `true`. Clicking it SHALL set `pendingPublishConversationPath` (new `ConversationPanelView` state, mirroring `pendingShareConversationPath`) to the conversation's context id.
@@ -83,32 +81,42 @@ Inline folder creation SHALL also validate the new folder name identically to th
 
 ### Requirement: Submit always creates a publish request and is not blocked by publication history
 
-The pinned footer's submit button SHALL always show the fixed label "Publish" (i18n key `buttons.publish`) regardless of folder selection — never an "Update version" variant, since conversations have no version to update. Each submission creates a new admin-approval request rather than updating or replacing an existing published conversation. Therefore, prior publication history for the selected folder is informational only and SHALL NOT disable the submit button or show an "already published" or replace-warning callout. When the selected folder is valid and writable and no submission is already in flight, the user SHALL be allowed to submit another publish request for the same conversation and folder.
+The pinned footer's submit button SHALL always show the fixed label "Publish" (i18n key `buttons.publish`) regardless of folder selection — never an "Update version" variant, since conversations have no version to update.
 
-**Temporary history-visibility exception (tracked in [GitHub issue #7897](https://github.com/epam/ai-dial-chat/issues/7897)):** `PublishConversationPanelContainer` SHALL NOT call the publish-history endpoint while it returns 503 from DIAL Core. For the duration of this exception, `history` SHALL remain empty and no prior requests SHALL be displayed in the panel. This affects history visibility only; publish eligibility is unchanged because publication history is not a deduplication or authorization input. The history fetch and display SHALL be restored when the backend publish-history endpoint (`conversation-publish-api`'s "Publish history endpoint" requirement) is fixed.
+Publication history SHALL be fetched for real. `PublishConversationPanelContainer` previously hardcoded `history` to an empty array behind a comment citing a DIAL Core `503` ([GitHub issue #7897](https://github.com/epam/ai-dial-chat/issues/7897)); the backend endpoint exists and is specified by `conversation-publish-api`, and its result is now required by `conversation-unpublish-flow` to know which folders the conversation is published to. The container SHALL therefore receive real history — fetched once per conversation by the conversation panel and handed down, not fetched again here.
+
+Because history is now real, the container's existing `allowReplace={false}` becomes observable, and it SHALL be honoured: when the selected folder already holds a publication of this conversation, `derivePublishState` yields `PublishCalloutKind.ReplaceWarning` and the submit button SHALL be **disabled**, with the callout text supplied by the host as `conversationPublish.alreadyPublishedWarning`. A conversation carries no version, so a second publish to the same folder cannot update or replace the first — it would create a duplicate public copy — which is exactly what `allowReplace: false` exists to prevent.
+
+This reverses this requirement's previous statement that history is informational only and never blocks submission. That statement was written while history was hardcoded empty, so the branch was unreachable and the disagreement with `allowReplace={false}`, its own doc comment in `PublishDerivationInput`, and the already-translated `alreadyPublishedWarning` string was invisible. The code's intent wins; see the change's design.md D6.
+
+Selecting a different, not-yet-used folder SHALL clear the callout and re-enable submit. When the selected folder is valid, writable, unused, and no submission is in flight, the user SHALL be allowed to submit.
+
+While history is loading or has failed to load, submission SHALL NOT be blocked — an unknown history is not evidence of an existing publication, and the panel already surfaces the loading and error states of the history list itself.
 
 #### Scenario: First publish to a folder is allowed
 - **GIVEN** the conversation has never been published to the selected folder
 - **WHEN** the user selects that folder
 - **THEN** the submit button is enabled and reads "Publish"
 
-#### Scenario: Another publish request to a previously used folder is allowed
+#### Scenario: A folder already published to blocks re-submission
 - **GIVEN** the conversation has a prior publication in the selected folder
 - **WHEN** the user selects that folder
-- **THEN** the submit button remains enabled and reads "Publish"
-- **AND** no "already published" or replace-warning callout is shown
-- **WHEN** the user clicks "Publish"
-- **THEN** a new admin-approval request is submitted
+- **THEN** the already-published callout is shown with the host-supplied `conversationPublish.alreadyPublishedWarning` text
+- **AND** the submit button is disabled
+
+#### Scenario: Choosing another folder re-enables submit
+- **GIVEN** the already-published callout is shown for the selected folder
+- **WHEN** the user selects a folder the conversation has not been published to
+- **THEN** the callout is replaced by the informational callout and the submit button is enabled
+
+#### Scenario: Unknown history does not block submission
+- **GIVEN** the publish-history request is still in flight or has failed
+- **WHEN** the user selects a valid writable folder
+- **THEN** the submit button is enabled and reads "Publish"
 
 #### Scenario: Long folder names never appear in the button label
 - **WHEN** any folder or the root is selected, regardless of name length
 - **THEN** the submit button label remains the fixed "Publish" text, never interpolating the destination name
-
-#### Scenario: Disabling history retrieval does not change publish eligibility
-- **GIVEN** the publish-history fetch is disabled per the temporary exception above
-- **WHEN** the user selects a valid writable folder
-- **THEN** the submit button is enabled and reads "Publish"
-- **AND** the user can submit a new admin-approval request regardless of whether that folder was used previously
 
 ### Requirement: Successful publish closes the panel, shows a pending-approval notification, and does not refresh the conversation list
 
@@ -220,3 +228,4 @@ The panel root SHALL expose `role="dialog"`, `aria-modal="true"`, and `aria-labe
 #### Scenario: A rules-lookup failure does not block the conversation publish flow
 - **GIVEN** the user selects a destination folder and the rules lookup fails
 - **THEN** folder selection, manual rule entry, and the Publish submit action all remain fully usable; only the pre-fill did not occur
+

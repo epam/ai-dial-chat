@@ -274,6 +274,34 @@ export interface ItemDetailsTexts {
   revokeShareConfirmConsequences?: string[];
   /** Status text announced to assistive tech while a revoke is in progress. Default: `'Revoking access'`. */
   revokingShareStatusLabel?: string;
+  /** Owner-side "Unpublish" action and confirmation label. Default: `'Unpublish'`. */
+  unpublishLabel?: string;
+  /** Title of the confirmation step shown before requesting removal of a published copy. Default: `'Unpublish'`. */
+  unpublishConfirmTitle?: string;
+  /**
+   * Returns the unpublish confirmation's body copy when the item is published
+   * to exactly one folder, given the item's display name and that folder's
+   * path. Default:
+   * `(name, folder) => \`Unpublish ${name} from "${folder}"? The request is submitted for admin approval.\`` (with the name emphasized).
+   */
+  unpublishConfirmMessage?: (name: string, folder: string) => ReactNode;
+  /**
+   * Returns the unpublish confirmation's body copy when the item is published
+   * to more than one folder and the user must pick one, given the item's
+   * display name. Default:
+   * `(name) => \`Choose which folder to unpublish ${name} from. The request is submitted for admin approval.\`` (with the name emphasized).
+   */
+  unpublishSelectFolderMessage?: (name: string) => ReactNode;
+  /** Accessible name of the published-folder radio group shown when the item is published to more than one folder. Default: `'Published folders'`. */
+  unpublishFolderGroupAriaLabel?: string;
+  /**
+   * Consequences listed as bullets in the unpublish confirmation. Default:
+   * `['Everyone loses access to the published copy', 'Your own copy is not deleted', 'You can publish it again later']`.
+   * Pass `[]` to render no list.
+   */
+  unpublishConfirmConsequences?: string[];
+  /** Status text announced to assistive tech while an unpublish request is in flight. Default: `'Requesting unpublish'`. */
+  unpublishingStatusLabel?: string;
   /** Status text announced to assistive tech while a logout is in progress. Default: `'Logging out'`. */
   loggingOutStatusLabel?: string;
   /** Generic "Cancel" label, used by every confirmation step. Default: `'Cancel'`. */
@@ -580,6 +608,24 @@ export interface DetailsPanelProps {
    * Defaults to `true` when absent.
    */
   isRevokeShareVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Called when unpublish is confirmed, with the published folder's path
+   * segments — the same `string[]` shape `onPublish` receives. May return a
+   * promise; the confirmation shows a loading state and prevents duplicate
+   * submission while pending. The published copy survives until an
+   * administrator approves the request, so the panel stays open, the item
+   * stays visible, and cached publish history is left untouched on success.
+   */
+  onUnpublish?: (
+    item: CatalogItem,
+    folderPath: string[],
+  ) => Promise<void> | void;
+  /**
+   * Additional caller-supplied rule for whether "Unpublish" is shown,
+   * combined (AND) with the presence of `onUnpublish` and at least one
+   * resolved publish-history entry. Defaults to `true` when absent.
+   */
+  isUnpublishVisible?: (item: CatalogItem) => boolean;
   /**
    * Called when the credentials login form is submitted. `level` identifies
    * which credentials slot the call applies to (`USER` for the current

@@ -17,6 +17,7 @@ import {
   CloseButton,
   ElementSize,
   GhostIconButton,
+  RadioGroup,
   Skeleton,
   Tabs,
 } from '@epam/ai-dial-ui-kit';
@@ -91,6 +92,25 @@ const hasConnectableApi = (
 ): api is CatalogItemApiDetails =>
   api?.resource?.endpointUrl != null || (api?.endpoints?.length ?? 0) > 0;
 
+/** One folder an item is currently published to, derived from its publish history. */
+interface PublishedFolder {
+  /** Joined folder path, used for identity and display. Empty for the public root. */
+  key: string;
+  /** Folder path segments, the shape `onUnpublish` is handed. */
+  segments: string[];
+}
+
+/** One published folder needs no choice; several require the user to pick one. */
+const resolveUnpublishFolder = (
+  folders: PublishedFolder[],
+  selectedKey: string | null,
+): PublishedFolder | undefined => {
+  if (selectedKey != null) {
+    return folders.find((folder) => folder.key === selectedKey);
+  }
+  return folders.length === 1 ? folders[0] : undefined;
+};
+
 const NO_OP_PUBLISH = async () => undefined;
 const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
 const EMPTY_RULE_SOURCE_OPTIONS: string[] = [];
@@ -105,6 +125,12 @@ const DEFAULT_UNSHARE_CONSEQUENCES = [
   'You will lose access to this item',
   'Other people keep their access',
   'You will need a new invitation to get it back',
+];
+
+const DEFAULT_UNPUBLISH_CONSEQUENCES = [
+  'Everyone loses access to the published copy',
+  'Your own copy is not deleted',
+  'You can publish it again later',
 ];
 
 const DEFAULT_REVOKE_SHARE_CONSEQUENCES = [
@@ -199,6 +225,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onRevokeShare,
   onFetchRecipientsCount,
   isRevokeShareVisible,
+  onUnpublish,
+  isUnpublishVisible,
   onLogin,
   onLogout,
   texts,
@@ -263,6 +291,11 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   );
   const [isPublishHistoryLoading, setIsPublishHistoryLoading] = useState(false);
   const [hasPublishHistoryError, setHasPublishHistoryError] = useState(false);
+  /* Distinguishes "resolved, zero folders" from "not looked up yet" — the
+   * Unpublish entry is withheld in the second case and hidden in the first. */
+  const [isPublishHistoryResolved, setIsPublishHistoryResolved] =
+    useState(false);
+  const publishHistoryRequestedItemIdRef = useRef<string | null>(null);
 
   const promptContent = item.details?.promptContent;
   const baseFileId = promptContent?.selectedFileId;
@@ -438,27 +471,64 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         )
       : undefined;
 
-  useEffect(() => {
-    if (!isPublishOpen || !getPublishHistory) {
+  /*
+   * Publish history is fetched at most once per item and shared by the publish
+   * sub-view and the Manage menu's Unpublish gate, so opening Publish after
+   * opening the menu issues no second request. It is never fetched on panel
+   * open or item render: most items are never unpublished, and the request is
+   * only worth making when the user reaches for one of those surfaces.
+   */
+  const requestPublishHistory = useCallback(() => {
+    if (
+      !getPublishHistory ||
+      publishHistoryRequestedItemIdRef.current === item.id
+    ) {
       return;
     }
-    let isCancelled = false;
+    const requestedItemId = item.id;
+    publishHistoryRequestedItemIdRef.current = requestedItemId;
     setIsPublishHistoryLoading(true);
     setHasPublishHistoryError(false);
-    getPublishHistory(item)
-      .then((entries) => {
-        if (!isCancelled) setPublishHistory(entries);
-      })
-      .catch(() => {
-        if (!isCancelled) setHasPublishHistoryError(true);
-      })
-      .finally(() => {
-        if (!isCancelled) setIsPublishHistoryLoading(false);
-      });
-    return () => {
-      isCancelled = true;
+
+    const resolve = async () => {
+      try {
+        const entries = await getPublishHistory(item);
+        if (publishHistoryRequestedItemIdRef.current !== requestedItemId)
+          return;
+        setPublishHistory(entries);
+        setIsPublishHistoryResolved(true);
+        setIsPublishHistoryLoading(false);
+      } catch {
+        if (publishHistoryRequestedItemIdRef.current !== requestedItemId)
+          return;
+        setHasPublishHistoryError(true);
+        setIsPublishHistoryLoading(false);
+        /* Cleared so the next Manage-menu or publish open retries the lookup. */
+        publishHistoryRequestedItemIdRef.current = null;
+      }
     };
-  }, [isPublishOpen, getPublishHistory, item]);
+    void resolve();
+  }, [getPublishHistory, item]);
+
+  useEffect(() => {
+    if (isPublishOpen) requestPublishHistory();
+  }, [isPublishOpen, requestPublishHistory]);
+
+  /*
+   * A successful publish adds a folder to this item's history, so the
+   * once-per-item lookup guard has to be released: without this the panel
+   * keeps the pre-publish folder list, leaving the replace warning stale and
+   * Unpublish hidden for the folder the user just published to.
+   */
+  const handlePublishSuccess = useCallback(
+    (publishedItem: CatalogItem, folderPath: string[]) => {
+      publishHistoryRequestedItemIdRef.current = null;
+      setIsPublishHistoryResolved(false);
+      requestPublishHistory();
+      onPublishSuccess?.(publishedItem, folderPath);
+    },
+    [requestPublishHistory, onPublishSuccess],
+  );
 
   const publishFlow = usePublishFlow<CatalogItem>({
     item,
@@ -467,7 +537,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     hasWriteAccess: hasPublishWriteAccess,
     onCreateFolder: onCreatePublishFolder,
     onPublish: onPublish ?? NO_OP_PUBLISH,
-    onPublishSuccess,
+    onPublishSuccess: handlePublishSuccess,
     onPublishError,
     onFetchExistingRules,
   });
@@ -506,6 +576,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
    */
   const [pendingLogoutLevel, setPendingLogoutLevel] =
     useState<CredentialsLevel | null>(null);
+  /*
+   * Set alongside `confirmation` for `Unpublish` when the item is published
+   * to more than one folder. Held here rather than in `ConfirmationView` so
+   * that view stays presentational, and cleared on cancel and on item change.
+   */
+  const [selectedUnpublishFolder, setSelectedUnpublishFolder] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     setIsStarred(initialIsStarred);
@@ -523,6 +601,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     publishFlow.reset();
     setPublishHistory([]);
     setHasPublishHistoryError(false);
+    setIsPublishHistoryLoading(false);
+    setIsPublishHistoryResolved(false);
+    publishHistoryRequestedItemIdRef.current = null;
+    setSelectedUnpublishFolder(null);
     setIsCredentialsManagementOpen(false);
     setConfirmation(null);
     setIsConfirming(false);
@@ -566,6 +648,40 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     setConfirmation(DetailsConfirmationKind.RevokeAccess);
   }, []);
 
+  /*
+   * Deduplicated because history lists one entry per publication, and an
+   * item republished to the same folder yields that folder twice. Order is
+   * preserved, so the most recently published folder stays first. `key` is
+   * the joined path, used for identity and display; `segments` is the
+   * `string[]` shape `onUnpublish` is handed, matching `onPublish`.
+   */
+  const publishedFolders = useMemo(() => {
+    const seen = new Set<string>();
+    const folders: PublishedFolder[] = [];
+    for (const entry of publishHistory) {
+      const key = entry.folderPath.join('/');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      folders.push({ key, segments: entry.folderPath });
+    }
+    return folders;
+  }, [publishHistory]);
+
+  const hasPublishedFolders =
+    isPublishHistoryResolved && publishedFolders.length > 0;
+
+  /* The public root has no path segments, so it borrows the publish panel's
+   * own root label rather than rendering as an empty string. */
+  const formatFolderLabel = useCallback(
+    (folderKey: string) =>
+      folderKey || (publishLabels?.rootFolderLabel ?? 'Organization'),
+    [publishLabels],
+  );
+
+  const handleRequestUnpublish = useCallback(() => {
+    setConfirmation(DetailsConfirmationKind.Unpublish);
+  }, []);
+
   const handleRequestDeleteApiKey = useCallback((level: CredentialsLevel) => {
     setPendingApiKeyDeleteLevel(level);
     setConfirmation(DetailsConfirmationKind.DeleteApiKey);
@@ -576,6 +692,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     setConfirmation(null);
     setPendingApiKeyDeleteLevel(null);
     setPendingLogoutLevel(null);
+    setSelectedUnpublishFolder(null);
   }, [isConfirming]);
 
   const handleConfirm = useCallback(async () => {
@@ -602,10 +719,24 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             await onLogout?.(item, { level: pendingApiKeyDeleteLevel });
           }
           break;
+        case DetailsConfirmationKind.Unpublish: {
+          /* With one published folder there is nothing to choose, so it is
+           * confirmed directly; with several the footer stays disabled until
+           * the user picks one. */
+          const chosen = resolveUnpublishFolder(
+            publishedFolders,
+            selectedUnpublishFolder,
+          );
+          if (chosen != null) {
+            await onUnpublish?.(item, chosen.segments);
+          }
+          break;
+        }
       }
       setConfirmation(null);
       setPendingApiKeyDeleteLevel(null);
       setPendingLogoutLevel(null);
+      setSelectedUnpublishFolder(null);
       if (CONFIRMATIONS_REMOVING_ITEM_FROM_VIEW.has(confirmation)) {
         onClose();
       }
@@ -617,6 +748,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
       setConfirmation(null);
       setPendingApiKeyDeleteLevel(null);
       setPendingLogoutLevel(null);
+      setSelectedUnpublishFolder(null);
     } finally {
       setIsConfirming(false);
     }
@@ -629,6 +761,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     onDelete,
     onUnshare,
     onRevokeShare,
+    onUnpublish,
+    selectedUnpublishFolder,
+    publishedFolders,
     onLogout,
     onClose,
   ]);
@@ -815,6 +950,44 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           variant: DetailsConfirmationVariant.Danger,
         };
       }
+      case DetailsConfirmationKind.Unpublish: {
+        const unpublishLabel = texts?.unpublishLabel ?? 'Unpublish';
+        const isSingleFolder = publishedFolders.length === 1;
+        const singleFolderLabel = isSingleFolder
+          ? formatFolderLabel(publishedFolders[0].key)
+          : '';
+        const singleFolderMessage = texts?.unpublishConfirmMessage?.(
+          item.name,
+          singleFolderLabel,
+        ) ?? (
+          <>
+            Unpublish <strong>{item.name}</strong> from "{singleFolderLabel}"?
+            The request is submitted for admin approval.
+          </>
+        );
+        const multiFolderMessage = texts?.unpublishSelectFolderMessage?.(
+          item.name,
+        ) ?? (
+          <>
+            Choose which folder to unpublish <strong>{item.name}</strong> from.
+            The request is submitted for admin approval.
+          </>
+        );
+        return {
+          title: texts?.unpublishConfirmTitle ?? unpublishLabel,
+          message: isSingleFolder ? singleFolderMessage : multiFolderMessage,
+          consequences:
+            texts?.unpublishConfirmConsequences ??
+            DEFAULT_UNPUBLISH_CONSEQUENCES,
+          confirmLabel: unpublishLabel,
+          loadingStatusLabel:
+            texts?.unpublishingStatusLabel ?? 'Requesting unpublish',
+          /* Everyone loses access to the published copy and the owner must
+           * publish again to restore it — the same reasoning as revoke, with
+           * the same caveat that the source item is untouched. */
+          variant: DetailsConfirmationVariant.Danger,
+        };
+      }
       case DetailsConfirmationKind.Logout: {
         const logoutLabel = texts?.logoutActionLabel ?? 'Log out';
         return {
@@ -848,9 +1021,26 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
       default:
         return null;
     }
-  }, [confirmation, item.name, pendingApiKeyDeleteLevel, texts]);
+  }, [
+    confirmation,
+    item.name,
+    pendingApiKeyDeleteLevel,
+    texts,
+    publishedFolders,
+    formatFolderLabel,
+  ]);
 
   const isConfirmationOpen = confirmationContent != null;
+
+  /*
+   * Kept separate from `isConfirming`: a confirmation that cannot run yet
+   * and one already running are different states, and only the latter also
+   * disables the back/cancel control. Today only `Unpublish` can be blocked,
+   * and only while it is published to several folders and none is chosen.
+   */
+  const isConfirmDisabled =
+    confirmation === DetailsConfirmationKind.Unpublish &&
+    resolveUnpublishFolder(publishedFolders, selectedUnpublishFolder) == null;
   const isSubViewOpen =
     isConfirmationOpen || isPublishOpen || isCredentialsManagementOpen;
 
@@ -970,7 +1160,27 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 confirmationContent.cardVariant ?? confirmationContent.variant
               }
               messageClassName={confirmMessageClassName}
-            />
+            >
+              {confirmation === DetailsConfirmationKind.Unpublish &&
+                publishedFolders.length > 1 && (
+                  <RadioGroup
+                    ariaLabel={
+                      texts?.unpublishFolderGroupAriaLabel ??
+                      'Published folders'
+                    }
+                    value={selectedUnpublishFolder ?? undefined}
+                    onChange={setSelectedUnpublishFolder}
+                    /* Locked in flight so the choice cannot drift away from the
+                     * folder path the request already captured. */
+                    disabled={isConfirming}
+                    items={publishedFolders.map((folder) => ({
+                      value: folder.key,
+                      label: formatFolderLabel(folder.key),
+                    }))}
+                    radioClassName={confirmMessageClassName}
+                  />
+                )}
+            </ConfirmationView>
           )}
 
           {!isConfirmationOpen &&
@@ -1040,6 +1250,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isShareVisible={isShareVisible}
                 isPublishVisible={isPublishVisible}
                 onOpenPublish={handleOpenPublish}
+                isUnpublishVisible={isUnpublishVisible}
+                hasPublishedFolders={hasPublishedFolders}
+                onRequestPublishHistory={requestPublishHistory}
+                onOpenUnpublish={
+                  onUnpublish ? handleRequestUnpublish : undefined
+                }
                 onEdit={onEdit}
                 onDownload={onDownload}
                 isDownloadVisible={isDownloadVisible}
@@ -1194,6 +1410,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             cancelLabel={cancelLabel}
             variant={confirmationContent.variant}
             isLoading={isConfirming}
+            isConfirmDisabled={isConfirmDisabled}
             loadingStatusLabel={confirmationContent.loadingStatusLabel}
             onConfirm={handleConfirm}
             onCancel={handleCancelConfirmation}
