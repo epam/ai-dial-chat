@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getModelDescription, getModelName } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -27,6 +26,7 @@ import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
+import { MarketplaceEntityLocalizedInfoRow } from '../MarketplaceEntityLocalizedInfoRow';
 
 interface ReviewToolsetDialogContentProps {
   toolset: ToolsetModel;
@@ -57,8 +57,6 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
     }),
     [toolset.id, toolset.name],
   );
-  const description = getModelDescription(toolset, locale);
-
   return (
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
@@ -66,9 +64,11 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
           {`${isResourceUnpublishing ? t(ChatI18nKeys.Unpublish) : t(ChatI18nKeys.Publish)} ${t(ChatI18nKeys.Toolset)}`}
         </h2>
         <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
-          <MarketplaceEntityInfoRow
+          <MarketplaceEntityLocalizedInfoRow
+            entity={toolset}
+            locale={locale}
+            field="name"
             label={t(ChatI18nKeys.Name)}
-            value={getModelName(toolset, locale)}
             dataQa="entity-name"
           />
           <MarketplaceEntityInfoRow
@@ -88,9 +88,11 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
             }
             valueClassName=""
           />
-          <MarketplaceEntityInfoRow
+          <MarketplaceEntityLocalizedInfoRow
+            entity={toolset}
+            locale={locale}
+            field="description"
             label={t(ChatI18nKeys.Description)}
-            value={description}
             dataQa="entity-description"
           />
           {toolset.topics?.length > 0 && (
