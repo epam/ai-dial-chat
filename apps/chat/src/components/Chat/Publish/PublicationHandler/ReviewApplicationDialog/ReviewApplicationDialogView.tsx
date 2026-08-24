@@ -7,8 +7,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationType,
-  getModelDescription,
-  getModelName,
   isExecutableApp,
   isQuickApp2,
 } from '@/src/utils/app/application';
@@ -32,6 +30,7 @@ import { IconButton } from '@/src/components/Common/IconButton';
 import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
+import { MarketplaceEntityLocalizedInfoRow } from '../MarketplaceEntityLocalizedInfoRow';
 import { ReviewCodeAppSection } from './ReviewCodeAppSection';
 import { ReviewExternalAppSection } from './ReviewExternalAppSection';
 import { ReviewQuickApp2Section } from './ReviewQuickApp2Section';
@@ -63,7 +62,6 @@ export function ReviewApplicationDialogView({
 
   const isCodeApp = isExecutableApp(application);
   const isQuickAppTwo = isQuickApp2(application);
-  const description = getModelDescription(application, locale);
 
   const controlsEntity = useMemo(
     () => ({
@@ -124,9 +122,11 @@ export function ReviewApplicationDialogView({
         </h2>
 
         <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
-          <MarketplaceEntityInfoRow
+          <MarketplaceEntityLocalizedInfoRow
+            entity={application}
+            locale={locale}
+            field="name"
             label={t(ChatI18nKeys.Name)}
-            value={getModelName(application, locale)}
             dataQa="entity-name"
           />
           <MarketplaceEntityInfoRow
@@ -146,9 +146,11 @@ export function ReviewApplicationDialogView({
             }
             valueClassName=""
           />
-          <MarketplaceEntityInfoRow
+          <MarketplaceEntityLocalizedInfoRow
+            entity={application}
+            locale={locale}
+            field="description"
             label={t(ChatI18nKeys.Description)}
-            value={description}
             dataQa="entity-description"
           />
           <MarketplaceEntityInfoRow

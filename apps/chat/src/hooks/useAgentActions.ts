@@ -5,7 +5,10 @@ import { useTranslation } from 'next-i18next';
 import { getApplicationType } from '@/src/utils/app/application';
 import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
+import {
+  parseLocalizedField,
+  withEntityIdName,
+} from '@/src/utils/app/marketplace-localization';
 import { getApplicationLink } from '@/src/utils/marketplace';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -21,7 +24,8 @@ import {
   ShareActions,
   UIActions,
 } from '@/src/store/actions';
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { DeleteType } from '@/src/constants/marketplace';
@@ -34,6 +38,8 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+
+  const locale = useAppSelector(UISelectors.selectLocale);
 
   const { handleDeploy, handleRedeploy, handleUndeploy } =
     useApplicationStatusActions(entity.id);
@@ -76,18 +82,24 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
         ShareActions.share({
           featureType: FeatureType.Application,
           entity: withEntityIdName(entity),
+          displayName: parseLocalizedField(locale, entity.name),
         }),
       );
     },
-    [dispatch, entity],
+    [dispatch, entity, locale],
   );
 
   const handleOpenUnshare = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      dispatch(ShareActions.setUnshareEntity(withEntityIdName(entity)));
+      dispatch(
+        ShareActions.setUnshareEntity({
+          ...withEntityIdName(entity),
+          displayName: parseLocalizedField(locale, entity.name),
+        }),
+      );
     },
-    [dispatch, entity],
+    [dispatch, entity, locale],
   );
 
   const handleCopy = useCallback(

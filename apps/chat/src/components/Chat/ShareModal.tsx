@@ -16,7 +16,10 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isQuickApp2 } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
-import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
+import {
+  parseLocalizedField,
+  withEntityIdName,
+} from '@/src/utils/app/marketplace-localization';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getShareType } from '@/src/utils/app/share';
 import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
@@ -32,6 +35,7 @@ import {
   ApplicationSelectors,
   ModelsSelectors,
   ShareSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 
 import { ChatI18nKeys, SideBarI18nKeys } from '@/src/constants/i18n';
@@ -124,9 +128,10 @@ function ShareModalView() {
   const writeInvitationId = useAppSelector(
     ShareSelectors.selectWriteInvitationId,
   );
+  const locale = useAppSelector(UISelectors.selectLocale);
   const shareResourceId = useAppSelector(ShareSelectors.selectShareResourceId);
   const shareResourceName = useAppSelector(
-    ShareSelectors.selectShareResourceName,
+    ShareSelectors.selectShareResourceDisplayName,
   );
   const isResourceShared = useAppSelector(
     ShareSelectors.selectIsResourceShared,
@@ -208,8 +213,15 @@ function ShareModalView() {
 
   const handleOpenUnshare = useCallback(() => {
     handleClose();
-    dispatch(ShareActions.setUnshareEntity(entity && withEntityIdName(entity)));
-  }, [dispatch, entity, handleClose]);
+    dispatch(
+      ShareActions.setUnshareEntity(
+        entity && {
+          ...withEntityIdName(entity),
+          displayName: parseLocalizedField(locale, entity.name),
+        },
+      ),
+    );
+  }, [dispatch, entity, handleClose, locale]);
 
   const handleOpenUnshareResource = useCallback(() => {
     handleClose();

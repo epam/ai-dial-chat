@@ -1,14 +1,17 @@
 import { useCallback, useMemo } from 'react';
 
 import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
-import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
+import {
+  parseLocalizedField,
+  withEntityIdName,
+} from '@/src/utils/app/marketplace-localization';
 import { isMyEntity } from '@/src/utils/app/shared-utils';
 
 import { ToolsetModel } from '@/src/types/toolsets';
 
 import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { EntityHeader } from '../EntityDetailsHeader';
 import { MarketplaceCopyLink } from '../MarketplaceCopyLink';
@@ -23,6 +26,8 @@ interface Props {
 export function ToolsetDetailsHeader({ entity, isPreview }: Props) {
   const dispatch = useAppDispatch();
 
+  const locale = useAppSelector(UISelectors.selectLocale);
+
   const isMyToolset = isMyEntity(entity);
   const isPublicToolset = isMarketplaceEntityPublic(entity);
   const handleOpenSharing = useCallback(() => {
@@ -30,9 +35,10 @@ export function ToolsetDetailsHeader({ entity, isPreview }: Props) {
       ShareActions.share({
         featureType: FeatureType.Toolset,
         entity: withEntityIdName(entity),
+        displayName: parseLocalizedField(locale, entity.name),
       }),
     );
-  }, [dispatch, entity]);
+  }, [dispatch, entity, locale]);
 
   const isToolsetSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ToolsetsSharing),
