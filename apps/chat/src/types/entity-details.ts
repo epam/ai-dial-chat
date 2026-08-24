@@ -2,8 +2,6 @@ export enum AuthenticationType {
   None = 'NONE',
   ApiKey = 'API_KEY',
   OAuth = 'OAUTH',
-  ServiceAccount = 'SERVICE_ACCOUNT',
-  Pat = 'PAT',
 }
 
 // ---- Model entity ----
@@ -38,8 +36,6 @@ export interface ModelSpecification {
   contextWindowTokens?: number;
   maxOutputTokens?: number;
   inputTypes?: string[];
-  outputTypes?: string[];
-  languages?: string[];
   hostedBy?: string;
   createdAt?: number;
 }
@@ -54,9 +50,6 @@ export interface ModelPriceRow {
 export interface ModelPricing {
   /* Every price DIAL Core reports for the deployment, `unit` excluded. */
   prices?: ModelPriceRow[];
-  dailyLimit?: string;
-  weeklyLimit?: string;
-  monthlyLimit?: string;
 }
 
 export interface ModelApiDetails {
@@ -72,29 +65,7 @@ export interface ModelEntityDetails {
 
 // ---- Agent entity ----
 
-export enum AgentDomain {
-  Engineering = 'ENGINEERING',
-  Marketing = 'MARKETING',
-  Sales = 'SALES',
-  Operations = 'OPERATIONS',
-  Hr = 'HR',
-  Finance = 'FINANCE',
-  General = 'GENERAL',
-}
-
-export enum AgentMaturity {
-  Experimental = 'EXPERIMENTAL',
-  Beta = 'BETA',
-  Production = 'PRODUCTION',
-  Deprecated = 'DEPRECATED',
-}
-
 export interface AgentSpecification {
-  domain?: AgentDomain;
-  useCase?: string;
-  maturity?: AgentMaturity;
-  permissions?: string[];
-  skills?: string[];
   hostedBy?: string;
   createdAt?: number;
   routes?: string[];
@@ -122,29 +93,13 @@ export interface AgentCapabilities {
 }
 
 export interface AgentConfiguration {
-  baseModelId?: string;
   inputAttachmentTypes?: string[];
-  outputAttachmentTypes?: string[];
-  authentication?: AuthenticationType;
-}
-
-export interface AgentCapabilityLink {
-  id: string;
-  label: string;
-}
-
-export interface AgentApiDetails {
-  endpointUrl?: string;
-  requestExample?: string;
-  responseSchema?: string;
 }
 
 export interface AgentEntityDetails {
   specification?: AgentSpecification;
   configuration?: AgentConfiguration;
   capabilities?: AgentCapabilities;
-  capabilityLinks?: AgentCapabilityLink[];
-  api?: AgentApiDetails;
 }
 
 // ---- Toolset entity ----
@@ -160,7 +115,6 @@ export interface ToolsetAuthStatus {
 }
 
 export interface ToolsetSpecification {
-  provider?: string;
   authentication?: AuthenticationType;
   permissions?: string[];
   hostedBy?: string;
