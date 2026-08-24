@@ -53,7 +53,7 @@ export const AddModelsControl = ({
       <div className="relative mx-2 mb-2 flex w-full flex-row items-center justify-center gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl">
         <DialNeutralButton
           onClick={handleInstallModels}
-          className="inset-x-0 !-top-10 mx-auto w-fit py-3"
+          className="static inset-x-0 !-top-10 mx-auto w-fit py-3"
           data-qa="add-model-to-workspace"
           iconBefore={<IconPlayerPlay size={18} />}
           label={t(
