@@ -158,6 +158,7 @@ export class DeploymentsController {
 
   @Get(':deployment/details')
   @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Header('Cache-Control', 'private, no-store')
   @ApiOperation({
     operationId: 'getDeploymentDetails',
     summary: 'Get full details for a single deployment',
@@ -166,9 +167,8 @@ export class DeploymentsController {
       "(dispatching to DIAL Core's getModel/getApplication/getToolset based on the " +
       'resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. ' +
       'Results are cached server-side for 60 seconds per user; the response ' +
-      'carries no client-facing Cache-Control so a browser never serves a ' +
-      "stale copy of another user's cache window or of credentials that " +
-      'changed since the last fetch.',
+      'sets Cache-Control to private, no-store so browsers and intermediaries ' +
+      'never reuse a stale copy after the active user or toolset credentials change.',
   })
   @ApiResponse({ status: 200, type: DeploymentDetailsDto })
   @ApiResponse({ status: 400, description: 'Invalid deployment identifier' })
