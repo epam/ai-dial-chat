@@ -86,7 +86,7 @@ describe('mapUserUsageToModelLimits', () => {
     ).toEqual([]);
   });
 
-  it('still produces a row for a deployment with all-zero usage', () => {
+  it('excludes a deployment with all-zero usage for the selected period', () => {
     const usage = withUsage({
       'gpt-4o': {
         dayCostStats: { used: 0, total: 2 ** 53 },
@@ -103,8 +103,7 @@ describe('mapUserUsageToModelLimits', () => {
       t,
     );
 
-    expect(rows).toHaveLength(1);
-    expect(rows[0].tokens.usedLabel).toBe('0');
+    expect(rows).toHaveLength(0);
   });
 
   it('falls back to the deployment ID and no avatar when the ID has no matching item', () => {
@@ -355,7 +354,9 @@ describe('mapUserUsageToModelLimits', () => {
     });
 
     it('classifies cost as unavailable when the stat entry is missing', () => {
-      const usage = withUsage({ 'gpt-4o': {} });
+      const usage = withUsage({
+        'gpt-4o': { dayTokenStats: { used: 1, total: 10 } },
+      });
 
       const [row] = mapUserUsageToModelLimits(
         usage,
@@ -387,7 +388,9 @@ describe('mapUserUsageToModelLimits', () => {
     });
 
     it('treats a missing token stat as unavailable, not zero', () => {
-      const usage = withUsage({ 'gpt-4o': {} });
+      const usage = withUsage({
+        'gpt-4o': { dayCostStats: { used: 1, total: 2 ** 53 } },
+      });
 
       const [row] = mapUserUsageToModelLimits(
         usage,
@@ -474,10 +477,13 @@ describe('mapUserUsageToModelLimits', () => {
       expect(row.status).toBe(ModelLimitStatus.NoLimit);
     });
 
-    it('is Unavailable when no metric is usable at all', () => {
+    it('produces no row (rather than an Unavailable one) when no metric is usable at all', () => {
+      // A row with no usable metric also has no evidence of usage in the selected period, so
+      // the period-scoped usage filter excludes it before `ModelLimitStatus.Unavailable` would
+      // ever reach the UI — see the "period-scoped usage filtering" describe block below.
       const usage = withUsage({ 'gpt-4o': {} });
 
-      const [row] = mapUserUsageToModelLimits(
+      const rows = mapUserUsageToModelLimits(
         usage,
         [modelItem()],
         ModelLimitsPeriod.Last24Hours,
@@ -485,7 +491,7 @@ describe('mapUserUsageToModelLimits', () => {
         t,
       );
 
-      expect(row.status).toBe(ModelLimitStatus.Unavailable);
+      expect(rows).toHaveLength(0);
     });
 
     it('derives status from the one finite metric among unlimited/unavailable ones', () => {
@@ -505,6 +511,91 @@ describe('mapUserUsageToModelLimits', () => {
       );
 
       expect(row.status).toBe(ModelLimitStatus.RunningLow);
+    });
+  });
+
+  describe('period-scoped usage filtering', () => {
+    it('keeps a row when only one of cost/tokens/requests has usage in the period', () => {
+      const usage = withUsage({
+        'gpt-4o': {
+          dayCostStats: { used: 0, total: 2 ** 53 },
+          dayTokenStats: { used: 250, total: 10000 },
+        },
+      });
+
+      const rows = mapUserUsageToModelLimits(
+        usage,
+        [modelItem()],
+        ModelLimitsPeriod.Last24Hours,
+        'en',
+        t,
+      );
+
+      expect(rows).toHaveLength(1);
+    });
+
+    it('excludes a row whose only mapped entry for the period is unavailable', () => {
+      const usage = withUsage({
+        'gpt-4o': {},
+      });
+
+      const rows = mapUserUsageToModelLimits(
+        usage,
+        [modelItem()],
+        ModelLimitsPeriod.LastHour,
+        'en',
+        t,
+      );
+
+      expect(rows).toHaveLength(0);
+    });
+
+    it('shows the same deployment for one period and hides it for another', () => {
+      const usage = withUsage({
+        'gpt-4o': {
+          monthTokenStats: { used: 100, total: 1000 },
+          dayTokenStats: { used: 0, total: 1000 },
+        },
+      });
+
+      const monthRows = mapUserUsageToModelLimits(
+        usage,
+        [modelItem()],
+        ModelLimitsPeriod.Last30Days,
+        'en',
+        t,
+      );
+      const dayRows = mapUserUsageToModelLimits(
+        usage,
+        [modelItem()],
+        ModelLimitsPeriod.Last24Hours,
+        'en',
+        t,
+      );
+
+      expect(monthRows).toHaveLength(1);
+      expect(dayRows).toHaveLength(0);
+    });
+
+    it('does not change an included row cell classification or formatting', () => {
+      const usage = withUsage({
+        'gpt-4o': {
+          dayCostStats: { used: 4.2, total: 2 ** 53 },
+          dayTokenStats: { used: 250, total: 10000 },
+        },
+      });
+
+      const [row] = mapUserUsageToModelLimits(
+        usage,
+        [modelItem()],
+        ModelLimitsPeriod.Last24Hours,
+        'en',
+        t,
+      );
+
+      expect(row.cost.kind).toBe(ModelLimitMetricKind.Unlimited);
+      expect(row.tokens.kind).toBe(ModelLimitMetricKind.Finite);
+      expect(row.tokens.usedPercent).toBe(2.5);
     });
   });
 

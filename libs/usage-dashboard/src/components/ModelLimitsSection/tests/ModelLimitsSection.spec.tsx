@@ -63,6 +63,7 @@ const labels: ModelLimitsLabels = {
   limitReachedBadgeLabel: 'Limit reached',
   noLimitBadgeLabel: 'No limit',
   unavailableBadgeLabel: 'Unavailable',
+  emptyStateLabel: 'No models to show yet.',
 };
 
 const unlimitedCostCell: ModelLimitMetricCell = {
@@ -117,7 +118,7 @@ describe('ModelLimitsSection', () => {
     ).toBeTruthy();
   });
 
-  it('renders nothing in the row group when rows is empty, but keeps the heading and selector', () => {
+  it('renders the empty state when rows is empty, but keeps the heading and period selector', () => {
     renderSection({ rows: [] });
 
     expect(
@@ -125,6 +126,16 @@ describe('ModelLimitsSection', () => {
     ).toBeTruthy();
     expect(screen.getByText('Last 24 hours')).toBeTruthy();
     expect(screen.queryAllByRole('cell')).toHaveLength(0);
+    expect(screen.getByText('No models to show yet.')).toBeTruthy();
+  });
+
+  it('lets the user change the period from the empty state', async () => {
+    const onPeriodChange = vi.fn();
+    renderSection({ rows: [], onPeriodChange });
+
+    await userEvent.click(screen.getByText('Last 7 days'));
+
+    expect(onPeriodChange).toHaveBeenCalledWith(ModelLimitsPeriod.Last7Days);
   });
 
   it('renders one row per entry with model name and version', () => {
