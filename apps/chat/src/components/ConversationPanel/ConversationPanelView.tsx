@@ -1,3 +1,7 @@
+import {
+  RecipientsCountStatus,
+  useShareRecipientsCount,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
@@ -58,8 +62,8 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { useConversationExport } from '../../hooks/useConversationExport';
 import { useConversationImport } from '../../hooks/useConversationImport';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
-import { useShareRecipientsCount } from '../../hooks/useShareRecipientsCount/useShareRecipientsCount';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { shareApi } from '../../server-api/api-client';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   discardSharedCatalogItem,
@@ -71,7 +75,6 @@ import {
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import { RecipientsCountStatus } from '../../types/share-recipients';
 import {
   conversationIdsMatch,
   toPanelConversationId,
@@ -237,7 +240,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     requestRecipientsCount,
     getRecipientsCount,
     invalidateRecipientsCount,
-  } = useShareRecipientsCount();
+  } = useShareRecipientsCount(shareApi);
 
   const handleExportAll = useCallback(() => {
     void exportAll();

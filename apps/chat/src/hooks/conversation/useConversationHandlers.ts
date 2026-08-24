@@ -2,6 +2,7 @@ import type {
   ConversationResponseDto,
   SendCompletionDtoModeEnum,
 } from '@epam/ai-dial-chat-api-client';
+import { useAttachmentUpload } from '@epam/ai-dial-chat-hooks';
 import {
   type Attachment,
   type Conversation,
@@ -19,7 +20,9 @@ import {
   useState,
 } from 'react';
 import { type NavigateFunction } from 'react-router';
+import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { filesApi } from '../../server-api/api-client';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   deleteConversation as apiDeleteConversation,
@@ -35,7 +38,6 @@ import {
   isMessageChanged,
 } from '../../utils/message-utils';
 import { getStarterSubmitText } from '../../utils/starter-option';
-import { useAttachmentUpload } from './useAttachmentUpload';
 
 interface Params {
   conversation: Conversation | null;
@@ -96,8 +98,10 @@ export const useConversationHandlers = ({
   const selectedItemId = fixedModelId ?? contextSelectedItemId;
 
   const { handleUploadAttachment } = useAttachmentUpload({
+    filesApi,
     bucket,
     onNetworkError: showNetworkError,
+    debounceMs: NETWORK_ERROR_DEBOUNCE_MS,
   });
 
   const handleSend = useCallback(

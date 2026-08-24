@@ -10,18 +10,15 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { uploadFile } from '../../../server-api/files.api';
 import { attachmentsToDtos } from '../../../utils/attachment-to-dto';
 import { useConversationHandlers } from '../useConversationHandlers';
 
 vi.mock('../../../utils/attachment-to-dto', () => ({
   attachmentsToDtos: vi.fn(),
 }));
-vi.mock('../../../utils/build-upload-path', () => ({
-  buildUploadPath: vi.fn((fileName: string) => `uploads/${fileName}`),
-}));
-vi.mock('../../../server-api/files.api', () => ({
-  uploadFile: vi.fn(),
+const mockUploadFile = vi.hoisted(() => vi.fn());
+vi.mock('../../../server-api/api-client', () => ({
+  filesApi: { uploadFile: mockUploadFile },
 }));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(() => ({ selectedItemId: 'selected-deployment' })),
@@ -35,7 +32,6 @@ vi.mock('../../../server-api/rate.api', () => ({
 }));
 
 const mockAttachmentsToDtos = vi.mocked(attachmentsToDtos);
-const mockUploadFile = vi.mocked(uploadFile);
 
 const makeConversation = (): Conversation =>
   ({
@@ -98,9 +94,10 @@ describe('useConversationHandlers — handleSend', () => {
     ).resolves.toBe('https://example.com/file.pdf');
 
     expect(mockUploadFile).toHaveBeenCalledWith(
-      'user-bucket',
-      'uploads/file.pdf',
-      attachment.file,
+      expect.objectContaining({
+        bucket: 'user-bucket',
+        file: attachment.file,
+      }),
     );
   });
 

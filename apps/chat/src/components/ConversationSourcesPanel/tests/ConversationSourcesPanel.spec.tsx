@@ -99,24 +99,6 @@ vi.mock('../../../context/DeploymentsContext', () => ({
   }),
 }));
 
-vi.mock(
-  '../../../hooks/attachment/useAttachmentAction',
-  async (importOriginal) => {
-    const actual =
-      await importOriginal<
-        typeof import('../../../hooks/attachment/useAttachmentAction')
-      >();
-    return {
-      ...actual,
-      downloadAttachment: (attachment: DisplayAttachment) =>
-        mockDownloadAttachment(attachment),
-      useAttachmentAction: () => ({
-        handleAttachmentClick: mockHandleAttachmentClick,
-      }),
-    };
-  },
-);
-
 vi.mock('../../../hooks/attachment/useOpenAttachmentCanvas', () => ({
   useOpenAttachmentCanvas: () => ({
     openAttachmentCanvas: vi.fn().mockResolvedValue(false),
@@ -127,17 +109,24 @@ vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
   useIsMobile: () => false,
 }));
 
-vi.mock('../../../hooks/conversation-sources/useConversationSources', () => ({
-  useConversationSources: () => ({
-    uploaded: mockUploaded,
-    generated: mockGenerated,
-    sources: [],
-  }),
-}));
-
-vi.mock('../../../hooks/use-viewport-width', () => ({
-  default: () => 1200,
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    usePanelMaxWidth: () => 800,
+    downloadAttachment: (attachment: DisplayAttachment) =>
+      mockDownloadAttachment(attachment),
+    useAttachmentAction: () => ({
+      handleAttachmentClick: mockHandleAttachmentClick,
+    }),
+    useConversationSources: () => ({
+      uploaded: mockUploaded,
+      generated: mockGenerated,
+      sources: [],
+    }),
+  };
+});
 
 vi.mock('../../../hooks/useLocalStorage', () => ({
   default: () => [360, vi.fn()],
@@ -145,6 +134,8 @@ vi.mock('../../../hooks/useLocalStorage', () => ({
 
 vi.mock('../../../utils/dial-file', () => ({
   isDialFileId: (url: string) => url.startsWith('files/'),
+  resolveDialFileDownloadUrl: (fileId: string) =>
+    `/api/v1/files/download?path=${fileId}`,
 }));
 
 const makeAttachment = (
