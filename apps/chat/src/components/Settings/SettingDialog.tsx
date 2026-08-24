@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isTouchable } from '@/src/utils/app/mobile';
+import { isDesktopDevice, isTouchable } from '@/src/utils/app/mobile';
 import { navigateToLocale } from '@/src/utils/app/navigateToLocale';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
@@ -268,7 +268,7 @@ const view = withRenderWhen((state) => {
             className="mt-1"
           />
         )}
-        {!isTouchable() && (
+        {(!isTouchable() || isDesktopDevice()) && (
           <EnterTypeSelectLabeled
             label={t(SettingsI18nKeys.KeyboardShortcuts)}
             value={enterType}
