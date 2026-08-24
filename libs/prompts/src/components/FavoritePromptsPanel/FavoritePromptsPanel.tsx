@@ -9,6 +9,7 @@ import {
   ElementSize,
   GhostButton,
   GhostIconButton,
+  ToggleIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconStarFilled } from '@tabler/icons-react';
 import type { FC, KeyboardEvent } from 'react';
@@ -78,7 +79,7 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
         >
           {item.name}
         </span>
-        <GhostIconButton
+        <ToggleIconButton
           size={ElementSize.Small}
           icon={
             <IconStarFilled

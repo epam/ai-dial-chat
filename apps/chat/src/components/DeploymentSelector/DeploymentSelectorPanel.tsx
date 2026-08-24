@@ -11,6 +11,7 @@ import {
   EllipsisTooltip,
   Highlight,
   Search,
+  ToggleIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconStar, IconStarFilled } from '@tabler/icons-react';
 import {
@@ -289,7 +290,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
             />
           )}
           {isFavoriteRow ? (
-            <GhostIconButton
+            <ToggleIconButton
               icon={
                 <IconStarFilled
                   size={DIAL_ICON_SIZE.SM}
