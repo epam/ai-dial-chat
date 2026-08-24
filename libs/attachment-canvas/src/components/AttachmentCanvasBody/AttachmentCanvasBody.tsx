@@ -16,6 +16,7 @@ import {
 } from '../../types/attachment-canvas';
 import { CodeContent } from '../CodeContent/CodeContent';
 import { HtmlContent } from '../HtmlContent/HtmlContent';
+import { OoxmlContent } from '../OoxmlContent/OoxmlContent';
 import { PdfContent } from '../PdfContent/PdfContent';
 import { VisualizerCanvasRenderer } from '../VisualizerCanvasRenderer/VisualizerCanvasRenderer';
 import styles from './AttachmentCanvasBody.module.scss';
@@ -147,6 +148,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
       case AttachmentContentType.Json:
         return 'h-full overflow-auto';
       case AttachmentContentType.Pdf:
+      case AttachmentContentType.Ooxml:
       case AttachmentContentType.Visualizer:
       case AttachmentContentType.Code:
       case AttachmentContentType.Html:
@@ -281,6 +283,14 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
               hideThumbnailsLabel: pdfHideThumbnailsLabel,
               pageNumberLabel: pdfPageNumberLabel,
             }}
+          />
+        );
+      case AttachmentContentType.Ooxml:
+        return (
+          <OoxmlContent
+            content={content}
+            fileName={fileName}
+            loadErrorLabel={loadErrorLabel}
           />
         );
       case AttachmentContentType.Visualizer:

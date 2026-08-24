@@ -98,7 +98,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-sidebar`                  | `sidebar`                  | Resizable sidebar shell — header, search, empty state                        |
 | `@epam/ai-dial-source-panel`             | `source-panel`             | Conversation sources — uploaded files and generated citations                |
 | `@epam/ai-dial-quotations`               | `quotations`               | Citation and annotation components, hooks, and utilities                     |
-| `@epam/ai-dial-attachment-canvas`        | `attachment-canvas`        | Viewer for attachment content — images, PDFs, JSON, markdown, plain text     |
+| `@epam/ai-dial-attachment-canvas`        | `attachment-canvas`        | Viewer for attachments — images, PDFs, DOCX/XLSX/PPTX, JSON, markdown, text  |
 | `@epam/ai-dial-attachment-input`         | `attachment-input`         | File input with upload validation, drag-and-drop, progress                   |
 | `@epam/ai-dial-starter-buttons`          | `starter-buttons`          | Starter prompts that overflow into a dropdown when space runs out            |
 | `@epam/ai-dial-share`                    | `share`                    | Share popover UI and share-link types                                        |
@@ -109,7 +109,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-builder-form`             | `builder-form`             | Presentational builder form for composing and editing DIAL entities          |
 | `@epam/ai-dial-deployment-creation-form` | `deployment-creation-form` | Form for creating and editing a deployment                                   |
 | `@epam/ai-dial-scheduled-tasks`          | `scheduled-tasks`          | Scheduled Tasks page shell — header, toolbar, empty state                    |
-| `@epam/ai-dial-usage-dashboard`          | `usage-dashboard`          | Aggregate daily/monthly cost-limit cards for the Settings Usage tab         |
+| `@epam/ai-dial-usage-dashboard`          | `usage-dashboard`          | Aggregate daily/monthly cost-limit cards for the Settings Usage tab          |
 
 `libs/ai-dial-kit/` is a leftover build-output directory from a removed library — no `package.json`, no sources, no importers. Do not add to it.
 

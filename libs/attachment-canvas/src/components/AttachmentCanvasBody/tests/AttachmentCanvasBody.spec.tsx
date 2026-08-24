@@ -4,6 +4,7 @@ import type { AttachmentCanvasContent } from '../../../models/attachment-canvas'
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  OoxmlFileType,
 } from '../../../types/attachment-canvas';
 import { AttachmentCanvasBody } from '../AttachmentCanvasBody';
 
@@ -38,6 +39,12 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
 vi.mock('../../PdfContent/PdfContent', () => ({
   PdfContent: ({ url }: { url: string }) => (
     <section aria-label="pdf-content">{url}</section>
+  ),
+}));
+
+vi.mock('../../OoxmlContent/OoxmlContent', () => ({
+  OoxmlContent: ({ content }: { content: { format: string } }) => (
+    <section aria-label="ooxml-content">{content.format}</section>
   ),
 }));
 
@@ -131,6 +138,15 @@ describe('AttachmentCanvasBody', () => {
       url: 'blob:pdf-url',
     });
     expect(screen.getByRole('region', { name: 'pdf-content' })).toBeTruthy();
+  });
+
+  it('renders OoxmlContent for OOXML content', () => {
+    renderBody({
+      type: AttachmentContentType.Ooxml,
+      url: 'blob:office-url',
+      format: OoxmlFileType.Docx,
+    });
+    expect(screen.getByRole('region', { name: 'ooxml-content' })).toBeTruthy();
   });
 
   it('mounts the visualizer renderer for Visualizer content', () => {

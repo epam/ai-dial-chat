@@ -18,6 +18,7 @@ const {
   mockResolveText,
   mockResolveCode,
   mockResolvePdf,
+  mockResolveOoxml,
   mockReferenceToPdf,
   mockResolveVisualizer,
   mockResolveHtml,
@@ -33,6 +34,7 @@ const {
   mockResolveText: vi.fn(),
   mockResolveCode: vi.fn(),
   mockResolvePdf: vi.fn(),
+  mockResolveOoxml: vi.fn(),
   mockReferenceToPdf: vi.fn(),
   mockResolveVisualizer: vi.fn(),
   mockResolveHtml: vi.fn(),
@@ -99,6 +101,7 @@ vi.mock('../../../utils/attachment-canvas', () => ({
     }
   },
   resolvePdfCanvasContent: (...args: unknown[]) => mockResolvePdf(...args),
+  resolveOoxmlCanvasContent: (...args: unknown[]) => mockResolveOoxml(...args),
   referenceAttachmentToPdfCanvasContent: (...args: unknown[]) =>
     mockReferenceToPdf(...args),
   resolveVisualizerCanvasContent: (...args: unknown[]) =>
@@ -133,6 +136,54 @@ const makeReferenceAttachment = (
 describe('useOpenAttachmentCanvas routing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it.each([
+    [
+      'report.docx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'docx',
+    ],
+    [
+      'budget.xlsx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'xlsx',
+    ],
+    [
+      'slides.pptx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'pptx',
+    ],
+  ])('routes %s to the OOXML resolver', async (name, mimeType, format) => {
+    const content = { type: 'ooxml', url: `blob:${name}`, format };
+    mockResolveOoxml.mockResolvedValue(content);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment(name, mimeType),
+    );
+
+    expect(opened).toBe(true);
+    expect(mockResolveOoxml).toHaveBeenCalledWith(
+      expect.objectContaining({ name, contentType: mimeType }),
+      format,
+    );
+    expect(mockOpenCanvas).toHaveBeenCalledWith(content, name, name);
+  });
+
+  it('routes an OOXML attachment by extension when its MIME type is generic', async () => {
+    mockResolveOoxml.mockResolvedValue({
+      type: 'ooxml',
+      url: 'blob:deck',
+      format: 'pptx',
+    });
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    await result.current.openAttachmentCanvas(
+      makeAttachment('slides.PPTX', 'application/octet-stream'),
+    );
+
+    expect(mockResolveOoxml).toHaveBeenCalledWith(expect.anything(), 'pptx');
   });
 
   it('routes .md attachments to the markdown resolver', async () => {
@@ -215,6 +266,21 @@ describe('useOpenAttachmentCanvas routing', () => {
     expect(mockResolveMarkdown).toHaveBeenCalledOnce();
     expect(mockResolveJson).not.toHaveBeenCalled();
     expect(mockResolveText).not.toHaveBeenCalled();
+  });
+
+  it('prefers a known text MIME type over an OOXML-looking title', async () => {
+    mockResolveMarkdown.mockResolvedValue({
+      type: 'markdown',
+      text: '# Extracted document',
+    });
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    await result.current.openAttachmentCanvas(
+      makeAttachment('[1] report.docx', 'text/markdown'),
+    );
+
+    expect(mockResolveMarkdown).toHaveBeenCalledOnce();
+    expect(mockResolveOoxml).not.toHaveBeenCalled();
   });
 
   it('routes application/json MIME type to the JSON resolver', async () => {

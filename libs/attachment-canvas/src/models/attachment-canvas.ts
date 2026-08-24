@@ -8,6 +8,7 @@ import type { CSSProperties } from 'react';
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  OoxmlFileType,
 } from '../types/attachment-canvas';
 
 /** Content payload for plain-text attachments. */
@@ -52,6 +53,16 @@ export interface PdfCanvasContent {
   highlights?: InputHighlightData[];
   /** ID of the highlight to scroll to and select on initial load. */
   selectedHighlightId?: string;
+}
+
+/** Content payload for Office Open XML document attachments. */
+export interface OoxmlCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.Ooxml;
+  /** Resolved download URL or object URL for the OOXML file. */
+  url: string;
+  /** The document format used to select the format-specific renderer. */
+  format: OoxmlFileType;
 }
 
 /** Content payload for audio file attachments. */
@@ -128,6 +139,7 @@ export type AttachmentCanvasContent =
   | MarkdownCanvasContent
   | JsonCanvasContent
   | PdfCanvasContent
+  | OoxmlCanvasContent
   | CodeCanvasContent
   | HtmlCanvasContent
   | VisualizerCanvasContent

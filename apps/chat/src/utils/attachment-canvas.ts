@@ -5,6 +5,8 @@ import type {
   ImageCanvasContent,
   JsonCanvasContent,
   MarkdownCanvasContent,
+  OoxmlCanvasContent,
+  OoxmlFileType,
   PdfCanvasContent,
   PlainTextCanvasContent,
   VisualizerCanvasContent,
@@ -413,6 +415,17 @@ export const resolvePdfCanvasContent = async (
     return result;
   }
   return { type: AttachmentContentType.Pdf, url: result };
+};
+
+/** Resolves an OOXML canvas content payload from a DisplayAttachment, or `null` if unavailable. */
+export const resolveOoxmlCanvasContent = async (
+  attachment: DisplayAttachment,
+  format: OoxmlFileType,
+): Promise<OoxmlCanvasContent | ErrorCanvasContent | null> => {
+  const result = await resolveAttachmentBlobUrl(attachment);
+  if (result == null) return null;
+  if (typeof result !== 'string') return result;
+  return { type: AttachmentContentType.Ooxml, url: result, format };
 };
 
 /**

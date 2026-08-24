@@ -1,6 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AttachmentContentType } from '../../types/attachment-canvas';
+import {
+  AttachmentContentType,
+  OoxmlFileType,
+} from '../../types/attachment-canvas';
 import {
   AttachmentCanvasProvider,
   useAttachmentCanvas,
@@ -87,6 +90,24 @@ describe('AttachmentCanvasProvider', () => {
     });
 
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-close-url');
+  });
+
+  it('revokes an OOXML blob URL when the canvas is closed', () => {
+    const { result } = renderCanvas();
+
+    act(() => {
+      result.current.openCanvas({
+        type: AttachmentContentType.Ooxml,
+        url: 'blob:mock-docx-url',
+        format: OoxmlFileType.Docx,
+      });
+    });
+
+    act(() => {
+      result.current.closeCanvas();
+    });
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-docx-url');
   });
 
   it('does not revoke content types with no url (e.g. PlainText)', () => {

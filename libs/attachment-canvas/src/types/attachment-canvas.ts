@@ -6,11 +6,19 @@ export enum AttachmentContentType {
   Markdown = 'markdown',
   Json = 'json',
   Pdf = 'pdf',
+  Ooxml = 'ooxml',
   Code = 'code',
   Html = 'html',
   Visualizer = 'visualizer',
   Unsupported = 'unsupported',
   Error = 'error',
+}
+
+/** Supported Office Open XML document formats. */
+export enum OoxmlFileType {
+  Docx = 'docx',
+  Xlsx = 'xlsx',
+  Pptx = 'pptx',
 }
 
 /** The kind of failure that produced an `ErrorCanvasContent`. */

@@ -1,0 +1,12 @@
+.viewer {
+  background: var(--bg-layer-1, #ffffff);
+}
+
+.statusOverlay {
+  background: var(--bg-layer-1, #ffffff);
+  color: var(--ac-status-text, var(--text-secondary, #454545));
+}
+
+.errorIcon {
+  color: var(--ac-error-icon, var(--text-error, #a30000));
+}
