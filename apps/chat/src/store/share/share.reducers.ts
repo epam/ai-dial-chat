@@ -10,7 +10,11 @@ import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 import { InvitationDetails, ShareRelations } from '@/src/types/share';
 
-import { ShareState, UnshareFileManagerItem } from './share.types';
+import {
+  ShareState,
+  UnshareEntity,
+  UnshareFileManagerItem,
+} from './share.types';
 
 import {
   ConversationInfo,
@@ -35,6 +39,7 @@ const initialState: ShareState = {
   unshareFileManagerItems: undefined,
 
   shareResourceName: undefined,
+  shareResourceDisplayName: undefined,
   shareResourceId: undefined,
   shareModalState: ModalState.CLOSED,
   shareFeatureType: undefined,
@@ -53,6 +58,7 @@ export const shareSlice = createSlice({
       }: PayloadAction<{
         featureType: FeatureType;
         entity: Omit<ShareEntity, 'folderId'>;
+        displayName?: string;
         isFolder?: boolean;
         permissions?: SharePermission[];
       }>,
@@ -63,6 +69,8 @@ export const shareSlice = createSlice({
       state.shareFeatureType = payload.featureType;
       state.shareIsFolder = payload.isFolder;
       state.shareResourceName = payload.entity.name;
+      state.shareResourceDisplayName =
+        payload.displayName?.trim() || payload.entity.name;
       state.shareResourceId = payload.entity.id;
       state.sharePermissions = payload.permissions;
       state.isShared = payload.entity.isShared;
@@ -185,7 +193,7 @@ export const shareSlice = createSlice({
     },
     setUnshareEntity: (
       state,
-      { payload }: PayloadAction<Omit<ShareEntity, 'folderId'> | undefined>,
+      { payload }: PayloadAction<UnshareEntity | undefined>,
     ) => {
       state.unshareEntity = payload;
       if (payload) {

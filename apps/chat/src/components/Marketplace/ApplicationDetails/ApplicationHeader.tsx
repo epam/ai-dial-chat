@@ -5,14 +5,17 @@ import {
   isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
-import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
+import {
+  parseLocalizedField,
+  withEntityIdName,
+} from '@/src/utils/app/marketplace-localization';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { EntityHeader } from '../EntityDetailsHeader';
 import { MarketplaceCopyLink } from '../MarketplaceCopyLink';
@@ -27,6 +30,8 @@ interface Props {
 export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
   const dispatch = useAppDispatch();
 
+  const locale = useAppSelector(UISelectors.selectLocale);
+
   const isMyApp = isMyApplication(entity);
   const isPublicApp = isMarketplaceEntityPublic(entity);
   const handleOpenSharing = useCallback(() => {
@@ -34,9 +39,10 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
       ShareActions.share({
         featureType: FeatureType.Application,
         entity: withEntityIdName(entity),
+        displayName: parseLocalizedField(locale, entity.name),
       }),
     );
-  }, [dispatch, entity]);
+  }, [dispatch, entity, locale]);
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),

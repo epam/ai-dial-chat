@@ -51,7 +51,7 @@ const view = withRenderWhen((state) => {
     ShareSelectors.selectUnshareFileManagerItems,
   );
   const shareResourceName = useAppSelector(
-    ShareSelectors.selectShareResourceName,
+    ShareSelectors.selectShareResourceDisplayName,
   );
   const shareFeatureType = useAppSelector(
     ShareSelectors.selectShareFeatureType,
@@ -123,7 +123,11 @@ const view = withRenderWhen((state) => {
         parseModel: isConversationId(resourceId),
       },
     );
-    const name = unshareEntity?.name ?? shareResourceName ?? parsedName;
+    const name =
+      unshareEntity?.displayName ??
+      unshareEntity?.name ??
+      shareResourceName ??
+      parsedName;
 
     return t(
       isAuthor
