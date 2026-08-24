@@ -3,6 +3,7 @@ import {
   InitialsAvatar,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
+import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import {
   ModelLimitRow as ModelLimitRowData,
@@ -125,15 +126,16 @@ export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
               {row.name}
             </span>
             {row.version != null && (
-              <span
+              /* Capped at 30% of the row so a long version truncates instead of
+                 squeezing the name out of the cell, matching the Catalog pattern. */
+              <EllipsisTooltip
+                text={row.version}
                 className={mergeClasses(
-                  'shrink-0',
+                  'max-w-[30%] shrink-0',
                   versionClassName,
                   styles.version,
                 )}
-              >
-                {row.version}
-              </span>
+              />
             )}
           </div>
         </div>
