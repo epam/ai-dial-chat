@@ -2,24 +2,25 @@
 
 ## Purpose
 Defines the success notification every user-initiated entity operation raises in `apps/chat`: which operations must confirm themselves, the one title/body sentence pattern per (entity, operation) pair, the i18n key layout, the variant and dismissal rules, and the single app-level helper (`useOperationNotification`) that owns the mapping so no call site chooses its own wording.
-
 ## Requirements
 ### Requirement: Every completed entity operation raises exactly one success notification
 
 A user-initiated operation that mutates or exports an entity SHALL raise exactly one success notification when it completes successfully. The operation matrix below is exhaustive for this capability; a `—` means the operation does not exist in the product today and no notification is expected until it does.
 
-| Entity | Created | Edited / saved | Deleted | Downloaded | Publish requested | Unpublished | Other |
+| Entity | Created | Edited / saved | Deleted | Downloaded | Publish requested | Unpublish requested | Other |
 |---|---|---|---|---|---|---|---|
-| Prompt (`PromptEditor`, catalog details) | required | required | required | **new** | required | specified only (see below) | — |
-| Quick app (`AppsEditor`) | **new** | **new** | required (catalog) | — | required (catalog) | specified only | — |
-| Custom app (`CustomAppEditor`) | **new** | **new** | required (catalog) | — | required (catalog) | specified only | — |
-| Toolset (`ToolsetEditor`) | **new** | **new** | required (catalog) | — | required (catalog) | specified only | — |
-| Model / Skill (catalog details) | required (Skill only, via archive import and any other Skill-create path) | — | required | — | required | specified only | — |
-| Conversation | not notified (see exclusions) | **new** (rename), **new** (duplicate) | required | required (export) | required | specified only | import, delete-all, unshare, revoke: required |
-| File | — | **new** (rename) | required | **new** (single, and a plural count for a multi-item selection) | — | — | upload, copy, move: required |
-| Folder | **new** | **new** (rename) | required | **new** (archive) | — | — | copy, move: required |
+| Prompt (`PromptEditor`, catalog details) | required | required | required | required | required | **new** | — |
+| Quick app (`AppsEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
+| Custom app (`CustomAppEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
+| Toolset (`ToolsetEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
+| Model / Skill (catalog details) | — | — | required | — | required | **new** | — |
+| Conversation | not notified (see exclusions) | required (rename), required (duplicate) | required | required (export) | required | **new** | import, delete-all, unshare, revoke: required |
+| File | — | required (rename) | required | required (single, and a plural count for a multi-item selection) | — | — | upload, copy, move: required |
+| Folder | required | required (rename) | required | required (archive) | — | — | copy, move: required |
 
-`required` = already implemented, copy realigned by this change. `**new**` = added by this change.
+`required` = already implemented. `**new**` = added by this change.
+
+The `Unpublished` column is replaced by `Unpublish requested`. Unpublishing submits an admin-approval request to DIAL Core rather than removing the published copy (see `catalog-unpublish-api`), so no notification in this capability may state that an entity has been unpublished.
 
 Exclusions, which SHALL NOT raise a success notification:
 
@@ -48,6 +49,16 @@ Exclusions, which SHALL NOT raise a success notification:
 - **WHEN** a user confirms a valid new folder name in the file manager and the create request succeeds
 - **THEN** a success notification titled `"Folder created successfully"` is shown
 
+#### Scenario: Unpublishing a catalog entity confirms a submitted request
+
+- **WHEN** a user confirms unpublish for a toolset and the request is accepted
+- **THEN** a success notification titled `"Toolset unpublish requested"` is shown, naming the toolset and the folder
+
+#### Scenario: Unpublishing a conversation confirms a submitted request
+
+- **WHEN** a user confirms unpublish for a conversation and the request is accepted
+- **THEN** a success notification titled `"Conversation unpublish requested"` is shown, naming the conversation and the folder
+
 #### Scenario: Starting a new conversation stays silent
 
 - **WHEN** a user starts a new conversation
@@ -57,11 +68,6 @@ Exclusions, which SHALL NOT raise a success notification:
 
 - **WHEN** any operation in the matrix rejects
 - **THEN** only the existing error notification is shown, with its `requestId` behaviour unchanged, and no success notification is raised
-
-#### Scenario: Importing a Skill archive confirms creation
-
-- **WHEN** a user uploads a Skill ZIP archive from the Catalog and the archive is imported successfully
-- **THEN** a success notification titled `"Skill created successfully"` is shown, naming the new Skill
 
 ### Requirement: A completed operation always uses the Success variant
 
@@ -91,7 +97,7 @@ Two notifications that currently use `NotificationVariant.Info` therefore become
 
 ### Requirement: Success notification copy follows one pattern per (entity, operation) pair
 
-Every success notification SHALL consist of a title of the form `<Entity> <operation> successfully` and a one-sentence body that names the entity in double quotes, and — for publish and unpublish — the target folder in double quotes.
+Every success notification SHALL consist of a title of the form `<Entity> <operation> successfully` and a one-sentence body that names the entity in double quotes, and — for publish and unpublish — the target folder in double quotes. The two request-shaped operations are the exception to the `successfully` title form: they end in `requested`, because nothing has completed yet.
 
 The strings SHALL be declared as one complete sentence per `(entity, operation)` pair. A sentence SHALL NOT be composed at runtime from an entity noun plus an operation fragment: gendered and cased locales (Arabic, which the app must support, as well as Russian and German) cannot form a correct sentence from interpolated nouns.
 
@@ -106,7 +112,7 @@ English copy per operation, where `<Entity>` / `<entity>` is the entity label fr
 | Deleted | `<Entity> deleted successfully` | `<Entity> "{{name}}" is not available anymore.` |
 | Downloaded | `<Entity> downloaded successfully` | `<Entity> "{{name}}" is saved on your device.` |
 | Publish requested | `<Entity> publish requested` | `Publish request for <entity> "{{name}}" was submitted to folder "{{folder}}". It will appear there once an admin approves it.` |
-| Unpublished | `<Entity> unpublished successfully` | `<Entity> "{{name}}" is unpublished from folder "{{folder}}".` |
+| Unpublish requested | `<Entity> unpublish requested` | `Unpublish request for <entity> "{{name}}" was submitted for folder "{{folder}}". It will be removed once an admin approves it.` |
 
 Entity labels: `Prompt`, `Quick app`, `Custom app`, `Agent`, `Toolset`, `Model`, `Skill`, `Conversation`, `File`, `Folder`.
 
@@ -126,6 +132,11 @@ A pair whose copy has to count items declares `_one` / `_other` variants and rec
 - **WHEN** an existing prompt is saved in the prompt editor
 - **THEN** the notification title is `"Prompt edited successfully"` and the body is `Changes for prompt "<name>" are saved.`
 
+#### Scenario: Unpublish copy names the folder and the approval step
+
+- **WHEN** a conversation's unpublish request is accepted for folder `Organization/Shared chats`
+- **THEN** the body is `Unpublish request for conversation "<name>" was submitted for folder "Shared chats". It will be removed once an admin approves it.`
+
 #### Scenario: Copy is not assembled from fragments at runtime
 
 - **WHEN** any success notification in this capability is rendered
@@ -133,9 +144,11 @@ A pair whose copy has to count items declares `_one` / `_other` variants and rec
 
 ### Requirement: Publish notifications state that approval is pending
 
-Both publish flows (`publishCatalogEntity` and `publishConversation`) create an admin-pending DIAL Core publication rather than making the entity immediately visible. Their success notification SHALL therefore use the `Publish requested` copy and SHALL NOT claim that the entity is published or visible.
+Both publish flows (`publishCatalogEntity` and `publishConversation`) and both unpublish flows (`unpublishCatalogEntity` and `unpublishConversation`) create an admin-pending DIAL Core publication rather than changing what is visible. Their success notifications SHALL therefore use the `Publish requested` / `Unpublish requested` copy and SHALL NOT claim that the entity is published, visible, unpublished, or removed.
 
 This replaces the current catalog copy (`catalog.publishSuccessTitle` = `"Published"`, `catalog.publishSuccess` = `"\"{{name}}\" published to {{folder}}"`), which overstates the outcome. The conversation publish notification already carries approval-aware copy and keeps that meaning, gaining only the unified title.
+
+The same rule binds the surfaces, not just the copy: an unpublish success SHALL NOT remove the folder from the entity's publish history, SHALL NOT hide the entity from any published list, and SHALL NOT refresh a list on the assumption that something disappeared.
 
 #### Scenario: Catalog publish reports a submitted request
 
@@ -146,6 +159,11 @@ This replaces the current catalog copy (`catalog.publishSuccessTitle` = `"Publis
 
 - **WHEN** a user publishes a conversation and the request is accepted
 - **THEN** the notification keeps its pending-approval meaning and does not state that the conversation is now published
+
+#### Scenario: Unpublish reports a submitted request and changes nothing visible
+
+- **WHEN** a user unpublishes a catalog entity and the request is accepted
+- **THEN** the notification title is `"<Entity> unpublish requested"`, the folder still appears in the entity's publish history, and no list is refreshed
 
 ### Requirement: One app-level helper owns the (entity, operation) → i18n key mapping
 
@@ -162,6 +180,7 @@ notifyOperationSuccess(NotifiableEntity.Prompt, EntityOperation.Downloaded, {
 - The hook SHALL resolve the title and body keys from one exported map keyed by `(NotifiableEntity, EntityOperation)`, translate them with the interpolation params it is given, and call `showSuccessNotification` from `useNotification`.
 - It SHALL NOT set `requestId` — trace ids belong to error notifications only (see `notification-request-id`).
 - `NotifiableEntity` and `EntityOperation` SHALL be string enums in `apps/chat/src/types/` (per the repo's enum rule), and a `resolveNotifiableEntity(type: CatalogEntityType)` helper SHALL map catalog item types onto `NotifiableEntity`.
+- `EntityOperation` SHALL include `UnpublishRequested = 'unpublishRequested'`, and the map SHALL carry one entry per entity the matrix marks as unpublishable — the catalog entities and `Conversation`. It SHALL NOT carry an entry for `File` or `Folder`, which have no unpublish action.
 - A pair absent from the map SHALL be a TypeScript error, not a silent no-op, so the matrix above is enforced at compile time.
 - `notifyOperationSuccess` SHALL be wrapped in `useCallback` and depend only on `t` and `showSuccessNotification`, both of which are already referentially stable, so it is safe to list in caller dependency arrays.
 
@@ -175,21 +194,10 @@ notifyOperationSuccess(NotifiableEntity.Prompt, EntityOperation.Downloaded, {
 - **WHEN** a developer calls `notifyOperationSuccess` with an `(entity, operation)` pair that has no entry in the map
 - **THEN** the call does not typecheck
 
-### Requirement: Unpublish notification is specified but not implemented
+#### Scenario: Unpublishing a file does not typecheck
 
-No unpublish endpoint exists in `@epam/chat-api-client` and no unpublish action exists in the UI. This change SHALL NOT add the operation, its i18n keys, or a map entry — unused keys and dead map entries are removed weight, not preparation.
-
-When the unpublish action is implemented, it SHALL raise its success notification through `useOperationNotification` using the `Unpublished` copy defined above, with `name` and the folder it was unpublished from.
-
-#### Scenario: Unpublish stays absent in this change
-
-- **WHEN** this change is implemented
-- **THEN** no unpublish action, endpoint call, i18n key, or map entry is added
-
-#### Scenario: A future unpublish action reuses the contract
-
-- **WHEN** the unpublish action is later implemented
-- **THEN** its success notification uses `EntityOperation.Unpublished` through `useOperationNotification`, with the entity name and source folder interpolated
+- **WHEN** a developer calls `notifyOperationSuccess(NotifiableEntity.File, EntityOperation.UnpublishRequested, …)`
+- **THEN** the call does not typecheck, because no such pair exists in the map
 
 ### Requirement: Success notifications are non-blocking, dismissible, and survive navigation
 
@@ -223,9 +231,15 @@ All new strings SHALL live in one `entityNotifications` namespace in `apps/chat/
 | `entityNotifications.prompt.downloaded` | `"Prompt \"{{name}}\" is saved on your device."` |
 | `entityNotifications.prompt.publishRequestedTitle` | `"Prompt publish requested"` |
 | `entityNotifications.prompt.publishRequested` | `"Publish request for prompt \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."` |
+| `entityNotifications.prompt.unpublishRequestedTitle` | `"Prompt unpublish requested"` |
+| `entityNotifications.prompt.unpublishRequested` | `"Unpublish request for prompt \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."` |
 | `entityNotifications.agent.*`, `entityNotifications.toolset.*`, `entityNotifications.model.*`, `entityNotifications.skill.*`, `entityNotifications.conversation.*`, `entityNotifications.file.*`, `entityNotifications.folder.*` | same operation suffixes, one sentence per pair, only for pairs the matrix marks as existing |
 
 Superseded keys SHALL be removed rather than left orphaned: `promptEditor.saveSuccessTitle`, `promptEditor.createSuccess`, `promptEditor.updateSuccess`, `catalog.publishSuccessTitle`, `catalog.publishSuccess`, `catalog.details.delete.successTitle`, `catalog.details.delete.success`. Keys whose copy is only realigned keep their names (`conversationPanel.*`, `conversationExport.*`, `conversationImport.*`, `dialFileManager.*`, `conversationPublish.successMessage`).
+
+The `unpublishRequested` pair SHALL exist only for entities the matrix marks as unpublishable; no `entityNotifications.file.unpublishRequested` or `entityNotifications.folder.unpublishRequested` key may be added.
+
+Strings that label the unpublish UI itself — the menu entry, confirmation copy, consequence bullets, folder-group label, status text — SHALL NOT live in `entityNotifications`. They belong to their own feature namespaces (`catalog.details.unpublish.*`, `conversationUnpublish.*`) with the shared verb reused from `ButtonsI18nKeys.Unpublish` rather than re-declared per surface.
 
 #### Scenario: Every new key is reachable through the enum
 
@@ -236,6 +250,11 @@ Superseded keys SHALL be removed rather than left orphaned: `promptEditor.saveSu
 
 - **WHEN** this change is implemented
 - **THEN** every superseded key listed above is deleted from `en.json` and from `translation-keys.ts`, and no key in `entityNotifications` is unreferenced
+
+#### Scenario: The Unpublish verb is declared once
+
+- **WHEN** the catalog menu entry, the conversation menu entry, and both confirm buttons render their label
+- **THEN** all four resolve `ButtonsI18nKeys.Unpublish`, and no feature namespace re-declares the bare word
 
 ### Requirement: RTL, accessibility, telemetry, and feature gating
 
@@ -255,3 +274,4 @@ Superseded keys SHALL be removed rather than left orphaned: `promptEditor.saveSu
 
 - **WHEN** this change is implemented
 - **THEN** no file under `libs/` gains a translated notification string, an i18n import, or a decision about which notification to raise
+

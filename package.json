@@ -104,7 +104,7 @@
     "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
-    "@epam/ai-dial-react-file-manager": "0.1.0-dev.22",
+    "@epam/ai-dial-react-file-manager": "0.2.0-dev.3",
     "@epam/ai-dial-react-pdf-highlighter": "0.2.0-dev.22",
     "@epam/ai-dial-shared": "0.48.0",
     "@epam/ai-dial-typescript-sdk": "0.1.0-dev.39",
@@ -173,12 +173,7 @@
     "brace-expansion@2.1.1": "2.1.4",
     "brace-expansion@5.0.6": "5.0.9",
     "js-yaml": "4.3.1",
-    "@epam/ai-dial-react-file-manager": {
-      "@epam/ai-dial-ui-kit": "$@epam/ai-dial-ui-kit"
-    },
-    "@epam/ai-dial-react-pdf-highlighter": {
-      "@epam/ai-dial-ui-kit": "$@epam/ai-dial-ui-kit"
-    }
+    "@epam/ai-dial-ui-kit": "$@epam/ai-dial-ui-kit"
   },
   "workspaces": [
     "packages/*",
