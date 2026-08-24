@@ -189,6 +189,66 @@ CatalogViewMode.List; // 'list'
 
 CatalogDetailsTab.About; // 'about'
 CatalogDetailsTab.Content; // 'content' — long-form text body (prompts)
+
+DetailsConfirmationKind.Delete; // 'delete'
+DetailsConfirmationKind.Logout; // 'logout'
+DetailsConfirmationKind.Unshare; // 'unshare'
+DetailsConfirmationKind.RevokeAccess; // 'revokeAccess'
+DetailsConfirmationKind.DeleteApiKey; // 'deleteApiKey'
+DetailsConfirmationKind.Unpublish; // 'unpublish'
+```
+
+### Details-panel confirmations
+
+Every confirmation replaces the panel's details content in place - there is
+no modal. `DetailsConfirmationKind` names the active step, and each kind
+resolves its title, copy, consequence bullets, confirm label, loading status
+text, and palette from `detailsTexts`.
+
+`Delete`, `RevokeAccess`, and `Unpublish` render with the danger palette;
+`Unshare` and `Logout` with the info one. `DeleteApiKey` is the only kind
+whose card and button diverge - a danger confirm button above an info
+identity card, because removing one credential leaves the item untouched.
+
+`Unpublish` is the only kind that needs an input before it can be confirmed.
+It appears in the Manage menu only once the panel has resolved
+`getPublishHistory` to at least one folder, and its body depends on how many
+folders that is: one folder is named in static copy with confirm enabled
+immediately, while several render as a single-select radio group with confirm
+disabled until the user picks one. Confirming calls
+`onUnpublish(item, folderPath)` with that folder's path segments - the same
+`string[]` shape `onPublish` receives. The panel stays open on success:
+removal is a request an administrator must approve, so the folder still reads
+as published afterwards.
+
+```tsx
+<DetailsPanel
+  item={item}
+  isOpen
+  onClose={handleClose}
+  getPublishHistory={fetchPublishHistory}
+  onUnpublish={async (unpublishedItem, folderPath) => {
+    await requestUnpublish(unpublishedItem.id, folderPath.join('/'));
+  }}
+  isUnpublishVisible={(candidate) => candidate.isMyApp === true}
+  texts={{
+    unpublishLabel: t('buttons.unpublish'),
+    unpublishFolderGroupAriaLabel: t('catalog.unpublishFolderGroupAriaLabel'),
+  }}
+/>
+```
+
+Through `Catalog`, the same two callbacks are `onUnpublish` and
+`isUnpublishVisible`, and the texts arrive as `detailsTexts`:
+
+```tsx
+<Catalog
+  items={items}
+  getPublishHistory={fetchPublishHistory}
+  onUnpublish={handleUnpublish}
+  isUnpublishVisible={(candidate) => candidate.isMyApp === true}
+  detailsTexts={{ unpublishLabel: t('buttons.unpublish') }}
+/>
 ```
 
 ### Prompt entities
@@ -395,10 +455,10 @@ every item** whenever `onDownload` is supplied. Scope placement with
 
 ### Declaring unsupported per-item capabilities
 
-`isUnshareVisible` and `isRevokeShareVisible` let a host hide the recipient-side
-"Remove from My List" and the owner-side "Revoke access" for items whose backing
-capability does not exist, without the lib knowing why. Both default to
-**visible** when omitted.
+`isUnshareVisible`, `isRevokeShareVisible`, and `isUnpublishVisible` let a host
+hide the recipient-side "Remove from My List", the owner-side "Revoke access",
+and "Unpublish" for items whose backing capability does not exist, without the
+lib knowing why. All three default to **visible** when omitted.
 
 ```tsx
 <Catalog
@@ -407,14 +467,17 @@ capability does not exist, without the lib knowing why. Both default to
   // Hide both on prompts — the host's API rejects prompt paths.
   isUnshareVisible={(item) => item.type !== CatalogEntityType.Prompt}
   isRevokeShareVisible={(item) => item.type !== CatalogEntityType.Prompt}
+  isUnpublishVisible={(item) => item.type !== CatalogEntityType.Prompt}
   onUnshare={handleUnshare}
   onRevokeShare={handleRevokeShare}
+  onUnpublish={handleUnpublish}
 />
 ```
 
 Each is combined (AND) with its built-in rule — `sharedWithMe`/`isMyApp` for
 unshare, `isMyApp` plus the recipient count resolved by
-`onFetchRecipientsCount` for revoke — so a predicate can only ever narrow
+`onFetchRecipientsCount` for revoke, and at least one resolved
+`getPublishHistory` folder for unpublish — so a predicate can only ever narrow
 visibility, never widen it.
 
 ## Types

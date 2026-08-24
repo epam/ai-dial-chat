@@ -73,15 +73,26 @@ Conversations have no details panel, so their entry uses `ConfirmationPopup`, wh
 
 **Alternative considered:** per-row `Unpublish` buttons in `PublishHistoryList`, which would handle multi-folder without any selection UI. Rejected as the primary entry point — it buries an action a user looks for in the Manage menu inside a flow named "Publish" — but it remains a clean follow-up, and the folder-selection state added here is what a later per-row action would replace, not fight.
 
-### D6 — Conversation publish history is switched on
+### D6 — Publish history is switched on, on both surfaces
 
-`PublishConversationPanelContainer` currently hardcodes `const [history] = useState<PublishHistoryEntry[]>([])` behind a comment citing a Core `503` (GH #7897). The backend endpoint (`GET /api/v1/conversations/publish-history`) exists and is implemented identically to the catalog one, which does work — the `503` was an environment/Core-wiring symptom, not a missing implementation. This change fetches it for real, because the unpublish entry has no other source for the folder list.
+Both publish-history fetches are stubbed out today, and both cite the same DIAL Core `503` (GH #7897):
 
-Two things follow.
+- `PublishConversationPanelContainer` hardcodes `const [history] = useState<PublishHistoryEntry[]>([])`.
+- `CatalogView` hardcodes `const getPublishHistory = useCallback(async () => [], [])`, the workaround proposed by the `disable-catalog-publish-history-fetch` change.
+
+The first draft of this design saw only the conversation stub and assumed the catalog endpoint "does work". It does not, as called: with a frozen empty history, `Unpublish` can never become visible for a catalog entity either, so the change had specified a feature whose primary surface was unreachable. Both stubs are removed, because history is the only source of the folder list an unpublish request needs.
+
+The `503` is attributable and fixed. Both services were calling `getPublications` with the resource's own url in `ResourceLink.url`, which Core defines as the list **scope**, not a filter, and rejects. `PublishService.getPublishHistory` and `ConversationPublishService.getPublishHistory` now pass `getPublicationsListScope(bucket)` and filter the response on `resources[].sourceUrl` locally; the helper's doc comment records the confirmation against Core's OpenAPI spec. So the stubs are worked around a defect that no longer exists — which is the premise for turning them back on, and the thing task 10.3 verifies against a live Core rather than assumes.
+
+`disable-catalog-publish-history-fetch` is therefore superseded, not merely overridden: its temporary exception is lifted by this change's `catalog-publish-flow` delta, and it should be archived as superseded so two active changes do not carry opposite requirements for the same behaviour.
+
+Three things follow.
 
 **The already-published callout stops being dead code, and the code and the spec disagree about what it should do.** `PublishConversationPanelContainer` passes `allowReplace={false}`, and `derivePublishState` turns that plus a matching history entry into a `ReplaceWarning` callout with submit **disabled**; the container even translates a dedicated `ConversationPublishI18nKeys.AlreadyPublishedWarning` string for it, and `PublishDerivationInput.allowReplace`'s own doc says conversations "have no update/replace semantics — publishing again to the same folder is not supported". But `conversation-publish-flow`'s "Submit always creates a publish request and is not blocked by publication history" requirement says the opposite: history is informational and never blocks. Neither side was observable while history was hardcoded empty.
 
 This change resolves it in favour of the code: an already-published folder shows the callout and blocks re-submission. Three artefacts (the prop, its doc, the translated string) were written deliberately for that behaviour, versus one requirement sentence written when the branch was known unreachable — and a second publish of an unversioned conversation to the same folder produces a duplicate public copy, which is the thing `allowReplace: false` exists to prevent. The `conversation-publish-flow` delta records the requirement being replaced, so the reversal is explicit rather than a silent side effect of turning history on.
+
+**The catalog publish panel regains its loading and error states.** Since the stub landed, `PublishHistoryList` has only ever rendered its empty state. Restoring the fetch makes the loading state and the inline error state reachable again — including for entities that genuinely have no history, which now pass through loading first. This is the one part of the change that alters an existing, shipped surface rather than adding to it, so the `catalog-publish-flow` delta states it rather than leaving it as a side effect.
 
 **The fetch must degrade.** History is loaded lazily when the row's action menu opens (the same trigger `Header.tsx` uses for its recipient-count lookup), never on list render, so a broken history endpoint costs one request per menu open and hides one menu entry — it does not slow down or break the conversation list.
 
@@ -104,12 +115,20 @@ Throttling matches the publish endpoints' write profile (`@Throttle({ default: {
 
 A successful unpublish request deletes the same history cache key the corresponding publish endpoint deletes (`publish-history:{entityType}:{entityId}` / `conversation-publish-history:{sourceUrl}`). Note what this does and does not achieve: the pending DELETE publication *is* returned by `getPublications`, and the history projection filters on `resources[].sourceUrl`, which the DELETE resource carries (D2). So after an unpublish request the folder does not vanish from history — it may appear twice. The history projection therefore drops resources whose `action` is `DELETE` when building the folder list, so a folder with a pending removal still reads as published, which is accurate until an admin approves.
 
+### D10 — `version` is optional on the unpublish request, because it is optional on publish
+
+`PublishCatalogEntityDto.version` is `@ApiPropertyOptional` + `@IsOptional`. It was tightened out deliberately: DIAL Core's Publication API has no version concept, and unversioned Prompt and Skill resources have nothing to send, so `add-prompt-catalog-entity-type` (D18) stopped the publish endpoint inventing a value. `PublishService.publish` falls back to `splitEntityNameAndVersion(sourceUrl)`, which yields `''` for a resource with no `__{version}` suffix, and trims the request `name` so a versionless title carries no trailing space.
+
+The unpublish DTO mirrors that shape rather than requiring `version`. Requiring it would make Prompt and Skill unpublishable through a route whose publish counterpart accepts them, and would push the frontend into inventing a value for a field the server can already recover — which is the exact failure the publish side just removed. `version` remains in the DTO because it is echoed in the response and in Core's request `name`, so the admin queue shows which version's publication is being reversed when there is one.
+
+This also settles what `entityId` means for a prompt. A prompt's id is bucket-relative (`Work/AI/summarize`), so `sourceUrl` is derived through the same `toSourceUrl` helper publish uses, qualifying it with the caller's own bucket. Unpublish inherits this rather than re-deriving it, for the same reason as D3: two derivations of one path drift.
+
 ## Risks / Trade-offs
 
 - **A failing publish-history call silently hides Unpublish (D4)** → The action is absent, not broken, and no error is shown for a menu entry the user may not have been looking for. Mitigated by the lazy per-menu-open fetch (a retry is one menu close/open away) and by the 60 s cache making a transient failure short-lived. Accepted deliberately: an entry that cannot construct a request is worse than an absent one.
 - **Reconstructed `targetUrl` could drift from what publish actually sent (D3)** → Both go through one helper, and the helper is unit-tested against the exact strings in the existing publish specs (root folder, spaces, percent-encoding, nested skill grouping folders).
 - **Users will read "unpublish requested" as "done"** → The notification body states the approval step explicitly, and the folder keeps showing in publish history until approval (D9) rather than optimistically disappearing.
-- **Turning conversation publish history on may re-expose the GH #7897 `503`** → The call is lazy and its failure path is already specified (hide the entry, show the history error state in the publish panel). If Core in a given deployment genuinely cannot serve it, the conversation unpublish entry never appears there — degraded, not broken. This is the one part of the change whose behaviour depends on a Core deployment detail, and it should be verified against a live Core before the slice is called done.
+- **Turning publish history back on may re-expose the GH #7897 `503`, on either surface** → The list-scope defect the stubs worked around is fixed (D6), but neither endpoint has been confirmed against a live Core since. Both calls are lazy and both failure paths are specified (hide the entry; show the history error state in the publish panel), so a still-broken endpoint leaves `Unpublish` permanently hidden on that surface — degraded, not broken. The catalog side carries the extra cost that its publish panel regains a visible history error state it has not shown since the stub landed, which is a user-visible regression the stub was hiding. This is the one part of the change whose behaviour depends on a Core deployment detail, and both endpoints should be verified against a live Core before the slice is called done.
 - **Skills published from a grouping folder share a leaf name in `public/`** → Pre-existing collision risk recorded as an open question in `catalog-publish-api`; unpublish inherits it verbatim, since it targets the same reconstructed path. Not resolved here.
 
 ## Migration Plan
@@ -119,4 +138,5 @@ No data migration — neither service persists anything. Deployment order matter
 ## Open Questions
 
 - Should a folder with an already-pending removal request be shown differently (e.g. disabled in the selection list) rather than being selectable a second time? Doing so needs publication `status` and `action` surfaced through the history DTO, which D9 deliberately avoids. Submitting a duplicate request is harmless — Core queues a second identical DELETE — so this is deferred until there is evidence users hit it.
-- Does the conversation publish-history endpoint work against the current Core deployment (GH #7897)? D6 assumes yes; the answer decides whether conversation unpublish is usable on day one or only after a Core-side fix.
+- Do both publish-history endpoints work against the current Core deployment? The list-scope defect behind GH #7897 is fixed in both services (D6), but neither has been re-verified live since the frontend stubs went in. The answer decides whether catalog and conversation unpublish are usable on day one or only after a Core-side fix, and — for the catalog panel — whether restoring the fetch re-exposes a history error state to users.
+- `disable-catalog-publish-history-fetch` is superseded by this change. It should be archived as superseded rather than applied; confirm that is the intent before this change is applied, since applying both would leave the catalog spec self-contradictory.

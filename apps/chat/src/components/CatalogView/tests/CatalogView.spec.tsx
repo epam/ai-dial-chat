@@ -54,7 +54,12 @@ import {
   getPublicPrompt,
 } from '../../../server-api/prompts.api';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
-import { publishCatalogEntity } from '../../../server-api/publish.api';
+import {
+  CatalogPublishEntityType,
+  getCatalogPublishHistory,
+  publishCatalogEntity,
+  unpublishCatalogEntity,
+} from '../../../server-api/publish.api';
 import {
   discardSharedCatalogItem,
   getShareRecipientsCount,
@@ -119,6 +124,8 @@ const capturedPublishProps: {
     onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
+    onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+    isUnpublishVisible?: (item: CatalogItem) => boolean;
     publishExpandedPaths?: Set<string>;
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
@@ -151,6 +158,8 @@ vi.mock('react-router', () => ({
 vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   publishCatalogEntity: vi.fn(),
+  unpublishCatalogEntity: vi.fn(),
+  getCatalogPublishHistory: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('../../../server-api/publish-rules.api', () => ({
@@ -200,6 +209,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublishSuccess,
     getPublishHistory,
     isPublishVisible,
+    onUnpublish,
+    isUnpublishVisible,
     ruleSourceOptions,
     onFetchExistingRules,
     isShareVisible,
@@ -250,6 +261,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
+    onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+    isUnpublishVisible?: (item: CatalogItem) => boolean;
     ruleSourceOptions?: string[];
     onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
     isShareVisible?: (item: CatalogItem) => boolean;
@@ -269,6 +282,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onPublishSuccess,
       getPublishHistory,
       isPublishVisible,
+      onUnpublish,
+      isUnpublishVisible,
       publishExpandedPaths,
       onPublishExpandedPathsChange,
       publishLoadingPaths,
@@ -1038,14 +1053,35 @@ describe('CatalogView', () => {
       ).rejects.toThrow('Forbidden');
     });
 
-    it('never fetches publish history and always resolves an empty list (version history is not fetched, see GH issue #7897)', async () => {
+    it('fetches publish history from the endpoint and maps each entry', async () => {
+      vi.mocked(getCatalogPublishHistory).mockResolvedValue([
+        {
+          entityId: 'tool-abc123',
+          entityType: CatalogPublishEntityType.Toolset,
+          folderPath: 'Organization/Data Science',
+          version: '1.0',
+          publishedAt: '2026-07-13T10:00:00.000Z',
+          publishedBy: 'user@example.com',
+        },
+      ]);
       render(<CatalogView />);
+
       const history =
         await capturedPublishProps.current?.getPublishHistory?.(
           makeCatalogItem(),
         );
 
-      expect(history).toEqual([]);
+      expect(getCatalogPublishHistory).toHaveBeenCalledWith(
+        CatalogPublishEntityType.Toolset,
+        'tool-abc123',
+      );
+      expect(history).toEqual([
+        {
+          version: '1.0',
+          publishedAt: Date.parse('2026-07-13T10:00:00.000Z'),
+          folderPath: ['Organization', 'Data Science'],
+        },
+      ]);
     });
 
     it('shows Publish only for isMyApp items of a publishable type', () => {
@@ -5136,5 +5172,123 @@ describe('CatalogView', () => {
         expect(triggerBlobDownload).not.toHaveBeenCalled();
       });
     });
+  });
+});
+
+describe('CatalogView — unpublish', () => {
+  const makeCatalogItem = (overrides?: Partial<CatalogItem>): CatalogItem => ({
+    id: 'tool-abc123',
+    type: CatalogEntityType.Toolset,
+    name: 'My toolset',
+    version: '1.2.0',
+    lastUsed: 'now',
+    description: '',
+    folder: [],
+    topics: [],
+    isMyApp: true,
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(vi.fn()),
+    );
+    vi.mocked(unpublishCatalogEntity).mockResolvedValue({
+      entityId: 'tool-abc123',
+      entityType: 'toolset',
+      folderPath: 'Organization/Data Science',
+      version: '1.2.0',
+      requestedAt: '2026-08-13T10:00:00.000Z',
+      requestedBy: 'user@example.com',
+    });
+  });
+
+  it('requests unpublish with the mapped entity type, joined folder, and version', async () => {
+    render(<CatalogView />);
+
+    await capturedPublishProps.current?.onUnpublish?.(makeCatalogItem(), [
+      'Organization',
+      'Data Science',
+    ]);
+
+    expect(unpublishCatalogEntity).toHaveBeenCalledWith(
+      CatalogPublishEntityType.Toolset,
+      'tool-abc123',
+      { folderPath: 'Organization/Data Science', version: '1.2.0' },
+    );
+  });
+
+  /* A prompt or skill carries no version, and the backend recovers or empties it. */
+  it('omits version for an unversioned item', async () => {
+    render(<CatalogView />);
+
+    await capturedPublishProps.current?.onUnpublish?.(
+      makeCatalogItem({ type: CatalogEntityType.Prompt, version: undefined }),
+      ['Organization'],
+    );
+
+    expect(unpublishCatalogEntity).toHaveBeenCalledWith(
+      CatalogPublishEntityType.Prompt,
+      'tool-abc123',
+      { folderPath: 'Organization' },
+    );
+  });
+
+  it('reports a submitted request naming the folder leaf, not a completed removal', async () => {
+    const showNotification = vi.fn();
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
+    render(<CatalogView />);
+
+    await capturedPublishProps.current?.onUnpublish?.(makeCatalogItem(), [
+      'Organization',
+      'Data Science',
+    ]);
+
+    expect(showNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.toolset.unpublishRequestedTitle',
+      message: 'entityNotifications.toolset.unpublishRequested',
+    });
+  });
+
+  it('raises no success notification when the request fails', async () => {
+    const showNotification = vi.fn();
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
+    vi.mocked(unpublishCatalogEntity).mockRejectedValue(new Error('Forbidden'));
+    render(<CatalogView />);
+
+    /*
+     * Rethrown after notifying, so the details panel's own rejection path runs
+     * — the same contract `onPublish` has.
+     */
+    await expect(
+      capturedPublishProps.current?.onUnpublish?.(makeCatalogItem(), [
+        'Organization',
+      ]),
+    ).rejects.toThrow('Forbidden');
+
+    expect(
+      showNotification.mock.calls.some(
+        ([notification]) => notification.variant === 'success',
+      ),
+    ).toBe(false);
+  });
+
+  it('offers Unpublish exactly where Publish is offered', () => {
+    render(<CatalogView />);
+
+    expect(
+      capturedPublishProps.current?.isUnpublishVisible?.(makeCatalogItem()),
+    ).toBe(capturedPublishProps.current?.isPublishVisible?.(makeCatalogItem()));
+    expect(
+      capturedPublishProps.current?.isUnpublishVisible?.(
+        makeCatalogItem({ isMyApp: false }),
+      ),
+    ).toBe(false);
   });
 });

@@ -19,10 +19,12 @@ import type { PublishRuleDto } from '../publish/dto/publish-rule.dto';
 import {
   getPublicationsListScope,
   getPublicTargetFolder,
+  getPublishedTargetUrl,
   getResourceName,
   stripPublicTargetFolder,
 } from '../publish/publish-target.util';
 import { PublishConversationResultDto } from './dto/publish-conversation-result.dto';
+import { UnpublishConversationResultDto } from './dto/unpublish-conversation-result.dto';
 
 const CONVERSATION_RESOURCE_PREFIX = 'conversations';
 
@@ -98,7 +100,11 @@ export class ConversationPublishService {
     }
 
     const publicTargetFolder = getPublicTargetFolder(folderPath);
-    const targetUrl = `${CONVERSATION_RESOURCE_PREFIX}/${publicTargetFolder}${getResourceName(sourceUrl)}`;
+    const targetUrl = getPublishedTargetUrl(
+      CONVERSATION_RESOURCE_PREFIX,
+      folderPath,
+      getResourceName(sourceUrl),
+    );
 
     const requestBody = {
       name: conversation.name,
@@ -150,6 +156,123 @@ export class ConversationPublishService {
   }
 
   /**
+   * Submits a removal request for one already-published folder of a
+   * conversation. DIAL Core models removal as a *publication* whose single
+   * resource carries `action: 'DELETE'` — the same `createPublication` call
+   * and the same `PENDING → APPROVED/REJECTED` lifecycle publish goes
+   * through, so this returns a submitted request, never a completed removal.
+   * The published copy stays visible to everyone who could already see it
+   * until an administrator approves.
+   *
+   * Like publish, this has no cross-bucket case: the copy being removed was
+   * published from the caller's own bucket, so `sourceUrl` and the title
+   * fetch both resolve against the session `bucket` only.
+   *
+   * @throws {NotFoundException} When the conversation or target folder is unknown
+   * @throws {ForbiddenException} When the caller lacks write access to `folderPath`
+   * @throws {BadGatewayException} When Core returns an unexpected error
+   * @throws {ServiceUnavailableException} When Core is unreachable or times out
+   */
+  async unpublish(
+    accessToken: string,
+    bucket: string,
+    path: string,
+    folderPath: string,
+    author: string,
+  ): Promise<UnpublishConversationResultDto> {
+    const encodedPath = encodeDialResourcePath(path);
+    const sourceUrl = `${CONVERSATION_RESOURCE_PREFIX}/${bucket}/${encodedPath}`;
+
+    /*
+     * The title is re-fetched for the same reason publish re-fetches it: the
+     * admin queue shows `Publication.name`, and a DELETE request with no
+     * readable title is unreviewable. A failed fetch aborts before any
+     * publication is created, so a request that cannot be labelled is never
+     * submitted.
+     */
+    const {
+      data: conversation,
+      error: getError,
+      response: getResponse,
+    } = (await this.dialClient.client.getConversation(bucket, encodedPath, {
+      headers: getBearerAuthHeaders(accessToken),
+    })) as {
+      data?: { name: string };
+      error?: unknown;
+      response: globalThis.Response;
+    };
+    if (getError != null || conversation == null) {
+      return handleDialSdkError(
+        getError,
+        `conversations.unpublish (fetch title for "${sourceUrl}")`,
+        this.logger,
+        getResponse,
+      );
+    }
+
+    const publicTargetFolder = getPublicTargetFolder(folderPath);
+    const targetUrl = getPublishedTargetUrl(
+      CONVERSATION_RESOURCE_PREFIX,
+      folderPath,
+      getResourceName(sourceUrl),
+    );
+
+    /*
+     * `sourceUrl` is sent even though Core allows it to be omitted for a
+     * `DELETE` action: it keeps the resource shape identical to the ADD one
+     * publish sends. `rules` is omitted entirely.
+     */
+    const requestBody = {
+      name: conversation.name,
+      targetFolder: publicTargetFolder,
+      resources: [{ action: 'DELETE' as const, sourceUrl, targetUrl }],
+      displayAuthor: author,
+    };
+
+    let result;
+    try {
+      result = await this.dialClient.client.createPublication({
+        headers: getBearerAuthHeaders(accessToken),
+        body: requestBody,
+      });
+    } catch (err) {
+      this.logger.error(
+        `Unexpected error requesting unpublish of conversation "${sourceUrl}"`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new BadGatewayException(
+        'Failed to submit unpublish request to DIAL Core',
+      );
+    }
+
+    if (result.error) {
+      return mapDialHttpStatus(
+        result.response.status,
+        `unpublish conversation "${sourceUrl}"`,
+        this.logger,
+        result.error,
+        extractDialErrorMessage(result.error),
+      );
+    }
+
+    await this.cacheManager.del(historyCacheKey(sourceUrl));
+
+    const publication = result.data;
+    this.logger.debug(
+      `Requested unpublish of conversation "${sourceUrl}" from "${folderPath}"`,
+    );
+
+    return {
+      path: sourceUrl,
+      folderPath,
+      requestedAt: publication.createdAt
+        ? new Date(publication.createdAt).toISOString()
+        : new Date().toISOString(),
+      requestedBy: publication.author ?? publication.displayAuthor ?? '',
+    };
+  }
+
+  /**
    * @throws {BadGatewayException} When Core returns an unexpected error
    * @throws {ServiceUnavailableException} When Core is unreachable or times out
    */
@@ -192,7 +315,19 @@ export class ConversationPublishService {
         return (result.data ?? [])
           .filter((publication) =>
             publication.resources?.some(
-              (resource) => resource.sourceUrl === sourceUrl,
+              (resource) =>
+                resource.sourceUrl === sourceUrl &&
+                /*
+                 * A `DELETE` resource is a pending removal request submitted
+                 * by the unpublish endpoint, not a publication of the
+                 * conversation. Keeping it would list the folder twice —
+                 * once for the original `ADD`, once for the pending `DELETE`
+                 * — and would read as "published here again". Until an admin
+                 * approves the removal the conversation genuinely is still
+                 * published there, so the folder stays, sourced from its
+                 * `ADD` publication.
+                 */
+                resource.action !== 'DELETE',
             ),
           )
           .map(

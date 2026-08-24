@@ -19,9 +19,11 @@ import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
 import type { PublishRuleDto } from './dto/publish-rule.dto';
+import { UnpublishResultDto } from './dto/unpublish-result.dto';
 import {
   getPublicationsListScope,
   getPublicTargetFolder,
+  getPublishedTargetUrl,
   getResourceBucket,
   getResourceName,
   getResourceTypePrefix,
@@ -117,7 +119,11 @@ export class PublishService {
   ): Promise<PublishResultDto> {
     const sourceUrl = toSourceUrl(entityType, entityId, bucket);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
-    const targetUrl = `${getResourceTypePrefix(sourceUrl)}/${publicTargetFolder}${getResourceName(sourceUrl)}`;
+    const targetUrl = getPublishedTargetUrl(
+      getResourceTypePrefix(sourceUrl),
+      folderPath,
+      getResourceName(sourceUrl),
+    );
     const { name: entityName, version: resourceVersion } =
       splitEntityNameAndVersion(sourceUrl);
     const publicationVersion = version || resourceVersion;
@@ -173,6 +179,100 @@ export class PublishService {
   }
 
   /**
+   * Submits a removal request for one already-published folder of a catalog
+   * entity. DIAL Core models removal as a *publication* whose single resource
+   * carries `action: 'DELETE'` — the same `createPublication` call, the same
+   * `PENDING → APPROVED/REJECTED` lifecycle, the same admin in the loop. Core's
+   * separate `deletePublication` discards a still-pending publication *request*,
+   * which is a different feature.
+   *
+   * So this returns a submitted request, never a completed removal: the
+   * published copy stays visible to everyone who could already see it until an
+   * administrator approves. Nothing in the result may assert otherwise.
+   *
+   * @throws {NotFoundException} When Core reports the entity or target as unknown
+   * @throws {ForbiddenException} When the caller lacks write access to `folderPath`
+   * @throws {BadGatewayException} When Core returns an unexpected error
+   * @throws {ServiceUnavailableException} When Core is unreachable or times out
+   */
+  async unpublish(
+    accessToken: string,
+    bucket: string,
+    entityType: CatalogEntityType,
+    entityId: string,
+    folderPath: string,
+    version: string | undefined,
+    author: string,
+  ): Promise<UnpublishResultDto> {
+    const sourceUrl = toSourceUrl(entityType, entityId, bucket);
+    const publicTargetFolder = getPublicTargetFolder(folderPath);
+    const targetUrl = getPublishedTargetUrl(
+      getResourceTypePrefix(sourceUrl),
+      folderPath,
+      getResourceName(sourceUrl),
+    );
+    const { name: entityName, version: resourceVersion } =
+      splitEntityNameAndVersion(sourceUrl);
+    const publicationVersion = version || resourceVersion;
+    /*
+     * `sourceUrl` is sent even though Core allows it to be omitted for a
+     * `DELETE` action: it costs nothing and keeps the DELETE resource shape
+     * identical to the ADD one publish sends. `rules` is omitted entirely —
+     * access rules govern who may see a published resource, and a removal
+     * request grants nobody anything.
+     */
+    const requestBody = {
+      name: `${entityName} ${publicationVersion}`.trim(),
+      targetFolder: publicTargetFolder,
+      resources: [{ action: 'DELETE' as const, sourceUrl, targetUrl }],
+      displayAuthor: author,
+    };
+    let result;
+    try {
+      result = await this.dialClient.client.createPublication({
+        headers: getBearerAuthHeaders(accessToken),
+        body: requestBody,
+      });
+    } catch (err) {
+      this.logger.error(
+        `Unexpected error requesting unpublish of ${entityType} "${entityId}"`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new BadGatewayException(
+        'Failed to submit unpublish request to DIAL Core',
+      );
+    }
+
+    if (result.error) {
+      return mapDialHttpStatus(
+        result.response.status,
+        `unpublish ${entityType} "${entityId}"`,
+        this.logger,
+        result.error,
+        extractDialErrorMessage(result.error),
+      );
+    }
+
+    await this.cacheManager.del(historyCacheKey(entityType, entityId));
+
+    const publication = result.data;
+    this.logger.debug(
+      `Requested unpublish of ${entityType} "${entityId}" from "${folderPath}"`,
+    );
+
+    return {
+      entityId,
+      entityType,
+      folderPath,
+      version: publicationVersion,
+      requestedAt: publication.createdAt
+        ? new Date(publication.createdAt).toISOString()
+        : new Date().toISOString(),
+      requestedBy: publication.author ?? publication.displayAuthor ?? '',
+    };
+  }
+
+  /**
    * @throws {BadGatewayException} When Core returns an unexpected error
    * @throws {ServiceUnavailableException} When Core is unreachable or times out
    */
@@ -215,7 +315,18 @@ export class PublishService {
         return (result.data ?? [])
           .filter((publication) =>
             publication.resources?.some(
-              (resource) => resource.sourceUrl === sourceUrl,
+              (resource) =>
+                resource.sourceUrl === sourceUrl &&
+                /*
+                 * A `DELETE` resource is a pending removal request submitted
+                 * by the unpublish endpoint, not a publication of the entity.
+                 * Keeping it would list the folder twice — once for the
+                 * original `ADD`, once for the pending `DELETE` — and would
+                 * read as a second publish. Until an admin approves the
+                 * removal the entity genuinely is still published there, so
+                 * the folder stays, sourced from its `ADD` publication.
+                 */
+                resource.action !== 'DELETE',
             ),
           )
           .map(

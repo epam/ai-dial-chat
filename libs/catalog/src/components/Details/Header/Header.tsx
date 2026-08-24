@@ -26,6 +26,7 @@ import {
   IconPlayerPlayFilled,
   IconTrash,
   IconUserOff,
+  IconWorldOff,
   IconWorldShare,
 } from '@tabler/icons-react';
 import {
@@ -129,6 +130,26 @@ interface HeaderProps {
   isPublishVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Publish" button is clicked; the host swaps this panel's content to the publish view. */
   onOpenPublish?: () => void;
+  /**
+   * Additional caller-supplied rule for whether "Unpublish" is shown,
+   * combined (AND) with `hasPublishedFolders` and the presence of
+   * `onOpenUnpublish`. Defaults to `true` when absent.
+   */
+  isUnpublishVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Whether the panel has resolved publish history for this item to at least
+   * one folder. Withheld while the lookup is unresolved and `false` on zero
+   * entries or failure — the request cannot be built without a folder, so an
+   * entry shown without one could not do anything if clicked. Default: `false`.
+   */
+  hasPublishedFolders?: boolean;
+  /**
+   * Starts the panel's publish-history lookup, called on Manage-menu open and
+   * on hover/focus of its trigger. Guarded once per item by the panel.
+   */
+  onRequestPublishHistory?: () => void;
+  /** Called when the "Unpublish" entry is clicked; the host swaps this panel's content to the unpublish confirmation. */
+  onOpenUnpublish?: () => void;
 }
 /** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit/Publish/Delete), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. */
 export const Header: FC<HeaderProps> = ({
@@ -156,6 +177,10 @@ export const Header: FC<HeaderProps> = ({
   detailsStyles,
   isPublishVisible,
   onOpenPublish,
+  isUnpublishVisible,
+  hasPublishedFolders = false,
+  onRequestPublishHistory,
+  onOpenUnpublish,
 }) => {
   const {
     nameClassName = 'dial-body-semi-text',
@@ -174,6 +199,10 @@ export const Header: FC<HeaderProps> = ({
   const handleOpenPublish = useCallback(() => {
     onOpenPublish?.();
   }, [onOpenPublish]);
+
+  const handleOpenUnpublish = useCallback(() => {
+    onOpenUnpublish?.();
+  }, [onOpenUnpublish]);
 
   /* Fire-and-forget by contract: the host reports its own failures. */
   const handleDownload = useCallback(() => {
@@ -278,10 +307,19 @@ export const Header: FC<HeaderProps> = ({
 
   const handleManageOpenChange = useCallback(
     (isOpen: boolean) => {
-      if (isOpen) requestRecipientsCount();
+      if (!isOpen) return;
+      requestRecipientsCount();
+      onRequestPublishHistory?.();
     },
-    [requestRecipientsCount],
+    [requestRecipientsCount, onRequestPublishHistory],
   );
+
+  /* Both Manage-menu lookups share one hover/focus trigger, so each is issued
+   * at most once per item before the click lands. */
+  const handleManageTriggerIntent = useCallback(() => {
+    requestRecipientsCount();
+    onRequestPublishHistory?.();
+  }, [requestRecipientsCount, onRequestPublishHistory]);
 
   const shouldShowPrimaryAction =
     texts?.hasPrimaryAction !== false &&
@@ -295,6 +333,17 @@ export const Header: FC<HeaderProps> = ({
     (item.type === CatalogEntityType.Model ||
       item.type === CatalogEntityType.Toolset ||
       item.type === CatalogEntityType.Agent);
+
+  /*
+   * Gated on resolved history rather than staying reachable the way "Revoke
+   * access" does on an unresolved count: revoke needs the lookup only for a
+   * number in its label, while unpublish needs the folder itself to build the
+   * request, so an entry shown without one could not do anything if clicked.
+   */
+  const shouldShowUnpublish =
+    !!onOpenUnpublish &&
+    hasPublishedFolders &&
+    (isUnpublishVisible?.(item) ?? true);
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
 
@@ -402,6 +451,23 @@ export const Header: FC<HeaderProps> = ({
         onClick: handleOpenPublish,
       });
     }
+    if (shouldShowUnpublish) {
+      /* Not `danger`: unpublishing removes a published copy but destroys
+       * nothing the owner holds — the source item is untouched and can be
+       * published again — so it sits with Edit/Download/Publish. */
+      items.push({
+        key: 'unpublish',
+        label: texts?.unpublishLabel ?? 'Unpublish',
+        icon: (
+          <IconWorldOff
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            className="text-secondary"
+          />
+        ),
+        onClick: handleOpenUnpublish,
+      });
+    }
     if (shouldShowDeleteAction) {
       items.push({
         key: 'delete',
@@ -441,6 +507,7 @@ export const Header: FC<HeaderProps> = ({
     shouldShowEditAction,
     shouldShowDownloadAction,
     shouldShowPublish,
+    shouldShowUnpublish,
     shouldShowDeleteAction,
     shouldShowRevokeShareAction,
     recipientsCount,
@@ -449,6 +516,7 @@ export const Header: FC<HeaderProps> = ({
     handleEdit,
     handleDownload,
     handleOpenPublish,
+    handleOpenUnpublish,
     handleDelete,
     handleRevokeShare,
     handleUnshare,
@@ -662,15 +730,16 @@ export const Header: FC<HeaderProps> = ({
             matchReferenceWidth={false}
             onOpenChange={handleManageOpenChange}
           >
-            {/* Hover and focus start the recipient-count lookup before the
-             * click lands, so the "Revoke access" entry is usually already
-             * settled by the time the menu opens. */}
+            {/* Hover and focus start the recipient-count and publish-history
+             * lookups before the click lands, so the "Revoke access" and
+             * "Unpublish" entries are usually already settled by the time the
+             * menu opens. */}
             <NeutralIconButton
               icon={<IconDots size={DIAL_ICON_SIZE.MD} aria-hidden />}
               aria-label={texts?.manageActionLabel ?? 'Manage'}
               aria-haspopup="menu"
-              onMouseEnter={requestRecipientsCount}
-              onFocus={requestRecipientsCount}
+              onMouseEnter={handleManageTriggerIntent}
+              onFocus={handleManageTriggerIntent}
             />
           </Dropdown>
         )}

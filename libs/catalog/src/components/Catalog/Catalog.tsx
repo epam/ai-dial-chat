@@ -62,6 +62,8 @@ export const Catalog: FC<CatalogProps> = ({
   onRevokeShare,
   onFetchRecipientsCount,
   isRevokeShareVisible,
+  onUnpublish,
+  isUnpublishVisible,
   onLogin,
   onLogout,
   onCreateClick,
@@ -565,6 +567,8 @@ export const Catalog: FC<CatalogProps> = ({
           onRevokeShare={onRevokeShare}
           onFetchRecipientsCount={onFetchRecipientsCount}
           isRevokeShareVisible={isRevokeShareVisible}
+          onUnpublish={onUnpublish}
+          isUnpublishVisible={isUnpublishVisible}
           onLogin={handleLogin}
           onLogout={handleLogout}
           texts={detailsTexts}

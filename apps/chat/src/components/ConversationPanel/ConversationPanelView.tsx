@@ -13,6 +13,7 @@ import {
   ConfirmationPopup,
   Popup,
   PopupSize,
+  RadioGroup,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -24,6 +25,7 @@ import {
   IconShare,
   IconTrashX,
   IconUserOff,
+  IconWorldOff,
   IconWorldShare,
 } from '@tabler/icons-react';
 import {
@@ -48,6 +50,7 @@ import {
   ConversationExportI18nKeys,
   ConversationImportI18nKeys,
   ConversationPanelI18nKeys,
+  ConversationUnpublishI18nKeys,
   ShareI18nKeys,
 } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
@@ -55,12 +58,15 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { useConversationExport } from '../../hooks/useConversationExport';
 import { useConversationImport } from '../../hooks/useConversationImport';
+import { useConversationPublishHistory } from '../../hooks/useConversationPublishHistory/useConversationPublishHistory';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useShareRecipientsCount } from '../../hooks/useShareRecipientsCount/useShareRecipientsCount';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorDetails } from '../../server-api/api-error';
+import { unpublishConversation } from '../../server-api/conversation-publish.api';
 import {
   discardSharedCatalogItem,
   revokeSharedAccess,
@@ -70,6 +76,7 @@ import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
+import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
 import { RecipientsCountStatus } from '../../types/share-recipients';
 import {
@@ -233,11 +240,26 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   } | null>(null);
   const publishReturnFocusRef = useRef<HTMLButtonElement | null>(null);
 
+  const [pendingUnpublishConversation, setPendingUnpublishConversation] =
+    useState<{
+      path: string;
+      title: string;
+      folders: string[][];
+    } | null>(null);
+  /* Set only when the conversation is published to more than one folder. */
+  const [selectedUnpublishFolder, setSelectedUnpublishFolder] = useState<
+    string | null
+  >(null);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
+
   const {
     requestRecipientsCount,
     getRecipientsCount,
     invalidateRecipientsCount,
   } = useShareRecipientsCount();
+  const { requestPublishHistory, getPublishHistory } =
+    useConversationPublishHistory();
+  const showPublishError = usePublishErrorNotification();
 
   const handleExportAll = useCallback(() => {
     void exportAll();
@@ -361,13 +383,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const handleActionMenuOpen = useCallback(
     (item: ConversationItem, trigger: HTMLButtonElement) => {
       publishReturnFocusRef.current = trigger;
-      if (!isConversationsSharingEnabled) return;
 
       const contextId = panelToContextId.get(item.id);
       if (!contextId) return;
 
-      /* Only an owned, writable row can offer revoking, so only those need a
-       * count. */
+      /* Only an owned, writable row can offer revoking or unpublishing, so
+       * only those need either lookup. */
       const rawItem = items.find((c) => c.id === contextId);
       if (
         rawItem?.isReadonly ||
@@ -376,13 +397,26 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       ) {
         return;
       }
-      requestRecipientsCount(contextId);
+      if (isConversationsSharingEnabled) {
+        requestRecipientsCount(contextId);
+      }
+      /*
+       * Keyed by the same bucket-relative path the publish and unpublish
+       * requests use, so the publish panel opened next reuses this result.
+       */
+      if (isConversationsPublishingEnabled) {
+        requestPublishHistory(
+          getConversationPath(normalizeConversationId(contextId)),
+        );
+      }
     },
     [
       panelToContextId,
       items,
       isConversationsSharingEnabled,
+      isConversationsPublishingEnabled,
       requestRecipientsCount,
+      requestPublishHistory,
     ],
   );
 
@@ -396,6 +430,24 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         rawItem?.isReadonly ||
         rawItem?.sharedWithMe ||
         rawItem?.publishedWithMe;
+
+      const conversationPath = getConversationPath(
+        normalizeConversationId(contextId),
+      );
+      const history = getPublishHistory(conversationPath);
+      /* Deduplicated: history lists one entry per publication, so a folder
+       * published to twice would otherwise appear twice. */
+      const publishedFolders =
+        history.status === PublishHistoryStatus.Resolved && !isReadonlyItem
+          ? [
+              ...new Map(
+                (history.entries ?? []).map((entry) => [
+                  entry.folderPath.join('/'),
+                  entry.folderPath,
+                ]),
+              ).values(),
+            ]
+          : [];
 
       const recipients = getRecipientsCount(contextId);
       const isRevokeVisible =
@@ -546,6 +598,35 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             ]
           : []),
         /*
+         * Withheld until the publish-history lookup started by this menu's
+         * open settles, and hidden on zero folders or on failure: unpublish
+         * needs the folder itself to build the request, so an entry shown
+         * without one could not do anything if clicked.
+         */
+        ...(isConversationsPublishingEnabled && publishedFolders.length > 0
+          ? [
+              {
+                key: 'unpublish',
+                label: t(ButtonsI18nKeys.Unpublish),
+                icon: (
+                  <IconWorldOff
+                    size={DIAL_ICON_SIZE.SM}
+                    aria-hidden
+                    className="text-secondary"
+                  />
+                ),
+                onClick: () => {
+                  setSelectedUnpublishFolder(null);
+                  setPendingUnpublishConversation({
+                    path: conversationPath,
+                    title: panelItem.title,
+                    folders: publishedFolders,
+                  });
+                },
+              },
+            ]
+          : []),
+        /*
          * Revoking cuts off every recipient of an owned conversation. It rides
          * the same feature flag as Share: with sharing disabled there is no way
          * to grant access, so offering to revoke it would be incoherent.
@@ -594,6 +675,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       panelActiveConversationId,
       isConversationsSharingEnabled,
       isConversationsPublishingEnabled,
+      getPublishHistory,
       navigate,
       onDuplicateReadonly,
       notifyOperationSuccess,
@@ -606,6 +688,18 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const handleCloseSharePopover = useCallback(() => {
     setPendingShareConversationPath(null);
   }, []);
+
+  /*
+   * Already fetched when the row's action menu opened, so opening the publish
+   * panel next issues no second request.
+   */
+  const publishPanelHistory = getPublishHistory(
+    pendingPublishConversation?.path ?? '',
+  );
+
+  const unpublishFolders = pendingUnpublishConversation?.folders ?? [];
+  /* One published folder is confirmed directly; several require a pick. */
+  const hasUnpublishFolderChoice = unpublishFolders.length > 1;
 
   const handleClosePublishPanel = useCallback(() => {
     setPendingPublishConversation(null);
@@ -732,6 +826,55 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
    * only other people lose access — so there is nothing to navigate away from.
    * `refreshConversations` runs purely so any share-derived indicator settles.
    */
+  const handleCloseUnpublishDialog = useCallback(() => {
+    if (isUnpublishing) return;
+    setPendingUnpublishConversation(null);
+    setSelectedUnpublishFolder(null);
+  }, [isUnpublishing]);
+
+  const handleConfirmUnpublish = useCallback(async () => {
+    if (!pendingUnpublishConversation || isUnpublishing) return;
+    const { path, title, folders } = pendingUnpublishConversation;
+    /* One published folder needs no choice; several require a pick, which
+     * the disabled confirm button already enforces. */
+    const folderPath =
+      selectedUnpublishFolder != null
+        ? folders.find((folder) => folder.join('/') === selectedUnpublishFolder)
+        : folders[0];
+    if (!folderPath) return;
+
+    setIsUnpublishing(true);
+    try {
+      await unpublishConversation(path, folderPath.join('/'));
+    } catch (error) {
+      showPublishError(error);
+      setIsUnpublishing(false);
+      setPendingUnpublishConversation(null);
+      setSelectedUnpublishFolder(null);
+      return;
+    }
+
+    /*
+     * No `refreshConversations()`: nothing about the caller's own list
+     * changed, and the published copy survives until an admin approves the
+     * removal — the same reason publish success does not refresh either.
+     */
+    notifyOperationSuccess(
+      NotifiableEntity.Conversation,
+      EntityOperation.UnpublishRequested,
+      { name: title, folder: folderPath[folderPath.length - 1] },
+    );
+    setIsUnpublishing(false);
+    setPendingUnpublishConversation(null);
+    setSelectedUnpublishFolder(null);
+  }, [
+    pendingUnpublishConversation,
+    isUnpublishing,
+    selectedUnpublishFolder,
+    showPublishError,
+    notifyOperationSuccess,
+  ]);
+
   const handleConfirmRevoke = useCallback(async () => {
     if (!pendingRevokeId) return;
     const idToRevoke = pendingRevokeId;
@@ -928,6 +1071,64 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       />
 
       <ConfirmationPopup
+        open={!!pendingUnpublishConversation}
+        header={t(ConversationUnpublishI18nKeys.ConfirmTitle)}
+        confirmLabel={t(ButtonsI18nKeys.Unpublish)}
+        cancelLabel={t(ButtonsI18nKeys.Cancel)}
+        variant={ConfirmationPopupVariant.Danger}
+        isLoading={isUnpublishing}
+        disableConfirmButton={
+          hasUnpublishFolderChoice && selectedUnpublishFolder == null
+        }
+        description={
+          <>
+            <span className="break-all">
+              {hasUnpublishFolderChoice
+                ? t(ConversationUnpublishI18nKeys.SelectFolderMessage, {
+                    name: pendingUnpublishConversation?.title ?? '',
+                  })
+                : t(ConversationUnpublishI18nKeys.ConfirmMessage, {
+                    name: pendingUnpublishConversation?.title ?? '',
+                    folder: (unpublishFolders[0] ?? []).join('/'),
+                  })}
+            </span>
+            {hasUnpublishFolderChoice && (
+              <RadioGroup
+                className="mt-3"
+                ariaLabel={t(
+                  ConversationUnpublishI18nKeys.FolderGroupAriaLabel,
+                )}
+                value={selectedUnpublishFolder ?? undefined}
+                onChange={setSelectedUnpublishFolder}
+                disabled={isUnpublishing}
+                items={unpublishFolders.map((folder) => ({
+                  value: folder.join('/'),
+                  label: folder.join('/'),
+                }))}
+                radioClassName="dial-small-text text-primary"
+              />
+            )}
+          </>
+        }
+        onConfirm={handleConfirmUnpublish}
+        onCancel={handleCloseUnpublishDialog}
+        onClose={handleCloseUnpublishDialog}
+      />
+
+      {/* Outside the popup on purpose: `ConfirmationPopup` swaps its whole
+       * body for a spinner while `isLoading`, so a region rendered in
+       * `description` would unmount at the moment it needs to announce.
+       * Mounted only while the popup is open, so the panel does not carry a
+       * second permanent status region alongside the transfer queues. */}
+      {pendingUnpublishConversation != null && (
+        <span role="status" aria-live="polite" className="sr-only">
+          {isUnpublishing
+            ? t(ConversationUnpublishI18nKeys.RequestingStatus)
+            : ''}
+        </span>
+      )}
+
+      <ConfirmationPopup
         open={!!pendingUnshareId}
         header={t(ConversationPanelI18nKeys.UnshareConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.RemoveFromMyList)}
@@ -1012,6 +1213,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             conversationTitle={pendingPublishConversation.title}
             onClose={handleClosePublishPanel}
             returnFocusRef={publishReturnFocusRef}
+            history={publishPanelHistory.entries}
+            isHistoryLoading={
+              publishPanelHistory.status === PublishHistoryStatus.Loading
+            }
+            hasHistoryError={
+              publishPanelHistory.status === PublishHistoryStatus.Failed
+            }
           />
         )}
     </>

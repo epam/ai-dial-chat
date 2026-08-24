@@ -39,6 +39,8 @@ Generated-client impact: OpenAPI `operationId: unpublishConversation`; request D
 
 Rate limiting: `@Throttle` at the publish endpoint's write profile. Authorization, error mapping, and logging discipline are identical to the catalog unpublish endpoint (see `catalog-unpublish-api`): authenticated session only, Core enforces folder write access, `mapDialHttpStatus` carries Core's own message, and no request body or token is ever logged.
 
+Validation: `folderPath` SHALL carry `IsValidFilePath`, so `..` and absolute-path escapes are rejected before the value reaches Core. The `path` query param reuses the existing `ConversationPathDto` unchanged, which validates only `IsString` + `MinLength(1)` — it carries **no** `IsValidFilePath`, because that DTO is shared with rename, delete, duplicate, and publish. A traversal-shaped `path` therefore reaches the service, exactly as it already does on the publish endpoint; what keeps the request own-bucket is that the service builds `sourceUrl` from the session `bucket` itself and never from a client-supplied resource url. Tightening the shared DTO is out of scope for this change — it would change five other endpoints' accepted input — and is recorded as a follow-up rather than assumed to be in place.
+
 #### Scenario: Successful conversation unpublish request
 - **WHEN** an authenticated user submits a valid unpublish request for a folder the conversation is published to
 - **THEN** the service re-fetches the title, calls `createPublication` with one `DELETE` resource, and returns 200
@@ -52,9 +54,13 @@ Rate limiting: `@Throttle` at the publish endpoint's write profile. Authorizatio
 - **WHEN** `getConversation` fails for the caller's own bucket and path
 - **THEN** `handleDialSdkError` maps the failure, no `createPublication` call is made, and no cache entry is invalidated
 
-#### Scenario: Path traversal is rejected
-- **WHEN** `path` or `folderPath` fails `IsValidFilePath` validation
+#### Scenario: folderPath traversal is rejected
+- **WHEN** `folderPath` fails `IsValidFilePath` validation
 - **THEN** the `ValidationPipe` rejects the request with 400 before the service runs
+
+#### Scenario: An empty conversation path is rejected
+- **WHEN** the `path` query param is empty
+- **THEN** `ConversationPathDto`'s `MinLength(1)` rejects the request with 400
 
 ### Requirement: A successful conversation unpublish request invalidates the publish-history cache
 

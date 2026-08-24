@@ -88,10 +88,12 @@ The response SHALL NOT include any field asserting removal (no `unpublishedAt`, 
 
 ### Requirement: Unpublish request DTO validates its inputs
 
-`UnpublishCatalogEntityDto` SHALL declare `folderPath` and `version` with `class-validator` decorators and `@ApiProperty` metadata:
+`UnpublishCatalogEntityDto` SHALL declare `folderPath` and `version` with `class-validator` decorators and Swagger metadata, mirroring `PublishCatalogEntityDto` field for field:
 
-- `folderPath`: string, required, MAY be empty (the public root), validated with the existing `IsValidFilePath` decorator (`apps/chat-api/src/files/dto/file-path.validator.ts`) so `..` and absolute-path escapes are rejected before the value reaches Core.
-- `version`: string, required. It is not used to address the resource — `entityId` already does that — but it is echoed in the response and used in Core's request `name`, so the admin queue shows which version's publication is being reversed.
+- `folderPath`: string, required, `@ApiProperty`, MAY be empty (the public root), validated with the existing `IsValidFilePath` decorator (`apps/chat-api/src/files/dto/file-path.validator.ts`) so `..` and absolute-path escapes are rejected before the value reaches Core.
+- `version`: string, **optional** (`@ApiPropertyOptional` + `@IsOptional`), matching `PublishCatalogEntityDto.version`. It is not used to address the resource — `entityId` already does that — but when present it is echoed in the response and used in Core's request `name`, so the admin queue shows which version's publication is being reversed. When it is omitted, the service SHALL recover it from `entityId`'s own `{name}__{version}` suffix through `splitEntityNameAndVersion`, exactly as publish does, and SHALL fall back to the empty version for an unversioned resource.
+
+`version` is optional because DIAL Core's Publication API has no version concept and unversioned Prompt and Skill resources have no version to send — the same reason `PublishCatalogEntityDto` made it optional. A required `version` here would make Prompt and Skill unpublishable through a route whose publish counterpart accepts them, and would force the frontend to invent a value.
 
 `entityType` and `entityId` reuse the existing `CatalogEntityParamsDto`, unchanged, so the unpublish route accepts exactly the entity kinds the publish route accepts.
 
@@ -103,6 +105,14 @@ The response SHALL NOT include any field asserting removal (no `unpublishedAt`, 
 - **WHEN** `folderPath` is the empty string
 - **THEN** validation passes and the request targets the public root
 
+#### Scenario: An unversioned prompt is unpublishable
+- **WHEN** an unpublish request for a Prompt omits `version`
+- **THEN** validation passes, the Core request `name` is the entity name with no trailing space, and the response echoes an empty `version`
+
+#### Scenario: An omitted version is recovered from the entity id
+- **GIVEN** `entityId` ends in `tool-abc123__1.2.0` and the request body carries no `version`
+- **WHEN** the request is handled
+- **THEN** the Core request `name` reads `tool-abc123 1.2.0` and the response's `version` is `1.2.0`
 #### Scenario: Unknown entityType is rejected
 - **WHEN** `entityType` is not a `CatalogEntityType` member
 - **THEN** the request is rejected with 400 by `CatalogEntityParamsDto`'s `@IsEnum` validation

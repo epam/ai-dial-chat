@@ -45,7 +45,7 @@ Only one confirmation can be active at a time, so the panel keeps exactly one `i
 
 ### Requirement: Confirmation kinds and their copy
 
-`DetailsConfirmationKind` (`libs/catalog/src/types/details-confirmation.ts`) SHALL enumerate exactly `Delete`, `Logout`, `Unshare`, `RevokeAccess`, and `Unpublish`. Each kind resolves its title, message, consequence bullets, confirm label, loading status text, and variant from `ItemDetailsTexts`, falling back to the lib's English defaults:
+`DetailsConfirmationKind` (`libs/catalog/src/types/details-confirmation.ts`) SHALL enumerate exactly `Delete`, `Logout`, `Unshare`, `RevokeAccess`, `DeleteApiKey`, and `Unpublish`. Each kind resolves its title, message, consequence bullets, confirm label, loading status text, and variant from `ItemDetailsTexts`, falling back to the lib's English defaults:
 
 | Kind | Title | Confirm label | Variant | Consequences default |
 |---|---|---|---|---|
@@ -54,12 +54,15 @@ Only one confirmation can be active at a time, so the panel keeps exactly one `i
 | `RevokeAccess` | `revokeShareConfirmTitle` → `revokeShareLabel` → `'Revoke access'` | `revokeShareLabel` | `Danger` | `revokeShareConfirmConsequences`, else the three-item revoke list |
 | `Unpublish` | `unpublishConfirmTitle` → `unpublishLabel` → `'Unpublish'` | `unpublishLabel` | `Danger` | `unpublishConfirmConsequences`, else the three-item unpublish list |
 | `Logout` | `logoutActionLabel` → `'Log out'` | `logoutActionLabel` | `Info` | none |
+| `DeleteApiKey` | `deleteActionLabel` → `'Delete'` | `deleteActionLabel` | `Danger` confirm, `Info` card | none |
 
 Removal is `Info` rather than `Danger` because it revokes only the caller's own access and is recoverable with a new invitation — nothing is destroyed for anyone else.
 
 Revocation is `Danger` because other people irreversibly lose access; the owner must re-share to restore it. It is nonetheless not a deletion — the item survives intact for its owner, which the copy states explicitly. Its English default consequence list is: `'Everyone you shared it with loses access'`, `'Existing share links stop working'`, `'You keep full access — nothing is deleted'`. Its default loading status label is `revokingShareStatusLabel` → `'Revoking access'`.
 
 Unpublish is `Danger` for the same reason as revocation and with the same caveat: everyone loses access to the published copy and the owner must publish again to restore it, while the source entity is untouched. Its English default consequence list is: `'Everyone loses access to the published copy'`, `'Your own copy is not deleted'`, `'You can publish it again later'`. Its default loading status label is `unpublishingStatusLabel` → `'Requesting unpublish'`, phrased as a request because the removal takes effect only after an administrator approves it (see `catalog-unpublish-flow`). It is the one kind that renders the interactive slot, and only when the item is published to more than one folder.
+
+`DeleteApiKey` is the only kind whose card and confirm button diverge: the confirm button is `Danger`, but the identity card stays `Info` via the separate `cardVariant` field, because removing one stored credential leaves the item itself untouched. Its message is `deleteApiKeyConfirmMessage(level)`, defaulting to `'Are you sure you want to delete the organization API key?'` for `CredentialsLevel.Global` and `'Are you sure you want to delete your personal API key?'` otherwise, and its loading status label is `deletingStatusLabel` → `'Deleting'`. It is listed here because the enumeration above is exhaustive; this change does not alter its behaviour.
 
 Message defaults emphasize the item name with `<strong>`. Hosts supplying `deleteConfirmMessage`/`unshareConfirmMessage`/`revokeShareConfirmMessage`/`unpublishConfirmMessage` return a `ReactNode`, so a host that wants emphasis can pass JSX; a host passing a plain translated string gets plain text. The English default revoke message is: `Revoke shared access to <strong>{name}</strong>? Anyone you shared it with will lose access.`
 
