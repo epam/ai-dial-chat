@@ -43,7 +43,12 @@ import { SettingsPanel } from '@epam/ai-dial-settings-panel';
   activeId="usage"
   onSelect={(id) => setActiveTab(id)}
   items={[
-    { id: 'general', label: 'General', icon: <IconUser size={18} />, disabled: true },
+    {
+      id: 'general',
+      label: 'General',
+      icon: <IconUser size={18} />,
+      disabled: true,
+    },
     { id: 'usage', label: 'Usage', icon: <IconLayoutGrid size={18} /> },
   ]}
 />;
@@ -63,7 +68,7 @@ the row background/text/focus colors (applied as CSS custom properties):
       rowFocusOutline: '#161b2d',
     },
   }}
-/>;
+/>
 ```
 
 ## Types
