@@ -75,12 +75,6 @@ vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
   useIsMobile: () => false,
 }));
 
-vi.mock('../../../hooks/conversation/useAttachmentUpload', () => ({
-  useAttachmentUpload: () => ({
-    handleUploadAttachment: vi.fn(),
-  }),
-}));
-
 vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
   useAudioTranscription: () => ({
     handleUploadAudio: vi.fn(),
@@ -117,11 +111,14 @@ vi.mock(
   }),
 );
 
-vi.mock('../../../hooks/usePageFileDrag', () => ({
+vi.mock('@epam/ai-dial-chat-hooks', () => ({
   usePageFileDrag: () => ({
     isDragging: false,
     pendingFiles: [],
     onFilesConsumed: vi.fn(),
+  }),
+  useAttachmentUpload: () => ({
+    handleUploadAttachment: vi.fn(),
   }),
 }));
 

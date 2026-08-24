@@ -6455,6 +6455,126 @@ export interface TranscribeAudioDto {
 /**
  *
  * @export
+ * @interface UnpublishCatalogEntityDto
+ */
+export interface UnpublishCatalogEntityDto {
+  /**
+   * Published folder to submit the removal request for, in the same plain form the publish endpoint accepts. Empty means the public root.
+   * @type {string}
+   * @memberof UnpublishCatalogEntityDto
+   */
+  folderPath: string;
+  /**
+   * Optional version label, echoed in the response and in DIAL Core's request name so the admin queue shows which version's publication is being reversed. When omitted, versioned resource ids recover it from their {name}__{version} suffix; unversioned Prompt and Skill resources use an empty version.
+   * @type {string}
+   * @memberof UnpublishCatalogEntityDto
+   */
+  version?: string;
+}
+/**
+ *
+ * @export
+ * @interface UnpublishConversationDto
+ */
+export interface UnpublishConversationDto {
+  /**
+   * Published folder to submit the removal request for, in the same plain form the publish endpoint accepts. Empty means the public root.
+   * @type {string}
+   * @memberof UnpublishConversationDto
+   */
+  folderPath: string;
+}
+/**
+ *
+ * @export
+ * @interface UnpublishConversationResultDto
+ */
+export interface UnpublishConversationResultDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UnpublishConversationResultDto
+   */
+  path: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UnpublishConversationResultDto
+   */
+  folderPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UnpublishConversationResultDto
+   */
+  requestedAt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UnpublishConversationResultDto
+   */
+  requestedBy: string;
+}
+/**
+ *
+ * @export
+ * @interface UnpublishResultDto
+ */
+export interface UnpublishResultDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UnpublishResultDto
+   */
+  entityId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UnpublishResultDto
+   */
+  entityType: UnpublishResultDtoEntityTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof UnpublishResultDto
+   */
+  folderPath: string;
+  /**
+   * Empty for unversioned Prompt and Skill resources.
+   * @type {string}
+   * @memberof UnpublishResultDto
+   */
+  version: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UnpublishResultDto
+   */
+  requestedAt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UnpublishResultDto
+   */
+  requestedBy: string;
+}
+
+/**
+ * @export
+ */
+export const UnpublishResultDtoEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
+} as const;
+export type UnpublishResultDtoEntityTypeEnum =
+  (typeof UnpublishResultDtoEntityTypeEnum)[keyof typeof UnpublishResultDtoEntityTypeEnum];
+
+/**
+ *
+ * @export
  * @interface UpdateApplicationBodyDto
  */
 export interface UpdateApplicationBodyDto {

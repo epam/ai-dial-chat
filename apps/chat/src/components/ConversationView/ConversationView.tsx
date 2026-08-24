@@ -1,5 +1,8 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
-import { useConversationScroll } from '@epam/ai-dial-chat-hooks';
+import {
+  useConversationScroll,
+  usePageFileDrag,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DisplayAttachment,
@@ -63,7 +66,6 @@ import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSetti
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';

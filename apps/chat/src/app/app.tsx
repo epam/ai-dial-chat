@@ -2,6 +2,7 @@ import {
   AttachmentCanvasContainer,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
@@ -34,6 +35,7 @@ import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
+import { MIN_CONTENT_AREA_WIDTH } from '../constants/layout';
 import {
   getConversationRoute,
   normalizeConversationId,
@@ -52,9 +54,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import { useAppVersionCheck } from '../hooks/useAppVersionCheck/useAppVersionCheck';
-import usePanelMaxWidth, {
-  MIN_CONTENT_AREA_WIDTH,
-} from '../hooks/usePanelMaxWidth';
 import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
@@ -120,7 +119,7 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
-  const canvasMaxWidth = usePanelMaxWidth();
+  const canvasMaxWidth = usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH);
   const canvasDefaultWidth = isMobile
     ? window.innerWidth
     : Math.min(

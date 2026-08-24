@@ -104,6 +104,42 @@ describe('useOperationNotification', () => {
     );
   });
 
+  it('interpolates the target folder for an unpublish request', () => {
+    const view = renderNotifier();
+
+    view.current.notifyOperationSuccess(
+      NotifiableEntity.Toolset,
+      EntityOperation.UnpublishRequested,
+      { name: 'Jira tools', folder: 'Shared/Ops' },
+    );
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title:
+          'entityNotifications.toolset.unpublishRequestedTitle|{"name":"Jira tools","folder":"Shared/Ops"}',
+        message:
+          'entityNotifications.toolset.unpublishRequested|{"name":"Jira tools","folder":"Shared/Ops"}',
+      }),
+    );
+  });
+
+  it('raises unpublish copy for a conversation too', () => {
+    const view = renderNotifier();
+
+    view.current.notifyOperationSuccess(
+      NotifiableEntity.Conversation,
+      EntityOperation.UnpublishRequested,
+      { name: 'Q3 planning', folder: 'Shared chats' },
+    );
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message:
+          'entityNotifications.conversation.unpublishRequested|{"name":"Q3 planning","folder":"Shared chats"}',
+      }),
+    );
+  });
+
   it('passes the item count so a plural pair can pick its variant', () => {
     const view = renderNotifier();
 
@@ -152,6 +188,24 @@ describe('useOperationNotification', () => {
      * The guarantee under test is the compile error above. At runtime the call is a
      * no-op instead of a throw: the operation it reports on has already succeeded.
      */
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  /*
+   * Files and folders have no publish UI, so they must have no unpublish copy
+   * either — the map is the audit surface, and an unreachable entry is exactly
+   * what `entity-operation-notifications` says not to leave behind.
+   */
+  it('rejects an unpublish request for a file, which cannot be published', () => {
+    const view = renderNotifier();
+
+    view.current.notifyOperationSuccess(
+      NotifiableEntity.File,
+      // @ts-expect-error a file cannot be published, so no unpublish copy exists
+      EntityOperation.UnpublishRequested,
+      { name: 'report.pdf', folder: 'Shared/Ops' },
+    );
+
     expect(mockShowNotification).not.toHaveBeenCalled();
   });
 });

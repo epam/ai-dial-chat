@@ -3,9 +3,7 @@
 ## Purpose
 
 Publishing a catalog entity: folder-tree destination picking, inline folder creation, access rules, and submission against real backend data.
-
 ## Requirements
-
 ### Requirement: Folder selection uses the ui-kit folder tree
 The catalog publish panel SHALL present the destination-folder picker using ui-kit's `DialFoldersTree` component (`showFiles={false}`, no context menu) rendered inside the shared `PublishFoldersTree` wrapper (exported from `@epam/ai-dial-publish-panel`), instead of the bespoke `PublishFolderPicker` tree. Selection SHALL remain single-folder: selecting a new folder replaces the prior selection.
 
@@ -138,7 +136,11 @@ The catalog Header's Publish action SHALL only be shown (`isPublishVisible`) whe
 ### Requirement: Publish submission and history use real backend data
 `CatalogView` SHALL call the real `onPublish`, `getPublishHistory`, and `hasPublishWriteAccess` implementations backed by `apps/chat/src/server-api` wrappers instead of mock data (`MOCK_PUBLISH_FOLDERS`, `MOCK_PUBLISH_HISTORY`, and the mock `handlePublish`), which SHALL be deleted once parity is confirmed.
 
-Loading/empty/error states: while history is loading, `PublishHistoryList` SHALL show a loading state; on fetch failure it SHALL show an inline error state distinct from the empty-history state.
+`CatalogView.getPublishHistory` SHALL call `getCatalogPublishHistory` and map the response through `mapPublishHistoryEntryDto`. It currently returns a hardcoded `[]` — `const getPublishHistory = useCallback(async () => [], [])` behind a comment citing a DIAL Core `503` ([GitHub issue #7897](https://github.com/epam/ai-dial-chat/issues/7897)) — which this change removes. The temporary exception proposed by the `disable-catalog-publish-history-fetch` change is therefore lifted rather than carried forward, and that change SHALL be archived as superseded by this one; the `503` it worked around was our own `getPublications` response-shape defect — since fixed in `publish/publication.util.ts`, along with the list scope and the metadata-only list response (see `catalog-publish-api`) — not a missing endpoint and not Core being unavailable.
+
+The fetch is load-bearing beyond the publish panel: it is the only source of the folder list the Unpublish action needs, and it is what makes that action visible at all (see `catalog-unpublish-flow`). While it returned a frozen `[]`, `Unpublish` could never appear for any catalog entity.
+
+Loading/empty/error states: while history is loading, `PublishHistoryList` SHALL show a loading state; on fetch failure it SHALL show an inline error state distinct from the empty-history state. Both states are reachable again once the fetch is restored.
 
 Submit success: `CatalogView`'s `onPublishSuccess` SHALL raise its notification through `useOperationNotification` (see `entity-operation-notifications`) with the item's resolved `NotifiableEntity` and `EntityOperation.PublishRequested`, passing the entity name and the selected destination folder. The copy SHALL state that a publish request was submitted and appears once an admin approves it — the endpoint creates an admin-pending DIAL Core publication, exactly as the conversation publish flow already reports. The previous `CatalogI18nKeys.PublishSuccess*` pair (`"Published"` / `"\"{{name}}\" published to {{folder}}"`) SHALL be deleted, since it claimed an outcome the backend does not deliver.
 
@@ -164,9 +166,13 @@ Accessibility: the publish history list SHALL expose `role="list"`/`role="listit
 - **WHEN** the user submits a publish request and it rejects (backend error or lost connection)
 - **THEN** the publish sub-view stays open with the submit-error callout, `onPublishError` receives the rejection reason, and an error notification is shown
 
+#### Scenario: History is fetched from the endpoint, not stubbed
+- **WHEN** the publish sub-view or the Manage menu triggers a history lookup for an entity
+- **THEN** `getCatalogPublishHistory` is called for that entity and its mapped entries populate `PublishHistoryList`, with no code path resolving to a hardcoded empty array
+
 #### Scenario: Publish history fails to load
 - **WHEN** `getPublishHistory` rejects
-- **THEN** `PublishHistoryList` renders an inline error state instead of an empty-history message
+- **THEN** `PublishHistoryList` renders an inline error state instead of an empty-history message, and the `Unpublish` menu entry stays hidden (see `catalog-unpublish-flow`)
 
 #### Scenario: While the temporary exception is active, publish history is always empty
 - **GIVEN** the publish-history fetch is disabled per the temporary exception above
@@ -214,3 +220,4 @@ Accessibility: the publish history list SHALL expose `role="list"`/`role="listit
 #### Scenario: A rules-lookup failure does not block the catalog publish flow
 - **GIVEN** the user selects a destination folder for a toolset and the rules lookup fails
 - **THEN** folder selection, manual rule entry, and the Publish submit action all remain fully usable; only the pre-fill did not occur
+

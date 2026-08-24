@@ -88,8 +88,11 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     description: initialValues?.description ?? '',
     instructions: initialValues?.instructions ?? '',
   });
+  const seededInitialValuesRef = useRef(initialValues);
+  const isReseeding = seededInitialValuesRef.current !== initialValues;
   const seededFilesRef = useRef<SkillFileTreeNode[]>(files);
   useEffect(() => {
+    seededInitialValuesRef.current = initialValues;
     setValues({
       name: initialValues?.name ?? '',
       description: initialValues?.description ?? '',
@@ -104,6 +107,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
   const isDirtyRef = useRef(false);
   useEffect(() => {
+    if (isReseeding) return;
     const seededValues: SkillEditorValues = {
       name: initialValues?.name ?? '',
       description: initialValues?.description ?? '',
@@ -116,7 +120,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       isDirtyRef.current = isDirty;
       onDirtyChange?.(isDirty);
     }
-  }, [values, files, initialValues, onDirtyChange]);
+  }, [values, files, initialValues, isReseeding, onDirtyChange]);
 
   const [internalSelectedPath, setInternalSelectedPath] =
     useState(SKILL_MANIFEST_PATH);
