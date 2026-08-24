@@ -24,7 +24,14 @@ const UNLIMITED_TOTAL_THRESHOLD = 2 ** 53;
 /** Percentage at/above which a metric is `RunningLow`; at/above 100 it's `LimitReached`; otherwise `WithinLimits`. */
 const RUNNING_LOW_THRESHOLD_PERCENT = 75;
 
+/** Formats Tokens/Requests metric values with compact K/M suffixes, e.g. `1.6M`, `900K`, `410`. */
 const numberFormatter = new Intl.NumberFormat(undefined, {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+/** Formats Tokens/Requests values in full for `aria-label` text, e.g. `1,600,000` instead of `1.6M`. */
+const fullNumberFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 2,
 });
 
@@ -103,7 +110,7 @@ const buildFiniteMetricCell = (
       kind: ModelLimitMetricKind.Unlimited,
       usedLabel,
       ariaLabel: t(UsageI18nKeys.UnlimitedProgressAriaLabel, {
-        used: usedLabel,
+        used: fullNumberFormatter.format(used),
       }),
     };
   }
@@ -120,8 +127,8 @@ const buildFiniteMetricCell = (
     usedPercent,
     status,
     ariaLabel: t(UsageI18nKeys.ProgressAriaLabel, {
-      used: usedLabel,
-      total: totalLabel,
+      used: fullNumberFormatter.format(used),
+      total: fullNumberFormatter.format(total),
       percent: Math.round(usedPercent),
     }),
   };

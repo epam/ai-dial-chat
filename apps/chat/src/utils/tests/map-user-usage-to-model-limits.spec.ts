@@ -282,7 +282,7 @@ describe('mapUserUsageToModelLimits', () => {
       );
 
       expect(row.tokens.usedLabel).toBe('100');
-      expect(row.tokens.totalLabel).toBe('1,000');
+      expect(row.tokens.totalLabel).toBe('1K');
       expect(row.requests.kind).toBe(ModelLimitMetricKind.Finite);
       expect(row.requests.usedLabel).toBe('5');
     });
@@ -384,7 +384,7 @@ describe('mapUserUsageToModelLimits', () => {
 
       expect(row.tokens.kind).toBe(ModelLimitMetricKind.Finite);
       expect(row.tokens.usedPercent).toBe(150);
-      expect(row.tokens.usedLabel).toBe('1,500');
+      expect(row.tokens.usedLabel).toBe('1.5K');
     });
 
     it('treats a missing token stat as unavailable, not zero', () => {
@@ -639,7 +639,7 @@ describe('mapUserUsageToModelLimits', () => {
       expect(row.requests.usedLabel).not.toContain('$');
     });
 
-    it('produces a full-value accessible label for a finite metric', () => {
+    it('produces a full-value accessible label even when the visible labels are compact', () => {
       const usage = withUsage({
         'gpt-4o': { dayTokenStats: { used: 1000, total: 2000 } },
       });
@@ -652,6 +652,8 @@ describe('mapUserUsageToModelLimits', () => {
         t,
       );
 
+      expect(row.tokens.usedLabel).toBe('1K');
+      expect(row.tokens.totalLabel).toBe('2K');
       expect(row.tokens.ariaLabel).toBe('1,000 of 2,000, 50% used');
     });
   });

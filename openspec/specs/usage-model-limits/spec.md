@@ -294,18 +294,23 @@ row is `unlimited`, the row `status` SHALL be `NoLimit`. When a row has no usabl
 ### Requirement: Formatting and accessible labels
 
 The adapter SHALL format cost values with the established localized USD currency formatter and
-token/request values with localized grouped numeric formatting (no currency symbol). Every
-`ModelLimitMetricCell.ariaLabel` SHALL contain the full, unambiguous localized value (used, and
-total when finite), independent of any visual truncation or future compact-notation display.
+token/request values with localized compact numeric formatting (e.g. `1.6M`, `900K`, no currency
+symbol) for `usedLabel`/`totalLabel`. Every `ModelLimitMetricCell.ariaLabel` SHALL instead contain
+the full, unambiguous localized value (used, and total when finite) formatted with grouped (not
+compact) numeric formatting, independent of the compact `usedLabel`/`totalLabel` display.
 
 #### Scenario: Cost cell never carries a currency symbol on tokens/requests
 - **WHEN** a row's Tokens cell is formatted
 - **THEN** its `usedLabel`/`totalLabel` contain no currency symbol
 
-#### Scenario: Accessible label states the full value
-- **WHEN** a Tokens cell has `usedLabel: '12,345'`, `totalLabel: '50,000'`
-- **THEN** its `ariaLabel` is a localized sentence containing both full values (e.g. "12,345 of
-  50,000 tokens used")
+#### Scenario: Large token/request counts render with compact K/M notation
+- **WHEN** a deployment's `dayTokenStats` is `{ total: 2000000, used: 1600000 }`
+- **THEN** the Tokens cell's `usedLabel` is `'1.6M'` and `totalLabel` is `'2M'`
+
+#### Scenario: Accessible label states the full value regardless of compact display
+- **WHEN** a Tokens cell has `usedLabel: '1K'`, `totalLabel: '2K'` (from `used: 1000, total: 2000`)
+- **THEN** its `ariaLabel` is a localized sentence containing both full grouped values (e.g. "1,000
+  of 2,000 tokens used"), not the compact `1K`/`2K` forms
 
 ---
 
