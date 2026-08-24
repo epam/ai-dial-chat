@@ -20,11 +20,14 @@
   "peerDependencies": {
     "react": "^19.2.6",
     "@epam/ai-dial-attachment-canvas": "*",
+    "@epam/ai-dial-attachment-input": "*",
     "@epam/ai-dial-chat-api-client": "*",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-quotations": "*",
+    "@epam/ai-dial-react-file-manager": "*",
     "@epam/ai-dial-share": "*",
-    "@epam/ai-dial-source-panel": "*"
+    "@epam/ai-dial-source-panel": "*",
+    "fflate": "^0.8.3"
   },
   "nx": {
     "tags": [

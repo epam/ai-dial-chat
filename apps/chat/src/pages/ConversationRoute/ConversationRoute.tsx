@@ -1,4 +1,10 @@
 import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
+import {
+  attachmentsToDtos,
+  getConversationPath,
+  getStarterConversationText,
+  hasActiveToolConfig,
+} from '@epam/ai-dial-chat-hooks';
 import type {
   Attachment,
   DeploymentItem,
@@ -41,17 +47,11 @@ import {
   createConversation as apiCreateConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
-import { attachmentsToDtos } from '../../utils/attachment-to-dto';
-import { getConversationPath } from '../../utils/conversation-path';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
-import { hasActiveToolConfig } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
-import {
-  getStarterConversationText,
-  getStartersFromSchema,
-} from '../../utils/starter-option';
+import { getStartersFromSchema } from '../../utils/starter-option';
 
 /*
  * TODO: rename page and component

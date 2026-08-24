@@ -56,15 +56,6 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => createNotificationContextValue(vi.fn()),
 }));
 
-vi.mock('../../../hooks/attachment/useAttachmentValidation', () => ({
-  useAttachmentValidation: () => ({
-    inputAttachmentTypes: [],
-    isAttachmentsAllowed: true,
-    validateAttachment: vi.fn(),
-    fileAccept: undefined,
-  }),
-}));
-
 vi.mock('../../../hooks/attachment/useOpenAttachmentCanvas', () => ({
   useOpenAttachmentCanvas: () => ({
     openAttachmentCanvas: vi.fn(),
@@ -119,6 +110,12 @@ vi.mock('@epam/ai-dial-chat-hooks', () => ({
   }),
   useAttachmentUpload: () => ({
     handleUploadAttachment: vi.fn(),
+  }),
+  useAttachmentValidation: () => ({
+    inputAttachmentTypes: [],
+    isAttachmentsAllowed: true,
+    validateAttachment: vi.fn(),
+    fileAccept: undefined,
   }),
 }));
 
