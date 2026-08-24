@@ -570,7 +570,15 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               },
             ]
           : []),
-        ...(isConversationsPublishingEnabled
+        /*
+         * "Publish" and "Unpublish" are mutually exclusive: the row menu offers
+         * whichever one matches the conversation's current state, never both.
+         * A conversation with no published copy offers "Publish"; once history
+         * resolves to at least one published folder, "Unpublish" takes its
+         * place. Republishing an already-published conversation therefore means
+         * unpublishing it first — the trade the single-state menu buys.
+         */
+        ...(isConversationsPublishingEnabled && publishedFolders.length === 0
           ? [
               {
                 key: 'publish',
@@ -601,7 +609,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
          * Withheld until the publish-history lookup started by this menu's
          * open settles, and hidden on zero folders or on failure: unpublish
          * needs the folder itself to build the request, so an entry shown
-         * without one could not do anything if clicked.
+         * without one could not do anything if clicked. While it is withheld
+         * "Publish" holds the slot, so the menu can swap one for the other as
+         * the lookup lands.
          */
         ...(isConversationsPublishingEnabled && publishedFolders.length > 0
           ? [

@@ -25,7 +25,7 @@ The published `targetUrl` SHALL be reconstructed from `folderPath` rather than r
 
 ### Requirement: Publish history endpoint derives history from Core publications, scoped by conversation path
 
-The backend SHALL expose `GET /api/v1/conversations/publish-history?path=<conversation-path>` returning every publication this conversation path has ever been published to, most recent first. It SHALL call Core's `getPublications` with the caller's own-bucket list scope (`{ url: "publications/{bucket}/" }`) and filter the response to `resources[].sourceUrl === "conversations/{bucket}/{normalizedPath}"`, matching `PublishService.getPublishHistory`'s corrected list-scope behavior. Each entry's `folderPath` SHALL have the `public/` prefix and trailing slash stripped, matching the existing `stripPublicTargetFolder` behavior.
+The backend SHALL expose `GET /api/v1/conversations/publish-history?path=<conversation-path>` returning every publication this conversation path has ever been published to, most recent first. It SHALL call Core's `getPublications` with the caller's own-bucket list scope (`{ url: "publications/{bucket}/" }`) and narrow the response to publications whose `resources[].sourceUrl` is `"conversations/{bucket}/{normalizedPath}"`, sharing every corrected helper with `PublishService.getPublishHistory` (see `catalog-publish-api`): the response shape is read through `toPublicationList`, so Core's `{ publications: [...] }` envelope no longer surfaces as a 503; and the narrowing goes through `resolvePublicationsForSource`, which re-reads each `APPROVED` candidate through `getPublication` because Core's list response carries publication metadata only and no `resources` array. Each entry's `folderPath` SHALL have the `public/` prefix and trailing slash stripped, matching the existing `stripPublicTargetFolder` behavior.
 
 A publication whose matching resource carries `action: 'DELETE'` SHALL be excluded from the result. Such a publication is a pending removal request, not a publication — including it would list the folder twice (once for the original ADD, once for the pending DELETE) and would read as "published here again". Until an administrator approves the removal the conversation genuinely is still published to that folder, so the folder SHALL continue to appear exactly once, from its ADD publication.
 
@@ -67,6 +67,11 @@ Rate limiting: default global throttle (read endpoint, no stricter override).
 #### Scenario: Cache invalidation on unpublish
 - **WHEN** an unpublish request for a given conversation `path` succeeds
 - **THEN** the next history request for that same `path` bypasses the stale cache entry and re-reads Core
+
+#### Scenario: The list response carries no resources
+- **GIVEN** Core's `getPublications` returns publications with `url`, `status` and `targetFolder` but no `resources` array
+- **WHEN** history is requested for the conversation
+- **THEN** each `APPROVED` publication is re-read through `getPublication` and the conversation's own publications are returned, rather than an empty array
 
 #### Scenario: Upstream failure
 - **WHEN** the Core `getPublications` call fails unexpectedly

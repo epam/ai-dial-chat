@@ -126,14 +126,20 @@ interface HeaderProps {
   onRequestLogout?: () => void;
   texts?: ItemDetailsTexts;
   detailsStyles?: ItemDetailsStyles;
-  /** Controls whether the "Publish" action is shown. Defaults to the same rule as the primary action. */
+  /**
+   * Controls whether the "Publish" action is shown. Defaults to the same rule
+   * as the primary action. Returning `true` is not sufficient on its own:
+   * "Publish" is suppressed whenever "Unpublish" is shown, so the menu carries
+   * one of the two, never both.
+   */
   isPublishVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Publish" button is clicked; the host swaps this panel's content to the publish view. */
   onOpenPublish?: () => void;
   /**
    * Additional caller-supplied rule for whether "Unpublish" is shown,
    * combined (AND) with `hasPublishedFolders` and the presence of
-   * `onOpenUnpublish`. Defaults to `true` when absent.
+   * `onOpenUnpublish`. Defaults to `true` when absent. When the entry ends up
+   * shown, it replaces "Publish" rather than joining it.
    */
   isUnpublishVisible?: (item: CatalogItem) => boolean;
   /**
@@ -151,7 +157,7 @@ interface HeaderProps {
   /** Called when the "Unpublish" entry is clicked; the host swaps this panel's content to the unpublish confirmation. */
   onOpenUnpublish?: () => void;
 }
-/** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit/Publish/Delete), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. */
+/** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit, Publish or Unpublish, and Delete), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. */
 export const Header: FC<HeaderProps> = ({
   item,
   onUseInChat,
@@ -328,12 +334,6 @@ export const Header: FC<HeaderProps> = ({
         item.type === CatalogEntityType.Agent ||
         item.type === CatalogEntityType.Prompt));
 
-  const shouldShowPublish =
-    isPublishVisible?.(item) ??
-    (item.type === CatalogEntityType.Model ||
-      item.type === CatalogEntityType.Toolset ||
-      item.type === CatalogEntityType.Agent);
-
   /*
    * Gated on resolved history rather than staying reachable the way "Revoke
    * access" does on an unresolved count: revoke needs the lookup only for a
@@ -344,6 +344,28 @@ export const Header: FC<HeaderProps> = ({
     !!onOpenUnpublish &&
     hasPublishedFolders &&
     (isUnpublishVisible?.(item) ?? true);
+
+  /*
+   * "Publish" and "Unpublish" are mutually exclusive: the menu offers whichever
+   * one matches the item's current state, never both at once. An item with no
+   * published copy offers "Publish"; once history resolves to at least one
+   * published folder, "Unpublish" takes its place.
+   *
+   * This does hide a second publish of an already-published item (to another
+   * folder, or a re-publish of the same one). That is the trade the single-state
+   * menu buys, and republishing stays reachable by unpublishing first.
+   *
+   * Because the history lookup is lazy (see `handleManageTriggerIntent`), the
+   * entry can start as "Publish" and become "Unpublish" once the response
+   * arrives — which is why the lookup is fired on hover/focus of the trigger
+   * rather than on open, so it is usually settled before the menu is visible.
+   */
+  const shouldShowPublish =
+    !shouldShowUnpublish &&
+    (isPublishVisible?.(item) ??
+      (item.type === CatalogEntityType.Model ||
+        item.type === CatalogEntityType.Toolset ||
+        item.type === CatalogEntityType.Agent));
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
 

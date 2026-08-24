@@ -337,3 +337,96 @@ describe('PublishService.getPublishHistory with pending removals', () => {
     ).resolves.toEqual([]);
   });
 });
+
+describe('PublishService.getPublishHistory list scope', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /*
+   * Regression: the scope used to be derived as `entityId.split('/')[1]`, which
+   * is `undefined` for a bare deployment id and `public` for an already-public
+   * resource. Both produced a scope Core cannot answer for the caller, so
+   * history came back empty while publishing kept working — silently hiding the
+   * Unpublish action.
+   */
+  it.each([
+    ['a bare deployment id', 'gemini-pro-vision-adapter_ah'],
+    ['a public resource path', 'applications/public/Shared/my-app__1.0'],
+    ['an own-bucket resource path', 'applications/bucket-123/my-app__1.0'],
+  ])('scopes by the session bucket for %s', async (_label, entityId) => {
+    const { service, dialClient, cacheManager } = makeService();
+    cacheManager.get.mockResolvedValue(undefined);
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse([]),
+    );
+
+    await service.getPublishHistory(
+      'token-abc',
+      TEST_BUCKET,
+      CatalogEntityType.Application,
+      entityId,
+    );
+
+    expect(dialClient.client.getPublications).toHaveBeenCalledWith({
+      headers: { Authorization: 'Bearer token-abc' },
+      body: { url: `publications/${TEST_BUCKET}/` },
+    });
+  });
+});
+
+describe('PublishService.getPublishHistory response shape', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /*
+   * Regression for GH #7897: a live Core answers `getPublications` with an
+   * envelope, not the bare array the SDK types. Reading `.filter` off it threw a
+   * TypeError that surfaced as a 503, which is why publish history was believed
+   * to be broken on the Core side.
+   */
+  it('reads history from the { publications: [...] } envelope Core returns', async () => {
+    const { service, dialClient, cacheManager } = makeService();
+    cacheManager.get.mockResolvedValue(undefined);
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse({
+        publications: [
+          {
+            targetFolder: 'public/Organization/01folder/',
+            createdAt: 1_700_000_000_000,
+            author: 'user@example.com',
+            resources: [{ action: 'ADD', sourceUrl: TOOLSET_ID }],
+          },
+        ],
+      }),
+    );
+
+    const result = await service.getPublishHistory(
+      'token-abc',
+      TEST_BUCKET,
+      CatalogEntityType.Toolset,
+      TOOLSET_ID,
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].folderPath).toBe('Organization/01folder');
+  });
+
+  it('degrades an unrecognised shape to an empty history instead of throwing', async () => {
+    const { service, dialClient, cacheManager } = makeService();
+    cacheManager.get.mockResolvedValue(undefined);
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse({ unexpected: true }),
+    );
+
+    await expect(
+      service.getPublishHistory(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        TOOLSET_ID,
+      ),
+    ).resolves.toEqual([]);
+  });
+});

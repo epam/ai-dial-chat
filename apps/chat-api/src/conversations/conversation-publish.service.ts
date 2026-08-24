@@ -17,6 +17,10 @@ import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { PublishRuleDto } from '../publish/dto/publish-rule.dto';
 import {
+  resolvePublicationsForSource,
+  toPublicationList,
+} from '../publish/publication.util';
+import {
   getPublicationsListScope,
   getPublicTargetFolder,
   getPublishedTargetUrl,
@@ -295,8 +299,10 @@ export class ConversationPublishService {
          * `url` is the caller's own-bucket list scope, not `sourceUrl` itself
          * (see `getPublicationsListScope`'s doc comment) — Core has no
          * per-resource filter, so every publication in this bucket is
-         * fetched and narrowed to this conversation via
-         * `resources[].sourceUrl` below.
+         * fetched and narrowed to this conversation by
+         * `resolvePublicationsForSource` below — which has to re-read each
+         * candidate individually, because this list response carries
+         * publication metadata only and no `resources` array.
          */
         const result = await this.dialClient.client.getPublications({
           headers: getBearerAuthHeaders(accessToken),
@@ -312,24 +318,19 @@ export class ConversationPublishService {
           );
         }
 
-        return (result.data ?? [])
-          .filter((publication) =>
-            publication.resources?.some(
-              (resource) =>
-                resource.sourceUrl === sourceUrl &&
-                /*
-                 * A `DELETE` resource is a pending removal request submitted
-                 * by the unpublish endpoint, not a publication of the
-                 * conversation. Keeping it would list the folder twice —
-                 * once for the original `ADD`, once for the pending `DELETE`
-                 * — and would read as "published here again". Until an admin
-                 * approves the removal the conversation genuinely is still
-                 * published there, so the folder stays, sourced from its
-                 * `ADD` publication.
-                 */
-                resource.action !== 'DELETE',
-            ),
-          )
+        const publications = await resolvePublicationsForSource(
+          toPublicationList<(typeof result.data)[number]>(
+            result.data,
+            this.logger,
+            `publish history for conversation "${sourceUrl}"`,
+          ),
+          sourceUrl,
+          (url) => this.fetchPublication(accessToken, url),
+          this.logger,
+          `publish history for conversation "${sourceUrl}"`,
+        );
+
+        return publications
           .map(
             (publication): PublishConversationResultDto => ({
               path: sourceUrl,
@@ -346,5 +347,34 @@ export class ConversationPublishService {
           .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
       },
     });
+  }
+  /**
+   * One publication's full record, including the `resources` array the list
+   * call omits, or `null` when it cannot be read.
+   *
+   * Publish history is informational, so an unreadable publication is dropped
+   * rather than propagated: one 403 among a bucket's publications must not take
+   * down the publish panel for the whole conversation.
+   */
+  private async fetchPublication(accessToken: string, url: string) {
+    try {
+      const result = await this.dialClient.client.getPublication({
+        headers: getBearerAuthHeaders(accessToken),
+        body: { url },
+      });
+      if (result.error) {
+        this.logger.warn(
+          `Skipping publication "${url}": DIAL Core returned ${result.response.status}`,
+        );
+        return null;
+      }
+      return result.data;
+    } catch (err) {
+      this.logger.warn(
+        `Skipping unreadable publication "${url}"`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      return null;
+    }
   }
 }

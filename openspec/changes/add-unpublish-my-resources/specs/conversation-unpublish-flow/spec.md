@@ -2,7 +2,9 @@
 
 ### Requirement: The conversation row action menu offers Unpublish
 
-`apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx` SHALL add an `Unpublish` entry to a conversation row's action menu, directly after the existing `Publish` entry, using `IconWorldOff` at `DIAL_ICON_SIZE.SM` with `aria-hidden` and the label `t(ButtonsI18nKeys.Unpublish)`.
+`apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx` SHALL add an `Unpublish` entry to a conversation row's action menu, occupying the existing `Publish` entry's position, using `IconWorldOff` at `DIAL_ICON_SIZE.SM` with `aria-hidden` and the label `t(ButtonsI18nKeys.Unpublish)`.
+
+`Publish` and `Unpublish` SHALL be mutually exclusive, matching the catalog details menu (`catalog-unpublish-flow`): the row menu SHALL carry exactly one of the two. A conversation with no published copy offers `Publish`; once history resolves to at least one published folder, `Unpublish` takes its place. Republishing an already-published conversation therefore means unpublishing it first.
 
 The entry SHALL be gated by the same conditions that gate `Publish`, plus one more:
 
@@ -10,10 +12,15 @@ The entry SHALL be gated by the same conditions that gate `Publish`, plus one mo
 - The row is the caller's own writable conversation (not `isReadonly`, `sharedWithMe`, or `publishedWithMe`), matching the existing publish gate.
 - The conversation's publish history has resolved to at least one folder.
 
-#### Scenario: Unpublish follows Publish in the row menu
-- **GIVEN** publishing is enabled and the conversation is published
+#### Scenario: Unpublish replaces Publish in the row menu
+- **GIVEN** publishing is enabled and the conversation's history has resolved to at least one published folder
 - **WHEN** the row's action menu is opened
-- **THEN** `Unpublish` renders immediately after `Publish`
+- **THEN** `Unpublish` renders in `Publish`'s position and `Publish` is not rendered
+
+#### Scenario: Publish holds the slot for an unpublished conversation
+- **GIVEN** publishing is enabled and the conversation has no published folder, or its history has not resolved yet
+- **WHEN** the row's action menu is opened
+- **THEN** `Publish` renders and `Unpublish` is not rendered
 
 #### Scenario: Publishing disabled hides both entries
 - **GIVEN** `OverlayFeature.ConversationsPublishing` is off

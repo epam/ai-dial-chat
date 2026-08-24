@@ -2,16 +2,30 @@
 
 ### Requirement: The catalog details Manage menu offers Unpublish
 
-`libs/catalog`'s details header (`Details/Header/Header.tsx`) SHALL render an `Unpublish` entry in the Manage dropdown, positioned directly after `Publish` so the two operations read as a pair. It uses `IconWorldOff` (`@tabler/icons-react`) at `DIAL_ICON_SIZE.SM` with `aria-hidden`, and its label comes from `texts.unpublishLabel`, defaulting to the lib's English `'Unpublish'`.
+`libs/catalog`'s details header (`Details/Header/Header.tsx`) SHALL render an `Unpublish` entry in the Manage dropdown, occupying `Publish`'s position. It uses `IconWorldOff` (`@tabler/icons-react`) at `DIAL_ICON_SIZE.SM` with `aria-hidden`, and its label comes from `texts.unpublishLabel`, defaulting to the lib's English `'Unpublish'`.
 
-The entry SHALL NOT use the `danger` dropdown treatment. Unpublishing removes a published copy but destroys nothing the owner holds — the source entity is untouched and can be published again — so it sits with Edit/Download/Publish rather than with Delete.
+`Publish` and `Unpublish` SHALL be mutually exclusive: the menu SHALL carry exactly one of the two, whichever matches the item's current state. `Publish` SHALL be suppressed whenever `Unpublish` is shown, regardless of what `isPublishVisible(item)` returns. An item with no published copy offers `Publish`; an item with at least one published folder offers `Unpublish` instead.
+
+This deliberately removes the ability to publish an already-published item a second time (to another folder, or a re-publish of the same one) from the menu; republishing stays reachable by unpublishing first. Because the history lookup is lazy, the entry MAY start as `Publish` and become `Unpublish` when the response lands — which is why the lookup fires on hover/focus of the Manage trigger rather than on menu open, so it is normally settled before the menu is visible.
+
+The entry SHALL NOT use the `danger` dropdown treatment. Unpublishing removes a published copy but destroys nothing the owner holds — the source entity is untouched and can be published again — so it sits with Edit/Download rather than with Delete.
 
 Clicking it SHALL call `onOpenUnpublish`, a new prop the panel supplies; the header itself performs no request and knows nothing about how a resource is unpublished.
 
-#### Scenario: Unpublish follows Publish in the menu
-- **GIVEN** both entries are visible for an item
+#### Scenario: Unpublish replaces Publish for a published item
+- **GIVEN** publish history has resolved to at least one published folder for the item
 - **WHEN** the Manage menu is opened
-- **THEN** `Unpublish` renders immediately after `Publish`, with a non-danger treatment
+- **THEN** `Unpublish` renders in `Publish`'s position with a non-danger treatment, and `Publish` is not rendered
+
+#### Scenario: Publish holds the slot for an unpublished item
+- **GIVEN** the item has no published folder, or its publish history has not resolved yet
+- **WHEN** the Manage menu is opened
+- **THEN** `Publish` renders and `Unpublish` is not rendered
+
+#### Scenario: Neither entry applies
+- **GIVEN** `isPublishVisible(item)` returns `false` and the item has no published folder
+- **WHEN** the Manage menu is opened
+- **THEN** neither `Publish` nor `Unpublish` is rendered
 
 #### Scenario: Host label overrides the default
 - **GIVEN** `texts.unpublishLabel` is supplied

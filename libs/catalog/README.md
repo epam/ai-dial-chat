@@ -212,8 +212,14 @@ identity card, because removing one credential leaves the item untouched.
 
 `Unpublish` is the only kind that needs an input before it can be confirmed.
 It appears in the Manage menu only once the panel has resolved
-`getPublishHistory` to at least one folder, and its body depends on how many
-folders that is: one folder is named in static copy with confirm enabled
+`getPublishHistory` to at least one folder - and when it does, it takes
+`Publish`'s place rather than joining it. The menu carries exactly one of the
+two: an item with no published copy offers `Publish`, an item with a published
+folder offers `Unpublish`, so publishing an already-published item a second
+time means unpublishing it first. Because the history lookup is lazy, the entry
+may start as `Publish` and swap once the response lands.
+
+Its body depends on how many folders history resolved to: one folder is named in static copy with confirm enabled
 immediately, while several render as a single-select radio group with confirm
 disabled until the user picks one. Confirming calls
 `onUnpublish(item, folderPath)` with that folder's path segments - the same

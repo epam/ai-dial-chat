@@ -50,7 +50,7 @@
 ## 7. Catalog lib: the Unpublish action
 
 - [x] 7.1 Add `onUnpublish`, `isUnpublishVisible`, and the `unpublish*` texts to `libs/catalog/src/models/item-details-props.ts`, with JSDoc stating every default verbatim; export every new type from `index.ts`
-- [x] 7.2 Add the `Unpublish` Manage-menu entry to `Header.tsx` after `Publish` — `IconWorldOff`, `aria-hidden`, non-danger, calling `onOpenUnpublish`
+- [x] 7.2 Add the `Unpublish` Manage-menu entry to `Header.tsx` in `Publish`'s position — `IconWorldOff`, `aria-hidden`, non-danger, calling `onOpenUnpublish` — and suppress `Publish` whenever it is shown, so the menu carries exactly one of the two
 - [x] 7.3 Lift the publish-history fetch in `DetailsPanel` so it also runs on Manage-menu open/focus, once per item, guarded by a started-lookup ref, reset on `item.id` change, and shared with the publish sub-view
 - [x] 7.4 Derive entry visibility from resolved-with-entries history AND `isUnpublishVisible` AND `onUnpublish`; hide on zero entries and on failure
 - [x] 7.5 Add the `Unpublish` branch to `confirmationContent`: danger variant, the folder radio group in the slot when history holds more than one folder, static single-folder copy otherwise
@@ -75,7 +75,7 @@
 
 - [x] 9.1 Replace the hardcoded empty `history` in `PublishConversationPanelContainer` with real history received as a prop, and remove the GH #7897 comment
 - [x] 9.2 Add a lazy per-conversation publish-history lookup in `ConversationPanelView`, triggered on row action-menu open/focus, held keyed by conversation, and shared with the publish panel
-- [x] 9.3 Add the `Unpublish` row-menu entry after `Publish`, gated on `ConversationsPublishing`, own-writable-row, and resolved history with ≥ 1 folder
+- [x] 9.3 Add the `Unpublish` row-menu entry in `Publish`'s position, gated on `ConversationsPublishing`, own-writable-row, and resolved history with ≥ 1 folder, hiding `Publish` while it is shown so the menu carries exactly one of the two
 - [x] 9.4 Add the `ConfirmationPopup` with single-folder copy or a labelled single-select folder group, controls locked and announced via a polite live region while in flight
 - [x] 9.5 Call `unpublishConversation` with the bucket-relative path from `getConversationPath(normalizeConversationId(contextId))`; on success raise the `UnpublishRequested` notification and do not call `refreshConversations()`; on failure use `usePublishErrorNotification`
 - [x] 9.6 Confirm the now-live `allowReplace={false}` behaviour: an already-published folder shows `conversationPublish.alreadyPublishedWarning` and disables submit, and loading/failed history does not block submit
@@ -87,7 +87,7 @@
 
 - [x] 10.1 RTL pass over both new surfaces — logical utilities only, `IconWorldOff` not mirrored; check the panel and popup under `dir="rtl"`
 - [x] 10.2 a11y pass — decorative icons `aria-hidden`, radio groups named and arrow-key operable, in-flight state announced, focus returns to the triggering control on dismiss
-- [ ] 10.3 Verify **both** publish-history endpoints (catalog and conversation) against a live DIAL Core (design.md open question, GH #7897) now that the list-scope defect is fixed; if either still fails, record the outcome in the change and confirm that surface's entry degrades to hidden rather than broken, and that the catalog publish panel's restored history error state is acceptable to show
+- [ ] 10.3 Verify **both** publish-history endpoints (catalog and conversation) against a live DIAL Core (design.md open question, GH #7897) now that the response-shape, list-scope and metadata-only-list defects are fixed (D6); the catalog endpoint has been verified live — the conversation one has not; if either still fails, record the outcome in the change and confirm that surface's entry degrades to hidden rather than broken, and that the catalog publish panel's restored history error state is acceptable to show
 - [ ] 10.4 Manual end-to-end: publish an entity and a conversation, confirm each appears in history, unpublish each, confirm the pending-request notification and that the folder still lists as published
 - [x] 10.5 `npm exec nx affected --target=test --base=origin/development-1.0` and the same for `lint` and `build`
 - [x] 10.6 Run the five-axis review (`.claude/skills/code-review-and-quality/SKILL.md`) before merge

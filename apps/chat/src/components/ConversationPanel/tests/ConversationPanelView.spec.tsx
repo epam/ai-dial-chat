@@ -2035,6 +2035,30 @@ describe('ConversationPanelView — unpublish', () => {
     ).toBeTruthy();
   });
 
+  /* The two are mutually exclusive: the menu shows the conversation's state. */
+  it('replaces Publish with Unpublish once history resolves with a folder', async () => {
+    vi.mocked(getConversationPublishHistory).mockResolvedValue([
+      historyEntry('Organization/Shared chats'),
+    ]);
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    await screen.findByRole('button', { name: UNPUBLISH_LABEL });
+    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+  });
+
+  it('keeps Publish for a never-published conversation', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    await waitFor(() =>
+      expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
+    );
+    expect(screen.getByRole('button', { name: PUBLISH_LABEL })).toBeTruthy();
+  });
+
   it('hides Unpublish for a never-published conversation', async () => {
     render(<ConversationPanelView {...defaultProps} />);
 

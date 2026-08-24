@@ -1140,8 +1140,10 @@ const CatalogView: FC<Props> = ({
    * Load-bearing beyond the publish panel: this is the only source of the
    * folder list an unpublish request needs, and what makes the details
    * panel's Unpublish action visible at all. The GH #7897 `503` this call
-   * was stubbed out for was the `getPublications` list-scope defect, since
-   * fixed in `PublishService.getPublishHistory`.
+   * was stubbed out for was never Core being down: `PublishService` called
+   * `.filter` on a `getPublications` response Core returns as an envelope,
+   * and the resulting `TypeError` was reported as "DIAL Core is currently
+   * unavailable". Fixed in `publication.util.ts`.
    */
   const getPublishHistory = useCallback(async (item: CatalogItem) => {
     const entityType = toPublishEntityType(item.type);
