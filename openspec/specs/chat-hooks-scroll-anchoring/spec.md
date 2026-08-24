@@ -2,19 +2,19 @@
 
 ## Purpose
 
-A framework-level, headless React hook (`useConversationScroll`) published from `libs/ai-dial-chat-hooks` (`@epam/ai-dial-chat-hooks`) that owns chat message-list autoscroll: anchoring a newly sent/regenerated turn near the top of the viewport, holding scroll position stable while a response streams in, revealing a "scroll to bottom" affordance when the user has scrolled away from the latest content, and returning to the bottom on request. It is consumed by wiring its returned refs and callbacks onto a host-owned scrollable message list, and carries no knowledge of AI DIAL's backend, app-specific state, or UI components.
+A framework-level, headless React hook (`useConversationScroll`) published from `libs/chat-hooks` (`@epam/ai-dial-chat-hooks`) that owns chat message-list autoscroll: anchoring a newly sent/regenerated turn near the top of the viewport, holding scroll position stable while a response streams in, revealing a "scroll to bottom" affordance when the user has scrolled away from the latest content, and returning to the bottom on request. It is consumed by wiring its returned refs and callbacks onto a host-owned scrollable message list, and carries no knowledge of AI DIAL's backend, app-specific state, or UI components.
 
 ## Requirements
 
 ### Requirement: Library isolation
-The `libs/ai-dial-chat-hooks` package SHALL declare `react` as its only runtime `peerDependency` and SHALL NOT import, at runtime or as a type dependency, any `@epam/ai-dial-*` package, any REST/API-client module, any application context/provider, any routing, storage, analytics, or i18n module. Hooks in this library SHALL accept all chat-domain data and behavior through function parameters (props/callbacks), never through implicit access to app-owned singletons or global state.
+The `libs/chat-hooks` package SHALL declare `react` as its only runtime `peerDependency` and SHALL NOT import, at runtime or as a type dependency, any `@epam/ai-dial-*` package, any REST/API-client module, any application context/provider, any routing, storage, analytics, or i18n module. Hooks in this library SHALL accept all chat-domain data and behavior through function parameters (props/callbacks), never through implicit access to app-owned singletons or global state.
 
 #### Scenario: Building the library without the host app
-- **WHEN** `libs/ai-dial-chat-hooks` is built in isolation via its own Nx `build` target
+- **WHEN** `libs/chat-hooks` is built in isolation via its own Nx `build` target
 - **THEN** the build succeeds without resolving any `@epam/ai-dial-ui-kit`, `@epam/chat-api-client`, `@epam/ai-dial-chat-shared`, or `apps/chat/**` module
 
 #### Scenario: Module boundary lint passes
-- **WHEN** `@nx/enforce-module-boundaries` lints `libs/ai-dial-chat-hooks`
+- **WHEN** `@nx/enforce-module-boundaries` lints `libs/chat-hooks`
 - **THEN** no violation is reported for importing an app, a generated API client, or another `@epam/ai-dial-*` library beyond `react`
 
 ### Requirement: `useConversationScroll` public API
@@ -45,4 +45,4 @@ The extraction SHALL NOT change `apps/chat`'s observable scroll/anchor behavior.
 
 #### Scenario: No duplicate implementation remains
 - **WHEN** the extraction is complete
-- **THEN** `apps/chat/src/hooks/conversation/useConversationScroll.ts` no longer exists, and exactly one implementation of this scroll-anchoring logic exists in the repository, inside `libs/ai-dial-chat-hooks`
+- **THEN** `apps/chat/src/hooks/conversation/useConversationScroll.ts` no longer exists, and exactly one implementation of this scroll-anchoring logic exists in the repository, inside `libs/chat-hooks`

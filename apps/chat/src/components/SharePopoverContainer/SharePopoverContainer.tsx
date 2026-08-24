@@ -1,5 +1,6 @@
 import { type CatalogItem } from '@epam/ai-dial-catalog';
 import { CreateShareLinkDtoResourceKindEnum } from '@epam/ai-dial-chat-api-client';
+import { useShareLink } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { ShareLinkAccess, SharePopover } from '@epam/ai-dial-share';
 import type { FC } from 'react';
@@ -10,7 +11,7 @@ import {
   ButtonsI18nKeys,
   ShareI18nKeys,
 } from '../../constants/translation-keys';
-import { useShareLink } from '../../hooks/useShareLink/useShareLink';
+import { shareApi } from '../../server-api/api-client';
 
 /*
  * Agent-tab entities (Agent + Application, both shown under the "Agents"
@@ -55,6 +56,7 @@ const SharePopoverContainer: FC<Props> = ({
       ? CreateShareLinkDtoResourceKindEnum.Prompt
       : undefined;
   const { data, isLoading, error, setAccess } = useShareLink(
+    shareApi,
     item.id,
     resourceKind,
   );

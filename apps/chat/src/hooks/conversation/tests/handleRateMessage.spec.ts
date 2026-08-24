@@ -10,11 +10,8 @@ import { useConversationHandlers } from '../useConversationHandlers';
 vi.mock('../../../utils/attachment-to-dto', () => ({
   attachmentsToDtos: vi.fn(),
 }));
-vi.mock('../../../utils/build-upload-path', () => ({
-  buildUploadPath: vi.fn((fileName: string) => `uploads/${fileName}`),
-}));
-vi.mock('../../../server-api/files.api', () => ({
-  uploadFile: vi.fn(),
+vi.mock('../../../server-api/api-client', () => ({
+  filesApi: { uploadFile: vi.fn() },
 }));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(() => ({ selectedItemId: 'model-id' })),
