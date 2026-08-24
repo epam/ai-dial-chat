@@ -292,7 +292,11 @@ body is re-fetched.
         content: '# Instructions',
         selectedFileId: 'SKILL.md',
         files: [
-          { type: CatalogContentNodeType.File, id: 'SKILL.md', name: 'SKILL.md' },
+          {
+            type: CatalogContentNodeType.File,
+            id: 'SKILL.md',
+            name: 'SKILL.md',
+          },
           {
             type: CatalogContentNodeType.Folder,
             id: 'scripts',
