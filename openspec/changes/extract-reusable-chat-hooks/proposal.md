@@ -1,6 +1,6 @@
 ## Why
 
-`libs/ai-dial-chat-hooks` was created to be the canonical home for chat-UI hook
+`libs/chat-hooks` was created to be the canonical home for chat-UI hook
 behavior that is reusable outside `apps/chat` (see `useConversationScroll` and
 the archived `add-ai-dial-chat-hooks-lib` change). Today it holds exactly one
 hook. Everything else that behaves the same way — pure browser/React
@@ -14,7 +14,7 @@ callbacks, headless, `react`-only), stops that copying without touching
 
 ## What Changes
 
-- Move `usePageFileDrag` to `libs/ai-dial-chat-hooks` unchanged (params/return
+- Move `usePageFileDrag` to `libs/chat-hooks` unchanged (params/return
   are already generic); `apps/chat` imports it from
   `@epam/ai-dial-chat-hooks`.
 - Extract `useViewportWidth` and `usePanelMaxWidth` to the library, turning the
@@ -106,7 +106,7 @@ change.
   `ConversationSourcesPanel`, `ShareConversationPopoverContainer`,
   `SharePopoverContainer`, `ConversationPanelView`,
   `ConversationMessageItem`, `useConversationHandlers`).
-- **Widened library dependency boundary**: `libs/ai-dial-chat-hooks` gains a
+- **Widened library dependency boundary**: `libs/chat-hooks` gains a
   dependency on the generated `@epam/ai-dial-chat-api-client` package (types and
   operation signatures only — never a configured client instance or base
   URL/auth setup, which stay app-owned) and on the already-published
@@ -115,12 +115,12 @@ change.
   `@epam/ai-dial-attachment-canvas`. `react` remains the only *runtime*
   dependency with app-specific configuration; the client-configuration
   concern is passed in per call, not imported.
-- **New library surface**: `libs/ai-dial-chat-hooks/src/` gains
+- **New library surface**: `libs/chat-hooks/src/` gains
   `usePageFileDrag`, `useViewportWidth`, `usePanelMaxWidth`, `useShareLink`,
   `useShareRecipientsCount`, `useAttachmentUpload`, `useConversationSources`,
   and `useAttachmentAction`, each re-exported from
-  `libs/ai-dial-chat-hooks/src/index.ts` and documented in
-  `libs/ai-dial-chat-hooks/README.md`.
+  `libs/chat-hooks/src/index.ts` and documented in
+  `libs/chat-hooks/README.md`.
 - **Tests**: existing `apps/chat` spec files for the extracted hooks move
   into the library (fixtures updated to construct a fake generated-client API
   instance instead of mocking `apps/chat/src/server-api/*`); `apps/chat`

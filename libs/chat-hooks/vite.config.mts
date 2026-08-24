@@ -6,7 +6,7 @@ import * as path from 'path';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
-  cacheDir: '../../node_modules/.vite/libs/ai-dial-chat-hooks',
+  cacheDir: '../../node_modules/.vite/libs/chat-hooks',
   resolve: {
     /*
      * Resolves to source for tests only (rollupOptions.external keeps the

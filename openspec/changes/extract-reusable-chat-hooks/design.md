@@ -1,6 +1,6 @@
 ## Context
 
-`libs/ai-dial-chat-hooks` exists to hold headless, `react`-only chat-UI hook
+`libs/chat-hooks` exists to hold headless, `react`-only chat-UI hook
 behavior (see `useConversationScroll` and the archived
 `openspec/changes/archive/2026-08-17-add-ai-dial-chat-hooks-lib/`). Everything
 else reusable still lives under `apps/chat/src/hooks`, organized by concern
@@ -36,7 +36,7 @@ app's private integration detail the way a base URL, an auth cookie, or a
 `NotificationContext` is. Per an explicit product decision, the boundary is
 therefore redrawn as:
 
-- **Now allowed in `libs/ai-dial-chat-hooks`**: `@epam/ai-dial-chat-api-client`
+- **Now allowed in `libs/chat-hooks`**: `@epam/ai-dial-chat-api-client`
   types and operation signatures; the request/response handling logic that
   today lives in `apps/chat/src/server-api/*.api.ts` (moved into the hook
   itself, since it is a thin, DTO-shaped wrapper with no host-specific
@@ -68,7 +68,7 @@ remain on `AGENTS.md`'s exclusion list unchanged. Because this is a real,
 intentional deviation from `AGENTS.md`'s literal generated-client exclusion
 (currently scoped only to `libs/chat-api-client/`), `AGENTS.md` §"Library
 isolation" should be amended in the same change to name
-`libs/ai-dial-chat-hooks` as a second, narrowly-scoped exception — mirroring
+`libs/chat-hooks` as a second, narrowly-scoped exception — mirroring
 how the generated-client exception is already documented for
 `libs/chat-api-client/` — so the rule and the code do not silently diverge.
 
@@ -77,7 +77,7 @@ how the generated-client exception is already documented for
 **Goals:**
 
 - Decide, with an explicit and auditable verdict, which of the ~30 inventoried
-  files can move to `libs/ai-dial-chat-hooks` as headless behavior, and which
+  files can move to `libs/chat-hooks` as headless behavior, and which
   must stay app-owned — for every file, not a sampled subset.
 - Extract every hook whose *only* remaining blocker was the
   generated-client/server-api boundary, now that boundary is widened:
@@ -275,7 +275,7 @@ already deferred it for the same reason. Bundling an unrelated bug fix into
 this extraction would mix two unrelated review concerns.
 
 **D6 — The generated-client/server-api boundary is widened for
-`libs/ai-dial-chat-hooks` specifically, by explicit product decision, and
+`libs/chat-hooks` specifically, by explicit product decision, and
 `AGENTS.md` is amended in the same change to record the exception.** See
 §Widened dependency boundary in Context for the full rationale and the exact
 line drawn (generated-client types/operation-shapes and their thin domain
@@ -343,10 +343,10 @@ this reasoning instead of re-auditing from scratch:
   concrete implementation, not just the DTO/id shape, before declaring
   something host-agnostic.
 - **[Risk]** `AGENTS.md` and the actual dependency graph could silently
-  drift apart if the `libs/ai-dial-chat-hooks` exception (D6) is not written
+  drift apart if the `libs/chat-hooks` exception (D6) is not written
   into the rule itself. → **Mitigation**: task list includes updating
   `AGENTS.md` §"Library isolation" in the same change, naming
-  `libs/ai-dial-chat-hooks` as a second, narrowly-scoped generated-client
+  `libs/chat-hooks` as a second, narrowly-scoped generated-client
   exception alongside `libs/chat-api-client/`.
 - **[Risk — found during implementation]** The lib's `vite.config.mts`
   externalizes runtime dependencies via a hardcoded `rollupOptions.external`
@@ -386,10 +386,10 @@ this reasoning instead of re-auditing from scratch:
 5. Slice 5: add `useConversationSources` and `useAttachmentAction` as
    direct moves (no new client-instance parameter needed); same verification
    commands.
-6. Update `libs/ai-dial-chat-hooks/README.md` with one new subsection per
+6. Update `libs/chat-hooks/README.md` with one new subsection per
    hook (pattern: `useConversationScroll`'s existing subsection), in the same
    commit as each slice.
-7. Update `AGENTS.md` §"Library isolation" to record the `libs/ai-dial-chat-hooks`
+7. Update `AGENTS.md` §"Library isolation" to record the `libs/chat-hooks`
    generated-client exception (D6), in the same commit as slice 3 (the first
    slice that exercises it).
 8. Rollback: each slice is an independent commit; reverting a slice restores
