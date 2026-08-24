@@ -26,7 +26,6 @@ After that it is no longer maintained, so plan the move before then.
 [Migrating from the Legacy DIAL Chat](#migrating-from-the-legacy-dial-chat)
 below is the starting point.
 
-
 ## 📚 Table of Contents
 
 - [Overview](#overview)

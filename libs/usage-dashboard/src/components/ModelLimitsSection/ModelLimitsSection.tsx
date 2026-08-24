@@ -1,5 +1,10 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  PanelEmptyState,
+} from '@epam/ai-dial-chat-shared';
 import { SegmentedControl } from '@epam/ai-dial-ui-kit';
+import { IconChartBar } from '@tabler/icons-react';
 import { FC } from 'react';
 import {
   ModelLimitsPeriod,
@@ -36,6 +41,7 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
   onPeriodChange,
   labels,
   styles: stylesProp,
+  emptyStateIconSize = 48,
 }) => {
   const { colors, typography = {} } = stylesProp ?? {};
   const {
@@ -106,47 +112,64 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
           styles.container,
         )}
       >
-        <div
-          role="row"
-          className={mergeClasses(
-            'hidden gap-4 px-6 py-3 desktop:grid',
-            MODEL_LIMITS_GRID_COLUMNS,
-            styles.headerRow,
-          )}
-        >
-          {(
-            [
-              labels.itemColumnLabel,
-              labels.costColumnLabel,
-              labels.tokensColumnLabel,
-              labels.requestsColumnLabel,
-              labels.statusColumnLabel,
-            ] as const
-          ).map((columnLabel) => (
-            <span
-              key={columnLabel}
-              role="columnheader"
+        {rows.length === 0 ? (
+          <div className="flex items-center justify-center px-6 py-10">
+            <PanelEmptyState
+              icon={
+                <IconChartBar
+                  aria-hidden
+                  size={emptyStateIconSize}
+                  stroke={1}
+                />
+              }
+              label={labels.emptyStateLabel}
+            />
+          </div>
+        ) : (
+          <>
+            <div
+              role="row"
               className={mergeClasses(
-                columnHeaderClassName,
-                styles.columnHeader,
+                'hidden gap-4 px-6 py-3 desktop:grid',
+                MODEL_LIMITS_GRID_COLUMNS,
+                styles.headerRow,
               )}
             >
-              {columnLabel}
-            </span>
-          ))}
-        </div>
+              {(
+                [
+                  labels.itemColumnLabel,
+                  labels.costColumnLabel,
+                  labels.tokensColumnLabel,
+                  labels.requestsColumnLabel,
+                  labels.statusColumnLabel,
+                ] as const
+              ).map((columnLabel) => (
+                <span
+                  key={columnLabel}
+                  role="columnheader"
+                  className={mergeClasses(
+                    columnHeaderClassName,
+                    styles.columnHeader,
+                  )}
+                >
+                  {columnLabel}
+                </span>
+              ))}
+            </div>
 
-        <div role="rowgroup">
-          {rows.map((row) => (
-            <ModelLimitsRow
-              key={row.id}
-              row={row}
-              labels={labels}
-              typography={typography}
-              avatarSize={AVATAR_SIZE}
-            />
-          ))}
-        </div>
+            <div role="rowgroup">
+              {rows.map((row) => (
+                <ModelLimitsRow
+                  key={row.id}
+                  row={row}
+                  labels={labels}
+                  typography={typography}
+                  avatarSize={AVATAR_SIZE}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

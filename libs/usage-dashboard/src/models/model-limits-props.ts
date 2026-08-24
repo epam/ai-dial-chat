@@ -106,6 +106,8 @@ export interface ModelLimitsLabels {
   noLimitBadgeLabel: string;
   /** Status badge text for `ModelLimitStatus.Unavailable`. */
   unavailableBadgeLabel: string;
+  /** Message shown in place of the table when `rows` is empty, e.g. `'No models to show yet.'`. */
+  emptyStateLabel: string;
 }
 
 /** Color overrides for `ModelLimitsSection`, applied as CSS custom properties. */
@@ -196,4 +198,6 @@ export interface ModelLimitsSectionProps {
   labels: ModelLimitsLabels;
   /** Style overrides applied as CSS custom properties and typography class overrides. */
   styles?: ModelLimitsStyles;
+  /** Size (px) of the empty-state icon, shown when `rows` is empty. Defaults to `48`. */
+  emptyStateIconSize?: number;
 }
