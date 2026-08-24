@@ -158,11 +158,13 @@ bg-info           bg-success
 ```text
 bg-control-accent              bg-control-accent-alpha
 bg-control-accent-alpha-hover  bg-control-accent-alpha-active
-bg-control-neutral             bg-control-neutral-hover
+bg-control-neutral             bg-control-neutral-default
+bg-control-neutral-hover-muted bg-control-neutral-hover-strong
 bg-control-neutral-active      bg-control-error
 bg-control-error-hover         bg-control-error-active
 bg-control-error-alpha-hover   bg-control-error-alpha-active
-bg-control-disable
+bg-control-disable-primary     bg-control-disable-secondary
+bg-control-inverted
 ```
 
 **Decorative fills**
@@ -180,9 +182,9 @@ text-primary       text-secondary       text-tertiary
 text-accent
 text-error         text-warning         text-warning-icon
 text-info          text-success
-text-control-permanent      text-control-blue-hover
-text-control-blue-active    text-control-disable-alpha
-text-control-disable-beta
+text-control-permanent          text-control-accent-hover
+text-control-accent-active      text-control-disable-primary
+text-control-disable-secondary  text-control-inverted
 text-visual-blue     text-visual-brown-1   text-visual-brown-2
 text-visual-green-1  text-visual-green-2   text-visual-green-3
 text-visual-red      text-visual-violet-1  text-visual-violet-2
@@ -194,7 +196,7 @@ text-visual-red      text-visual-violet-1  text-visual-violet-2
 stroke-primary     stroke-secondary    stroke-tertiary
 stroke-error       stroke-error-alpha  stroke-warning
 stroke-info        stroke-success      stroke-accent-alpha
-stroke-hover-alpha stroke-focus-black  stroke-focus-blue
+stroke-focus-black stroke-focus-blue
 ```
 
 **Shadows**
@@ -202,6 +204,30 @@ stroke-hover-alpha stroke-focus-black  stroke-focus-blue
 ```text
 shadow-default   shadow-blue-500   shadow-grey-1000
 ```
+
+**Renamed in ui-kit 0.14.0 — the old names still resolve**
+
+Six control tokens were renamed after the role they fill rather than their
+opacity or hue. Each new name resolves through its old name before reaching the
+built-in light value, so a theme written against the previous names keeps its
+colors — but new themes should use the names listed above.
+
+| Previous name                | Current name                     |
+| ---------------------------- | -------------------------------- |
+| `bg-control-disable`         | `bg-control-disable-primary`     |
+| `bg-control-neutral-hover`   | `bg-control-neutral-hover-muted` |
+| `text-control-disable-alpha` | `text-control-disable-primary`   |
+| `text-control-disable-beta`  | `text-control-disable-secondary` |
+| `text-control-blue-hover`    | `text-control-accent-hover`      |
+| `text-control-blue-active`   | `text-control-accent-active`     |
+
+`stroke-hover-alpha` is the exception: it was removed rather than renamed and is
+in no fallback chain. It held the same color as `stroke-accent-alpha`, so move
+its value there — a theme that still sets only `stroke-hover-alpha` loses its
+accent hover border to the light default.
+
+The focus stroke tokens (`stroke-focus-black`, `stroke-focus-blue`) were **not**
+renamed; only the Tailwind class names built on them changed.
 
 **Transitional — do not build a theme on these**
 
@@ -241,26 +267,26 @@ same role) are omitted: `bg-error`, `bg-warning`, `bg-info`, `bg-success`,
 `text-secondary`, `text-error`, `text-warning`, `text-warning-icon`,
 `text-info`, `text-success`.
 
-| Legacy token                                                                                                             | Closest new token                                                                                 |
-| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `bg-layer-0` … `bg-layer-4`                                                                                              | `bg-layer-sunken`, `bg-layer-base`, `bg-layer-raised` — five elevation steps collapsed into three |
-| `bg-blackout`                                                                                                            | `bg-backdrop`                                                                                     |
-| `controls-bg-accent`, `bg-accent-primary`                                                                                | `bg-control-accent`                                                                               |
-| `controls-bg-accent-hover`                                                                                               | No solid hover token; the new controls use `bg-control-accent-alpha-hover` / `-active`            |
-| `controls-bg-disable`, `controls-bg-disable-accent`                                                                      | `bg-control-disable`                                                                              |
-| `controls-text-permanent`                                                                                                | `text-control-permanent`                                                                          |
-| `controls-text-disable`, `controls-text-primary-disable`, `controls-text-accent-disable`                                 | `text-control-disable-alpha`, `text-control-disable-beta` — three states collapsed into two       |
-| `text-accent-primary`                                                                                                    | `text-accent`                                                                                     |
-| `stroke-hover`                                                                                                           | `stroke-hover-alpha`                                                                              |
-| `stroke-accent-primary`                                                                                                  | `stroke-accent-alpha`, plus `stroke-focus-blue` for focus rings                                   |
-| `bg-accent-secondary`, `bg-accent-tertiary`, `stroke-accent-secondary`, `stroke-accent-tertiary`, `text-accent-tertiary` | No equivalent — the three-accent scheme became a single accent                                    |
-| `bg-auth-layer-0`, `bg-auth-layer-1`                                                                                     | No equivalent — the login page uses the shared surface tokens                                     |
-| `bg-model-icon`                                                                                                          | No equivalent                                                                                     |
-| `border-radius`                                                                                                          | No equivalent — radii are Tailwind classes, not a themeable variable                              |
-| `codeblock-font`, `theme-font`                                                                                           | No equivalent in practice — see [Fonts are not themeable](#fonts-are-not-themeable)               |
+| Legacy token                                                                                                             | Closest new token                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `bg-layer-0` … `bg-layer-4`                                                                                              | `bg-layer-sunken`, `bg-layer-base`, `bg-layer-raised` — five elevation steps collapsed into three  |
+| `bg-blackout`                                                                                                            | `bg-backdrop`                                                                                      |
+| `controls-bg-accent`, `bg-accent-primary`                                                                                | `bg-control-accent`                                                                                |
+| `controls-bg-accent-hover`                                                                                               | No solid hover token; the new controls use `bg-control-accent-alpha-hover` / `-active`             |
+| `controls-bg-disable`, `controls-bg-disable-accent`                                                                      | `bg-control-disable-primary`                                                                       |
+| `controls-text-permanent`                                                                                                | `text-control-permanent`                                                                           |
+| `controls-text-disable`, `controls-text-primary-disable`, `controls-text-accent-disable`                                 | `text-control-disable-primary`, `text-control-disable-secondary` — three states collapsed into two |
+| `text-accent-primary`                                                                                                    | `text-accent`                                                                                      |
+| `stroke-hover`                                                                                                           | `stroke-accent-alpha`                                                                              |
+| `stroke-accent-primary`                                                                                                  | `stroke-accent-alpha`, plus `stroke-focus-blue` for focus rings                                    |
+| `bg-accent-secondary`, `bg-accent-tertiary`, `stroke-accent-secondary`, `stroke-accent-tertiary`, `text-accent-tertiary` | No equivalent — the three-accent scheme became a single accent                                     |
+| `bg-auth-layer-0`, `bg-auth-layer-1`                                                                                     | No equivalent — the login page uses the shared surface tokens                                      |
+| `bg-model-icon`                                                                                                          | No equivalent                                                                                      |
+| `border-radius`                                                                                                          | No equivalent — radii are Tailwind classes, not a themeable variable                               |
+| `codeblock-font`, `theme-font`                                                                                           | No equivalent in practice — see [Fonts are not themeable](#fonts-are-not-themeable)                |
 
 New token groups with no legacy counterpart — `bg-visual-*`, `text-visual-*`,
-`bg-control-neutral*`, `bg-control-error*`, `text-control-blue-*`,
+`bg-control-neutral*`, `bg-control-error*`, `text-control-accent-*`,
 `stroke-focus-black`, `stroke-error-alpha`, and `shadow-*` — start at their
 built-in light values until the theme sets them. A dark theme that leaves them
 alone will show light chips, focus rings, and shadows.

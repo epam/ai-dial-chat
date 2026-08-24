@@ -119,7 +119,7 @@ const ScheduledTaskConversationBanner: FC = () => {
           ScheduledTasksI18nKeys.ConversationBannerTaskDetailsAriaLabel,
           { taskName: displayName },
         )}
-        className="dial-tiny-semi-text flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-accent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus-black"
+        className="dial-tiny-semi-text focus-visible:outline-focus flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-accent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1"
       >
         {t(ScheduledTasksI18nKeys.ConversationBannerTaskDetailsLabel)}
         <IconChevronRight size={16} className="rtl:scale-x-[-1]" aria-hidden />
