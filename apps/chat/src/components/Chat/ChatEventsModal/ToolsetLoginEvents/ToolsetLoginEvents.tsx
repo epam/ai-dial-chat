@@ -8,6 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getModelName } from '@/src/utils/app/application';
 import { getEntityNameFromId, isPredefinedEntity } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { openToolsetAuthWindow } from '@/src/utils/auth/auth-toolset';
 import { getVersionFromId } from '@/src/utils/server/api';
 
 import {
@@ -86,12 +87,17 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
           }),
         );
       } else {
+        // Reserved here, while the click is still on the stack: the epic runs
+        // too late for Safari to accept a `window.open` as user-initiated.
+        const authWindow = openToolsetAuthWindow();
+
         dispatch(
           ToolsetActions.startSignInProcess({
             authLevel: isPublic
               ? ToolsetCredentialsLevel.USER
               : ToolsetCredentialsLevel.GLOBAL,
             toolset: t,
+            authWindow,
           }),
         );
       }

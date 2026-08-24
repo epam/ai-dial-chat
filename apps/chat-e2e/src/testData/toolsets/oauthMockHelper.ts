@@ -16,6 +16,41 @@ import {
 } from '@epam/ai-dial-shared';
 import { Page } from '@playwright/test';
 
+const CALLBACK_CAPTURE_TIMEOUT = 30_000;
+
+/**
+ * Awaitable latch: stays open once notified, so a waiter that arrives late
+ * still passes. `reset()` re-arms it for the next sign in, since one helper
+ * serves several logins within a test.
+ */
+class Latch {
+  private isOpen = false;
+  private waiters: (() => void)[] = [];
+
+  notify(): void {
+    this.isOpen = true;
+    this.waiters.splice(0).forEach((resolve) => resolve());
+  }
+
+  reset(): void {
+    this.isOpen = false;
+  }
+
+  /** Resolves when notified, or once `timeoutMs` elapses - never rejects */
+  async wait(timeoutMs: number): Promise<void> {
+    if (this.isOpen) return;
+
+    let timer: NodeJS.Timeout | undefined;
+
+    await new Promise<void>((resolve) => {
+      this.waiters.push(resolve);
+      timer = setTimeout(resolve, timeoutMs);
+    });
+
+    clearTimeout(timer);
+  }
+}
+
 export interface OAuthState {
   capturedOAuthUrl: string | null;
   capturedState: string | null;
@@ -31,6 +66,8 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
     callbackUrl: null,
   };
   private handledSignInCount = 0;
+  /** Opened by the mocked authorization route once it captures the callback */
+  private readonly callbackCaptured = new Latch();
 
   constructor(
     page: Page,
@@ -70,13 +107,31 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
     await this.setupSignOutRoute();
   }
 
+  /**
+   * Waits until the authorization request has reached the mocked route.
+   *
+   * The app reserves the login window synchronously on click - so Safari
+   * accepts it as user-initiated - and navigates it to the authorization
+   * endpoint only afterwards. Callers that read the captured OAuth state right
+   * after the login click must await this first.
+   */
+  async waitForOAuthRedirect(popup?: Page): Promise<void> {
+    if (popup && this.isFlowAlreadyDone(popup)) return;
+
+    await this.callbackCaptured.wait(CALLBACK_CAPTURE_TIMEOUT);
+  }
+
   // Drives the popup through the OAuth callback and waits for it to close —
   // the signal that sign-in fully landed. We navigate there ourselves unless
   // the mocked auth redirect already got it there first, or the flow is
   // already done.
   async navigateToCallback(popup: Page): Promise<void> {
+    await this.waitForOAuthRedirect(popup);
+
     if (!this.oauthState.callbackUrl) {
-      throw new Error('Callback URL has not been captured yet');
+      throw new Error(
+        `Callback URL has not been captured for toolset "${this.getToolset().id}". Popup URL: "${popup.isClosed() ? '<closed>' : popup.url()}"`,
+      );
     }
 
     if (!this.isFlowAlreadyDone(popup)) {
@@ -120,6 +175,8 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
     }
 
     this.handledSignInCount = this.getSignInCount();
+    // Re-arm for the next sign in - tests log in repeatedly via one helper
+    this.callbackCaptured.reset();
 
     // The main page closes the popup once it detects login-complete=1. This
     // is also the caller's synchronization point — getSignInRequest() and
@@ -167,6 +224,7 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
       );
       const redirectUri = url.searchParams.get(OAuthQueryParams.redirectUri)!;
       this.oauthState.callbackUrl = `${redirectUri}?${OAuthQueryParams.code}=${this.authorizationCode}&${OAuthQueryParams.state}=${this.oauthState.capturedState}`;
+      this.callbackCaptured.notify();
       // Redirect popup to callback instead of aborting — this lets
       // the popup complete the full login flow on its own and avoids
       // "Auth timeout" crash from signInToolset()

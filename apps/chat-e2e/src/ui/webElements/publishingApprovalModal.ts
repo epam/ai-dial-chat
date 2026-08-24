@@ -16,11 +16,11 @@ import {
 } from '@/src/ui/webElements/entityTree';
 import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 import { PublishingRules } from '@/src/ui/webElements/publishingRules';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class PublishingApprovalModal extends BaseElement {
-  constructor(page: Page) {
-    super(page, PublishingApprovalModalSelectors.modalContainer);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, PublishingApprovalModalSelectors.modalContainer, parentLocator);
   }
 
   //conversations to approve trees

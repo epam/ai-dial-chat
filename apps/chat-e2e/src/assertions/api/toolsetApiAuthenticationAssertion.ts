@@ -22,6 +22,10 @@ export class ToolsetApiAuthenticationAssertion extends BaseAssertion {
     state: OAuthState,
     mockConfig: OAuthMockConfig,
   ) {
+    this.assertValueIsNotUndefined(
+      state.capturedOAuthUrl ?? undefined,
+      MarketplaceExpectedMessages.toolsetOAuthRedirectUriIsValid,
+    );
     const redirectUrl = new URL(state.capturedOAuthUrl!);
     const params = redirectUrl.searchParams;
     this.assertValueIsNotUndefined(

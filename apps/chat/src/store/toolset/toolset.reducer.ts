@@ -119,6 +119,7 @@ export const toolsetSlice = createSlice({
         auth?: {
           apiKey?: string;
           authLevel?: ToolsetCredentialsLevel;
+          authWindow?: Window | null;
         };
       }>,
     ) => {
@@ -215,6 +216,8 @@ export const toolsetSlice = createSlice({
         authLevel: ToolsetCredentialsLevel;
         apiKey?: string;
         toolset: ToolsetModel;
+        /** Login window reserved synchronously from the click handler */
+        authWindow?: Window | null;
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;

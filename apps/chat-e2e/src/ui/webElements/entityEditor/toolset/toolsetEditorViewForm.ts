@@ -175,8 +175,9 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
 
   // OAuth login now opens a popup instead of redirecting the main page.
   // The mock route redirects the popup to the callback URL (302).
-  // We wait for the popup to load the callback page so the captured
-  // OAuth state is available right after this method returns.
+  // Returns the login window as soon as it opens. The app navigates it to the
+  // authorization endpoint asynchronously, so the captured OAuth state only
+  // becomes available later - navigateToCallback() waits for it.
   public async initAuthentication(
     button: Button,
     triggeredHttpHost?: string,
@@ -185,12 +186,6 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
       const popupPromise = this.page.waitForEvent('popup');
       await button.click();
       const popup = await popupPromise;
-      try {
-        // popup is redirected to /auth/toolset-signin — wait for it to load
-        await popup.waitForLoadState('domcontentloaded');
-      } catch {
-        // popup may close before DOM loads if the flow finishes very fast
-      }
       return popup;
     }
     await button.click();

@@ -34,4 +34,9 @@ export const OverlaySandboxUrls = {
   enabledMarketplaceTableViewUrl:
     '/cases/overlay/enabled-marketplace-table-view-sandbox',
   enabledAppSharingUrl: '/cases/overlay/enabled-app-sharing-sandbox',
+  enableLikesUrl: '/cases/overlay/enabled-likes-sandbox', //sandbox to test 'EPMDIAL-2285'
+  enableHideCustomAppCreationUrl:
+    '/cases/overlay/enabled-hide-custom-app-creation-sandbox', //sandbox to test 'EPMDIAL-2294'
+  skipFocusSetSandboxUrl: '/cases/overlay/skip-focus-set-sandbox', //sandbox to test 'EPMDIAL-2318'
+  disabledDefaultButtonsUrl: '/cases/overlay/disabled-default-buttons', //sandbox to test 'EPMDIAL-2319'
 };

@@ -16,11 +16,6 @@ const overlayOptions = {
     Feature.TopChatModelSettings,
     Feature.EmptyChatSettings,
     Feature.Header,
-    Feature.Footer,
-    Feature.RequestApiKey,
-    Feature.ReportAnIssue,
-    Feature.Likes,
-    Feature.Marketplace,
     Feature.SkipFocusChatInputOnLoad,
   ],
 } as ChatOverlayOptions;

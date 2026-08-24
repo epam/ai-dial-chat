@@ -10,6 +10,7 @@ import { isPredefinedEntity } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+import { openToolsetAuthWindow } from '@/src/utils/auth/auth-toolset';
 
 import { ModalState } from '@/src/types/modal';
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
@@ -162,6 +163,13 @@ const view = withRenderWhenEntities<ToolsetLoginDialogProps>({
 
   const handleLogin = useCallback(
     (data: ToolsetLoginFormType) => {
+      // Reserved here, while the click is still on the stack: the epic runs too
+      // late for Safari to accept a `window.open` as user-initiated.
+      const authWindow =
+        toolset.authSettings.authenticationType === ToolsetAuthTypes.OAUTH
+          ? openToolsetAuthWindow()
+          : null;
+
       dispatch(
         ToolsetActions.startSignInProcess({
           authLevel:
@@ -171,6 +179,7 @@ const view = withRenderWhenEntities<ToolsetLoginDialogProps>({
               : ToolsetCredentialsLevel.GLOBAL),
           apiKey: data.apiKey,
           toolset,
+          authWindow,
         }),
       );
       handleClose();
