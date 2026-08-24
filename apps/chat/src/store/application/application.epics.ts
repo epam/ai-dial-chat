@@ -1006,6 +1006,14 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
 const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ApplicationActions.exitEditor.type),
+    tap(() => {
+      const conversationSignal =
+        ConversationsSelectors.selectConversationSignal(state$.value);
+
+      if (!conversationSignal.signal.aborted) {
+        conversationSignal.abort();
+      }
+    }),
     switchMap(({ payload }) => {
       const returnConversationIds =
         ApplicationSelectors.selectReturnConversationIds(state$.value);

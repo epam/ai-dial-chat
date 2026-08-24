@@ -2016,15 +2016,23 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             .some((c) => c.isMessageStreaming);
 
           if (error.name === 'AbortError') {
+            const conversationExists =
+              !!ConversationsSelectors.selectConversation(
+                state$.value,
+                payload.conversation.id,
+              );
+
             return concat(
-              of(
-                ConversationsActions.updateConversation({
-                  id: payload.conversation.id,
-                  values: {
-                    isMessageStreaming: false,
-                  },
-                }),
-              ),
+              conversationExists
+                ? of(
+                    ConversationsActions.updateConversation({
+                      id: payload.conversation.id,
+                      values: {
+                        isMessageStreaming: false,
+                      },
+                    }),
+                  )
+                : EMPTY,
               iif(
                 () => !areOtherConversationsStreaming,
                 of(ChatEventsActions.unsubscribe()),
