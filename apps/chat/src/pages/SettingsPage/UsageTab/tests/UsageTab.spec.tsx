@@ -41,13 +41,17 @@ vi.mock('@epam/ai-dial-usage-dashboard', async (importOriginal) => {
     ),
     ModelLimitsSection: ({
       rows,
+      labels,
     }: {
       rows: { id: string; name: string }[];
+      labels: { emptyStateLabel: string };
     }) => (
       <div>
-        {rows.map((row) => (
-          <span key={row.id}>{row.name}</span>
-        ))}
+        {rows.length === 0 ? (
+          <span>{labels.emptyStateLabel}</span>
+        ) : (
+          rows.map((row) => <span key={row.id}>{row.name}</span>)
+        )}
       </div>
     ),
   };
@@ -226,6 +230,36 @@ describe('UsageTab', () => {
 
       render(<UsageTab />);
 
+      expect(
+        screen.getByText(UsageI18nKeys.ModelLimitsEmptyState),
+      ).toBeTruthy();
+    });
+
+    it('shows the same empty state when every deployment has no usage in the selected period', () => {
+      mockUseDeployments.mockReturnValue(
+        createDeploymentsContextValue({
+          items: [
+            {
+              id: 'gpt-4o',
+              displayName: 'GPT-4o',
+              type: DeploymentItemDtoTypeEnum.Model,
+            },
+          ],
+        }),
+      );
+      mockUseUsageData.mockReturnValue({
+        usage: {
+          deployments: {
+            'gpt-4o': { dayTokenStats: { used: 0, total: 10 } },
+          },
+        },
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+
+      expect(screen.queryByText('GPT-4o')).toBeNull();
       expect(
         screen.getByText(UsageI18nKeys.ModelLimitsEmptyState),
       ).toBeTruthy();

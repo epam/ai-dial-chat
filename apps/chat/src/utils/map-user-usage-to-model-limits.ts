@@ -176,13 +176,24 @@ const getRowStatus = (cells: ModelLimitMetricCell[]): ModelLimitStatus => {
 };
 
 /**
+ * Whether at least one of a row's period-mapped raw stats is usable and has nonzero `used` — the
+ * signal that the deployment actually has usage in the selected period, as opposed to merely
+ * having an entry in `usage.deployments` (which may reflect usage in a different period only).
+ */
+const hasUsageInPeriod = (stats: (LimitStatsDto | undefined)[]): boolean =>
+  stats.some((stat) => isUsableStats(stat) && stat.used > 0);
+
+/**
  * Maps `usage.deployments` (already fetched by `useUsageData`) into `ModelLimitsSection`'s `rows`
  * prop, joined with model identity from `useDeployments().items`. Never calls a new endpoint —
- * everything here is derived from data already in memory. The table shows exactly the entries
- * present in `usage.deployments` — never more (no accessible-but-unused models added from `items`)
- * and never fewer — in `Object.keys(deployments)` order, so row set and order depend only on the
- * `usage` fetch and stay stable regardless of whether/when `items` has loaded. `items` is used
- * solely to enrich a row with display name/version/avatar when a match exists.
+ * everything here is derived from data already in memory. Candidate rows come from exactly the
+ * entries present in `usage.deployments` (no accessible-but-unused models added from `items`), but
+ * the returned rows are further scoped to the selected period: a candidate is dropped unless at
+ * least one of its Cost/Tokens/Requests stats mapped for that period is usable and has `used > 0`.
+ * Among rows that pass this filter, order follows `Object.keys(deployments)` order, so row set and
+ * order depend only on the `usage` fetch and the selected period, and stay stable regardless of
+ * whether/when `items` has loaded. `items` is used solely to enrich a row with display
+ * name/version/avatar when a match exists.
  */
 export const mapUserUsageToModelLimits = (
   usage: UserLimitStatsResponseDto | undefined,
@@ -203,37 +214,56 @@ export const mapUserUsageToModelLimits = (
   );
   const fieldMapping = PERIOD_FIELD_MAPPINGS[period];
 
-  return Object.keys(deployments).map((id) => {
-    const item = modelItemById.get(id);
-    const name =
-      item != null
-        ? resolveLocalizedText(item.displayName, activeLocale) || item.id
-        : id;
-    const deploymentStats = deployments[id];
-    const avatarSrc = resolveCatalogIconUrl(item?.iconUrl);
+  return Object.keys(deployments)
+    .map((id) => {
+      const item = modelItemById.get(id);
+      const name =
+        item != null
+          ? resolveLocalizedText(item.displayName, activeLocale) || item.id
+          : id;
+      const deploymentStats = deployments[id];
+      const avatarSrc = resolveCatalogIconUrl(item?.iconUrl);
 
-    const cost =
-      fieldMapping.cost != null
-        ? buildCostMetricCell(deploymentStats[fieldMapping.cost], t)
-        : buildUnavailableCell(t);
-    const tokens =
-      fieldMapping.tokens != null
-        ? buildFiniteMetricCell(deploymentStats[fieldMapping.tokens], t)
-        : buildUnavailableCell(t);
-    const requests =
-      fieldMapping.requests != null
-        ? buildFiniteMetricCell(deploymentStats[fieldMapping.requests], t)
-        : buildUnavailableCell(t);
+      const costStats =
+        fieldMapping.cost != null
+          ? deploymentStats[fieldMapping.cost]
+          : undefined;
+      const tokenStats =
+        fieldMapping.tokens != null
+          ? deploymentStats[fieldMapping.tokens]
+          : undefined;
+      const requestStats =
+        fieldMapping.requests != null
+          ? deploymentStats[fieldMapping.requests]
+          : undefined;
 
-    return {
-      id,
-      name,
-      version: item?.displayVersion,
-      avatarSrc,
-      cost,
-      tokens,
-      requests,
-      status: getRowStatus([cost, tokens, requests]),
-    };
-  });
+      const cost =
+        fieldMapping.cost != null
+          ? buildCostMetricCell(costStats, t)
+          : buildUnavailableCell(t);
+      const tokens =
+        fieldMapping.tokens != null
+          ? buildFiniteMetricCell(tokenStats, t)
+          : buildUnavailableCell(t);
+      const requests =
+        fieldMapping.requests != null
+          ? buildFiniteMetricCell(requestStats, t)
+          : buildUnavailableCell(t);
+
+      return {
+        row: {
+          id,
+          name,
+          version: item?.displayVersion,
+          avatarSrc,
+          cost,
+          tokens,
+          requests,
+          status: getRowStatus([cost, tokens, requests]),
+        },
+        hasUsage: hasUsageInPeriod([costStats, tokenStats, requestStats]),
+      };
+    })
+    .filter(({ hasUsage }) => hasUsage)
+    .map(({ row }) => row);
 };

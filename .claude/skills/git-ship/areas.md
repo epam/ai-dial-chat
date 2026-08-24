@@ -48,6 +48,7 @@ Apply in order, stop at the first match:
 | `skill-editor`          | Skill editor UI and authoring components                      |
 | `source-panel`          | Sources panel                                                 |
 | `starter-buttons`       | Starter prompt buttons                                        |
+| `usage-dashboard`       | Usage limits cards and per-model usage dashboard              |
 
 > `chat-api-client` changes are almost always the result of regenerating from OpenAPI sources. Do not
 > hand-edit it; if you must scope a regeneration commit, use `chore(chat-api-client): regenerate client`.

@@ -27,6 +27,7 @@ single-card use case.
 - `react` ^19.2.7
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-chat-shared`
+- `@tabler/icons-react`
 
 ## Components
 
@@ -191,6 +192,7 @@ const [period, setPeriod] = useState(ModelLimitsPeriod.Last24Hours);
     limitReachedBadgeLabel: 'Limit reached',
     noLimitBadgeLabel: 'No limit',
     unavailableBadgeLabel: 'Unavailable',
+    emptyStateLabel: 'No models to show yet.',
   }}
 />;
 ```
@@ -198,6 +200,11 @@ const [period, setPeriod] = useState(ModelLimitsPeriod.Last24Hours);
 `ModelLimitsSection` is fully controlled: it never manages the selected period itself, never
 refetches anything, and never infers the unlimited sentinel or a metric's status — the host derives
 `kind`, `usedPercent`, and `status` for every cell and `status` for the row.
+
+The heading and period selector always render, even when `rows` is empty — only the table body
+switches to an empty-state message (`labels.emptyStateLabel`), so the host can still change the
+selected period from an empty result. Pass `emptyStateIconSize` (default `48`) to resize the
+empty-state icon.
 
 ## Types
 
@@ -214,8 +221,8 @@ refetches anything, and never infers the unlimited sentinel or a metric's status
 - `ModelLimitMetricKind` — `Finite | Unlimited | Unavailable`
 - `ModelLimitMetricCell` — `{ kind, usedLabel?, totalLabel?, usedPercent?, status?, ariaLabel }`
 - `ModelLimitRow` — `{ id, name, version?, avatarSrc?, cost, tokens, requests, status }`
-- `ModelLimitsLabels` — `{ headingLabel, periodLabels, periodSelectorAriaLabel, itemColumnLabel, costColumnLabel, tokensColumnLabel, requestsColumnLabel, statusColumnLabel, modelTypeLabel, noLimitLabel, unavailableLabel, withinLimitsBadgeLabel, runningLowBadgeLabel, limitReachedBadgeLabel, noLimitBadgeLabel, unavailableBadgeLabel }`
-- `ModelLimitsSectionProps` — `{ rows, period, onPeriodChange, labels, styles? }`
+- `ModelLimitsLabels` — `{ headingLabel, periodLabels, periodSelectorAriaLabel, itemColumnLabel, costColumnLabel, tokensColumnLabel, requestsColumnLabel, statusColumnLabel, modelTypeLabel, noLimitLabel, unavailableLabel, withinLimitsBadgeLabel, runningLowBadgeLabel, limitReachedBadgeLabel, noLimitBadgeLabel, unavailableBadgeLabel, emptyStateLabel }`
+- `ModelLimitsSectionProps` — `{ rows, period, onPeriodChange, labels, styles?, emptyStateIconSize? }`
 - `ModelLimitsStyles` — `{ colors?, typography? }`
 - `ModelLimitsColors` — CSS-custom-property color overrides
 - `ModelLimitsTypography` — typography class overrides
