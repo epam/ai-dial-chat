@@ -113,7 +113,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
         // a tab stop, but jsx-a11y requires an interactive role to declare
         // its own (non-reachable) focusability.
         tabIndex={-1}
-        className="flex flex-col"
+        className="flex flex-col px-2"
       >
         {items.map((item) => {
           const isActive = item.id === activeId;

@@ -3,11 +3,20 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import DeploymentSelectorPanel from '../DeploymentSelectorPanel';
+
+const breakpoint = vi.hoisted(() => ({ isMobile: false }));
+vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+  useIsMobile: () => breakpoint.isMobile,
+}));
 
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
+});
+
+afterEach(() => {
+  breakpoint.isMobile = false;
 });
 
 const makeItem = (id: string, type: CatalogEntityType): CatalogItem => ({
@@ -221,5 +230,27 @@ describe('DeploymentSelectorPanel', () => {
         expect(onToggleFavorite).toHaveBeenCalledWith('gpt-4o', false),
       );
     });
+  });
+});
+
+describe('DeploymentSelectorPanel — focus on open', () => {
+  it('focuses the search field so a keyboard user lands inside the panel', () => {
+    renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
+
+    const search = screen.getByRole('textbox', {
+      name: 'Search models, agents\u2026',
+    });
+    expect(search.matches(':focus')).toBe(true);
+  });
+
+  it('leaves focus alone on mobile, where the panel opens in a bottom sheet', () => {
+    breakpoint.isMobile = true;
+
+    renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
+
+    const search = screen.getByRole('textbox', {
+      name: 'Search models, agents\u2026',
+    });
+    expect(search.matches(':focus')).toBe(false);
   });
 });

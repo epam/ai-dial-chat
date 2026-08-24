@@ -22,16 +22,16 @@
     "@tabler/icons-react": "^3.0.0",
     "react": "^19.0.0",
     "react-qr-code": "^2.2.0",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.26"
+    "@epam/ai-dial-ui-kit": "*"
   },
   "nx": {
     "tags": [
       "type:ui"
     ]
   },
-   "targets": {
-      "publish": {
-        "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
-      }
+  "targets": {
+    "publish": {
+      "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
     }
+  }
 }

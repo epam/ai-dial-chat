@@ -72,6 +72,12 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
     [onPreview, citationCard],
   );
 
+  /*
+   * Stays on the 1.0 tooltip: this is a controlled popover carrying an
+   * interactive card, and it needs `bottom-end` so the 400px card aligns with
+   * the marker instead of overhanging it. The 2.0 `Tooltip` narrows `placement`
+   * to the four `TooltipPlacement` sides, which cannot express `-end` alignment.
+   */
   return (
     <DialTooltip
       open={isOpen}

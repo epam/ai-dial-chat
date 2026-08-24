@@ -1,6 +1,6 @@
 import type { Stage } from '@epam/ai-dial-chat-shared';
 import { mergeClasses, StageStatus } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type {
@@ -66,7 +66,7 @@ export const StageItem: FC<StageItemProps> = ({
           isMono && styles.monoName,
         )}
       >
-        <DialEllipsisTooltip text={displayName || stage.status || ''} />
+        <EllipsisTooltip text={displayName || stage.status || ''} />
       </span>
       {stage.tag && (
         <span

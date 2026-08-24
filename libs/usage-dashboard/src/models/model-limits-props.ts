@@ -106,6 +106,8 @@ export interface ModelLimitsLabels {
   noLimitBadgeLabel: string;
   /** Status badge text for `ModelLimitStatus.Unavailable`. */
   unavailableBadgeLabel: string;
+  /** Message shown in place of the table when `rows` is empty, e.g. `'No models to show yet.'`. */
+  emptyStateLabel: string;
 }
 
 /** Color overrides for `ModelLimitsSection`, applied as CSS custom properties. */
@@ -132,7 +134,7 @@ export interface ModelLimitsColors {
   secondaryValueColor?: string;
   /** Progress-bar track color. Fallback: `--bg-layer-sunken`. */
   progressTrackColor?: string;
-  /** Progress-fill / accent color for `WithinLimits`. Fallback: `--text-control-blue-hover`. */
+  /** Progress-fill / accent color for `WithinLimits`. Fallback: `--text-control-accent-hover`. */
   defaultProgressColor?: string;
   /** Progress-fill / accent color for `RunningLow`. Fallback: `--text-warning-icon`. */
   warningProgressColor?: string;
@@ -196,4 +198,6 @@ export interface ModelLimitsSectionProps {
   labels: ModelLimitsLabels;
   /** Style overrides applied as CSS custom properties and typography class overrides. */
   styles?: ModelLimitsStyles;
+  /** Size (px) of the empty-state icon, shown when `rows` is empty. Defaults to `48`. */
+  emptyStateIconSize?: number;
 }

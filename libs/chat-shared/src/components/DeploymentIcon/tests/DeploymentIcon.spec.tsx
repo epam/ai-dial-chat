@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type DeploymentIconProps, DeploymentIcon } from '../DeploymentIcon';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DialTooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 /**

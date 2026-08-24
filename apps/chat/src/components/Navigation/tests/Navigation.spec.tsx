@@ -34,8 +34,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DropdownItemType: { PlainText: 'plainText', Divider: 'divider' },
   mergeClasses: (...classes: (string | undefined)[]) =>
     classes.filter(Boolean).join(' '),
-  DialTooltip: ({ children }: { children: ReactNode }) => children,
-  DialEllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
+  Tooltip: ({ children }: { children: ReactNode }) => children,
+  EllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
   IconButton: ({
     'aria-label': ariaLabel,
     'aria-current': ariaCurrent,

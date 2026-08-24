@@ -194,13 +194,13 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
             (isSignedIn ? (
               <DangerButton
                 label={logoutLabel}
-                className="w-28 shrink-0 justify-center whitespace-nowrap"
+                className="shrink-0 justify-center whitespace-nowrap"
                 onClick={handleRequestLogout}
               />
             ) : (
               <NeutralButton
                 label={loginLabel}
-                className="w-28 shrink-0 justify-center whitespace-nowrap"
+                className="shrink-0 justify-center whitespace-nowrap"
                 onClick={handleLogin}
               />
             ))}

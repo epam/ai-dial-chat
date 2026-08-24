@@ -1,5 +1,10 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialSegmentedControl } from '@epam/ai-dial-ui-kit';
+import {
+  buildCssVars,
+  mergeClasses,
+  PanelEmptyState,
+} from '@epam/ai-dial-chat-shared';
+import { SegmentedControl } from '@epam/ai-dial-ui-kit';
+import { IconChartBar } from '@tabler/icons-react';
 import { FC } from 'react';
 import {
   ModelLimitsPeriod,
@@ -18,12 +23,16 @@ const PERIOD_ORDER: ModelLimitsPeriod[] = [
   ModelLimitsPeriod.Last30Days,
 ];
 
-// TODO: Replace the legacy segmented control and remove these overrides when a 2.0 UI-kit equivalent is available.
-const PERIOD_SELECTOR_CLASS_NAME = [
-  'box-border !inline-flex max-h-[54px] min-h-10 max-w-full items-center overflow-x-auto overflow-y-hidden !rounded-full border !border-tertiary !bg-layer-sunken p-1 desktop:h-10',
-  '[&>button]:!m-0 [&>button]:!h-11 [&>button]:!flex-none [&>button]:!rounded-full [&>button]:!border-0 [&>button]:!bg-transparent [&>button]:!px-4 [&>button]:!py-0 [&>button]:!text-secondary desktop:[&>button]:!h-8',
-  '[&>button[aria-selected=true]]:!bg-layer-raised [&>button[aria-selected=true]]:!text-accent [&>button[aria-selected=true]]:!shadow-sm',
-].join(' ');
+/*
+ * The 2.0 track already supplies the sunken pill, the raised accent segment and
+ * its shadow. What it does not cover is a five-segment row on a phone: the track
+ * is `w-fit` with no overflow handling, so the segments scroll horizontally
+ * (the scrollbar itself is hidden in the stylesheet) instead of shrinking below
+ * their labels, and each one keeps the 44px pointer target that the kit's own
+ * 32px height does not reach on touch.
+ */
+const PERIOD_SELECTOR_CLASS_NAME =
+  'max-w-full overflow-x-auto overflow-y-hidden [&>button]:flex-none mobile:[&>button]:h-11';
 
 /** "Model limits" section: a heading with row count, a controlled period selector, and a table of per-model Cost/Tokens/Requests/Status metrics. */
 export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
@@ -32,6 +41,7 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
   onPeriodChange,
   labels,
   styles: stylesProp,
+  emptyStateIconSize = 48,
 }) => {
   const { colors, typography = {} } = stylesProp ?? {};
   const {
@@ -79,15 +89,15 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
             {rows.length}
           </span>
         </h3>
-        <DialSegmentedControl
-          ariaLabel={labels.periodSelectorAriaLabel}
+        <SegmentedControl
+          aria-label={labels.periodSelectorAriaLabel}
           value={period}
           onChange={onPeriodChange}
           className={mergeClasses(
             PERIOD_SELECTOR_CLASS_NAME,
             styles.periodSelector,
           )}
-          options={PERIOD_ORDER.map((value) => ({
+          items={PERIOD_ORDER.map((value) => ({
             value,
             label: labels.periodLabels[value],
           }))}
@@ -102,47 +112,64 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
           styles.container,
         )}
       >
-        <div
-          role="row"
-          className={mergeClasses(
-            'hidden gap-4 px-6 py-3 desktop:grid',
-            MODEL_LIMITS_GRID_COLUMNS,
-            styles.headerRow,
-          )}
-        >
-          {(
-            [
-              labels.itemColumnLabel,
-              labels.costColumnLabel,
-              labels.tokensColumnLabel,
-              labels.requestsColumnLabel,
-              labels.statusColumnLabel,
-            ] as const
-          ).map((columnLabel) => (
-            <span
-              key={columnLabel}
-              role="columnheader"
+        {rows.length === 0 ? (
+          <div className="flex items-center justify-center px-6 py-10">
+            <PanelEmptyState
+              icon={
+                <IconChartBar
+                  aria-hidden
+                  size={emptyStateIconSize}
+                  stroke={1}
+                />
+              }
+              label={labels.emptyStateLabel}
+            />
+          </div>
+        ) : (
+          <>
+            <div
+              role="row"
               className={mergeClasses(
-                columnHeaderClassName,
-                styles.columnHeader,
+                'hidden gap-4 px-6 py-3 desktop:grid',
+                MODEL_LIMITS_GRID_COLUMNS,
+                styles.headerRow,
               )}
             >
-              {columnLabel}
-            </span>
-          ))}
-        </div>
+              {(
+                [
+                  labels.itemColumnLabel,
+                  labels.costColumnLabel,
+                  labels.tokensColumnLabel,
+                  labels.requestsColumnLabel,
+                  labels.statusColumnLabel,
+                ] as const
+              ).map((columnLabel) => (
+                <span
+                  key={columnLabel}
+                  role="columnheader"
+                  className={mergeClasses(
+                    columnHeaderClassName,
+                    styles.columnHeader,
+                  )}
+                >
+                  {columnLabel}
+                </span>
+              ))}
+            </div>
 
-        <div role="rowgroup">
-          {rows.map((row) => (
-            <ModelLimitsRow
-              key={row.id}
-              row={row}
-              labels={labels}
-              typography={typography}
-              avatarSize={AVATAR_SIZE}
-            />
-          ))}
-        </div>
+            <div role="rowgroup">
+              {rows.map((row) => (
+                <ModelLimitsRow
+                  key={row.id}
+                  row={row}
+                  labels={labels}
+                  typography={typography}
+                  avatarSize={AVATAR_SIZE}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

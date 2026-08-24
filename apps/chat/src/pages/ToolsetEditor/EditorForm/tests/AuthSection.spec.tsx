@@ -109,32 +109,32 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       />
     </label>
   ),
-  DialRadioButton: ({
-    inputId,
+  Radio: ({
+    id,
     value,
-    label,
-    checked,
+    labelProps,
+    isSelected,
     disabled,
     onChange,
   }: {
     name?: string;
-    inputId?: string;
+    id?: string;
     value?: string;
-    label?: string;
-    checked?: boolean;
+    labelProps?: { label?: string };
+    isSelected?: boolean;
     disabled?: boolean;
     onChange?: (v: string) => void;
   }) => (
-    <label htmlFor={inputId}>
+    <label htmlFor={id}>
       <input
-        id={inputId}
+        id={id}
         type="radio"
         value={value}
-        checked={checked}
+        checked={isSelected}
         disabled={disabled}
         onChange={() => onChange?.(value ?? '')}
       />
-      {label}
+      {labelProps?.label}
     </label>
   ),
   PrimaryButton: ({

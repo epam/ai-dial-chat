@@ -22,7 +22,6 @@ import { AuthenticationType } from '../types/entity-details';
 import type {
   AgentEntityDetails,
   EntitySpecificDetails,
-  GuardrailEntityDetails,
   ModelEntityDetails,
   ModelPricing,
   ToolsetAuthStatus,
@@ -488,40 +487,6 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
   };
 };
 
-const mapGuardrailDetails = (
-  data: GuardrailEntityDetails,
-): CatalogItemTabData => {
-  const sections: OverviewSection[] = [];
-
-  if (data.specification != null) {
-    const { specification: s } = data;
-    const specs: OverviewSection['specs'] = [];
-
-    if (s.stage != null) specs.push({ label: 'Stage', value: s.stage });
-    if (s.type != null) specs.push({ label: 'Type', value: s.type });
-    if (s.checks?.length)
-      specs.push({ label: 'Checks', value: s.checks.join(' · ') });
-    if (s.actionOnMatch != null)
-      specs.push({ label: 'Action on match', value: s.actionOnMatch });
-    if (s.sensitivity != null)
-      specs.push({ label: 'Sensitivity', value: s.sensitivity });
-    if (s.compliance?.length)
-      specs.push({ label: 'Compliance', value: s.compliance.join(' · ') });
-    if (s.appliesTo?.length)
-      specs.push({ label: 'Applies to', value: s.appliesTo.join(' · ') });
-    if (s.failureMode != null)
-      specs.push({ label: 'Failure mode', value: s.failureMode });
-    if (s.hasLogging != null)
-      specs.push({ label: 'Logging', value: s.hasLogging });
-
-    if (specs.length > 0) sections.push({ title: 'Specification', specs });
-  }
-
-  return {
-    overview: sections.length > 0 ? { sections } : undefined,
-  };
-};
-
 /** Converts a strongly-typed entity domain model into the lib's `CatalogItemTabData` shape. */
 export const mapEntityDetailsToCatalogDetails = (
   details: EntitySpecificDetails,
@@ -534,8 +499,6 @@ export const mapEntityDetailsToCatalogDetails = (
       return mapAgentDetails(details.data);
     case 'TOOLSET':
       return mapToolsetDetails(details.data);
-    case 'GUARDRAIL':
-      return mapGuardrailDetails(details.data);
   }
 };
 
