@@ -1,4 +1,5 @@
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+import { useAttachmentUpload, usePageFileDrag } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ResponseFormat,
@@ -26,21 +27,21 @@ import {
   FileDndI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
+import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
-import { useAttachmentUpload } from '../../hooks/conversation/useAttachmentUpload';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { filesApi } from '../../server-api/api-client';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
@@ -194,8 +195,10 @@ const NewConversationComposer: FC<Props> = ({
   );
 
   const { handleUploadAttachment } = useAttachmentUpload({
+    filesApi,
     bucket,
     onNetworkError: handleNetworkUploadError,
+    debounceMs: NETWORK_ERROR_DEBOUNCE_MS,
   });
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(

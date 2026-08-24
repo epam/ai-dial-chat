@@ -26,8 +26,10 @@ The endpoint:
 - SHALL respond 502 when DIAL Core returns a non-2xx response for the detail call.
 - SHALL respond 503 when DIAL Core is unreachable or times out.
 - SHALL apply `@Throttle({ default: { limit: 60, ttl: 60000 } })`, matching `GET /api/v1/deployments`.
-- SHALL cache the mapped `DeploymentDetailsDto` under key `deployments:details:<deploymentId>` for 60 000 ms; the TTL is time-based only — there is no write path for deployments in this app, so no explicit invalidation event exists beyond expiry.
-- SHALL set response header `Cache-Control: private, max-age=60`.
+- SHALL cache the mapped `DeploymentDetailsDto` under key `deployments:details:<userSub>:<deployment>` for 60 000 ms, so entries and in-flight request deduplication are isolated by authenticated user and deployment.
+- SHALL invalidate the affected `deployments:details:<userSub>:<deployment>` entry after a successful toolset create, update, delete, login, or logout before the next details fetch is treated as fresh.
+- SHALL set response header `Cache-Control: private, no-store`; client and intermediary caches MUST NOT reuse the response, while the user-scoped BFF cache remains active.
+- SHALL preserve OpenAPI `operationId: getDeploymentDetails`, path parameter `deployment: string`, response `DeploymentDetailsDto`, and normal generated `DeploymentsApi.getDeploymentDetails({ deployment })` usage; no `Raw` generated call is required because frontend callers do not consume the response header.
 - SHOULD log, at debug level, the raw DIAL Core toolset response (redacting `auth_settings.client_secret`/`code_verifier`) and the final mapped `DeploymentDetailsDto` sent to the frontend, to aid diagnosing field-mapping gaps.
 - MUST NOT log the session access token.
 - MUST NOT forward `function.env`, `function.source_folder`, `function.target_folder`, `auth_settings.client_secret`, `auth_settings.code_verifier`, `editor_url`, or raw `reference` fields.
@@ -69,13 +71,28 @@ The endpoint:
 
 #### Scenario: Cache hit avoids upstream detail call
 
-- **WHEN** `deployments:details:<id>` is present in cache and not yet expired
+- **WHEN** `deployments:details:<userSub>:<deployment>` is present in cache and not yet expired
 - **THEN** the service returns the cached `DeploymentDetailsDto` without calling `getModel`/`getApplication`/`getToolset`
 
-#### Scenario: Concurrent requests for the same uncached id share one upstream call
+#### Scenario: Concurrent requests for the same uncached user and deployment share one upstream call
 
-- **WHEN** two requests for the same uncached `deployment` id arrive before the first has resolved
-- **THEN** only one upstream detail call is made; the second request awaits and receives the same result as the first (via the in-memory `pendingDetailsRequests` map keyed by cache key)
+- **WHEN** two concurrent requests for the same authenticated user and uncached `deployment` arrive before the first has resolved
+- **THEN** only one upstream detail call is made; the second request awaits and receives the same result through the in-memory map keyed by `deployments:details:<userSub>:<deployment>`
+
+#### Scenario: Different users do not share deployment details
+
+- **WHEN** two authenticated users request the same deployment id within the 60-second server cache window
+- **THEN** each user resolves through a distinct `deployments:details:<userSub>:<deployment>` cache key and cannot receive the other user's detail snapshot
+
+#### Scenario: Toolset write invalidates cached details
+
+- **WHEN** a toolset create, update, delete, login, or logout succeeds for a user and toolset
+- **THEN** the affected `deployments:details:<userSub>:<deployment>` entry is deleted before a subsequent details request can reuse it
+
+#### Scenario: Client-side caching is disabled
+
+- **WHEN** an authenticated deployment-details request succeeds
+- **THEN** the response contains `Cache-Control: private, no-store`, while the BFF may still serve the body from its user-scoped server cache
 
 #### Scenario: DIAL Core unreachable
 

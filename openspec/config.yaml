@@ -37,6 +37,8 @@ context: |
   - @/*        → apps/chat/*
   - @epam/ai-dial-conversation-input/* → libs/conversation-input/*
   - @epam/ai-dial-chat-shared/*        → libs/chat-shared/*
+  - @epam/ai-dial-chat-hooks           → libs/chat-hooks/
+  - @epam/ai-dial-chat-hooks/*         → libs/chat-hooks/*
 
   ## Commands
   - Frontend dev: `npm start` (localhost:4207, proxies /api → localhost:5000)
@@ -86,11 +88,12 @@ context: |
 
   ### Libraries
   - libs/chat-shared/  — shared TypeScript interfaces and types only (no logic)
+  - libs/chat-hooks/  — reusable headless React hooks for chat interfaces
   - libs/conversation-input/  — ConversationInput React component
   - Libraries under libs/* are host-agnostic: host/external integration knowledge stays in
     app-level adapters and is passed in via props, callbacks, or resolved values. See
-    AGENTS.md §Library isolation for the full boundary rules and the libs/chat-api-client/
-    generated-client exception — do NOT restate them here.
+    AGENTS.md §Library isolation for the full boundary rules and the narrow exceptions for
+    libs/chat-api-client/ and libs/chat-hooks/ — do NOT restate them here.
 
   ### Module boundary rules
   - apps may import from libs; apps may not import from each other
@@ -98,7 +101,8 @@ context: |
   - type:shared libs (chat-shared) import nothing
   - libs may not import from apps, server-api wrappers, generated API clients, backend DTOs,
     app providers/contexts, config/env, storage, analytics, routing, or SDK singletons; the
-    only generated-client exception is code inside libs/chat-api-client/ itself
+    generated-client exceptions are limited to libs/chat-api-client/ and the narrow
+    libs/chat-hooks/ contract documented in AGENTS.md
   - Enforced by @nx/enforce-module-boundaries in eslint.config.mjs
 
 rules:

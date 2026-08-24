@@ -26,7 +26,6 @@ import {
 } from '../../../server-api/conversation-publish.api';
 import {
   discardSharedCatalogItem,
-  getShareRecipientsCount,
   revokeSharedAccess,
 } from '../../../server-api/share.api';
 import {
@@ -241,6 +240,10 @@ vi.mock('../../../server-api/conversation-publish.api', () => ({
     requestedAt: '2026-08-13T10:00:00.000Z',
     requestedBy: 'Test User',
   }),
+}));
+const getShareRecipientsCount = vi.hoisted(() => vi.fn());
+vi.mock('../../../server-api/api-client', () => ({
+  shareApi: { getShareRecipientsCount },
 }));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({ items: [] }),
@@ -1736,7 +1739,7 @@ describe('ConversationPanelView — revoke access', () => {
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
 
-    expect(getShareRecipientsCount).toHaveBeenCalledWith('conv1');
+    expect(getShareRecipientsCount).toHaveBeenCalledWith({ itemId: 'conv1' });
     expect(
       screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
     ).toBeTruthy();

@@ -1,14 +1,19 @@
+import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import { ShareLinkAccess, type SharePopoverProps } from '@epam/ai-dial-share';
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as useShareLinkModule from '../../../hooks/useShareLink/useShareLink';
+import { shareApi } from '../../../server-api/api-client';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer';
 
 const { mockSharePopover } = vi.hoisted(() => ({
   mockSharePopover: vi.fn((_props: SharePopoverProps) => null),
 }));
 
-vi.mock('../../../hooks/useShareLink/useShareLink');
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return { ...actual, useShareLink: vi.fn() };
+});
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -20,9 +25,9 @@ vi.mock('@epam/ai-dial-share', () => ({
 }));
 
 const mockUseShareLink = (
-  overrides: Partial<ReturnType<typeof useShareLinkModule.useShareLink>> = {},
+  overrides: Partial<ReturnType<typeof chatHooksModule.useShareLink>> = {},
 ) => {
-  vi.mocked(useShareLinkModule.useShareLink).mockReturnValue({
+  vi.mocked(chatHooksModule.useShareLink).mockReturnValue({
     data: undefined,
     isLoading: false,
     error: null,
@@ -52,7 +57,10 @@ describe('ShareConversationPopoverContainer', () => {
       />,
     );
 
-    expect(useShareLinkModule.useShareLink).toHaveBeenCalledWith('path-1');
+    expect(chatHooksModule.useShareLink).toHaveBeenCalledWith(
+      shareApi,
+      'path-1',
+    );
 
     expect(mockSharePopover).toHaveBeenCalledWith(
       expect.objectContaining({
