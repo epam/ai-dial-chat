@@ -1,4 +1,5 @@
 import { registerDecorator, type ValidationOptions } from 'class-validator';
+import { safeDecodeURIComponent } from '../utils/uri';
 import { DEPLOYMENT_ID_PATTERN } from './deployment-id.pattern';
 
 /*
@@ -7,12 +8,19 @@ import { DEPLOYMENT_ID_PATTERN } from './deployment-id.pattern';
  * passes it — see GitHub #7925. Toolset names legitimately need `/` for
  * custom toolset paths (`toolsets/{bucket}/{path}`, see
  * ToolsetsService.parseDialToolsetResource), so the fix adds a
- * segment-level check instead of dropping `/` from the allowlist.
+ * segment-level check instead of dropping `/` from the allowlist. Decoding
+ * each segment once more prevents a double-encoded slash from hiding a
+ * traversal segment from that check.
  */
-const hasTraversalSegment = (value: string): boolean =>
+const getDecodedSegments = (value: string): string[] =>
   value
     .split('/')
-    .some((segment) => segment === '' || segment === '.' || segment === '..');
+    .flatMap((segment) => safeDecodeURIComponent(segment).split('/'));
+
+const hasTraversalSegment = (value: string): boolean =>
+  getDecodedSegments(value).some(
+    (segment) => segment === '' || segment === '.' || segment === '..',
+  );
 
 export const isSafeToolsetName = (value: unknown): value is string => {
   if (typeof value !== 'string' || value.length === 0) return false;
@@ -33,7 +41,7 @@ export const IsSafeToolsetName = (validationOptions?: ValidationOptions) => {
           return (
             'Toolset name must contain only supported characters or valid ' +
             'percent-encoded bytes, and must not contain empty, dot, or ' +
-            'dot-dot path segments'
+            'dot-dot path segments, including when encoded'
           );
         },
       },
