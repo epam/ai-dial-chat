@@ -88,7 +88,8 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
             />
           }
           aria-label={removeFromFavoritesLabel}
-          aria-pressed
+          /* Every row in this panel is a favorite, so the star is always on. */
+          isSelected
           onClick={(e) => {
             e.stopPropagation();
             onToggleFavorite(item.id);
