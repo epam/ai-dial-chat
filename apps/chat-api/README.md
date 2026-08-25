@@ -193,6 +193,21 @@ setting is read at Core startup, so restart DIAL Core after changing it.
 | `ANNOUNCEMENT_DESCRIPTION`              | —                              | Supporting copy shown after the banner title. Sanitized server-side (allowlist: `a b strong em br span`); non-hash anchors are forced to `target="_blank" rel="noopener noreferrer"`. Text that overruns the banner width is silently truncated with an ellipsis, so keep it short. Blank, or markup that sanitizes away entirely, is treated as unset.                                                                                                                                                                                                                              |
 | `ANNOUNCEMENTS`                         | `[]`                           | JSON array feeding the `+N announcements` popover: `[{ "title": "…", "description": "…", "link": { "label": "…", "href": "https://…" } }]`. `description` and `link` are optional; an entry with no link renders without a call to action. Max 10 entries. Validation is drop-and-log and never fatal — an entry is dropped if its title is blank, or if its link is present but has a blank label or an `href` that is not an absolute `http`/`https` URL (relative paths are rejected). Malformed JSON resolves to `[]`. Rejected entries appear only in the server log.           |
 
+#### Outbound DIAL Core client identity
+
+Every request from Chat API to DIAL Core carries
+`User-Agent: ai-dial-chat/<normalized-version>`. This applies to requests made
+through the shared DIAL SDK client and to the raw Core transports used for
+rating, scheduled tasks, and streaming archive uploads. Requests to non-Core
+services, such as the theme service, keep their own transport and identity.
+
+The version is resolved from `CHAT_VERSION`; blank or unset values fall back to
+the app's `package.json` version. For the header only, runs of characters outside
+`A-Z`, `a-z`, `0-9`, `.`, `_`, and `-` become `-`, leading and trailing `-` are
+removed, and an empty normalized value becomes `unknown`. The header is intended
+only for operational diagnostics and client-version attribution. It contains no
+user, tenant, authentication, conversation, or other runtime request data.
+
 Banner dismissal is content-keyed and persists in the browser's `localStorage`: a user who closes the banner keeps it hidden across restarts, and it reappears automatically for everyone once an operator changes the title or the description — no version counter or manual reset. Note that dismissing the banner also hides the announcements popover, since the pill lives inside the banner.
 
 | Variable                    | Default | Description                                                                                                                                                                                                                                                      |
