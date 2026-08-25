@@ -402,6 +402,34 @@ describe('ResponsesAdapter', () => {
       });
     });
 
+    it('strips MIME parameters from the type before building a base64 data-URI to keep the URI well-formed', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [
+          {
+            role: ConversationMessageRole.User,
+            content: 'Here',
+            custom_content: {
+              attachments: [
+                { type: 'image/png; charset=utf-8', data: 'abc123' },
+              ],
+            },
+          } as never,
+        ],
+        temperatureSupported: false,
+      });
+
+      expect(request.input[0]).toEqual({
+        role: 'user',
+        content: [
+          { type: 'input_text', text: 'Here' },
+          { type: 'input_image', image_url: 'data:image/png;base64,abc123' },
+        ],
+      });
+    });
+
     it('drops non-image attachments and returns plain text content', () => {
       const { adapter } = makeAdapter();
       const request = adapter.buildRequest({
@@ -839,7 +867,7 @@ describe('ResponsesAdapter', () => {
       expect(res.getWritten()).not.toContain('secret thinking');
     });
 
-    it('accumulates response.reasoning_text.delta content into the assembled message stages', async () => {
+    it('discards response.reasoning_text.delta — reasoning is not persisted in the assembled message stages', async () => {
       const { adapter, mockDialClient } = makeAdapter();
       const { result } = await relay(adapter, mockDialClient, [
         'data: {"type":"response.reasoning_text.delta","item_id":"rs-2","delta":"Thinking step 1."}\n\n',
@@ -849,24 +877,7 @@ describe('ResponsesAdapter', () => {
 
       expect(result.outcome).toBe('completed');
       if (result.outcome === 'completed') {
-        const stages = result.assembledMessage.custom_content?.stages;
-        expect(stages).toBeDefined();
-        expect(stages![0].content).toBe('Thinking step 1. And more.');
-      }
-    });
-
-    it('emits name "Thinking" only on the first delta per item_id to avoid "ThinkingThinking" duplication from mergeStages', async () => {
-      const { adapter, mockDialClient } = makeAdapter();
-      const { result } = await relay(adapter, mockDialClient, [
-        'data: {"type":"response.reasoning_text.delta","item_id":"rs-3","delta":"Alpha"}\n\n',
-        'data: {"type":"response.reasoning_text.delta","item_id":"rs-3","delta":" Beta"}\n\n',
-        'data: {"type":"response.completed","response":{"id":"resp-r3","status":"completed"}}\n\n',
-      ]);
-
-      expect(result.outcome).toBe('completed');
-      if (result.outcome === 'completed') {
-        const stages = result.assembledMessage.custom_content?.stages;
-        expect(stages![0].name).toBe('Thinking');
+        expect(result.assembledMessage.custom_content?.stages).toBeFalsy();
       }
     });
   });

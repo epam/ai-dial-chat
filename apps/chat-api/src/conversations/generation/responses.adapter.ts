@@ -156,7 +156,7 @@ export class ResponsesAdapter {
       .map((attachment) => ({
         type: 'input_image',
         image_url: attachment.data
-          ? `data:${attachment.type};base64,${attachment.data}`
+          ? `data:${(attachment.type as string).split(';')[0].trim()};base64,${attachment.data}`
           : (attachment.url as string),
       }));
 
@@ -256,22 +256,8 @@ export class ResponsesAdapter {
       let terminalSignal: ResponsesTerminalSignal | null = null;
       let isDone = false;
       const pendingChunks: string[] = [];
-      /* Tracks reasoning `item_id`s already opened as a stage, so the
-       * synthetic "Thinking" stage name is sent once, not on every delta. */
-      const reasoningStageItemIds = new Set<string>();
-
       const writeChunk = (chunk: NormalizedStreamChunk): void => {
         pendingChunks.push(`data: ${JSON.stringify(chunk)}\n\n`);
-        assembledMessage = applyChunkToMessage(assembledMessage, chunk);
-      };
-
-      /*
-       * Same accumulation as `writeChunk`, but never queued to
-       * `pendingChunks` — the reasoning "Thinking" stage is persisted on the
-       * assembled message (so it's available in exported/inspected
-       * conversation data) without being live-streamed to the browser UI.
-       */
-      const recordWithoutStreaming = (chunk: NormalizedStreamChunk): void => {
         assembledMessage = applyChunkToMessage(assembledMessage, chunk);
       };
 
@@ -297,38 +283,13 @@ export class ResponsesAdapter {
           }
           case 'response.reasoning_text.delta': {
             /*
-             * Records the model's reasoning into the persisted message using
-             * the pre-existing `stages` mechanism (see `mergeStages` in
-             * `apply-chunk.server.ts`) instead of a new wire concept, but via
-             * `recordWithoutStreaming` rather than `writeChunk` — reasoning is
-             * kept in the stored conversation data without being shown live in
-             * the chat UI. `name` is sent only on the first delta for a given
-             * `item_id`; `mergeStages` concatenates `name` on every merge, so
-             * repeating it would duplicate the "Thinking" label.
+             * Reasoning deltas are intentionally discarded — not forwarded to
+             * the browser and not persisted in the assembled message. The
+             * persisted message retains only the visible output text. This
+             * prevents chain-of-thought from surfacing in the chat history on
+             * reload. Once a UI for displaying reasoning is designed and
+             * implemented, this case should be revisited.
              */
-            const delta = (event as { delta?: string; item_id?: string }).delta;
-            const itemId = (event as { item_id?: string }).item_id;
-            if (delta && itemId) {
-              const isFirstDeltaForItem = !reasoningStageItemIds.has(itemId);
-              reasoningStageItemIds.add(itemId);
-              recordWithoutStreaming({
-                choices: [
-                  {
-                    delta: {
-                      custom_content: {
-                        stages: [
-                          {
-                            index: 0,
-                            ...(isFirstDeltaForItem && { name: 'Thinking' }),
-                            content: delta,
-                          },
-                        ],
-                      },
-                    },
-                  },
-                ],
-              });
-            }
             return;
           }
           case 'response.completed': {

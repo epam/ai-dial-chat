@@ -17,8 +17,7 @@ Most scaffolding was reverted once it answered its question — tools/function c
 each would silently alter every real Responses request on `development`). Several other items have since
 been hardened and merged to `development` with production DTOs, Swagger contracts, and an `openapi` regen:
 multimodal input (`input_image` mapping), `reasoning.effort` request passthrough (gated behind
-`features.reasoningEfforts`), `custom_fields.configuration` passthrough, and the reasoning-to-`stages`
-mapping (persisted, not shown in the UI). None of these yet have a real per-conversation UI setting layer —
+`features.reasoningEfforts`), and `custom_fields.configuration` passthrough. None of these yet have a real per-conversation UI setting layer —
 that remains open. This document continues to serve as the record of what is confirmed vs. still guessed
 for the remaining unimplemented items.
 
@@ -29,10 +28,10 @@ for the remaining unimplemented items.
 - **Multimodal input** (image attachments) — confirmed working over Responses.
 - **`reasoning.effort`** request passthrough — confirmed Core accepts it without rejection; kept live,
   gated behind `features.reasoningEfforts` so it's a no-op on unsupported deployments.
-- **Reasoning surfacing** — the model's reasoning text (`response.reasoning_text.delta`) is captured into
-  the message's `custom_content.stages` (reusing the existing stages accumulator) via
-  `recordWithoutStreaming`, so it lands in persisted conversation data without being streamed live to the
-  browser — no "Thinking" panel shows in the chat UI today.
+- **Reasoning surfacing** — `response.reasoning_text.delta` events are recognized and not forwarded to the
+  browser. They are currently **discarded** (not persisted) — the assembled message retains no `stages` entry
+  for reasoning, so chain-of-thought does not appear in conversation history on reload. A dedicated UI for
+  displaying or persisting reasoning remains open.
 - **Stages support over Responses — definitively answered "no."** Confirmed via a same-deployment,
   same-prompt comparison: Chat Completions gets automatic server-side web-search grounding (stages) for
   `-web-search` deployments; Responses gets none. This is a Core-side gap, not something fixable in this
@@ -204,23 +203,19 @@ any deployment that doesn't support it.
    `response_format` test would need `json_object`/`json_schema` and a check that the model returns valid
    JSON; a real reasoning-effort test would need a low-vs-high A/B comparison on a task sensitive to it.
 
-### Reasoning items/summaries — CONFIRMED present in the stream; captured in data, not shown in the UI
+### Reasoning items/summaries — CONFIRMED present in the stream; currently discarded
 
 Live-tested on `ali.qwen3.7-plus-web-search`. The real event names (not the sketch previously written
 here) are `response.reasoning_text.delta` (token-by-token reasoning text, same shape as
 `response.output_text.delta` but for the model's chain-of-thought) and `response.output_item.done` with
 `item.type: 'reasoning'` carrying the full text again as `item.summary: [{ type: 'summary_text', text }]`.
 
-Originally both fell into `handleEvent`'s `default:` branch — logged at debug level, counted as an
-unknown-event metric, never forwarded to the browser or persisted. `handleEvent` now has a dedicated
-`response.reasoning_text.delta` case that maps each delta into a synthetic `custom_content.stages` entry
-(`index: 0`, `name: 'Thinking'` sent once per `item_id`, `content` appended per delta), reusing the exact
-`mergeStages` accumulation Chat Completions already uses for its own stages. It's recorded onto the
-assembled message via `recordWithoutStreaming` rather than `writeChunk`, so the reasoning stage lands in the
-persisted conversation data but is never queued into `pendingChunks` — nothing streams live to the browser,
-so the chat UI shows no "Thinking" panel. `response.output_item.done` for the reasoning item is still
-unhandled/dropped by choice: the full text already arrived via the deltas, so re-sending it as a second copy
-would duplicate content.
+`handleEvent` has a dedicated `response.reasoning_text.delta` case that explicitly discards the event —
+not forwarded to the browser and not persisted in the assembled message. The assembled message retains no
+`stages` entry for reasoning, so chain-of-thought does not appear in conversation history on reload. This
+avoids surfacing chain-of-thought to the user after the fact (a concern with the previous
+`recordWithoutStreaming` approach). `response.output_item.done` for the reasoning item is also
+unhandled/dropped.
 
 **Verified the reasoning/answer boundary is clean, not buggy.** A follow-up test looked like reasoning text
 was leaking into the visible chat answer (mid-thought content appearing outside the "Thinking" stage).
@@ -335,8 +330,8 @@ per slice later.)*
 - **Citations parity:** trigger a citation-producing response through a Responses-routed deployment; confirm
   the citation renders identically (same component, same tooltip/quote behavior) as an equivalent
   Chat-Completions citation.
-- **Reasoning summary persistence:** trigger a reasoning-capable deployment; confirm the reasoning summary
-  (if the UI surfaces it) or at least its persisted `custom_content` field survives a conversation reload.
+- **Reasoning — no persisted stage:** trigger a reasoning-capable deployment; confirm that the assembled
+  message has no `custom_content.stages` entry and that reloading the conversation shows no "Thinking" panel.
 - **Regression — Chat Completions unaffected:** for a deployment that stays on Chat Completions (either
   `RESPONSES_API_ENABLED=false` or `features.responsesApi` absent/false), confirm none of the new fields
   change its request or response shape at all.

@@ -21,15 +21,20 @@ describe('AttachmentDto', () => {
       'IMAGE/PNG',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/octet-stream',
-    ])('accepts the valid MIME type %s', async (type) => {
+    ])('accepts the bare MIME type %s', async (type) => {
       expect(await isValid(makeDto({ type }))).toBe(true);
     });
 
-    it('rejects a MIME type containing a semicolon (would corrupt a data: URI)', async () => {
-      expect(await isValid(makeDto({ type: 'image/png;charset=utf-8' }))).toBe(false);
+    it.each([
+      'text/plain; charset=utf-8',
+      'image/png;charset=utf-8',
+      'application/json; charset=utf-8',
+      'multipart/form-data; boundary=----WebKitFormBoundary',
+    ])('accepts the parameterized MIME type %s', async (type) => {
+      expect(await isValid(makeDto({ type }))).toBe(true);
     });
 
-    it('rejects a MIME type containing a comma (would corrupt a data: URI)', async () => {
+    it('rejects a MIME type containing a comma (corrupts the data: URI data separator)', async () => {
       expect(await isValid(makeDto({ type: 'image/png,text/html' }))).toBe(false);
     });
 

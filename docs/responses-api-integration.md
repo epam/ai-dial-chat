@@ -195,7 +195,7 @@ The Responses API returns typed events, while the existing frontend expects Chat
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `response.created`                | Saves the response identifier and sends it in `delta.responseId`                                                               |
 | `response.output_text.delta`      | Appends `delta` to the assistant message and sends it as `delta.content`                                                        |
-| `response.reasoning_text.delta`   | Accumulates `delta` into the assembled message's `stages` (`name: "Thinking"` on first delta per item); never sent to browser  |
+| `response.reasoning_text.delta`   | Discarded — not forwarded to the browser and not persisted in the assembled message                                             |
 | `response.completed`              | Validates the final status; a valid status completes the stream and saves `responseId`                                          |
 | `response.failed`                 | Ends generation with an error extracted from `response.error`, preserving text received so far                                  |
 | `response.incomplete`             | Ends generation with an error while preserving text received so far                                                             |
@@ -292,13 +292,13 @@ If the Responses API has already been selected and returns an error, Chat does n
 | Image attachments          | `image/*` → `input_image` parts; non-image dropped                                       | forwarded as-is in `custom_content.attachments` |
 | Reasoning effort           | `reasoning.effort` when `features.reasoningEfforts` non-empty                            | not applicable                                  |
 | Configuration              | `custom_fields.configuration` when present                                               | `custom_content.configuration`                  |
-| Reasoning capture          | `response.reasoning_text.delta` → `stages` (stored, not streamed)                        | not applicable                                  |
+| Reasoning events           | `response.reasoning_text.delta` discarded (not streamed, not persisted)                   | not applicable                                  |
 | Streaming                  | native events are transformed to chunks                                                  | upstream chunks are passed through almost as-is |
 | Storage in Core            | `store: false`                                                                           | not applicable                                  |
 | Continuation by ID         | not used                                                                                 | not applicable                                  |
 | Final conversation storage | AI DIAL Chat                                                                             | AI DIAL Chat                                    |
 
-The Chat Completions branch retains existing support for DIAL-specific payloads: attachments, `custom_content`, configuration, and stages. The Responses branch sends text-based `role`/`content` messages, the system prompt, generation parameters (`temperature`, `max_output_tokens`, `reasoning.effort`), `custom_fields.configuration`, and image attachments mapped to `input_image`; non-image attachments and remaining DIAL-specific payloads remain Chat-Completions-only. Reasoning output from `response.reasoning_text.delta` is captured into the persisted message's `stages` with a `"Thinking"` label but is not yet rendered in the chat UI.
+The Chat Completions branch retains existing support for DIAL-specific payloads: attachments, `custom_content`, configuration, and stages. The Responses branch sends text-based `role`/`content` messages, the system prompt, generation parameters (`temperature`, `max_output_tokens`, `reasoning.effort`), `custom_fields.configuration`, and image attachments mapped to `input_image`; non-image attachments and remaining DIAL-specific payloads remain Chat-Completions-only. `response.reasoning_text.delta` events are discarded — not forwarded to the browser and not persisted.
 
 ## Current Support Scope
 
@@ -320,7 +320,7 @@ Supported:
 - `reasoning.effort`: forwarded from the deployment's `features.reasoningEfforts` list when non-empty (first entry is used); omitted when the list is absent or empty, so models that do not declare reasoning-effort support never receive the field;
 - image input: `image/*` attachments from the conversation's message history are mapped to `input_image` content parts in the Responses `input` array; non-image attachments are dropped (not forwarded) in the Responses branch;
 - `custom_fields.configuration`: forwarded when a configuration value is present on the conversation, mirroring the Chat Completions Deep Research passthrough;
-- reasoning output capture: `response.reasoning_text.delta` events are accumulated into the assistant message's `stages` with a `"Thinking"` label and stored in conversation history; the `name: "Thinking"` label is sent only on the first delta per `item_id` to avoid duplication from `mergeStages` name-concatenation; reasoning is not forwarded to the browser stream and is not yet rendered in the chat UI.
+- `response.reasoning_text.delta` events are recognized and explicitly discarded — not forwarded to the browser stream and not persisted in conversation history; the assembled message retains no `stages` entry for reasoning, so chain-of-thought does not appear on conversation reload.
 
 Not yet supported in the Responses branch:
 
@@ -329,7 +329,7 @@ Not yet supported in the Responses branch:
 - background mode;
 - Core `GET`, `CANCEL`, and `DELETE /openai/v1/responses/{response_id}` operations;
 - tools and function calling;
-- reasoning UI display (reasoning deltas are captured in `stages` in conversation history but are not yet rendered in the chat UI);
+- reasoning display — `response.reasoning_text.delta` is discarded today; persisting and displaying reasoning requires a dedicated UI design;
 - non-image file input and other non-image multimodal content items (`image/*` attachments are supported; other types are dropped);
 - citations, annotations, and rich output;
 - DIAL non-image attachment forwarding and remaining `custom_content` fields not described in Supported above;
