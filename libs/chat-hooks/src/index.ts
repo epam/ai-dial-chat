@@ -32,6 +32,7 @@ export { getConversationPath } from './conversation/useConversationStream/conver
 export { isAwaitingGenerationResume } from './conversation/useConversationStream/generation-resume';
 export * from './conversation/useConversationStream/useConversationStream';
 export * from './conversation-sources/useConversationSources/useConversationSources';
+export * from './useChatSettingsFormConfig/useChatSettingsFormConfig';
 export * from './usePageFileDrag/usePageFileDrag';
 export * from './usePanelMaxWidth/usePanelMaxWidth';
 export * from './useShareLink/useShareLink';
