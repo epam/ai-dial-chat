@@ -3,42 +3,17 @@ import {
   mergeClasses,
   PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
-import { SegmentedControl } from '@epam/ai-dial-ui-kit';
 import { IconChartBar } from '@tabler/icons-react';
 import { FC } from 'react';
-import {
-  ModelLimitsPeriod,
-  ModelLimitsSectionProps,
-} from '../../models/model-limits-props';
+import { ModelLimitsSectionProps } from '../../models/model-limits-props';
 import { MODEL_LIMITS_GRID_COLUMNS, ModelLimitsRow } from './ModelLimitsRow';
 import styles from './ModelLimitsSection.module.scss';
 
 const AVATAR_SIZE = 40;
 
-const PERIOD_ORDER: ModelLimitsPeriod[] = [
-  ModelLimitsPeriod.LastMinute,
-  ModelLimitsPeriod.LastHour,
-  ModelLimitsPeriod.Last24Hours,
-  ModelLimitsPeriod.Last7Days,
-  ModelLimitsPeriod.Last30Days,
-];
-
-/*
- * The 2.0 track already supplies the sunken pill, the raised accent segment and
- * its shadow. What it does not cover is a five-segment row on a phone: the track
- * is `w-fit` with no overflow handling, so the segments scroll horizontally
- * (the scrollbar itself is hidden in the stylesheet) instead of shrinking below
- * their labels, and each one keeps the 44px pointer target that the kit's own
- * 32px height does not reach on touch.
- */
-const PERIOD_SELECTOR_CLASS_NAME =
-  'max-w-full overflow-x-auto overflow-y-hidden [&>button]:flex-none mobile:[&>button]:h-11';
-
-/** "Model limits" section: a heading with row count, a controlled period selector, and a table of per-model Cost/Tokens/Requests/Status metrics. */
+/** "Model limits" section: a fixed table comparing Cost and Tokens across three rolling periods. */
 export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
   rows,
-  period,
-  onPeriodChange,
   labels,
   styles: stylesProp,
   emptyStateIconSize = 48,
@@ -78,7 +53,7 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
 
   return (
     <div className="flex flex-col gap-4" style={cssVars}>
-      <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
+      <div className="flex min-h-10 items-center">
         <h3 className="m-0 flex items-center gap-2">
           <span className={mergeClasses(headingClassName, styles.heading)}>
             {labels.headingLabel}
@@ -89,19 +64,6 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
             {rows.length}
           </span>
         </h3>
-        <SegmentedControl
-          aria-label={labels.periodSelectorAriaLabel}
-          value={period}
-          onChange={onPeriodChange}
-          className={mergeClasses(
-            PERIOD_SELECTOR_CLASS_NAME,
-            styles.periodSelector,
-          )}
-          items={PERIOD_ORDER.map((value) => ({
-            value,
-            label: labels.periodLabels[value],
-          }))}
-        />
       </div>
 
       <div
@@ -130,7 +92,7 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
             <div
               role="row"
               className={mergeClasses(
-                'hidden gap-4 px-6 py-3 desktop:grid',
+                'hidden gap-4 px-6 py-3 desktop:grid desktop:items-center',
                 MODEL_LIMITS_GRID_COLUMNS,
                 styles.headerRow,
               )}
@@ -138,9 +100,9 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
               {(
                 [
                   labels.itemColumnLabel,
-                  labels.costColumnLabel,
-                  labels.tokensColumnLabel,
-                  labels.requestsColumnLabel,
+                  labels.last24HoursColumnLabel,
+                  labels.last7DaysColumnLabel,
+                  labels.last30DaysColumnLabel,
                   labels.statusColumnLabel,
                 ] as const
               ).map((columnLabel) => (

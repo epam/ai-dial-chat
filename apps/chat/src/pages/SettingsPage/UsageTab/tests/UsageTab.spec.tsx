@@ -1,5 +1,9 @@
 import { DeploymentItemDtoTypeEnum } from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import type {
+  ModelLimitRow,
+  ModelLimitsLabels,
+} from '@epam/ai-dial-usage-dashboard';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsageI18nKeys } from '../../../../constants/translation-keys';
@@ -10,6 +14,10 @@ import { createDeploymentsContextValue } from '../../../../context/tests/deploym
 import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
 import { useUsageData } from '../../../../hooks/useUsageData';
 import UsageTab from '../UsageTab';
+
+const { modelLimitsSectionSpy } = vi.hoisted(() => ({
+  modelLimitsSectionSpy: vi.fn(),
+}));
 
 vi.mock('../../../../context/AppConfigContext', () => ({
   useFeatureFlag: vi.fn(),
@@ -43,17 +51,20 @@ vi.mock('@epam/ai-dial-usage-dashboard', async (importOriginal) => {
       rows,
       labels,
     }: {
-      rows: { id: string; name: string }[];
-      labels: { emptyStateLabel: string };
-    }) => (
-      <div>
-        {rows.length === 0 ? (
-          <span>{labels.emptyStateLabel}</span>
-        ) : (
-          rows.map((row) => <span key={row.id}>{row.name}</span>)
-        )}
-      </div>
-    ),
+      rows: ModelLimitRow[];
+      labels: ModelLimitsLabels;
+    }) => {
+      modelLimitsSectionSpy({ rows, labels });
+      return (
+        <div>
+          {rows.length === 0 ? (
+            <span>{labels.emptyStateLabel}</span>
+          ) : (
+            rows.map((row) => <span key={row.id}>{row.name}</span>)
+          )}
+        </div>
+      );
+    },
   };
 });
 
@@ -219,6 +230,29 @@ describe('UsageTab', () => {
 
       expect(screen.getByText('GPT-4o')).toBeTruthy();
       expect(screen.getByText('Claude 3')).toBeTruthy();
+
+      const { rows, labels } = modelLimitsSectionSpy.mock.lastCall?.[0] as {
+        rows: ModelLimitRow[];
+        labels: ModelLimitsLabels;
+      };
+      expect(rows[0].last24Hours.tokens.usedLabel).toBe('1');
+      expect(rows[0].last7Days.tokens.kind).toBe('unavailable');
+      expect(rows[0].last30Days.tokens.kind).toBe('unavailable');
+      expect(labels).toEqual(
+        expect.objectContaining({
+          last24HoursColumnLabel: UsageI18nKeys.TodayPeriodDescription,
+          last7DaysColumnLabel: UsageI18nKeys.ThisWeekPeriodDescription,
+          last30DaysColumnLabel: UsageI18nKeys.ThisMonthPeriodDescription,
+          tokensLabel: UsageI18nKeys.TokensColumnLabel,
+          costLabel: UsageI18nKeys.CostColumnLabel,
+        }),
+      );
+      expect(modelLimitsSectionSpy.mock.lastCall?.[0]).not.toHaveProperty(
+        'period',
+      );
+      expect(modelLimitsSectionSpy.mock.lastCall?.[0]).not.toHaveProperty(
+        'onPeriodChange',
+      );
     });
 
     it('shows an empty state instead of an empty table when `usage.deployments` is empty', () => {
@@ -235,7 +269,7 @@ describe('UsageTab', () => {
       ).toBeTruthy();
     });
 
-    it('shows the same empty state when every deployment has no usage in the selected period', () => {
+    it('shows the same empty state when every deployment has no usage in displayed periods', () => {
       mockUseDeployments.mockReturnValue(
         createDeploymentsContextValue({
           items: [

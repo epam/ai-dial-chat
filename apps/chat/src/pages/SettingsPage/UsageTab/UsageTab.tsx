@@ -1,10 +1,9 @@
 import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
-  ModelLimitsPeriod,
   ModelLimitsSection,
   UsageLimitCardGroup,
 } from '@epam/ai-dial-usage-dashboard';
-import { memo, useEffect, useMemo, useState, type FC } from 'react';
+import { memo, useEffect, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UsageI18nKeys } from '../../../constants/translation-keys';
 import { useFeatureFlag } from '../../../context/AppConfigContext';
@@ -27,7 +26,6 @@ const UsageTab: FC = () => {
   } = useUsageData(isSettingsPageEnabled);
   const { items: deploymentItems, isLoading: isDeploymentsLoading } =
     useDeployments();
-  const [period, setPeriod] = useState(ModelLimitsPeriod.Last24Hours);
   const isLoading = isUsageLoading || isDeploymentsLoading;
 
   useEffect(() => {
@@ -56,25 +54,13 @@ const UsageTab: FC = () => {
   const modelLimitsLabels = useMemo(
     () => ({
       headingLabel: t(UsageI18nKeys.ModelLimitsHeading),
-      periodLabels: {
-        [ModelLimitsPeriod.LastMinute]: t(UsageI18nKeys.PeriodLastMinuteLabel),
-        [ModelLimitsPeriod.LastHour]: t(UsageI18nKeys.PeriodLastHourLabel),
-        [ModelLimitsPeriod.Last24Hours]: t(
-          UsageI18nKeys.TodayPeriodDescription,
-        ),
-        [ModelLimitsPeriod.Last7Days]: t(
-          UsageI18nKeys.ThisWeekPeriodDescription,
-        ),
-        [ModelLimitsPeriod.Last30Days]: t(
-          UsageI18nKeys.ThisMonthPeriodDescription,
-        ),
-      },
-      periodSelectorAriaLabel: t(UsageI18nKeys.PeriodSelectorAriaLabel),
       itemColumnLabel: t(UsageI18nKeys.ItemColumnLabel),
-      costColumnLabel: t(UsageI18nKeys.CostColumnLabel),
-      tokensColumnLabel: t(UsageI18nKeys.TokensColumnLabel),
-      requestsColumnLabel: t(UsageI18nKeys.RequestsColumnLabel),
+      last24HoursColumnLabel: t(UsageI18nKeys.TodayPeriodDescription),
+      last7DaysColumnLabel: t(UsageI18nKeys.ThisWeekPeriodDescription),
+      last30DaysColumnLabel: t(UsageI18nKeys.ThisMonthPeriodDescription),
       statusColumnLabel: t(UsageI18nKeys.StatusColumnLabel),
+      tokensLabel: t(UsageI18nKeys.TokensColumnLabel),
+      costLabel: t(UsageI18nKeys.CostColumnLabel),
       modelTypeLabel: t(UsageI18nKeys.ModelTypeLabel),
       noLimitLabel: t(UsageI18nKeys.NoLimitLabel),
       unavailableLabel: t(UsageI18nKeys.UnavailableLabel),
@@ -89,15 +75,8 @@ const UsageTab: FC = () => {
   );
 
   const modelLimitRows = useMemo(
-    () =>
-      mapUserUsageToModelLimits(
-        usage,
-        deploymentItems,
-        period,
-        activeLocale,
-        t,
-      ),
-    [usage, deploymentItems, period, activeLocale, t],
+    () => mapUserUsageToModelLimits(usage, deploymentItems, activeLocale, t),
+    [usage, deploymentItems, activeLocale, t],
   );
 
   return (
@@ -120,8 +99,6 @@ const UsageTab: FC = () => {
             <UsageLimitCardGroup cards={cards} labels={labels} />
             <ModelLimitsSection
               rows={modelLimitRows}
-              period={period}
-              onPeriodChange={setPeriod}
               labels={modelLimitsLabels}
             />
           </>

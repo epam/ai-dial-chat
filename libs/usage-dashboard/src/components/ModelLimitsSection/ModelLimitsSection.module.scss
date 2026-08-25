@@ -10,14 +10,6 @@
   color: var(--mls-heading-count, var(--text-tertiary, #9fa6bd));
 }
 
-.periodSelector {
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
 .columnHeader {
   color: var(--mls-column-header, var(--text-secondary, #57647a));
 }

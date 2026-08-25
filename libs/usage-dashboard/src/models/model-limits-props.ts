@@ -12,31 +12,17 @@ export enum ModelLimitStatus {
   Unavailable = 'unavailable',
 }
 
-/** Rolling window a `ModelLimitsSection` displays metrics for. Not every metric has data at every granularity — see `ModelLimitMetricKind.Unavailable`. */
-export enum ModelLimitsPeriod {
-  /** Rolling 1-minute window. */
-  LastMinute = 'last-minute',
-  /** Rolling 1-hour window. */
-  LastHour = 'last-hour',
-  /** Rolling 24-hour window. */
-  Last24Hours = 'last-24-hours',
-  /** Rolling 7-day window. */
-  Last7Days = 'last-7-days',
-  /** Rolling 30-day window. */
-  Last30Days = 'last-30-days',
-}
-
 /** Which of the three normalized shapes a `ModelLimitMetricCell` carries. */
 export enum ModelLimitMetricKind {
   /** A usable total exists — renders `used / total` with a progress bar. */
   Finite = 'finite',
-  /** The host detected the unlimited sentinel — renders the used value and "No limit", no progress bar. */
+  /** The host detected the unlimited sentinel; the renderer decides whether its metric shows supporting limit text. */
   Unlimited = 'unlimited',
   /** The metric could not be determined — renders an explicit unavailable state, no progress bar. */
   Unavailable = 'unavailable',
 }
 
-/** One normalized, preformatted metric value (Cost, Tokens, or Requests) for one `ModelLimitRow`. */
+/** One normalized, preformatted Cost or Tokens value for one `ModelLimitRow`. */
 export interface ModelLimitMetricCell {
   /** Which of the three rendering shapes this cell uses. */
   kind: ModelLimitMetricKind;
@@ -52,7 +38,15 @@ export interface ModelLimitMetricCell {
   ariaLabel: string;
 }
 
-/** One row of the Model limits table: one accessible model's identity plus its Cost/Tokens/Requests metrics and overall status. */
+/** Preformatted Cost and Tokens values for one rolling-period column. */
+export interface ModelLimitPeriodCell {
+  /** Tokens usage and limit for the period. */
+  tokens: ModelLimitMetricCell;
+  /** Attributed cost for the period. */
+  cost: ModelLimitMetricCell;
+}
+
+/** One row of the Model limits table: model identity, three rolling-period comparisons, and overall status. */
 export interface ModelLimitRow {
   /** Stable identifier for the row, e.g. the deployment ID. */
   id: string;
@@ -62,13 +56,13 @@ export interface ModelLimitRow {
   version?: string;
   /** Image URL for the model's avatar. When absent, an initials-based fallback derived from `name` is shown. */
   avatarSrc?: string;
-  /** Cost metric for the currently selected period. */
-  cost: ModelLimitMetricCell;
-  /** Tokens metric for the currently selected period. */
-  tokens: ModelLimitMetricCell;
-  /** Requests metric for the currently selected period. */
-  requests: ModelLimitMetricCell;
-  /** Overall row status: the most severe status among the row's finite metrics, or `NoLimit`/`Unavailable`. */
+  /** Cost and Tokens metrics for the rolling 24-hour period. */
+  last24Hours: ModelLimitPeriodCell;
+  /** Cost and Tokens metrics for the rolling 7-day period. */
+  last7Days: ModelLimitPeriodCell;
+  /** Cost and Tokens metrics for the rolling 30-day period. */
+  last30Days: ModelLimitPeriodCell;
+  /** Host-derived overall status across the three token-limit periods. */
   status: ModelLimitStatus;
 }
 
@@ -76,23 +70,23 @@ export interface ModelLimitRow {
 export interface ModelLimitsLabels {
   /** Section heading text, e.g. `'Model limits'`. The row count is rendered separately. */
   headingLabel: string;
-  /** Localized label for each selectable period, keyed by `ModelLimitsPeriod`. */
-  periodLabels: Record<ModelLimitsPeriod, string>;
-  /** Accessible name for the period selector control. */
-  periodSelectorAriaLabel: string;
   /** Column header text for the Item (identity) column. */
   itemColumnLabel: string;
-  /** Column header text for the Cost column. */
-  costColumnLabel: string;
-  /** Column header text for the Tokens column. */
-  tokensColumnLabel: string;
-  /** Column header text for the Requests column. */
-  requestsColumnLabel: string;
+  /** Column header text for the rolling 24-hour period. */
+  last24HoursColumnLabel: string;
+  /** Column header text for the rolling 7-day period. */
+  last7DaysColumnLabel: string;
+  /** Column header text for the rolling 30-day period. */
+  last30DaysColumnLabel: string;
   /** Column header text for the Status column. */
   statusColumnLabel: string;
+  /** Tokens sublabel rendered inside every period cell. */
+  tokensLabel: string;
+  /** Non-visual accessible label for the value-only Cost amount in every period cell. */
+  costLabel: string;
   /** Entity type shown above each model name. */
   modelTypeLabel: string;
-  /** Text shown after a cell's used value when the metric is unlimited, e.g. `'No limit'`. */
+  /** Text shown after an unlimited Tokens value, e.g. `'No limit'`. */
   noLimitLabel: string;
   /** Text shown in place of a value when the metric is unavailable, e.g. `'Not available'`. Must read as distinct from `noLimitLabel`. */
   unavailableLabel: string;
@@ -172,7 +166,7 @@ export interface ModelLimitsTypography {
   versionClassName?: string;
   /** CSS class for a metric's prominent used value. Defaults to `'dial-small-text'`. */
   valueClassName?: string;
-  /** CSS class for a metric's secondary caption ("used of X" / "No limit" / "Not available"). Defaults to `'dial-tiny-text'`. */
+  /** CSS class for a metric's secondary caption (total / "No limit" / "Not available"). Defaults to `'dial-tiny-text'`. */
   secondaryValueClassName?: string;
   /** CSS class for status badge text. Defaults to `'dial-caption-lead-semi-text'`. */
   badgeClassName?: string;
@@ -190,10 +184,6 @@ export interface ModelLimitsStyles {
 export interface ModelLimitsSectionProps {
   /** Rows to render, in display order. Each renders as one table row. */
   rows: ModelLimitRow[];
-  /** Currently selected period. The section is fully controlled — it never changes this itself. */
-  period: ModelLimitsPeriod;
-  /** Called with the newly selected period when the user picks a different option. */
-  onPeriodChange: (period: ModelLimitsPeriod) => void;
   /** Localized strings shared by the section shell and every row. */
   labels: ModelLimitsLabels;
   /** Style overrides applied as CSS custom properties and typography class overrides. */

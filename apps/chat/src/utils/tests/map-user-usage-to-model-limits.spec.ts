@@ -6,7 +6,6 @@ import type {
 import { DeploymentItemDtoTypeEnum } from '@epam/ai-dial-chat-api-client';
 import {
   ModelLimitMetricKind,
-  ModelLimitsPeriod,
   ModelLimitStatus,
 } from '@epam/ai-dial-usage-dashboard';
 import type { TFunction } from 'i18next';
@@ -40,621 +39,343 @@ const withUsage = (
   deployments: Record<string, DeploymentLimitsResponseDto>,
 ): UserLimitStatsResponseDto => ({ deployments });
 
+const mapUsage = (
+  usage: UserLimitStatsResponseDto | undefined,
+  items: DeploymentItemDto[] = [modelItem()],
+) => mapUserUsageToModelLimits(usage, items, 'en', t);
+
 describe('mapUserUsageToModelLimits', () => {
-  it('returns one row per entry in `usage.deployments`', () => {
-    const usage = withUsage({
-      'gpt-4o': { dayTokenStats: { used: 100, total: 1000 } },
-      'claude-3': { dayTokenStats: { used: 50, total: 500 } },
-    });
-    const items = [
-      modelItem({ id: 'gpt-4o' }),
-      modelItem({ id: 'claude-3', displayName: 'Claude 3' }),
-    ];
-
-    const rows = mapUserUsageToModelLimits(
-      usage,
-      items,
-      ModelLimitsPeriod.Last24Hours,
-      'en',
-      t,
+  it('returns one row per deployment with usage in a displayed period', () => {
+    const rows = mapUsage(
+      withUsage({
+        'gpt-4o': { dayTokenStats: { used: 100, total: 1000 } },
+        'claude-3': { monthTokenStats: { used: 50, total: 500 } },
+      }),
+      [
+        modelItem({ id: 'gpt-4o' }),
+        modelItem({ id: 'claude-3', displayName: 'Claude 3' }),
+      ],
     );
 
-    expect(rows).toHaveLength(2);
+    expect(rows.map((row) => row.name)).toEqual(['GPT-4o', 'Claude 3']);
   });
 
-  it('returns an empty array when `usage` is undefined', () => {
-    expect(
-      mapUserUsageToModelLimits(
-        undefined,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
-      ),
-    ).toEqual([]);
+  it('returns an empty array when usage or deployments is absent', () => {
+    expect(mapUsage(undefined)).toEqual([]);
+    expect(mapUsage({})).toEqual([]);
   });
 
-  it('returns an empty array when `usage.deployments` is undefined', () => {
-    expect(
-      mapUserUsageToModelLimits(
-        {},
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
-      ),
-    ).toEqual([]);
-  });
-
-  it('excludes a deployment with all-zero usage for the selected period', () => {
-    const usage = withUsage({
-      'gpt-4o': {
-        dayCostStats: { used: 0, total: 2 ** 53 },
-        dayTokenStats: { used: 0, total: 1000 },
-        dayRequestStats: { used: 0, total: 100 },
-      },
-    });
-
-    const rows = mapUserUsageToModelLimits(
-      usage,
-      [modelItem()],
-      ModelLimitsPeriod.Last24Hours,
-      'en',
-      t,
+  it('excludes a deployment with no non-zero usage across displayed periods', () => {
+    const rows = mapUsage(
+      withUsage({
+        'gpt-4o': {
+          dayCostStats: { used: 0, total: 2 ** 53 },
+          weekTokenStats: { used: 0, total: 1000 },
+          monthTokenStats: { used: Number.NaN, total: 1000 },
+        },
+      }),
     );
 
-    expect(rows).toHaveLength(0);
+    expect(rows).toEqual([]);
   });
 
-  it('falls back to the deployment ID and no avatar when the ID has no matching item', () => {
-    const usage = withUsage({
-      'unknown-model': { dayTokenStats: { used: 1, total: 10 } },
-    });
-
-    const rows = mapUserUsageToModelLimits(
-      usage,
-      [],
-      ModelLimitsPeriod.Last24Hours,
-      'en',
-      t,
+  it('keeps a deployment used in only one displayed period', () => {
+    const rows = mapUsage(
+      withUsage({
+        'gpt-4o': {
+          dayTokenStats: { used: 0, total: 1000 },
+          monthTokenStats: { used: 25, total: 1000 },
+        },
+      }),
     );
 
     expect(rows).toHaveLength(1);
-    expect(rows[0].name).toBe('unknown-model');
-    expect(rows[0].avatarSrc).toBeUndefined();
+    expect(rows[0].last30Days.tokens.usedLabel).toBe('25');
+  });
+
+  it('keeps cost-only usage while leaving token Status unavailable', () => {
+    const [row] = mapUsage(
+      withUsage({
+        'gpt-4o': {
+          weekCostStats: { used: 1.25, total: 2 ** 53 },
+        },
+      }),
+    );
+
+    expect(row.last7Days.cost.usedLabel).toBe('$1.25');
+    expect(row.status).toBe(ModelLimitStatus.Unavailable);
+  });
+
+  it('ignores minute, hour, and request usage for row inclusion', () => {
+    const rows = mapUsage(
+      withUsage({
+        'gpt-4o': {
+          minuteCostStats: { used: 1, total: 2 ** 53 },
+          minuteTokenStats: { used: 10, total: 100 },
+          hourRequestStats: { used: 3, total: 10 },
+          dayRequestStats: { used: 5, total: 20 },
+        },
+      }),
+    );
+
+    expect(rows).toEqual([]);
+  });
+
+  it('falls back to the deployment ID and initials avatar data when metadata is missing', () => {
+    const [row] = mapUsage(
+      withUsage({
+        'unknown-model': { dayTokenStats: { used: 1, total: 10 } },
+      }),
+      [],
+    );
+
+    expect(row.name).toBe('unknown-model');
+    expect(row.avatarSrc).toBeUndefined();
   });
 
   it('resolves a model icon URL before passing it to the dashboard row', () => {
-    const usage = withUsage({
-      'gpt-4o': { dayTokenStats: { used: 1, total: 10 } },
-    });
-
-    const rows = mapUserUsageToModelLimits(
-      usage,
-      [modelItem({ iconUrl: 'model icon.svg' })],
-      ModelLimitsPeriod.Last24Hours,
-      'en',
-      t,
-    );
-
-    expect(rows[0].avatarSrc).toBe(
-      '/api/themes/icon?iconName=model%20icon.svg',
-    );
-  });
-
-  it('does not use a non-model item to resolve a matching deployment ID', () => {
-    const usage = withUsage({
-      shared_id: { dayTokenStats: { used: 1, total: 10 } },
-    });
-    const items = [
-      modelItem({
-        id: 'shared_id',
-        type: DeploymentItemDtoTypeEnum.Application,
-        displayName: 'Some App',
+    const [row] = mapUsage(
+      withUsage({
+        'gpt-4o': { dayTokenStats: { used: 1, total: 10 } },
       }),
-    ];
-
-    const rows = mapUserUsageToModelLimits(
-      usage,
-      items,
-      ModelLimitsPeriod.Last24Hours,
-      'en',
-      t,
+      [modelItem({ iconUrl: 'model icon.svg' })],
     );
 
-    expect(rows[0].name).toBe('shared_id');
+    expect(row.avatarSrc).toBe('/api/themes/icon?iconName=model%20icon.svg');
   });
 
-  it('orders rows by `usage.deployments` key order, regardless of the model-items order', () => {
-    const items = [
-      modelItem({ id: 'b', displayName: 'B' }),
-      modelItem({ id: 'a', displayName: 'A' }),
-    ];
-    const usage = withUsage({
-      a: { dayTokenStats: { used: 1, total: 10 } },
-      b: { dayTokenStats: { used: 1, total: 10 } },
-    });
+  it('does not enrich a model row from a non-model deployment item', () => {
+    const [row] = mapUsage(
+      withUsage({
+        shared_id: { dayTokenStats: { used: 1, total: 10 } },
+      }),
+      [
+        modelItem({
+          id: 'shared_id',
+          type: DeploymentItemDtoTypeEnum.Application,
+          displayName: 'Some App',
+        }),
+      ],
+    );
 
-    const rows = mapUserUsageToModelLimits(
-      usage,
-      items,
-      ModelLimitsPeriod.Last24Hours,
-      'en',
-      t,
+    expect(row.name).toBe('shared_id');
+  });
+
+  it('preserves usage.deployments key order independently of metadata order', () => {
+    const rows = mapUsage(
+      withUsage({
+        a: { dayTokenStats: { used: 1, total: 10 } },
+        b: { dayTokenStats: { used: 1, total: 10 } },
+      }),
+      [
+        modelItem({ id: 'b', displayName: 'B' }),
+        modelItem({ id: 'a', displayName: 'A' }),
+      ],
     );
 
     expect(rows.map((row) => row.id)).toEqual(['a', 'b']);
   });
 
-  it('produces a row for every deployment key regardless of item-resolution order, in key order', () => {
-    const items = [modelItem({ id: 'known' })];
-    const usage = withUsage({
-      unresolved: { dayTokenStats: { used: 1, total: 10 } },
-      known: { dayTokenStats: { used: 1, total: 10 } },
-    });
-
-    const rows = mapUserUsageToModelLimits(
-      usage,
-      items,
-      ModelLimitsPeriod.Last24Hours,
-      'en',
-      t,
+  it('never adds an accessible model absent from usage.deployments', () => {
+    const rows = mapUsage(
+      withUsage({
+        used: { dayTokenStats: { used: 1, total: 10 } },
+      }),
+      [modelItem({ id: 'used' }), modelItem({ id: 'never-used' })],
     );
 
-    expect(rows.map((row) => row.id)).toEqual(['unresolved', 'known']);
+    expect(rows.map((row) => row.id)).toEqual(['used']);
   });
 
-  it('never adds a row for an accessible model absent from `usage.deployments`', () => {
-    const items = [
-      modelItem({ id: 'used-model' }),
-      modelItem({ id: 'never-used-model' }),
-    ];
-    const usage = withUsage({
-      'used-model': { dayTokenStats: { used: 1, total: 10 } },
-    });
-
-    const rows = mapUserUsageToModelLimits(
-      usage,
-      items,
-      ModelLimitsPeriod.Last24Hours,
-      'en',
-      t,
-    );
-
-    expect(rows.map((row) => row.id)).toEqual(['used-model']);
-  });
-
-  describe('period-to-field mapping', () => {
+  describe('fixed period mapping', () => {
     const usage = withUsage({
       'gpt-4o': {
-        minuteCostStats: { used: 0.1, total: 2 ** 53 },
+        minuteCostStats: { used: 99, total: 2 ** 53 },
         dayCostStats: { used: 1, total: 2 ** 53 },
         weekCostStats: { used: 2, total: 2 ** 53 },
         monthCostStats: { used: 3, total: 2 ** 53 },
-        minuteTokenStats: { used: 10, total: 100 },
+        minuteTokenStats: { used: 99, total: 100 },
         dayTokenStats: { used: 100, total: 1000 },
         weekTokenStats: { used: 200, total: 2000 },
         monthTokenStats: { used: 300, total: 3000 },
-        hourRequestStats: { used: 2, total: 20 },
-        dayRequestStats: { used: 5, total: 50 },
+        hourRequestStats: { used: 99, total: 100 },
+        dayRequestStats: { used: 99, total: 100 },
       },
     });
-    const items = [modelItem()];
 
-    it('reads minute-scoped fields for LastMinute and marks Requests unavailable', () => {
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        items,
-        ModelLimitsPeriod.LastMinute,
-        'en',
-        t,
-      );
+    it('maps day Cost and Tokens to Last 24 hours', () => {
+      const [row] = mapUsage(usage);
 
-      expect(row.tokens.usedLabel).toBe('10');
-      expect(row.tokens.totalLabel).toBe('100');
-      expect(row.cost.usedLabel).toContain('0.1');
-      expect(row.requests.kind).toBe(ModelLimitMetricKind.Unavailable);
+      expect(row.last24Hours.tokens.usedLabel).toBe('100');
+      expect(row.last24Hours.tokens.totalLabel).toBe('1K');
+      expect(row.last24Hours.cost.usedLabel).toBe('$1');
     });
 
-    it('reads hour-scoped Requests for LastHour and marks Cost/Tokens unavailable', () => {
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        items,
-        ModelLimitsPeriod.LastHour,
-        'en',
-        t,
-      );
+    it('maps week Cost and Tokens to Last 7 days', () => {
+      const [row] = mapUsage(usage);
 
-      expect(row.requests.kind).toBe(ModelLimitMetricKind.Finite);
-      expect(row.requests.usedLabel).toBe('2');
-      expect(row.requests.totalLabel).toBe('20');
-      expect(row.cost.kind).toBe(ModelLimitMetricKind.Unavailable);
-      expect(row.tokens.kind).toBe(ModelLimitMetricKind.Unavailable);
+      expect(row.last7Days.tokens.usedLabel).toBe('200');
+      expect(row.last7Days.tokens.totalLabel).toBe('2K');
+      expect(row.last7Days.cost.usedLabel).toBe('$2');
     });
 
-    it('reads day-scoped fields for Last24Hours, including a real Requests value', () => {
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        items,
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
-      );
+    it('maps month Cost and Tokens to Last 30 days', () => {
+      const [row] = mapUsage(usage);
 
-      expect(row.tokens.usedLabel).toBe('100');
-      expect(row.tokens.totalLabel).toBe('1K');
-      expect(row.requests.kind).toBe(ModelLimitMetricKind.Finite);
-      expect(row.requests.usedLabel).toBe('5');
+      expect(row.last30Days.tokens.usedLabel).toBe('300');
+      expect(row.last30Days.tokens.totalLabel).toBe('3K');
+      expect(row.last30Days.cost.usedLabel).toBe('$3');
     });
 
-    it('reads week-scoped fields for Last7Days and marks Requests unavailable', () => {
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        items,
-        ModelLimitsPeriod.Last7Days,
-        'en',
-        t,
+    it('does not substitute a missing period value', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            dayTokenStats: { used: 10, total: 100 },
+            monthTokenStats: { used: 30, total: 300 },
+          },
+        }),
       );
 
-      expect(row.tokens.usedLabel).toBe('200');
-      expect(row.requests.kind).toBe(ModelLimitMetricKind.Unavailable);
-    });
-
-    it('reads month-scoped fields for Last30Days and marks Requests unavailable', () => {
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        items,
-        ModelLimitsPeriod.Last30Days,
-        'en',
-        t,
-      );
-
-      expect(row.tokens.usedLabel).toBe('300');
-      expect(row.requests.kind).toBe(ModelLimitMetricKind.Unavailable);
-    });
-
-    it('never falls back to dayRequestStats for the week/month periods', () => {
-      const [weekRow] = mapUserUsageToModelLimits(
-        usage,
-        items,
-        ModelLimitsPeriod.Last7Days,
-        'en',
-        t,
-      );
-      const [monthRow] = mapUserUsageToModelLimits(
-        usage,
-        items,
-        ModelLimitsPeriod.Last30Days,
-        'en',
-        t,
-      );
-
-      expect(weekRow.requests.usedLabel).toBeUndefined();
-      expect(monthRow.requests.usedLabel).toBeUndefined();
+      expect(row.last7Days.tokens.kind).toBe(ModelLimitMetricKind.Unavailable);
+      expect(row.last24Hours.tokens.usedLabel).toBe('10');
+      expect(row.last30Days.tokens.usedLabel).toBe('30');
     });
   });
 
-  describe('per-metric classification', () => {
-    it('classifies cost as always unlimited when the stat entry is well-formed', () => {
-      const usage = withUsage({
-        'gpt-4o': { dayCostStats: { used: 4.2, total: 2 ** 53 } },
-      });
-
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
+  describe('metric classification and formatting', () => {
+    it('classifies well-formed cost as unlimited attributed spend', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            dayCostStats: { used: 0.242753, total: 2 ** 53 },
+          },
+        }),
       );
 
-      expect(row.cost.kind).toBe(ModelLimitMetricKind.Unlimited);
-      expect(row.cost.usedLabel).toContain('4.2');
-      expect(row.status).not.toBe(ModelLimitStatus.LimitReached);
+      expect(row.last24Hours.cost.kind).toBe(ModelLimitMetricKind.Unlimited);
+      expect(row.last24Hours.cost.usedLabel).toBe('$0.24');
+      expect(row.last24Hours.cost.ariaLabel).toBe('$0.24');
     });
 
-    it('classifies cost as unavailable when the stat entry is missing', () => {
-      const usage = withUsage({
-        'gpt-4o': { dayTokenStats: { used: 1, total: 10 } },
-      });
-
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
+    it('classifies missing cost as unavailable', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': { dayTokenStats: { used: 1, total: 10 } },
+        }),
       );
 
-      expect(row.cost.kind).toBe(ModelLimitMetricKind.Unavailable);
+      expect(row.last24Hours.cost.kind).toBe(ModelLimitMetricKind.Unavailable);
     });
 
-    it('classifies a finite token stat as progress-capable with an uncapped usedPercent', () => {
-      const usage = withUsage({
-        'gpt-4o': { dayTokenStats: { used: 1500, total: 1000 } },
-      });
-
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
+    it('keeps finite token percentages uncapped', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': { dayTokenStats: { used: 1500, total: 1000 } },
+        }),
       );
 
-      expect(row.tokens.kind).toBe(ModelLimitMetricKind.Finite);
-      expect(row.tokens.usedPercent).toBe(150);
-      expect(row.tokens.usedLabel).toBe('1.5K');
+      expect(row.last24Hours.tokens.kind).toBe(ModelLimitMetricKind.Finite);
+      expect(row.last24Hours.tokens.usedPercent).toBe(150);
+      expect(row.last24Hours.tokens.status).toBe(ModelLimitStatus.LimitReached);
     });
 
-    it('treats a missing token stat as unavailable, not zero', () => {
-      const usage = withUsage({
-        'gpt-4o': { dayCostStats: { used: 1, total: 2 ** 53 } },
-      });
-
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
+    it('classifies unlimited and unavailable token periods distinctly', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            dayCostStats: { used: 1, total: 2 ** 53 },
+            weekTokenStats: { used: 10, total: 2 ** 53 },
+          },
+        }),
       );
 
-      expect(row.tokens.kind).toBe(ModelLimitMetricKind.Unavailable);
-      expect(row.tokens.usedLabel).toBeUndefined();
+      expect(row.last24Hours.tokens.kind).toBe(
+        ModelLimitMetricKind.Unavailable,
+      );
+      expect(row.last7Days.tokens.kind).toBe(ModelLimitMetricKind.Unlimited);
     });
 
-    it('classifies a token stat at the unlimited sentinel as unlimited', () => {
-      const usage = withUsage({
-        'gpt-4o': {
-          dayTokenStats: { used: 10, total: 2 ** 53 },
-        },
-      });
-
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
+    it('uses compact visible token values and full accessible values', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': { dayTokenStats: { used: 1000, total: 2000 } },
+        }),
       );
 
-      expect(row.tokens.kind).toBe(ModelLimitMetricKind.Unlimited);
+      expect(row.last24Hours.tokens.usedLabel).toBe('1K');
+      expect(row.last24Hours.tokens.totalLabel).toBe('2K');
+      expect(row.last24Hours.tokens.ariaLabel).toBe('1,000 of 2,000, 50% used');
+      expect(row.last24Hours.tokens.usedLabel).not.toContain('$');
     });
   });
 
-  describe('status derivation', () => {
-    const rowWithTokens = (used: number, total: number) => {
-      const usage = withUsage({
-        'gpt-4o': { dayTokenStats: { used, total } },
-      });
-      return mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
-      )[0];
-    };
-
-    it('is WithinLimits below 75%', () => {
-      expect(rowWithTokens(70, 100).status).toBe(ModelLimitStatus.WithinLimits);
-    });
-
-    it('is RunningLow at exactly 75%', () => {
-      expect(rowWithTokens(75, 100).status).toBe(ModelLimitStatus.RunningLow);
-    });
-
-    it('is LimitReached at exactly 100%', () => {
-      expect(rowWithTokens(100, 100).status).toBe(
-        ModelLimitStatus.LimitReached,
+  describe('cross-period status derivation', () => {
+    it('uses LimitReached from any displayed token period', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            dayTokenStats: { used: 100, total: 100 },
+            weekTokenStats: { used: 80, total: 100 },
+            monthTokenStats: { used: 20, total: 100 },
+          },
+        }),
       );
+
+      expect(row.status).toBe(ModelLimitStatus.LimitReached);
     });
 
-    it('is LimitReached above 100%', () => {
-      expect(rowWithTokens(150, 100).status).toBe(
-        ModelLimitStatus.LimitReached,
+    it('uses RunningLow when no period has reached its limit', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            dayTokenStats: { used: 10, total: 100 },
+            weekTokenStats: { used: 75, total: 100 },
+            monthTokenStats: { used: 20, total: 100 },
+          },
+        }),
       );
+
+      expect(row.status).toBe(ModelLimitStatus.RunningLow);
     });
 
-    it('is NoLimit when every metric is unlimited', () => {
-      const usage = withUsage({
-        'gpt-4o': {
-          dayCostStats: { used: 1, total: 2 ** 53 },
-          dayTokenStats: { used: 1, total: 2 ** 53 },
-          dayRequestStats: { used: 1, total: 2 ** 53 },
-        },
-      });
+    it('uses WithinLimits when every finite period is healthy', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            dayTokenStats: { used: 10, total: 100 },
+            monthTokenStats: { used: 10, total: 2 ** 53 },
+          },
+        }),
+      );
 
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
+      expect(row.status).toBe(ModelLimitStatus.WithinLimits);
+    });
+
+    it('uses NoLimit only when no finite token period exists', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            weekTokenStats: { used: 10, total: 2 ** 53 },
+          },
+        }),
       );
 
       expect(row.status).toBe(ModelLimitStatus.NoLimit);
     });
 
-    it('produces no row (rather than an Unavailable one) when no metric is usable at all', () => {
-      // A row with no usable metric also has no evidence of usage in the selected period, so
-      // the period-scoped usage filter excludes it before `ModelLimitStatus.Unavailable` would
-      // ever reach the UI — see the "period-scoped usage filtering" describe block below.
-      const usage = withUsage({ 'gpt-4o': {} });
-
-      const rows = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
+    it('does not let cost affect token Status', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            dayCostStats: { used: 1, total: 2 ** 53 },
+            weekCostStats: { used: 2, total: 2 ** 53 },
+            monthCostStats: { used: 3, total: 2 ** 53 },
+          },
+        }),
       );
 
-      expect(rows).toHaveLength(0);
-    });
-
-    it('derives status from the one finite metric among unlimited/unavailable ones', () => {
-      const usage = withUsage({
-        'gpt-4o': {
-          dayCostStats: { used: 1, total: 2 ** 53 },
-          dayTokenStats: { used: 92, total: 100 },
-        },
-      });
-
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
-      );
-
-      expect(row.status).toBe(ModelLimitStatus.RunningLow);
-    });
-  });
-
-  describe('period-scoped usage filtering', () => {
-    it('keeps a row when only one of cost/tokens/requests has usage in the period', () => {
-      const usage = withUsage({
-        'gpt-4o': {
-          dayCostStats: { used: 0, total: 2 ** 53 },
-          dayTokenStats: { used: 250, total: 10000 },
-        },
-      });
-
-      const rows = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
-      );
-
-      expect(rows).toHaveLength(1);
-    });
-
-    it('excludes a row whose only mapped entry for the period is unavailable', () => {
-      const usage = withUsage({
-        'gpt-4o': {},
-      });
-
-      const rows = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.LastHour,
-        'en',
-        t,
-      );
-
-      expect(rows).toHaveLength(0);
-    });
-
-    it('shows the same deployment for one period and hides it for another', () => {
-      const usage = withUsage({
-        'gpt-4o': {
-          monthTokenStats: { used: 100, total: 1000 },
-          dayTokenStats: { used: 0, total: 1000 },
-        },
-      });
-
-      const monthRows = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last30Days,
-        'en',
-        t,
-      );
-      const dayRows = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
-      );
-
-      expect(monthRows).toHaveLength(1);
-      expect(dayRows).toHaveLength(0);
-    });
-
-    it('does not change an included row cell classification or formatting', () => {
-      const usage = withUsage({
-        'gpt-4o': {
-          dayCostStats: { used: 4.2, total: 2 ** 53 },
-          dayTokenStats: { used: 250, total: 10000 },
-        },
-      });
-
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
-      );
-
-      expect(row.cost.kind).toBe(ModelLimitMetricKind.Unlimited);
-      expect(row.tokens.kind).toBe(ModelLimitMetricKind.Finite);
-      expect(row.tokens.usedPercent).toBe(2.5);
-    });
-  });
-
-  describe('formatting', () => {
-    it('rounds accumulated model costs to cents', () => {
-      const usage = withUsage({
-        'gpt-4o': {
-          dayCostStats: { used: 0.242753, total: 2 ** 53 },
-        },
-      });
-
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
-      );
-
-      expect(row.cost.usedLabel).toBe('$0.24');
-      expect(row.cost.ariaLabel).toBe('$0.24 used, unlimited');
-    });
-
-    it('never adds a currency symbol to token/request labels', () => {
-      const usage = withUsage({
-        'gpt-4o': {
-          dayTokenStats: { used: 1234, total: 5000 },
-          dayRequestStats: { used: 12, total: 50 },
-        },
-      });
-
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
-      );
-
-      expect(row.tokens.usedLabel).not.toContain('$');
-      expect(row.requests.usedLabel).not.toContain('$');
-    });
-
-    it('produces a full-value accessible label even when the visible labels are compact', () => {
-      const usage = withUsage({
-        'gpt-4o': { dayTokenStats: { used: 1000, total: 2000 } },
-      });
-
-      const [row] = mapUserUsageToModelLimits(
-        usage,
-        [modelItem()],
-        ModelLimitsPeriod.Last24Hours,
-        'en',
-        t,
-      );
-
-      expect(row.tokens.usedLabel).toBe('1K');
-      expect(row.tokens.totalLabel).toBe('2K');
-      expect(row.tokens.ariaLabel).toBe('1,000 of 2,000, 50% used');
+      expect(row.status).toBe(ModelLimitStatus.Unavailable);
     });
   });
 });

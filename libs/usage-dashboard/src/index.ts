@@ -14,10 +14,10 @@ export { ModelLimitsSection } from './components/ModelLimitsSection/ModelLimitsS
 export {
   ModelLimitMetricKind,
   ModelLimitStatus,
-  ModelLimitsPeriod,
 } from './models/model-limits-props';
 export type {
   ModelLimitMetricCell,
+  ModelLimitPeriodCell,
   ModelLimitRow,
   ModelLimitsColors,
   ModelLimitsLabels,

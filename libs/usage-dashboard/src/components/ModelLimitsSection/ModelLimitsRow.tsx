@@ -11,12 +11,12 @@ import {
   ModelLimitStatus,
   ModelLimitsTypography,
 } from '../../models/model-limits-props';
-import { MetricCell } from './MetricCell';
 import styles from './ModelLimitsSection.module.scss';
+import { PeriodCell } from './PeriodCell';
 
 /** Grid template shared by the header row and every data row so columns stay aligned on desktop. */
 export const MODEL_LIMITS_GRID_COLUMNS =
-  'desktop:grid-cols-[repeat(4,minmax(0,1fr))_10rem]';
+  'desktop:grid-cols-[minmax(12rem,1.25fr)_repeat(3,minmax(0,1fr))_minmax(8rem,10rem)]';
 
 const getBadgeClassName = (status: ModelLimitStatus) => {
   switch (status) {
@@ -62,7 +62,7 @@ export interface ModelLimitsRowProps {
   avatarSize: number;
 }
 
-/** One data row of `ModelLimitsSection`'s table: model identity plus Cost/Tokens/Requests/Status cells. */
+/** One data row of `ModelLimitsSection`: identity, three period comparisons, and host-derived Status. */
 export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
   row,
   labels,
@@ -85,7 +85,7 @@ export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
     <div
       role="row"
       className={mergeClasses(
-        'grid grid-cols-1 gap-2 px-4 py-3 desktop:min-h-16 desktop:items-start desktop:gap-4 desktop:px-6',
+        'grid grid-cols-1 gap-2 px-4 py-3 desktop:min-h-16 desktop:items-center desktop:gap-4 desktop:px-6',
         MODEL_LIMITS_GRID_COLUMNS,
         styles.row,
       )}
@@ -141,26 +141,37 @@ export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
         </div>
       </div>
 
-      <MetricCell
-        cell={row.cost}
-        mobileColumnLabel={labels.costColumnLabel}
+      <PeriodCell
+        cell={row.last24Hours}
+        periodLabel={labels.last24HoursColumnLabel}
         labels={labels}
         typography={typography}
       />
-      <MetricCell
-        cell={row.tokens}
-        mobileColumnLabel={labels.tokensColumnLabel}
+      <PeriodCell
+        cell={row.last7Days}
+        periodLabel={labels.last7DaysColumnLabel}
         labels={labels}
         typography={typography}
       />
-      <MetricCell
-        cell={row.requests}
-        mobileColumnLabel={labels.requestsColumnLabel}
+      <PeriodCell
+        cell={row.last30Days}
+        periodLabel={labels.last30DaysColumnLabel}
         labels={labels}
         typography={typography}
       />
 
-      <div role="cell" className="flex items-center">
+      <div
+        role="cell"
+        className="flex min-w-0 flex-col gap-2 py-2 desktop:py-0"
+      >
+        <span
+          className={mergeClasses(
+            'dial-caption-lead-semi-text block desktop:hidden',
+            styles.mobileColumnLabel,
+          )}
+        >
+          {labels.statusColumnLabel}
+        </span>
         {hasStatusBadge ? (
           <span
             className={mergeClasses(
