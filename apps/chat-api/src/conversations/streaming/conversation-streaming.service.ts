@@ -197,6 +197,7 @@ export class ConversationStreamingService {
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
     timing?: GenerationRelayTiming,
+    conversationId?: string,
   ): AsyncGenerator<Uint8Array, RelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -211,6 +212,7 @@ export class ConversationStreamingService {
             ...(clientChannelId
               ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
               : {}),
+            ...(conversationId ? { 'X-CONVERSATION-ID': conversationId } : {}),
           },
           params: { query: { 'api-version': this.dialClient.dialApiVersion } },
           parseAs: 'stream',
@@ -578,6 +580,7 @@ export class ConversationStreamingService {
             assembledMessage,
             clientChannelId,
             timing,
+            startConversation.id,
           )
         : this.relayModelCompletion(
             model,
@@ -587,6 +590,7 @@ export class ConversationStreamingService {
             assembledMessage,
             clientChannelId,
             timing,
+            startConversation.id,
           );
     let next = await relayIterator.next();
     while (!next.done) {

@@ -21,6 +21,7 @@ const makeService = () => {
     client: {
       getConversation: vi.fn(),
       createPublication: vi.fn(),
+      getPublication: vi.fn(),
       getPublications: vi.fn(),
     },
   } as unknown as DialClientService;
@@ -250,6 +251,51 @@ describe('ConversationPublishService', () => {
   });
 
   describe('getPublishHistory', () => {
+    /*
+     * Core's list call returns publication metadata only — no `resources` —
+     * so filtering the list response matched nothing and history came back
+     * empty for a conversation that was demonstrably published.
+     */
+    it('re-reads each APPROVED publication, because the list omits resources', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+        okResponse([
+          { url: 'publications/bucket-123/mine', status: 'APPROVED' },
+          { url: 'publications/bucket-123/awaiting', status: 'PENDING' },
+        ]),
+      );
+      vi.spyOn(dialClient.client, 'getPublication').mockResolvedValue(
+        okResponse({
+          url: 'publications/bucket-123/mine',
+          status: 'APPROVED',
+          targetFolder: 'public/Reports/',
+          createdAt: 1_700_000_000_000,
+          author: 'user@example.com',
+          resources: [
+            { sourceUrl: 'conversations/bucket-123/my-conversation-abc' },
+          ],
+        }),
+      );
+
+      const result = await service.getPublishHistory(
+        'token-abc',
+        'bucket-123',
+        'my-conversation-abc',
+      );
+
+      /* The PENDING publication is not a published copy, so it is never read. */
+      expect(dialClient.client.getPublication).toHaveBeenCalledOnce();
+      expect(result).toEqual([
+        {
+          path: 'conversations/bucket-123/my-conversation-abc',
+          folderPath: 'Reports',
+          publishedAt: new Date(1_700_000_000_000).toISOString(),
+          publishedBy: 'user@example.com',
+        },
+      ]);
+    });
+
     it('scopes the Core request by the own-bucket publications list scope (not sourceUrl) and maps matching publications', async () => {
       const { service, dialClient, cacheManager } = makeService();
       cacheManager.get.mockResolvedValue(undefined);

@@ -1,3 +1,4 @@
+import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode, useEffect, useState } from 'react';
@@ -12,14 +13,13 @@ import * as NotificationContextModule from '../../context/NotificationContext';
 import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import * as apiClient from '../../server-api/api-client';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
 import * as conversationsApi from '../../server-api/conversations.api';
 import * as deploymentConfigurationApi from '../../server-api/deployments';
 import * as deploymentsApi from '../../server-api/deployments.api';
-import * as filesApi from '../../server-api/files.api';
 import * as toolsetsApi from '../../server-api/toolsets';
 import { AuthStatus } from '../../types/auth-status';
-import * as attachmentToDtoModule from '../../utils/attachment-to-dto';
 import ConversationRoute from './ConversationRoute';
 
 /*
@@ -96,11 +96,16 @@ vi.mock('../../server-api/application-schemas');
 vi.mock('../../server-api/toolsets');
 vi.mock('../../server-api/deployments');
 vi.mock('../../server-api/conversations.api');
-vi.mock('../../server-api/files.api');
-vi.mock('../../utils/attachment-to-dto');
-vi.mock('../../utils/build-upload-path', () => ({
-  buildUploadPath: vi.fn((fileName: string) => `uploads/${fileName}`),
-}));
+vi.mock('../../server-api/api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../server-api/api-client')>();
+  return { ...actual, filesApi: { ...actual.filesApi, uploadFile: vi.fn() } };
+});
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return { ...actual, attachmentsToDtos: vi.fn() };
+});
 vi.mock('../../components/StarterButtons/StarterButtons', () => ({
   default: () => <div />,
 }));
@@ -204,10 +209,8 @@ describe('ConversationRoute — new chat model inheritance (issue #8150 Case 3)'
   const mockUseToolsMenu = vi.mocked(ToolsMenuModule.useToolsMenu);
   const mockCreateConversation = vi.mocked(conversationsApi.createConversation);
   const mockSaveConversation = vi.mocked(conversationsApi.saveConversation);
-  const mockAttachmentsToDtos = vi.mocked(
-    attachmentToDtoModule.attachmentsToDtos,
-  );
-  const mockUploadFile = vi.mocked(filesApi.uploadFile);
+  const mockAttachmentsToDtos = vi.mocked(chatHooksModule.attachmentsToDtos);
+  const mockUploadFile = vi.mocked(apiClient.filesApi.uploadFile);
 
   beforeEach(() => {
     vi.clearAllMocks();

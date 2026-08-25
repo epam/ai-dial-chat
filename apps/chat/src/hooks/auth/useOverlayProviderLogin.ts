@@ -115,6 +115,15 @@ export const useOverlayProviderLogin = (): OverlayProviderLogin => {
     [cancelExternalLogin, getProviderUiMode, openExternalLogin],
   );
 
+  /*
+   * Wrapped so wiring this straight into a component's `onClick` cannot leak
+   * the handler's own argument into `openExternalLogin`'s optional `loginUrl`,
+   * which would navigate the auth window to "[object Object]".
+   */
+  const openLogin = useCallback(() => {
+    openExternalLogin();
+  }, [openExternalLogin]);
+
   return {
     hasProviderConfiguration,
     providers,
@@ -122,7 +131,7 @@ export const useOverlayProviderLogin = (): OverlayProviderLogin => {
     hasProviderError,
     retryLoadProviders,
     openProviderLogin,
-    openLogin: openExternalLogin,
+    openLogin,
     externalLoginStatus,
   };
 };

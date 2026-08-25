@@ -8,9 +8,10 @@ import {
   DIAL_ICON_SIZE,
   GhostButton,
   GhostIconButton,
-  DialEllipsisTooltip,
+  EllipsisTooltip,
   Highlight,
   Search,
+  ToggleIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconStar, IconStarFilled } from '@tabler/icons-react';
 import {
@@ -24,6 +25,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import styles from './DeploymentSelectorPanel.module.scss';
 
 /** Localizable string labels for `DeploymentSelectorPanel`. */
@@ -176,6 +178,22 @@ const DeploymentSelectorPanel: FC<Props> = ({
     selectedRowRef.current?.scrollIntoView({ block: 'nearest' });
   }, []);
 
+  const isMobile = useIsMobile();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  /*
+   * The kit's 2.0 `Dropdown` mounts its overlay with `initialFocus={-1}`, so
+   * it never moves focus off the trigger — a keyboard user would open the
+   * panel and stay parked outside it. Claiming focus here is what makes the
+   * panel keyboard-operable. Skipped on mobile, where the same panel renders
+   * inside a bottom sheet and focusing the field would raise the on-screen
+   * keyboard over the list the user came to read.
+   */
+  useEffect(() => {
+    if (isMobile) return;
+    searchInputRef.current?.focus();
+  }, [isMobile]);
+
   const handleSelect = (item: CatalogItem) => {
     onSelect(item.id);
     onClose();
@@ -250,7 +268,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
                 className="dial-small-text min-w-0 !flex-initial"
               />
             ) : (
-              <DialEllipsisTooltip
+              <EllipsisTooltip
                 text={item.name}
                 className="dial-small-text min-w-0 !flex-initial"
               />
@@ -258,7 +276,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
             {item.version && (
               /* Capped at 30% of the row so a long version truncates instead of
                  squeezing the name out of the option. */
-              <DialEllipsisTooltip
+              <EllipsisTooltip
                 text={item.version}
                 className="dial-tiny-text max-w-[30%] shrink-0 text-secondary"
               />
@@ -272,14 +290,17 @@ const DeploymentSelectorPanel: FC<Props> = ({
             />
           )}
           {isFavoriteRow ? (
-            <GhostIconButton
+            <ToggleIconButton
               icon={
                 <IconStarFilled
                   size={DIAL_ICON_SIZE.SM}
                   className="text-warning-icon"
+                  aria-hidden
                 />
               }
               aria-label={removeFromFavoritesLabel}
+              /* Every row in the Favorites list is a favorite, so the star is always on. */
+              isSelected
               onClick={(e) => {
                 e.stopPropagation();
                 handleToggleFavorite(item.id, false);
@@ -287,7 +308,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
             />
           ) : (
             <GhostIconButton
-              icon={<IconStar size={DIAL_ICON_SIZE.SM} />}
+              icon={<IconStar size={DIAL_ICON_SIZE.SM} aria-hidden />}
               aria-label={addToFavoritesLabel}
               onClick={(e) => {
                 e.stopPropagation();
@@ -320,6 +341,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
         className="sticky top-0 z-10 bg-layer-raised px-1 pb-3 pt-2"
       >
         <Search
+          inputRef={searchInputRef}
           value={query}
           onChange={handleSearchChange}
           placeholder={searchPlaceholder}

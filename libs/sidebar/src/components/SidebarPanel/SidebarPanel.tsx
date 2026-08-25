@@ -193,7 +193,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
           />
           <div
             className={mergeClasses(
-              'flex-1 overflow-y-auto p-4',
+              'flex-1 overflow-y-auto p-4 pt-0',
               bodyClassName,
             )}
           >

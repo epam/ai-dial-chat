@@ -3,6 +3,7 @@ import {
   PublicationRule,
   PublicationRuleFunction,
   PublishFolderNode,
+  PublishHistoryEntry,
 } from '@epam/ai-dial-publish-panel';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -173,6 +174,10 @@ vi.mock('../Header/Header', () => ({
     isRevokeShareVisible,
     onRequestLogout,
     onOpenCredentialsManagement,
+    onOpenUnpublish,
+    isUnpublishVisible,
+    hasPublishedFolders,
+    onRequestPublishHistory,
   }: {
     item: CatalogItem;
     onOpenPublish?: () => void;
@@ -184,9 +189,21 @@ vi.mock('../Header/Header', () => ({
     isRevokeShareVisible?: (item: CatalogItem) => boolean;
     onRequestLogout?: () => void;
     onOpenCredentialsManagement?: () => void;
+    onOpenUnpublish?: () => void;
+    isUnpublishVisible?: (item: CatalogItem) => boolean;
+    hasPublishedFolders?: boolean;
+    onRequestPublishHistory?: () => void;
   }) => (
     <>
       <button onClick={onOpenPublish}>Publish</button>
+      {/* Stands in for hovering/opening the real Manage menu, which is what
+       * starts the panel's publish-history lookup. */}
+      <button onClick={onRequestPublishHistory}>ManageMenuIntent</button>
+      {onOpenUnpublish &&
+        hasPublishedFolders &&
+        (isUnpublishVisible?.(item) ?? true) && (
+          <button onClick={onOpenUnpublish}>UnpublishTrigger</button>
+        )}
       {onDownload && (isDownloadVisible?.(item) ?? true) && (
         <button onClick={() => onDownload(item)}>DownloadTrigger</button>
       )}
@@ -2115,5 +2132,241 @@ describe('DetailsPanel', () => {
       expect(onLogout).not.toHaveBeenCalled();
       expect(screen.getByText('CredentialsManagementPanel')).toBeTruthy();
     });
+  });
+});
+
+describe('DetailsPanel — Unpublish', () => {
+  const historyEntry = (folderPath: string[]) => ({
+    folderPath,
+    publishedAt: 1_700_000_000_000,
+    version: '1',
+  });
+
+  const openManageMenu = () =>
+    userEvent.click(screen.getByRole('button', { name: 'ManageMenuIntent' }));
+
+  const openUnpublishConfirmation = async () => {
+    await openManageMenu();
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'UnpublishTrigger' }),
+    );
+  };
+
+  const isConfirmDisabled = () =>
+    screen.getByRole('button', { name: 'Unpublish' }).hasAttribute('disabled');
+
+  const hasCheckedRadio = () =>
+    screen
+      .getAllByRole('radio')
+      .some((radio) => (radio as HTMLInputElement).checked);
+
+  it('withholds the entry until the history lookup resolves', async () => {
+    let resolveHistory: (entries: PublishHistoryEntry[]) => void = () => {
+      /* replaced synchronously by the promise executor below */
+    };
+    const getPublishHistory = vi.fn(
+      () =>
+        new Promise<PublishHistoryEntry[]>((resolve) => {
+          resolveHistory = resolve;
+        }),
+    );
+    renderPanel({ getPublishHistory, onUnpublish: vi.fn() });
+
+    await openManageMenu();
+    expect(
+      screen.queryByRole('button', { name: 'UnpublishTrigger' }),
+    ).toBeNull();
+
+    await act(async () => {
+      resolveHistory([historyEntry(['Shared'])]);
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'UnpublishTrigger' }),
+    ).toBeTruthy();
+  });
+
+  it('hides the entry for a never-published item', async () => {
+    renderPanel({
+      getPublishHistory: vi.fn().mockResolvedValue([]),
+      onUnpublish: vi.fn(),
+    });
+
+    await openManageMenu();
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'UnpublishTrigger' }),
+      ).toBeNull(),
+    );
+  });
+
+  it('hides the entry when the history lookup fails and retries on the next open', async () => {
+    const getPublishHistory = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('503'))
+      .mockResolvedValueOnce([historyEntry(['Shared'])]);
+    renderPanel({ getPublishHistory, onUnpublish: vi.fn() });
+
+    await openManageMenu();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'UnpublishTrigger' }),
+      ).toBeNull(),
+    );
+
+    await openManageMenu();
+
+    expect(
+      await screen.findByRole('button', { name: 'UnpublishTrigger' }),
+    ).toBeTruthy();
+    expect(getPublishHistory).toHaveBeenCalledTimes(2);
+  });
+
+  it('issues the history lookup once per item across the menu and the publish view', async () => {
+    const getPublishHistory = vi
+      .fn()
+      .mockResolvedValue([historyEntry(['Shared'])]);
+    renderPanel({ getPublishHistory, onUnpublish: vi.fn() });
+
+    await openManageMenu();
+    await openManageMenu();
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => expect(getPublishHistory).toHaveBeenCalledOnce());
+  });
+
+  it('hides the entry when the host rule says no, even with resolved history', async () => {
+    renderPanel({
+      getPublishHistory: vi.fn().mockResolvedValue([historyEntry(['Shared'])]),
+      onUnpublish: vi.fn(),
+      isUnpublishVisible: () => false,
+    });
+
+    await openManageMenu();
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'UnpublishTrigger' }),
+      ).toBeNull(),
+    );
+  });
+
+  it('names the single published folder and enables confirm immediately', async () => {
+    renderPanel({
+      getPublishHistory: vi
+        .fn()
+        .mockResolvedValue([historyEntry(['Organization', 'Data Science'])]),
+      onUnpublish: vi.fn(),
+    });
+
+    await openUnpublishConfirmation();
+
+    expect(screen.getByText(/Organization\/Data Science/)).toBeTruthy();
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(isConfirmDisabled()).toBe(false);
+  });
+
+  it('requires a choice when the item is published to several folders', async () => {
+    renderPanel({
+      getPublishHistory: vi
+        .fn()
+        .mockResolvedValue([
+          historyEntry(['Organization', 'Data Science']),
+          historyEntry(['Shared']),
+        ]),
+      onUnpublish: vi.fn(),
+    });
+
+    await openUnpublishConfirmation();
+
+    expect(screen.getAllByRole('radio')).toHaveLength(2);
+    expect(hasCheckedRadio()).toBe(false);
+    expect(isConfirmDisabled()).toBe(true);
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Shared' }));
+
+    expect(isConfirmDisabled()).toBe(false);
+  });
+
+  it('reports the chosen folder as path segments', async () => {
+    const onUnpublish = vi.fn().mockResolvedValue(undefined);
+    renderPanel({
+      getPublishHistory: vi
+        .fn()
+        .mockResolvedValue([
+          historyEntry(['Organization', 'Data Science']),
+          historyEntry(['Shared']),
+        ]),
+      onUnpublish,
+    });
+
+    await openUnpublishConfirmation();
+    await userEvent.click(
+      screen.getByRole('radio', { name: 'Organization/Data Science' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
+
+    expect(onUnpublish).toHaveBeenCalledWith(item, [
+      'Organization',
+      'Data Science',
+    ]);
+  });
+
+  it('discards the folder choice when the confirmation is cancelled', async () => {
+    renderPanel({
+      getPublishHistory: vi
+        .fn()
+        .mockResolvedValue([
+          historyEntry(['Organization', 'Data Science']),
+          historyEntry(['Shared']),
+        ]),
+      onUnpublish: vi.fn(),
+    });
+
+    await openUnpublishConfirmation();
+    await userEvent.click(screen.getByRole('radio', { name: 'Shared' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await openUnpublishConfirmation();
+
+    expect(hasCheckedRadio()).toBe(false);
+    expect(isConfirmDisabled()).toBe(true);
+  });
+
+  it('keeps the panel open and the folder published after a successful request', async () => {
+    const onClose = vi.fn();
+    const onUnpublish = vi.fn().mockResolvedValue(undefined);
+    renderPanel({
+      onClose,
+      getPublishHistory: vi.fn().mockResolvedValue([historyEntry(['Shared'])]),
+      onUnpublish,
+    });
+
+    await openUnpublishConfirmation();
+    await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
+
+    await waitFor(() => expect(onUnpublish).toHaveBeenCalledOnce());
+    expect(onClose).not.toHaveBeenCalled();
+    /* The removal is pending approval, so the folder still reads as published. */
+    expect(
+      screen.getByRole('button', { name: 'UnpublishTrigger' }),
+    ).toBeTruthy();
+  });
+
+  it('renders no error text of its own when the request rejects', async () => {
+    const onUnpublish = vi.fn().mockRejectedValue(new Error('403'));
+    renderPanel({
+      getPublishHistory: vi.fn().mockResolvedValue([historyEntry(['Shared'])]),
+      onUnpublish,
+    });
+
+    await openUnpublishConfirmation();
+    await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
+
+    await waitFor(() => expect(onUnpublish).toHaveBeenCalledOnce());
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'UnpublishTrigger' }),
+    ).toBeTruthy();
   });
 });

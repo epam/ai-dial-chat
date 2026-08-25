@@ -11,6 +11,7 @@ import type {
   PromptResponseDto,
   ToolsetLogoutBodyDto,
 } from '@epam/ai-dial-chat-api-client';
+import { EXPORT_APP_NAME } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   CatalogEntityType,
@@ -73,7 +74,11 @@ import {
   getPublishRules,
   toPublishRuleDto,
 } from '../../server-api/publish-rules.api';
-import { publishCatalogEntity } from '../../server-api/publish.api';
+import {
+  getCatalogPublishHistory,
+  publishCatalogEntity,
+  unpublishCatalogEntity,
+} from '../../server-api/publish.api';
 import {
   discardSharedCatalogItem,
   getShareRecipientsCount,
@@ -105,7 +110,6 @@ import { isQuickAppSchema } from '../../utils/application-schema';
 import { buildDeploymentConnectApi } from '../../utils/deployment-endpoint-url';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
-import { EXPORT_APP_NAME } from '../../utils/export-conversation';
 import {
   buildPromptExportEnvelope,
   buildPromptExportFileName,
@@ -142,7 +146,11 @@ import {
   buildConnectApi,
   resolveMcpResourceKind,
 } from '../../utils/mcp-endpoint-url';
-import { getAccessRulesLabels, toPublishEntityType } from '../../utils/publish';
+import {
+  getAccessRulesLabels,
+  mapPublishHistoryEntryDto,
+  toPublishEntityType,
+} from '../../utils/publish';
 import type { SkillFileContent } from '../../utils/skill-file-preview';
 import { parseSkillManifest } from '../../utils/skill-manifest';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
@@ -1129,12 +1137,20 @@ const CatalogView: FC<Props> = ({
   );
 
   /*
-   * Publish history is never fetched: the backend endpoint returns 503 for
-   * DIAL Core (see GH issue #7897), the same outage already worked around
-   * in `PublishConversationPanelContainer`. Restore the
-   * `getCatalogPublishHistory` call here once the backend is fixed.
+   * Load-bearing beyond the publish panel: this is the only source of the
+   * folder list an unpublish request needs, and what makes the details
+   * panel's Unpublish action visible at all. The GH #7897 `503` this call
+   * was stubbed out for was never Core being down: `PublishService` called
+   * `.filter` on a `getPublications` response Core returns as an envelope,
+   * and the resulting `TypeError` was reported as "DIAL Core is currently
+   * unavailable". Fixed in `publication.util.ts`.
    */
-  const getPublishHistory = useCallback(async () => [], []);
+  const getPublishHistory = useCallback(async (item: CatalogItem) => {
+    const entityType = toPublishEntityType(item.type);
+    if (!entityType) return [];
+    const entries = await getCatalogPublishHistory(entityType, item.id);
+    return entries.map(mapPublishHistoryEntryDto);
+  }, []);
 
   const handlePublish = useCallback(
     async (
@@ -1182,6 +1198,43 @@ const CatalogView: FC<Props> = ({
       return `${ROUTES.AppsEditor}?${params.toString()}`;
     },
     [],
+  );
+
+  /*
+   * Reports a submitted request, never a completed removal: the published
+   * copy survives until an administrator approves, so nothing here refreshes
+   * the list or drops the folder from history.
+   */
+  const handleUnpublish = useCallback(
+    async (item: CatalogItem, folderPath: string[]) => {
+      const entityType = toPublishEntityType(item.type);
+      if (!entityType) {
+        throw new Error(`Entity type "${item.type}" is not publishable`);
+      }
+      try {
+        await unpublishCatalogEntity(entityType, item.id, {
+          folderPath: folderPath.join('/'),
+          ...(item.version ? { version: item.version } : {}),
+        });
+      } catch (error) {
+        /* Notified here, then rethrown so the panel's own rejection path runs
+         * — matching `handlePublish`, which lets the error reach the lib. */
+        showPublishError(error);
+        throw error;
+      }
+      notifyOperationSuccess(
+        resolveCatalogItemEntity(
+          item.type,
+          findDeploymentByIdOrReference(deployments, item.id),
+        ),
+        EntityOperation.UnpublishRequested,
+        {
+          name: item.name,
+          folder: folderPath[folderPath.length - 1],
+        },
+      );
+    },
+    [deployments, notifyOperationSuccess, showPublishError],
   );
 
   const handlePublishSuccess = useCallback(
@@ -1579,6 +1632,8 @@ const CatalogView: FC<Props> = ({
         hasPublishWriteAccess={hasPublishWriteAccess}
         onPublish={handlePublish}
         onPublishSuccess={handlePublishSuccess}
+        onUnpublish={handleUnpublish}
+        isUnpublishVisible={isPublishVisible}
         onPublishError={handlePublishError}
         ruleSourceOptions={config.publicationFilterSources}
         onFetchExistingRules={handleFetchExistingRules}
@@ -1778,6 +1833,25 @@ const CatalogView: FC<Props> = ({
           ],
           revokingShareStatusLabel: t(
             CatalogI18nKeys.DetailsRevokeShareRevokingStatus,
+          ),
+          unpublishLabel: t(ButtonsI18nKeys.Unpublish),
+          unpublishConfirmTitle: t(
+            CatalogI18nKeys.DetailsUnpublishConfirmTitle,
+          ),
+          unpublishConfirmMessage: (name, folder) =>
+            t(CatalogI18nKeys.DetailsUnpublishConfirmMessage, { name, folder }),
+          unpublishSelectFolderMessage: (name) =>
+            t(CatalogI18nKeys.DetailsUnpublishSelectFolderMessage, { name }),
+          unpublishFolderGroupAriaLabel: t(
+            CatalogI18nKeys.DetailsUnpublishFolderGroupAriaLabel,
+          ),
+          unpublishConfirmConsequences: [
+            t(CatalogI18nKeys.DetailsUnpublishConsequenceEveryoneLosesAccess),
+            t(CatalogI18nKeys.DetailsUnpublishConsequenceKeepsYourCopy),
+            t(CatalogI18nKeys.DetailsUnpublishConsequenceCanPublishAgain),
+          ],
+          unpublishingStatusLabel: t(
+            CatalogI18nKeys.DetailsUnpublishRequestingStatus,
           ),
           loggingOutStatusLabel: t(AuthI18nKeys.LoggingOutStatus),
           cancelLabel: t(ButtonsI18nKeys.Cancel),

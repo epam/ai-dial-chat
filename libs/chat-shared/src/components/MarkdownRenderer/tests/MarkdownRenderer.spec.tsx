@@ -223,7 +223,7 @@ describe('MarkdownRenderer', () => {
     expect(screen.getByText('Removed').className).toContain('custom-del');
     const checkbox = screen.getByRole('checkbox') as HTMLInputElement;
     expect(checkbox.checked).toBe(true);
-    expect(checkbox.getAttribute('aria-disabled')).toBe('true');
+    expect(checkbox.disabled).toBe(true);
   });
 
   it('renders single-newline-separated lines with a visible line break between each pair', () => {

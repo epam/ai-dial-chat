@@ -1,5 +1,11 @@
 import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
+  attachmentsToDtos,
+  getConversationPath,
+  useConversationHandlers,
+  useConversationStream,
+} from '@epam/ai-dial-chat-hooks';
+import {
   MessageRating,
   MessageRole,
   ResponseFormat,
@@ -23,7 +29,6 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { NavigateFunction } from 'react-router';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NewConversationComposer, {
   type NewConversationChatSettings,
@@ -36,10 +41,14 @@ import {
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useGeneration } from '../../context/GenerationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
-import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
-import { useConversationStream } from '../../hooks/conversation/useConversationStream';
+import {
+  conversationsApi as configuredConversationsApi,
+  filesApi as configuredFilesApi,
+  rateApi as configuredRateApi,
+} from '../../server-api/api-client';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
@@ -47,10 +56,8 @@ import {
   deleteConversation as apiDeleteConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
-import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
-import { attachmentsToDtos } from '../../utils/attachment-to-dto';
-import { getConversationPath } from '../../utils/conversation-path';
+import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
@@ -138,11 +145,14 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     });
   }, [showErrorNotification, t]);
 
+  const { startGeneration, completeGeneration } = useGeneration();
+
   const { startStream, handleStop, isStreaming, canStopStreaming } =
     useConversationStream({
       conversationId: conversationId ?? undefined,
-      setConversation,
-      conversationRef,
+      state: { setConversation, conversationRef },
+      transport: conversationStreamTransport,
+      generation: { startGeneration, completeGeneration },
       onStopError: handleStopError,
     });
 
@@ -227,20 +237,17 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   );
 
   /*
-   * useConversationHandlers only ever calls `navigate(ROUTES.Root)`, triggered by
-   * deleting the last message in the conversation. This stub handles only that
-   * case and resets local preview state instead of performing a real route
-   * navigation. The cast to NavigateFunction below is intentional: it satisfies
-   * useConversationHandlers's prop type without implementing the full
-   * NavigateFunction contract, since no other call shape is used here.
+   * Deleting the last message in the conversation deletes the whole
+   * conversation. There is no real route to navigate to in the preview —
+   * this just resets local preview state.
    */
-  const handlePreviewNavigate = useCallback((to: unknown) => {
-    if (to === ROUTES.Root) {
-      conversationRef.current = null;
-      setConversation(null);
-      setConversationId(null);
-    }
+  const handleConversationDeleted = useCallback(() => {
+    conversationRef.current = null;
+    setConversation(null);
+    setConversationId(null);
   }, []);
+
+  const resolveModelId = useCallback(() => appId, [appId]);
 
   const {
     handleSend,
@@ -261,11 +268,13 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     bucket,
     isStreaming,
     startStream,
-    conversationRef,
-    setConversation,
-    navigate: handlePreviewNavigate as NavigateFunction,
+    state: { setConversation, conversationRef },
+    filesApi: configuredFilesApi,
+    conversationsApi: configuredConversationsApi,
+    rateApi: configuredRateApi,
+    resolveModelId,
+    onConversationDeleted: handleConversationDeleted,
     showNetworkError: handleNetworkUploadError,
-    fixedModelId: appId,
   });
 
   const handleConversationChange = useCallback(

@@ -22,7 +22,6 @@ import { AuthenticationType } from '../types/entity-details';
 import type {
   AgentEntityDetails,
   EntitySpecificDetails,
-  GuardrailEntityDetails,
   ModelEntityDetails,
   ModelPricing,
   ToolsetAuthStatus,
@@ -164,17 +163,6 @@ const mapModelDetails = (
         ),
         value: mimeTypesToExtensionLabels(s.inputTypes),
       });
-    if (s.outputTypes?.length)
-      specs.push({
-        label: getDetailsLabel(
-          t,
-          CatalogI18nKeys.DetailsModelOutputModalities,
-          'Output modalities',
-        ),
-        value: mimeTypesToExtensionLabels(s.outputTypes),
-      });
-    if (s.languages?.length)
-      specs.push({ label: 'Languages', value: s.languages.join(' · ') });
 
     if (specs.length > 0) sections.push({ title: 'Specification', specs });
   }
@@ -241,23 +229,8 @@ const mapModelPricing = (
     .sort((a, b) => getPricingKeyRank(a.key) - getPricingKeyRank(b.key))
     .map(({ key, price }) => ({ label: formatPricingKeyLabel(key), price }));
 
-  const limits = [
-    pricing.dailyLimit != null && {
-      label: 'Daily limit',
-      value: pricing.dailyLimit,
-    },
-    pricing.weeklyLimit != null && {
-      label: 'Weekly limit',
-      value: pricing.weeklyLimit,
-    },
-    pricing.monthlyLimit != null && {
-      label: 'Monthly limit',
-      value: pricing.monthlyLimit,
-    },
-  ].filter(Boolean) as CatalogItemPricing['limits'];
-
-  if (prices.length === 0 && !limits?.length) return undefined;
-  return { prices, limits };
+  if (prices.length === 0) return undefined;
+  return { prices };
 };
 
 const mapModelApi = (
@@ -276,14 +249,6 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
     const { specification: s } = data;
     const specs: OverviewSection['specs'] = [];
 
-    if (s.domain != null) specs.push({ label: 'Domain', value: s.domain });
-    if (s.useCase != null) specs.push({ label: 'Use case', value: s.useCase });
-    if (s.maturity != null)
-      specs.push({ label: 'Maturity', value: s.maturity });
-    if (s.permissions?.length)
-      specs.push({ label: 'Permissions', value: s.permissions.join(' · ') });
-    if (s.skills?.length)
-      specs.push({ label: 'Skills', value: s.skills.join(' · ') });
     if (s.hostedBy != null)
       specs.push({ label: 'Hosted by', value: s.hostedBy });
     if (s.createdAt != null)
@@ -317,50 +282,16 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
     const { configuration: c } = data;
     const specs: OverviewSection['specs'] = [];
 
-    if (c.baseModelId != null)
-      specs.push({ label: 'Base model', value: c.baseModelId });
     if (c.inputAttachmentTypes?.length)
       specs.push({
         label: 'Input attachments',
         value: mimeTypesToExtensionLabels(c.inputAttachmentTypes),
       });
-    if (c.outputAttachmentTypes?.length)
-      specs.push({
-        label: 'Output attachments',
-        value: mimeTypesToExtensionLabels(c.outputAttachmentTypes),
-      });
-    if (c.authentication != null)
-      specs.push({ label: 'Authentication', value: c.authentication });
 
     if (specs.length > 0) sections.push({ title: 'Configuration', specs });
   }
 
-  if (data.capabilityLinks?.length) {
-    sections.push({
-      title: 'References',
-      specs: data.capabilityLinks.map((ref) => ({
-        label: ref.id,
-        value: ref.label,
-      })),
-    });
-  }
-
-  const api: CatalogItemApiDetails | undefined =
-    data.api != null
-      ? {
-          resource:
-            data.api.endpointUrl != null
-              ? { endpointUrl: data.api.endpointUrl }
-              : undefined,
-          requestExample: data.api.requestExample,
-          responseSchema: data.api.responseSchema,
-        }
-      : undefined;
-
-  return {
-    overview: sections.length > 0 ? { sections } : undefined,
-    api,
-  };
+  return { overview: sections.length > 0 ? { sections } : undefined };
 };
 
 const TOOLSET_AUTHENTICATION_TYPE_MAP: Partial<
@@ -452,8 +383,6 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
     const { specification: s } = data;
     const specs: OverviewSection['specs'] = [];
 
-    if (s.provider != null)
-      specs.push({ label: 'Provider', value: s.provider });
     if (s.authentication != null)
       specs.push({ label: 'Authentication', value: s.authentication });
     if (s.hostedBy != null)
@@ -488,40 +417,6 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
   };
 };
 
-const mapGuardrailDetails = (
-  data: GuardrailEntityDetails,
-): CatalogItemTabData => {
-  const sections: OverviewSection[] = [];
-
-  if (data.specification != null) {
-    const { specification: s } = data;
-    const specs: OverviewSection['specs'] = [];
-
-    if (s.stage != null) specs.push({ label: 'Stage', value: s.stage });
-    if (s.type != null) specs.push({ label: 'Type', value: s.type });
-    if (s.checks?.length)
-      specs.push({ label: 'Checks', value: s.checks.join(' · ') });
-    if (s.actionOnMatch != null)
-      specs.push({ label: 'Action on match', value: s.actionOnMatch });
-    if (s.sensitivity != null)
-      specs.push({ label: 'Sensitivity', value: s.sensitivity });
-    if (s.compliance?.length)
-      specs.push({ label: 'Compliance', value: s.compliance.join(' · ') });
-    if (s.appliesTo?.length)
-      specs.push({ label: 'Applies to', value: s.appliesTo.join(' · ') });
-    if (s.failureMode != null)
-      specs.push({ label: 'Failure mode', value: s.failureMode });
-    if (s.hasLogging != null)
-      specs.push({ label: 'Logging', value: s.hasLogging });
-
-    if (specs.length > 0) sections.push({ title: 'Specification', specs });
-  }
-
-  return {
-    overview: sections.length > 0 ? { sections } : undefined,
-  };
-};
-
 /** Converts a strongly-typed entity domain model into the lib's `CatalogItemTabData` shape. */
 export const mapEntityDetailsToCatalogDetails = (
   details: EntitySpecificDetails,
@@ -534,8 +429,6 @@ export const mapEntityDetailsToCatalogDetails = (
       return mapAgentDetails(details.data);
     case 'TOOLSET':
       return mapToolsetDetails(details.data);
-    case 'GUARDRAIL':
-      return mapGuardrailDetails(details.data);
   }
 };
 

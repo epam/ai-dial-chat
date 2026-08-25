@@ -26,7 +26,6 @@ After that it is no longer maintained, so plan the move before then.
 [Migrating from the Legacy DIAL Chat](#migrating-from-the-legacy-dial-chat)
 below is the starting point.
 
-
 ## 📚 Table of Contents
 
 - [Overview](#overview)
@@ -594,6 +593,23 @@ CHAT_VERSION=<ci-build-identifier>
 Every variable is validated at boot by
 `apps/chat-api/src/config/environment.config.ts`, so a missing or malformed
 value fails the container fast rather than at first request.
+
+### DIAL Core OAuth Redirect Allowlist
+
+Toolset OAuth also requires a setting on the DIAL Core deployment. Add the
+Chat callback URL to Core's
+[`toolsets.security.allowedRedirectUris`](https://github.com/epam/ai-dial-core/blob/development/README.md#static-settings):
+
+```text
+https://your-frontend-domain.com/auth/toolset-signin
+```
+
+Use the public Chat origin (the URL users open), not
+`AUTH_CALLBACK_BASE_URL` when the frontend and API use different origins. Keep
+the redirect URIs for any other clients, such as the Admin panel, in the same
+array. This is a static Core setting, so restart DIAL Core after changing it.
+See the [Chat API deployment setup](apps/chat-api/README.md#dial-core-oauth-redirect-allowlist)
+for a configuration example.
 
 ## Troubleshooting
 

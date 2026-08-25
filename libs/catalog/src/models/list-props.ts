@@ -69,6 +69,6 @@ export interface ListViewProps {
   stickyHeaderTop?: number;
   /** ID of an item to visually mark as selected (border, tint, and checkmark). */
   selectedItemId?: string;
-  /** Credentials-status badge label shown when signed out. Default: `'LOGGED OUT'`. */
+  /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
 }

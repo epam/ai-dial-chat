@@ -178,6 +178,7 @@ export class ResponsesAdapter {
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
     timing?: GenerationRelayTiming,
+    conversationId?: string,
   ): AsyncGenerator<string, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -191,6 +192,7 @@ export class ResponsesAdapter {
           ...(clientChannelId
             ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
             : {}),
+          ...(conversationId ? { 'X-CONVERSATION-ID': conversationId } : {}),
         },
         parseAs: 'stream',
         signal,
@@ -507,6 +509,7 @@ export class ResponsesAdapter {
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
     timing?: GenerationRelayTiming,
+    conversationId?: string,
   ): Promise<GenerationRelayOutcome> {
     const iterator = this.stream(
       requestBody,
@@ -515,6 +518,7 @@ export class ResponsesAdapter {
       initialAssembledMessage,
       clientChannelId,
       timing,
+      conversationId,
     );
     let next = await iterator.next();
     while (!next.done) {

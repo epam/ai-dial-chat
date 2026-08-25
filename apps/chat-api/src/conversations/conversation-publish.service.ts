@@ -17,12 +17,18 @@ import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { PublishRuleDto } from '../publish/dto/publish-rule.dto';
 import {
+  resolvePublicationsForSource,
+  toPublicationList,
+} from '../publish/publication.util';
+import {
   getPublicationsListScope,
   getPublicTargetFolder,
+  getPublishedTargetUrl,
   getResourceName,
   stripPublicTargetFolder,
 } from '../publish/publish-target.util';
 import { PublishConversationResultDto } from './dto/publish-conversation-result.dto';
+import { UnpublishConversationResultDto } from './dto/unpublish-conversation-result.dto';
 
 const CONVERSATION_RESOURCE_PREFIX = 'conversations';
 
@@ -98,7 +104,11 @@ export class ConversationPublishService {
     }
 
     const publicTargetFolder = getPublicTargetFolder(folderPath);
-    const targetUrl = `${CONVERSATION_RESOURCE_PREFIX}/${publicTargetFolder}${getResourceName(sourceUrl)}`;
+    const targetUrl = getPublishedTargetUrl(
+      CONVERSATION_RESOURCE_PREFIX,
+      folderPath,
+      getResourceName(sourceUrl),
+    );
 
     const requestBody = {
       name: conversation.name,
@@ -150,6 +160,123 @@ export class ConversationPublishService {
   }
 
   /**
+   * Submits a removal request for one already-published folder of a
+   * conversation. DIAL Core models removal as a *publication* whose single
+   * resource carries `action: 'DELETE'` — the same `createPublication` call
+   * and the same `PENDING → APPROVED/REJECTED` lifecycle publish goes
+   * through, so this returns a submitted request, never a completed removal.
+   * The published copy stays visible to everyone who could already see it
+   * until an administrator approves.
+   *
+   * Like publish, this has no cross-bucket case: the copy being removed was
+   * published from the caller's own bucket, so `sourceUrl` and the title
+   * fetch both resolve against the session `bucket` only.
+   *
+   * @throws {NotFoundException} When the conversation or target folder is unknown
+   * @throws {ForbiddenException} When the caller lacks write access to `folderPath`
+   * @throws {BadGatewayException} When Core returns an unexpected error
+   * @throws {ServiceUnavailableException} When Core is unreachable or times out
+   */
+  async unpublish(
+    accessToken: string,
+    bucket: string,
+    path: string,
+    folderPath: string,
+    author: string,
+  ): Promise<UnpublishConversationResultDto> {
+    const encodedPath = encodeDialResourcePath(path);
+    const sourceUrl = `${CONVERSATION_RESOURCE_PREFIX}/${bucket}/${encodedPath}`;
+
+    /*
+     * The title is re-fetched for the same reason publish re-fetches it: the
+     * admin queue shows `Publication.name`, and a DELETE request with no
+     * readable title is unreviewable. A failed fetch aborts before any
+     * publication is created, so a request that cannot be labelled is never
+     * submitted.
+     */
+    const {
+      data: conversation,
+      error: getError,
+      response: getResponse,
+    } = (await this.dialClient.client.getConversation(bucket, encodedPath, {
+      headers: getBearerAuthHeaders(accessToken),
+    })) as {
+      data?: { name: string };
+      error?: unknown;
+      response: globalThis.Response;
+    };
+    if (getError != null || conversation == null) {
+      return handleDialSdkError(
+        getError,
+        `conversations.unpublish (fetch title for "${sourceUrl}")`,
+        this.logger,
+        getResponse,
+      );
+    }
+
+    const publicTargetFolder = getPublicTargetFolder(folderPath);
+    const targetUrl = getPublishedTargetUrl(
+      CONVERSATION_RESOURCE_PREFIX,
+      folderPath,
+      getResourceName(sourceUrl),
+    );
+
+    /*
+     * `sourceUrl` is sent even though Core allows it to be omitted for a
+     * `DELETE` action: it keeps the resource shape identical to the ADD one
+     * publish sends. `rules` is omitted entirely.
+     */
+    const requestBody = {
+      name: conversation.name,
+      targetFolder: publicTargetFolder,
+      resources: [{ action: 'DELETE' as const, sourceUrl, targetUrl }],
+      displayAuthor: author,
+    };
+
+    let result;
+    try {
+      result = await this.dialClient.client.createPublication({
+        headers: getBearerAuthHeaders(accessToken),
+        body: requestBody,
+      });
+    } catch (err) {
+      this.logger.error(
+        `Unexpected error requesting unpublish of conversation "${sourceUrl}"`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new BadGatewayException(
+        'Failed to submit unpublish request to DIAL Core',
+      );
+    }
+
+    if (result.error) {
+      return mapDialHttpStatus(
+        result.response.status,
+        `unpublish conversation "${sourceUrl}"`,
+        this.logger,
+        result.error,
+        extractDialErrorMessage(result.error),
+      );
+    }
+
+    await this.cacheManager.del(historyCacheKey(sourceUrl));
+
+    const publication = result.data;
+    this.logger.debug(
+      `Requested unpublish of conversation "${sourceUrl}" from "${folderPath}"`,
+    );
+
+    return {
+      path: sourceUrl,
+      folderPath,
+      requestedAt: publication.createdAt
+        ? new Date(publication.createdAt).toISOString()
+        : new Date().toISOString(),
+      requestedBy: publication.author ?? publication.displayAuthor ?? '',
+    };
+  }
+
+  /**
    * @throws {BadGatewayException} When Core returns an unexpected error
    * @throws {ServiceUnavailableException} When Core is unreachable or times out
    */
@@ -172,8 +299,10 @@ export class ConversationPublishService {
          * `url` is the caller's own-bucket list scope, not `sourceUrl` itself
          * (see `getPublicationsListScope`'s doc comment) — Core has no
          * per-resource filter, so every publication in this bucket is
-         * fetched and narrowed to this conversation via
-         * `resources[].sourceUrl` below.
+         * fetched and narrowed to this conversation by
+         * `resolvePublicationsForSource` below — which has to re-read each
+         * candidate individually, because this list response carries
+         * publication metadata only and no `resources` array.
          */
         const result = await this.dialClient.client.getPublications({
           headers: getBearerAuthHeaders(accessToken),
@@ -189,12 +318,19 @@ export class ConversationPublishService {
           );
         }
 
-        return (result.data ?? [])
-          .filter((publication) =>
-            publication.resources?.some(
-              (resource) => resource.sourceUrl === sourceUrl,
-            ),
-          )
+        const publications = await resolvePublicationsForSource(
+          toPublicationList<(typeof result.data)[number]>(
+            result.data,
+            this.logger,
+            `publish history for conversation "${sourceUrl}"`,
+          ),
+          sourceUrl,
+          (url) => this.fetchPublication(accessToken, url),
+          this.logger,
+          `publish history for conversation "${sourceUrl}"`,
+        );
+
+        return publications
           .map(
             (publication): PublishConversationResultDto => ({
               path: sourceUrl,
@@ -211,5 +347,34 @@ export class ConversationPublishService {
           .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
       },
     });
+  }
+  /**
+   * One publication's full record, including the `resources` array the list
+   * call omits, or `null` when it cannot be read.
+   *
+   * Publish history is informational, so an unreadable publication is dropped
+   * rather than propagated: one 403 among a bucket's publications must not take
+   * down the publish panel for the whole conversation.
+   */
+  private async fetchPublication(accessToken: string, url: string) {
+    try {
+      const result = await this.dialClient.client.getPublication({
+        headers: getBearerAuthHeaders(accessToken),
+        body: { url },
+      });
+      if (result.error) {
+        this.logger.warn(
+          `Skipping publication "${url}": DIAL Core returned ${result.response.status}`,
+        );
+        return null;
+      }
+      return result.data;
+    } catch (err) {
+      this.logger.warn(
+        `Skipping unreadable publication "${url}"`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      return null;
+    }
   }
 }

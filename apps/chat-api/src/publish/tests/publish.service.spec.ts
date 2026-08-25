@@ -22,7 +22,11 @@ const makeCacheManager = () => ({
 
 const makeService = () => {
   const dialClient = {
-    client: { createPublication: vi.fn(), getPublications: vi.fn() },
+    client: {
+      createPublication: vi.fn(),
+      getPublication: vi.fn(),
+      getPublications: vi.fn(),
+    },
   } as unknown as DialClientService;
   const cacheManager = makeCacheManager();
   const service = new PublishService(dialClient, cacheManager as never);
@@ -373,6 +377,83 @@ describe('PublishService', () => {
   });
 
   describe('getPublishHistory', () => {
+    /*
+     * The regression the detail lookup exists for: Core's list call returns
+     * publication metadata only — no `resources` — so filtering the list
+     * response matched nothing. A live Core returned 60 publications and
+     * history still came back empty, hiding Unpublish on a published entity.
+     */
+    it('re-reads each APPROVED publication, because the list omits resources', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+        okResponse([
+          {
+            url: 'publications/bucket-123/mine',
+            status: 'APPROVED',
+            targetFolder: 'public/Organization/Data Science/',
+          },
+          {
+            url: 'publications/bucket-123/someone-else',
+            status: 'APPROVED',
+            targetFolder: 'public/Organization/Other/',
+          },
+          {
+            url: 'publications/bucket-123/awaiting-approval',
+            status: 'PENDING',
+            targetFolder: 'public/Organization/Pending/',
+          },
+        ]),
+      );
+      vi.spyOn(dialClient.client, 'getPublication').mockImplementation((async ({
+        body,
+      }: {
+        body: { url: string };
+      }) =>
+        okResponse({
+          url: body.url,
+          status: 'APPROVED',
+          targetFolder:
+            body.url === 'publications/bucket-123/mine'
+              ? 'public/Organization/Data Science/'
+              : 'public/Organization/Other/',
+          createdAt: 1_700_000_000_000,
+          author: 'user@example.com',
+          resources: [
+            {
+              sourceUrl:
+                body.url === 'publications/bucket-123/mine'
+                  ? 'toolsets/bucket-123/tool-abc123__1.2.0'
+                  : 'toolsets/bucket-123/some-other-entity__0.9.0',
+            },
+          ],
+        })) as never);
+
+      const result = await service.getPublishHistory(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+      );
+
+      /* The PENDING publication is not a published copy, so it is never read. */
+      expect(dialClient.client.getPublication).toHaveBeenCalledTimes(2);
+      expect(dialClient.client.getPublication).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: { url: 'publications/bucket-123/mine' },
+      });
+      expect(result).toEqual([
+        {
+          entityId: 'toolsets/bucket-123/tool-abc123__1.2.0',
+          entityType: CatalogEntityType.Toolset,
+          folderPath: 'Organization/Data Science',
+          version: '1.2.0',
+          publishedAt: new Date(1_700_000_000_000).toISOString(),
+          publishedBy: 'user@example.com',
+        },
+      ]);
+    });
+
     it('scopes the Core request by the caller own-bucket publications list (not entityId), maps matching publications, and recovers the version from entityId (not Publication.name)', async () => {
       const { service, dialClient, cacheManager } = makeService();
       cacheManager.get.mockResolvedValue(undefined);

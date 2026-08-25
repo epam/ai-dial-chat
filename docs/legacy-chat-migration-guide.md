@@ -36,12 +36,15 @@ API, never a rebuild of the frontend image.
 3. Re-register the OIDC redirect URI and the post-logout redirect URI with every
    identity provider. Both moved in 1.0 — the callback path gained the `/v1` API
    version segment — see [Authentication](#authentication).
-4. Port UI feature flags — see [UI feature flags](#ui-feature-flags).
-5. Port the themes configuration — see [Themes](#themes).
-6. Port any embedded-overlay integration — see [Embedding](#embedding).
-7. Point a non-production deployment at a copy of real storage and verify
+4. If the deployment uses toolset OAuth, add the public Chat callback URI to
+   DIAL Core's redirect allowlist and restart Core — see
+   [Authentication](#authentication).
+5. Port UI feature flags — see [UI feature flags](#ui-feature-flags).
+6. Port the themes configuration — see [Themes](#themes).
+7. Port any embedded-overlay integration — see [Embedding](#embedding).
+8. Point a non-production deployment at a copy of real storage and verify
    existing conversations — see [User data](#user-data).
-8. Review the [capabilities not in 1.0 yet](#capabilities-not-in-10-yet) and
+9. Review the [capabilities not in 1.0 yet](#capabilities-not-in-10-yet) and
    decide what to do about the flows that depend on them.
 
 ## Environment variables
@@ -142,6 +145,21 @@ redirect_uri`.
   browser there through the IdP, so it must be in the client's post-logout
   allow-list (Keycloak: _Valid post logout redirect URIs_). Unlike the callback it
   points at the **application** origin, not the API.
+- **Allow Chat's toolset OAuth callback in DIAL Core.** When toolset OAuth is
+  used and more than one client can start sign-in for the same toolset, add the
+  1.0 callback URI to Core's `toolsets.security.allowedRedirectUris`, preserving
+  the entries for other clients such as the Admin panel:
+
+  ```text
+  <CHAT_PUBLIC_ORIGIN>/auth/toolset-signin
+  ```
+
+  This uses the public origin from which users open Chat, not
+  `AUTH_CALLBACK_BASE_URL` when the frontend and API are exposed separately.
+  The setting is read at Core startup, so restart DIAL Core after changing it.
+  See the
+  [Chat API deployment setup](../apps/chat-api/README.md#dial-core-oauth-redirect-allowlist)
+  for the Core configuration example.
 - Existing sessions do not carry over. Users log in once after the switch.
 - Provider configuration keeps the legacy shape: one set of discrete
   `AUTH_{PROVIDER}_*` variables per provider, registered when its `CLIENT_ID` is

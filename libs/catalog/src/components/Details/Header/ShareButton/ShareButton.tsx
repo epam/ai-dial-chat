@@ -25,10 +25,10 @@ interface ShareButtonProps {
 }
 
 /*
- * Guardrail and MCP sharing is descoped for now — hide Share entirely for
- * those types rather than offering a button with undefined behavior.
- * Sharing is also limited to entities the current user owns (deployments
- * and toolsets in their personal space), not the whole catalog.
+ * MCP sharing is descoped for now — hide Share entirely for that type rather
+ * than offering a button with undefined behavior. Sharing is also limited to
+ * entities the current user owns (deployments and toolsets in their personal
+ * space), not the whole catalog.
  */
 const shouldShowShare = (item: CatalogItem): boolean => item.isMyApp === true;
 

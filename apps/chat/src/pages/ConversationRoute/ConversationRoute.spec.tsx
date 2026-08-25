@@ -2,6 +2,7 @@ import {
   DeploymentItemDto,
   DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
+import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
@@ -17,10 +18,9 @@ import * as OverlayContextMock from '../../context/overlay/OverlayContext';
 import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import * as apiClient from '../../server-api/api-client';
 import * as conversationsApi from '../../server-api/conversations.api';
-import * as filesApi from '../../server-api/files.api';
 import { AuthStatus } from '../../types/auth-status';
-import * as attachmentToDtoModule from '../../utils/attachment-to-dto';
 import ConversationRoute from './ConversationRoute';
 
 const OverlayTestCtx = (
@@ -94,11 +94,16 @@ vi.mock('../../hooks/conversation/useToolsMenu', () => ({
   useToolsMenu: vi.fn(),
 }));
 vi.mock('../../server-api/conversations.api');
-vi.mock('../../server-api/files.api');
-vi.mock('../../utils/attachment-to-dto');
-vi.mock('../../utils/build-upload-path', () => ({
-  buildUploadPath: vi.fn((fileName: string) => `uploads/${fileName}`),
-}));
+vi.mock('../../server-api/api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../server-api/api-client')>();
+  return { ...actual, filesApi: { ...actual.filesApi, uploadFile: vi.fn() } };
+});
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return { ...actual, attachmentsToDtos: vi.fn() };
+});
 vi.mock('../../components/StarterButtons/StarterButtons', () => ({
   default: ({
     starters,
@@ -243,10 +248,8 @@ describe('ConversationRoute', () => {
     NotificationContextModule.useNotification,
   );
   const mockCreateConversation = vi.mocked(conversationsApi.createConversation);
-  const mockUploadFile = vi.mocked(filesApi.uploadFile);
-  const mockAttachmentsToDtos = vi.mocked(
-    attachmentToDtoModule.attachmentsToDtos,
-  );
+  const mockUploadFile = vi.mocked(apiClient.filesApi.uploadFile);
+  const mockAttachmentsToDtos = vi.mocked(chatHooksModule.attachmentsToDtos);
   const mockShowNotification = vi.fn();
   const mockRestoreSelectedItemId = vi.fn();
   const mockRestoreDefaultSelection = vi.fn();
@@ -474,9 +477,10 @@ describe('ConversationRoute', () => {
 
     await waitFor(() => {
       expect(mockUploadFile).toHaveBeenCalledWith(
-        'user-bucket',
-        'uploads/file.pdf',
-        expect.any(File),
+        expect.objectContaining({
+          bucket: 'user-bucket',
+          file: expect.any(File),
+        }),
       );
     });
   });

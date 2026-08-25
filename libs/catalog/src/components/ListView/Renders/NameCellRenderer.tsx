@@ -25,12 +25,18 @@ export const NameCellRenderer: FC<
   if (!data) return null;
   return (
     <div className="flex h-full min-w-0 items-center gap-2.5">
-      <DeploymentIcon
-        src={data.iconUrl}
-        size={36}
-        initialsName={data.name}
-        styles={{ badgeClassName: 'rounded-[10px]' }}
-      />
+      <div className="relative shrink-0">
+        <DeploymentIcon
+          src={data.iconUrl}
+          size={36}
+          initialsName={data.name}
+          styles={{ badgeClassName: 'rounded-[10px]' }}
+        />
+        <CredentialsBadge
+          credentials={data.credentials}
+          loggedOutLabel={context?.credentialsBadgeLoggedOutLabel}
+        />
+      </div>
       <ItemHeader
         title={data.name}
         postfix={data.version}
@@ -47,11 +53,6 @@ export const NameCellRenderer: FC<
             />
           ) : undefined
         }
-      />
-      <CredentialsBadge
-        credentials={data.credentials}
-        loggedOutLabel={context?.credentialsBadgeLoggedOutLabel}
-        className="ms-2 shrink-0"
       />
     </div>
   );

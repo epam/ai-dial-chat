@@ -430,6 +430,7 @@ describe('DeploymentsController (integration)', () => {
         .expect(200);
 
       expect(res.body).toEqual(mockDetails);
+      expect(res.headers['cache-control']).toBe('private, no-store');
       expect(service.getDeploymentDetails).toHaveBeenCalledWith(
         TEST_USER.sub,
         'gpt-4o',

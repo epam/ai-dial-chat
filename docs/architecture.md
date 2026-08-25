@@ -88,6 +88,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | Package                                  | Path                       | Purpose                                                                      |
 | ---------------------------------------- | -------------------------- | ---------------------------------------------------------------------------- |
 | `@epam/ai-dial-chat-shared`              | `chat-shared`              | Shared domain models, utilities, and UI primitives consumed by every lib     |
+| `@epam/ai-dial-chat-hooks`               | `chat-hooks`               | Headless React hooks for reusable chat-interface behavior                     |
 | `@epam/ai-dial-chat-api-client`          | `chat-api-client`          | Generated OpenAPI client for the chat API (see the exception below)          |
 | `@epam/ai-dial-chat-overlay`             | `chat-overlay`             | Embeddable `ChatOverlay` / `ChatOverlayManager` and the postMessage protocol |
 | `@epam/ai-dial-catalog`                  | `catalog`                  | Catalog for browsing models, applications, tools, prompts, and skills        |
@@ -109,7 +110,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-builder-form`             | `builder-form`             | Presentational builder form for composing and editing DIAL entities          |
 | `@epam/ai-dial-deployment-creation-form` | `deployment-creation-form` | Form for creating and editing a deployment                                   |
 | `@epam/ai-dial-scheduled-tasks`          | `scheduled-tasks`          | Scheduled Tasks page shell — header, toolbar, empty state                    |
-| `@epam/ai-dial-usage-dashboard`          | `usage-dashboard`          | Aggregate daily/monthly cost-limit cards for the Settings Usage tab         |
+| `@epam/ai-dial-usage-dashboard`          | `usage-dashboard`          | Aggregate daily/monthly cost-limit cards for the Settings Usage tab          |
 
 `libs/ai-dial-kit/` is a leftover build-output directory from a removed library — no `package.json`, no sources, no importers. Do not add to it.
 
@@ -117,7 +118,9 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 
 Libraries must stay free of host and external-system knowledge: no REST paths, generated clients, app contexts, auth/session/cookies, environment variables, feature flags, routing, analytics, storage keys, or third-party SDK setup. Applications adapt those concerns and pass data, resolved values, and behaviour into libs through props, typed callbacks, or narrow interfaces.
 
-`@epam/ai-dial-chat-api-client` is the single exception: it is generated from the backend's OpenAPI document and exists to carry endpoint paths and DTOs. Do not hand-edit it, and do not import it from other libraries — apps consume it through `apps/chat/src/server-api`.
+`@epam/ai-dial-chat-api-client` is the generated-client exception: it is generated from the backend's OpenAPI document and exists to carry endpoint paths and DTOs. Do not hand-edit it; applications normally consume it through `apps/chat/src/server-api`.
+
+`libs/chat-hooks` has a narrower exception: hooks may depend on the generated client's types and operation signatures and accept an already-configured client instance. The library must not construct or configure that client or acquire any other host-owned integration knowledge.
 
 The styling contract every UI lib follows — CSS variable naming, what belongs in `.module.scss` versus Tailwind, the `styles={{ colors, typography }}` prop shape, and the checks that catch inert styles — is in [`openspec/lib-styling-guide.md`](../openspec/lib-styling-guide.md). `libs/conversation-input` is the reference implementation.
 
@@ -528,7 +531,7 @@ The intended direction, enforced in review:
 | `apps/*`      | any `libs/*`                          |
 | Feature libs  | `chat-shared` only                    |
 | `chat-shared` | nothing in the workspace              |
-| Any lib       | not `chat-api-client` — apps adapt it |
+| Any lib       | not `chat-api-client`; `chat-hooks` has the narrow exception above |
 | `apps/*`      | not another `apps/*`                  |
 
 ---
