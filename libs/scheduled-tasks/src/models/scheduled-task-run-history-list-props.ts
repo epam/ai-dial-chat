@@ -31,7 +31,7 @@ export interface ScheduledTaskRunHistoryListColors {
   missedIconColor?: string;
   /** Error/empty message text color. Fallback: `--text-secondary`. */
   subtitleTextColor?: string;
-  /** Current-run row background. Fallback: `--bg-accent-primary-alpha`. */
+  /** Current-run row background. Fallback: `--bg-control-accent-alpha-active`. */
   currentRunBackground?: string;
 }
 

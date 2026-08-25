@@ -18,7 +18,7 @@ export interface FavoritesColors {
   selectedCheckIcon?: string;
   /** Border color of the selected favorite card. Fallback: `--stroke-info`. */
   selectedCardBorder?: string;
-  /** Background color (tint) of the selected favorite card. Fallback: `--bg-accent-primary-alpha`. */
+  /** Background color (tint) of the selected favorite card. Fallback: `--bg-control-accent-alpha-active`. */
   selectedCardBackground?: string;
   /** Icon color of the pagination arrows. Fallback: `--text-accent`. */
   navButton?: string;

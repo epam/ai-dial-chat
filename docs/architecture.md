@@ -99,7 +99,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-sidebar`                  | `sidebar`                  | Resizable sidebar shell — header, search, empty state                        |
 | `@epam/ai-dial-source-panel`             | `source-panel`             | Conversation sources — uploaded files and generated citations                |
 | `@epam/ai-dial-quotations`               | `quotations`               | Citation and annotation components, hooks, and utilities                     |
-| `@epam/ai-dial-attachment-canvas`        | `attachment-canvas`        | Viewer for attachment content — images, PDFs, JSON, markdown, plain text     |
+| `@epam/ai-dial-attachment-canvas`        | `attachment-canvas`        | Viewer for attachments — images, PDFs, DOCX/XLSX/PPTX, JSON, markdown, text  |
 | `@epam/ai-dial-attachment-input`         | `attachment-input`         | File input with upload validation, drag-and-drop, progress                   |
 | `@epam/ai-dial-starter-buttons`          | `starter-buttons`          | Starter prompts that overflow into a dropdown when space runs out            |
 | `@epam/ai-dial-share`                    | `share`                    | Share popover UI and share-link types                                        |

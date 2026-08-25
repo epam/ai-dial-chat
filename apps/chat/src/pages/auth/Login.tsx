@@ -101,7 +101,7 @@ const LoginPage: FC = () => {
         </picture>
       </div>
 
-      <div className="relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl bg-overlay p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
+      <div className="relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl bg-layer-raised p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
         {currentThemeFavicon && (
           <span
             style={{

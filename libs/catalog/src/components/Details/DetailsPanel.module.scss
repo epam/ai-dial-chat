@@ -33,5 +33,8 @@
 
 /* Read from TSX as `styles.skeletonColor` — Skeleton takes a color value, not a class. */
 :export {
-  skeletonColor: var(--cat-details-skeleton, var(--bg-layer-4, #d1dbea));
+  skeletonColor: var(
+    --cat-details-skeleton,
+    var(--bg-control-disable-primary, #dce0e8)
+  );
 }

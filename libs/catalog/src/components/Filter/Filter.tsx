@@ -40,7 +40,7 @@ export interface FilterColors {
   overlayBackground?: string;
   /** Row background on hover. Fallback: `--bg-layer-raised`. */
   rowHoverBackground?: string;
-  /** Background of a checked row. Fallback: `--bg-accent-primary-alpha`. */
+  /** Background of a checked row. Fallback: `--bg-control-accent-alpha-active`. */
   rowCheckedBackground?: string;
   /** Row label text color. Fallback: `--text-primary`. */
   rowLabel?: string;

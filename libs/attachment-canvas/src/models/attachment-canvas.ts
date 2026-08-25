@@ -8,6 +8,7 @@ import type { CSSProperties } from 'react';
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  OoxmlFileType,
 } from '../types/attachment-canvas';
 
 /** Content payload for plain-text attachments. */
@@ -52,6 +53,16 @@ export interface PdfCanvasContent {
   highlights?: InputHighlightData[];
   /** ID of the highlight to scroll to and select on initial load. */
   selectedHighlightId?: string;
+}
+
+/** Content payload for Office Open XML document attachments. */
+export interface OoxmlCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.Ooxml;
+  /** Resolved download URL or object URL for the OOXML file. */
+  url: string;
+  /** The document format used to select the format-specific renderer. */
+  format: OoxmlFileType;
 }
 
 /** Content payload for audio file attachments. */
@@ -128,6 +139,7 @@ export type AttachmentCanvasContent =
   | MarkdownCanvasContent
   | JsonCanvasContent
   | PdfCanvasContent
+  | OoxmlCanvasContent
   | CodeCanvasContent
   | HtmlCanvasContent
   | VisualizerCanvasContent
@@ -146,7 +158,7 @@ export interface AttachmentCanvasColors {
   openInNewTabText?: string;
   /** Border color of the JSON viewer wrapper. Defaults to `--stroke-secondary`. */
   jsonBorder?: string;
-  /** Background color of the JSON viewer wrapper. Defaults to `--bg-layer-1`. */
+  /** Background color of the JSON viewer wrapper. Defaults to `--bg-layer-base`. */
   jsonBackground?: string;
   /** JSON key/label color. Defaults to `--text-primary`. */
   jsonLabel?: string;
@@ -166,6 +178,8 @@ export interface AttachmentCanvasColors {
   jsonToggleIcon?: string;
   /** Expand/collapse triangle color on hover. Defaults to `--text-primary`. */
   jsonToggleIconHover?: string;
+  /** Background color of the OOXML (DOCX/XLSX/PPTX) viewer surface and its loading/error overlay. Defaults to `--bg-layer-raised`. */
+  ooxmlBackground?: string;
   /** Text color of the collapsed-content ellipsis. Defaults to `--text-secondary`. */
   jsonCollapsedText?: string;
   /** Background color of the collapsed-content ellipsis. Defaults to `--bg-layer-raised`. */

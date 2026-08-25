@@ -14,7 +14,7 @@ export interface ResourceSummaryColors {
   background?: string;
   /** Version tag border color. Defaults to `--stroke-tertiary`. */
   versionTagBorder?: string;
-  /** Version tag background color. Defaults to `--bg-accent-primary-alpha`. */
+  /** Version tag background color. Defaults to `--bg-control-accent-alpha`. */
   versionTagBackground?: string;
   /** Version tag text color. Defaults to `--text-accent`. */
   versionTagText?: string;

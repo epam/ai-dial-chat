@@ -19,7 +19,7 @@ export interface BottomSheetShellColors {
   sheetBg?: string;
   /** Sheet title text color. Defaults to `--text-primary`. */
   sheetText?: string;
-  /** Divider line color below the header. Defaults to `--bg-layer-4`. */
+  /** Divider line color below the header. Defaults to `--stroke-tertiary`. */
   divider?: string;
 }
 
