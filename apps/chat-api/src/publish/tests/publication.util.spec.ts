@@ -1,9 +1,11 @@
 import { Logger } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  getPublicationSourceAction,
   PublicationResourceAction,
   PublicationStatus,
   publishesSource,
+  removesSource,
   resolvePublicationsForSource,
   toPublicationList,
 } from '../publication.util';
@@ -65,6 +67,7 @@ interface ListedPublication {
   url?: string;
   status?: string;
   targetFolder?: string;
+  createdAt?: number | string;
   resources?: { action?: string; sourceUrl?: string }[];
 }
 
@@ -129,6 +132,97 @@ describe('publishesSource', () => {
 
   it('does not match a publication with no resources', () => {
     expect(publishesSource(listed('publications/b/1'), SOURCE_URL)).toBe(false);
+  });
+});
+
+describe('getPublicationSourceAction', () => {
+  it('returns null when the publication does not reference the source', () => {
+    expect(
+      getPublicationSourceAction(listed('publications/b/1'), SOURCE_URL),
+    ).toBeNull();
+  });
+
+  it('reports ADD and DELETE for the referenced source', () => {
+    expect(
+      getPublicationSourceAction(
+        detailed('publications/b/1', SOURCE_URL),
+        SOURCE_URL,
+      ),
+    ).toBe(PublicationResourceAction.Add);
+    expect(
+      getPublicationSourceAction(
+        detailed(
+          'publications/b/1',
+          SOURCE_URL,
+          PublicationResourceAction.Delete,
+        ),
+        SOURCE_URL,
+      ),
+    ).toBe(PublicationResourceAction.Delete);
+  });
+
+  /* Core's own default, so a resource that omits `action` is publishing. */
+  it('treats a resource with no action as ADD', () => {
+    expect(
+      getPublicationSourceAction(
+        {
+          ...listed('publications/b/1'),
+          resources: [{ sourceUrl: SOURCE_URL }],
+        },
+        SOURCE_URL,
+      ),
+    ).toBe(PublicationResourceAction.Add);
+  });
+
+  it('reports ADD_IF_ABSENT as itself, and as publishing', () => {
+    const publication = detailed(
+      'publications/b/1',
+      SOURCE_URL,
+      PublicationResourceAction.AddIfAbsent,
+    );
+
+    expect(getPublicationSourceAction(publication, SOURCE_URL)).toBe(
+      PublicationResourceAction.AddIfAbsent,
+    );
+    expect(publishesSource(publication, SOURCE_URL)).toBe(true);
+    expect(removesSource(publication, SOURCE_URL)).toBe(false);
+  });
+});
+
+describe('removesSource', () => {
+  it('matches only a DELETE resource for the source url', () => {
+    expect(
+      removesSource(
+        detailed(
+          'publications/b/1',
+          SOURCE_URL,
+          PublicationResourceAction.Delete,
+        ),
+        SOURCE_URL,
+      ),
+    ).toBe(true);
+    expect(
+      removesSource(detailed('publications/b/1', SOURCE_URL), SOURCE_URL),
+    ).toBe(false);
+    expect(removesSource(listed('publications/b/1'), SOURCE_URL)).toBe(false);
+  });
+
+  /* Whether the removal has happened is `status`, not the action. */
+  it('matches a DELETE regardless of status', () => {
+    expect(
+      removesSource(
+        {
+          ...listed('publications/b/1', PublicationStatus.Pending),
+          resources: [
+            {
+              action: PublicationResourceAction.Delete,
+              sourceUrl: SOURCE_URL,
+            },
+          ],
+        },
+        SOURCE_URL,
+      ),
+    ).toBe(true);
   });
 });
 
@@ -256,5 +350,237 @@ describe('resolvePublicationsForSource', () => {
 
     expect(matched).toEqual([detailed('publications/b/42', SOURCE_URL)]);
     expect(peakInFlight).toBeLessThanOrEqual(8);
+  });
+});
+
+const FOLDER = 'public/folder/';
+
+/** An `APPROVED` publication carrying one resource for `SOURCE_URL`. */
+const approved = (
+  url: string,
+  action: PublicationResourceAction,
+  createdAt: number | string | undefined,
+  targetFolder = FOLDER,
+): ListedPublication => ({
+  url,
+  status: PublicationStatus.Approved,
+  targetFolder,
+  createdAt,
+  resources: [{ action, sourceUrl: SOURCE_URL }],
+});
+
+/*
+ * GH #8445. Core never retracts the original `ADD` publication — it stays
+ * `APPROVED` as an audit record — so once an administrator approved an
+ * unpublish request the folder still looked published, the action menu went on
+ * offering Unpublish, and acting on it failed with "Target resource does not
+ * exists".
+ */
+describe('resolvePublicationsForSource, approved removals', () => {
+  const resolve = (publications: ListedPublication[]) =>
+    resolvePublicationsForSource(
+      publications,
+      SOURCE_URL,
+      async () => null,
+      undefined,
+      'ctx',
+    );
+
+  it('drops the ADD once its removal is APPROVED', async () => {
+    expect(
+      await resolve([
+        approved('publications/b/1', PublicationResourceAction.Add, 1000),
+        approved('publications/b/2', PublicationResourceAction.Delete, 2000),
+      ]),
+    ).toEqual([]);
+  });
+
+  /* Until an admin approves, the published copy is still live. */
+  it('keeps the ADD while the removal is only PENDING', async () => {
+    const add = approved(
+      'publications/b/1',
+      PublicationResourceAction.Add,
+      1000,
+    );
+
+    expect(
+      await resolve([
+        add,
+        {
+          ...approved(
+            'publications/b/2',
+            PublicationResourceAction.Delete,
+            2000,
+          ),
+          status: PublicationStatus.Pending,
+        },
+      ]),
+    ).toEqual([add]);
+  });
+
+  /*
+   * Cancelling on an assumed approval is the more expensive mistake: it hides
+   * Unpublish for a copy that is still live and offers a Publish that Core
+   * rejects because the target already exists.
+   */
+  it('keeps the ADD when Core reported no status on the removal', async () => {
+    const add = approved(
+      'publications/b/1',
+      PublicationResourceAction.Add,
+      1000,
+    );
+    const removal = approved(
+      'publications/b/2',
+      PublicationResourceAction.Delete,
+      2000,
+    );
+    delete removal.status;
+
+    expect(await resolve([add, removal])).toEqual([add]);
+  });
+
+  it('keeps the ADD when the removal was REJECTED', async () => {
+    const add = approved(
+      'publications/b/1',
+      PublicationResourceAction.Add,
+      1000,
+    );
+
+    expect(
+      await resolve([
+        add,
+        {
+          ...approved(
+            'publications/b/2',
+            PublicationResourceAction.Delete,
+            2000,
+          ),
+          status: PublicationStatus.Rejected,
+        },
+      ]),
+    ).toEqual([add]);
+  });
+
+  /* publish → unpublish (approved) → publish again: the folder is published. */
+  it('keeps an ADD created after the approved removal', async () => {
+    const republished = approved(
+      'publications/b/3',
+      PublicationResourceAction.Add,
+      3000,
+    );
+
+    expect(
+      await resolve([
+        approved('publications/b/1', PublicationResourceAction.Add, 1000),
+        approved('publications/b/2', PublicationResourceAction.Delete, 2000),
+        republished,
+      ]),
+    ).toEqual([republished]);
+  });
+
+  it('cancels only the folder the removal targeted', async () => {
+    const otherFolder = approved(
+      'publications/b/3',
+      PublicationResourceAction.Add,
+      1000,
+      'public/reports/',
+    );
+
+    expect(
+      await resolve([
+        approved('publications/b/1', PublicationResourceAction.Add, 1000),
+        approved('publications/b/2', PublicationResourceAction.Delete, 2000),
+        otherFolder,
+      ]),
+    ).toEqual([otherFolder]);
+  });
+
+  /* Core echoes `targetFolder` percent-encoded; the ADD was built from plain text. */
+  it('matches the removal across a percent-encoding difference', async () => {
+    expect(
+      await resolve([
+        approved(
+          'publications/b/1',
+          PublicationResourceAction.Add,
+          1000,
+          'public/New Folder/',
+        ),
+        approved(
+          'publications/b/2',
+          PublicationResourceAction.Delete,
+          2000,
+          'public/New%20Folder/',
+        ),
+      ]),
+    ).toEqual([]);
+  });
+
+  it('accepts an ISO createdAt as well as epoch milliseconds', async () => {
+    expect(
+      await resolve([
+        approved(
+          'publications/b/1',
+          PublicationResourceAction.Add,
+          '2026-08-01T00:00:00.000Z',
+        ),
+        approved(
+          'publications/b/2',
+          PublicationResourceAction.Delete,
+          '2026-08-02T00:00:00.000Z',
+        ),
+      ]),
+    ).toEqual([]);
+  });
+
+  /*
+   * An approved removal that cannot be dated is the more recent statement of
+   * what exists: showing Unpublish for a copy Core has deleted is the failure
+   * being prevented.
+   */
+  it('lets an undateable approved removal cancel its folder', async () => {
+    expect(
+      await resolve([
+        approved('publications/b/1', PublicationResourceAction.Add, 1000),
+        approved(
+          'publications/b/2',
+          PublicationResourceAction.Delete,
+          undefined,
+        ),
+      ]),
+    ).toEqual([]);
+  });
+
+  it('never reports the removal publication itself as published', async () => {
+    expect(
+      await resolve([
+        approved('publications/b/2', PublicationResourceAction.Delete, 2000),
+      ]),
+    ).toEqual([]);
+  });
+
+  /* The real path: the list carries metadata only, details come from lookups. */
+  it('cancels across separately fetched detail records', async () => {
+    const details: Record<string, ListedPublication> = {
+      'publications/b/1': approved(
+        'publications/b/1',
+        PublicationResourceAction.Add,
+        1000,
+      ),
+      'publications/b/2': approved(
+        'publications/b/2',
+        PublicationResourceAction.Delete,
+        2000,
+      ),
+    };
+    const fetchPublication = vi.fn(async (url: string) => details[url] ?? null);
+
+    const matched = await resolvePublicationsForSource(
+      [listed('publications/b/1'), listed('publications/b/2')],
+      SOURCE_URL,
+      fetchPublication,
+    );
+
+    expect(fetchPublication).toHaveBeenCalledTimes(2);
+    expect(matched).toEqual([]);
   });
 });

@@ -677,6 +677,9 @@ export enum PublishI18nKeys {
   FailedTitle = 'publish.failedTitle',
   FailedMessage = 'publish.failedMessage',
   NetworkErrorMessage = 'publish.networkErrorMessage',
+  UnpublishFailedTitle = 'publish.unpublishFailedTitle',
+  UnpublishFailedMessage = 'publish.unpublishFailedMessage',
+  UnpublishNetworkErrorMessage = 'publish.unpublishNetworkErrorMessage',
   SubmitErrorCallout = 'publish.submitErrorCallout',
 }
 
