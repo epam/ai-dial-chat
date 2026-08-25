@@ -115,6 +115,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       : rawLanguageHeader;
     const language = languageHeaderValue?.trim() || undefined;
 
+    const rawTimezoneHeader = req.headers['x-timezone'];
+    const timezoneHeaderValue = Array.isArray(rawTimezoneHeader)
+      ? rawTimezoneHeader[0]
+      : rawTimezoneHeader;
+    const timezone = timezoneHeaderValue?.trim() || undefined;
+
     const stream = await OpenAIStream({
       model,
       messages: messagesToSend,
@@ -122,6 +128,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       chatReference: reference ?? id,
       jobTitle: token?.jobTitle,
       language: language,
+      timezone: timezone,
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
         : undefined,

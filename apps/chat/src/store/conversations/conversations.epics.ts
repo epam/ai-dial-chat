@@ -1877,6 +1877,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const conversationSignal =
         ConversationsSelectors.selectConversationSignal(state$.value);
       const locale = UISelectors.selectLocale(state$.value);
+      const timezone = UISelectors.selectTimezone(state$.value);
       const decoder = new TextDecoder();
       let eventData = '';
       let message = payload.message;
@@ -1888,6 +1889,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           headers: {
             'Content-Type': 'application/json',
             'x-language': locale,
+            ...(timezone && { 'x-timezone': timezone }),
             ...(channelId &&
               isApplication && {
                 [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
