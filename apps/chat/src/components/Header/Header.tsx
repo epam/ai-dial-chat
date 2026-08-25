@@ -56,7 +56,7 @@ const Header: FC<Props> = ({
   return (
     <header
       className={mergeClasses(
-        'z-30 grid min-h-[48px] w-full grid-cols-[1fr_auto_1fr] items-center bg-transparent desktop:hidden',
+        'z-30 grid min-h-[48px] w-full grid-cols-[1fr_auto_1fr] items-center bg-transparent pt-1 desktop:hidden',
         isRootRoute ? 'absolute inset-x-0 top-0' : 'relative',
       )}
     >
