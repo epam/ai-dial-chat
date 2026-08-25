@@ -5,16 +5,30 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  Tooltip,
-  ElementSize,
   GhostButton,
-  GhostIconButton,
+  ToggleIconButton,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconStarFilled } from '@tabler/icons-react';
-import type { FC, KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FC,
+  type KeyboardEvent,
+} from 'react';
 import type { FavoritePromptItem } from '../../models/favorite-prompt-item';
 import type { FavoritePromptsPanelProps } from '../../models/favorite-prompts-panel-props';
 import styles from './FavoritePromptsPanel.module.scss';
+
+const SECTION_HEADING_CLASS_NAME = 'px-3 pb-0.5 pt-2';
+
+/* Must match the .rowLeaving exit-animation duration in FavoritePromptsPanel.module.scss. */
+const ROW_LEAVE_ANIMATION_MS = 180;
+
+/* Matches the max-h-72 cap on the scrollable list. */
+const LIST_MAX_HEIGHT_PX = 288;
 
 /**
  * Second-level "My Collection" panel: the user's favorite prompts, or an
@@ -28,7 +42,7 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
   labels = {},
   colors,
   nameClassName = 'dial-small-text',
-  headerClassName = 'dial-tiny-semi-text',
+  headerClassName = 'dial-tiny-lead-semi-text',
   emptyHintClassName = 'dial-small-text',
 }) => {
   const {
@@ -46,6 +60,34 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
     '--fp-footer-border': colors?.footerBorder,
   });
 
+  const [leavingIds, setLeavingIds] = useState<Set<string>>(new Set());
+  const leaveTimeoutsRef = useRef(
+    new Map<string, ReturnType<typeof setTimeout>>(),
+  );
+
+  useEffect(() => {
+    const timeouts = leaveTimeoutsRef.current;
+    return () => {
+      timeouts.forEach((timeout) => clearTimeout(timeout));
+      timeouts.clear();
+    };
+  }, []);
+
+  /*
+   * Animates the scrollable list's own height as rows leave instead of
+   * letting it snap instantly, since CSS can't transition height: auto.
+   */
+  const listContentRef = useRef<HTMLDivElement>(null);
+  const [listHeight, setListHeight] = useState<number>();
+
+  useLayoutEffect(() => {
+    if (listContentRef.current) {
+      setListHeight(
+        Math.min(listContentRef.current.scrollHeight, LIST_MAX_HEIGHT_PX),
+      );
+    }
+  }, [favorites]);
+
   const handleKeyDown = (
     e: KeyboardEvent<HTMLDivElement>,
     item: FavoritePromptItem,
@@ -55,6 +97,25 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
       e.preventDefault();
       onSelect(item);
     }
+  };
+
+  /*
+   * Plays the row's fade-out animation before actually committing the
+   * favorite change, since applying it immediately would make the row
+   * (and its own animation) disappear instantly.
+   */
+  const handleToggleFavorite = (id: string) => {
+    setLeavingIds((prev) => new Set(prev).add(id));
+    const timeout = setTimeout(() => {
+      onToggleFavorite(id);
+      setLeavingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      leaveTimeoutsRef.current.delete(id);
+    }, ROW_LEAVE_ANIMATION_MS);
+    leaveTimeoutsRef.current.set(id, timeout);
   };
 
   const renderRow = (item: FavoritePromptItem) => {
@@ -78,8 +139,7 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
         >
           {item.name}
         </span>
-        <GhostIconButton
-          size={ElementSize.Small}
+        <ToggleIconButton
           icon={
             <IconStarFilled
               size={DIAL_ICON_SIZE.SM}
@@ -88,10 +148,11 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
             />
           }
           aria-label={removeFromFavoritesLabel}
-          aria-pressed
+          /* Every row in this panel is a favorite, so the star is always on. */
+          isSelected
           onClick={(e) => {
             e.stopPropagation();
-            onToggleFavorite(item.id);
+            handleToggleFavorite(item.id);
           }}
         />
       </div>
@@ -100,7 +161,12 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
     const hasDescription = item.description != null && item.description !== '';
 
     return (
-      <li key={item.id}>
+      <li
+        key={item.id}
+        className={
+          leavingIds.has(item.id) ? styles.rowLeaving : styles.rowEnter
+        }
+      >
         {hasDescription ? (
           <Tooltip tooltip={item.description} triggerClassName="block">
             {row}
@@ -114,35 +180,43 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
 
   return (
     <div className="flex min-w-[240px] flex-col" style={cssVars}>
-      <div className="flex items-center gap-1 py-2.5">
-        <p
-          className={mergeClasses(
-            headerClassName,
-            'px-3 uppercase',
-            styles.header,
+      <p
+        className={mergeClasses(
+          headerClassName,
+          SECTION_HEADING_CLASS_NAME,
+          styles.header,
+        )}
+      >
+        {myCollectionLabel}
+      </p>
+
+      <div
+        className={mergeClasses(
+          'max-h-72 min-h-0 flex-1 overflow-y-auto',
+          styles.listContent,
+        )}
+        style={{ maxHeight: listHeight }}
+      >
+        <div ref={listContentRef}>
+          {favorites.length > 0 ? (
+            <ul className="flex flex-col gap-1 px-1 pb-1">
+              {favorites.map(renderRow)}
+            </ul>
+          ) : (
+            <p
+              className={mergeClasses(
+                emptyHintClassName,
+                'px-4 py-4 text-start',
+                styles.emptyHint,
+              )}
+            >
+              {emptyHintLabel}
+            </p>
           )}
-        >
-          {myCollectionLabel}
-        </p>
+        </div>
       </div>
 
-      {favorites.length > 0 ? (
-        <ul className="flex max-h-72 flex-col gap-1 overflow-y-auto px-1 pb-1">
-          {favorites.map(renderRow)}
-        </ul>
-      ) : (
-        <p
-          className={mergeClasses(
-            emptyHintClassName,
-            'px-4 py-4 text-start',
-            styles.emptyHint,
-          )}
-        >
-          {emptyHintLabel}
-        </p>
-      )}
-
-      <div className={mergeClasses('border-t px-2 py-1', styles.footer)}>
+      <div className={mergeClasses('border-t px-2 py-3', styles.footer)}>
         <GhostButton
           label={browseLabel}
           className="w-full justify-center"

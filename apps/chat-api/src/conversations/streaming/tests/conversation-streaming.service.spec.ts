@@ -98,6 +98,7 @@ describe('ConversationStreamingService', () => {
     sessionId: string,
     res: ReturnType<typeof makeMockRes>,
     clientChannelId?: string,
+    timezone?: string,
   ) => {
     const stream = service.streamCompletion(
       conversationPath,
@@ -118,6 +119,7 @@ describe('ConversationStreamingService', () => {
       },
       'user1',
       clientChannelId,
+      timezone,
     );
     for await (const chunk of stream) {
       res.write(chunk);
@@ -212,6 +214,7 @@ describe('ConversationStreamingService', () => {
       mode = CompletionMode.Append,
       streamChunks = [': keepalive\n\n'],
       clientChannelId?: string,
+      timezone?: string,
     ) => {
       vi.spyOn(
         service['dialClient'].client,
@@ -248,6 +251,7 @@ describe('ConversationStreamingService', () => {
         'test-session-id',
         res as never,
         clientChannelId,
+        timezone,
       );
       return { sendSpy, res };
     };
@@ -280,6 +284,30 @@ describe('ConversationStreamingService', () => {
       });
     });
 
+    it('forwards the stable conversation id as X-CONVERSATION-ID for Chat Completions', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(sendSpy.mock.calls[0][1].headers).toMatchObject({
+        'X-CONVERSATION-ID': baseConversation.id,
+      });
+    });
+
     it('omits X-DIAL-CLIENT-CHANNEL-ID when no channel id is provided', async () => {
       const conversation = {
         ...baseConversation,
@@ -302,6 +330,157 @@ describe('ConversationStreamingService', () => {
       expect(sendSpy.mock.calls[0][1].headers).not.toHaveProperty(
         'X-DIAL-CLIENT-CHANNEL-ID',
       );
+    });
+
+    it('forwards the request timezone as X-Timezone when provided', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+        undefined,
+        CompletionMode.Append,
+        [': keepalive\n\n'],
+        undefined,
+        'Asia/Tokyo',
+      );
+
+      expect(sendSpy.mock.calls[0][1].headers).toMatchObject({
+        'X-Timezone': 'Asia/Tokyo',
+      });
+    });
+
+    it('omits X-Timezone when no request timezone is provided', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(sendSpy.mock.calls[0][1].headers).not.toHaveProperty('X-Timezone');
+    });
+
+    it('keeps timezone values isolated across concurrent completion requests', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+      vi.spyOn(
+        service['dialClient'].client,
+        'getConversation',
+      ).mockResolvedValue({ data: conversation } as never);
+      const sendSpy = vi
+        .spyOn(service['dialClient'].client, 'sendChatCompletionRequest')
+        .mockImplementation(async () => ({
+          response: new Response(textToStream(['data: [DONE]\n\n']), {
+            status: 200,
+          }),
+        })) as ReturnType<typeof vi.fn>;
+
+      await Promise.all([
+        runStreamCompletion(
+          'test-path-a',
+          'test-token',
+          'test-bucket',
+          'test-gen-id-a',
+          CompletionMode.Append,
+          'First',
+          undefined,
+          'gpt-4o',
+          undefined,
+          'test-session-id',
+          makeMockRes(),
+          undefined,
+          'Europe/Warsaw',
+        ),
+        runStreamCompletion(
+          'test-path-b',
+          'test-token',
+          'test-bucket',
+          'test-gen-id-b',
+          CompletionMode.Append,
+          'Second',
+          undefined,
+          'gpt-4o',
+          undefined,
+          'test-session-id',
+          makeMockRes(),
+          undefined,
+          'Asia/Tokyo',
+        ),
+      ]);
+
+      const timezones = sendSpy.mock.calls.map(
+        (call) => (call[1].headers as Record<string, string>)['X-Timezone'],
+      );
+      expect(timezones).toEqual(
+        expect.arrayContaining(['Europe/Warsaw', 'Asia/Tokyo']),
+      );
+    });
+
+    it('does not include the request timezone in service logs', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+      const debugSpy = vi.spyOn(service['logger'], 'debug');
+      const logSpy = vi.spyOn(service['logger'], 'log');
+      const warnSpy = vi.spyOn(service['logger'], 'warn');
+      const errorSpy = vi.spyOn(service['logger'], 'error');
+
+      await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+        undefined,
+        CompletionMode.Append,
+        [': keepalive\n\n'],
+        undefined,
+        'Pacific/Auckland',
+      );
+
+      const loggedValues = [debugSpy, logSpy, warnSpy, errorSpy]
+        .flatMap((spy) => spy.mock.calls)
+        .flat()
+        .join(' ');
+      expect(loggedValues).not.toContain('Pacific/Auckland');
     });
 
     it('uses Responses API when the server-resolved deployment supports it', async () => {
@@ -340,6 +519,11 @@ describe('ConversationStreamingService', () => {
         conversation,
         'Next message',
         'gpt-4o',
+        undefined,
+        CompletionMode.Append,
+        [': keepalive\n\n'],
+        undefined,
+        'Europe/Warsaw',
       );
 
       expect(createResponseSpy).toHaveBeenCalledOnce();
@@ -348,6 +532,10 @@ describe('ConversationStreamingService', () => {
         stream: true,
         store: false,
         temperature: 1,
+      });
+      expect(createResponseSpy.mock.calls[0][0].headers).toMatchObject({
+        'X-Timezone': 'Europe/Warsaw',
+        'X-CONVERSATION-ID': baseConversation.id,
       });
       expect(sendSpy).not.toHaveBeenCalled();
       expect(res.getWritten()).toContain('Hello');

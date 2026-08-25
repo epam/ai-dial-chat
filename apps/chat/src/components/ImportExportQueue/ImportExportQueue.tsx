@@ -102,10 +102,7 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
       <div className="flex shrink-0 items-center gap-1">
         {job.status === ConversationTransferJobStatus.Success && (
           <span className={STATUS_SLOT_CLASS}>
-            <IconCircleCheckFilled
-              size={16}
-              className="text-accent-secondary"
-            />
+            <IconCircleCheckFilled size={16} className="text-visual-green-2" />
           </span>
         )}
         {job.status === ConversationTransferJobStatus.Failed && (

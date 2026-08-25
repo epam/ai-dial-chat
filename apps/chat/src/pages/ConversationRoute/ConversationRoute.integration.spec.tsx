@@ -11,7 +11,6 @@ import {
 } from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
 import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
-import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as apiClient from '../../server-api/api-client';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
@@ -97,9 +96,6 @@ vi.mock('../../hooks/useUiFeature', async () => {
     useUiFeature: (feature: any) => DEFAULT_ENABLED_UI_FEATURES.has(feature),
   };
 });
-vi.mock('../../hooks/conversation/useToolsMenu', () => ({
-  useToolsMenu: vi.fn(),
-}));
 vi.mock('../../server-api/deployments.api');
 vi.mock('../../server-api/application-schemas');
 vi.mock('../../server-api/toolsets');
@@ -113,7 +109,7 @@ vi.mock('../../server-api/api-client', async (importOriginal) => {
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
-  return { ...actual, attachmentsToDtos: vi.fn() };
+  return { ...actual, attachmentsToDtos: vi.fn(), useToolsMenu: vi.fn() };
 });
 vi.mock('../../components/StarterButtons/StarterButtons', () => ({
   default: () => <div />,
@@ -215,7 +211,7 @@ describe('ConversationRoute — new chat model inheritance (issue #8150 Case 3)'
   const mockUseKeyboardShortcutPreference = vi.mocked(
     KeyboardShortcutModule.useKeyboardShortcutPreference,
   );
-  const mockUseToolsMenu = vi.mocked(ToolsMenuModule.useToolsMenu);
+  const mockUseToolsMenu = vi.mocked(chatHooksModule.useToolsMenu);
   const mockCreateConversation = vi.mocked(conversationsApi.createConversation);
   const mockSaveConversation = vi.mocked(conversationsApi.saveConversation);
   const mockAttachmentsToDtos = vi.mocked(chatHooksModule.attachmentsToDtos);

@@ -9,12 +9,15 @@
   &:focus-visible {
     background: var(
       --np-sheet-item-hover,
-      var(--bg-accent-primary-alpha, #7da4ff2e)
+      var(--bg-control-accent-alpha-hover, #2764d924)
     );
   }
 
   &:active {
-    background: var(--np-sheet-item-active, var(--bg-layer-4, #d1dbea));
+    background: var(
+      --np-sheet-item-active,
+      var(--bg-control-neutral-active, #d1dbea)
+    );
   }
 }
 

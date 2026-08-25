@@ -23,15 +23,19 @@ const getProgressFillClassName = (status: ModelLimitStatus | undefined) => {
 
 interface MetricCellProps {
   cell: ModelLimitMetricCell;
-  mobileColumnLabel: string;
+  label: string;
+  progressAriaLabel: string;
+  showProgress: boolean;
   labels: ModelLimitsLabels;
   typography: ModelLimitsTypography;
 }
 
-/** Renders one Cost/Tokens/Requests cell in one of its three shapes: finite (progress bar), unlimited, or unavailable. */
+/** Renders one normalized Cost or Tokens value without owning its table-cell semantics. */
 export const MetricCell: FC<MetricCellProps> = ({
   cell,
-  mobileColumnLabel,
+  label,
+  progressAriaLabel,
+  showProgress,
   labels,
   typography,
 }) => {
@@ -47,60 +51,73 @@ export const MetricCell: FC<MetricCellProps> = ({
   );
 
   return (
-    <div role="cell" className="flex min-w-0 flex-col gap-1 py-2 desktop:py-0">
-      <span
-        className={mergeClasses(
-          'dial-caption-lead-semi-text mobile:block desktop:hidden',
-          styles.mobileColumnLabel,
-        )}
-      >
-        {mobileColumnLabel}
-      </span>
+    <div className="flex min-w-0 flex-col gap-1">
+      <span className="sr-only">{label}: </span>
       {cell.kind === ModelLimitMetricKind.Unlimited && (
-        <div className="flex min-w-0 flex-col gap-1">
-          {value}
+        <div
+          className="flex min-w-0 items-start gap-2"
+          role="group"
+          aria-label={progressAriaLabel}
+        >
+          <div className="flex min-w-0 flex-col gap-1">
+            {value}
+            <span
+              className={mergeClasses(
+                secondaryValueClassName,
+                styles.secondaryValue,
+              )}
+            >
+              {cell.supportingLabel ?? labels.noLimitLabel}
+            </span>
+          </div>
+        </div>
+      )}
+      {cell.kind === ModelLimitMetricKind.Unavailable && (
+        <div
+          className="flex min-w-0 items-baseline gap-2"
+          role="group"
+          aria-label={progressAriaLabel}
+        >
           <span
             className={mergeClasses(
               secondaryValueClassName,
               styles.secondaryValue,
             )}
           >
-            {labels.noLimitLabel}
+            {labels.unavailableLabel}
           </span>
         </div>
       )}
-      {cell.kind === ModelLimitMetricKind.Unavailable && (
-        <span
-          className={mergeClasses(
-            secondaryValueClassName,
-            styles.secondaryValue,
-          )}
-        >
-          {labels.unavailableLabel}
-        </span>
-      )}
       {cell.kind === ModelLimitMetricKind.Finite && (
-        <div className="flex min-w-0 flex-col gap-3">
-          <div className="flex min-w-0 items-baseline gap-1 whitespace-nowrap">
-            {value}
-            <span
-              className={mergeClasses(valueClassName, styles.secondaryValue)}
-            >
-              / {cell.totalLabel}
-            </span>
+        <div className="flex min-w-0 flex-col gap-2">
+          <div
+            className="flex min-w-0 items-baseline gap-2"
+            role="group"
+            aria-label={progressAriaLabel}
+          >
+            <div className="flex min-w-0 items-baseline gap-1 whitespace-nowrap">
+              {value}
+              <span
+                className={mergeClasses(valueClassName, styles.secondaryValue)}
+              >
+                / {cell.totalLabel}
+              </span>
+            </div>
           </div>
-          <ProgressBar
-            value={Math.min(cell.usedPercent ?? 0, 100)}
-            max={100}
-            size={ElementSize.Small}
-            className={mergeClasses(
-              '!h-1 w-full',
-              styles.progressTrack,
-              getProgressFillClassName(cell.status),
-            )}
-            aria-label={mobileColumnLabel}
-            aria-valuetext={cell.ariaLabel}
-          />
+          {showProgress && (
+            <ProgressBar
+              value={Math.min(cell.usedPercent ?? 0, 100)}
+              max={100}
+              size={ElementSize.Small}
+              className={mergeClasses(
+                '!h-1 w-full',
+                styles.progressTrack,
+                getProgressFillClassName(cell.status),
+              )}
+              aria-label={progressAriaLabel}
+              aria-valuetext={cell.ariaLabel}
+            />
+          )}
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  OoxmlFileType,
   isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
@@ -11,12 +12,14 @@ import type {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearAttachmentCache,
+  getUrlFileName,
   hasAttachmentTextSource,
   isExternalSourcePreviewable,
   referenceAttachmentToPdfCanvasContent,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
+  resolveOoxmlCanvasContent,
   resolvePdfCanvasContent,
   resolveTextCanvasContent,
   resolveVisualizerCanvasContent,
@@ -652,6 +655,79 @@ describe('resolvePdfCanvasContent', () => {
   });
 });
 
+describe('resolveOoxmlCanvasContent', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearAttachmentCache();
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-ooxml-url');
+  });
+
+  it('returns OOXML content from a local Office file', async () => {
+    const result = await resolveOoxmlCanvasContent(
+      makeLocalAttachment('report.docx', 'OOXML bytes'),
+      OoxmlFileType.Docx,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Ooxml,
+      url: 'blob:mock-ooxml-url',
+      format: 'docx',
+    });
+  });
+
+  it('returns a Forbidden error when a remote Office file cannot be fetched', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 403 }),
+    );
+
+    const result = await resolveOoxmlCanvasContent(
+      makeRemoteAttachment('budget.xlsx', 'files/bucket/path/budget.xlsx'),
+      OoxmlFileType.Xlsx,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.Forbidden,
+      url: '/download?path=path/budget.xlsx',
+    });
+  });
+
+  it('returns a LoadFailed error when the fetch throws', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('network down')),
+    );
+
+    const result = await resolveOoxmlCanvasContent(
+      makeRemoteAttachment('slides.pptx', 'files/bucket/path/slides.pptx'),
+      OoxmlFileType.Pptx,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.LoadFailed,
+      url: '/download?path=path/slides.pptx',
+    });
+  });
+
+  it('returns null when the attachment has no resolvable source', async () => {
+    /* No local file, no DIAL url, no previewUrl, and no inline data — there is
+     * nothing for the blob resolver to work from. */
+    const result = await resolveOoxmlCanvasContent(
+      {
+        id: 'report.docx',
+        name: 'report.docx',
+        contentType: 'application/octet-stream',
+        type: AttachmentType.File,
+      } as DisplayAttachment,
+      OoxmlFileType.Docx,
+    );
+
+    expect(result).toBeNull();
+  });
+});
+
 describe('resolveVisualizerCanvasContent', () => {
   const visualizerEntry: CustomVisualizer = {
     title: 'my-viz',
@@ -703,6 +779,44 @@ describe('resolveVisualizerCanvasContent', () => {
         layout: expect.objectContaining({ themeId: 'light' }),
       }),
     );
+  });
+});
+
+describe('getUrlFileName', () => {
+  it('returns the last path segment of an absolute url', () => {
+    expect(getUrlFileName('https://example.com/files/report.pdf')).toBe(
+      'report.pdf',
+    );
+  });
+
+  it('returns the file name of a relative DIAL resource path', () => {
+    expect(
+      getUrlFileName(
+        'files/4FD1MyzohvVCq3YG9kDnt7Yk38cZfot7myHgGbBMKBpsSERRfFUHAh6ZsqCfieQsGy/qa-routed-source.html',
+      ),
+    ).toBe('qa-routed-source.html');
+  });
+
+  it('drops the query string and hash', () => {
+    expect(getUrlFileName('files/bucket/page.html?v=2#top')).toBe('page.html');
+    expect(getUrlFileName('https://example.com/page.html?v=2#top')).toBe(
+      'page.html',
+    );
+  });
+
+  it('decodes percent escapes in the file name', () => {
+    expect(getUrlFileName('files/bucket/my%20report.pdf')).toBe(
+      'my report.pdf',
+    );
+  });
+
+  it('ignores a trailing slash', () => {
+    expect(getUrlFileName('files/bucket/nested/')).toBe('nested');
+  });
+
+  it('returns an empty string when there is no path segment', () => {
+    expect(getUrlFileName('')).toBe('');
+    expect(getUrlFileName('https://example.com/')).toBe('');
   });
 });
 

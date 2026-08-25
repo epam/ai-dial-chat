@@ -5,6 +5,8 @@ import type {
   ImageCanvasContent,
   JsonCanvasContent,
   MarkdownCanvasContent,
+  OoxmlCanvasContent,
+  OoxmlFileType,
   PdfCanvasContent,
   PlainTextCanvasContent,
   VisualizerCanvasContent,
@@ -88,15 +90,29 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
  * extension — Google's grounding API labels every web reference (YouTube,
  * Forbes, etc.) as 'text/markdown', so content-type alone is unreliable. */
 /**
- * Returns the last path segment of `url`, or an empty string when `url` is not
- * absolute. Used to classify a resource by extension when its display name is
- * a citation title rather than a file name.
+ * Returns the last path segment of `url` — its file name — for both absolute
+ * URLs and DIAL-relative resource paths such as
+ * `files/<bucket>/qa-routed-source.html`. Any query string or hash is dropped
+ * and percent escapes are decoded. Returns an empty string when no segment can
+ * be extracted. Used to classify a resource by extension when its display name
+ * is a citation title rather than a file name.
  */
 export const getUrlFileName = (url: string): string => {
+  let path: string;
   try {
-    return new URL(url).pathname.split('/').pop() ?? '';
+    path = new URL(url).pathname;
   } catch {
-    return '';
+    /* A relative DIAL resource path has no base to resolve against, so the
+     * query and hash are stripped by hand instead. */
+    path = url.split(/[?#]/)[0];
+  }
+  const segment = path.split('/').filter(Boolean).pop() ?? '';
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    /* Malformed percent escape — the raw segment still works for extension
+     * matching. */
+    return segment;
   }
 };
 
@@ -413,6 +429,17 @@ export const resolvePdfCanvasContent = async (
     return result;
   }
   return { type: AttachmentContentType.Pdf, url: result };
+};
+
+/** Resolves an OOXML canvas content payload from a DisplayAttachment, or `null` if unavailable. */
+export const resolveOoxmlCanvasContent = async (
+  attachment: DisplayAttachment,
+  format: OoxmlFileType,
+): Promise<OoxmlCanvasContent | ErrorCanvasContent | null> => {
+  const result = await resolveAttachmentBlobUrl(attachment);
+  if (result == null) return null;
+  if (typeof result !== 'string') return result;
+  return { type: AttachmentContentType.Ooxml, url: result, format };
 };
 
 /**

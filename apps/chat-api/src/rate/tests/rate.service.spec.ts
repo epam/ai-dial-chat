@@ -10,12 +10,14 @@ import { RateService } from '../rate.service';
 
 const BASE_URL = 'http://dial-core';
 const ACCESS_TOKEN = 'test-token';
+let fetchSpy: ReturnType<typeof vi.fn>;
 
 function makeService() {
   const dialClient = {
     client: {},
     baseUrl: BASE_URL,
     dialApiVersion: '2024-10-21',
+    fetchCore: fetchSpy,
   } as unknown as DialClientService;
 
   return new RateService(dialClient);
@@ -29,10 +31,8 @@ const validDto: RateMessageDto = {
 };
 
 describe('RateService', () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
-    fetchSpy = vi.spyOn(global, 'fetch');
+    fetchSpy = vi.fn();
   });
 
   afterEach(() => {
@@ -91,6 +91,17 @@ describe('RateService', () => {
       const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
       const headers = init.headers as Record<string, string>;
       expect(headers['Authorization']).toBe(`Bearer ${ACCESS_TOKEN}`);
+    });
+
+    it('forwards the conversation id in the X-CONVERSATION-ID header', async () => {
+      fetchSpy.mockResolvedValue({ ok: true } as Response);
+      const service = makeService();
+
+      await service.rateMessage(validDto, ACCESS_TOKEN);
+
+      const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      const headers = init.headers as Record<string, string>;
+      expect(headers['X-CONVERSATION-ID']).toBe(validDto.conversationId);
     });
 
     it('includes optional comment when provided', async () => {

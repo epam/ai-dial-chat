@@ -6,7 +6,7 @@
  * default — callers can still override it via this prop.
  */
 export interface ScheduledTaskCardSkeletonColors {
-  /** Background color of each skeleton bar. Fallback: `--bg-layer-4`. */
+  /** Background color of each skeleton bar. Fallback: `--bg-control-disable-primary`. */
   skeletonColor?: string;
 }
 

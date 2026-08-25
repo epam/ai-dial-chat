@@ -8,14 +8,16 @@ import {
 import {
   DIAL_ICON_SIZE,
   ElementSize,
-  GhostIconButton,
+  ToggleIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconMarkdown,
   IconPencilMinus,
   IconRefresh,
   IconThumbDown,
+  IconThumbDownFilled,
   IconThumbUp,
+  IconThumbUpFilled,
   IconTrashX,
 } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
@@ -82,8 +84,14 @@ export const MessageActions: FC<MessageActionsProps> = ({
       {role === MessageRole.User ? (
         <>
           {onEdit && (
-            <GhostIconButton
-              icon={<IconPencilMinus size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            <ToggleIconButton
+              icon={
+                <IconPencilMinus
+                  size={DIAL_ICON_SIZE.SM}
+                  aria-hidden
+                  stroke={1.5}
+                />
+              }
               size={ElementSize.Small}
               aria-label={ariaLabels?.editMessage ?? 'Edit message'}
               tooltipProps={{ tooltip: tooltips?.edit ?? 'Edit' }}
@@ -93,8 +101,10 @@ export const MessageActions: FC<MessageActionsProps> = ({
             />
           )}
           {onDelete && (
-            <GhostIconButton
-              icon={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            <ToggleIconButton
+              icon={
+                <IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden stroke={1.5} />
+              }
               size={ElementSize.Small}
               aria-label={ariaLabels?.deleteMessage ?? 'Delete message'}
               tooltipProps={{ tooltip: tooltips?.delete ?? 'Delete' }}
@@ -105,8 +115,14 @@ export const MessageActions: FC<MessageActionsProps> = ({
       ) : (
         <>
           {onRegenerate && (
-            <GhostIconButton
-              icon={<IconRefresh size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            <ToggleIconButton
+              icon={
+                <IconRefresh
+                  size={DIAL_ICON_SIZE.SM}
+                  aria-hidden
+                  stroke={1.5}
+                />
+              }
               size={ElementSize.Small}
               aria-label={
                 ariaLabels?.regenerateResponse ?? 'Regenerate response'
@@ -132,7 +148,13 @@ export const MessageActions: FC<MessageActionsProps> = ({
               onClick={handleCopyMarkdown}
               size={ElementSize.Small}
               isCopied={copied === 'markdown'}
-              iconCopy={<IconMarkdown size={DIAL_ICON_SIZE.SM} aria-hidden />}
+              iconCopy={
+                <IconMarkdown
+                  size={DIAL_ICON_SIZE.SM}
+                  aria-hidden
+                  stroke={1.5}
+                />
+              }
               copyLabel={tooltips?.copyMarkdown ?? 'Copy as Markdown'}
               copiedLabel={tooltips?.copiedMarkdown ?? 'Copied!'}
               ariaLabel={ariaLabels?.copyAsMarkdown ?? 'Copy as markdown'}
@@ -140,31 +162,51 @@ export const MessageActions: FC<MessageActionsProps> = ({
           )}
 
           {onLike && (
-            <GhostIconButton
-              icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            <ToggleIconButton
+              icon={
+                activeRating === MessageRating.Like ? (
+                  <IconThumbUpFilled
+                    className={styles.activeRating}
+                    size={DIAL_ICON_SIZE.SM}
+                    stroke={1.5}
+                    aria-hidden
+                  />
+                ) : (
+                  <IconThumbUp
+                    size={DIAL_ICON_SIZE.SM}
+                    aria-hidden
+                    stroke={1.5}
+                  />
+                )
+              }
               size={ElementSize.Small}
               aria-label={ariaLabels?.likeResponse ?? 'Like response'}
               aria-pressed={activeRating === MessageRating.Like}
-              className={
-                activeRating === MessageRating.Like
-                  ? styles.activeRating
-                  : undefined
-              }
               tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
               onClick={onLike}
             />
           )}
           {onDislike && (
-            <GhostIconButton
-              icon={<IconThumbDown size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            <ToggleIconButton
+              icon={
+                activeRating === MessageRating.Dislike ? (
+                  <IconThumbDownFilled
+                    className={styles.activeRating}
+                    size={DIAL_ICON_SIZE.SM}
+                    aria-hidden
+                    stroke={1.5}
+                  />
+                ) : (
+                  <IconThumbDown
+                    size={DIAL_ICON_SIZE.SM}
+                    aria-hidden
+                    stroke={1.5}
+                  />
+                )
+              }
               size={ElementSize.Small}
               aria-label={ariaLabels?.dislikeResponse ?? 'Dislike response'}
               aria-pressed={activeRating === MessageRating.Dislike}
-              className={
-                activeRating === MessageRating.Dislike
-                  ? styles.activeRating
-                  : undefined
-              }
               tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}
               onClick={onDislike}
             />

@@ -1,5 +1,5 @@
 .divider {
-  background: var(--ci-sheet-divider, var(--bg-layer-4, #d1dbea));
+  background: var(--ci-sheet-divider, var(--stroke-secondary, #d1dbea));
 }
 
 .item {
@@ -10,7 +10,10 @@
   }
 
   &:active {
-    background: var(--ci-sheet-item-active, var(--bg-layer-4, #d1dbea));
+    background: var(
+      --ci-sheet-item-active,
+      var(--bg-control-neutral-active, #d1dbea)
+    );
   }
 }
 

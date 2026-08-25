@@ -110,6 +110,34 @@ part of the callback is a literal in `src/auth/auth.controller.ts` and does not
 follow `API_PREFIX`, so a deployment that overrides `API_PREFIX` sends the IdP a
 `redirect_uri` that no longer resolves to a route.
 
+#### DIAL Core OAuth redirect allowlist
+
+Toolset OAuth needs the public Chat callback URL to be allowed by DIAL Core.
+Add `<CHAT_PUBLIC_ORIGIN>/auth/toolset-signin` to Core's
+[`toolsets.security.allowedRedirectUris`](https://github.com/epam/ai-dial-core/blob/development/README.md#static-settings).
+For example, the relevant part of `aidial.settings.json` is:
+
+```json
+{
+  "toolsets": {
+    "security": {
+      "allowedRedirectUris": [
+        "https://chat.example.com/auth/toolset-signin"
+      ]
+    }
+  }
+}
+```
+
+Use the public origin from which users open Chat. The SPA builds this URI from
+`window.location.origin`, so it is not necessarily the same as
+`AUTH_CALLBACK_BASE_URL` when the frontend and API are exposed separately. Add
+the Chat URI without removing entries for other clients, such as the Admin
+panel. Core accepts a client-provided OAuth redirect URI only when it is in this
+allowlist or equals the toolset's own `redirect_uri`; the allowlist is therefore
+required when more than one client can start sign-in for the same toolset. The
+setting is read at Core startup, so restart DIAL Core after changing it.
+
 **Optional:**
 
 | Variable                                | Default                        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -164,6 +192,21 @@ follow `API_PREFIX`, so a deployment that overrides `API_PREFIX` sends the IdP a
 | `ANNOUNCEMENT_TITLE`                    | —                              | Bold heading of the top-of-app announcement banner. Plain text — never interpreted as markup, so `<b>` renders literally. Set this or `ANNOUNCEMENT_DESCRIPTION` to render the banner; leaving both unset hides it. Blank is treated as unset.                                                                                                                                                                                                                                                                                                                                       |
 | `ANNOUNCEMENT_DESCRIPTION`              | —                              | Supporting copy shown after the banner title. Sanitized server-side (allowlist: `a b strong em br span`); non-hash anchors are forced to `target="_blank" rel="noopener noreferrer"`. Text that overruns the banner width is silently truncated with an ellipsis, so keep it short. Blank, or markup that sanitizes away entirely, is treated as unset.                                                                                                                                                                                                                              |
 | `ANNOUNCEMENTS`                         | `[]`                           | JSON array feeding the `+N announcements` popover: `[{ "title": "…", "description": "…", "link": { "label": "…", "href": "https://…" } }]`. `description` and `link` are optional; an entry with no link renders without a call to action. Max 10 entries. Validation is drop-and-log and never fatal — an entry is dropped if its title is blank, or if its link is present but has a blank label or an `href` that is not an absolute `http`/`https` URL (relative paths are rejected). Malformed JSON resolves to `[]`. Rejected entries appear only in the server log.           |
+
+#### Outbound DIAL Core client identity
+
+Every request from Chat API to DIAL Core carries
+`User-Agent: ai-dial-chat/<normalized-version>`. This applies to requests made
+through the shared DIAL SDK client and to the raw Core transports used for
+rating, scheduled tasks, and streaming archive uploads. Requests to non-Core
+services, such as the theme service, keep their own transport and identity.
+
+The version is resolved from `CHAT_VERSION`; blank or unset values fall back to
+the app's `package.json` version. For the header only, runs of characters outside
+`A-Z`, `a-z`, `0-9`, `.`, `_`, and `-` become `-`, leading and trailing `-` are
+removed, and an empty normalized value becomes `unknown`. The header is intended
+only for operational diagnostics and client-version attribution. It contains no
+user, tenant, authentication, conversation, or other runtime request data.
 
 Banner dismissal is content-keyed and persists in the browser's `localStorage`: a user who closes the banner keeps it hidden across restarts, and it reappears automatically for everyone once an operator changes the title or the description — no version counter or manual reset. Note that dismissing the banner also hides the announcements popover, since the pill lives inside the banner.
 

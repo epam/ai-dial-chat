@@ -14,6 +14,7 @@ import {
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
+  resolveOoxmlCanvasContent,
   resolvePdfCanvasContent,
   resolveTextCanvasContent,
   resolveVisualizerCanvasContent,
@@ -33,6 +34,7 @@ const resolvers: UseOpenAttachmentCanvasResolvers = {
   resolveCodeContent: resolveCodeCanvasContent,
   resolveHtmlContent: resolveHtmlCanvasContent,
   resolvePdfContent: resolvePdfCanvasContent,
+  resolveOoxmlContent: resolveOoxmlCanvasContent,
   resolveJsonContent: resolveJsonCanvasContent,
   /* The app resolver's `themeId` is required; the lib's contract allows it to
    * be omitted, so a missing theme falls back to an empty string. */

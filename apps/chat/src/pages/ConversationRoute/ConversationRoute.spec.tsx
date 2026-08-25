@@ -16,7 +16,6 @@ import * as DeploymentsContextModule from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
 import * as OverlayContextMock from '../../context/overlay/OverlayContext';
 import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
-import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as apiClient from '../../server-api/api-client';
 import * as conversationsApi from '../../server-api/conversations.api';
@@ -99,9 +98,6 @@ vi.mock('../../hooks/useUiFeature', async () => {
     useUiFeature: (feature: any) => DEFAULT_ENABLED_UI_FEATURES.has(feature),
   };
 });
-vi.mock('../../hooks/conversation/useToolsMenu', () => ({
-  useToolsMenu: vi.fn(),
-}));
 vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/api-client', async (importOriginal) => {
   const actual =
@@ -111,7 +107,7 @@ vi.mock('../../server-api/api-client', async (importOriginal) => {
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
-  return { ...actual, attachmentsToDtos: vi.fn() };
+  return { ...actual, attachmentsToDtos: vi.fn(), useToolsMenu: vi.fn() };
 });
 vi.mock('../../components/StarterButtons/StarterButtons', () => ({
   default: ({
@@ -252,7 +248,7 @@ describe('ConversationRoute', () => {
   const mockUseKeyboardShortcutPreference = vi.mocked(
     KeyboardShortcutModule.useKeyboardShortcutPreference,
   );
-  const mockUseToolsMenu = vi.mocked(ToolsMenuModule.useToolsMenu);
+  const mockUseToolsMenu = vi.mocked(chatHooksModule.useToolsMenu);
   const mockUseNotification = vi.mocked(
     NotificationContextModule.useNotification,
   );

@@ -13,6 +13,8 @@ export { downloadAttachmentContent, isDownloadable } from './utils/download';
 export {
   isTextPreviewable,
   isHtmlPreviewable,
+  isOoxmlPreviewable,
+  getOoxmlFileType,
   extensionToLanguage,
   createUnsupportedCanvasContent,
   createLoadErrorCanvasContent,
@@ -28,6 +30,7 @@ export type {
 export {
   AttachmentContentType,
   AttachmentErrorType,
+  OoxmlFileType,
 } from './types/attachment-canvas';
 export type {
   AttachmentCanvasContent,
@@ -37,6 +40,7 @@ export type {
   MarkdownCanvasContent,
   JsonCanvasContent,
   PdfCanvasContent,
+  OoxmlCanvasContent,
   CodeCanvasContent,
   HtmlCanvasContent,
   VisualizerCanvasContent,

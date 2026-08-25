@@ -16,14 +16,19 @@ import type {
   ImageCanvasContent,
   JsonCanvasContent,
   MarkdownCanvasContent,
+  OoxmlCanvasContent,
   PdfCanvasContent,
   PlainTextCanvasContent,
   VisualizerCanvasContent,
 } from '../../models/attachment-canvas';
-import { AttachmentContentType } from '../../types/attachment-canvas';
+import {
+  AttachmentContentType,
+  type OoxmlFileType,
+} from '../../types/attachment-canvas';
 import {
   createUnsupportedCanvasContent,
   extensionToLanguage,
+  getOoxmlFileType,
   isHtmlPreviewable,
   isTextPreviewable,
 } from '../../utils/content';
@@ -60,6 +65,11 @@ export interface UseOpenAttachmentCanvasResolvers {
   resolvePdfContent(
     attachment: DisplayAttachment,
   ): Promise<PdfCanvasContent | ErrorCanvasContent | null>;
+  /** Resolves an attachment's OOXML (Word/Excel/PowerPoint) content for the given format. Returns `null` if unavailable. */
+  resolveOoxmlContent(
+    attachment: DisplayAttachment,
+    format: OoxmlFileType,
+  ): Promise<OoxmlCanvasContent | ErrorCanvasContent | null>;
   /** Resolves an attachment's JSON content, falling back to plain text when the payload is not valid JSON. Returns `null` if unavailable. */
   resolveJsonContent(
     attachment: DisplayAttachment,
@@ -170,6 +180,23 @@ export const useOpenAttachmentCanvas = (
         }
       }
 
+      const mimeOoxmlFileType = getOoxmlFileType('', contentType);
+      if (mimeOoxmlFileType != null) {
+        const content = await resolvers.resolveOoxmlContent(
+          attachment,
+          mimeOoxmlFileType,
+        );
+        openCanvas(
+          content ??
+            createUnsupportedCanvasContent(
+              resolvers.resolveContentUrl(attachment),
+            ),
+          attachment.name,
+          canvasAttachmentId,
+        );
+        return true;
+      }
+
       switch (contentType) {
         case MIMEType.PDF: {
           const content = await resolvers.resolvePdfContent(attachment);
@@ -212,6 +239,23 @@ export const useOpenAttachmentCanvas = (
       const fileName = attachment.name ?? '';
       const dotIdx = fileName.lastIndexOf('.');
       const ext = dotIdx !== -1 ? fileName.slice(dotIdx + 1).toLowerCase() : '';
+
+      const extensionOoxmlFileType = getOoxmlFileType(fileName);
+      if (extensionOoxmlFileType != null) {
+        const content = await resolvers.resolveOoxmlContent(
+          attachment,
+          extensionOoxmlFileType,
+        );
+        openCanvas(
+          content ??
+            createUnsupportedCanvasContent(
+              resolvers.resolveContentUrl(attachment),
+            ),
+          attachment.name,
+          canvasAttachmentId,
+        );
+        return true;
+      }
 
       switch (ext) {
         case FileExtension.Markdown:

@@ -11,6 +11,7 @@ import {
   EllipsisTooltip,
   Highlight,
   Search,
+  ToggleIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconStar, IconStarFilled } from '@tabler/icons-react';
 import {
@@ -248,7 +249,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
             'flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5',
             'transition-colors hover:bg-layer-sunken',
             isSelected
-              ? 'border-info bg-accent-primary-alpha'
+              ? 'border-info bg-control-accent-alpha-active'
               : 'border-transparent',
           )}
           onClick={() => handleSelect(item)}
@@ -289,14 +290,17 @@ const DeploymentSelectorPanel: FC<Props> = ({
             />
           )}
           {isFavoriteRow ? (
-            <GhostIconButton
+            <ToggleIconButton
               icon={
                 <IconStarFilled
                   size={DIAL_ICON_SIZE.SM}
                   className="text-warning-icon"
+                  aria-hidden
                 />
               }
               aria-label={removeFromFavoritesLabel}
+              /* Every row in the Favorites list is a favorite, so the star is always on. */
+              isSelected
               onClick={(e) => {
                 e.stopPropagation();
                 handleToggleFavorite(item.id, false);
@@ -304,7 +308,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
             />
           ) : (
             <GhostIconButton
-              icon={<IconStar size={DIAL_ICON_SIZE.SM} />}
+              icon={<IconStar size={DIAL_ICON_SIZE.SM} aria-hidden />}
               aria-label={addToFavoritesLabel}
               onClick={(e) => {
                 e.stopPropagation();

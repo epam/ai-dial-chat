@@ -6,6 +6,7 @@ import {
   AttachmentValidationErrorReason,
   isMessageChanged,
   useAttachmentValidation,
+  useChatSettingsFormConfig,
   useConversationScroll,
   usePageFileDrag,
 } from '@epam/ai-dial-chat-hooks';
@@ -68,7 +69,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
-import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
+import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
@@ -214,7 +215,7 @@ const ConversationView: FC<Props> = ({
   });
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { showErrorNotification } = useNotification();
+  const { showErrorNotification, showSuccessNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
@@ -547,6 +548,7 @@ const ConversationView: FC<Props> = ({
     [isAssistantTyping, messages, onEditMessage, armAnchor],
   );
 
+  const chatSettingsLabels = useChatSettingsFormLabels();
   const chatSettings = useChatSettingsFormConfig({
     mode: 'conversation',
     conversation,
@@ -555,6 +557,11 @@ const ConversationView: FC<Props> = ({
     isQuickApp: isQuickAppSchema({
       id: selectedDeployment?.applicationTypeSchemaId,
     }),
+    labels: chatSettingsLabels,
+    onSaved: () =>
+      showSuccessNotification({
+        message: chatSettingsLabels.savedNotification,
+      }),
   });
 
   const handleAttachDialFiles = useCallback(

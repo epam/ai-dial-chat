@@ -3,332 +3,249 @@
 ## Purpose
 
 Defines the app-level integration that adds a per-model "Model limits" table to the `Usage` tab:
-the period state and DTO-to-row adapter that turn `useUsageData()`'s already-fetched
-`usage.deployments` into `@epam/ai-dial-usage-dashboard`'s `ModelLimitsSection` rows, without any
-additional API call. The adapter owns all DTO interpretation (period-to-field mapping,
-finite/unlimited/unavailable detection, status derivation, formatting, and the join against
-`useDeployments().items`); the library only renders the rows it is given.
+the DTO-to-row adapter that turns `useUsageData()`'s already-fetched `usage.deployments` into
+`@epam/ai-dial-usage-dashboard`'s `ModelLimitsSection` rows for the fixed Last 24 hours/Last 7
+days/Last 30 days comparison, without any additional API call. The adapter owns all DTO
+interpretation (period-to-field mapping, finite/unlimited/unavailable detection, status derivation,
+formatting, and the join against `useDeployments().items`); the library only renders the rows it is
+given.
 
 ## Requirements
 
 ### Requirement: UsageTab renders Model limits below the aggregate cards
 
 The `Usage` tab SHALL render `@epam/ai-dial-usage-dashboard`'s `ModelLimitsSection` below
-`UsageLimitCardGroup`, sourced from `useUsageData()`'s already-fetched `usage.deployments` (no
-additional API call), unconditionally passing whatever rows the adapter produces (including zero
-rows) — the `Usage` tab SHALL NOT branch on row count itself. The section SHALL be omitted (not
-rendered) while `isLoading` is `true`, matching the existing cards' loading behavior. Whenever,
-after loading completes, the adapter produces zero rows for the currently selected period —
-whether because `usage` is `undefined`, `usage.deployments` is absent/empty, or every entry in
-`usage.deployments` was filtered out for having no usage in that period (see "Rows with no usage in
-the selected period are excluded" below) — `ModelLimitsSection` itself SHALL render its shared
-empty state in place of the table body, while still rendering its heading and period selector (see
-`ModelLimitsSectionProps.emptyStateLabel` in the "usage-dashboard-lib" spec), so the period
-selector remains available for the user to pick a different period from an empty result.
+`UsageLimitCardGroup`, sourced from `useUsageData()`'s already-fetched `usage.deployments` without
+an additional API call. It SHALL unconditionally pass the adapter's rows, including zero rows, and
+SHALL NOT branch on row count. The section SHALL be omitted while loading. After loading, a zero-row
+result SHALL render `ModelLimitsSection`'s existing internal empty state while keeping its heading
+and row count visible. The aggregate cards SHALL remain unchanged.
 
-#### Scenario: Model limits section renders alongside the cards
-- **WHEN** the Usage tab finishes loading and `usage.deployments` contains at least one model with
-  usage in the selected period
-- **THEN** `ModelLimitsSection` renders below `UsageLimitCardGroup` with one row per such model
+`UsageTab` SHALL NOT own a selected Model limits period and SHALL NOT pass period or period-change
+props to `ModelLimitsSection`. It SHALL pass `Model tokens limits` as the localized section heading,
+the adapter's normalized overall Cost header statuses/tooltips, and a dynamic row count supplied by
+the section.
 
-#### Scenario: Empty deployments map renders the section's own empty state, with the selector still usable
-- **WHEN** the Usage tab finishes loading and `usage.deployments` is an empty object
-- **THEN** `ModelLimitsSection` still renders (with its heading, row count of `0`, and period
-  selector), showing its internal empty state in place of the row table, rather than the `Usage`
-  tab omitting the section or rendering a separate empty-state element outside it
+#### Scenario: Fixed comparison table renders below the cards
+- **WHEN** Usage finishes loading and at least one deployment has usage in any displayed period
+- **THEN** one `ModelLimitsSection` renders below `UsageLimitCardGroup`, with fixed Last 24 hours,
+  Last 7 days, and Last 30 days data for every included row
 
-#### Scenario: All deployments filtered out for the selected period renders the same empty state, with the selector still usable
-- **WHEN** the Usage tab finishes loading, `usage.deployments` is non-empty, but every entry has no
-  usage in the currently selected period
-- **THEN** `ModelLimitsSection` still renders (with its heading, row count of `0`, and period
-  selector) showing the same internal empty state as the empty-deployments-map case, and the user
-  can select a different period from the still-visible selector to see whether that period has data
+#### Scenario: Empty comparison renders the section empty state
+- **WHEN** Usage finishes loading and the adapter returns zero rows
+- **THEN** `ModelLimitsSection` renders its heading, count `0`, and internal empty-state message,
+  without a period selector or a separate app-level empty state
 
-#### Scenario: Usage fetch failure leaves the rest of the page visible
+#### Scenario: Usage fetch failure preserves existing page behavior
 - **WHEN** `useUsageData()` reports a `usageError`
-- **THEN** the Model limits section renders its own unavailable state (no stale/zeroed rows), the
-  aggregate cards region reflects the same existing partial/full failure behavior, and no additional
-  notification is emitted beyond the one already produced by the existing `usage-data-hook`
-  "Deduplicated error notifications" behavior
-
----
-
-### Requirement: App-owned period state, re-derived without refetching
-
-`UsageTab` (or a small app-level hook) SHALL own the selected `ModelLimitsPeriod` as local React
-state, defaulting to `ModelLimitsPeriod.Last24Hours`. Changing the selected period SHALL re-derive
-`ModelLimitRow[]` from the already-fetched `usage` value and SHALL NOT invoke `getUserLimits()` or
-`getUserUsage()` again, and SHALL NOT emit any notification.
-
-#### Scenario: Default period is Last 24 hours
-- **WHEN** the Usage tab first renders the Model limits section
-- **THEN** `ModelLimitsSection` is rendered with `period={ModelLimitsPeriod.Last24Hours}`
-
-#### Scenario: Changing period does not refetch
-- **WHEN** the user selects "Last 7 days" after the initial fetch has completed
-- **THEN** neither `getUserLimits()` nor `getUserUsage()` is called again, and the table's rows
-  update synchronously from the already-fetched `usage` data
-
-#### Scenario: Changing period does not notify
-- **WHEN** the user changes the selected period
-- **THEN** no error or informational notification is shown as a result of that change alone
+- **THEN** the Model limits section receives no stale or zero-filled rows, aggregate-card failure
+  behavior remains unchanged, and no notification is added beyond existing Usage error handling
 
 ---
 
 ### Requirement: Period-to-field mapping
 
-The adapter SHALL map the selected period to `DeploymentLimitsResponseDto` fields as follows, and
-SHALL NOT substitute a different period's field, or a different metric's field, for a missing one:
+The adapter SHALL always map all three displayed rolling periods from
+`DeploymentLimitsResponseDto` as follows and SHALL NOT substitute another period or metric when a
+field is missing:
 
-| Period | Cost field | Tokens field | Requests field |
-|---|---|---|---|
-| `LastMinute` | `minuteCostStats` | `minuteTokenStats` | *(none — unavailable)* |
-| `LastHour` | *(none — unavailable)* | *(none — unavailable)* | `hourRequestStats` |
-| `Last24Hours` | `dayCostStats` | `dayTokenStats` | `dayRequestStats` |
-| `Last7Days` | `weekCostStats` | `weekTokenStats` | *(none — unavailable)* |
-| `Last30Days` | `monthCostStats` | `monthTokenStats` | *(none — unavailable)* |
+| Period column | Cost field | Tokens field |
+|---|---|---|
+| Last 24 hours | `dayCostStats` | `dayTokenStats` |
+| Last 7 days | `weekCostStats` | `weekTokenStats` |
+| Last 30 days | `monthCostStats` | `monthTokenStats` |
 
-#### Scenario: Last 24 hours reads day-scoped fields
-- **WHEN** the selected period is `Last24Hours` for a deployment with usable `dayCostStats`,
-  `dayTokenStats`, and `dayRequestStats`
-- **THEN** the row's Cost, Tokens, and Requests cells are derived from those three fields
-  respectively
+Minute, hour, and request fields SHALL NOT be mapped into the table.
 
-#### Scenario: Last minute reads minute-scoped Cost/Tokens and renders Requests as unavailable
-- **WHEN** the selected period is `LastMinute` for a deployment with usable `minuteCostStats` and
-  `minuteTokenStats`
-- **THEN** the row's Cost and Tokens cells are derived from those fields, and the Requests cell has
-  `kind: ModelLimitMetricKind.Unavailable` regardless of any `*RequestStats` value present
+#### Scenario: One row carries all three period pairs
+- **WHEN** a deployment contains usable day, week, and month Cost and Tokens stats
+- **THEN** the row's `last24Hours`, `last7Days`, and `last30Days` period cells contain the matching
+  Cost and Tokens stats from the table above
 
-#### Scenario: Last hour reads hour-scoped Requests and renders Cost/Tokens as unavailable
-- **WHEN** the selected period is `LastHour` for a deployment with usable `hourRequestStats`
-- **THEN** the row's Requests cell is derived from `hourRequestStats`, and the Cost and Tokens
-  cells both have `kind: ModelLimitMetricKind.Unavailable` regardless of any `*CostStats`/
-  `*TokenStats` value present
+#### Scenario: Missing period stat is not substituted
+- **WHEN** `weekTokenStats` is absent but `dayTokenStats` and `monthTokenStats` are present
+- **THEN** Last 7 days Tokens is `Unavailable`, while Last 24 hours and Last 30 days use their own
+  fields; neither is substituted into Last 7 days
 
-#### Scenario: Last 7 days renders Requests as unavailable
-- **WHEN** the selected period is `Last7Days`
-- **THEN** the row's Requests cell has `kind: ModelLimitMetricKind.Unavailable`, regardless of the deployment's
-  `dayRequestStats` value, and is never derived from `dayRequestStats`
-
-#### Scenario: Last 30 days renders Requests as unavailable
-- **WHEN** the selected period is `Last30Days`
-- **THEN** the row's Requests cell has `kind: ModelLimitMetricKind.Unavailable`, regardless of the deployment's
-  `dayRequestStats` value
+#### Scenario: Requests and short windows are excluded
+- **WHEN** minute/hour/request fields contain usage
+- **THEN** they do not create a displayed cell, affect row inclusion, or affect row Status
 
 ---
 
 ### Requirement: `usage.deployments` join with model metadata
 
-The adapter SHALL build candidate rows from exactly the entries present in `usage.deployments` —
-every entry present, and no entry not present — regardless of what `useDeployments().items`
-contains: an accessible model with no entry in `usage.deployments` SHALL NOT produce a row, and
-every entry in `usage.deployments` SHALL produce a candidate row even if no matching `items` entry
-exists. Candidate rows are then subject to the period-scoped usage filter defined in "Rows with no
-usage in the selected period are excluded" before being returned. Among the rows that survive that
-filter, order SHALL follow `Object.keys(usage.deployments)` order (the order the API returns),
-independent of `items`' content, order, or load state — `items` is consulted only to enrich a
-matched row's display name/version/avatar, never to determine which rows exist or their order. The
-join against `items` SHALL be filtered to `type === DeploymentItemDtoTypeEnum.Model`.
+The adapter SHALL build candidates from exactly the entries in `usage.deployments`, in
+`Object.keys(usage.deployments)` order, regardless of `useDeployments().items` content, order, or
+loading state. `items` SHALL only enrich candidates with display name, version, and avatar and the
+join SHALL be restricted to `type === DeploymentItemDtoTypeEnum.Model`. A deployment ID without a
+matching model item SHALL use the ID as its name and no avatar URL. Candidates SHALL then be subject
+to the all-period usage filter defined below.
 
-When a deployment ID has no matching entry in `items`, the adapter SHALL still produce a candidate
-row for it, using the deployment ID as the display name and no `avatarSrc` (so `ModelLimitsSection`
-falls back to its initials avatar), rather than omitting the row outright (it is still subject to
-the usage filter like any other row).
+#### Scenario: Row order remains API deployment order
+- **WHEN** items and `usage.deployments` provide the same models in different orders
+- **THEN** included rows follow `Object.keys(usage.deployments)` order
 
-#### Scenario: Row count matches the number of deployments with usage in the selected period
-- **WHEN** `usage.deployments` has 12 entries, all resolvable against `items`, and 9 of them have
-  nonzero usage for the currently selected period
-- **THEN** `ModelLimitsSection` receives exactly 9 rows and its heading reports a count of 9
+#### Scenario: Unresolved deployment remains eligible
+- **WHEN** a deployment ID has qualifying day/week/month usage but no matching model item
+- **THEN** it renders using its ID and initials-avatar fallback without dropping other rows
 
-#### Scenario: A deployment with all-zero used values for the selected period does not appear
-- **WHEN** a deployment in `usage.deployments` has all-zero (or unusable) `used` values across
-  every stat field mapped for the selected period, even though it has nonzero usage recorded under
-  a different period's fields
-- **THEN** it does not produce a row while that period is selected (see "Rows with no usage in the
-  selected period are excluded"); selecting the period under which it has usage makes it reappear
-
-#### Scenario: A model never used in the trailing 30 days does not appear at all
-- **WHEN** an accessible model has no entry in `usage.deployments` at all (never used in the
-  trailing 30 days, per `openspec/specs/user-usage-limits-api/spec.md:80`)
-- **THEN** the adapter produces no row for it — this is the accepted trade-off of reading
-  `usage.deployments` instead of `limits.deployments` (see design.md's data-source correction), not
-  a defect
-
-#### Scenario: Unresolvable deployment ID still renders a fallback row when it has usage
-- **WHEN** a deployment ID in `usage.deployments` has no matching entry in
-  `useDeployments().items`, and it has nonzero usage in the selected period
-- **THEN** the adapter produces a row for it with `name` equal to the deployment ID and
-  `avatarSrc: undefined`, and this row does not cause other rows to be dropped
-
-#### Scenario: Non-model deployment items are never joined in
-- **WHEN** `useDeployments().items` contains an application or toolset whose `id` happens to match a
-  key in `usage.deployments`
-- **THEN** the adapter does not use that non-model item's metadata for the row (join is restricted
-  to `type === DeploymentItemDtoTypeEnum.Model`)
-
-#### Scenario: Row order follows `usage.deployments` key order, not `items`' order
-- **WHEN** `items` lists models in one order (e.g. `['b', 'a']`) but `usage.deployments` has keys
-  in a different order (e.g. `{ a: ..., b: ... }`), and both have usage in the selected period
-- **THEN** the resulting rows are ordered `['a', 'b']` — `Object.keys(usage.deployments)` order —
-  regardless of `items`' order
-
-#### Scenario: Row order does not depend on whether `items` has finished loading
-- **WHEN** `useDeployments().items` is still empty (not yet loaded) while `usage.deployments`
-  already has data with usage in the selected period
-- **THEN** the rows render immediately in `usage.deployments` key order, with the deployment ID as
-  each row's name; once `items` loads, matched rows are enriched with name/version/avatar but the
-  row set and order do not change or re-shuffle
+#### Scenario: Non-model item is not used for enrichment
+- **WHEN** an application or toolset item has the same ID as a usage deployment
+- **THEN** its metadata is not applied to the model row
 
 ---
 
-### Requirement: Rows with no usage in the selected period are excluded
+### Requirement: Rows with no usage across displayed periods are excluded
 
-For each candidate row, the adapter SHALL inspect the raw `LimitStatsDto` entries backing that
-row's Cost, Tokens, and Requests cells for the currently selected period (per the existing
-period-to-field mapping) and SHALL include the row in the returned `ModelLimitRow[]` only if at
-least one of those entries is usable (`Number.isFinite(total)` and `Number.isFinite(used)`) and has
-`used > 0`. A row whose every mapped entry for the selected period is either absent/unusable or has
-`used <= 0` SHALL be excluded from the result. This filter SHALL be re-evaluated from the
-already-fetched `usage` value whenever the selected period changes, without an additional API call,
-and SHALL NOT alter the per-metric `finite`/`unlimited`/`unavailable` classification, status
-derivation, or formatting of any row that is included.
+For each candidate, the adapter SHALL inspect the raw Cost and Tokens stats backing Last 24 hours,
+Last 7 days, and Last 30 days. It SHALL return the row only if at least one inspected stat is usable
+(`Number.isFinite(total)` and `Number.isFinite(used)`) and has `used > 0`. A candidate whose twelve
+relevant numeric values represent only missing, malformed, zero, or negative usage SHALL be
+excluded. Filtering SHALL use the already-fetched `usage` value and SHALL NOT alter the normalized
+content of an included cell.
 
-#### Scenario: Row with nonzero tokens but zero cost and unavailable requests is kept
-- **WHEN** the selected period is `Last24Hours` and a deployment's `dayTokenStats` is `{ total:
-  10000, used: 250 }`, `dayCostStats.used` is `0`, and `dayRequestStats` is absent
-- **THEN** the row is included, because at least one mapped entry (`dayTokenStats`) has `used > 0`
+#### Scenario: Usage in only one window retains the row
+- **WHEN** a deployment has non-zero `monthTokenStats.used` and all other displayed Cost/Tokens
+  `used` values are zero or unavailable
+- **THEN** the row is included and the unavailable/zero cells retain their normal classification
 
-#### Scenario: Row with all-zero mapped entries for the period is excluded
-- **WHEN** the selected period is `Last7Days` and a deployment's `weekCostStats.used` and
-  `weekTokenStats.used` are both `0` (Requests is unavailable for `Last7Days`)
-- **THEN** the row is excluded from the returned rows for that period
+#### Scenario: Cost-only usage retains the row
+- **WHEN** at least one displayed cost stat has `used > 0` while all displayed token stats are
+  missing or zero
+- **THEN** the row is included and its Status still considers the matching top-level overall Cost
+  limits independently of its attributed Cost values
 
-#### Scenario: Row with only unavailable mapped entries for the period is excluded
-- **WHEN** the selected period is `LastHour` and a deployment's `hourRequestStats` is missing from
-  the DTO entirely (Cost and Tokens are always unavailable for `LastHour`)
-- **THEN** the row is excluded — an unusable entry never counts as "has usage"
-
-#### Scenario: Switching periods changes which rows are included
-- **WHEN** a deployment has `used > 0` in `monthTokenStats` but `used === 0` in every field mapped
-  for `Last24Hours`
-- **THEN** the row appears while `Last30Days` is selected and disappears while `Last24Hours` is
-  selected, with no refetch triggered by the period change
-
-#### Scenario: Filtering does not change included rows' metric classification or formatting
-- **WHEN** a row is included because `dayTokenStats.used > 0`, and that same row's `dayCostStats`
-  is a well-formed unlimited-sentinel entry
-- **THEN** the row's Cost cell is still classified `kind: ModelLimitMetricKind.Unlimited` exactly
-  as it would be without this filter — the filter only affects row inclusion, never cell content
+#### Scenario: No displayed usage removes the row
+- **WHEN** every displayed Cost/Tokens stat is absent, malformed, or has `used <= 0`
+- **THEN** the candidate is excluded even if minute, hour, or request usage is non-zero
 
 ---
 
 ### Requirement: Per-metric finite/unlimited/unavailable detection
 
-For Cost, the adapter SHALL produce `kind: ModelLimitMetricKind.Unlimited` (attributed spend + "No limit") whenever the
-period's cost stat entry itself is well-formed, since per-model cost totals are always the unlimited
-sentinel per the upstream contract; it SHALL produce `kind: ModelLimitMetricKind.Unavailable` only when the cost stat
-entry is missing or has a non-finite `used`/`total`. The adapter SHALL NOT render a cost progress bar
-or a finite cost status under any input. For Tokens and
-the Last-24-hours Requests field, the adapter SHALL classify each stat as `finite` when
-`Number.isFinite(total)`, `Number.isFinite(used)`, and `total < 2 ** 53`; as `unlimited` when
-`total >= 2 ** 53`; and as `unavailable` when the stat is missing, `null`, or has a non-finite
-`total`/`used`. An `unavailable` metric SHALL NOT be treated as zero or as unlimited.
+For every displayed period, the adapter SHALL produce a normalized Cost cell and Tokens cell. A
+well-formed Cost entry SHALL be `Unlimited` with formatted attributed spend; the renderer SHALL use
+only that spend value without limit text or a progress bar. Missing or non-finite Cost data SHALL be
+`Unavailable`. A Tokens entry SHALL be `Finite` when its
+`total` and `used` are finite and `total < 2 ** 53`, `Unlimited` when well-formed and
+`total >= 2 ** 53`, and `Unavailable` when absent or non-finite. Missing data SHALL NOT be treated as
+zero or unlimited. Finite token `usedPercent` SHALL retain values above 100; only rendering may
+clamp the progress fill. An unlimited Tokens entry SHALL receive `Follows cost limit` when the
+matching top-level overall Cost stat is finite; it SHALL receive `No limit` only when that overall
+Cost stat is also unlimited.
 
-#### Scenario: Cost is always unlimited
-- **WHEN** a deployment's `dayCostStats` is `{ total: 9223372036854775807, used: 4.2 }`
-- **THEN** the row's Cost cell has `kind: ModelLimitMetricKind.Unlimited`, `usedLabel` formatted from `4.2`, and no
-  progress bar
+#### Scenario: Finite tokens produce progress data for their period
+- **WHEN** `weekTokenStats` is `{ total: 10000, used: 4000 }`
+- **THEN** Last 7 days Tokens is `Finite` with `usedPercent: 40` and its own derived metric status
 
-#### Scenario: Finite token stat produces a progress-capable cell
-- **WHEN** a deployment's `dayTokenStats` is `{ total: 10000, used: 4000 }`
-- **THEN** the row's Tokens cell has `kind: ModelLimitMetricKind.Finite`, `usedPercent: 40`, and a `status` derived per
-  the status-model requirement below
+#### Scenario: Well-formed period cost remains attributed spend without a cap
+- **WHEN** `dayCostStats` is well-formed with `used: 4.2`
+- **THEN** Last 24 hours Cost is `Unlimited`, displays formatted `4.2` spend, and has no progress bar
 
-#### Scenario: Missing stat is unavailable, not zero
-- **WHEN** a deployment's `weekTokenStats` field is absent from the DTO entirely
-- **THEN** the Tokens cell (when the selected period is `Last7Days`) has `kind: ModelLimitMetricKind.Unavailable`, not
-  `used: 0`
+#### Scenario: Missing token stat stays unavailable
+- **WHEN** `monthTokenStats` is missing
+- **THEN** Last 30 days Tokens is `Unavailable`, not zero and not copied from another period
 
-#### Scenario: Over-limit used value is preserved, not clamped in the data
-- **WHEN** a deployment's `dayTokenStats` is `{ total: 1000, used: 1500 }`
-- **THEN** the Tokens cell's `usedPercent` is `150` (uncapped) and `usedLabel` reflects the actual
-  `1500`, with only the rendered progress bar clamping visually
+#### Scenario: Over-limit percentage remains uncapped in normalized data
+- **WHEN** `dayTokenStats` is `{ total: 1000, used: 1500 }`
+- **THEN** Last 24 hours Tokens has `usedPercent: 150` and a `LimitReached` metric status
 
 ---
 
-### Requirement: Per-metric and overall row status model
+### Requirement: Per-metric, overall Cost, and row status model
 
-For each `finite` metric, the adapter SHALL derive `status` from its `usedPercent`: `>= 100` →
-`LimitReached`; `>= 75` → `RunningLow`; otherwise → `WithinLimits`. The overall row `status` SHALL be
-the most severe status among the row's finite metrics only, in order `LimitReached` >
-`RunningLow` > `WithinLimits`. Unlimited metrics SHALL NOT reduce or override a finite status.
-Unavailable metrics SHALL NOT participate in status calculation. When every supported metric on a
-row is `unlimited`, the row `status` SHALL be `NoLimit`. When a row has no usable (`finite` or
-`unlimited`) metric at all, the row `status` SHALL be `Unavailable`.
+For each finite token cell and each matching top-level overall Cost stat, the adapter SHALL derive
+status from `usedPercent`: `>= 100` is `LimitReached`, `>= 75` and `< 100` is `RunningLow`, and `< 75`
+is `WithinLimits`. Overall row Status SHALL be the most severe finite status across all three model
+token cells and all three overall Cost limits, ordered `LimitReached` > `RunningLow` >
+`WithinLimits`. Per-deployment attributed Cost SHALL NOT be treated as a cap. If there is no finite
+status but at least one token or overall Cost limit is `Unlimited`, overall Status SHALL be
+`NoLimit`; otherwise it SHALL be `Unavailable`.
 
-#### Scenario: Most severe finite metric determines row status
-- **WHEN** a row's Tokens cell is `WithinLimits` and its Requests cell (Last 24 hours) is
-  `RunningLow`, with Cost always `unlimited`
-- **THEN** the row's overall `status` is `RunningLow`
+#### Scenario: Short-window breach determines overall Status
+- **WHEN** Last 24 hours Tokens is `LimitReached`, Last 7 days is `RunningLow`, and Last 30 days is
+  `WithinLimits`
+- **THEN** overall row Status is `LimitReached`
 
-#### Scenario: All-unlimited row is NoLimit
-- **WHEN** a row's Cost is `unlimited`, and both Tokens and Requests are also `unlimited`
-- **THEN** the row's overall `status` is `ModelLimitStatus.NoLimit`
+#### Scenario: Warning in any window is not hidden by healthy windows
+- **WHEN** one finite token period is `RunningLow` and the other finite periods are `WithinLimits`
+- **THEN** overall row Status is `RunningLow`
 
-#### Scenario: Malformed cost entry falls back to unavailable rather than crashing the row
-- **WHEN** a deployment's `dayCostStats` entry itself is missing or has a non-finite `used`/`total`
-  (distinct from the normal unlimited-sentinel case), and its Tokens/Requests are also `unavailable`
-  for the selected period
-- **THEN** the Cost cell has `kind: ModelLimitMetricKind.Unavailable` and the row's overall `status` is
-  `ModelLimitStatus.Unavailable` — this is the only path to `Unavailable`, since a well-formed cost
-  entry is always classified `unlimited` per the requirement above
+#### Scenario: Overall Cost breach applies to every model
+- **WHEN** a model's token limits are within limits but the top-level Last 24 hours Cost limit is
+  reached
+- **THEN** that model row's overall Status is `LimitReached`
 
-#### Scenario: One finite metric among unlimited metrics drives status
-- **WHEN** a row's Cost is `unlimited`, Requests (Last 24 hours) is `unlimited`, and Tokens is
-  `finite` with `usedPercent: 92`
-- **THEN** the row's overall `status` is `RunningLow`, derived solely from the Tokens metric
+#### Scenario: Unlimited fallback applies only without finite limits
+- **WHEN** no displayed token or overall Cost limit is finite and at least one is `Unlimited`
+- **THEN** overall row Status is `NoLimit`
+
+---
+
+### Requirement: Overall Cost period header indicators
+
+The adapter SHALL normalize the top-level `dayCostStats`, `weekCostStats`, and `monthCostStats` used
+by the aggregate cards into Last 24 hours, Last 7 days, and Last 30 days header statuses. It SHALL
+provide an error icon tooltip for `LimitReached`, a warning icon tooltip for `RunningLow`, and no
+icon for `WithinLimits`, `NoLimit`, or `Unavailable`. Tooltip text SHALL name its own period. A
+reached tooltip SHALL state that models cannot be used until the overall Cost limit resets,
+regardless of remaining token limits.
+
+#### Scenario: Header indicator uses the same overall Cost budget as its card
+- **WHEN** top-level `weekCostStats` is finite and 80% used
+- **THEN** Last 7 days receives a `RunningLow` header indicator and period-aware tooltip, while row
+  statuses consider that same warning
 
 ---
 
 ### Requirement: Formatting and accessible labels
 
-The adapter SHALL format cost values with the established localized USD currency formatter and
-token/request values with localized compact numeric formatting (e.g. `1.6M`, `900K`, no currency
-symbol) for `usedLabel`/`totalLabel`. Every `ModelLimitMetricCell.ariaLabel` SHALL instead contain
-the full, unambiguous localized value (used, and total when finite) formatted with grouped (not
-compact) numeric formatting, independent of the compact `usedLabel`/`totalLabel` display.
+The adapter SHALL format displayed cost with the established localized currency formatter plus the
+localized `spent` caption and token used/total values with localized compact numeric formatting.
+Every token metric's `ariaLabel` SHALL
+contain full grouped, non-compact used and total values when finite, and full unambiguous text for
+unlimited/unavailable states. Period cells SHALL use localized Last 24 hours, Last 7 days, and Last
+30 days labels visibly; localized Tokens and Cost labels supplied by `UsageTab` SHALL provide
+non-visual accessible context for the metric values.
 
-#### Scenario: Cost cell never carries a currency symbol on tokens/requests
-- **WHEN** a row's Tokens cell is formatted
-- **THEN** its `usedLabel`/`totalLabel` contain no currency symbol
+The integration SHALL reuse `UsageI18nKeys.TodayPeriodDescription`,
+`ThisWeekPeriodDescription`, `ThisMonthPeriodDescription`, `TokensColumnLabel`, and
+`CostColumnLabel`, and SHALL add localized keys for `Model tokens limits`, `spent`, `Follows cost
+limit`, its accessible value description, and both overall Cost status tooltip templates. Selector,
+minute/hour, and Requests keys SHALL only be removed if unused elsewhere.
 
-#### Scenario: Large token/request counts render with compact K/M notation
-- **WHEN** a deployment's `dayTokenStats` is `{ total: 2000000, used: 1600000 }`
-- **THEN** the Tokens cell's `usedLabel` is `'1.6M'` and `totalLabel` is `'2M'`
+#### Scenario: Visible token numbers are compact and currency-free
+- **WHEN** Last 24 hours Tokens has `used: 1600000` and `total: 2000000`
+- **THEN** visible labels use compact token notation such as `1.6M / 2M` without currency symbols
 
-#### Scenario: Accessible label states the full value regardless of compact display
-- **WHEN** a Tokens cell has `usedLabel: '1K'`, `totalLabel: '2K'` (from `used: 1000, total: 2000`)
-- **THEN** its `ariaLabel` is a localized sentence containing both full grouped values (e.g. "1,000
-  of 2,000 tokens used"), not the compact `1K`/`2K` forms
+#### Scenario: Accessible token value remains full
+- **WHEN** a finite token cell visibly renders `1K / 2K`
+- **THEN** its accessible text contains the full grouped 1,000 and 2,000 values plus the period's
+  Tokens context
+
+#### Scenario: Cost is associated with the same period
+- **WHEN** assistive technology reads a Last 7 days period cell
+- **THEN** both its Tokens metric and formatted Cost value are programmatically associated with the
+  Last 7 days column
 
 ---
 
 ### Requirement: Library isolation for the adapter
 
-The period state, the DTO-to-row adapter, and the `UsageTab` integration SHALL live under
-`apps/chat/src/`, reusing the existing `useUsageData` hook and `useDeployments()` context without
-modification. All DTO interpretation — the unlimited-sentinel check, status-threshold derivation,
-currency/number formatting, and the deployment-metadata join — SHALL happen in the app-level adapter,
-never in `libs/usage-dashboard`.
+The fixed period mapping, DTO-to-row adapter, and `UsageTab` integration SHALL live under
+`apps/chat/src/`, reusing `useUsageData` and `useDeployments()` without modification. All DTO field
+selection, unlimited-sentinel checks, status thresholds, currency/number formatting, locale/icon
+resolution, and deployment joins SHALL happen in the app adapter. `libs/usage-dashboard` SHALL
+receive only normalized rows and localized labels and SHALL NOT import app code, generated clients,
+API DTOs, contexts, feature flags, or other host/external integration details.
 
-#### Scenario: Static analysis passes module boundary lint
-- **WHEN** `npm exec nx lint chat` and `npm exec nx lint usage-dashboard` run after this change
-- **THEN** `@nx/enforce-module-boundaries` reports no violations introduced by the new adapter,
-  period state, or `ModelLimitsSection` integration
+#### Scenario: Library public API stays normalized
+- **WHEN** `libs/usage-dashboard` public types are inspected
+- **THEN** they expose period-shaped presentation props but no DTO field such as `dayTokenStats`, API
+  path/client type, unlimited sentinel, locale resolver, or status threshold
 
-#### Scenario: No Core field names cross into the library's public API
-- **WHEN** `libs/usage-dashboard`'s public types are inspected
-- **THEN** no field name matches a `DeploymentLimitsResponseDto`/`LimitStatsDto` field name (e.g.
-  `dayTokenStats`), and no type or comment references the `2 ** 53` sentinel
-</content>
+#### Scenario: Existing feature ownership remains unchanged
+- **WHEN** the comparison table renders
+- **THEN** `useUsageData` and `useDeployments` remain the only existing owners of fetched Usage and
+  deployment state; no new context or hook is introduced

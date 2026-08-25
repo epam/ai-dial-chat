@@ -39,7 +39,7 @@ export interface UseModelSelectorOptions {
   searchHeaderClassName?: string;
   /**
    * Class applied to the currently selected menu item. Defaults to a
-   * `--bg-accent-primary-alpha` background. The dropdown item is owned by the
+   * `--bg-control-accent-alpha-active` background. The dropdown item is owned by the
    * ui-kit and takes no `style`, so its background can only be overridden
    * through this class or by setting `--ms-selected-item-bg` at theme level —
    * unlike the other two, it has no entry in {@link ModelSelectorColors}.

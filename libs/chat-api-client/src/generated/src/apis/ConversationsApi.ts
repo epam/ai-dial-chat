@@ -102,6 +102,7 @@ export interface StopCompletionRequest {
 
 export interface StreamCompletionRequest {
   sendCompletionDto: SendCompletionDto;
+  xTimezone?: string;
 }
 
 export interface UnpublishConversationRequest {
@@ -937,6 +938,10 @@ export class ConversationsApi extends runtime.BaseAPI {
     const headerParameters: runtime.HTTPHeaders = {};
 
     headerParameters['Content-Type'] = 'application/json';
+
+    if (requestParameters['xTimezone'] != null) {
+      headerParameters['X-Timezone'] = String(requestParameters['xTimezone']);
+    }
 
     let urlPath = `/api/v1/conversations/completions`;
 

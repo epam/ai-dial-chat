@@ -26,7 +26,7 @@ const UploadProgressModal: FC<Props> = ({
 
     return (
       <div
-        className="h-1 w-full overflow-hidden rounded-full bg-layer-1"
+        className="h-1 w-full overflow-hidden rounded-full bg-control-disable-primary"
         data-qa="uploading-indicator"
         role="progressbar"
         aria-valuemin={0}

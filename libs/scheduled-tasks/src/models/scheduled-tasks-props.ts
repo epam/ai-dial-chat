@@ -46,7 +46,7 @@ export interface ScheduledTasksColors {
   subtitleText?: string;
   /** Sort control label/icon color. Fallback: `--text-accent`. */
   sortButtonText?: string;
-  /** Background color of the load-more placeholder skeleton bars. Fallback: `--bg-layer-4`. */
+  /** Background color of the load-more placeholder skeleton bars. Fallback: `--bg-control-disable-primary`. */
   skeletonColor?: string;
 }
 
