@@ -4,6 +4,7 @@ import { type ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import ScheduledTaskCreatePage from '../ScheduledTaskCreatePage';
 
 const useFeatureFlagMock = vi.fn();
@@ -20,7 +21,7 @@ vi.mock('../../../context/DeploymentsContext', () => ({
 
 const showNotificationMock = vi.fn();
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => ({ showNotification: showNotificationMock }),
+  useNotification: () => createNotificationContextValue(showNotificationMock),
 }));
 
 const useThemeMock = vi.fn();
@@ -32,6 +33,33 @@ const createScheduledTaskMock = vi.fn();
 vi.mock('../../../server-api/scheduled-tasks.api', () => ({
   createScheduledTask: (...args: unknown[]) => createScheduledTaskMock(...args),
 }));
+
+vi.mock(
+  '../../../components/DeploymentSelector/DeploymentSelectorFieldTrigger',
+  () => ({
+    default: ({
+      selectedId,
+      onSelect,
+      labelledById,
+    }: {
+      selectedId: string | null;
+      onSelect: (id: string) => void;
+      labelledById?: string;
+    }) => (
+      <>
+        <select
+          aria-label="modelId"
+          value={selectedId ?? ''}
+          onChange={(e) => onSelect(e.target.value)}
+        >
+          <option value="" />
+          <option value="gpt-4o">GPT-4o</option>
+        </select>
+        <output aria-label="triggerLabelledById">{labelledById}</output>
+      </>
+    ),
+  }),
+);
 
 interface FormProps {
   labels: { cancelButtonLabel: string; createButtonLabel: string };
@@ -46,7 +74,8 @@ interface FormProps {
     runAt?: string;
   };
   errors: Record<string, string | undefined>;
-  modelOptions: { id: string; label: string }[];
+  modelSelector: ReactNode;
+  modelLabelId: string;
   onFieldChange: (field: string, value: unknown) => void;
   onBack: () => void;
   onCancel: () => void;
@@ -67,7 +96,8 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     labels,
     values,
     errors,
-    modelOptions,
+    modelSelector,
+    modelLabelId,
     onFieldChange,
     onBack,
     onCancel,
@@ -81,18 +111,8 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.displayName}
         onChange={(e) => onFieldChange('displayName', e.target.value)}
       />
-      <select
-        aria-label="modelId"
-        value={values.modelId}
-        onChange={(e) => onFieldChange('modelId', e.target.value)}
-      >
-        <option value="" />
-        {modelOptions.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <output aria-label="modelLabelId">{modelLabelId}</output>
+      {modelSelector}
       <textarea
         aria-label="prompt"
         value={values.prompt}
@@ -201,6 +221,18 @@ describe('ScheduledTaskCreatePage', () => {
     ).toBeTruthy();
   });
 
+  it('links the model field label to the trigger via a generated id, not a hardcoded literal', () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    const modelLabelId = screen.getByLabelText('modelLabelId').textContent;
+    const triggerLabelledById = screen.getByLabelText(
+      'triggerLabelledById',
+    ).textContent;
+
+    expect(modelLabelId).toBeTruthy();
+    expect(triggerLabelledById).toBe(modelLabelId);
+  });
+
   it('navigates to the default list route on Cancel when returnUrl is absent', async () => {
     renderAtRoute('/scheduled-tasks/new');
 
@@ -257,6 +289,19 @@ describe('ScheduledTaskCreatePage', () => {
 
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
     expect(screen.getByText('editor.nameRequired')).toBeTruthy();
+  });
+
+  it('binds the model selector to values.modelId and updates it on selection', async () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    const select = screen.getByRole('combobox', {
+      name: 'modelId',
+    }) as HTMLSelectElement;
+    expect(select.value).toBe('');
+
+    await userEvent.selectOptions(select, 'gpt-4o');
+
+    expect(select.value).toBe('gpt-4o');
   });
 
   it('submits the mapped body and navigates to returnUrl on success', async () => {

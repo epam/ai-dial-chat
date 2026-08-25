@@ -35,7 +35,7 @@ export interface InputColors {
   modelSelectorCaret?: string;
   /** Model-selector chip hover/active background color. Defaults to `--bg-control-accent-alpha-hover`/`--bg-control-accent-alpha-active`. */
   modelSelectorHoverBg?: string;
-  /** Model-selector chip caret color when disabled. Defaults to `--text-control-disable-beta`. */
+  /** Model-selector chip caret color when disabled. Defaults to `--text-control-disable-primary`. */
   modelSelectorDisabled?: string;
   /** Voice bar error border/icon color. Defaults to `--stroke-error`/`--text-error`. */
   voiceError?: string;
@@ -65,6 +65,8 @@ export interface ModelSelectorLabels {
   searchPlaceholder?: string;
   /** Accessible label for the close button in the mobile bottom-sheet. Defaults to `'Close'`. */
   closeLabel?: string;
+  /** Tooltip shown when the selected deployment is no longer available (e.g. removed from the catalog). Defaults to `'This deployment is no longer available'`. */
+  unavailableTooltip?: string;
 }
 
 /** Labels for the selected-tools chip row that appears in the input when tools are active. */
@@ -141,6 +143,12 @@ export interface InputProps {
   onPendingAttachmentsConsumed?: () => void;
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
+  /**
+   * Maximum character count for the message text. When `isAttachmentsEnabled`
+   * is `false`, pasting or sending text at or above this length triggers
+   * `onMessageTooLong` instead of being accepted. Defaults to `50000`.
+   */
+  maxMessageLength?: number;
   /**
    * When `false`, long pasted plain text is inserted inline instead of being
    * converted to a text attachment. Set to `false` when the selected model
@@ -229,8 +237,6 @@ export interface InputProps {
   stopRecordingLabel?: string;
   /** Accessible label for the discard / X button inside the voice bar. Defaults to `'Discard recording'`. */
   discardRecordingLabel?: string;
-  /** `aria-label` for the elapsed-time region inside the voice bar. Defaults to `'Recording time'`. */
-  timerAriaLabel?: string;
   /**
    * Controls which key combination submits the message.
    * - `SendOnEnter.Enter` (default): Enter submits; Shift+Enter inserts a newline.
@@ -257,6 +263,16 @@ export interface InputProps {
   toolsBackLabel?: string;
   /** Labels for the selected-tools chip row shown in the input when tools are active. */
   toolsChipLabels?: ToolsChipLabels;
+  /**
+   * When provided, a "Prompts" item is added to the `+` menu above "Chat
+   * settings". Its submenu (desktop flyout / mobile bottom sheet) renders
+   * this host-owned overlay, mirroring `modelPickerOverlay`.
+   */
+  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
+  /** Label for the "Prompts" menu item and mobile sheet title. Defaults to `'Prompts'`. */
+  promptsMenuTitle?: string;
+  /** Accessible label for the back arrow in the mobile prompts bottom sheet. Defaults to `'Back'`. */
+  promptsBackLabel?: string;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */
   autoFocus?: boolean;
   /**
@@ -303,8 +319,8 @@ export interface InputProps {
   /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
   usageLimitsSlot?: ReactNode;
   /**
-   * Called when the user pastes text whose length is ≥ `pasteTextThreshold` while
-   * `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
+   * Called when the user pastes or sends text whose length is ≥ `maxMessageLength`
+   * while `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
    * host is responsible for surfacing the error to the user.
    */
   onMessageTooLong?: (length: number, max: number) => void;

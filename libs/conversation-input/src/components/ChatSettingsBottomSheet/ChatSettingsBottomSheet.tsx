@@ -1,6 +1,6 @@
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
 import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
-import { DialTooltip, PrimaryButton } from '@epam/ai-dial-ui-kit';
+import { Tooltip, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';
@@ -131,7 +131,7 @@ export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
         temperatureHint={temperatureHint}
       />
       <div className={mergeClasses('px-6 py-4 mobile:pb-8')}>
-        <DialTooltip
+        <Tooltip
           tooltip={saveDisabledTooltip}
           hideTooltip={canSubmit || !saveDisabledTooltip}
           triggerClassName="w-full"
@@ -142,7 +142,7 @@ export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
             disabled={!canSubmit}
             className="w-full"
           />
-        </DialTooltip>
+        </Tooltip>
       </div>
     </BottomSheetShell>
   );

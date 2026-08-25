@@ -1,4 +1,10 @@
-## ADDED Requirements
+# file-download Specification
+
+## Purpose
+
+Downloading a file from DIAL Core through the BFF, with query DTO validation and a generated-client frontend wrapper.
+
+## Requirements
 
 ### Requirement: Download file from DIAL Core via BFF
 The system SHALL expose `GET /api/v1/files/download` accepting `bucket` and `path` query parameters, validate all inputs, proxy the request to DIAL Core `GET /v1/files/{bucket}/{path}` under the authenticated user's session, and stream the binary response back to the browser.

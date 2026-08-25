@@ -7,6 +7,13 @@ export class PromptResponseDto {
   })
   id!: string;
 
+  @ApiProperty({
+    description:
+      'DIAL Core bucket the prompt lives in. For a prompt shared with the caller this is the owner bucket, not the caller bucket, so `id` can be qualified back into a `prompts/{bucket}/{id}` resource url',
+    example: 'my-bucket',
+  })
+  bucket!: string;
+
   @ApiProperty({ description: 'Display name', example: 'My Prompt' })
   name!: string;
 
@@ -22,6 +29,12 @@ export class PromptResponseDto {
   })
   folderId!: string;
 
+  @ApiPropertyOptional({
+    description: 'Resource author reported by DIAL Core, when it is known',
+    example: 'john.doe@example.com',
+  })
+  author?: string;
+
   @ApiProperty({
     description: 'Creation timestamp (Unix ms)',
     example: 1700000000000,
@@ -33,4 +46,26 @@ export class PromptResponseDto {
     example: 1700000001000,
   })
   updatedAt!: number;
+
+  @ApiPropertyOptional({
+    description: 'Whether the prompt belongs to the requestor',
+  })
+  isMy?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether the requestor may update the prompt. Organisation prompts are always read-only.',
+  })
+  canEdit?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether another user shared the prompt with the requestor',
+  })
+  sharedWithMe?: boolean;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'READ/WRITE/SHARE permissions applicable to the requestor',
+  })
+  permissions?: string[];
 }

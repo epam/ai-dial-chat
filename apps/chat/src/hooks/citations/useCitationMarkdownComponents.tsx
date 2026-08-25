@@ -1,5 +1,9 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
-import type { Annotation, DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  type Annotation,
+  type DisplayAttachment,
+} from '@epam/ai-dial-chat-shared';
 import {
   CitationDropdown,
   injectCitationSentinels,
@@ -32,11 +36,16 @@ import { annotationToDisplayAttachment } from '../../utils/attachment-dto-to-dis
  * Returns both the pre-processed content string (with sentinel placeholders
  * injected at the right offsets) and the `Components` map to pass to the
  * markdown renderer.
+ *
+ * `isCompactTypography` drops the paragraph class one type-scale step, matching
+ * `COMPACT_MARKDOWN_CLASS_NAMES` so cited and uncited paragraphs stay the same
+ * size.
  */
 export const useCitationMarkdownComponents = (
   content: string,
   groups: AnnotationGroup[],
   onAttachmentPreview: (attachment: DisplayAttachment) => void,
+  isCompactTypography = false,
 ): { processedContent: string; markdownComponents: Components } => {
   const { t } = useTranslation();
   const { openCanvas } = useAttachmentCanvas();
@@ -115,7 +124,12 @@ export const useCitationMarkdownComponents = (
       p: ({ children, ...rest }) => (
         <p
           {...rest}
-          className="dial-body-paragraph-text mb-3 [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0"
+          className={mergeClasses(
+            isCompactTypography
+              ? 'dial-small-paragraph-text'
+              : 'dial-body-paragraph-text',
+            'mb-3 [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0',
+          )}
         >
           {replaceSentinelsInChildren(children, renderMarker)}
         </p>
@@ -126,7 +140,7 @@ export const useCitationMarkdownComponents = (
         </li>
       ),
     };
-  }, [groups, onPreview, onOpenInBrowser, t]);
+  }, [groups, onPreview, onOpenInBrowser, t, isCompactTypography]);
 
   return { processedContent, markdownComponents };
 };

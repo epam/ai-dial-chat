@@ -26,6 +26,8 @@ function makeService() {
   const sdkClient = {
     configurationDeployment: vi.fn(),
     getDeploymentLimits: vi.fn(),
+    getUserLimits: vi.fn(),
+    getUserUsage: vi.fn(),
     getModel: vi.fn(),
     getApplication: vi.fn(),
     getCustomApplication: vi.fn().mockResolvedValue({
@@ -277,6 +279,100 @@ describe('DeploymentsDetailsService', () => {
     });
   });
 
+  describe('getUserLimits', () => {
+    const mockUserLimits = {
+      deployments: {
+        'gpt-4o': { dayTokenStats: { total: 10000, used: 4000 } },
+      },
+      dayCostStats: { total: 100, used: 10 },
+    };
+
+    it('returns aggregate limits from upstream', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserLimits.mockResolvedValue(okResponse(mockUserLimits));
+
+      const result = await service.getUserLimits('token');
+      expect(result).toEqual(mockUserLimits);
+    });
+
+    it('forwards Authorization header to DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserLimits.mockResolvedValue(okResponse(mockUserLimits));
+
+      await service.getUserLimits('my-token');
+      expect(sdkClient.getUserLimits).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
+          }),
+        }),
+      );
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserLimits.mockRejectedValue(new TypeError('fetch failed'));
+      await expect(service.getUserLimits('token')).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+    });
+
+    it('throws BadGatewayException on upstream 5xx', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserLimits.mockResolvedValue(errResponse(502));
+      await expect(service.getUserLimits('token')).rejects.toThrow(
+        BadGatewayException,
+      );
+    });
+  });
+
+  describe('getUserUsage', () => {
+    const mockUserUsage = {
+      deployments: {
+        'gpt-4o': { dayTokenStats: { total: 10000, used: 4000 } },
+      },
+      dayCostStats: { total: 100, used: 10 },
+    };
+
+    it('returns usage from upstream', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserUsage.mockResolvedValue(okResponse(mockUserUsage));
+
+      const result = await service.getUserUsage('token');
+      expect(result).toEqual(mockUserUsage);
+    });
+
+    it('forwards Authorization header to DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserUsage.mockResolvedValue(okResponse(mockUserUsage));
+
+      await service.getUserUsage('my-token');
+      expect(sdkClient.getUserUsage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
+          }),
+        }),
+      );
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserUsage.mockRejectedValue(new TypeError('fetch failed'));
+      await expect(service.getUserUsage('token')).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+    });
+
+    it('throws BadGatewayException on upstream 5xx', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getUserUsage.mockResolvedValue(errResponse(502));
+      await expect(service.getUserUsage('token')).rejects.toThrow(
+        BadGatewayException,
+      );
+    });
+  });
+
   describe('getDeploymentDetails', () => {
     it('encodes each deployment path segment before calling DIAL Core', async () => {
       const { service, sdkClient } = makeService();
@@ -305,7 +401,20 @@ describe('DeploymentsDetailsService', () => {
           lifecycle_status: 'generally-available',
           tokenizer_model: 'gpt-4o',
           limits: { max_total_tokens: 128000 },
-          pricing: { unit: 'token', prompt: '0.01', completion: '0.03' },
+          pricing: {
+            unit: 'token',
+            prompt: '0.01',
+            completion: '0.03',
+            cache_read: '0.001',
+          },
+          catalog_properties: {
+            provider: 'Provider',
+            vendor: 'Vendor',
+            license: 'License',
+            knowledgeCutoffDate: '2026-08-17',
+            parameters: '100B',
+            schemaSpecificExtra: 'not exposed',
+          },
         }),
       );
 
@@ -334,7 +443,19 @@ describe('DeploymentsDetailsService', () => {
             maxPromptTokens: undefined,
             maxCompletionTokens: undefined,
           },
-          pricing: { unit: 'token', prompt: '0.01', completion: '0.03' },
+          pricing: {
+            unit: 'token',
+            prompt: '0.01',
+            completion: '0.03',
+            cache_read: '0.001',
+          },
+          catalogProperties: {
+            provider: 'Provider',
+            vendor: 'Vendor',
+            license: 'License',
+            knowledgeCutoffDate: '2026-08-17',
+            parameters: '100B',
+          },
         },
       });
       expect(sdkClient.getApplication).not.toHaveBeenCalled();
@@ -396,7 +517,7 @@ describe('DeploymentsDetailsService', () => {
       sdkClient.getApplication.mockResolvedValue(
         okResponse({
           id: 'applications/public/finhub-via-openapi__1.0.0',
-          display_name: 'finhub-via-openapi',
+          display_name: { plainValue: 'finhub-via-openapi' },
         }),
       );
 
@@ -417,7 +538,7 @@ describe('DeploymentsDetailsService', () => {
       sdkClient.getApplication.mockResolvedValue(
         okResponse({
           id: 'applications/public/finhub-via-openapi__1.0.0',
-          display_name: 'finhub-via-openapi',
+          display_name: { plainValue: 'finhub-via-openapi' },
         }),
       );
 

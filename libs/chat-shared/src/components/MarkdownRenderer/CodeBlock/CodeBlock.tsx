@@ -45,7 +45,7 @@ export interface MarkdownCodeBlockProps {
   theme?: CodeBlockTheme;
   /** Accessible label for the copy button. Defaults to `'Copy code'`. */
   copyLabel?: string;
-  /** Accessible label for the copy button after copy completes. Defaults to `'Copied!'`. */
+  /** Message announced through the block's `aria-live="polite"` region after a copy completes. The copy button's own accessible name stays `copyLabel`. Defaults to `'Copied!'`. */
   copiedLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download code'`. */
   downloadLabel?: string;
@@ -57,7 +57,7 @@ export interface MarkdownCodeBlockProps {
   headerClassName?: string;
   /** Typography class for the `<code>` element (used when no language is detected). Defaults to `'dial-code-text'`. */
   codeClassName?: string;
-  /** CSS class applied to the language label in the header. Defaults to `'dial-tiny-semi-text uppercase'` plus the module's `.languageLabel` class (`--text-secondary`). */
+  /** CSS class applied to the language label in the header. Defaults to `'dial-tiny-lead-semi-text'` plus the module's `.languageLabel` class (`--text-secondary`). */
   languageLabelClassName?: string;
   /** Header text shown in place of `language`, for blocks whose highlighting id is not the name to display (e.g. `bash` highlighted, `cURL` shown). Defaults to the `language` value. */
   title?: string;
@@ -86,7 +86,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     containerClassName,
     headerClassName,
     codeClassName = 'dial-code-text',
-    languageLabelClassName = 'dial-tiny-semi-text uppercase',
+    languageLabelClassName = 'dial-tiny-lead-semi-text',
     title,
     titleSlot,
     colors,
@@ -155,7 +155,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
                     <IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />
                   )
                 }
-                aria-label={isCopied ? copiedLabel : copyLabel}
+                aria-label={copyLabel}
                 size={ElementSize.Small}
                 onClick={copy}
               />
@@ -194,6 +194,13 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
             </pre>
           )}
         </div>
+        {/*
+         * Copy success leaves no persistent visible text, so it is announced
+         * here; the button keeps its stable `copyLabel` accessible name.
+         */}
+        <span role="status" aria-live="polite" className="sr-only">
+          {isCopied ? copiedLabel : ''}
+        </span>
       </div>
     );
   },

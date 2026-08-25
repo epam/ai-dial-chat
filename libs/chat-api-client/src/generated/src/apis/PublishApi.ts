@@ -18,6 +18,8 @@ import type {
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRulesResultDto,
+  UnpublishCatalogEntityDto,
+  UnpublishResultDto,
 } from '../models/index';
 
 export interface GetCatalogPublishHistoryRequest {
@@ -33,6 +35,12 @@ export interface PublishCatalogEntityRequest {
   entityType: PublishCatalogEntityEntityTypeEnum;
   entityId: string;
   publishCatalogEntityDto: PublishCatalogEntityDto;
+}
+
+export interface UnpublishCatalogEntityRequest {
+  entityType: UnpublishCatalogEntityEntityTypeEnum;
+  entityId: string;
+  unpublishCatalogEntityDto: UnpublishCatalogEntityDto;
 }
 
 /**
@@ -157,7 +165,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.
+   * Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.
    * Publish a catalog entity to an Organization folder
    */
   async publishCatalogEntityRaw(
@@ -216,7 +224,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.
+   * Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.
    * Publish a catalog entity to an Organization folder
    */
   async publishCatalogEntity(
@@ -224,6 +232,80 @@ export class PublishApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<PublishResultDto> {
     const response = await this.publishCatalogEntityRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Submits a removal request for one already-published folder of a catalog entity (Toolset, Application, Prompt, or Skill) by proxying DIAL Core\'s Publication API (`createPublication`) with a single `DELETE`-action resource. **The removal takes effect only after an administrator approves the request.** Until then the published copy stays visible to everyone who could already see it, and the folder continues to appear in the entity’s publish history. This endpoint keeps no records of its own — DIAL Core is the sole source of truth.
+   * Request removal of a published catalog entity from a folder
+   */
+  async unpublishCatalogEntityRaw(
+    requestParameters: UnpublishCatalogEntityRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<UnpublishResultDto>> {
+    if (requestParameters['entityType'] == null) {
+      throw new runtime.RequiredError(
+        'entityType',
+        'Required parameter "entityType" was null or undefined when calling unpublishCatalogEntity().',
+      );
+    }
+
+    if (requestParameters['entityId'] == null) {
+      throw new runtime.RequiredError(
+        'entityId',
+        'Required parameter "entityId" was null or undefined when calling unpublishCatalogEntity().',
+      );
+    }
+
+    if (requestParameters['unpublishCatalogEntityDto'] == null) {
+      throw new runtime.RequiredError(
+        'unpublishCatalogEntityDto',
+        'Required parameter "unpublishCatalogEntityDto" was null or undefined when calling unpublishCatalogEntity().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/catalog/{entityType}/{entityId}/unpublish`;
+    urlPath = urlPath.replace(
+      `{${'entityType'}}`,
+      encodeURIComponent(String(requestParameters['entityType'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'entityId'}}`,
+      encodeURIComponent(String(requestParameters['entityId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['unpublishCatalogEntityDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<UnpublishResultDto>(response);
+  }
+
+  /**
+   * Submits a removal request for one already-published folder of a catalog entity (Toolset, Application, Prompt, or Skill) by proxying DIAL Core\'s Publication API (`createPublication`) with a single `DELETE`-action resource. **The removal takes effect only after an administrator approves the request.** Until then the published copy stays visible to everyone who could already see it, and the folder continues to appear in the entity’s publish history. This endpoint keeps no records of its own — DIAL Core is the sole source of truth.
+   * Request removal of a published catalog entity from a folder
+   */
+  async unpublishCatalogEntity(
+    requestParameters: UnpublishCatalogEntityRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<UnpublishResultDto> {
+    const response = await this.unpublishCatalogEntityRaw(
       requestParameters,
       initOverrides,
     );
@@ -238,6 +320,8 @@ export const GetCatalogPublishHistoryEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
 } as const;
 export type GetCatalogPublishHistoryEntityTypeEnum =
   (typeof GetCatalogPublishHistoryEntityTypeEnum)[keyof typeof GetCatalogPublishHistoryEntityTypeEnum];
@@ -248,6 +332,20 @@ export const PublishCatalogEntityEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
   Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
 } as const;
 export type PublishCatalogEntityEntityTypeEnum =
   (typeof PublishCatalogEntityEntityTypeEnum)[keyof typeof PublishCatalogEntityEntityTypeEnum];
+/**
+ * @export
+ */
+export const UnpublishCatalogEntityEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
+} as const;
+export type UnpublishCatalogEntityEntityTypeEnum =
+  (typeof UnpublishCatalogEntityEntityTypeEnum)[keyof typeof UnpublishCatalogEntityEntityTypeEnum];

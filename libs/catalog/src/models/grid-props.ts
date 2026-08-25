@@ -10,7 +10,7 @@ export interface CardGridTitles {
   addToFavoritesAriaLabel?: string;
   /** Accessible label for the star button when the item is already starred. Default: `'Remove from favorites'`. */
   removeFromFavoritesAriaLabel?: string;
-  /** Credentials-status badge label shown on cards when signed out. Default: `'LOGGED OUT'`. */
+  /** Accessible label for the logged-out warning icon on card avatars, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
 }
 

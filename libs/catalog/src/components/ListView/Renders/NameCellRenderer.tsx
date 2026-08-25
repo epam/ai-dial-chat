@@ -1,4 +1,8 @@
-import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  DeploymentIcon,
+  ItemHeader,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import type { ICellRendererParams } from 'ag-grid-community';
@@ -6,7 +10,6 @@ import { FC } from 'react';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
 import { CredentialsBadge } from '../../CredentialsBadge/CredentialsBadge';
-import { ItemHeader } from '../../ItemHeader/ItemHeader';
 import styles from '../ListView.module.scss';
 
 /** ag-grid cell renderer for the name/identity column: icon, name, version, credentials badge, and selection checkmark. */
@@ -22,12 +25,18 @@ export const NameCellRenderer: FC<
   if (!data) return null;
   return (
     <div className="flex h-full min-w-0 items-center gap-2.5">
-      <DeploymentIcon
-        src={data.iconUrl}
-        size={36}
-        initialsName={data.name}
-        styles={{ badgeClassName: 'rounded-[10px]' }}
-      />
+      <div className="relative shrink-0">
+        <DeploymentIcon
+          src={data.iconUrl}
+          size={36}
+          initialsName={data.name}
+          styles={{ badgeClassName: 'rounded-[10px]' }}
+        />
+        <CredentialsBadge
+          credentials={data.credentials}
+          loggedOutLabel={context?.credentialsBadgeLoggedOutLabel}
+        />
+      </div>
       <ItemHeader
         title={data.name}
         postfix={data.version}
@@ -44,11 +53,6 @@ export const NameCellRenderer: FC<
             />
           ) : undefined
         }
-      />
-      <CredentialsBadge
-        credentials={data.credentials}
-        loggedOutLabel={context?.credentialsBadgeLoggedOutLabel}
-        className="ms-2 shrink-0"
       />
     </div>
   );

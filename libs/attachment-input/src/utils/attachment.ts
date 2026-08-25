@@ -57,6 +57,7 @@ const WILDCARD_TYPE_LABELS: Record<string, string> = {
   audio: 'Audio files',
   video: 'Video files',
   text: 'Text files',
+  '*': 'All files',
 };
 
 /** Converts an array of MIME type strings (including wildcards) into a comma-separated human-readable label string. */
@@ -229,6 +230,9 @@ const getBottomLabel = (
     const ext = getExtFromContentType(contentType);
     if (ext) return `.${ext}`;
   }
+
+  // name may be missing on some backend payloads despite the required type
+  if (name == null) return '';
 
   // Fall back to name extension; guard against trailing dots (e.g. sentence endings)
   const lastDot = name.lastIndexOf('.');

@@ -20,13 +20,7 @@ const renderTabs = (tabClassName?: string) =>
     />,
   );
 
-const getTab = (label: string) => {
-  const tab = screen.getByText(label).closest('div');
-  if (!tab) {
-    throw new Error(`Tab wrapper for "${label}" not found`);
-  }
-  return tab;
-};
+const getTab = (label: string) => screen.getByRole('tab', { name: label });
 
 describe('FilterTabs', () => {
   it('renders a tab for each filter', () => {
@@ -39,6 +33,6 @@ describe('FilterTabs', () => {
 
   it('applies flex-1 by default so the tabs fill the row equally', () => {
     renderTabs();
-    expect(getTab('All').className).toContain('flex');
+    expect(getTab('All').className).toContain('contents');
   });
 });

@@ -2,6 +2,14 @@ import {
   ConversationDeletionFailureDtoCodeEnum,
   type ConversationDeletionResultDto,
 } from '@epam/ai-dial-chat-api-client';
+import {
+  ConversationExportMode,
+  ConversationTransferErrorCode,
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+  useConversationExport,
+  useConversationImport,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   act,
@@ -11,21 +19,21 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { cloneElement, ReactElement, ReactNode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
-import { useConversationExport } from '../../../hooks/useConversationExport';
-import { useConversationImport } from '../../../hooks/useConversationImport';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { useUiFeature } from '../../../hooks/useUiFeature';
+import {
+  getConversationPublishHistory,
+  unpublishConversation,
+} from '../../../server-api/conversation-publish.api';
 import {
   discardSharedCatalogItem,
   revokeSharedAccess,
 } from '../../../server-api/share.api';
-import {
-  ConversationExportMode,
-  ExportJobStatus,
-} from '../../../types/conversation-export';
 import ConversationPanelView from '../ConversationPanelView';
 
 vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
@@ -60,43 +68,53 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
     }) => (
       <div role="region" aria-label="conversation panel" className={className}>
         {headerActions}
-        {panelConversations?.map((item) => (
-          <div key={item.id}>
-            <button
-              id={`action-trigger-${item.id}`}
-              aria-label={`action trigger ${item.id}`}
-            />
-            {item.isUnread && (
-              <span aria-label={`unread indicator ${item.id}`} />
-            )}
-            {(getActions?.(item) ?? []).map((action) =>
-              action.children ? (
-                // Simulates the hover-revealed submenu: children render as sibling buttons.
-                <div key={action.key}>
-                  <span>{action.label}</span>
-                  {action.children.map((child) => (
-                    <button key={child.key} onClick={child.onClick}>
-                      {child.label}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <button
-                  key={action.key}
-                  onClick={() => {
-                    const trigger = document.getElementById(
-                      `action-trigger-${item.id}`,
-                    ) as HTMLButtonElement | null;
-                    if (trigger) onActionMenuOpen?.(item, trigger);
-                    action.onClick?.();
-                  }}
-                >
-                  {action.label}
-                </button>
-              ),
-            )}
-          </div>
-        ))}
+        {panelConversations?.map((item) => {
+          /* Captures the trigger button via a ref callback instead of looking
+             it up through the DOM, so the mock stays within React APIs. */
+          let triggerRef: HTMLButtonElement | null = null;
+
+          return (
+            <div key={item.id}>
+              <button
+                ref={(node) => {
+                  triggerRef = node;
+                }}
+                id={`action-trigger-${item.id}`}
+                aria-label={`action trigger ${item.id}`}
+                onClick={(event) =>
+                  onActionMenuOpen?.(item, event.currentTarget)
+                }
+              />
+              {item.isUnread && (
+                <span aria-label={`unread indicator ${item.id}`} />
+              )}
+              {(getActions?.(item) ?? []).map((action) =>
+                // eslint-disable-next-line testing-library/no-node-access -- `action.children` is this mock's own action-data shape, not a DOM node
+                action.children ? (
+                  // Simulates the hover-revealed submenu: children render as sibling buttons.
+                  <div key={action.key}>
+                    <span>{action.label}</span>
+                    {action.children.map((child) => (
+                      <button key={child.key} onClick={child.onClick}>
+                        {child.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <button
+                    key={action.key}
+                    onClick={() => {
+                      if (triggerRef) onActionMenuOpen?.(item, triggerRef);
+                      action.onClick?.();
+                    }}
+                  >
+                    {action.label}
+                  </button>
+                ),
+              )}
+            </div>
+          );
+        })}
       </div>
     ),
   };
@@ -202,6 +220,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconTrashX: () => null,
   IconUserOff: () => null,
   IconWorldShare: () => null,
+  IconWorldOff: () => null,
 }));
 
 vi.mock('react-i18next', () => ({
@@ -215,6 +234,21 @@ vi.mock('react-router', () => ({
 vi.mock('../../../context/ConversationsContext');
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../server-api/share.api');
+vi.mock('../../../server-api/conversation-publish.api', () => ({
+  getConversationPublishHistory: vi.fn().mockResolvedValue([]),
+  unpublishConversation: vi.fn().mockResolvedValue({
+    path: 'conversations/bucket-123/conv1',
+    folderPath: 'Organization/Shared chats',
+    requestedAt: '2026-08-13T10:00:00.000Z',
+    requestedBy: 'Test User',
+  }),
+}));
+const getShareRecipientsCount = vi.hoisted(() => vi.fn());
+vi.mock('../../../server-api/api-client', () => ({
+  shareApi: { getShareRecipientsCount },
+  conversationsApi: {},
+  filesApi: {},
+}));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({ items: [] }),
 }));
@@ -290,7 +324,11 @@ vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
     onRetry,
   }: {
     title: string;
-    jobs: Array<{ id: string; label: string; status: string }>;
+    jobs: Array<{
+      id: string;
+      subject: { kind: string; title?: string };
+      status: string;
+    }>;
     onClose: () => void;
     onDismiss: (jobId: string) => void;
     onRetry: (jobId: string) => void;
@@ -301,7 +339,7 @@ vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
         <span>{title}</span>
         {jobs.map((job) => (
           <div key={job.id}>
-            <span>{job.label}</span>
+            <span>{job.subject.title ?? 'All conversations'}</span>
             {job.status === 'failed' && (
               <button onClick={() => onRetry(job.id)}>Retry</button>
             )}
@@ -312,8 +350,18 @@ vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
     );
   },
 }));
-vi.mock('../../../hooks/useConversationExport');
-vi.mock('../../../hooks/useConversationImport');
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    useConversationExport: vi.fn(),
+    useConversationImport: vi.fn(),
+  };
+});
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => ({ user: { bucket: 'bucket' } }),
+}));
 vi.mock('../get-conversation-source', () => ({
   getConversationSource: () => undefined,
 }));
@@ -348,6 +396,7 @@ const PARTIAL_ERROR = 'conversationPanel.deleteAll.deleteAllPartialError';
 const DELETE_CONFIRM_BUTTON = 'buttons.delete';
 const SHARE_LABEL = 'share.title';
 const PUBLISH_LABEL = 'buttons.publish';
+const UNPUBLISH_LABEL = 'buttons.unpublish';
 
 const UNSHARE_BUTTON = 'buttons.removeFromMyList';
 const UNSHARE_CONFIRM_TITLE = 'conversationPanel.unshare.unshareConfirmTitle';
@@ -372,6 +421,13 @@ const mockRetryImportJob = vi.fn();
 const EXPORT_LABEL = 'conversationExport.exportLabel';
 const EXPORT_ALL_LABEL = 'conversationExport.exportAllLabel';
 const IMPORT_LABEL = 'conversationImport.importLabel';
+
+/* The import file input is `aria-hidden` and `sr-only` by design (it is only
+   ever triggered programmatically via the Import button), so it has no
+   accessible role, label, or text a Testing Library query could target. */
+const getImportFileInput = () =>
+  // eslint-disable-next-line testing-library/no-node-access
+  document.querySelector('input[type="file"]') as HTMLInputElement;
 
 const baseContextValue = {
   conversations: [
@@ -418,11 +474,9 @@ beforeEach(() => {
   vi.mocked(useUiFeature).mockReturnValue(true);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
-  vi.mocked(useNotification).mockReturnValue({
-    notifications: [],
-    showNotification: mockShowNotification,
-    dismissNotification: vi.fn(),
-  });
+  vi.mocked(useNotification).mockReturnValue(
+    createNotificationContextValue(mockShowNotification),
+  );
   vi.mocked(useConversationExport).mockReturnValue({
     jobs: [],
     exportSingle: mockExportSingle,
@@ -505,9 +559,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -530,9 +582,7 @@ describe('ConversationPanelView — delete-all header action', () => {
       />,
     );
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -555,9 +605,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeTruthy();
@@ -581,9 +629,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -602,9 +648,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeTruthy();
@@ -653,9 +697,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -716,9 +758,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -839,11 +879,9 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
     );
 
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
@@ -875,11 +913,9 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
     fireEvent.click(deleteButtons[1]);
 
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -919,11 +955,9 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
     );
 
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
@@ -933,6 +967,28 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
 
 describe('ConversationPanelView — rename', () => {
   const RENAME_LABEL = 'buttons.rename';
+
+  it('confirms a duplicated conversation and navigates to the copy', async () => {
+    const mockDuplicateConversation = vi
+      .fn()
+      .mockResolvedValue('conversations/bucket/conv1-copy');
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      duplicateConversation: mockDuplicateConversation,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: 'buttons.duplicate' }));
+
+    await waitFor(() => {
+      expect(mockDuplicateConversation).toHaveBeenCalled();
+    });
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.conversation.duplicatedTitle',
+      message: 'entityNotifications.conversation.duplicated',
+    });
+  });
 
   it('clicking rename opens the popup with the current title', () => {
     render(<ConversationPanelView {...defaultProps} />);
@@ -958,15 +1014,38 @@ describe('ConversationPanelView — rename', () => {
     const dialog = screen.getByRole('dialog', {
       name: 'rename conversation',
     });
-    await act(async () => {
-      fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
-    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     expect(mockRenameConversation).toHaveBeenCalledWith('conv1', 'New Title');
     expect(mockNavigate).not.toHaveBeenCalled();
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.conversation.renamedTitle',
+      message: 'entityNotifications.conversation.renamed',
+    });
+  });
+
+  it('a failed rename keeps the popup open and raises no success notification', async () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      renameConversation: vi.fn().mockRejectedValue(new Error('boom')),
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'rename conversation',
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(mockShowNotification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'success' }),
+    );
   });
 });
 
@@ -1117,6 +1196,51 @@ describe('ConversationPanelView — publish', () => {
   });
 });
 
+describe('ConversationPanelView — export/import notification mapping', () => {
+  it('maps a successful single-conversation export to a success notification with the title', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const params = vi.mocked(useConversationExport).mock.calls.at(-1)?.[0];
+
+    params?.onSuccess?.({ jobId: 'job-1', titles: ['My Chat'] });
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'conversationExport.successSingle',
+      }),
+    );
+  });
+
+  it('suppresses the export error notification for an unauthorized failure', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const params = vi.mocked(useConversationExport).mock.calls.at(-1)?.[0];
+    mockShowNotification.mockClear();
+
+    params?.onError?.({
+      jobId: 'job-1',
+      code: ConversationTransferErrorCode.Unauthorized,
+    });
+
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('maps an import UnsupportedFormat error to the unsupported-format notification', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const params = vi.mocked(useConversationImport).mock.calls.at(-1)?.[0];
+    mockShowNotification.mockClear();
+
+    params?.onError?.({
+      jobId: 'imp-1',
+      code: ConversationTransferErrorCode.UnsupportedFormat,
+    });
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'conversationImport.unsupportedFormat',
+      }),
+    );
+  });
+});
+
 describe('ConversationPanelView — export', () => {
   it('row action list contains an Export item (submenu trigger, no onClick of its own)', () => {
     render(<ConversationPanelView {...defaultProps} />);
@@ -1174,8 +1298,11 @@ describe('ConversationPanelView — export', () => {
       jobs: [
         {
           id: 'job-1',
-          label: 'Chat 1',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 1',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       exportSingle: mockExportSingle,
@@ -1200,7 +1327,14 @@ describe('ConversationPanelView — export', () => {
   it('clicking close on a queue job calls dismissJob with its id', () => {
     vi.mocked(useConversationExport).mockReturnValue({
       jobs: [
-        { id: 'job-2', label: 'Chat 2', status: ExportJobStatus.InProgress },
+        {
+          id: 'job-2',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 2',
+          },
+          status: ConversationTransferJobStatus.InProgress,
+        },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
@@ -1217,7 +1351,16 @@ describe('ConversationPanelView — export', () => {
 
   it('clicking retry on a failed queue job calls retryJob with its id', () => {
     vi.mocked(useConversationExport).mockReturnValue({
-      jobs: [{ id: 'job-3', label: 'Chat 3', status: ExportJobStatus.Failed }],
+      jobs: [
+        {
+          id: 'job-3',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 3',
+          },
+          status: ConversationTransferJobStatus.Failed,
+        },
+      ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
       dismissJob: mockDismissJob,
@@ -1243,9 +1386,7 @@ describe('ConversationPanelView — import header action', () => {
 
   it('clicking Import triggers the hidden file input', () => {
     render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getImportFileInput();
     const clickSpy = vi.spyOn(fileInput, 'click');
 
     openDropdown();
@@ -1256,9 +1397,7 @@ describe('ConversationPanelView — import header action', () => {
 
   it('accepts .json, .dial, and .zip files', () => {
     render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getImportFileInput();
     expect(fileInput.accept).toBe(
       '.json,.dial,.zip,application/json,application/zip',
     );
@@ -1267,17 +1406,13 @@ describe('ConversationPanelView — import header action', () => {
   it('leaves the import picker unfiltered on mobile', () => {
     mockUseIsMobile.mockReturnValue(true);
     render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getImportFileInput();
     expect(fileInput.hasAttribute('accept')).toBe(false);
   });
 
   it('selecting a file calls importConversations with that file', () => {
     render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getImportFileInput();
     const file = new File(['{}'], 'export.json', {
       type: 'application/json',
     });
@@ -1289,9 +1424,7 @@ describe('ConversationPanelView — import header action', () => {
 
   it('resets the file input value after selection so the same file can be re-picked', () => {
     render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
+    const fileInput = getImportFileInput();
     const file = new File(['{}'], 'export.json');
 
     fireEvent.change(fileInput, { target: { files: [file] } });
@@ -1306,8 +1439,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1325,7 +1461,14 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
   it('renders two separate queues with their own titles when both import and export jobs are present', () => {
     vi.mocked(useConversationExport).mockReturnValue({
       jobs: [
-        { id: 'job-1', label: 'Chat 1', status: ExportJobStatus.InProgress },
+        {
+          id: 'job-1',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 1',
+          },
+          status: ConversationTransferJobStatus.InProgress,
+        },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
@@ -1337,8 +1480,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1359,8 +1505,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1377,7 +1526,14 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
   it('shows the Exporting title when only export jobs are present', () => {
     vi.mocked(useConversationExport).mockReturnValue({
       jobs: [
-        { id: 'job-1', label: 'Chat 1', status: ExportJobStatus.InProgress },
+        {
+          id: 'job-1',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 1',
+          },
+          status: ConversationTransferJobStatus.InProgress,
+        },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
@@ -1396,8 +1552,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1416,7 +1575,14 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
   it('wires the import queue retry button to the import hook', () => {
     vi.mocked(useConversationImport).mockReturnValue({
       jobs: [
-        { id: 'imp-1', label: 'Imported Chat', status: ExportJobStatus.Failed },
+        {
+          id: 'imp-1',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.Failed,
+        },
       ],
       importConversations: mockImportConversations,
       dismissJob: mockDismissImportJob,
@@ -1544,11 +1710,9 @@ describe('ConversationPanelView — unshare (Remove from My List)', () => {
     /* sharedConversation is listed first, so its Remove from My List button is the first match. */
     fireEvent.click(screen.getAllByRole('button', { name: UNSHARE_BUTTON })[0]);
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+    );
 
     expect(discardSharedCatalogItem).toHaveBeenCalledWith('conv1');
     await waitFor(() => {
@@ -1575,11 +1739,9 @@ describe('ConversationPanelView — unshare (Remove from My List)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+    );
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
@@ -1598,11 +1760,9 @@ describe('ConversationPanelView — unshare (Remove from My List)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+    );
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -1623,13 +1783,13 @@ describe('ConversationPanelView — unshare (Remove from My List)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
     const dialog = screen.getByRole('dialog');
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+    );
 
-    expect(within(dialog).getByText(UNSHARE_ERROR)).toBeTruthy();
+    await waitFor(() => {
+      expect(within(dialog).getByText(UNSHARE_ERROR)).toBeTruthy();
+    });
     expect(mockRefresh).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
@@ -1664,25 +1824,72 @@ describe('ConversationPanelView — revoke access', () => {
 
   beforeEach(() => {
     vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+      itemId: 'conv1',
+      recipientsCount: 1,
+    });
   });
 
+  /*
+   * The count that gates "Revoke access" is fetched when the row's action menu
+   * opens, so every test that expects the entry has to open the menu first.
+   */
+  const openRowMenu = async (id = 'conv1') => {
+    fireEvent.click(
+      screen.getByRole('button', { name: `action trigger ${id}` }),
+    );
+    await waitFor(() => expect(getShareRecipientsCount).toHaveBeenCalled());
+  };
+
+  /* The default lookup resolves one recipient, so the menu entry carries the
+   * counted label; the confirmation's own button keeps the plain one. */
   const openRevokeConfirmation = () => {
-    fireEvent.click(screen.getByRole('button', { name: REVOKE_BUTTON }));
+    fireEvent.click(
+      screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+    );
     return screen.getByRole('dialog');
   };
 
-  it('owned row menu includes Revoke access', () => {
+  it('owned row menu includes Revoke access once the recipient count resolves', async () => {
     render(<ConversationPanelView {...defaultProps} />);
-    expect(screen.getByRole('button', { name: REVOKE_BUTTON })).toBeTruthy();
+    await openRowMenu();
+
+    expect(getShareRecipientsCount).toHaveBeenCalledWith({ itemId: 'conv1' });
+    expect(
+      screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+    ).toBeTruthy();
   });
 
-  it('shared-with-me row menu does not include Revoke access', () => {
+  it('does not request the recipient count until the row menu opens', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    expect(getShareRecipientsCount).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+    ).toBeNull();
+  });
+
+  it('requests the recipient count once across repeated menu opens', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
+    await openRowMenu();
+
+    expect(getShareRecipientsCount).toHaveBeenCalledOnce();
+  });
+
+  it('shared-with-me row menu does not include Revoke access', async () => {
     vi.mocked(useConversations).mockReturnValue({
       ...baseContextValue,
       conversations: [sharedWithMeConversation],
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'action trigger conv1' }),
+    );
+
+    expect(getShareRecipientsCount).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
     expect(screen.getByRole('button', { name: UNSHARE_BUTTON })).toBeTruthy();
   });
@@ -1700,37 +1907,56 @@ describe('ConversationPanelView — revoke access', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'action trigger conv1' }),
+    );
+
     expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
   });
 
-  it('hides Revoke access for an owned conversation nobody currently holds access to', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [
-        { ...baseContextValue.conversations[0], recipientsCount: 0 },
-      ],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+  it('hides Revoke access for an owned conversation nobody currently holds access to', async () => {
+    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+      itemId: 'conv1',
+      recipientsCount: 0,
+    });
 
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
+
     expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
-  });
-
-  it('shows the recipient count in the Revoke access label when it is known', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [
-        { ...baseContextValue.conversations[0], recipientsCount: 2 },
-      ],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
     expect(
-      screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+      screen.queryByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+    ).toBeNull();
+  });
+
+  it('shows the recipient count in the Revoke access label when it is known', async () => {
+    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+      itemId: 'conv1',
+      recipientsCount: 2,
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
+
+    expect(
+      await screen.findByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
     ).toBeTruthy();
   });
 
-  it('clicking Revoke access opens confirmation without calling the revoke API', () => {
+  it('keeps Revoke access reachable without a count when the lookup fails', async () => {
+    vi.mocked(getShareRecipientsCount).mockRejectedValue(new Error('503'));
+
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
+
+    expect(
+      await screen.findByRole('button', { name: REVOKE_BUTTON }),
+    ).toBeTruthy();
+  });
+
+  it('clicking Revoke access opens confirmation without calling the revoke API', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
 
     expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
@@ -1746,6 +1972,7 @@ describe('ConversationPanelView — revoke access', () => {
     );
 
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
     const confirmButton = within(dialog).getByRole('button', {
       name: REVOKE_BUTTON,
@@ -1771,14 +1998,15 @@ describe('ConversationPanelView — revoke access', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+    );
 
-    expect(mockRefresh).toHaveBeenCalledOnce();
+    await waitFor(() => {
+      expect(mockRefresh).toHaveBeenCalledOnce();
+    });
     expect(mockShowNotification).toHaveBeenCalledOnce();
     expect(mockNavigate).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -1792,14 +2020,15 @@ describe('ConversationPanelView — revoke access', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+    );
 
-    expect(mockShowNotification).toHaveBeenCalledOnce();
+    await waitFor(() => {
+      expect(mockShowNotification).toHaveBeenCalledOnce();
+    });
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
@@ -1812,20 +2041,22 @@ describe('ConversationPanelView — revoke access', () => {
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
-    await act(async () => {
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
-      );
-    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+    );
 
-    expect(within(dialog).getByText(REVOKE_ERROR)).toBeTruthy();
+    await waitFor(() => {
+      expect(within(dialog).getByText(REVOKE_ERROR)).toBeTruthy();
+    });
     expect(mockRefresh).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  it('cancel closes the popup without calling the revoke API', () => {
+  it('cancel closes the popup without calling the revoke API', async () => {
     render(<ConversationPanelView {...defaultProps} />);
+    await openRowMenu();
     const dialog = openRevokeConfirmation();
     fireEvent.click(
       within(dialog).getByRole('button', { name: CANCEL_BUTTON }),
@@ -1835,10 +2066,11 @@ describe('ConversationPanelView — revoke access', () => {
     expect(revokeSharedAccess).not.toHaveBeenCalled();
   });
 
-  it('keeps the action and its confirmation reachable under dir="rtl"', () => {
+  it('keeps the action and its confirmation reachable under dir="rtl"', async () => {
     document.documentElement.dir = 'rtl';
     try {
       render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
       const dialog = openRevokeConfirmation();
       expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
       expect(
@@ -1866,5 +2098,215 @@ describe('ConversationPanelView — UI feature gates', () => {
     expect(
       screen.getByRole('region', { name: 'conversation panel' }),
     ).toBeTruthy();
+  });
+});
+
+describe('ConversationPanelView — unpublish', () => {
+  const historyEntry = (folderPath: string) => ({
+    path: 'conversations/bucket-123/conv1',
+    folderPath,
+    publishedAt: '2026-07-15T10:00:00.000Z',
+    publishedBy: 'Test User',
+  });
+
+  const openActionMenu = async () =>
+    userEvent.click(
+      screen.getByRole('button', { name: 'action trigger conv1' }),
+    );
+
+  beforeEach(() => {
+    vi.mocked(getConversationPublishHistory).mockResolvedValue([]);
+  });
+
+  it('issues no history request while rendering the list', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    expect(getConversationPublishHistory).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: UNPUBLISH_LABEL })).toBeNull();
+  });
+
+  it('requests history once when the row action menu opens', async () => {
+    vi.mocked(getConversationPublishHistory).mockResolvedValue([
+      historyEntry('Organization/Shared chats'),
+    ]);
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+    await openActionMenu();
+
+    await waitFor(() =>
+      expect(getConversationPublishHistory).toHaveBeenCalledTimes(1),
+    );
+    expect(getConversationPublishHistory).toHaveBeenCalledWith('conv1');
+  });
+
+  it('shows Unpublish once history resolves with a folder', async () => {
+    vi.mocked(getConversationPublishHistory).mockResolvedValue([
+      historyEntry('Organization/Shared chats'),
+    ]);
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    expect(
+      await screen.findByRole('button', { name: UNPUBLISH_LABEL }),
+    ).toBeTruthy();
+  });
+
+  /* The two are mutually exclusive: the menu shows the conversation's state. */
+  it('replaces Publish with Unpublish once history resolves with a folder', async () => {
+    vi.mocked(getConversationPublishHistory).mockResolvedValue([
+      historyEntry('Organization/Shared chats'),
+    ]);
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    await screen.findByRole('button', { name: UNPUBLISH_LABEL });
+    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+  });
+
+  it('keeps Publish for a never-published conversation', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    await waitFor(() =>
+      expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
+    );
+    expect(screen.getByRole('button', { name: PUBLISH_LABEL })).toBeTruthy();
+  });
+
+  it('hides Unpublish for a never-published conversation', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    await waitFor(() =>
+      expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
+    );
+    expect(screen.queryByRole('button', { name: UNPUBLISH_LABEL })).toBeNull();
+  });
+
+  it('hides Unpublish and raises no notification when the lookup fails', async () => {
+    vi.mocked(getConversationPublishHistory).mockRejectedValue(
+      new Error('503'),
+    );
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    await waitFor(() =>
+      expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
+    );
+    expect(screen.queryByRole('button', { name: UNPUBLISH_LABEL })).toBeNull();
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationPanelView — unpublish confirmation', () => {
+  const historyEntry = (folderPath: string) => ({
+    path: 'conversations/bucket-123/conv1',
+    folderPath,
+    publishedAt: '2026-07-15T10:00:00.000Z',
+    publishedBy: 'Test User',
+  });
+
+  const openUnpublishPopup = async (folders: string[]) => {
+    vi.mocked(getConversationPublishHistory).mockResolvedValue(
+      folders.map(historyEntry),
+    );
+    render(<ConversationPanelView {...defaultProps} />);
+    await userEvent.click(
+      screen.getByRole('button', { name: 'action trigger conv1' }),
+    );
+    await userEvent.click(
+      await screen.findByRole('button', { name: UNPUBLISH_LABEL }),
+    );
+  };
+
+  /* The row menu entry and the popup's confirm share the same label, so the
+   * confirm button is addressed through the dialog it lives in. */
+  const dialog = () => within(screen.getByRole('dialog'));
+  const confirmButton = () =>
+    dialog().getByRole('button', { name: UNPUBLISH_LABEL });
+
+  it('requests unpublish with the bucket-relative path and the single folder', async () => {
+    await openUnpublishPopup(['Organization/Shared chats']);
+
+    await userEvent.click(confirmButton());
+
+    expect(unpublishConversation).toHaveBeenCalledWith(
+      'conv1',
+      'Organization/Shared chats',
+    );
+  });
+
+  it('reports a submitted request and leaves the conversation list alone', async () => {
+    const mockRefresh = vi.fn();
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      refreshConversations: mockRefresh,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    await openUnpublishPopup(['Organization/Shared chats']);
+
+    await userEvent.click(confirmButton());
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'entityNotifications.conversation.unpublishRequestedTitle',
+        }),
+      ),
+    );
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it('requires a folder choice when the conversation is published to several', async () => {
+    await openUnpublishPopup(['Organization/Shared chats', 'Organization/Ops']);
+
+    const radios = dialog().getAllByRole('radio');
+    expect(radios).toHaveLength(2);
+    expect(radios.some((radio) => (radio as HTMLInputElement).checked)).toBe(
+      false,
+    );
+    expect(confirmButton().hasAttribute('disabled')).toBe(true);
+
+    await userEvent.click(
+      dialog().getByRole('radio', { name: 'Organization/Ops' }),
+    );
+
+    expect(confirmButton().hasAttribute('disabled')).toBe(false);
+
+    await userEvent.click(confirmButton());
+
+    expect(unpublishConversation).toHaveBeenCalledWith(
+      'conv1',
+      'Organization/Ops',
+    );
+  });
+
+  it('raises no success notification when the request fails', async () => {
+    vi.mocked(unpublishConversation).mockRejectedValue(new Error('Forbidden'));
+    await openUnpublishPopup(['Organization/Shared chats']);
+
+    await userEvent.click(confirmButton());
+
+    await waitFor(() => expect(unpublishConversation).toHaveBeenCalled());
+    expect(
+      mockShowNotification.mock.calls.some(
+        ([notification]) => notification.variant === 'success',
+      ),
+    ).toBe(false);
+  });
+
+  it('dismisses without a request when Cancel is clicked', async () => {
+    await openUnpublishPopup(['Organization/Shared chats']);
+
+    await userEvent.click(
+      dialog().getByRole('button', { name: 'buttons.cancel' }),
+    );
+
+    expect(unpublishConversation).not.toHaveBeenCalled();
   });
 });

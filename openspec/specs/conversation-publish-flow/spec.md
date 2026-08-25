@@ -1,9 +1,7 @@
 ## Purpose
 
 Define the conversation publishing UI flow, including eligibility, destination selection, approval-request submission, feedback, internationalization, RTL behavior, and accessibility.
-
 ## Requirements
-
 ### Requirement: Publish action is offered only for owned, writable conversations
 
 `ConversationPanelView.getActions` SHALL add a "Publish" `DropdownItem` to the row action menu, positioned after "Share" and before "Delete", using the same `isReadonlyItem` gate already computed for Share (`rawItem.isReadonly || rawItem.sharedWithMe || rawItem.publishedWithMe`) — the action SHALL be omitted entirely (not shown disabled) when `isReadonlyItem` is `true`. Clicking it SHALL set `pendingPublishConversationPath` (new `ConversationPanelView` state, mirroring `pendingShareConversationPath`) to the conversation's context id.
@@ -83,20 +81,38 @@ Inline folder creation SHALL also validate the new folder name identically to th
 
 ### Requirement: Submit always creates a publish request and is not blocked by publication history
 
-The pinned footer's submit button SHALL always show the fixed label "Publish" (i18n key `buttons.publish`) regardless of folder selection — never an "Update version" variant, since conversations have no version to update. Each submission creates a new admin-approval request rather than updating or replacing an existing published conversation. Therefore, prior publication history for the selected folder is informational only and SHALL NOT disable the submit button or show an "already published" or replace-warning callout. When the selected folder is valid and writable and no submission is already in flight, the user SHALL be allowed to submit another publish request for the same conversation and folder.
+The pinned footer's submit button SHALL always show the fixed label "Publish" (i18n key `buttons.publish`) regardless of folder selection — never an "Update version" variant, since conversations have no version to update.
+
+Publication history SHALL be fetched for real. `PublishConversationPanelContainer` previously hardcoded `history` to an empty array behind a comment citing a DIAL Core `503` ([GitHub issue #7897](https://github.com/epam/ai-dial-chat/issues/7897)); the backend endpoint exists and is specified by `conversation-publish-api`, and its result is now required by `conversation-unpublish-flow` to know which folders the conversation is published to. The container SHALL therefore receive real history — fetched once per conversation by the conversation panel and handed down, not fetched again here.
+
+Because history is now real, the container's existing `allowReplace={false}` becomes observable, and it SHALL be honoured: when the selected folder already holds a publication of this conversation, `derivePublishState` yields `PublishCalloutKind.ReplaceWarning` and the submit button SHALL be **disabled**, with the callout text supplied by the host as `conversationPublish.alreadyPublishedWarning`. A conversation carries no version, so a second publish to the same folder cannot update or replace the first — it would create a duplicate public copy — which is exactly what `allowReplace: false` exists to prevent.
+
+This reverses this requirement's previous statement that history is informational only and never blocks submission. That statement was written while history was hardcoded empty, so the branch was unreachable and the disagreement with `allowReplace={false}`, its own doc comment in `PublishDerivationInput`, and the already-translated `alreadyPublishedWarning` string was invisible. The code's intent wins; see the change's design.md D6.
+
+Selecting a different, not-yet-used folder SHALL clear the callout and re-enable submit. When the selected folder is valid, writable, unused, and no submission is in flight, the user SHALL be allowed to submit.
+
+While history is loading or has failed to load, submission SHALL NOT be blocked — an unknown history is not evidence of an existing publication, and the panel already surfaces the loading and error states of the history list itself.
 
 #### Scenario: First publish to a folder is allowed
 - **GIVEN** the conversation has never been published to the selected folder
 - **WHEN** the user selects that folder
 - **THEN** the submit button is enabled and reads "Publish"
 
-#### Scenario: Another publish request to a previously used folder is allowed
+#### Scenario: A folder already published to blocks re-submission
 - **GIVEN** the conversation has a prior publication in the selected folder
 - **WHEN** the user selects that folder
-- **THEN** the submit button remains enabled and reads "Publish"
-- **AND** no "already published" or replace-warning callout is shown
-- **WHEN** the user clicks "Publish"
-- **THEN** a new admin-approval request is submitted
+- **THEN** the already-published callout is shown with the host-supplied `conversationPublish.alreadyPublishedWarning` text
+- **AND** the submit button is disabled
+
+#### Scenario: Choosing another folder re-enables submit
+- **GIVEN** the already-published callout is shown for the selected folder
+- **WHEN** the user selects a folder the conversation has not been published to
+- **THEN** the callout is replaced by the informational callout and the submit button is enabled
+
+#### Scenario: Unknown history does not block submission
+- **GIVEN** the publish-history request is still in flight or has failed
+- **WHEN** the user selects a valid writable folder
+- **THEN** the submit button is enabled and reads "Publish"
 
 #### Scenario: Long folder names never appear in the button label
 - **WHEN** any folder or the root is selected, regardless of name length
@@ -112,8 +128,8 @@ On failure, the panel SHALL remain open, the submit-error callout (existing `der
 
 The failure notification SHALL:
 
-- use the shared `publish.failedTitle` title and the shared `publish.failedMessage` body, and carry `requestId` set to the trace ID resolved from the failed response via `getApiErrorDetails` when one is available (see `notification-request-id` and `api-error-trace-correlation`);
-- use the connection-specific `publish.networkErrorMessage` body and omit `requestId` when the failure occurred while `navigator.onLine` is `false`, because the request never reached the backend and therefore has no trace ID;
+- use the shared `publish.failedTitle` title, and a body resolved from the failed response's `message` (via `getApiErrorDetails`) when the response carries one — surfacing the backend/DIAL Core reason (e.g. a validation message for a 400) instead of always showing generic copy — falling back to the shared `publish.failedMessage` body only when the response carries no message; it SHALL carry `requestId` set to the trace ID resolved from the same call when one is available (see `notification-request-id` and `api-error-trace-correlation`);
+- use the connection-specific `publish.networkErrorMessage` body and omit `requestId` when the failure occurred while `navigator.onLine` is `false`, because the request never reached the backend and therefore has no trace ID or message;
 - be additive to the inline callout, never a replacement for it — the callout remains the in-context explanation next to the destination picker.
 
 The submit-error callout text SHALL be supplied by the host as `PublishPanelLabels.submitError` (`publish.submitErrorCallout`) rather than left to the library's hardcoded English default, since libraries carry no i18n.
@@ -127,7 +143,7 @@ The failure-notification strings SHALL live in one shared `publish.*` namespace 
 #### Scenario: Publish fails with a backend error
 - **WHEN** the backend returns an error for the publish request
 - **THEN** the panel stays open, the submit-error callout is shown, and no success notification or list refresh occurs
-- **AND** an error notification appears with the `publish.failedTitle` title and `publish.failedMessage` body
+- **AND** an error notification appears with the `publish.failedTitle` title and a body showing the response's own `message` (e.g. the DIAL Core reason for a 400) when the response carries one, or the shared `publish.failedMessage` body otherwise
 - **AND** the notification shows the request ID when the failed response carried a valid `traceparent`
 
 #### Scenario: Publish fails because the connection was lost
@@ -212,3 +228,4 @@ The panel root SHALL expose `role="dialog"`, `aria-modal="true"`, and `aria-labe
 #### Scenario: A rules-lookup failure does not block the conversation publish flow
 - **GIVEN** the user selects a destination folder and the rules lookup fails
 - **THEN** folder selection, manual rule entry, and the Publish submit action all remain fully usable; only the pre-fill did not occur
+

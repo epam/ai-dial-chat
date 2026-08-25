@@ -6,7 +6,7 @@ import {
 import {
   Button,
   DIAL_ICON_SIZE,
-  DialSearch,
+  Search,
   ElementSize,
   Highlight,
 } from '@epam/ai-dial-ui-kit';
@@ -134,7 +134,7 @@ export interface ModelSelectorBottomSheetProps {
   emptyLabel?: string;
   /** Inline CSS custom properties forwarded to the sheet root for theming. */
   style?: CSSProperties;
-  /** CSS class applied to the sheet title. Defaults to `'dial-body-semi-bold-text'`. */
+  /** CSS class applied to the sheet title. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
   /** CSS class applied to each item label and the state label. Defaults to `'dial-small-text'`. */
   labelClassName?: string;
@@ -205,11 +205,11 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
         {hasDeployments && !isLoading && (
           <>
             <div className="flex-shrink-0 px-4 py-[10px]">
-              <DialSearch
+              <Search
                 value={query}
                 placeholder={searchPlaceholder}
                 size={ElementSize.Standard}
-                onChange={setQuery}
+                onChange={(value) => setQuery(value ?? '')}
               />
             </div>
             <div

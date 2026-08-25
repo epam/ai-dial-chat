@@ -1,9 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayNotEmpty,
   IsArray,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
 } from 'class-validator';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
@@ -18,6 +19,14 @@ export enum ShareAccess {
   Edit = 'edit',
 }
 
+/**
+ * Resource kinds whose `itemId` is not already a full DIAL Core resource path
+ * and therefore has to be qualified server-side.
+ */
+export enum ShareResourceKind {
+  Prompt = 'prompt',
+}
+
 /** Request body for `POST /api/v1/share`. */
 export class CreateShareLinkDto {
   @ApiProperty({
@@ -28,6 +37,16 @@ export class CreateShareLinkDto {
   @IsNotEmpty()
   @IsValidFilePath()
   itemId!: string;
+
+  @ApiPropertyOptional({
+    description:
+      "Set to `prompt` when `itemId` is a bucket-relative prompt path (as returned by the prompts endpoints) rather than a full DIAL Core resource path. The caller's own bucket is then used to qualify it.",
+    enum: ShareResourceKind,
+    example: ShareResourceKind.Prompt,
+  })
+  @IsOptional()
+  @IsEnum(ShareResourceKind)
+  resourceKind?: ShareResourceKind;
 
   @ApiProperty({
     description:

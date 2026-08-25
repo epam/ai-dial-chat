@@ -9,18 +9,36 @@ import {
 import { ConfigService } from '@nestjs/config';
 import {
   handleDialFetchError,
+  handleDialSdkError,
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
+import {
+  countRecipientsByUrl,
+  resolveRecipientsCount,
+} from '../common/utils/resource-ownership';
+import { safeDecodeURIComponent } from '../common/utils/uri';
 import { EnvironmentVariables } from '../config/environment.config';
+import { resolveConversationLocation } from '../conversations/utils/conversation.utils';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
+import {
+  isPromptResourceUrl,
+  toPromptResourceUrl,
+} from '../prompts/utils/prompt-mapper.util';
+import { SkillsLookupService } from '../skills/lookup/skills-lookup.service';
 import { ToolsetsService } from '../toolsets/toolsets.service';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
-import { CreateShareLinkDto, ShareAccess } from './dto/create-share-link.dto';
+import {
+  CreateShareLinkDto,
+  ShareAccess,
+  ShareResourceKind,
+} from './dto/create-share-link.dto';
 import { DiscardSharedCatalogItemResponseDto } from './dto/discard-shared-catalog-item.dto';
 import { RevokeSharedAccessResponseDto } from './dto/revoke-shared-access.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
+import { ShareRecipientsResponseDto } from './dto/share-recipients.dto';
 
 type ResourceAccessType = components['schemas']['ResourceAccessType'];
 type ResourceKind = components['schemas']['ResourceTypes'];
@@ -35,6 +53,7 @@ const RESOURCE_KIND_BY_PREFIX: [prefix: string, kind: ResourceKind][] = [
   ['applications/', 'APPLICATION'],
   ['toolsets/', 'TOOL_SET'],
   ['conversations/', 'CONVERSATION'],
+  ['skills/', 'SKILL'],
 ];
 
 const resolveResourceKind = (itemId: string): ResourceKind => {
@@ -80,6 +99,75 @@ const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';
 
 /** DIAL Core conversation resource paths always start with this prefix. */
 const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
+const FILE_RESOURCE_PREFIX = 'files/';
+
+interface AnnotationWithAttachment {
+  body?: {
+    source?: {
+      attachment?: unknown;
+    };
+  };
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const collectAttachmentResourceUrls = (
+  attachments: unknown,
+  resourceUrls: Set<string>,
+): void => {
+  if (!Array.isArray(attachments)) return;
+
+  for (const attachment of attachments) {
+    if (!isRecord(attachment)) continue;
+
+    for (const field of ['url', 'reference_url'] as const) {
+      const url = attachment[field];
+      if (typeof url !== 'string') continue;
+
+      const resourceUrl = url.split('#', 1)[0];
+      if (resourceUrl.startsWith(FILE_RESOURCE_PREFIX)) {
+        resourceUrls.add(resourceUrl);
+      }
+    }
+  }
+};
+
+/** Collects unique DIAL file resources referenced by messages, stages, and citations. */
+const collectConversationResourceUrls = (conversation: unknown): string[] => {
+  if (!isRecord(conversation) || !Array.isArray(conversation.messages)) {
+    return [];
+  }
+
+  const resourceUrls = new Set<string>();
+  for (const message of conversation.messages) {
+    if (!isRecord(message) || !isRecord(message.custom_content)) continue;
+
+    collectAttachmentResourceUrls(
+      message.custom_content.attachments,
+      resourceUrls,
+    );
+
+    const stages = message.custom_content.stages;
+    if (Array.isArray(stages)) {
+      for (const stage of stages) {
+        if (isRecord(stage)) {
+          collectAttachmentResourceUrls(stage.attachments, resourceUrls);
+        }
+      }
+    }
+
+    const annotations = message.custom_content.annotations;
+    if (!Array.isArray(annotations)) continue;
+    for (const annotation of annotations) {
+      const attachment = (annotation as AnnotationWithAttachment)?.body?.source
+        ?.attachment;
+      collectAttachmentResourceUrls([attachment], resourceUrls);
+    }
+  }
+
+  return [...resourceUrls];
+};
 
 const getInvitationRoutePath = (itemId: string): string =>
   itemId.startsWith(CONVERSATION_RESOURCE_PREFIX)
@@ -111,6 +199,7 @@ export class ShareService {
     private readonly configService: ConfigService<EnvironmentVariables>,
     private readonly deploymentsService: DeploymentsService,
     private readonly toolsetsService: ToolsetsService,
+    private readonly skillsLookupService: SkillsLookupService,
   ) {
     const callbackBaseUrl = this.configService.get('AUTH_CALLBACK_BASE_URL', {
       infer: true,
@@ -136,22 +225,83 @@ export class ShareService {
     return `${this.appOrigin}${getInvitationRoutePath(itemId)}/${invitationId}`;
   }
 
+  private async getRelatedResourceUrls(
+    accessToken: string,
+    sessionBucket: string,
+    resourceUrl: string,
+  ): Promise<string[]> {
+    if (!resourceUrl.startsWith(CONVERSATION_RESOURCE_PREFIX)) return [];
+
+    const conversationPath = resourceUrl.slice(
+      CONVERSATION_RESOURCE_PREFIX.length,
+    );
+    const { bucket, subPath } = resolveConversationLocation(
+      conversationPath,
+      sessionBucket,
+    );
+
+    let result;
+    try {
+      result = await this.dialClient.client.getConversation(
+        bucket,
+        encodeDialResourcePath(subPath),
+        { headers: getBearerAuthHeaders(accessToken) },
+      );
+    } catch (err) {
+      return handleDialSdkError(
+        err,
+        'load conversation resources before sharing',
+        this.logger,
+      );
+    }
+
+    if (result.error != null) {
+      return handleDialSdkError(
+        result.error,
+        'load conversation resources before sharing',
+        this.logger,
+        result.response,
+      );
+    }
+    if (result.data == null) {
+      this.logger.error(
+        `DIAL Core returned an empty conversation for resourceUrl=${resourceUrl}`,
+      );
+      throw new BadGatewayException('DIAL Core returned an empty conversation');
+    }
+
+    return collectConversationResourceUrls(result.data);
+  }
+
   /**
-   * Creates a share link for a DIAL Core resource (catalog entity or conversation).
+   * Creates a share link for a DIAL Core resource (catalog entity, prompt, or conversation).
    *
    * @throws {BadGatewayException} When DIAL Core returns an error response
    * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
    */
   async createShareLink(
     accessToken: string,
-    { itemId, access }: CreateShareLinkDto,
+    bucket: string,
+    { itemId, access, resourceKind }: CreateShareLinkDto,
   ): Promise<ShareLinkResponseDto> {
+    const resourceUrl =
+      resourceKind === ShareResourceKind.Prompt
+        ? toPromptResourceUrl(itemId, bucket)
+        : itemId;
     const permissions = Array.from(
       new Set(access.flatMap((level) => ACCESS_PERMISSIONS[level])),
     );
+    const relatedResourceUrls = await this.getRelatedResourceUrls(
+      accessToken,
+      bucket,
+      resourceUrl,
+    );
     const requestBody = {
       invitationType: 'LINK' as const,
-      resources: [{ url: itemId, permissions }],
+      resources: [resourceUrl, ...relatedResourceUrls].map((url) => ({
+        url,
+        permissions,
+      })),
     };
     this.logger.debug(
       `Requesting share link from DIAL Core: ${JSON.stringify(requestBody)}`,
@@ -177,23 +327,23 @@ export class ShareService {
     }
 
     this.logger.debug(
-      `DIAL Core share link response for itemId=${itemId}: ${JSON.stringify(result.data)}`,
+      `DIAL Core share link response for itemId=${resourceUrl}: ${JSON.stringify(result.data)}`,
     );
 
     const invitationLink = result.data?.invitationLink;
     if (invitationLink == null) {
       this.logger.error(
-        `DIAL Core returned an empty invitation link for itemId=${itemId}`,
+        `DIAL Core returned an empty invitation link for itemId=${resourceUrl}`,
       );
       throw new BadGatewayException(
         'DIAL Core returned an empty invitation link',
       );
     }
 
-    this.logger.debug(`Created share link for itemId=${itemId}`);
+    this.logger.debug(`Created share link for itemId=${resourceUrl}`);
 
     return {
-      url: this.buildInvitationUrl(invitationLink, itemId),
+      url: this.buildInvitationUrl(invitationLink, resourceUrl),
       expiresInDays: SHARE_LINK_EXPIRES_IN_DAYS,
       access,
     };
@@ -326,9 +476,27 @@ export class ShareService {
     userSub: string,
     bucket: string,
   ): Promise<
-    Pick<AcceptInvitationResponseDto, 'sharedDeployment' | 'sharedToolset'>
+    Pick<
+      AcceptInvitationResponseDto,
+      'sharedDeployment' | 'sharedToolset' | 'sharedSkill'
+    >
   > {
     try {
+      if (itemId.startsWith('skills/')) {
+        const sharedSkill = await this.skillsLookupService.resolveSkillItem(
+          itemId,
+          accessToken,
+          bucket,
+        );
+        return sharedSkill ? { sharedSkill } : {};
+      }
+
+      /*
+       * A prompt has no deployments/toolsets list entry to summarise — the
+       * frontend picks it up from its own prompts refetch instead.
+       */
+      if (isPromptResourceUrl(itemId)) return {};
+
       if (itemId.startsWith('toolsets/')) {
         const sharedToolset = await this.toolsetsService.resolveToolsetItem(
           userSub,
@@ -482,6 +650,72 @@ export class ShareService {
 
     this.logger.log('Discard shared resource completed: success=true');
     return { success: true };
+  }
+
+  /**
+   * Counts how many users currently hold shared access to one resource the
+   * caller owns, via DIAL Core `getSharedResources({ with: 'others' })`.
+   *
+   * Answered per resource, on demand — the frontend calls this when the owner
+   * opens the action menu that offers {@link ShareService.revokeShared}, so a
+   * count is never older than the menu showing it. DIAL Core has no
+   * single-resource variant of this query, so the whole `with: 'others'` set
+   * for the resource's kind is fetched and the one entry is picked out of it.
+   *
+   * `sharedWith` only lists users who *accepted* an invitation, so `0` means
+   * "nobody holds access", not "never shared" — an issued but unopened share
+   * link contributes nothing.
+   *
+   * @throws {BadGatewayException} When DIAL Core returns an error response
+   * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
+   */
+  async getRecipientsCount(
+    itemId: string,
+    accessToken: string,
+  ): Promise<ShareRecipientsResponseDto> {
+    let result;
+    try {
+      result = await this.dialClient.client.getSharedResources({
+        headers: getBearerAuthHeaders(accessToken),
+        body: {
+          resourceTypes: [resolveResourceKind(itemId)],
+          with: 'others',
+          includeUserInfo: true,
+        },
+      });
+    } catch (err) {
+      return handleDialFetchError(
+        err,
+        'share.getRecipientsCount',
+        this.logger,
+        0,
+      );
+    }
+
+    if (result.error) {
+      return mapDialHttpStatus(
+        result.response.status,
+        'share.getRecipientsCount',
+        this.logger,
+        result.error,
+      );
+    }
+
+    const counts = countRecipientsByUrl(
+      (result.data?.resources ?? []) as {
+        url?: string;
+        sharedWith?: unknown[];
+      }[],
+    );
+    /*
+     * Both encodings are tried: list ids and DIAL Core share urls differ in
+     * percent-encoding for some resource types (conversations in particular).
+     */
+    const recipientsCount =
+      resolveRecipientsCount(counts, itemId, safeDecodeURIComponent(itemId)) ??
+      0;
+
+    return { itemId, recipientsCount };
   }
 
   /**

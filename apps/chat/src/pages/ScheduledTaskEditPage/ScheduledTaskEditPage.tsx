@@ -5,17 +5,19 @@ import {
   ScheduledTaskCreateFormValues,
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
-import { GhostButton, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { EditorThemes, GhostButton } from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useState,
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
+import DeploymentSelectorFieldTrigger from '../../components/DeploymentSelector/DeploymentSelectorFieldTrigger';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import {
@@ -24,10 +26,8 @@ import {
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
-import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
-import { useLanguage } from '../../hooks/language/useLanguage';
 import {
   getApiErrorDetails,
   getApiErrorStatus,
@@ -38,7 +38,6 @@ import {
 } from '../../server-api/scheduled-tasks.api';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { resolveLocalizedText } from '../../utils/locale';
 import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
 import {
   mapFormValuesToUpdateBody,
@@ -52,13 +51,12 @@ const ScheduledTaskEditPage: FC = () => {
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
-  const { items: deploymentItems } = useDeployments();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
   const { currentTheme } = useTheme();
-  const { language } = useLanguage();
+  const modelLabelId = useId();
 
-  const markdownEditorTheme: 'light' | 'dark' =
-    currentTheme === ThemeId.Dark ? 'dark' : 'light';
+  const markdownEditorTheme: EditorThemes =
+    currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light;
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
   const [isTaskLoading, setIsTaskLoading] = useState(true);
@@ -129,15 +127,6 @@ const ScheduledTaskEditPage: FC = () => {
     };
   }, [isEnabled, scheduleId, taskFetchToken]);
 
-  const modelOptions = useMemo(
-    () =>
-      deploymentItems.map((item) => ({
-        id: item.id,
-        label: resolveLocalizedText(item.displayName, language),
-      })),
-    [deploymentItems, language],
-  );
-
   const labels = useMemo(
     () => ({
       pageTitle: t(ScheduledTasksI18nKeys.EditPageTitle),
@@ -189,7 +178,6 @@ const ScheduledTaskEditPage: FC = () => {
       endDateLabel: t(ScheduledTasksI18nKeys.CreateEndDateLabel),
       endDatePlaceholder: t(ScheduledTasksI18nKeys.CreateEndDatePlaceholder),
       modelOrAgentLabel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),
-      modelPlaceholder: t(ScheduledTasksI18nKeys.CreateModelPlaceholder),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
       instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
       cancelButtonLabel: t(ButtonsI18nKeys.Cancel),
@@ -212,6 +200,11 @@ const ScheduledTaskEditPage: FC = () => {
       });
     },
     [],
+  );
+
+  const handleModelSelect = useCallback(
+    (id: string) => handleFieldChange('modelId', id),
+    [handleFieldChange],
   );
 
   const handleCancel = useCallback(() => {
@@ -238,8 +231,7 @@ const ScheduledTaskEditPage: FC = () => {
     setIsSubmitting(true);
     try {
       await updateScheduledTask(scheduleId, mapFormValuesToUpdateBody(values));
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ScheduledTasksI18nKeys.EditSuccessNotification),
       });
       navigate(returnUrl);
@@ -250,14 +242,21 @@ const ScheduledTaskEditPage: FC = () => {
         return;
       }
       const { traceId } = await getApiErrorDetails(error);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ScheduledTasksI18nKeys.EditErrorNotification),
         requestId: traceId,
       });
       setIsSubmitting(false);
     }
-  }, [values, showNotification, t, navigate, returnUrl, scheduleId]);
+  }, [
+    values,
+    showSuccessNotification,
+    showErrorNotification,
+    t,
+    navigate,
+    returnUrl,
+    scheduleId,
+  ]);
 
   const handleSubmitVoid = useCallback(
     () => void handleSubmit(),
@@ -315,7 +314,17 @@ const ScheduledTaskEditPage: FC = () => {
       labels={labels}
       values={values}
       errors={errors}
-      modelOptions={modelOptions}
+      modelSelector={
+        <DeploymentSelectorFieldTrigger
+          selectedId={values.modelId || null}
+          onSelect={handleModelSelect}
+          placeholder={t(ScheduledTasksI18nKeys.CreateModelPlaceholder)}
+          labelledById={modelLabelId}
+          isDisabled={isSubmitting}
+          isInvalid={Boolean(errors.modelId)}
+        />
+      }
+      modelLabelId={modelLabelId}
       onFieldChange={handleFieldChange}
       onBack={handleBack}
       onCancel={handleCancel}

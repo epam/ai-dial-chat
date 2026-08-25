@@ -13,11 +13,16 @@ import ConversationMessageItem from '../ConversationMessageItem';
 
 const mockHandleAttachmentClick = vi.fn();
 
-vi.mock('../../../hooks/attachment/useAttachmentAction', () => ({
-  useAttachmentAction: () => ({
-    handleAttachmentClick: mockHandleAttachmentClick,
-  }),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    useAttachmentAction: () => ({
+      handleAttachmentClick: mockHandleAttachmentClick,
+    }),
+  };
+});
 
 vi.mock('../../../hooks/useUiFeature');
 

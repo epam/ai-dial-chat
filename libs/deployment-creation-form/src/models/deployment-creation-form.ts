@@ -114,6 +114,10 @@ export interface DeploymentCreationFormProps {
   errors: DeploymentCreationFormFieldErrors;
   /** Called with a partial patch whenever a field value changes. */
   onChange: (patch: Partial<DeploymentCreationFormValues>) => void;
+  /** Called when the name field loses focus, so the host can run on-blur validation. */
+  onNameBlur?: () => void;
+  /** Called when the version field loses focus, so the host can run on-blur validation. */
+  onVersionBlur?: () => void;
   /** Pre-translated labels/placeholders for every field. */
   labels: DeploymentCreationFormLabels;
   /** Optional per-slot class name overrides. */

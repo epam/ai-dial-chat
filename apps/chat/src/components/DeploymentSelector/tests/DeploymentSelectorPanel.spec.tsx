@@ -1,12 +1,22 @@
-import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
+import { type CatalogItem } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import DeploymentSelectorPanel from '../DeploymentSelectorPanel';
+
+const breakpoint = vi.hoisted(() => ({ isMobile: false }));
+vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+  useIsMobile: () => breakpoint.isMobile,
+}));
 
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
+});
+
+afterEach(() => {
+  breakpoint.isMobile = false;
 });
 
 const makeItem = (id: string, type: CatalogEntityType): CatalogItem => ({
@@ -33,6 +43,31 @@ const renderPanel = (
       {...props}
     />,
   );
+
+describe('DeploymentSelectorPanel — long version', () => {
+  it('caps the version at 30% of the row so it cannot overlap the name', () => {
+    renderPanel([
+      {
+        ...makeItem('model-1', CatalogEntityType.Model),
+        version: 'With Google Search Grounding',
+      },
+    ]);
+
+    const version = screen.getByText('With Google Search Grounding');
+    expect(version.className).toContain('max-w-[30%]');
+    expect(version.className).toContain('shrink-0');
+  });
+
+  it('renders no version element when the item has an empty version', () => {
+    renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
+
+    /* Asserting the absence of a CSS-level styling class (not text/role) has
+       no semantic query equivalent — this repo's spec conventions carve out
+       this exact case for container/document.querySelector. */
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('.max-w-\\[30\\%\\]')).toBeNull();
+  });
+});
 
 describe('DeploymentSelectorPanel', () => {
   it('shows a favorited Application in the list', () => {
@@ -195,5 +230,27 @@ describe('DeploymentSelectorPanel', () => {
         expect(onToggleFavorite).toHaveBeenCalledWith('gpt-4o', false),
       );
     });
+  });
+});
+
+describe('DeploymentSelectorPanel — focus on open', () => {
+  it('focuses the search field so a keyboard user lands inside the panel', () => {
+    renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
+
+    const search = screen.getByRole('textbox', {
+      name: 'Search models, agents\u2026',
+    });
+    expect(search.matches(':focus')).toBe(true);
+  });
+
+  it('leaves focus alone on mobile, where the panel opens in a bottom sheet', () => {
+    breakpoint.isMobile = true;
+
+    renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
+
+    const search = screen.getByRole('textbox', {
+      name: 'Search models, agents\u2026',
+    });
+    expect(search.matches(':focus')).toBe(false);
   });
 });

@@ -5,12 +5,13 @@ import {
   Textarea,
   Calendar,
   CalendarMode,
+  Label,
   NumberInput,
   Spinner,
   LazyMarkdownEditor,
   Select,
 } from '@epam/ai-dial-ui-kit';
-import { lazy, Suspense, type ComponentProps, type FC } from 'react';
+import { lazy, Suspense, type FC } from 'react';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
@@ -24,32 +25,27 @@ import {
 } from '../../utils/calendar-value';
 import styles from './ScheduledTaskCreateForm.module.scss';
 
-/* `Calendar` has no built-in required-field indicator (unlike `Input`'s
- * `labelProps.required`), so required Calendar fields get the marker
- * appended to their label text directly. */
-const withRequiredMarker = (label: string): string => `${label} *`;
-
 const MarkdownEditor = lazy(async () => {
   const module = await LazyMarkdownEditor();
   return { default: module.MarkdownEditor };
 });
 
-type MarkdownEditorTheme = ComponentProps<typeof MarkdownEditor>['theme'];
-
 /**
  * Presentational create-task form: a back-navigable header (Cancel/Save
  * actions) and a two-column Details/Configuration body. Details holds
- * display name, description, the schedule fields, and the model picker;
- * Configuration holds the markdown Instructions editor. Field values,
- * validation errors, and model options are all supplied by the host app;
- * this component holds no state of its own and performs no routing, i18n,
- * or network calls.
+ * display name, description, the schedule fields, and the Model or Agent
+ * field; Configuration holds the markdown Instructions editor. Field values
+ * and validation errors are supplied by the host app, and the Model or
+ * Agent field's control is a fully-composed `modelSelector` element the host
+ * renders; this component holds no state of its own and performs no
+ * routing, i18n, or network calls.
  */
 export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   labels,
   values,
   errors,
-  modelOptions,
+  modelSelector,
+  modelLabelId,
   onFieldChange,
   onBack,
   onCancel,
@@ -148,17 +144,24 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             }
           />
 
-          <Select
-            labelProps={{ label: labels.modelOrAgentLabel, required: true }}
-            value={values.modelId}
-            placeholder={labels.modelPlaceholder}
-            onChange={(next) => onFieldChange('modelId', next as string)}
-            error={errors.modelId}
-            options={modelOptions.map((option) => ({
-              value: option.id,
-              label: option.label,
-            }))}
-          />
+          <div className="flex flex-col gap-1">
+            <Label
+              id={modelLabelId}
+              label={labels.modelOrAgentLabel}
+              required
+            />
+            {modelSelector}
+            {errors.modelId && (
+              <p
+                className={mergeClasses(
+                  instructionsErrorClassName,
+                  styles.instructionsError,
+                )}
+              >
+                {errors.modelId}
+              </p>
+            )}
+          </div>
 
           <div className="flex flex-col gap-3">
             <Select
@@ -182,7 +185,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   onChange={(value) =>
                     onFieldChange('runAt', calendarValueToRunAt(value))
                   }
-                  label={withRequiredMarker(labels.runAtLabel)}
+                  labelProps={{ label: labels.runAtLabel, required: true }}
                   invalid={Boolean(errors.runAt)}
                 />
                 {errors.runAt && (
@@ -212,7 +215,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           typeof value === 'string' ? value : '',
                         )
                       }
-                      label={withRequiredMarker(labels.timeLabel)}
+                      labelProps={{ label: labels.timeLabel, required: true }}
                       invalid={Boolean(errors.time)}
                     />
                     {errors.time && (
@@ -240,7 +243,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDayOfWeek(value),
                         )
                       }
-                      label={withRequiredMarker(labels.dayOfWeekLabel)}
+                      labelProps={{
+                        label: labels.dayOfWeekLabel,
+                        required: true,
+                      }}
                       invalid={Boolean(errors.dayOfWeek)}
                     />
                     {errors.dayOfWeek && (
@@ -306,7 +312,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDateValue(value),
                         )
                       }
-                      label={labels.startDateLabel}
+                      labelProps={{ label: labels.startDateLabel }}
                       placeholder={labels.startDatePlaceholder}
                       invalid={Boolean(errors.startDate)}
                     />
@@ -333,7 +339,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDateValue(value),
                         )
                       }
-                      label={labels.endDateLabel}
+                      labelProps={{ label: labels.endDateLabel }}
                       placeholder={labels.endDatePlaceholder}
                       invalid={Boolean(errors.endDate)}
                     />
@@ -387,7 +393,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               value={values.prompt}
               onChange={(value) => onFieldChange('prompt', value)}
               height={480}
-              theme={markdownEditorTheme as MarkdownEditorTheme}
+              theme={markdownEditorTheme}
             />
           </Suspense>
           {errors.prompt && (

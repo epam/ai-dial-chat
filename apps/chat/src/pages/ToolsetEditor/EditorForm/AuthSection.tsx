@@ -7,10 +7,9 @@ import {
   DIAL_ICON_SIZE,
   ConfirmationPopup,
   Input,
-  DialRadioButton,
-  DialTagInput,
+  Radio,
+  TagInput,
   ElementSize,
-  NotificationVariant,
   mergeClasses,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
@@ -95,7 +94,7 @@ const AuthSection: FC<Props> = ({
   onEnsureSaved,
 }) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
   const [isAuthBusy, setIsAuthBusy] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -140,8 +139,7 @@ const AuthSection: FC<Props> = ({
         initiation.type === ToolsetOAuthInitiationResultType.Blocked
           ? ToolsetEditorI18nKeys.ErrorPopupBlocked
           : ToolsetEditorI18nKeys.ErrorOAuthConfigMissing;
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(errorKey),
       });
       return;
@@ -160,13 +158,11 @@ const AuthSection: FC<Props> = ({
 
     if (result.type === ToolsetOAuthResultType.Success) {
       onAuthChange({ isLoggedIn: true });
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ToolsetEditorI18nKeys.LoginSuccess),
       });
     } else if (result.type === ToolsetOAuthResultType.Failure) {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
       });
     } else if (result.type === ToolsetOAuthResultType.Cancelled) {
@@ -180,8 +176,7 @@ const AuthSection: FC<Props> = ({
         const refreshedAuth = await fetchToolsetAuthSettings(savedToolsetId);
         if (refreshedAuth.isLoggedIn) {
           onAuthChange({ isLoggedIn: true });
-          showNotification({
-            variant: NotificationVariant.Success,
+          showSuccessNotification({
             message: t(ToolsetEditorI18nKeys.LoginSuccess),
           });
         }
@@ -210,8 +205,7 @@ const AuthSection: FC<Props> = ({
       if (needsDynamicRegistration) {
         const popup = openToolsetOAuthPopup();
         if (!popup) {
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             message: t(ToolsetEditorI18nKeys.ErrorPopupBlocked),
           });
           return;
@@ -243,8 +237,7 @@ const AuthSection: FC<Props> = ({
           } catch (error) {
             popup.close();
             const { traceId } = await getApiErrorDetails(error);
-            showNotification({
-              variant: NotificationVariant.Error,
+            showErrorNotification({
               message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
               requestId: traceId,
             });
@@ -288,14 +281,12 @@ const AuthSection: FC<Props> = ({
       };
       await loginToolset(savedToolsetId, body);
       onAuthChange({ isLoggedIn: true });
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ToolsetEditorI18nKeys.LoginSuccess),
       });
     } catch (error) {
       const { traceId } = await getApiErrorDetails(error);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
         requestId: traceId,
       });
@@ -317,14 +308,12 @@ const AuthSection: FC<Props> = ({
       await logoutToolset(toolsetId, body);
       onAuthChange({ isLoggedIn: false });
       setShowLogoutConfirm(false);
-      showNotification({
-        variant: NotificationVariant.Success,
+      showSuccessNotification({
         message: t(ToolsetEditorI18nKeys.LogoutSuccess),
       });
     } catch (error) {
       const { traceId } = await getApiErrorDetails(error);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
         requestId: traceId,
       });
@@ -364,21 +353,21 @@ const AuthSection: FC<Props> = ({
   const renderOAuthContent = () => (
     <div className="flex flex-col gap-3 pb-3 ps-4">
       <div className="flex flex-col gap-2">
-        <DialRadioButton
+        <Radio
           name="oauth-login-mode"
-          inputId="oauth-with-login"
+          id="oauth-with-login"
           value={WithLogin.WithLogin}
-          label={t(ToolsetEditorI18nKeys.WithLoginLabel)}
-          checked={auth.withLogin === WithLogin.WithLogin}
+          labelProps={{ label: t(ToolsetEditorI18nKeys.WithLoginLabel) }}
+          isSelected={auth.withLogin === WithLogin.WithLogin}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
         />
-        <DialRadioButton
+        <Radio
           name="oauth-login-mode"
-          inputId="oauth-with-config"
+          id="oauth-with-config"
           value={WithLogin.WithConfig}
-          label={t(ToolsetEditorI18nKeys.WithConfigLabel)}
-          checked={auth.withLogin === WithLogin.WithConfig}
+          labelProps={{ label: t(ToolsetEditorI18nKeys.WithConfigLabel) }}
+          isSelected={auth.withLogin === WithLogin.WithConfig}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
         />
@@ -434,11 +423,13 @@ const AuthSection: FC<Props> = ({
             invalid={!!errors.tokenEndpoint}
             disabled={isControlsDisabled}
           />
-          <DialTagInput
-            elementId="toolset-scopes"
-            label={t(ToolsetEditorI18nKeys.ScopesLabel)}
+          <TagInput
+            id="toolset-scopes"
+            labelProps={{
+              label: t(ToolsetEditorI18nKeys.ScopesLabel),
+            }}
             placeholder={t(ToolsetEditorI18nKeys.ScopesPlaceholder)}
-            initialTags={auth.scopes ?? []}
+            value={auth.scopes ?? []}
             onChange={(scopes) => onAuthChange({ scopes })}
             disabled={isControlsDisabled}
           />
@@ -452,21 +443,21 @@ const AuthSection: FC<Props> = ({
   const renderApiKeyContent = () => (
     <div className="flex flex-col gap-3 pb-3 ps-4">
       <div className="flex flex-col gap-2">
-        <DialRadioButton
+        <Radio
           name="apikey-login-mode"
-          inputId="apikey-with-login"
+          id="apikey-with-login"
           value={WithLogin.WithLogin}
-          label={t(ToolsetEditorI18nKeys.WithLoginLabel)}
-          checked={auth.withLogin === WithLogin.WithLogin}
+          labelProps={{ label: t(ToolsetEditorI18nKeys.WithLoginLabel) }}
+          isSelected={auth.withLogin === WithLogin.WithLogin}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
         />
-        <DialRadioButton
+        <Radio
           name="apikey-login-mode"
-          inputId="apikey-without-login"
+          id="apikey-without-login"
           value={WithLogin.WithoutLogin}
-          label={t(ToolsetEditorI18nKeys.WithoutLoginLabel)}
-          checked={auth.withLogin === WithLogin.WithoutLogin}
+          labelProps={{ label: t(ToolsetEditorI18nKeys.WithoutLoginLabel) }}
+          isSelected={auth.withLogin === WithLogin.WithoutLogin}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
         />
@@ -536,7 +527,7 @@ const AuthSection: FC<Props> = ({
               />
               <span
                 className={mergeClasses(
-                  'text-sm',
+                  'dial-small-text',
                   isSelected ? 'text-accent' : 'text-primary',
                 )}
               >

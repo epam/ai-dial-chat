@@ -10,8 +10,6 @@ import {
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import {
   computeItemOwnershipFlags,
-  countRecipientsByUrl,
-  resolveRecipientsCount,
   splitResourcesByPermission,
   type ResourceOwnershipUrlSets,
 } from '../../common/utils/resource-ownership';
@@ -116,53 +114,6 @@ export class DeploymentsListingService {
   ): Promise<ResourceOwnershipUrlSets> {
     const resources = await this.getSharedResources(accessToken);
     return splitResourcesByPermission(resources);
-  }
-
-  /**
-   * Resolves how many users each APPLICATION the caller owns is currently
-   * shared with — the mirror image of `getSharedResources` above (`with:
-   * 'others'` instead of `'me'`), which is what lets the frontend hide a
-   * "Revoke access" action for an item nobody holds.
-   *
-   * One call covers the whole list rather than one call per item, and it runs
-   * in parallel with the `with: 'me'` call at the single call site below.
-   *
-   * Returns `null` — not an empty map — when the upstream call fails, because
-   * the two cases mean opposite things to the caller: a *successful* response
-   * simply omits resources nobody holds, so "absent from the map" is a
-   * genuine zero, whereas a failure means the count is unknown and the UI
-   * must not hide the revoke action on the strength of it.
-   */
-  private async getRecipientCounts(
-    accessToken: string,
-  ): Promise<Map<string, number> | null> {
-    try {
-      const { data, error, response } =
-        await this.dialClient.client.getSharedResources({
-          headers: getBearerAuthHeaders(accessToken),
-          body: {
-            resourceTypes: ['APPLICATION'],
-            with: 'others',
-            includeUserInfo: true,
-          },
-        });
-      if (error) {
-        this.logger.warn(
-          `Failed to resolve APPLICATION resources shared with others: status=${response.status}`,
-        );
-        return null;
-      }
-
-      return countRecipientsByUrl(
-        (data?.resources ?? []) as { url?: string; sharedWith?: unknown[] }[],
-      );
-    } catch (err) {
-      this.logger.warn(
-        'Failed to resolve APPLICATION resources shared with others',
-        err,
-      );
-      return null;
-    }
   }
 
   async listDeployments(
@@ -273,16 +224,12 @@ export class DeploymentsListingService {
     const { deployments: deploymentIds } =
       await this.userConfigService.getInstalledIds(accessToken, bucket);
     const deploymentsSet = new Set(deploymentIds);
-    const [applicationUrlSets, recipientCounts] = await Promise.all([
-      this.getSharedResourceUrlSets(accessToken),
-      this.getRecipientCounts(accessToken),
-    ]);
+    const applicationUrlSets = await this.getSharedResourceUrlSets(accessToken);
 
     const withInstalled = allItems.map((item) => ({
       ...item,
       isInstalled: deploymentsSet.has(item.id),
       ...computeItemOwnershipFlags(item.id, bucket, applicationUrlSets),
-      recipientsCount: resolveRecipientsCount(recipientCounts, item.id),
     }));
 
     if (!interfaceFilter) {

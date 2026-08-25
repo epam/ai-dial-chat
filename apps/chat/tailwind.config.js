@@ -11,15 +11,13 @@ module.exports = {
     ),
     ...createGlobPatternsForDependencies(__dirname),
     join(__dirname, '../../node_modules/@epam/ai-dial-ui-kit/**/*.{js,jsx}'),
+    join(
+      __dirname,
+      '../../node_modules/@epam/ai-dial-react-file-manager/**/*.{js,jsx}',
+    ),
   ],
   theme: {
     extend: {
-      backgroundColor: {
-        'avatar-bg': '#60D239',
-      },
-      textColor: {
-        'avatar-initials': '#000000',
-      },
       keyframes: {
         spin: {
           to: { transform: 'rotate(1turn)' },

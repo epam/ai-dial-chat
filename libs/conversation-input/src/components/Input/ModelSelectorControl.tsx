@@ -3,7 +3,7 @@ import {
   DIAL_ICON_SIZE,
   Dropdown,
   DialDropdownIcon,
-  DialTooltip,
+  Tooltip,
   ElementSize,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -90,7 +90,7 @@ export const ModelSelectorControl: FC<Props> = ({
   if (isMobile) {
     return (
       <>
-        <DialTooltip tooltip={selectedLabel}>
+        <Tooltip tooltip={selectedLabel}>
           <GhostIconButton
             icon={
               <div className="flex items-center gap-1">
@@ -108,7 +108,7 @@ export const ModelSelectorControl: FC<Props> = ({
               disabledIconClassName,
             )}
           />
-        </DialTooltip>
+        </Tooltip>
         {modelPickerOverlay ? (
           <BottomSheetShell
             isOpen={isModelSheetOpen}
@@ -153,9 +153,9 @@ export const ModelSelectorControl: FC<Props> = ({
         renderOverlay={() =>
           modelPickerOverlay(() => onPickerOpenChange?.(false))
         }
-        listClassName="cp-dropdown-overlay !w-[320px]"
+        listClassName="!w-[368px] !bg-layer-raised"
       >
-        <DialTooltip tooltip={selectedLabel}>
+        <Tooltip tooltip={selectedLabel}>
           <button
             type="button"
             aria-label={selectorAriaLabel}
@@ -175,7 +175,7 @@ export const ModelSelectorControl: FC<Props> = ({
             {selectorIcon}
             {caretIcon}
           </button>
-        </DialTooltip>
+        </Tooltip>
       </Dropdown>
     );
   }
@@ -185,7 +185,7 @@ export const ModelSelectorControl: FC<Props> = ({
       className={mergeClasses(isDisabled && disabledIconClassName)}
       aria-disabled={isDisabled || undefined}
     >
-      <DialTooltip tooltip={selectedLabel}>
+      <Tooltip tooltip={selectedLabel}>
         <DialDropdownIcon
           icon={selectorIcon}
           ariaLabel={selectorAriaLabel}
@@ -193,7 +193,7 @@ export const ModelSelectorControl: FC<Props> = ({
           menuHeader={menuHeader}
           placement="bottom-end"
           matchReferenceWidth={false}
-          listClassName="cp-dropdown-overlay !w-[240px] !max-h-80"
+          listClassName="!w-[240px] !max-h-80"
           onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
           size={ElementSize.Standard}
           caretIcon={caretIcon}
@@ -204,7 +204,7 @@ export const ModelSelectorControl: FC<Props> = ({
             isDisabled && styles.modelSelectorButtonDisabled,
           )}
         />
-      </DialTooltip>
+      </Tooltip>
     </div>
   );
 };

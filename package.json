@@ -32,9 +32,12 @@
     "publish:dry": "nx run-many -t publish --output-style=static --projects=tag:publishable --dry=true --ver=0.0.0-preview.0 --tag=dev",
     "validate:agent-docs": "node scripts/validate-agent-docs.mjs",
     "validate:agent-docs:test": "node --test scripts/validate-agent-docs.spec.mjs",
+    "validate:docs": "node scripts/validate-docs.mjs",
     "prepare": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
+    "@babel/core": "^7.14.5",
+    "@babel/preset-react": "^7.14.5",
     "@eslint/js": "^9.8.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@nestjs/schematics": "^11.0.0",
@@ -67,6 +70,7 @@
     "@vitejs/plugin-react": "^6.0.0",
     "@vitest/coverage-v8": "~4.1.0",
     "@vitest/ui": "~4.1.0",
+    "ajv": "^8.0.0",
     "autoprefixer": "^10.4.13",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.4",
@@ -77,6 +81,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-tailwindcss": "^3.18.2",
+    "eslint-plugin-testing-library": "^7.16.2",
     "jiti": "2.4.2",
     "jsdom": "~22.1.0",
     "jsonc-eslint-parser": "^2.1.0",
@@ -98,15 +103,14 @@
     "vite-plugin-svgr": "^5.2.0",
     "vitest": "~4.1.0",
     "webpack-cli": "^5.1.4",
-    "webpack-node-externals": "^3.0.0",
-    "yaml": "2.8.3"
+    "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
-    "@epam/ai-dial-react-file-manager": "0.1.0-dev.21",
+    "@epam/ai-dial-react-file-manager": "0.2.0-dev.3",
     "@epam/ai-dial-react-pdf-highlighter": "0.2.0-dev.22",
     "@epam/ai-dial-shared": "0.48.0",
-    "@epam/ai-dial-typescript-sdk": "0.1.0-dev.31",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.51",
+    "@epam/ai-dial-typescript-sdk": "0.1.0-dev.39",
+    "@epam/ai-dial-ui-kit": "^0.14.0-dev.4",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
     "@epam/pdf-highlighter-kit": "^0.0.18",
     "@mcp-ui/client": "^7.1.1",
@@ -122,7 +126,7 @@
     "@uiw/react-markdown-preview": "^5.2.1",
     "@uiw/react-md-editor": "^4.1.1",
     "cache-manager": "^7.2.8",
-    "dompurify": "3.4.12",
+    "dompurify": "3.4.13",
     "express": "^5.2.1",
     "fflate": "^0.8.3",
     "helmet": "^8.1.0",
@@ -155,21 +159,24 @@
     "rxjs": "^7.8.2",
     "swagger-ui-express": "^5.0.1",
     "tailwind-merge": "^3.6.0",
-    "unified": "^11.0.5"
+    "unified": "^11.0.5",
+    "yaml": "2.8.3"
   },
   "overrides": {
-    "dompurify": "3.4.12",
+    "axios": "1.19.0",
+    "dompurify": "3.4.13",
     "tmp": "0.2.7",
     "form-data": "4.0.6",
     "ip-address": "10.3.1",
     "uuid": "14.0.0",
-    "shell-quote": "1.8.4",
+    "shell-quote": "1.10.0",
     "http-proxy-middleware": "3.0.7",
-    "undici": "7.28.0",
+    "undici": "7.29.0",
     "brace-expansion@1.1.15": "1.1.16",
     "brace-expansion@2.1.1": "2.1.4",
     "brace-expansion@5.0.6": "5.0.9",
-    "js-yaml": "4.3.1"
+    "js-yaml": "4.3.1",
+    "@epam/ai-dial-ui-kit": "$@epam/ai-dial-ui-kit"
   },
   "workspaces": [
     "packages/*",

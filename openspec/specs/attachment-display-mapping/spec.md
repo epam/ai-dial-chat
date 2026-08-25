@@ -1,4 +1,10 @@
-## ADDED Requirements
+# attachment-display-mapping Specification
+
+## Purpose
+
+One pure mapper in `chat-shared` from the API `MessageAttachment` shape to the UI `DisplayAttachment` model.
+
+## Requirements
 
 ### Requirement: Single pure MessageAttachment-to-DisplayAttachment mapper in chat-shared
 The system SHALL expose one pure mapper, `message-attachment-to-display.ts` in `libs/chat-shared`, that converts a `MessageAttachment` DTO into a `DisplayAttachment` and accepts optional `resolvePreviewUrl` and `resolvePlayUrl` callbacks for app-specific URL resolution. The mapper SHALL NOT import `resolveCatalogIconUrl`, `resolveDialFileDownloadUrl`, i18n, `/api` paths, or any other host-owned integration detail.

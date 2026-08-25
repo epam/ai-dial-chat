@@ -1,3 +1,11 @@
+# catalog-query-filtering Specification
+
+## Purpose
+
+Capability query parameters on the catalog endpoint and the filter service that applies them.
+
+## Requirements
+
 ### Requirement: CatalogQueryDto capability query parameters
 The system SHALL accept only capability filter query parameters on `GET /api/v1/catalog` via a `CatalogQueryDto` class decorated with `class-validator`, `class-transformer`, and `@nestjs/swagger`.
 
@@ -86,6 +94,12 @@ It SHALL expose:
 - `capabilitiesFilter()`: exact match, value mismatch, missing capability, and application pass-through
 - `apply()`: empty filter, matching model filter, application pass-through, empty model result, all-items result
 - No network calls, no NestJS context required
+
+#### Scenario: Filter service suite runs in isolation
+
+- **WHEN** `catalog-filter.service.spec.ts` is executed
+- **THEN** it covers `parse()`, `capabilitiesFilter()`, and `apply()` across the listed cases
+- **AND** it completes without a network call or a NestJS testing module
 
 ---
 

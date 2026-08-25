@@ -5,6 +5,7 @@ import {
   HttpCode,
   Param,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -23,6 +24,10 @@ import {
   RevokeSharedAccessResponseDto,
 } from './dto/revoke-shared-access.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
+import {
+  GetShareRecipientsDto,
+  ShareRecipientsResponseDto,
+} from './dto/share-recipients.dto';
 import { ShareService } from './share.service';
 
 /** Controller for creating share links for DIAL Core resources. */
@@ -70,8 +75,8 @@ export class ShareController {
     @Req() req: Request,
     @Body() body: CreateShareLinkDto,
   ): Promise<ShareLinkResponseDto> {
-    const { at } = req.user as SessionUser;
-    return this.shareService.createShareLink(at, body);
+    const { at, bucket } = req.user as SessionUser;
+    return this.shareService.createShareLink(at, bucket, body);
   }
 
   @Get('invitations/:invitationId')
@@ -126,9 +131,10 @@ export class ShareController {
     summary: 'Discard a shared catalog resource or conversation',
     description:
       "Discards the authenticated user's own access to a shared catalog " +
-      "entity (application or toolset) or conversation, via DIAL Core's " +
-      "discardSharedResources operation. Only affects the caller's own " +
-      'access — removing access for everyone else is a separate operation.',
+      'entity (application or toolset), a skill, or a conversation, via ' +
+      "DIAL Core's discardSharedResources operation. Only affects the " +
+      "caller's own access — removing access for everyone else is a " +
+      'separate operation.',
   })
   @ApiBody({ type: DiscardSharedCatalogItemDto })
   @ApiResponse({
@@ -166,6 +172,47 @@ export class ShareController {
     return this.shareService.discardShared(body.itemId, at, sub);
   }
 
+  @Get('recipients')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'getShareRecipientsCount',
+    summary: 'Count current recipients of an owned resource',
+    description:
+      "Returns how many users currently hold shared access to a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core's " +
+      'getSharedResources operation. Intended to be called when an owner opens the menu offering "Revoke access", so the count is never stale. ' +
+      'Counts accepted invitations only — an issued but unopened share link is not counted.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Recipient count resolved',
+    type: ShareRecipientsResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error — invalid itemId',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  getShareRecipientsCount(
+    @Req() req: Request,
+    @Query() { itemId }: GetShareRecipientsDto,
+  ): Promise<ShareRecipientsResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.shareService.getRecipientsCount(itemId, at);
+  }
+
   @Post('revoke')
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
@@ -173,7 +220,7 @@ export class ShareController {
     operationId: 'revokeSharedAccess',
     summary: 'Revoke all shared access to an owned resource',
     description:
-      "Revokes every outstanding share grant on a catalog entity (application or toolset) or conversation the caller owns, via DIAL Core's " +
+      "Revokes every outstanding share grant on a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core's " +
       'revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the ' +
       "caller's own access to a resource shared with them is a separate operation.",
   })

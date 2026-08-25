@@ -42,7 +42,7 @@ export interface ConversationRowProps {
   itemTitleClassName?: string;
   /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
-  /** Typography class applied to the task pill badge. Defaults to `'dial-caption-semi-text uppercase tracking-[0.6px]'`. Colors come from the module stylesheet. */
+  /** Typography class applied to the task pill badge. Defaults to `'dial-caption-lead-semi-text'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
   /** Accessible (visually hidden) label announced for the unread indicator dot. Defaults to `"Unread"`. */
   unreadIndicatorLabel?: string;
@@ -83,7 +83,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
   itemIconBadgeClassName,
-  taskBadgeClassName = 'dial-caption-semi-text uppercase tracking-[0.6px]',
+  taskBadgeClassName = 'dial-caption-lead-semi-text',
   unreadIndicatorLabel = 'Unread',
   rowGroupKey,
   rows,

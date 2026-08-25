@@ -36,13 +36,6 @@ export class ConversationListItemDto {
   })
   publishedWithMe!: boolean;
 
-  @ApiPropertyOptional({
-    description:
-      'How many other users currently hold shared access to this conversation, for conversations the caller owns. Counts accepted invitations only — an issued but unopened share link is not counted. Absent when DIAL Core could not be consulted.',
-    example: 3,
-  })
-  recipientsCount?: number;
-
   @ApiProperty({
     description: 'True when the user has pinned this conversation.',
     example: false,

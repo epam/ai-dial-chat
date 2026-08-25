@@ -1,13 +1,13 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
+  DangerIconButton,
   DIAL_ICON_SIZE,
-  DialDangerIconButton,
   DialFormPopup,
-  DialSelectField,
   ElementSize,
   Input,
   LinkButton,
+  Select,
   Textarea,
 } from '@epam/ai-dial-ui-kit';
 import { IconPencil, IconPlus, IconTrashX } from '@tabler/icons-react';
@@ -32,7 +32,7 @@ export interface DeploymentLocalesFieldProps {
   className?: string;
   /** Typography and color class applied to the summary text. Defaults to `'dial-body-text text-secondary'`. */
   summaryClassName?: string;
-  /** Typography and color class applied to each row's heading. Defaults to `'dial-small-text text-secondary'`. */
+  /** Typography and color class applied to each row's heading. Defaults to `'dial-tiny-lead-text text-secondary'`, which uppercases the label itself. */
   rowLabelClassName?: string;
   /** Color class applied to the required-field asterisk on the per-locale name field. Defaults to `'text-error'`. */
   requiredMarkClassName?: string;
@@ -59,7 +59,7 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
   labels,
   className,
   summaryClassName = 'dial-body-text text-secondary',
-  rowLabelClassName = 'dial-small-text text-secondary',
+  rowLabelClassName = 'dial-tiny-lead-text text-secondary',
   requiredMarkClassName = 'text-error',
 }) => {
   const {
@@ -185,12 +185,10 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
             return (
               <div key={entry.id} className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span
-                    className={mergeClasses('uppercase', rowLabelClassName)}
-                  >
+                  <span className={rowLabelClassName}>
                     {localeRowLabel} {index + 1}
                   </span>
-                  <DialDangerIconButton
+                  <DangerIconButton
                     appearance={ButtonAppearance.Ghost}
                     size={ElementSize.Small}
                     icon={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
@@ -205,10 +203,10 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
                   className="flex flex-col gap-5"
                 >
                   <div className="flex items-start gap-5">
-                    <DialSelectField
+                    <Select
                       id={`${entry.id}-language`}
-                      label={languageLabel}
-                      containerClassName="w-20 shrink-0"
+                      labelProps={{ label: languageLabel }}
+                      className="shrink-0 basis-20"
                       options={availableLocaleOptions.map((option) => ({
                         value: option.code,
                         label: option.label,

@@ -4,6 +4,7 @@ import { type ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import ScheduledTaskEditPage from '../ScheduledTaskEditPage';
 
 const useFeatureFlagMock = vi.fn();
@@ -20,7 +21,7 @@ vi.mock('../../../context/DeploymentsContext', () => ({
 
 const showNotificationMock = vi.fn();
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => ({ showNotification: showNotificationMock }),
+  useNotification: () => createNotificationContextValue(showNotificationMock),
 }));
 
 const useThemeMock = vi.fn();
@@ -42,6 +43,34 @@ vi.mock('../../../server-api/api-error', () => ({
   getApiErrorDetails: (error: unknown) => getApiErrorDetailsMock(error),
 }));
 
+vi.mock(
+  '../../../components/DeploymentSelector/DeploymentSelectorFieldTrigger',
+  () => ({
+    default: ({
+      selectedId,
+      onSelect,
+      labelledById,
+    }: {
+      selectedId: string | null;
+      onSelect: (id: string) => void;
+      labelledById?: string;
+    }) => (
+      <>
+        <select
+          aria-label="modelId"
+          value={selectedId ?? ''}
+          onChange={(e) => onSelect(e.target.value)}
+        >
+          <option value="" />
+          <option value="gpt-4o">GPT-4o</option>
+          <option value="claude-3">Claude 3</option>
+        </select>
+        <output aria-label="triggerLabelledById">{labelledById}</output>
+      </>
+    ),
+  }),
+);
+
 interface FormProps {
   labels: { cancelButtonLabel: string; createButtonLabel: string };
   values: {
@@ -53,7 +82,8 @@ interface FormProps {
     minute?: string;
   };
   errors: Record<string, string | undefined>;
-  modelOptions: { id: string; label: string }[];
+  modelSelector: ReactNode;
+  modelLabelId: string;
   onFieldChange: (field: string, value: unknown) => void;
   onBack: () => void;
   onCancel: () => void;
@@ -73,6 +103,8 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
   ScheduledTaskCreateForm: ({
     labels,
     values,
+    modelSelector,
+    modelLabelId,
     onFieldChange,
     onBack,
     onCancel,
@@ -90,6 +122,8 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.displayName}
         onChange={(e) => onFieldChange('displayName', e.target.value)}
       />
+      <output aria-label="modelLabelId">{modelLabelId}</output>
+      {modelSelector}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button onClick={onSubmit} disabled={isSubmitting}>
         {labels.createButtonLabel}
@@ -159,24 +193,20 @@ describe('ScheduledTaskEditPage', () => {
     getApiErrorStatusMock.mockReturnValue(404);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('region', { name: NotFoundI18nKeys.Title }),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('region', { name: NotFoundI18nKeys.Title }),
+    ).toBeTruthy();
   });
 
   it('shows a retryable error state on a non-404 task fetch failure', async () => {
     getScheduledTaskMock.mockRejectedValue(new Error('network down'));
     renderEditPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('button', {
-          name: 'scheduledTasks.list.retryLabel',
-        }),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('button', {
+        name: 'scheduledTasks.list.retryLabel',
+      }),
+    ).toBeTruthy();
 
     getScheduledTaskMock.mockResolvedValue(baseTask);
     await userEvent.click(
@@ -190,20 +220,61 @@ describe('ScheduledTaskEditPage', () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     expect(screen.getByText('modelId:gpt-4o')).toBeTruthy();
     expect(screen.getByText('prompt:Summarize my inbox')).toBeTruthy();
+  });
+
+  it('links the model field label to the trigger via a generated id, not a hardcoded literal', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+
+    const modelLabelId = screen.getByLabelText('modelLabelId').textContent;
+    const triggerLabelledById = screen.getByLabelText(
+      'triggerLabelledById',
+    ).textContent;
+
+    expect(modelLabelId).toBeTruthy();
+    expect(triggerLabelledById).toBe(modelLabelId);
+  });
+
+  it('preselects the task current deployment in the model selector', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+
+    const select = screen.getByRole('combobox', {
+      name: 'modelId',
+    }) as HTMLSelectElement;
+    expect(select.value).toBe('gpt-4o');
+  });
+
+  it('allows changing the preselected deployment and sends it via PUT on save', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockResolvedValue({ id: 'sched_123' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'modelId' }),
+      'claude-3',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
+    const body = updateScheduledTaskMock.mock.calls[0][1];
+    expect(body.model).toBe('claude-3');
   });
 
   it('defaults minute to 0 for a non-hourly task, so switching Repeat to Hourly does not start with an empty field', async () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     expect(screen.getByText('minute:0')).toBeTruthy();
   });
 
@@ -214,11 +285,9 @@ describe('ScheduledTaskEditPage', () => {
     });
     renderEditPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByText('scheduledTasks.edit.unsupportedTriggerMessage'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('scheduledTasks.edit.unsupportedTriggerMessage'),
+    ).toBeTruthy();
     expect(screen.queryByText(/displayName:/)).not.toBeTruthy();
   });
 
@@ -226,20 +295,16 @@ describe('ScheduledTaskEditPage', () => {
     getScheduledTaskMock.mockResolvedValue({ ...baseTask, model: undefined });
     renderEditPage();
 
-    await waitFor(() =>
-      expect(
-        screen.getByText('scheduledTasks.edit.unsupportedTriggerMessage'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByText('scheduledTasks.edit.unsupportedTriggerMessage'),
+    ).toBeTruthy();
   });
 
   it('navigates to the detail route without a network call when Back is activated', async () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'back' }));
 
     expect(screen.getByText('scheduled task detail page')).toBeTruthy();
@@ -250,9 +315,7 @@ describe('ScheduledTaskEditPage', () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(
       screen.getByRole('button', { name: 'buttons.cancel' }),
     );
@@ -266,9 +329,7 @@ describe('ScheduledTaskEditPage', () => {
     updateScheduledTaskMock.mockResolvedValue({ id: 'sched_123' });
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
@@ -282,9 +343,7 @@ describe('ScheduledTaskEditPage', () => {
     updateScheduledTaskMock.mockReturnValue(new Promise(() => undefined));
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     const saveButton = screen.getByRole('button', { name: 'buttons.save' });
     await userEvent.click(saveButton);
     await userEvent.click(saveButton);
@@ -299,9 +358,7 @@ describe('ScheduledTaskEditPage', () => {
     getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-1' });
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.type(
       screen.getByRole('textbox', { name: 'displayName' }),
       ' edited',
@@ -326,15 +383,11 @@ describe('ScheduledTaskEditPage', () => {
     getApiErrorStatusMock.mockReturnValue(404);
     renderEditPage();
 
-    await waitFor(() =>
-      expect(screen.getByText('displayName:Daily summary')).toBeTruthy(),
-    );
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('region', { name: NotFoundI18nKeys.Title }),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByRole('region', { name: NotFoundI18nKeys.Title }),
+    ).toBeTruthy();
   });
 });

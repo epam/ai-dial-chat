@@ -18,7 +18,13 @@ const labels: Partial<Record<CatalogI18nKeys, string>> = {
 };
 
 const format = new Intl.NumberFormat(undefined, {
-  maximumFractionDigits: 6,
+  maximumFractionDigits: 2,
+}).format;
+
+const costFormat = new Intl.NumberFormat(undefined, {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 2,
 }).format;
 
 const t = ((key: string, params?: Record<string, string>) => {
@@ -48,6 +54,8 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
           label: 'Requests per hour',
           used: 2,
           total: 10,
+          usedLabel: '2',
+          totalLabel: '10',
           valueLabel: '2 / 10',
           ariaLabel: 'Requests per hour: 2 of 10 used',
         },
@@ -55,6 +63,8 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
           label: 'Tokens per day',
           used: 2500,
           total: 10000,
+          usedLabel: format(2500),
+          totalLabel: format(10000),
           valueLabel: `${format(2500)} / ${format(10000)}`,
           ariaLabel: `Tokens per day: ${format(2500)} of ${format(10000)} used`,
         },
@@ -62,8 +72,10 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
           label: 'Cost per month',
           used: 12.345,
           total: 25,
-          valueLabel: `${format(12.345)} / ${format(25)}`,
-          ariaLabel: `Cost per month: ${format(12.345)} of ${format(25)} used`,
+          usedLabel: costFormat(12.345),
+          totalLabel: costFormat(25),
+          valueLabel: `${costFormat(12.345)} / ${costFormat(25)}`,
+          ariaLabel: `Cost per month: ${costFormat(12.345)} of ${costFormat(25)} used`,
         },
       ],
     });
@@ -110,8 +122,10 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
           label: 'Cost per day',
           used: 0.003852,
           total: 100,
-          valueLabel: '0.003852 / 100',
-          ariaLabel: 'Cost per day: 0.003852 of 100 used',
+          usedLabel: costFormat(0.003852),
+          totalLabel: costFormat(100),
+          valueLabel: `${costFormat(0.003852)} / ${costFormat(100)}`,
+          ariaLabel: `Cost per day: ${costFormat(0.003852)} of ${costFormat(100)} used`,
         },
         {
           label: 'Cost per week',
@@ -119,14 +133,16 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
           total: unlimitedTotal,
           isUnlimited: true,
           valueLabel: 'Unlimited',
-          ariaLabel: `Cost per week: ${format(0.11901255)} of Unlimited used`,
+          ariaLabel: `Cost per week: ${costFormat(0.11901255)} of Unlimited used`,
         },
         {
           label: 'Cost per month',
           used: 3.64120297,
           total: 500,
-          valueLabel: `${format(3.64120297)} / 500`,
-          ariaLabel: `Cost per month: ${format(3.64120297)} of 500 used`,
+          usedLabel: costFormat(3.64120297),
+          totalLabel: costFormat(500),
+          valueLabel: `${costFormat(3.64120297)} / ${costFormat(500)}`,
+          ariaLabel: `Cost per month: ${costFormat(3.64120297)} of ${costFormat(500)} used`,
         },
       ],
     });

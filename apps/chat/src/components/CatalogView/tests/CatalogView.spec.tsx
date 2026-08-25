@@ -1,6 +1,5 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import {
-  CatalogEntityType,
   CatalogSortKey,
   CredentialsBadgeState,
   CredentialsUiState,
@@ -9,11 +8,21 @@ import {
 } from '@epam/ai-dial-catalog';
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import {
+  CatalogEntityType,
+  triggerBlobDownload,
+} from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import {
+  isValidElement,
+  type ComponentProps,
+  type ReactElement,
+  type ReactNode,
+  useState,
+} from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ToolsetOAuthCallbackQuery,
@@ -29,18 +38,39 @@ import {
   useFavoriteApplications,
 } from '../../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { usePrompts } from '../../../context/PromptsContext';
+import { useSkills } from '../../../context/SkillsContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
+import { useCatalogActiveTabPreference } from '../../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { deleteApplication } from '../../../server-api/applications';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
+import {
+  deletePrompt,
+  getPrompt,
+  getPublicPrompt,
+} from '../../../server-api/prompts.api';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
-import { publishCatalogEntity } from '../../../server-api/publish.api';
+import {
+  CatalogPublishEntityType,
+  getCatalogPublishHistory,
+  publishCatalogEntity,
+  unpublishCatalogEntity,
+} from '../../../server-api/publish.api';
 import {
   discardSharedCatalogItem,
+  getShareRecipientsCount,
   revokeSharedAccess,
 } from '../../../server-api/share.api';
+import {
+  deleteSkill,
+  downloadSkill,
+  downloadSkillFile,
+  listSkillFiles,
+} from '../../../server-api/skills.api';
 import {
   deleteToolset,
   getToolset,
@@ -49,9 +79,15 @@ import {
 } from '../../../server-api/toolsets';
 import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
+import { SKILL_MANIFEST_MAX_BYTES } from '../../../types/skill';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
+import { SkillDetailsFilePreview } from '../SkillDetailsFilePreview';
+
+const formatLimitNumber = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 2,
+}).format;
 
 /** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
 const makeFakePopup = () => {
@@ -85,8 +121,11 @@ const capturedPublishProps: {
       folderPath: string[],
       rules: PublicationRule[],
     ) => Promise<void>;
+    onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
+    onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+    isUnpublishVisible?: (item: CatalogItem) => boolean;
     publishExpandedPaths?: Set<string>;
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
@@ -99,6 +138,15 @@ const capturedPublishProps: {
     onFilterTopicsChange?: (topics: Set<string>) => void;
     isMyAppsActive?: boolean;
     onMyAppsActiveChange?: (isActive: boolean) => void;
+    activeTab?: string;
+    onActiveTabChange?: (tabId: string) => void;
+  } | null;
+} = { current: null };
+
+const capturedContentFileProps: {
+  current: {
+    onLoadContentFile?: (fileId: string) => Promise<string | undefined>;
+    renderContentFilePreview?: (fileId: string, fileName: string) => ReactNode;
   } | null;
 } = { current: null };
 
@@ -110,6 +158,8 @@ vi.mock('react-router', () => ({
 vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   publishCatalogEntity: vi.fn(),
+  unpublishCatalogEntity: vi.fn(),
+  getCatalogPublishHistory: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('../../../server-api/publish-rules.api', () => ({
@@ -130,14 +180,23 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
   Catalog: ({
     createOptions,
     items,
+    favorites,
     onToggleFavorite,
     onUseInChat,
+    onCardClick,
     isPrimaryActionVisible,
     onEdit,
+    onDownload,
+    isDownloadVisible,
     onDelete,
     onUnshare,
+    isUnshareVisible,
     onRevokeShare,
+    onFetchRecipientsCount,
+    isRevokeShareVisible,
     onFetchDetails,
+    onLoadContentFile,
+    renderContentFilePreview,
     onLogin,
     onLogout,
     initialDetailsItemId,
@@ -147,8 +206,11 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     publishLoadingPaths,
     onCreatePublishFolder,
     onPublish,
+    onPublishSuccess,
     getPublishHistory,
     isPublishVisible,
+    onUnpublish,
+    isUnpublishVisible,
     ruleSourceOptions,
     onFetchExistingRules,
     isShareVisible,
@@ -158,18 +220,28 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onFilterTopicsChange,
     isMyAppsActive,
     onMyAppsActiveChange,
+    activeTab,
+    onActiveTabChange,
   }: {
     createOptions?: DropdownItem[];
     items?: CatalogItem[];
     favorites?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
+    onCardClick?: (item: CatalogItem) => void;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
     onEdit?: (item: CatalogItem) => void;
+    onDownload?: (item: CatalogItem) => Promise<void>;
+    isDownloadVisible?: (item: CatalogItem) => boolean;
     onDelete?: (item: CatalogItem) => Promise<void>;
     onUnshare?: (item: CatalogItem) => Promise<void>;
+    isUnshareVisible?: (item: CatalogItem) => boolean;
     onRevokeShare?: (item: CatalogItem) => Promise<void>;
+    onFetchRecipientsCount?: (item: CatalogItem) => Promise<number | undefined>;
+    isRevokeShareVisible?: (item: CatalogItem) => boolean;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
+    onLoadContentFile?: (fileId: string) => Promise<string | undefined>;
+    renderContentFilePreview?: (fileId: string, fileName: string) => ReactNode;
     onLogin?: (
       item: CatalogItem,
       params: { level: string; apiKey?: string },
@@ -186,8 +258,11 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       folderPath: string[],
       rules: PublicationRule[],
     ) => Promise<void>;
+    onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
+    onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+    isUnpublishVisible?: (item: CatalogItem) => boolean;
     ruleSourceOptions?: string[];
     onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
     isShareVisible?: (item: CatalogItem) => boolean;
@@ -197,12 +272,18 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onFilterTopicsChange?: (topics: Set<string>) => void;
     isMyAppsActive?: boolean;
     onMyAppsActiveChange?: (isActive: boolean) => void;
+    activeTab?: string;
+    onActiveTabChange?: (tabId: string) => void;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
+    const [recipientsCount, setRecipientsCount] = useState<string>('');
     capturedPublishProps.current = {
       onPublish,
+      onPublishSuccess,
       getPublishHistory,
       isPublishVisible,
+      onUnpublish,
+      isUnpublishVisible,
       publishExpandedPaths,
       onPublishExpandedPathsChange,
       publishLoadingPaths,
@@ -215,6 +296,12 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onFilterTopicsChange,
       isMyAppsActive,
       onMyAppsActiveChange,
+      activeTab,
+      onActiveTabChange,
+    };
+    capturedContentFileProps.current = {
+      onLoadContentFile,
+      renderContentFilePreview,
     };
 
     return (
@@ -222,6 +309,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         <output aria-label="Catalog item ids">
           {(items ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
         </output>
+        <output aria-label="Active tab">{activeTab ?? ''}</output>
+        <button type="button" onClick={() => onActiveTabChange?.('PROMPT')}>
+          switch to Prompts tab
+        </button>
         {(items ?? []).map((item) => (
           <output
             key={`credentials-badge-${item.id}`}
@@ -247,6 +338,9 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         <output aria-label="Initial details item id">
           {initialDetailsItemId ?? ''}
         </output>
+        <output aria-label="Favorite item ids">
+          {(favorites ?? []).map((item) => item.id).join(',')}
+        </output>
         {(items ?? []).map((item) => (
           <button
             key={`favorite-${item.id}`}
@@ -269,13 +363,35 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
           ))}
         {(items ?? []).map((item) => (
           <button
-            key={`edit-${item.id}`}
+            key={`card-select-${item.id}`}
             type="button"
-            onClick={() => onEdit?.(item)}
+            onClick={() => onCardClick?.(item)}
           >
-            edit {item.id}
+            card select {item.id}
           </button>
         ))}
+        {(items ?? [])
+          .filter((item) => item.isEditable)
+          .map((item) => (
+            <button
+              key={`edit-${item.id}`}
+              type="button"
+              onClick={() => onEdit?.(item)}
+            >
+              edit {item.id}
+            </button>
+          ))}
+        {(items ?? [])
+          .filter((item) => isDownloadVisible?.(item) ?? true)
+          .map((item) => (
+            <button
+              key={`download-${item.id}`}
+              type="button"
+              onClick={() => onDownload?.(item)}
+            >
+              download {item.id}
+            </button>
+          ))}
         {(items ?? []).map((item) => (
           <button
             key={`delete-${item.id}`}
@@ -292,38 +408,62 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             delete {item.id}
           </button>
         ))}
+        {(items ?? [])
+          .filter((item) => isUnshareVisible?.(item) ?? true)
+          .map((item) => (
+            <button
+              key={`unshare-${item.id}`}
+              type="button"
+              onClick={async () => {
+                try {
+                  await onUnshare?.(item);
+                } catch {
+                  // Swallowed here the same way the real DetailsPanel's
+                  // confirmation popup catches a rejected onUnshare.
+                }
+              }}
+            >
+              unshare {item.id}
+            </button>
+          ))}
+        {(items ?? [])
+          .filter((item) => isRevokeShareVisible?.(item) ?? true)
+          .map((item) => (
+            <button
+              key={`revoke-share-${item.id}`}
+              type="button"
+              onClick={async () => {
+                try {
+                  await onRevokeShare?.(item);
+                } catch {
+                  // Swallowed here the same way the real DetailsPanel's
+                  // confirmation step catches a rejected onRevokeShare.
+                }
+              }}
+            >
+              revoke {item.id}
+            </button>
+          ))}
+        {/* Stands in for the real Header's Manage-menu open, which is what
+         * triggers the recipient-count lookup. */}
         {(items ?? []).map((item) => (
           <button
-            key={`unshare-${item.id}`}
+            key={`recipients-count-${item.id}`}
             type="button"
             onClick={async () => {
               try {
-                await onUnshare?.(item);
+                const count = await onFetchRecipientsCount?.(item);
+                setRecipientsCount(String(count));
               } catch {
-                // Swallowed here the same way the real DetailsPanel's
-                // confirmation popup catches a rejected onUnshare.
+                /* The real Header treats a rejection as "count unknown". */
+                setRecipientsCount('unknown');
               }
             }}
           >
-            unshare {item.id}
+            recipients count {item.id}
           </button>
         ))}
-        {(items ?? []).map((item) => (
-          <button
-            key={`revoke-share-${item.id}`}
-            type="button"
-            onClick={async () => {
-              try {
-                await onRevokeShare?.(item);
-              } catch {
-                // Swallowed here the same way the real DetailsPanel's
-                // confirmation step catches a rejected onRevokeShare.
-              }
-            }}
-          >
-            revoke {item.id}
-          </button>
-        ))}
+        <output aria-label="Recipients count result">{recipientsCount}</output>
         {(items ?? []).map((item) => (
           <button
             key={`fetch-details-${item.id}`}
@@ -373,7 +513,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             logout global {item.id}
           </button>
         ))}
-        {(createOptions ?? []).map((option) => (
+        {(createOptions ?? []).flatMap((option) => [
           <button
             key={option.key}
             type="button"
@@ -382,8 +522,20 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             }
           >
             {option.label}
-          </button>
-        ))}
+          </button>,
+          // eslint-disable-next-line testing-library/no-node-access -- `option.children` is a DropdownItem field, not a DOM node
+          ...(option.children ?? []).map((child) => (
+            <button
+              key={child.key}
+              type="button"
+              onClick={(domEvent) =>
+                child.onClick?.({ key: child.key, domEvent })
+              }
+            >
+              {child.label}
+            </button>
+          )),
+        ])}
         <output aria-label="Publish folder names">
           {(publishFolderItems ?? []).map((folder) => folder.name).join(',')}
         </output>
@@ -432,6 +584,34 @@ vi.mock('../../../server-api/applications', () => ({
 vi.mock('../../../server-api/share.api', () => ({
   discardSharedCatalogItem: vi.fn(),
   revokeSharedAccess: vi.fn(),
+  getShareRecipientsCount: vi.fn(),
+}));
+
+vi.mock('../../../context/PromptsContext', () => ({
+  usePrompts: vi.fn(),
+}));
+
+vi.mock('../../../server-api/prompts.api', () => ({
+  getPrompt: vi.fn(),
+  getPublicPrompt: vi.fn(),
+  deletePrompt: vi.fn(),
+}));
+
+vi.mock('../../../context/SkillsContext', () => ({
+  useSkills: vi.fn(),
+}));
+
+vi.mock('../../../server-api/skills.api', () => ({
+  downloadSkill: vi.fn(),
+  downloadSkillFile: vi.fn(),
+  listSkillFiles: vi.fn(),
+  deleteSkill: vi.fn(),
+}));
+
+/* Only the download trigger is stubbed; the mappers still need the real helpers. */
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
+  triggerBlobDownload: vi.fn(),
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
@@ -442,6 +622,8 @@ vi.mock('../../../context/FavoriteApplicationsContext', () => ({
   FavoriteEntityType: {
     Deployment: 'deployment',
     Toolset: 'toolset',
+    Prompt: 'prompt',
+    Skill: 'skill',
   },
   useFavoriteApplications: vi.fn(),
 }));
@@ -475,6 +657,13 @@ vi.mock(
   '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference',
   () => ({
     useCatalogSortFilterPreference: vi.fn(),
+  }),
+);
+
+vi.mock(
+  '../../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference',
+  () => ({
+    useCatalogActiveTabPreference: vi.fn(),
   }),
 );
 
@@ -524,18 +713,37 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentLimits).mockResolvedValue({});
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification: vi.fn(),
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(vi.fn()),
+    );
     vi.mocked(useFavoriteApplications).mockReturnValue({
       favoriteIds: new Set(),
       isLoading: false,
       toggleFavorite: vi.fn(),
+    });
+    vi.mocked(usePrompts).mockReturnValue({
+      prompts: [],
+      folders: [],
+      sharedWithMe: [],
+      publicPrompts: [],
+      publicFolders: [],
+      isLoading: false,
+      error: null,
+      refetchPrompts: vi.fn().mockResolvedValue(undefined),
+      refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+    });
+    vi.mocked(useSkills).mockReturnValue({
+      skills: [],
+      publicSkills: [],
+      isLoading: false,
+      error: null,
+      refetchSkills: vi.fn().mockResolvedValue(undefined),
+      mergeSharedSkill: vi.fn(),
     });
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
@@ -546,6 +754,10 @@ describe('CatalogView', () => {
       onCreatePublishFolder: vi.fn(),
       rememberPublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
+    });
+    vi.mocked(useCatalogActiveTabPreference).mockReturnValue({
+      activeTab: 'MODEL',
+      setActiveTab: vi.fn(),
     });
     vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
       sortKey: CatalogSortKey.RecentlyUpdated,
@@ -709,6 +921,65 @@ describe('CatalogView', () => {
       );
     });
 
+    it('publishes an owned skill without sending a synthetic version', async () => {
+      vi.mocked(publishCatalogEntity).mockResolvedValue({
+        entityId: 'skills/my-bucket/analysis/revenue-skill',
+        entityType: 'skill',
+        folderPath: 'Organization/Data Science',
+        version: '',
+        publishedAt: '2026-07-13T10:00:00.000Z',
+        publishedBy: 'user@example.com',
+      });
+
+      render(<CatalogView />);
+      await capturedPublishProps.current?.onPublish?.(
+        makeCatalogItem({
+          id: 'skills/my-bucket/analysis/revenue-skill',
+          type: CatalogEntityType.Skill,
+          version: '',
+        }),
+        ['Organization', 'Data Science'],
+        [],
+      );
+
+      expect(publishCatalogEntity).toHaveBeenCalledWith(
+        'skill',
+        'skills/my-bucket/analysis/revenue-skill',
+        {
+          folderPath: 'Organization/Data Science',
+          rules: [],
+        },
+      );
+    });
+
+    it.each([
+      [CatalogEntityType.Toolset, 'toolset'],
+      [CatalogEntityType.Prompt, 'prompt'],
+      [CatalogEntityType.Agent, 'agent'],
+      [CatalogEntityType.Model, 'model'],
+      [CatalogEntityType.Skill, 'skill'],
+    ])(
+      'reports a submitted publish request naming the %s kind',
+      (type, entity) => {
+        const showNotification = vi.fn();
+        vi.mocked(useNotification).mockReturnValue(
+          createNotificationContextValue(showNotification),
+        );
+
+        render(<CatalogView />);
+        capturedPublishProps.current?.onPublishSuccess?.(
+          makeCatalogItem({ type }),
+          ['Organization', 'Data Science'],
+        );
+
+        expect(showNotification).toHaveBeenCalledWith({
+          variant: 'success',
+          title: `entityNotifications.${entity}.publishRequestedTitle`,
+          message: `entityNotifications.${entity}.publishRequested`,
+        });
+      },
+    );
+
     it('forwards rules added in the panel to publishCatalogEntity', async () => {
       vi.mocked(publishCatalogEntity).mockResolvedValue({
         entityId: 'tool-abc123',
@@ -783,14 +1054,35 @@ describe('CatalogView', () => {
       ).rejects.toThrow('Forbidden');
     });
 
-    it('never fetches publish history and always resolves an empty list (version history is not fetched, see GH issue #7897)', async () => {
+    it('fetches publish history from the endpoint and maps each entry', async () => {
+      vi.mocked(getCatalogPublishHistory).mockResolvedValue([
+        {
+          entityId: 'tool-abc123',
+          entityType: CatalogPublishEntityType.Toolset,
+          folderPath: 'Organization/Data Science',
+          version: '1.0',
+          publishedAt: '2026-07-13T10:00:00.000Z',
+          publishedBy: 'user@example.com',
+        },
+      ]);
       render(<CatalogView />);
+
       const history =
         await capturedPublishProps.current?.getPublishHistory?.(
           makeCatalogItem(),
         );
 
-      expect(history).toEqual([]);
+      expect(getCatalogPublishHistory).toHaveBeenCalledWith(
+        CatalogPublishEntityType.Toolset,
+        'tool-abc123',
+      );
+      expect(history).toEqual([
+        {
+          version: '1.0',
+          publishedAt: Date.parse('2026-07-13T10:00:00.000Z'),
+          folderPath: ['Organization', 'Data Science'],
+        },
+      ]);
     });
 
     it('shows Publish only for isMyApp items of a publishable type', () => {
@@ -848,6 +1140,26 @@ describe('CatalogView', () => {
           makeCatalogItem({ type: CatalogEntityType.Toolset }),
         ),
       ).toBe(true);
+    });
+
+    it('shows Share for a prompt the user owns', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Prompt, isMyApp: true }),
+        ),
+      ).toBe(true);
+    });
+
+    it('hides Share for a prompt the user does not own', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Prompt, isMyApp: false }),
+        ),
+      ).toBe(false);
     });
   });
 
@@ -907,6 +1219,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -938,6 +1252,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(useFavoriteApplications).mockReturnValue({
@@ -982,6 +1298,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1019,6 +1337,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1053,6 +1373,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1086,6 +1408,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1119,6 +1443,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1150,6 +1476,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1178,6 +1506,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
 
@@ -1204,6 +1534,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
@@ -1211,7 +1543,12 @@ describe('CatalogView', () => {
       type: 'model',
       modelDetails: {
         limits: { maxTotalTokens: 128000 },
-        pricing: { unit: 'token', prompt: '0.01', completion: '0.03' },
+        pricing: {
+          unit: 'token',
+          prompt: '0.000003',
+          completion: '0.000015',
+          cache_read: '0.0000003',
+        },
         features: {
           tools: true,
           mcp: false,
@@ -1248,8 +1585,9 @@ describe('CatalogView', () => {
     );
     expect(result.pricing).toEqual({
       prices: [
-        { label: 'Input tokens', price: '0.01' },
-        { label: 'Output tokens', price: '0.03' },
+        { label: 'Input tokens', price: '$3/M tokens' },
+        { label: 'Output tokens', price: '$15/M tokens' },
+        { label: 'Cached input', price: '$0.3/M tokens' },
       ],
       limits: [],
     });
@@ -1259,6 +1597,8 @@ describe('CatalogView', () => {
           label: CatalogI18nKeys.DetailsLimitsRequestsPerHour,
           used: 2,
           total: 10,
+          usedLabel: formatLimitNumber(2),
+          totalLabel: formatLimitNumber(10),
           valueLabel: CatalogI18nKeys.DetailsLimitsValue,
           ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
         },
@@ -1266,6 +1606,8 @@ describe('CatalogView', () => {
           label: CatalogI18nKeys.DetailsLimitsTokensPerDay,
           used: 2500,
           total: 10000,
+          usedLabel: formatLimitNumber(2500),
+          totalLabel: formatLimitNumber(10000),
           valueLabel: CatalogI18nKeys.DetailsLimitsValue,
           ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
         },
@@ -1277,14 +1619,7 @@ describe('CatalogView', () => {
         title: 'Capabilities',
         specs: [
           { label: 'Tools', value: true },
-          { label: 'MCP', value: false },
-          { label: 'Prompt caching', value: true },
           { label: 'Parallel tool calls', value: true },
-          { label: 'URL attachments', value: false },
-          { label: 'Folder attachments', value: false },
-          { label: 'Seed', value: false },
-          { label: 'System prompt', value: true },
-          { label: 'Resume', value: true },
           { label: 'Reasoning efforts', value: 'low · medium · high' },
         ],
       },
@@ -1297,7 +1632,10 @@ describe('CatalogView', () => {
             value: new Date(1780387921823).toLocaleDateString(),
           },
           { label: 'Context window', value: '128K tokens' },
-          { label: 'Input type', value: 'text/* · image/*' },
+          {
+            label: CatalogI18nKeys.DetailsModelInputModalities,
+            value: 'Text files, Image files',
+          },
         ],
       },
     ]);
@@ -1317,6 +1655,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
@@ -1349,15 +1689,11 @@ describe('CatalogView', () => {
       },
       {
         title: 'Capabilities',
-        specs: [
-          { label: 'Tools', value: false },
-          { label: 'MCP', value: false },
-          { label: 'Prompt caching', value: false },
-        ],
+        specs: [{ label: 'Tools', value: false }],
       },
       {
         title: 'Configuration',
-        specs: [{ label: 'Input attachments', value: 'text/*' }],
+        specs: [{ label: 'Input attachments', value: 'Text files' }],
       },
     ]);
   });
@@ -1378,6 +1714,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
@@ -1427,14 +1765,6 @@ describe('CatalogView', () => {
           },
         ],
       },
-      {
-        title: 'Capabilities',
-        specs: [
-          { label: 'MCP', value: true },
-          { label: 'Prompt caching', value: false },
-          { label: 'System prompt', value: true },
-        ],
-      },
     ]);
     expect(result.tools).toEqual({
       tools: [{ name: 'search' }, { name: 'fetch' }],
@@ -1461,6 +1791,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockRejectedValue(new Error('502'));
@@ -1499,6 +1831,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
@@ -1543,6 +1877,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
@@ -1586,6 +1922,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(logoutToolset).mockResolvedValue({ success: true });
@@ -1607,11 +1945,9 @@ describe('CatalogView', () => {
 
   it('shows an error notification when loginToolset rejects', async () => {
     const showNotification = vi.fn();
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     vi.mocked(useDeployments).mockReturnValue({
       items: [],
       selectedItemId: null,
@@ -1632,6 +1968,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockRejectedValue(new Error('network error'));
@@ -1678,6 +2016,8 @@ describe('CatalogView', () => {
         toolsets: getToolsets(),
         refetchToolsets,
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       }));
       return render(<CatalogView />);
@@ -1705,11 +2045,9 @@ describe('CatalogView', () => {
         ];
       });
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       const { unmount } = renderWithOAuthToolset(
         refetchToolsets,
         () => currentToolsets,
@@ -1756,11 +2094,9 @@ describe('CatalogView', () => {
     it('shows the success notification on the first attempt when the channel event is missed', async () => {
       const refetchToolsets = vi.fn().mockResolvedValue(undefined);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       renderWithOAuthToolset(refetchToolsets);
 
       await user.click(
@@ -1790,11 +2126,9 @@ describe('CatalogView', () => {
     it('shows an error notification and does not refetch when the OAuth result is a failure', async () => {
       const refetchToolsets = vi.fn().mockResolvedValue(undefined);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       renderWithOAuthToolset(refetchToolsets);
 
       await user.click(
@@ -1823,11 +2157,9 @@ describe('CatalogView', () => {
     it('recovers a login that actually succeeded but was reported as Cancelled by a lost broadcast message', async () => {
       const refetchToolsets = vi.fn().mockResolvedValue(undefined);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       vi.mocked(getToolset).mockResolvedValue({
         ...oauthToolset,
         authSettings: {
@@ -1857,11 +2189,9 @@ describe('CatalogView', () => {
     it('shows a popup-blocked error notification without waiting for a result', async () => {
       vi.mocked(window.open).mockReturnValueOnce(null);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       renderWithOAuthToolset();
 
       await user.click(
@@ -1881,11 +2211,9 @@ describe('CatalogView', () => {
   it('deletes a toolset, refetches toolsets, and shows a success notification', async () => {
     const refetchToolsets = vi.fn().mockResolvedValue(undefined);
     const showNotification = vi.fn();
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     vi.mocked(useDeployments).mockReturnValue({
       items: [],
       selectedItemId: null,
@@ -1906,6 +2234,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockResolvedValue(undefined);
@@ -1920,18 +2250,20 @@ describe('CatalogView', () => {
     expect(refetchToolsets).toHaveBeenCalledOnce();
     expect(deleteApplication).not.toHaveBeenCalled();
     expect(showNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'success' }),
+      expect.objectContaining({
+        variant: 'success',
+        title: 'entityNotifications.toolset.deletedTitle',
+        message: 'entityNotifications.toolset.deleted',
+      }),
     );
   });
 
   it('deletes an application, refetches deployments, and shows a success notification', async () => {
     const refetchDeployments = vi.fn().mockResolvedValue(undefined);
     const showNotification = vi.fn();
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     vi.mocked(useDeployments).mockReturnValue({
       items: [
         {
@@ -1952,6 +2284,8 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments,
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteApplication).mockResolvedValue(undefined);
@@ -1970,17 +2304,55 @@ describe('CatalogView', () => {
     expect(refetchDeployments).toHaveBeenCalledOnce();
     expect(deleteToolset).not.toHaveBeenCalled();
     expect(showNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'success' }),
+      expect.objectContaining({
+        variant: 'success',
+        title: 'entityNotifications.customApp.deletedTitle',
+        message: 'entityNotifications.customApp.deleted',
+      }),
+    );
+  });
+
+  it('names a schema-driven application a quick app when deleting it', async () => {
+    const showNotification = vi.fn();
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
+    vi.mocked(useDeployments).mockReturnValue({
+      ...vi.mocked(useDeployments)(),
+      items: [
+        {
+          id: 'applications/b/Quick One__1.0',
+          displayName: 'Quick One',
+          type: 'application',
+          isMy: true,
+          applicationTypeSchemaId: 'quickapps2-schema',
+        },
+      ],
+      refetchDeployments: vi.fn().mockResolvedValue(undefined),
+    });
+    vi.mocked(deleteApplication).mockResolvedValue(undefined);
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'delete applications/b/Quick One__1.0',
+      }),
+    );
+
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'entityNotifications.quickApp.deletedTitle',
+        message: 'entityNotifications.quickApp.deleted',
+      }),
     );
   });
 
   it('shows an error notification when deleteToolset rejects', async () => {
     const showNotification = vi.fn();
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
     vi.mocked(useDeployments).mockReturnValue({
       items: [],
       selectedItemId: null,
@@ -2001,6 +2373,8 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
       mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockRejectedValue(new Error('network error'));
@@ -2033,6 +2407,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
@@ -2064,6 +2440,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
@@ -2130,6 +2508,123 @@ describe('CatalogView', () => {
     });
   });
 
+  describe('active tab persistence wiring', () => {
+    it('passes the persisted activeTab through to Catalog', () => {
+      vi.mocked(useCatalogActiveTabPreference).mockReturnValue({
+        activeTab: 'PROMPT',
+        setActiveTab: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(capturedPublishProps.current?.activeTab).toBe('PROMPT');
+    });
+
+    it('forwards Catalog tab switches to the persistence hook setter', () => {
+      const setActiveTab = vi.fn();
+      vi.mocked(useCatalogActiveTabPreference).mockReturnValue({
+        activeTab: 'MODEL',
+        setActiveTab,
+      });
+
+      render(<CatalogView />);
+      capturedPublishProps.current?.onActiveTabChange?.('PROMPT');
+
+      expect(setActiveTab).toHaveBeenCalledWith('PROMPT');
+    });
+
+    it('does not forward the activeTab controlled props in selector mode', () => {
+      render(<CatalogView isSelectorMode onClose={vi.fn()} />);
+
+      expect(capturedPublishProps.current?.activeTab).toBeUndefined();
+      expect(capturedPublishProps.current?.onActiveTabChange).toBeUndefined();
+    });
+
+    it('restores the origin tab after remounting with the same persisted value, as happens when an editor navigates back to Catalog', () => {
+      vi.mocked(useCatalogActiveTabPreference).mockReturnValue({
+        activeTab: 'PROMPT',
+        setActiveTab: vi.fn(),
+      });
+
+      const { unmount } = render(<CatalogView />);
+      expect(capturedPublishProps.current?.activeTab).toBe('PROMPT');
+
+      // Simulate the editor's `navigate(returnUrl)` back to the bare
+      // `ROUTES.Catalog`, which remounts `CatalogView`. The hook still
+      // resolves the same persisted value from `localStorage`.
+      unmount();
+      render(<CatalogView />);
+
+      expect(capturedPublishProps.current?.activeTab).toBe('PROMPT');
+    });
+  });
+
+  describe('selector mode card pick', () => {
+    it('commits the pick to DeploymentsContext when no onSelect is supplied (chat input default)', async () => {
+      const setSelectedItemId = vi.fn();
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId,
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
+        mergeSharedItem: vi.fn(),
+      });
+      const onClose = vi.fn();
+
+      render(<CatalogView isSelectorMode onClose={onClose} />);
+      await user.click(
+        screen.getByRole('button', { name: 'card select gpt-4o' }),
+      );
+
+      expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
+      expect(onClose).toHaveBeenCalledOnce();
+    });
+
+    it('routes the pick through onSelect instead of DeploymentsContext when onSelect is supplied', async () => {
+      const setSelectedItemId = vi.fn();
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId,
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
+        mergeSharedItem: vi.fn(),
+      });
+      const onClose = vi.fn();
+      const onSelect = vi.fn();
+
+      render(
+        <CatalogView isSelectorMode onClose={onClose} onSelect={onSelect} />,
+      );
+      await user.click(
+        screen.getByRole('button', { name: 'card select gpt-4o' }),
+      );
+
+      expect(onSelect).toHaveBeenCalledWith('gpt-4o');
+      expect(setSelectedItemId).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledOnce();
+    });
+  });
+
   describe('UI feature gates', () => {
     it('renders nothing when catalog is disabled (non-selector mode)', () => {
       vi.mocked(useUiFeature).mockImplementation(
@@ -2138,7 +2633,7 @@ describe('CatalogView', () => {
           feature !== OverlayFeature.Catalog,
       );
       const { container } = render(<CatalogView />);
-      expect(container.firstChild).toBeNull();
+      expect(container.innerHTML).toBe('');
     });
 
     it('still renders in selector mode when catalog is disabled', () => {
@@ -2172,6 +2667,8 @@ describe('CatalogView', () => {
         ],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useUiFeature).mockImplementation(
@@ -2204,6 +2701,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       } as never);
 
@@ -2228,6 +2727,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       } as never);
       vi.mocked(useUiFeature).mockImplementation(
@@ -2257,6 +2758,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       } as never);
       vi.mocked(useUiFeature).mockImplementation(
@@ -2293,6 +2796,8 @@ describe('CatalogView', () => {
         ],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
       });
       vi.mocked(useUiFeature).mockImplementation(
@@ -2341,6 +2846,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
         ...overrides,
       } as ReturnType<typeof useDeployments>);
@@ -2349,11 +2856,9 @@ describe('CatalogView', () => {
       const refetchToolsets = vi.fn().mockResolvedValue(undefined);
       const refetchDeployments = vi.fn().mockResolvedValue(undefined);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         toolsets: [sharedToolset],
         refetchToolsets,
@@ -2379,11 +2884,9 @@ describe('CatalogView', () => {
       const refetchToolsets = vi.fn().mockResolvedValue(undefined);
       const refetchDeployments = vi.fn().mockResolvedValue(undefined);
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         items: [sharedApplication],
         refetchToolsets,
@@ -2452,11 +2955,9 @@ describe('CatalogView', () => {
       const refetchDeployments = vi.fn().mockResolvedValue(undefined);
       const setSelectedItemId = vi.fn();
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         items: [sharedApplication],
         selectedItemId: sharedApplication.id,
@@ -2486,11 +2987,9 @@ describe('CatalogView', () => {
         .mockRejectedValue(new Error('refresh failed'));
       const setSelectedItemId = vi.fn();
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         items: [sharedApplication],
         selectedItemId: sharedApplication.id,
@@ -2516,6 +3015,613 @@ describe('CatalogView', () => {
     });
   });
 
+  describe('prompt wiring', () => {
+    const personalPrompt = {
+      id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
+      name: 'summarize',
+      description: 'Summarize a document',
+      content: 'Summarize the following text:',
+      folderId: 'Work/AI',
+      createdAt: 1,
+      updatedAt: 2,
+    };
+
+    const organisationPrompt = {
+      ...personalPrompt,
+      id: 'Public/translate',
+      name: 'translate',
+      folderId: 'Public',
+    };
+
+    /*
+     * Resets before setting the implementation: an earlier test in this file
+     * uses `mockReturnValue`, which takes precedence over an implementation
+     * set afterwards and would otherwise leak "every feature enabled" here.
+     */
+    const setFeatures = (
+      extra: OverlayFeature[] = [],
+      disabled: OverlayFeature[] = [],
+    ) => {
+      vi.mocked(useUiFeature).mockReset();
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          !disabled.includes(feature) &&
+          (extra.includes(feature) || DEFAULT_ENABLED_UI_FEATURES.has(feature)),
+      );
+    };
+
+    const enablePrompts = () => setFeatures([OverlayFeature.Prompts]);
+    /* Explicitly opted out: `prompts` is in the default-enabled set. */
+    const disablePrompts = () => setFeatures([], [OverlayFeature.Prompts]);
+
+    const mockPrompts = (
+      overrides: Partial<ReturnType<typeof usePrompts>> = {},
+    ) =>
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [personalPrompt],
+        folders: [],
+        sharedWithMe: [],
+        publicPrompts: [organisationPrompt],
+        publicFolders: [],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+        ...overrides,
+      });
+
+    it('adds prompt items to the catalog when the feature is enabled', () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).toContain('Work/AI/summarize:PROMPT');
+      expect(ids).toContain('Public/translate:PROMPT');
+    });
+
+    it('adds no prompt items when the feature is disabled', () => {
+      disablePrompts();
+      mockPrompts();
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).not.toContain('PROMPT');
+    });
+
+    it('excludes prompts from the model picker in selector mode', () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(<CatalogView isSelectorMode />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).not.toContain('PROMPT');
+    });
+
+    it('shows only prompts in selector mode when visibleTypes is set to Prompt', () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(
+        <CatalogView
+          isSelectorMode
+          visibleTypes={new Set([CatalogEntityType.Prompt])}
+        />,
+      );
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).toContain('PROMPT');
+      expect(ids).not.toContain(':MODEL');
+      expect(ids).not.toContain(':AGENT');
+    });
+
+    it('filters personal prompts out when catalog-hide-my-apps is enabled', () => {
+      setFeatures([OverlayFeature.Prompts, OverlayFeature.CatalogHideMyApps]);
+      mockPrompts();
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).not.toContain('Work/AI/summarize');
+      expect(ids).toContain('Public/translate:PROMPT');
+    });
+
+    it('fetches a personal prompt through getPrompt and never the deployment endpoints', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockResolvedValue(personalPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'fetch details Work/AI/summarize' }),
+      );
+
+      expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      expect(getPublicPrompt).not.toHaveBeenCalled();
+      expect(getDeploymentDetails).not.toHaveBeenCalled();
+      expect(getDeploymentLimits).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(
+          screen.getByLabelText('Fetch details result').textContent,
+        ).toContain('Summarize the following text:'),
+      );
+    });
+
+    it('fetches an organisation prompt through getPublicPrompt', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPublicPrompt).mockResolvedValue(organisationPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'fetch details Public/translate' }),
+      );
+
+      expect(getPublicPrompt).toHaveBeenCalledWith('Public/translate');
+      expect(getPrompt).not.toHaveBeenCalled();
+    });
+
+    it('fetches a shared prompt from the owner bucket, not the caller bucket', async () => {
+      enablePrompts();
+      const sharedPrompt = { ...personalPrompt, bucket: 'owner-bucket' };
+      mockPrompts({ prompts: [], sharedWithMe: [sharedPrompt] });
+      vi.mocked(getPrompt).mockResolvedValue(sharedPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details prompts/owner-bucket/Work/AI/summarize',
+        }),
+      );
+
+      expect(getPrompt).toHaveBeenCalledWith(
+        'Work/AI/summarize',
+        'owner-bucket',
+      );
+    });
+
+    it('keeps a shared prompt distinct from a personal prompt at the same path', () => {
+      enablePrompts();
+      mockPrompts({
+        sharedWithMe: [{ ...personalPrompt, bucket: 'owner-bucket' }],
+      });
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).toContain('Work/AI/summarize:PROMPT');
+      expect(ids).toContain('prompts/owner-bucket/Work/AI/summarize:PROMPT');
+    });
+
+    it('resolves undefined when the prompt fetch fails', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'fetch details Work/AI/summarize' }),
+      );
+
+      await waitFor(() =>
+        expect(screen.getByLabelText('Fetch details result').textContent).toBe(
+          'null',
+        ),
+      );
+    });
+
+    it('deletes a prompt through deletePrompt and refetches', async () => {
+      enablePrompts();
+      const refetchPrompts = vi.fn().mockResolvedValue(undefined);
+      mockPrompts({ refetchPrompts });
+      vi.mocked(deletePrompt).mockResolvedValue(undefined);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'delete Work/AI/summarize' }),
+      );
+
+      expect(deletePrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      expect(refetchPrompts).toHaveBeenCalledOnce();
+      expect(deleteApplication).not.toHaveBeenCalled();
+    });
+
+    it('surfaces an error notification when deleting a prompt fails', async () => {
+      enablePrompts();
+      mockPrompts();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      vi.mocked(deletePrompt).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'delete Work/AI/summarize' }),
+      );
+
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+    });
+
+    it('offers a favourite control but no unshare control for a prompt', () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(useDeployments).mockReturnValue({
+        ...vi.mocked(useDeployments)(),
+        items: [
+          {
+            id: 'shared-model',
+            displayName: 'Shared model',
+            type: 'model',
+            isMy: false,
+            sharedWithMe: true,
+          },
+        ],
+      } as ReturnType<typeof useDeployments>);
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', { name: 'favorite Work/AI/summarize' }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: 'unshare Work/AI/summarize' }),
+      ).toBeNull();
+      expect(
+        screen.getByRole('button', { name: 'favorite shared-model' }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: 'unshare shared-model' }),
+      ).toBeTruthy();
+    });
+
+    it('toggles a prompt favourite through the prompts user-config section', async () => {
+      enablePrompts();
+      mockPrompts();
+      const toggleFavorite = vi.fn();
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set(),
+        isLoading: false,
+        toggleFavorite,
+      });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: 'favorite Work/AI/summarize' }),
+      );
+
+      expect(toggleFavorite).toHaveBeenCalledWith(
+        'Work/AI/summarize',
+        true,
+        FavoriteEntityType.Prompt,
+      );
+    });
+
+    it('marks a prompt whose path is in favoriteIds as starred', () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set(['Work/AI/summarize']),
+        isLoading: false,
+        toggleFavorite: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(screen.getByLabelText('Favorite item ids').textContent).toContain(
+        'Work/AI/summarize',
+      );
+    });
+
+    it('shows the primary action for a prompt', () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+      ).toBeTruthy();
+    });
+  });
+
+  describe('prompt use in chat', () => {
+    const personalPrompt = {
+      id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
+      name: 'summarize',
+      description: '',
+      content: 'Summarize the following text:',
+      folderId: 'Work/AI',
+      createdAt: 1,
+      updatedAt: 2,
+    };
+
+    /*
+     * Resets before setting the implementation: an earlier test in this file
+     * uses `mockReturnValue`, which takes precedence over an implementation
+     * set afterwards and would otherwise leak "every feature enabled" here.
+     */
+    const setFeatures = (
+      extra: OverlayFeature[] = [],
+      disabled: OverlayFeature[] = [],
+    ) => {
+      vi.mocked(useUiFeature).mockReset();
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          !disabled.includes(feature) &&
+          (extra.includes(feature) || DEFAULT_ENABLED_UI_FEATURES.has(feature)),
+      );
+    };
+
+    const enablePrompts = () => setFeatures([OverlayFeature.Prompts]);
+    /* Explicitly opted out: `prompts` is in the default-enabled set. */
+    const disablePrompts = () => setFeatures([], [OverlayFeature.Prompts]);
+
+    const mockPrompts = (prompts = [personalPrompt]) =>
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts,
+        folders: [],
+        sharedWithMe: [],
+        publicPrompts: [],
+        publicFolders: [],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+    it('navigates to the composer with the body in router state, leaving the deployment selection alone', async () => {
+      enablePrompts();
+      mockPrompts();
+      const setSelectedItemId = vi.fn();
+      vi.mocked(useDeployments).mockReturnValue({
+        ...vi.mocked(useDeployments)(),
+        setSelectedItemId,
+      } as ReturnType<typeof useDeployments>);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith('/', {
+        state: { promptContent: 'Summarize the following text:' },
+      });
+      expect(setSelectedItemId).not.toHaveBeenCalled();
+    });
+
+    it('resolves the body through getPrompt when the list did not carry it', async () => {
+      enablePrompts();
+      mockPrompts([{ ...personalPrompt, content: '' }]);
+      vi.mocked(getPrompt).mockResolvedValue(personalPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+      );
+
+      expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      expect(mockNavigate).toHaveBeenCalledWith('/', {
+        state: { promptContent: 'Summarize the following text:' },
+      });
+    });
+
+    it('navigates with a pendingPrompt payload instead of raw content when the prompt has parameters', async () => {
+      enablePrompts();
+      mockPrompts([
+        {
+          ...personalPrompt,
+          content: 'Summarize {{text}} in {{tone}} tone',
+          description: 'A summarizer prompt',
+        },
+      ]);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith('/', {
+        state: {
+          pendingPrompt: {
+            id: 'Work/AI/summarize',
+            name: 'summarize',
+            content: 'Summarize {{text}} in {{tone}} tone',
+            description: 'A summarizer prompt',
+          },
+        },
+      });
+    });
+
+    it('stays on the catalog and notifies when the body cannot be resolved', async () => {
+      enablePrompts();
+      mockPrompts([{ ...personalPrompt, content: '' }]);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      vi.mocked(getPrompt).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+      );
+
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('opens the prompt editor with the prompt id when Edit is activated', async () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'edit Work/AI/summarize' }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/prompt-editor?id=Work%2FAI%2Fsummarize&returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('opens the prompt editor for a writable shared prompt', async () => {
+      enablePrompts();
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [],
+        folders: [],
+        publicPrompts: [],
+        publicFolders: [],
+        sharedWithMe: [
+          {
+            ...personalPrompt,
+            bucket: 'owner-bucket',
+            isMy: false,
+            canEdit: true,
+            sharedWithMe: true,
+          },
+        ],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'edit prompts/owner-bucket/Work/AI/summarize',
+        }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize&returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('keeps public prompts read-only even when metadata contains WRITE', () => {
+      enablePrompts();
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [],
+        folders: [],
+        sharedWithMe: [],
+        publicPrompts: [
+          {
+            ...personalPrompt,
+            id: 'Public/translate',
+            name: 'translate',
+            folderId: 'Public',
+            canEdit: true,
+          },
+        ],
+        publicFolders: [],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', { name: 'edit Public/translate' }),
+      ).toBeNull();
+    });
+
+    it('offers a Prompt create option only when the feature is enabled', async () => {
+      enablePrompts();
+      mockPrompts();
+
+      const { unmount } = render(<CatalogView />);
+      expect(
+        screen.getByRole('button', { name: 'catalog.create.prompt' }),
+      ).toBeTruthy();
+      unmount();
+
+      disablePrompts();
+      render(<CatalogView />);
+      expect(
+        screen.queryByRole('button', { name: 'catalog.create.prompt' }),
+      ).toBeNull();
+    });
+
+    it('navigates to the editor in create mode from the Prompt create option', async () => {
+      enablePrompts();
+      mockPrompts();
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'catalog.create.prompt' }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/prompt-editor?returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('still selects the deployment and navigates for a model item', async () => {
+      const setSelectedItemId = vi.fn();
+      vi.mocked(useDeployments).mockReturnValue({
+        ...vi.mocked(useDeployments)(),
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        setSelectedItemId,
+      } as ReturnType<typeof useDeployments>);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'use in chat gpt-4o' }),
+      );
+
+      expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
+      expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+
+    it('offers the Skill create option regardless of the prompts feature flag', async () => {
+      disablePrompts();
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', { name: 'catalog.create.skill' }),
+      ).toBeTruthy();
+    });
+
+    it('navigates to the skill editor with the catalog return url from the Skill submenu\'s "Write instructions" option', async () => {
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'catalog.create.skillWriteInstructions',
+        }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/skill-editor?returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('offers no nested children other than "Write instructions" and "Upload" under Skill', () => {
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', {
+          name: 'catalog.create.skillWriteInstructions',
+        }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: 'catalog.create.skillUpload' }),
+      ).toBeTruthy();
+    });
+  });
   describe('revoke access', () => {
     const ownedApplication = {
       id: 'applications/my-bucket/My App__1.0',
@@ -2541,6 +3647,8 @@ describe('CatalogView', () => {
         toolsets: [],
         refetchToolsets: vi.fn(),
         refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
         mergeSharedItem: vi.fn(),
         ...overrides,
       } as ReturnType<typeof useDeployments>);
@@ -2550,11 +3658,9 @@ describe('CatalogView', () => {
       const refetchDeployments = vi.fn().mockResolvedValue(undefined);
       const setSelectedItemId = vi.fn();
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         items: [ownedApplication],
         selectedItemId: ownedApplication.id,
@@ -2581,11 +3687,9 @@ describe('CatalogView', () => {
 
     it('shows an error notification carrying the trace id when revokeSharedAccess rejects', async () => {
       const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
       mockDeployments({
         items: [ownedApplication],
       } as Partial<ReturnType<typeof useDeployments>>);
@@ -2606,5 +3710,1586 @@ describe('CatalogView', () => {
         expect.objectContaining({ variant: 'success' }),
       );
     });
+
+    it('resolves the recipient count for the item the details panel asks about', async () => {
+      mockDeployments({
+        items: [ownedApplication],
+      } as Partial<ReturnType<typeof useDeployments>>);
+      vi.mocked(getShareRecipientsCount).mockResolvedValue({
+        itemId: ownedApplication.id,
+        recipientsCount: 4,
+      });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `recipients count ${ownedApplication.id}`,
+        }),
+      );
+
+      expect(getShareRecipientsCount).toHaveBeenCalledWith(ownedApplication.id);
+      expect(screen.getByLabelText('Recipients count result').textContent).toBe(
+        '4',
+      );
+    });
+
+    it('propagates a failed recipient-count lookup without notifying', async () => {
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockDeployments({
+        items: [ownedApplication],
+      } as Partial<ReturnType<typeof useDeployments>>);
+      vi.mocked(getShareRecipientsCount).mockRejectedValue(new Error('503'));
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `recipients count ${ownedApplication.id}`,
+        }),
+      );
+
+      /* The details panel decides how to degrade; a failed count is not
+       * something to interrupt the user about. */
+      expect(showNotification).not.toHaveBeenCalled();
+      expect(screen.getByLabelText('Recipients count result').textContent).toBe(
+        'unknown',
+      );
+    });
+  });
+
+  describe('prompt download', () => {
+    const personalPrompt = {
+      id: 'Work/AI/summarize',
+      bucket: 'my-bucket',
+      name: 'summarize',
+      description: 'Summarize a document',
+      content: 'Summarize:\n\n{{document}}',
+      folderId: 'Work/AI',
+      createdAt: 1,
+      updatedAt: 2,
+    };
+
+    const organisationPrompt = {
+      ...personalPrompt,
+      id: 'Public/translate',
+      name: 'translate',
+      folderId: 'Public',
+    };
+
+    const enablePrompts = () => {
+      vi.mocked(useUiFeature).mockReset();
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          feature === OverlayFeature.Prompts ||
+          DEFAULT_ENABLED_UI_FEATURES.has(feature),
+      );
+    };
+
+    const mockPrompts = () =>
+      vi.mocked(usePrompts).mockReturnValue({
+        prompts: [personalPrompt],
+        folders: [],
+        sharedWithMe: [],
+        publicPrompts: [organisationPrompt],
+        publicFolders: [],
+        isLoading: false,
+        error: null,
+        refetchPrompts: vi.fn().mockResolvedValue(undefined),
+        refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+      });
+
+    /* jsdom's Blob has no `text()`, so the written file is read through FileReader. */
+    const readDownloadedFile = async (): Promise<{
+      fileName: string;
+      envelope: {
+        version: number;
+        prompts: { id: string; content: string; folderId?: string }[];
+        folders: { id: string; name: string; folderId?: string }[];
+      };
+    }> => {
+      const [blob, fileName] = vi.mocked(triggerBlobDownload).mock.calls[0];
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(blob);
+      });
+      return { fileName, envelope: JSON.parse(text) };
+    };
+
+    it('writes a personal prompt as a version 5 envelope fetched through getPrompt', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockResolvedValue(personalPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+
+      expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
+
+      const { fileName, envelope } = await readDownloadedFile();
+      expect(fileName).toMatch(
+        /^\d{4}-\d{2}-\d{2}_ai_dial_prompt_summarize\.json$/,
+      );
+      expect(envelope.version).toBe(5);
+      expect(envelope.prompts[0]).toMatchObject({
+        id: 'Work/AI/summarize',
+        content: 'Summarize:\n\n{{document}}',
+        folderId: 'Work/AI',
+      });
+      expect(envelope.folders).toEqual([
+        { id: 'Work', name: 'Work' },
+        { id: 'Work/AI', name: 'AI', folderId: 'Work' },
+      ]);
+    });
+
+    it('fetches an organisation prompt through the public endpoint', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPublicPrompt).mockResolvedValue(organisationPrompt);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Public/translate' }),
+      );
+
+      expect(getPublicPrompt).toHaveBeenCalledWith('Public/translate');
+      expect(getPrompt).not.toHaveBeenCalled();
+      await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
+    });
+
+    it('re-fetches the body instead of writing the content seeded by the listing', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockResolvedValue({
+        ...personalPrompt,
+        content: 'Edited elsewhere',
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+      await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
+
+      const { envelope } = await readDownloadedFile();
+      expect(envelope.prompts[0].content).toBe('Edited elsewhere');
+    });
+
+    /*
+     * Lives here rather than in the revoke describe because it needs the prompt
+     * fixtures: `RevokeSharedAccessDto` rejects prompt paths, so the action must
+     * not reach the user even though the item is one they own.
+     */
+    it('offers no revoke access on a personal prompt', () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(useDeployments).mockReturnValue({
+        ...vi.mocked(useDeployments)(),
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', { name: 'revoke Work/AI/summarize' }),
+      ).toBeNull();
+      expect(
+        screen.getByRole('button', { name: 'revoke gpt-4o' }),
+      ).toBeTruthy();
+    });
+
+    it('confirms a completed download with a success notification', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockResolvedValue(personalPrompt);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+      await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
+
+      expect(showNotification).toHaveBeenCalledWith({
+        variant: 'success',
+        title: 'entityNotifications.prompt.downloadedTitle',
+        message: 'entityNotifications.prompt.downloaded',
+      });
+    });
+
+    it('raises no success notification when the download fails', async () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(getPrompt).mockRejectedValue(new Error('boom'));
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: 'error' }),
+        ),
+      );
+      expect(triggerBlobDownload).not.toHaveBeenCalled();
+      expect(showNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('offers no download for an item that is not a prompt', () => {
+      enablePrompts();
+      mockPrompts();
+      vi.mocked(useDeployments).mockReturnValue({
+        ...vi.mocked(useDeployments)(),
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: 'download gpt-4o' }),
+      ).toBeNull();
+    });
+
+    it('reports a failed download and writes no file', async () => {
+      enablePrompts();
+      mockPrompts();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      vi.mocked(getPrompt).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: CatalogI18nKeys.DetailsPromptDownloadError,
+          }),
+        ),
+      );
+      expect(triggerBlobDownload).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('skill wiring', () => {
+    const personalSkill = {
+      name: 'revenue-skill',
+      path: 'analysis/revenue-skill',
+      url: 'skills/my-bucket/analysis/revenue-skill',
+      bucket: 'my-bucket',
+      nodeType: 'item' as const,
+      parentPath: 'analysis/',
+      author: 'alice',
+      updatedAt: 2,
+    };
+
+    const organisationSkill = {
+      ...personalSkill,
+      name: 'shared-skill',
+      path: 'shared-skill',
+      url: 'skills/public/shared-skill',
+      bucket: 'public',
+      parentPath: undefined,
+    };
+
+    const setFeatures = (
+      extra: OverlayFeature[] = [],
+      disabled: OverlayFeature[] = [],
+    ) => {
+      vi.mocked(useUiFeature).mockReset();
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          !disabled.includes(feature) &&
+          (extra.includes(feature) || DEFAULT_ENABLED_UI_FEATURES.has(feature)),
+      );
+    };
+
+    const enableSkills = () => setFeatures([OverlayFeature.Skills]);
+    /* Explicitly opted out: `skills` is in the default-enabled set. */
+    const disableSkills = () => setFeatures([], [OverlayFeature.Skills]);
+
+    const mockSkills = (
+      overrides: Partial<ReturnType<typeof useSkills>> = {},
+    ) =>
+      vi.mocked(useSkills).mockReturnValue({
+        skills: [personalSkill],
+        publicSkills: [organisationSkill],
+        isLoading: false,
+        error: null,
+        refetchSkills: vi.fn().mockResolvedValue(undefined),
+        mergeSharedSkill: vi.fn(),
+        ...overrides,
+      });
+
+    const makeManifestResponse = (body: string) =>
+      new Response(body, {
+        headers: { 'content-length': String(body.length) },
+      });
+
+    it('adds skill items to the catalog when the feature is enabled', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).toContain('skills/my-bucket/analysis/revenue-skill:SKILL');
+      expect(ids).toContain('skills/public/shared-skill:SKILL');
+    });
+
+    it('opens the skill editor for a writable shared skill', async () => {
+      enableSkills();
+      mockSkills({
+        skills: [],
+        publicSkills: [],
+        sharedWithMe: [
+          {
+            ...personalSkill,
+            url: 'skills/owner-bucket/analysis/revenue-skill',
+            bucket: 'owner-bucket',
+            isMy: false,
+            canEdit: true,
+            sharedWithMe: true,
+          },
+        ],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'edit skills/owner-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/skill-editor?id=skills%2Fowner-bucket%2Fanalysis%2Frevenue-skill&returnUrl=%2Fcatalog',
+      );
+    });
+
+    it('keeps public skills read-only even when metadata contains WRITE', () => {
+      enableSkills();
+      mockSkills({
+        skills: [],
+        sharedWithMe: [],
+        publicSkills: [{ ...organisationSkill, canEdit: true }],
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', {
+          name: 'edit skills/public/shared-skill',
+        }),
+      ).toBeNull();
+    });
+
+    it('adds no skill items when the feature is disabled', () => {
+      disableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).not.toContain('SKILL');
+    });
+
+    it('excludes skills from the model picker in selector mode', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView isSelectorMode />);
+
+      const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
+      expect(ids).not.toContain('SKILL');
+    });
+
+    /* A skill has no chat interface, so it never offers Use in chat; download, unshare, and revoke are all backed by DTOs that accept a skills path. */
+    it('hides Use in chat for a skill while offering download, unshare, and revoke', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const skillId = 'skills/my-bucket/analysis/revenue-skill';
+      expect(
+        screen.queryByRole('button', { name: `use in chat ${skillId}` }),
+      ).toBeNull();
+      expect(
+        screen.getByRole('button', { name: `download ${skillId}` }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: `unshare ${skillId}` }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: `revoke ${skillId}` }),
+      ).toBeTruthy();
+    });
+
+    it('shows Publish and Share for an owned skill', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const ownedSkill = makeCatalogItem({
+        type: CatalogEntityType.Skill,
+        isMyApp: true,
+      });
+      expect(capturedPublishProps.current?.isShareVisible?.(ownedSkill)).toBe(
+        true,
+      );
+      expect(capturedPublishProps.current?.isPublishVisible?.(ownedSkill)).toBe(
+        true,
+      );
+      expect(
+        capturedPublishProps.current?.isPublishVisible?.({
+          ...ownedSkill,
+          isMyApp: false,
+          sharedWithMe: true,
+        }),
+      ).toBe(false);
+      expect(
+        capturedPublishProps.current?.isPublishVisible?.({
+          ...ownedSkill,
+          isMyApp: false,
+          folder: ['Public'],
+        }),
+      ).toBe(false);
+    });
+
+    it('hides Share for a writable shared skill, even though it is editable', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const writableSharedSkill = makeCatalogItem({
+        type: CatalogEntityType.Skill,
+        isMyApp: false,
+        sharedWithMe: true,
+        isEditable: true,
+      });
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(writableSharedSkill),
+      ).toBe(false);
+    });
+
+    it('hides Share for a read-only shared skill', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const readOnlySharedSkill = makeCatalogItem({
+        type: CatalogEntityType.Skill,
+        isMyApp: false,
+        sharedWithMe: true,
+        isEditable: false,
+      });
+      expect(
+        capturedPublishProps.current?.isShareVisible?.(readOnlySharedSkill),
+      ).toBe(false);
+    });
+
+    it('hides Share for a public skill', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      const publicSkill = makeCatalogItem({
+        type: CatalogEntityType.Skill,
+        isMyApp: false,
+        sharedWithMe: false,
+        isEditable: false,
+      });
+      expect(capturedPublishProps.current?.isShareVisible?.(publicSkill)).toBe(
+        false,
+      );
+    });
+
+    it('leaves the Create dropdown without a skill entry', () => {
+      enableSkills();
+      mockSkills();
+
+      render(<CatalogView />);
+
+      /* Create options render as buttons labelled with the option's own label. */
+      expect(screen.queryByRole('button', { name: 'Skill' })).toBeNull();
+    });
+
+    it('deletes a skill via the skills endpoint, refetches skills, and shows a success notification', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockSkills({ skills: [personalSkill], publicSkills: [], refetchSkills });
+      vi.mocked(deleteSkill).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `delete ${personalSkill.url}` }),
+      );
+
+      expect(deleteSkill).toHaveBeenCalledWith(
+        'my-bucket',
+        'analysis/revenue-skill',
+      );
+      expect(deleteApplication).not.toHaveBeenCalled();
+      expect(refetchSkills).toHaveBeenCalledOnce();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('shows an error notification and does not call deleteSkill or deleteApplication for a malformed skill resource id', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      const malformedSkill = { ...personalSkill, url: 'skills/onlybucket' };
+      mockSkills({
+        skills: [malformedSkill],
+        publicSkills: [],
+        refetchSkills,
+      });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `delete ${malformedSkill.url}` }),
+      );
+
+      expect(deleteSkill).not.toHaveBeenCalled();
+      expect(deleteApplication).not.toHaveBeenCalled();
+      expect(refetchSkills).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+    });
+
+    it('removes a shared skill via Remove from My List, refetches skills, and shows a success notification', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      const sharedSkill = {
+        ...personalSkill,
+        url: 'skills/owner-bucket/analysis/revenue-skill',
+        bucket: 'owner-bucket',
+        isMy: false,
+        sharedWithMe: true,
+      };
+      mockSkills({
+        skills: [],
+        publicSkills: [],
+        sharedWithMe: [sharedSkill],
+        refetchSkills,
+      });
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `unshare ${sharedSkill.url}` }),
+      );
+
+      expect(discardSharedCatalogItem).toHaveBeenCalledWith(sharedSkill.url);
+      expect(refetchSkills).toHaveBeenCalledOnce();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('shows an error notification and does not refetch skills when discardSharedCatalogItem rejects for a skill', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      const sharedSkill = {
+        ...personalSkill,
+        url: 'skills/owner-bucket/analysis/revenue-skill',
+        bucket: 'owner-bucket',
+        isMy: false,
+        sharedWithMe: true,
+      };
+      mockSkills({
+        skills: [],
+        publicSkills: [],
+        sharedWithMe: [sharedSkill],
+        refetchSkills,
+      });
+      vi.mocked(discardSharedCatalogItem).mockRejectedValue(
+        new Error('network error'),
+      );
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `unshare ${sharedSkill.url}` }),
+      );
+
+      expect(refetchSkills).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+    });
+
+    it('revokes access to an owned skill and shows a success notification without refetching', async () => {
+      enableSkills();
+      const refetchSkills = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockSkills({ skills: [personalSkill], publicSkills: [], refetchSkills });
+      vi.mocked(getShareRecipientsCount).mockResolvedValue({
+        itemId: personalSkill.url,
+        recipientsCount: 2,
+      });
+      vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `revoke ${personalSkill.url}` }),
+      );
+
+      expect(revokeSharedAccess).toHaveBeenCalledWith(personalSkill.url);
+      expect(refetchSkills).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('notifies once when the skill listing fails and still renders the catalog', async () => {
+      enableSkills();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockSkills({ skills: [], publicSkills: [], error: new Error('down') });
+
+      render(<CatalogView />);
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: CatalogI18nKeys.SkillsLoadError,
+          }),
+        ),
+      );
+      expect(showNotification).toHaveBeenCalledOnce();
+      expect(screen.getByLabelText('Catalog item ids')).toBeTruthy();
+    });
+
+    it('resolves a skill through the skills endpoints, never the deployment ones', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse('Revenue skill manifest'),
+      );
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: [
+          {
+            name: 'SKILL.md',
+            path: 'SKILL.md',
+            url: 'skills/my-bucket/analysis/revenue-skill/SKILL.md',
+            bucket: 'my-bucket',
+            nodeType: 'item',
+            updatedAt: 3,
+          },
+        ],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      expect(downloadSkillFile).toHaveBeenCalledWith(
+        'my-bucket',
+        'analysis/revenue-skill',
+        'SKILL.md',
+      );
+      expect(listSkillFiles).toHaveBeenCalledWith({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        filePath: '',
+        recursive: true,
+      });
+      expect(getDeploymentDetails).not.toHaveBeenCalled();
+      expect(getDeploymentLimits).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(
+          screen.getByLabelText('Fetch details result').textContent,
+        ).toContain('Revenue skill manifest'),
+      );
+    });
+
+    it('keeps the file overview when the manifest read fails', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockRejectedValue(new Error('404'));
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: [],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      await waitFor(() => {
+        const result =
+          screen.getByLabelText('Fetch details result').textContent ?? '';
+        expect(result).toContain('overview');
+        expect(result).not.toContain('promptContent');
+      });
+    });
+
+    it('keeps the manifest when the file listing fails', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse('Revenue skill manifest'),
+      );
+      vi.mocked(listSkillFiles).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      await waitFor(() => {
+        const result =
+          screen.getByLabelText('Fetch details result').textContent ?? '';
+        expect(result).toContain('Revenue skill manifest');
+        expect(result).not.toContain('overview');
+      });
+    });
+
+    it('resolves null when both skill requests fail', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockRejectedValue(new Error('404'));
+      vi.mocked(listSkillFiles).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      await waitFor(() =>
+        expect(screen.getByLabelText('Fetch details result').textContent).toBe(
+          'null',
+        ),
+      );
+    });
+
+    it('drops an oversized manifest but keeps the overview', async () => {
+      enableSkills();
+      mockSkills();
+      const oversized = 'x'.repeat(SKILL_MANIFEST_MAX_BYTES + 1);
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse(oversized),
+      );
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: [],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+
+      await waitFor(() => {
+        const result =
+          screen.getByLabelText('Fetch details result').textContent ?? '';
+        expect(result).toContain('overview');
+        expect(result).not.toContain('promptContent');
+      });
+    });
+
+    const skillFileItems = [
+      {
+        name: 'SKILL.md',
+        path: 'SKILL.md',
+        url: 'skills/my-bucket/analysis/revenue-skill/SKILL.md',
+        bucket: 'my-bucket',
+        nodeType: 'item' as const,
+        updatedAt: 3,
+      },
+      {
+        name: 'run.py',
+        path: 'scripts/run.py',
+        url: 'skills/my-bucket/analysis/revenue-skill/scripts/run.py',
+        bucket: 'my-bucket',
+        nodeType: 'item' as const,
+        updatedAt: 4,
+      },
+    ];
+
+    const mockSkillDetailRequests = (manifest: string) => {
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse(manifest),
+      );
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: skillFileItems,
+      });
+    };
+
+    const openSkillDetails = async () => {
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details skills/my-bucket/analysis/revenue-skill',
+        }),
+      );
+    };
+
+    const readFetchResult = () =>
+      screen.getByLabelText('Fetch details result').textContent ?? '';
+
+    it('lifts the frontmatter out of the body and into the summary and Specification', async () => {
+      enableSkills();
+      mockSkills();
+      mockSkillDetailRequests(
+        '---\nname: Revenue\ndescription: Finds revenue figures\nallowed_tools: [search]\n---\n\n# Instructions\nDo the thing.',
+      );
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() =>
+        expect(readFetchResult()).toContain('Finds revenue figures'),
+      );
+      const result = readFetchResult();
+      /* The fence and its keys must not survive into the rendered body. */
+      expect(result).not.toContain('allowed_tools');
+      expect(result).toContain(CatalogI18nKeys.DetailsSkillAllowedTools);
+      expect(result).toContain('# Instructions');
+    });
+
+    it('renders a manifest with no frontmatter as body only', async () => {
+      enableSkills();
+      mockSkills();
+      mockSkillDetailRequests('# Instructions\nDo the thing.');
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() => {
+        const result = readFetchResult();
+        expect(result).toContain('# Instructions');
+        expect(result).not.toContain('description');
+        expect(result).not.toContain(
+          CatalogI18nKeys.DetailsSkillSpecificationSection,
+        );
+      });
+    });
+
+    it('keeps the whole manifest as the body when its frontmatter is malformed', async () => {
+      enableSkills();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockSkills();
+      mockSkillDetailRequests(
+        '---\ndescription: "unbalanced\n---\n\n# Instructions',
+      );
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() =>
+        expect(readFetchResult()).toContain('# Instructions'),
+      );
+      expect(readFetchResult()).toContain('unbalanced');
+      /* A parse failure is weaker than a fetch failure — it is not reported. */
+      expect(showNotification).not.toHaveBeenCalled();
+    });
+
+    it('builds a hierarchical file tree, keeping an empty grouping folder visible', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse('# Instructions'),
+      );
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: [
+          ...skillFileItems,
+          {
+            name: 'scripts',
+            path: 'scripts',
+            url: 'skills/my-bucket/analysis/revenue-skill/scripts',
+            bucket: 'my-bucket',
+            nodeType: 'folder' as const,
+            updatedAt: 5,
+          },
+          {
+            name: 'assets',
+            path: 'assets',
+            url: 'skills/my-bucket/analysis/revenue-skill/assets',
+            bucket: 'my-bucket',
+            nodeType: 'folder' as const,
+            updatedAt: 6,
+          },
+        ],
+      });
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() => {
+        const { promptContent, overview } = JSON.parse(readFetchResult());
+        expect(promptContent.files).toEqual([
+          { type: 'file', id: 'SKILL.md', name: 'SKILL.md' },
+          {
+            type: 'folder',
+            id: 'assets',
+            name: 'assets',
+            items: [],
+          },
+          {
+            type: 'folder',
+            id: 'scripts',
+            name: 'scripts',
+            items: [{ type: 'file', id: 'scripts/run.py', name: 'run.py' }],
+          },
+        ]);
+        expect(promptContent.selectedFileId).toBe('SKILL.md');
+        /* Grouping folders are neither counted nor rendered as file rows. */
+        expect(overview.sections[0].specs).toContainEqual({
+          label: CatalogI18nKeys.DetailsSkillFileCount,
+          value: '2',
+        });
+      });
+    });
+
+    it('selects the manifest by its opaque listing id when Core returns a prefixed path', async () => {
+      enableSkills();
+      mockSkills();
+      const manifestPath = 'analysis/revenue-skill/files/SKILL.md';
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse('# Instructions'),
+      );
+      vi.mocked(listSkillFiles).mockResolvedValue({
+        bucket: 'my-bucket',
+        path: 'analysis/revenue-skill',
+        items: [
+          {
+            name: 'SKILL.md',
+            path: manifestPath,
+            parentPath: 'analysis/revenue-skill/files',
+            url: `skills/my-bucket/${manifestPath}`,
+            bucket: 'my-bucket',
+            nodeType: 'item',
+            updatedAt: 3,
+          },
+          {
+            name: 'notes.md',
+            path: 'analysis/revenue-skill/files/notes.md',
+            parentPath: 'analysis/revenue-skill/files',
+            url: 'skills/my-bucket/analysis/revenue-skill/files/notes.md',
+            bucket: 'my-bucket',
+            nodeType: 'item',
+            updatedAt: 4,
+          },
+        ],
+      });
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() => {
+        const { promptContent } = JSON.parse(readFetchResult());
+        expect(promptContent.selectedFileId).toBe(manifestPath);
+      });
+    });
+
+    it('offers an empty tree when the file listing fails', async () => {
+      enableSkills();
+      mockSkills();
+      vi.mocked(downloadSkillFile).mockResolvedValue(
+        makeManifestResponse('# Instructions'),
+      );
+      vi.mocked(listSkillFiles).mockRejectedValue(new Error('502'));
+
+      render(<CatalogView />);
+      await openSkillDetails();
+
+      await waitFor(() =>
+        expect(JSON.parse(readFetchResult()).promptContent.files).toEqual([]),
+      );
+    });
+
+    it('issues no request for a skill whose id is not a skill resource URL', async () => {
+      enableSkills();
+      mockSkills({
+        skills: [{ ...personalSkill, url: 'files/my-bucket/report.pdf' }],
+        publicSkills: [],
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', {
+          name: 'fetch details files/my-bucket/report.pdf',
+        }),
+      );
+
+      expect(downloadSkillFile).not.toHaveBeenCalled();
+      expect(listSkillFiles).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(screen.getByLabelText('Fetch details result').textContent).toBe(
+          'null',
+        ),
+      );
+    });
+
+    describe('content file preview', () => {
+      const getPreviewElement = (
+        fileId = 'analysis/revenue-skill/files/openai.yaml',
+        fileName = 'openai.yaml',
+      ) => {
+        const view =
+          capturedContentFileProps.current?.renderContentFilePreview?.(
+            fileId,
+            fileName,
+          );
+        expect(isValidElement(view)).toBe(true);
+        return view as ReactElement<
+          ComponentProps<typeof SkillDetailsFilePreview>
+        >;
+      };
+
+      const openDetailsAndGetPreview = async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+        return getPreviewElement();
+      };
+
+      it('supplies the shared Skill Builder preview component for supporting files', async () => {
+        const element = await openDetailsAndGetPreview();
+
+        expect(element.type).toBe(SkillDetailsFilePreview);
+        expect(element.props.fileId).toBe(
+          'analysis/revenue-skill/files/openai.yaml',
+        );
+        expect(element.props.fileName).toBe('openai.yaml');
+      });
+
+      it('normalizes Core-prefixed ids and loads raw bytes for the shared preview pipeline', async () => {
+        const element = await openDetailsAndGetPreview();
+        vi.mocked(downloadSkillFile).mockClear();
+        vi.mocked(downloadSkillFile).mockResolvedValueOnce(
+          new Response('name: address-current-branch-review', {
+            headers: { 'content-type': 'application/octet-stream' },
+          }),
+        );
+
+        const content = await element.props.onLoadFile(element.props.fileId);
+
+        expect(downloadSkillFile).toHaveBeenCalledWith(
+          'my-bucket',
+          'analysis/revenue-skill',
+          'openai.yaml',
+        );
+        expect(new TextDecoder().decode(content.bytes)).toBe(
+          'name: address-current-branch-review',
+        );
+        expect(content.mimeType).toBeUndefined();
+      });
+
+      it('preserves a specific response MIME type for the Skill Builder classifier', async () => {
+        const element = await openDetailsAndGetPreview();
+        vi.mocked(downloadSkillFile).mockResolvedValueOnce(
+          new Response('image-bytes', {
+            headers: { 'content-type': 'image/png; charset=binary' },
+          }),
+        );
+
+        const content = await element.props.onLoadFile(element.props.fileId);
+
+        expect(content.mimeType).toBe('image/png');
+      });
+
+      it('preserves the HTTP status when a supporting file cannot be loaded', async () => {
+        const element = await openDetailsAndGetPreview();
+        vi.mocked(downloadSkillFile).mockResolvedValueOnce(
+          new Response(null, { status: 403 }),
+        );
+
+        await expect(
+          element.props.onLoadFile(element.props.fileId),
+        ).rejects.toMatchObject({ status: 403 });
+      });
+
+      it('rejects an oversized supporting file before opening the shared preview', async () => {
+        const element = await openDetailsAndGetPreview();
+        vi.mocked(downloadSkillFile).mockResolvedValueOnce(
+          new Response('irrelevant', {
+            headers: {
+              'content-length': String(SKILL_MANIFEST_MAX_BYTES + 1),
+            },
+          }),
+        );
+
+        await expect(
+          element.props.onLoadFile(element.props.fileId),
+        ).rejects.toThrow('File exceeds the preview size limit');
+      });
+
+      it('keeps the legacy manifest loader frontmatter-stripped', async () => {
+        await openDetailsAndGetPreview();
+        vi.mocked(downloadSkillFile).mockClear();
+        vi.mocked(downloadSkillFile).mockResolvedValueOnce(
+          new Response('---\nname: Revenue\n---\n\n# Updated instructions'),
+        );
+
+        const content =
+          await capturedContentFileProps.current?.onLoadContentFile?.(
+            'analysis/revenue-skill/files/SKILL.md',
+          );
+
+        expect(downloadSkillFile).toHaveBeenCalledWith(
+          'my-bucket',
+          'analysis/revenue-skill',
+          'SKILL.md',
+        );
+        expect(content).toBe('# Updated instructions');
+      });
+    });
+
+    describe('archive download', () => {
+      it('downloads the whole skill through the archive endpoint using the open skill bucket and path', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response('zip-bytes'));
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(downloadSkill).toHaveBeenCalledWith(
+            'my-bucket',
+            'analysis/revenue-skill',
+          ),
+        );
+        await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
+      });
+
+      it('uses the server-provided Content-Disposition filename when present', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(
+          new Response('zip-bytes', {
+            headers: {
+              'Content-Disposition': 'attachment; filename="custom-name.zip"',
+            },
+          }),
+        );
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(triggerBlobDownload).toHaveBeenCalledWith(
+            expect.anything(),
+            'custom-name.zip',
+          ),
+        );
+      });
+
+      it('falls back to the sanitized skill name when no filename is provided', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response('zip-bytes'));
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(triggerBlobDownload).toHaveBeenCalledWith(
+            expect.anything(),
+            'revenue-skill.zip',
+          ),
+        );
+      });
+
+      it('sanitizes unsafe characters out of the fallback filename', async () => {
+        enableSkills();
+        mockSkills({
+          skills: [{ ...personalSkill, name: 'revenue:skill/v2' }],
+        });
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response('zip-bytes'));
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(triggerBlobDownload).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.not.stringMatching(/[:/]/),
+          ),
+        );
+      });
+
+      it('passes a Unicode skill name through unchanged in the fallback filename', async () => {
+        enableSkills();
+        mockSkills({
+          skills: [{ ...personalSkill, name: 'выручка-skill' }],
+        });
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response('zip-bytes'));
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(triggerBlobDownload).toHaveBeenCalledWith(
+            expect.anything(),
+            'выручка-skill.zip',
+          ),
+        );
+      });
+
+      it('resolves a saved filename even when the response body is empty', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response(''));
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(triggerBlobDownload).toHaveBeenCalledWith(
+            expect.anything(),
+            'revenue-skill.zip',
+          ),
+        );
+      });
+
+      it('confirms a completed download with a success notification', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(new Response('zip-bytes'));
+        const showNotification = vi.fn();
+        vi.mocked(useNotification).mockReturnValue(
+          createNotificationContextValue(showNotification),
+        );
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(showNotification).toHaveBeenCalledWith(
+            expect.objectContaining({ variant: 'success' }),
+          ),
+        );
+      });
+
+      it('reports a failed download and leaves the panel open without a success notification', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockRejectedValue(new Error('502'));
+        const showNotification = vi.fn();
+        vi.mocked(useNotification).mockReturnValue(
+          createNotificationContextValue(showNotification),
+        );
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(showNotification).toHaveBeenCalledWith(
+            expect.objectContaining({
+              variant: 'error',
+              message: CatalogI18nKeys.DetailsSkillDownloadError,
+            }),
+          ),
+        );
+        expect(triggerBlobDownload).not.toHaveBeenCalled();
+        expect(showNotification).not.toHaveBeenCalledWith(
+          expect.objectContaining({ variant: 'success' }),
+        );
+        expect(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        ).toBeTruthy();
+      });
+
+      it('treats a non-OK response as a failure without decoding the body', async () => {
+        enableSkills();
+        mockSkills();
+        mockSkillDetailRequests('# Instructions');
+        vi.mocked(downloadSkill).mockResolvedValue(
+          new Response('error body', { status: 500 }),
+        );
+        const showNotification = vi.fn();
+        vi.mocked(useNotification).mockReturnValue(
+          createNotificationContextValue(showNotification),
+        );
+
+        render(<CatalogView />);
+        await openSkillDetails();
+        await waitFor(() => expect(readFetchResult()).not.toBe('null'));
+
+        await user.click(
+          screen.getByRole('button', {
+            name: 'download skills/my-bucket/analysis/revenue-skill',
+          }),
+        );
+
+        await waitFor(() =>
+          expect(showNotification).toHaveBeenCalledWith(
+            expect.objectContaining({ variant: 'error' }),
+          ),
+        );
+        expect(triggerBlobDownload).not.toHaveBeenCalled();
+      });
+    });
+  });
+});
+
+describe('CatalogView — unpublish', () => {
+  const makeCatalogItem = (overrides?: Partial<CatalogItem>): CatalogItem => ({
+    id: 'tool-abc123',
+    type: CatalogEntityType.Toolset,
+    name: 'My toolset',
+    version: '1.2.0',
+    lastUsed: 'now',
+    description: '',
+    folder: [],
+    topics: [],
+    isMyApp: true,
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(vi.fn()),
+    );
+    vi.mocked(unpublishCatalogEntity).mockResolvedValue({
+      entityId: 'tool-abc123',
+      entityType: 'toolset',
+      folderPath: 'Organization/Data Science',
+      version: '1.2.0',
+      requestedAt: '2026-08-13T10:00:00.000Z',
+      requestedBy: 'user@example.com',
+    });
+  });
+
+  it('requests unpublish with the mapped entity type, joined folder, and version', async () => {
+    render(<CatalogView />);
+
+    await capturedPublishProps.current?.onUnpublish?.(makeCatalogItem(), [
+      'Organization',
+      'Data Science',
+    ]);
+
+    expect(unpublishCatalogEntity).toHaveBeenCalledWith(
+      CatalogPublishEntityType.Toolset,
+      'tool-abc123',
+      { folderPath: 'Organization/Data Science', version: '1.2.0' },
+    );
+  });
+
+  /* A prompt or skill carries no version, and the backend recovers or empties it. */
+  it('omits version for an unversioned item', async () => {
+    render(<CatalogView />);
+
+    await capturedPublishProps.current?.onUnpublish?.(
+      makeCatalogItem({ type: CatalogEntityType.Prompt, version: undefined }),
+      ['Organization'],
+    );
+
+    expect(unpublishCatalogEntity).toHaveBeenCalledWith(
+      CatalogPublishEntityType.Prompt,
+      'tool-abc123',
+      { folderPath: 'Organization' },
+    );
+  });
+
+  it('reports a submitted request naming the folder leaf, not a completed removal', async () => {
+    const showNotification = vi.fn();
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
+    render(<CatalogView />);
+
+    await capturedPublishProps.current?.onUnpublish?.(makeCatalogItem(), [
+      'Organization',
+      'Data Science',
+    ]);
+
+    expect(showNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.toolset.unpublishRequestedTitle',
+      message: 'entityNotifications.toolset.unpublishRequested',
+    });
+  });
+
+  it('raises no success notification when the request fails', async () => {
+    const showNotification = vi.fn();
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
+    vi.mocked(unpublishCatalogEntity).mockRejectedValue(new Error('Forbidden'));
+    render(<CatalogView />);
+
+    /*
+     * Rethrown after notifying, so the details panel's own rejection path runs
+     * — the same contract `onPublish` has.
+     */
+    await expect(
+      capturedPublishProps.current?.onUnpublish?.(makeCatalogItem(), [
+        'Organization',
+      ]),
+    ).rejects.toThrow('Forbidden');
+
+    expect(
+      showNotification.mock.calls.some(
+        ([notification]) => notification.variant === 'success',
+      ),
+    ).toBe(false);
+  });
+
+  it('offers Unpublish exactly where Publish is offered', () => {
+    render(<CatalogView />);
+
+    expect(
+      capturedPublishProps.current?.isUnpublishVisible?.(makeCatalogItem()),
+    ).toBe(capturedPublishProps.current?.isPublishVisible?.(makeCatalogItem()));
+    expect(
+      capturedPublishProps.current?.isUnpublishVisible?.(
+        makeCatalogItem({ isMyApp: false }),
+      ),
+    ).toBe(false);
   });
 });

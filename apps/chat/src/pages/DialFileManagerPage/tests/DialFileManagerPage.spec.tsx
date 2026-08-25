@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useDialFileManagerModule from '../../../hooks/files/useDialFileManager';
 import type { UseDialFileManagerResult } from '../../../hooks/files/useDialFileManager';
 import {
@@ -16,7 +17,7 @@ import DialFileManagerPage from '../DialFileManagerPage';
 vi.mock('../../../hooks/files/useDialFileManager');
 
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => ({ showNotification: vi.fn() }),
+  useNotification: () => createNotificationContextValue(vi.fn()),
 }));
 
 vi.mock('../../../context/auth/UserContext', () => ({

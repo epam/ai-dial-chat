@@ -2,6 +2,7 @@ import {
   AttachmentCanvasContainer,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
@@ -18,6 +19,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Navigate,
   Route,
   Routes,
   useLocation,
@@ -33,6 +35,7 @@ import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
+import { MIN_CONTENT_AREA_WIDTH } from '../constants/layout';
 import {
   getConversationRoute,
   normalizeConversationId,
@@ -42,6 +45,7 @@ import {
   ButtonsI18nKeys,
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
+import { useFeatureFlag } from '../context/AppConfigContext';
 import { useConversationPanel } from '../context/ConversationPanelContext';
 import { useDeployments } from '../context/DeploymentsContext';
 import { useOptionalOverlay } from '../context/overlay/OverlayContext';
@@ -50,9 +54,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import { useAppVersionCheck } from '../hooks/useAppVersionCheck/useAppVersionCheck';
-import usePanelMaxWidth, {
-  MIN_CONTENT_AREA_WIDTH,
-} from '../hooks/usePanelMaxWidth';
 import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
@@ -63,6 +64,7 @@ const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
 );
+const SettingsPage = lazy(() => import('../pages/SettingsPage/SettingsPage'));
 const ScheduledTasksPage = lazy(
   () => import('../pages/ScheduledTasksPage/ScheduledTasksPage'),
 );
@@ -75,6 +77,9 @@ const ScheduledTaskDetailPage = lazy(
 const ScheduledTaskEditPage = lazy(
   () => import('../pages/ScheduledTaskEditPage/ScheduledTaskEditPage'),
 );
+const ScheduledTasksRouteGate = lazy(
+  () => import('../pages/ScheduledTasksRouteGate/ScheduledTasksRouteGate'),
+);
 const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditor'),
@@ -82,6 +87,10 @@ const ToolsetEditorPage = lazy(
 const CustomAppEditorPage = lazy(
   () => import('../pages/ToolsetEditor/CustomAppEditor'),
 );
+const PromptEditorPage = lazy(
+  () => import('../pages/PromptEditor/PromptEditor'),
+);
+const SkillEditorPage = lazy(() => import('../pages/SkillEditor/SkillEditor'));
 const ToolsetAuthCallbackPage = lazy(
   () => import('../pages/ToolsetAuthCallback/ToolsetAuthCallback'),
 );
@@ -110,7 +119,7 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
-  const canvasMaxWidth = usePanelMaxWidth();
+  const canvasMaxWidth = usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH);
   const canvasDefaultWidth = isMobile
     ? window.innerWidth
     : Math.min(
@@ -168,6 +177,8 @@ const App: FC = () => {
   const isAttachmentsManagerEnabled = useUiFeature(
     OverlayFeature.AttachmentsManager,
   );
+  const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
+  const isSettingsPageEnabled = useFeatureFlag('settingsPageEnabled');
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
@@ -371,55 +382,85 @@ const App: FC = () => {
                 }
               />
               <Route
+                path={ROUTES.Settings}
+                element={
+                  isSettingsPageEnabled ? (
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <SettingsPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  ) : (
+                    /* Keeps a direct /settings URL from bypassing the hidden gear icon. */
+                    <Navigate to={ROUTES.Root} replace />
+                  )
+                }
+              />
+              <Route
                 path={ROUTES.FileManager}
                 element={
-                  <RouteErrorBoundary>
-                    <Suspense fallback={<RouteFallback />}>
-                      <DialFileManagerPage />
-                    </Suspense>
-                  </RouteErrorBoundary>
+                  isFileManagerEnabled ? (
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <DialFileManagerPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  ) : (
+                    /* Keeps a direct /files URL from bypassing the hidden nav entry. */
+                    <Navigate to={ROUTES.Root} replace />
+                  )
                 }
               />
               <Route
-                path={ROUTES.ScheduledTasks}
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <ScheduledTasksPage />
+                      <ScheduledTasksRouteGate />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
-              />
-              <Route
-                path={ROUTES.ScheduledTaskCreate}
-                element={
-                  <RouteErrorBoundary>
-                    <Suspense fallback={<RouteFallback />}>
-                      <ScheduledTaskCreatePage />
-                    </Suspense>
-                  </RouteErrorBoundary>
-                }
-              />
-              <Route
-                path={ROUTES.ScheduledTaskDetail}
-                element={
-                  <RouteErrorBoundary>
-                    <Suspense fallback={<RouteFallback />}>
-                      <ScheduledTaskDetailPage />
-                    </Suspense>
-                  </RouteErrorBoundary>
-                }
-              />
-              <Route
-                path={ROUTES.ScheduledTaskEdit}
-                element={
-                  <RouteErrorBoundary>
-                    <Suspense fallback={<RouteFallback />}>
-                      <ScheduledTaskEditPage />
-                    </Suspense>
-                  </RouteErrorBoundary>
-                }
-              />
+              >
+                <Route
+                  path={ROUTES.ScheduledTasks}
+                  element={
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <ScheduledTasksPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  }
+                />
+                <Route
+                  path={ROUTES.ScheduledTaskCreate}
+                  element={
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <ScheduledTaskCreatePage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  }
+                />
+                <Route
+                  path={ROUTES.ScheduledTaskDetail}
+                  element={
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <ScheduledTaskDetailPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  }
+                />
+                <Route
+                  path={ROUTES.ScheduledTaskEdit}
+                  element={
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <ScheduledTaskEditPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  }
+                />
+              </Route>
               <Route
                 path={ROUTES.AppsEditor}
                 element={
@@ -471,6 +512,26 @@ const App: FC = () => {
                 }
               />
               <Route
+                path={ROUTES.PromptEditor}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <PromptEditorPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.SkillEditor}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <SkillEditorPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
                 path="*"
                 element={
                   <RouteErrorBoundary>
@@ -510,6 +571,18 @@ const App: FC = () => {
               htmlViewSourceLabel: t(AttachmentCanvasI18nKeys.HtmlViewSource),
               htmlViewRenderedLabel: t(
                 AttachmentCanvasI18nKeys.HtmlViewRendered,
+              ),
+              pdfThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfThumbnailsLabel,
+              ),
+              pdfShowThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfShowThumbnailsLabel,
+              ),
+              pdfHideThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfHideThumbnailsLabel,
+              ),
+              pdfPageNumberLabel: t(
+                AttachmentCanvasI18nKeys.PdfPageNumberLabel,
               ),
             }}
             isMobile={isMobile}

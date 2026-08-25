@@ -1,42 +1,9 @@
 import {
-  Message,
-  type MessageCustomContent,
   MessageRole,
   StatusEvent,
   StatusMessage,
   StatusMessageCustomContent,
 } from '@epam/ai-dial-chat-shared';
-
-interface MessagePair {
-  userMessage: Message;
-  assistantMessage: Message;
-}
-
-export const createMessagePair = (
-  content: string,
-  customContent?: MessageCustomContent,
-  deploymentId?: string | null,
-): MessagePair => {
-  const now = Date.now();
-  const timestamp = new Date(now).toISOString();
-
-  return {
-    userMessage: {
-      role: MessageRole.User,
-      content,
-      timestamp,
-      ...(customContent && Object.keys(customContent).length
-        ? { custom_content: customContent }
-        : {}),
-    },
-    assistantMessage: {
-      role: MessageRole.Assistant,
-      content: '',
-      timestamp,
-      ...(deploymentId ? { deploymentId } : {}),
-    },
-  };
-};
 
 /**
  * Creates a status message recording a deployment change in the conversation timeline.

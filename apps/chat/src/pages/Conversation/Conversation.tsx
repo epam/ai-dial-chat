@@ -1,5 +1,11 @@
 import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
+  getConversationPath,
+  isAwaitingGenerationResume,
+  useConversationHandlers,
+  useConversationStream,
+} from '@epam/ai-dial-chat-hooks';
+import {
   MessageRating,
   MessageRole,
   type Conversation,
@@ -9,7 +15,6 @@ import {
   ConfirmationPopupVariant,
   ConfirmationPopup,
   Spinner,
-  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +32,7 @@ import {
 } from '../../constants/translation-keys';
 import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useClientChannel } from '../../context/ClientChannelContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import {
@@ -38,10 +44,13 @@ import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useActiveConversationBridge } from '../../hooks/conversation/useActiveConversationBridge';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
-import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
-import { useConversationStream } from '../../hooks/conversation/useConversationStream';
 import { useToolsMenu } from '../../hooks/conversation/useToolsMenu';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
+import {
+  conversationsApi as configuredConversationsApi,
+  filesApi as configuredFilesApi,
+  rateApi as configuredRateApi,
+} from '../../server-api/api-client';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
@@ -51,10 +60,12 @@ import {
 import { ActiveScheduledTaskStatus } from '../../types/active-scheduled-task';
 import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
-import { getConversationPath } from '../../utils/conversation-path';
+import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
 import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
-import { isAwaitingGenerationResume } from '../../utils/generation-resume';
-import { getLastDeploymentId } from '../../utils/message-utils';
+import {
+  getLastDeploymentId,
+  getLastUserMessageToolConfiguration,
+} from '../../utils/message-utils';
 
 interface Props {
   onDuplicateReadonly?: () => void;
@@ -75,6 +86,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const displayNameWatchCleanupRef = useRef<(() => void) | null>(null);
   const displayNameWatchKeyRef = useRef<string | null>(null);
   const notificationShownForRef = useRef<string | null>(null);
+  const restoredToolConfigIdRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
@@ -82,6 +94,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     selectedItemId: currentSelectedItemId,
     isLoading: isDeploymentsLoading,
   } = useDeployments();
+  const {
+    toolsMenuItems,
+    onToolToggle,
+    toolConfigurationValue,
+    restoreToolConfiguration,
+  } = useToolsMenu();
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
   const { user } = useUser();
@@ -95,7 +113,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const overlay = useOptionalOverlay();
-  const [overlayInputContent, setOverlayInputContent] = useState({
+  /*
+   * One-shot text hand-off into the composer's textarea: the overlay bridge
+   * and prompt insertion both write here rather than each owning a separate
+   * revision-token channel.
+   */
+  const [pendingInputContent, setPendingInputContent] = useState({
     revision: 0,
     value: '',
   });
@@ -105,16 +128,15 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     selectedDeploymentId: currentSelectedItemId,
   });
 
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
 
   const handleNetworkUploadError = useCallback(
     (filenames: string[]) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         ...buildNetworkUploadErrorNotification(filenames, t),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const [pendingDislikeMessageIndex, setPendingDislikeMessageIndex] = useState<
@@ -172,11 +194,31 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
 
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
-    return () => {
+  }, [conversation?.messages, setMessages]);
+
+  /*
+   * Switching to another conversation resets the sidebar, matching how the
+   * history panel and the attachment canvas behave on navigation. Route
+   * changes within `/conversations/*` do not unmount this page, so the reset
+   * has to be keyed on the id rather than left to the unmount cleanup below.
+   */
+  useEffect(() => {
+    handleCloseSourcesSidebar();
+  }, [conversationId, handleCloseSourcesSidebar]);
+
+  /*
+   * Cleanup must run only on unmount. Both callbacks are stable, so keeping
+   * `conversation?.messages` out of the deps stops the sources sidebar from
+   * closing on every message mutation (stream chunk, the post-stream
+   * conversation refetch, send, regenerate, edit, delete, status message).
+   */
+  useEffect(
+    () => () => {
       handleCloseSourcesSidebar();
       setMessages([]);
-    };
-  }, [handleCloseSourcesSidebar, conversation?.messages, setMessages]);
+    },
+    [handleCloseSourcesSidebar, setMessages],
+  );
 
   const addStatusMessage = useCallback(
     (msg: Message) => {
@@ -206,7 +248,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     isConversationLoaded,
   );
 
-  const { getGeneration } = useGeneration();
+  const { getGeneration, startGeneration, completeGeneration } =
+    useGeneration();
+  const { channelId, ensureConnected } = useClientChannel();
+  const channel = useMemo(
+    () => ({ channelId, ensureConnected }),
+    [channelId, ensureConnected],
+  );
   /*
    * Conversation paths whose auto-stream has already been kicked off. Guards
    * against React 18 StrictMode double-mounting (and any other re-run of
@@ -215,11 +263,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
    */
   const autoStartedPathsRef = useRef<Set<string>>(new Set());
   const handleStopError = useCallback(() => {
-    showNotification({
-      variant: NotificationVariant.Error,
+    showErrorNotification({
       message: t(ChatI18nKeys.StreamError),
     });
-  }, [showNotification, t]);
+  }, [showErrorNotification, t]);
 
   const {
     startStream,
@@ -229,8 +276,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     canStopStreaming,
   } = useConversationStream({
     conversationId,
-    setConversation,
-    conversationRef,
+    state: { setConversation, conversationRef },
+    transport: conversationStreamTransport,
+    generation: { startGeneration, completeGeneration },
+    channel,
+    overlay,
     onStopError: handleStopError,
   });
 
@@ -309,6 +359,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         if (modelToSelect) {
           restoreSelectedItemId(modelToSelect);
         }
+        if (restoredToolConfigIdRef.current !== id) {
+          restoredToolConfigIdRef.current = id;
+          restoreToolConfiguration(
+            getLastUserMessageToolConfiguration(result.messages),
+          );
+        }
 
         const lastMsg = result.messages[result.messages.length - 1];
 
@@ -368,8 +424,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         if (notificationShownForRef.current !== id) {
           notificationShownForRef.current = id;
           const { traceId } = await getApiErrorDetails(error);
-          showNotification({
-            variant: NotificationVariant.Error,
+          showErrorNotification({
             message: t(ChatI18nKeys.ConversationNotFound),
             requestId: traceId,
           });
@@ -382,11 +437,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     [
       navigate,
       restoreSelectedItemId,
+      restoreToolConfiguration,
       startStream,
       resumeIfAwaitingGeneration,
       updateConversationTitle,
       getGeneration,
-      showNotification,
+      showErrorNotification,
       t,
     ],
   );
@@ -417,8 +473,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     navigate(`${pathname}${search}`, { replace: true, state: null });
   }, [conversationId, prefetchedConversation, navigate, pathname, search]);
 
-  const { toolsMenuItems, onToolToggle, toolConfigurationValue } =
-    useToolsMenu();
+  const resolveModelId = useCallback(
+    () => currentSelectedItemId ?? conversation?.model.id ?? '',
+    [currentSelectedItemId, conversation?.model.id],
+  );
 
   const {
     handleSend,
@@ -443,9 +501,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     bucket,
     isStreaming,
     startStream,
-    conversationRef,
-    setConversation,
-    navigate,
+    state: { setConversation, conversationRef },
+    filesApi: configuredFilesApi,
+    conversationsApi: configuredConversationsApi,
+    rateApi: configuredRateApi,
+    resolveModelId,
+    onConversationDeleted: () => navigate(ROUTES.Root),
     showNetworkError: handleNetworkUploadError,
     toolConfigurationValue,
   });
@@ -457,8 +518,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     overlay.notifyConversationLoaded();
   }, [overlay, isFetching, conversation, conversationId]);
 
-  const handleOverlayInputContent = useCallback((content: string) => {
-    setOverlayInputContent((prev) => ({
+  const handleSetPendingInputContent = useCallback((content: string) => {
+    setPendingInputContent((prev) => ({
       revision: prev.revision + 1,
       value: content,
     }));
@@ -470,21 +531,20 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     conversationRef,
     setConversation,
     handleSend,
-    setOverlayInputContent: handleOverlayInputContent,
+    setOverlayInputContent: handleSetPendingInputContent,
   });
 
   const handleLike = useCallback(
     async (messageIndex: number, rating: MessageRating | null) => {
       const success = await handleRateMessage(messageIndex, rating);
       if (success && rating === MessageRating.Like) {
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           title: t(RateI18nKeys.LikeToastTitle),
           message: t(RateI18nKeys.LikeToastDescription),
         });
       }
     },
-    [handleRateMessage, showNotification, t],
+    [handleRateMessage, showSuccessNotification, t],
   );
 
   const handleOpenDislikeModal = useCallback((messageIndex: number) => {
@@ -502,14 +562,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         comment,
       );
       if (success) {
-        showNotification({
-          variant: NotificationVariant.Success,
+        showSuccessNotification({
           title: t(RateI18nKeys.DislikeToastTitle),
           message: t(RateI18nKeys.LikeToastDescription),
         });
       }
     },
-    [pendingDislikeMessageIndex, handleRateMessage, showNotification, t],
+    [pendingDislikeMessageIndex, handleRateMessage, showSuccessNotification, t],
   );
 
   const handleDislikeModalClose = useCallback(() => {
@@ -557,10 +616,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           isAudioMessageSupported={isAudioMessageSupported}
           conversation={conversation}
           onConversationChange={handleConversationChange}
-          inputContent={overlay ? overlayInputContent.value : undefined}
-          inputContentRevision={
-            overlay ? overlayInputContent.revision : undefined
-          }
+          inputContent={pendingInputContent.value}
+          inputContentRevision={pendingInputContent.revision}
+          onInsertText={handleSetPendingInputContent}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}

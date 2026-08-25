@@ -22,6 +22,8 @@ describe('DeploymentsService facade', () => {
       getDeploymentDetails: vi.fn().mockResolvedValue('details-get'),
       getDeploymentConfiguration: vi.fn().mockResolvedValue('details-config'),
       getDeploymentLimits: vi.fn().mockResolvedValue('details-limits'),
+      getUserLimits: vi.fn().mockResolvedValue('details-user-limits'),
+      getUserUsage: vi.fn().mockResolvedValue('details-user-usage'),
       invalidateDetailsCache: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -119,6 +121,24 @@ describe('DeploymentsService facade', () => {
       'token',
     );
     expect(result).toBe('details-limits');
+  });
+
+  it('delegates getUserLimits to DeploymentsDetailsService', async () => {
+    const { service, detailsService } = makeService();
+
+    const result = await service.getUserLimits('token');
+
+    expect(detailsService.getUserLimits).toHaveBeenCalledWith('token');
+    expect(result).toBe('details-user-limits');
+  });
+
+  it('delegates getUserUsage to DeploymentsDetailsService', async () => {
+    const { service, detailsService } = makeService();
+
+    const result = await service.getUserUsage('token');
+
+    expect(detailsService.getUserUsage).toHaveBeenCalledWith('token');
+    expect(result).toBe('details-user-usage');
   });
 
   it('delegates invalidateDetailsCache to DeploymentsDetailsService', async () => {

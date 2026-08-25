@@ -1,3 +1,5 @@
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
 /** A single folder in the "publish to folder" destination tree. */
 export interface PublishFolderNode {
   /** Full path segments to this folder, outermost first. Also serves as the unique key. */
@@ -38,6 +40,10 @@ export interface PublishResourceSummary {
   title: string;
   /** Version, when the resource is versioned. `undefined` for conversations. */
   version?: string;
+  /** Entity category. When set, the summary row renders the entity header with icon and type label instead of the title-only row. */
+  type?: CatalogEntityType;
+  /** URL of the entity icon, used only by the entity-header row. */
+  iconUrl?: string;
 }
 
 /** Combining function applied across a rule's `targets`. */

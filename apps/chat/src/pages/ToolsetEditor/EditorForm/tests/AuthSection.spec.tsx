@@ -16,6 +16,7 @@ import {
   ToolsetEditorI18nKeys,
 } from '../../../../constants/translation-keys';
 import { useNotification } from '../../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
@@ -83,57 +84,57 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <p role="alert">{error}</p>}
     </>
   ),
-  DialRadioButton: ({
-    inputId,
-    value,
-    label,
-    checked,
-    disabled,
-    onChange,
-  }: {
-    name?: string;
-    inputId?: string;
-    value?: string;
-    label?: string;
-    checked?: boolean;
-    disabled?: boolean;
-    onChange?: (v: string) => void;
-  }) => (
-    <label htmlFor={inputId}>
-      <input
-        id={inputId}
-        type="radio"
-        value={value}
-        checked={checked}
-        disabled={disabled}
-        onChange={() => onChange?.(value ?? '')}
-      />
-      {label}
-    </label>
-  ),
-  DialTagInput: ({
-    label,
+  TagInput: ({
+    labelProps,
     placeholder,
     onChange,
-    initialTags,
+    value,
     disabled,
   }: {
-    label?: string;
+    labelProps?: { label?: string };
     placeholder?: string;
     onChange?: (tags: string[]) => void;
-    initialTags?: string[];
+    value?: string[];
     disabled?: boolean;
   }) => (
     <label>
-      {label}
+      {labelProps?.label}
       <input
         placeholder={placeholder}
-        defaultValue={(initialTags ?? []).join(',')}
+        value={(value ?? []).join(',')}
         disabled={disabled}
         onChange={(e) =>
           onChange?.(e.target.value ? e.target.value.split(',') : [])
         }
       />
+    </label>
+  ),
+  Radio: ({
+    id,
+    value,
+    labelProps,
+    isSelected,
+    disabled,
+    onChange,
+  }: {
+    name?: string;
+    id?: string;
+    value?: string;
+    labelProps?: { label?: string };
+    isSelected?: boolean;
+    disabled?: boolean;
+    onChange?: (v: string) => void;
+  }) => (
+    <label htmlFor={id}>
+      <input
+        id={id}
+        type="radio"
+        value={value}
+        checked={isSelected}
+        disabled={disabled}
+        onChange={() => onChange?.(value ?? '')}
+      />
+      {labelProps?.label}
     </label>
   ),
   PrimaryButton: ({
@@ -257,11 +258,9 @@ describe('AuthSection', () => {
         return capturedPopup;
       }),
     });
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification: mockShowNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
   });
 
   describe('type selection', () => {

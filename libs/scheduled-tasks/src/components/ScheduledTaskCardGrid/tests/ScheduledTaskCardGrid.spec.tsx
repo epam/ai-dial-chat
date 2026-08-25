@@ -55,21 +55,24 @@ describe('ScheduledTaskCardGrid', () => {
       />,
     );
 
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- verifying the grid wrapper's CSS class, which has no accessible role/name
     const grids = container.querySelectorAll('.grid');
     expect(grids).toHaveLength(1);
 
-    const grid = grids[0];
+    const [grid] = grids;
+    // eslint-disable-next-line testing-library/no-node-access -- counting real vs skeleton cards by DOM structure; both share the "article" role so aria-hidden is the only distinguishing CSS-level attribute
     expect(grid.querySelectorAll('article').length).toBe(6);
+    // eslint-disable-next-line testing-library/no-node-access -- see above
     expect(grid.querySelectorAll('article[aria-hidden="true"]').length).toBe(4);
   });
 
   it('renders no skeleton cards when trailingSkeletonCount is omitted', () => {
-    const { container } = render(
-      <ScheduledTaskCardGrid items={[buildItem()]} />,
-    );
+    render(<ScheduledTaskCardGrid items={[buildItem()]} />);
 
     expect(
-      container.querySelectorAll('article[aria-hidden="true"]'),
+      screen
+        .queryAllByRole('article', { hidden: true })
+        .filter((card) => card.getAttribute('aria-hidden') === 'true'),
     ).toHaveLength(0);
   });
 
@@ -90,7 +93,7 @@ describe('ScheduledTaskCardGrid', () => {
   });
 
   it('forwards skeletonStyles to every trailing skeleton card', () => {
-    const { container } = render(
+    render(
       <ScheduledTaskCardGrid
         items={[buildItem()]}
         trailingSkeletonCount={2}
@@ -98,14 +101,12 @@ describe('ScheduledTaskCardGrid', () => {
       />,
     );
 
-    const skeletonCards = container.querySelectorAll(
-      'article[aria-hidden="true"]',
-    );
+    const skeletonCards = screen
+      .getAllByRole('article', { hidden: true })
+      .filter((card) => card.getAttribute('aria-hidden') === 'true');
     expect(skeletonCards.length).toBeGreaterThan(0);
     skeletonCards.forEach((card) => {
-      expect(
-        (card as HTMLElement).style.getPropertyValue('--stcs-skeleton-bg'),
-      ).toBe('#ff00ff');
+      expect(card.style.getPropertyValue('--stcs-skeleton-bg')).toBe('#ff00ff');
     });
   });
 });

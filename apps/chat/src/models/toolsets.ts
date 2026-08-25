@@ -76,7 +76,13 @@ export interface ToolsetRedirectState {
    * existing redirect state (written before this field existed) keeps
    * calling `loginToolset` unchanged. `ExternalService` reuses the same
    * popup/BroadcastChannel machinery with `toolsetId` repurposed as an
-   * `{appId}::{serviceId}` composite key.
+   * `{appId}::{serviceId}` composite key. `OfflineCredentials` (Scheduled
+   * Tasks proactive consent, `useOfflineCredentialsLogin`) reuses the same
+   * machinery again, with `toolsetId` repurposed as a fixed sentinel
+   * correlation id (`'offline-credentials'`) — there is no per-resource id
+   * for this kind, so the field carries no real toolset/external-service
+   * meaning here, only the opaque flow-correlation string the shared popup/
+   * `BroadcastChannel` utilities require structurally.
    */
   resourceKind?: OAuthResourceKind;
 }
@@ -106,7 +112,12 @@ export interface ToolsetOAuthResultAcknowledgement {
   type: ToolsetOAuthChannelControlType.ResultAcknowledged;
 }
 
-/** Non-secret result reported by the OAuth callback popup for one flow. */
+/**
+ * Non-secret result reported by the OAuth callback popup for one flow. Used
+ * unchanged by the `OfflineCredentials` resource kind — that callback branch
+ * only needs to signal success/failure, not resource details, back through
+ * the channel, exactly like `Toolset`/`ExternalService` today.
+ */
 export type ToolsetOAuthChannelMessage =
   | ToolsetOAuthSuccessMessage
   | ToolsetOAuthFailureMessage;

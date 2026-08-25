@@ -42,7 +42,7 @@ into both `AppsEditor` and `ToolsetEditor`. Both existing `GeneralForm.tsx` file
 therefore consumed from exactly one visual context today.
 
 `libs/ai-dial-kit` already wraps a handful of `@epam/ai-dial-ui-kit` primitives
-(`Button`, `SearchBar`, `TabRow`, `GhostIconButton`) at the app level, per the
+(`Button`, `SearchBar`, `Tabs`, `GhostIconButton`) at the app level, per the
 "Component-First Development" convention in `.claude/rules/all-tsx.md`; `Input` /
 `Textarea` / `DialTagInput` are not in that wrapped set and both existing forms already
 import them directly from `@epam/ai-dial-ui-kit`.
@@ -270,7 +270,7 @@ from `@epam/ai-dial-kit` instead of the primitives directly from `@epam/ai-dial-
 (`libs/deployment-creation-form`'s `package.json`/`vite.config.mts` no longer list
 `@epam/ai-dial-ui-kit` at all, since it is now only a transitive dependency through
 `ai-dial-kit`). `.claude/rules/all-tsx.md` gained a "Text fields" entry alongside the existing
-Button/SearchBar/Spinner/TabRow rules, banning direct `Input`/`Textarea`/`DialTagInput`
+Button/SearchBar/Spinner/Tabs rules, banning direct `Input`/`Textarea`/`DialTagInput`
 imports app-wide going forward.
 
 **Corrected sub-decision (bug found in the first pass)**: the first version of `Input.tsx`

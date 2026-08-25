@@ -16,6 +16,7 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule } from '@nestjs/swagger';
 import type { ValidationError } from 'class-validator';
+import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import 'reflect-metadata';
@@ -67,6 +68,15 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
 
+  /*
+   * Lets class-validator resolve custom `@ValidatorConstraint` classes (e.g.
+   * `IsAllowedRedirectUriConstraint`) through Nest's DI container, so they
+   * can inject `ConfigService` instead of reading `process.env` directly.
+   * `fallbackOnErrors` keeps constraints with no DI needs working via plain
+   * `new` construction.
+   */
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
   app.use(cookieParser());
   app.use(traceparentMiddleware);
   app.useGlobalFilters(new TraceparentErrorFilter());
@@ -77,6 +87,8 @@ async function bootstrap() {
   const allowedIframeOrigins = configService.get('ALLOWED_IFRAME_ORIGINS', {
     infer: true,
   });
+  const secureTransport =
+    configService.get('AUTH_COOKIE_SECURE', { infer: true }) !== false;
 
   app.useBodyParser('json', {
     limit: configService.get('CONVERSATION_BODY_SIZE_LIMIT_BYTES', {
@@ -85,7 +97,9 @@ async function bootstrap() {
   });
 
   // Security headers middleware
-  app.use(helmet(createHelmetOptions(allowedIframeOrigins ?? [])));
+  app.use(
+    helmet(createHelmetOptions(allowedIframeOrigins ?? [], secureTransport)),
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({

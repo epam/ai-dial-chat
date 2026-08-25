@@ -42,7 +42,13 @@ const RowValue: FC<RowValueProps> = ({
     );
   }
   return (
-    <span className={mergeClasses(valueClassName, styles.valueText)}>
+    <span
+      className={mergeClasses(
+        'min-w-0 break-words',
+        valueClassName,
+        styles.valueText,
+      )}
+    >
       {value}
     </span>
   );
@@ -157,7 +163,7 @@ export const TableView: FC<TableViewProps> = ({
                 >
                   {row.label}
                 </span>
-                <div className="flex w-3/5 items-center gap-1">
+                <div className="flex w-3/5 min-w-0 items-center gap-1">
                   <RowValue
                     value={row.value}
                     valueClassName={valueClassName}

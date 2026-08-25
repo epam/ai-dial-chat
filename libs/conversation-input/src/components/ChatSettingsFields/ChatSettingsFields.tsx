@@ -5,9 +5,9 @@ import {
   ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import {
-  Input,
-  DialRadioGroup,
+  Textarea,
   DialSlider,
+  RadioGroup,
   RadioGroupOrientation,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
@@ -91,32 +91,36 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
   );
 
   return (
-    <div className="flex flex-col gap-4 px-6 py-3" style={cssVars}>
+    <div className="flex flex-col gap-4 px-6 pb-3" style={cssVars}>
       {features.responseFormat && (
-        <DialRadioGroup
-          fieldTitle={responseFormatLabel}
-          labelClassName={fieldLabelClassName}
-          elementId="response-format"
+        <RadioGroup
+          id="response-format"
+          labelProps={{
+            label: responseFormatLabel,
+            className: fieldLabelClassName,
+            caption: responseFormatHint,
+          }}
+          optionsClassName="mb-2"
           orientation={RadioGroupOrientation.Column}
-          activeRadioButton={responseFormat ?? ResponseFormat.Markdown}
-          labelDescription={responseFormatHint}
-          radioButtons={[
+          value={responseFormat ?? ResponseFormat.Markdown}
+          items={[
             {
-              id: ResponseFormat.Markdown,
-              name: responseFormatMarkdownLabel,
+              value: ResponseFormat.Markdown,
+              label: responseFormatMarkdownLabel,
             },
             {
-              id: ResponseFormat.PlainText,
-              name: responseFormatPlainTextLabel,
+              value: ResponseFormat.PlainText,
+              label: responseFormatPlainTextLabel,
             },
           ]}
           onChange={(v) => onResponseFormatChange(v as ResponseFormat)}
         />
       )}
       {features.systemPrompt && (
-        <Input
+        <Textarea
           value={systemPrompt}
           placeholder={systemPromptTooltip}
+          resize
           labelProps={{
             className: fieldLabelClassName,
             label: systemPromptLabel,

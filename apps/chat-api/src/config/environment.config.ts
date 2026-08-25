@@ -740,6 +740,20 @@ export class EnvironmentVariables {
   LIVE_CHAT_INTERACTION_ENABLED?: boolean = false;
 
   @IsOptional()
+  @Transform(({ obj, key }) => {
+    /* Reads the raw source value (not `value`, which class-transformer's
+     * enableImplicitConversion may have already coerced to `true` for any
+     * non-empty string, including the literal string "false") so an env var
+     * explicitly set to "false"/"0"/"no" parses to `false` as intended. */
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  RESPONSES_API_ENABLED?: boolean = false;
+
+  @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];
     return String(value)
@@ -771,6 +785,26 @@ export class EnvironmentVariables {
   SCHEDULED_TASKS_ENABLED_ROLES?: string[] = [];
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'boolean') return value;
+    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  })
+  @IsBoolean()
+  SETTINGS_PAGE_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  SETTINGS_PAGE_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
   @IsString()
   SCHEDULER_APP_ID?: string;
 
@@ -799,4 +833,55 @@ export class EnvironmentVariables {
   @IsString({ each: true })
   @MaxLength(200, { each: true })
   PUBLICATION_FILTER_SOURCES?: string[] = [];
+
+  /*
+   * Skills domain limits (see openspec/changes/fix-skill-editor-core-contract/design.md).
+   * Defaults match DIAL Core's own real, verified `ComplexResourceService.Settings`
+   * (maxFiles=100, maxFileSizeBytes=1 MiB, maxTotalBytes=16 MiB — read directly from
+   * epam/ai-dial-core's source, not the epic issue's "~" approximations). The former
+   * `SKILL_UPLOAD_MAX_BYTES` (a compressed-ZIP Multer ingress cap) has been removed: no
+   * ZIP is ever uploaded on the create/update path since this change, so it has no
+   * remaining meaning. A deployment that still sets it has that value silently ignored
+   * (class-transformer only maps decorated properties) rather than the boot failing.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  SKILL_UPLOAD_MAX_FILES?: number = 100;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  SKILL_FILE_UPLOAD_MAX_BYTES?: number = 1_048_576;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  SKILL_UPLOAD_MAX_TOTAL_BYTES?: number = 16_777_216;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  SKILL_TRANSFER_TIMEOUT_MS?: number = 60_000;
+
+  /*
+   * Compressed-ZIP ingress cap for `POST /api/v1/skills/import` (see
+   * openspec/changes/add-skill-archive-import/design.md D8). Distinct from
+   * the retired `SKILL_UPLOAD_MAX_BYTES`: that variable capped a ZIP upload
+   * on the create/update path, which no longer accepts ZIP at all; this one
+   * bounds the new, additive archive-import endpoint's compressed upload
+   * before extraction. Default (20 MiB) is deliberately larger than
+   * `SKILL_UPLOAD_MAX_TOTAL_BYTES` (16 MiB decompressed) since ZIP container
+   * overhead and poorly-compressible content (Markdown, scripts) mean the
+   * compressed size can approach the uncompressed total.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  SKILL_ARCHIVE_UPLOAD_MAX_BYTES?: number = 20_971_520;
 }

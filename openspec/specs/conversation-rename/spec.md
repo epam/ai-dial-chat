@@ -1,5 +1,9 @@
 # Spec: conversation-rename
 
+## Purpose
+
+The rename popup for conversations, its entry in the action menu, and the optimistic context update behind it.
+
 ## Requirements
 
 ### Requirement: RenameConversationPopup component renders a DialPopup with a text input and Save/Cancel actions

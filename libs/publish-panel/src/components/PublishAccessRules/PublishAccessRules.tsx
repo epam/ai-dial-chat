@@ -1,21 +1,20 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonVariant,
   DIAL_ICON_SIZE,
   GhostButton,
   GhostIconButton,
   Notification,
   NotificationType,
   NotificationVariant,
-  PrimaryButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconPlus, IconX } from '@tabler/icons-react';
-import { FC, useEffect, useRef, useState } from 'react';
+import { IconPlus, IconTrashX } from '@tabler/icons-react';
+import { FC, useEffect, useId, useRef, useState } from 'react';
 import { PublicationRule, PublicationRuleFunction } from '../../models/publish';
-import {
-  PublishAccessRuleEditor,
-  PublishAccessRuleEditorLabels,
-} from '../PublishAccessRuleEditor/PublishAccessRuleEditor';
+import type { PublishAccessRuleEditorLabels } from '../../models/publish-access-rule-editor';
+import type { PublishAccessRulesStyles } from '../../models/publish-access-rules-styles';
+import { PublishAccessRuleEditor } from '../PublishAccessRuleEditor/PublishAccessRuleEditor';
 import styles from './PublishAccessRules.module.scss';
 
 const MAX_RULES_DEFAULT = 20;
@@ -24,6 +23,14 @@ const MAX_RULES_DEFAULT = 20;
 export interface PublishAccessRulesLabels {
   /** Section heading. Default: `'Allow access if all match'`. */
   heading?: string;
+  /** Hint under the heading naming the destination folder the rules apply to; `{folder}` is replaced. Default: `'These rules apply to "{folder}". Selecting another folder loads that folder\'s own rules instead.'`. */
+  folderScopeHint?: string;
+  /** Hint under the heading shown while no destination folder is selected. Default: `'Access rules apply to the destination folder — pick a folder above to set its rules.'`. */
+  noFolderScopeHint?: string;
+  /** Warning shown when rules exist while no destination folder is selected. Default: `'These rules have no destination yet. Select a folder above to apply them.'`. */
+  rulesWithoutFolderWarning?: string;
+  /** Hint next to a disabled "Add rule" trigger once `maxRules` is reached; `{max}` is replaced. Default: `'Rule limit reached ({max}). Remove a rule to add another.'`. */
+  maxRulesReachedLabel?: string;
   /** Label for the trigger that opens the single-rule editor. Default: `'Add rule'`. */
   addRuleLabel?: string;
   /** Label for the control that removes every rule; shown only when at least one rule exists. Default: `'Clear all'`. */
@@ -62,6 +69,8 @@ export interface PublishAccessRulesProps {
   onRulesChange: (rules: PublicationRule[]) => void;
   /** Options offered in the single-rule editor's source picker. */
   sourceOptions: string[];
+  /** Name of the destination folder these rules apply to; `undefined` while no folder is selected. */
+  folderName?: string;
   /** Disables every control in the section, e.g. while a publish request is in flight. Default: `false`. */
   disabled?: boolean;
   /** Whether existing rules are currently being fetched for the selected folder. Default: `false`. */
@@ -76,26 +85,16 @@ export interface PublishAccessRulesProps {
   labels?: PublishAccessRulesLabels;
   /** Typography class for the section heading. Default: `'dial-body-semi-text'`. */
   headingClassName?: string;
+  /** Typography class for the folder-scope and rule-limit hints. Default: `'dial-small-text'`. */
+  hintClassName?: string;
   /** Typography class for the loading message. Default: `'dial-small-text'`. */
   loadingClassName?: string;
   /** Typography class for each rule chip's text. Default: `'dial-small-text'`. */
   ruleTextClassName?: string;
-  /** Color overrides. */
-  colors?: PublishAccessRulesColors;
-}
-
-/** Color overrides for {@link PublishAccessRules}, applied as CSS custom properties with app theme fallbacks. */
-export interface PublishAccessRulesColors {
-  /** Rule row border color. Fallback: `--stroke-tertiary`. */
-  ruleBorder?: string;
-  /** Rule row background color. Fallback: `--bg-layer-sunken`. */
-  ruleBackground?: string;
-  /** Section heading text color. Fallback: `--text-primary`. */
-  headingText?: string;
-  /** Loading message text color. Fallback: `--text-secondary`. */
-  loadingText?: string;
-  /** Rule chip text color. Fallback: `--text-primary`. */
-  ruleText?: string;
+  /** Typography class for the emphasised rule source inside each chip. Default: `'dial-small-semi-text'`. */
+  ruleSourceClassName?: string;
+  /** Style overrides. */
+  styles?: PublishAccessRulesStyles;
 }
 
 const functionLabel = (
@@ -107,17 +106,12 @@ const functionLabel = (
   return labels.regex;
 };
 
-/**
- * Chip list for the access-rules section: renders each rule as a removable
- * chip, an "Add rule" trigger opening {@link PublishAccessRuleEditor}, and a
- * "Clear all" control shown only when rules are present. Announces add,
- * remove, clear, and pre-fill-from-folder-selection through a shared
- * `aria-live="polite"` status region.
- */
+/** Renders access rules with controls to add, remove, and clear them. */
 export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
   rules,
   onRulesChange,
   sourceOptions,
+  folderName,
   disabled = false,
   isLoading = false,
   hasLoadError = false,
@@ -125,20 +119,29 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
   maxTargetsPerRule,
   labels = {},
   headingClassName = 'dial-body-semi-text',
+  hintClassName = 'dial-small-text',
   loadingClassName = 'dial-small-text',
   ruleTextClassName = 'dial-small-text',
-  colors,
+  ruleSourceClassName = 'dial-small-semi-text',
+  styles: stylesProp = {},
 }) => {
-  const cssVars = buildCssVars({
-    '--par-rule-border': colors?.ruleBorder,
-    '--par-rule-bg': colors?.ruleBackground,
-    '--par-heading-text': colors?.headingText,
-    '--par-loading-text': colors?.loadingText,
-    '--par-rule-text': colors?.ruleText,
-  });
+  const cssVars = {
+    ...buildCssVars({
+      '--par-rule-bg': stylesProp.colors?.ruleBackground,
+      '--par-heading-text': stylesProp.colors?.headingText,
+      '--par-hint-text': stylesProp.colors?.hintText,
+      '--par-loading-text': stylesProp.colors?.loadingText,
+      '--par-rule-text': stylesProp.colors?.ruleText,
+    }),
+    ...stylesProp.cssVars,
+  };
 
   const {
     heading = 'Allow access if all match',
+    folderScopeHint = 'These rules apply to "{folder}". Selecting another folder loads that folder\'s own rules instead.',
+    noFolderScopeHint = 'Access rules apply to the destination folder — pick a folder above to set its rules.',
+    rulesWithoutFolderWarning = 'These rules have no destination yet. Select a folder above to apply them.',
+    maxRulesReachedLabel = 'Rule limit reached ({max}). Remove a rule to add another.',
     addRuleLabel = 'Add rule',
     clearAllLabel = 'Clear all',
     orSeparatorLabel = 'Or',
@@ -156,6 +159,7 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
     editorLabels,
   } = labels;
 
+  const headingId = useId();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   /*
@@ -173,12 +177,12 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
     wasLoadingRef.current = isLoading;
   }, [isLoading, rules, rulesLoadedAnnouncement]);
 
-  const openEditor = () => {
+  const handleOpenEditor = () => {
     previousFocusRef.current = document.activeElement as HTMLElement | null;
     setIsEditorOpen(true);
   };
 
-  const closeEditor = () => {
+  const handleCloseEditor = () => {
     setIsEditorOpen(false);
     previousFocusRef.current?.focus?.();
   };
@@ -186,7 +190,7 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
   const handleAddRule = (rule: PublicationRule) => {
     onRulesChange([...rules, rule]);
     setStatusMessage(ruleAddedAnnouncement);
-    closeEditor();
+    handleCloseEditor();
   };
 
   const handleRemoveRule = (index: number) => {
@@ -205,17 +209,53 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
     regex: regexFunctionLabel,
   };
 
-  const isAddDisabled = disabled || rules.length >= maxRules;
+  const isMaxRulesReached = rules.length >= maxRules;
+  const isAddDisabled = disabled || isMaxRulesReached;
+  const hasFolder = folderName != null && folderName !== '';
 
   return (
-    <div className={mergeClasses(disabled && 'pointer-events-none opacity-60')}>
+    <div
+      role="group"
+      aria-labelledby={headingId}
+      style={cssVars}
+      className={mergeClasses(disabled && 'pointer-events-none opacity-60')}
+    >
       <span role="status" aria-live="polite" className="sr-only">
         {statusMessage}
       </span>
 
-      <div className={mergeClasses('mb-2', headingClassName, styles.heading)}>
-        {heading}
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <div
+          id={headingId}
+          className={mergeClasses(headingClassName, styles.heading)}
+        >
+          {heading}
+        </div>
+        {rules.length > 0 && (
+          <GhostButton
+            variant={ButtonVariant.Primary}
+            label={clearAllLabel}
+            onClick={handleClearAll}
+            disabled={disabled}
+          />
+        )}
       </div>
+
+      <p className={mergeClasses('mb-2', hintClassName, styles.hint)}>
+        {hasFolder
+          ? folderScopeHint.replace('{folder}', folderName)
+          : noFolderScopeHint}
+      </p>
+
+      {rules.length > 0 && !hasFolder && (
+        <div className="mb-2">
+          <Notification
+            type={NotificationType.SectionMessage}
+            variant={NotificationVariant.Warning}
+            message={rulesWithoutFolderWarning}
+          />
+        </div>
+      )}
 
       {isLoading && (
         <div
@@ -250,9 +290,8 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
             return (
               <li
                 key={index}
-                style={cssVars}
                 className={mergeClasses(
-                  'flex items-center justify-between gap-2 rounded-lg border px-3 py-2',
+                  'flex items-center justify-between gap-2 rounded-lg px-3 py-2',
                   styles.ruleRow,
                 )}
               >
@@ -263,11 +302,11 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
                     styles.ruleText,
                   )}
                 >
-                  <span className="font-semibold">{rule.source}</span>{' '}
+                  <span className={ruleSourceClassName}>{rule.source}</span>{' '}
                   {functionLabel(rule.function, functionLabels)}: {targetsText}
                 </span>
                 <GhostIconButton
-                  icon={<IconX size={DIAL_ICON_SIZE.SM} aria-hidden />}
+                  icon={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
                   aria-label={removeAriaLabel}
                   onClick={() => handleRemoveRule(index)}
                   disabled={disabled}
@@ -282,28 +321,35 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
         <PublishAccessRuleEditor
           sourceOptions={sourceOptions}
           onSave={handleAddRule}
-          onCancel={closeEditor}
+          onCancel={handleCloseEditor}
           disabled={disabled}
           maxTargets={maxTargetsPerRule}
           labels={editorLabels}
+          styles={stylesProp.editor}
         />
       )}
 
-      <div className="flex items-center gap-2">
-        <PrimaryButton
+      <div className="flex flex-wrap items-center gap-2">
+        {/*
+         * Plain `GhostButton` stands in for a tertiary button: the installed
+         * kit declares `ButtonVariant.Tertiary` but ships no CSS for it yet on
+         * the real Button/GhostButton, so it would silently render as
+         * primary-solid. Switch to `variant={ButtonVariant.Tertiary}` once the
+         * kit adds the style.
+         */}
+        <GhostButton
           label={addRuleLabel}
           iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
-          onClick={openEditor}
+          onClick={handleOpenEditor}
           disabled={isAddDisabled}
         />
-        {rules.length > 0 && (
-          <GhostButton
-            label={clearAllLabel}
-            onClick={handleClearAll}
-            disabled={disabled}
-          />
-        )}
       </div>
+
+      {isMaxRulesReached && (
+        <p className={mergeClasses('mt-2', hintClassName, styles.hint)}>
+          {maxRulesReachedLabel.replace('{max}', String(maxRules))}
+        </p>
+      )}
     </div>
   );
 };

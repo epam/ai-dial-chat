@@ -472,7 +472,7 @@ describe('AppEditorIframe — toolset login request', () => {
     );
   });
 
-  const renderAndSpyOnIframe = () => {
+  const mountIframeAndSpyOnPostMessage = () => {
     renderIframe();
     const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
     return vi.spyOn(iframe.contentWindow as Window, 'postMessage');
@@ -483,7 +483,7 @@ describe('AppEditorIframe — toolset login request', () => {
       configurable: true,
       value: vi.fn(() => null),
     });
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLoginRequest('toolsets/b/my__1.0.0');
 
@@ -507,7 +507,7 @@ describe('AppEditorIframe — toolset login request', () => {
       toolset: 't',
       authSettings: { authenticationType: 'API_KEY' },
     } as DialToolsetDto);
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLoginRequest('toolsets/b/my__1.0.0');
 
@@ -530,7 +530,7 @@ describe('AppEditorIframe — toolset login request', () => {
       toolset: 't',
       authSettings: { authenticationType: 'API_KEY' },
     } as DialToolsetDto);
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLoginRequest('toolsets/b/My Toolset__1.0.0');
 
@@ -553,7 +553,7 @@ describe('AppEditorIframe — toolset login request', () => {
 
   it('closes the popup and posts toolset-fetch-failed when getToolset rejects', async () => {
     vi.mocked(toolsetsApi.getToolset).mockRejectedValue(new Error('boom'));
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLoginRequest('toolsets/b/my__1.0.0');
 
@@ -579,7 +579,7 @@ describe('AppEditorIframe — toolset login request', () => {
         authorizationEndpoint: 'https://auth.example.com/authorize',
       },
     } as DialToolsetDto);
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLoginRequest('toolsets/b/my__1.0.0');
 
@@ -624,7 +624,7 @@ describe('AppEditorIframe — toolset login request', () => {
         authSettings: { userLevelAuthStatus: 'SIGNED_IN' },
       },
     } as never);
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLoginRequest('toolsets/b/my__1.0.0');
 
@@ -667,7 +667,7 @@ describe('AppEditorIframe — toolset login request', () => {
         authorizationEndpoint: 'https://auth.example.com/authorize',
       },
     } as DialToolsetDto);
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLoginRequest('toolsets/b/my__1.0.0');
 
@@ -708,7 +708,7 @@ describe('AppEditorIframe — toolset login request', () => {
         toolset: 't',
         authSettings: { userLevelAuthStatus: 'SIGNED_IN' },
       } as DialToolsetDto);
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLoginRequest('toolsets/b/my__1.0.0');
 
@@ -745,7 +745,7 @@ describe('AppEditorIframe — toolset login request', () => {
         toolset: 't',
         authSettings: { userLevelAuthStatus: 'SIGNED_OUT' },
       } as DialToolsetDto);
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLoginRequest('toolsets/b/my__1.0.0');
 
@@ -778,7 +778,7 @@ describe('AppEditorIframe — toolset logout request', () => {
     );
   };
 
-  const renderAndSpyOnIframe = () => {
+  const mountIframeAndSpyOnPostMessage = () => {
     renderIframe();
     const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
     return vi.spyOn(iframe.contentWindow as Window, 'postMessage');
@@ -805,7 +805,7 @@ describe('AppEditorIframe — toolset logout request', () => {
 
   it('percent-encodes the raw toolsetId, calls logoutToolset without authenticationType, and posts a success result echoing the raw id', async () => {
     vi.mocked(toolsetsApi.logoutToolset).mockResolvedValue({ success: true });
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLogoutRequest('toolsets/b/My Toolset__1.0.0');
 
@@ -840,7 +840,7 @@ describe('AppEditorIframe — toolset logout request', () => {
         authSettings: { userLevelAuthStatus: 'SIGNED_OUT' },
       },
     } as never);
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLogoutRequest('toolsets/b/my__1.0.0');
 
@@ -861,7 +861,7 @@ describe('AppEditorIframe — toolset logout request', () => {
     vi.mocked(toolsetsApi.logoutToolset).mockRejectedValue(
       new Error('network error'),
     );
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     sendLogoutRequest('toolsets/b/my__1.0.0');
 
@@ -895,7 +895,7 @@ describe('AppEditorIframe — toolset logout request', () => {
 });
 
 describe('AppEditorIframe — toolset login broadcast', () => {
-  const renderAndSpyOnIframe = () => {
+  const mountIframeAndSpyOnPostMessage = () => {
     renderIframe();
     const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
     return vi.spyOn(iframe.contentWindow as Window, 'postMessage');
@@ -928,7 +928,7 @@ describe('AppEditorIframe — toolset login broadcast', () => {
         authSettings: { userLevelAuthStatus: 'SIGNED_IN' },
       },
     } as never);
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     emitToolsetLoginSuccess({
       toolsetId: 'toolsets/b/My%20Toolset__1.0.0',
@@ -955,7 +955,7 @@ describe('AppEditorIframe — toolset login broadcast', () => {
   });
 
   it('still posts a success result when the credentials refresh fails', async () => {
-    const postMessageSpy = renderAndSpyOnIframe();
+    const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
     emitToolsetLoginSuccess({
       toolsetId: 'toolsets/b/my__1.0.0',

@@ -1,5 +1,8 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
-import type { PublishHistoryEntryDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  PublishConversationResultDto,
+  PublishHistoryEntryDto,
+} from '@epam/ai-dial-chat-api-client';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PublishAccessRulesLabels,
   PublishHistoryEntry,
@@ -17,6 +20,8 @@ const PUBLISHABLE_ENTITY_TYPES: Partial<
   [CatalogEntityType.Model]: CatalogPublishEntityType.Model,
   [CatalogEntityType.Toolset]: CatalogPublishEntityType.Toolset,
   [CatalogEntityType.Agent]: CatalogPublishEntityType.Application,
+  [CatalogEntityType.Prompt]: CatalogPublishEntityType.Prompt,
+  [CatalogEntityType.Skill]: CatalogPublishEntityType.Skill,
 };
 
 /** Maps a catalog item's entity type to the publish API's entity-type path param, or `undefined` if that type is not publishable. */
@@ -38,6 +43,12 @@ export const getAccessRulesLabels = (
   t: TFunction,
 ): PublishAccessRulesLabels => ({
   heading: t(PublishAccessRulesI18nKeys.Heading),
+  folderScopeHint: t(PublishAccessRulesI18nKeys.FolderScopeHint),
+  noFolderScopeHint: t(PublishAccessRulesI18nKeys.NoFolderScopeHint),
+  rulesWithoutFolderWarning: t(
+    PublishAccessRulesI18nKeys.RulesWithoutFolderWarning,
+  ),
+  maxRulesReachedLabel: t(PublishAccessRulesI18nKeys.MaxRulesReachedLabel),
   addRuleLabel: t(PublishAccessRulesI18nKeys.AddRuleLabel),
   clearAllLabel: t(PublishAccessRulesI18nKeys.ClearAllLabel),
   orSeparatorLabel: t(PublishAccessRulesI18nKeys.OrSeparatorLabel),
@@ -68,6 +79,9 @@ export const getAccessRulesLabels = (
     regexOptionLabel: t(PublishAccessRulesI18nKeys.RegexFunctionLabel),
     targetsLabel: t(PublishAccessRulesI18nKeys.TargetsLabel),
     targetsPlaceholder: t(PublishAccessRulesI18nKeys.TargetsPlaceholder),
+    targetsHintLabel: t(PublishAccessRulesI18nKeys.TargetsHintLabel),
+    requiredFieldError: t(PublishAccessRulesI18nKeys.RequiredFieldError),
+    targetsRequiredError: t(PublishAccessRulesI18nKeys.TargetsRequiredError),
     patternLabel: t(PublishAccessRulesI18nKeys.PatternLabel),
     patternPlaceholder: t(PublishAccessRulesI18nKeys.PatternPlaceholder),
     invalidRegexError: t(PublishAccessRulesI18nKeys.InvalidRegexError),
@@ -75,4 +89,14 @@ export const getAccessRulesLabels = (
     cancelLabel: t(ButtonsI18nKeys.Cancel),
     dialogAriaLabel: t(PublishAccessRulesI18nKeys.DialogAriaLabel),
   },
+});
+
+/** Maps a conversation publish-history API response entry to the publish panel's `PublishHistoryEntry` model. */
+export const mapPublishConversationResultDto = (
+  dto: PublishConversationResultDto,
+): PublishHistoryEntry => ({
+  /* A conversation carries no version, so any entry for a folder already means
+   * "published here" — see `usePublishFlow`. */
+  publishedAt: Date.parse(dto.publishedAt),
+  folderPath: dto.folderPath.split('/').filter(Boolean),
 });

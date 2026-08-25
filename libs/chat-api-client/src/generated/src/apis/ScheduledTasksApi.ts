@@ -27,6 +27,10 @@ export interface CreateScheduledTaskRequest {
   createScheduledTaskBodyDto: CreateScheduledTaskBodyDto;
 }
 
+export interface DeleteScheduledTaskRequest {
+  scheduleId: string;
+}
+
 export interface GetScheduledTaskRequest {
   scheduleId: string;
 }
@@ -111,6 +115,55 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
       initOverrides,
     );
     return await response.value();
+  }
+
+  /**
+   * Deletes a DIAL Scheduler schedule for the authenticated session user. DIAL Scheduler alone decides whether the schedule is hard-deleted (no run history) or soft-deleted (is_deleted: true, run history preserved) — the BFF never predicts or requests a specific outcome. Invalidates the scheduled tasks list cache on success.
+   * Delete a scheduled task
+   */
+  async deleteScheduledTaskRaw(
+    requestParameters: DeleteScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['scheduleId'] == null) {
+      throw new runtime.RequiredError(
+        'scheduleId',
+        'Required parameter "scheduleId" was null or undefined when calling deleteScheduledTask().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/scheduled-tasks/{scheduleId}`;
+    urlPath = urlPath.replace(
+      `{${'scheduleId'}}`,
+      encodeURIComponent(String(requestParameters['scheduleId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Deletes a DIAL Scheduler schedule for the authenticated session user. DIAL Scheduler alone decides whether the schedule is hard-deleted (no run history) or soft-deleted (is_deleted: true, run history preserved) — the BFF never predicts or requests a specific outcome. Invalidates the scheduled tasks list cache on success.
+   * Delete a scheduled task
+   */
+  async deleteScheduledTask(
+    requestParameters: DeleteScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.deleteScheduledTaskRaw(requestParameters, initOverrides);
   }
 
   /**

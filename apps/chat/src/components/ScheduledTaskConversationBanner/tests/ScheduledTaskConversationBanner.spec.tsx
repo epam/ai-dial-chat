@@ -90,12 +90,12 @@ describe('ScheduledTaskConversationBanner', () => {
       } as ScheduledTaskRunDto,
     ];
 
-    const { container } = renderBanner();
+    renderBanner();
 
     expect(screen.getByText('Weekly digest')).toBeTruthy();
-    expect(container.querySelector('span')?.textContent).toContain(
-      'scheduledTasks.detail.historyDurationSuffix',
-    );
+    expect(
+      screen.getByText(/scheduledTasks\.detail\.historyDurationSuffix/),
+    ).toBeTruthy();
   });
 
   it('shows a loading placeholder and no task name while loading', () => {
@@ -134,6 +134,6 @@ describe('ScheduledTaskConversationBanner', () => {
 
     const { container } = renderBanner();
 
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
   });
 });

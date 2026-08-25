@@ -2,8 +2,10 @@ import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { PublicationRuleFunction } from '@epam/ai-dial-publish-panel';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { publishConversation } from '../../../server-api/conversation-publish.api';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
@@ -117,7 +119,9 @@ const baseFoldersResult = {
   hasPublishWriteAccess: () => true,
 };
 
-const renderContainer = (props?: Partial<{ isOpen: boolean }>) =>
+const renderContainer = (
+  props?: Partial<ComponentProps<typeof PublishConversationPanelContainer>>,
+) =>
   render(
     <PublishConversationPanelContainer
       isOpen
@@ -131,11 +135,9 @@ const renderContainer = (props?: Partial<{ isOpen: boolean }>) =>
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(usePublishFolders).mockReturnValue(baseFoldersResult);
-  vi.mocked(useNotification).mockReturnValue({
-    notifications: [],
-    showNotification: mockShowNotification,
-    dismissNotification: vi.fn(),
-  });
+  vi.mocked(useNotification).mockReturnValue(
+    createNotificationContextValue(mockShowNotification),
+  );
   useAppConfigMock.mockReturnValue({
     config: { publicationFilterSources: ['title', 'role', 'dial_roles'] },
   });
@@ -201,11 +203,11 @@ describe('PublishConversationPanelContainer', () => {
       );
     });
     await waitFor(() => {
-      expect(mockShowNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'conversationPublish.successMessage',
-        }),
-      );
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: 'success',
+        title: 'entityNotifications.conversation.publishRequestedTitle',
+        message: 'entityNotifications.conversation.publishRequested',
+      });
       expect(onClose).toHaveBeenCalled();
     });
   });
@@ -296,8 +298,36 @@ describe('PublishConversationPanelContainer', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('never reports an existing publication in the folder (version history is not fetched, see GH issue #7897)', async () => {
+  it('reports no existing publication for a folder absent from the handed-down history', async () => {
     await renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+
+    expect(screen.getByText('existing:false')).toBeTruthy();
+  });
+
+  /*
+   * `allowReplace={false}` became observable once history stopped being
+   * hardcoded empty: a conversation carries no version, so a second publish
+   * to the same folder would create a duplicate public copy rather than an
+   * update. See the change's design.md D6.
+   */
+  it('reports an existing publication for a folder the handed-down history names', async () => {
+    await renderContainer({
+      history: [{ publishedAt: 1_700_000_000_000, folderPath: ['Shared'] }],
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+
+    expect(screen.getByText('existing:true')).toBeTruthy();
+  });
+
+  it('does not treat a loading or failed history as an existing publication', async () => {
+    await renderContainer({ isHistoryLoading: true, hasHistoryError: true });
 
     await userEvent.click(
       screen.getByRole('button', { name: 'Select Shared' }),

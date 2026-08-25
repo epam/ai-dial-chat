@@ -11,7 +11,11 @@ import { PromptService } from '../prompt.service';
 describe('PromptService facade', () => {
   const makeService = () => {
     const personalService = {
-      listPrompts: vi.fn().mockResolvedValue('personal-list'),
+      listPrompts: vi.fn().mockResolvedValue({
+        prompts: ['personal'],
+        folders: ['personal-folder'],
+        sharedWithMe: ['shared'],
+      }),
       getSharedPrompts: vi.fn().mockResolvedValue('personal-shared'),
       getPrompt: vi.fn().mockResolvedValue('personal-get'),
       createPrompt: vi.fn().mockResolvedValue('personal-create'),
@@ -19,7 +23,10 @@ describe('PromptService facade', () => {
       deletePrompt: vi.fn().mockResolvedValue(undefined),
     };
     const publicService = {
-      listPublicPrompts: vi.fn().mockResolvedValue('public-list'),
+      listPublicPrompts: vi.fn().mockResolvedValue({
+        prompts: ['public'],
+        folders: ['public-folder'],
+      }),
       getPublicPrompt: vi.fn().mockResolvedValue('public-get'),
     };
     const folderService = {
@@ -38,13 +45,33 @@ describe('PromptService facade', () => {
     return { service, personalService, publicService, folderService };
   };
 
-  it('delegates listPrompts to PromptsPersonalService', async () => {
-    const { service, personalService } = makeService();
+  it('aggregates personal, shared, and public prompts', async () => {
+    const { service, personalService, publicService } = makeService();
 
     const result = await service.listPrompts('token', 'bucket');
 
     expect(personalService.listPrompts).toHaveBeenCalledWith('token', 'bucket');
-    expect(result).toBe('personal-list');
+    expect(publicService.listPublicPrompts).toHaveBeenCalledWith('token');
+    expect(result).toEqual({
+      prompts: ['personal'],
+      folders: ['personal-folder'],
+      sharedWithMe: ['shared'],
+      publicPrompts: ['public'],
+      publicFolders: ['public-folder'],
+    });
+  });
+
+  it('keeps personal prompts when the public namespace is unavailable', async () => {
+    const { service, publicService } = makeService();
+    publicService.listPublicPrompts.mockRejectedValue(new Error('down'));
+
+    await expect(service.listPrompts('token', 'bucket')).resolves.toEqual({
+      prompts: ['personal'],
+      folders: ['personal-folder'],
+      sharedWithMe: ['shared'],
+      publicPrompts: [],
+      publicFolders: [],
+    });
   });
 
   it('delegates getSharedPrompts to PromptsPersonalService', async () => {
@@ -124,7 +151,10 @@ describe('PromptService facade', () => {
     const result = await service.listPublicPrompts('token');
 
     expect(publicService.listPublicPrompts).toHaveBeenCalledWith('token');
-    expect(result).toBe('public-list');
+    expect(result).toEqual({
+      prompts: ['public'],
+      folders: ['public-folder'],
+    });
   });
 
   it('delegates getPublicPrompt to PromptsPublicService', async () => {

@@ -21,6 +21,15 @@ export const normalizeConversationId = (id: string): string => {
 export const isSafePathSegment = (segment: string): boolean =>
   segment !== '' && segment !== '.' && segment !== '..';
 
+/**
+ * Rejects anything but a local, same-app path for a `returnUrl` query param
+ * (e.g. `EditorQuery.ReturnUrl`) — blocks absolute URLs and protocol-relative
+ * URLs (`//evil.example`), which a `navigate()` call would otherwise follow
+ * off-site.
+ */
+export const isSafeReturnUrl = (value: string): boolean =>
+  value.startsWith('/') && !value.startsWith('//');
+
 /*
  * Some callers (e.g. the accept-invitation flow) build this route from a
  * conversation id returned by the backend rather than one already known to

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# ui-feature-toggles Specification
+
+## Purpose
+
+`UiFeaturesContext`: the effective UI-feature set, its default baseline, server override, and overlay replace semantics.
+
+## Requirements
 
 ### Requirement: UiFeaturesContext owns the effective UI-feature set
 
@@ -27,7 +33,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 23 default-on keys and exclude the 15 default-off keys enumerated in `design.md`'s classification table (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `show-layout-dividers`, `attachments-manager`, `top-settings`, `top-chat-model-settings`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `hide-edit-user-message`... — the full 38-key membership is defined in `design.md`, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 38 keys, matching each surface's current unconditional behavior.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 24 default-on keys and exclude the 17 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `catalog-table-view`, `hide-change-agent`, `skills`... are default-off — the full 41-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 41 keys, matching each surface's current unconditional behavior.
 
 **RTL impact:** None for this requirement itself — individual owning-surface gates state their own RTL impact where relevant (see per-surface requirements below).
 
@@ -39,7 +45,7 @@
 #### Scenario: Modifier features default off
 
 - **WHEN** no `enabledUiFeatures` and no overlay override are present
-- **THEN** `isEnabled('hide-new-conversation')`, `isEnabled('disabled-send')`, `isEnabled('hide-user-menu')`, and `isEnabled('chat-header-border')` all return `false`
+- **THEN** `isEnabled('hide-new-conversation')`, `isEnabled('disabled-send')`, `isEnabled('hide-user-menu')`, and `isEnabled('catalog-table-view')` all return `false`
 
 #### Scenario: Non-overlay app is unaffected by this change when nothing is configured
 
@@ -119,7 +125,7 @@ The effective visibility of the voice-input UI affordance SHALL be `isEnabled('v
 
 ### Requirement: Each transferable feature key gates exactly one owning surface
 
-Each of the 38 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
+Each of the 41 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
 
 **Accessibility:** Conditionally-unmounted controls remove themselves from both the accessibility tree and the tab order by not rendering — no `aria-hidden` container with focusable descendants is introduced by this change.
 
@@ -127,10 +133,169 @@ Each of the 38 transferable `OverlayFeature` values SHALL gate exactly the ownin
 
 #### Scenario: Gating one feature does not affect another
 
-- **WHEN** `enabledUiFeatures` omits `'top-settings'` but includes everything else
+- **WHEN** `enabledUiFeatures` omits `'likes'` but includes everything else
 - **THEN** the new-conversation button's visibility (`hide-new-conversation`) is unaffected
 
 #### Scenario: hide-new-conversation hides only the new-conversation entry points
 
 - **WHEN** `isEnabled('hide-new-conversation')` is `true`
 - **THEN** the "New conversation" controls in `Header.tsx` and `ChatLayout.tsx` do not render, and no other header/layout control is affected
+
+### Requirement: chat-settings gates the settings entry everywhere; empty-chat-settings narrows it
+
+The "Chat settings" entry in the conversation input's "+" menu â and the modal (desktop) and bottom sheet (mobile) it opens, carrying temperature, system prompt, and response format â SHALL be removed wherever `isEnabled('chat-settings')` is `false`. `ConversationView` and `NewConversationComposer` SHALL both hide it by passing no `chatSettings` config to `ConversationInput`, the lib's own omit path, which drops the menu item and leaves the modal and sheet unmounted rather than hidden.
+
+`empty-chat-settings` SHALL narrow the entry to the empty-chat composer only: that screen renders it when **both** keys are enabled. A host that disables only `empty-chat-settings` therefore keeps the in-chat entry, its behavior before `chat-settings` existed, while a host that disables `chat-settings` loses the entry on every screen without having to name the narrower key too.
+
+**Accessibility:** The entry and its overlay are conditionally unmounted, so neither leaves an accessibility-tree node nor a tab stop.
+
+**i18n impact:** None â existing translated labels are shown or omitted.
+
+#### Scenario: chat-settings removes the entry from an active conversation
+
+- **WHEN** `isEnabled('chat-settings')` is `false`
+- **THEN** `ConversationView` passes no `chatSettings`, so the "+" menu renders no "Chat settings" item and neither the modal nor the bottom sheet is mounted
+
+#### Scenario: chat-settings overrides empty-chat-settings on the composer
+
+- **WHEN** `isEnabled('chat-settings')` is `false` and `isEnabled('empty-chat-settings')` is `true`
+- **THEN** the empty-chat composer still renders no "Chat settings" entry
+
+#### Scenario: empty-chat-settings alone leaves the in-chat entry
+
+- **WHEN** `isEnabled('empty-chat-settings')` is `false` and `isEnabled('chat-settings')` is `true`
+- **THEN** the empty-chat composer renders no "Chat settings" entry and an active conversation still renders it
+
+#### Scenario: Both entries render by default
+
+- **WHEN** no `enabledUiFeatures` and no overlay override are present
+- **THEN** both keys are default-on and the "Chat settings" entry renders on the composer and in an active conversation
+
+### Requirement: hide-navigation-menu removes the hamburger and the sheet it opens
+
+`isEnabled('hide-navigation-menu')` SHALL remove the mobile navigation menu in full: `Header` SHALL render no hamburger button, and `Navigation` SHALL leave `NavigationSheet` unmounted rather than merely closed. Both are required â the sheet carries focusable rows (nav items, profile, keyboard shortcuts, log out), so leaving it mounted-but-closed would keep them in the tab order once any other caller flipped its `isOpen`, and the hamburger is its only trigger.
+
+The key SHALL NOT affect the desktop navigation rail or its user menu, which `hide-user-menu` owns. It exists for embeds whose host portal already handles sign-in and sign-out, making the sheet's log-out row dead weight.
+
+**RTL impact:** None â the removed control and surface are omitted, not repositioned.
+
+**Accessibility:** Both the button and the sheet are absent from the DOM, so neither leaves an accessibility-tree node nor a tab stop.
+
+**i18n impact:** None â existing translated labels are omitted along with their controls.
+
+#### Scenario: The hamburger is gone
+
+- **WHEN** `isEnabled('hide-navigation-menu')` is `true`
+- **THEN** the header renders no button labelled by `NavigationI18nKeys.OpenMenu`
+
+#### Scenario: The sheet is unmounted even when asked to open
+
+- **WHEN** `isEnabled('hide-navigation-menu')` is `true` and `Navigation` receives `isOpen: true`
+- **THEN** no dialog is rendered and none of the sheet's rows are reachable
+
+#### Scenario: The desktop rail is untouched
+
+- **WHEN** `isEnabled('hide-navigation-menu')` is `true` and `isEnabled('hide-user-menu')` is `false`
+- **THEN** the desktop navigation rail still renders its user menu
+
+#### Scenario: The menu renders by default
+
+- **WHEN** no `enabledUiFeatures` and no overlay override are present
+- **THEN** the key is default-off, so the hamburger renders and opens the sheet
+
+### Requirement: hide-keyboard-shortcuts removes the entry on both profile surfaces
+
+`isEnabled('hide-keyboard-shortcuts')` SHALL remove the Keyboard shortcuts entry from the desktop user menu (`UserMenu`) and from the mobile profile sheet (`ProfilePageContent`). `isEnabled('hide-user-settings')` SHALL also remove it from both, so the two surfaces agree; neither key SHALL affect the other settings entries the other key governs — with only `hide-keyboard-shortcuts` enabled the language selector SHALL still render.
+
+Because Keyboard shortcuts is the mobile sheet's only settings entry, hiding it SHALL drop that entry's list and its trailing divider together, leaving no empty list or stray rule.
+
+Hiding the entry SHALL NOT change send behavior: the `SendOnEnter` preference is read from storage by `ConversationView` and `NewConversationComposer` independently of this key, and continues to resolve to its stored value, defaulting to `SendOnEnter.Enter`.
+
+**Accessibility:** The entry is not rendered, so it leaves neither an accessibility-tree node nor a tab stop.
+
+**i18n impact:** None — the existing translated label is shown or omitted; no new strings.
+
+#### Scenario: The entry disappears from the user menu
+
+- **WHEN** `isEnabled('hide-keyboard-shortcuts')` is `true` and the user opens the user menu
+- **THEN** no Keyboard shortcuts entry is rendered, and the language entry still is
+
+#### Scenario: hide-user-settings hides it too
+
+- **WHEN** `isEnabled('hide-user-settings')` is `true`
+- **THEN** the Keyboard shortcuts entry is absent from both the user menu and the mobile profile sheet
+
+#### Scenario: Send-on-Enter keeps working while the entry is hidden
+
+- **WHEN** `isEnabled('hide-keyboard-shortcuts')` is `true` and the stored preference is `SendOnEnter.MetaEnter`
+- **THEN** the conversation input still sends on `⌘`/`Ctrl`+Enter
+
+### Requirement: hide-conversations-filter removes the panel's source filter row
+
+`isEnabled('hide-conversations-filter')` SHALL remove the conversations panel's `FilterTabs` row (All / My chats / Shared / Organization). `ConversationPanelView` SHALL express this by passing `isFilterTabsHidden` to `ConversationPanel`; the lib SHALL take that decision as a boolean prop and SHALL NOT read the feature set itself, per the library-isolation rule.
+
+Hiding the control SHALL NOT filter the list: the active tab stays `FilterTab.All`, so every group — Pinned, My chats, Shared, Organization — remains listed. The row is currently the only surface that moves the list off `All` — no route, URL, or host message sets `activeFilter` to anything else — so with the row hidden the panel shows all sources permanently. `labels.filterLabels` stays a required prop whether or not the row renders.
+
+**Accessibility:** The row is not rendered, so it leaves neither an accessibility-tree node nor a tab stop.
+
+**i18n impact:** None — the existing translated tab labels are shown or omitted; no new strings.
+
+#### Scenario: The filter row is gone but every group still lists
+
+- **WHEN** `isEnabled('hide-conversations-filter')` is `true`
+- **THEN** the panel renders no filter tabs, and conversations from every source still appear under their group headings
+
+#### Scenario: The filter row renders by default
+
+- **WHEN** no `enabledUiFeatures` and no overlay override are present
+- **THEN** the panel renders the four filter tabs, because the key is default-off
+
+### Requirement: An unusable agent selector is removed, not dimmed
+
+The in-chat agent selector SHALL NOT render when the user cannot act on it. `isEnabled('hide-change-agent')` and `isEnabled('disallow-change-agent')` SHALL each remove the control from `ConversationView`'s conversation input entirely, by passing no `deployments` to `ConversationInput` — the lib's own hide path, which also leaves the send button enabled because `Input` reads an absent selector as a resolved model. Neither key SHALL render the selector greyed out: a dimmed icon carrying a caret advertises a menu that never opens, and where the deployment cannot be changed the icon carries no actionable information.
+
+A pinned `fixedModel` SHALL keep rendering the disabled selector, because the app editor's preview pane shows the same chip through `NewConversationComposer` in its empty state and would otherwise lose it after the first message. The empty-chat composer keeps its own separate key, `hide-empty-chat-change-agent`.
+
+**Accessibility:** The removed control leaves neither an accessibility-tree node nor a tab stop, replacing a `pointer-events-none` element that was still exposed to assistive tech.
+
+**i18n impact:** None — the selector's existing translated labels are shown or omitted; no new strings.
+
+#### Scenario: hide-change-agent removes the in-chat selector
+
+- **WHEN** `isEnabled('hide-change-agent')` is `true`
+- **THEN** the conversation input renders no agent selector, and the send button stays enabled
+
+#### Scenario: disallow-change-agent removes the selector rather than dimming it
+
+- **WHEN** `isEnabled('disallow-change-agent')` is `true`
+- **THEN** the conversation input renders no agent selector — in particular no greyed-out icon with a caret
+
+#### Scenario: A pinned model still shows its disabled selector
+
+- **WHEN** `ConversationView` receives a `fixedModel` and neither agent-selector key is enabled
+- **THEN** the selector renders disabled with the pinned model's icon, matching what the composer shows before the first message
+
+### Requirement: A key that gates a route hides both the entry point and the route
+
+A feature key whose owning surface is a whole route SHALL gate the navigation entry and the route element together, so that a direct URL cannot reach a section whose entry point is hidden. `file-manager` SHALL gate the File Manager navigation entry (desktop `Navigation` and mobile `NavPageContent`, both through the shared `useVisibleNavItems` hook) and the `ROUTES.FileManager` route element, which SHALL redirect to `ROUTES.Root` with `replace` when the key is disabled.
+
+Route gating SHALL NOT be treated as an authorization boundary: the backend SHALL continue to enforce access to the underlying data and operations regardless of which keys are enabled.
+
+**Accessibility:** A hidden navigation entry is not rendered at all, so it leaves neither an accessibility-tree node nor a tab stop.
+
+**i18n impact:** None — the entry's existing translated label is shown or omitted; no new strings.
+
+#### Scenario: file-manager hides the navigation entry on both layouts
+
+- **WHEN** `isEnabled('file-manager')` is `false`
+- **THEN** neither the desktop sidebar nor the mobile navigation sheet renders a File Manager entry, and every other navigation entry is unaffected
+
+#### Scenario: A direct /files URL does not bypass the hidden entry
+
+- **WHEN** `isEnabled('file-manager')` is `false` and the user navigates directly to `/files`
+- **THEN** the app redirects to `/` with `replace`, and `DialFileManagerPage` is never mounted
+
+#### Scenario: file-manager is independent of the in-chat attachment flow
+
+- **WHEN** `isEnabled('file-manager')` is `false` and `isEnabled('input-files')` is `true`
+- **THEN** the conversation input still renders the attach-file button and can open the file-manager modal — only the standalone `/files` section is gone

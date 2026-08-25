@@ -1,6 +1,10 @@
 # Spec: spa-auth-session
 
-## ADDED Requirements
+## Purpose
+
+SPA session bootstrap, cookie-backed API requests, 401 handling, and the routing gates around a resolved session.
+
+## Requirements
 
 ### Requirement: SPA session bootstrap on application mount
 

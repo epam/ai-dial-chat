@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import type { DragEvent, FC } from 'react';
 import { FilterTab } from '../../types/conversation-classification';
@@ -15,7 +15,7 @@ export interface ConversationGroupHeaderProps {
   onToggle: () => void;
   /** `id` of the virtualized list container this header's rows belong to, referenced via `aria-controls`. */
   listId: string;
-  /** Typography class applied to the header button. Defaults to `'dial-tiny-semi-text uppercase'`. */
+  /** Typography class applied to the header button. Defaults to `'dial-tiny-lead-text'`. */
   className?: string;
   /** When provided the header acts as a drag-and-drop drop zone. */
   dropZoneGroupKey?: FilterTab;
@@ -99,7 +99,7 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
           aria-hidden
         />
       )}
-      <DialEllipsisTooltip text={label} />
+      <EllipsisTooltip text={label} />
     </button>
   );
 };

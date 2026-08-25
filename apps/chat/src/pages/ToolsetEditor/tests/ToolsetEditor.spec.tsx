@@ -9,6 +9,7 @@ import { ToolsetAuthTypes, WithLogin } from '../../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ROUTES } from '../../../types/routes';
 import ToolsetEditor from '../ToolsetEditor';
@@ -235,11 +236,9 @@ describe('ToolsetEditor', () => {
       id: 'toolsets/b/my__0.0.1',
     });
     vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification: mockShowNotification,
-      dismissNotification: vi.fn(),
-    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
     mockRefetchToolsets.mockResolvedValue(undefined);
     vi.mocked(useDeployments).mockReturnValue({
       refetchToolsets: mockRefetchToolsets,
@@ -380,6 +379,10 @@ describe('ToolsetEditor', () => {
       await screen.findByText('ensure-saved-result-toolsets/b/my__0.0.1'),
     ).toBeTruthy();
     expect(toolsetsApi.createToolset).toHaveBeenCalledOnce();
+    /* Persisting the draft to advance a step is not an outcome the user asked about. */
+    expect(mockShowNotification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'success' }),
+    );
   });
 
   it('resolves onEnsureSaved to the already-persisted id without another request when nothing changed', async () => {
@@ -432,6 +435,11 @@ describe('ToolsetEditor', () => {
       ),
     );
     expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'entityNotifications.toolset.createdTitle',
+      message: 'entityNotifications.toolset.created',
+    });
   });
 
   it('returns to the requested screen after saving a new OAuth toolset without starting login', async () => {

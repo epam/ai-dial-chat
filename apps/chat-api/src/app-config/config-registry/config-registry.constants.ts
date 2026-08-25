@@ -192,6 +192,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
   },
   {
+    key: 'features.responsesApiEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'server',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Server-side kill switch for routing eligible generations through the OpenAI Responses API. Even when a deployment reports features.responsesApi=true, Responses is only used when this flag is also true. Defaults to false. Not exposed to the frontend client-config endpoint (visibility: server). Role-based rollout (RESPONSES_API_ENABLED_ROLES) is not implemented — out of scope.',
+    owner: 'chat-team',
+    envVar: 'RESPONSES_API_ENABLED',
+  },
+  {
     key: 'overlay.enabled',
     type: 'config',
     valueType: 'boolean',
@@ -256,6 +268,21 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'SCHEDULED_TASKS_ENABLED',
     allowedRolesEnvVar: 'SCHEDULED_TASKS_ENABLED_ROLES',
+  },
+  {
+    key: 'features.settingsPageEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the Settings page is enabled, including its gear-icon entry point in the ' +
+      'user menu, the /settings route, and the Usage tab data fetch. Set ' +
+      'SETTINGS_PAGE_ENABLED_ROLES to restrict to specific roles.',
+    owner: 'chat-team',
+    envVar: 'SETTINGS_PAGE_ENABLED',
+    allowedRolesEnvVar: 'SETTINGS_PAGE_ENABLED_ROLES',
   },
   {
     key: 'uiFeatures.enabledUiFeatures',

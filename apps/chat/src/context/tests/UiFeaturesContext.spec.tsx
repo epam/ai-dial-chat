@@ -2,6 +2,7 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_ENABLED_UI_FEATURES } from '../../constants/ui-features';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { AppConfigState, useAppConfig } from '../AppConfigContext';
 import { UiFeaturesProvider, useUiFeatures } from '../UiFeaturesContext';
@@ -48,24 +49,37 @@ describe('UiFeaturesContext', () => {
   });
 
   describe('default baseline', () => {
-    it('enables exactly the 20 default-on features', () => {
+    it('enables exactly the compiled-in default-on features', () => {
       mockAppConfig();
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
-      expect(result.current.enabledFeatures.size).toBe(20);
+      /* Compared against the constant rather than a hardcoded count: the
+         baseline grows every time a feature ships default-on, and a literal
+         here only ever records how many there were the last time someone
+         edited this line. */
+      expect([...result.current.enabledFeatures].sort()).toEqual(
+        [...DEFAULT_ENABLED_UI_FEATURES].sort(),
+      );
       expect(result.current.isEnabled(OverlayFeature.Header)).toBe(true);
       expect(
         result.current.isEnabled(OverlayFeature.ConversationsSection),
       ).toBe(true);
       expect(result.current.isEnabled(OverlayFeature.Likes)).toBe(true);
+      expect(result.current.isEnabled(OverlayFeature.Prompts)).toBe(true);
+      expect(result.current.isEnabled(OverlayFeature.FileManager)).toBe(true);
       expect(
         result.current.isEnabled(OverlayFeature.ConversationsSharing),
       ).toBe(true);
     });
 
-    it('leaves the 13 default-off (modifier) features disabled', () => {
+    it('leaves every non-default (modifier) feature disabled', () => {
       mockAppConfig();
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
+
+      const enabledModifiers = Object.values(OverlayFeature)
+        .filter((feature) => !DEFAULT_ENABLED_UI_FEATURES.has(feature))
+        .filter((feature) => result.current.isEnabled(feature));
+      expect(enabledModifiers).toEqual([]);
 
       expect(result.current.isEnabled(OverlayFeature.HideNewConversation)).toBe(
         false,
@@ -101,7 +115,9 @@ describe('UiFeaturesContext', () => {
       mockAppConfig(null);
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
-      expect(result.current.enabledFeatures.size).toBe(20);
+      expect([...result.current.enabledFeatures].sort()).toEqual(
+        [...DEFAULT_ENABLED_UI_FEATURES].sort(),
+      );
       expect(result.current.isEnabled(OverlayFeature.Header)).toBe(true);
     });
   });

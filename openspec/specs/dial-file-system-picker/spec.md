@@ -1,10 +1,16 @@
+# dial-file-system-picker Specification
+
+## Purpose
+
+Attaching files from the DIAL file system through the file-manager modal, both in the composer and while editing a message.
+
 > **Sync note (2026-07-23):** The "read-only" framing below was inaccurate.
 > `DialFileManagerModal` (attach picker, `actionProfile = Attach`) intentionally
 > allows Upload, Create folder, Delete, Rename, and Download — only Move, Copy,
 > and permission-management actions are excluded. The requirements below were
 > rewritten to match this actual, intended behavior.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Show DIAL file system button in attachment menu
 
@@ -112,11 +118,21 @@ The system SHALL provide a `useDialFileManager(options: { bucket: string; rootLa
 
 **Cache**: Per-modal, in-memory folder cache with no TTL. It is discarded when the modal unmounts and refreshed when a folder is revisited or retry is requested.
 
+#### Scenario: Revisiting a loaded folder serves the accumulated hierarchy
+
+- **WHEN** the user opens a subfolder and then navigates back to its parent
+- **THEN** the parent and its siblings are still present in `items` without a second `listFiles` call for the parent path
+
+#### Scenario: Unmounting mid-request sets no state
+
+- **WHEN** the modal unmounts while a `listFiles` request is still in flight
+- **THEN** the `cancelled` flag suppresses the state update and no React unmounted-update warning is produced
+
 ---
 
 ### Requirement: Select and attach DIAL files with scoped mutation actions
 
-`DialFileManager` is rendered with `actionProfile = DialFileManagerActionProfile.Attach`. This profile scopes down — but does not eliminate — mutation actions: Upload, Create folder, Delete, Rename, and Download remain reachable so the user can manage files while picking what to attach; Move, Copy, and permission-management actions are excluded because they imply a destination/ownership context the attach flow does not have.
+`DialFileManager` SHALL be rendered with `actionProfile = DialFileManagerActionProfile.Attach`. This profile scopes down — but does not eliminate — mutation actions: Upload, Create folder, Delete, Rename, and Download remain reachable so the user can manage files while picking what to attach; Move, Copy, and permission-management actions are excluded because they imply a destination/ownership context the attach flow does not have.
 
 The following props MUST be omitted (not passed), because their actions are gated off by `actionProfile = Attach` (via `isCopyMoveDuplicateAllowed` / `isShareActionsAllowed` in `dial-file-manager-path.util.ts`):
 
@@ -177,7 +193,7 @@ The library contract is `pendingAttachments?: Attachment[]` plus `onPendingAttac
 
 ### Requirement: Navigate folders
 
-When the user clicks a folder in `DialFileManager`, `onPathChange` fires with the folder's new path. The hook updates `folderPath`, triggers a new `listFiles` call for the subfolder, and the grid updates.
+When the user clicks a folder in `DialFileManager`, `onPathChange` SHALL fire with the folder's new path. The hook then updates `folderPath`, triggers a new `listFiles` call for the subfolder, and the grid updates.
 
 - `onPathChange(nextPath)` strips the virtual root prefix and maps back to the BFF `path` parameter.
 - Navigation into a subfolder resets `isLoading` to `true` and `error` to `null`.
@@ -191,6 +207,8 @@ When the user clicks a folder in `DialFileManager`, `onPathChange` fires with th
 ---
 
 ### Requirement: Handle loading, empty, error, and retry states
+
+The modal SHALL render a distinct loading, empty, and error state, and the error state SHALL offer a retry that re-issues the listing request.
 
 **Loading state**
 - `filesLoading={true}` is passed to `DialFileManager`, which renders a built-in skeleton.
@@ -248,7 +266,7 @@ The existing "Attach file" menu item and device-file-picker behavior MUST be unm
 
 ### Requirement: Scoped mutation actions available
 
-The `DialFileManager` rendered in this modal exposes a subset of mutation actions, gated by `actionProfile = Attach`:
+The `DialFileManager` rendered in this modal SHALL expose only a subset of mutation actions, gated by `actionProfile = Attach`:
 
 **Reachable** (row, bulk, and/or toolbar action, subject to tab/permission as noted above):
 
@@ -278,6 +296,8 @@ The `DialFileManager` rendered in this modal exposes a subset of mutation action
 ---
 
 ### Requirement: i18n, Accessibility, RTL, and Responsive Behavior
+
+The picker SHALL be fully translated, keyboard-operable, direction-agnostic, and usable at both mobile and desktop widths.
 
 **i18n keys** (all in `apps/chat/src/i18n/locales/en.json`):
 
@@ -325,9 +345,22 @@ All `aria-label` values in `DialFileManagerModal` go through `t()`. No English s
 
 **Rate limiting**: `GET /api/v1/files/list` uses `@Throttle({ default: { limit: 60, ttl: 60000 } })` (defined in `add-files-list-api`). The frontend does not add extra throttling.
 
----
+#### Scenario: Every user-visible string is translated
 
-## MODIFIED Requirements
+- **WHEN** `DialFileManagerModal` is rendered
+- **THEN** each label and `aria-label` resolves through `t()` against the listed keys, with no hardcoded English in the app component
+
+#### Scenario: A load failure is announced and retryable
+
+- **WHEN** `listFiles` rejects
+- **THEN** an error card with `role="alert"` is rendered and its Retry button is reachable by keyboard
+
+#### Scenario: Layout follows the writing direction
+
+- **WHEN** the document is rendered with `dir="rtl"`
+- **THEN** the modal's spacing and alignment flip through logical properties, with no physical `left-*` / `right-*` class involved
+
+---
 
 ### Requirement: DialFileManagerModal attach callback
 

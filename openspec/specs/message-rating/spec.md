@@ -1,3 +1,9 @@
+# message-rating Specification
+
+## Purpose
+
+Rating assistant messages: the BFF endpoint, the optimistic toggle, the negative-feedback modal, and read-only gating.
+
 ## Requirements
 
 ---

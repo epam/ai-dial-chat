@@ -1,0 +1,111 @@
+.container {
+  background: var(--mls-container-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
+.heading {
+  color: var(--mls-heading, var(--text-primary, #161b2d));
+}
+
+.headingCount {
+  color: var(--mls-heading-count, var(--text-tertiary, #9fa6bd));
+}
+
+.periodSelector {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.columnHeader {
+  color: var(--mls-column-header, var(--text-secondary, #57647a));
+}
+
+.headerRow {
+  border-block-end: 1px solid
+    var(--mls-row-divider, var(--stroke-tertiary, #e0e6f0));
+}
+
+.row {
+  border-block-start: 1px solid
+    var(--mls-row-divider, var(--stroke-tertiary, #e0e6f0));
+}
+
+.row:first-child {
+  border-block-start: none;
+}
+
+.mobileColumnLabel {
+  color: var(--mls-column-header, var(--text-secondary, #57647a));
+}
+
+.name {
+  color: var(--mls-name, var(--text-primary, #161b2d));
+}
+
+.modelType {
+  color: var(--mls-model-type, var(--text-accent, #1d4ed8));
+}
+
+.version {
+  color: var(--mls-version, var(--text-secondary, #57647a));
+}
+
+.value {
+  color: var(--mls-value, var(--text-primary, #161b2d));
+}
+
+.secondaryValue {
+  color: var(--mls-secondary-value, var(--text-secondary, #57647a));
+}
+
+/* !important overrides ProgressBar's own `bg-control-disable-primary` track utility class,
+ * which has equal CSS specificity and is not otherwise reliably out-cascaded. */
+.progressTrack {
+  background: var(
+    --mls-progress-track,
+    var(--bg-layer-sunken, #eef1f7)
+  ) !important;
+}
+
+/* Targets ProgressBar's inner fill element (its only child), which has no color-override prop. */
+.progressFillDefault > div {
+  background: var(
+    --mls-progress-default,
+    var(--text-control-accent-hover, var(--text-control-blue-hover, #5976e9))
+  ) !important;
+}
+
+.progressFillWarning > div {
+  background: var(
+    --mls-progress-warning,
+    var(--text-warning-icon, #eec840)
+  ) !important;
+}
+
+.progressFillError > div {
+  background: var(
+    --mls-progress-error,
+    var(--bg-control-error-active, #cc4545)
+  ) !important;
+}
+
+.defaultBadge {
+  background: var(--mls-badge-default-bg, var(--bg-success, #dbf1eb));
+  color: var(--mls-badge-default-text, var(--text-success, #007274));
+}
+
+.warningBadge {
+  background: var(--mls-badge-warning-bg, var(--bg-warning, #faf0cf));
+  color: var(--mls-badge-warning-text, var(--text-warning, #7f6300));
+}
+
+.errorBadge {
+  background: var(--mls-badge-error-bg, var(--bg-error, #f3d6d8));
+  color: var(--mls-badge-error-text, var(--text-error, #ae2f2f));
+}
+
+.neutralStatus {
+  color: var(--mls-badge-neutral-text, var(--text-secondary, #57647a));
+}

@@ -21,6 +21,8 @@ export const parseFeaturesData = (
   }
 };
 
+const ALLOWED_FEATURES_DATA_KEYS = ['rate_endpoint', 'configuration_endpoint'];
+
 export const isValidFeaturesData = (value: string): boolean => {
   const trimmed = value.trim();
   if (!trimmed) return true;
@@ -28,8 +30,11 @@ export const isValidFeaturesData = (value: string): boolean => {
     const parsed: unknown = JSON.parse(trimmed);
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed))
       return false;
-    const obj = parsed as Record<string, unknown>;
-    return 'rate_endpoint' in obj || 'configuration_endpoint' in obj;
+    const keys = Object.keys(parsed as Record<string, unknown>);
+    return (
+      keys.length > 0 &&
+      keys.every((key) => ALLOWED_FEATURES_DATA_KEYS.includes(key))
+    );
   } catch {
     return false;
   }

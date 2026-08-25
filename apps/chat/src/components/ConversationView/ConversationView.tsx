@@ -1,4 +1,12 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  AttachmentValidationErrorReason,
+  isMessageChanged,
+  useAttachmentValidation,
+  useChatSettingsFormConfig,
+  useConversationScroll,
+  usePageFileDrag,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DisplayAttachment,
@@ -26,7 +34,6 @@ import {
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
-  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import {
@@ -43,6 +50,7 @@ import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
   AttachmentCanvasI18nKeys,
+  AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
@@ -51,24 +59,23 @@ import {
   ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
+  PromptSelectorI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useAutoOpenMcpAppCanvas } from '../../hooks/attachment/useAutoOpenMcpAppCanvas';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useOpenMcpAppCanvas } from '../../hooks/attachment/useOpenMcpAppCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
-import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
-import { useConversationScroll } from '../../hooks/conversation/useConversationScroll';
+import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
 import { useMcpAppTools } from '../../hooks/conversation/useMcpAppTools';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { isQuickAppSchema } from '../../utils/application-schema';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import {
@@ -77,11 +84,11 @@ import {
 } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
-import { isMessageChanged } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import FooterMessage from '../FooterMessage/FooterMessage';
+import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
 
@@ -139,6 +146,12 @@ interface Props {
   /** Token that forces `inputContent` to re-apply even if its string is unchanged. */
   inputContentRevision?: number;
   /**
+   * Called with resolved text (e.g. a picked prompt, params substituted) that
+   * should be seeded into the composer via the same `inputContent`/
+   * `inputContentRevision` channel. Required for the Prompts picker to work.
+   */
+  onInsertText?: (text: string) => void;
+  /**
    * When provided, the model selector shows this model only and renders
    * disabled (dimmed, does not open) instead of allowing a different model
    * to be picked. The chip stays visible — it is not hidden.
@@ -185,6 +198,7 @@ const ConversationView: FC<Props> = ({
   fixedModel,
   inputContent,
   inputContentRevision,
+  onInsertText,
   toolsMenuItems,
   onToolToggle,
   toolsMenuTitle,
@@ -193,20 +207,29 @@ const ConversationView: FC<Props> = ({
 }) => {
   const isModelFixed = !!fixedModel;
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
+  const {
+    renderOverlay: renderPromptsOverlay,
+    promptCatalogModal,
+    parametersPopup: promptParametersPopup,
+  } = usePromptSelectorOverlay({
+    onInsertText: onInsertText ?? (() => undefined),
+  });
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { showNotification } = useNotification();
+  const { showErrorNotification, showSuccessNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
   const isDisallowChangeAgentEnabled = useUiFeature(
     OverlayFeature.DisallowChangeAgent,
   );
+  const isHideChangeAgentEnabled = useUiFeature(OverlayFeature.HideChangeAgent);
   const isDisabledSendEnabled = useUiFeature(OverlayFeature.DisabledSend);
   const isSkipFocusChatInputOnloadEnabled = useUiFeature(
     OverlayFeature.SkipFocusChatInputOnload,
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
+  const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -265,7 +288,26 @@ const ConversationView: FC<Props> = ({
     isAttachmentsAllowed,
     validateAttachment,
     fileAccept,
-  } = useAttachmentValidation(selectedDeployment);
+  } = useAttachmentValidation({
+    allowedMimeTypes: selectedDeployment?.inputAttachmentTypes ?? [],
+    onValidationError: ({ reason, formats }) => {
+      const noTypesAllowed =
+        reason === AttachmentValidationErrorReason.NoTypesAllowed;
+      showErrorNotification({
+        title: t(
+          noTypesAllowed
+            ? AttachmentsI18nKeys.NoAttachmentsAllowedTitle
+            : AttachmentsI18nKeys.UnsupportedTypeTitle,
+        ),
+        message: t(
+          noTypesAllowed
+            ? AttachmentsI18nKeys.NoAttachmentsAllowedMessage
+            : AttachmentsI18nKeys.UnsupportedTypeMessage,
+          noTypesAllowed ? undefined : { formats },
+        ),
+      });
+    },
+  });
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
     isAttachmentsAllowed,
@@ -307,6 +349,26 @@ const ConversationView: FC<Props> = ({
         : undefined,
     [fixedModel],
   );
+
+  /*
+   * A selector the user cannot act on is removed rather than dimmed: a greyed-out
+   * icon with a caret advertises a menu that never opens, and where a deployment
+   * cannot be changed the icon carries no actionable information either.
+   * `deployments: undefined` is the lib's own hide path (the same one
+   * `NewConversationComposer` uses for `hide-empty-chat-change-agent`) and leaves
+   * the send button enabled, because `Input` reads an absent selector as "model
+   * already resolved".
+   *
+   * `fixedModel` is deliberately excluded. It reaches this component only from
+   * the app editor's preview pane, whose empty state renders the same chip
+   * through `NewConversationComposer` — hiding it here alone would make that
+   * pane lose the chip the moment the first message is sent.
+   */
+  const isAgentSelectorHidden =
+    isHideChangeAgentEnabled || isDisallowChangeAgentEnabled;
+  const agentSelectorItems = isModelFixed
+    ? fixedDeploymentItems
+    : deploymentItems;
 
   const hasQuickAppStarters = useMemo(
     () =>
@@ -491,11 +553,20 @@ const ConversationView: FC<Props> = ({
     [isAssistantTyping, messages, onEditMessage, armAnchor],
   );
 
+  const chatSettingsLabels = useChatSettingsFormLabels();
   const chatSettings = useChatSettingsFormConfig({
     mode: 'conversation',
     conversation,
     onConversationChange,
     deploymentFeatures: selectedDeployment?.features,
+    isQuickApp: isQuickAppSchema({
+      id: selectedDeployment?.applicationTypeSchemaId,
+    }),
+    labels: chatSettingsLabels,
+    onSaved: () =>
+      showSuccessNotification({
+        message: chatSettingsLabels.savedNotification,
+      }),
   });
 
   const handleAttachDialFiles = useCallback(
@@ -520,8 +591,7 @@ const ConversationView: FC<Props> = ({
 
   const handleAttachmentsLimitExceeded = useCallback(
     (count: number, limit: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         title: t(DialFileManagerI18nKeys.TooManyFilesSelected),
         message: t(DialFileManagerI18nKeys.TooManyFilesDescription, {
           count,
@@ -529,17 +599,16 @@ const ConversationView: FC<Props> = ({
         }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleMessageTooLong = useCallback(
     (_length: number, max: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ConversationI18nKeys.MessageTooLong, { max }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleInputAttachmentClick = useCallback(
@@ -606,6 +675,7 @@ const ConversationView: FC<Props> = ({
                     index={index}
                     totalCount={messages.length}
                     isAssistantTyping={isAssistantTyping}
+                    isCompactTypography={isMobile}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
                     onStartEdit={isReadOnly ? undefined : onStartEdit}
@@ -753,15 +823,13 @@ const ConversationView: FC<Props> = ({
                 onAttachmentsChange={handleAttachmentsChange}
                 placeholder={placeholder}
                 deployments={
-                  fixedModel ? fixedDeploymentItems : deploymentItems
+                  isAgentSelectorHidden ? undefined : agentSelectorItems
                 }
                 selectedDeploymentId={
                   selectedDeployment?.id ?? activeDeploymentId
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
-                isModelSelectorDisabled={
-                  isModelFixed || isDisallowChangeAgentEnabled
-                }
+                isModelSelectorDisabled={isModelFixed}
                 isSendDisabled={isDisabledSendEnabled}
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
@@ -777,10 +845,9 @@ const ConversationView: FC<Props> = ({
                 discardRecordingLabel={t(
                   VoiceRecordingI18nKeys.DiscardRecordingLabel,
                 )}
-                timerAriaLabel={t(VoiceRecordingI18nKeys.TimerAriaLabel)}
                 messageHistory={messageHistory}
                 sendOnEnter={sendOnEnter}
-                chatSettings={chatSettings}
+                chatSettings={isChatSettingsEnabled ? chatSettings : undefined}
                 toolsMenuItems={toolsMenuItems}
                 onToolToggle={onToolToggle}
                 toolsMenuTitle={toolsMenuTitle}
@@ -820,6 +887,10 @@ const ConversationView: FC<Props> = ({
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
+                promptsMenuOverlay={
+                  onInsertText ? renderPromptsOverlay : undefined
+                }
+                promptsMenuTitle={t(PromptSelectorI18nKeys.AddMenuLabel)}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
                   <UsageLimitsControl
@@ -876,7 +947,7 @@ const ConversationView: FC<Props> = ({
                       : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
                   }
                   deleteConfirmBody={(names) => (
-                    <div className="px-6 py-3 text-sm">
+                    <div className="dial-small-text px-6 py-3">
                       <p className="mb-3 text-secondary">
                         {names.length === 1 ? (
                           <>
@@ -923,6 +994,8 @@ const ConversationView: FC<Props> = ({
        */}
       <FooterMessage />
       {catalogModal}
+      {promptCatalogModal}
+      {promptParametersPopup}
     </>
   );
 };

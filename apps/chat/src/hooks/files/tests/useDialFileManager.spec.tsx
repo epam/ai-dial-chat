@@ -11,6 +11,8 @@ import {
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useNotification } from '../../../context/NotificationContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as filesApi from '../../../server-api/files.api';
 import {
   DialFileManagerActionProfile,
@@ -19,6 +21,7 @@ import {
 import { useDialFileManager } from '../useDialFileManager';
 
 vi.mock('../../../server-api/files.api');
+vi.mock('../../../context/NotificationContext');
 vi.mock('../../../utils/file-name', () => ({
   sanitizeFileName: vi.fn((name: string) => name),
 }));
@@ -29,7 +32,12 @@ vi.mock('../../../utils/file-download', () => ({
     Cancelled: 'cancelled',
   },
   prepareDownloadDestination: vi.fn().mockResolvedValue({ type: 'blob' }),
-  triggerBrowserDownload: vi.fn().mockResolvedValue(undefined),
+  /* Mirrors the real helper: resolves to the name the file was saved under. */
+  triggerBrowserDownload: vi
+    .fn()
+    .mockImplementation((_response: Response, fallbackName: string) =>
+      Promise.resolve(fallbackName),
+    ),
 }));
 
 const mockListFiles = vi.mocked(filesApi.listFiles);
@@ -37,12 +45,15 @@ const mockListSharedFiles = vi.mocked(filesApi.listSharedFiles);
 const mockListPublicFiles = vi.mocked(filesApi.listPublicFiles);
 const mockListSharedByMe = vi.mocked(filesApi.listSharedByMe);
 const mockDownloadArchive = vi.mocked(filesApi.downloadArchive);
+const mockDownloadFile = vi.mocked(filesApi.downloadFile);
 const mockDeleteFiles = vi.mocked(filesApi.deleteFiles);
 const mockCopyFiles = vi.mocked(filesApi.copyFiles);
 const mockMoveFiles = vi.mocked(filesApi.moveFiles);
 const mockDiscardShared = vi.mocked(filesApi.discardShared);
 const mockRevokeAccess = vi.mocked(filesApi.revokeAccess);
 const mockGetFileMetadata = vi.mocked(filesApi.getFileMetadata);
+
+const mockOperationNotification = vi.fn();
 
 const BUCKET = 'test-bucket';
 
@@ -53,6 +64,9 @@ const emptyPublicListResponse = { bucket: 'public', path: '', items: [] };
 const emptySharedByMeResponse = { bucket: BUCKET, path: '', items: [] };
 
 beforeEach(() => {
+  vi.mocked(useNotification).mockReturnValue(
+    createNotificationContextValue(mockOperationNotification),
+  );
   mockListFiles.mockResolvedValue({
     bucket: BUCKET,
     path: '',
@@ -840,6 +854,39 @@ describe('useDialFileManager', () => {
         nodeType: 'item',
       },
     ]);
+    expect(mockOperationNotification).toHaveBeenCalledWith({
+      variant: NotificationVariant.Success,
+      title: 'entityNotifications.file.downloadedTitle',
+      message: 'entityNotifications.file.downloaded',
+    });
+  });
+
+  it('confirms a completed single-file download by name', async () => {
+    mockDownloadFile.mockResolvedValue(new Response('pdf', { status: 200 }));
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onDownloadFiles([
+        {
+          id: '/My files/report-a.pdf',
+          name: 'report-a.pdf',
+          path: '/My files/report-a.pdf',
+          parentPath: '/My files',
+          nodeType: DialFileNodeType.ITEM,
+          folderId: BUCKET,
+          bucket: BUCKET,
+        },
+      ]);
+    });
+
+    await waitFor(() => expect(result.current.isDownloading).toBe(false));
+    expect(mockOperationNotification).toHaveBeenCalledWith({
+      variant: NotificationVariant.Success,
+      title: 'entityNotifications.file.downloadedTitle',
+      message: 'entityNotifications.file.downloaded',
+    });
   });
 
   it('shows a notification when file download fails', async () => {

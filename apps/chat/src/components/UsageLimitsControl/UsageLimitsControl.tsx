@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialProgressBar, DialProgressBarSize } from '@epam/ai-dial-ui-kit';
+import { ElementSize, ProgressBar } from '@epam/ai-dial-ui-kit';
 import {
   type CSSProperties,
   type FC,
@@ -189,12 +189,12 @@ const UsageLimitsControl: FC<Props> = ({
             </p>
           )}
 
-          <DialProgressBar
+          <ProgressBar
             value={limit.usedPercent}
             max={100}
-            size={DialProgressBarSize.Small}
+            size={ElementSize.Small}
             className="w-full"
-            ariaLabel={labels.progressAriaLabel({
+            aria-label={labels.progressAriaLabel({
               used: formattedUsed,
               total: formattedTotal,
             })}

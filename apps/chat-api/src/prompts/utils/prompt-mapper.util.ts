@@ -1,5 +1,7 @@
 import type { components } from '@epam/ai-dial-typescript-sdk';
+import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
+import { HIDDEN_FILE } from '../../constants/dial.constants';
 import { FOLDER_SENTINEL } from '../constants/prompt.constants';
 import type { PromptFolderResponseDto } from '../dto/prompt-folder-response.dto';
 import type { PromptResponseDto } from '../dto/prompt-response.dto';
@@ -39,6 +41,7 @@ export interface SharedResourceItem {
   url?: string;
   name?: string;
   parentPath?: string;
+  permissions?: string[];
 }
 
 export interface SharedResourcesResult {
@@ -60,6 +63,41 @@ export const nameFromId = (id: string): string => {
 
 export const isSentinelPath = (path: string): boolean =>
   path === FOLDER_SENTINEL || path.endsWith(`/${FOLDER_SENTINEL}`);
+
+/*
+ * DIAL Core writes a `.dial_folder` marker to keep an otherwise-empty folder
+ * alive. It is a storage artefact, not a prompt: reading it as one yields a
+ * broken entry in every listing, so it is dropped before any prompt is read.
+ */
+export const isHiddenPromptPath = (path: string): boolean =>
+  path.split('/').includes(HIDDEN_FILE);
+
+/**
+ * First segment of every DIAL Core prompt resource url, which is shaped
+ * `prompts/{bucket}/{path}`. Owned here rather than per-module so the publish
+ * and share flows cannot drift on whether the trailing slash is part of it.
+ */
+export const PROMPT_RESOURCE_PREFIX = 'prompts';
+
+/**
+ * Qualifies a bucket-relative prompt path into a full DIAL Core resource url.
+ * The prompts endpoints address a prompt by a bucket-relative path, so the
+ * bucket is re-attached here. Which bucket that is comes from
+ * `PromptResponseDto.bucket`: for a prompt shared with the caller it is the
+ * owner's, and a path alone would resolve against the caller's own bucket.
+ * Each path segment is percent-encoded via `encodeDialResourcePath` so that
+ * folder or prompt names containing spaces or other reserved characters
+ * resolve to a valid DIAL Core resource link instead of a 400.
+ */
+export const toPromptResourceUrl = (
+  promptPath: string,
+  bucket: string,
+): string =>
+  `${PROMPT_RESOURCE_PREFIX}/${bucket}/${encodeDialResourcePath(promptPath)}`;
+
+/** Whether `url` is a DIAL Core prompt resource url, i.e. `prompts/{bucket}/{path}`. */
+export const isPromptResourceUrl = (url: string): boolean =>
+  url.startsWith(`${PROMPT_RESOURCE_PREFIX}/`);
 
 /* Parses a full DIAL resource URL back to the SDK-relative prompt path. */
 export const urlToPromptPath = (url: string, bucket: string): string | null => {
@@ -84,14 +122,24 @@ export const mapPromptToResponse = (
   prompt: PromptPayload,
   id: string,
   metadata: PromptMetadataItem,
+  bucket: string,
+  ownership: Partial<
+    Pick<PromptResponseDto, 'isMy' | 'canEdit' | 'sharedWithMe' | 'permissions'>
+  > = {},
 ): PromptResponseDto => ({
   id,
+  bucket,
   name: prompt.name ?? nameFromId(id),
   description: prompt.description,
   content: prompt.content ?? '',
   folderId: prompt.folderId ?? folderIdFromId(id),
+  author: metadata.author,
   createdAt: metadata.createdAt ?? 0,
   updatedAt: metadata.updatedAt ?? 0,
+  isMy: ownership.isMy ?? false,
+  canEdit: ownership.canEdit ?? false,
+  sharedWithMe: ownership.sharedWithMe ?? false,
+  permissions: ownership.permissions ?? metadata.permissions,
 });
 
 export const deriveFolders = (

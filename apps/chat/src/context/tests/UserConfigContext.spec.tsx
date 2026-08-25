@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as userConfigApi from '../../server-api/user-config.api';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { UserConfigProvider, useUserConfig } from '../UserConfigContext';
+import { createNotificationContextValue } from './notification-context-mock';
 
 const contextMocks = vi.hoisted(() => ({
   userSub: 'user-1' as string | undefined,
@@ -35,7 +36,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 
 const mockShowNotification = vi.fn();
 vi.mock('../NotificationContext', () => ({
-  useNotification: () => ({ showNotification: mockShowNotification }),
+  useNotification: () => createNotificationContextValue(mockShowNotification),
 }));
 
 const mockGetUserConfig = vi.mocked(userConfigApi.getUserConfig);
@@ -51,10 +52,12 @@ const mockUpdateSelectedDeployment = vi.mocked(
 );
 
 const fullConfig = {
-  version: 2,
+  version: 5,
   conversations: { pinnedIds: ['conv-1'] },
   toolsets: { installed: ['ts-a'] },
   deployments: { installed: ['dep-1'] },
+  prompts: { installed: ['Work/AI/summarize'] },
+  skills: { installed: ['skills/my-bucket/revenue-skill'] },
 };
 
 const wrapper = ({ children }: { children: ReactNode }) => (
@@ -190,13 +193,11 @@ describe('UserConfigContext', () => {
       mockGetUserConfig.mockReturnValueOnce(refetchPromise);
       contextMocks.userSub = 'user-2';
 
-      act(() => {
-        rerender(
-          <UserConfigProvider>
-            <Consumer />
-          </UserConfigProvider>,
-        );
-      });
+      rerender(
+        <UserConfigProvider>
+          <Consumer />
+        </UserConfigProvider>,
+      );
 
       // While the identity-triggered refetch is in flight, UserConfigProvider
       // shows its loading spinner (per the existing "loading spinner"
@@ -207,10 +208,12 @@ describe('UserConfigContext', () => {
 
       await act(async () => {
         resolveRefetch({
-          version: 2,
+          version: 5,
           conversations: { pinnedIds: ['conv-2'] },
           toolsets: { installed: [] },
           deployments: { installed: [] },
+          prompts: { installed: [] },
+          skills: { installed: [] },
         });
         await refetchPromise;
       });
@@ -258,7 +261,7 @@ describe('UserConfigContext', () => {
           <div data-testid="child" />
         </UserConfigProvider>,
       );
-      await waitFor(() => expect(screen.getByTestId('child')).toBeTruthy());
+      expect(await screen.findByTestId('child')).toBeTruthy();
       expect(screen.queryByTestId('dial-spinner')).toBeNull();
     });
 
@@ -269,7 +272,7 @@ describe('UserConfigContext', () => {
           <div data-testid="child" />
         </UserConfigProvider>,
       );
-      await waitFor(() => expect(screen.getByTestId('child')).toBeTruthy());
+      expect(await screen.findByTestId('child')).toBeTruthy();
     });
   });
 

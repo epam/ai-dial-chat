@@ -6,26 +6,55 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
-import { mapDialHttpStatus } from '../common/dial/dial-error.mapper';
+import {
+  extractDialErrorMessage,
+  mapDialHttpStatus,
+} from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
+import { toPromptResourceUrl } from '../prompts/utils/prompt-mapper.util';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
 import type { PublishRuleDto } from './dto/publish-rule.dto';
+import { UnpublishResultDto } from './dto/unpublish-result.dto';
+import {
+  resolvePublicationsForSource,
+  toPublicationList,
+} from './publication.util';
 import {
   getPublicationsListScope,
   getPublicTargetFolder,
-  getResourceBucket,
+  getPublishedTargetUrl,
   getResourceName,
   getResourceTypePrefix,
   stripPublicTargetFolder,
 } from './publish-target.util';
 
+/*
+ * This service does NOT inject SkillsLookupService. Skill publication uses the
+ * whole resource URL and intentionally has no synthetic version; a missing
+ * request version degrades to the empty value already used by skill history.
+ */
 const historyCacheKey = (entityType: CatalogEntityType, entityId: string) =>
   `publish-history:${entityType}:${entityId}`;
+
+/*
+ * Every other entity kind is addressed by a full DIAL Core resource path, so
+ * `entityId` is already the Publication API's `sourceUrl`. A prompt's id is
+ * bucket-relative (`Work/AI/summarize`), the form the prompts endpoints
+ * return, and is qualified here with the caller's own bucket.
+ */
+const toSourceUrl = (
+  entityType: CatalogEntityType,
+  entityId: string,
+  bucket: string,
+): string =>
+  entityType === CatalogEntityType.Prompt
+    ? toPromptResourceUrl(entityId, bucket)
+    : entityId;
 
 /**
  * Catalog entity names are always `{name}__{version}` (see
@@ -49,7 +78,7 @@ const splitEntityNameAndVersion = (
 };
 
 /**
- * Publishes catalog entities (Toolset, Application) to an Organization
+ * Publishes catalog entities (Toolset, Application, Prompt, Skill) to an Organization
  * folder and reads their publish history by proxying DIAL Core's
  * Publication API (`createPublication`/`getPublications`) — this service
  * holds no persistence of its own. `apps/chat-api` has no database, and Core
@@ -83,20 +112,29 @@ export class PublishService {
    */
   async publish(
     accessToken: string,
+    bucket: string,
     entityType: CatalogEntityType,
     entityId: string,
     folderPath: string,
-    version: string,
+    version: string | undefined,
     author: string,
     rules?: PublishRuleDto[],
   ): Promise<PublishResultDto> {
+    const sourceUrl = toSourceUrl(entityType, entityId, bucket);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
-    const targetUrl = `${getResourceTypePrefix(entityId)}/${publicTargetFolder}${getResourceName(entityId)}`;
-    const { name: entityName } = splitEntityNameAndVersion(entityId);
+    const targetUrl = getPublishedTargetUrl(
+      getResourceTypePrefix(sourceUrl),
+      folderPath,
+      getResourceName(sourceUrl),
+    );
+    const { name: entityName, version: resourceVersion } =
+      splitEntityNameAndVersion(sourceUrl);
+    const publicationVersion = version || resourceVersion;
     const requestBody = {
-      name: `${entityName} ${version}`,
+      /* A prompt carries no version, so the title must not gain a trailing space. */
+      name: `${entityName} ${publicationVersion}`.trim(),
       targetFolder: publicTargetFolder,
-      resources: [{ action: 'ADD' as const, sourceUrl: entityId, targetUrl }],
+      resources: [{ action: 'ADD' as const, sourceUrl, targetUrl }],
       displayAuthor: author,
       rules: rules ?? [],
     };
@@ -119,6 +157,8 @@ export class PublishService {
         result.response.status,
         `publish ${entityType} "${entityId}"`,
         this.logger,
+        result.error,
+        extractDialErrorMessage(result.error),
       );
     }
 
@@ -133,11 +173,105 @@ export class PublishService {
       entityId,
       entityType,
       folderPath,
-      version,
+      version: publicationVersion,
       publishedAt: publication.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
       publishedBy: publication.author ?? publication.displayAuthor ?? '',
+    };
+  }
+
+  /**
+   * Submits a removal request for one already-published folder of a catalog
+   * entity. DIAL Core models removal as a *publication* whose single resource
+   * carries `action: 'DELETE'` — the same `createPublication` call, the same
+   * `PENDING → APPROVED/REJECTED` lifecycle, the same admin in the loop. Core's
+   * separate `deletePublication` discards a still-pending publication *request*,
+   * which is a different feature.
+   *
+   * So this returns a submitted request, never a completed removal: the
+   * published copy stays visible to everyone who could already see it until an
+   * administrator approves. Nothing in the result may assert otherwise.
+   *
+   * @throws {NotFoundException} When Core reports the entity or target as unknown
+   * @throws {ForbiddenException} When the caller lacks write access to `folderPath`
+   * @throws {BadGatewayException} When Core returns an unexpected error
+   * @throws {ServiceUnavailableException} When Core is unreachable or times out
+   */
+  async unpublish(
+    accessToken: string,
+    bucket: string,
+    entityType: CatalogEntityType,
+    entityId: string,
+    folderPath: string,
+    version: string | undefined,
+    author: string,
+  ): Promise<UnpublishResultDto> {
+    const sourceUrl = toSourceUrl(entityType, entityId, bucket);
+    const publicTargetFolder = getPublicTargetFolder(folderPath);
+    const targetUrl = getPublishedTargetUrl(
+      getResourceTypePrefix(sourceUrl),
+      folderPath,
+      getResourceName(sourceUrl),
+    );
+    const { name: entityName, version: resourceVersion } =
+      splitEntityNameAndVersion(sourceUrl);
+    const publicationVersion = version || resourceVersion;
+    /*
+     * `sourceUrl` is sent even though Core allows it to be omitted for a
+     * `DELETE` action: it costs nothing and keeps the DELETE resource shape
+     * identical to the ADD one publish sends. `rules` is omitted entirely —
+     * access rules govern who may see a published resource, and a removal
+     * request grants nobody anything.
+     */
+    const requestBody = {
+      name: `${entityName} ${publicationVersion}`.trim(),
+      targetFolder: publicTargetFolder,
+      resources: [{ action: 'DELETE' as const, sourceUrl, targetUrl }],
+      displayAuthor: author,
+    };
+    let result;
+    try {
+      result = await this.dialClient.client.createPublication({
+        headers: getBearerAuthHeaders(accessToken),
+        body: requestBody,
+      });
+    } catch (err) {
+      this.logger.error(
+        `Unexpected error requesting unpublish of ${entityType} "${entityId}"`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new BadGatewayException(
+        'Failed to submit unpublish request to DIAL Core',
+      );
+    }
+
+    if (result.error) {
+      return mapDialHttpStatus(
+        result.response.status,
+        `unpublish ${entityType} "${entityId}"`,
+        this.logger,
+        result.error,
+        extractDialErrorMessage(result.error),
+      );
+    }
+
+    await this.cacheManager.del(historyCacheKey(entityType, entityId));
+
+    const publication = result.data;
+    this.logger.debug(
+      `Requested unpublish of ${entityType} "${entityId}" from "${folderPath}"`,
+    );
+
+    return {
+      entityId,
+      entityType,
+      folderPath,
+      version: publicationVersion,
+      requestedAt: publication.createdAt
+        ? new Date(publication.createdAt).toISOString()
+        : new Date().toISOString(),
+      requestedBy: publication.author ?? publication.displayAuthor ?? '',
     };
   }
 
@@ -147,9 +281,11 @@ export class PublishService {
    */
   async getPublishHistory(
     accessToken: string,
+    bucket: string,
     entityType: CatalogEntityType,
     entityId: string,
   ): Promise<PublishHistoryEntryDto[]> {
+    const sourceUrl = toSourceUrl(entityType, entityId, bucket);
     return withCachedDialRequest({
       cacheManager: this.cacheManager,
       cacheKey: historyCacheKey(entityType, entityId),
@@ -161,28 +297,49 @@ export class PublishService {
          * `url` is the caller's own-bucket list scope, not `entityId` itself
          * (see `getPublicationsListScope`'s doc comment) — Core has no
          * per-resource filter, so every publication in this bucket is
-         * fetched and narrowed to this entity via `resources[].sourceUrl`
-         * below.
+         * fetched and narrowed to this entity by
+         * `resolvePublicationsForSource` below — which has to re-read each
+         * candidate individually, because this list response carries
+         * publication metadata only and no `resources` array.
+         *
+         * The scope comes from the session `bucket`, never from `entityId`:
+         * only some entity ids are full `{type}/{bucket}/{name}` resource
+         * paths. A deployment id can be a bare name (`gemini-pro-vision`),
+         * which made the extracted bucket `undefined` and the scope
+         * `publications/undefined/`; a public resource
+         * (`applications/public/...`) yielded the admin-only
+         * `publications/public/` scope instead. Both returned no history
+         * while publishing kept working, which silently hid Unpublish.
+         * `conversation-publish.service.ts` already scoped by session bucket.
          */
         const result = await this.dialClient.client.getPublications({
           headers: getBearerAuthHeaders(accessToken),
-          body: { url: getPublicationsListScope(getResourceBucket(entityId)) },
+          body: { url: getPublicationsListScope(bucket) },
         });
         if (result.error) {
           return mapDialHttpStatus(
             result.response.status,
             `get publish history for ${entityType} "${entityId}"`,
             this.logger,
+            result.error,
+            extractDialErrorMessage(result.error),
           );
         }
-        const { version } = splitEntityNameAndVersion(entityId);
+        const { version } = splitEntityNameAndVersion(sourceUrl);
 
-        return (result.data ?? [])
-          .filter((publication) =>
-            publication.resources?.some(
-              (resource) => resource.sourceUrl === entityId,
-            ),
-          )
+        const publications = await resolvePublicationsForSource(
+          toPublicationList<(typeof result.data)[number]>(
+            result.data,
+            this.logger,
+            `publish history for ${entityType} "${entityId}"`,
+          ),
+          sourceUrl,
+          (url) => this.fetchPublication(accessToken, url),
+          this.logger,
+          `publish history for ${entityType} "${entityId}"`,
+        );
+
+        return publications
           .map(
             (publication): PublishHistoryEntryDto => ({
               entityId,
@@ -201,5 +358,35 @@ export class PublishService {
           .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
       },
     });
+  }
+
+  /**
+   * One publication's full record, including the `resources` array the list
+   * call omits, or `null` when it cannot be read.
+   *
+   * Publish history is informational, so an unreadable publication is dropped
+   * rather than propagated: one 403 among a bucket's publications must not take
+   * down the publish panel for the whole entity.
+   */
+  private async fetchPublication(accessToken: string, url: string) {
+    try {
+      const result = await this.dialClient.client.getPublication({
+        headers: getBearerAuthHeaders(accessToken),
+        body: { url },
+      });
+      if (result.error) {
+        this.logger.warn(
+          `Skipping publication "${url}": DIAL Core returned ${result.response.status}`,
+        );
+        return null;
+      }
+      return result.data;
+    } catch (err) {
+      this.logger.warn(
+        `Skipping unreadable publication "${url}"`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      return null;
+    }
   }
 }

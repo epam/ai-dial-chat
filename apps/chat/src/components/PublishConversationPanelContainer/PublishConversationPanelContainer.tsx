@@ -4,9 +4,8 @@ import {
   StandalonePublishPanel,
   usePublishFlow,
 } from '@epam/ai-dial-publish-panel';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC, RefObject } from 'react';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
@@ -14,12 +13,18 @@ import {
   PublishI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
-import { useNotification } from '../../context/NotificationContext';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { publishConversation } from '../../server-api/conversation-publish.api';
 import { getPublishRules } from '../../server-api/publish-rules.api';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { getAccessRulesLabels } from '../../utils/publish';
+
+const EMPTY_HISTORY: PublishHistoryEntry[] = [];
 
 /** Props for `PublishConversationPanelContainer`. */
 interface Props {
@@ -33,6 +38,17 @@ interface Props {
   onClose: () => void;
   /** Conversation-row action trigger that receives focus after dismissal. */
   returnFocusRef?: RefObject<HTMLElement | null>;
+  /**
+   * Folders this conversation is already published to, fetched once per
+   * conversation by the conversation panel and handed down rather than
+   * fetched again here, so opening the row menu and then this panel issues
+   * one request. Defaults to an empty list.
+   */
+  history?: PublishHistoryEntry[];
+  /** Whether the handed-down history lookup is still in flight. Default: `false`. */
+  isHistoryLoading?: boolean;
+  /** Whether the handed-down history lookup failed. Default: `false`. */
+  hasHistoryError?: boolean;
 }
 
 /**
@@ -49,9 +65,12 @@ const PublishConversationPanelContainer: FC<Props> = ({
   conversationTitle,
   onClose,
   returnFocusRef,
+  history = EMPTY_HISTORY,
+  isHistoryLoading = false,
+  hasHistoryError = false,
 }) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
   const showPublishError = usePublishErrorNotification();
   const {
     config: { publicationFilterSources },
@@ -67,14 +86,6 @@ const PublishConversationPanelContainer: FC<Props> = ({
     hasPublishWriteAccess,
   } = usePublishFolders();
 
-  /*
-   * Version history is not fetched: the backend endpoint is not yet
-   * functional (returns 503 for DIAL Core, see GH issue #7897).
-   */
-  const [history] = useState<PublishHistoryEntry[]>([]);
-  const [isHistoryLoading] = useState(false);
-  const [hasHistoryError, setHasHistoryError] = useState(false);
-
   const resource: PublishResourceSummary = { title: conversationTitle };
 
   const publishFlow = usePublishFlow<PublishResourceSummary>({
@@ -88,10 +99,14 @@ const PublishConversationPanelContainer: FC<Props> = ({
     },
     onPublishSuccess: (_item, folderPath) => {
       rememberPublishFolder(folderPath);
-      showNotification({
-        variant: NotificationVariant.Success,
-        message: t(ConversationPublishI18nKeys.SuccessMessage),
-      });
+      notifyOperationSuccess(
+        NotifiableEntity.Conversation,
+        EntityOperation.PublishRequested,
+        {
+          name: conversationTitle,
+          folder: folderPath[folderPath.length - 1],
+        },
+      );
     },
     onPublishError: (_item, _folderPath, error) => showPublishError(error),
     onFetchExistingRules: (folderPath) => getPublishRules(folderPath.join('/')),
@@ -100,7 +115,6 @@ const PublishConversationPanelContainer: FC<Props> = ({
   useEffect(() => {
     if (!isOpen) {
       publishFlow.reset();
-      setHasHistoryError(false);
     }
     // Reset publish-flow-local state only when the panel closes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -148,6 +162,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
       }}
       panelLabels={{
         replaceWarning: t(ConversationPublishI18nKeys.AlreadyPublishedWarning),
+        cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),
         createFolderEmptyNameError: t(
           ConversationPublishI18nKeys.EmptyFolderNameError,
         ),

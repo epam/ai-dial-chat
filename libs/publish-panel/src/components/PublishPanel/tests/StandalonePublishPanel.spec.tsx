@@ -107,11 +107,11 @@ describe('StandalonePublishPanel', () => {
 
     const { unmount } = renderPanel({ returnFocusRef });
 
-    expect(document.activeElement).toBe(
-      screen.getByRole('dialog', { name: 'Publish' }),
-    );
+    expect(
+      screen.getByRole('dialog', { name: 'Publish' }).matches(':focus'),
+    ).toBe(true);
     unmount();
-    expect(document.activeElement).toBe(trigger);
+    expect(trigger.matches(':focus')).toBe(true);
     trigger.remove();
   });
 
@@ -129,9 +129,9 @@ describe('StandalonePublishPanel', () => {
     queueMicrotask(() => trigger.focus({ preventScroll: true }));
     await new Promise<void>((resolve) => queueMicrotask(resolve));
 
-    expect(document.activeElement).toBe(
-      screen.getByRole('dialog', { name: 'Publish' }),
-    );
+    expect(
+      screen.getByRole('dialog', { name: 'Publish' }).matches(':focus'),
+    ).toBe(true);
     trigger.remove();
   });
 
@@ -145,7 +145,7 @@ describe('StandalonePublishPanel', () => {
     );
     outside.focus();
 
-    expect(document.activeElement).toBe(outside);
+    expect(outside.matches(':focus')).toBe(true);
     outside.remove();
   });
 

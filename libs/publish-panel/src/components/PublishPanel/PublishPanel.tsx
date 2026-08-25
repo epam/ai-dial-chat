@@ -1,9 +1,13 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { SearchInput } from '@epam/ai-dial-sidebar';
+import {
+  buildCssVars,
+  mergeClasses,
+  ResourceSummary,
+} from '@epam/ai-dial-chat-shared';
 import {
   Notification,
   NotificationType,
   NotificationVariant,
+  Search,
 } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, useMemo, useState } from 'react';
 import {
@@ -13,13 +17,16 @@ import {
   PublishHistoryEntry,
   PublishResourceSummary,
 } from '../../models/publish';
+import type { PublishPanelStyles } from '../../models/publish-panel-styles';
 import { derivePublishState } from '../../utils/publish-state';
 import {
   PublishAccessRules,
   PublishAccessRulesLabels,
 } from '../PublishAccessRules/PublishAccessRules';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
-import { PublishHistoryList } from '../PublishHistoryList/PublishHistoryList';
+// TODO: will implement later — re-enable along with the versions history
+// section below.
+// import { PublishHistoryList } from '../PublishHistoryList/PublishHistoryList';
 import styles from './PublishPanel.module.scss';
 
 /** Text overrides for all user-visible strings in {@link PublishPanel}. */
@@ -44,6 +51,8 @@ export interface PublishPanelLabels {
   addSiblingFolderLabel?: string;
   /** Label for the per-row context menu action that creates a folder inside the clicked folder. */
   addChildFolderLabel?: string;
+  /** Label for the action that cancels inline folder creation. Defaults to `'Cancel'`. */
+  cancelCreatingFolderLabel?: string;
   /** Inline error shown while creating a folder with an empty name. */
   createFolderEmptyNameError?: string;
   /** Inline error shown while creating a folder whose name contains `..` or a forbidden character. */
@@ -56,6 +65,8 @@ export interface PublishPanelLabels {
   historyErrorLabel?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
+  /** Version tag text in the entity-header summary row; `{version}` is replaced. Default: `'Version {version} · current'`. */
+  summaryVersionLabel?: string;
   /** Text overrides for the access-rules section. */
   accessRulesLabels?: PublishAccessRulesLabels;
 }
@@ -66,14 +77,15 @@ export interface PublishPanelProps {
    * Display metadata for the summary row and for version-derived behavior:
    * the replace-warning callout's version substitution, and whether the
    * publish-history section is shown at all (only when `version` is set).
-   * Title-only rendering applies when `renderSummary` is absent.
+   * A `type` renders the entity-header row; otherwise the row is title-only,
+   * unless `renderSummary` replaces it.
    */
   resource?: PublishResourceSummary;
   /**
-   * Renders a custom summary row (e.g. a full entity header with icon and
-   * type badge) in place of the default title-only row built from
-   * `resource.title`. Pass `resource` alongside this so version-derived
-   * behavior (callout, history section) keeps working.
+   * Renders a custom summary row in place of the default title-only row built
+   * from `resource.title`. Ignored when `resource.type` is set. Pass
+   * `resource` alongside this so version-derived behavior (callout, history
+   * section) keeps working.
    */
   renderSummary?: () => ReactNode;
   /** Previously published entries for this item. */
@@ -134,32 +146,25 @@ export interface PublishPanelProps {
   hasRulesLoadError?: boolean;
   /** Text overrides for all user-visible strings. */
   labels?: PublishPanelLabels;
-  /** Typography class for the default summary title (unused when `renderSummary` is passed). Default: `'dial-body-semi-text'`. */
+  /** Typography class for the default summary title (unused when `renderSummary` or `resource.type` is passed). Default: `'dial-body-semi-text'`. */
   summaryTitleClassName?: string;
   /** Typography class for the "Publish to folder" and "Versions history" section headings. Default: `'dial-body-semi-text'`. */
   headingClassName?: string;
-  /** Color overrides. */
-  colors?: PublishPanelColors;
-}
-
-/** Color overrides for {@link PublishPanel}, applied as CSS custom properties with app theme fallbacks. */
-export interface PublishPanelColors {
-  /** Summary row border color. Fallback: `--stroke-tertiary`. */
-  summaryBorder?: string;
-  /** Summary row background color. Fallback: `--bg-layer-sunken`. */
-  summaryBackground?: string;
-  /** Default summary title text color. Fallback: `--text-primary`. */
-  summaryTitleText?: string;
-  /** Section heading text color. Fallback: `--text-primary`. */
-  headingText?: string;
+  /** Style overrides. */
+  styles?: PublishPanelStyles;
 }
 
 /** Scrollable body of the Publish flow: entity summary, destination folder picker with callout, and publish history. */
 export const PublishPanel: FC<PublishPanelProps> = ({
   resource,
   renderSummary,
+  // TODO: will implement later — history, isHistoryLoading, hasHistoryError
+  // are unused while the versions history section below is commented out.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   history,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isHistoryLoading = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   hasHistoryError = false,
   folderItems,
   selectedFolderPath,
@@ -181,36 +186,59 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   labels = {},
   summaryTitleClassName = 'dial-body-semi-text',
   headingClassName = 'dial-body-semi-text',
-  colors,
+  styles: stylesProp = {},
 }) => {
-  const cssVars = buildCssVars({
-    '--pp-summary-border': colors?.summaryBorder,
-    '--pp-summary-bg': colors?.summaryBackground,
-    '--pp-summary-title-text': colors?.summaryTitleText,
-    '--pp-heading-text': colors?.headingText,
-  });
+  const {
+    colors,
+    folderTree: folderTreeStyles,
+    accessRules: accessRulesStyles,
+  } = stylesProp;
+  const cssVars = {
+    ...buildCssVars({
+      '--pp-summary-title-text': colors?.summaryTitleText,
+      '--pp-heading-text': colors?.headingText,
+    }),
+    ...stylesProp.cssVars,
+  };
+
+  /* Border and background belong to `ResourceSummary`'s own row, so they are
+     forwarded as colors instead of being set as vars on an ancestor. */
+  const summaryColors = {
+    border: colors?.summaryBorder,
+    background: colors?.summaryBackground,
+    versionTagBorder: colors?.summaryVersionTagBorder,
+    versionTagBackground: colors?.summaryVersionTagBackground,
+    versionTagText: colors?.summaryVersionTagText,
+  };
 
   const {
     folderLabel = 'Publish to folder',
-    searchPlaceholder = 'Search folders',
-    clearSearchAriaLabel = 'Clear search',
-    historyLabel = 'Versions history',
+    // TODO: will implement later — historyLabel is unused while the versions
+    // history section below is commented out.
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
     folderEmptyStateLabel,
     addSiblingFolderLabel,
     addChildFolderLabel,
+    cancelCreatingFolderLabel,
     createFolderEmptyNameError,
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
-    historyLoadingLabel,
-    historyErrorLabel,
+    // TODO: will implement later — historyLoadingLabel, historyErrorLabel are
+    // unused while the versions history section below is commented out.
     rootFolderLabel = 'Organization',
+    summaryVersionLabel,
     accessRulesLabels,
+    searchPlaceholder,
+    clearSearchAriaLabel,
   } = labels;
 
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchChange = (value?: string) => {
+    setSearchQuery(value ?? '');
+  };
 
   const isFolderSelected = selectedFolderPath != null;
 
@@ -238,37 +266,48 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     ? (selectedFolderPath[selectedFolderPath.length - 1] ?? rootFolderLabel)
     : '';
 
-  const folderHistory = useMemo(() => {
-    if (!isFolderSelected) {
-      return [];
-    }
-    const key = selectedFolderPath.join('/');
-    return history.filter((entry) => entry.folderPath.join('/') === key);
-  }, [history, selectedFolderPath, isFolderSelected]);
+  // TODO: will implement later — re-enable along with the versions history
+  // section below.
+  // const folderHistory = useMemo(() => {
+  //   if (!isFolderSelected) {
+  //     return [];
+  //   }
+  //   const key = selectedFolderPath.join('/');
+  //   return history.filter((entry) => entry.folderPath.join('/') === key);
+  // }, [history, selectedFolderPath, isFolderSelected]);
+
+  const defaultSummary = renderSummary ? (
+    renderSummary()
+  ) : (
+    <span
+      className={mergeClasses(
+        'truncate',
+        summaryTitleClassName,
+        styles.summaryTitle,
+      )}
+    >
+      {resource?.title}
+    </span>
+  );
 
   return (
-    <div className="flex flex-col gap-5">
-      <div
-        style={cssVars}
-        className={mergeClasses(
-          'flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3',
-          styles.summaryRow,
-        )}
-      >
-        {renderSummary ? (
-          renderSummary()
-        ) : (
-          <span
-            className={mergeClasses(
-              'truncate',
-              summaryTitleClassName,
-              styles.summaryTitle,
-            )}
-          >
-            {resource?.title}
-          </span>
-        )}
-      </div>
+    <div className="flex flex-col gap-5" style={cssVars}>
+      {resource?.type != null ? (
+        <ResourceSummary
+          item={{
+            type: resource.type,
+            name: resource.title,
+            version: resource.version ?? '',
+            iconUrl: resource.iconUrl,
+          }}
+          versionLabel={summaryVersionLabel}
+          colors={summaryColors}
+        />
+      ) : (
+        <ResourceSummary colors={summaryColors}>
+          {defaultSummary}
+        </ResourceSummary>
+      )}
 
       <div>
         <div
@@ -280,15 +319,13 @@ export const PublishPanel: FC<PublishPanelProps> = ({
         >
           {folderLabel}
         </div>
-        <div className="mb-3">
-          <SearchInput
+        <div role="search" className="mb-3">
+          <Search
             value={searchQuery}
-            onChange={setSearchQuery}
-            labels={{
-              placeholder: searchPlaceholder,
-              clearLabel: clearSearchAriaLabel,
-            }}
-            styles={{ wrapperClassName: 'px-0', rowClassName: '!rounded-lg' }}
+            onChange={handleSearchChange}
+            placeholder={searchPlaceholder}
+            clearLabel={clearSearchAriaLabel}
+            aria-label={searchPlaceholder}
           />
         </div>
         <PublishFoldersTree
@@ -304,10 +341,12 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           noResultsLabel={folderEmptyStateLabel}
           addSiblingFolderLabel={addSiblingFolderLabel}
           addChildFolderLabel={addChildFolderLabel}
+          cancelCreatingFolderLabel={cancelCreatingFolderLabel}
           emptyFolderNameError={createFolderEmptyNameError}
           invalidFolderNameError={createFolderInvalidNameError}
           duplicateFolderNameError={createFolderDuplicateNameError}
           rootLabel={rootFolderLabel}
+          styles={folderTreeStyles}
         />
         {derived.calloutKind !== PublishCalloutKind.None &&
           derived.calloutKind !== PublishCalloutKind.Info && (
@@ -325,19 +364,28 @@ export const PublishPanel: FC<PublishPanelProps> = ({
               />
             </div>
           )}
+
+        {/* Nested inside the destination-folder block, and tighter than the
+            inter-section gap, so the rules read as scoped to the selection
+            above rather than as an independent control. */}
+        <div className="mt-4">
+          <PublishAccessRules
+            rules={rules}
+            onRulesChange={onRulesChange}
+            sourceOptions={ruleSourceOptions}
+            folderName={isFolderSelected ? folderName : undefined}
+            disabled={isSubmitting}
+            isLoading={isRulesLoading}
+            hasLoadError={hasRulesLoadError}
+            labels={accessRulesLabels}
+            styles={accessRulesStyles}
+          />
+        </div>
       </div>
 
-      <PublishAccessRules
-        rules={rules}
-        onRulesChange={onRulesChange}
-        sourceOptions={ruleSourceOptions}
-        disabled={isSubmitting}
-        isLoading={isRulesLoading}
-        hasLoadError={hasRulesLoadError}
-        labels={accessRulesLabels}
-      />
-
-      {isFolderSelected && resource?.version != null && (
+      {/* TODO: will implement later — versions history section is disabled
+          for now, keep the markup below for when it's re-enabled. */}
+      {/* {isFolderSelected && resource?.version != null && (
         <div>
           <div
             className={mergeClasses(
@@ -357,7 +405,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             errorLabel={historyErrorLabel}
           />
         </div>
-      )}
+      )} */}
     </div>
   );
 };

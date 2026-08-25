@@ -1,11 +1,6 @@
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
 import { ResponseFormat } from '@epam/ai-dial-chat-shared';
-import {
-  Popup,
-  DialTooltip,
-  PrimaryButton,
-  PopupSize,
-} from '@epam/ai-dial-ui-kit';
+import { Popup, Tooltip, PrimaryButton, PopupSize } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';
@@ -28,6 +23,8 @@ export interface ChatSettingsModalProps {
   onClose: () => void;
   /** Modal title. Defaults to `'Chat settings'`. */
   title?: string;
+  /** CSS class applied to the modal title. Defaults to `'dial-h1-text'`. */
+  titleClassName?: string;
   /** Label for the response format field. Defaults to `'Response format'`. */
   responseFormatLabel?: string;
   /** Helper text shown below the response format field. Defaults to `'Applies to new and existing messages'`. */
@@ -52,7 +49,7 @@ export interface ChatSettingsModalProps {
   saveDisabledTooltip?: string;
   /**
    * CSS class applied for the modal background. Defaults to a
-   * `--bg-layer-sunken` background. `Popup` renders through a portal and
+   * `--bg-layer-raised` background. `Popup` renders through a portal and
    * accepts no `style`, so this class (or setting `--csm-bg` at theme level) is
    * the only way to override the surface color — there is no `colors` prop.
    */
@@ -68,6 +65,7 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
   onSave,
   onClose,
   title = 'Chat settings',
+  titleClassName = 'dial-h1-text',
   responseFormatLabel,
   responseFormatHint,
   responseFormatMarkdownLabel,
@@ -103,12 +101,13 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
     <Popup
       open
       header={title}
+      titleClassName={titleClassName}
       size={PopupSize.Sm}
       onClose={onClose}
       className={backgroundClassName}
       footer={
         <div className="flex justify-end px-6 py-4">
-          <DialTooltip
+          <Tooltip
             tooltip={saveDisabledTooltip}
             hideTooltip={canSubmit || !saveDisabledTooltip}
           >
@@ -117,7 +116,7 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
               onClick={handleSubmit}
               disabled={!canSubmit}
             />
-          </DialTooltip>
+          </Tooltip>
         </div>
       }
     >

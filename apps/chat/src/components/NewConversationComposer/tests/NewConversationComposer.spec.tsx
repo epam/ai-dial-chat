@@ -3,6 +3,7 @@ import { type DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import NewConversationComposer from '../NewConversationComposer';
 
@@ -52,18 +53,7 @@ vi.mock('../../../context/auth/UserContext', () => ({
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => ({
-    showNotification: vi.fn(),
-  }),
-}));
-
-vi.mock('../../../hooks/attachment/useAttachmentValidation', () => ({
-  useAttachmentValidation: () => ({
-    inputAttachmentTypes: [],
-    isAttachmentsAllowed: true,
-    validateAttachment: vi.fn(),
-    fileAccept: undefined,
-  }),
+  useNotification: () => createNotificationContextValue(vi.fn()),
 }));
 
 vi.mock('../../../hooks/attachment/useOpenAttachmentCanvas', () => ({
@@ -76,12 +66,6 @@ vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
   useIsMobile: () => false,
 }));
 
-vi.mock('../../../hooks/conversation/useAttachmentUpload', () => ({
-  useAttachmentUpload: () => ({
-    handleUploadAttachment: vi.fn(),
-  }),
-}));
-
 vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
   useAudioTranscription: () => ({
     handleUploadAudio: vi.fn(),
@@ -90,8 +74,24 @@ vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
   }),
 }));
 
-vi.mock('../../../hooks/conversation/useChatSettingsFormConfig', () => ({
-  useChatSettingsFormConfig: () => ({}),
+vi.mock('../../../hooks/conversation/useChatSettingsFormLabels', () => ({
+  useChatSettingsFormLabels: () => ({
+    settings: 'Settings',
+    savedNotification: 'Chat settings have been saved',
+    responseFormatLabel: 'Response format',
+    responseFormatHint: 'Applies to new and existing messages',
+    responseFormatMarkdown: 'Markdown',
+    responseFormatPlainText: 'Plain text',
+    systemPromptLabel: 'System prompt',
+    systemPromptTooltip: 'Enter a prompt',
+    temperatureLabel: 'Temperature',
+    temperaturePrecise: 'Precise',
+    temperatureNeutral: 'Neutral',
+    temperatureCreative: 'Creative',
+    temperatureHint: 'Hint',
+    saveLabel: 'Apply changes',
+    saveDisabledTooltip: 'Please select a response format',
+  }),
 }));
 
 vi.mock('../../../hooks/conversation/useModelSelectorLabels', () => ({
@@ -118,11 +118,21 @@ vi.mock(
   }),
 );
 
-vi.mock('../../../hooks/usePageFileDrag', () => ({
+vi.mock('@epam/ai-dial-chat-hooks', () => ({
   usePageFileDrag: () => ({
     isDragging: false,
     pendingFiles: [],
     onFilesConsumed: vi.fn(),
+  }),
+  useAttachmentUpload: () => ({
+    handleUploadAttachment: vi.fn(),
+  }),
+  useChatSettingsFormConfig: () => ({}),
+  useAttachmentValidation: () => ({
+    inputAttachmentTypes: [],
+    isAttachmentsAllowed: true,
+    validateAttachment: vi.fn(),
+    fileAccept: undefined,
   }),
 }));
 
@@ -141,7 +151,9 @@ describe('NewConversationComposer', () => {
 
   beforeEach(() => {
     mockUseUiFeature.mockImplementation(
-      (feature) => feature === OverlayFeature.EmptyChatSettings,
+      (feature) =>
+        feature === OverlayFeature.EmptyChatSettings ||
+        feature === OverlayFeature.ChatSettings,
     );
   });
 
@@ -174,7 +186,7 @@ describe('NewConversationComposer', () => {
     ).toBeTruthy();
   });
 
-  it('passes chatSettings through by default (empty-chat-settings enabled)', async () => {
+  it('passes chatSettings through when both chat-settings and empty-chat-settings are enabled', async () => {
     render(
       <Suspense fallback={null}>
         <NewConversationComposer
@@ -189,8 +201,30 @@ describe('NewConversationComposer', () => {
     expect(screen.getByLabelText('chat-settings').textContent).toBe('defined');
   });
 
+  it('omits chatSettings when chat-settings is disabled even though empty-chat-settings is enabled', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.EmptyChatSettings,
+    );
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+    expect(screen.getByLabelText('chat-settings').textContent).toBe(
+      'undefined',
+    );
+  });
+
   it('omits chatSettings when empty-chat-settings is disabled', async () => {
-    mockUseUiFeature.mockReturnValue(false);
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.ChatSettings,
+    );
     render(
       <Suspense fallback={null}>
         <NewConversationComposer

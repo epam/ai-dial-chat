@@ -7,13 +7,23 @@ export const DEFAULT_MARKDOWN_CLASS_NAMES: MarkdownRendererClassNames = {
   h3: 'dial-h3-text mb-2 mt-4 first:mt-0 [text-wrap:balance]',
   h4: 'mb-2 mt-4 dial-body-semi-text first:mt-0 [text-wrap:balance]',
   h5: 'mb-2 mt-4 dial-small-semi-text first:mt-0 [text-wrap:balance]',
-  h6: 'mb-2 mt-4 text-sm font-medium first:mt-0 [text-wrap:balance]',
+  h6: 'mb-2 mt-4 dial-tiny-text first:mt-0 [text-wrap:balance]',
   p: 'dial-body-paragraph-text mb-3 break-words [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0',
   ul: 'mb-3 space-y-1',
   ol: 'mb-3 space-y-1',
-  codeInline:
-    'mx-0.5 px-1.5 text-[0.875em] break-words [overflow-wrap:anywhere]',
+  codeInline: 'mx-0.5 px-1.5 break-words [overflow-wrap:anywhere]',
   blockquote: 'my-4',
   link: 'break-words [overflow-wrap:anywhere]',
   tableWrapper: 'my-4',
+};
+
+/**
+ * {@link DEFAULT_MARKDOWN_CLASS_NAMES} with the body copy one step down the
+ * type scale. Headings, code, and tables are unchanged — only the text that
+ * dominates a long answer shrinks, so more of it fits on a narrow viewport.
+ */
+export const COMPACT_MARKDOWN_CLASS_NAMES: MarkdownRendererClassNames = {
+  ...DEFAULT_MARKDOWN_CLASS_NAMES,
+  p: 'dial-small-paragraph-text mb-3 break-words [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0',
+  strong: 'dial-small-paragraph-semi-text',
 };

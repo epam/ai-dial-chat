@@ -1,5 +1,8 @@
-## ADDED Requirements
+# dial-error-mapping Specification
 
+## Purpose
+Provides one shared mapper (`apps/chat-api/src/common/dial/dial-error.mapper.ts`) that every `chat-api` domain service uses to translate a DIAL Core error — whether SDK-shaped (`@epam/ai-dial-typescript-sdk`) or fetch-shaped — into the matching NestJS `HttpException`, so upstream DIAL Core status codes surface consistently across the API instead of each domain reimplementing its own mapping.
+## Requirements
 ### Requirement: Single DIAL error mapper for all chat-api domains
 The system SHALL expose one module (`apps/chat-api/src/common/dial/dial-error.mapper.ts`) that all `chat-api` domain services use to translate a DIAL Core error into a NestJS `HttpException`, regardless of whether the error originated from `@epam/ai-dial-typescript-sdk` (SDK-shaped, `{ status }`) or from a raw `fetch` call (`Response`-shaped, `AbortError`, network `TypeError`).
 
@@ -41,3 +44,29 @@ Every `chat-api` service method that calls `handleDialSdkError` after receiving 
 #### Scenario: every SDK-shaped service passes the response through to the mapper
 - **WHEN** any of `conversation.service.ts`, `bucket.service.ts`, `files.service.ts`, `user-config.service.ts`, `chat.service.ts`, or `transcription.service.ts` handles an SDK-shaped result on a path where a `response` is available
 - **THEN** it passes that `response` (or a `{ status }` object derived from it) as the 4th argument to `handleDialSdkError`, so no SDK-path service can silently lose the upstream status; `rate.service.ts` is out of scope for this requirement because it is fetch-based, not SDK-shaped
+
+### Requirement: mapDialHttpStatus maps 405, 412, and 422 explicitly
+`mapDialHttpStatus` (`apps/chat-api/src/common/dial/dial-error.mapper.ts`) SHALL map DIAL Core status `405` to `MethodNotAllowedException`, `412` to `PreconditionFailedException`, and `422` to `UnprocessableEntityException`, instead of falling through to the generic `>= 500` `BadGatewayException` branch (which previously caught nothing for these three codes and fell to the final catch-all `BadGatewayException` at the function's end). Every other previously-mapped status (`400`, `401`, `403`, `404`, `409`, `413`, `429`, `5xx`) SHALL remain mapped exactly as before this change.
+
+This is required by the skills domain, whose verified DIAL Core operations (`downloadSkillFolder`, `uploadSkillFolder`, `uploadSkillFile`, `deleteSkillFile`, `deleteSkillGroupingFolder`, and others) declare real `405`/`412`/`422` responses in their OpenAPI schema, but is a shared-mapper change available to every `chat-api` domain, not skills-specific code.
+
+#### Scenario: 405 maps to MethodNotAllowedException
+- **WHEN** any caller invokes `mapDialHttpStatus(405, context, logger)`
+- **THEN** the function throws `MethodNotAllowedException`, not `BadGatewayException`
+
+#### Scenario: 412 maps to PreconditionFailedException
+- **WHEN** any caller invokes `mapDialHttpStatus(412, context, logger)`
+- **THEN** the function throws `PreconditionFailedException`, not `BadGatewayException`
+
+#### Scenario: 422 maps to UnprocessableEntityException
+- **WHEN** any caller invokes `mapDialHttpStatus(422, context, logger)`
+- **THEN** the function throws `UnprocessableEntityException`, not `BadGatewayException`
+
+#### Scenario: Existing status mappings are unchanged
+- **WHEN** `mapDialHttpStatus` is called with any of `400`, `401`, `403`, `404`, `409`, `413`, `429`, or a `5xx` status
+- **THEN** the exact same exception subtype it threw before this change is thrown again, verified by the pre-existing `dial-error.mapper.spec.ts` regression suite passing unmodified
+
+#### Scenario: handleDialSdkError and handleDialFetchError inherit the new mappings automatically
+- **WHEN** `handleDialSdkError` or `handleDialFetchError` resolves a `405`, `412`, or `422` status through `mapDialHttpStatus`
+- **THEN** they throw the newly mapped exception without requiring any change to their own implementation, since both already delegate final status-to-exception mapping to `mapDialHttpStatus`
+

@@ -118,19 +118,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   },
   Calendar: ({
     id,
-    label,
+    labelProps,
     value,
     onChange,
     placeholder,
   }: {
     id?: string;
-    label?: string;
+    labelProps?: { label: ReactNode; required?: boolean };
     value?: Date | string | null;
     onChange: (value: string | null) => void;
     placeholder?: string;
   }) => (
     <label htmlFor={id}>
-      {label}
+      {labelProps?.label}
+      {labelProps?.required && ' *'}
       <input
         id={id}
         placeholder={placeholder}
@@ -170,6 +171,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </label>
   ),
   Spinner: () => <div>Loading</div>,
+  Label: ({
+    id,
+    label,
+    required,
+  }: {
+    id?: string;
+    label: ReactNode;
+    required?: boolean;
+  }) => (
+    <span id={id}>
+      {label}
+      {required && ' *'}
+    </span>
+  ),
   LazyMarkdownEditor: () =>
     Promise.resolve({
       MarkdownEditor: ({
@@ -199,7 +214,7 @@ const baseValues: ScheduledTaskCreateFormValues = {
 const renderForm = async (
   overrides?: Partial<ScheduledTaskCreateFormProps>,
 ) => {
-  const result = render(
+  const view = render(
     <ScheduledTaskCreateForm
       labels={{
         pageTitle: 'New task',
@@ -228,7 +243,6 @@ const renderForm = async (
         endDateLabel: 'End date',
         endDatePlaceholder: 'Pick end date',
         modelOrAgentLabel: 'Model or Agent',
-        modelPlaceholder: 'Select a model',
         descriptionLabel: 'Description',
         instructionsLabel: 'Instructions',
         cancelButtonLabel: 'Cancel',
@@ -236,7 +250,8 @@ const renderForm = async (
       }}
       values={baseValues}
       errors={{}}
-      modelOptions={[{ id: 'gpt-4o', label: 'GPT-4o' }]}
+      modelSelector={<button type="button">Select Model or Agent</button>}
+      modelLabelId="scheduled-task-model-label"
       onFieldChange={vi.fn()}
       onBack={vi.fn()}
       onCancel={vi.fn()}
@@ -245,10 +260,32 @@ const renderForm = async (
     />,
   );
   await screen.findAllByRole('textbox');
-  return result;
+  return view;
 };
 
 describe('ScheduledTaskCreateForm', () => {
+  it('renders the host-supplied modelSelector verbatim', async () => {
+    await renderForm({
+      modelSelector: <button type="button">Custom model trigger</button>,
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Custom model trigger' }),
+    ).toBeTruthy();
+  });
+
+  it('wraps modelSelector with the required Model or Agent label', async () => {
+    await renderForm();
+
+    expect(screen.getByText('Model or Agent *')).toBeTruthy();
+  });
+
+  it('renders errors.modelId below the modelSelector slot', async () => {
+    await renderForm({ errors: { modelId: 'Model is required' } });
+
+    expect(screen.getByText('Model is required')).toBeTruthy();
+  });
+
   it('renders display name field with label', async () => {
     await renderForm();
 

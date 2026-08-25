@@ -306,9 +306,9 @@ export const Filter: FC<FilterProps> = ({
               />
               <div
                 className={mergeClasses(
-                  'px-[10px] pb-1 pt-[10px] uppercase tracking-[0.06em]',
+                  'px-[10px] pb-1 pt-[10px]',
                   typography?.filterSectionLabelClassName ??
-                    'dial-tiny-semi-text',
+                    'dial-tiny-lead-semi-text',
                   styles.sectionLabel,
                 )}
                 aria-hidden

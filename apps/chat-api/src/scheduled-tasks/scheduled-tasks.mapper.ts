@@ -65,6 +65,7 @@ export interface UpstreamScheduleResponse {
   service_id?: string;
   created_by?: string;
   description?: string;
+  is_deleted?: boolean;
   properties?: {
     payload?: {
       model?: string;
@@ -193,6 +194,7 @@ export const fromUpstreamSchedule = (
   updatedAt: upstream.updated_at,
   triggerType: upstream.trigger_type as ScheduleTriggerType | undefined,
   isActive: deriveIsActive(upstream),
+  isDeleted: upstream.is_deleted ?? false,
   serviceId: upstream.service_id,
   createdBy: upstream.created_by,
   description: upstream.description,

@@ -97,6 +97,21 @@ describe('validate', () => {
     expect(config.OVERLAY_ENABLED).toBe(true);
   });
 
+  it('defaults RESPONSES_API_ENABLED to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.RESPONSES_API_ENABLED).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+    ['0', false],
+    ['no', false],
+  ])('parses RESPONSES_API_ENABLED=%s as %s', (rawValue, expected) => {
+    const config = validate({ ...baseConfig, RESPONSES_API_ENABLED: rawValue });
+    expect(config.RESPONSES_API_ENABLED).toBe(expected);
+  });
+
   it('defaults OVERLAY_SANDBOX_ENABLED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.OVERLAY_SANDBOX_ENABLED).toBe(false);

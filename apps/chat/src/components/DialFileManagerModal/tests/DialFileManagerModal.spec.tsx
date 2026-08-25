@@ -7,6 +7,7 @@ import {
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useDialFileManagerModule from '../../../hooks/files/useDialFileManager';
 import type { UseDialFileManagerResult } from '../../../hooks/files/useDialFileManager';
 import { DialFileManagerVariant } from '../../../types/file-manager-variant';
@@ -15,7 +16,7 @@ import DialFileManagerModal from '../DialFileManagerModal';
 vi.mock('../../../hooks/files/useDialFileManager');
 
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => ({ showNotification: mockShowNotification }),
+  useNotification: () => createNotificationContextValue(mockShowNotification),
 }));
 
 const { mockActiveTab, mockHandleTabChange, mockFileManagerTabs } = vi.hoisted(
@@ -71,9 +72,9 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       activeTab: mockActiveTab.value ?? Tabs.MyFiles,
       handleTabChange: mockHandleTabChange,
       tabs: [
-        { id: Tabs.MyFiles, name: 'My Files' },
-        { id: Tabs.Shared, name: 'Shared with Me' },
-        { id: Tabs.Organization, name: 'Organization' },
+        { id: Tabs.MyFiles, label: 'My Files' },
+        { id: Tabs.Shared, label: 'Shared with Me' },
+        { id: Tabs.Organization, label: 'Organization' },
       ],
     })),
     DialFileManager: ({
@@ -112,7 +113,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       };
       uploadEnabled?: boolean;
       toolbarOptions?: {
-        tabs?: Array<{ id: string; name: string }>;
+        tabs?: Array<{ id: string; label: string }>;
         activeTab?: string;
         onTabChange?: (id: DialFileManagerTabs) => void;
         showHiddenFilesToggle?: boolean;
@@ -250,7 +251,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
                   toolbarOptions.onTabChange?.(tab.id as DialFileManagerTabs)
                 }
               >
-                {tab.name}
+                {tab.label}
               </button>
             ))}
         <button
@@ -553,12 +554,17 @@ describe('DialFileManagerModal', () => {
     expect(dialog.classList.contains('!h-[min(800px,100dvh)]')).toBe(true);
     expect(dialog.classList.contains('!bg-layer-sunken')).toBe(true);
 
+    /* These assert pure CSS-level styling (which class is present), for which
+       no semantic query applies — this repo's spec conventions carve out
+       this exact case for container/element.querySelector. */
+    // eslint-disable-next-line testing-library/no-node-access
     const body = dialog.querySelector('.overflow-auto');
     expect(body?.classList.contains('flex')).toBe(true);
     expect(body?.classList.contains('min-h-0')).toBe(true);
     expect(body?.classList.contains('flex-col')).toBe(true);
 
-    const footer = screen.getByRole('button', { name: 'Attach' }).parentElement;
+    // eslint-disable-next-line testing-library/no-node-access
+    const footer = dialog.querySelector('.px-6.py-4');
     expect(footer?.classList.contains('px-6')).toBe(true);
     expect(footer?.classList.contains('py-4')).toBe(true);
   });

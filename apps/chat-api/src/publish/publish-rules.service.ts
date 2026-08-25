@@ -1,5 +1,8 @@
 import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
-import { mapDialHttpStatus } from '../common/dial/dial-error.mapper';
+import {
+  extractDialErrorMessage,
+  mapDialHttpStatus,
+} from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { DialClientService } from '../dial/dial-client.service';
 import type { PublishRuleDto } from './dto/publish-rule.dto';
@@ -56,6 +59,8 @@ export class PublishRulesService {
         result.response.status,
         `get publish rules for "${folderPath}"`,
         this.logger,
+        result.error,
+        extractDialErrorMessage(result.error),
       );
     }
 

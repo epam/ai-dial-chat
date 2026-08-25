@@ -2,13 +2,15 @@ import type { CatalogItem } from './catalog-item';
 
 /** Typography class overrides for `Card` content. */
 export interface CardTypography {
-  /** Typography class applied to the item name. Default: `'dial-h3-text'`. */
+  /** Typography class applied to the item name. Default: `'dial-body-semi-text'`. */
   nameClassName?: string;
   /** Typography class applied to the version text. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
   /** Typography class applied to the description text. Default: `'dial-small-text'`. */
   descriptionClassName?: string;
-  /** Typography class applied to the featured chip label. Default: `'dial-tiny-semi-text uppercase tracking-[0.06em]'`. */
+  /** Typography class applied to the last-used text. Default: `'dial-tiny-text'`. */
+  descriptionSizeClassName?: string;
+  /** Typography class applied to the featured chip label. Default: `'dial-tiny-lead-semi-text'`. */
   featuredChipClassName?: string;
   /** Typography class applied to folder path separator labels. Default: `'dial-tiny-text'`. */
   folderLabelClassName?: string;
@@ -66,6 +68,6 @@ export interface CardProps {
   removeFromFavoritesAriaLabel?: string;
   /** Whether this card represents the currently selected item — shows an accent border, tinted background, and a checkmark. Default: false. */
   isSelected?: boolean;
-  /** Credentials-status badge label shown when signed out. Default: `'LOGGED OUT'`. */
+  /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
 }

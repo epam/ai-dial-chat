@@ -45,6 +45,9 @@ const Header: FC<Props> = ({
   const isNewConversationHidden = useUiFeature(
     OverlayFeature.HideNewConversation,
   );
+  const isNavigationMenuHidden = useUiFeature(
+    OverlayFeature.HideNavigationMenu,
+  );
 
   if (!isHeaderEnabled) {
     return null;
@@ -53,7 +56,7 @@ const Header: FC<Props> = ({
   return (
     <header
       className={mergeClasses(
-        'z-30 grid min-h-[64px] w-full grid-cols-[1fr_auto_1fr] items-center bg-transparent desktop:hidden',
+        'z-30 grid min-h-[48px] w-full grid-cols-[1fr_auto_1fr] items-center bg-transparent desktop:hidden',
         isRootRoute ? 'absolute inset-x-0 top-0' : 'relative',
       )}
     >
@@ -108,11 +111,13 @@ const Header: FC<Props> = ({
               />
             </div>
           )}
-        <GhostIconButton
-          icon={<IconMenu2 size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-          aria-label={t(NavigationI18nKeys.OpenMenu)}
-          onClick={onMenuToggle}
-        />
+        {!isNavigationMenuHidden && (
+          <GhostIconButton
+            icon={<IconMenu2 size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+            aria-label={t(NavigationI18nKeys.OpenMenu)}
+            onClick={onMenuToggle}
+          />
+        )}
       </div>
       <Logo />
       <div className="flex justify-end pe-3">

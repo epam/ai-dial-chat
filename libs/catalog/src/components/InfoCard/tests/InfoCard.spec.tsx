@@ -1,19 +1,22 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { DetailsConfirmationVariant } from '../../../types/details-confirmation';
-import { CatalogEntityType } from '../../../types/entity-type';
 import { InfoCard } from '../InfoCard';
 
-vi.mock('../../EntityHeader/EntityHeader', () => ({
-  EntityHeader: ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
+  ResourceSummary: ({
     item,
     iconSize,
+    className,
   }: {
     item: CatalogItem;
     iconSize: number;
+    className?: string;
   }) => (
-    <div>
+    <div className={className}>
       {item.name}:{iconSize}
     </div>
   ),

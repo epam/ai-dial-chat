@@ -39,7 +39,7 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   ul?: string;
   /** Extra classes on `<ol>` (base: `list-decimal ps-5`). */
   ol?: string;
-  /** Typography class for `<strong>`. Defaults to `'font-semibold'`. */
+  /** Typography class for `<strong>`. Defaults to `'dial-body-paragraph-semi-text'` — the semibold step matching the default `p` class. */
   strong?: string;
   /** Typography class for `<em>`. Defaults to `'italic'`. */
   em?: string;
@@ -72,7 +72,7 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   tableBodyCell?: string;
   /** Extra classes on `<th>` only (applied alongside `tableCell`). */
   tableHeader?: string;
-  /** Typography class for `<th>` cells. Defaults to `'dial-tiny-semi-text uppercase tracking-wider'`. Text color is set separately via `colors.tableHeaderText`. */
+  /** Typography class for `<th>` cells. Defaults to `'dial-tiny-lead-semi-text'`. Text color is set separately via `colors.tableHeaderText`. */
   tableHeaderFont?: string;
 }
 
@@ -91,6 +91,8 @@ export interface MarkdownRendererProps {
    * Use for elements not covered by `classNames`.
    */
   components?: Components;
+  /** Extra rehype plugins, applied after the built-in KaTeX pass. Defaults to none. */
+  rehypePlugins?: NonNullable<Options['rehypePlugins']>;
   /**
    * Label shown with a shimmer animation while `isStreaming` is true and no content has arrived yet.
    * Defaults to `'Thinking'`. Pass a translated string from the consuming app.
@@ -146,9 +148,12 @@ const remarkPlugins: Options['remarkPlugins'] = [
 ];
 
 /** KaTeX rehype plugin list, shared across all markdown instances. */
-const rehypePlugins: Options['rehypePlugins'] = [
+const baseRehypePlugins: NonNullable<Options['rehypePlugins']> = [
   [rehypeKatex, { output: 'mathml', strict: false }],
 ];
+
+/** Stable empty plugin list used as the default when no extra plugins are passed. */
+const EMPTY_REHYPE_PLUGINS: NonNullable<Options['rehypePlugins']> = [];
 
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
@@ -201,7 +206,9 @@ const buildMarkdownComponents = (
     <ol className={mergeClasses('list-decimal ps-5', cn.ol)}>{children}</ol>
   ),
   strong: ({ children }) => (
-    <strong className={cn.strong ?? 'font-semibold'}>{children}</strong>
+    <strong className={cn.strong ?? 'dial-body-paragraph-semi-text'}>
+      {children}
+    </strong>
   ),
   em: ({ children }) => <em className={cn.em ?? 'italic'}>{children}</em>,
   pre: ({ children }) => <>{children}</>,
@@ -309,10 +316,10 @@ const buildMarkdownComponents = (
     <th
       scope="col"
       className={mergeClasses(
-        'sticky top-0 z-[2] max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start [overflow-wrap:anywhere]',
+        'sticky top-0 z-[2] max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start',
         tableStyles.rowDivider,
         tableStyles.tableHeaderCell,
-        cn.tableHeaderFont ?? 'dial-tiny-semi-text uppercase tracking-wider',
+        cn.tableHeaderFont ?? 'dial-tiny-lead-semi-text',
         cn.tableCell,
         cn.tableHeader,
       )}
@@ -323,7 +330,7 @@ const buildMarkdownComponents = (
   td: ({ children }) => (
     <td
       className={mergeClasses(
-        'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 align-top [overflow-wrap:anywhere]',
+        'max-w-96 whitespace-normal border-b px-3 py-2.5 align-top [overflow-wrap:anywhere]',
         tableStyles.rowDivider,
         cn.tableBodyCell,
         cn.tableCell,
@@ -342,6 +349,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     streamCharactersPerSecond,
     classNames = EMPTY_CLASS_NAMES,
     components,
+    rehypePlugins = EMPTY_REHYPE_PLUGINS,
     thinkingLabel = 'Thinking',
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
@@ -409,7 +417,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       <div style={cssVars}>
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
-          rehypePlugins={rehypePlugins}
+          rehypePlugins={[...baseRehypePlugins, ...rehypePlugins]}
           components={mergedComponents}
         >
           {processedContent}

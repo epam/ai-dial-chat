@@ -48,7 +48,7 @@ Specifies four shared hooks under `apps/chat/src/hooks/conversation/` — `useAt
 
 ### Requirement: useModelSelectorLabels hook
 
-`apps/chat/src/hooks/conversation/useModelSelectorLabels.ts` SHALL accept `{ isLoading, error, itemCount }` and return an object with `ariaLabel`, `loading`, `error`, `empty`, `searchPlaceholder`, and `closeLabel` string fields, sourced via `useTranslation()` using keys from `DeploymentsI18nKeys` and `BasicI18nKeys` in `translation-keys.ts`. No raw string literals are used for any label.
+`apps/chat/src/hooks/conversation/useModelSelectorLabels.ts` SHALL accept `{ isLoading, error, itemCount }` and return an object with `ariaLabel`, `loading`, `error`, `empty`, `searchPlaceholder`, `closeLabel`, and `unavailableTooltip` string fields, sourced via `useTranslation()` using keys from `DeploymentsI18nKeys` and `BasicI18nKeys` in `translation-keys.ts`. No raw string literals are used for any label.
 
 #### Scenario: Labels are consistent across both surfaces
 
@@ -57,7 +57,14 @@ Specifies four shared hooks under `apps/chat/src/hooks/conversation/` — `useAt
 
 ### Requirement: useChatSettingsFormConfig hook
 
-`apps/chat/src/hooks/conversation/useChatSettingsFormConfig.ts` SHALL accept a discriminated-union options object — `{ mode: 'local'; values: ChatSettingsValues; onValuesChange; deploymentFeatures? }` for new-chat usage or `{ mode: 'conversation'; conversation; onConversationChange; deploymentFeatures? }` for existing-conversation usage — and return the `chatSettings` prop object expected by `@epam/ai-dial-conversation-input` (features, values, `onSave`, and all i18n label strings sourced from `ChatSettingsI18nKeys` / `ChatI18nKeys.ChatSettings`).
+`apps/chat/src/hooks/conversation/useChatSettingsFormConfig.ts` SHALL accept a discriminated-union options object — `{ mode: 'local'; values: ChatSettingsValues; onValuesChange; deploymentFeatures?; isQuickApp? }` for new-chat usage or `{ mode: 'conversation'; conversation; onConversationChange; deploymentFeatures?; isQuickApp? }` for existing-conversation usage — and return the `chatSettings` prop object expected by `@epam/ai-dial-conversation-input` (features, values, `onSave`, and all i18n label strings sourced from `ChatSettingsI18nKeys` / `ChatI18nKeys.ChatSettings`).
+
+When `isQuickApp` is `true`, the returned `features.temperature` SHALL be `false` regardless of `deploymentFeatures?.temperature` — a Quick App's orchestrator configuration sets its own fixed temperature, so the per-conversation temperature control MUST stay hidden. Callers (`NewConversationComposer.tsx`, `ConversationView.tsx`) SHALL derive `isQuickApp` via `isQuickAppSchema({ id: selectedDeployment?.applicationTypeSchemaId })`.
+
+#### Scenario: Temperature is hidden for Quick App deployments
+
+- **WHEN** `useChatSettingsFormConfig` is called with `isQuickApp: true` and `deploymentFeatures.temperature === true`
+- **THEN** the returned `chatSettings.features.temperature` is `false`, so no temperature slider is rendered, in both new-chat (`AppPreviewChat`'s pre-conversation composer) and existing-conversation (`ConversationView`) usage
 
 #### Scenario: Local mode wires values directly
 

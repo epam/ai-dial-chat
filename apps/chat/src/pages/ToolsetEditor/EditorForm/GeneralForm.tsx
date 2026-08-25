@@ -25,6 +25,8 @@ interface Props {
   namePlaceholder: string;
   descriptionPlaceholder: string;
   onChange: (patch: Partial<CustomAppGeneralFormData>) => void;
+  onNameBlur?: () => void;
+  onVersionBlur?: () => void;
 }
 
 const GeneralForm: FC<Props> = ({
@@ -33,6 +35,8 @@ const GeneralForm: FC<Props> = ({
   namePlaceholder,
   descriptionPlaceholder,
   onChange,
+  onNameBlur,
+  onVersionBlur,
 }) => {
   const { t } = useTranslation();
 
@@ -83,6 +87,8 @@ const GeneralForm: FC<Props> = ({
       values={values}
       errors={errors}
       onChange={onChange}
+      onNameBlur={onNameBlur}
+      onVersionBlur={onVersionBlur}
       labels={labels}
       availableLocaleOptions={localeOptions}
     />

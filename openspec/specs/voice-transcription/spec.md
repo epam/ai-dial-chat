@@ -1,3 +1,11 @@
+# voice-transcription Specification
+
+## Purpose
+
+Uploading recorded audio and transcribing it into the conversation input.
+
+## Requirements
+
 ### Requirement: isAudioTranscriptionSupported utility
 
 `libs/chat-shared` SHALL export a pure utility function:

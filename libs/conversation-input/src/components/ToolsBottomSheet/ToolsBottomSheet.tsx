@@ -26,6 +26,8 @@ export interface ToolsBottomSheetProps {
   items: ToolMenuItem[];
   /** Called with the tool id when a row is tapped. */
   onToolToggle: (toolId: string) => void;
+  /** CSS class applied to each tool row label. Defaults to `'dial-small-text'`. */
+  itemLabelClassName?: string;
   /** Color overrides. */
   colors?: ToolsBottomSheetColors;
 }
@@ -52,6 +54,7 @@ export const ToolsBottomSheet: FC<ToolsBottomSheetProps> = ({
   title = 'Tools',
   items,
   onToolToggle,
+  itemLabelClassName = 'dial-small-text',
   colors,
 }) => {
   const cssVars = buildCssVars({
@@ -93,7 +96,7 @@ export const ToolsBottomSheet: FC<ToolsBottomSheetProps> = ({
                   </span>
                 ) : null
               }
-              label={<span className="dial-small-text">{item.label}</span>}
+              label={<span className={itemLabelClassName}>{item.label}</span>}
               onClick={() => onToolToggle(item.id)}
             />
           </li>

@@ -1,5 +1,7 @@
+import { useAttachmentAction } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  COMPACT_MARKDOWN_CLASS_NAMES,
   CodeBlockTheme,
   isStatusMessage,
   mergeClasses,
@@ -39,7 +41,6 @@ import {
   CitationsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
-import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
 import type { McpAppToolCallSeed } from '../../hooks/attachment/useOpenMcpAppCanvas';
 import { useCitationMarkdownComponents } from '../../hooks/citations/useCitationMarkdownComponents';
 import type { McpAppToolRef } from '../../hooks/conversation/useMcpAppTools';
@@ -48,6 +49,7 @@ import { ThemeId } from '../../types/theme-id';
 import { openAnnotationAttachment } from '../../utils/annotation';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
+import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
 import {
   findMcpAppForMessage,
   mcpAppCanvasKey,
@@ -68,8 +70,14 @@ const EditMessageInput = lazy(async () => {
 
 const preloadEditInput = () => void import('@epam/ai-dial-conversation-input');
 
-const USER_MESSAGE_TEXT_STYLES = {
+const MESSAGE_TEXT_STYLES = {
   typography: { fontClassName: 'dial-body-text' },
+};
+
+/* One type-scale step down for narrow viewports: the full-size body copy costs
+   too much vertical space on a phone. Desktop keeps the wider scale. */
+const COMPACT_MESSAGE_TEXT_STYLES = {
+  typography: { fontClassName: 'dial-small-paragraph-text' },
 };
 
 interface Props {
@@ -137,6 +145,8 @@ interface Props {
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
   isAttachmentsEnabled?: boolean;
+  /** Renders message text one type-scale step down. The host sets it on narrow viewports. */
+  isCompactTypography?: boolean;
   maximumAttachmentsAmount?: number;
   onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
   hideAttachFile?: boolean;
@@ -206,6 +216,7 @@ const ConversationMessageItem: FC<Props> = ({
   onPreviewReference,
   validateAttachment,
   isAttachmentsEnabled,
+  isCompactTypography = false,
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
   hideAttachFile,
@@ -232,7 +243,9 @@ const ConversationMessageItem: FC<Props> = ({
   );
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
-  const { handleAttachmentClick: handleDownload } = useAttachmentAction();
+  const { handleAttachmentClick: handleDownload } = useAttachmentAction({
+    resolveDownloadUrl: resolveDialFileDownloadUrl,
+  });
   const handleAttachmentClick = onAttachmentClickProp ?? handleDownload;
   const handleDownloadAll = useCallback(
     (attachmentsToDownload: DisplayAttachment[]) => {
@@ -255,11 +268,18 @@ const ConversationMessageItem: FC<Props> = ({
     [annotations],
   );
   const citationCard = useCitationCard();
+  const messageTextStyles = isCompactTypography
+    ? COMPACT_MESSAGE_TEXT_STYLES
+    : MESSAGE_TEXT_STYLES;
+  const markdownClassNames = isCompactTypography
+    ? COMPACT_MARKDOWN_CLASS_NAMES
+    : undefined;
   const { processedContent, markdownComponents } =
     useCitationMarkdownComponents(
       msg.content,
       citationGroups,
       handleAttachmentClick,
+      isCompactTypography,
     );
   const referenceGroups = useMemo(
     () => getReferenceAttachmentGroups(msg.custom_content?.attachments),
@@ -298,7 +318,7 @@ const ConversationMessageItem: FC<Props> = ({
             <MessageBubble
               role={msg.role}
               text={msg.content}
-              styles={{ ...USER_MESSAGE_TEXT_STYLES, className: 'justify-end' }}
+              styles={{ ...messageTextStyles, className: 'justify-end' }}
               attachments={allDisplayAttachments}
               labels={{
                 showMoreLabel,
@@ -402,7 +422,7 @@ const ConversationMessageItem: FC<Props> = ({
         role={msg.role}
         text={messageText}
         styles={{
-          ...(msg.role === MessageRole.User ? USER_MESSAGE_TEXT_STYLES : {}),
+          ...messageTextStyles,
           className: isUserMessage ? 'justify-end' : 'justify-start',
           bubbleClassName: mergeClasses(
             msg.streamErrorMessage != null ? 'w-full' : undefined,
@@ -411,6 +431,7 @@ const ConversationMessageItem: FC<Props> = ({
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }
+        markdownClassNames={markdownClassNames}
         attachments={nonReferenceDisplayAttachments}
         isStreaming={isStreaming}
         hasAlwaysVisibleActions={!isStreaming}

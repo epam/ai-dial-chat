@@ -50,6 +50,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   onPendingAttachmentsConsumed,
   onAttachmentClick,
   pasteTextThreshold,
+  maxMessageLength = 50000,
   onMessageTooLong,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,11 +93,8 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
 
   const handleSaveClick = () => {
     if (!canSend) return;
-    if (
-      !isAttachmentsEnabled &&
-      currentText.length >= (pasteTextThreshold ?? 4000)
-    ) {
-      onMessageTooLong?.(currentText.length, pasteTextThreshold ?? 4000);
+    if (!isAttachmentsEnabled && currentText.length >= maxMessageLength) {
+      onMessageTooLong?.(currentText.length, maxMessageLength);
       return;
     }
     handleSend(currentText, currentNewAttachments);
@@ -156,6 +154,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
         onAttachmentClick={onAttachmentClick}
         pasteTextThreshold={pasteTextThreshold}
+        maxMessageLength={maxMessageLength}
         onMessageTooLong={onMessageTooLong}
       />
 

@@ -1,8 +1,8 @@
-import type { CatalogEntityType } from '../types/entity-type';
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { CatalogItem } from './catalog-item';
 /** Typography class overrides for `ListView` cells. */
 export interface ListViewTypography {
-  /** Typography class for item name text. Default: `'dial-h3-text'`. */
+  /** Typography class for item name text. Default: `'dial-small-semi-text'`. */
   nameClassName?: string;
   /** Typography class for item version text. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
@@ -69,6 +69,6 @@ export interface ListViewProps {
   stickyHeaderTop?: number;
   /** ID of an item to visually mark as selected (border, tint, and checkmark). */
   selectedItemId?: string;
-  /** Credentials-status badge label shown when signed out. Default: `'LOGGED OUT'`. */
+  /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
 }

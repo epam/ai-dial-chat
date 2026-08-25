@@ -1,3 +1,11 @@
+# deployment-reference-resolution Specification
+
+## Purpose
+
+Resolving a conversation or message `model.id` that holds a DIAL Core reference value to a real deployment id before it reaches REST calls or lib props.
+
+## Requirements
+
 ### Requirement: Conversation and message model.id may hold a Core reference value
 
 `Conversation.model` in `libs/chat-shared/src/models/chat.ts` SHALL remain `{ id: string }` — unchanged by this capability. The ambiguity this capability resolves lives inside that existing `id` value: DIAL Core may address a deployment by `reference` in places that store a deployment id (a conversation's `model.id`, a message's `model.id`), so the string held in `id` is not guaranteed to equal any deployment's `id` — it may instead equal that deployment's `reference`. No new field is introduced to track this; `findDeploymentByIdOrReference` (below) is the mechanism that resolves it from the single existing `id` value.

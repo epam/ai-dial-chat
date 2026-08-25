@@ -1,19 +1,31 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Cache } from 'cache-manager';
 import {
+  extractDialErrorMessage,
   handleDialFetchError,
   mapDialHttpStatus,
 } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import { resolveLocalizedValue } from '../../common/utils/localized-value';
 import { DialClientService } from '../../dial/dial-client.service';
-import type { DeploymentLimitsResponseDto } from '../../openapi/openapi-response.dto';
+import type {
+  DeploymentLimitsResponseDto,
+  UserLimitStatsResponseDto,
+} from '../../openapi/openapi-response.dto';
 import type { DeploymentConfigurationDto } from '../dto/deployment-configuration.dto';
 import type { DeploymentDetailsDto } from '../dto/deployment-details.dto';
 import { DeploymentItemType } from '../dto/deployment-item.dto';
 import {
   getNumber,
+  getString,
   isRecord,
   mapDeploymentFeatures,
   mapToolsetAuthSettings,
@@ -73,6 +85,9 @@ export class DeploymentsDetailsService {
         {
           headers: getBearerAuthHeaders(accessToken),
         },
+      );
+      this.logger.debug(
+        `DIAL Core configurationDeployment for "${name}": ${JSON.stringify(result)}`,
       );
       if (result.error) {
         return mapDialHttpStatus(
@@ -221,6 +236,9 @@ export class DeploymentsDetailsService {
       throw new NotFoundException('Resource not found');
     }
     const raw = result.data;
+    this.logger.debug(
+      `DIAL Core model details for "${deployment}": ${JSON.stringify(raw)}`,
+    );
     const limits = raw.limits;
 
     const data: DeploymentDetailsDto = {
@@ -255,14 +273,26 @@ export class DeploymentsDetailsService {
                   : undefined,
             }
           : undefined,
-        pricing: raw.pricing
-          ? {
-              unit: raw.pricing.unit,
-              prompt: raw.pricing.prompt,
-              completion: raw.pricing.completion,
-            }
-          : undefined,
+        pricing: raw.pricing,
         features: mapDeploymentFeatures(raw.features),
+        catalogProperties: (() => {
+          if (!isRecord(raw.catalog_properties)) return undefined;
+
+          const properties = {
+            provider: getString(raw.catalog_properties, 'provider'),
+            vendor: getString(raw.catalog_properties, 'vendor'),
+            license: getString(raw.catalog_properties, 'license'),
+            knowledgeCutoffDate: getString(
+              raw.catalog_properties,
+              'knowledgeCutoffDate',
+            ),
+            parameters: getString(raw.catalog_properties, 'parameters'),
+          };
+
+          return Object.values(properties).some((value) => value != null)
+            ? properties
+            : undefined;
+        })(),
         owner: raw.owner,
         inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
           ? raw.input_attachment_types
@@ -273,6 +303,10 @@ export class DeploymentsDetailsService {
         createdAt: raw.created_at,
       },
     };
+
+    this.logger.debug(
+      `Model details sent to frontend for "${deployment}": ${JSON.stringify(data)}`,
+    );
 
     return data;
   }
@@ -330,7 +364,7 @@ export class DeploymentsDetailsService {
       id: deployment,
       type: DeploymentItemType.Application,
       applicationDetails: {
-        displayName: raw.display_name,
+        displayName: resolveLocalizedValue(raw.display_name),
         applicationProperties: (() => {
           const base = isRecord(raw.application_properties)
             ? raw.application_properties
@@ -493,6 +527,81 @@ export class DeploymentsDetailsService {
         this.logger,
         0,
       );
+    }
+  }
+
+  async getUserLimits(accessToken: string): Promise<UserLimitStatsResponseDto> {
+    this.logger.debug('Fetching user limits from DIAL Core');
+    try {
+      const result = await this.dialClient.client.getUserLimits({
+        headers: getBearerAuthHeaders(accessToken),
+      });
+      if (result.error) {
+        this.logger.debug(
+          `DIAL Core get user limits error: status=${result.response.status} body=${JSON.stringify(result.error)}`,
+        );
+        return mapDialHttpStatus(
+          result.response.status,
+          'get user limits',
+          this.logger,
+          result.error,
+          extractDialErrorMessage(result.error),
+        );
+      }
+      this.logger.debug(
+        `DIAL Core user limits raw response: ${JSON.stringify(result.data)}`,
+      );
+      return result.data as unknown as UserLimitStatsResponseDto;
+    } catch (err) {
+      /* mapDialHttpStatus above throws on a non-2xx DIAL Core response, so it
+       * lands here too — only a non-HttpException means no response was
+       * actually received (network error, timeout, unexpected throw). */
+      if (err instanceof HttpException) {
+        this.logger.debug(
+          `get user limits: re-throwing mapped DIAL Core error: ${err.message}`,
+        );
+      } else {
+        this.logger.debug(
+          `get user limits threw before a response was received: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      return handleDialFetchError(err, 'get user limits', this.logger, 0);
+    }
+  }
+
+  async getUserUsage(accessToken: string): Promise<UserLimitStatsResponseDto> {
+    this.logger.debug('Fetching user usage from DIAL Core');
+    try {
+      const result = await this.dialClient.client.getUserUsage({
+        headers: getBearerAuthHeaders(accessToken),
+      });
+      if (result.error) {
+        this.logger.debug(
+          `DIAL Core get user usage error: status=${result.response.status} body=${JSON.stringify(result.error)}`,
+        );
+        return mapDialHttpStatus(
+          result.response.status,
+          'get user usage',
+          this.logger,
+          result.error,
+          extractDialErrorMessage(result.error),
+        );
+      }
+      this.logger.debug(
+        `DIAL Core user usage raw response: ${JSON.stringify(result.data)}`,
+      );
+      return result.data as unknown as UserLimitStatsResponseDto;
+    } catch (err) {
+      if (err instanceof HttpException) {
+        this.logger.debug(
+          `get user usage: re-throwing mapped DIAL Core error: ${err.message}`,
+        );
+      } else {
+        this.logger.debug(
+          `get user usage threw before a response was received: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      return handleDialFetchError(err, 'get user usage', this.logger, 0);
     }
   }
 }

@@ -1,8 +1,9 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
+import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as conversationsApi from '../../../server-api/conversations.api';
 import AppPreviewChat from '../AppPreviewChat';
 
@@ -19,9 +20,7 @@ vi.mock('../../../context/auth/UserContext', () => ({
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => ({
-    showNotification: vi.fn(),
-  }),
+  useNotification: () => createNotificationContextValue(vi.fn()),
 }));
 
 vi.mock('../../../context/DeploymentsContext');
@@ -34,29 +33,39 @@ vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
   }),
 }));
 
-vi.mock('../../../hooks/conversation/useConversationStream', () => ({
-  useConversationStream: () => ({
-    startStream: vi.fn(),
-    handleStop: vi.fn(),
-    isStreaming: false,
-    canStopStreaming: false,
-  }),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    useConversationStream: () => ({
+      startStream: vi.fn(),
+      handleStop: vi.fn(),
+      isStreaming: false,
+      canStopStreaming: false,
+    }),
+    useConversationHandlers: () => ({
+      handleSend: vi.fn(),
+      handleUploadAttachment: vi.fn(),
+      handleRegenerateMessage: vi.fn(),
+      handleDeleteMessage: vi.fn(),
+      handleConfirmDelete: vi.fn(),
+      handleRateMessage: vi.fn(),
+      handleStartEdit: vi.fn(),
+      handleCancelEdit: vi.fn(),
+      handleEditMessage: vi.fn(),
+      editingMessageIndexes: new Set<number>(),
+      pendingDeleteIndex: null,
+      setPendingDeleteIndex: vi.fn(),
+    }),
+  };
+});
 
-vi.mock('../../../hooks/conversation/useConversationHandlers', () => ({
-  useConversationHandlers: () => ({
-    handleSend: vi.fn(),
-    handleUploadAttachment: vi.fn(),
-    handleRegenerateMessage: vi.fn(),
-    handleDeleteMessage: vi.fn(),
-    handleConfirmDelete: vi.fn(),
-    handleRateMessage: vi.fn(),
-    handleStartEdit: vi.fn(),
-    handleCancelEdit: vi.fn(),
-    handleEditMessage: vi.fn(),
-    editingMessageIndexes: new Set<number>(),
-    pendingDeleteIndex: null,
-    setPendingDeleteIndex: vi.fn(),
+vi.mock('../../../context/GenerationContext', () => ({
+  useGeneration: () => ({
+    startGeneration: vi.fn(() => new AbortController()),
+    completeGeneration: vi.fn(),
+    getGeneration: vi.fn(),
   }),
 }));
 
@@ -64,6 +73,12 @@ vi.mock('../../../server-api/conversations.api', () => ({
   createConversation: vi.fn(),
   deleteConversation: vi.fn(),
   saveConversation: vi.fn(),
+}));
+
+vi.mock('../../../server-api/api-client', () => ({
+  conversationsApi: {},
+  filesApi: {},
+  rateApi: {},
 }));
 
 vi.mock('../../../components/ConversationView/ConversationView', () => ({
@@ -193,9 +208,7 @@ describe('AppPreviewChat', () => {
 
     render(<AppPreviewChat appId="applications/bucket/My App" />);
 
-    await act(async () => {
-      screen.getByRole('button', { name: 'Draft' }).click();
-    });
+    await userEvent.click(screen.getByRole('button', { name: 'Draft' }));
 
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(

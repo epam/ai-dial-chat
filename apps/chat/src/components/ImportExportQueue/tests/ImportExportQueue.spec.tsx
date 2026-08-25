@@ -1,9 +1,12 @@
+import {
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+  type ConversationTransferJob,
+} from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { QueueJob } from '../../../models/conversation-queue';
-import { ExportJobStatus } from '../../../types/conversation-export';
 import ImportExportQueue from '../ImportExportQueue';
 
 vi.mock('react-i18next', () => ({
@@ -11,14 +14,13 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DialProgressBar: ({
+  ProgressBar: ({
     value,
-    ariaLabel,
+    'aria-label': ariaLabel,
   }: {
     value: number;
-    ariaLabel?: string;
+    'aria-label'?: string;
   }) => <div data-progress={value} aria-label={ariaLabel} />,
-  DialProgressBarSize: { Small: 'sm', Medium: 'md' },
   GhostIconButton: ({
     'aria-label': ariaLabel,
     onClick,
@@ -96,7 +98,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     );
   },
   ConfirmationPopupVariant: { Danger: 'danger', Info: 'info' },
-  DialEllipsisTooltip: ({
+  EllipsisTooltip: ({
     text,
     className,
   }: {
@@ -114,11 +116,24 @@ vi.mock('@tabler/icons-react', () => ({
   IconChevronUp: () => null,
 }));
 
-const makeJob = (overrides: Partial<QueueJob> = {}): QueueJob => ({
-  id: 'job-1',
-  label: 'My Chat',
-  status: ExportJobStatus.InProgress,
-  ...overrides,
+const makeJob = ({
+  id = 'job-1',
+  title = 'My Chat',
+  description,
+  status = ConversationTransferJobStatus.InProgress,
+}: {
+  id?: string;
+  title?: string;
+  description?: string;
+  status?: ConversationTransferJobStatus;
+} = {}): ConversationTransferJob => ({
+  id,
+  subject: {
+    kind: ConversationTransferSubjectKind.Single,
+    title,
+    sourceBreadcrumb: description,
+  },
+  status,
 });
 
 const TITLE = 'Exporting';
@@ -127,7 +142,7 @@ describe('ImportExportQueue', () => {
   const user = userEvent.setup({ delay: null });
 
   const renderQueue = (
-    jobs: QueueJob[],
+    jobs: ConversationTransferJob[],
     props: Partial<{
       onDismiss: (id: string) => void;
       onRetry: (id: string) => void;
@@ -151,8 +166,12 @@ describe('ImportExportQueue', () => {
 
   it('renders the panel with a status region and every job label', () => {
     renderQueue([
-      makeJob({ id: 'a', label: 'Chat A' }),
-      makeJob({ id: 'b', label: 'Chat B', status: ExportJobStatus.Success }),
+      makeJob({ id: 'a', title: 'Chat A' }),
+      makeJob({
+        id: 'b',
+        title: 'Chat B',
+        status: ConversationTransferJobStatus.Success,
+      }),
     ]);
     const region = screen.getByRole('status');
     expect(region.getAttribute('aria-live')).toBe('polite');
@@ -167,23 +186,29 @@ describe('ImportExportQueue', () => {
 
   it('renders job rows without divider borders between them', () => {
     renderQueue([makeJob({ id: 'a' }), makeJob({ id: 'b' })]);
+    /* CSS-level assertion (class/attribute presence, not text or role) —
+       no semantic query applies. */
+    // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelector('.divide-y')).toBeNull();
   });
 
   it('shows aggregate progress as the fraction of finished jobs', () => {
     renderQueue([
-      makeJob({ id: 'a', status: ExportJobStatus.Success }),
-      makeJob({ id: 'b', status: ExportJobStatus.InProgress }),
-      makeJob({ id: 'c', status: ExportJobStatus.Failed }),
-      makeJob({ id: 'd', status: ExportJobStatus.InProgress }),
+      makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+      makeJob({ id: 'b', status: ConversationTransferJobStatus.InProgress }),
+      makeJob({ id: 'c', status: ConversationTransferJobStatus.Failed }),
+      makeJob({ id: 'd', status: ConversationTransferJobStatus.InProgress }),
     ]);
     // 2 of 4 jobs finished (success or failed) = 50%
+    /* CSS-level assertion (class/attribute presence, not text or role) —
+       no semantic query applies. */
+    // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelector('[data-progress="50"]')).toBeTruthy();
   });
 
   it('clicking close on an in-progress job calls onDismiss with its id', async () => {
     const onDismiss = vi.fn();
-    renderQueue([makeJob({ id: 'job-x', label: 'Chat X' })], { onDismiss });
+    renderQueue([makeJob({ id: 'job-x', title: 'Chat X' })], { onDismiss });
 
     await user.click(
       screen.getByRole('button', {
@@ -198,8 +223,8 @@ describe('ImportExportQueue', () => {
     renderQueue([
       makeJob({
         id: 'job-y',
-        label: 'Chat Y',
-        status: ExportJobStatus.Success,
+        title: 'Chat Y',
+        status: ConversationTransferJobStatus.Success,
       }),
     ]);
 
@@ -216,8 +241,8 @@ describe('ImportExportQueue', () => {
       [
         makeJob({
           id: 'job-z',
-          label: 'Chat Z',
-          status: ExportJobStatus.Failed,
+          title: 'Chat Z',
+          status: ConversationTransferJobStatus.Failed,
         }),
       ],
       { onRetry },
@@ -238,7 +263,7 @@ describe('ImportExportQueue', () => {
   });
 
   it('collapsing the panel hides job rows without removing the header', async () => {
-    renderQueue([makeJob({ label: 'Chat A' })]);
+    renderQueue([makeJob({ title: 'Chat A' })]);
 
     expect(screen.getByText('Chat A')).toBeTruthy();
 
@@ -261,7 +286,9 @@ describe('ImportExportQueue', () => {
 
   it('clicking close when all jobs succeeded calls onClose directly', async () => {
     const onClose = vi.fn();
-    renderQueue([makeJob({ status: ExportJobStatus.Success })], { onClose });
+    renderQueue([makeJob({ status: ConversationTransferJobStatus.Success })], {
+      onClose,
+    });
 
     await user.click(
       screen.getByRole('button', {
@@ -275,7 +302,10 @@ describe('ImportExportQueue', () => {
 
   it('clicking close with an in-progress job shows the confirmation dialog with the in-progress message', async () => {
     const onClose = vi.fn();
-    renderQueue([makeJob({ status: ExportJobStatus.InProgress })], { onClose });
+    renderQueue(
+      [makeJob({ status: ConversationTransferJobStatus.InProgress })],
+      { onClose },
+    );
 
     await user.click(
       screen.getByRole('button', {
@@ -294,7 +324,9 @@ describe('ImportExportQueue', () => {
 
   it('clicking close with a failed job shows the confirmation dialog with the failed message', async () => {
     const onClose = vi.fn();
-    renderQueue([makeJob({ status: ExportJobStatus.Failed })], { onClose });
+    renderQueue([makeJob({ status: ConversationTransferJobStatus.Failed })], {
+      onClose,
+    });
 
     await user.click(
       screen.getByRole('button', {
@@ -313,8 +345,8 @@ describe('ImportExportQueue', () => {
     const onClose = vi.fn();
     renderQueue(
       [
-        makeJob({ id: 'a', status: ExportJobStatus.InProgress }),
-        makeJob({ id: 'b', status: ExportJobStatus.Failed }),
+        makeJob({ id: 'a', status: ConversationTransferJobStatus.InProgress }),
+        makeJob({ id: 'b', status: ConversationTransferJobStatus.Failed }),
       ],
       { onClose },
     );
@@ -334,7 +366,10 @@ describe('ImportExportQueue', () => {
 
   it('confirming the dialog calls onClose', async () => {
     const onClose = vi.fn();
-    renderQueue([makeJob({ status: ExportJobStatus.InProgress })], { onClose });
+    renderQueue(
+      [makeJob({ status: ConversationTransferJobStatus.InProgress })],
+      { onClose },
+    );
 
     await user.click(
       screen.getByRole('button', {
@@ -353,7 +388,12 @@ describe('ImportExportQueue', () => {
   it('does not reopen the confirmation dialog when a new job arrives after confirming', async () => {
     const onClose = vi.fn();
     const { rerender } = renderQueue(
-      [makeJob({ id: 'job-1', status: ExportJobStatus.InProgress })],
+      [
+        makeJob({
+          id: 'job-1',
+          status: ConversationTransferJobStatus.InProgress,
+        }),
+      ],
       { onClose },
     );
 
@@ -383,7 +423,12 @@ describe('ImportExportQueue', () => {
     rerender(
       <ImportExportQueue
         title={TITLE}
-        jobs={[makeJob({ id: 'job-2', status: ExportJobStatus.InProgress })]}
+        jobs={[
+          makeJob({
+            id: 'job-2',
+            status: ConversationTransferJobStatus.InProgress,
+          }),
+        ]}
         onDismiss={vi.fn()}
         onRetry={vi.fn()}
         onClose={onClose}
@@ -395,7 +440,10 @@ describe('ImportExportQueue', () => {
 
   it('cancelling the dialog closes it without calling onClose', async () => {
     const onClose = vi.fn();
-    renderQueue([makeJob({ status: ExportJobStatus.InProgress })], { onClose });
+    renderQueue(
+      [makeJob({ status: ConversationTransferJobStatus.InProgress })],
+      { onClose },
+    );
 
     await user.click(
       screen.getByRole('button', {
@@ -410,8 +458,8 @@ describe('ImportExportQueue', () => {
 
   it('shows a failed count badge when at least one job has failed', () => {
     renderQueue([
-      makeJob({ id: 'a', status: ExportJobStatus.Failed }),
-      makeJob({ id: 'b', status: ExportJobStatus.InProgress }),
+      makeJob({ id: 'a', status: ConversationTransferJobStatus.Failed }),
+      makeJob({ id: 'b', status: ConversationTransferJobStatus.InProgress }),
     ]);
 
     expect(screen.getByText('1')).toBeTruthy();
@@ -419,8 +467,8 @@ describe('ImportExportQueue', () => {
 
   it('does not show the failed count badge when no jobs have failed', () => {
     renderQueue([
-      makeJob({ id: 'a', status: ExportJobStatus.Success }),
-      makeJob({ id: 'b', status: ExportJobStatus.InProgress }),
+      makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+      makeJob({ id: 'b', status: ConversationTransferJobStatus.InProgress }),
     ]);
 
     expect(screen.queryByText('1')).toBeNull();
@@ -430,7 +478,7 @@ describe('ImportExportQueue', () => {
   it('renders a job description as a secondary line above the label', () => {
     renderQueue([
       makeJob({
-        label: 'My Chat',
+        title: 'My Chat',
         description: 'Folder 1 / Folder 2',
       }),
     ]);
@@ -440,9 +488,12 @@ describe('ImportExportQueue', () => {
   });
 
   it('renders no secondary line when a job has no description', () => {
-    renderQueue([makeJob({ label: 'My Chat' })]);
+    renderQueue([makeJob({ title: 'My Chat' })]);
 
     expect(screen.getByText('My Chat')).toBeTruthy();
+    /* CSS-level assertion (class/attribute presence, not text or role) —
+       no semantic query applies. */
+    // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelectorAll('.text-secondary').length).toBe(0);
   });
 });

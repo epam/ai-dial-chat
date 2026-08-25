@@ -8,6 +8,7 @@
     "urlPlaceholder": "https://...",
     "preview": "Preview",
     "settings": "Settings",
+    "usage": "Usage",
     "attachFiles": "Attach files",
     "deleteConfirmDescription": "Are you sure you want to delete",
     "canView": "Can view",
@@ -99,6 +100,10 @@
     "listViewLabel": "List view",
     "details": {
       "tabTools": "Tools",
+      "tabContent": "Details",
+      "promptLoadError": "Couldn't load this prompt. Please try again.",
+      "promptDownloadError": "Couldn't download this prompt. Please try again.",
+      "skillDownloadError": "Couldn't download this skill. Please try again.",
       "tabLimits": "Limits",
       "api": {
         "resourceSection": "Resource",
@@ -110,6 +115,15 @@
       "pricing": {
         "pricesSection": "Token pricing",
         "limitsSection": "Usage limits"
+      },
+      "modelSpecification": {
+        "provider": "Provider",
+        "vendor": "Vendor",
+        "license": "License",
+        "knowledgeCutoffDate": "Knowledge cutoff date",
+        "parameters": "Parameters",
+        "inputModalities": "Input modalities",
+        "outputModalities": "Output modalities"
       },
       "limits": {
         "requestsPerHour": "Requests per hour",
@@ -129,12 +143,34 @@
       "credentials": {
         "signedInLabel": "Signed in",
         "signedOutLabel": "Signed out",
-        "apiKeyFieldHint": "Enter your API key value for \"{{header}}\" header",
-        "loginWithMyCredsLabel": "Login with my creds",
         "manageLabel": "Manage credentials",
-        "mySectionLabel": "My credentials",
-        "orgSectionLabel": "Entire organization credentials",
-        "badgeLoggedOut": "LOGGED OUT",
+        "manageApiKeysLabel": "Manage API keys",
+        "changeApiKeyActionLabel": "Change API key",
+        "personalApiKeyPanelTitle": "Personal API key",
+        "personalApiKeyAddedMessage": "Personal key has been added",
+        "apiKeyConfiguredMessage": "Key has been configured",
+        "apiKeyAddedLabel": "Added {{when}}",
+        "addingApiKeyStatusLabel": "Adding",
+        "apiKeyRequiredErrorMessage": "API key is required.",
+        "deleteApiKeyConfirmMessagePersonal": "Are you sure you want to delete your personal API key?",
+        "deleteApiKeyConfirmMessageOrg": "Are you sure you want to delete the organization API key?",
+        "orgFallbackBannerTitleCredentials": "You are currently using organization credentials to access this toolset.",
+        "orgFallbackBannerTitleApiKey": "You are currently using organization API key to access this toolset.",
+        "orgFallbackBannerDescriptionCredentials": "Login using personal account to have access to your data.",
+        "orgFallbackBannerDescriptionApiKey": "Configure your personal API key to have access to your data.",
+        "orgActiveBannerTitleCredentials": "Signed in with organization credentials.",
+        "orgActiveBannerTitleApiKey": "Signed in with organization API key.",
+        "personalActiveBannerTitleCredentials": "Signed in with personal credentials.",
+        "personalActiveBannerTitleApiKey": "Signed in with personal API key.",
+        "managementTitleCredentials": "Toolset credentials",
+        "managementTitleApiKey": "Toolset API keys",
+        "managementDescriptionCredentials": "Select which account to use with this toolset — personal or organization. If both are configured, personal credentials will be used by default.",
+        "managementDescriptionApiKey": "Select which account to use with this toolset — personal or organization. If both are configured, personal credentials will be used by default for toolset access.",
+        "personalLabel": "Personal credentials",
+        "personalDescription": "These credentials apply only to your account.",
+        "organizationLabel": "Organization credentials",
+        "organizationDescription": "Once added, these credentials will grant all users in your organization access to this toolset.",
+        "badgeLoggedOut": "Authorize to use this toolset.",
         "loginSuccessTitle": "Successful login",
         "loginSuccessOrg": "You have successfully logged into the \"{{name}}\" version {{version}} with credentials to entire organization.",
         "loginSuccessGlobal": "You have successfully logged into the \"{{name}}\" version {{version}}.",
@@ -142,7 +178,15 @@
         "logoutSuccessTitle": "Successful logout",
         "logoutSuccessOrg": "You have successfully logged out of the \"{{name}}\" version {{version}} with credentials to entire organization.",
         "logoutSuccessGlobal": "You have successfully logged out of the \"{{name}}\" version {{version}}.",
-        "logoutSuccessUser": "You have successfully logged out of the \"{{name}}\" version {{version}} using your personal credentials."
+        "logoutSuccessUser": "You have successfully logged out of the \"{{name}}\" version {{version}} using your personal credentials.",
+        "apiKeyAddedSuccessTitle": "API key added",
+        "apiKeyAddedSuccessOrg": "The organization API key for \"{{name}}\" version {{version}} has been added, granting access to everyone in your organization.",
+        "apiKeyAddedSuccessGlobal": "The API key for \"{{name}}\" version {{version}} has been added.",
+        "apiKeyAddedSuccessUser": "Your personal API key for \"{{name}}\" version {{version}} has been added.",
+        "apiKeyDeletedSuccessTitle": "API key deleted",
+        "apiKeyDeletedSuccessOrg": "The organization API key for \"{{name}}\" version {{version}} has been deleted.",
+        "apiKeyDeletedSuccessGlobal": "The API key for \"{{name}}\" version {{version}} has been deleted.",
+        "apiKeyDeletedSuccessUser": "Your personal API key for \"{{name}}\" version {{version}} has been deleted."
       },
       "delete": {
         "confirmTitle": "Delete",
@@ -150,9 +194,7 @@
         "consequenceSharedConfigurations": "All shared configurations will be lost",
         "consequenceUsersLoseAccess": "Users who rely on it will lose access",
         "consequenceCannotBeUndone": "Cannot be undone",
-        "error": "Failed to delete. Please try again.",
-        "successTitle": "Deleted successfully",
-        "success": "\"{{name}}\" was deleted."
+        "error": "Failed to delete. Please try again."
       },
       "unshare": {
         "confirmTitle": "Remove from My List",
@@ -165,6 +207,16 @@
         "error": "Failed to remove \"{{name}}\". Please try again.",
         "successTitle": "Removed from My List",
         "success": "\"{{name}}\" was removed from your list."
+      },
+      "unpublish": {
+        "confirmTitle": "Unpublish?",
+        "confirmMessage": "Unpublish \"{{name}}\" from \"{{folder}}\"? The request is submitted for admin approval.",
+        "selectFolderMessage": "Choose which folder to unpublish \"{{name}}\" from. The request is submitted for admin approval.",
+        "folderGroupAriaLabel": "Published folders",
+        "consequenceEveryoneLosesAccess": "Everyone loses access to the published copy",
+        "consequenceKeepsYourCopy": "Your own copy is not deleted",
+        "consequenceCanPublishAgain": "You can publish it again later",
+        "requestingStatus": "Requesting unpublish…"
       },
       "revokeShare": {
         "confirmTitle": "Revoke access?",
@@ -183,28 +235,54 @@
         "applicationTitle": "Connect Application",
         "toolsetDescription": "Copy endpoint URL to easily integrate toolset into your workflows",
         "applicationDescription": "Copy endpoint URL to easily integrate application into your workflows"
-      }
+      },
+      "prompt": {
+        "section": "Prompt",
+        "author": "Author",
+        "updated": "Last updated"
+      },
+      "skill": {
+        "section": "Skill",
+        "author": "Author",
+        "updated": "Last updated",
+        "fileCount": "Files",
+        "specificationSection": "Specification",
+        "whenToUse": "When to use",
+        "allowedTools": "Allowed tools",
+        "bundledResources": "Bundled resources"
+      },
+      "contentFileSelectorAriaLabel": "Select file",
+      "contentFileCount": "{{count}} files",
+      "contentFileLoading": "Loading file",
+      "contentFileError": "Failed to load this file.",
+      "contentFileUnsupported": "Preview is not supported for this file",
+      "downloadingStatus": "Downloading"
     },
     "create": {
       "menuCaption": "Create new",
       "quickApp": "QuickApp",
       "toolset": "Toolset",
-      "customApp": "Custom App"
+      "customApp": "Custom App",
+      "prompt": "Prompt",
+      "skill": "Skill",
+      "skillWriteInstructions": "Write instructions",
+      "skillUpload": "Upload"
     },
-    "publishSuccessTitle": "Published",
-    "publishSuccess": "\"{{name}}\" published to {{folder}}",
     "publishFolderSearchPlaceholder": "Search folders",
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publishHistoryLoading": "Loading history…",
     "publishHistoryError": "Failed to load publish history.",
+    "skillsLoadError": "Failed to load skills",
     "tab": {
       "models": "Models",
       "applications": "Agents",
-      "toolsets": "Toolsets"
+      "toolsets": "Toolsets",
+      "prompts": "Prompts",
+      "skills": "Skills"
     },
     "folder": {
       "personal": "Personal",
-      "public": "Public",
+      "public": "Organization",
       "shared": "Shared with me"
     }
   },
@@ -219,7 +297,19 @@
     "empty": "No models available",
     "closeLabel": "Close model selector",
     "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date.",
-    "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date."
+    "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date.",
+    "browseCatalogLabel": "Catalog",
+    "unavailableTooltip": "This deployment is no longer available"
+  },
+  "promptSelector": {
+    "addMenuLabel": "Prompts",
+    "myCollectionLabel": "My Collection",
+    "emptyHint": "Star a prompt to pin it here",
+    "modalTitle": "Use prompt",
+    "parametersTitle": "Prompt parameters",
+    "parametersLabel": "Parameters",
+    "detailsLabel": "Details",
+    "enterValuePlaceholder": "Enter value"
   },
   "notFound": {
     "eyebrow": "404",
@@ -271,10 +361,12 @@
     "logIn": "Log in",
     "retry": "Retry",
     "publish": "Publish",
+    "unpublish": "Unpublish",
     "manage": "Manage",
     "removeFromMyList": "Remove from My List",
     "revokeAccess": "Revoke access",
-    "revokeAccessWithCount": "Revoke access ({{count}})"
+    "revokeAccessWithCount": "Revoke access ({{count}})",
+    "replace": "Replace"
   },
   "sidebar": {
     "base": {
@@ -321,8 +413,6 @@
     },
     "delete": {
       "deleteConfirmTitle": "Confirm Deleting Chat",
-      "deleteSuccess": "Conversation deleted successfully",
-      "deleteSuccessTitle": "Conversation deleted",
       "deleteError": "Failed to delete the conversation. Please try again."
     },
     "rename": {
@@ -365,10 +455,16 @@
   "conversationPublish": {
     "panelAriaLabel": "Publish conversation",
     "alreadyPublishedWarning": "This conversation is already published in {folder}.",
-    "successMessage": "Publish request submitted. It will appear in Organization once an admin approves it.",
     "emptyFolderNameError": "Folder name cannot be empty.",
     "invalidFolderNameError": "Folder name contains invalid characters.",
     "duplicateFolderNameError": "A folder with this name already exists."
+  },
+  "conversationUnpublish": {
+    "confirmTitle": "Unpublish conversation?",
+    "confirmMessage": "Unpublish \"{{name}}\" from \"{{folder}}\"? The request is submitted for admin approval.",
+    "selectFolderMessage": "Choose which folder to unpublish \"{{name}}\" from. The request is submitted for admin approval.",
+    "folderGroupAriaLabel": "Published folders",
+    "requestingStatus": "Requesting unpublish…"
   },
   "publish": {
     "failedTitle": "Publish failed",
@@ -378,6 +474,10 @@
   },
   "publishAccessRules": {
     "heading": "Allow access if all match",
+    "folderScopeHint": "These rules apply to \"{folder}\". Selecting another folder loads that folder's own rules instead.",
+    "noFolderScopeHint": "Access rules apply to the destination folder — pick a folder above to set its rules.",
+    "rulesWithoutFolderWarning": "These rules have no destination yet. Select a folder above to apply them.",
+    "maxRulesReachedLabel": "Rule limit reached ({max}). Remove a rule to add another.",
     "addRuleLabel": "Add rule",
     "clearAllLabel": "Clear all",
     "orSeparatorLabel": "Or",
@@ -396,6 +496,9 @@
     "functionLabel": "Function",
     "targetsLabel": "Targets",
     "targetsPlaceholder": "Add a target",
+    "targetsHintLabel": "Press Enter or comma to add a target.",
+    "requiredFieldError": "This field is required.",
+    "targetsRequiredError": "Add at least one target.",
     "patternLabel": "Pattern",
     "patternPlaceholder": "Enter a regular expression",
     "invalidRegexError": "Enter a valid regular expression.",
@@ -445,7 +548,7 @@
     "overlayLoginDescription": "Choose a sign-in option to use DIAL Chat in this embedded view.",
     "overlayExternalLoginBlocked": "The sign-in tab was blocked. Allow popups for this site and try again.",
     "overlayLoginTakingLonger": "Sign-in is taking longer than expected. Finish it in the opened tab, or try again.",
-    "overlayProviderPickerLoading": "Loading sign-in providers\u2026",
+    "overlayProviderPickerLoading": "Loading sign-in providers…",
     "overlayProvidersError": "Could not load sign-in providers. Please try again.",
     "logOutConfirmTitle": "Log out?",
     "logOutConfirmDescription": "Are you sure you want to log out?",
@@ -544,7 +647,7 @@
       "scheduleDailyAt": "Every day at {{time}}",
       "scheduleWeeklyAt": "Every {{day}} at {{time}}",
       "scheduleMonthlyAt": "Monthly on day {{day}} at {{time}}",
-      "scheduleHourlyAt": "Hourly at :{{minute}}",
+      "scheduleHourlyAt": "Hourly, {{minute}} min past the hour",
       "scheduleEveryNMinutes_one": "Every minute",
       "scheduleEveryNMinutes_other": "Every {{count}} minutes",
       "scheduleOnceAt": "Once on {{date}}",
@@ -571,7 +674,7 @@
       "dayOfWeekRequired": "Day of week is required",
       "dayOfMonthLabel": "Day of month",
       "dayOfMonthRequired": "Day of month is required",
-      "minuteLabel": "Minute",
+      "minuteLabel": "Minutes past the hour",
       "minuteInvalid": "Enter a minute between 0 and 59",
       "startDateLabel": "Start date",
       "startDatePlaceholder": "Pick start date",
@@ -579,7 +682,7 @@
       "endDatePlaceholder": "Pick end date",
       "endDateBeforeStartError": "End date must be after start date",
       "modelOrAgentLabel": "Model or Agent",
-      "modelPlaceholder": "Select a model",
+      "modelPlaceholder": "Select Model or Agent",
       "modelRequired": "Model is required",
       "descriptionLabel": "Description",
       "descriptionMaxLengthError": "Description must be 500 characters or fewer",
@@ -608,7 +711,15 @@
       "activeStatusLabel": "Active",
       "pauseSuccess": "Task paused",
       "resumeSuccess": "Task resumed",
-      "activeStatusUpdateError": "Failed to update the task's active status"
+      "activeStatusUpdateError": "Failed to update the task's active status",
+      "deleteConfirmTitle": "Confirm Deleting Task",
+      "deleteConfirmDescription": "Are you sure you want to delete the task \"{{taskName}}\"? All run conversations will still be accessible.",
+      "deleteConfirmingLabel": "Deleting…",
+      "deleteSuccess": "Scheduled task deleted",
+      "deleteNotFoundError": "This task has already been deleted or could not be found",
+      "deleteRetryableError": "Couldn't delete the task — it hasn't been removed and you can safely try again",
+      "deleteGenericError": "Failed to delete the scheduled task",
+      "deletedStateLabel": "Deleted"
     },
     "edit": {
       "pageTitle": "Edit scheduled task",
@@ -626,6 +737,18 @@
     "conversationPanel": {
       "modelLabel": "Model",
       "currentRunLabel": "Current run"
+    },
+    "offlineCredentialsModal": {
+      "title": "Log in required for scheduled tasks",
+      "body": "To run your scheduled tasks automatically, you need to log in once so they can keep running without you present.",
+      "dismissButtonLabel": "Not now",
+      "closeAriaLabel": "Close login required dialog",
+      "popupBlockedMessage": "The login popup was blocked by your browser. Please allow popups and try again.",
+      "cancelledMessage": "Login was cancelled.",
+      "timeoutMessage": "The login attempt timed out. Please try again.",
+      "failedMessage": "Login failed. Please try again.",
+      "successAnnouncement": "You're logged in. Scheduled tasks can now run automatically.",
+      "loggingInAriaLabel": "Logging in…"
     }
   },
   "dialFileManager": {
@@ -787,7 +910,11 @@
     "openedInCanvasLabel": "Opened in Canvas",
     "mcpAppTitle": "MCP App",
     "mcpAppLoadErrorLabel": "Failed to load MCP App",
-    "mcpAppForbiddenErrorLabel": "You don't have permission to access this MCP App"
+    "mcpAppForbiddenErrorLabel": "You don't have permission to access this MCP App",
+    "pdfThumbnailsLabel": "Thumbnails",
+    "pdfShowThumbnailsLabel": "Show thumbnails",
+    "pdfHideThumbnailsLabel": "Hide thumbnails",
+    "pdfPageNumberLabel": "Page number"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
@@ -831,6 +958,7 @@
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
     "visibilityNoteConversation": "This conversation and its updates will be visible to users with the link.",
+    "nestedItemsNote": "Nested items such as prompts and files aren't shared automatically — share them separately so the app works correctly.",
     "copiedButtonLabel": "Copied",
     "linkAriaLabel": "Share link",
     "expiryNote": "This link is active for {{days}} days.",
@@ -842,6 +970,8 @@
   "editor": {
     "stepGeneral": "General",
     "stepsNavAriaLabel": "Editor steps",
+    "stepOfTotal": "Step {{current}} of {{total}}",
+    "moreActionsLabel": "More actions",
     "saveButton": "Save & Exit",
     "nextButton": "Next",
     "nameLabel": "Name",
@@ -958,8 +1088,7 @@
   "voiceRecording": {
     "micLabel": "Record voice message",
     "stopRecordingLabel": "Stop recording",
-    "discardRecordingLabel": "Discard recording",
-    "timerAriaLabel": "Recording time"
+    "discardRecordingLabel": "Discard recording"
   },
   "tools": {
     "menuTitle": "Tools",
@@ -1008,10 +1137,273 @@
       "description": "Some fields are invalid or required fields are missing. Changes in those fields will not be saved. Exit and save only valid information?",
       "confirmLabel": "Save"
     },
+    "savingOverlay": "Saving in progress…",
+    "loadingOverlay": "Loading…",
     "error": {
       "createFailed": "Failed to create custom app. Please try again.",
       "saveFailed": "Failed to save custom app. Please try again.",
       "loadFailed": "Failed to load custom app. Please try again."
     }
+  },
+  "promptEditor": {
+    "createTitle": "New prompt",
+    "editTitle": "Edit prompt",
+    "backButtonLabel": "Back",
+    "nameLabel": "Name",
+    "namePlaceholder": "Give your prompt a short name",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What is this prompt for?",
+    "contentLabel": "Instructions",
+    "contentPlaceholder": "Write the prompt instructions you want to reuse",
+    "error": {
+      "required": "This field is required.",
+      "nameTooLong": "Use 256 characters or fewer.",
+      "nameInvalid": "Use only letters, digits, spaces, and _ . -",
+      "descriptionTooLong": "Use 2000 characters or fewer.",
+      "contentTooLong": "Use 50000 characters or fewer.",
+      "nameConflict": "A prompt with this name already exists in this folder."
+    },
+    "charactersRemaining": "{{count}} characters left",
+    "loadError": "Couldn't load this prompt.",
+    "retryLabel": "Try again",
+    "savingStatus": "Saving",
+    "saveError": "Couldn't save this prompt. Please try again.",
+    "loadingAriaLabel": "Loading prompt",
+    "contentLoadingAriaLabel": "Loading prompt editor"
+  },
+  "skillEditor": {
+    "title": "Create skill",
+    "backAriaLabel": "Back",
+    "filesHeading": "Files",
+    "filesTreeAriaLabel": "Skill files",
+    "addUploadLabel": "Upload from device",
+    "removeLabel": "Remove",
+    "editingFileLabel": "Editing file",
+    "nameLabel": "Name",
+    "namePlaceholder": "good-morning-breakfast",
+    "nameCaption": "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What this skill does and when to use it",
+    "instructionsLabel": "Instructions",
+    "instructionsPlaceholder": "Write the skill instructions in Markdown",
+    "loadError": "Couldn't load this skill. Please try again.",
+    "savingStatus": "Saving",
+    "loadingAriaLabel": "Loading skill",
+    "instructionsLoadingAriaLabel": "Loading",
+    "supportingFileNote": "This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.",
+    "bucketMissingTitle": "Can't create a skill right now",
+    "bucketMissingMessage": "We couldn't determine your storage location. Please sign in again or try later.",
+    "error": {
+      "required": "This field is required.",
+      "nameInvalid": "Use only letters, digits, and hyphens.",
+      "nameConflict": "A skill with this name already exists.",
+      "pathInvalid": "Enter a valid relative path.",
+      "pathReserved": "This path is reserved and can't be used.",
+      "pathDuplicate": "A file or folder already exists at this path.",
+      "fileTooLarge": "This file exceeds the maximum size of {{maxSize}}.",
+      "archiveTooLarge": "This skill package is too large to upload.",
+      "serviceUnavailable": "The service is temporarily unavailable. Please try again.",
+      "save": "Couldn't create this skill. Please try again.",
+      "manifestCasingInvalid": "The manifest filename must be exactly \"SKILL.md\".",
+      "manifestDuplicate": "Only one SKILL.md is allowed per upload.",
+      "manifestInvalidUtf8": "SKILL.md isn't valid UTF-8 text.",
+      "manifestInvalidFrontmatter": "SKILL.md must have valid YAML frontmatter with a name and description.",
+      "manifestNameMismatch": "This SKILL.md's name doesn't match this skill. Renaming a skill isn't supported.",
+      "totalSizeExceeded": "This would make the skill package too large to upload.",
+      "totalCountExceeded": "This would exceed the maximum number of files allowed in a skill.",
+      "manifestImportDeclined": "Manifest import cancelled, staged files kept."
+    },
+    "saveSuccessTitle": "Skill created",
+    "updateSuccessTitle": "Skill updated",
+    "createSuccess": "\"{{name}}\" has been created.",
+    "editTitle": "Edit skill",
+    "saveLabel": "Save",
+    "updateSuccess": "\"{{name}}\" has been updated.",
+    "loadErrorForbidden": "You don't have access to this skill.",
+    "loadErrorNotFound": "This skill could not be found.",
+    "conflictMessage": "Someone else changed this skill since you opened it.",
+    "reloadLatestLabel": "Reload latest",
+    "reloadConfirmTitle": "Reload latest version?",
+    "reloadConfirmMessage": "Reloading will discard your unsaved changes. This cannot be undone.",
+    "reloadConfirmLabel": "Reload",
+    "reloadCancelLabel": "Cancel",
+    "unsavedChangesTitle": "Discard unsaved changes?",
+    "unsavedChangesMessage": "You have unsaved changes. Leaving now will discard them.",
+    "unsavedChangesConfirmLabel": "Discard changes",
+    "unsavedChangesCancelLabel": "Keep editing",
+    "uploadDialogTitle": "Upload files from device",
+    "uploadDropZoneLabel": "Drag and drop it or click here to upload",
+    "uploadDropZoneMobileLabel": "Click here to upload",
+    "uploadDropZoneAriaLabel": "Upload files",
+    "uploadManifestRowNote": "Will replace this Skill's name, description, and instructions",
+    "uploadBatchErrorAriaPrefix": "Upload error: ",
+    "uploadRemoveCandidateLabel": "Remove {{path}}",
+    "dropOverlayTitle": "Upload files",
+    "dropOverlaySubtitle": "Drop files here to add them to this skill",
+    "manifestImportConfirmTitle": "Replace Skill metadata?",
+    "manifestImportConfirmMessage": "Importing this SKILL.md will replace the Name, Description, and Instructions fields. This cannot be undone."
+  },
+  "skillArchiveImport": {
+    "fileInputAriaLabel": "Upload a skill ZIP archive or a SKILL.md file",
+    "status": {
+      "uploading": "Uploading skill…",
+      "success": "Skill uploaded successfully.",
+      "error": "Skill upload failed."
+    },
+    "error": {
+      "title": "Skill import failed",
+      "validation": "This archive isn't a valid skill package. Please check its contents and try again.",
+      "unsupportedFilename": "Please select a ZIP archive or a file named exactly \"SKILL.md\".",
+      "collision": "A skill with this name already exists.",
+      "rateLimited": "Too many attempts. Please wait a moment and try again.",
+      "serviceUnavailable": "The service is temporarily unavailable. Please try again.",
+      "generic": "Couldn't import this skill. Please try again."
+    }
+  },
+  "entityNotifications": {
+    "prompt": {
+      "createdTitle": "Prompt created successfully",
+      "created": "You can now see prompt \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Prompt edited successfully",
+      "edited": "Changes for prompt \"{{name}}\" are saved.",
+      "deletedTitle": "Prompt deleted successfully",
+      "deleted": "Prompt \"{{name}}\" is not available anymore.",
+      "downloadedTitle": "Prompt downloaded successfully",
+      "downloaded": "Prompt \"{{name}}\" is saved on your device.",
+      "publishRequestedTitle": "Prompt publish requested",
+      "publishRequested": "Publish request for prompt \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Prompt unpublish requested",
+      "unpublishRequested": "Unpublish request for prompt \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
+    },
+    "agent": {
+      "createdTitle": "Agent created successfully",
+      "created": "You can now see agent \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Agent edited successfully",
+      "edited": "Changes for agent \"{{name}}\" are saved.",
+      "deletedTitle": "Agent deleted successfully",
+      "deleted": "Agent \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Agent publish requested",
+      "publishRequested": "Publish request for agent \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Agent unpublish requested",
+      "unpublishRequested": "Unpublish request for agent \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
+    },
+    "quickApp": {
+      "createdTitle": "Quick app created successfully",
+      "created": "You can now see quick app \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Quick app edited successfully",
+      "edited": "Changes for quick app \"{{name}}\" are saved.",
+      "deletedTitle": "Quick app deleted successfully",
+      "deleted": "Quick app \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Quick app publish requested",
+      "publishRequested": "Publish request for quick app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Quick app unpublish requested",
+      "unpublishRequested": "Unpublish request for quick app \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
+    },
+    "customApp": {
+      "createdTitle": "Custom app created successfully",
+      "created": "You can now see custom app \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Custom app edited successfully",
+      "edited": "Changes for custom app \"{{name}}\" are saved.",
+      "deletedTitle": "Custom app deleted successfully",
+      "deleted": "Custom app \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Custom app publish requested",
+      "publishRequested": "Publish request for custom app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Custom app unpublish requested",
+      "unpublishRequested": "Unpublish request for custom app \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
+    },
+    "toolset": {
+      "createdTitle": "Toolset created successfully",
+      "created": "You can now see toolset \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Toolset edited successfully",
+      "edited": "Changes for toolset \"{{name}}\" are saved.",
+      "deletedTitle": "Toolset deleted successfully",
+      "deleted": "Toolset \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Toolset publish requested",
+      "publishRequested": "Publish request for toolset \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Toolset unpublish requested",
+      "unpublishRequested": "Unpublish request for toolset \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
+    },
+    "model": {
+      "deletedTitle": "Model deleted successfully",
+      "deleted": "Model \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "Model publish requested",
+      "publishRequested": "Publish request for model \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Model unpublish requested",
+      "unpublishRequested": "Unpublish request for model \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
+    },
+    "skill": {
+      "createdTitle": "Skill created successfully",
+      "created": "You can now see skill \"{{name}}\" in the catalog and My collection.",
+      "deletedTitle": "Skill deleted successfully",
+      "deleted": "Skill \"{{name}}\" is not available anymore.",
+      "downloadedTitle": "Skill downloaded successfully",
+      "downloaded": "Skill \"{{name}}\" is saved on your device.",
+      "publishRequestedTitle": "Skill publish requested",
+      "publishRequested": "Publish request for skill \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Skill unpublish requested",
+      "unpublishRequested": "Unpublish request for skill \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
+    },
+    "conversation": {
+      "renamedTitle": "Conversation renamed successfully",
+      "renamed": "Conversation \"{{name}}\" is renamed.",
+      "duplicatedTitle": "Conversation duplicated successfully",
+      "duplicated": "A copy of conversation \"{{name}}\" is created.",
+      "publishRequestedTitle": "Conversation publish requested",
+      "publishRequested": "Publish request for conversation \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Conversation unpublish requested",
+      "unpublishRequested": "Unpublish request for conversation \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it.",
+      "deletedTitle": "Conversation deleted successfully",
+      "deleted": "Conversation \"{{name}}\" is not available anymore."
+    },
+    "file": {
+      "renamedTitle": "File renamed successfully",
+      "renamed": "File \"{{name}}\" is renamed.",
+      "downloadedTitle_one": "File downloaded successfully",
+      "downloadedTitle_other": "Files downloaded successfully",
+      "downloaded_one": "File \"{{name}}\" is saved on your device.",
+      "downloaded_other": "{{count}} files are saved on your device."
+    },
+    "folder": {
+      "createdTitle": "Folder created successfully",
+      "created": "Folder \"{{name}}\" is created.",
+      "renamedTitle": "Folder renamed successfully",
+      "renamed": "Folder \"{{name}}\" is renamed.",
+      "downloadedTitle": "Folder downloaded successfully",
+      "downloaded": "Folder \"{{name}}\" is saved on your device."
+    }
+  },
+  "usage": {
+    "pageTitle": "Usage",
+    "pageDescription": "Cost, tokens and requests are metered independently — each can carry its own limit per day, week and month.",
+    "todayTitle": "Today",
+    "todayPeriodDescription": "Last 24 hours",
+    "thisWeekTitle": "This week",
+    "thisWeekPeriodDescription": "Last 7 days",
+    "thisMonthTitle": "This month",
+    "thisMonthPeriodDescription": "Last 30 days",
+    "defaultBadgeLabel": "Within limits",
+    "runningLowBadgeLabel": "Running low",
+    "limitReachedBadgeLabel": "Limit reached",
+    "usedOfTotalLabel": "used of {{total}}",
+    "remainingCaptionLabel": "{{remaining}} left",
+    "usedPercentLabel": "{{percent}}%",
+    "unlimitedProgressAriaLabel": "{{used}} used, unlimited",
+    "progressAriaLabel": "{{used}} of {{total}}, {{percent}}% used",
+    "fullLoadError": "We couldn't load your usage data. Please try again later.",
+    "loading": "Loading usage data…",
+    "modelLimitsHeading": "Model limits",
+    "modelLimitsEmptyState": "No models to show yet.",
+    "periodSelectorAriaLabel": "Select usage period",
+    "itemColumnLabel": "Item",
+    "costColumnLabel": "Cost",
+    "tokensColumnLabel": "Tokens",
+    "requestsColumnLabel": "Requests",
+    "statusColumnLabel": "Status",
+    "modelTypeLabel": "Model",
+    "periodLastMinuteLabel": "Last minute",
+    "periodLastHourLabel": "Last hour",
+    "noLimitLabel": "No limit",
+    "unavailableLabel": "Not available",
+    "unavailableBadgeLabel": "Unavailable"
   }
 }

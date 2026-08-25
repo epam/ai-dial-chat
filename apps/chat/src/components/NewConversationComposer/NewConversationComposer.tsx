@@ -1,4 +1,11 @@
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+import {
+  AttachmentValidationErrorReason,
+  useAttachmentUpload,
+  useAttachmentValidation,
+  useChatSettingsFormConfig,
+  usePageFileDrag,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ResponseFormat,
@@ -12,12 +19,12 @@ import {
   type ConversationInputStyles,
   type ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC, ReactNode } from 'react';
 import { lazy, memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
+  AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
@@ -27,22 +34,22 @@ import {
   FileDndI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
+import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
-import { useAttachmentUpload } from '../../hooks/conversation/useAttachmentUpload';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
-import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
+import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { filesApi } from '../../server-api/api-client';
 import { getApiErrorDetails } from '../../server-api/api-error';
+import { isQuickAppSchema } from '../../utils/application-schema';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -84,6 +91,15 @@ interface Props {
   introText?: string;
   /** Initial textarea content (e.g. populated by a starter selection). */
   message?: string;
+  /** Token that forces `message` to re-apply even if its string is unchanged. */
+  messageRevision?: number;
+  /**
+   * When provided, adds a "Prompts" item to the `+` menu whose submenu
+   * renders this host-owned overlay, mirroring `modelPickerOverlay`.
+   */
+  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
+  /** Label for the "Prompts" menu item and mobile sheet title. */
+  promptsMenuTitle?: string;
   inputStyles?: ConversationInputStyles;
   /** Called on first send. Rejecting shows the standard create-conversation error notification. */
   onCreateConversation: (
@@ -112,6 +128,9 @@ const NewConversationComposer: FC<Props> = ({
   placeholder,
   introText,
   message,
+  messageRevision,
+  promptsMenuOverlay,
+  promptsMenuTitle,
   inputStyles,
   onCreateConversation,
   toolsMenuItems,
@@ -122,7 +141,7 @@ const NewConversationComposer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { showNotification } = useNotification();
+  const { showErrorNotification, showSuccessNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
 
@@ -167,24 +186,44 @@ const NewConversationComposer: FC<Props> = ({
     isAttachmentsAllowed,
     validateAttachment,
     fileAccept,
-  } = useAttachmentValidation(resolvedSelectedDeployment);
+  } = useAttachmentValidation({
+    allowedMimeTypes: resolvedSelectedDeployment?.inputAttachmentTypes ?? [],
+    onValidationError: ({ reason, formats }) => {
+      const noTypesAllowed =
+        reason === AttachmentValidationErrorReason.NoTypesAllowed;
+      showErrorNotification({
+        title: t(
+          noTypesAllowed
+            ? AttachmentsI18nKeys.NoAttachmentsAllowedTitle
+            : AttachmentsI18nKeys.UnsupportedTypeTitle,
+        ),
+        message: t(
+          noTypesAllowed
+            ? AttachmentsI18nKeys.NoAttachmentsAllowedMessage
+            : AttachmentsI18nKeys.UnsupportedTypeMessage,
+          noTypesAllowed ? undefined : { formats },
+        ),
+      });
+    },
+  });
 
   const handleNetworkUploadError = useCallback(
     (filenames: string[]) => {
       const { title, message: notificationMessage } =
         buildNetworkUploadErrorNotification(filenames, t);
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         title,
         message: notificationMessage,
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const { handleUploadAttachment } = useAttachmentUpload({
+    filesApi,
     bucket,
     onNetworkError: handleNetworkUploadError,
+    debounceMs: NETWORK_ERROR_DEBOUNCE_MS,
   });
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
@@ -196,11 +235,20 @@ const NewConversationComposer: FC<Props> = ({
     selectedDeploymentId,
   });
 
+  const chatSettingsLabels = useChatSettingsFormLabels();
   const chatSettings = useChatSettingsFormConfig({
     mode: 'local',
     values: chatSettingsValues,
     onValuesChange: setChatSettingsValues,
     deploymentFeatures: selectedDeployment?.features,
+    isQuickApp: isQuickAppSchema({
+      id: selectedDeployment?.applicationTypeSchemaId,
+    }),
+    labels: chatSettingsLabels,
+    onSaved: () =>
+      showSuccessNotification({
+        message: chatSettingsLabels.savedNotification,
+      }),
   });
 
   const modelSelectorLabels = useModelSelectorLabels({
@@ -211,9 +259,14 @@ const NewConversationComposer: FC<Props> = ({
 
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   const isEmptyChatSettingsEnabled = useUiFeature(
     OverlayFeature.EmptyChatSettings,
   );
+  /* `chat-settings` is the master switch for the settings entry on every screen;
+     `empty-chat-settings` narrows it to this one. Both must be on here. */
+  const isComposerChatSettingsEnabled =
+    isChatSettingsEnabled && isEmptyChatSettingsEnabled;
   const isHideEmptyChatChangeAgentEnabled = useUiFeature(
     OverlayFeature.HideEmptyChatChangeAgent,
   );
@@ -253,8 +306,7 @@ const NewConversationComposer: FC<Props> = ({
 
   const handleAttachmentsLimitExceeded = useCallback(
     (count: number, limit: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         title: t(DialFileManagerI18nKeys.TooManyFilesSelected),
         message: t(DialFileManagerI18nKeys.TooManyFilesDescription, {
           count,
@@ -262,17 +314,16 @@ const NewConversationComposer: FC<Props> = ({
         }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleMessageTooLong = useCallback(
     (_length: number, max: number) => {
-      showNotification({
-        variant: NotificationVariant.Error,
+      showErrorNotification({
         message: t(ConversationI18nKeys.MessageTooLong, { max }),
       });
     },
-    [showNotification, t],
+    [showErrorNotification, t],
   );
 
   const handleSend = useCallback(
@@ -284,8 +335,7 @@ const NewConversationComposer: FC<Props> = ({
       } catch (err) {
         const { message: errorMessage, traceId } =
           await getApiErrorDetails(err);
-        showNotification({
-          variant: NotificationVariant.Error,
+        showErrorNotification({
           message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
           requestId: traceId,
         });
@@ -298,7 +348,7 @@ const NewConversationComposer: FC<Props> = ({
       selectedDeploymentId,
       onCreateConversation,
       chatSettingsValues,
-      showNotification,
+      showErrorNotification,
       t,
     ],
   );
@@ -331,6 +381,7 @@ const NewConversationComposer: FC<Props> = ({
           onUploadAttachment={handleUploadAttachment}
           onAttachmentsChange={handleAttachmentsChange}
           message={message}
+          messageRevision={messageRevision}
           welcomeText={getTimeOfDayGreeting(
             new Date().getHours(),
             {
@@ -374,9 +425,10 @@ const NewConversationComposer: FC<Props> = ({
           discardRecordingLabel={t(
             VoiceRecordingI18nKeys.DiscardRecordingLabel,
           )}
-          timerAriaLabel={t(VoiceRecordingI18nKeys.TimerAriaLabel)}
           sendOnEnter={sendOnEnter}
-          chatSettings={isEmptyChatSettingsEnabled ? chatSettings : undefined}
+          chatSettings={
+            isComposerChatSettingsEnabled ? chatSettings : undefined
+          }
           pendingDropFiles={pendingFiles}
           onDropFilesConsumed={onFilesConsumed}
           pendingAttachments={pendingDialAttachments}
@@ -399,6 +451,8 @@ const NewConversationComposer: FC<Props> = ({
           onAttachmentClick={handleAttachmentClick}
           onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
+          promptsMenuOverlay={promptsMenuOverlay}
+          promptsMenuTitle={promptsMenuTitle}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           toolsMenuTitle={toolsMenuTitle}
@@ -455,7 +509,7 @@ const NewConversationComposer: FC<Props> = ({
               : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
           }
           deleteConfirmBody={(names) => (
-            <div className="px-6 py-3 text-sm">
+            <div className="dial-small-text px-6 py-3">
               <p className="mb-3 text-secondary">
                 {names.length === 1 ? (
                   <>

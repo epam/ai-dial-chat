@@ -89,4 +89,26 @@ describe('parseScheduledTaskConversationPath', () => {
       ),
     ).toBeNull();
   });
+
+  it('returns scheduleId and runId for a scheduled application deployment nested under applications/{applicationId}', () => {
+    expect(
+      parseScheduledTaskConversationPath(
+        'conversations/test-bucket/.scheduler/8433fe2f-2ac7-4880-9869-31ea70f2c822/applications/test-bucket/MY%20Outlook%20Agent__0.0.1__EPM-RTC%20Issue%20Tracker__73482c36-2ff1-40e6-a6bf-e38a63a83f2c',
+      ),
+    ).toEqual({
+      scheduleId: '8433fe2f-2ac7-4880-9869-31ea70f2c822',
+      runId: '73482c36-2ff1-40e6-a6bf-e38a63a83f2c',
+    });
+  });
+
+  it('returns scheduleId and runId for a scheduled application deployment nested under several folders', () => {
+    expect(
+      parseScheduledTaskConversationPath(
+        'conversations/test-bucket/.scheduler/sched_abc/applications/some-bucket/nested/folder/gpt-4o__title__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
+      ),
+    ).toEqual({
+      scheduleId: 'sched_abc',
+      runId: 'c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
+    });
+  });
 });

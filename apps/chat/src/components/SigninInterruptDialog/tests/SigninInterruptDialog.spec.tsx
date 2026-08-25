@@ -108,6 +108,8 @@ const makeDeploymentsValue = (toolsets: unknown[] = []) => ({
   toolsets,
   refetchToolsets: vi.fn().mockResolvedValue(undefined),
   refetchDeployments: vi.fn().mockResolvedValue(undefined),
+  selectedDeploymentDetails: null,
+  isDeploymentDetailsLoading: false,
   mergeSharedItem: vi.fn(),
 });
 
@@ -132,7 +134,7 @@ describe('SigninInterruptDialog', () => {
     mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
 
     const { container } = render(<SigninInterruptDialog />);
-    expect(container.firstChild).toBeNull();
+    expect(container.innerHTML).toBe('');
   });
 
   it('renders the toolset display name and version when known', () => {
@@ -176,6 +178,15 @@ describe('SigninInterruptDialog', () => {
     });
     expect(loginButton.hasAttribute('disabled')).toBe(true);
 
+    /*
+     * The popup's focus manager pulls focus onto the dialog root shortly
+     * after mount; typing before that lands loses the keystrokes. Wait for
+     * the initial focus to settle so the click inside `type` keeps the input
+     * focused.
+     */
+    await waitFor(() =>
+      expect(document.activeElement?.getAttribute('role')).toBe('dialog'),
+    );
     await user.type(
       screen.getByLabelText(ToolsetSigninI18nKeys.ApiKeyLabel),
       'secret-key',
@@ -243,7 +254,7 @@ describe('SigninInterruptDialog', () => {
 
       render(<SigninInterruptDialog />);
 
-      await waitFor(() => expect(screen.getByText('FinHub API')).toBeTruthy());
+      expect(await screen.findByText('FinHub API')).toBeTruthy();
       expect(mockGetExternalService).toHaveBeenCalledWith(APP_ID, SERVICE_NAME);
     });
 
@@ -281,7 +292,7 @@ describe('SigninInterruptDialog', () => {
       mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
 
       render(<SigninInterruptDialog />);
-      await waitFor(() => screen.getByText('FinHub API'));
+      await screen.findByText('FinHub API');
       /*
        * A single atomic `change` event, rather than `user.type`'s
        * char-by-char keystrokes, avoids racing the metadata-fetch effect's
@@ -355,10 +366,12 @@ describe('SigninInterruptDialog', () => {
         screen.getByRole('button', { name: ToolsetSigninI18nKeys.DeclineAll }),
       );
 
-      await waitFor(() => {
-        expect(reportEvent).toHaveBeenCalledWith('evt-1', 'denied');
-        expect(reportEvent).toHaveBeenCalledWith('evt-2', 'denied');
-      });
+      await waitFor(() =>
+        expect(reportEvent).toHaveBeenCalledWith('evt-1', 'denied'),
+      );
+      await waitFor(() =>
+        expect(reportEvent).toHaveBeenCalledWith('evt-2', 'denied'),
+      );
     });
   });
 });

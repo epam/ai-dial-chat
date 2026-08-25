@@ -24,10 +24,13 @@ interface Props {
   settingsForm: CustomAppFormData;
   settingsErrors: CustomAppFormErrors;
   isSaving: boolean;
+  isNextDisabled: boolean;
   onNext: () => void;
   onCancel: () => void;
   onGeneralChange: (patch: Partial<CustomAppGeneralFormData>) => void;
   onSettingsChange: (patch: Partial<CustomAppFormData>) => void;
+  onNameBlur: () => void;
+  onVersionBlur: () => void;
 }
 
 const CustomAppEditorView: FC<Props> = ({
@@ -37,16 +40,19 @@ const CustomAppEditorView: FC<Props> = ({
   settingsForm,
   settingsErrors,
   isSaving,
+  isNextDisabled,
   onNext,
   onCancel,
   onGeneralChange,
   onSettingsChange,
+  onNameBlur,
+  onVersionBlur,
 }) => {
   const { t } = useTranslation();
   const isGeneralStep = step === ToolsetEditorSteps.General;
 
   return (
-    <div className="flex min-h-0 flex-1">
+    <div className="flex h-full min-h-0">
       <div className="flex h-full w-full min-w-0 flex-col">
         <div className="flex-1 overflow-y-auto p-6">
           {isGeneralStep ? (
@@ -58,6 +64,8 @@ const CustomAppEditorView: FC<Props> = ({
                 CustomAppI18nKeys.DescriptionPlaceholder,
               )}
               onChange={onGeneralChange}
+              onNameBlur={onNameBlur}
+              onVersionBlur={onVersionBlur}
             />
           ) : (
             <CustomAppSettingsForm
@@ -80,7 +88,7 @@ const CustomAppEditorView: FC<Props> = ({
               type="button"
               label={t(EditorI18nKeys.NextButton)}
               onClick={onNext}
-              disabled={isSaving}
+              disabled={isNextDisabled}
             />
           </div>
         )}

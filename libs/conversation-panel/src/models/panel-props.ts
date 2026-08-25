@@ -1,5 +1,6 @@
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
+import type { PillTabsColors } from '../components/PillTabs/PillTabs';
 import { FilterTab } from '../types/conversation-classification';
 
 /** Labels for each filter tab. */
@@ -44,7 +45,7 @@ export interface ConversationItem {
 export interface ConversationPanelTypography {
   /** A single utility class (e.g. `'dial-body-semi-text'`) applied to the title span. */
   fontClassName?: string;
-  /** Typography class applied to collapsible group header buttons. Defaults to `'dial-tiny-semi-text uppercase'`. */
+  /** Typography class applied to collapsible group header buttons. Defaults to `'dial-tiny-lead-semi-text'`. */
   groupHeaderClassName?: string;
   /** Typography class applied to conversation title text in each row. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
@@ -104,11 +105,13 @@ export interface ConversationPanelStyles {
   colors?: ConversationColors;
   /** Color overrides forwarded to the New chat button. */
   newChatButton?: NewChatButtonColors;
+  /** Color overrides forwarded to the filter pill tabs. */
+  filterTabs?: PillTabsColors;
   /** Typography overrides for the panel and its children. */
   typography?: ConversationPanelTypography;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
-  /** Typography class applied to the task pill badge in each conversation row. Defaults to `'dial-caption-semi-text uppercase tracking-[0.6px]'`. Colors come from the module stylesheet. */
+  /** Typography class applied to the task pill badge in each conversation row. Defaults to `'dial-caption-lead-semi-text'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
 }
 
@@ -189,6 +192,12 @@ export interface ConversationPanelProps {
   activeFilter?: FilterTab;
   /** Called when the active filter tab changes. */
   onActiveFilterChange?: (tab: FilterTab) => void;
+  /**
+   * When `true`, the filter tabs are not rendered and the list stays on
+   * whichever tab is active — `FilterTab.All` unless `activeFilter` says
+   * otherwise. Defaults to `false`.
+   */
+  isFilterTabsHidden?: boolean;
 }
 
 /** Describes a completed drag-and-drop move in the conversation panel. */

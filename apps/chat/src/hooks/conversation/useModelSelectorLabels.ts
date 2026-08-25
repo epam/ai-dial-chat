@@ -18,6 +18,7 @@ interface Result {
   empty: string | undefined;
   searchPlaceholder: string;
   closeLabel: string;
+  unavailableTooltip: string;
 }
 
 export const useModelSelectorLabels = ({
@@ -38,6 +39,7 @@ export const useModelSelectorLabels = ({
           : undefined,
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
       closeLabel: t(DeploymentSelectorI18nKeys.CloseLabel),
+      unavailableTooltip: t(DeploymentSelectorI18nKeys.UnavailableTooltip),
     }),
     [t, isLoading, error, itemCount],
   );

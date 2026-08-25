@@ -550,7 +550,9 @@ describe('ApplicationsService', () => {
       await service.updateApplication('user1', 'token', id, updateBody);
 
       const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
-      expect(sentBody).toMatchObject({ displayName: 'Updated App' });
+      expect(sentBody).toMatchObject({
+        displayName: 'Updated App',
+      });
     });
 
     it('throws NotFoundException when the existing application fetch returns 404', async () => {

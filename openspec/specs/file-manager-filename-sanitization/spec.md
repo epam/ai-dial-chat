@@ -1,5 +1,11 @@
 # Spec: File Manager Filename Sanitization
 
+## Purpose
+
+Sanitizing an upload's filename before conflict detection runs.
+
+## Requirements
+
 ### Requirement: Sanitize upload filename before conflict detection
 The system SHALL sanitize each uploaded file's name by replacing any character matching `NOT_ALLOWED_SYMBOLS_REGEXP` (from `@epam/ai-dial-ui-kit`) with `_`, trimming trailing dots and whitespace from the base name, and preserving the original file extension. Sanitization SHALL occur inside `onValidateUpload` in `useDialFileManager`, mutating `DialUploadFileItem.name` in-place before the ui-kit performs conflict detection. The sanitized name SHALL be used for all subsequent operations including conflict popup display, upload path construction, and `POST /api/v1/files`.
 

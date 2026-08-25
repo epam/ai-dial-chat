@@ -1,6 +1,7 @@
 import type {
   CodeBlockTheme,
   DisplayAttachment,
+  MarkdownRendererClassNames,
   MessageRole,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
@@ -119,6 +120,8 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
 export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   /** react-markdown component overrides. Use to inject custom renderers (e.g. citation markers) into markdown elements. */
   markdownComponents?: Components;
+  /** Per-element markdown typography classes. Defaults to the renderer's full-size scale; pass `COMPACT_MARKDOWN_CLASS_NAMES` for the smaller body scale. */
+  markdownClassNames?: MarkdownRendererClassNames;
   /** Quick-reply buttons rendered below the message text when non-empty. */
   starters?: StarterOption[];
   /** Fires with the clicked `StarterOption`. */
