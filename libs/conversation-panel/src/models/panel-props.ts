@@ -1,6 +1,5 @@
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
-import type { PillTabsColors } from '../components/PillTabs/PillTabs';
 import { FilterTab } from '../types/conversation-classification';
 
 /** Labels for each filter tab. */
@@ -13,6 +12,8 @@ export interface FilterLabels {
   shared: string;
   /** Label for the "Organization" tab. */
   organization: string;
+  /** Accessible name of the filter row itself. Defaults to `"Filter chats"`. */
+  groupAriaLabel?: string;
 }
 
 /** A single conversation entry shown in the history panel. */
@@ -105,8 +106,6 @@ export interface ConversationPanelStyles {
   colors?: ConversationColors;
   /** Color overrides forwarded to the New chat button. */
   newChatButton?: NewChatButtonColors;
-  /** Color overrides forwarded to the filter pill tabs. */
-  filterTabs?: PillTabsColors;
   /** Typography overrides for the panel and its children. */
   typography?: ConversationPanelTypography;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */

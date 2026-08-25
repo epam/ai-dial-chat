@@ -72,7 +72,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       colors,
       typography,
       newChatButton: newChatButtonColors,
-      filterTabs: filterTabsColors,
     } = panelStyles ?? {};
 
     const {
@@ -424,7 +423,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
               onActiveFilterChange?.(tab);
             }}
             tabClassName={typography?.tabClassName}
-            colors={filterTabsColors}
           />
         )}
 

@@ -20,7 +20,7 @@ const renderTabs = (tabClassName?: string) =>
     />,
   );
 
-const getTab = (label: string) => screen.getByRole('tab', { name: label });
+const getTab = (label: string) => screen.getByRole('button', { name: label });
 
 describe('FilterTabs', () => {
   it('renders a tab for each filter', () => {
@@ -31,8 +31,24 @@ describe('FilterTabs', () => {
     expect(screen.getByText('Organization')).toBeTruthy();
   });
 
+  it('marks only the active tab as pressed', () => {
+    renderTabs();
+    expect(getTab('All').getAttribute('aria-pressed')).toBe('true');
+    expect(getTab('Shared').getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('names the filter row so the group is announced', () => {
+    renderTabs();
+    expect(screen.getByRole('group', { name: 'Filter chats' })).toBeTruthy();
+  });
+
   it('applies flex-1 by default so the tabs fill the row equally', () => {
     renderTabs();
-    expect(getTab('All').className).toContain('contents');
+    expect(getTab('All').className).toContain('flex-1');
+  });
+
+  it('applies the provided typography class to each tab', () => {
+    renderTabs('dial-small-text');
+    expect(getTab('All').className).toContain('dial-small-text');
   });
 });

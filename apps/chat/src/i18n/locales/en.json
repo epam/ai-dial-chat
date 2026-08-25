@@ -98,6 +98,7 @@
     "featuredLabel": "Featured",
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
+    "viewToggleLabel": "View mode",
     "details": {
       "tabTools": "Tools",
       "tabContent": "Details",
@@ -289,7 +290,7 @@
     "title": "Talk to",
     "searchPlaceholder": "Search models, agents…",
     "emptyHint": "Star a model or agent to pin it here.",
-    "currentlySelectedLabel": "Currently selected",
+    "currentlySelectedLabel": "My Collection",
     "ariaLabel": "Select model",
     "loading": "Loading models…",
     "error": "Failed to load models",
@@ -303,6 +304,7 @@
   "promptSelector": {
     "addMenuLabel": "Prompts",
     "myCollectionLabel": "My Collection",
+    "browseLabel": "Catalog",
     "emptyHint": "Star a prompt to pin it here",
     "modalTitle": "Use prompt",
     "parametersTitle": "Prompt parameters",
@@ -401,6 +403,7 @@
     "empty": "No conversations yet",
     "filter": {
       "all": "All",
+      "groupAriaLabel": "Filter chats",
       "shared": "Shared",
       "pinnedSection": "Pinned",
       "myChatsSection": "My chats"
