@@ -617,6 +617,7 @@ export enum ConversationPanelI18nKeys {
   ToggleAriaLabel = 'conversationPanel.toggleAriaLabel',
   Empty = 'conversationPanel.empty',
   FilterAll = 'conversationPanel.filter.all',
+  FilterGroupAriaLabel = 'conversationPanel.filter.groupAriaLabel',
   FilterShared = 'conversationPanel.filter.shared',
   PinnedSection = 'conversationPanel.filter.pinnedSection',
   MyChatsSection = 'conversationPanel.filter.myChatsSection',

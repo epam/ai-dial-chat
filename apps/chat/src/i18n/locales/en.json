@@ -401,6 +401,7 @@
     "empty": "No conversations yet",
     "filter": {
       "all": "All",
+      "groupAriaLabel": "Filter chats",
       "shared": "Shared",
       "pinnedSection": "Pinned",
       "myChatsSection": "My chats"

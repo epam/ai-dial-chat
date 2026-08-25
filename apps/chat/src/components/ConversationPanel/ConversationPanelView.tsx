@@ -490,6 +490,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       myChats: t(ConversationPanelI18nKeys.MyChatsSection),
       shared: t(ConversationPanelI18nKeys.FilterShared),
       organization: t(BasicI18nKeys.Organization),
+      groupAriaLabel: t(ConversationPanelI18nKeys.FilterGroupAriaLabel),
     }),
     [t],
   );
