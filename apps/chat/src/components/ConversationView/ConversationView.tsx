@@ -937,7 +937,7 @@ const ConversationView: FC<Props> = ({
                         {names.length === 1 ? (
                           <>
                             {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
-                            <span className="break-all text-primary">
+                            <span className="break-words text-primary">
                               &quot;{names[0].split('/').pop()}&quot;?
                             </span>
                           </>

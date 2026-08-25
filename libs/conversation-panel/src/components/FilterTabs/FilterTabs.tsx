@@ -1,8 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-ui-kit';
+import { Tag, TagAppearance, mergeClasses } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
 import { type FilterLabels } from '../../models/panel-props';
 import { FilterTab } from '../../types/conversation-classification';
-import { PillTabs, type PillTabsColors } from '../PillTabs/PillTabs';
 
 /** Props for `FilterTabs`. */
 export interface FilterTabsProps {
@@ -14,41 +13,42 @@ export interface FilterTabsProps {
   onChange: (tab: FilterTab) => void;
   /** Class applied to each tab. Defaults to `'dial-tiny-semi-text'`. */
   tabClassName?: string;
-  /** Color overrides forwarded to the underlying pill tabs. */
-  colors?: PillTabsColors;
 }
 
-const TABS: { value: FilterTab; labelKey: keyof FilterLabels }[] = [
+/** Keys of `FilterLabels` that name a tab (i.e. all but the group's own label). */
+type FilterTabLabelKey = Exclude<keyof FilterLabels, 'groupAriaLabel'>;
+
+const TABS: { value: FilterTab; labelKey: FilterTabLabelKey }[] = [
   { value: FilterTab.All, labelKey: 'all' },
   { value: FilterTab.MyChats, labelKey: 'myChats' },
   { value: FilterTab.Shared, labelKey: 'shared' },
   { value: FilterTab.Organization, labelKey: 'organization' },
 ];
 
-/** Segmented pill-tab control for filtering conversations by source. */
+/**
+ * Row of selectable filter chips for filtering conversations by source.
+ */
 export const FilterTabs: FC<FilterTabsProps> = memo(
-  ({
-    activeTab,
-    labels,
-    onChange,
-    tabClassName = 'dial-tiny-semi-text',
-    colors,
-  }) => (
-    <div className="px-3 py-2">
-      <PillTabs
-        tabs={TABS.map(({ value, labelKey }) => ({
-          id: value,
-          label: labels[labelKey],
-        }))}
-        activeTabId={activeTab}
-        onTabChange={(id: string) => onChange(id as FilterTab)}
-        styles={{
-          typography: {
-            tabClassName: mergeClasses(tabClassName, 'flex-1'),
-          },
-          colors,
-        }}
-      />
+  ({ activeTab, labels, onChange, tabClassName = 'dial-tiny-semi-text' }) => (
+    <div
+      role="group"
+      aria-label={labels.groupAriaLabel ?? 'Filter chats'}
+      className="flex flex-nowrap gap-1 px-3 py-2"
+    >
+      {TABS.map(({ value, labelKey }) => (
+        <Tag
+          key={value}
+          label={labels[labelKey]}
+          appearance={TagAppearance.Selectable}
+          selected={activeTab === value}
+          onClick={() => onChange(value)}
+          className={mergeClasses(
+            /* The filter row splits its width evenly and keeps the pill silhouette. */
+            'flex-1 justify-center rounded-full',
+            tabClassName,
+          )}
+        />
+      ))}
     </div>
   ),
 );

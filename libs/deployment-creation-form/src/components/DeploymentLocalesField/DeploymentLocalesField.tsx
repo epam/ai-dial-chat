@@ -1,12 +1,13 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
+  ButtonVariant,
   DangerIconButton,
   DIAL_ICON_SIZE,
-  DialFormPopup,
   ElementSize,
   Input,
   LinkButton,
+  Popup,
   Select,
   Textarea,
 } from '@epam/ai-dial-ui-kit';
@@ -162,16 +163,19 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
         onClick={handleOpen}
       />
 
-      <DialFormPopup
+      <Popup
         open={isOpen}
         header={popupTitle}
-        dividers={false}
         onClose={handleCancel}
-        onCancel={handleCancel}
-        onSubmit={handleSave}
-        cancelLabel={cancelLabel}
-        submitLabel={saveLabel}
-        disableSubmitButton={isSaveDisabled}
+        mainButtons={[
+          { label: cancelLabel, onClick: handleCancel },
+          {
+            label: saveLabel,
+            variant: ButtonVariant.Primary,
+            disabled: isSaveDisabled,
+            onClick: handleSave,
+          },
+        ]}
       >
         <div className="flex flex-col gap-8 px-6 py-3">
           {draftEntries.map((entry, index) => {
@@ -264,7 +268,7 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
             disabled={draftEntries.length >= availableLocaleOptions.length}
           />
         </div>
-      </DialFormPopup>
+      </Popup>
     </div>
   );
 };

@@ -18,6 +18,27 @@ import Navigation from '../Navigation';
 
 vi.mock('../../../hooks/useUiFeature');
 
+/* The shipped locale list is data, not behaviour under test: the app ships
+   English only today, which hides the language group outright. Two locales
+   keep the group renderable so its feature gating stays observable; the
+   single-locale case gets its own test by trimming this array. */
+const { supportedLanguages } = vi.hoisted(() => ({
+  supportedLanguages: [] as { code: string; nativeName: string }[],
+}));
+
+const resetSupportedLanguages = () =>
+  supportedLanguages.splice(
+    0,
+    supportedLanguages.length,
+    { code: 'en', nativeName: 'English' },
+    { code: 'de', nativeName: 'Deutsch' },
+  );
+
+vi.mock('../../../hooks/language/useLanguage', () => ({
+  SUPPORTED_LANGUAGES: supportedLanguages,
+  useLanguage: () => ({ language: 'en', changeLanguage: vi.fn() }),
+}));
+
 interface MockDropdownItem {
   key: string;
   label?: ReactNode;
@@ -144,6 +165,7 @@ const setDefaults = (
   >,
 ) => {
   vi.clearAllMocks();
+  resetSupportedLanguages();
   useAppConfigMock.mockReturnValue({
     status: UserConfigStatus.Ready,
     features: { scheduledTasksEnabled: true },
@@ -338,6 +360,13 @@ describe('Navigation user menu', () => {
     renderNavigation();
     expect(screen.getByText(SettingsI18nKeys.Language)).toBeTruthy();
     expect(screen.queryByText(SettingsI18nKeys.KeyboardShortcuts)).toBeNull();
+  });
+
+  it('drops the language group when only one locale ships', () => {
+    supportedLanguages.splice(1);
+    renderNavigation();
+    expect(screen.queryByText(SettingsI18nKeys.Language)).toBeNull();
+    expect(screen.getByText(SettingsI18nKeys.KeyboardShortcuts)).toBeTruthy();
   });
 
   it('hides the Settings entry when the Settings page flag is off', () => {

@@ -10,44 +10,39 @@ import RenameConversationPopup from '../RenameConversationPopup';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   PopupSize: { Sm: 'sm' },
-  DialFormPopup: ({
+  ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
+  Popup: ({
     open,
     header,
     children,
     onClose,
-    onCancel,
-    onSubmit,
-    cancelLabel,
-    submitLabel,
-    isLoading,
-    disableSubmitButton,
+    mainButtons,
   }: {
     open: boolean;
     header?: ReactNode;
     children?: ReactNode;
     onClose?: () => void;
-    onCancel?: () => void;
-    onSubmit?: () => void;
-    cancelLabel?: string;
-    submitLabel?: string;
-    isLoading?: boolean;
-    disableSubmitButton?: boolean;
+    mainButtons?: {
+      label?: ReactNode;
+      disabled?: boolean;
+      onClick?: () => void;
+    }[];
   }) =>
     open ? (
       <div role="dialog" aria-label="Rename conversation">
         <h2>{header}</h2>
         <button type="button" aria-label="Close" onClick={onClose} />
         {children}
-        <button type="button" onClick={onCancel} disabled={isLoading}>
-          {cancelLabel}
-        </button>
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={disableSubmitButton ?? isLoading}
-        >
-          {submitLabel}
-        </button>
+        {mainButtons?.map((button, index) => (
+          <button
+            key={index}
+            type="button"
+            onClick={button.onClick}
+            disabled={button.disabled}
+          >
+            {button.label}
+          </button>
+        ))}
       </div>
     ) : null,
   Input: ({
@@ -157,11 +152,16 @@ describe('RenameConversationPopup', () => {
     expect(getSaveButton().disabled).toBe(true);
   });
 
-  it('Save button is disabled while isSaving is true', async () => {
+  it('replaces the fields and actions with a loader while isSaving is true', () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} isSaving={true} />);
-    await user.clear(getInput());
-    await user.type(getInput(), 'New Title');
-    expect(getSaveButton().disabled).toBe(true);
+    expect(screen.getByRole('status')).toBeTruthy();
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.Save }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.Cancel }),
+    ).toBeNull();
   });
 
   it('Save button is enabled when value differs from currentTitle', async () => {

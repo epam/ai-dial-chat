@@ -6,10 +6,12 @@ import {
   DIAL_ICON_SIZE,
   DropdownItem,
   Search,
+  SegmentedControl,
+  SegmentedControlItem,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 import { ToolbarStyles } from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Filter } from '../../Filter/Filter';
@@ -26,6 +28,7 @@ interface TitleRowProps {
   searchPlaceholder?: string;
   gridViewLabel?: string;
   listViewLabel?: string;
+  viewToggleLabel?: string;
   sortKey?: string;
   sortOptions?: DropdownItem[];
   filters?: Set<string>;
@@ -50,6 +53,7 @@ export const TitleRow: FC<TitleRowProps> = ({
   searchPlaceholder,
   gridViewLabel = 'Grid view',
   listViewLabel = 'List view',
+  viewToggleLabel = 'View mode',
   sortKey,
   sortOptions,
   filters,
@@ -65,6 +69,22 @@ export const TitleRow: FC<TitleRowProps> = ({
     browseStyles?.typography?.titleClassName ?? 'dial-body-semi-text';
   const countClassName =
     browseStyles?.typography?.countClassName ?? 'dial-tiny-semi-text';
+
+  const viewModeItems = useMemo<SegmentedControlItem<CatalogViewMode>[]>(
+    () => [
+      {
+        value: CatalogViewMode.Grid,
+        icon: <IconLayoutGrid size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        'aria-label': gridViewLabel,
+      },
+      {
+        value: CatalogViewMode.List,
+        icon: <IconLayoutList size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        'aria-label': listViewLabel,
+      },
+    ],
+    [gridViewLabel, listViewLabel],
+  );
 
   const activeLabel = sortOptions?.find((o) => o.key === sortKey)?.label ?? '';
 
@@ -90,44 +110,12 @@ export const TitleRow: FC<TitleRowProps> = ({
         />
 
         <div className="ms-auto flex items-center gap-2">
-          {/* Segmented view toggle */}
-          <div
-            className={mergeClasses(
-              'flex items-center rounded-full border p-[3px]',
-              styles.viewToggleWrapper,
-            )}
-          >
-            {([CatalogViewMode.Grid, CatalogViewMode.List] as const).map(
-              (mode) => {
-                const isActive = viewMode === mode;
-                return (
-                  <button
-                    key={mode}
-                    type="button"
-                    aria-label={
-                      mode === CatalogViewMode.Grid
-                        ? gridViewLabel
-                        : listViewLabel
-                    }
-                    aria-pressed={isActive}
-                    onClick={() => onViewModeChange(mode)}
-                    className={mergeClasses(
-                      'flex min-h-11 min-w-11 items-center justify-center rounded-full px-3 py-1.5 transition-colors desktop:min-h-8 desktop:min-w-10',
-                      isActive
-                        ? mergeClasses('shadow-sm', styles.viewToggleActive)
-                        : styles.viewToggleInactive,
-                    )}
-                  >
-                    {mode === CatalogViewMode.Grid ? (
-                      <IconLayoutGrid size={DIAL_ICON_SIZE.SM} />
-                    ) : (
-                      <IconLayoutList size={DIAL_ICON_SIZE.SM} />
-                    )}
-                  </button>
-                );
-              },
-            )}
-          </div>
+          <SegmentedControl
+            aria-label={viewToggleLabel}
+            value={viewMode}
+            onChange={onViewModeChange}
+            items={viewModeItems}
+          />
 
           {sortOptions != null && sortOptions.length > 0 && (
             <>

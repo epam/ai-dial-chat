@@ -152,6 +152,7 @@ export enum CatalogI18nKeys {
   FeaturedLabel = 'catalog.featuredLabel',
   GridViewLabel = 'catalog.gridViewLabel',
   ListViewLabel = 'catalog.listViewLabel',
+  ViewToggleLabel = 'catalog.viewToggleLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
   DetailsTabContent = 'catalog.details.tabContent',
@@ -327,6 +328,7 @@ export enum DeploymentSelectorI18nKeys {
 export enum PromptSelectorI18nKeys {
   AddMenuLabel = 'promptSelector.addMenuLabel',
   MyCollectionLabel = 'promptSelector.myCollectionLabel',
+  BrowseLabel = 'promptSelector.browseLabel',
   EmptyHint = 'promptSelector.emptyHint',
   ModalTitle = 'promptSelector.modalTitle',
   ParametersTitle = 'promptSelector.parametersTitle',
@@ -617,6 +619,7 @@ export enum ConversationPanelI18nKeys {
   ToggleAriaLabel = 'conversationPanel.toggleAriaLabel',
   Empty = 'conversationPanel.empty',
   FilterAll = 'conversationPanel.filter.all',
+  FilterGroupAriaLabel = 'conversationPanel.filter.groupAriaLabel',
   FilterShared = 'conversationPanel.filter.shared',
   PinnedSection = 'conversationPanel.filter.pinnedSection',
   MyChatsSection = 'conversationPanel.filter.myChatsSection',

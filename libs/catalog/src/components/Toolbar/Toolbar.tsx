@@ -20,19 +20,13 @@ export const Toolbar: FC<ToolbarProps> = ({
   filterTopicsLabel,
   gridViewLabel,
   listViewLabel,
+  viewToggleLabel,
   sortKey,
   sortOptions,
   ...innerProps
 }) => {
   const cssVars = {
     '--cat-browse-divider': browseStyles?.colors?.divider,
-    '--cat-view-toggle-bg': browseStyles?.colors?.viewToggleBackground,
-    '--cat-view-toggle-border': browseStyles?.colors?.viewToggleBorder,
-    '--cat-view-toggle-active-bg':
-      browseStyles?.colors?.viewToggleActiveBackground,
-    '--cat-view-toggle-active-text': browseStyles?.colors?.viewToggleActiveText,
-    '--cat-view-toggle-text': browseStyles?.colors?.viewToggleText,
-    '--cat-view-toggle-text-hover': browseStyles?.colors?.viewToggleTextHover,
   } as CSSProperties;
 
   return (
@@ -47,6 +41,7 @@ export const Toolbar: FC<ToolbarProps> = ({
         searchPlaceholder={searchPlaceholder}
         gridViewLabel={gridViewLabel}
         listViewLabel={listViewLabel}
+        viewToggleLabel={viewToggleLabel}
         sortKey={sortKey}
         sortOptions={sortOptions}
         filters={filters}
