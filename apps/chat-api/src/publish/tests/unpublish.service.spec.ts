@@ -338,6 +338,103 @@ describe('PublishService.getPublishHistory with pending removals', () => {
   });
 });
 
+/*
+ * GH #8445. Core keeps the original ADD publication as APPROVED forever — it is
+ * an audit record, not live state — so after an administrator approved an
+ * unpublish request the folder still came back as published. The details panel
+ * derives Publish-vs-Unpublish from exactly this history, so the action menu
+ * went on offering Unpublish for a copy Core had already deleted, and acting on
+ * it failed with "Target resource does not exists".
+ */
+describe('PublishService.getPublishHistory with approved removals', () => {
+  const FOLDER = 'public/Organization/Data Science/';
+
+  const addPublication = (createdAt: number, targetFolder = FOLDER) => ({
+    targetFolder,
+    createdAt,
+    status: 'APPROVED',
+    author: 'user@example.com',
+    resources: [{ action: 'ADD', sourceUrl: TOOLSET_ID }],
+  });
+
+  const deletePublication = (createdAt: number, targetFolder = FOLDER) => ({
+    targetFolder,
+    createdAt,
+    status: 'APPROVED',
+    author: 'user@example.com',
+    resources: [{ action: 'DELETE', sourceUrl: TOOLSET_ID }],
+  });
+
+  const getHistory = async (publications: unknown[]) => {
+    const { service, dialClient, cacheManager } = makeService();
+    cacheManager.get.mockResolvedValue(undefined);
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse(publications),
+    );
+    return service.getPublishHistory(
+      'token-abc',
+      TEST_BUCKET,
+      CatalogEntityType.Toolset,
+      TOOLSET_ID,
+    );
+  };
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('drops the folder once the removal is APPROVED, so the menu offers Publish again', async () => {
+    await expect(
+      getHistory([
+        addPublication(1_700_000_000_000),
+        deletePublication(1_700_000_100_000),
+      ]),
+    ).resolves.toEqual([]);
+  });
+
+  it('lists the folder again after a re-publish that followed the approved removal', async () => {
+    const result = await getHistory([
+      addPublication(1_700_000_000_000),
+      deletePublication(1_700_000_100_000),
+      addPublication(1_700_000_200_000),
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].folderPath).toBe('Organization/Data Science');
+    expect(result[0].publishedAt).toBe(
+      new Date(1_700_000_200_000).toISOString(),
+    );
+  });
+
+  it('keeps the folders the removal did not target', async () => {
+    const result = await getHistory([
+      addPublication(1_700_000_000_000),
+      addPublication(1_700_000_000_000, 'public/Organization/Reports/'),
+      deletePublication(1_700_000_100_000),
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].folderPath).toBe('Organization/Reports');
+  });
+
+  /*
+   * The ADD's `targetFolder` was built from plain text, while Core echoes the
+   * removal's back percent-encoded — a strict comparison would leave the
+   * folder listed.
+   */
+  it('matches the removal across a percent-encoding difference', async () => {
+    await expect(
+      getHistory([
+        addPublication(1_700_000_000_000, 'public/Organization/Data Science/'),
+        deletePublication(
+          1_700_000_100_000,
+          'public/Organization/Data%20Science/',
+        ),
+      ]),
+    ).resolves.toEqual([]);
+  });
+});
+
 describe('PublishService.getPublishHistory list scope', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
