@@ -28,6 +28,7 @@ const openFoldersInitialState = {
 const initialState: UIState = {
   initialized: false,
   locale: DEFAULT_LOCAL,
+  timezone: '',
   theme: '',
   availableThemes: [],
   themesImages: {},
@@ -79,6 +80,9 @@ export const uiSlice = createSlice({
     },
     setLocale: (state, { payload }: PayloadAction<string>) => {
       state.locale = payload;
+    },
+    setTimezone: (state, { payload }: PayloadAction<string>) => {
+      state.timezone = payload;
     },
     setEnterType: (state, { payload }: PayloadAction<EnterType>) => {
       state.enterType = payload;
