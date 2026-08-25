@@ -1,3 +1,4 @@
+import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import {
   AttachmentValidationErrorReason,
@@ -36,7 +37,7 @@ import {
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
+import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
@@ -270,7 +271,8 @@ const NewConversationComposer: FC<Props> = ({
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const { displayName } = useUserProfile();
   const firstName = displayName.split(' ')[0];
-  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+  const { resolvers, options } = useAttachmentCanvasResolvers();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
 
   const usageLimitsLabels = useMemo(
     () => ({

@@ -56,10 +56,19 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => createNotificationContextValue(vi.fn()),
 }));
 
-vi.mock('../../../hooks/attachment/useOpenAttachmentCanvas', () => ({
-  useOpenAttachmentCanvas: () => ({
-    openAttachmentCanvas: vi.fn(),
-  }),
+vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
+  return {
+    ...actual,
+    useOpenAttachmentCanvas: () => ({
+      openAttachmentCanvas: vi.fn(),
+    }),
+  };
+});
+
+vi.mock('../../../hooks/attachment/useAttachmentCanvasResolvers', () => ({
+  useAttachmentCanvasResolvers: () => ({ resolvers: {}, options: {} }),
 }));
 
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({

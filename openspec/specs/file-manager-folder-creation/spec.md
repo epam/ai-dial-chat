@@ -6,7 +6,7 @@ Creating folders as zero-byte markers, with inline name validation and the cache
 
 ## State ownership
 
-`useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) owns folder-creation state.
+`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) owns folder-creation state.
 
 New state field:
 ```ts
@@ -354,7 +354,7 @@ No new metrics or analytics events beyond `MetricsInterceptor` (request duration
 ## Requirements
 ### Requirement: Folder creation is rejected for invalid names independent of the host UI
 
-`onCreateFolder` (`apps/chat/src/hooks/files/useDialFileMutations.ts`) SHALL independently call `onCreateFolderValidate` with the resolved folder name and parent folder before calling the `POST /api/v1/files/folders` BFF endpoint, and SHALL NOT call it when `onCreateFolderValidate` returns a non-null error — regardless of whether the host `DialFileManager` component already blocked confirmation on that same validation result.
+`onCreateFolder` (`libs/chat-hooks/src/files/useDialFileMutations/useDialFileMutations.ts (@epam/ai-dial-chat-hooks)`) SHALL independently call `onCreateFolderValidate` with the resolved folder name and parent folder before calling the `POST /api/v1/files/folders` BFF endpoint, and SHALL NOT call it when `onCreateFolderValidate` returns a non-null error — regardless of whether the host `DialFileManager` component already blocked confirmation on that same validation result.
 
 #### Scenario: Enter confirms an invalid folder name
 
@@ -379,7 +379,7 @@ No new metrics or analytics events beyond `MetricsInterceptor` (request duration
 ---
 ### Requirement: A created folder confirms itself
 
-`onCreateFolder` (`apps/chat/src/hooks/files/useDialFileMutations.ts`) SHALL raise a success notification after the `POST /api/v1/files/folders` call resolves and the created folder has been merged into the listing cache, through `useOperationNotification` (see `entity-operation-notifications`) with `NotifiableEntity.Folder` + `EntityOperation.Created` and `name` = the created folder's resolved name.
+`onCreateFolder` (`libs/chat-hooks/src/files/useDialFileMutations/useDialFileMutations.ts (@epam/ai-dial-chat-hooks)`) SHALL raise a success notification after the `POST /api/v1/files/folders` call resolves and the created folder has been merged into the listing cache, through `useOperationNotification` (see `entity-operation-notifications`) with `NotifiableEntity.Folder` + `EntityOperation.Created` and `name` = the created folder's resolved name.
 
 Today only the failure path notifies (`dialFileManager.folderCreateError`), so a folder created into a collapsed or non-visible parent — from a destination-folder popup, for example — produces no feedback at all.
 

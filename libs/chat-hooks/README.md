@@ -4,7 +4,7 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Overview
 
-`@epam/ai-dial-chat-hooks` is a headless hooks library: every hook here solves a piece of chat-interface UI mechanics (scrolling, streaming, anchoring, attachment upload/validation — more hooks will be added over time) using only React, standard browser APIs, and a narrow set of already-published, host-agnostic DIAL packages (the generated `@epam/ai-dial-chat-api-client` and its DTOs, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, and others listed under Peer Dependencies below). It never depends on AI DIAL Chat's React contexts, a *configured* REST client instance, UI-kit components, i18n, or routing — every hook that needs to call DIAL Core accepts an already-configured generated-client instance as a parameter instead of importing or constructing one itself. This means a consumer can drop a hook from this package into a completely different chat UI, wire its returned refs/callbacks and injected client instances onto their own app, and get the same tuned, edge-case-tested behavior AI DIAL Chat ships with, without adopting anything else from this repository.
+`@epam/ai-dial-chat-hooks` is a headless hooks library: every hook here solves a piece of chat-interface UI mechanics (scrolling, streaming, anchoring, attachment upload/validation — more hooks will be added over time) using only React, standard browser APIs, and a narrow set of already-published, host-agnostic DIAL packages (the generated `@epam/ai-dial-chat-api-client` and its DTOs, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, and others listed under Peer Dependencies below). It never depends on AI DIAL Chat's React contexts, a _configured_ REST client instance, i18n, or routing, and never renders a UI-kit component — every hook that needs to call DIAL Core accepts an already-configured generated-client instance as a parameter instead of importing or constructing one itself. A few hooks do import non-component symbols from `@epam/ai-dial-ui-kit` (enums such as `NotificationVariant`, constants such as `NOT_ALLOWED_SYMBOLS`, types such as `TabModel`) to describe values the host renders — that is a data/type dependency, not a rendering one. This means a consumer can drop a hook from this package into a completely different chat UI, wire its returned refs/callbacks and injected client instances onto their own app, and get the same tuned, edge-case-tested behavior AI DIAL Chat ships with, without adopting anything else from this repository.
 
 ## Installation
 
@@ -19,14 +19,17 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 ## Peer Dependencies
 
 - `react` ^19.2.6
-- `@epam/ai-dial-attachment-canvas` *
-- `@epam/ai-dial-attachment-input` *
-- `@epam/ai-dial-chat-api-client` *
-- `@epam/ai-dial-chat-shared` *
-- `@epam/ai-dial-quotations` *
-- `@epam/ai-dial-react-file-manager` *
-- `@epam/ai-dial-share` *
-- `@epam/ai-dial-source-panel` *
+- `@epam/ai-dial-attachment-canvas` \*
+- `@epam/ai-dial-attachment-input` \*
+- `@epam/ai-dial-chat-api-client` \*
+- `@epam/ai-dial-chat-shared` \*
+- `@epam/ai-dial-quotations` \*
+- `@epam/ai-dial-react-file-manager` \*
+- `@epam/ai-dial-share` \*
+- `@epam/ai-dial-source-panel` \*
+- `@epam/ai-dial-ui-kit` \*
+- `ag-grid-community` ^35.3.0
+- `fflate` ^0.8.3
 
 ## Hooks
 
@@ -122,9 +125,8 @@ const ComposerWithFileDrop = ({
 }: {
   isAttachmentsAllowed: boolean;
 }) => {
-  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
-    isAttachmentsAllowed,
-  );
+  const { isDragging, pendingFiles, onFilesConsumed } =
+    usePageFileDrag(isAttachmentsAllowed);
 
   useEffect(() => {
     if (pendingFiles.length === 0) return;
@@ -140,18 +142,18 @@ const ComposerWithFileDrop = ({
 
 **Parameters**:
 
-| Name                  | Type      | Description                                                     |
-| --------------------- | --------- | ----------------------------------------------------------------- |
-| `isAttachmentsAllowed` | `boolean` | Whether dropped files should be collected. Defaults to `true`.   |
-| `isEnabled`            | `boolean` | Whether drag detection is active at all. Defaults to `true`.     |
+| Name                   | Type      | Description                                                    |
+| ---------------------- | --------- | -------------------------------------------------------------- |
+| `isAttachmentsAllowed` | `boolean` | Whether dropped files should be collected. Defaults to `true`. |
+| `isEnabled`            | `boolean` | Whether drag detection is active at all. Defaults to `true`.   |
 
 **Returns** (`UsePageFileDragResult`):
 
-| Name              | Type         | Description                                                |
-| ----------------- | ------------ | ------------------------------------------------------------ |
-| `isDragging`      | `boolean`    | Whether a file drag is currently over the page.             |
+| Name              | Type         | Description                                                   |
+| ----------------- | ------------ | ------------------------------------------------------------- |
+| `isDragging`      | `boolean`    | Whether a file drag is currently over the page.               |
 | `pendingFiles`    | `File[]`     | Files dropped on the page, pending consumption by the caller. |
-| `onFilesConsumed` | `() => void` | Clears `pendingFiles` after the caller has processed them.   |
+| `onFilesConsumed` | `() => void` | Clears `pendingFiles` after the caller has processed them.    |
 
 ### useViewportWidth / usePanelMaxWidth
 
@@ -174,7 +176,7 @@ const ResizableSidePanel = () => {
 
 **`usePanelMaxWidth(minContentAreaWidth: number)`** returns `number` — `Math.max(0, viewportWidth - minContentAreaWidth)`.
 
-| Name                  | Type     | Description                                                                 |
+| Name                  | Type     | Description                                                                   |
 | --------------------- | -------- | ----------------------------------------------------------------------------- |
 | `minContentAreaWidth` | `number` | Minimum pixel width the main content area must retain when the panel is open. |
 
@@ -186,14 +188,22 @@ Resolves and manages share-link data for a DIAL Core resource: loading/error sta
 import { useShareLink } from '@epam/ai-dial-chat-hooks';
 import { ShareLinkAccess } from '@epam/ai-dial-share';
 
-const ShareLinkPanel = ({ shareApi, itemId }: { shareApi: ShareApi; itemId: string }) => {
+const ShareLinkPanel = ({
+  shareApi,
+  itemId,
+}: {
+  shareApi: ShareApi;
+  itemId: string;
+}) => {
   const { data, isLoading, error, setAccess } = useShareLink(shareApi, itemId);
 
   return (
     <div>
       {isLoading && <span>Creating link...</span>}
       {data && <input readOnly value={data.url} />}
-      <button onClick={() => setAccess([ShareLinkAccess.Edit])}>Allow editing</button>
+      <button onClick={() => setAccess([ShareLinkAccess.Edit])}>
+        Allow editing
+      </button>
     </div>
   );
 };
@@ -203,12 +213,12 @@ const ShareLinkPanel = ({ shareApi, itemId }: { shareApi: ShareApi; itemId: stri
 
 **Parameters**: `useShareLink(shareApi, itemId, resourceKind?, origin?)`
 
-| Name           | Type                                          | Description                                                                 |
-| -------------- | ---------------------------------------------- | ----------------------------------------------------------------------------- |
-| `shareApi`     | `Pick<ShareApi, 'createShareLink'>`            | Already-configured generated-client instance.                                |
-| `itemId`       | `string`                                        | Identifier of the resource being shared.                                     |
-| `resourceKind` | `CreateShareLinkDtoResourceKindEnum`            | Optional; required only for resources whose ids need backend qualification.  |
-| `origin`       | `string`                                        | Origin the returned link is anchored to. Defaults to `window.location.origin`. |
+| Name           | Type                                 | Description                                                                    |
+| -------------- | ------------------------------------ | ------------------------------------------------------------------------------ |
+| `shareApi`     | `Pick<ShareApi, 'createShareLink'>`  | Already-configured generated-client instance.                                  |
+| `itemId`       | `string`                             | Identifier of the resource being shared.                                       |
+| `resourceKind` | `CreateShareLinkDtoResourceKindEnum` | Optional; required only for resources whose ids need backend qualification.    |
+| `origin`       | `string`                             | Origin the returned link is anchored to. Defaults to `window.location.origin`. |
 
 **Returns** (`UseShareLinkResult`): `{ data, isLoading, error, setAccess }` — `data` is `ShareLinkData | undefined`, `setAccess` takes a `ShareLinkAccess[]` and triggers a re-fetch.
 
@@ -219,8 +229,15 @@ Resolves how many users hold shared access to a resource, one resource at a time
 ```tsx
 import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks';
 
-const RevokeAccessMenuItem = ({ shareApi, itemId }: { shareApi: ShareApi; itemId: string }) => {
-  const { requestRecipientsCount, getRecipientsCount } = useShareRecipientsCount(shareApi);
+const RevokeAccessMenuItem = ({
+  shareApi,
+  itemId,
+}: {
+  shareApi: ShareApi;
+  itemId: string;
+}) => {
+  const { requestRecipientsCount, getRecipientsCount } =
+    useShareRecipientsCount(shareApi);
   const { status, count } = getRecipientsCount(itemId);
 
   return (
@@ -237,11 +254,11 @@ const RevokeAccessMenuItem = ({ shareApi, itemId }: { shareApi: ShareApi; itemId
 
 **Returns** (`UseShareRecipientsCountResult`):
 
-| Name                       | Type                                          | Description                                                        |
-| -------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------- |
-| `requestRecipientsCount`   | `(itemId: string) => void`                        | Starts a lookup for the resource unless one already ran for it.        |
-| `getRecipientsCount`       | `(itemId: string) => RecipientsCountEntry`        | Current lookup state for the resource (`{ status, count? }`).          |
-| `invalidateRecipientsCount`| `(itemId: string) => void`                        | Drops the resource's cached result so the next request fetches again.  |
+| Name                        | Type                                       | Description                                                           |
+| --------------------------- | ------------------------------------------ | --------------------------------------------------------------------- |
+| `requestRecipientsCount`    | `(itemId: string) => void`                 | Starts a lookup for the resource unless one already ran for it.       |
+| `getRecipientsCount`        | `(itemId: string) => RecipientsCountEntry` | Current lookup state for the resource (`{ status, count? }`).         |
+| `invalidateRecipientsCount` | `(itemId: string) => void`                 | Drops the resource's cached result so the next request fetches again. |
 
 `RecipientsCountEntry.status` is a `RecipientsCountStatus` of `Idle` / `Loading` / `Resolved` / `Unknown` (`Unknown` on a failed lookup, so a "Revoke access" action stays reachable without a number).
 
@@ -252,14 +269,26 @@ Uploads an attachment's file to DIAL Core storage against an already-configured 
 ```tsx
 import { useAttachmentUpload } from '@epam/ai-dial-chat-hooks';
 
-const Composer = ({ filesApi, bucket }: { filesApi: FilesApi; bucket: string }) => {
+const Composer = ({
+  filesApi,
+  bucket,
+}: {
+  filesApi: FilesApi;
+  bucket: string;
+}) => {
   const { handleUploadAttachment } = useAttachmentUpload({
     filesApi,
     bucket,
-    onNetworkError: (fileNames) => showToast(`Failed to upload: ${fileNames.join(', ')}`),
+    onNetworkError: (fileNames) =>
+      showToast(`Failed to upload: ${fileNames.join(', ')}`),
   });
 
-  return <input type="file" onChange={(e) => handleUploadAttachment(toAttachment(e.target.files![0]))} />;
+  return (
+    <input
+      type="file"
+      onChange={(e) => handleUploadAttachment(toAttachment(e.target.files![0]))}
+    />
+  );
 };
 ```
 
@@ -267,12 +296,12 @@ const Composer = ({ filesApi, bucket }: { filesApi: FilesApi; bucket: string }) 
 
 **Parameters** (`UseAttachmentUploadParams`):
 
-| Name             | Type                                | Description                                                                 |
-| ---------------- | -------------------------------------- | ------------------------------------------------------------------------------- |
-| `filesApi`       | `Pick<FilesApi, 'uploadFile'>`         | Already-configured generated-client instance.                                   |
-| `bucket`         | `string \| undefined`                  | DIAL Core bucket the file is uploaded into.                                     |
-| `onNetworkError` | `(fileNames: string[]) => void`        | Called once per debounce window with all filenames that failed while offline.   |
-| `debounceMs`     | `number`                                | Debounce window for coalescing offline-failure batches. Defaults to `700`.      |
+| Name             | Type                            | Description                                                                   |
+| ---------------- | ------------------------------- | ----------------------------------------------------------------------------- |
+| `filesApi`       | `Pick<FilesApi, 'uploadFile'>`  | Already-configured generated-client instance.                                 |
+| `bucket`         | `string \| undefined`           | DIAL Core bucket the file is uploaded into.                                   |
+| `onNetworkError` | `(fileNames: string[]) => void` | Called once per debounce window with all filenames that failed while offline. |
+| `debounceMs`     | `number`                        | Debounce window for coalescing offline-failure batches. Defaults to `700`.    |
 
 **Returns** (`UseAttachmentUploadResult`): `{ handleUploadAttachment: (attachment: Attachment) => Promise<string> }` — resolves to the uploaded file's DIAL Core URL; rejects with an `Error` tagged `errorReason: AttachmentErrorReason.Network` when offline.
 
@@ -288,19 +317,34 @@ import {
   useConversationImport,
 } from '@epam/ai-dial-chat-hooks';
 
-const ExportButton = ({ conversationsApi, filesApi }: { conversationsApi: ConversationsApi; filesApi: FilesApi }) => {
+const ExportButton = ({
+  conversationsApi,
+  filesApi,
+}: {
+  conversationsApi: ConversationsApi;
+  filesApi: FilesApi;
+}) => {
   const { jobs, exportSingle, dismissJob, retryJob } = useConversationExport({
     conversationsApi,
     filesApi,
     normalizeConversationPath: (id) => id,
     onSuccess: (event) => showToast(`Exported ${event.titles?.join(', ')}`),
     onError: (event) => {
-      if (event.code !== ConversationTransferErrorCode.Unauthorized) showToast('Export failed');
+      if (event.code !== ConversationTransferErrorCode.Unauthorized)
+        showToast('Export failed');
     },
   });
 
   return (
-    <button onClick={() => exportSingle('bucket/conv-id', 'My Chat', ConversationExportMode.WithAttachments)}>
+    <button
+      onClick={() =>
+        exportSingle(
+          'bucket/conv-id',
+          'My Chat',
+          ConversationExportMode.WithAttachments,
+        )
+      }
+    >
       Export
     </button>
   );
@@ -311,16 +355,16 @@ const ExportButton = ({ conversationsApi, filesApi }: { conversationsApi: Conver
 
 **Parameters** (`UseConversationExportParams`):
 
-| Name                       | Type                                                                 | Description                                                                     |
-| -------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `conversationsApi`         | `Pick<ConversationsApi, 'getConversation' \| 'listConversations'>`   | Already-configured generated-client instance.                                       |
-| `filesApi`                 | `Pick<FilesApi, 'downloadFileRaw'>`                                   | Already-configured generated-client instance.                                       |
-| `normalizeConversationPath`| `(conversationId: string) => string`                                  | Resolves a conversation id to the bucket-qualified path `getConversation` expects.  |
-| `classifyTransferError`    | `(error: unknown) => { isUnauthorized?: boolean; isNotFound?: boolean }` | Host-owned error classification. Defaults to `{}` (never unauthorized/not-found). |
-| `resolveErrorTraceId`      | `(error: unknown) => Promise<string \| undefined>`                    | Resolves a trace id for a failing request. Defaults to resolving `undefined`.       |
-| `onSuccess`                | `(event: ConversationTransferSuccessEvent) => void`                    | Called when a job completes successfully.                                           |
-| `onWarning`                | `(event: ConversationTransferWarningEvent) => void`                    | Called when a job succeeds but had to skip something (e.g. an attachment).          |
-| `onError`                  | `(event: ConversationTransferErrorEvent) => void`                     | Called when a job fails.                                                             |
+| Name                        | Type                                                                     | Description                                                                        |
+| --------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `conversationsApi`          | `Pick<ConversationsApi, 'getConversation' \| 'listConversations'>`       | Already-configured generated-client instance.                                      |
+| `filesApi`                  | `Pick<FilesApi, 'downloadFileRaw'>`                                      | Already-configured generated-client instance.                                      |
+| `normalizeConversationPath` | `(conversationId: string) => string`                                     | Resolves a conversation id to the bucket-qualified path `getConversation` expects. |
+| `classifyTransferError`     | `(error: unknown) => { isUnauthorized?: boolean; isNotFound?: boolean }` | Host-owned error classification. Defaults to `{}` (never unauthorized/not-found).  |
+| `resolveErrorTraceId`       | `(error: unknown) => Promise<string \| undefined>`                       | Resolves a trace id for a failing request. Defaults to resolving `undefined`.      |
+| `onSuccess`                 | `(event: ConversationTransferSuccessEvent) => void`                      | Called when a job completes successfully.                                          |
+| `onWarning`                 | `(event: ConversationTransferWarningEvent) => void`                      | Called when a job succeeds but had to skip something (e.g. an attachment).         |
+| `onError`                   | `(event: ConversationTransferErrorEvent) => void`                        | Called when a job fails.                                                           |
 
 **Returns** (`UseConversationExportResult`): `{ jobs, exportSingle(conversationId, title, mode), exportAll(), dismissJob(jobId), retryJob(jobId), dismissAll() }`.
 
@@ -347,19 +391,27 @@ const ChatPage = ({
   generation,
 }: {
   transport: ConversationStreamTransport;
-  generation: { startGeneration: (path: string, id: string) => AbortController; completeGeneration: (path: string, id: string) => void };
+  generation: {
+    startGeneration: (path: string, id: string) => AbortController;
+    completeGeneration: (path: string, id: string) => void;
+  };
 }) => {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const conversationRef = useRef<Conversation | null>(conversation);
 
-  const { startStream, handleStop, isStreaming, canStopStreaming } = useConversationStream({
-    conversationId: conversation?.id,
-    state: { setConversation, conversationRef },
-    transport,
-    generation,
-  });
+  const { startStream, handleStop, isStreaming, canStopStreaming } =
+    useConversationStream({
+      conversationId: conversation?.id,
+      state: { setConversation, conversationRef },
+      transport,
+      generation,
+    });
 
-  return <button onClick={() => startStream(conversation!.id, 'Hi', 1, 'gpt-4o')}>Send</button>;
+  return (
+    <button onClick={() => startStream(conversation!.id, 'Hi', 1, 'gpt-4o')}>
+      Send
+    </button>
+  );
 };
 ```
 
@@ -367,15 +419,15 @@ const ChatPage = ({
 
 **Parameters** (`UseConversationStreamParams`):
 
-| Name             | Type                                     | Description                                                                       |
-| ---------------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `conversationId` | `string \| undefined`                      | The currently displayed conversation's id.                                              |
-| `state`          | `ConversationStateAccessor`                | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state. |
-| `transport`      | `ConversationStreamTransport`              | Host-owned completion/stop/watch/reload implementation.                                 |
-| `generation`     | `ConversationGenerationLifecycle`          | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership. |
-| `channel`        | `ConversationStreamChannel`                | Optional. `{ channelId, ensureConnected }` for tool-signin delivery.                     |
-| `overlay`        | `ConversationStreamOverlayNotifier`        | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.     |
-| `onStopError`    | `(error: Error) => void`                   | Called when the transport's `stopCompletion` rejects.                                   |
+| Name             | Type                                | Description                                                                                   |
+| ---------------- | ----------------------------------- | --------------------------------------------------------------------------------------------- |
+| `conversationId` | `string \| undefined`               | The currently displayed conversation's id.                                                    |
+| `state`          | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.      |
+| `transport`      | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                       |
+| `generation`     | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership. |
+| `channel`        | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected }` for tool-signin delivery.                          |
+| `overlay`        | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.          |
+| `onStopError`    | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                         |
 
 `ConversationStreamTransport` has four methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, and `getConversation(conversationId, signal?)`.
 
@@ -398,7 +450,10 @@ const ChatPage = ({
   filesApi,
   rateApi,
 }: {
-  conversationsApi: Pick<ConversationsApi, 'saveConversation' | 'deleteConversation'>;
+  conversationsApi: Pick<
+    ConversationsApi,
+    'saveConversation' | 'deleteConversation'
+  >;
   filesApi: Pick<FilesApi, 'uploadFile'>;
   rateApi: Pick<RateApi, 'rateMessage'>;
 }) => {
@@ -435,21 +490,21 @@ const ChatPage = ({
 
 **Parameters** (`UseConversationHandlersParams`):
 
-| Name                    | Type                                                        | Description                                                                            |
-| ----------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| `conversation`          | `Conversation \| null`                                        | The currently displayed conversation.                                                        |
-| `conversationId`        | `string \| undefined`                                         | The currently displayed conversation's id.                                                   |
-| `bucket`                | `string \| undefined`                                         | Passed through to the internal `useAttachmentUpload`.                                        |
-| `isStreaming`           | `boolean`                                                     | The `isStreaming` value returned by `useConversationStream` — gates regenerate/delete/edit.  |
-| `startStream`           | `ConversationStreamStarter`                                   | The `startStream` function returned by `useConversationStream`.                              |
-| `state`                 | `ConversationStateAccessor`                                   | `{ setConversation, conversationRef }` — the same channel passed to `useConversationStream`. |
-| `filesApi`              | `Pick<FilesApi, 'uploadFile'>`                                 | Already-configured generated-client instance used to upload attachments.                     |
-| `conversationsApi`      | `Pick<ConversationsApi, 'saveConversation' \| 'deleteConversation'>` | Already-configured generated-client instance used to save/delete the conversation.     |
-| `rateApi`               | `Pick<RateApi, 'rateMessage'>`                                 | Already-configured generated-client instance used to rate a message.                         |
-| `resolveModelId`        | `() => string`                                                 | Resolves the model id to send with the next completion. Re-evaluated on every call.          |
-| `onConversationDeleted` | `() => void`                                                   | Optional. Called when deleting the last message also deletes the whole conversation.         |
-| `showNetworkError`      | `(filenames: string[]) => void`                                | Optional. Called with batched filenames after a burst of network-error upload failures.      |
-| `toolConfigurationValue`| `Record<string, boolean>`                                     | Optional. Tool toggle configuration values merged into every outgoing completion request.    |
+| Name                     | Type                                                                 | Description                                                                                  |
+| ------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `conversation`           | `Conversation \| null`                                               | The currently displayed conversation.                                                        |
+| `conversationId`         | `string \| undefined`                                                | The currently displayed conversation's id.                                                   |
+| `bucket`                 | `string \| undefined`                                                | Passed through to the internal `useAttachmentUpload`.                                        |
+| `isStreaming`            | `boolean`                                                            | The `isStreaming` value returned by `useConversationStream` — gates regenerate/delete/edit.  |
+| `startStream`            | `ConversationStreamStarter`                                          | The `startStream` function returned by `useConversationStream`.                              |
+| `state`                  | `ConversationStateAccessor`                                          | `{ setConversation, conversationRef }` — the same channel passed to `useConversationStream`. |
+| `filesApi`               | `Pick<FilesApi, 'uploadFile'>`                                       | Already-configured generated-client instance used to upload attachments.                     |
+| `conversationsApi`       | `Pick<ConversationsApi, 'saveConversation' \| 'deleteConversation'>` | Already-configured generated-client instance used to save/delete the conversation.           |
+| `rateApi`                | `Pick<RateApi, 'rateMessage'>`                                       | Already-configured generated-client instance used to rate a message.                         |
+| `resolveModelId`         | `() => string`                                                       | Resolves the model id to send with the next completion. Re-evaluated on every call.          |
+| `onConversationDeleted`  | `() => void`                                                         | Optional. Called when deleting the last message also deletes the whole conversation.         |
+| `showNetworkError`       | `(filenames: string[]) => void`                                      | Optional. Called with batched filenames after a burst of network-error upload failures.      |
+| `toolConfigurationValue` | `Record<string, boolean>`                                            | Optional. Tool toggle configuration values merged into every outgoing completion request.    |
 
 **Returns** (`UseConversationHandlersResult`): `{ handleSend, handleUploadAttachment, handleRegenerateMessage, handleDeleteMessage, handleConfirmDelete, handleRateMessage, handleButtonSelect, handleConfirmStarter, handleStartEdit, handleCancelEdit, handleEditMessage, editingMessageIndexes, pendingDeleteIndex, setPendingDeleteIndex, pendingStarterContext, setPendingStarterContext }`.
 
@@ -472,11 +527,17 @@ const Composer = ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) => {
       onValidationError: ({ reason, formats }) => {
         const noTypesAllowed =
           reason === AttachmentValidationErrorReason.NoTypesAllowed;
-        showToast(noTypesAllowed ? 'Attachments are not allowed' : `Unsupported file type. Allowed: ${formats}`);
+        showToast(
+          noTypesAllowed
+            ? 'Attachments are not allowed'
+            : `Unsupported file type. Allowed: ${formats}`,
+        );
       },
     });
 
-  return <input type="file" accept={fileAccept} disabled={!isAttachmentsAllowed} />;
+  return (
+    <input type="file" accept={fileAccept} disabled={!isAttachmentsAllowed} />
+  );
 };
 ```
 
@@ -484,11 +545,11 @@ const Composer = ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) => {
 
 **Parameters** (`UseAttachmentValidationParams`):
 
-| Name                | Type                                                      | Description                                                                 |
-| ------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `allowedMimeTypes`  | `string[]`                                                  | Resolved MIME types currently allowed for attachments.                          |
-| `onValidationError` | `(event: AttachmentValidationErrorEvent) => void`           | Called at most once per debounce window when a rejected file is reported.       |
-| `debounceMs`        | `number`                                                    | Debounce window before firing `onValidationError`. Defaults to `100`.           |
+| Name                | Type                                              | Description                                                               |
+| ------------------- | ------------------------------------------------- | ------------------------------------------------------------------------- |
+| `allowedMimeTypes`  | `string[]`                                        | Resolved MIME types currently allowed for attachments.                    |
+| `onValidationError` | `(event: AttachmentValidationErrorEvent) => void` | Called at most once per debounce window when a rejected file is reported. |
+| `debounceMs`        | `number`                                          | Debounce window before firing `onValidationError`. Defaults to `100`.     |
 
 `AttachmentValidationErrorEvent` is `{ reason: AttachmentValidationErrorReason; allowedMimeTypes: string[]; formats?: string }`, where `reason` is `NoTypesAllowed` or `UnsupportedType` and `formats` (present only for `UnsupportedType`) is an already-formatted, non-translated extension list (e.g. `".png, .jpg"`).
 
@@ -527,7 +588,11 @@ const AttachmentTile = ({ attachment }: { attachment: DisplayAttachment }) => {
   const { handleAttachmentClick } = useAttachmentAction({
     resolveDownloadUrl: (fileId) => myResolveFileDownloadUrl(fileId),
   });
-  return <button onClick={() => handleAttachmentClick(attachment)}>{attachment.name}</button>;
+  return (
+    <button onClick={() => handleAttachmentClick(attachment)}>
+      {attachment.name}
+    </button>
+  );
 };
 ```
 
@@ -538,6 +603,256 @@ const AttachmentTile = ({ attachment }: { attachment: DisplayAttachment }) => {
 **Returns** (`UseAttachmentActionResult`): `{ handleAttachmentClick: (attachment: DisplayAttachment) => void }`.
 
 Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler.
+
+## File Manager
+
+A domain-specific set of hooks (and their supporting types/utilities) implementing the DIAL file manager: browsing/search, upload, create/rename/move/copy/delete, sharing, and metadata, composed against an injected `DialFilesApi` port instead of a configured REST client or React context. `useDialFileManager` is the composed entry point most consumers reach for; the six sub-hooks it composes (`useDialFileListing`, `useDialFileMetadata`, `useDialFileMutations`, `useDialFileSharing`, `useDialFileUploadBatch`) and the two standalone hooks (`useDialFileManagerTabConfig`, `useGridEditingScroll`) are exported individually for hosts that need only part of the surface, or that render `@epam/ai-dial-react-file-manager`'s `DialFileManager` grid directly.
+
+None of these hooks call `react-i18next` or read an application context: every user-visible string arrives through a `labels`/`buildValidationErrorMessage`/`disabledNewButtonTooltip` parameter, and every failure/success is reported through a structured, translation-free event (`FileManagerNotification`, `FileOperationSuccessEvent`) the host maps to its own toast/notification copy.
+
+### useDialFileManager
+
+Composes listing/navigation, upload, mutations, sharing, and metadata into the single flat result `DialFileManager`'s host component consumes — action-label/upload/column/loading gating included.
+
+```tsx
+import {
+  DialFileManager,
+  DialFileManagerTabs,
+  DialFileManagerActions,
+} from '@epam/ai-dial-react-file-manager';
+import {
+  useDialFileManager,
+  type DialFilesApi,
+  DownloadDestinationType,
+} from '@epam/ai-dial-chat-hooks';
+
+const FileManagerHost = ({
+  filesApi,
+  bucket,
+}: {
+  filesApi: DialFilesApi;
+  bucket: string;
+}) => {
+  const fileManager = useDialFileManager({
+    filesApi,
+    bucket,
+    activeTab: DialFileManagerTabs.MyFiles,
+    labels: {
+      [DialFileManagerActions.Download]: 'Download',
+      [DialFileManagerActions.Delete]: 'Delete',
+    },
+    locale: 'en-US',
+    disabledNewButtonTooltip: 'You do not have permission to create files here',
+    downloadDestination: {
+      resolveDestination: async () => ({ type: DownloadDestinationType.Blob }),
+      triggerDownload: async (response, fallbackName) => {
+        // write `response`'s bytes to disk under `fallbackName`
+        return fallbackName;
+      },
+    },
+    buildValidationErrorMessage: (error) => {
+      switch (error.reason) {
+        case 'empty':
+          return 'Name cannot be empty';
+        case 'forbiddenSymbols':
+          return `Name cannot contain: ${error.symbols}`;
+        case 'reservedName':
+          return 'This name is reserved';
+        case 'tooLong':
+          return `Name must be at most ${error.maxLength} characters`;
+        case 'duplicateName':
+          return `"${error.existingName}" already exists here`;
+        case 'leadingDot':
+          return 'Name cannot start with a dot';
+      }
+    },
+  });
+
+  return <DialFileManager {...fileManager} />; // from @epam/ai-dial-react-file-manager
+};
+```
+
+#### API
+
+**Parameters** (`UseDialFileManagerOptions`): `filesApi`, `bucket`, `labels`, `locale`, `disabledNewButtonTooltip`, `downloadDestination`, and `buildValidationErrorMessage` are required; `rootLabel` (default `'My files'`), `activeTab` (default `MyFiles`), `variant` (default `Attach`), `actionProfile`, `forbiddenSymbolsRegExp`, `onNotification`, and `onOperationSuccess` are optional. See the exported `UseDialFileManagerOptions` type for the complete shape.
+
+**Returns** (`UseDialFileManagerResult`): the full set of props `DialFileManager` needs — `items`, `isLoading`, `path`/`onPathChange`, search (`onSearchFiles`/`searchResults`/`isSearching`), tree expand state, upload (`onUploadFiles`/`onUploadArchive`/`uploadBatchState`), create/rename/move/copy/delete callbacks and their `isXxx` flags, sharing (`onUnshareFiles`/`onRemoveFilesAccess`), metadata (`onGetInfo`/`fileMetadata`), `actionLabels`, `visibleColumns`, and the aggregate `isAnyOperationInProgress`. See the exported `UseDialFileManagerResult` type for the complete shape.
+
+### useDialFileListing
+
+Owns folder browsing/navigation, the tree's expand/collapse state, search, and the shared per-folder listing cache the other file-manager hooks invalidate through its returned `invalidateFolders`/`bumpRetry` after their own mutations settle.
+
+```tsx
+import { useDialFileListing } from '@epam/ai-dial-chat-hooks';
+import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
+
+const { items, isLoading, path, onPathChange, onSearchFiles, searchResults } =
+  useDialFileListing({
+    filesApi,
+    bucket,
+    rootLabel: 'My files',
+    activeTab: DialFileManagerTabs.MyFiles,
+  });
+```
+
+#### API
+
+**Parameters** (`UseDialFileListingOptions`): `filesApi`, `bucket`, `rootLabel`, `activeTab` are required; `onNotification` is optional.
+
+**Returns** (`UseDialFileListingResult`): `items`, `isLoading`, `error`, `path`/`folderPath`/`onPathChange`, `retry`, search (`onSearchFiles`/`isSearching`/`searchResults`/`clearSearchResults`), tree state (`expandedPaths`/`loadedPaths`/`onExpandedPathsChange`), folder-popup preload state, `sharedWithMeIds`/`sharedByMePaths`/`currentFolder`, and the cache-ownership seam other sub-hooks consume (`cache`, `listingPermissionsCache`, `sharedRootMetaRef`, `setFolderPath`, `invalidateFolders`, `mergeCreatedFolder`, `bumpRetry`).
+
+### useDialFileMetadata
+
+Fetches and holds single-file metadata for a file-details popup — the only sub-hook with no interaction with the shared listing cache.
+
+```tsx
+import { useDialFileMetadata } from '@epam/ai-dial-chat-hooks';
+
+const { fileMetadata, isFileMetadataLoading, onGetInfo, clearMetadata } =
+  useDialFileMetadata({ filesApi, bucket, rootLabel: 'My files' });
+
+onGetInfo(selectedFile);
+```
+
+#### API
+
+**Parameters** (`UseDialFileMetadataOptions`): `filesApi`, `bucket`, `rootLabel` are required; `onNotification` is optional.
+
+**Returns** (`UseDialFileMetadataResult`): `{ fileMetadata: DialFile | undefined, isFileMetadataLoading: boolean, onGetInfo: (file: DialFile) => void, clearMetadata: () => void }`.
+
+### useDialFileManagerTabConfig
+
+Filters the file manager's tab list down to a host-configured set and resets the active tab to the highest-priority still-enabled tab when the current one becomes excluded. A `fileManagerTabs` of `undefined` means no restriction.
+
+```tsx
+import { useDialFileManagerTabConfig } from '@epam/ai-dial-chat-hooks';
+import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
+
+const { tabs } = useDialFileManagerTabConfig(
+  activeTab,
+  setActiveTab,
+  allTabs,
+  ['my_files', 'shared'], // or undefined for no restriction
+);
+```
+
+#### API
+
+**Parameters**: `useDialFileManagerTabConfig(activeTab: DialFileManagerTabs, onTabChange: (tab: DialFileManagerTabs) => void, allTabs: TabModel[] | undefined, fileManagerTabs: string[] | undefined)`.
+
+**Returns** (`UseDialFileManagerTabConfigResult`): `{ tabs: ToolbarOptions['tabs'] }`.
+
+### useDialFileMutations
+
+Implements create-folder, download, delete, rename, copy, and move against the injected `DialFilesApi`, reporting validation failures as a `FileNameValidationError` and successful mutations through a structured `FileOperationSuccessEvent` rather than a translated toast.
+
+```tsx
+import {
+  FileOperationKind,
+  useDialFileMutations,
+} from '@epam/ai-dial-chat-hooks';
+
+const mutations = useDialFileMutations({
+  filesApi,
+  bucket,
+  rootLabel: 'My files',
+  activeTab,
+  folderPath,
+  currentFolder,
+  sharedRootMetaRef,
+  listingPermissionsCache,
+  invalidateFolders,
+  bumpRetry,
+  mergeCreatedFolder,
+  setFolderPath,
+  downloadDestination,
+  onOperationSuccess: (event) => {
+    if (event.kind === FileOperationKind.FolderCreated)
+      showToast(`Created "${event.name}"`);
+  },
+});
+```
+
+#### API
+
+**Parameters** (`UseDialFileMutationsOptions`, ~13 fields): most are the listing-cache seam threaded straight from `useDialFileListing`'s result (`folderPath`, `currentFolder`, `sharedRootMetaRef`, `listingPermissionsCache`, `invalidateFolders`, `bumpRetry`, `mergeCreatedFolder`, `setFolderPath`) plus `filesApi`, `bucket`, `rootLabel`, `activeTab`, `downloadDestination` (required), and the optional `onNotification`/`onOperationSuccess`/`forbiddenSymbolsRegExp`. See the exported `UseDialFileMutationsOptions` type for the complete shape.
+
+**Returns** (`UseDialFileMutationsResult`): `onCreateFolder`/`onCreateFolderValidate`, `onDownloadFiles`, `onDeleteFiles`, `onRenameValidate`/`onMoveToFiles`, `onCopyFiles`, `cancelCopyMove`, and an `isXxx` in-flight flag for each (`isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`). `onCreateFolderValidate`/`onRenameValidate` return `FileNameValidationError | null` rather than a message string.
+
+### useDialFileSharing
+
+Implements unshare and remove-access, bumping `useDialFileListing`'s retry counter after each mutation settles instead of holding its own cache copy.
+
+```tsx
+import { useDialFileSharing } from '@epam/ai-dial-chat-hooks';
+
+const { onUnshareFiles, onRemoveFilesAccess, isUnsharing, isRemovingAccess } =
+  useDialFileSharing({ filesApi, bucket, rootLabel: 'My files', bumpRetry });
+```
+
+#### API
+
+**Parameters** (`UseDialFileSharingOptions`): `filesApi`, `bucket`, `rootLabel`, `bumpRetry` are required; `onNotification` is optional.
+
+**Returns** (`UseDialFileSharingResult`): `{ isUnsharing, isRemovingAccess, onUnshareFiles: (files: DialFile[]) => void, onRemoveFilesAccess: (files: DialFile[]) => void }`.
+
+### useDialFileUploadBatch
+
+Runs a concurrency-limited (`UPLOAD_CONCURRENCY`-worker) upload batch against the injected `DialFilesApi`, including per-file conflict resolution, cancellation, and a ZIP-archive extraction path via `onUploadArchive`.
+
+```tsx
+import { useDialFileUploadBatch } from '@epam/ai-dial-chat-hooks';
+
+const { onUploadFiles, uploadBatchState, cancelUpload, clearUploadBatch } =
+  useDialFileUploadBatch({
+    filesApi,
+    bucket,
+    rootLabel: 'My files',
+    activeTab,
+    cache,
+    sharedRootMetaRef,
+    invalidateFolders,
+    bumpRetry,
+  });
+```
+
+#### API
+
+**Parameters** (`UseDialFileUploadBatchOptions`): `filesApi`, `bucket`, `rootLabel`, `activeTab`, `cache`, `sharedRootMetaRef`, `invalidateFolders`, `bumpRetry` are required (all but `filesApi`/`bucket`/`rootLabel`/`activeTab` come straight from `useDialFileListing`'s result); `onNotification` is optional.
+
+**Returns** (`UseDialFileUploadBatchResult`): `onUploadFiles`, `onUploadArchive`, plus (per `UseDialFileManagerResult`'s equivalent fields) `onValidateUpload`, `uploadBatchState: FileUploadBatchState | null`, `cancelUpload`, `clearUploadBatch`.
+
+### useGridEditingScroll
+
+Scrolls a newly inline-edited or newly-inserted grid row into view. Binds directly to the AG Grid `GridApi` obtained via `DialFileManager`'s `onGridApiChange` prop, since `@epam/ai-dial-react-file-manager`'s own `GridOptions` type does not forward the raw AG Grid event callbacks this needs. `handleGridApiChange` accepts that raw `GridApi` only to bind to `onGridApiChange` — the narrow AGENTS.md D9 exception for this hook — and the hook otherwise never renders, themes, or depends on AG Grid beyond that one event-binding parameter.
+
+```tsx
+import { useGridEditingScroll } from '@epam/ai-dial-chat-hooks';
+
+const { handleGridApiChange, reset } = useGridEditingScroll();
+
+// <DialFileManager onGridApiChange={handleGridApiChange} ... />
+// reset() on a data-source change such as a tab switch
+```
+
+#### API
+
+**Parameters** (`UseGridEditingScrollOptions`, all optional): `resolveTargetNode` — picks which newly-added row to scroll to; defaults to the first row flagged `isTemporary`, or the first new row.
+
+**Returns** (`UseGridEditingScrollResult`): `{ handleGridApiChange: (api: GridApi<FileManagerGridRow>) => void, reset: () => void }`.
+
+### Supporting types
+
+- **`DialFilesApi`** — the operation port every file-manager hook that performs network I/O accepts as a parameter, mirroring the host's own files-API transport (list/upload/download/create/rename/move/copy/delete/share methods) instead of a configured REST client.
+- **`FileManagerNotification`** — the structured toast event file-manager hooks emit through `onNotification`, carrying a `variant` (`NotificationVariant`), an optional `reason` (`FileManagerNotificationReason`), and optional interpolation data (`count`, `name`, `folder`, `names`, `restCount`).
+- **`FileManagerNotificationReason`** — library-owned enum identifying why a hook is surfacing a notification (e.g. `FolderLoadFailed`, `FolderCreateFailed`, `FilesDeleted`, `UploadCompleted`, `UnshareFailed`) — see the exported enum for the full member list.
+- **`FileNameValidationErrorReason`** — library-owned enum identifying why a file/folder name failed validation: `Empty`, `ForbiddenSymbols`, `ReservedName`, `TooLong`, `DuplicateName`, `LeadingDot`.
+- **`FileNameValidationError`** — discriminated union returned by `onCreateFolderValidate`/`onRenameValidate` instead of a translated message; members are `{ reason: FileNameValidationErrorReason.Empty }`, `{ reason: FileNameValidationErrorReason.ForbiddenSymbols; symbols: string }`, `{ reason: FileNameValidationErrorReason.ReservedName }`, `{ reason: FileNameValidationErrorReason.TooLong; maxLength: number }`, `{ reason: FileNameValidationErrorReason.DuplicateName; existingName: string }`, `{ reason: FileNameValidationErrorReason.LeadingDot }`.
+- **`FileOperationSuccessEvent`** — the structured success event `useDialFileMutations` emits through `onOperationSuccess`, carrying a `kind` (`FileOperationKind`) plus optional `name`/`count`/`destinationFolderName`/`isFolder`.
+- **`FileOperationKind`** — library-owned enum identifying which mutation just succeeded: `FolderCreated`, `FileRenamed`, `FileDownloaded`, `FilesDownloaded`, `FileCopied`, `FilesCopied`, `FileMoved`, `FilesMoved`.
+- **`DownloadDestinationHandlers`** / **`DownloadDestination`** / **`DownloadDestinationType`** — the host-injected "Save As" / blob-download seam for `useDialFileMutations.onDownloadFiles`. `DownloadDestinationType` is `Blob | Stream | Cancelled`; `DownloadDestination` is the matching discriminated union (the `Stream` member carries a `WritableStream<Uint8Array>`); `DownloadDestinationHandlers` is `{ resolveDestination(filename, mimeType), triggerDownload(response, fallbackName, destination) }`.
+- **`FileUploadStatus`** / **`FileUploadEntry`** / **`FileUploadBatchState`** — an upload batch's progress model. `FileUploadStatus` is `Queued | Uploading | Completed | Failed | Cancelled`; `FileUploadEntry` is `{ id, name, status, percent? }`; `FileUploadBatchState` is `{ files: FileUploadEntry[], isOpen: boolean }`.
+- **`DialFileManagerVariant`** / **`DialFileManagerActionProfile`** — identify which host is driving `useDialFileManager` (`Attach | Standalone | FolderPicker`) and which action set that gates (`Attach | Browse | Full`); `deriveActionProfile(variant)` maps the former to the latter.
 
 ## Building
 

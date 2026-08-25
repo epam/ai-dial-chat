@@ -10,7 +10,7 @@ Client-side rename validation and the rename save flow in the file-manager shell
 
 `useDialFileManager` SHALL expose `onRenameValidate(value: string, item: DialFile): string | null`, which validates a proposed new name before the rename is submitted.
 
-**State ownership**: the hook in `apps/chat/src/hooks/files/useDialFileManager.ts` owns validation logic. `DialFileManagerShell` receives `onRenameValidate` via the `hookResult` prop and passes it to `DialFileManager`.
+**State ownership**: the hook in `libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)` owns validation logic. `DialFileManagerShell` receives `onRenameValidate` via the `hookResult` prop and passes it to `DialFileManager`.
 
 **Validation rules** (checked in order):
 
