@@ -8,11 +8,10 @@ import { Feature } from '@epam/ai-dial-shared';
 const overlayOptions = {
   ...commonOverlayProps,
   enabledFeatures: [
-    Feature.EditLastAssistantContent,
+    Feature.EditAllAssistantContent,
     Feature.Header,
     Feature.ConversationsSection,
     Feature.LiveChatInteraction,
-    Feature.InputFiles,
   ],
 };
 

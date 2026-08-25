@@ -39,4 +39,8 @@ export const OverlaySandboxUrls = {
     '/cases/overlay/enabled-hide-custom-app-creation-sandbox', //sandbox to test 'EPMDIAL-2294'
   skipFocusSetSandboxUrl: '/cases/overlay/skip-focus-set-sandbox', //sandbox to test 'EPMDIAL-2318'
   disabledDefaultButtonsUrl: '/cases/overlay/disabled-default-buttons', //sandbox to test 'EPMDIAL-2319'
+  enableEditAllAssistantContentUrl:
+    '/cases/overlay/enabled-edit-all-assistant-content-sandbox', //sandbox to test 'EPMDIAL-2313'
+  enableEditLastAssistantContentUrl:
+    '/cases/overlay/edit-last-assistant-message', //sandbox to test 'EPMDIAL-2314', 'EPMDIAL-2316'
 };
