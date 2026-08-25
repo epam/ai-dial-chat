@@ -169,6 +169,129 @@ describe('ConversationListingService', () => {
       expect(getConversationSpy).toHaveBeenCalledTimes(20);
     });
 
+    it('enriches display names per source group so published copies do not starve owned items', async () => {
+      const buildItems = (bucket: string, count: number) =>
+        Array.from({ length: count }, (_, index) => ({
+          url: `conversations/${bucket}/conv-${index}`,
+          nodeType: 'FILE' as const,
+          updatedAt: index,
+          permissions: ['READ', 'WRITE'],
+        }));
+      mockMetadata(buildItems('test-bucket', 25), buildItems('public', 25));
+      const getConversationSpy = vi
+        .spyOn(service['dialClient'].client, 'getConversation')
+        .mockResolvedValue({
+          data: { name: 'Stored display title' },
+        } as never);
+
+      await service.listConversations('test-token', 'test-bucket');
+
+      expect(getConversationSpy).toHaveBeenCalledTimes(40);
+      expect(getConversationSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'conv-24',
+        expect.anything(),
+      );
+      expect(getConversationSpy).toHaveBeenCalledWith(
+        'public',
+        'conv-24',
+        expect.anything(),
+      );
+    });
+
+    it("shows a published copy's renamed title, not the filename it was published under", async () => {
+      mockMetadata(
+        [],
+        [
+          {
+            url: 'conversations/public/folder/gpt-4o__Original name',
+            nodeType: 'FILE',
+            name: 'gpt-4o__Original name',
+            parentPath: 'folder',
+            updatedAt: 1000,
+          },
+        ],
+      );
+      const getConversationSpy = vi
+        .spyOn(service['dialClient'].client, 'getConversation')
+        .mockResolvedValue({
+          data: { name: 'Renamed by the author', llmNamingDone: true },
+        } as never);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].title).toBe('Renamed by the author');
+      /* Read from the public bucket the copy lives in, not the session bucket. */
+      expect(getConversationSpy).toHaveBeenCalledWith(
+        'public',
+        'folder/gpt-4o__Original%20name',
+        expect.anything(),
+      );
+    });
+
+    it("reads a shared conversation's stored display name from the owner's bucket", async () => {
+      mockMetadata([]);
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'conversations/other-bucket/gpt-4o__Original name',
+              nodeType: 'FILE',
+              name: 'gpt-4o__Original name',
+            },
+          ],
+        },
+      } as never);
+      const getConversationSpy = vi
+        .spyOn(service['dialClient'].client, 'getConversation')
+        .mockResolvedValue({
+          data: { name: 'Renamed by the owner', llmNamingDone: true },
+        } as never);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].title).toBe('Renamed by the owner');
+      expect(getConversationSpy).toHaveBeenCalledWith(
+        'other-bucket',
+        'gpt-4o__Original%20name',
+        expect.anything(),
+      );
+    });
+
+    it('keeps the filename-derived title of a published copy whose body cannot be read', async () => {
+      mockMetadata(
+        [],
+        [
+          {
+            url: 'conversations/public/gpt-4o__Original name',
+            nodeType: 'FILE',
+            name: 'gpt-4o__Original name',
+            updatedAt: 1000,
+          },
+        ],
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getConversation',
+      ).mockRejectedValue({ error: { status: 403 } } as never);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].title).toBe('Original name');
+    });
+
     it('does not mistake a bare-numeric title for a version suffix on a plain model deployment', async () => {
       mockMetadata([
         {
