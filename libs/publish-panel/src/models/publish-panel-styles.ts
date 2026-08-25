@@ -10,7 +10,7 @@ export interface PublishPanelColors {
   summaryBackground?: string;
   /** Version tag border color. Defaults to `--stroke-tertiary`. */
   summaryVersionTagBorder?: string;
-  /** Version tag background color. Defaults to `--bg-accent-primary-alpha`. */
+  /** Version tag background color. Defaults to `--bg-control-accent-alpha`. */
   summaryVersionTagBackground?: string;
   /** Version tag text color. Defaults to `--text-accent`. */
   summaryVersionTagText?: string;

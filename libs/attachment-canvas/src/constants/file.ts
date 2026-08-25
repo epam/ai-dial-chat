@@ -1,6 +1,13 @@
 /** File extensions that are rendered as HTML in a sandboxed iframe. */
 export const HTML_EXTENSIONS = new Set(['html', 'htm']);
 
+/** MIME types for the supported Office Open XML formats. */
+export const OOXML_MIME_TYPES = {
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+} as const;
+
 /** File extensions that are known to be previewable as plain text. */
 export const TEXT_EXTENSIONS = new Set([
   'txt',

@@ -513,7 +513,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       <div className="relative size-full">
         {isUiLoading && (
           <div
-            className="absolute inset-0 flex items-center justify-center bg-layer-1"
+            className="absolute inset-0 flex items-center justify-center bg-layer-sunken"
             aria-label={t(AppsEditorI18nKeys.SettingsStepLoadingLabel)}
             aria-live="polite"
           >

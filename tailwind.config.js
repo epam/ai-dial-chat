@@ -135,23 +135,6 @@ const controlsTextColors = {
     'var(--text-control-accent-active, var(--text-control-blue-active, #6785FB))', // blue-200
 };
 
-// remove
-const textColorsToRemove = {
-  'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
-};
-
-const bgColorsToRemove = {
-  'layer-1': 'var(--bg-layer-1, #E0E6F0)',
-  'layer-4': 'var(--bg-layer-4, #D1DBEA)',
-  'layer-6': 'var(--bg-layer-6, #F8FAFC)',
-  'layer-7': 'var(--bg-layer-7, #00000006)',
-  overlay: 'var(--bg-overlay, #FCFCFC80)',
-  inverted: 'var(--bg-inverted, #161B2D)',
-  'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
-  // Catalog tab bar — override via CSS custom properties for dark-theme support
-  'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
-};
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   blocklist: ['[-:=]'],
@@ -163,7 +146,6 @@ module.exports = {
   theme: {
     backgroundColor: {
       ...backgroundsColors,
-      ...bgColorsToRemove,
       ...controlsBgColors,
       ...visualBgColors,
     },
@@ -173,7 +155,6 @@ module.exports = {
     placeholderColor: placeholderColor,
     textColor: {
       ...textColors,
-      ...textColorsToRemove,
       ...controlsTextColors,
       ...visualTextColors,
     },
@@ -198,7 +179,6 @@ module.exports = {
        */
       fill: {
         ...backgroundsColors,
-        ...bgColorsToRemove,
         ...controlsBgColors,
         ...visualBgColors,
       },

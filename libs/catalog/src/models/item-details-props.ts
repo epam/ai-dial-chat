@@ -368,7 +368,7 @@ export interface ItemDetailsColors {
   divider?: string;
   /** Scrollbar thumb color of the scrollable content area. Fallback: `--stroke-secondary`. */
   scrollbar?: string;
-  /** Shimmer color of the tab-row loading skeleton. Fallback: `--bg-layer-4`. */
+  /** Shimmer color of the tab-row loading skeleton. Fallback: `--bg-control-disable-primary`. */
   skeleton?: string;
   /** Entity name text color in the header. Fallback: `--text-primary`. */
   nameText?: string;
@@ -376,7 +376,7 @@ export interface ItemDetailsColors {
   publishTitleText?: string;
   /** Border color of the "current version" tag. Fallback: `--stroke-tertiary`. */
   versionTagBorder?: string;
-  /** Background color of the "current version" tag. Fallback: `--bg-accent-primary-alpha`. */
+  /** Background color of the "current version" tag. Fallback: `--bg-control-accent-alpha`. */
   versionTagBackground?: string;
   /** Text color of the "current version" tag. Fallback: `--text-accent`. */
   versionTagText?: string;
@@ -396,13 +396,13 @@ export interface ItemDetailsColors {
   gridBorder?: string;
   /** Spec-grid header text color. Fallback: `--text-secondary`. */
   gridHeaderText?: string;
-  /** Spec-grid header background. Fallback: `--bg-layer-1`. */
+  /** Spec-grid header background. Fallback: `--bg-layer-sunken`. */
   gridHeaderBackground?: string;
   /** Spec-grid cell text color. Fallback: `--text-primary`. */
   gridCellText?: string;
   /** Spec-grid cell top-border color. Fallback: `--stroke-secondary`. */
   gridCellDivider?: string;
-  /** Spec-grid even-row background. Fallback: `--bg-layer-7`. */
+  /** Spec-grid even-row background. Fallback: `--bg-layer-base`. */
   gridRowEvenBackground?: string;
   /** `InfoCard` surface color in its `Info` variant. Fallback: `--bg-info`. */
   infoCardBackground?: string;

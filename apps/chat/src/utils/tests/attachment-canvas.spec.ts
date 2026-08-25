@@ -1,6 +1,7 @@
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  OoxmlFileType,
   isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
@@ -18,6 +19,7 @@ import {
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
+  resolveOoxmlCanvasContent,
   resolvePdfCanvasContent,
   resolveTextCanvasContent,
   resolveVisualizerCanvasContent,
@@ -649,6 +651,79 @@ describe('resolvePdfCanvasContent', () => {
       type: AttachmentType.File,
       status: RequestStatus.Idle,
     });
+    expect(result).toBeNull();
+  });
+});
+
+describe('resolveOoxmlCanvasContent', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearAttachmentCache();
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-ooxml-url');
+  });
+
+  it('returns OOXML content from a local Office file', async () => {
+    const result = await resolveOoxmlCanvasContent(
+      makeLocalAttachment('report.docx', 'OOXML bytes'),
+      OoxmlFileType.Docx,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Ooxml,
+      url: 'blob:mock-ooxml-url',
+      format: 'docx',
+    });
+  });
+
+  it('returns a Forbidden error when a remote Office file cannot be fetched', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 403 }),
+    );
+
+    const result = await resolveOoxmlCanvasContent(
+      makeRemoteAttachment('budget.xlsx', 'files/bucket/path/budget.xlsx'),
+      OoxmlFileType.Xlsx,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.Forbidden,
+      url: '/download?path=path/budget.xlsx',
+    });
+  });
+
+  it('returns a LoadFailed error when the fetch throws', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('network down')),
+    );
+
+    const result = await resolveOoxmlCanvasContent(
+      makeRemoteAttachment('slides.pptx', 'files/bucket/path/slides.pptx'),
+      OoxmlFileType.Pptx,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.LoadFailed,
+      url: '/download?path=path/slides.pptx',
+    });
+  });
+
+  it('returns null when the attachment has no resolvable source', async () => {
+    /* No local file, no DIAL url, no previewUrl, and no inline data — there is
+     * nothing for the blob resolver to work from. */
+    const result = await resolveOoxmlCanvasContent(
+      {
+        id: 'report.docx',
+        name: 'report.docx',
+        contentType: 'application/octet-stream',
+        type: AttachmentType.File,
+      } as DisplayAttachment,
+      OoxmlFileType.Docx,
+    );
+
     expect(result).toBeNull();
   });
 });

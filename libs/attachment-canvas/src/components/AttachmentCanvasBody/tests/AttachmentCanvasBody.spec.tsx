@@ -4,6 +4,7 @@ import type { AttachmentCanvasContent } from '../../../models/attachment-canvas'
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  OoxmlFileType,
 } from '../../../types/attachment-canvas';
 import { AttachmentCanvasBody } from '../AttachmentCanvasBody';
 
@@ -38,6 +39,12 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
 vi.mock('../../PdfContent/PdfContent', () => ({
   PdfContent: ({ url }: { url: string }) => (
     <section aria-label="pdf-content">{url}</section>
+  ),
+}));
+
+vi.mock('../../OoxmlContent/OoxmlContent', () => ({
+  OoxmlContent: ({ content }: { content: { format: string } }) => (
+    <section aria-label="ooxml-content">{content.format}</section>
   ),
 }));
 
@@ -131,6 +138,46 @@ describe('AttachmentCanvasBody', () => {
       url: 'blob:pdf-url',
     });
     expect(screen.getByRole('region', { name: 'pdf-content' })).toBeTruthy();
+  });
+
+  it('renders OoxmlContent for OOXML content', () => {
+    renderBody({
+      type: AttachmentContentType.Ooxml,
+      url: 'blob:office-url',
+      format: OoxmlFileType.Docx,
+    });
+    expect(screen.getByRole('region', { name: 'ooxml-content' })).toBeTruthy();
+  });
+
+  it('exposes the OOXML background as a host-overridable CSS variable', () => {
+    const { container } = renderBody(
+      {
+        type: AttachmentContentType.Ooxml,
+        url: 'blob:office-url',
+        format: OoxmlFileType.Docx,
+      },
+      { styles: { colors: { ooxmlBackground: 'rebeccapurple' } } },
+    );
+
+    /* Set on the body root and inherited by OoxmlContent through the cascade. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- reading an inline CSS custom property, which has no accessible representation to query
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--ac-ooxml-bg')).toBe('rebeccapurple');
+  });
+
+  it('does not add its own scroll container for OOXML content', () => {
+    const { container } = renderBody({
+      type: AttachmentContentType.Ooxml,
+      url: 'blob:office-url',
+      format: OoxmlFileType.Docx,
+    });
+
+    /* The viewer manages its own scrolling — an outer scroll container would
+     * produce nested scrollbars. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting a CSS sizing class on the unlabeled body wrapper, which has no accessible role or text to query
+    expect(container.querySelector('.overflow-hidden')).toBeTruthy();
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- same unlabeled wrapper; verifying the absence of a scroll container
+    expect(container.querySelector('.overflow-auto')).toBeNull();
   });
 
   it('mounts the visualizer renderer for Visualizer content', () => {

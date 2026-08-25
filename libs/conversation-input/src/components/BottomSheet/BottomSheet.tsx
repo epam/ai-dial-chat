@@ -11,7 +11,7 @@ export interface BottomSheetColors {
   itemText?: string;
   /** Item hover background. Defaults to `--bg-layer-raised`. */
   itemHoverBg?: string;
-  /** Item active/pressed background. Defaults to `--bg-layer-4`. */
+  /** Item active/pressed background. Defaults to `--bg-control-neutral-active`. */
   itemActiveBg?: string;
   /** Item leading-icon color. Defaults to `--text-secondary`. */
   itemIcon?: string;

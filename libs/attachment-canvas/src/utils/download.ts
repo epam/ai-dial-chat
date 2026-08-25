@@ -18,6 +18,7 @@ export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
     case AttachmentContentType.Image:
     case AttachmentContentType.Audio:
     case AttachmentContentType.Pdf:
+    case AttachmentContentType.Ooxml:
     case AttachmentContentType.Code:
       return true;
     case AttachmentContentType.Html:
@@ -74,6 +75,7 @@ export const downloadAttachmentContent = (
     case AttachmentContentType.Image:
     case AttachmentContentType.Audio:
     case AttachmentContentType.Pdf:
+    case AttachmentContentType.Ooxml:
       triggerAnchorDownload(content.url, name);
       return;
     case AttachmentContentType.Code:

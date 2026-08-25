@@ -17,6 +17,7 @@ import {
 import { CodeContent } from '../CodeContent/CodeContent';
 import { HtmlContent } from '../HtmlContent/HtmlContent';
 import { McpAppCanvasRenderer } from '../McpAppCanvasRenderer/McpAppCanvasRenderer';
+import { OoxmlContent } from '../OoxmlContent/OoxmlContent';
 import { PdfContent } from '../PdfContent/PdfContent';
 import { VisualizerCanvasRenderer } from '../VisualizerCanvasRenderer/VisualizerCanvasRenderer';
 import styles from './AttachmentCanvasBody.module.scss';
@@ -64,6 +65,16 @@ const ImageContent: FC<ImageContentProps> = ({
     />
   );
 };
+
+/* Content types whose renderers read the `--ac-*` custom properties, so the
+ * body root has to carry them. `buildCssVars` drops unset fields, so adding a
+ * type here is safe; the remaining types still leave their `*Colors` fields
+ * inert (see the JSON and status/error vars). */
+const THEMED_CONTENT_TYPES = new Set<AttachmentContentType>([
+  AttachmentContentType.PlainText,
+  AttachmentContentType.Code,
+  AttachmentContentType.Ooxml,
+]);
 
 const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   content,
@@ -116,6 +127,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         '--ac-json-null': colors?.jsonNull,
         '--ac-json-toggle-icon': colors?.jsonToggleIcon,
         '--ac-json-toggle-icon-hover': colors?.jsonToggleIconHover,
+        '--ac-ooxml-bg': colors?.ooxmlBackground,
         '--ac-json-collapsed-text': colors?.jsonCollapsedText,
         '--ac-json-collapsed-bg': colors?.jsonCollapsedBackground,
         '--ac-font-family': hasFontClassName
@@ -148,6 +160,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
       case AttachmentContentType.Json:
         return 'h-full overflow-auto';
       case AttachmentContentType.Pdf:
+      case AttachmentContentType.Ooxml:
       case AttachmentContentType.Visualizer:
       case AttachmentContentType.McpApp:
       case AttachmentContentType.Code:
@@ -285,6 +298,14 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             }}
           />
         );
+      case AttachmentContentType.Ooxml:
+        return (
+          <OoxmlContent
+            content={content}
+            fileName={fileName}
+            loadErrorLabel={loadErrorLabel}
+          />
+        );
       case AttachmentContentType.Visualizer:
         return (
           <VisualizerCanvasRenderer
@@ -344,9 +365,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   return (
     <div
       style={
-        !isLoading &&
-        (content.type === AttachmentContentType.PlainText ||
-          content.type === AttachmentContentType.Code)
+        !isLoading && THEMED_CONTENT_TYPES.has(content.type)
           ? cssVars
           : undefined
       }

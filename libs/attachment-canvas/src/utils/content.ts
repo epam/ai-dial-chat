@@ -1,4 +1,8 @@
-import { HTML_EXTENSIONS, TEXT_EXTENSIONS } from '../constants/file';
+import {
+  HTML_EXTENSIONS,
+  OOXML_MIME_TYPES,
+  TEXT_EXTENSIONS,
+} from '../constants/file';
 import type {
   ErrorCanvasContent,
   UnsupportedCanvasContent,
@@ -6,7 +10,40 @@ import type {
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  OoxmlFileType,
 } from '../types/attachment-canvas';
+
+const OOXML_EXTENSION_TO_FILE_TYPE: Record<string, OoxmlFileType> = {
+  docx: OoxmlFileType.Docx,
+  xlsx: OoxmlFileType.Xlsx,
+  pptx: OoxmlFileType.Pptx,
+};
+
+const OOXML_MIME_TO_FILE_TYPE: Record<string, OoxmlFileType> = {
+  [OOXML_MIME_TYPES.docx]: OoxmlFileType.Docx,
+  [OOXML_MIME_TYPES.xlsx]: OoxmlFileType.Xlsx,
+  [OOXML_MIME_TYPES.pptx]: OoxmlFileType.Pptx,
+};
+
+/** Resolves a supported OOXML format from a MIME type or file extension. */
+export const getOoxmlFileType = (
+  name: string,
+  mimeType?: string,
+): OoxmlFileType | undefined => {
+  const normalizedMimeType = mimeType?.split(';', 1)[0].trim().toLowerCase();
+  if (normalizedMimeType != null) {
+    const mimeMatch = OOXML_MIME_TO_FILE_TYPE[normalizedMimeType];
+    if (mimeMatch != null) return mimeMatch;
+  }
+
+  const dot = name.lastIndexOf('.');
+  if (dot === -1) return undefined;
+  return OOXML_EXTENSION_TO_FILE_TYPE[name.slice(dot + 1).toLowerCase()];
+};
+
+/** Returns true when a file can be rendered by the built-in OOXML viewer. */
+export const isOoxmlPreviewable = (name: string, mimeType?: string): boolean =>
+  getOoxmlFileType(name, mimeType) != null;
 
 /** Returns true if the file name has an extension known to be text-previewable. */
 export const isTextPreviewable = (name: string): boolean => {
