@@ -1,6 +1,6 @@
 import type { PromptResponseDto } from '@epam/ai-dial-chat-api-client';
+import { formatDateYMD } from '@epam/ai-dial-chat-hooks';
 import type { ExportFolder } from '@epam/ai-dial-chat-shared';
-import { formatDateYMD } from './date';
 
 /** A prompt record as it appears inside a downloaded prompt file. */
 export interface ExportedPrompt {

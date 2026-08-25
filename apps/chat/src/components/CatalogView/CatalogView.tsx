@@ -11,6 +11,7 @@ import type {
   PromptResponseDto,
   ToolsetLogoutBodyDto,
 } from '@epam/ai-dial-chat-api-client';
+import { EXPORT_APP_NAME } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   CatalogEntityType,
@@ -109,7 +110,6 @@ import { isQuickAppSchema } from '../../utils/application-schema';
 import { buildDeploymentConnectApi } from '../../utils/deployment-endpoint-url';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
-import { EXPORT_APP_NAME } from '../../utils/export-conversation';
 import {
   buildPromptExportEnvelope,
   buildPromptExportFileName,

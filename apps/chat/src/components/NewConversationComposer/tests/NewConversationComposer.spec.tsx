@@ -56,15 +56,6 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => createNotificationContextValue(vi.fn()),
 }));
 
-vi.mock('../../../hooks/attachment/useAttachmentValidation', () => ({
-  useAttachmentValidation: () => ({
-    inputAttachmentTypes: [],
-    isAttachmentsAllowed: true,
-    validateAttachment: vi.fn(),
-    fileAccept: undefined,
-  }),
-}));
-
 vi.mock('../../../hooks/attachment/useOpenAttachmentCanvas', () => ({
   useOpenAttachmentCanvas: () => ({
     openAttachmentCanvas: vi.fn(),
@@ -83,8 +74,24 @@ vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
   }),
 }));
 
-vi.mock('../../../hooks/conversation/useChatSettingsFormConfig', () => ({
-  useChatSettingsFormConfig: () => ({}),
+vi.mock('../../../hooks/conversation/useChatSettingsFormLabels', () => ({
+  useChatSettingsFormLabels: () => ({
+    settings: 'Settings',
+    savedNotification: 'Chat settings have been saved',
+    responseFormatLabel: 'Response format',
+    responseFormatHint: 'Applies to new and existing messages',
+    responseFormatMarkdown: 'Markdown',
+    responseFormatPlainText: 'Plain text',
+    systemPromptLabel: 'System prompt',
+    systemPromptTooltip: 'Enter a prompt',
+    temperatureLabel: 'Temperature',
+    temperaturePrecise: 'Precise',
+    temperatureNeutral: 'Neutral',
+    temperatureCreative: 'Creative',
+    temperatureHint: 'Hint',
+    saveLabel: 'Apply changes',
+    saveDisabledTooltip: 'Please select a response format',
+  }),
 }));
 
 vi.mock('../../../hooks/conversation/useModelSelectorLabels', () => ({
@@ -119,6 +126,13 @@ vi.mock('@epam/ai-dial-chat-hooks', () => ({
   }),
   useAttachmentUpload: () => ({
     handleUploadAttachment: vi.fn(),
+  }),
+  useChatSettingsFormConfig: () => ({}),
+  useAttachmentValidation: () => ({
+    inputAttachmentTypes: [],
+    isAttachmentsAllowed: true,
+    validateAttachment: vi.fn(),
+    fileAccept: undefined,
   }),
 }));
 

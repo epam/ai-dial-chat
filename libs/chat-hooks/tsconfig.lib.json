@@ -31,6 +31,9 @@
     },
     {
       "path": "../attachment-canvas/tsconfig.lib.json"
+    },
+    {
+      "path": "../attachment-input/tsconfig.lib.json"
     }
   ],
   "exclude": [

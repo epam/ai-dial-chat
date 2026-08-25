@@ -4,7 +4,7 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Overview
 
-`@epam/ai-dial-chat-hooks` is a headless hooks library: every hook here solves a piece of chat-interface UI mechanics (scrolling, streaming, anchoring — more hooks will be added over time) using only React and standard browser APIs. It never depends on AI DIAL Chat's Redux-equivalent contexts, REST client, UI-kit components, i18n, or routing — `react` is the library's only dependency. This means a consumer can drop a hook from this package into a completely different chat UI, wire its returned refs and callbacks onto their own markup, and get the same tuned, edge-case-tested behavior AI DIAL Chat ships with, without adopting anything else from this repository.
+`@epam/ai-dial-chat-hooks` is a headless hooks library: every hook here solves a piece of chat-interface UI mechanics (scrolling, streaming, anchoring, attachment upload/validation — more hooks will be added over time) using only React, standard browser APIs, and a narrow set of already-published, host-agnostic DIAL packages (the generated `@epam/ai-dial-chat-api-client` and its DTOs, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, and others listed under Peer Dependencies below). It never depends on AI DIAL Chat's React contexts, a *configured* REST client instance, UI-kit components, i18n, or routing — every hook that needs to call DIAL Core accepts an already-configured generated-client instance as a parameter instead of importing or constructing one itself. This means a consumer can drop a hook from this package into a completely different chat UI, wire its returned refs/callbacks and injected client instances onto their own app, and get the same tuned, edge-case-tested behavior AI DIAL Chat ships with, without adopting anything else from this repository.
 
 ## Installation
 
@@ -19,6 +19,14 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 ## Peer Dependencies
 
 - `react` ^19.2.6
+- `@epam/ai-dial-attachment-canvas` *
+- `@epam/ai-dial-attachment-input` *
+- `@epam/ai-dial-chat-api-client` *
+- `@epam/ai-dial-chat-shared` *
+- `@epam/ai-dial-quotations` *
+- `@epam/ai-dial-react-file-manager` *
+- `@epam/ai-dial-share` *
+- `@epam/ai-dial-source-panel` *
 
 ## Hooks
 
@@ -268,6 +276,224 @@ const Composer = ({ filesApi, bucket }: { filesApi: FilesApi; bucket: string }) 
 
 **Returns** (`UseAttachmentUploadResult`): `{ handleUploadAttachment: (attachment: Attachment) => Promise<string> }` — resolves to the uploaded file's DIAL Core URL; rejects with an `Error` tagged `errorReason: AttachmentErrorReason.Network` when offline.
 
+### useConversationExport / useConversationImport
+
+A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Both share the same job-queue semantics — `jobs`, `dismissJob`, `retryJob`, `dismissAll` — and report outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text.
+
+```tsx
+import {
+  ConversationExportMode,
+  ConversationTransferErrorCode,
+  useConversationExport,
+  useConversationImport,
+} from '@epam/ai-dial-chat-hooks';
+
+const ExportButton = ({ conversationsApi, filesApi }: { conversationsApi: ConversationsApi; filesApi: FilesApi }) => {
+  const { jobs, exportSingle, dismissJob, retryJob } = useConversationExport({
+    conversationsApi,
+    filesApi,
+    normalizeConversationPath: (id) => id,
+    onSuccess: (event) => showToast(`Exported ${event.titles?.join(', ')}`),
+    onError: (event) => {
+      if (event.code !== ConversationTransferErrorCode.Unauthorized) showToast('Export failed');
+    },
+  });
+
+  return (
+    <button onClick={() => exportSingle('bucket/conv-id', 'My Chat', ConversationExportMode.WithAttachments)}>
+      Export
+    </button>
+  );
+};
+```
+
+#### API
+
+**Parameters** (`UseConversationExportParams`):
+
+| Name                       | Type                                                                 | Description                                                                     |
+| -------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `conversationsApi`         | `Pick<ConversationsApi, 'getConversation' \| 'listConversations'>`   | Already-configured generated-client instance.                                       |
+| `filesApi`                 | `Pick<FilesApi, 'downloadFileRaw'>`                                   | Already-configured generated-client instance.                                       |
+| `normalizeConversationPath`| `(conversationId: string) => string`                                  | Resolves a conversation id to the bucket-qualified path `getConversation` expects.  |
+| `classifyTransferError`    | `(error: unknown) => { isUnauthorized?: boolean; isNotFound?: boolean }` | Host-owned error classification. Defaults to `{}` (never unauthorized/not-found). |
+| `resolveErrorTraceId`      | `(error: unknown) => Promise<string \| undefined>`                    | Resolves a trace id for a failing request. Defaults to resolving `undefined`.       |
+| `onSuccess`                | `(event: ConversationTransferSuccessEvent) => void`                    | Called when a job completes successfully.                                           |
+| `onWarning`                | `(event: ConversationTransferWarningEvent) => void`                    | Called when a job succeeds but had to skip something (e.g. an attachment).          |
+| `onError`                  | `(event: ConversationTransferErrorEvent) => void`                     | Called when a job fails.                                                             |
+
+**Returns** (`UseConversationExportResult`): `{ jobs, exportSingle(conversationId, title, mode), exportAll(), dismissJob(jobId), retryJob(jobId), dismissAll() }`.
+
+**Parameters** (`UseConversationImportParams`): `conversationsApi: Pick<ConversationsApi, 'saveConversation'>`, `filesApi: Pick<FilesApi, 'listFiles' | 'uploadFile'>`, `bucket: string | undefined` (import fails with `MissingBucket` when absent), `onImported?: () => Promise<void> | void` (called after at least one conversation imports successfully), plus the same `classifyTransferError`/`resolveErrorTraceId`/`onSuccess`/`onWarning`/`onError` shape as export.
+
+**Returns** (`UseConversationImportResult`): `{ jobs, importConversations(file), dismissJob(jobId), retryJob(jobId), dismissAll() }`.
+
+`ConversationTransferJob` is `{ id: string; subject: ConversationTransferSubject; status: ConversationTransferJobStatus }`, where `ConversationTransferSubject` is `{ kind: Single; title: string; sourceBreadcrumb?: string } | { kind: All }` — render `label`/`description` text from `subject` at the call site (e.g. `subject.kind === Single ? subject.title : t('allConversations')`), never from a library-owned string. `ConversationTransferErrorEvent`/`WarningEvent`/`SuccessEvent` carry a `jobId`, a library-owned code (`ConversationTransferErrorCode`/`WarningCode`), and structured facts (`titles`, `names`, `traceId`) — never translated text.
+
+Also exports `EXPORT_APP_NAME` and `formatQuotedNameList` (the standalone functions the hooks are built on) for hosts that render their own export file names or name lists outside the hooks' own notifications.
+
+### useConversationStream
+
+Owns completion-streaming state — per-conversation-path streaming/stoppable tracking, stale-chunk rejection, reload-after-complete, and hard-refresh resume detection — driven entirely through an injected `ConversationStreamTransport`. The library never hardcodes an `/api` path, CSRF handling, or a `server-api` import; the host implements the transport against its own BFF/generated-client calls.
+
+```tsx
+import {
+  useConversationStream,
+  type ConversationStreamTransport,
+} from '@epam/ai-dial-chat-hooks';
+
+const ChatPage = ({
+  transport,
+  generation,
+}: {
+  transport: ConversationStreamTransport;
+  generation: { startGeneration: (path: string, id: string) => AbortController; completeGeneration: (path: string, id: string) => void };
+}) => {
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const conversationRef = useRef<Conversation | null>(conversation);
+
+  const { startStream, handleStop, isStreaming, canStopStreaming } = useConversationStream({
+    conversationId: conversation?.id,
+    state: { setConversation, conversationRef },
+    transport,
+    generation,
+  });
+
+  return <button onClick={() => startStream(conversation!.id, 'Hi', 1, 'gpt-4o')}>Send</button>;
+};
+```
+
+#### API
+
+**Parameters** (`UseConversationStreamParams`):
+
+| Name             | Type                                     | Description                                                                       |
+| ---------------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `conversationId` | `string \| undefined`                      | The currently displayed conversation's id.                                              |
+| `state`          | `ConversationStateAccessor`                | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state. |
+| `transport`      | `ConversationStreamTransport`              | Host-owned completion/stop/watch/reload implementation.                                 |
+| `generation`     | `ConversationGenerationLifecycle`          | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership. |
+| `channel`        | `ConversationStreamChannel`                | Optional. `{ channelId, ensureConnected }` for tool-signin delivery.                     |
+| `overlay`        | `ConversationStreamOverlayNotifier`        | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.     |
+| `onStopError`    | `(error: Error) => void`                   | Called when the transport's `stopCompletion` rejects.                                   |
+
+`ConversationStreamTransport` has four methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, and `getConversation(conversationId, signal?)`.
+
+**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, isStreaming, canStopStreaming }`. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and watches for its resolution.
+
+Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on) for hosts that need the same checks outside the hook.
+
+### useConversationHandlers
+
+Composes send/regenerate/edit/delete/rate/starter-submission orchestration for a displayed conversation on top of the library's own `useAttachmentUpload` and the injected `startStream` (the `useConversationStream` result). Optimistic message-pair insertion, delete confirmation, and rate revert-on-failure mutate the same `ConversationStateAccessor` channel passed to `useConversationStream`, so the two hooks stay in lockstep.
+
+```tsx
+import {
+  useConversationHandlers,
+  useConversationStream,
+} from '@epam/ai-dial-chat-hooks';
+
+const ChatPage = ({
+  conversationsApi,
+  filesApi,
+  rateApi,
+}: {
+  conversationsApi: Pick<ConversationsApi, 'saveConversation' | 'deleteConversation'>;
+  filesApi: Pick<FilesApi, 'uploadFile'>;
+  rateApi: Pick<RateApi, 'rateMessage'>;
+}) => {
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const conversationRef = useRef<Conversation | null>(conversation);
+  const state = { setConversation, conversationRef };
+
+  const { startStream, isStreaming } = useConversationStream({
+    conversationId: conversation?.id,
+    state,
+    transport,
+    generation,
+  });
+
+  const { handleSend, handleRateMessage } = useConversationHandlers({
+    conversation,
+    conversationId: conversation?.id,
+    bucket: 'my-bucket',
+    isStreaming,
+    startStream,
+    state,
+    filesApi,
+    conversationsApi,
+    rateApi,
+    resolveModelId: () => conversation?.model.id ?? '',
+    onConversationDeleted: () => navigate('/'),
+  });
+
+  return <button onClick={() => handleSend('Hi', [])}>Send</button>;
+};
+```
+
+#### API
+
+**Parameters** (`UseConversationHandlersParams`):
+
+| Name                    | Type                                                        | Description                                                                            |
+| ----------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `conversation`          | `Conversation \| null`                                        | The currently displayed conversation.                                                        |
+| `conversationId`        | `string \| undefined`                                         | The currently displayed conversation's id.                                                   |
+| `bucket`                | `string \| undefined`                                         | Passed through to the internal `useAttachmentUpload`.                                        |
+| `isStreaming`           | `boolean`                                                     | The `isStreaming` value returned by `useConversationStream` — gates regenerate/delete/edit.  |
+| `startStream`           | `ConversationStreamStarter`                                   | The `startStream` function returned by `useConversationStream`.                              |
+| `state`                 | `ConversationStateAccessor`                                   | `{ setConversation, conversationRef }` — the same channel passed to `useConversationStream`. |
+| `filesApi`              | `Pick<FilesApi, 'uploadFile'>`                                 | Already-configured generated-client instance used to upload attachments.                     |
+| `conversationsApi`      | `Pick<ConversationsApi, 'saveConversation' \| 'deleteConversation'>` | Already-configured generated-client instance used to save/delete the conversation.     |
+| `rateApi`               | `Pick<RateApi, 'rateMessage'>`                                 | Already-configured generated-client instance used to rate a message.                         |
+| `resolveModelId`        | `() => string`                                                 | Resolves the model id to send with the next completion. Re-evaluated on every call.          |
+| `onConversationDeleted` | `() => void`                                                   | Optional. Called when deleting the last message also deletes the whole conversation.         |
+| `showNetworkError`      | `(filenames: string[]) => void`                                | Optional. Called with batched filenames after a burst of network-error upload failures.      |
+| `toolConfigurationValue`| `Record<string, boolean>`                                     | Optional. Tool toggle configuration values merged into every outgoing completion request.    |
+
+**Returns** (`UseConversationHandlersResult`): `{ handleSend, handleUploadAttachment, handleRegenerateMessage, handleDeleteMessage, handleConfirmDelete, handleRateMessage, handleButtonSelect, handleConfirmStarter, handleStartEdit, handleCancelEdit, handleEditMessage, editingMessageIndexes, pendingDeleteIndex, setPendingDeleteIndex, pendingStarterContext, setPendingStarterContext }`.
+
+Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`, and `getStarterConversationText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
+
+### useAttachmentValidation
+
+Validates an attachment's content type against a resolved list of allowed MIME types, debouncing a burst of rejected files into a single structured `onValidationError` report instead of firing one per file. Reports rejections through a library-owned reason and interpolation-ready facts — never translated text — so the host maps them to its own copy and notification UI.
+
+```tsx
+import {
+  AttachmentValidationErrorReason,
+  useAttachmentValidation,
+} from '@epam/ai-dial-chat-hooks';
+
+const Composer = ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) => {
+  const { isAttachmentsAllowed, fileAccept, validateAttachment } =
+    useAttachmentValidation({
+      allowedMimeTypes,
+      onValidationError: ({ reason, formats }) => {
+        const noTypesAllowed =
+          reason === AttachmentValidationErrorReason.NoTypesAllowed;
+        showToast(noTypesAllowed ? 'Attachments are not allowed' : `Unsupported file type. Allowed: ${formats}`);
+      },
+    });
+
+  return <input type="file" accept={fileAccept} disabled={!isAttachmentsAllowed} />;
+};
+```
+
+#### API
+
+**Parameters** (`UseAttachmentValidationParams`):
+
+| Name                | Type                                                      | Description                                                                 |
+| ------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `allowedMimeTypes`  | `string[]`                                                  | Resolved MIME types currently allowed for attachments.                          |
+| `onValidationError` | `(event: AttachmentValidationErrorEvent) => void`           | Called at most once per debounce window when a rejected file is reported.       |
+| `debounceMs`        | `number`                                                    | Debounce window before firing `onValidationError`. Defaults to `100`.           |
+
+`AttachmentValidationErrorEvent` is `{ reason: AttachmentValidationErrorReason; allowedMimeTypes: string[]; formats?: string }`, where `reason` is `NoTypesAllowed` or `UnsupportedType` and `formats` (present only for `UnsupportedType`) is an already-formatted, non-translated extension list (e.g. `".png, .jpg"`).
+
+**Returns** (`UseAttachmentValidationResult`): `{ inputAttachmentTypes: string[], isAttachmentsAllowed: boolean, validateAttachment: (attachment: Attachment) => AttachmentErrorReason | undefined, fileAccept: string | undefined }`.
+
 ### useConversationSources
 
 Derives, via a pure `useMemo` computation, a deduplicated list of a conversation's uploaded/generated attachments and its quotation sources from a message list.
@@ -289,6 +515,73 @@ const SourcesPanel = ({ messages }: { messages: Message[] }) => {
 **Parameters**: `useConversationSources(messages: Message[], resolvers?: AttachmentDisplayResolvers)` — `resolvers` (from `@epam/ai-dial-chat-shared`) resolves preview/play URLs for attachments; omit it to use the attachment's own `url`.
 
 **Returns** (`UseConversationSourcesResult`): `{ uploaded: DisplayAttachment[], generated: DisplayAttachment[], sources: QuotationSource[] }`.
+
+### useChatSettingsFormConfig
+
+Assembles the config object a chat-settings popover/modal consumes: feature flags derived from deployment features, the current `responseFormat`/`systemPrompt`/`temperature` values, the save handler, and the form labels. Works in two modes — `'local'` (an in-flight composer that holds values in state) and `'conversation'` (a persisted `Conversation` patched on save). Headless: the host supplies translated labels via `labels` and a save toast via `onSaved`.
+
+```tsx
+import {
+  type ChatSettingsFormLabels,
+  useChatSettingsFormConfig,
+} from '@epam/ai-dial-chat-hooks';
+
+const labels: ChatSettingsFormLabels = {
+  settings: 'Chat settings',
+  savedNotification: 'Chat settings have been saved',
+  responseFormatLabel: 'Response format',
+  responseFormatHint: 'Applies to new and existing messages',
+  responseFormatMarkdown: 'Markdown',
+  responseFormatPlainText: 'Plain text',
+  systemPromptLabel: 'System prompt',
+  systemPromptTooltip: 'Enter a prompt',
+  temperatureLabel: 'Temperature',
+  temperaturePrecise: 'Precise',
+  temperatureNeutral: 'Neutral',
+  temperatureCreative: 'Creative',
+  temperatureHint:
+    'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
+  saveLabel: 'Apply changes',
+  saveDisabledTooltip: 'Please select a response format',
+};
+
+const ComposerSettings = ({
+  values,
+  onValuesChange,
+  deploymentFeatures,
+  isQuickApp,
+}: {
+  values: { responseFormat: ResponseFormat; systemPrompt: string; temperature: number };
+  onValuesChange: (v: typeof values) => void;
+  deploymentFeatures?: DeploymentFeatures;
+  isQuickApp?: boolean;
+}) => {
+  const chatSettings = useChatSettingsFormConfig({
+    mode: 'local',
+    values,
+    onValuesChange,
+    deploymentFeatures,
+    isQuickApp,
+    labels,
+    onSaved: () => showToast(labels.savedNotification),
+  });
+
+  return <ChatSettingsModal {...chatSettings} />;
+};
+```
+
+#### API
+
+**Parameters**: `useChatSettingsFormConfig(params)` where `params` is a discriminated union:
+
+| Mode              | Shape                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `'local'`         | `{ mode: 'local'; values; onValuesChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }` |
+| `'conversation'`  | `{ mode: 'conversation'; conversation; onConversationChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }` |
+
+`labels` (`Partial<ChatSettingsFormLabels>`) overrides English fallbacks for every visible string; `onSaved` is called after a successful save so the host can surface its own toast. `isQuickApp` forces the temperature field off regardless of `deploymentFeatures`.
+
+**Returns** (`UseChatSettingsFormConfigResult`): `{ features, responseFormat, systemPrompt, temperature, onSave, menuItemLabel, title, responseFormatLabel, responseFormatHint, responseFormatMarkdownLabel, responseFormatPlainTextLabel, systemPromptLabel, systemPromptTooltip, temperatureLabel, temperatureLabels, temperatureHint, saveLabel, saveDisabledTooltip }` — spread directly into `ChatSettingsModal` / `ChatSettingsBottomSheet` from `@epam/ai-dial-conversation-input`.
 
 ### useAttachmentAction
 

@@ -2,6 +2,14 @@ import {
   ConversationDeletionFailureDtoCodeEnum,
   type ConversationDeletionResultDto,
 } from '@epam/ai-dial-chat-api-client';
+import {
+  ConversationExportMode,
+  ConversationTransferErrorCode,
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+  useConversationExport,
+  useConversationImport,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   act,
@@ -17,8 +25,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import { useConversationExport } from '../../../hooks/useConversationExport';
-import { useConversationImport } from '../../../hooks/useConversationImport';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import {
   getConversationPublishHistory,
@@ -28,10 +34,6 @@ import {
   discardSharedCatalogItem,
   revokeSharedAccess,
 } from '../../../server-api/share.api';
-import {
-  ConversationExportMode,
-  ExportJobStatus,
-} from '../../../types/conversation-export';
 import ConversationPanelView from '../ConversationPanelView';
 
 vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
@@ -244,6 +246,8 @@ vi.mock('../../../server-api/conversation-publish.api', () => ({
 const getShareRecipientsCount = vi.hoisted(() => vi.fn());
 vi.mock('../../../server-api/api-client', () => ({
   shareApi: { getShareRecipientsCount },
+  conversationsApi: {},
+  filesApi: {},
 }));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({ items: [] }),
@@ -320,7 +324,11 @@ vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
     onRetry,
   }: {
     title: string;
-    jobs: Array<{ id: string; label: string; status: string }>;
+    jobs: Array<{
+      id: string;
+      subject: { kind: string; title?: string };
+      status: string;
+    }>;
     onClose: () => void;
     onDismiss: (jobId: string) => void;
     onRetry: (jobId: string) => void;
@@ -331,7 +339,7 @@ vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
         <span>{title}</span>
         {jobs.map((job) => (
           <div key={job.id}>
-            <span>{job.label}</span>
+            <span>{job.subject.title ?? 'All conversations'}</span>
             {job.status === 'failed' && (
               <button onClick={() => onRetry(job.id)}>Retry</button>
             )}
@@ -342,8 +350,18 @@ vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
     );
   },
 }));
-vi.mock('../../../hooks/useConversationExport');
-vi.mock('../../../hooks/useConversationImport');
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    useConversationExport: vi.fn(),
+    useConversationImport: vi.fn(),
+  };
+});
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => ({ user: { bucket: 'bucket' } }),
+}));
 vi.mock('../get-conversation-source', () => ({
   getConversationSource: () => undefined,
 }));
@@ -1178,6 +1196,51 @@ describe('ConversationPanelView — publish', () => {
   });
 });
 
+describe('ConversationPanelView — export/import notification mapping', () => {
+  it('maps a successful single-conversation export to a success notification with the title', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const params = vi.mocked(useConversationExport).mock.calls.at(-1)?.[0];
+
+    params?.onSuccess?.({ jobId: 'job-1', titles: ['My Chat'] });
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'conversationExport.successSingle',
+      }),
+    );
+  });
+
+  it('suppresses the export error notification for an unauthorized failure', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const params = vi.mocked(useConversationExport).mock.calls.at(-1)?.[0];
+    mockShowNotification.mockClear();
+
+    params?.onError?.({
+      jobId: 'job-1',
+      code: ConversationTransferErrorCode.Unauthorized,
+    });
+
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('maps an import UnsupportedFormat error to the unsupported-format notification', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const params = vi.mocked(useConversationImport).mock.calls.at(-1)?.[0];
+    mockShowNotification.mockClear();
+
+    params?.onError?.({
+      jobId: 'imp-1',
+      code: ConversationTransferErrorCode.UnsupportedFormat,
+    });
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'conversationImport.unsupportedFormat',
+      }),
+    );
+  });
+});
+
 describe('ConversationPanelView — export', () => {
   it('row action list contains an Export item (submenu trigger, no onClick of its own)', () => {
     render(<ConversationPanelView {...defaultProps} />);
@@ -1235,8 +1298,11 @@ describe('ConversationPanelView — export', () => {
       jobs: [
         {
           id: 'job-1',
-          label: 'Chat 1',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 1',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       exportSingle: mockExportSingle,
@@ -1261,7 +1327,14 @@ describe('ConversationPanelView — export', () => {
   it('clicking close on a queue job calls dismissJob with its id', () => {
     vi.mocked(useConversationExport).mockReturnValue({
       jobs: [
-        { id: 'job-2', label: 'Chat 2', status: ExportJobStatus.InProgress },
+        {
+          id: 'job-2',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 2',
+          },
+          status: ConversationTransferJobStatus.InProgress,
+        },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
@@ -1278,7 +1351,16 @@ describe('ConversationPanelView — export', () => {
 
   it('clicking retry on a failed queue job calls retryJob with its id', () => {
     vi.mocked(useConversationExport).mockReturnValue({
-      jobs: [{ id: 'job-3', label: 'Chat 3', status: ExportJobStatus.Failed }],
+      jobs: [
+        {
+          id: 'job-3',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 3',
+          },
+          status: ConversationTransferJobStatus.Failed,
+        },
+      ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
       dismissJob: mockDismissJob,
@@ -1357,8 +1439,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1376,7 +1461,14 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
   it('renders two separate queues with their own titles when both import and export jobs are present', () => {
     vi.mocked(useConversationExport).mockReturnValue({
       jobs: [
-        { id: 'job-1', label: 'Chat 1', status: ExportJobStatus.InProgress },
+        {
+          id: 'job-1',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 1',
+          },
+          status: ConversationTransferJobStatus.InProgress,
+        },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
@@ -1388,8 +1480,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1410,8 +1505,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1428,7 +1526,14 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
   it('shows the Exporting title when only export jobs are present', () => {
     vi.mocked(useConversationExport).mockReturnValue({
       jobs: [
-        { id: 'job-1', label: 'Chat 1', status: ExportJobStatus.InProgress },
+        {
+          id: 'job-1',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 1',
+          },
+          status: ConversationTransferJobStatus.InProgress,
+        },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
@@ -1447,8 +1552,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1467,7 +1575,14 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
   it('wires the import queue retry button to the import hook', () => {
     vi.mocked(useConversationImport).mockReturnValue({
       jobs: [
-        { id: 'imp-1', label: 'Imported Chat', status: ExportJobStatus.Failed },
+        {
+          id: 'imp-1',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.Failed,
+        },
       ],
       importConversations: mockImportConversations,
       dismissJob: mockDismissImportJob,
