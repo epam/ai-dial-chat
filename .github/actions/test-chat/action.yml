@@ -2,10 +2,10 @@ name: test-chat
 description: "Run ai-dial-chat e2e-tests"
 inputs:
   application-url:
-    description: "Application URL of the environment, e.g., `https://chat-my-repo-pr-1.example.com`"
+    description: "URL of the deployed review environment (specific application)"
     required: true
-  enviroment-url:
-    description: "URL of the deployed review environment (common services)"
+  environment-fqdn:
+    description: "FQDN of the deployed review environment, useful to build additional application URLs"
     required: true
   test-repository:
     description: "GitHub repository with e2e-tests source code"
