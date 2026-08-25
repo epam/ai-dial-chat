@@ -18,10 +18,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   isValidElement,
+  useState,
   type ComponentProps,
   type ReactElement,
   type ReactNode,
-  useState,
 } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -84,10 +84,6 @@ import { UserConfigStatus } from '../../../types/user-config-status';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
 import { SkillDetailsFilePreview } from '../SkillDetailsFilePreview';
-
-const formatLimitNumber = new Intl.NumberFormat(undefined, {
-  maximumFractionDigits: 2,
-}).format;
 
 /** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
 const makeFakePopup = () => {
