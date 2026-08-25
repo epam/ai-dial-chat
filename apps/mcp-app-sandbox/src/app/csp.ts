@@ -1,9 +1,11 @@
 /*
  * The sandbox CSP cannot restrict script/resource origins because we don't know
  * what the MCP app will load. Isolation is achieved instead through:
- *   - `sandbox allow-scripts allow-forms allow-popups` — drops `allow-same-origin`,
- *     giving the page a null origin so it cannot access cookies, localStorage,
- *     sessionStorage, or IndexedDB.
+ *   - `sandbox allow-scripts allow-same-origin allow-forms allow-popups` —
+ *     `allow-same-origin` grants the sandbox proxy's own isolated origin (not the
+ *     chat application's origin) to the inner iframe. Chat cookies, localStorage,
+ *     sessionStorage, IndexedDB, and DOM remain inaccessible because the sandbox
+ *     proxy is deployed at a distinct origin from the chat app.
  *   - `frame-ancestors <hostOrigin>` — built dynamically so only the validated
  *     chat host can embed the sandbox page.
  */

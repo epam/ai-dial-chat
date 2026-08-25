@@ -79,10 +79,12 @@ Neither iframe ever grants `allow-same-origin` to the tool-supplied HTML, which 
 
 There is no tool-declared permissions payload in DIAL Core's Phase 1 contract (no `_meta.ui.permissions` field is returned by the resource endpoint) — no permissions beyond `allow-scripts` are requested anywhere in the pipeline today. If a later phase introduces one, that is a new requirement against a real payload, not something to speculatively build now.
 
-#### Scenario: same-origin is never granted to the untrusted content
+#### Scenario: same-origin relaxation is bounded to the isolated sandbox origin
 
 - **WHEN** an `McpAppCanvasContent` is rendered
-- **THEN** the inner iframe ultimately holding the tool-supplied HTML has a `sandbox` attribute that never includes `allow-same-origin` (enforced today by `apps/mcp-app-sandbox/src/app/sandbox-page.ts`'s hardcoded default, not by any prop passed from `apps/chat`)
+- **THEN** the inner iframe ultimately holding the tool-supplied HTML has `sandbox="allow-scripts allow-same-origin allow-forms"` (matching the outer host↔proxy iframe hardcoded by `@mcp-ui/client`'s `AppFrame`)
+- **AND** `allow-same-origin` grants the tool HTML the `mcp-app-sandbox` deployment's own isolated origin, not the chat application's origin — chat cookies, localStorage, sessionStorage, and DOM remain inaccessible because the sandbox proxy is deployed at a distinct origin from the chat app
+- **AND** `allow-top-navigation` is never included in either iframe's sandbox attribute
 
 ---
 
