@@ -212,6 +212,39 @@ const ShareLinkPanel = ({ shareApi, itemId }: { shareApi: ShareApi; itemId: stri
 
 **Returns** (`UseShareLinkResult`): `{ data, isLoading, error, setAccess }` — `data` is `ShareLinkData | undefined`, `setAccess` takes a `ShareLinkAccess[]` and triggers a re-fetch.
 
+### useToolsMenu
+
+Derives the "deep research" tools submenu from the active deployment's configuration schema and the operator-configured tool id: detects the boolean-typed schema property, manages toggle state, resets on deployment change, and exposes a stable `toolConfigurationValue` record for inclusion in completion requests. Headless: the host supplies the translated fallback label via `labels` and the tool icon via `toolIcon`.
+
+```tsx
+import { type UseToolsMenuParams, useToolsMenu } from '@epam/ai-dial-chat-hooks';
+
+const ToolsMenu = ({ params }: { params: UseToolsMenuParams }) => {
+  const { toolsMenuItems, onToolToggle, toolConfigurationValue } =
+    useToolsMenu(params);
+
+  return (
+    <Menu items={toolsMenuItems} onSelect={onToolToggle}>
+      {toolConfigurationValue && <input type="hidden" />}
+    </Menu>
+  );
+};
+```
+
+#### API
+
+**Parameters**: `useToolsMenu(params: UseToolsMenuParams)`
+
+| Name                                  | Type                                  | Description                                                                 |
+| ------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------- |
+| `deepResearchToolId`                  | `string \| null`                      | Operator-configured tool id; `null` yields an empty menu.                   |
+| `selectedItemId`                       | `string \| null`                      | Selected deployment id; changing it resets toggle state to the schema default. |
+| `selectedDeploymentConfiguration`     | `DeploymentConfigurationSchema \| null` | JSON-schema for the selected deployment; `null` yields an empty menu.       |
+| `labels`                              | `Partial<ToolsMenuLabels>`            | Override for the fallback label. Defaults to English `'Deep research'`.    |
+| `toolIcon`                            | `ReactNode`                           | Icon element for the tool item. Defaults to `null`.                         |
+
+**Returns** (`UseToolsMenuResult`): `{ toolsMenuItems: ToolMenuItem[], onToolToggle, toolConfigurationValue: Record<string, boolean>, restoreToolConfiguration }` — `restoreToolConfiguration` re-applies a persisted tool-config record (e.g. from the last user message) on conversation load.
+
 ### useShareRecipientsCount
 
 Resolves how many users hold shared access to a resource, one resource at a time and only when asked — a deduplicated, per-resource lazy lookup cache. Accepts an already-configured `ShareApi` instance.
