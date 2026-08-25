@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getBrowserTimezone } from '../../utils/browser-timezone';
 import { setCsrfToken } from '../base';
 import { stopCompletion, streamCompletion } from '../chat-stream.api';
+
+vi.mock('../../utils/browser-timezone', () => ({
+  getBrowserTimezone: vi.fn(() => undefined),
+}));
 
 describe('chat-stream api', () => {
   const fetchMock = vi.fn();
@@ -8,6 +13,8 @@ describe('chat-stream api', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
     fetchMock.mockReset();
+    vi.mocked(getBrowserTimezone).mockReset();
+    vi.mocked(getBrowserTimezone).mockReturnValue(undefined);
     setCsrfToken(null);
   });
 
@@ -53,6 +60,86 @@ describe('chat-stream api', () => {
         controller.close();
       },
     });
+
+  const completeStreamRequest = (): Promise<void> =>
+    new Promise<void>((resolve) => {
+      streamCompletion('gpt-4o__Hello__uuid', 'hello', 'gpt-4o', {
+        onChunk: vi.fn(),
+        onComplete: resolve,
+        onError: () => resolve(),
+      });
+    });
+
+  it('sends the current browser timezone with each completion request', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(emptyStream(), {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      }),
+    );
+    vi.mocked(getBrowserTimezone)
+      .mockReturnValueOnce('Europe/Warsaw')
+      .mockReturnValueOnce('Asia/Tokyo');
+
+    await completeStreamRequest();
+    await completeStreamRequest();
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/v1/conversations/completions',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'X-Timezone': 'Europe/Warsaw',
+        }),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/v1/conversations/completions',
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'X-Timezone': 'Asia/Tokyo' }),
+      }),
+    );
+    expect(getBrowserTimezone).toHaveBeenCalledTimes(2);
+  });
+
+  it('omits the timezone header when browser detection has no value', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(emptyStream(), {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      }),
+    );
+
+    await completeStreamRequest();
+
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(new Headers(request.headers).has('X-Timezone')).toBe(false);
+  });
+
+  it('preserves CSRF and request body behavior when adding the timezone', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(emptyStream(), {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      }),
+    );
+    setCsrfToken('csrf-token');
+    vi.mocked(getBrowserTimezone).mockReturnValue('America/New_York');
+
+    await completeStreamRequest();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/conversations/completions',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'X-CSRF-Token': 'csrf-token',
+          'X-Timezone': 'America/New_York',
+        }),
+        body: expect.stringContaining('"model":"gpt-4o"'),
+      }),
+    );
+  });
 
   it('includes clientChannelId in the completion body when provided', async () => {
     fetchMock.mockResolvedValue(

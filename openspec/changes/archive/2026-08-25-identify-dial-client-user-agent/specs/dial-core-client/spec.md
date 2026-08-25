@@ -1,10 +1,4 @@
-# dial-core-client Specification
-
-## Purpose
-
-A single shared DIAL Core SDK client service used by every chat-api domain.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Single shared DIAL Core SDK client
 The system SHALL create exactly one `@epam/ai-dial-typescript-sdk` client instance per process, owned by `DialClientService`, using `createSDK({ baseUrl, fetch })` where `baseUrl` is read from the `DIAL_CORE_URL` environment variable via `ConfigService<EnvironmentVariables>` with `{ infer: true }` and `fetch` is the shared DIAL Core transport owned by `DialClientService`.
@@ -20,6 +14,15 @@ The system SHALL create exactly one `@epam/ai-dial-typescript-sdk` client instan
 #### Scenario: SDK uses the shared Core transport
 - **WHEN** `DialClientService` constructs the SDK client
 - **THEN** it passes the same fetch-compatible transport that raw DIAL Core callers receive, so SDK and raw requests share the client identity behavior
+
+### Requirement: No behavior change to DIAL Core requests
+Except for cross-cutting transport behavior explicitly specified by this capability, replacing inheritance-based client access with injected `DialClientService` access SHALL NOT change the DIAL Core base URL, API version, operation-specific request headers, or any HTTP behavior observed by DIAL Core or by API consumers of `chat-api`.
+
+#### Scenario: Identical operation-specific requests before and after migration
+- **WHEN** any migrated service (e.g. `ModelsService.listModels`) issues the same logical request before and after the `DialClientService` migration
+- **THEN** the resulting DIAL Core HTTP request has the same URL, method, operation-specific headers, and body, while also carrying any shared transport headers required by this capability
+
+## ADDED Requirements
 
 ### Requirement: DIAL Core requests carry the Chat product identity
 Every outbound HTTP request from `chat-api` to DIAL Core SHALL include exactly one `User-Agent` field with the value `ai-dial-chat/<normalized-version>`. The value is diagnostic metadata only and MUST NOT contain a tenant, user, hostname, pod, environment, credential, or Node.js runtime identifier. This behavior SHALL NOT change any browser-facing API, OpenAPI operation, generated client, authorization rule, rate limit, cache, UI, or feature flag.
@@ -67,21 +70,3 @@ Any `chat-api` integration that calls a DIAL Core URL without an SDK operation M
 #### Scenario: Non-Core upstream remains unaffected
 - **WHEN** `ThemeService` fetches theme configuration or an icon from the configured theme service
 - **THEN** it does not use the DIAL Core transport and does not receive `User-Agent: ai-dial-chat/<normalized-version>` from this capability
-
-### Requirement: DialClientService exposes baseUrl and dialApiVersion
-`DialClientService` SHALL expose `baseUrl` (the raw `DIAL_CORE_URL` value) and `dialApiVersion` (the raw `DIAL_API_VERSION` value) as readonly members, in addition to `client`, so that services needing raw HTTP access or the `api-version` query parameter do not need their own `ConfigService` reads for these values.
-
-#### Scenario: Raw fetch escape hatch
-- **WHEN** `ApplicationsService` needs to call a DIAL Core endpoint not covered by the SDK (e.g. `/v1/bucket`)
-- **THEN** it builds the request URL using `dialClient.baseUrl` rather than reading `DIAL_CORE_URL` from `ConfigService` itself
-
-#### Scenario: Chat completion api-version parameter
-- **WHEN** `ChatService`, `TranscriptionService`, or `ConversationNamingService` issue a chat completion request
-- **THEN** they read `dialClient.dialApiVersion` for the `api-version` query parameter rather than reading `DIAL_API_VERSION` from `ConfigService` themselves
-
-### Requirement: No behavior change to DIAL Core requests
-Except for cross-cutting transport behavior explicitly specified by this capability, replacing inheritance-based client access with injected `DialClientService` access SHALL NOT change the DIAL Core base URL, API version, operation-specific request headers, or any HTTP behavior observed by DIAL Core or by API consumers of `chat-api`.
-
-#### Scenario: Identical operation-specific requests before and after migration
-- **WHEN** any migrated service (e.g. `ModelsService.listModels`) issues the same logical request before and after the `DialClientService` migration
-- **THEN** the resulting DIAL Core HTTP request has the same URL, method, operation-specific headers, and body, while also carrying any shared transport headers required by this capability

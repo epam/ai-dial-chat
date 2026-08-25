@@ -130,6 +130,35 @@ describe('POST /conversations/completions (integration)', () => {
     expect(message).toBe('Hello');
     expect(model).toBe('gpt-4o');
     expect(sid).toBe(TEST_USER.sid);
+    expect(mockService.streamCompletion.mock.calls[0][13]).toBeUndefined();
+  });
+
+  it('passes a valid timezone header to the completion service', async () => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .set('X-Timezone', 'Europe/Warsaw')
+      .send(VALID_COMPLETION_BODY)
+      .expect(200);
+
+    expect(mockService.streamCompletion).toHaveBeenCalledOnce();
+    expect(mockService.streamCompletion.mock.calls[0][13]).toBe(
+      'Europe/Warsaw',
+    );
+  });
+
+  it.each([
+    ['malformed', 'Europe Warsaw'],
+    ['unknown', 'Mars/Olympus'],
+    ['oversized', 'A'.repeat(256)],
+    ['multiple', 'Europe/Warsaw, Asia/Tokyo'],
+  ])('returns 400 for a %s timezone header', async (_case, timezone) => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .set('X-Timezone', timezone)
+      .send(VALID_COMPLETION_BODY)
+      .expect(400);
+
+    expect(mockService.streamCompletion).not.toHaveBeenCalled();
   });
 
   it('returns 409 when ConversationService throws ConflictException (duplicate active generation)', async () => {

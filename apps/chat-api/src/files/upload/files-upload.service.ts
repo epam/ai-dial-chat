@@ -559,17 +559,20 @@ export class FilesUploadService {
        * The SDK upload helper requires FormData/Blob, which would buffer the
        * staged file again. Raw fetch lets archive uploads stream from disk.
        */
-      const response = await fetch(this.buildDialUploadUrl(bucket, path), {
-        method: 'PUT',
-        headers: {
-          ...getBearerAuthHeaders(token),
-          'If-None-Match': '*',
-          'Content-Type': `multipart/form-data; boundary=${boundary}`,
-        },
-        body: Readable.toWeb(multipartStream) as RequestInit['body'],
-        signal,
-        duplex: 'half',
-      } as RequestInit & { duplex: 'half' });
+      const response = await this.dialClient.fetchCore(
+        this.buildDialUploadUrl(bucket, path),
+        {
+          method: 'PUT',
+          headers: {
+            ...getBearerAuthHeaders(token),
+            'If-None-Match': '*',
+            'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          },
+          body: Readable.toWeb(multipartStream) as RequestInit['body'],
+          signal,
+          duplex: 'half',
+        } as RequestInit & { duplex: 'half' },
+      );
 
       if (response.status === 412) {
         throw new ConflictException('File already exists at this path');
