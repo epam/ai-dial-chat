@@ -50,6 +50,10 @@ tooltip), and the "Browse" button. When `favorites` is empty, the list area is
 replaced with an empty-state hint; the header and "Browse" button still
 render.
 
+Clicking a row's star plays a short exit animation first, so
+`onToggleFavorite` fires ~180 ms after the click rather than synchronously.
+The list's height animates to match once the row is gone.
+
 ### `PromptParametersPopup`
 
 ```tsx

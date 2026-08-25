@@ -77,3 +77,23 @@ export const stripPublicTargetFolder = (targetFolder: string): string => {
     : withoutPrefix;
   return withoutTrailingSlash.split('/').map(safeDecodeURIComponent).join('/');
 };
+
+/**
+ * The published copy's full resource path under `public/`:
+ * `{resourceTypePrefix}/{getPublicTargetFolder(folderPath)}{resourceName}`.
+ *
+ * Publish and unpublish MUST both derive `targetUrl` through this function.
+ * A publish whose `targetUrl` is wrong fails loudly, because Core has to
+ * create the resource at that path; a `DELETE` resource whose `targetUrl`
+ * matches no existing published copy is a request to remove nothing, which
+ * Core can accept and an admin can approve while nothing observable changes.
+ * One derivation for all four call sites (catalog publish/unpublish,
+ * conversation publish/unpublish) is what keeps the two operations
+ * addressing the same path.
+ */
+export const getPublishedTargetUrl = (
+  resourceTypePrefix: string,
+  folderPath: string,
+  resourceName: string,
+): string =>
+  `${resourceTypePrefix}/${getPublicTargetFolder(folderPath)}${resourceName}`;

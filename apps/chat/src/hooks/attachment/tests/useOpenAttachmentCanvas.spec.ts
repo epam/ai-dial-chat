@@ -92,13 +92,16 @@ vi.mock('../../../utils/attachment-canvas', () => ({
   resolveHtmlCanvasContent: (...args: unknown[]) => mockResolveHtml(...args),
   hasAttachmentTextSource: (...args: unknown[]) =>
     mockHasAttachmentTextSource(...args),
-  /* Faithful to the real helper: the URL's own last path segment. */
+  /* Faithful to the real helper: the last path segment of an absolute URL or a
+   * relative DIAL resource path. */
   getUrlFileName: (url: string) => {
+    let path: string;
     try {
-      return new URL(url).pathname.split('/').pop() ?? '';
+      path = new URL(url).pathname;
     } catch {
-      return '';
+      path = url.split(/[?#]/)[0];
     }
+    return path.split('/').filter(Boolean).pop() ?? '';
   },
   resolvePdfCanvasContent: (...args: unknown[]) => mockResolvePdf(...args),
   resolveOoxmlCanvasContent: (...args: unknown[]) => mockResolveOoxml(...args),

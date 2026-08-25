@@ -93,6 +93,17 @@ describe('RateService', () => {
       expect(headers['Authorization']).toBe(`Bearer ${ACCESS_TOKEN}`);
     });
 
+    it('forwards the conversation id in the X-CONVERSATION-ID header', async () => {
+      fetchSpy.mockResolvedValue({ ok: true } as Response);
+      const service = makeService();
+
+      await service.rateMessage(validDto, ACCESS_TOKEN);
+
+      const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      const headers = init.headers as Record<string, string>;
+      expect(headers['X-CONVERSATION-ID']).toBe(validDto.conversationId);
+    });
+
     it('includes optional comment when provided', async () => {
       fetchSpy.mockResolvedValue({ ok: true } as Response);
       const service = makeService();

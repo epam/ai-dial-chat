@@ -20,7 +20,7 @@
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "0.0.1",
-    "@epam/ai-dial-react-pdf-highlighter": "0.2.0-dev.22",
+    "@epam/ai-dial-react-pdf-highlighter": "*",
     "@epam/ai-dial-shared": "0.48.0",
     "@epam/ai-dial-sidebar": "0.0.1",
     "@epam/ai-dial-visualizer-connector": "0.48.0",

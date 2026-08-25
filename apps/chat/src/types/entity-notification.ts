@@ -21,4 +21,11 @@ export enum EntityOperation {
   Deleted = 'deleted',
   Downloaded = 'downloaded',
   PublishRequested = 'publishRequested',
+  /**
+   * Removal of a published copy was submitted for admin approval. Named
+   * `UnpublishRequested`, not `Unpublished`: DIAL Core returns a `PENDING`
+   * publication, so no copy raised for this operation may claim the entity is
+   * no longer published.
+   */
+  UnpublishRequested = 'unpublishRequested',
 }

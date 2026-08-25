@@ -30,6 +30,8 @@ import type {
   SaveConversationBodyDto,
   SendCompletionDto,
   StopCompletionDto,
+  UnpublishConversationDto,
+  UnpublishConversationResultDto,
   WatchConversationBodyDto,
 } from '../models/index';
 
@@ -100,6 +102,11 @@ export interface StopCompletionRequest {
 
 export interface StreamCompletionRequest {
   sendCompletionDto: SendCompletionDto;
+}
+
+export interface UnpublishConversationRequest {
+  path: string;
+  unpublishConversationDto: UnpublishConversationDto;
 }
 
 export interface WatchConversationRequest {
@@ -956,6 +963,71 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.streamCompletionRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Submits a removal request for one already-published folder of an owned conversation by proxying DIAL Core\'s Publication API (`createPublication`) with a single `DELETE`-action resource. **The removal takes effect only after an administrator approves the request.** Until then the published copy stays visible to everyone who could already see it, and the folder continues to appear in the conversation’s publish history. The conversation title is re-fetched server-side and used as the publication name, so the request is legible in the admin queue.
+   * Request removal of a published conversation from a folder
+   */
+  async unpublishConversationRaw(
+    requestParameters: UnpublishConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<UnpublishConversationResultDto>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling unpublishConversation().',
+      );
+    }
+
+    if (requestParameters['unpublishConversationDto'] == null) {
+      throw new runtime.RequiredError(
+        'unpublishConversationDto',
+        'Required parameter "unpublishConversationDto" was null or undefined when calling unpublishConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/unpublish`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['unpublishConversationDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<UnpublishConversationResultDto>(
+      response,
+    );
+  }
+
+  /**
+   * Submits a removal request for one already-published folder of an owned conversation by proxying DIAL Core\'s Publication API (`createPublication`) with a single `DELETE`-action resource. **The removal takes effect only after an administrator approves the request.** Until then the published copy stays visible to everyone who could already see it, and the folder continues to appear in the conversation’s publish history. The conversation title is re-fetched server-side and used as the publication name, so the request is legible in the admin queue.
+   * Request removal of a published conversation from a folder
+   */
+  async unpublishConversation(
+    requestParameters: UnpublishConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<UnpublishConversationResultDto> {
+    const response = await this.unpublishConversationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
   }
 
   /**

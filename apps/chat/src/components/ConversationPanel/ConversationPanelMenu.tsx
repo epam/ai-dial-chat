@@ -102,10 +102,9 @@ const ConversationPanelMenu: FC<Props> = ({
       {
         key: 'delete-all',
         label: t(ConversationPanelI18nKeys.DeleteAllChatsLabel),
-        icon: (
-          <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-secondary" />
-        ),
+        icon: <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-error" />,
         onClick: handleOpen,
+        className: 'text-error',
       },
     ],
     [handleOpen, onExportAll, onImport, t],

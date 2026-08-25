@@ -122,8 +122,7 @@
         "license": "License",
         "knowledgeCutoffDate": "Knowledge cutoff date",
         "parameters": "Parameters",
-        "inputModalities": "Input modalities",
-        "outputModalities": "Output modalities"
+        "inputModalities": "Input modalities"
       },
       "limits": {
         "requestsPerHour": "Requests per hour",
@@ -208,6 +207,16 @@
         "successTitle": "Removed from My List",
         "success": "\"{{name}}\" was removed from your list."
       },
+      "unpublish": {
+        "confirmTitle": "Unpublish?",
+        "confirmMessage": "Unpublish \"{{name}}\" from \"{{folder}}\"? The request is submitted for admin approval.",
+        "selectFolderMessage": "Choose which folder to unpublish \"{{name}}\" from. The request is submitted for admin approval.",
+        "folderGroupAriaLabel": "Published folders",
+        "consequenceEveryoneLosesAccess": "Everyone loses access to the published copy",
+        "consequenceKeepsYourCopy": "Your own copy is not deleted",
+        "consequenceCanPublishAgain": "You can publish it again later",
+        "requestingStatus": "Requesting unpublish…"
+      },
       "revokeShare": {
         "confirmTitle": "Revoke access?",
         "confirmMessage": "Revoke shared access to \"{{name}}\"? Anyone you shared it with will lose access.",
@@ -272,7 +281,7 @@
     },
     "folder": {
       "personal": "Personal",
-      "public": "Public",
+      "public": "Organization",
       "shared": "Shared with me"
     }
   },
@@ -351,6 +360,7 @@
     "logIn": "Log in",
     "retry": "Retry",
     "publish": "Publish",
+    "unpublish": "Unpublish",
     "manage": "Manage",
     "removeFromMyList": "Remove from My List",
     "revokeAccess": "Revoke access",
@@ -447,6 +457,13 @@
     "emptyFolderNameError": "Folder name cannot be empty.",
     "invalidFolderNameError": "Folder name contains invalid characters.",
     "duplicateFolderNameError": "A folder with this name already exists."
+  },
+  "conversationUnpublish": {
+    "confirmTitle": "Unpublish conversation?",
+    "confirmMessage": "Unpublish \"{{name}}\" from \"{{folder}}\"? The request is submitted for admin approval.",
+    "selectFolderMessage": "Choose which folder to unpublish \"{{name}}\" from. The request is submitted for admin approval.",
+    "folderGroupAriaLabel": "Published folders",
+    "requestingStatus": "Requesting unpublish…"
   },
   "publish": {
     "failedTitle": "Publish failed",
@@ -1248,7 +1265,9 @@
       "downloadedTitle": "Prompt downloaded successfully",
       "downloaded": "Prompt \"{{name}}\" is saved on your device.",
       "publishRequestedTitle": "Prompt publish requested",
-      "publishRequested": "Publish request for prompt \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for prompt \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Prompt unpublish requested",
+      "unpublishRequested": "Unpublish request for prompt \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "agent": {
       "createdTitle": "Agent created successfully",
@@ -1258,7 +1277,9 @@
       "deletedTitle": "Agent deleted successfully",
       "deleted": "Agent \"{{name}}\" is not available anymore.",
       "publishRequestedTitle": "Agent publish requested",
-      "publishRequested": "Publish request for agent \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for agent \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Agent unpublish requested",
+      "unpublishRequested": "Unpublish request for agent \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "quickApp": {
       "createdTitle": "Quick app created successfully",
@@ -1268,7 +1289,9 @@
       "deletedTitle": "Quick app deleted successfully",
       "deleted": "Quick app \"{{name}}\" is not available anymore.",
       "publishRequestedTitle": "Quick app publish requested",
-      "publishRequested": "Publish request for quick app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for quick app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Quick app unpublish requested",
+      "unpublishRequested": "Unpublish request for quick app \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "customApp": {
       "createdTitle": "Custom app created successfully",
@@ -1278,7 +1301,9 @@
       "deletedTitle": "Custom app deleted successfully",
       "deleted": "Custom app \"{{name}}\" is not available anymore.",
       "publishRequestedTitle": "Custom app publish requested",
-      "publishRequested": "Publish request for custom app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for custom app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Custom app unpublish requested",
+      "unpublishRequested": "Unpublish request for custom app \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "toolset": {
       "createdTitle": "Toolset created successfully",
@@ -1288,13 +1313,17 @@
       "deletedTitle": "Toolset deleted successfully",
       "deleted": "Toolset \"{{name}}\" is not available anymore.",
       "publishRequestedTitle": "Toolset publish requested",
-      "publishRequested": "Publish request for toolset \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for toolset \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Toolset unpublish requested",
+      "unpublishRequested": "Unpublish request for toolset \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "model": {
       "deletedTitle": "Model deleted successfully",
       "deleted": "Model \"{{name}}\" is not available anymore.",
       "publishRequestedTitle": "Model publish requested",
-      "publishRequested": "Publish request for model \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for model \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Model unpublish requested",
+      "unpublishRequested": "Unpublish request for model \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "skill": {
       "createdTitle": "Skill created successfully",
@@ -1304,7 +1333,9 @@
       "downloadedTitle": "Skill downloaded successfully",
       "downloaded": "Skill \"{{name}}\" is saved on your device.",
       "publishRequestedTitle": "Skill publish requested",
-      "publishRequested": "Publish request for skill \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for skill \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Skill unpublish requested",
+      "unpublishRequested": "Unpublish request for skill \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "conversation": {
       "renamedTitle": "Conversation renamed successfully",
@@ -1313,6 +1344,8 @@
       "duplicated": "A copy of conversation \"{{name}}\" is created.",
       "publishRequestedTitle": "Conversation publish requested",
       "publishRequested": "Publish request for conversation \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Conversation unpublish requested",
+      "unpublishRequested": "Unpublish request for conversation \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it.",
       "deletedTitle": "Conversation deleted successfully",
       "deleted": "Conversation \"{{name}}\" is not available anymore."
     },

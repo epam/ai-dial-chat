@@ -1,4 +1,7 @@
-import type { PublishHistoryEntryDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  PublishConversationResultDto,
+  PublishHistoryEntryDto,
+} from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PublishAccessRulesLabels,
@@ -86,4 +89,14 @@ export const getAccessRulesLabels = (
     cancelLabel: t(ButtonsI18nKeys.Cancel),
     dialogAriaLabel: t(PublishAccessRulesI18nKeys.DialogAriaLabel),
   },
+});
+
+/** Maps a conversation publish-history API response entry to the publish panel's `PublishHistoryEntry` model. */
+export const mapPublishConversationResultDto = (
+  dto: PublishConversationResultDto,
+): PublishHistoryEntry => ({
+  /* A conversation carries no version, so any entry for a folder already means
+   * "published here" — see `usePublishFlow`. */
+  publishedAt: Date.parse(dto.publishedAt),
+  folderPath: dto.folderPath.split('/').filter(Boolean),
 });

@@ -41,6 +41,10 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
       titleKey: EntityNotificationsI18nKeys.PromptPublishRequestedTitle,
       messageKey: EntityNotificationsI18nKeys.PromptPublishRequested,
     },
+    [EntityOperation.UnpublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.PromptUnpublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.PromptUnpublishRequested,
+    },
   },
   [NotifiableEntity.Agent]: {
     [EntityOperation.Created]: {
@@ -58,6 +62,10 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
     [EntityOperation.PublishRequested]: {
       titleKey: EntityNotificationsI18nKeys.AgentPublishRequestedTitle,
       messageKey: EntityNotificationsI18nKeys.AgentPublishRequested,
+    },
+    [EntityOperation.UnpublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.AgentUnpublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.AgentUnpublishRequested,
     },
   },
   [NotifiableEntity.QuickApp]: {
@@ -77,6 +85,10 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
       titleKey: EntityNotificationsI18nKeys.QuickAppPublishRequestedTitle,
       messageKey: EntityNotificationsI18nKeys.QuickAppPublishRequested,
     },
+    [EntityOperation.UnpublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.QuickAppUnpublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.QuickAppUnpublishRequested,
+    },
   },
   [NotifiableEntity.CustomApp]: {
     [EntityOperation.Created]: {
@@ -94,6 +106,10 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
     [EntityOperation.PublishRequested]: {
       titleKey: EntityNotificationsI18nKeys.CustomAppPublishRequestedTitle,
       messageKey: EntityNotificationsI18nKeys.CustomAppPublishRequested,
+    },
+    [EntityOperation.UnpublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.CustomAppUnpublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.CustomAppUnpublishRequested,
     },
   },
   [NotifiableEntity.Toolset]: {
@@ -113,6 +129,10 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
       titleKey: EntityNotificationsI18nKeys.ToolsetPublishRequestedTitle,
       messageKey: EntityNotificationsI18nKeys.ToolsetPublishRequested,
     },
+    [EntityOperation.UnpublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.ToolsetUnpublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.ToolsetUnpublishRequested,
+    },
   },
   [NotifiableEntity.Model]: {
     [EntityOperation.Deleted]: {
@@ -122,6 +142,10 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
     [EntityOperation.PublishRequested]: {
       titleKey: EntityNotificationsI18nKeys.ModelPublishRequestedTitle,
       messageKey: EntityNotificationsI18nKeys.ModelPublishRequested,
+    },
+    [EntityOperation.UnpublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.ModelUnpublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.ModelUnpublishRequested,
     },
   },
   [NotifiableEntity.Skill]: {
@@ -141,6 +165,10 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
       titleKey: EntityNotificationsI18nKeys.SkillPublishRequestedTitle,
       messageKey: EntityNotificationsI18nKeys.SkillPublishRequested,
     },
+    [EntityOperation.UnpublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.SkillUnpublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.SkillUnpublishRequested,
+    },
   },
   [NotifiableEntity.Conversation]: {
     [EntityOperation.Deleted]: {
@@ -150,6 +178,10 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
     [EntityOperation.PublishRequested]: {
       titleKey: EntityNotificationsI18nKeys.ConversationPublishRequestedTitle,
       messageKey: EntityNotificationsI18nKeys.ConversationPublishRequested,
+    },
+    [EntityOperation.UnpublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.ConversationUnpublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.ConversationUnpublishRequested,
     },
     [EntityOperation.Renamed]: {
       titleKey: EntityNotificationsI18nKeys.ConversationRenamedTitle,

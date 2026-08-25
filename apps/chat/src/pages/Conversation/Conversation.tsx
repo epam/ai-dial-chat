@@ -1,5 +1,12 @@
 import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
+  getConversationPath,
+  isAwaitingGenerationResume,
+  useConversationHandlers,
+  useConversationStream,
+  useToolsMenu,
+} from '@epam/ai-dial-chat-hooks';
+import {
   MessageRating,
   MessageRole,
   type Conversation,
@@ -8,8 +15,10 @@ import {
 import {
   ConfirmationPopupVariant,
   ConfirmationPopup,
+  DIAL_ICON_SIZE,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
+import { IconTelescope } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router';
@@ -25,7 +34,9 @@ import {
   ToolsI18nKeys,
 } from '../../constants/translation-keys';
 import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useClientChannel } from '../../context/ClientChannelContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import {
@@ -37,10 +48,12 @@ import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useActiveConversationBridge } from '../../hooks/conversation/useActiveConversationBridge';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
-import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
-import { useConversationStream } from '../../hooks/conversation/useConversationStream';
-import { useToolsMenu } from '../../hooks/conversation/useToolsMenu';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
+import {
+  conversationsApi as configuredConversationsApi,
+  filesApi as configuredFilesApi,
+  rateApi as configuredRateApi,
+} from '../../server-api/api-client';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
@@ -50,9 +63,8 @@ import {
 import { ActiveScheduledTaskStatus } from '../../types/active-scheduled-task';
 import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
-import { getConversationPath } from '../../utils/conversation-path';
+import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
 import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
-import { isAwaitingGenerationResume } from '../../utils/generation-resume';
 import {
   getLastDeploymentId,
   getLastUserMessageToolConfiguration,
@@ -80,9 +92,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const restoredToolConfigIdRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { config } = useAppConfig();
   const {
     restoreSelectedItemId,
     selectedItemId: currentSelectedItemId,
+    selectedDeploymentConfiguration,
     isLoading: isDeploymentsLoading,
   } = useDeployments();
   const {
@@ -90,7 +104,15 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     onToolToggle,
     toolConfigurationValue,
     restoreToolConfiguration,
-  } = useToolsMenu();
+  } = useToolsMenu({
+    deepResearchToolId: config.deepResearchToolId,
+    selectedItemId: currentSelectedItemId,
+    selectedDeploymentConfiguration,
+    labels: {
+      deepResearchFallback: t(ToolsI18nKeys.DeepResearchFallback),
+    },
+    toolIcon: <IconTelescope size={DIAL_ICON_SIZE.SM} aria-hidden />,
+  });
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
   const { user } = useUser();
@@ -239,7 +261,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     isConversationLoaded,
   );
 
-  const { getGeneration } = useGeneration();
+  const { getGeneration, startGeneration, completeGeneration } =
+    useGeneration();
+  const { channelId, ensureConnected } = useClientChannel();
+  const channel = useMemo(
+    () => ({ channelId, ensureConnected }),
+    [channelId, ensureConnected],
+  );
   /*
    * Conversation paths whose auto-stream has already been kicked off. Guards
    * against React 18 StrictMode double-mounting (and any other re-run of
@@ -261,8 +289,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     canStopStreaming,
   } = useConversationStream({
     conversationId,
-    setConversation,
-    conversationRef,
+    state: { setConversation, conversationRef },
+    transport: conversationStreamTransport,
+    generation: { startGeneration, completeGeneration },
+    channel,
+    overlay,
     onStopError: handleStopError,
   });
 
@@ -455,6 +486,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     navigate(`${pathname}${search}`, { replace: true, state: null });
   }, [conversationId, prefetchedConversation, navigate, pathname, search]);
 
+  const resolveModelId = useCallback(
+    () => currentSelectedItemId ?? conversation?.model.id ?? '',
+    [currentSelectedItemId, conversation?.model.id],
+  );
+
   const {
     handleSend,
     handleUploadAttachment,
@@ -478,9 +514,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     bucket,
     isStreaming,
     startStream,
-    conversationRef,
-    setConversation,
-    navigate,
+    state: { setConversation, conversationRef },
+    filesApi: configuredFilesApi,
+    conversationsApi: configuredConversationsApi,
+    rateApi: configuredRateApi,
+    resolveModelId,
+    onConversationDeleted: () => navigate(ROUTES.Root),
     showNetworkError: handleNetworkUploadError,
     toolConfigurationValue,
   });

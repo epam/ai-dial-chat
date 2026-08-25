@@ -135,6 +135,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconPlayerPlayFilled: () => <svg />,
   IconTrash: () => <svg />,
   IconUserOff: () => <svg />,
+  IconWorldOff: () => <svg />,
   IconWorldShare: () => <svg />,
 }));
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
@@ -296,6 +297,90 @@ describe('Header', () => {
     await openManage();
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
     expect(onOpenPublish).toHaveBeenCalledOnce();
+  });
+
+  it('renders Unpublish instead of Publish once the item has a published folder', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        onOpenUnpublish={vi.fn()}
+        hasPublishedFolders
+      />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Unpublish' })).toBeTruthy();
+    /* The two are mutually exclusive: the menu shows the item's current state. */
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+  });
+
+  it('renders Publish while the item has no published folder', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        onOpenUnpublish={vi.fn()}
+        hasPublishedFolders={false}
+      />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Unpublish' })).toBeNull();
+  });
+
+  it('keeps Publish when the unpublish predicate rejects the item', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        onOpenUnpublish={vi.fn()}
+        isUnpublishVisible={() => false}
+        hasPublishedFolders
+      />,
+    );
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Unpublish' })).toBeNull();
+  });
+
+  it('shows neither entry when the publish predicate rejects an item with no published folder', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        onEdit={vi.fn()}
+        onOpenUnpublish={vi.fn()}
+        isPublishVisible={() => false}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Unpublish' })).toBeNull();
+  });
+
+  it('calls onOpenUnpublish when Unpublish is clicked in the Manage menu', async () => {
+    const onOpenUnpublish = vi.fn();
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        onOpenUnpublish={onOpenUnpublish}
+        hasPublishedFolders
+      />,
+    );
+    await openManage();
+    await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
+    expect(onOpenUnpublish).toHaveBeenCalledOnce();
+  });
+
+  it('uses texts.unpublishLabel for the Unpublish entry', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        onOpenUnpublish={vi.fn()}
+        hasPublishedFolders
+        texts={{ unpublishLabel: 'Remove from Organization' }}
+      />,
+    );
+    await openManage();
+    expect(
+      screen.getByRole('button', { name: 'Remove from Organization' }),
+    ).toBeTruthy();
   });
 
   it('does not render the Manage button when onEdit is not supplied and no other action applies', () => {

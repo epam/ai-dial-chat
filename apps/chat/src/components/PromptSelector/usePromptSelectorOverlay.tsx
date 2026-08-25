@@ -52,8 +52,14 @@ interface UsePromptSelectorOverlayOptions {
 }
 
 interface UsePromptSelectorOverlayResult {
-  /** Pass directly as the `promptsMenuOverlay` prop of `ConversationInput`/`Input`. */
-  renderOverlay: (onClose: () => void) => ReactNode;
+  /**
+   * Pass directly as the `promptsMenuOverlay` prop of
+   * `ConversationInput`/`Input`. `undefined` while `OverlayFeature.Prompts` is
+   * disabled: the Add menu keys the whole Prompts row off this prop being
+   * present, so a stub renderer would leave the row in place with nothing
+   * behind it.
+   */
+  renderOverlay?: (onClose: () => void) => ReactNode;
   /** Render this element at a stable level outside the popover (e.g. next to the input). */
   promptCatalogModal: ReactNode;
   /** Render this element at a stable level outside the popover (e.g. next to the input). */
@@ -189,7 +195,7 @@ export function usePromptSelectorOverlay({
 
   if (!isPromptsEnabled) {
     return {
-      renderOverlay: () => null,
+      renderOverlay: undefined,
       promptCatalogModal: null,
       parametersPopup: null,
       openParametersPopup: () => undefined,

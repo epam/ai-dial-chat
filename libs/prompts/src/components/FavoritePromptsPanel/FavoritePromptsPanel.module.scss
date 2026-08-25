@@ -20,3 +20,58 @@
 .footer {
   border-top-color: var(--fp-footer-border, var(--stroke-tertiary, #e0e6f0));
 }
+
+/* Mirrors the deployment selector's row transitions
+   (rowEnter/rowLeaving in
+   apps/chat/src/components/DeploymentSelector/DeploymentSelectorPanel.module.scss)
+   so both "selected list" panels animate identically. */
+.rowEnter {
+  animation: rowFadeIn 200ms ease-out;
+}
+
+.rowLeaving {
+  animation: rowFadeOut 180ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes rowFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rowFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* Animates the scrollable list's own height when a row leaves, since CSS
+   can't transition height: auto; see listContentRef/listHeight in
+   FavoritePromptsPanel.tsx. */
+.listContent {
+  transition: max-height 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rowEnter,
+  .rowLeaving {
+    animation: none;
+  }
+
+  .listContent {
+    transition: none;
+  }
+}
