@@ -1,7 +1,17 @@
 # attachment-canvas-ooxml-viewer Specification
 
 ## Purpose
-TBD - created by archiving change support-ooxml-attachment-previews. Update Purpose after archive.
+
+The Office-document variant of the attachment canvas: the `Ooxml` content type, MIME/extension format detection, the lazily-loaded renderer, and routing.
+
+## Capability: attachment-canvas-ooxml-viewer
+
+### Overview
+
+Adds a DOCX/XLSX/PPTX viewer to `AttachmentCanvas` as a new `Ooxml` content type. Office files are opaque ZIP containers rather than natively-renderable binaries, so they are parsed in the browser by `@silurus/ooxml`, whose three separate entry points are each loaded through their own dynamic `import()` — opening a DOCX downloads only the DOCX parser. Format is resolved from the MIME type first and the file extension second, so either signal alone is enough. The file's bytes are resolved at the application boundary and the library receives only a URL and a format enum.
+
+---
+
 ## Requirements
 ### Requirement: `OoxmlFileType` enum
 
