@@ -90,7 +90,11 @@ import {
   ToolsetLoginQuery,
 } from '@/src/constants/toolsets';
 
-import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import {
+  PkceMethod,
+  ToolsetAuthStatus,
+  ToolsetAuthTypes,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 import { parse } from 'querystring';
 
@@ -803,7 +807,10 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
                 authSettings.codeChallenge,
               );
             }
-            if (authSettings.codeChallengeMethod) {
+            if (
+              authSettings.codeChallengeMethod &&
+              authSettings.codeChallengeMethod !== PkceMethod.None
+            ) {
               url.searchParams.set(
                 'code_challenge_method',
                 authSettings.codeChallengeMethod,

@@ -2,6 +2,7 @@ import { EntityType } from './common';
 
 import {
   EntityPublicationInfo,
+  PkceMethod,
   ShareEntity,
   TokenEndpointAuthMethod,
   ToolsetAuthStatus,
@@ -43,7 +44,7 @@ export interface ToolsetModel extends Omit<ShareEntity, 'name'> {
     apiKeyHeader?: string;
     // OAuth flow
     codeChallenge?: string;
-    codeChallengeMethod?: string;
+    codeChallengeMethod?: PkceMethod;
     clientId?: string;
     clientSecret?: string;
     authorizationEndpoint?: string;

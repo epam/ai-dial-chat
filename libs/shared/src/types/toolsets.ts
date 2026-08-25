@@ -21,6 +21,12 @@ export enum TokenEndpointAuthMethod {
   None = 'none',
 }
 
+export enum PkceMethod {
+  None = 'none',
+  Plain = 'plain',
+  S256 = 'S256',
+}
+
 export interface Toolset {
   endpoint: string;
   transport: ToolsetTransportType;
@@ -56,7 +62,7 @@ export interface Toolset {
     client_secret?: string;
     authorization_endpoint?: string;
     code_challenge?: string;
-    code_challenge_method?: string;
+    code_challenge_method?: PkceMethod;
     global_auth_status?: ToolsetAuthStatus;
     user_level_auth_status?: ToolsetAuthStatus;
     scopes_supported?: string[];

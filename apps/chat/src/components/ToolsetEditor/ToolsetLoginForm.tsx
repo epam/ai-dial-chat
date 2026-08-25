@@ -30,6 +30,7 @@ import { ToolsetRepairButton } from '@/src/components/Marketplace/ToolsetRepairB
 import { ToolsetLoginFormType, WithLogin } from './form';
 
 import {
+  PkceMethod,
   TokenEndpointAuthMethod,
   ToolsetAuthTypes,
 } from '@epam/ai-dial-shared';
@@ -51,10 +52,9 @@ const TOKEN_ENDPOINT_AUTH_METHOD_LABELS: Record<
     CommonI18nKeys.TokenEndpointAuthMethodPost,
     { ns: Translation.Common },
   ),
-  [TokenEndpointAuthMethod.None]: translate(
-    CommonI18nKeys.TokenEndpointAuthMethodNone,
-    { ns: Translation.Common },
-  ),
+  [TokenEndpointAuthMethod.None]: translate(CommonI18nKeys.NoneOption, {
+    ns: Translation.Common,
+  }),
 };
 
 const tokenEndpointAuthMethodOptions = Object.values(
@@ -62,6 +62,23 @@ const tokenEndpointAuthMethodOptions = Object.values(
 ).map((value) => ({
   value,
   label: TOKEN_ENDPOINT_AUTH_METHOD_LABELS[value],
+}));
+
+const PKCE_METHOD_LABELS: Record<PkceMethod, string> = {
+  [PkceMethod.None]: translate(CommonI18nKeys.NoneOption, {
+    ns: Translation.Common,
+  }),
+  [PkceMethod.Plain]: translate(CommonI18nKeys.PkceMethodPlain, {
+    ns: Translation.Common,
+  }),
+  [PkceMethod.S256]: translate(CommonI18nKeys.PkceMethodS256, {
+    ns: Translation.Common,
+  }),
+};
+
+const pkceMethodOptions = Object.values(PkceMethod).map((value) => ({
+  value,
+  label: PKCE_METHOD_LABELS[value],
 }));
 
 const fields = [
@@ -230,6 +247,34 @@ export const ToolsetLoginForm = ({
                       value,
                     }}
                     options={tokenEndpointAuthMethodOptions}
+                    onChange={(option) =>
+                      field.onChange(
+                        (option as unknown as DropdownSelectorOption).value,
+                      )
+                    }
+                    closeMenuOnSelect
+                    isDisabled={disabled}
+                    tooltip={fieldsTooltip}
+                  />
+                );
+              }}
+            />
+            <Controller
+              name="codeChallengeMethod"
+              control={control}
+              render={({ field }) => {
+                const value = field.value ?? PkceMethod.None;
+                return (
+                  <SelectorField
+                    label={t(CommonI18nKeys.PkceMethodLabel)}
+                    isSearchable={false}
+                    isClearable={false}
+                    id="codeChallengeMethod"
+                    value={{
+                      label: t(PKCE_METHOD_LABELS[value]),
+                      value,
+                    }}
+                    options={pkceMethodOptions}
                     onChange={(option) =>
                       field.onChange(
                         (option as unknown as DropdownSelectorOption).value,

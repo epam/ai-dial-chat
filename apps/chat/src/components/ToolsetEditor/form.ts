@@ -18,6 +18,7 @@ import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { MarketplaceEntityBaseSchema } from '@/src/constants/validation-helpers';
 
 import {
+  PkceMethod,
   TokenEndpointAuthMethod,
   ToolsetAuthTypes,
   ToolsetTransportType,
@@ -47,6 +48,7 @@ export const ToolsetLoginFormSchema = zodValidation
     tokenEndpointAuthMethod: zodValidation
       .enum(TokenEndpointAuthMethod)
       .optional(),
+    codeChallengeMethod: zodValidation.enum(PkceMethod).optional(),
     scopes: zodValidation.array(zodValidation.string()).optional(),
   })
   .superRefine((data, ctx) => {
@@ -162,6 +164,8 @@ export const getDefaultLoginFormData = ({
         tokenEndpointAuthMethod:
           toolset?.authSettings?.tokenEndpointAuthMethod ??
           TokenEndpointAuthMethod.ClientSecretBasic,
+        codeChallengeMethod:
+          toolset?.authSettings?.codeChallengeMethod ?? PkceMethod.None,
         withLogin:
           !prevData &&
           toolset?.authSettings?.clientSecret &&

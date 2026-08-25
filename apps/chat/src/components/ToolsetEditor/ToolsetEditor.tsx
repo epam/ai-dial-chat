@@ -95,6 +95,7 @@ export const ToolsetEditor = () => {
             authorizationEndpoint: data.authorizationEndpoint,
             tokenEndpoint: data.tokenEndpoint,
             tokenEndpointAuthMethod: data.tokenEndpointAuthMethod,
+            codeChallengeMethod: data.codeChallengeMethod,
             scopesSupported: data.scopes,
           },
         },
