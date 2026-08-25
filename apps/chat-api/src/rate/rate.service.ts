@@ -33,6 +33,7 @@ export class RateService {
         headers: {
           'Content-Type': 'application/json',
           ...getBearerAuthHeaders(accessToken),
+          'X-CONVERSATION-ID': dto.conversationId,
         },
         body: JSON.stringify(body),
       });

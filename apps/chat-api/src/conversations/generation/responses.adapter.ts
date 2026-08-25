@@ -118,6 +118,7 @@ export class ResponsesAdapter {
     clientChannelId?: string,
     timezone?: string,
     timing?: GenerationRelayTiming,
+    conversationId?: string,
   ): AsyncGenerator<string, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -132,6 +133,7 @@ export class ResponsesAdapter {
             ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
             : {}),
           ...(timezone ? { [TIMEZONE_HEADER]: timezone } : {}),
+          ...(conversationId ? { 'X-CONVERSATION-ID': conversationId } : {}),
         },
         parseAs: 'stream',
         signal,
@@ -400,6 +402,7 @@ export class ResponsesAdapter {
     clientChannelId?: string,
     timezone?: string,
     timing?: GenerationRelayTiming,
+    conversationId?: string,
   ): Promise<GenerationRelayOutcome> {
     const iterator = this.stream(
       requestBody,
@@ -409,6 +412,7 @@ export class ResponsesAdapter {
       clientChannelId,
       timezone,
       timing,
+      conversationId,
     );
     let next = await iterator.next();
     while (!next.done) {

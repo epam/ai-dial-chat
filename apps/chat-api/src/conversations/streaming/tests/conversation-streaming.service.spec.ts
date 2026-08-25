@@ -284,6 +284,30 @@ describe('ConversationStreamingService', () => {
       });
     });
 
+    it('forwards the stable conversation id as X-CONVERSATION-ID for Chat Completions', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(sendSpy.mock.calls[0][1].headers).toMatchObject({
+        'X-CONVERSATION-ID': baseConversation.id,
+      });
+    });
+
     it('omits X-DIAL-CLIENT-CHANNEL-ID when no channel id is provided', async () => {
       const conversation = {
         ...baseConversation,
@@ -511,6 +535,7 @@ describe('ConversationStreamingService', () => {
       });
       expect(createResponseSpy.mock.calls[0][0].headers).toMatchObject({
         'X-Timezone': 'Europe/Warsaw',
+        'X-CONVERSATION-ID': baseConversation.id,
       });
       expect(sendSpy).not.toHaveBeenCalled();
       expect(res.getWritten()).toContain('Hello');
