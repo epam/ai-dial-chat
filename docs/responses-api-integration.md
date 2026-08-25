@@ -160,10 +160,12 @@ Mapping rules:
 
 - the system prompt is added as the first `input` item when present;
 - all messages from the prepared history are then added in their original order;
-- only `role` and `content` are included for each message;
+- for messages with `image/*` attachments, `content` is an array of `input_text` (omitted when empty) and `input_image` parts; non-image attachments are dropped; messages with no image attachments use a plain `content` string;
 - `model` contains the selected deployment name;
 - `stream` is always `true`;
-- `store` is always `false`.
+- `store` is always `false`;
+- `reasoning.effort` is included when the resolved deployment's `features.reasoningEfforts` list is non-empty (the first entry is used); omitted when the list is absent or empty;
+- `custom_fields.configuration` is included when a configuration value is present on the conversation, mirroring the Chat Completions Deep Research passthrough.
 
 The request also includes the user's Bearer token, `Accept: text/event-stream`, an AbortSignal, the stable persisted conversation id in `X-CONVERSATION-ID`, and `X-DIAL-CLIENT-CHANNEL-ID` when available. The Chat Completions adapter forwards the same conversation header.
 
@@ -189,15 +191,16 @@ The Responses API returns typed events, while the existing frontend expects Chat
 
 ### Supported events
 
-| Upstream event               | BFF action                                                                                     |
-| ---------------------------- | ---------------------------------------------------------------------------------------------- |
-| `response.created`           | Saves the response identifier and sends it in `delta.responseId`                               |
-| `response.output_text.delta` | Appends `delta` to the assistant message and sends it as `delta.content`                       |
-| `response.completed`         | Validates the final status; a valid status completes the stream and saves `responseId`         |
-| `response.failed`            | Ends generation with an error extracted from `response.error`, preserving text received so far |
-| `response.incomplete`        | Ends generation with an error while preserving text received so far                            |
-| `error`                      | Ends generation with the upstream error message                                                |
-| unknown event                | Does not send it to the client, writes a debug log, and increments a metric                    |
+| Upstream event                    | BFF action                                                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `response.created`                | Saves the response identifier and sends it in `delta.responseId`                                                               |
+| `response.output_text.delta`      | Appends `delta` to the assistant message and sends it as `delta.content`                                                        |
+| `response.reasoning_text.delta`   | Accumulates `delta` into the assembled message's `stages` (`name: "Thinking"` on first delta per item); never sent to browser  |
+| `response.completed`              | Validates the final status; a valid status completes the stream and saves `responseId`                                          |
+| `response.failed`                 | Ends generation with an error extracted from `response.error`, preserving text received so far                                  |
+| `response.incomplete`             | Ends generation with an error while preserving text received so far                                                             |
+| `error`                           | Ends generation with the upstream error message                                                                                 |
+| unknown event                     | Does not send it to the client, writes a debug log, and increments a metric                                                     |
 
 `event:` lines, empty lines, and SSE comments are ignored. JSON is parsed from `data:` lines. See "Terminal state and `[DONE]`" below for how a stream resolves to success or error — none of `response.failed`, `response.incomplete`, or an in-band `error` ever produce a downstream `data: [DONE]`, and none of them are retried through Chat Completions.
 
@@ -280,18 +283,22 @@ If the Responses API has already been selected and returns an error, Chat does n
 
 ## Adapter Differences
 
-| Behavior                   | Responses                               | Chat Completions                                |
-| -------------------------- | --------------------------------------- | ----------------------------------------------- |
-| Selection                  | `responsesApi === true`                 | value is not `true`                             |
-| Upstream SDK               | `createResponse`                        | `sendChatCompletionRequest`                     |
-| History                    | `input[]` with `role` and `content`     | existing Chat Completions payload               |
-| System prompt              | first item in `input`                   | system message                                  |
-| Streaming                  | native events are transformed to chunks | upstream chunks are passed through almost as-is |
-| Storage in Core            | `store: false`                          | not applicable                                  |
-| Continuation by ID         | not used                                | not applicable                                  |
-| Final conversation storage | AI DIAL Chat                            | AI DIAL Chat                                    |
+| Behavior                   | Responses                                                                                | Chat Completions                                |
+| -------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Selection                  | `responsesApi === true`                                                                  | value is not `true`                             |
+| Upstream SDK               | `createResponse`                                                                         | `sendChatCompletionRequest`                     |
+| History                    | `input[]` with `role` and `content`                                                      | existing Chat Completions payload               |
+| System prompt              | first item in `input`                                                                    | system message                                  |
+| Image attachments          | `image/*` → `input_image` parts; non-image dropped                                       | forwarded as-is in `custom_content.attachments` |
+| Reasoning effort           | `reasoning.effort` when `features.reasoningEfforts` non-empty                            | not applicable                                  |
+| Configuration              | `custom_fields.configuration` when present                                               | `custom_content.configuration`                  |
+| Reasoning capture          | `response.reasoning_text.delta` → `stages` (stored, not streamed)                        | not applicable                                  |
+| Streaming                  | native events are transformed to chunks                                                  | upstream chunks are passed through almost as-is |
+| Storage in Core            | `store: false`                                                                           | not applicable                                  |
+| Continuation by ID         | not used                                                                                 | not applicable                                  |
+| Final conversation storage | AI DIAL Chat                                                                             | AI DIAL Chat                                    |
 
-The Chat Completions branch retains existing support for DIAL-specific payloads: attachments, `custom_content`, configuration, and stages. The Responses branch sends text-based `role`/`content` messages, the system prompt, and now the two generation parameters described below (`temperature`, `max_output_tokens`); all other DIAL-specific payloads remain Chat-Completions-only.
+The Chat Completions branch retains existing support for DIAL-specific payloads: attachments, `custom_content`, configuration, and stages. The Responses branch sends text-based `role`/`content` messages, the system prompt, generation parameters (`temperature`, `max_output_tokens`, `reasoning.effort`), `custom_fields.configuration`, and image attachments mapped to `input_image`; non-image attachments and remaining DIAL-specific payloads remain Chat-Completions-only. Reasoning output from `response.reasoning_text.delta` is captured into the persisted message's `stages` with a `"Thinking"` label but is not yet rendered in the chat UI.
 
 ## Current Support Scope
 
@@ -309,7 +316,11 @@ Supported:
 - safe handling of unknown SSE events;
 - compatibility with older deployments that do not expose the capability flag;
 - `temperature`: forwarded from the conversation's persisted value only when the resolved deployment's capabilities explicitly report `features.temperature: true`; omitted (never substituted with a default) when support is `false` or unknown, so a model that rejects the field is never sent one. The value `0` is forwarded, not treated as absent;
-- `max_output_tokens`: forwarded from the conversation's optional `maxOutputTokens` setting whenever it is a valid positive safe integer, independent of any capability flag (no Responses-specific max-output-tokens capability exists in DIAL Core today). Absent or invalid values (zero, negative, fractional, non-finite, or unsafe-integer) omit the field entirely — Chat never derives it from a deployment's `limits.maxCompletionTokens`, the legacy Chat Completions `defaults.max_tokens`, or DIAL Core's own `responsesDefaults`, which keep governing the field's default whenever Chat sends none.
+- `max_output_tokens`: forwarded from the conversation's optional `maxOutputTokens` setting whenever it is a valid positive safe integer, independent of any capability flag (no Responses-specific max-output-tokens capability exists in DIAL Core today). Absent or invalid values (zero, negative, fractional, non-finite, or unsafe-integer) omit the field entirely — Chat never derives it from a deployment's `limits.maxCompletionTokens`, the legacy Chat Completions `defaults.max_tokens`, or DIAL Core's own `responsesDefaults`, which keep governing the field's default whenever Chat sends none;
+- `reasoning.effort`: forwarded from the deployment's `features.reasoningEfforts` list when non-empty (first entry is used); omitted when the list is absent or empty, so models that do not declare reasoning-effort support never receive the field;
+- image input: `image/*` attachments from the conversation's message history are mapped to `input_image` content parts in the Responses `input` array; non-image attachments are dropped (not forwarded) in the Responses branch;
+- `custom_fields.configuration`: forwarded when a configuration value is present on the conversation, mirroring the Chat Completions Deep Research passthrough;
+- reasoning output capture: `response.reasoning_text.delta` events are accumulated into the assistant message's `stages` with a `"Thinking"` label and stored in conversation history; the `name: "Thinking"` label is sent only on the first delta per `item_id` to avoid duplication from `mergeStages` name-concatenation; reasoning is not forwarded to the browser stream and is not yet rendered in the chat UI.
 
 Not yet supported in the Responses branch:
 
@@ -318,11 +329,11 @@ Not yet supported in the Responses branch:
 - background mode;
 - Core `GET`, `CANCEL`, and `DELETE /openai/v1/responses/{response_id}` operations;
 - tools and function calling;
-- reasoning items and reasoning summaries;
-- image/file input and other multimodal content items;
+- reasoning UI display (reasoning deltas are captured in `stages` in conversation history but are not yet rendered in the chat UI);
+- non-image file input and other non-image multimodal content items (`image/*` attachments are supported; other types are dropped);
 - citations, annotations, and rich output;
-- DIAL attachments, `custom_content`, configuration, and stages;
-- generation parameters other than `temperature` and `max_output_tokens` (e.g. penalties, seed, response format, reasoning effort);
+- DIAL non-image attachment forwarding and remaining `custom_content` fields not described in Supported above;
+- generation parameters other than `temperature`, `max_output_tokens`, and `reasoning.effort` (e.g. penalties, seed, response format);
 - a UI control for editing `maxOutputTokens` — the field is settable today only via the persisted conversation model (API, import/export), not through a chat-settings control; a dedicated UI is a follow-up;
 - dedicated handling for every output-item type;
 - automatic fallback after a Responses API error.

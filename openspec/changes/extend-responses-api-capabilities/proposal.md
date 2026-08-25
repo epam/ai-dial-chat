@@ -1,9 +1,10 @@
 # Extend Responses API feature coverage
 
-**Status: draft — not scoped for implementation yet.** This proposal captures the feature list, what has
-been spiked/confirmed against a live DIAL Core instance, and the open questions blocking a real
-implementation plan. See `docs/responses-api-integration.md` for the current, shipped behavior this proposal
-extends.
+**Status: partially shipped.** Several items originally classified as spike-only have been hardened and
+merged to `development` (see "Done — live code" section below). This proposal continues to capture the
+remaining unimplemented features, what has been spiked/confirmed against a live DIAL Core instance, and the
+open questions blocking a full implementation plan. See `docs/responses-api-integration.md` for the current,
+shipped behavior this proposal extends.
 
 Two code changes from this work are **live on `development`, shipped and verified** (not part of this
 proposal's remaining scope):
@@ -11,15 +12,15 @@ proposal's remaining scope):
 - Typed the pre-existing Chat Completions DTO gap for `stages`/`annotations`/`form_schema`.
 - A debug log for generation-API routing decisions (`Generation API resolved for "<model>" — api: ...`).
 
-Everything else below is **spike-only**: findings gathered by testing against real deployments. Most
-scaffolding was reverted once it answered its question — tools/function calling, and `top_p`/
+Most scaffolding was reverted once it answered its question — tools/function calling, and `top_p`/
 `response_format` (confirmed Core accepts them, then reverted because neither has a capability gate and
-each would silently alter every real Responses request on `development`). A few pieces of passthrough/
-mapping code remain live in `responses.adapter.ts`/`generation.types.ts` because they're gated and cost
-nothing to keep: multimodal input, `reasoning.effort` request passthrough (gated behind
-`features.reasoningEfforts`, hardcoded test value, no real per-conversation setting yet), and the
-reasoning-to-`stages` mapping (persisted, not shown in the UI). This document is still the record of what's
-confirmed vs. still guessed, since none of it has a real UI/setting layer on top yet.
+each would silently alter every real Responses request on `development`). Several other items have since
+been hardened and merged to `development` with production DTOs, Swagger contracts, and an `openapi` regen:
+multimodal input (`input_image` mapping), `reasoning.effort` request passthrough (gated behind
+`features.reasoningEfforts`), `custom_fields.configuration` passthrough, and the reasoning-to-`stages`
+mapping (persisted, not shown in the UI). None of these yet have a real per-conversation UI setting layer —
+that remains open. This document continues to serve as the record of what is confirmed vs. still guessed
+for the remaining unimplemented items.
 
 ## Summary: done, left, blockers
 
@@ -106,8 +107,8 @@ Tested against `ali.qwen3.7-plus` (`responsesApi: true`, `contentParts: true`).
   (never mapped to `input_file`) rather than sent unconditionally, since that would break any non-image
   attachment on any deployment other than `qwen3.5-ocr`.
 
-**Implementation** (still in code, marked spike/TEMPORARY, not hardened into a real feature — no DTOs, no
-Swagger contract, no tests, no `openapi` regen):
+**Implementation** (hardened and merged to `development`, with production DTOs, Swagger contract, and
+`openapi` regen):
 `apps/chat-api/src/conversations/generation/generation.types.ts` (`ResponsesInputContentPart` union) and
 `responses.adapter.ts` (`buildInputItem`).
 
