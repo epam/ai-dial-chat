@@ -223,10 +223,23 @@ const ToolsMenu = ({ params }: { params: UseToolsMenuParams }) => {
   const { toolsMenuItems, onToolToggle, toolConfigurationValue } =
     useToolsMenu(params);
 
+  // Render `toolsMenuItems` with the host's own menu component; the hook is
+  // headless and ships no UI. `toolConfigurationValue` is meant to be merged
+  // into the completion request payload, not rendered directly.
   return (
-    <Menu items={toolsMenuItems} onSelect={onToolToggle}>
-      {toolConfigurationValue && <input type="hidden" />}
-    </Menu>
+    <ul>
+      {toolsMenuItems.map((tool) => (
+        <li key={tool.id}>
+          <button
+            aria-pressed={tool.isSelected}
+            onClick={() => onToolToggle(tool.id)}
+          >
+            {tool.icon}
+            {tool.label}
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 };
 ```
@@ -240,7 +253,7 @@ const ToolsMenu = ({ params }: { params: UseToolsMenuParams }) => {
 | `deepResearchToolId`                  | `string \| null`                      | Operator-configured tool id; `null` yields an empty menu.                   |
 | `selectedItemId`                       | `string \| null`                      | Selected deployment id; changing it resets toggle state to the schema default. |
 | `selectedDeploymentConfiguration`     | `DeploymentConfigurationSchema \| null` | JSON-schema for the selected deployment; `null` yields an empty menu.       |
-| `labels`                              | `Partial<ToolsMenuLabels>`            | Override for the fallback label. Defaults to English `'Deep research'`.    |
+| `labels`                              | `Partial<ToolsMenuLabels>`            | Override for the fallback label. Falls back to English `'Deep research'` only when the host omits `labels` entirely. |
 | `toolIcon`                            | `ReactNode`                           | Icon element for the tool item. Defaults to `null`.                         |
 
 **Returns** (`UseToolsMenuResult`): `{ toolsMenuItems: ToolMenuItem[], onToolToggle, toolConfigurationValue: Record<string, boolean>, restoreToolConfiguration }` — `restoreToolConfiguration` re-applies a persisted tool-config record (e.g. from the last user message) on conversation load.
