@@ -110,6 +110,27 @@ describe('AttachmentCanvasProvider', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-docx-url');
   });
 
+  it('revokes the previous OOXML blob URL when new content is opened', () => {
+    const { result } = renderCanvas();
+
+    act(() => {
+      result.current.openCanvas({
+        type: AttachmentContentType.Ooxml,
+        url: 'blob:mock-replaced-url',
+        format: OoxmlFileType.Xlsx,
+      });
+    });
+
+    act(() => {
+      result.current.openCanvas({
+        type: AttachmentContentType.PlainText,
+        text: 'replacement',
+      });
+    });
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-replaced-url');
+  });
+
   it('does not revoke content types with no url (e.g. PlainText)', () => {
     const { result, unmount } = renderCanvas();
 

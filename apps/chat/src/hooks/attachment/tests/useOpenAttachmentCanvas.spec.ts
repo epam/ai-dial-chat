@@ -189,6 +189,74 @@ describe('useOpenAttachmentCanvas routing', () => {
     expect(mockResolveOoxml).toHaveBeenCalledWith(expect.anything(), 'pptx');
   });
 
+  it('routes an OOXML attachment whose name has no extension by MIME type', async () => {
+    const content = { type: 'ooxml', url: 'blob:titled', format: 'xlsx' };
+    mockResolveOoxml.mockResolvedValue(content);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment(
+        'Quarterly Report',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ),
+    );
+
+    expect(opened).toBe(true);
+    expect(mockResolveOoxml).toHaveBeenCalledWith(expect.anything(), 'xlsx');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      content,
+      'Quarterly Report',
+      'Quarterly Report',
+    );
+  });
+
+  it('opens the unsupported panel when a recognized OOXML file cannot be resolved', async () => {
+    mockResolveOoxml.mockResolvedValue(null);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('report.docx', 'application/octet-stream'),
+    );
+
+    /* Still `true`: the format was recognized, so the canvas owns the
+     * outcome — the caller must not fall back to a bare browser download. */
+    expect(opened).toBe(true);
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'unsupported' }),
+      'report.docx',
+      'report.docx',
+    );
+  });
+
+  it('forwards a Forbidden error from the OOXML resolver to the canvas', async () => {
+    const forbidden = {
+      type: 'error',
+      errorType: 'forbidden',
+      url: '/download?path=path/budget.xlsx',
+    };
+    mockResolveOoxml.mockResolvedValue(forbidden);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    await result.current.openAttachmentCanvas(
+      makeAttachment('budget.xlsx', 'application/octet-stream'),
+    );
+
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      forbidden,
+      'budget.xlsx',
+      'budget.xlsx',
+    );
+  });
+
+  it('does not route legacy binary Office formats to the OOXML resolver', async () => {
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    await result.current.openAttachmentCanvas(
+      makeAttachment('old.doc', 'application/octet-stream'),
+    );
+
+    expect(mockResolveOoxml).not.toHaveBeenCalled();
+  });
+
   it('routes .md attachments to the markdown resolver', async () => {
     mockResolveMarkdown.mockResolvedValue({
       type: 'markdown',

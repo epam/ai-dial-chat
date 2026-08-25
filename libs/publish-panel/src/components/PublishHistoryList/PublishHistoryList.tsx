@@ -42,7 +42,7 @@ export interface PublishHistoryListProps {
 export interface PublishHistoryListColors {
   /** Border color of the "Current" badge. Fallback: `--stroke-tertiary`. */
   currentBadgeBorder?: string;
-  /** Background color of the "Current" badge. Fallback: `--bg-accent-primary-alpha`. */
+  /** Background color of the "Current" badge. Fallback: `--bg-control-accent-alpha`. */
   currentBadgeBackground?: string;
   /** Text color of the "Current" badge. Fallback: `--text-accent`. */
   currentBadgeText?: string;

@@ -24,7 +24,7 @@ export interface MarkdownTableColors {
   rowDivider?: string;
   /** Background of even-indexed body rows. Defaults to `--bg-layer-base`. */
   rowZebraBackground?: string;
-  /** Background of a body row on hover. Defaults to `--bg-accent-primary-alpha`. */
+  /** Background of a body row on hover. Defaults to `--bg-control-accent-alpha-hover`. */
   rowHoverBackground?: string;
 }
 

@@ -158,7 +158,7 @@ export interface AttachmentCanvasColors {
   openInNewTabText?: string;
   /** Border color of the JSON viewer wrapper. Defaults to `--stroke-secondary`. */
   jsonBorder?: string;
-  /** Background color of the JSON viewer wrapper. Defaults to `--bg-layer-1`. */
+  /** Background color of the JSON viewer wrapper. Defaults to `--bg-layer-base`. */
   jsonBackground?: string;
   /** JSON key/label color. Defaults to `--text-primary`. */
   jsonLabel?: string;

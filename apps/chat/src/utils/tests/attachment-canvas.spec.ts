@@ -692,6 +692,40 @@ describe('resolveOoxmlCanvasContent', () => {
       url: '/download?path=path/budget.xlsx',
     });
   });
+
+  it('returns a LoadFailed error when the fetch throws', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('network down')),
+    );
+
+    const result = await resolveOoxmlCanvasContent(
+      makeRemoteAttachment('slides.pptx', 'files/bucket/path/slides.pptx'),
+      OoxmlFileType.Pptx,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.LoadFailed,
+      url: '/download?path=path/slides.pptx',
+    });
+  });
+
+  it('returns null when the attachment has no resolvable source', async () => {
+    /* No local file, no DIAL url, no previewUrl, and no inline data — there is
+     * nothing for the blob resolver to work from. */
+    const result = await resolveOoxmlCanvasContent(
+      {
+        id: 'report.docx',
+        name: 'report.docx',
+        contentType: 'application/octet-stream',
+        type: AttachmentType.File,
+      } as DisplayAttachment,
+      OoxmlFileType.Docx,
+    );
+
+    expect(result).toBeNull();
+  });
 });
 
 describe('resolveVisualizerCanvasContent', () => {

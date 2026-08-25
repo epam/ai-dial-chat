@@ -1,9 +1,9 @@
 .viewer {
-  background: var(--bg-layer-1, #ffffff);
+  background: var(--bg-layer-raised, #fcfcfc);
 }
 
 .statusOverlay {
-  background: var(--bg-layer-1, #ffffff);
+  background: var(--bg-layer-raised, #fcfcfc);
   color: var(--ac-status-text, var(--text-secondary, #454545));
 }
 

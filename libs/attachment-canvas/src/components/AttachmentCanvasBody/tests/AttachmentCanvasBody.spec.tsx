@@ -149,6 +149,21 @@ describe('AttachmentCanvasBody', () => {
     expect(screen.getByRole('region', { name: 'ooxml-content' })).toBeTruthy();
   });
 
+  it('does not add its own scroll container for OOXML content', () => {
+    const { container } = renderBody({
+      type: AttachmentContentType.Ooxml,
+      url: 'blob:office-url',
+      format: OoxmlFileType.Docx,
+    });
+
+    /* The viewer manages its own scrolling — an outer scroll container would
+     * produce nested scrollbars. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting a CSS sizing class on the unlabeled body wrapper, which has no accessible role or text to query
+    expect(container.querySelector('.overflow-hidden')).toBeTruthy();
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- same unlabeled wrapper; verifying the absence of a scroll container
+    expect(container.querySelector('.overflow-auto')).toBeNull();
+  });
+
   it('mounts the visualizer renderer for Visualizer content', () => {
     renderBody({
       type: AttachmentContentType.Visualizer,

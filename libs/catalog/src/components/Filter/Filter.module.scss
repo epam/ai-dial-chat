@@ -98,14 +98,14 @@
 .rowChecked {
   background: var(
     --cat-filter-row-checked-bg,
-    var(--bg-accent-primary-alpha, #7da4ff2e)
+    var(--bg-control-accent-alpha-active, #2764d933)
   );
 
   @media (hover: hover) {
     &:hover {
       background: var(
         --cat-filter-row-checked-bg,
-        var(--bg-accent-primary-alpha, #7da4ff2e)
+        var(--bg-control-accent-alpha-active, #2764d933)
       );
     }
   }

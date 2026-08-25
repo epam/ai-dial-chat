@@ -4,7 +4,7 @@
 
 .header {
   color: var(--cat-grid-header-text, var(--text-secondary, #57647a));
-  background: var(--cat-grid-header-bg, var(--bg-layer-1, #e0e6f0));
+  background: var(--cat-grid-header-bg, var(--bg-layer-sunken, #eef1f7));
 }
 
 .cell {
@@ -14,5 +14,5 @@
 }
 
 .evenRow {
-  background: var(--cat-grid-row-even-bg, var(--bg-layer-7, #00000006));
+  background: var(--cat-grid-row-even-bg, var(--bg-layer-base, #f5f7fa));
 }
