@@ -11,7 +11,10 @@ import {
 import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import { UsageI18nKeys } from '../../constants/translation-keys';
-import { mapUserUsageToModelLimits } from '../map-user-usage-to-model-limits';
+import {
+  mapOverallCostLimitsToPeriodStatuses,
+  mapUserUsageToModelLimits,
+} from '../map-user-usage-to-model-limits';
 
 const t = ((key: string, params?: Record<string, unknown>) => {
   if (key === UsageI18nKeys.UnlimitedProgressAriaLabel) {
@@ -22,6 +25,33 @@ const t = ((key: string, params?: Record<string, unknown>) => {
   }
   if (key === UsageI18nKeys.UnavailableLabel) {
     return 'Not available';
+  }
+  if (key === UsageI18nKeys.NoLimitLabel) {
+    return 'No limit';
+  }
+  if (key === UsageI18nKeys.FollowsCostLimitLabel) {
+    return 'Follows cost limit';
+  }
+  if (key === UsageI18nKeys.FollowsCostLimitAriaLabel) {
+    return `${params?.used} used. Follows cost limit.`;
+  }
+  if (key === UsageI18nKeys.SpentLabel) {
+    return `${params?.amount} spent`;
+  }
+  if (key === UsageI18nKeys.TodayPeriodDescription) {
+    return 'Last 24 hours';
+  }
+  if (key === UsageI18nKeys.ThisWeekPeriodDescription) {
+    return 'Last 7 days';
+  }
+  if (key === UsageI18nKeys.ThisMonthPeriodDescription) {
+    return 'Last 30 days';
+  }
+  if (key === UsageI18nKeys.OverallCostLimitRunningLowTooltip) {
+    return `Overall ${params?.period} cost limit is running low.`;
+  }
+  if (key === UsageI18nKeys.OverallCostLimitReachedTooltip) {
+    return `Overall ${params?.period} cost limit is reached. Models can't be used until it resets, regardless of remaining token limits.`;
   }
   return key;
 }) as TFunction;
@@ -37,7 +67,8 @@ const modelItem = (
 
 const withUsage = (
   deployments: Record<string, DeploymentLimitsResponseDto>,
-): UserLimitStatsResponseDto => ({ deployments });
+  overrides: Partial<UserLimitStatsResponseDto> = {},
+): UserLimitStatsResponseDto => ({ deployments, ...overrides });
 
 const mapUsage = (
   usage: UserLimitStatsResponseDto | undefined,
@@ -102,7 +133,7 @@ describe('mapUserUsageToModelLimits', () => {
       }),
     );
 
-    expect(row.last7Days.cost.usedLabel).toBe('$1.25');
+    expect(row.last7Days.cost.usedLabel).toBe('$1.25 spent');
     expect(row.status).toBe(ModelLimitStatus.Unavailable);
   });
 
@@ -208,7 +239,7 @@ describe('mapUserUsageToModelLimits', () => {
 
       expect(row.last24Hours.tokens.usedLabel).toBe('100');
       expect(row.last24Hours.tokens.totalLabel).toBe('1K');
-      expect(row.last24Hours.cost.usedLabel).toBe('$1');
+      expect(row.last24Hours.cost.usedLabel).toBe('$1 spent');
     });
 
     it('maps week Cost and Tokens to Last 7 days', () => {
@@ -216,7 +247,7 @@ describe('mapUserUsageToModelLimits', () => {
 
       expect(row.last7Days.tokens.usedLabel).toBe('200');
       expect(row.last7Days.tokens.totalLabel).toBe('2K');
-      expect(row.last7Days.cost.usedLabel).toBe('$2');
+      expect(row.last7Days.cost.usedLabel).toBe('$2 spent');
     });
 
     it('maps month Cost and Tokens to Last 30 days', () => {
@@ -224,7 +255,7 @@ describe('mapUserUsageToModelLimits', () => {
 
       expect(row.last30Days.tokens.usedLabel).toBe('300');
       expect(row.last30Days.tokens.totalLabel).toBe('3K');
-      expect(row.last30Days.cost.usedLabel).toBe('$3');
+      expect(row.last30Days.cost.usedLabel).toBe('$3 spent');
     });
 
     it('does not substitute a missing period value', () => {
@@ -254,8 +285,8 @@ describe('mapUserUsageToModelLimits', () => {
       );
 
       expect(row.last24Hours.cost.kind).toBe(ModelLimitMetricKind.Unlimited);
-      expect(row.last24Hours.cost.usedLabel).toBe('$0.24');
-      expect(row.last24Hours.cost.ariaLabel).toBe('$0.24');
+      expect(row.last24Hours.cost.usedLabel).toBe('$0.24 spent');
+      expect(row.last24Hours.cost.ariaLabel).toBe('$0.24 spent');
     });
 
     it('classifies missing cost as unavailable', () => {
@@ -294,6 +325,24 @@ describe('mapUserUsageToModelLimits', () => {
         ModelLimitMetricKind.Unavailable,
       );
       expect(row.last7Days.tokens.kind).toBe(ModelLimitMetricKind.Unlimited);
+    });
+
+    it('shows that unlimited model tokens follow the matching finite overall Cost limit', () => {
+      const [row] = mapUsage(
+        withUsage(
+          {
+            'gpt-4o': {
+              weekTokenStats: { used: 10, total: 2 ** 53 },
+            },
+          },
+          { weekCostStats: { used: 5, total: 100 } },
+        ),
+      );
+
+      expect(row.last7Days.tokens.supportingLabel).toBe('Follows cost limit');
+      expect(row.last7Days.tokens.ariaLabel).toBe(
+        '10 used. Follows cost limit.',
+      );
     });
 
     it('uses compact visible token values and full accessible values', () => {
@@ -364,7 +413,7 @@ describe('mapUserUsageToModelLimits', () => {
       expect(row.status).toBe(ModelLimitStatus.NoLimit);
     });
 
-    it('does not let cost affect token Status', () => {
+    it('does not treat per-model attributed cost as a finite limit', () => {
       const [row] = mapUsage(
         withUsage({
           'gpt-4o': {
@@ -376,6 +425,56 @@ describe('mapUserUsageToModelLimits', () => {
       );
 
       expect(row.status).toBe(ModelLimitStatus.Unavailable);
+    });
+
+    it('applies the worst overall Cost status to every model row', () => {
+      const [row] = mapUsage(
+        withUsage(
+          {
+            'gpt-4o': {
+              dayTokenStats: { used: 10, total: 100 },
+              weekTokenStats: { used: 20, total: 100 },
+            },
+          },
+          {
+            dayCostStats: { used: 75, total: 100 },
+            weekCostStats: { used: 100, total: 100 },
+          },
+        ),
+      );
+
+      expect(row.status).toBe(ModelLimitStatus.LimitReached);
+    });
+  });
+
+  describe('overall Cost period statuses', () => {
+    it('maps top-level Cost limits to period-aware header tooltips', () => {
+      const statuses = mapOverallCostLimitsToPeriodStatuses(
+        withUsage(
+          {},
+          {
+            dayCostStats: { used: 100, total: 100 },
+            weekCostStats: { used: 80, total: 100 },
+            monthCostStats: { used: 20, total: 100 },
+          },
+        ),
+        'en',
+        t,
+      );
+
+      expect(statuses.last24Hours).toEqual({
+        status: ModelLimitStatus.LimitReached,
+        tooltipLabel:
+          "Overall last 24 hours cost limit is reached. Models can't be used until it resets, regardless of remaining token limits.",
+      });
+      expect(statuses.last7Days).toEqual({
+        status: ModelLimitStatus.RunningLow,
+        tooltipLabel: 'Overall last 7 days cost limit is running low.',
+      });
+      expect(statuses.last30Days).toEqual({
+        status: ModelLimitStatus.WithinLimits,
+        tooltipLabel: undefined,
+      });
     });
   });
 });

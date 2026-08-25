@@ -11,7 +11,8 @@ The library SHALL export `ModelLimitsSection`; the string enums `ModelLimitStatu
 
 `ModelLimitMetricCell` SHALL retain its normalized `kind`, preformatted labels, optional uncapped
 finite `usedPercent`/`status`, and required `ariaLabel`. The library SHALL not recompute percentage,
-status, formatting, or unlimited classification.
+status, formatting, unlimited classification, or supporting-label selection. It MAY receive a
+host-provided `supportingLabel` for an unlimited metric, such as `Follows cost limit`.
 
 `ModelLimitPeriodCell` SHALL contain `tokens: ModelLimitMetricCell` and
 `cost: ModelLimitMetricCell`. `ModelLimitRow` SHALL contain identity fields,
@@ -19,11 +20,13 @@ status, formatting, or unlimited classification.
 `last30Days: ModelLimitPeriodCell`, and host-derived `status: ModelLimitStatus`.
 
 `ModelLimitsLabels` SHALL contain heading, Item/Last 24 hours/Last 7 days/Last 30 days/Status column,
-visible Tokens sublabel, accessible Cost context, model type, metric state, status badge, and
+accessible Tokens/Cost context, model type, metric state, status badge, and
 empty-state strings. It SHALL NOT require period-selector or Requests labels.
 
 `ModelLimitsSectionProps` SHALL accept `rows`, `labels`, optional `styles`, and optional
-`emptyStateIconSize`; it SHALL NOT accept `period` or `onPeriodChange`.
+`emptyStateIconSize`, plus normalized overall Cost statuses/tooltips for the three fixed headers; it
+SHALL NOT accept `period` or `onPeriodChange`. The library SHALL not derive header status or tooltip
+copy from row data.
 
 #### Scenario: Fixed comparison exports are available
 - **WHEN** a consumer imports from `@epam/ai-dial-usage-dashboard`
@@ -49,25 +52,26 @@ the fill SHALL be clamped to `[0, 100]` while `aria-valuetext` preserves the hos
 meaning. Unlimited Tokens SHALL show `usedLabel` and `noLimitLabel` without a progress bar.
 Unavailable Tokens SHALL show `unavailableLabel` without a progress bar.
 
-Cost SHALL render in the same period cell as only its normalized used value when present, or
-`unavailableLabel` when Unavailable. It SHALL NOT visibly render `costLabel`, `totalLabel`,
-`noLimitLabel`, or a progress bar. The localized `costLabel` SHALL remain available as non-visual
-accessible context. The component SHALL render the host-provided value and SHALL not derive or
-format it. The token amount/state and Cost value SHALL share one baseline row; a finite token
-progress bar SHALL render directly below that row at the period cell's available width.
+Cost SHALL render in the same period cell as only its normalized attributed-spend label when
+present, or `unavailableLabel` when Unavailable. It SHALL NOT visibly render `costLabel`,
+`totalLabel`, `noLimitLabel`, a per-model Cost cap, or a progress bar. The localized `costLabel`
+SHALL remain available as non-visual accessible context. The component SHALL render the
+host-provided value and SHALL not derive or format it. A finite token progress bar SHALL render
+directly below the token value, and Cost SHALL render on its own line below that progress bar.
 
 Each finite token progress fill color SHALL reflect that token cell's own metric status, independent
 of the row's overall Status and other periods.
 
-#### Scenario: Period cell combines finite Tokens progress and compact Cost
-- **WHEN** a period contains finite Tokens `4K / 10K` at 40% and Cost `$3.20`
-- **THEN** the same period cell renders `4K / 10K` and `$3.20` on one baseline row with the token
-  progress bar directly below, without a visible Cost label, total, No limit text, or Cost progress
-  bar
+#### Scenario: Period cell stacks finite Tokens progress and attributed Cost
+- **WHEN** a period contains finite Tokens `4K / 10K` at 40% and normalized Cost `$3.20 spent`
+- **THEN** the same period cell renders `4K / 10K`, then its token progress bar, then `$3.20 spent`
+  on a separate line, without a visible Cost label, per-model Cost limit, No limit text, or Cost
+  progress bar
 
 #### Scenario: Unlimited Tokens render without progress
-- **WHEN** a period's Tokens kind is `Unlimited`
-- **THEN** it renders the token used value plus `noLimitLabel` and no progress bar
+- **WHEN** a period's Tokens kind is `Unlimited` with host-provided supporting label
+  `Follows cost limit`
+- **THEN** it renders the token used value plus `Follows cost limit` and no progress bar
 
 #### Scenario: Unavailable metrics remain explicit
 - **WHEN** either metric in a period is `Unavailable`
@@ -105,14 +109,15 @@ breakpoints, and logical directional properties/classes. At desktop widths it SH
 aligned five-column grid: Item, Last 24 hours, Last 7 days, Last 30 days, and Status. Each period
 column SHALL group its Tokens and Cost content without vertical column borders. Every desktop row's
 grid items SHALL be centered along the vertical axis while preserving their horizontal text/content
-alignment. The compact token/Cost value row SHALL not wrap under normal compact values, and token
-progress tracks SHALL retain the available period-cell width.
+alignment. Token progress tracks SHALL retain the available period-cell width, and the attributed
+Cost line SHALL remain below the progress track or token supporting state.
 
 At mobile widths each semantic row SHALL stack identity, three visibly labelled period sections,
-and a visibly labelled Status in one subtree. It SHALL not create page-level horizontal overflow at
-360px, hide any period, or mount separate desktop/mobile component trees. Long content SHALL wrap or
-truncate without obscuring the accessible value. No directional icon is introduced, so icon
-mirroring is not required.
+and a visibly labelled Status in one subtree. Overall Cost status indicators SHALL remain available
+beside the corresponding visible mobile period label. It SHALL not create page-level horizontal
+overflow at 360px, hide any period, or mount separate desktop/mobile component trees. Long content
+SHALL wrap or truncate without obscuring the accessible value. The status icons are
+direction-agnostic and SHALL NOT be mirrored.
 
 #### Scenario: Mobile preserves all periods without horizontal page scroll
 - **WHEN** the section renders at 360px with long model and metric values
@@ -140,12 +145,18 @@ column header SHALL programmatically cover both Tokens and Cost in its correspon
 finite token progress bar SHALL have a period-specific accessible name and host-provided full
 `aria-valuetext`. Mobile visible labels SHALL not replace or break the table associations.
 Decorative empty-state and avatar imagery SHALL remain hidden from assistive technology where
-redundant. The surface introduces no interactive period control and therefore no new keyboard
-interaction.
+redundant. A running-low/reached period status indicator SHALL be keyboard-focusable, expose its
+complete host-provided tooltip as an accessible name, and provide at least a 44×44 CSS-pixel touch
+target where it is shown on mobile.
+
+#### Scenario: Overall Cost status is explained from the period header
+- **WHEN** Last 24 hours overall Cost status is `LimitReached`
+- **THEN** its header renders an error indicator whose accessible tooltip explains that the overall
+  Last 24 hours Cost limit is reached and models cannot be used until it resets
 
 #### Scenario: Table name includes rendered row count
 - **WHEN** the section has 7 rows
-- **THEN** its accessible table name includes the Model limits label and count `7`
+- **THEN** its accessible table name includes the Model tokens limits label and count `7`
 
 #### Scenario: Period progress has unambiguous context
 - **WHEN** assistive technology reaches a model's Last 7 days token progress bar
@@ -164,7 +175,7 @@ interaction.
 `ModelLimitsSection` SHALL render exactly the fixed columns Item, Last 24 hours, Last 7 days, Last
 30 days, and Status. It SHALL not render a period selector, Last minute/Last hour option, standalone
 Cost/Tokens/Requests columns, or Requests content. Every period column SHALL render both the Tokens
-and compact value-only Cost supplied for that period.
+and attributed Cost supplied for that period without visible Tokens or Cost subheaders.
 
 #### Scenario: Header contains only requested columns
 - **WHEN** rows are present

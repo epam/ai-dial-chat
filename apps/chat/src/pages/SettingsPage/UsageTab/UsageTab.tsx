@@ -12,7 +12,10 @@ import { useNotification } from '../../../context/NotificationContext';
 import { useLanguage } from '../../../hooks/language/useLanguage';
 import { useUsageData } from '../../../hooks/useUsageData';
 import { mapUsageDataToDashboard } from '../../../utils/map-usage-data-to-dashboard';
-import { mapUserUsageToModelLimits } from '../../../utils/map-user-usage-to-model-limits';
+import {
+  mapOverallCostLimitsToPeriodStatuses,
+  mapUserUsageToModelLimits,
+} from '../../../utils/map-user-usage-to-model-limits';
 
 const UsageTab: FC = () => {
   const { t } = useTranslation();
@@ -78,6 +81,10 @@ const UsageTab: FC = () => {
     () => mapUserUsageToModelLimits(usage, deploymentItems, activeLocale, t),
     [usage, deploymentItems, activeLocale, t],
   );
+  const modelLimitPeriodStatuses = useMemo(
+    () => mapOverallCostLimitsToPeriodStatuses(usage, activeLocale, t),
+    [usage, activeLocale, t],
+  );
 
   return (
     <div className="flex size-full min-h-0 flex-col">
@@ -100,6 +107,7 @@ const UsageTab: FC = () => {
             <ModelLimitsSection
               rows={modelLimitRows}
               labels={modelLimitsLabels}
+              periodStatuses={modelLimitPeriodStatuses}
             />
           </>
         )}

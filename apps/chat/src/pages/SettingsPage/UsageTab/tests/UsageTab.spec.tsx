@@ -1,6 +1,7 @@
 import { DeploymentItemDtoTypeEnum } from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type {
+  ModelLimitPeriodStatuses,
   ModelLimitRow,
   ModelLimitsLabels,
 } from '@epam/ai-dial-usage-dashboard';
@@ -50,11 +51,13 @@ vi.mock('@epam/ai-dial-usage-dashboard', async (importOriginal) => {
     ModelLimitsSection: ({
       rows,
       labels,
+      periodStatuses,
     }: {
       rows: ModelLimitRow[];
       labels: ModelLimitsLabels;
+      periodStatuses: ModelLimitPeriodStatuses;
     }) => {
-      modelLimitsSectionSpy({ rows, labels });
+      modelLimitsSectionSpy({ rows, labels, periodStatuses });
       return (
         <div>
           {rows.length === 0 ? (
@@ -231,9 +234,11 @@ describe('UsageTab', () => {
       expect(screen.getByText('GPT-4o')).toBeTruthy();
       expect(screen.getByText('Claude 3')).toBeTruthy();
 
-      const { rows, labels } = modelLimitsSectionSpy.mock.lastCall?.[0] as {
+      const { rows, labels, periodStatuses } = modelLimitsSectionSpy.mock
+        .lastCall?.[0] as {
         rows: ModelLimitRow[];
         labels: ModelLimitsLabels;
+        periodStatuses: ModelLimitPeriodStatuses;
       };
       expect(rows[0].last24Hours.tokens.usedLabel).toBe('1');
       expect(rows[0].last7Days.tokens.kind).toBe('unavailable');
@@ -247,12 +252,39 @@ describe('UsageTab', () => {
           costLabel: UsageI18nKeys.CostColumnLabel,
         }),
       );
+      expect(periodStatuses).toEqual({
+        last24Hours: { status: 'unavailable', tooltipLabel: undefined },
+        last7Days: { status: 'unavailable', tooltipLabel: undefined },
+        last30Days: { status: 'unavailable', tooltipLabel: undefined },
+      });
       expect(modelLimitsSectionSpy.mock.lastCall?.[0]).not.toHaveProperty(
         'period',
       );
       expect(modelLimitsSectionSpy.mock.lastCall?.[0]).not.toHaveProperty(
         'onPeriodChange',
       );
+    });
+
+    it('passes overall Cost statuses from the aggregate-card budgets', () => {
+      mockUseUsageData.mockReturnValue({
+        usage: {
+          deployments: {},
+          dayCostStats: { used: 10, total: 10 },
+          weekCostStats: { used: 8, total: 10 },
+          monthCostStats: { used: 1, total: 10 },
+        },
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+
+      const { periodStatuses } = modelLimitsSectionSpy.mock.lastCall?.[0] as {
+        periodStatuses: ModelLimitPeriodStatuses;
+      };
+      expect(periodStatuses.last24Hours.status).toBe('limit-reached');
+      expect(periodStatuses.last7Days.status).toBe('running-low');
+      expect(periodStatuses.last30Days.status).toBe('within-limits');
     });
 
     it('shows an empty state instead of an empty table when `usage.deployments` is empty', () => {

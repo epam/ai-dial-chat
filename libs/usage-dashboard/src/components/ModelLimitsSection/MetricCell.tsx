@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ElementSize, ProgressBar } from '@epam/ai-dial-ui-kit';
-import { FC, ReactNode } from 'react';
+import { FC } from 'react';
 import {
   ModelLimitMetricCell,
   ModelLimitMetricKind,
@@ -26,7 +26,6 @@ interface MetricCellProps {
   label: string;
   progressAriaLabel: string;
   showProgress: boolean;
-  trailingValue?: ReactNode;
   labels: ModelLimitsLabels;
   typography: ModelLimitsTypography;
 }
@@ -37,7 +36,6 @@ export const MetricCell: FC<MetricCellProps> = ({
   label,
   progressAriaLabel,
   showProgress,
-  trailingValue,
   labels,
   typography,
 }) => {
@@ -54,14 +52,7 @@ export const MetricCell: FC<MetricCellProps> = ({
 
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      <span
-        className={mergeClasses(
-          'dial-caption-lead-semi-text',
-          styles.mobileColumnLabel,
-        )}
-      >
-        {label}
-      </span>
+      <span className="sr-only">{label}: </span>
       {cell.kind === ModelLimitMetricKind.Unlimited && (
         <div
           className="flex min-w-0 items-start gap-2"
@@ -76,10 +67,9 @@ export const MetricCell: FC<MetricCellProps> = ({
                 styles.secondaryValue,
               )}
             >
-              {labels.noLimitLabel}
+              {cell.supportingLabel ?? labels.noLimitLabel}
             </span>
           </div>
-          {trailingValue}
         </div>
       )}
       {cell.kind === ModelLimitMetricKind.Unavailable && (
@@ -96,7 +86,6 @@ export const MetricCell: FC<MetricCellProps> = ({
           >
             {labels.unavailableLabel}
           </span>
-          {trailingValue}
         </div>
       )}
       {cell.kind === ModelLimitMetricKind.Finite && (
@@ -114,7 +103,6 @@ export const MetricCell: FC<MetricCellProps> = ({
                 / {cell.totalLabel}
               </span>
             </div>
-            {trailingValue}
           </div>
           {showProgress && (
             <ProgressBar

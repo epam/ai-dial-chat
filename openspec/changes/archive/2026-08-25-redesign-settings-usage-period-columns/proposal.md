@@ -20,12 +20,17 @@ single Status cell only describes the currently selected window.
   Last 7 days, Last 30 days, and Status.
 - Remove the Last minute / Last hour / Last 24 hours / Last 7 days / Last 30 days segmented period
   selector and remove selected-period state from `UsageTab`.
-- In each period column, show the existing token used/total progress treatment and only the
-  formatted cost amount for that same rolling window. The Cost sublabel and limit text are not
-  shown; Requests are no longer displayed in this table.
-- Derive the row Status from the most severe finite token status across all three displayed windows:
-  Limit reached > Running low > Within limits; unlimited/unavailable fallbacks keep their existing
-  meaning when no finite token status exists.
+- In each period column, show the existing token used/total progress treatment followed by the
+  formatted attributed cost and `spent` caption for that same rolling window. The Cost sublabel and
+  per-model Cost limit are not shown; Requests are no longer displayed in this table.
+- When a model has no finite token cap for a period, show `Follows cost limit` and evaluate that
+  period against the matching top-level user Cost limit used by the aggregate cards.
+- Derive the row Status from the most severe model-token or overall Cost status across all three
+  displayed windows: Limit reached > Running low > Within limits; unlimited/unavailable fallbacks
+  keep their existing meaning when no finite status exists.
+- Rename the section to `Model tokens limits`, keep its dynamic row count, and show a status icon in
+  each affected period header when the matching overall Cost limit is running low or reached. The
+  icon tooltip explains the overall period Cost status and that a reached limit blocks all models.
 - Include a deployment row when any usable Cost or Tokens stat has non-zero usage in at least one of
   the three displayed windows. Keep the section and its existing empty state when no row qualifies.
 - Keep the existing aggregate Today / This week / This month cards above the table unchanged.
@@ -42,10 +47,11 @@ the existing boundary in `apps/chat/src/utils/map-user-usage-to-model-limits.ts:
 responsive table-row pattern in
 `libs/usage-dashboard/src/components/ModelLimitsSection/ModelLimitsRow.tsx:84`.
 
-Each period cell contains a Tokens block (used/total, progress bar, or No limit/Not available) and a
-compact formatted cost amount (or Not available) without a visible Cost sublabel or limit text. The
-token amount/state and Cost share one baseline row, with the progress bar directly below, to avoid
-unnecessarily tall table rows. On
+Each period cell contains a Tokens block (used/total plus progress, `Follows cost limit`, or Not
+available) followed by a formatted attributed cost amount with the `spent` caption (or Not
+available), without a visible Cost sublabel or per-model Cost limit. The app derives overall Cost
+statuses from the same top-level stats as the aggregate cards and passes normalized header statuses,
+tooltips, supporting labels, and row statuses into the library. On
 desktop the five columns remain aligned and every cell's content is vertically centered within the
 row without changing its horizontal alignment. On mobile each model becomes a stacked card-like
 row, so the table does not require horizontal page scrolling at 360px.
@@ -81,13 +87,16 @@ None.
 
 ## Acceptance Criteria
 
-- Settings → Usage shows exactly one Model limits table with Item, Last 24 hours, Last 7 days, Last
+- Settings → Usage shows exactly one Model tokens limits table with Item, Last 24 hours, Last 7 days, Last
   30 days, and Status columns and no period selector.
-- Every period cell shows token usage using the current finite/unlimited/unavailable treatment and
-  also shows only the formatted cost amount for that same period, without a visible Cost sublabel or
-  limit text; token and Cost values share one compact row above the token progress bar.
-- A row's Status reflects the most severe finite token status found across all three periods,
-  independent of which period has that status.
+- Every period cell shows token usage using the finite/unlimited/unavailable treatment, then the
+  formatted attributed cost plus `spent` for that period, without a visible Cost sublabel or
+  per-model Cost limit; a finite token progress bar sits between the token value and Cost line.
+- An unlimited model-token period shows `Follows cost limit` when the matching overall Cost limit is
+  finite, and the period header shows an accessible running-low/reached icon with the supplied
+  tooltip when that overall Cost status requires attention.
+- A row's Status reflects the most severe finite model-token or overall Cost status found across all
+  three periods, independent of which period or metric has that status.
 - Rows with no non-zero usable Cost or Tokens usage in any displayed period are absent; a zero-row
   result renders the existing section-level empty state.
 - The layout remains usable without page-level horizontal overflow at 360px and preserves aligned
@@ -107,8 +116,8 @@ None.
 - Specs: `usage-model-limits` and `usage-dashboard-lib`.
 - No backend, endpoint, generated-client, dependency, feature-flag, authorization, cache, telemetry,
   or rate-limit changes.
-- i18n removes selector/Requests labels from this surface and reuses the existing Last 24 hours /
-  Last 7 days / Last 30 days / Tokens / Cost labels; no new user-visible string is required.
+- i18n removes selector/Requests labels from this surface, changes the heading to `Model tokens
+  limits`, and adds localized `spent`, `Follows cost limit`, and overall Cost-status tooltip text.
 - Scope touches `libs/usage-dashboard`; all API field selection, currency formatting, locale
   resolution, icon URL resolution, and status thresholds stay in the app mapper and cross the
   boundary only as normalized props.

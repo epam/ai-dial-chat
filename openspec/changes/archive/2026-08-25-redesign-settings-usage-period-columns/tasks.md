@@ -94,3 +94,10 @@ before widening scope.
   baseline row above the full-width token progress bar for all metric kinds; preserve accessible
   Cost context, RTL/mobile behavior, and vertical row centering, update specs/README/tests, then
   rerun library verification and strict OpenSpec validation.
+- [x] 4.5 Apply the final visual contract: rename the section to `Model tokens limits`; move the
+  attributed Cost value plus localized `spent` caption below token progress; replace unlimited
+  model-token supporting text with `Follows cost limit` when the matching top-level Cost limit is
+  finite; derive accessible period-header warning/reached indicators and every row's worst Status
+  from the same top-level day/week/month Cost limits plus model-token limits; update normalized lib
+  props, app mapper/i18n, README/specs/tests, verify RTL/mobile semantics and library isolation, then
+  rerun focused Nx checks, docs validation, affected checks, and strict OpenSpec validation.

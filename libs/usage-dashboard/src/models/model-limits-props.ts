@@ -34,8 +34,25 @@ export interface ModelLimitMetricCell {
   usedPercent?: number;
   /** Status derived from `usedPercent` against the host's thresholds. Present for `Finite` only. */
   status?: ModelLimitStatus;
+  /** Host-provided secondary text for an `Unlimited` metric, e.g. `'Follows cost limit'` or `'No limit'`. */
+  supportingLabel?: string;
   /** Accessible text describing the cell's full value, present regardless of `kind` (e.g. `'12,345 of 50,000 tokens used'` or `'Not available'`). */
   ariaLabel: string;
+}
+
+/** Normalized overall Cost status and optional explanatory tooltip for one period header. */
+export interface ModelLimitPeriodStatus {
+  /** Host-derived status of the matching overall Cost limit. */
+  status: ModelLimitStatus;
+  /** Complete tooltip/accessibility text for warning and error indicators. */
+  tooltipLabel?: string;
+}
+
+/** Overall Cost statuses aligned with the three fixed comparison periods. */
+export interface ModelLimitPeriodStatuses {
+  last24Hours: ModelLimitPeriodStatus;
+  last7Days: ModelLimitPeriodStatus;
+  last30Days: ModelLimitPeriodStatus;
 }
 
 /** Preformatted Cost and Tokens values for one rolling-period column. */
@@ -46,7 +63,7 @@ export interface ModelLimitPeriodCell {
   cost: ModelLimitMetricCell;
 }
 
-/** One row of the Model limits table: model identity, three rolling-period comparisons, and overall status. */
+/** One row of the Model tokens limits table: model identity, three rolling-period comparisons, and overall status. */
 export interface ModelLimitRow {
   /** Stable identifier for the row, e.g. the deployment ID. */
   id: string;
@@ -62,13 +79,13 @@ export interface ModelLimitRow {
   last7Days: ModelLimitPeriodCell;
   /** Cost and Tokens metrics for the rolling 30-day period. */
   last30Days: ModelLimitPeriodCell;
-  /** Host-derived overall status across the three token-limit periods. */
+  /** Host-derived overall status across all model-token and overall Cost limit periods. */
   status: ModelLimitStatus;
 }
 
 /** Localized strings shared by every row and by the section shell in `ModelLimitsSection`. */
 export interface ModelLimitsLabels {
-  /** Section heading text, e.g. `'Model limits'`. The row count is rendered separately. */
+  /** Section heading text, e.g. `'Model tokens limits'`. The row count is rendered separately. */
   headingLabel: string;
   /** Column header text for the Item (identity) column. */
   itemColumnLabel: string;
@@ -80,7 +97,7 @@ export interface ModelLimitsLabels {
   last30DaysColumnLabel: string;
   /** Column header text for the Status column. */
   statusColumnLabel: string;
-  /** Tokens sublabel rendered inside every period cell. */
+  /** Non-visual accessible label for Tokens values inside every period cell. */
   tokensLabel: string;
   /** Non-visual accessible label for the value-only Cost amount in every period cell. */
   costLabel: string;
@@ -134,6 +151,10 @@ export interface ModelLimitsColors {
   warningProgressColor?: string;
   /** Progress-fill / accent color for `LimitReached`. Fallback: `--bg-control-error-active`. */
   errorProgressColor?: string;
+  /** Period-header indicator color for `RunningLow`. Fallback: `--text-warning-icon`. */
+  warningIndicatorColor?: string;
+  /** Period-header indicator color for `LimitReached`. Fallback: `--text-error`. */
+  errorIndicatorColor?: string;
   /** `WithinLimits` badge background. Fallback: `--bg-success`. */
   defaultBadgeBackground?: string;
   /** `WithinLimits` badge text color. Fallback: `--text-success`. */
@@ -186,6 +207,8 @@ export interface ModelLimitsSectionProps {
   rows: ModelLimitRow[];
   /** Localized strings shared by the section shell and every row. */
   labels: ModelLimitsLabels;
+  /** Host-derived overall Cost statuses/tooltips for the three fixed period headers. */
+  periodStatuses: ModelLimitPeriodStatuses;
   /** Style overrides applied as CSS custom properties and typography class overrides. */
   styles?: ModelLimitsStyles;
   /** Size (px) of the empty-state icon, shown when `rows` is empty. Defaults to `48`. */

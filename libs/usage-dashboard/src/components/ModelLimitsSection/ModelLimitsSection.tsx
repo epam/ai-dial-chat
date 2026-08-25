@@ -5,16 +5,45 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { IconChartBar } from '@tabler/icons-react';
 import { FC } from 'react';
-import { ModelLimitsSectionProps } from '../../models/model-limits-props';
+import {
+  ModelLimitPeriodStatus,
+  ModelLimitsSectionProps,
+} from '../../models/model-limits-props';
 import { MODEL_LIMITS_GRID_COLUMNS, ModelLimitsRow } from './ModelLimitsRow';
 import styles from './ModelLimitsSection.module.scss';
+import { PeriodStatusIndicator } from './PeriodStatusIndicator';
 
 const AVATAR_SIZE = 40;
+
+interface PeriodHeaderProps {
+  label: string;
+  periodStatus: ModelLimitPeriodStatus;
+  className: string;
+}
+
+const PeriodHeader: FC<PeriodHeaderProps> = ({
+  label,
+  periodStatus,
+  className,
+}) => (
+  <span
+    role="columnheader"
+    className={mergeClasses(
+      'flex min-w-0 items-center justify-between gap-2',
+      className,
+      styles.columnHeader,
+    )}
+  >
+    <span className="min-w-0 truncate">{label}</span>
+    <PeriodStatusIndicator periodStatus={periodStatus} />
+  </span>
+);
 
 /** "Model limits" section: a fixed table comparing Cost and Tokens across three rolling periods. */
 export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
   rows,
   labels,
+  periodStatuses,
   styles: stylesProp,
   emptyStateIconSize = 48,
 }) => {
@@ -40,6 +69,8 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
     '--mls-progress-default': colors?.defaultProgressColor,
     '--mls-progress-warning': colors?.warningProgressColor,
     '--mls-progress-error': colors?.errorProgressColor,
+    '--mls-indicator-warning': colors?.warningIndicatorColor,
+    '--mls-indicator-error': colors?.errorIndicatorColor,
     '--mls-badge-default-bg': colors?.defaultBadgeBackground,
     '--mls-badge-default-text': colors?.defaultBadgeColor,
     '--mls-badge-warning-bg': colors?.warningBadgeBackground,
@@ -97,26 +128,39 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
                 styles.headerRow,
               )}
             >
-              {(
-                [
-                  labels.itemColumnLabel,
-                  labels.last24HoursColumnLabel,
-                  labels.last7DaysColumnLabel,
-                  labels.last30DaysColumnLabel,
-                  labels.statusColumnLabel,
-                ] as const
-              ).map((columnLabel) => (
-                <span
-                  key={columnLabel}
-                  role="columnheader"
-                  className={mergeClasses(
-                    columnHeaderClassName,
-                    styles.columnHeader,
-                  )}
-                >
-                  {columnLabel}
-                </span>
-              ))}
+              <span
+                role="columnheader"
+                className={mergeClasses(
+                  columnHeaderClassName,
+                  styles.columnHeader,
+                )}
+              >
+                {labels.itemColumnLabel}
+              </span>
+              <PeriodHeader
+                label={labels.last24HoursColumnLabel}
+                periodStatus={periodStatuses.last24Hours}
+                className={columnHeaderClassName}
+              />
+              <PeriodHeader
+                label={labels.last7DaysColumnLabel}
+                periodStatus={periodStatuses.last7Days}
+                className={columnHeaderClassName}
+              />
+              <PeriodHeader
+                label={labels.last30DaysColumnLabel}
+                periodStatus={periodStatuses.last30Days}
+                className={columnHeaderClassName}
+              />
+              <span
+                role="columnheader"
+                className={mergeClasses(
+                  columnHeaderClassName,
+                  styles.columnHeader,
+                )}
+              >
+                {labels.statusColumnLabel}
+              </span>
             </div>
 
             <div role="rowgroup">
@@ -125,6 +169,7 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
                   key={row.id}
                   row={row}
                   labels={labels}
+                  periodStatuses={periodStatuses}
                   typography={typography}
                   avatarSize={AVATAR_SIZE}
                 />

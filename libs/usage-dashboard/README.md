@@ -6,12 +6,13 @@ Provides `UsageLimitCardGroup` and `UsageLimitCard`, presentational cards for a 
 cost-budget usage over a rolling period (e.g. today, this week, this month), and
 `ModelLimitsSection`, a presentational per-model comparison table with fixed Last 24 hours, Last 7
 days, and Last 30 days columns. Each period groups Tokens usage/progress with a compact attributed
-Cost amount, and a final Status reflects the host-derived result across all periods. All components are fully
-host-agnostic: they take already-normalized, preformatted amounts, status enums, and localized
-labels via props — they never interpret raw API data, format currency, detect the unlimited
-sentinel, or compute percentages themselves. `UsageLimitCardGroup` renders each card as its own
-independent, equally-sized box: stacked on mobile, side by side on desktop. `UsageLimitCard` is also
-exported standalone for a single-card use case.
+Cost line, and a final Status reflects the host-derived result across model-token and overall Cost
+limits in all periods. Overall Cost warning/reached indicators and their tooltips are supplied for
+the matching period headers. All components are fully host-agnostic: they take already-normalized,
+preformatted amounts, status enums, and localized labels via props — they never interpret raw API
+data, format currency, detect the unlimited sentinel, or compute percentages themselves.
+`UsageLimitCardGroup` renders each card as its own independent, equally-sized box: stacked on mobile,
+side by side on desktop. `UsageLimitCard` is also exported standalone for a single-card use case.
 
 ## Installation
 
@@ -126,12 +127,12 @@ import {
 
 ### ModelLimitsSection
 
-Renders a "Model limits" heading with the rendered row count and one fixed comparison table per
+Renders a "Model tokens limits" heading with the rendered row count and one fixed comparison table per
 model: Item, Last 24 hours, Last 7 days, Last 30 days, and Status. Every period cell contains Tokens
-and a value-only Cost amount supplied by the host. Cost has no visible sublabel, total/No limit text,
-or progress bar; `costLabel` supplies screen-reader context. The token amount and Cost share one
-compact baseline row above the token progress bar. Desktop row content is vertically centered while
-preserving its existing horizontal alignment:
+followed by an attributed Cost amount supplied by the host. Cost has no visible sublabel,
+per-model limit, or progress bar; `costLabel` supplies screen-reader context. Overall Cost statuses
+can add warning/reached icons with accessible tooltips to the period headers. Desktop row content is
+vertically centered while preserving its existing horizontal alignment:
 
 ```tsx
 import {
@@ -141,6 +142,15 @@ import {
 } from '@epam/ai-dial-usage-dashboard';
 
 <ModelLimitsSection
+  periodStatuses={{
+    last24Hours: {
+      status: ModelLimitStatus.LimitReached,
+      tooltipLabel:
+        "Overall last 24 hours cost limit is reached. Models can't be used until it resets, regardless of remaining token limits.",
+    },
+    last7Days: { status: ModelLimitStatus.WithinLimits },
+    last30Days: { status: ModelLimitStatus.WithinLimits },
+  }}
   rows={[
     {
       id: 'gpt-4o',
@@ -158,8 +168,8 @@ import {
         },
         cost: {
           kind: ModelLimitMetricKind.Unlimited,
-          usedLabel: '$3.20',
-          ariaLabel: '$3.20',
+          usedLabel: '$3.20 spent',
+          ariaLabel: '$3.20 spent',
         },
       },
       last7Days: {
@@ -173,8 +183,8 @@ import {
         },
         cost: {
           kind: ModelLimitMetricKind.Unlimited,
-          usedLabel: '$18.60',
-          ariaLabel: '$18.60',
+          usedLabel: '$18.60 spent',
+          ariaLabel: '$18.60 spent',
         },
       },
       last30Days: {
@@ -188,15 +198,15 @@ import {
         },
         cost: {
           kind: ModelLimitMetricKind.Unlimited,
-          usedLabel: '$55.10',
-          ariaLabel: '$55.10',
+          usedLabel: '$55.10 spent',
+          ariaLabel: '$55.10 spent',
         },
       },
       status: ModelLimitStatus.RunningLow,
     },
   ]}
   labels={{
-    headingLabel: 'Model limits',
+    headingLabel: 'Model tokens limits',
     itemColumnLabel: 'Item',
     last24HoursColumnLabel: 'Last 24 hours',
     last7DaysColumnLabel: 'Last 7 days',
@@ -217,10 +227,13 @@ import {
 />;
 ```
 
-`ModelLimitsSection` never fetches data or infers the unlimited sentinel, percentage, or status. The
-host derives `kind`, `usedPercent`, and `status` for every token/cost cell and supplies the final row
-`status`. Cost renders only its `usedLabel` (or the unavailable state), even though the normalized
-cell keeps its metric kind. All three periods are always present; there is no period selector state.
+`ModelLimitsSection` never fetches data or infers the unlimited sentinel, percentage, supporting
+label, header status, tooltip, or row status. The host derives `kind`, `usedPercent`, and `status`
+for every token/cost cell, supplies `Follows cost limit` through an unlimited token cell's optional
+`supportingLabel`, and combines model-token plus overall Cost limits into the final row `status`.
+Cost renders only its normalized attributed-spend `usedLabel` (or the unavailable state), even
+though the cell keeps its metric kind. All three periods are always present; there is no period
+selector state.
 
 The heading and row count remain visible when `rows` is empty; the table body switches to
 `labels.emptyStateLabel`. Pass `emptyStateIconSize` (default `48`) to resize the empty-state icon.
@@ -237,11 +250,13 @@ The heading and row count remain visible when `rows` is empty; the table body sw
 - `UsageLimitCardGroupTypography` — typography class overrides
 - `ModelLimitStatus` — `WithinLimits | RunningLow | LimitReached | NoLimit | Unavailable`
 - `ModelLimitMetricKind` — `Finite | Unlimited | Unavailable`
-- `ModelLimitMetricCell` — `{ kind, usedLabel?, totalLabel?, usedPercent?, status?, ariaLabel }`
+- `ModelLimitMetricCell` — `{ kind, usedLabel?, totalLabel?, usedPercent?, status?, supportingLabel?, ariaLabel }`
 - `ModelLimitPeriodCell` — `{ tokens: ModelLimitMetricCell, cost: ModelLimitMetricCell }`
+- `ModelLimitPeriodStatus` — `{ status, tooltipLabel? }`
+- `ModelLimitPeriodStatuses` — `{ last24Hours, last7Days, last30Days }`
 - `ModelLimitRow` — `{ id, name, version?, avatarSrc?, last24Hours, last7Days, last30Days, status }`
 - `ModelLimitsLabels` — `{ headingLabel, itemColumnLabel, last24HoursColumnLabel, last7DaysColumnLabel, last30DaysColumnLabel, statusColumnLabel, tokensLabel, costLabel, modelTypeLabel, noLimitLabel, unavailableLabel, withinLimitsBadgeLabel, runningLowBadgeLabel, limitReachedBadgeLabel, noLimitBadgeLabel, unavailableBadgeLabel, emptyStateLabel }`
-- `ModelLimitsSectionProps` — `{ rows, labels, styles?, emptyStateIconSize? }`
+- `ModelLimitsSectionProps` — `{ rows, labels, periodStatuses, styles?, emptyStateIconSize? }`
 - `ModelLimitsStyles` — `{ colors?, typography? }`
 - `ModelLimitsColors` — CSS-custom-property color overrides
 - `ModelLimitsTypography` — typography class overrides

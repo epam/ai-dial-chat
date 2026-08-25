@@ -83,6 +83,14 @@
   ) !important;
 }
 
+.warningIndicator {
+  color: var(--mls-indicator-warning, var(--text-warning-icon, #eec840));
+}
+
+.errorIndicator {
+  color: var(--mls-indicator-error, var(--text-error, #ae2f2f));
+}
+
 .defaultBadge {
   background: var(--mls-badge-default-bg, var(--bg-success, #dbf1eb));
   color: var(--mls-badge-default-text, var(--text-success, #007274));

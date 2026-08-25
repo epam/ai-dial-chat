@@ -18,6 +18,8 @@ export {
 export type {
   ModelLimitMetricCell,
   ModelLimitPeriodCell,
+  ModelLimitPeriodStatus,
+  ModelLimitPeriodStatuses,
   ModelLimitRow,
   ModelLimitsColors,
   ModelLimitsLabels,

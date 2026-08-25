@@ -10,6 +10,8 @@ import {
   ModelLimitMetricCell,
   ModelLimitMetricKind,
   ModelLimitPeriodCell,
+  ModelLimitPeriodStatus,
+  ModelLimitPeriodStatuses,
   ModelLimitRow,
   ModelLimitStatus,
 } from '@epam/ai-dial-usage-dashboard';
@@ -61,6 +63,27 @@ const PERIOD_FIELD_MAPPINGS = {
   PeriodFieldMapping
 >;
 
+const OVERALL_COST_PERIODS = {
+  last24Hours: {
+    field: 'dayCostStats',
+    labelKey: UsageI18nKeys.TodayPeriodDescription,
+  },
+  last7Days: {
+    field: 'weekCostStats',
+    labelKey: UsageI18nKeys.ThisWeekPeriodDescription,
+  },
+  last30Days: {
+    field: 'monthCostStats',
+    labelKey: UsageI18nKeys.ThisMonthPeriodDescription,
+  },
+} satisfies Record<
+  keyof ModelLimitPeriodStatuses,
+  {
+    field: 'dayCostStats' | 'weekCostStats' | 'monthCostStats';
+    labelKey: UsageI18nKeys;
+  }
+>;
+
 const isUsableStats = (
   stats: LimitStatsDto | undefined,
 ): stats is LimitStatsDto =>
@@ -76,6 +99,75 @@ const getMetricStatus = (usedPercent: number): ModelLimitStatus => {
   return ModelLimitStatus.WithinLimits;
 };
 
+const getOverallCostStatus = (
+  stats: LimitStatsDto | undefined,
+): ModelLimitStatus => {
+  if (!isUsableStats(stats)) {
+    return ModelLimitStatus.Unavailable;
+  }
+  if (stats.total >= UNLIMITED_TOTAL_THRESHOLD) {
+    return ModelLimitStatus.NoLimit;
+  }
+
+  const used = Math.max(0, stats.used);
+  const total = Math.max(0, stats.total);
+  const usedPercent = total > 0 ? (used / total) * 100 : 100;
+  return getMetricStatus(usedPercent);
+};
+
+const isFiniteLimitStatus = (status: ModelLimitStatus): boolean =>
+  status === ModelLimitStatus.WithinLimits ||
+  status === ModelLimitStatus.RunningLow ||
+  status === ModelLimitStatus.LimitReached;
+
+const buildOverallCostPeriodStatus = (
+  usage: UserLimitStatsResponseDto | undefined,
+  period: (typeof OVERALL_COST_PERIODS)[keyof ModelLimitPeriodStatuses],
+  activeLocale: string,
+  t: TFunction,
+): ModelLimitPeriodStatus => {
+  const status = getOverallCostStatus(usage?.[period.field]);
+  const periodLabel = t(period.labelKey).toLocaleLowerCase(activeLocale);
+  const tooltipLabel =
+    status === ModelLimitStatus.LimitReached
+      ? t(UsageI18nKeys.OverallCostLimitReachedTooltip, {
+          period: periodLabel,
+        })
+      : status === ModelLimitStatus.RunningLow
+        ? t(UsageI18nKeys.OverallCostLimitRunningLowTooltip, {
+            period: periodLabel,
+          })
+        : undefined;
+
+  return { status, tooltipLabel };
+};
+
+/** Maps the same top-level Cost budgets used by the aggregate cards into table-header state. */
+export const mapOverallCostLimitsToPeriodStatuses = (
+  usage: UserLimitStatsResponseDto | undefined,
+  activeLocale: string,
+  t: TFunction,
+): ModelLimitPeriodStatuses => ({
+  last24Hours: buildOverallCostPeriodStatus(
+    usage,
+    OVERALL_COST_PERIODS.last24Hours,
+    activeLocale,
+    t,
+  ),
+  last7Days: buildOverallCostPeriodStatus(
+    usage,
+    OVERALL_COST_PERIODS.last7Days,
+    activeLocale,
+    t,
+  ),
+  last30Days: buildOverallCostPeriodStatus(
+    usage,
+    OVERALL_COST_PERIODS.last30Days,
+    activeLocale,
+    t,
+  ),
+});
+
 const buildUnavailableCell = (t: TFunction): ModelLimitMetricCell => ({
   kind: ModelLimitMetricKind.Unavailable,
   ariaLabel: t(UsageI18nKeys.UnavailableLabel),
@@ -87,6 +179,7 @@ const buildUnavailableCell = (t: TFunction): ModelLimitMetricCell => ({
  */
 const buildFiniteMetricCell = (
   stats: LimitStatsDto | undefined,
+  overallCostStatus: ModelLimitStatus,
   t: TFunction,
 ): ModelLimitMetricCell => {
   if (!isUsableStats(stats)) {
@@ -97,12 +190,19 @@ const buildFiniteMetricCell = (
   const usedLabel = numberFormatter.format(used);
 
   if (stats.total >= UNLIMITED_TOTAL_THRESHOLD) {
+    const followsCostLimit = isFiniteLimitStatus(overallCostStatus);
     return {
       kind: ModelLimitMetricKind.Unlimited,
       usedLabel,
-      ariaLabel: t(UsageI18nKeys.UnlimitedProgressAriaLabel, {
-        used: fullNumberFormatter.format(used),
-      }),
+      supportingLabel: followsCostLimit
+        ? t(UsageI18nKeys.FollowsCostLimitLabel)
+        : t(UsageI18nKeys.NoLimitLabel),
+      ariaLabel: t(
+        followsCostLimit
+          ? UsageI18nKeys.FollowsCostLimitAriaLabel
+          : UsageI18nKeys.UnlimitedProgressAriaLabel,
+        { used: fullNumberFormatter.format(used) },
+      ),
     };
   }
 
@@ -139,7 +239,8 @@ const buildCostMetricCell = (
   }
 
   const used = Math.max(0, stats.used);
-  const usedLabel = formatCost(used);
+  const amountLabel = formatCost(used);
+  const usedLabel = t(UsageI18nKeys.SpentLabel, { amount: amountLabel });
 
   return {
     kind: ModelLimitMetricKind.Unlimited,
@@ -151,19 +252,30 @@ const buildCostMetricCell = (
 const buildPeriodCell = (
   deploymentStats: DeploymentLimitsResponseDto,
   fields: PeriodFieldMapping,
+  overallCostStatus: ModelLimitStatus,
   t: TFunction,
 ): ModelLimitPeriodCell => ({
-  tokens: buildFiniteMetricCell(deploymentStats[fields.tokens], t),
+  tokens: buildFiniteMetricCell(
+    deploymentStats[fields.tokens],
+    overallCostStatus,
+    t,
+  ),
   cost: buildCostMetricCell(deploymentStats[fields.cost], t),
 });
 
 /**
  * Reduces the three rolling-period Tokens cells to the row's most severe status.
  */
-const getRowStatus = (tokenCells: ModelLimitMetricCell[]): ModelLimitStatus => {
-  const finiteStatuses = tokenCells
+const getRowStatus = (
+  tokenCells: ModelLimitMetricCell[],
+  overallCostStatuses: ModelLimitStatus[],
+): ModelLimitStatus => {
+  const tokenStatuses = tokenCells
     .filter((cell) => cell.kind === ModelLimitMetricKind.Finite)
     .map((cell) => cell.status);
+  const finiteStatuses = [...tokenStatuses, ...overallCostStatuses].filter(
+    (status) => status != null && isFiniteLimitStatus(status),
+  );
 
   if (finiteStatuses.includes(ModelLimitStatus.LimitReached)) {
     return ModelLimitStatus.LimitReached;
@@ -174,7 +286,10 @@ const getRowStatus = (tokenCells: ModelLimitMetricCell[]): ModelLimitStatus => {
   if (finiteStatuses.includes(ModelLimitStatus.WithinLimits)) {
     return ModelLimitStatus.WithinLimits;
   }
-  if (tokenCells.some((cell) => cell.kind === ModelLimitMetricKind.Unlimited)) {
+  if (
+    tokenCells.some((cell) => cell.kind === ModelLimitMetricKind.Unlimited) ||
+    overallCostStatuses.includes(ModelLimitStatus.NoLimit)
+  ) {
     return ModelLimitStatus.NoLimit;
   }
   return ModelLimitStatus.Unavailable;
@@ -210,6 +325,11 @@ export const mapUserUsageToModelLimits = (
       .filter((item) => item.type === DeploymentItemDtoTypeEnum.Model)
       .map((item) => [item.id, item]),
   );
+  const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
+    usage,
+    activeLocale,
+    t,
+  );
   return Object.keys(deployments)
     .map((id) => {
       const item = modelItemById.get(id);
@@ -223,16 +343,19 @@ export const mapUserUsageToModelLimits = (
       const last24Hours = buildPeriodCell(
         deploymentStats,
         PERIOD_FIELD_MAPPINGS.last24Hours,
+        periodStatuses.last24Hours.status,
         t,
       );
       const last7Days = buildPeriodCell(
         deploymentStats,
         PERIOD_FIELD_MAPPINGS.last7Days,
+        periodStatuses.last7Days.status,
         t,
       );
       const last30Days = buildPeriodCell(
         deploymentStats,
         PERIOD_FIELD_MAPPINGS.last30Days,
+        periodStatuses.last30Days.status,
         t,
       );
 
@@ -249,11 +372,14 @@ export const mapUserUsageToModelLimits = (
           last24Hours,
           last7Days,
           last30Days,
-          status: getRowStatus([
-            last24Hours.tokens,
-            last7Days.tokens,
-            last30Days.tokens,
-          ]),
+          status: getRowStatus(
+            [last24Hours.tokens, last7Days.tokens, last30Days.tokens],
+            [
+              periodStatuses.last24Hours.status,
+              periodStatuses.last7Days.status,
+              periodStatuses.last30Days.status,
+            ],
+          ),
         },
         hasUsage: hasUsageAcrossDisplayedPeriods(displayedStats),
       };

@@ -10,7 +10,9 @@ result SHALL render `ModelLimitsSection`'s existing internal empty state while k
 and row count visible. The aggregate cards SHALL remain unchanged.
 
 `UsageTab` SHALL NOT own a selected Model limits period and SHALL NOT pass period or period-change
-props to `ModelLimitsSection`.
+props to `ModelLimitsSection`. It SHALL pass `Model tokens limits` as the localized section heading,
+the adapter's normalized overall Cost header statuses/tooltips, and a dynamic row count supplied by
+the section.
 
 #### Scenario: Fixed comparison table renders below the cards
 - **WHEN** Usage finishes loading and at least one deployment has usage in any displayed period
@@ -99,7 +101,8 @@ content of an included cell.
 #### Scenario: Cost-only usage retains the row
 - **WHEN** at least one displayed cost stat has `used > 0` while all displayed token stats are
   missing or zero
-- **THEN** the row is included and its Status is derived from token cells independently
+- **THEN** the row is included and its Status still considers the matching top-level overall Cost
+  limits independently of its attributed Cost values
 
 #### Scenario: No displayed usage removes the row
 - **WHEN** every displayed Cost/Tokens stat is absent, malformed, or has `used <= 0`
@@ -116,7 +119,9 @@ only that spend value without limit text or a progress bar. Missing or non-finit
 `total` and `used` are finite and `total < 2 ** 53`, `Unlimited` when well-formed and
 `total >= 2 ** 53`, and `Unavailable` when absent or non-finite. Missing data SHALL NOT be treated as
 zero or unlimited. Finite token `usedPercent` SHALL retain values above 100; only rendering may
-clamp the progress fill.
+clamp the progress fill. An unlimited Tokens entry SHALL receive `Follows cost limit` when the
+matching top-level overall Cost stat is finite; it SHALL receive `No limit` only when that overall
+Cost stat is also unlimited.
 
 #### Scenario: Finite tokens produce progress data for their period
 - **WHEN** `weekTokenStats` is `{ total: 10000, used: 4000 }`
@@ -136,14 +141,15 @@ clamp the progress fill.
 
 ---
 
-### Requirement: Per-metric and overall row status model
+### Requirement: Per-metric, overall Cost, and row status model
 
-For each finite token cell, the adapter SHALL derive status from `usedPercent`: `>= 100` is
-`LimitReached`, `>= 75` and `< 100` is `RunningLow`, and `< 75` is `WithinLimits`. Overall row
-Status SHALL be the most severe finite token status across Last 24 hours, Last 7 days, and Last 30
-days, ordered `LimitReached` > `RunningLow` > `WithinLimits`. Cost SHALL NOT participate. If there
-is no finite token status but at least one displayed token cell is `Unlimited`, overall Status SHALL
-be `NoLimit`; if all displayed token cells are `Unavailable`, it SHALL be `Unavailable`.
+For each finite token cell and each matching top-level overall Cost stat, the adapter SHALL derive
+status from `usedPercent`: `>= 100` is `LimitReached`, `>= 75` and `< 100` is `RunningLow`, and `< 75`
+is `WithinLimits`. Overall row Status SHALL be the most severe finite status across all three model
+token cells and all three overall Cost limits, ordered `LimitReached` > `RunningLow` >
+`WithinLimits`. Per-deployment attributed Cost SHALL NOT be treated as a cap. If there is no finite
+status but at least one token or overall Cost limit is `Unlimited`, overall Status SHALL be
+`NoLimit`; otherwise it SHALL be `Unavailable`.
 
 #### Scenario: Short-window breach determines overall Status
 - **WHEN** Last 24 hours Tokens is `LimitReached`, Last 7 days is `RunningLow`, and Last 30 days is
@@ -154,29 +160,48 @@ be `NoLimit`; if all displayed token cells are `Unavailable`, it SHALL be `Unava
 - **WHEN** one finite token period is `RunningLow` and the other finite periods are `WithinLimits`
 - **THEN** overall row Status is `RunningLow`
 
-#### Scenario: Cost does not turn unavailable token limits into No limit
-- **WHEN** all three token cells are `Unavailable` and one or more cost cells are well-formed
-- **THEN** overall row Status is `Unavailable`
+#### Scenario: Overall Cost breach applies to every model
+- **WHEN** a model's token limits are within limits but the top-level Last 24 hours Cost limit is
+  reached
+- **THEN** that model row's overall Status is `LimitReached`
 
-#### Scenario: Unlimited token fallback applies only without finite token limits
-- **WHEN** no displayed token cell is finite and at least one is `Unlimited`
+#### Scenario: Unlimited fallback applies only without finite limits
+- **WHEN** no displayed token or overall Cost limit is finite and at least one is `Unlimited`
 - **THEN** overall row Status is `NoLimit`
+
+---
+
+### Requirement: Overall Cost period header indicators
+
+The adapter SHALL normalize the top-level `dayCostStats`, `weekCostStats`, and `monthCostStats` used
+by the aggregate cards into Last 24 hours, Last 7 days, and Last 30 days header statuses. It SHALL
+provide an error icon tooltip for `LimitReached`, a warning icon tooltip for `RunningLow`, and no
+icon for `WithinLimits`, `NoLimit`, or `Unavailable`. Tooltip text SHALL name its own period. A
+reached tooltip SHALL state that models cannot be used until the overall Cost limit resets,
+regardless of remaining token limits.
+
+#### Scenario: Header indicator uses the same overall Cost budget as its card
+- **WHEN** top-level `weekCostStats` is finite and 80% used
+- **THEN** Last 7 days receives a `RunningLow` header indicator and period-aware tooltip, while row
+  statuses consider that same warning
 
 ---
 
 ### Requirement: Formatting and accessible labels
 
-The adapter SHALL format displayed cost with the established localized currency formatter and token
-used/total values with localized compact numeric formatting. Every token metric's `ariaLabel` SHALL
+The adapter SHALL format displayed cost with the established localized currency formatter plus the
+localized `spent` caption and token used/total values with localized compact numeric formatting.
+Every token metric's `ariaLabel` SHALL
 contain full grouped, non-compact used and total values when finite, and full unambiguous text for
-unlimited/unavailable states. Period cells SHALL use localized Last 24 hours, Last 7 days, Last 30
-days, and Tokens labels visibly; the localized Cost label supplied by `UsageTab` SHALL be used only
-as non-visual accessible context for the value-only cost output.
+unlimited/unavailable states. Period cells SHALL use localized Last 24 hours, Last 7 days, and Last
+30 days labels visibly; localized Tokens and Cost labels supplied by `UsageTab` SHALL provide
+non-visual accessible context for the metric values.
 
-No new user-visible string is required: the integration SHALL reuse
-`UsageI18nKeys.TodayPeriodDescription`, `ThisWeekPeriodDescription`,
-`ThisMonthPeriodDescription`, `TokensColumnLabel`, and `CostColumnLabel`. Selector, minute/hour, and
-Requests keys SHALL only be removed if unused elsewhere.
+The integration SHALL reuse `UsageI18nKeys.TodayPeriodDescription`,
+`ThisWeekPeriodDescription`, `ThisMonthPeriodDescription`, `TokensColumnLabel`, and
+`CostColumnLabel`, and SHALL add localized keys for `Model tokens limits`, `spent`, `Follows cost
+limit`, its accessible value description, and both overall Cost status tooltip templates. Selector,
+minute/hour, and Requests keys SHALL only be removed if unused elsewhere.
 
 #### Scenario: Visible token numbers are compact and currency-free
 - **WHEN** Last 24 hours Tokens has `used: 1600000` and `total: 2000000`

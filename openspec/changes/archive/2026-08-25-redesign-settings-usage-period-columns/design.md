@@ -24,7 +24,8 @@ rules, deployment metadata sources, or status thresholds.
 
 - Present the three requested periods simultaneously in one table.
 - Put token usage/progress and cost for a period in the same period cell.
-- Compute one conservative Status from token limits across all displayed periods.
+- Compute one conservative Status from model-token limits and overall Cost limits across all
+  displayed periods.
 - Preserve the current deployment identity, empty/loading/error behavior, status thresholds, and
   aggregate cards.
 - Keep the component usable at 360px, aligned at desktop widths, direction-agnostic under RTL, and
@@ -89,21 +90,25 @@ feature flags, locale resolution, icon URL resolution, and currency formatting r
 Alternative: pass the raw deployment DTO to the library and let it build periods. Rejected because
 it violates library isolation and couples a reusable UI package to one host API.
 
-### 3. Aggregate Status from the three token cells only
+### 3. Combine model-token status with the matching overall Cost limits
 
-The adapter will reduce `last24Hours.tokens`, `last7Days.tokens`, and `last30Days.tokens` using the
-existing severity order:
+The adapter will classify top-level `dayCostStats`, `weekCostStats`, and `monthCostStats` using the
+same thresholds and unlimited sentinel as the aggregate cards. These are overall user Cost budgets,
+not per-model limits. For each period, their normalized status is used for the header icon/tooltip
+and as the fallback constraint when a model token stat has no finite cap. The row reducer considers
+the three model-token cells plus the three overall Cost statuses using this severity order:
 
 1. any finite `LimitReached` → `LimitReached`;
 2. otherwise any finite `RunningLow` → `RunningLow`;
 3. otherwise any finite `WithinLimits` → `WithinLimits`;
-4. otherwise any unlimited token cell → `NoLimit`;
+4. otherwise any unlimited token or Cost status → `NoLimit`;
 5. otherwise → `Unavailable`.
 
-Cost is displayed but does not participate because per-deployment cost stats are attributed spend
-with no finite cap; including them would turn token-unavailable rows into misleading `NoLimit`
-statuses. The 75% and 100% thresholds remain unchanged. Progress fill remains visually capped at
-100%, while the normalized percentage and accessible text retain the actual over-limit value.
+Per-deployment Cost stats remain attributed spend only and do not supply a cap or status. When a
+token stat is unlimited and its corresponding overall Cost limit is finite, the app supplies
+`Follows cost limit` as the token supporting label. The 75% and 100% thresholds remain unchanged.
+Progress fill remains visually capped at 100%, while normalized percentage and accessible text
+retain the actual over-limit value.
 
 Alternative: derive Status from Last 30 days only. Rejected because it contradicts the requirement
 that Status depend on all three windows and can hide a shorter-window limit breach.
@@ -122,10 +127,12 @@ all three token stats are unavailable.
 ### 5. Use one responsive table with stacked mobile rows
 
 Desktop (≥769px) will use one shared five-column grid for header and rows: Item, three flexible
-period columns, and Status. Each period cell renders the Tokens label, then one compact baseline row
-containing the token amount/state and a trailing value-only Cost, followed by the full-width token
-progress bar when finite. Cost has no visible label, total, or No limit text. Grid items are centered
-along the row's vertical axis while retaining their existing horizontal alignment.
+period columns, and Status. Each period cell renders the token amount/state, then the full-width
+token progress bar when finite, followed by the attributed Cost value and `spent` caption. Cost has
+no visible label, total, per-model limit, or progress bar. Grid items are centered along the row's
+vertical axis while retaining their existing horizontal alignment. A period header renders a
+focusable Tooltip status icon at its inline end only for a running-low or reached overall Cost
+limit; the same normalized indicator remains available beside the visible mobile period label.
 
 Mobile (≤768px) will keep one semantic table/row tree but hide the desktop header and stack each row:
 identity first, then three labelled period sections, then a labelled Status. Base styles are
@@ -145,10 +152,11 @@ lose at-a-glance comparison and the responsive workflow requires no page-level o
 
 `UsageI18nKeys.TodayPeriodDescription`, `ThisWeekPeriodDescription`, and
 `ThisMonthPeriodDescription` provide the three headers. Existing Tokens, Status, Item,
-metric-state, badge, and empty-state labels are reused. Cost remains available as screen-reader
-context but is not rendered as a visible sublabel. Minute/hour/period-selector/request labels may
-be removed only after a workspace search proves they have no remaining consumer. No new
-user-visible string is required.
+metric-state, badge, and empty-state labels are reused. The heading becomes `Model tokens limits`.
+New localized strings provide the `spent` value caption, `Follows cost limit`, and period-aware
+overall Cost running-low/reached tooltip text. Cost remains available as screen-reader context but
+is not rendered as a visible sublabel. Minute/hour/period-selector/request labels may be removed
+only after a workspace search proves they have no remaining consumer.
 
 The surface remains gated only through the existing `settingsPageEnabled` feature behavior. It adds
 no `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES` key and no role-specific branch.
@@ -169,8 +177,9 @@ rate limiting, caching/TTL/invalidation, and new metrics/analytics are not appli
   update exports/README, and run typecheck for both `chat` and `usage-dashboard`.
 - [Nested rolling windows may repeat cumulative values] → label each column explicitly; repetition
   is the intended comparison and no arithmetic is performed between windows.
-- [Status can look more severe than the longest-period bar] → keep the badge conservative and test
-  that any shorter-window breach wins; accessible progress text lets users identify the source.
+- [An overall Cost breach makes every model row severe] → this is intentional because a reached
+  overall Cost budget blocks every model regardless of its remaining token limits; the matching
+  period-header tooltip explains the cause.
 - [Removing Requests may surprise existing users] → call it out in release/PR notes; rollback is a
   code-only revert with no data migration.
 - [Malformed stats] → preserve explicit Unavailable rendering and exclude malformed values from both
@@ -189,6 +198,7 @@ state. There is no persisted state, API version, or deployment-order dependency.
 
 ## Open Questions
 
-None for proposal readiness. The design assumes the requested “slider” is the current token
-`ProgressBar`, aggregate cards remain, Requests are removed, and Status is the worst token-limit
-severity across the three displayed windows.
+None. The final visual is authoritative: Cost is below token progress, top-level Cost stats drive
+period header indicators and participate in every row's Status, and a period-aware tooltip uses its
+own header label (the `Last 24 hours` text shown for the `Last 7 days` warning in the supplied image
+is treated as a mockup copy error).

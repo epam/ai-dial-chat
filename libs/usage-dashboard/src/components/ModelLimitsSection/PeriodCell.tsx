@@ -4,15 +4,18 @@ import {
   ModelLimitMetricCell,
   ModelLimitMetricKind,
   ModelLimitPeriodCell,
+  ModelLimitPeriodStatus,
   ModelLimitsLabels,
   ModelLimitsTypography,
 } from '../../models/model-limits-props';
 import { MetricCell } from './MetricCell';
 import styles from './ModelLimitsSection.module.scss';
+import { PeriodStatusIndicator } from './PeriodStatusIndicator';
 
 interface PeriodCellProps {
   cell: ModelLimitPeriodCell;
   periodLabel: string;
+  periodStatus: ModelLimitPeriodStatus;
   labels: ModelLimitsLabels;
   typography: ModelLimitsTypography;
 }
@@ -30,20 +33,17 @@ const CostValue: FC<CostValueProps> = ({
   unavailableLabel,
   typography,
 }) => {
-  const {
-    valueClassName = 'dial-small-text',
-    secondaryValueClassName = 'dial-tiny-text',
-  } = typography;
+  const { secondaryValueClassName = 'dial-tiny-text' } = typography;
   const isUnavailable = cell.kind === ModelLimitMetricKind.Unavailable;
 
   return (
-    <div className="ms-auto flex min-w-0 max-w-[45%] items-baseline gap-1">
+    <div className="flex min-w-0 items-baseline gap-1">
       <span className="sr-only">{label}: </span>
       <span
         className={mergeClasses(
-          'min-w-0 truncate',
-          isUnavailable ? secondaryValueClassName : valueClassName,
-          isUnavailable ? styles.secondaryValue : styles.value,
+          'min-w-0 break-words',
+          secondaryValueClassName,
+          styles.secondaryValue,
         )}
         title={isUnavailable ? unavailableLabel : cell.usedLabel}
       >
@@ -57,32 +57,32 @@ const CostValue: FC<CostValueProps> = ({
 export const PeriodCell: FC<PeriodCellProps> = ({
   cell,
   periodLabel,
+  periodStatus,
   labels,
   typography,
 }) => (
-  <div role="cell" className="flex min-w-0 flex-col gap-3 py-2 desktop:py-0">
-    <span
+  <div role="cell" className="flex min-w-0 flex-col gap-2 py-2 desktop:py-0">
+    <div
       className={mergeClasses(
-        'dial-caption-lead-semi-text block desktop:hidden',
+        'dial-caption-lead-semi-text flex min-h-11 items-center justify-between gap-2 desktop:hidden',
         styles.mobileColumnLabel,
       )}
     >
-      {periodLabel}
-    </span>
+      <span>{periodLabel}</span>
+      <PeriodStatusIndicator periodStatus={periodStatus} />
+    </div>
     <MetricCell
       cell={cell.tokens}
       label={labels.tokensLabel}
       progressAriaLabel={`${periodLabel} ${labels.tokensLabel}`}
       showProgress
-      trailingValue={
-        <CostValue
-          cell={cell.cost}
-          label={labels.costLabel}
-          unavailableLabel={labels.unavailableLabel}
-          typography={typography}
-        />
-      }
       labels={labels}
+      typography={typography}
+    />
+    <CostValue
+      cell={cell.cost}
+      label={labels.costLabel}
+      unavailableLabel={labels.unavailableLabel}
       typography={typography}
     />
   </div>

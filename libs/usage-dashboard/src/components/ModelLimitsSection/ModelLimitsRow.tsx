@@ -7,6 +7,7 @@ import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import {
   ModelLimitRow as ModelLimitRowData,
+  ModelLimitPeriodStatuses,
   ModelLimitsLabels,
   ModelLimitStatus,
   ModelLimitsTypography,
@@ -56,6 +57,8 @@ export interface ModelLimitsRowProps {
   row: ModelLimitRowData;
   /** Localized strings shared by every row. */
   labels: ModelLimitsLabels;
+  /** Host-derived overall Cost statuses for the fixed periods. */
+  periodStatuses: ModelLimitPeriodStatuses;
   /** Typography class overrides. */
   typography: ModelLimitsTypography;
   /** Avatar badge dimension in pixels. */
@@ -66,6 +69,7 @@ export interface ModelLimitsRowProps {
 export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
   row,
   labels,
+  periodStatuses,
   typography,
   avatarSize,
 }) => {
@@ -144,18 +148,21 @@ export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
       <PeriodCell
         cell={row.last24Hours}
         periodLabel={labels.last24HoursColumnLabel}
+        periodStatus={periodStatuses.last24Hours}
         labels={labels}
         typography={typography}
       />
       <PeriodCell
         cell={row.last7Days}
         periodLabel={labels.last7DaysColumnLabel}
+        periodStatus={periodStatuses.last7Days}
         labels={labels}
         typography={typography}
       />
       <PeriodCell
         cell={row.last30Days}
         periodLabel={labels.last30DaysColumnLabel}
+        periodStatus={periodStatuses.last30Days}
         labels={labels}
         typography={typography}
       />
