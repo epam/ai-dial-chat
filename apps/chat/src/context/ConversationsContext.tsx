@@ -3,6 +3,7 @@ import type {
   ConversationListItemDto,
   ConversationResponseDto,
 } from '@epam/ai-dial-chat-api-client';
+import { getConversationPath } from '@epam/ai-dial-chat-hooks';
 import {
   createContext,
   type ReactNode,
@@ -26,7 +27,6 @@ import {
   watchConversation,
 } from '../server-api/conversations.api';
 import { conversationIdsMatch } from '../utils/conversation-id-match';
-import { getConversationPath } from '../utils/conversation-path';
 import { safeDecodeURIComponent } from '../utils/string-utils';
 import { useUser } from './auth/UserContext';
 import { useOptionalOverlay } from './overlay/OverlayContext';
