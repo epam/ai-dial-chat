@@ -27,10 +27,24 @@ import {
   encodeCompoundToken,
   getConversationTitleFromName,
   isApplicationDeploymentPath,
-  qualifySessionConversationPath,
   resolveListDisplayTitle,
 } from '../utils/conversation.utils';
 import { parseScheduledTaskConversationPath } from '../utils/parse-scheduled-task-conversation-path';
+
+/** Leading segment of every DIAL Core conversation resource id. */
+const CONVERSATION_RESOURCE_TYPE = 'conversations';
+
+/** True for a writable list item in the caller's own bucket. */
+const isOwned = (item: ConversationListItemDto): boolean =>
+  !item.isReadonly && !item.sharedWithMe && !item.publishedWithMe;
+
+/** The most recently updated slice of one source group's items. */
+const pickMostRecent = (
+  group: ConversationListItemDto[],
+): ConversationListItemDto[] =>
+  [...group]
+    .sort((left, right) => right.updatedAt - left.updatedAt)
+    .slice(0, MAX_LIST_DISPLAY_NAME_ENRICHMENTS);
 
 @Injectable()
 export class ConversationListingService {
@@ -299,33 +313,47 @@ export class ConversationListingService {
     }
   }
 
-  private getListItemRelativePath(itemId: string): string {
-    const decodedId = safeDecodeURIComponent(itemId);
-    const parts = decodedId.split('/');
-    if (parts.length >= 3 && parts[0] === 'conversations') {
-      return parts.slice(2).join('/');
+  /*
+   * Resolves the `{bucket}/{subPath}` storage path of a list item so its body
+   * is read from the bucket the item actually lives in: the caller's own
+   * bucket for owned items, `public` for published copies, another user's
+   * bucket for shared ones. DIAL Core returns ids as
+   * `conversations/{bucket}/{subPath}`; dropping only the resource-type
+   * segment keeps the bucket, which `resolveConversationLocation` (inside
+   * `getStoredConversation`) reads back off the path. An id that carries no
+   * bucket falls back to the session bucket there.
+   */
+  private getListItemStoragePath(itemId: string): string {
+    const segments = safeDecodeURIComponent(itemId).split('/').filter(Boolean);
+    if (segments[0] === CONVERSATION_RESOURCE_TYPE) {
+      segments.shift();
     }
-    if (parts.length >= 2) {
-      return parts.slice(1).join('/');
-    }
-    return decodedId;
+    return segments.join('/');
   }
 
+  /*
+   * A manual rename (and LLM naming) writes the new title into the
+   * conversation body's `name` at the unchanged storage path, so a
+   * filename-derived title can be stale for any item — including a published
+   * copy, whose public-bucket filename is taken from the source filename at
+   * publish time and never follows a later rename. Reading the body back is
+   * the only way to recover the authoritative name, so it is budgeted: the
+   * most recently updated items of each source group (owned, and read-only
+   * ones — published or shared) are enriched per group, so a long list of one
+   * kind cannot starve the other.
+   */
   private async enrichListItemsWithStoredDisplayNames(
     items: ConversationListItemDto[],
     token: string,
     bucket: string,
   ): Promise<ConversationListItemDto[]> {
-    const enrichable = items.filter(
-      (item) => !item.isReadonly && !item.sharedWithMe && !item.publishedWithMe,
-    );
-    if (enrichable.length === 0) {
+    const candidates = [
+      ...pickMostRecent(items.filter(isOwned)),
+      ...pickMostRecent(items.filter((item) => !isOwned(item))),
+    ];
+    if (candidates.length === 0) {
       return items;
     }
-
-    const candidates = [...enrichable]
-      .sort((left, right) => right.updatedAt - left.updatedAt)
-      .slice(0, MAX_LIST_DISPLAY_NAME_ENRICHMENTS);
 
     const displayNameById = new Map<string, string>();
     const batchSize = 25;
@@ -337,10 +365,7 @@ export class ConversationListingService {
           try {
             const conversation =
               await this.persistenceService.getStoredConversation(
-                qualifySessionConversationPath(
-                  this.getListItemRelativePath(item.id),
-                  bucket,
-                ),
+                this.getListItemStoragePath(item.id),
                 token,
                 bucket,
               );
