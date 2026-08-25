@@ -430,7 +430,7 @@ describe('ResponsesAdapter', () => {
       });
     });
 
-    it('drops non-image attachments and returns plain text content', () => {
+    it('drops non-image attachments and wraps the message text in an input_text part', () => {
       const { adapter } = makeAdapter();
       const request = adapter.buildRequest({
         model: 'gpt-4o',
@@ -452,9 +452,15 @@ describe('ResponsesAdapter', () => {
         temperatureSupported: false,
       });
 
+      /*
+       * A non-image attachment has a url so it survives the data||url filter
+       * (validAttachments is non-empty), but it is excluded from imageParts.
+       * The code therefore takes the array-content path and wraps the message
+       * text into an input_text part rather than returning a plain string.
+       */
       expect(request.input[0]).toEqual({
         role: 'user',
-        content: 'See attached',
+        content: [{ type: 'input_text', text: 'See attached' }],
       });
     });
 
@@ -505,7 +511,9 @@ describe('ResponsesAdapter', () => {
 
       expect(request.input[0]).toEqual({
         role: 'user',
-        content: [{ type: 'input_image', image_url: 'https://example.com/img.png' }],
+        content: [
+          { type: 'input_image', image_url: 'https://example.com/img.png' },
+        ],
       });
     });
   });

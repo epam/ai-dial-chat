@@ -18,7 +18,7 @@ const DIAL_FILE_URL_PATTERN = /^files\/[A-Za-z0-9_-]+\/.+$/;
  * building the URI (see `ResponsesAdapter.buildInputItem`).
  */
 const MIME_TYPE_PATTERN =
-  /^[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_.+]*(?:\s*;\s*[a-zA-Z0-9\-]+=(?:[a-zA-Z0-9\-_.+%]+|"[^"]*"))*$/;
+  /^[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_.+]*(?:\s*;\s*[a-zA-Z0-9-]+=(?:[a-zA-Z0-9\-_.+%]+|"[^"]*"))*$/;
 const INVALID_PERCENT_ENCODING = /%(?![0-9a-fA-F]{2})/;
 const ENCODED_PATH_SEPARATOR_OR_DOT = /%(?:2e|2f|5c)/i;
 

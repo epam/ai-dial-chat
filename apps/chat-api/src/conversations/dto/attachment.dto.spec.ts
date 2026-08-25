@@ -35,26 +35,30 @@ describe('AttachmentDto', () => {
     });
 
     it('rejects a MIME type containing a comma (corrupts the data: URI data separator)', async () => {
-      expect(await isValid(makeDto({ type: 'image/png,text/html' }))).toBe(false);
+      expect(await isValid(makeDto({ type: 'image/png,text/html' }))).toBe(
+        false,
+      );
     });
 
-    it.each([
-      '',
-      'image/',
-      '/png',
-      'image png',
-    ])('rejects the structurally invalid MIME type %s', async (type) => {
-      expect(await isValid(makeDto({ type }))).toBe(false);
-    });
+    it.each(['', 'image/', '/png', 'image png'])(
+      'rejects the structurally invalid MIME type %s',
+      async (type) => {
+        expect(await isValid(makeDto({ type }))).toBe(false);
+      },
+    );
   });
 
   describe('DTO validation boundaries', () => {
     it('accepts a complete valid attachment with an HTTPS URL', async () => {
-      expect(await isValid(makeDto({ url: 'https://example.com/img.png' }))).toBe(true);
+      expect(
+        await isValid(makeDto({ url: 'https://example.com/img.png' })),
+      ).toBe(true);
     });
 
     it('accepts a DIAL file URL', async () => {
-      expect(await isValid(makeDto({ url: 'files/bucket/file.txt' }))).toBe(true);
+      expect(await isValid(makeDto({ url: 'files/bucket/file.txt' }))).toBe(
+        true,
+      );
     });
 
     it('accepts an attachment with only inline base64 data', async () => {
@@ -78,11 +82,15 @@ describe('AttachmentDto', () => {
     });
 
     it('rejects an HTTP URL (only HTTPS is accepted for remote URLs)', async () => {
-      expect(await isValid(makeDto({ url: 'http://example.com/img.png' }))).toBe(false);
+      expect(
+        await isValid(makeDto({ url: 'http://example.com/img.png' })),
+      ).toBe(false);
     });
 
     it('rejects a DIAL file path containing a directory traversal segment', async () => {
-      expect(await isValid(makeDto({ url: 'files/bucket/../etc/passwd' }))).toBe(false);
+      expect(
+        await isValid(makeDto({ url: 'files/bucket/../etc/passwd' })),
+      ).toBe(false);
     });
   });
 });
