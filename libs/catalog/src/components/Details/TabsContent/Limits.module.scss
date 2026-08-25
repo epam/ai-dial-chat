@@ -23,7 +23,7 @@
 .progressFillDefault > div {
   background: var(
     --lt-progress-fill-default,
-    var(--text-control-accent-hover, var(--text-control-blue-hover, #5976e9))
+    var(--text-control-accent-hover, #5976e9)
   ) !important;
 }
 

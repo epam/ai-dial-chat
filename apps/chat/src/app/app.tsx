@@ -319,7 +319,7 @@ const App: FC = () => {
           <main
             id="main-content"
             role="main"
-            className="relative flex min-h-0 min-w-0 flex-1 flex-col shadow-main-inset"
+            className="relative flex min-h-0 min-w-0 flex-1 flex-col"
           >
             <Header
               onMenuToggle={toggleNav}
