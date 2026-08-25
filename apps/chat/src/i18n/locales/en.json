@@ -98,6 +98,7 @@
     "featuredLabel": "Featured",
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
+    "viewToggleLabel": "View mode",
     "details": {
       "tabTools": "Tools",
       "tabContent": "Details",

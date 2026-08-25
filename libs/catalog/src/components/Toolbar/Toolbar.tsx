@@ -20,6 +20,7 @@ export const Toolbar: FC<ToolbarProps> = ({
   filterTopicsLabel,
   gridViewLabel,
   listViewLabel,
+  viewToggleLabel,
   sortKey,
   sortOptions,
   ...innerProps
@@ -47,6 +48,7 @@ export const Toolbar: FC<ToolbarProps> = ({
         searchPlaceholder={searchPlaceholder}
         gridViewLabel={gridViewLabel}
         listViewLabel={listViewLabel}
+        viewToggleLabel={viewToggleLabel}
         sortKey={sortKey}
         sortOptions={sortOptions}
         filters={filters}

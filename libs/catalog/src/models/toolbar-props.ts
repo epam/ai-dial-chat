@@ -63,6 +63,8 @@ export interface ToolbarProps {
   gridViewLabel?: string;
   /** Accessible label for switching to list view. Default: 'List view'. */
   listViewLabel?: string;
+  /** Accessible label naming the grid/list view toggle group. Default: 'View mode'. */
+  viewToggleLabel?: string;
   /** Grouped typography and color overrides. */
   styles?: ToolbarStyles;
   /** Currently selected topic filters. Empty set means no topic filter is active. */

@@ -288,12 +288,6 @@ const DeploymentSelectorPanel: FC<Props> = ({
               aria-hidden
             />
           )}
-          {/*
-            Same control in both sections so the rows keep one height and one
-            set of hover/press styles — `ToggleIconButton` defaults to
-            `ElementSize.Small` while a plain `GhostIconButton` defaults to
-            `Standard`, which made the "Currently selected" row taller.
-          */}
           <ToggleIconButton
             icon={<IconStar size={DIAL_ICON_SIZE.SM} aria-hidden />}
             selectedIcon={

@@ -152,6 +152,7 @@ export enum CatalogI18nKeys {
   FeaturedLabel = 'catalog.featuredLabel',
   GridViewLabel = 'catalog.gridViewLabel',
   ListViewLabel = 'catalog.listViewLabel',
+  ViewToggleLabel = 'catalog.viewToggleLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
   DetailsTabContent = 'catalog.details.tabContent',
