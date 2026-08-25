@@ -516,6 +516,73 @@ const SourcesPanel = ({ messages }: { messages: Message[] }) => {
 
 **Returns** (`UseConversationSourcesResult`): `{ uploaded: DisplayAttachment[], generated: DisplayAttachment[], sources: QuotationSource[] }`.
 
+### useChatSettingsFormConfig
+
+Assembles the config object a chat-settings popover/modal consumes: feature flags derived from deployment features, the current `responseFormat`/`systemPrompt`/`temperature` values, the save handler, and the form labels. Works in two modes — `'local'` (an in-flight composer that holds values in state) and `'conversation'` (a persisted `Conversation` patched on save). Headless: the host supplies translated labels via `labels` and a save toast via `onSaved`.
+
+```tsx
+import {
+  type ChatSettingsFormLabels,
+  useChatSettingsFormConfig,
+} from '@epam/ai-dial-chat-hooks';
+
+const labels: ChatSettingsFormLabels = {
+  settings: 'Chat settings',
+  savedNotification: 'Chat settings have been saved',
+  responseFormatLabel: 'Response format',
+  responseFormatHint: 'Applies to new and existing messages',
+  responseFormatMarkdown: 'Markdown',
+  responseFormatPlainText: 'Plain text',
+  systemPromptLabel: 'System prompt',
+  systemPromptTooltip: 'Enter a prompt',
+  temperatureLabel: 'Temperature',
+  temperaturePrecise: 'Precise',
+  temperatureNeutral: 'Neutral',
+  temperatureCreative: 'Creative',
+  temperatureHint:
+    'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
+  saveLabel: 'Apply changes',
+  saveDisabledTooltip: 'Please select a response format',
+};
+
+const ComposerSettings = ({
+  values,
+  onValuesChange,
+  deploymentFeatures,
+  isQuickApp,
+}: {
+  values: { responseFormat: ResponseFormat; systemPrompt: string; temperature: number };
+  onValuesChange: (v: typeof values) => void;
+  deploymentFeatures?: DeploymentFeatures;
+  isQuickApp?: boolean;
+}) => {
+  const chatSettings = useChatSettingsFormConfig({
+    mode: 'local',
+    values,
+    onValuesChange,
+    deploymentFeatures,
+    isQuickApp,
+    labels,
+    onSaved: () => showToast(labels.savedNotification),
+  });
+
+  return <ChatSettingsModal {...chatSettings} />;
+};
+```
+
+#### API
+
+**Parameters**: `useChatSettingsFormConfig(params)` where `params` is a discriminated union:
+
+| Mode              | Shape                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `'local'`         | `{ mode: 'local'; values; onValuesChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }` |
+| `'conversation'`  | `{ mode: 'conversation'; conversation; onConversationChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }` |
+
+`labels` (`Partial<ChatSettingsFormLabels>`) overrides English fallbacks for every visible string; `onSaved` is called after a successful save so the host can surface its own toast. `isQuickApp` forces the temperature field off regardless of `deploymentFeatures`.
+
+**Returns** (`UseChatSettingsFormConfigResult`): `{ features, responseFormat, systemPrompt, temperature, onSave, menuItemLabel, title, responseFormatLabel, responseFormatHint, responseFormatMarkdownLabel, responseFormatPlainTextLabel, systemPromptLabel, systemPromptTooltip, temperatureLabel, temperatureLabels, temperatureHint, saveLabel, saveDisabledTooltip }` — spread directly into `ChatSettingsModal` / `ChatSettingsBottomSheet` from `@epam/ai-dial-conversation-input`.
+
 ### useAttachmentAction
 
 Default click behavior for an attachment tile: downloads DIAL-hosted and inline (`data`) files, and for reference-only attachments (RAG/search-grounding chunks), opens a PDF in the canvas scrolled to its referenced page when present, otherwise opens/downloads the reference as-is.
