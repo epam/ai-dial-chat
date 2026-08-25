@@ -80,11 +80,24 @@ export const ToolsetLoginFormSchema = zodValidation
           message: 'Client ID is required',
         });
       }
-      if (!data.clientSecret?.trim()) {
+      if (
+        !data.clientSecret?.trim() &&
+        data.tokenEndpointAuthMethod !== TokenEndpointAuthMethod.None
+      ) {
         ctx.addIssue({
           code: 'custom',
           path: ['clientSecret'],
           message: 'Client secret is required',
+        });
+      }
+      if (
+        data.codeChallengeMethod === PkceMethod.None &&
+        data.tokenEndpointAuthMethod === TokenEndpointAuthMethod.None
+      ) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['codeChallengeMethod'],
+          message: 'Code challenge method is required',
         });
       }
     }

@@ -1,5 +1,5 @@
 import { IconLogin, IconLogout } from '@tabler/icons-react';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   Controller,
   useFormContext,
@@ -37,7 +37,7 @@ import {
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
-const SelectorField = withLabel(DropdownSelector);
+const SelectorField = withErrorMessage(withLabel(DropdownSelector));
 const getItemLabel = (item: unknown): string => item as string;
 
 const TOKEN_ENDPOINT_AUTH_METHOD_LABELS: Record<
@@ -125,12 +125,17 @@ export const ToolsetLoginForm = ({
     ? [DialNeutralButton, IconLogout]
     : [DialPrimaryButton, IconLogin];
 
-  const { register, getValues, trigger, control } =
+  const { register, getValues, trigger, control, clearErrors } =
     useFormContext<ToolsetLoginFormType>();
   const { isValid, errors } = useFormState<ToolsetLoginFormType>({ control });
 
   const withLogin = useWatch({
     name: 'withLogin',
+    control,
+  });
+
+  const endpointAuthMethod = useWatch({
+    name: 'tokenEndpointAuthMethod',
     control,
   });
 
@@ -147,6 +152,14 @@ export const ToolsetLoginForm = ({
       });
     }
   }, [isSignedIn, onLogout, trigger, getValues, onLogin]);
+
+  useEffect(() => {
+    if (endpointAuthMethod === TokenEndpointAuthMethod.None) {
+      clearErrors('clientSecret');
+    } else {
+      clearErrors('codeChallengeMethod');
+    }
+  }, [clearErrors, endpointAuthMethod]);
 
   return (
     <div
@@ -210,7 +223,7 @@ export const ToolsetLoginForm = ({
               id="clientSecret"
               disabled={disabled}
               error={errors.clientSecret?.message}
-              mandatory
+              mandatory={endpointAuthMethod !== TokenEndpointAuthMethod.None}
               type="password"
               tooltip={fieldsTooltip}
             />
@@ -267,6 +280,10 @@ export const ToolsetLoginForm = ({
                 return (
                   <SelectorField
                     label={t(CommonI18nKeys.PkceMethodLabel)}
+                    error={errors.codeChallengeMethod?.message}
+                    mandatory={
+                      endpointAuthMethod === TokenEndpointAuthMethod.None
+                    }
                     isSearchable={false}
                     isClearable={false}
                     id="codeChallengeMethod"
