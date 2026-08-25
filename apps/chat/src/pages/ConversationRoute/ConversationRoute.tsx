@@ -4,12 +4,15 @@ import {
   getConversationPath,
   getStarterConversationText,
   hasActiveToolConfig,
+  useToolsMenu,
 } from '@epam/ai-dial-chat-hooks';
 import type {
   Attachment,
   DeploymentItem,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
+import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { IconTelescope } from '@tabler/icons-react';
 import {
   FC,
   memo,
@@ -37,10 +40,10 @@ import {
   PromptSelectorI18nKeys,
   ToolsI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
-import { useToolsMenu } from '../../hooks/conversation/useToolsMenu';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import {
@@ -59,6 +62,7 @@ import { getStartersFromSchema } from '../../utils/starter-option';
  */
 const ConversationRoute: FC = () => {
   const { t } = useTranslation();
+  const { config } = useAppConfig();
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { pathname, state } = useLocation();
@@ -156,8 +160,17 @@ const ConversationRoute: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [Boolean(overlay)]);
 
-  const { toolsMenuItems, onToolToggle, toolConfigurationValue } =
-    useToolsMenu();
+  const { toolsMenuItems, onToolToggle, toolConfigurationValue } = useToolsMenu(
+    {
+      deepResearchToolId: config.deepResearchToolId,
+      selectedItemId,
+      selectedDeploymentConfiguration,
+      labels: {
+        deepResearchFallback: t(ToolsI18nKeys.DeepResearchFallback),
+      },
+      toolIcon: <IconTelescope size={DIAL_ICON_SIZE.SM} aria-hidden />,
+    },
+  );
 
   const selectedDeployment = useMemo(
     () => findDeploymentByIdOrReference(items, selectedItemId),

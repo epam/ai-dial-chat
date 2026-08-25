@@ -1005,7 +1005,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     try {
       await unpublishConversation(path, folderPath.join('/'));
     } catch (error) {
-      showPublishError(error);
+      showPublishError(error, EntityOperation.UnpublishRequested);
       setIsUnpublishing(false);
       setPendingUnpublishConversation(null);
       setSelectedUnpublishFolder(null);

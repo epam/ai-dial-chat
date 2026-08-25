@@ -10,12 +10,14 @@ import { RateService } from '../rate.service';
 
 const BASE_URL = 'http://dial-core';
 const ACCESS_TOKEN = 'test-token';
+let fetchSpy: ReturnType<typeof vi.fn>;
 
 function makeService() {
   const dialClient = {
     client: {},
     baseUrl: BASE_URL,
     dialApiVersion: '2024-10-21',
+    fetchCore: fetchSpy,
   } as unknown as DialClientService;
 
   return new RateService(dialClient);
@@ -29,10 +31,8 @@ const validDto: RateMessageDto = {
 };
 
 describe('RateService', () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
-    fetchSpy = vi.spyOn(global, 'fetch');
+    fetchSpy = vi.fn();
   });
 
   afterEach(() => {

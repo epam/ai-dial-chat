@@ -264,3 +264,60 @@ describe('ConversationPublishService.getPublishHistory with pending removals', (
     ).resolves.toEqual([]);
   });
 });
+
+/*
+ * GH #8445. Core keeps the original ADD publication as APPROVED forever, so
+ * after an administrator approved an unpublish request the conversation's row
+ * menu went on offering Unpublish for a copy Core had already deleted.
+ */
+describe('ConversationPublishService.getPublishHistory with approved removals', () => {
+  const FOLDER = 'public/Organization/Shared chats/';
+
+  const publication = (action: string, createdAt: number) => ({
+    targetFolder: FOLDER,
+    createdAt,
+    status: 'APPROVED',
+    author: 'Test User',
+    resources: [{ action, sourceUrl: SOURCE_URL }],
+  });
+
+  const getHistory = async (publications: unknown[]) => {
+    const { service, dialClient, cacheManager } = makeService();
+    cacheManager.get.mockResolvedValue(undefined);
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse(publications),
+    );
+    return service.getPublishHistory(
+      'token-abc',
+      'bucket-123',
+      CONVERSATION_PATH,
+    );
+  };
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('drops the folder once the removal is APPROVED, so the menu offers Publish again', async () => {
+    await expect(
+      getHistory([
+        publication('ADD', 1_700_000_000_000),
+        publication('DELETE', 1_700_000_100_000),
+      ]),
+    ).resolves.toEqual([]);
+  });
+
+  it('lists the folder again after a re-publish that followed the approved removal', async () => {
+    const result = await getHistory([
+      publication('ADD', 1_700_000_000_000),
+      publication('DELETE', 1_700_000_100_000),
+      publication('ADD', 1_700_000_200_000),
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].folderPath).toBe('Organization/Shared chats');
+    expect(result[0].publishedAt).toBe(
+      new Date(1_700_000_200_000).toISOString(),
+    );
+  });
+});
