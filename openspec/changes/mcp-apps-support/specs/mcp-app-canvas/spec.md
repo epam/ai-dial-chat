@@ -41,7 +41,8 @@ interface McpAppCanvasContent {
 
 `libs/attachment-canvas/src/components/McpAppCanvasRenderer/McpAppCanvasRenderer.tsx` SHALL mount the app via `@mcp-ui/client`'s `AppRenderer` component (confirmed via spike, `design.md` D2). Behaviour:
 
-- Render `<AppRenderer html={content.html} sandbox={{ url: new URL(content.sandboxUrl), permissions: 'allow-scripts' }} toolName={content.toolName} onCallTool={...} onError={...} />`. The `html` prop skips `AppRenderer`'s own resource-fetching path entirely — the renderer never issues its own network request for the resource.
+- Render `<AppRenderer html={content.html} sandbox={{ url: new URL(content.sandboxUrl) }} toolName={content.toolName} onCallTool={...} onError={...} />`. The `html` prop skips `AppRenderer`'s own resource-fetching path entirely — the renderer never issues its own network request for the resource.
+- **Correction (found by runtime inspection of `@mcp-ui/client@<installed version>`'s bundled source):** the `sandbox` prop's `permissions` field does not exist in `@mcp-ui/client`'s actual `AppRenderer`/`AppFrame` implementation — only `sandbox.url` and `sandbox.csp` are read (`AppFrame`'s resource-ready message only ever sends `{ html, csp }`). A `permissions: 'allow-scripts'` value that was previously passed here was inert and has been removed; see the sandbox-attribute requirement below for where the inner iframe's `sandbox` attribute is actually controlled.
 - Every `tools/call` request the mounted app issues SHALL be forwarded to `content.onToolCall(name, args)` via `onCallTool`; the resolved/rejected result SHALL be relayed back to the app through `AppRenderer`'s response channel.
 - The component MUST NOT read from any app-level context (auth, theme, i18n, feature flags) — all data required is passed in through `McpAppCanvasContent`, matching the constraint already placed on `VisualizerCanvasRenderer`.
 - Display a loading state until `AppRenderer`'s initialization handshake completes (its ref/`onError` callbacks signal this — no separate "ready" event is fabricated).
@@ -69,14 +70,19 @@ interface McpAppCanvasContent {
 
 ### Requirement: inner (untrusted content) iframe sandbox attribute for MCP Apps
 
-The `sandbox` prop passed to `AppRenderer` SHALL set `permissions: 'allow-scripts'` exactly, overriding `@mcp-ui/client`'s default (`"allow-scripts allow-same-origin allow-forms"`) for the inner iframe that ultimately holds the tool-supplied HTML — unlike `custom-visualizers` (which grants same-origin because its URLs are trusted, operator-registered origins), an MCP App's resource is tool-supplied, so the sandbox MUST NOT relax same-origin isolation for it. This is layered defense-in-depth alongside `mcp-app-sandbox-proxy`'s own fixed CSP (see `design.md` D6/D7) — the outer host↔proxy iframe's own `sandbox` attribute is set internally by `@mcp-ui/client` to isolate the proxy's *own* origin (not overridable, and not the untrusted-content boundary).
+**Corrected by runtime investigation (see `mcp-app-sandbox-proxy`'s "Sandbox permissions are not configurable per-render" requirement for the full finding):** there is no way to pass a `permissions`/`sandbox`-attribute override through `AppRenderer`'s props to either of the two nested sandboxed iframes. Both are hardcoded:
 
-There is no tool-declared permissions payload in DIAL Core's Phase 1 contract (no `_meta.ui.permissions` field is returned by the resource endpoint) — the renderer requests no permissions beyond `allow-scripts`. If a later phase introduces one, that is a new requirement against a real payload, not something to speculatively build now.
+- The **outer** host↔proxy iframe (an isolated-origin iframe pointed at `content.sandboxUrl`, created internally by `@mcp-ui/client`'s `AppFrame`) is hardcoded by that vendored library to `sandbox="allow-scripts allow-same-origin allow-forms"`. Nothing in `AppRenderer`'s public props reaches this value.
+- The **inner** untrusted-content iframe, created by `apps/mcp-app-sandbox/src/app/sandbox-page.ts` itself (see `mcp-app-sandbox-proxy`), defaults to the identical string and exposes a `params.sandbox` override channel over `postMessage` — but `@mcp-ui/client`'s `AppFrame` never sends that override (its `sendSandboxResourceReady` call only ever includes `{ html, csp }`), so in practice this channel is currently unreachable from `apps/chat`.
+
+Neither iframe ever grants `allow-same-origin` to the tool-supplied HTML, which satisfies this requirement's original security intent (no same-origin relaxation for untrusted content) — but the specific mechanism this requirement described (`AppRenderer`'s `sandbox.permissions` prop set to `'allow-scripts'`) does not exist in the installed library version and has been removed from `McpAppCanvasRenderer.tsx` as dead code. The actual, load-bearing default lives in `apps/mcp-app-sandbox/src/app/sandbox-page.ts`'s hardcoded `sandbox` attribute string, not in this component.
+
+There is no tool-declared permissions payload in DIAL Core's Phase 1 contract (no `_meta.ui.permissions` field is returned by the resource endpoint) — no permissions beyond `allow-scripts` are requested anywhere in the pipeline today. If a later phase introduces one, that is a new requirement against a real payload, not something to speculatively build now.
 
 #### Scenario: same-origin is never granted to the untrusted content
 
 - **WHEN** an `McpAppCanvasContent` is rendered
-- **THEN** `AppRenderer` is passed `sandbox.permissions === 'allow-scripts'`
+- **THEN** the inner iframe ultimately holding the tool-supplied HTML has a `sandbox` attribute that never includes `allow-same-origin` (enforced today by `apps/mcp-app-sandbox/src/app/sandbox-page.ts`'s hardcoded default, not by any prop passed from `apps/chat`)
 
 ---
 

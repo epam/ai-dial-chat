@@ -43,7 +43,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
         toolName={toolName}
         toolInput={toolInput}
         toolResult={toolResult}
-        sandbox={{ url: new URL(sandboxUrl), permissions: 'allow-scripts' }}
+        sandbox={{ url: new URL(sandboxUrl) }}
         onCallTool={(params) => onToolCall(params.name, params.arguments)}
         /*
          * AppRenderer does not expose an explicit "ready"/handshake-complete

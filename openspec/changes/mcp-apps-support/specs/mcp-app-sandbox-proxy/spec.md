@@ -19,7 +19,7 @@ It MUST be deployed at an origin distinct from `apps/chat`'s (different hostname
 
 - The outer proxy's referrer/origin validation and double-iframe relay (host ↔ proxy ↔ inner untrusted iframe), per the reference `src/sandbox.ts`.
 - The self-test that verifies the browser actually enforced `sandbox` isolation on this page (throws if `window.top` is unexpectedly accessible).
-- Creation of the inner iframe that ultimately holds the tool-supplied HTML, with its `sandbox` attribute defaulting to the value negotiated by `@mcp-ui/client`'s `AppBridge` (overridden to `allow-scripts` by `apps/chat`'s renderer — see `mcp-app-canvas`).
+- Creation of the inner iframe that ultimately holds the tool-supplied HTML, with its `sandbox` attribute hardcoded to `"allow-scripts allow-same-origin allow-forms"` by this page's own inline script (`apps/mcp-app-sandbox/src/app/sandbox-page.ts`). A `params.sandbox` string override channel exists over `postMessage` (`ui/notifications/sandbox-resource-ready`), but as of the installed `@mcp-ui/client` version, `AppFrame` never sends that field — see the requirement below for the full finding. There is no per-render override reaching this default from `apps/chat` today (corrects the `mcp-app-canvas` spec's earlier claim that `apps/chat`'s renderer overrides this to `allow-scripts`).
 
 No query-param-driven per-tool CSP configuration is implemented in v1 (see the CSP requirement below) — unlike the reference implementation's `?csp=` support.
 
@@ -80,3 +80,22 @@ The response SHALL also carry `Cache-Control: no-store` — the served script em
 
 - **WHEN** `MCP_APP_SANDBOX_URL` is not set
 - **THEN** the client-config response's `mcpAppSandboxUrl` is `null`
+
+---
+
+### Requirement: Sandbox permissions are not configurable per-render; `allow-popups` is unsupported end-to-end
+
+**Finding from runtime investigation** (triggered by a real bug report: a mounted app's `window.open(...)` call was silently blocked). Both nested sandboxed iframes in the double-iframe architecture are hardcoded and neither includes `allow-popups`:
+
+1. The **outer** host↔proxy iframe — an isolated-origin iframe pointed at `mcpAppSandboxUrl`, created by `@mcp-ui/client`'s `AppFrame` internals (vendored code under `node_modules`, not this repo's source) — is hardcoded to `sandbox="allow-scripts allow-same-origin allow-forms"`. `AppRenderer`'s public `sandbox` prop only forwards `url` and `csp` into this library's internals; there is no prop, in the installed version, that changes this iframe's `sandbox` attribute.
+2. The **inner** untrusted-content iframe — created by this app's own `sandbox-page.ts` script — defaults to the identical string. Its `params.sandbox` override channel (received over `postMessage` as part of `ui/notifications/sandbox-resource-ready`) is real and would let this app's own default be overridden, but `@mcp-ui/client`'s `AppFrame` never populates that field when it calls `sendSandboxResourceReady` (only `{ html, csp }` are sent) — so this channel has no caller in the current integration.
+
+Per the HTML sandboxing spec, a nested browsing context's effective permissions are capped by every sandboxed ancestor. Consequently, adding `allow-popups` to only the inner iframe (item 2, the only lever this repo can edit directly) would **not** be sufficient on its own — the outer vendored iframe (item 1) would still block it. Enabling popups end-to-end would require patching `@mcp-ui/client`'s bundled output (no `patch-package` tooling exists in this repo today) in addition to changing this app's own default, or an upstream change to `@mcp-ui/client` that exposes the outer iframe's `sandbox` attribute as a configurable prop.
+
+**Status:** documented limitation, not fixed. No `allow-popups` support is implemented anywhere in the pipeline as of this change.
+
+#### Scenario: a tool app's popup call is blocked
+
+- **WHEN** the mounted app calls `window.open(...)` (e.g. to open an external link in a new tab)
+- **THEN** the browser blocks the popup because neither the outer nor the inner sandboxed iframe includes `allow-popups`
+- **AND** no prop passed by `apps/chat`'s `McpAppCanvasRenderer` can change this outcome
