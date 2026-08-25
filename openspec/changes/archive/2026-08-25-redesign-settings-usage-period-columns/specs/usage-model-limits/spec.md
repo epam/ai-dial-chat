@@ -1,16 +1,4 @@
-# usage-model-limits Specification
-
-## Purpose
-
-Defines the app-level integration that adds a per-model "Model limits" table to the `Usage` tab:
-the DTO-to-row adapter that turns `useUsageData()`'s already-fetched `usage.deployments` into
-`@epam/ai-dial-usage-dashboard`'s `ModelLimitsSection` rows for the fixed Last 24 hours/Last 7
-days/Last 30 days comparison, without any additional API call. The adapter owns all DTO
-interpretation (period-to-field mapping, finite/unlimited/unavailable detection, status derivation,
-formatting, and the join against `useDeployments().items`); the library only renders the rows it is
-given.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: UsageTab renders Model limits below the aggregate cards
 
@@ -249,3 +237,18 @@ API DTOs, contexts, feature flags, or other host/external integration details.
 - **WHEN** the comparison table renders
 - **THEN** `useUsageData` and `useDeployments` remain the only existing owners of fetched Usage and
   deployment state; no new context or hook is introduced
+
+## REMOVED Requirements
+
+### Requirement: App-owned period state, re-derived without refetching
+
+**Reason**: All three supported periods render simultaneously, so there is no selected period to
+store or change.
+
+**Migration**: Remove `ModelLimitsPeriod` state and the mapper's `period` argument. Derive fixed day,
+week, and month cells once from the already-fetched usage response.
+
+## RENAMED Requirements
+
+- FROM: `Rows with no usage in the selected period are excluded`
+- TO: `Rows with no usage across displayed periods are excluded`
