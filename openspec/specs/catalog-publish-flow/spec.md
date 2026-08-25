@@ -146,6 +146,8 @@ Submit success: `CatalogView`'s `onPublishSuccess` SHALL raise its notification 
 
 Submit failure: `CatalogView` SHALL supply an `onPublishError` handler, threaded down as `CatalogProps.onPublishError` → `DetailsPanelProps.onPublishError` → `usePublishFlow` the same way `onPublishSuccess` already is, so a rejected publish produces an error notification in addition to the inline submit-error callout ([GitHub issue #7898](https://github.com/epam/ai-dial-chat/issues/7898)). It SHALL reuse the same shared `usePublishErrorNotification` hook and shared `publish.*` i18n namespace as the conversation publish flow (see `conversation-publish-flow`), including the offline branch that swaps in `publish.networkErrorMessage` and omits `requestId`. `CatalogView` SHALL also pass the translated `publishLabels.submitError` (`publish.submitErrorCallout`), so the callout no longer renders the publish-panel library's hardcoded English default.
 
+**Temporary exception (tracked in [GitHub issue #7897](https://github.com/epam/ai-dial-chat/issues/7897)):** `CatalogView.getPublishHistory` SHALL NOT call the publish-history endpoint (`getCatalogPublishHistory`) while it returns 503 from DIAL Core. For the duration of this exception, `getPublishHistory` SHALL always resolve to `[]`, so `PublishHistoryList` SHALL always render its empty state and the fetch-failure error state described above SHALL NOT trigger. This exception SHALL be lifted — restoring the full requirement above — as soon as the backend publish-history endpoint (`catalog-publish-api`’s history requirement) is fixed; the exception itself is not a permanent relaxation of this requirement.
+
 Accessibility: the publish history list SHALL expose `role="list"`/`role="listitem"` semantics (or equivalent list semantics already implemented) so screen readers announce entry count; the submit-error callout SHALL use `role="alert"`.
 
 #### Scenario: Publish succeeds
@@ -171,6 +173,11 @@ Accessibility: the publish history list SHALL expose `role="list"`/`role="listit
 #### Scenario: Publish history fails to load
 - **WHEN** `getPublishHistory` rejects
 - **THEN** `PublishHistoryList` renders an inline error state instead of an empty-history message, and the `Unpublish` menu entry stays hidden (see `catalog-unpublish-flow`)
+
+#### Scenario: While the temporary exception is active, publish history is always empty
+- **GIVEN** the publish-history fetch is disabled per the temporary exception above
+- **WHEN** the user opens the publish panel for an application or toolset, regardless of any real prior publications
+- **THEN** `getPublishHistory` resolves to `[]` and `PublishHistoryList` renders its empty state, never a loading or error state
 
 ### Requirement: Catalog entity summary is supplied to the shared publish panel via a render-slot
 `DetailsPanel` SHALL supply its entity-specific publish summary (the `EntityHeader` block plus version tag, for Applications/Toolsets/Models) to the shared `PublishPanel` (from `@epam/ai-dial-publish-panel`) via the `renderSummary?: () => ReactNode` prop, rather than passing a `CatalogItem` directly. `DetailsPanel` SHALL remain the only place in `libs/catalog` that maps a `CatalogItem` to its publish-summary rendering; `PublishPanel` itself SHALL have no knowledge of `CatalogItem` or `EntityHeader`. This is a structural/ownership change only — the rendered output (entity name, icon, version tag) SHALL be visually identical to before the move.

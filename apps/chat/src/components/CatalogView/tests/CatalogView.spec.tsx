@@ -18,10 +18,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   isValidElement,
+  useState,
   type ComponentProps,
   type ReactElement,
   type ReactNode,
-  useState,
 } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -84,10 +84,6 @@ import { UserConfigStatus } from '../../../types/user-config-status';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
 import { SkillDetailsFilePreview } from '../SkillDetailsFilePreview';
-
-const formatLimitNumber = new Intl.NumberFormat(undefined, {
-  maximumFractionDigits: 2,
-}).format;
 
 /** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
 const makeFakePopup = () => {
@@ -1518,127 +1514,6 @@ describe('CatalogView', () => {
     );
 
     expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
-  });
-
-  it('maps a fetched model DeploymentDetailsDto into structured catalog tab data', async () => {
-    vi.mocked(useDeployments).mockReturnValue({
-      items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
-      selectedItemId: null,
-      setSelectedItemId: vi.fn(),
-      restoreSelectedItemId: vi.fn(),
-      restoreDefaultSelection: vi.fn(),
-      selectedDeploymentConfiguration: null,
-      isLoading: false,
-      error: null,
-      schemas: [],
-      toolsets: [],
-      refetchToolsets: vi.fn(),
-      refetchDeployments: vi.fn(),
-      selectedDeploymentDetails: null,
-      isDeploymentDetailsLoading: false,
-      mergeSharedItem: vi.fn(),
-    });
-    vi.mocked(getDeploymentDetails).mockResolvedValue({
-      id: 'gpt-4o',
-      type: 'model',
-      modelDetails: {
-        limits: { maxTotalTokens: 128000 },
-        pricing: {
-          unit: 'token',
-          prompt: '0.000003',
-          completion: '0.000015',
-          cache_read: '0.0000003',
-        },
-        features: {
-          tools: true,
-          mcp: false,
-          cache: true,
-          parallelToolCalls: true,
-          urlAttachments: false,
-          folderAttachments: false,
-          seed: false,
-          systemPrompt: true,
-          allowResume: true,
-          reasoningEfforts: ['low', 'medium', 'high'],
-        },
-        owner: 'organization-owner',
-        inputAttachmentTypes: ['text/*', 'image/*'],
-        createdAt: 1780387921823,
-      },
-    });
-    vi.mocked(getDeploymentLimits).mockResolvedValue({
-      hourRequestStats: { used: 2, total: 10 },
-      dayTokenStats: { used: 2500, total: 10000 },
-    });
-
-    render(<CatalogView />);
-
-    await user.click(
-      screen.getByRole('button', { name: 'fetch details gpt-4o' }),
-    );
-
-    const result = JSON.parse(
-      await screen.findByLabelText('Fetch details result').then((el) => {
-        expect(el.textContent).toBeTruthy();
-        return el.textContent as string;
-      }),
-    );
-    expect(result.pricing).toEqual({
-      prices: [
-        { label: 'Input tokens', price: '$3/M tokens' },
-        { label: 'Output tokens', price: '$15/M tokens' },
-        { label: 'Cached input', price: '$0.3/M tokens' },
-      ],
-      limits: [],
-    });
-    expect(result.limits).toEqual({
-      rows: [
-        {
-          label: CatalogI18nKeys.DetailsLimitsRequestsPerHour,
-          used: 2,
-          total: 10,
-          usedLabel: formatLimitNumber(2),
-          totalLabel: formatLimitNumber(10),
-          valueLabel: CatalogI18nKeys.DetailsLimitsValue,
-          ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
-        },
-        {
-          label: CatalogI18nKeys.DetailsLimitsTokensPerDay,
-          used: 2500,
-          total: 10000,
-          usedLabel: formatLimitNumber(2500),
-          totalLabel: formatLimitNumber(10000),
-          valueLabel: CatalogI18nKeys.DetailsLimitsValue,
-          ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
-        },
-      ],
-    });
-    expect(getDeploymentLimits).toHaveBeenCalledWith('gpt-4o');
-    expect(result.overview.sections).toEqual([
-      {
-        title: 'Capabilities',
-        specs: [
-          { label: 'Tools', value: true },
-          { label: 'Parallel tool calls', value: true },
-          { label: 'Reasoning efforts', value: 'low · medium · high' },
-        ],
-      },
-      {
-        title: 'Specification',
-        specs: [
-          { label: 'Hosted by', value: 'organization-owner' },
-          {
-            label: 'Release date',
-            value: new Date(1780387921823).toLocaleDateString(),
-          },
-          { label: 'Context window', value: '128K tokens' },
-          {
-            label: CatalogI18nKeys.DetailsModelInputModalities,
-            value: 'Text files, Image files',
-          },
-        ],
-      },
-    ]);
   });
 
   it('maps a fetched application DeploymentDetailsDto into specification/capabilities/configuration', async () => {

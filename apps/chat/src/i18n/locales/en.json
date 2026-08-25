@@ -122,8 +122,7 @@
         "license": "License",
         "knowledgeCutoffDate": "Knowledge cutoff date",
         "parameters": "Parameters",
-        "inputModalities": "Input modalities",
-        "outputModalities": "Output modalities"
+        "inputModalities": "Input modalities"
       },
       "limits": {
         "requestsPerHour": "Requests per hour",
