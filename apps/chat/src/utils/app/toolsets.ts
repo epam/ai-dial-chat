@@ -38,6 +38,7 @@ import { Routes } from '@/src/constants/routes';
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import {
+  PkceMethod,
   SharePermission,
   Toolset,
   ToolsetAuthStatus,
@@ -134,9 +135,10 @@ const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
         ...(data.authSettings.codeChallenge && {
           code_challenge: data.authSettings.codeChallenge,
         }),
-        ...(data.authSettings.codeChallengeMethod && {
-          code_challenge_method: data.authSettings.codeChallengeMethod,
-        }),
+        ...(data.authSettings.codeChallengeMethod &&
+          data.authSettings.codeChallengeMethod !== PkceMethod.None && {
+            code_challenge_method: data.authSettings.codeChallengeMethod,
+          }),
         ...(data.authSettings.dynamicallyRegistered && {
           dynamically_registered: data.authSettings.dynamicallyRegistered,
         }),

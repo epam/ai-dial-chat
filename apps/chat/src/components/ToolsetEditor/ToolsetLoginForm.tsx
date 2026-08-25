@@ -1,5 +1,5 @@
 import { IconLogin, IconLogout } from '@tabler/icons-react';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   Controller,
   useFormContext,
@@ -30,13 +30,14 @@ import { ToolsetRepairButton } from '@/src/components/Marketplace/ToolsetRepairB
 import { ToolsetLoginFormType, WithLogin } from './form';
 
 import {
+  PkceMethod,
   TokenEndpointAuthMethod,
   ToolsetAuthTypes,
 } from '@epam/ai-dial-shared';
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
-const SelectorField = withLabel(DropdownSelector);
+const SelectorField = withErrorMessage(withLabel(DropdownSelector));
 const getItemLabel = (item: unknown): string => item as string;
 
 const TOKEN_ENDPOINT_AUTH_METHOD_LABELS: Record<
@@ -51,10 +52,9 @@ const TOKEN_ENDPOINT_AUTH_METHOD_LABELS: Record<
     CommonI18nKeys.TokenEndpointAuthMethodPost,
     { ns: Translation.Common },
   ),
-  [TokenEndpointAuthMethod.None]: translate(
-    CommonI18nKeys.TokenEndpointAuthMethodNone,
-    { ns: Translation.Common },
-  ),
+  [TokenEndpointAuthMethod.None]: translate(CommonI18nKeys.NoneOption, {
+    ns: Translation.Common,
+  }),
 };
 
 const tokenEndpointAuthMethodOptions = Object.values(
@@ -62,6 +62,23 @@ const tokenEndpointAuthMethodOptions = Object.values(
 ).map((value) => ({
   value,
   label: TOKEN_ENDPOINT_AUTH_METHOD_LABELS[value],
+}));
+
+const PKCE_METHOD_LABELS: Record<PkceMethod, string> = {
+  [PkceMethod.None]: translate(CommonI18nKeys.NoneOption, {
+    ns: Translation.Common,
+  }),
+  [PkceMethod.Plain]: translate(CommonI18nKeys.PkceMethodPlain, {
+    ns: Translation.Common,
+  }),
+  [PkceMethod.S256]: translate(CommonI18nKeys.PkceMethodS256, {
+    ns: Translation.Common,
+  }),
+};
+
+const pkceMethodOptions = Object.values(PkceMethod).map((value) => ({
+  value,
+  label: PKCE_METHOD_LABELS[value],
 }));
 
 const fields = [
@@ -108,12 +125,17 @@ export const ToolsetLoginForm = ({
     ? [DialNeutralButton, IconLogout]
     : [DialPrimaryButton, IconLogin];
 
-  const { register, getValues, trigger, control } =
+  const { register, getValues, trigger, control, clearErrors } =
     useFormContext<ToolsetLoginFormType>();
   const { isValid, errors } = useFormState<ToolsetLoginFormType>({ control });
 
   const withLogin = useWatch({
     name: 'withLogin',
+    control,
+  });
+
+  const endpointAuthMethod = useWatch({
+    name: 'tokenEndpointAuthMethod',
     control,
   });
 
@@ -130,6 +152,14 @@ export const ToolsetLoginForm = ({
       });
     }
   }, [isSignedIn, onLogout, trigger, getValues, onLogin]);
+
+  useEffect(() => {
+    if (endpointAuthMethod === TokenEndpointAuthMethod.None) {
+      clearErrors('clientSecret');
+    } else {
+      clearErrors('codeChallengeMethod');
+    }
+  }, [clearErrors, endpointAuthMethod]);
 
   return (
     <div
@@ -193,7 +223,7 @@ export const ToolsetLoginForm = ({
               id="clientSecret"
               disabled={disabled}
               error={errors.clientSecret?.message}
-              mandatory
+              mandatory={endpointAuthMethod !== TokenEndpointAuthMethod.None}
               type="password"
               tooltip={fieldsTooltip}
             />
@@ -230,6 +260,38 @@ export const ToolsetLoginForm = ({
                       value,
                     }}
                     options={tokenEndpointAuthMethodOptions}
+                    onChange={(option) =>
+                      field.onChange(
+                        (option as unknown as DropdownSelectorOption).value,
+                      )
+                    }
+                    closeMenuOnSelect
+                    isDisabled={disabled}
+                    tooltip={fieldsTooltip}
+                  />
+                );
+              }}
+            />
+            <Controller
+              name="codeChallengeMethod"
+              control={control}
+              render={({ field }) => {
+                const value = field.value ?? PkceMethod.None;
+                return (
+                  <SelectorField
+                    label={t(CommonI18nKeys.PkceMethodLabel)}
+                    error={errors.codeChallengeMethod?.message}
+                    mandatory={
+                      endpointAuthMethod === TokenEndpointAuthMethod.None
+                    }
+                    isSearchable={false}
+                    isClearable={false}
+                    id="codeChallengeMethod"
+                    value={{
+                      label: t(PKCE_METHOD_LABELS[value]),
+                      value,
+                    }}
+                    options={pkceMethodOptions}
                     onChange={(option) =>
                       field.onChange(
                         (option as unknown as DropdownSelectorOption).value,
