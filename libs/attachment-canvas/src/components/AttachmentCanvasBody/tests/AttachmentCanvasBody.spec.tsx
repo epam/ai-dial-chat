@@ -149,6 +149,22 @@ describe('AttachmentCanvasBody', () => {
     expect(screen.getByRole('region', { name: 'ooxml-content' })).toBeTruthy();
   });
 
+  it('exposes the OOXML background as a host-overridable CSS variable', () => {
+    const { container } = renderBody(
+      {
+        type: AttachmentContentType.Ooxml,
+        url: 'blob:office-url',
+        format: OoxmlFileType.Docx,
+      },
+      { styles: { colors: { ooxmlBackground: 'rebeccapurple' } } },
+    );
+
+    /* Set on the body root and inherited by OoxmlContent through the cascade. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- reading an inline CSS custom property, which has no accessible representation to query
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--ac-ooxml-bg')).toBe('rebeccapurple');
+  });
+
   it('does not add its own scroll container for OOXML content', () => {
     const { container } = renderBody({
       type: AttachmentContentType.Ooxml,

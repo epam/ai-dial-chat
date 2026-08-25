@@ -178,6 +178,8 @@ export interface AttachmentCanvasColors {
   jsonToggleIcon?: string;
   /** Expand/collapse triangle color on hover. Defaults to `--text-primary`. */
   jsonToggleIconHover?: string;
+  /** Background color of the OOXML (DOCX/XLSX/PPTX) viewer surface and its loading/error overlay. Defaults to `--bg-layer-raised`. */
+  ooxmlBackground?: string;
   /** Text color of the collapsed-content ellipsis. Defaults to `--text-secondary`. */
   jsonCollapsedText?: string;
   /** Background color of the collapsed-content ellipsis. Defaults to `--bg-layer-raised`. */
