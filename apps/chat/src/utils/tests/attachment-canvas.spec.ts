@@ -11,6 +11,7 @@ import type {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearAttachmentCache,
+  getUrlFileName,
   hasAttachmentTextSource,
   isExternalSourcePreviewable,
   referenceAttachmentToPdfCanvasContent,
@@ -703,6 +704,44 @@ describe('resolveVisualizerCanvasContent', () => {
         layout: expect.objectContaining({ themeId: 'light' }),
       }),
     );
+  });
+});
+
+describe('getUrlFileName', () => {
+  it('returns the last path segment of an absolute url', () => {
+    expect(getUrlFileName('https://example.com/files/report.pdf')).toBe(
+      'report.pdf',
+    );
+  });
+
+  it('returns the file name of a relative DIAL resource path', () => {
+    expect(
+      getUrlFileName(
+        'files/4FD1MyzohvVCq3YG9kDnt7Yk38cZfot7myHgGbBMKBpsSERRfFUHAh6ZsqCfieQsGy/qa-routed-source.html',
+      ),
+    ).toBe('qa-routed-source.html');
+  });
+
+  it('drops the query string and hash', () => {
+    expect(getUrlFileName('files/bucket/page.html?v=2#top')).toBe('page.html');
+    expect(getUrlFileName('https://example.com/page.html?v=2#top')).toBe(
+      'page.html',
+    );
+  });
+
+  it('decodes percent escapes in the file name', () => {
+    expect(getUrlFileName('files/bucket/my%20report.pdf')).toBe(
+      'my report.pdf',
+    );
+  });
+
+  it('ignores a trailing slash', () => {
+    expect(getUrlFileName('files/bucket/nested/')).toBe('nested');
+  });
+
+  it('returns an empty string when there is no path segment', () => {
+    expect(getUrlFileName('')).toBe('');
+    expect(getUrlFileName('https://example.com/')).toBe('');
   });
 });
 

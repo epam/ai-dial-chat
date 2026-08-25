@@ -190,7 +190,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       <span role="status" aria-live="polite" className="sr-only">
         {isNoResults ? labels.noResultsLabel : ''}
       </span>
-      <div className="flex-1 overflow-y-auto p-4">{bodyContent}</div>
+      <div className="flex-1 overflow-y-auto p-4 pt-0">{bodyContent}</div>
     </SidebarPanel>
   );
 };

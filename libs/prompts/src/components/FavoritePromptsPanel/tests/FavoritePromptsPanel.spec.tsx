@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -64,7 +64,7 @@ describe('FavoritePromptsPanel', () => {
     expect(onSelect).toHaveBeenCalledWith(item);
   });
 
-  it('calls onToggleFavorite with the id when the star is clicked', async () => {
+  it('does not call onToggleFavorite synchronously on click', async () => {
     const onToggleFavorite = vi.fn();
     renderPanel({
       favorites: [makeItem({ id: 'prompt-2' })],
@@ -75,7 +75,23 @@ describe('FavoritePromptsPanel', () => {
       screen.getByRole('button', { name: 'Remove from favorites' }),
     );
 
-    expect(onToggleFavorite).toHaveBeenCalledWith('prompt-2');
+    expect(onToggleFavorite).not.toHaveBeenCalled();
+  });
+
+  it('calls onToggleFavorite with the id once the exit animation finishes', async () => {
+    const onToggleFavorite = vi.fn();
+    renderPanel({
+      favorites: [makeItem({ id: 'prompt-2' })],
+      onToggleFavorite,
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Remove from favorites' }),
+    );
+
+    await waitFor(() =>
+      expect(onToggleFavorite).toHaveBeenCalledWith('prompt-2'),
+    );
   });
 
   it('calls onBrowse when "Browse" is clicked', async () => {
