@@ -184,6 +184,7 @@ export class ConversationStreamingService {
     signal: AbortSignal,
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
+    timezone?: string,
     timing?: GenerationRelayTiming,
   ): AsyncGenerator<Uint8Array, RelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
@@ -199,6 +200,7 @@ export class ConversationStreamingService {
             ...(clientChannelId
               ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
               : {}),
+            ...(timezone ? { 'X-Timezone': timezone } : {}),
           },
           params: { query: { 'api-version': this.dialClient.dialApiVersion } },
           parseAs: 'stream',
@@ -388,6 +390,7 @@ export class ConversationStreamingService {
     onReadyToStream: () => void,
     sub: string,
     clientChannelId?: string,
+    timezone?: string,
   ): AsyncGenerator<Uint8Array | string, void, void> {
     this.logger.debug(
       `streamCompletion start — model: ${model}, bucket: ${bucket}, path: ${conversationPath}, mode: ${mode}`,
@@ -562,6 +565,7 @@ export class ConversationStreamingService {
             abortController.signal,
             assembledMessage,
             clientChannelId,
+            timezone,
             timing,
           )
         : this.relayModelCompletion(
@@ -571,6 +575,7 @@ export class ConversationStreamingService {
             abortController.signal,
             assembledMessage,
             clientChannelId,
+            timezone,
             timing,
           );
     let next = await relayIterator.next();

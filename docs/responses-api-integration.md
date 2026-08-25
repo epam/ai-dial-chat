@@ -52,7 +52,7 @@ resolveGenerationApi()
   |                              |
   | true                         | false / absent
   v                              v
-ResponsesAdapter             ChatCompletionsAdapter
+ResponsesAdapter             ConversationStreamingService
   |                              |
   | POST /openai/v1/responses    | Chat Completions request
   v                              v
@@ -65,7 +65,11 @@ DIAL Core                    DIAL Core
        status, and generation stop handling
 ```
 
-Separating the two modes into adapters preserves the existing external Chat contract and the shared conversation-history logic.
+The Responses mode is isolated in `ResponsesAdapter`. The active Chat Completions
+relay remains in `ConversationStreamingService.relayModelCompletion`; the dormant
+`ChatCompletionsAdapter` refactor is not used for runtime dispatch. Both modes
+preserve the existing external Chat contract and shared conversation-history
+logic.
 
 ## How Responses API Support Is Determined
 
@@ -128,6 +132,42 @@ If the deployment is a toolset, generation is rejected with `400 Bad Request`. I
 
 This lifecycle is the same for Responses and Chat Completions except for upstream request construction and stream parsing.
 
+### Browser timezone context
+
+For each completion request, the frontend resolves the browser's current IANA
+timezone with `Intl.DateTimeFormat().resolvedOptions().timeZone`. Resolution is
+best-effort and happens again for every send, so a changed browser timezone is
+used without reloading the application. When resolution succeeds, the frontend
+adds the optional request header:
+
+```http
+X-Timezone: Europe/Warsaw
+```
+
+The streaming frontend deliberately continues to use raw `fetch` for
+`POST /api/v1/conversations/completions`. Although the generated
+`ConversationsApi.streamCompletion` contract exposes optional
+`xTimezone?: string`, neither that method nor its `Raw` variant exposes the live
+response body needed by the existing SSE reader.
+
+`ConversationController` validates a present header before generation starts.
+It must be a single IANA timezone string, no longer than 255 characters, match
+the safe timezone-segment syntax, and be accepted by `Intl.DateTimeFormat`.
+Malformed, unknown, oversized, or multi-value input returns `400 Bad Request`
+without calling DIAL Core. An absent header is accepted for backward
+compatibility.
+
+The validated value stays request-local. The BFF forwards it unchanged as
+`X-Timezone` through both active upstream paths:
+
+- Chat Completions via
+  `ConversationStreamingService.relayModelCompletion` and
+  `sendChatCompletionRequest`;
+- Responses via `ResponsesAdapter` and `createResponse`.
+
+The timezone is context for DIAL Core only. Chat does not persist it, cache it,
+put it into metrics, or include it in logs.
+
 ## Responses API Request
 
 The Responses adapter calls the SDK's `createResponse` method, which sends a request to:
@@ -165,7 +205,9 @@ Mapping rules:
 - `stream` is always `true`;
 - `store` is always `false`.
 
-The request also includes the user's Bearer token, `Accept: text/event-stream`, an AbortSignal, and `X-DIAL-CLIENT-CHANNEL-ID` when available.
+The request also includes the user's Bearer token, `Accept: text/event-stream`,
+an AbortSignal, `X-DIAL-CLIENT-CHANNEL-ID` when available, and the validated
+`X-Timezone` when supplied by the browser.
 
 ### Why the full history is sent
 
@@ -354,21 +396,23 @@ Possible `generation.api` values:
 
 ## Code Map
 
-| Area                                       | File                                                                                                                                                                              |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| API enum and selection                     | `apps/chat-api/src/conversations/generation/generation-api.ts`                                                                                                                    |
-| Shared result types                        | `apps/chat-api/src/conversations/generation/generation.types.ts`                                                                                                                  |
-| Responses request and SSE parser           | `apps/chat-api/src/conversations/generation/responses.adapter.ts`                                                                                                                 |
-| Existing Chat Completions flow             | `apps/chat-api/src/conversations/generation/chat-completions.adapter.ts`                                                                                                          |
-| Metrics                                    | `apps/chat-api/src/conversations/generation/generation-metrics.ts`                                                                                                                |
-| Orchestration and conversation persistence | `apps/chat-api/src/conversations/conversation.service.ts`                                                                                                                         |
-| Deployment-details retrieval and caching   | `apps/chat-api/src/deployments/deployments.service.ts`                                                                                                                            |
-| Deployment-capability DTOs and mapping     | `apps/chat-api/src/deployments/dto/raw-deployment.dto.ts`, `apps/chat-api/src/deployments/dto/deployment-item.dto.ts`, and `apps/chat-api/src/deployments/deployments.service.ts` |
-| Message DTO containing `responseId`        | `apps/chat-api/src/conversations/dto/conversation-message.dto.ts`                                                                                                                 |
-| API-selection unit tests                   | `apps/chat-api/src/conversations/generation/generation-api.spec.ts`                                                                                                               |
-| Responses-adapter unit tests               | `apps/chat-api/src/conversations/generation/responses.adapter.spec.ts`                                                                                                            |
-| Service-level integration                  | `apps/chat-api/src/conversations/tests/conversation.service.spec.ts`                                                                                                              |
-| `features.responsesApiEnabled` flag source | `apps/chat-api/src/app-config/feature-flags/feature-key.enum.ts`, `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`                                     |
+| Area                                        | File                                                                                                                                                                              |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API enum and selection                      | `apps/chat-api/src/conversations/generation/generation-api.ts`                                                                                                                    |
+| Shared result types                         | `apps/chat-api/src/conversations/generation/generation.types.ts`                                                                                                                  |
+| Responses request and SSE parser            | `apps/chat-api/src/conversations/generation/responses.adapter.ts`                                                                                                                 |
+| Active Chat Completions flow                | `apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`                                                                                                     |
+| Browser timezone resolution and SSE request | `apps/chat/src/utils/browser-timezone.ts`, `apps/chat/src/server-api/chat-stream.api.ts`                                                                                          |
+| Timezone header validation                  | `apps/chat-api/src/conversations/utils/timezone-header.ts`, `apps/chat-api/src/conversations/conversation.controller.ts`                                                          |
+| Metrics                                     | `apps/chat-api/src/conversations/generation/generation-metrics.ts`                                                                                                                |
+| Orchestration and conversation persistence  | `apps/chat-api/src/conversations/conversation.service.ts`                                                                                                                         |
+| Deployment-details retrieval and caching    | `apps/chat-api/src/deployments/deployments.service.ts`                                                                                                                            |
+| Deployment-capability DTOs and mapping      | `apps/chat-api/src/deployments/dto/raw-deployment.dto.ts`, `apps/chat-api/src/deployments/dto/deployment-item.dto.ts`, and `apps/chat-api/src/deployments/deployments.service.ts` |
+| Message DTO containing `responseId`         | `apps/chat-api/src/conversations/dto/conversation-message.dto.ts`                                                                                                                 |
+| API-selection unit tests                    | `apps/chat-api/src/conversations/generation/generation-api.spec.ts`                                                                                                               |
+| Responses-adapter unit tests                | `apps/chat-api/src/conversations/generation/responses.adapter.spec.ts`                                                                                                            |
+| Service-level integration                   | `apps/chat-api/src/conversations/tests/conversation.service.spec.ts`                                                                                                              |
+| `features.responsesApiEnabled` flag source  | `apps/chat-api/src/app-config/feature-flags/feature-key.enum.ts`, `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`                                     |
 
 ## DIAL Core Context
 

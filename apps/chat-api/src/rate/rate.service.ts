@@ -28,7 +28,7 @@ export class RateService {
         body['comment'] = dto.comment;
       }
 
-      const response = await fetch(url, {
+      const response = await this.dialClient.fetchCore(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
