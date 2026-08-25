@@ -1,10 +1,10 @@
 # @epam/ai-dial-attachment-canvas
 
-Canvas/viewer component for rendering attachment content inline — images, audio, PDFs, JSON, markdown, code, HTML, and plain text.
+Canvas/viewer component for rendering attachment content inline — images, audio, PDFs, DOCX/XLSX/PPTX, JSON, markdown, code, HTML, and plain text.
 
 ## Overview
 
-`@epam/ai-dial-attachment-canvas` solves the problem of rendering heterogeneous attachment content — images, audio, PDFs with text highlighting, JSON trees, markdown documents, syntax-highlighted source files, sandboxed HTML, third-party visualizers, and plain text — inside a single unified preview panel. Without this library, each consuming feature would need to independently wire up content-type detection, lazy loading, and a PDF renderer. The library centralises all of that behind a React context, meaning any component in the tree can push new content to the canvas without drilling props through intermediate layers. Use it whenever a conversation view, side panel, or modal needs to display an attachment that the user has opened or clicked. When a MIME type is not natively supported, or a fetch fails, the library provides graceful `UnsupportedCanvasContent` / `ErrorCanvasContent` fallbacks and a download utility so users can still retrieve the file.
+`@epam/ai-dial-attachment-canvas` solves the problem of rendering heterogeneous attachment content — images, audio, PDFs with text highlighting, DOCX/XLSX/PPTX documents, JSON trees, markdown documents, syntax-highlighted source files, sandboxed HTML, third-party visualizers, and plain text — inside a single unified preview panel. Without this library, each consuming feature would need to independently wire up content-type detection, lazy loading, and document renderers. The library centralises all of that behind a React context, meaning any component in the tree can push new content to the canvas without drilling props through intermediate layers. Use it whenever a conversation view, side panel, or modal needs to display an attachment that the user has opened or clicked. When a MIME type is not natively supported, or a fetch fails, the library provides graceful `UnsupportedCanvasContent` / `ErrorCanvasContent` fallbacks and a download utility so users can still retrieve the file.
 
 ## Installation
 
@@ -26,6 +26,10 @@ Canvas/viewer component for rendering attachment content inline — images, audi
 - `@epam/ai-dial-react-pdf-highlighter`
 - `@tabler/icons-react`
 - `react-json-view-lite`
+
+The library uses `@silurus/ooxml` as a bundled runtime dependency. Its DOCX,
+XLSX, and PPTX entry points are loaded independently on demand, so opening one
+format does not eagerly load the other renderers.
 
 ## Components
 
@@ -55,7 +59,7 @@ import {
 
 ### AttachmentCanvasBody
 
-Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render.
+Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render.
 
 ```tsx
 import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
@@ -132,19 +136,20 @@ openCanvas(
 
 `AttachmentContentType` is the discriminant on every content descriptor.
 
-| Enum member                         | Content type               | Description                                      |
-| ----------------------------------- | -------------------------- | ------------------------------------------------ |
-| `AttachmentContentType.PlainText`   | `PlainTextCanvasContent`   | Renders plain text                               |
-| `AttachmentContentType.Image`       | `ImageCanvasContent`       | Renders an image from a URL                      |
-| `AttachmentContentType.Audio`       | `AudioCanvasContent`       | Renders an audio player                          |
-| `AttachmentContentType.Markdown`    | `MarkdownCanvasContent`    | Renders markdown text                            |
-| `AttachmentContentType.Json`        | `JsonCanvasContent`        | Renders a JSON tree viewer                       |
-| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support             |
-| `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                |
-| `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source |
-| `AttachmentContentType.Visualizer`  | `VisualizerCanvasContent`  | Renders a registered custom visualizer           |
-| `AttachmentContentType.Unsupported` | `UnsupportedCanvasContent` | Fallback for unsupported MIME types              |
-| `AttachmentContentType.Error`       | `ErrorCanvasContent`       | Load failure or forbidden access                 |
+| Enum member                         | Content type               | Description                                       |
+| ----------------------------------- | -------------------------- | ------------------------------------------------- |
+| `AttachmentContentType.PlainText`   | `PlainTextCanvasContent`   | Renders plain text                                |
+| `AttachmentContentType.Image`       | `ImageCanvasContent`       | Renders an image from a URL                       |
+| `AttachmentContentType.Audio`       | `AudioCanvasContent`       | Renders an audio player                           |
+| `AttachmentContentType.Markdown`    | `MarkdownCanvasContent`    | Renders markdown text                             |
+| `AttachmentContentType.Json`        | `JsonCanvasContent`        | Renders a JSON tree viewer                        |
+| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support              |
+| `AttachmentContentType.Ooxml`       | `OoxmlCanvasContent`       | Renders DOCX, XLSX, or PPTX with `@silurus/ooxml` |
+| `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                 |
+| `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source  |
+| `AttachmentContentType.Visualizer`  | `VisualizerCanvasContent`  | Renders a registered custom visualizer            |
+| `AttachmentContentType.Unsupported` | `UnsupportedCanvasContent` | Fallback for unsupported MIME types               |
+| `AttachmentContentType.Error`       | `ErrorCanvasContent`       | Load failure or forbidden access                  |
 
 `AttachmentErrorType` distinguishes the two failure kinds carried by
 `ErrorCanvasContent`: `LoadFailed` (network error or a non-`403` non-OK
@@ -158,15 +163,21 @@ import {
   isDownloadable,
   isTextPreviewable,
   isHtmlPreviewable,
+  isOoxmlPreviewable,
+  getOoxmlFileType,
   extensionToLanguage,
   createUnsupportedCanvasContent,
   createLoadErrorCanvasContent,
   createForbiddenCanvasContent,
 } from '@epam/ai-dial-attachment-canvas';
 
-// Check whether a file name's extension can be previewed as text or as HTML
+// Check whether a file can be previewed by a built-in renderer
 if (isTextPreviewable(fileName)) { ... }
 if (isHtmlPreviewable(fileName)) { ... }
+if (isOoxmlPreviewable(fileName, mimeType)) { ... }
+
+// Resolve the format needed by OoxmlCanvasContent
+const format = getOoxmlFileType(fileName, mimeType);
 
 // Resolve a syntax-highlighting language from a file extension
 const language = extensionToLanguage('ts');

@@ -41,7 +41,7 @@ export interface PublishAccessRuleEditorLabels {
 
 /** Color overrides for the access-rule editor. */
 export interface PublishAccessRuleEditorColors {
-  /** Full-screen mobile background. Defaults to `--bg-layer-1`. */
+  /** Full-screen mobile background. Defaults to `--bg-layer-sunken`. */
   mobileBackground?: string;
   /** Desktop panel background. Defaults to `--bg-layer-base`. */
   background?: string;
