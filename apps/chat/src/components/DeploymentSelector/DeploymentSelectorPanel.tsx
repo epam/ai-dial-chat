@@ -7,7 +7,6 @@ import {
 import {
   DIAL_ICON_SIZE,
   GhostButton,
-  GhostIconButton,
   EllipsisTooltip,
   Highlight,
   Search,
@@ -72,7 +71,7 @@ interface Props {
 }
 
 const SECTION_HEADING_CLASS_NAME =
-  'dial-tiny-lead-semi-text px-3 pb-0.5 pt-2 text-tertiary';
+  'dial-tiny-lead-semi-text px-3 pb-2 pt-2 text-tertiary';
 
 // Must match the .rowLeaving exit-animation duration in DeploymentSelectorPanel.module.scss.
 const ROW_LEAVE_ANIMATION_MS = 180;
@@ -289,33 +288,30 @@ const DeploymentSelectorPanel: FC<Props> = ({
               aria-hidden
             />
           )}
-          {isFavoriteRow ? (
-            <ToggleIconButton
-              icon={
-                <IconStarFilled
-                  size={DIAL_ICON_SIZE.SM}
-                  className="text-warning-icon"
-                  aria-hidden
-                />
-              }
-              aria-label={removeFromFavoritesLabel}
-              /* Every row in the Favorites list is a favorite, so the star is always on. */
-              isSelected
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggleFavorite(item.id, false);
-              }}
-            />
-          ) : (
-            <GhostIconButton
-              icon={<IconStar size={DIAL_ICON_SIZE.SM} aria-hidden />}
-              aria-label={addToFavoritesLabel}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggleFavorite(item.id, true);
-              }}
-            />
-          )}
+          {/*
+            Same control in both sections so the rows keep one height and one
+            set of hover/press styles — `ToggleIconButton` defaults to
+            `ElementSize.Small` while a plain `GhostIconButton` defaults to
+            `Standard`, which made the "Currently selected" row taller.
+          */}
+          <ToggleIconButton
+            icon={<IconStar size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            selectedIcon={
+              <IconStarFilled
+                size={DIAL_ICON_SIZE.SM}
+                className="text-warning-icon"
+                aria-hidden
+              />
+            }
+            isSelected={isFavoriteRow}
+            aria-label={
+              isFavoriteRow ? removeFromFavoritesLabel : addToFavoritesLabel
+            }
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleFavorite(item.id, !isFavoriteRow);
+            }}
+          />
         </div>
       </li>
     );
@@ -363,14 +359,17 @@ const DeploymentSelectorPanel: FC<Props> = ({
               <p className={SECTION_HEADING_CLASS_NAME}>
                 {currentlySelectedLabel}
               </p>
-              <ul className="px-1 pb-1">{renderRow(selectedItem, false)}</ul>
+              <ul className="flex flex-col gap-1 px-1 pb-1">
+                {renderRow(selectedItem, false)}
+              </ul>
             </>
           )}
 
           {(showCurrentlySelected || filteredFavorites.length > 0) && (
             <p
               className={mergeClasses(
-                'dial-tiny-lead-semi-text sticky top-0 z-10 bg-layer-raised px-3 pb-2 pt-2 text-tertiary will-change-transform',
+                SECTION_HEADING_CLASS_NAME,
+                'sticky top-0 z-10 bg-layer-raised will-change-transform',
                 styles.stickyLabelSeamFix,
               )}
             >
