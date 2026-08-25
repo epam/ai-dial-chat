@@ -110,6 +110,34 @@ part of the callback is a literal in `src/auth/auth.controller.ts` and does not
 follow `API_PREFIX`, so a deployment that overrides `API_PREFIX` sends the IdP a
 `redirect_uri` that no longer resolves to a route.
 
+#### DIAL Core OAuth redirect allowlist
+
+Toolset OAuth needs the public Chat callback URL to be allowed by DIAL Core.
+Add `<CHAT_PUBLIC_ORIGIN>/auth/toolset-signin` to Core's
+[`toolsets.security.allowedRedirectUris`](https://github.com/epam/ai-dial-core/blob/development/README.md#static-settings).
+For example, the relevant part of `aidial.settings.json` is:
+
+```json
+{
+  "toolsets": {
+    "security": {
+      "allowedRedirectUris": [
+        "https://chat.example.com/auth/toolset-signin"
+      ]
+    }
+  }
+}
+```
+
+Use the public origin from which users open Chat. The SPA builds this URI from
+`window.location.origin`, so it is not necessarily the same as
+`AUTH_CALLBACK_BASE_URL` when the frontend and API are exposed separately. Add
+the Chat URI without removing entries for other clients, such as the Admin
+panel. Core accepts a client-provided OAuth redirect URI only when it is in this
+allowlist or equals the toolset's own `redirect_uri`; the allowlist is therefore
+required when more than one client can start sign-in for the same toolset. The
+setting is read at Core startup, so restart DIAL Core after changing it.
+
 **Optional:**
 
 | Variable                                | Default                        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
