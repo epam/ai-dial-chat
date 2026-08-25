@@ -1212,7 +1212,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isLoading={isDeleting}
         description={
           <>
-            <span className="break-all">
+            <span className="break-words">
               {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
               <span className="dial-small-text text-primary">
                 &ldquo;{pendingDeleteTitle}&rdquo;
@@ -1241,7 +1241,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         }
         description={
           <>
-            <span className="break-all">
+            <span className="break-words">
               {hasUnpublishFolderChoice
                 ? t(ConversationUnpublishI18nKeys.SelectFolderMessage, {
                     name: pendingUnpublishConversation?.title ?? '',
@@ -1296,7 +1296,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isLoading={isUnsharing}
         description={
           <>
-            <span className="break-all">
+            <span className="break-words">
               {t(ConversationPanelI18nKeys.UnshareConfirmMessage, {
                 name: pendingUnshareTitle,
               })}
@@ -1322,7 +1322,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isLoading={isRevoking}
         description={
           <>
-            <span className="break-all">
+            <span className="break-words">
               {t(ConversationPanelI18nKeys.RevokeConfirmMessage, {
                 name: pendingRevokeTitle,
               })}
