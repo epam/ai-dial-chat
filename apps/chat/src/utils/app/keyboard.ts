@@ -2,7 +2,7 @@ import { KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import { EnterType } from '@/src/types/settings';
 
-import { isMacOs, isTouchable } from './mobile';
+import { isDesktopDevice, isMacOs, isTouchable } from './mobile';
 
 const isComposing = <T>(e: KeyboardEvent | ReactKeyboardEvent<T>) =>
   // `isComposing`/keyCode 229 signal that the keypress belongs to an active
@@ -17,7 +17,9 @@ export const allowEnterClick =
   <T>(e: KeyboardEvent | ReactKeyboardEvent<T>) => {
     if (
       e.key !== 'Enter' ||
-      isTouchable() ||
+      // touch laptops are touchable but still have a physical keyboard, so the
+      // shortcut must keep working there
+      (isTouchable() && !isDesktopDevice()) ||
       isComposing(e) ||
       e.shiftKey ||
       e.altKey

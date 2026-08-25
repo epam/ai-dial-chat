@@ -14,6 +14,20 @@ export const isMobile = () => {
   const { isMobileOnly, isTablet } = getDeviceSelectors();
   return isMobileOnly && !isTablet;
 };
+
+// A desktop-class device (Windows/macOS/Linux browser), regardless of whether it
+// also has a touch screen. `isTablet` is excluded on purpose: an iPad asking for
+// the desktop site sends a macOS user agent, and only `getIPad13()` (via
+// `navigator.platform`/`maxTouchPoints`) tells it apart from a real Mac.
+export const isDesktopDevice = () => {
+  if (typeof navigator === 'undefined' || !navigator.userAgent) {
+    return false;
+  }
+
+  const { isDesktop, isTablet } = getDeviceSelectors();
+
+  return isDesktop && !isTablet;
+};
 export const isTouchable = () => {
   if (typeof window !== 'undefined') {
     const hasCoarsePointer =
