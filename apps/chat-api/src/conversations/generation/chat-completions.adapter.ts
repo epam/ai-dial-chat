@@ -107,6 +107,7 @@ export class ChatCompletionsAdapter {
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
     timing?: GenerationRelayTiming,
+    conversationId?: string,
   ): AsyncGenerator<Uint8Array, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -121,6 +122,7 @@ export class ChatCompletionsAdapter {
             ...(clientChannelId
               ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
               : {}),
+            ...(conversationId ? { 'X-CONVERSATION-ID': conversationId } : {}),
           },
           params: { query: { 'api-version': this.dialClient.dialApiVersion } },
           parseAs: 'stream',
@@ -297,6 +299,7 @@ export class ChatCompletionsAdapter {
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
     timing?: GenerationRelayTiming,
+    conversationId?: string,
   ): Promise<GenerationRelayOutcome> {
     const iterator = this.stream(
       model,
@@ -306,6 +309,7 @@ export class ChatCompletionsAdapter {
       initialAssembledMessage,
       clientChannelId,
       timing,
+      conversationId,
     );
     let next = await iterator.next();
     while (!next.done) {
