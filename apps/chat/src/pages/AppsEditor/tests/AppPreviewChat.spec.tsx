@@ -33,29 +33,39 @@ vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
   }),
 }));
 
-vi.mock('../../../hooks/conversation/useConversationStream', () => ({
-  useConversationStream: () => ({
-    startStream: vi.fn(),
-    handleStop: vi.fn(),
-    isStreaming: false,
-    canStopStreaming: false,
-  }),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    useConversationStream: () => ({
+      startStream: vi.fn(),
+      handleStop: vi.fn(),
+      isStreaming: false,
+      canStopStreaming: false,
+    }),
+    useConversationHandlers: () => ({
+      handleSend: vi.fn(),
+      handleUploadAttachment: vi.fn(),
+      handleRegenerateMessage: vi.fn(),
+      handleDeleteMessage: vi.fn(),
+      handleConfirmDelete: vi.fn(),
+      handleRateMessage: vi.fn(),
+      handleStartEdit: vi.fn(),
+      handleCancelEdit: vi.fn(),
+      handleEditMessage: vi.fn(),
+      editingMessageIndexes: new Set<number>(),
+      pendingDeleteIndex: null,
+      setPendingDeleteIndex: vi.fn(),
+    }),
+  };
+});
 
-vi.mock('../../../hooks/conversation/useConversationHandlers', () => ({
-  useConversationHandlers: () => ({
-    handleSend: vi.fn(),
-    handleUploadAttachment: vi.fn(),
-    handleRegenerateMessage: vi.fn(),
-    handleDeleteMessage: vi.fn(),
-    handleConfirmDelete: vi.fn(),
-    handleRateMessage: vi.fn(),
-    handleStartEdit: vi.fn(),
-    handleCancelEdit: vi.fn(),
-    handleEditMessage: vi.fn(),
-    editingMessageIndexes: new Set<number>(),
-    pendingDeleteIndex: null,
-    setPendingDeleteIndex: vi.fn(),
+vi.mock('../../../context/GenerationContext', () => ({
+  useGeneration: () => ({
+    startGeneration: vi.fn(() => new AbortController()),
+    completeGeneration: vi.fn(),
+    getGeneration: vi.fn(),
   }),
 }));
 
@@ -63,6 +73,12 @@ vi.mock('../../../server-api/conversations.api', () => ({
   createConversation: vi.fn(),
   deleteConversation: vi.fn(),
   saveConversation: vi.fn(),
+}));
+
+vi.mock('../../../server-api/api-client', () => ({
+  conversationsApi: {},
+  filesApi: {},
+  rateApi: {},
 }));
 
 vi.mock('../../../components/ConversationView/ConversationView', () => ({

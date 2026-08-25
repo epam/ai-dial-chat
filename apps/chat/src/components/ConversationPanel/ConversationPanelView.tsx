@@ -1,6 +1,17 @@
+import { ResponseError } from '@epam/ai-dial-chat-api-client';
 import {
+  ConversationExportMode,
+  ConversationTransferErrorCode,
+  ConversationTransferWarningCode,
+  formatQuotedNameList,
+  getConversationPath,
   RecipientsCountStatus,
+  useConversationExport,
+  useConversationImport,
   useShareRecipientsCount,
+  type ConversationTransferErrorEvent,
+  type ConversationTransferSuccessEvent,
+  type ConversationTransferWarningEvent,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
@@ -57,25 +68,28 @@ import {
   ConversationUnpublishI18nKeys,
   ShareI18nKeys,
 } from '../../constants/translation-keys';
+import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
-import { useConversationExport } from '../../hooks/useConversationExport';
-import { useConversationImport } from '../../hooks/useConversationImport';
 import { useConversationPublishHistory } from '../../hooks/useConversationPublishHistory/useConversationPublishHistory';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import { shareApi } from '../../server-api/api-client';
+import {
+  conversationsApi,
+  filesApi,
+  shareApi,
+} from '../../server-api/api-client';
 import { getApiErrorDetails } from '../../server-api/api-error';
+import { UnauthorizedError } from '../../server-api/base';
 import { unpublishConversation } from '../../server-api/conversation-publish.api';
 import {
   discardSharedCatalogItem,
   revokeSharedAccess,
 } from '../../server-api/share.api';
-import { ConversationExportMode } from '../../types/conversation-export';
 import {
   EntityOperation,
   NotifiableEntity,
@@ -86,7 +100,6 @@ import {
   conversationIdsMatch,
   toPanelConversationId,
 } from '../../utils/conversation-id-match';
-import { getConversationPath } from '../../utils/conversation-path';
 import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
@@ -140,8 +153,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const { language } = useLanguage();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { showSuccessNotification, showErrorNotification } = useNotification();
+  const {
+    showSuccessNotification,
+    showErrorNotification,
+    showWarningNotification,
+  } = useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
+  const { user } = useUser();
   const isConversationsSectionEnabled = useUiFeature(
     OverlayFeature.ConversationsSection,
   );
@@ -155,21 +173,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     OverlayFeature.HideConversationsFilter,
   );
   const {
-    jobs: exportJobs,
-    exportSingle,
-    exportAll,
-    dismissJob: dismissExportJob,
-    retryJob: retryExportJob,
-    dismissAll: dismissAllExports,
-  } = useConversationExport();
-  const {
-    jobs: importJobs,
-    importConversations,
-    dismissJob: dismissImportJob,
-    retryJob: retryImportJob,
-    dismissAll: dismissAllImports,
-  } = useConversationImport();
-  const {
     conversations: items,
     isLoading,
     pinConversation,
@@ -180,6 +183,148 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     duplicateConversation,
     refreshConversations,
   } = useConversations();
+  const classifyTransferError = useCallback((error: unknown) => {
+    if (error instanceof UnauthorizedError) return { isUnauthorized: true };
+    if (error instanceof ResponseError && error.response.status === 404) {
+      return { isNotFound: true };
+    }
+    return {};
+  }, []);
+  const resolveErrorTraceId = useCallback(
+    async (error: unknown) => (await getApiErrorDetails(error)).traceId,
+    [],
+  );
+  const normalizeConversationPath = useCallback(
+    (conversationId: string) =>
+      safeDecodeURIComponent(normalizeConversationId(conversationId)),
+    [],
+  );
+
+  const handleExportSuccess = useCallback(
+    (event: ConversationTransferSuccessEvent) => {
+      showSuccessNotification({
+        title: t(ConversationExportI18nKeys.SuccessTitle),
+        message: event.titles?.length
+          ? t(ConversationExportI18nKeys.SuccessSingle, {
+              title: event.titles[0],
+            })
+          : t(ConversationExportI18nKeys.SuccessAll),
+      });
+    },
+    [showSuccessNotification, t],
+  );
+  const handleExportWarning = useCallback(
+    (event: ConversationTransferWarningEvent) => {
+      if (event.code !== ConversationTransferWarningCode.AttachmentSkipped) {
+        return;
+      }
+      showWarningNotification({
+        message: t(ConversationExportI18nKeys.WarningAttachmentSkipped),
+      });
+    },
+    [showWarningNotification, t],
+  );
+  const handleExportError = useCallback(
+    (event: ConversationTransferErrorEvent) => {
+      if (event.code === ConversationTransferErrorCode.Unauthorized) return;
+      showErrorNotification({
+        title: t(ConversationExportI18nKeys.FailedTitle),
+        message: event.titles?.length
+          ? t(ConversationExportI18nKeys.FailedSingle, {
+              title: event.titles[0],
+            })
+          : t(ConversationExportI18nKeys.FailedAll),
+        requestId: event.traceId,
+      });
+    },
+    [showErrorNotification, t],
+  );
+
+  const {
+    jobs: exportJobs,
+    exportSingle,
+    exportAll,
+    dismissJob: dismissExportJob,
+    retryJob: retryExportJob,
+    dismissAll: dismissAllExports,
+  } = useConversationExport({
+    conversationsApi,
+    filesApi,
+    normalizeConversationPath,
+    classifyTransferError,
+    resolveErrorTraceId,
+    onSuccess: handleExportSuccess,
+    onWarning: handleExportWarning,
+    onError: handleExportError,
+  });
+
+  const handleImportSuccess = useCallback(
+    (event: ConversationTransferSuccessEvent) => {
+      showSuccessNotification({
+        title: t(ConversationImportI18nKeys.SuccessTitle),
+        message: t(ConversationImportI18nKeys.Success, {
+          names: formatQuotedNameList(event.titles ?? []),
+        }),
+      });
+    },
+    [showSuccessNotification, t],
+  );
+  const handleImportWarning = useCallback(
+    (event: ConversationTransferWarningEvent) => {
+      if (event.code !== ConversationTransferWarningCode.AttachmentSkipped) {
+        return;
+      }
+      showWarningNotification({
+        message: t(ConversationImportI18nKeys.WarningAttachmentSkipped, {
+          names: formatQuotedNameList(event.names ?? []),
+        }),
+      });
+    },
+    [showWarningNotification, t],
+  );
+  const handleImportError = useCallback(
+    (event: ConversationTransferErrorEvent) => {
+      if (event.code === ConversationTransferErrorCode.UnsupportedFormat) {
+        showErrorNotification({
+          title: t(ConversationImportI18nKeys.FailedTitle),
+          message: t(ConversationImportI18nKeys.UnsupportedFormat),
+        });
+        return;
+      }
+      if (
+        event.code === ConversationTransferErrorCode.Unauthorized ||
+        event.code === ConversationTransferErrorCode.MissingBucket
+      ) {
+        return;
+      }
+      showErrorNotification({
+        title: t(ConversationImportI18nKeys.FailedTitle),
+        message: t(ConversationImportI18nKeys.Failed, {
+          names: formatQuotedNameList(event.titles ?? []),
+        }),
+        requestId: event.traceId,
+      });
+    },
+    [showErrorNotification, t],
+  );
+
+  const {
+    jobs: importJobs,
+    importConversations,
+    dismissJob: dismissImportJob,
+    retryJob: retryImportJob,
+    dismissAll: dismissAllImports,
+  } = useConversationImport({
+    conversationsApi,
+    filesApi,
+    bucket: user?.bucket,
+    onImported: refreshConversations,
+    classifyTransferError,
+    resolveErrorTraceId,
+    onSuccess: handleImportSuccess,
+    onWarning: handleImportWarning,
+    onError: handleImportError,
+  });
 
   const { items: deployments, isLoading: isDeploymentsLoading } =
     useDeployments();
