@@ -42,7 +42,7 @@ export interface FavoritePromptsPanelProps {
   colors?: FavoritePromptsPanelColors;
   /** CSS class applied to a row's prompt name. Defaults to `'dial-small-text'`. */
   nameClassName?: string;
-  /** CSS class applied to the "My Collection" header. Defaults to `'dial-tiny-semi-text'`. */
+  /** CSS class applied to the "My Collection" header. Defaults to `'dial-tiny-lead-semi-text'`, which uppercases the label itself. */
   headerClassName?: string;
   /** CSS class applied to the empty-favorites hint. Defaults to `'dial-small-text'`. */
   emptyHintClassName?: string;

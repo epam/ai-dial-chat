@@ -143,47 +143,22 @@ Error codes:
 
 ### Requirement: POST /api/v1/prompts/move?path= moves a prompt to a different folder
 
-The backend SHALL expose `POST /api/v1/prompts/move` with a required `path` query parameter. The body is `MovePromptDto`:
+`POST /api/v1/prompts/move` SHALL accept required `path`, optional owner `bucket`, and `MovePromptDto { targetFolderId }`. With no `bucket`, it moves a prompt in the caller's session bucket. With `bucket`, it operates in that owner namespace only when DIAL Core grants `WRITE`. It preserves the existing target-path conflict check, write-new/delete-old sequence, timestamps, and `400`/`401`/`404`/`409`/`502`/`500` errors.
 
-```
-{
-  "targetFolderId": "<string @IsString @Matches(/^[a-zA-Z0-9 _.\-/]*$/)>"
-}
-```
-
-`targetFolderId` may be an empty string (moves the prompt to root).
-
-The service:
-1. Reads DIAL prompt resource `prompts/{sessionBucket}/{path}`.
-2. Derives the new path: `{targetFolderId ? targetFolderId + '/' : ''}{lastName}` where `lastName` is the last segment of the current path.
-3. Rejects with 409 if the new path already exists.
-4. Writes to the new path and deletes the old path; `updatedAt` is taken from resulting Core metadata.
-5. Returns HTTP 200 with `PromptResponseDto` reflecting the new path.
-
-Error codes:
-- `400 Bad Request` — DTO validation fails
-- `401 Unauthorized`
-- `404 Not Found` — no prompt at the source path
-- `409 Conflict` — a prompt already exists at the target path
-- `502 Bad Gateway`
-- `500 Internal Server Error`
-
-#### Scenario: Moving a prompt into a subfolder
+#### Scenario: Moving a personal prompt
 
 - **WHEN** `POST /api/v1/prompts/move?path=greeting` is called with `{ "targetFolderId": "Work" }`
-- **THEN** the response is 200 with `id: "Work/greeting"` and `folderId: "Work"`
-- **AND** the prompt no longer exists at `greeting` in DIAL Core
+- **THEN** the caller's prompt moves to `Work/greeting`
 
-#### Scenario: Moving a prompt to root
+#### Scenario: Moving a writable shared prompt preserves its owner
 
-- **WHEN** `POST /api/v1/prompts/move?path=Work/greeting` is called with `{ "targetFolderId": "" }`
-- **THEN** the response is 200 with `id: "greeting"` and `folderId: ""`
+- **WHEN** `POST /api/v1/prompts/move?path=greeting&bucket=owner-bucket` is called with `{ "targetFolderId": "Work" }`
+- **THEN** the operation targets `prompts/owner-bucket/greeting` and never the caller's bucket
 
 #### Scenario: Move conflict returns 409
 
-- **WHEN** `POST /api/v1/prompts/move?path=greeting` is called with `{ "targetFolderId": "Work" }`
-- **AND** `Work/greeting` already exists
-- **THEN** the response is 409
+- **WHEN** the target path already exists in the resolved bucket
+- **THEN** the response status is 409
 
 ---
 

@@ -8,87 +8,72 @@ The personal and organisation prompt endpoints, the prompt data model, and the g
 
 ### Requirement: Prompt entity data model
 
-A **Prompt** SHALL be represented by the following shape in all API responses (`PromptResponseDto`):
+A prompt SHALL be represented by `PromptResponseDto` with its bucket-relative identity and content fields plus ownership information applicable to the requestor:
 
-```
+```json
 {
-  "id":          "<string — DIAL Core relative path, e.g. Work/AI/my-prompt>",
-  "name":        "<string — display name>",
-  "description": "<string | undefined — optional description>",
-  "content":     "<string — prompt text; may contain {{variableName}} placeholders>",
-  "folderId":    "<string — parent folder path; empty string means root>",
-  "createdAt":   "<number — Unix ms timestamp>",
-  "updatedAt":   "<number — Unix ms timestamp>"
+  "id": "Work/AI/summarize",
+  "bucket": "owner-bucket",
+  "name": "summarize",
+  "description": "Summarize a document",
+  "content": "Summarize the following text:",
+  "folderId": "Work/AI",
+  "author": "owner@example.com",
+  "createdAt": 1700000000000,
+  "updatedAt": 1700000001000,
+  "isMy": false,
+  "canEdit": true,
+  "sharedWithMe": true,
+  "permissions": ["READ", "WRITE"]
 }
 ```
 
-`id` equals the user-relative path (everything after `prompts/{bucket}/` in the full DIAL
-resource URL). The `folderId` is derived from `id` by dropping the last path segment.
-`createdAt` and `updatedAt` come from DIAL Core resource metadata; they are not fields written
-into the prompt payload.
+`id` remains relative to `bucket`; `folderId` is derived by dropping the last path segment. `isMy`, `canEdit`, and `sharedWithMe` are requestor-relative flags. `permissions` carries the upstream READ/WRITE/SHARE values when available. An organisation prompt SHALL always return `isMy: false`, `canEdit: false`, and `sharedWithMe: false`, even if upstream metadata unexpectedly includes `WRITE`.
 
-#### Scenario: id encodes the folder hierarchy
+#### Scenario: Writable shared prompt reports its owner and permissions
 
-- **WHEN** a prompt has DIAL resource URL `prompts/{bucket}/Work/AI/my-prompt`
-- **THEN** the API response contains `id: "Work/AI/my-prompt"` and `folderId: "Work/AI"`
+- **WHEN** another user shares `prompts/owner-bucket/Work/AI/summarize` with `READ` and `WRITE`
+- **THEN** its response contains `bucket: 'owner-bucket'`, `isMy: false`, `canEdit: true`, `sharedWithMe: true`, and both permissions
 
-#### Scenario: Root-level prompt has empty folderId
+#### Scenario: Organisation prompt is always read-only
 
-- **WHEN** a prompt has DIAL resource URL `prompts/{bucket}/my-prompt`
-- **THEN** the API response contains `id: "my-prompt"` and `folderId: ""`
+- **WHEN** organisation prompt metadata contains `WRITE`
+- **THEN** the BFF response still contains `canEdit: false`
 
 ---
 
 ### Requirement: GET /api/v1/prompts lists personal prompts
 
-The backend SHALL expose `GET /api/v1/prompts` in `PromptController` (`version: '1'`, `@ApiTags('prompts')`). The endpoint requires an authenticated session (handled by the global `SessionGuard`). It returns HTTP 200 with `PromptListResponseDto`:
+`GET /api/v1/prompts` SHALL be the aggregate catalog listing for an authenticated requestor. It returns `PromptListResponseDto` with personal, shared, and organisation namespaces in one response:
 
-```
+```json
 {
-  "prompts": PromptResponseDto[],
-  "folders": PromptFolderResponseDto[]
+  "prompts": [],
+  "folders": [],
+  "sharedWithMe": [],
+  "publicPrompts": [],
+  "publicFolders": []
 }
 ```
 
-`PromptFolderResponseDto`:
-```
-{
-  "id":   "<string — folder path, e.g. Work/AI>",
-  "name": "<string — last segment of the path>"
-}
-```
+The personal and organisation metadata listings SHALL request `permissions=true`. Personal prompt editability SHALL be derived from `WRITE` when permissions are returned. Shared prompt editability SHALL be derived from the permissions returned by `getSharedResources`. Organisation prompts SHALL be forced read-only.
 
-The service recursively lists prompt metadata from the root of the session bucket, filters out
-`.folder` sentinel resources, reads prompt payloads, and merges them with Core metadata into
-`PromptResponseDto`. It derives `PromptFolderResponseDto` entries from distinct relative path
-prefixes present in the result set.
+The BFF SHALL collect personal/shared and organisation namespaces concurrently. If one namespace rejects, it SHALL log a warning and return the other with the failed namespace empty. If both reject, the endpoint SHALL propagate an upstream error. Rate limiting remains the global default.
 
-Additionally, prompts shared with the current user SHALL be included in a separate `sharedWithMe` field:
+#### Scenario: One browser request receives all namespaces
 
-```
-{
-  "prompts":     PromptResponseDto[],
-  "folders":     PromptFolderResponseDto[],
-  "sharedWithMe": PromptResponseDto[]
-}
-```
+- **WHEN** an authenticated client calls `GET /api/v1/prompts`
+- **THEN** no second public-list request is needed to populate the catalog
 
-Rate limiting: inherits the global default (100 req/min).
+#### Scenario: Organisation listing fails independently
 
-Error codes:
-- `401 Unauthorized` — missing or invalid session
-- `502 Bad Gateway` — DIAL Core unreachable or returned an error
-- `500 Internal Server Error` — unexpected failure
+- **WHEN** personal/shared listing succeeds and organisation listing fails
+- **THEN** the response is 200 with personal/shared values and empty `publicPrompts`/`publicFolders`
 
-#### Scenario: Empty library returns empty arrays
+#### Scenario: Both upstream listings fail
 
-- **WHEN** `GET /api/v1/prompts` is called by a user with no prompts
-- **THEN** the response is 200 with `{ "prompts": [], "folders": [], "sharedWithMe": [] }`
-
-#### Scenario: Flat listing returns all personal prompts with folder metadata
-
-- **WHEN** a user has prompts stored at `root-prompt`, `Work/work-prompt`, and `Work/AI/ai-prompt`
-- **THEN** `GET /api/v1/prompts` returns all three items in `prompts` and folders `["Work", "Work/AI"]` in `folders`
+- **WHEN** both personal/shared and organisation listings reject
+- **THEN** the endpoint returns the mapped upstream failure rather than a successful empty catalog
 
 ---
 
@@ -153,69 +138,49 @@ Error codes:
 
 ### Requirement: GET /api/v1/prompts/item?path= retrieves a specific personal prompt
 
-The backend SHALL expose `GET /api/v1/prompts/item` with a required `path` query parameter (`RequiredPromptPathDto: { path: string @IsString @MinLength(1) @MaxLength(2048) @Matches(safe path allowlist) }`). The endpoint returns the single prompt at that path. The path allowlist rejects traversal segments (`.` and `..`), backslashes, absolute paths, and empty segments.
+`GET /api/v1/prompts/item` SHALL accept required `path` and optional `bucket` query parameters. With no `bucket`, it reads `prompts/{sessionBucket}/{path}`. With `bucket`, it reads `prompts/{bucket}/{path}` and relies on DIAL Core to authorize access, enabling a qualified shared prompt to be fetched without rewriting its owner namespace.
 
-On success, the service reads DIAL resource `prompts/{sessionBucket}/{path}` and its metadata,
-then returns HTTP 200 with `PromptResponseDto`.
+Error codes remain `400`, `401`, `404`, `502`, and `500` as defined by the base prompts API.
 
-Error codes:
-- `400 Bad Request` — `path` fails DTO validation
-- `401 Unauthorized` — missing or invalid session
-- `404 Not Found` — no prompt exists at the given path
-- `502 Bad Gateway` — DIAL Core read failed
-- `500 Internal Server Error` — unexpected failure
+#### Scenario: Personal prompt uses the session bucket
 
-#### Scenario: Existing prompt is returned
+- **WHEN** `GET /api/v1/prompts/item?path=Work/AI/summarize` is called
+- **THEN** the service reads the path from the caller's session bucket
 
-- **WHEN** `GET /api/v1/prompts/item?path=Work/AI/my-prompt` is called and that prompt exists
-- **THEN** the response is 200 with the full `PromptResponseDto`
+#### Scenario: Shared prompt uses its owner bucket
+
+- **WHEN** `GET /api/v1/prompts/item?path=Work/AI/summarize&bucket=owner-bucket` is called
+- **THEN** the service reads `prompts/owner-bucket/Work/AI/summarize`
 
 #### Scenario: Non-existent prompt returns 404
 
-- **WHEN** `GET /api/v1/prompts/item?path=nonexistent` is called and no prompt exists there
+- **WHEN** the resolved prompt does not exist
 - **THEN** the response status is 404
 
 ---
 
 ### Requirement: PUT /api/v1/prompts?path= updates a personal prompt
 
-The backend SHALL expose `PUT /api/v1/prompts` with a required `path` query parameter. The body is `UpdatePromptDto`:
+`PUT /api/v1/prompts` SHALL accept required `path`, optional owner `bucket`, and `UpdatePromptDto`. With no `bucket`, it updates the caller's prompt. With `bucket`, it updates that owner namespace only when DIAL Core grants the requestor `WRITE`. Rename keeps the existing write-new/delete-old behavior and conflict/error semantics.
 
-```
-{
-  "name":        "<string | undefined @IsString @MinLength(1) @MaxLength(256) @Matches(/^[^/]+$/) @IsOptional>",
-  "description": "<string | undefined @IsString @MaxLength(2000) @IsOptional>",
-  "content":     "<string | undefined @IsString @MaxLength(50000) @IsOptional>"
-}
-```
+#### Scenario: Updating a personal prompt
 
-If `name` is provided and differs from the current path's last segment, the service writes to
-the new path and then deletes the old path. Any failed step is returned as an upstream error;
-the endpoint MUST NOT report success after a failed source deletion. The response uses
-`createdAt` and `updatedAt` from DIAL Core metadata. Returns HTTP 200 with updated
-`PromptResponseDto`.
+- **WHEN** `PUT /api/v1/prompts?path=Work/greeting` is called without `bucket`
+- **THEN** the caller's session bucket is used
 
-Error codes:
-- `400 Bad Request` — DTO validation fails
-- `401 Unauthorized` — missing or invalid session
-- `404 Not Found` — no prompt at the given path
-- `409 Conflict` — rename target already exists
-- `502 Bad Gateway` — DIAL Core operation failed
-- `500 Internal Server Error` — unexpected failure
+#### Scenario: Updating a writable shared prompt
 
-#### Scenario: Updating content only preserves name and folderId
+- **WHEN** `PUT /api/v1/prompts?path=Work/greeting&bucket=owner-bucket` is called by a requestor with `WRITE`
+- **THEN** the prompt in `owner-bucket` is updated and the response is 200
 
-- **WHEN** `PUT /api/v1/prompts?path=Work/greeting` is called with `{ "content": "New content" }`
-- **THEN** the response is 200, `content` reflects the update, `id` and `folderId` are unchanged
+#### Scenario: Shared write is not granted
 
-#### Scenario: Renaming a prompt moves it to the new path
-
-- **WHEN** `PUT /api/v1/prompts?path=old-name` is called with `{ "name": "new-name" }`
-- **THEN** the response is 200, `id` is `"new-name"`, the old path is deleted from DIAL Core
+- **WHEN** the same requestor has only `READ`
+- **THEN** DIAL Core rejects the mutation and the BFF does not reinterpret the resource as personal
 
 #### Scenario: Rename conflict returns 409
 
-- **WHEN** `PUT /api/v1/prompts?path=old-name` is called with `{ "name": "existing-name" }` and `existing-name` already exists
+- **WHEN** a rename targets an existing prompt path
 - **THEN** the response status is 409
 
 ---
@@ -286,23 +251,9 @@ allowlist as personal prompt paths. It reads DIAL resource `prompts/public/{path
 
 ### Requirement: OpenAPI and generated client
 
-After implementation the developer SHALL run `npm run openapi && npm run openapi:check`. The generated `@epam/chat-api-client` MUST expose the following SDK methods (operationId → method name mapping):
+`npm run openapi && npm run openapi:check` SHALL generate the aggregate prompt response, ownership fields, and optional owner-bucket parameters. The normal generated methods remain `listPrompts`, `getPrompt`, `updatePrompt`, and `movePrompt`; frontend wrappers SHALL use those methods rather than direct `fetch` or hand-authored DTOs.
 
-| HTTP | Path | operationId | Generated SDK method |
-|------|------|-------------|----------------------|
-| GET | /api/v1/prompts | `listPrompts` | `listPrompts` |
-| POST | /api/v1/prompts | `createPrompt` | `createPrompt` |
-| GET | /api/v1/prompts/item (+ path param) | `getPrompt` | `getPrompt` |
-| PUT | /api/v1/prompts (+ path param) | `updatePrompt` | `updatePrompt` |
-| DELETE | /api/v1/prompts (+ path param) | `deletePrompt` | `deletePrompt` |
-| GET | /api/v1/prompts/public | `listPublicPrompts` | `listPublicPrompts` |
-| GET | /api/v1/prompts/public/item (+ path param) | `getPublicPrompt` | `getPublicPrompt` |
+#### Scenario: Generated client matches the aggregate contract
 
-#### Scenario: Prompt operations are available in the generated client
-
-- **WHEN** `npm run openapi && npm run openapi:check` completes from the implemented Swagger document
-- **THEN** `@epam/chat-api-client` exposes all seven SDK methods in the table above without schema drift
-
-Feature flag gating: none — the prompts API is always enabled once deployed.
-RTL / direction impact: none (backend only).
-Observability: log `WARN` on any DIAL Core error with the resolved bucket and path for traceability. No new metrics or analytics events required at this stage.
+- **WHEN** OpenAPI generation completes
+- **THEN** `PromptListResponseDto` includes public arrays, `PromptResponseDto` includes ownership/permission fields, and the shared-resource operations accept optional `bucket`

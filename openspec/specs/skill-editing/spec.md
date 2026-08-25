@@ -6,15 +6,48 @@ Specifies `apps/chat/src/pages/SkillEditor/SkillEditor.tsx`'s edit-mode behavior
 ## Requirements
 
 ### Requirement: `/skill-editor?id=...` route switches the page to edit mode
-The system SHALL add `SkillEditorQuery.Id` (mirroring `PromptEditorQuery.Id`) to `apps/chat/src/types/skill-editor.ts`. Presence of a non-empty `id` query param SHALL switch `SkillEditor.tsx` to edit mode; its absence keeps create mode (unchanged, per the `skill-authoring` capability). The `id`'s bucket/relative-path SHALL be resolved safely — an `id` that fails to resolve to a well-formed bucket/path pair SHALL be treated as a load failure (see below), not passed through to `downloadSkill` unvalidated.
 
-#### Scenario: id present switches to edit mode
-- **WHEN** a user navigates to `/skill-editor?id=<bucket>%2Fteam-a%2Fdocs-helper`
-- **THEN** the page renders in edit mode and begins loading that skill
+A non-empty `id` SHALL switch the page to edit mode. A full `skills/{ownerBucket}/{path}` id SHALL be parsed and used directly, enabling personal and writable shared skills to load from their real owner bucket. A legacy bucket-relative id SHALL continue to resolve against the current user's bucket. A public-bucket or malformed id SHALL be treated as an invalid load target and SHALL never be passed to `downloadSkill` or `updateSkill`.
+
+#### Scenario: Full personal resource URL enters edit mode
+
+- **WHEN** the user navigates to `/skill-editor?id=skills%2Fmy-bucket%2Fteam-a%2Fdocs-helper`
+- **THEN** the page loads `downloadSkill('my-bucket', 'team-a/docs-helper')`
+
+#### Scenario: Writable shared skill preserves its owner bucket
+
+- **WHEN** the catalog navigates to `/skill-editor?id=skills%2Fowner-bucket%2Fteam-a%2Fdocs-helper`
+- **THEN** load and save use `owner-bucket` and `team-a/docs-helper`
+
+#### Scenario: Whole-skill ZIP is incompatible with the Core installation
+
+- **WHEN** the canonical whole-skill download returns `400` as a grouping folder, or returns an archive without a usable ETag/root manifest
+- **THEN** the editor loads `SKILL.md`, recursive file metadata, and every supporting file through the granular skill-file endpoints
+- **AND** it derives supporting-file paths relative to `{skillPath}/files`, preserves the resource ETag for update, and never sends the technical `files` prefix back as part of a file path
+
+#### Scenario: Development StrictMode does not abort an active ZIP stream
+
+- **WHEN** React performs its development-only effect setup → cleanup → setup cycle
+- **THEN** the discarded setup finishes before opening the HTTP stream and the active setup issues exactly one whole-skill download
+- **AND** effect cleanup prevents stale state updates without aborting an already-open binary response through the Vite development proxy
+
+#### Scenario: Public resource URL is rejected
+
+- **WHEN** the route id begins `skills/public/`
+- **THEN** no public mutation request is issued
 
 #### Scenario: id absent stays in create mode
-- **WHEN** a user navigates to `/skill-editor` with no `id` param
-- **THEN** the page renders the create form exactly as the `skill-authoring` capability specifies, with no load attempt
+
+- **WHEN** the route has no `id`
+- **THEN** the existing create flow is unchanged
+
+#### Scenario: Successful save refreshes the catalog before navigation
+
+- **WHEN** a personal skill is created or an editable skill is updated successfully
+- **THEN** the editor awaits the aggregate skill-list refetch before navigating to the return URL
+- **AND** the destination catalog renders the updated skill snapshot without requiring a page reload
+
+---
 
 ### Requirement: Edit load requires an ETag and never falls back to an empty create form
 On edit-mode load, the page SHALL call the existing `downloadSkill()` wrapper (`apps/chat/src/server-api/skills.api.ts`, already returning the raw `Response`) and SHALL treat a missing `ETag` response header as a load failure, even if the ZIP body itself is otherwise readable — an edit session with no ETag has no concurrency guard to send back on save. The page SHALL render one of: a loading state, a retryable load-error state (network/5xx/timeout), a forbidden state (`403`), or a not-found state (`404`) — and SHALL NOT, on any load failure, silently render the create form's empty fields as if the user were creating a new skill.
@@ -39,6 +72,8 @@ On edit-mode load, the page SHALL call the existing `downloadSkill()` wrapper (`
 - **WHEN** a user activates Retry from the load-error state
 - **THEN** the page calls `downloadSkill` again with the same `id`-derived bucket/path
 
+---
+
 ### Requirement: Frontmatter and supporting files are unpacked and preserved for editing
 On successful load, the page SHALL unpack the downloaded ZIP with `fflate`, parse the root `SKILL.md`'s YAML frontmatter with the `yaml` package's `parse` function keeping the entire parsed object (not just `name`/`description`), and load every other entry into an in-memory `Map<relativePath, Uint8Array>`. The file tree presented to `libs/skill-editor` SHALL be built from these real file paths plus any parent folders inferred from those paths — no server-side "folder" entities exist to load separately.
 
@@ -53,6 +88,8 @@ On successful load, the page SHALL unpack the downloaded ZIP with `fflate`, pars
 #### Scenario: File tree infers folders from paths
 - **WHEN** the archive contains `agents/analyzer.md` and no separate folder marker for `agents`
 - **THEN** the presented file tree shows an `agents` folder node containing `analyzer.md`, derived purely from the file's path
+
+---
 
 ### Requirement: Edit save sends manifest/files via updateSkill with the loaded ETag; no ZIP
 On save in edit mode, the page SHALL merge the edited `name`/`description` into the *original* frontmatter object loaded at task-load time (unknown fields untouched), serialize that merged object plus the current instructions into `SKILL.md` text (no ZIP rebuild), and SHALL call `updateSkill(bucket, path, skillManifest, filePaths, files, ifMatch: <the ETag loaded at page-load or after the last successful save>)` — `filePaths`/`files` covering every entry in the in-memory supporting-file map (edited entries with their new bytes, untouched entries passed through byte-for-byte). On a successful response, the page SHALL replace its stored ETag with the one DIAL Core returns, so a subsequent save within the same session guards against changes made since *that* save, not the original load.
@@ -69,6 +106,8 @@ On save in edit mode, the page SHALL merge the edited `name`/`description` into 
 - **WHEN** a user edits only the Description field and saves, without touching a supporting `assets/logo.png` file
 - **THEN** the `files` part submitted for `assets/logo.png` is byte-identical to what was originally loaded
 
+---
+
 ### Requirement: Stale edit conflict is explicit and non-destructive
 When a save's `updateSkill` call rejects with `412 Precondition Failed` (the ETag sent no longer matches — someone else saved since this page's load), the page SHALL present an explicit conflict state distinct from a generic submit error, offering a "Reload latest" action. The page SHALL NOT automatically retry the save without the user's `If-Match`, and SHALL NOT discard the user's current unsaved field/file edits until the user explicitly confirms discarding them (e.g. by confirming a "Reload latest, discarding my changes" prompt) — reloading is not silently destructive. A `428 Precondition Required` response (the BFF's own guard, should the page ever fail to send `If-Match` — an implementation bug, not an expected runtime state) SHALL be treated the same as any other unrecoverable submit error, distinct from the `412` conflict state.
 
@@ -84,6 +123,8 @@ When a save's `updateSkill` call rejects with `412 Precondition Failed` (the ETa
 - **WHEN** a `412` occurs
 - **THEN** the page does not automatically resubmit the same save with a different or omitted `If-Match`
 
+---
+
 ### Requirement: Resource path and Name are immutable in edit mode
 DIAL Core has no rename or move operation for a whole-skill resource. The page SHALL render the Name field read-only in edit mode (via `libs/skill-editor`'s `isNameReadOnly` prop) and SHALL construct the `updateSkill` call's `path` for a save from the *originally loaded* path, never from a (disabled, but defensively re-derived) edited name. The page SHALL NOT implement a rename by creating a new skill at a different path and deleting the old one.
 
@@ -94,6 +135,8 @@ DIAL Core has no rename or move operation for a whole-skill resource. The page S
 #### Scenario: No create-then-delete rename path exists
 - **WHEN** the codebase is searched for any code path that calls `createSkill` at a new path and `deleteSkill` at the old path within the same user action
 - **THEN** none is found
+
+---
 
 ### Requirement: Dirty-navigation guard
 When the edit or create form has unsaved changes (`onDirtyChange(true)` most recently reported by `libs/skill-editor`), the page SHALL confirm before: activating Cancel, activating the page's Back control, or closing/navigating away from the browser tab via `beforeunload`. A confirmed navigation proceeds; a declined one leaves the user on the page with their edits intact. No in-app router-level navigation-blocking mechanism (e.g. intercepting arbitrary link/menu clicks elsewhere in the app) is in scope — no such pattern exists elsewhere in this codebase to extend, and this guard is scoped to the page's own Cancel/Back controls plus the browser-level `beforeunload` guard.
@@ -106,6 +149,8 @@ When the edit or create form has unsaved changes (`onDirtyChange(true)` most rec
 - **WHEN** a user has made no edits (or has reverted to the seeded state) and activates Cancel
 - **THEN** the page navigates immediately, with no confirmation prompt
 
+---
+
 ### Requirement: Edit-specific labels and success notification
 In edit mode, the page SHALL render an edit-specific title and Save-button label (distinct from create mode's "Create skill" title and Create button) and, on a successful save, SHALL show a success notification distinct from the create-success notification in both its title and its message (e.g. title "Skill updated" vs. "Skill created", message "\"{{name}}\" has been updated." vs. "\"{{name}}\" has been created."). The edit-mode notification's title SHALL use a dedicated i18n key distinct from create mode's title key — reusing the create-mode title key for an edit-mode save is a defect, not an acceptable shortcut.
 
@@ -116,6 +161,8 @@ In edit mode, the page SHALL render an edit-specific title and Save-button label
 #### Scenario: Successful edit save shows an update notification
 - **WHEN** an edit save succeeds
 - **THEN** the shown notification's title and message both reflect an update ("Skill updated"), not a creation ("Skill created")
+
+---
 
 ### Requirement: Selecting a supporting file in edit mode opens its preview
 
@@ -129,6 +176,8 @@ In edit mode, selecting a supporting-file node in the file tree (any node other 
 - **WHEN** a user has a supporting file previewed and then selects the `SKILL.md` node
 - **THEN** the preview closes and the editable Name/Description/Instructions form renders as it did before any file was previewed
 
+---
+
 ### Requirement: Edit mode applies the same batch validation limits as create mode
 
 In edit mode, the `SkillEditor` page's `fileActions.validateBatch` implementation SHALL apply the identical per-candidate and batch-level checks specified by `skill-authoring`'s "Batch validation mirrors BFF package limits before commit" requirement (per-file size, path safety/traversal, within-batch and against-existing duplicates, reserved paths, projected total size, projected total file count), computed against the edit session's currently loaded supporting files (the in-memory `Map<relativePath, Uint8Array>` populated at load) rather than a freshly empty set.
@@ -140,6 +189,8 @@ In edit mode, the `SkillEditor` page's `fileActions.validateBatch` implementatio
 #### Scenario: Projected total size accounts for already-loaded bytes
 - **WHEN** the edited skill already has supporting files near the total package size limit and a user stages a further large file
 - **THEN** the projected total size calculation includes the already-loaded bytes, and the batch is rejected if the limit would be exceeded
+
+---
 
 ### Requirement: Importing SKILL.md in edit mode requires an exact name match and explicit confirmation
 
