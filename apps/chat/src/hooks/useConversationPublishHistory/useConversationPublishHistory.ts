@@ -52,7 +52,8 @@ const PUBLISH_HISTORY_TTL_MS = 60 * 1000;
  *
  * A resolved result is reused for `PUBLISH_HISTORY_TTL_MS` and revalidated
  * after that, so a row menu opened later in a long-lived session reflects
- * approvals that happened meanwhile rather than a first-open snapshot.
+ * approvals that happened meanwhile rather than a first-open snapshot. At most
+ * one request per conversation is ever in flight.
  */
 export const useConversationPublishHistory =
   (): UseConversationPublishHistoryResult => {
@@ -62,8 +63,17 @@ export const useConversationPublishHistory =
     /* When each path's in-flight-or-resolved lookup started, so reopening the
      * same menu does not re-issue the request until the result goes stale. */
     const requestedAtRef = useRef(new Map<string, number>());
+    /* Paths with a lookup in flight. The timestamp alone stops a repeat inside
+     * the TTL but not one just outside it, and a request that outlives the
+     * window would otherwise be joined by a second — which is both a wasted
+     * scan and a chance for the slower response to land last and overwrite the
+     * newer folders. One request per path at a time removes both. */
+    const inFlightRef = useRef(new Set<string>());
 
     const requestPublishHistory = useCallback((path: string) => {
+      if (inFlightRef.current.has(path)) {
+        return;
+      }
       const requestedAt = requestedAtRef.current.get(path);
       if (
         requestedAt != null &&
@@ -72,6 +82,7 @@ export const useConversationPublishHistory =
         return;
       }
       requestedAtRef.current.set(path, Date.now());
+      inFlightRef.current.add(path);
       /* A revalidation keeps the folders already on screen: replacing them with
        * `Loading` would blink the open menu's Unpublish entry out and back. */
       setEntries((prev) => ({
@@ -97,13 +108,16 @@ export const useConversationPublishHistory =
            * that cannot do anything, and raises no notification — the user
            * opened a menu, they did not ask for history. The timestamp is
            * dropped so the next menu open retries immediately instead of
-           * waiting out the TTL.
+           * waiting out the TTL: a failure is forgotten, while a request still
+           * in flight is remembered until it settles.
            */
           requestedAtRef.current.delete(path);
           setEntries((prev) => ({
             ...prev,
             [path]: { status: PublishHistoryStatus.Failed },
           }));
+        } finally {
+          inFlightRef.current.delete(path);
         }
       };
       void resolve();

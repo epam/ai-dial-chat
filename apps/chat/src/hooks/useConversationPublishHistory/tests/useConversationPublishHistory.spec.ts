@@ -121,6 +121,58 @@ describe('useConversationPublishHistory', () => {
     expect(result.current.getPublishHistory(PATH).entries).toHaveLength(1);
   });
 
+  /*
+   * The TTL alone stops a repeat inside the window, not one just outside it: a
+   * request still running when the window closes would otherwise be joined by
+   * a second, and the slower response could land last and overwrite the newer
+   * folders.
+   */
+  it('issues no second request while one is still in flight past the TTL', async () => {
+    let settleFirst: (value: never[]) => void = () => undefined;
+    vi.mocked(getConversationPublishHistory).mockReturnValueOnce(
+      new Promise((resolve) => {
+        settleFirst = resolve;
+      }),
+    );
+    const { result } = renderHook(() => useConversationPublishHistory());
+
+    act(() => result.current.requestPublishHistory(PATH));
+    act(() => {
+      vi.advanceTimersByTime(60 * 1000 + 1);
+    });
+    act(() => result.current.requestPublishHistory(PATH));
+
+    expect(getConversationPublishHistory).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      settleFirst([]);
+    });
+
+    /* Once it settles the next open revalidates as usual. */
+    act(() => result.current.requestPublishHistory(PATH));
+    await waitFor(() =>
+      expect(getConversationPublishHistory).toHaveBeenCalledTimes(2),
+    );
+  });
+
+  it('releases the in-flight lock when the lookup fails', async () => {
+    vi.mocked(getConversationPublishHistory).mockRejectedValue(
+      new Error('boom'),
+    );
+    const { result } = renderHook(() => useConversationPublishHistory());
+
+    act(() => result.current.requestPublishHistory(PATH));
+    await waitFor(() =>
+      expect(result.current.getPublishHistory(PATH).status).toBe(
+        PublishHistoryStatus.Failed,
+      ),
+    );
+
+    act(() => result.current.requestPublishHistory(PATH));
+
+    expect(getConversationPublishHistory).toHaveBeenCalledTimes(2);
+  });
+
   it('marks the lookup Failed and retries on the next request', async () => {
     vi.mocked(getConversationPublishHistory).mockRejectedValue(
       new Error('boom'),

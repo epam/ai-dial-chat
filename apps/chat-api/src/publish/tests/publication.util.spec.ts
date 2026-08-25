@@ -550,6 +550,50 @@ describe('resolvePublicationsForSource, approved removals', () => {
     ).toEqual([]);
   });
 
+  /*
+   * The trade-off the `+Infinity` fallback makes on purpose: with no date on
+   * the removal there is nothing to order it against, so it cancels the whole
+   * folder — a later re-publish included. Pinned because the alternative
+   * (letting the dateable ADD win) would offer Unpublish for a copy Core may
+   * already have deleted, the failure GH #8445 is about.
+   */
+  it('cancels a later ADD when the approved removal cannot be dated', async () => {
+    expect(
+      await resolve([
+        approved('publications/b/1', PublicationResourceAction.Add, 1000),
+        approved(
+          'publications/b/2',
+          PublicationResourceAction.Delete,
+          undefined,
+        ),
+        approved('publications/b/3', PublicationResourceAction.Add, 3000),
+      ]),
+    ).toEqual([]);
+  });
+
+  it('warns instead of silently cancelling when a removal cannot be dated', async () => {
+    const logger = { debug: vi.fn(), warn: vi.fn() };
+
+    await resolvePublicationsForSource(
+      [
+        approved('publications/b/1', PublicationResourceAction.Add, 1000),
+        approved(
+          'publications/b/2',
+          PublicationResourceAction.Delete,
+          undefined,
+        ),
+      ],
+      SOURCE_URL,
+      async () => null,
+      logger as never,
+      'ctx',
+    );
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('no usable createdAt'),
+    );
+  });
+
   it('never reports the removal publication itself as published', async () => {
     expect(
       await resolve([

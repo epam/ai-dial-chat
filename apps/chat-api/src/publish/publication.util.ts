@@ -308,6 +308,17 @@ export const resolvePublicationsForSource = async <T extends PublicationLike>(
    * removal Core reports as approved is the more recent statement of what
    * exists, and offering Unpublish for a copy Core has deleted is the failure
    * this cancellation exists to prevent.
+   *
+   * The trade-off this makes deliberately: `+Infinity` also cancels an `ADD`
+   * created *after* the removal, so an undateable removal hides Unpublish for
+   * a genuine re-publish and offers a Publish that Core rejects because the
+   * target already exists. Both outcomes are one wrong menu entry, and this
+   * one is recoverable (the panel lists the folder, the error names the
+   * conflict) while the other leaves a request that can never succeed. Core
+   * stamps every publication, so the fallback only fires on a response that
+   * omitted `createdAt` — logged below rather than applied silently, and
+   * pinned by "cancels a later ADD when the approved removal cannot be dated"
+   * in `publication.util.spec.ts`.
    */
   const removedAtByFolder = new Map<string, number>();
   for (const publication of referencing) {
@@ -322,6 +333,13 @@ export const resolvePublicationsForSource = async <T extends PublicationLike>(
       publication.createdAt,
       Number.POSITIVE_INFINITY,
     );
+    if (!Number.isFinite(removedAt)) {
+      logger?.warn(
+        `Approved removal "${publication.url ?? '(no url)'}" carries no usable createdAt${
+          context ? ` for ${context}` : ''
+        } — cancelling every ADD in "${folderKey}", a re-publish included`,
+      );
+    }
     removedAtByFolder.set(
       folderKey,
       Math.max(
