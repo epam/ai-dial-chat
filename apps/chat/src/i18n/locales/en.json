@@ -303,6 +303,7 @@
   "promptSelector": {
     "addMenuLabel": "Prompts",
     "myCollectionLabel": "My Collection",
+    "browseLabel": "Catalog",
     "emptyHint": "Star a prompt to pin it here",
     "modalTitle": "Use prompt",
     "parametersTitle": "Prompt parameters",

@@ -327,6 +327,7 @@ export enum DeploymentSelectorI18nKeys {
 export enum PromptSelectorI18nKeys {
   AddMenuLabel = 'promptSelector.addMenuLabel',
   MyCollectionLabel = 'promptSelector.myCollectionLabel',
+  BrowseLabel = 'promptSelector.browseLabel',
   EmptyHint = 'promptSelector.emptyHint',
   ModalTitle = 'promptSelector.modalTitle',
   ParametersTitle = 'promptSelector.parametersTitle',
