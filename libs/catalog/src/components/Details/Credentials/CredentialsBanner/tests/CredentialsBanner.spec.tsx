@@ -8,6 +8,7 @@ import { CredentialsBanner } from '../CredentialsBanner';
 
 vi.mock('@tabler/icons-react', () => ({
   IconBuildingCommunity: () => <svg />,
+  IconCircleCheckFilled: () => <svg />,
   IconUser: () => <svg />,
 }));
 

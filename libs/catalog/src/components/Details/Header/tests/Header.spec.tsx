@@ -51,17 +51,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
-  DangerButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => (
-    <button className="danger" onClick={onClick}>
-      {label}
-    </button>
-  ),
   NeutralIconButton: ({
     'aria-label': ariaLabel,
     onClick,
@@ -1201,7 +1190,7 @@ describe('Header', () => {
       expect(screen.getByRole('button', { name: 'Log out' })).toBeTruthy();
     });
 
-    it('renders Log out with a danger style', () => {
+    it('renders Log out with the same neutral style as Log in, not a danger style', () => {
       render(
         <Header
           item={{
@@ -1215,7 +1204,7 @@ describe('Header', () => {
         />,
       );
       expect(screen.getByRole('button', { name: 'Log out' }).className).toBe(
-        'danger',
+        'neutral',
       );
     });
 

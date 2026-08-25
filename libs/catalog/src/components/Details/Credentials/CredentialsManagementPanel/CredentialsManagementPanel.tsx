@@ -1,5 +1,6 @@
 import { EntityHeader, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonAppearance,
   DangerButton,
   DIAL_ICON_SIZE,
   Input,
@@ -152,7 +153,7 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
       : undefined;
 
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-3 rounded-xl p-3">
       <div className="relative shrink-0">
         <div
           className={mergeClasses(
@@ -164,10 +165,10 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
         </div>
         {isActive && (
           <IconCircleCheckFilled
-            size={DIAL_ICON_SIZE.SM}
+            size={DIAL_ICON_SIZE.MD}
             aria-hidden
             className={mergeClasses(
-              'absolute -end-1 -top-1',
+              'absolute -end-2 -top-2',
               styles.activeIcon,
             )}
           />
@@ -193,14 +194,15 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
           {authenticationType === ToolsetAuthenticationType.OAuth &&
             (isSignedIn ? (
               <DangerButton
+                appearance={ButtonAppearance.Ghost}
                 label={logoutLabel}
-                className="shrink-0 justify-center whitespace-nowrap"
+                className="w-28 shrink-0 justify-center whitespace-nowrap"
                 onClick={handleRequestLogout}
               />
             ) : (
               <NeutralButton
                 label={loginLabel}
-                className="shrink-0 justify-center whitespace-nowrap"
+                className="w-28 shrink-0 justify-center whitespace-nowrap"
                 onClick={handleLogin}
               />
             ))}
@@ -366,7 +368,7 @@ export const CredentialsManagementPanel: FC<
         >
           {description}
         </span>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col">
           <CredentialsManagementRow
             item={item}
             level={CredentialsLevel.User}

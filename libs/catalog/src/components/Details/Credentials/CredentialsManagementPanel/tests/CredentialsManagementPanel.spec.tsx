@@ -14,6 +14,12 @@ import { CredentialsManagementPanel } from '../CredentialsManagementPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  ButtonAppearance: {
+    Solid: 'solid',
+    Outlined: 'outlined',
+    Ghost: 'ghost',
+    Link: 'link',
+  },
   Input: ({
     onChange,
     labelProps,
@@ -53,12 +59,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label,
     onClick,
     className,
+    appearance,
   }: {
     label?: string;
     onClick: () => void;
     className?: string;
+    appearance?: string;
   }) => (
-    <button onClick={onClick} className={className} data-variant="danger">
+    <button
+      onClick={onClick}
+      className={className}
+      data-variant="danger"
+      data-appearance={appearance}
+    >
       {label}
     </button>
   ),
@@ -168,15 +181,15 @@ describe('CredentialsManagementPanel', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('renders Log out with a danger style', () => {
+  it('renders Log out as a ghost danger button, matching the design', () => {
     const item = makeItem({ userStatus: CredentialStatus.SignedIn });
     render(<CredentialsManagementPanel item={item} />);
-    expect(
-      screen.getByRole('button', { name: 'Log out' }).dataset.variant,
-    ).toBe('danger');
+    const logoutButton = screen.getByRole('button', { name: 'Log out' });
+    expect(logoutButton.dataset.variant).toBe('danger');
+    expect(logoutButton.dataset.appearance).toBe('ghost');
   });
 
-  it('gives Log in and Log out the same fixed width', () => {
+  it('gives Log in and Log out the same fixed width so the two rows stay column-aligned', () => {
     const signedOutItem = makeItem();
     const { unmount } = render(
       <CredentialsManagementPanel item={signedOutItem} />,
