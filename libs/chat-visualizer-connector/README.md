@@ -127,6 +127,12 @@ Both flags are independent and can be combined:
 }
 ```
 
+### 3. Custom Viewers
+
+The same connector powers **Custom Viewers**, which replace the entire chat UI for an application instead of rendering an attachment. Custom Viewers are not configured through `CUSTOM_VISUALIZERS` / `APPLICATION_VISUALIZERS` — they are configured per-application via `viewer_url` or an application type schema, receive conversation context instead of attachment data, and can send conversation events back to the chat.
+
+See [Custom Viewers](../../docs/CUSTOM-VIEWERS.md) for the full contract.
+
 ## Data Structures
 
 ### Single Attachment Data (CUSTOM_VISUALIZERS)
@@ -140,6 +146,7 @@ export interface AttachmentData {
 export interface CustomVisualizerDataLayout {
   width: number;
   height: number;
+  mobileHeight?: number;
   themeId?: string;
   logInHint?: string;
   providerId?: string;
@@ -164,10 +171,11 @@ export interface GroupedAttachmentsData {
 export interface AttachmentItem {
   url: string;
   mimeType: string;
-  contentType: string;
   visualizerData: CustomVisualizerData;
 }
 ```
+
+_Note: DIAL Chat additionally sets a `contentType` field on each attachment item at runtime (mirroring `mimeType`). It is not part of the exported interface — do not rely on it._
 
 ## Integration Guide
 
@@ -260,7 +268,6 @@ const content = useMemo(() => {
     return groupedData.attachments.map((att) => ({
       url: att.url,
       mimeType: att.mimeType,
-      contentType: att.contentType,
       data: att.visualizerData,
     }));
   }
@@ -399,7 +406,7 @@ constructor(
 
 **Parameters:**
 
-- `dialHost` - DIAL CHAT host URL(s)
+- `dialHost` - DIAL CHAT host URL(s). Accepts a single host or an array. Incoming messages are accepted only from these origins, and outgoing messages sent without an explicit `dialHost` are broadcast to all of them. Passing `'*'` as the first (or only) host disables the origin check — **development only**.
 - `appName` - Visualizer name (must match `title` in configuration)
 - `dataCallback` - Either a single callback function or a `ChatVisualizerCallbacks` object
 
@@ -414,13 +421,40 @@ interface ChatVisualizerCallbacks {
 
 #### Methods
 
-| Method                               | Description                                               |
-| ------------------------------------ | --------------------------------------------------------- |
-| `sendReady()`                        | Notify DIAL Chat that visualizer is loaded (hides loader) |
-| `sendReadyToInteract()`              | Notify DIAL Chat that visualizer is ready to receive data |
-| `sendMessage(content: string)`       | Send a message to the chat                                |
-| `send({ type, payload, dialHost? })` | Send custom event to DIAL Chat                            |
-| `destroy()`                          | Clean up event listeners                                  |
+| Method                               | Description                                                                                           |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `sendReady()`                        | Notify DIAL Chat that visualizer is loaded (hides loader)                                             |
+| `sendReadyToInteract()`              | Notify DIAL Chat that visualizer is ready to receive data                                             |
+| `sendMessage(content: string)`       | Send a message to the chat                                                                            |
+| `send({ type, payload, dialHost? })` | Send any `VisualizerConnectorEvents` event to DIAL Chat                                               |
+| `sendPMResponse(requestParams)`      | Acknowledge a request by `requestId`. Called automatically for incoming data — rarely needed manually |
+| `destroy()`                          | Clean up event listeners                                                                              |
+
+Events that have no dedicated helper method (the conversation and application events below) are sent with `send()`.
+
+#### Event and request types
+
+Events the visualizer/viewer sends **to** DIAL Chat (`VisualizerConnectorEvents`):
+
+| Member                       | Value                          | Purpose                                                                   |
+| ---------------------------- | ------------------------------ | ------------------------------------------------------------------------- |
+| `ready`                      | `READY`                        | Visualizer loaded — hides the loader                                      |
+| `readyToInteract`            | `READY_TO_INTERACT`            | Visualizer ready to receive data — unblocks data delivery                 |
+| `sendMessage`                | `SEND_MESSAGE`                 | Send a message into the conversation                                      |
+| `createdConversationSuccess` | `CREATED_CONVERSATION_SUCCESS` | Custom Viewers: a conversation was created, add and select it in the chat |
+| `updatedConversationSuccess` | `UPDATED_CONVERSATION_SUCCESS` | Custom Viewers: a conversation was updated, apply it in the chat          |
+| `updatedApplicationSuccess`  | `UPDATED_APPLICATION_SUCCESS`  | Applications editor: an application was updated, apply it in the chat     |
+| `initReady`                  | `INIT_READY`                   | _Reserved — not handled for visualizers_                                  |
+
+Requests DIAL Chat sends **to** the visualizer/viewer (`VisualizerConnectorRequests`):
+
+| Member                     | Value                         | Delivered to                                                 |
+| -------------------------- | ----------------------------- | ------------------------------------------------------------ |
+| `sendVisualizeData`        | `SEND_VISUALIZE_DATA`         | `onData` (single attachment / Custom Viewer context payload) |
+| `sendGroupedVisualizeData` | `SEND_GROUPED_VISUALIZE_DATA` | `onGroupedData` (grouped attachments)                        |
+| `setVisualizerOptions`     | `SET_VISUALIZER_OPTIONS`      | _Reserved — currently never sent_                            |
+
+Both enums are exported from `@epam/ai-dial-shared`. Incoming requests are acknowledged automatically by the connector.
 
 ### Sending to a particular host when multiple were passed
 
@@ -467,6 +501,7 @@ Failed to execute 'postMessage' on 'DOMWindow': The target origin provided does 
 
 **Checklist:**
 
-1. `appName` must match `title` in `CUSTOM_VISUALIZERS` or `APPLICATION_VISUALIZERS`
+1. `appName` must match `title` in `CUSTOM_VISUALIZERS` or `APPLICATION_VISUALIZERS` (for Custom Viewers, the application or schema display name)
 2. For `APPLICATION_VISUALIZERS`, the key must match the `applicationId` from messages
 3. `sendReady()` and `sendReadyToInteract()` must be called after connector creation
+4. `dialHost` must list the DIAL Chat origin — messages from other origins are dropped before reaching your callbacks
