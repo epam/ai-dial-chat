@@ -121,7 +121,7 @@ If the deployment is a toolset, generation is rejected with `400 Bad Request`. I
 2. `ConversationService` registers an active generation, preserving the existing protection against concurrent generations in the same conversation.
 3. The BFF retrieves details for the selected model or application and selects the generation API.
 4. The initial conversation state and assistant placeholder are created and saved before Core is called.
-5. The selected adapter sends the request to DIAL Core and processes the upstream SSE stream.
+5. The selected adapter sends the request to DIAL Core with the stable persisted conversation id in `X-CONVERSATION-ID` and processes the upstream SSE stream.
 6. Response fragments are applied to the assistant message through the shared `applyChunkToMessage` function.
 7. The final text, status, optional error, and `responseId` are saved when generation ends.
 8. The active-generation record is removed regardless of the outcome.
@@ -165,7 +165,7 @@ Mapping rules:
 - `stream` is always `true`;
 - `store` is always `false`.
 
-The request also includes the user's Bearer token, `Accept: text/event-stream`, an AbortSignal, and `X-DIAL-CLIENT-CHANNEL-ID` when available.
+The request also includes the user's Bearer token, `Accept: text/event-stream`, an AbortSignal, the stable persisted conversation id in `X-CONVERSATION-ID`, and `X-DIAL-CLIENT-CHANNEL-ID` when available. The Chat Completions adapter forwards the same conversation header.
 
 ### Why the full history is sent
 
