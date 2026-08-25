@@ -1,6 +1,7 @@
 import { SendCompletionDtoModeEnum } from '@epam/ai-dial-chat-api-client';
 import { MessageCustomContent, StreamChunk } from '@epam/ai-dial-chat-shared';
 import { JSON_HEADERS } from '../constants/http';
+import { getBrowserTimezone } from '../utils/browser-timezone';
 import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
 
 export { SendCompletionDtoModeEnum as CompletionMode };
@@ -55,6 +56,7 @@ export const streamCompletion = (
   const run = async () => {
     let response: Response;
     try {
+      const timezone = getBrowserTimezone();
       response = await fetch(`${ApiEndpoints.CONVERSATIONS}/completions`, {
         method: 'POST',
         credentials: 'include',
@@ -64,6 +66,7 @@ export const streamCompletion = (
           ...(getCsrfToken() != null
             ? { 'X-CSRF-Token': getCsrfToken() as string }
             : {}),
+          ...(timezone ? { 'X-Timezone': timezone } : {}),
         },
         body: JSON.stringify({
           path,

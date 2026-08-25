@@ -2248,7 +2248,20 @@
       "post": {
         "description": "Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.",
         "operationId": "streamCompletion",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "X-Timezone",
+            "in": "header",
+            "description": "Current browser IANA timezone forwarded to DIAL Core for date- and time-sensitive tools.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 255,
+              "pattern": "^[A-Za-z0-9._+-]+(?:/[A-Za-z0-9._+-]+)*$",
+              "example": "Europe/Warsaw"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2264,7 +2277,7 @@
             "description": "SSE stream of completion chunks"
           },
           "400": {
-            "description": "Invalid request body"
+            "description": "Invalid request body or X-Timezone header"
           },
           "401": {
             "description": "Not authenticated"

@@ -1219,7 +1219,7 @@ const CatalogView: FC<Props> = ({
       } catch (error) {
         /* Notified here, then rethrown so the panel's own rejection path runs
          * — matching `handlePublish`, which lets the error reach the lib. */
-        showPublishError(error);
+        showPublishError(error, EntityOperation.UnpublishRequested);
         throw error;
       }
       notifyOperationSuccess(

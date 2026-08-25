@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { EntityOperation } from '../../../types/entity-notification';
 import { usePublishErrorNotification } from '../usePublishErrorNotification';
 
 vi.mock('../../../context/NotificationContext');
@@ -113,5 +114,86 @@ describe('usePublishErrorNotification', () => {
     result.current(error);
 
     expect(console.error).toHaveBeenCalledWith('Publish request failed', error);
+  });
+
+  /*
+   * GH #8445: a failed Unpublish was reported as "Publish failed", which is
+   * what the user saw in the notification after clicking Unpublish.
+   */
+  describe('for an unpublish request', () => {
+    it('titles the notification after the operation that failed', async () => {
+      const { result } = renderHook(() => usePublishErrorNotification());
+
+      result.current(new Error('boom'), EntityOperation.UnpublishRequested);
+
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith({
+          variant: NotificationVariant.Error,
+          title: 'publish.unpublishFailedTitle',
+          message: 'boom',
+          requestId: undefined,
+        }),
+      );
+    });
+
+    it('falls back to the unpublish-specific generic message', async () => {
+      const { result } = renderHook(() => usePublishErrorNotification());
+
+      result.current({}, EntityOperation.UnpublishRequested);
+
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith({
+          variant: NotificationVariant.Error,
+          title: 'publish.unpublishFailedTitle',
+          message: 'publish.unpublishFailedMessage',
+          requestId: undefined,
+        }),
+      );
+    });
+
+    it('shows the unpublish-specific connection message while offline', async () => {
+      setOnLine(false);
+      const { result } = renderHook(() => usePublishErrorNotification());
+
+      result.current(
+        new TypeError('Failed to fetch'),
+        EntityOperation.UnpublishRequested,
+      );
+
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith({
+          variant: NotificationVariant.Error,
+          title: 'publish.unpublishFailedTitle',
+          message: 'publish.unpublishNetworkErrorMessage',
+        }),
+      );
+    });
+
+    it('logs the operation that failed', () => {
+      const { result } = renderHook(() => usePublishErrorNotification());
+      const error = new Error('boom');
+
+      result.current(error, EntityOperation.UnpublishRequested);
+
+      expect(console.error).toHaveBeenCalledWith(
+        'Unpublish request failed',
+        error,
+      );
+    });
+  });
+
+  it('keeps the publish copy for any other operation', async () => {
+    const { result } = renderHook(() => usePublishErrorNotification());
+
+    result.current(new Error('boom'), EntityOperation.PublishRequested);
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        title: 'publish.failedTitle',
+        message: 'boom',
+        requestId: undefined,
+      }),
+    );
   });
 });

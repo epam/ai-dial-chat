@@ -10,6 +10,7 @@ import {
   ConversationMessageRole,
 } from '../dto/conversation-message.dto';
 import { applyChunkToMessage } from '../utils/apply-chunk.server';
+import { TIMEZONE_HEADER } from '../utils/timezone-header';
 import { generationUnknownEventsTotal } from './generation-metrics';
 import {
   isValidMaxOutputTokens,
@@ -177,6 +178,7 @@ export class ResponsesAdapter {
     signal: AbortSignal,
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
+    timezone?: string,
     timing?: GenerationRelayTiming,
     conversationId?: string,
   ): AsyncGenerator<string, GenerationRelayOutcome, void> {
@@ -192,6 +194,7 @@ export class ResponsesAdapter {
           ...(clientChannelId
             ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
             : {}),
+          ...(timezone ? { [TIMEZONE_HEADER]: timezone } : {}),
           ...(conversationId ? { 'X-CONVERSATION-ID': conversationId } : {}),
         },
         parseAs: 'stream',
@@ -469,6 +472,7 @@ export class ResponsesAdapter {
     res: Response,
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
+    timezone?: string,
     timing?: GenerationRelayTiming,
     conversationId?: string,
   ): Promise<GenerationRelayOutcome> {
@@ -478,6 +482,7 @@ export class ResponsesAdapter {
       signal,
       initialAssembledMessage,
       clientChannelId,
+      timezone,
       timing,
       conversationId,
     );
