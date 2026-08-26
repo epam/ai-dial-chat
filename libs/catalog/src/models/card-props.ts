@@ -26,7 +26,7 @@ export interface CardColors {
   border?: string;
   /** Version text color. Fallback: `--text-secondary`. */
   textSecondary?: string;
-  /** Border color of a selected card. Fallback: `--stroke-info`. */
+  /** Border color of a selected card. Fallback: `--stroke-accent`. */
   selectedBorder?: string;
   /** Background color (tint) of a selected card. Fallback: `--bg-control-accent-alpha-active`. */
   selectedBackground?: string;

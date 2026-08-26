@@ -6,7 +6,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   Textarea,
-  DialSlider,
+  Slider,
   RadioGroup,
   RadioGroupOrientation,
 } from '@epam/ai-dial-ui-kit';
@@ -129,7 +129,7 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
         />
       )}
       {features.temperature && (
-        <DialSlider
+        <Slider
           labelProps={{
             label: temperatureLabel,
             className: fieldLabelClassName,
@@ -140,6 +140,7 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
           max={1}
           step={0.1}
           labels={temperatureLabels}
+          showValue
           onChange={onTemperatureChange}
         />
       )}
