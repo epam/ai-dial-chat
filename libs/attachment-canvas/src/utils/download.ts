@@ -24,6 +24,7 @@ export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
     case AttachmentContentType.Html:
       return content.url != null;
     case AttachmentContentType.Visualizer:
+    case AttachmentContentType.McpApp:
       return false;
     case AttachmentContentType.Unsupported:
       return content.url != null;
@@ -89,6 +90,7 @@ export const downloadAttachmentContent = (
       triggerAnchorDownload(content.url, name);
       return;
     case AttachmentContentType.Visualizer:
+    case AttachmentContentType.McpApp:
       return;
     case AttachmentContentType.Unsupported:
       if (content.url == null) return;

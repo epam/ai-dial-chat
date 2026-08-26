@@ -4,6 +4,8 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
+import type { McpUiHostContext } from '@mcp-ui/client';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { CSSProperties } from 'react';
 import {
   AttachmentContentType,
@@ -113,6 +115,26 @@ export interface VisualizerCanvasContent {
   requestTimeout?: number;
 }
 
+/** Content payload for an MCP App's `ui://` resource, rendered in a sandboxed iframe via an isolated-origin sandbox proxy. */
+export interface McpAppCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.McpApp;
+  /** HTML body of the tool's `ui://` resource, fetched by the app layer — never fetched by this lib. */
+  html: string;
+  /** Isolated-origin URL of the MCP Apps sandbox-proxy page, resolved by the app layer from its own config. */
+  sandboxUrl: string;
+  /** Name of the tool call that produced this resource, forwarded on every `onToolCall`. */
+  toolName: string;
+  /** Arguments of the original tool call that produced this resource, passed to the mounted app so it renders that invocation immediately instead of an empty initial state. */
+  toolInput?: Record<string, unknown>;
+  /** Result of the original tool call that produced this resource, passed to the mounted app so it renders that invocation immediately instead of an empty initial state. */
+  toolResult?: CallToolResult;
+  /** UI context delivered to the View during the `ui/initialize` handshake; built by the app layer from the active theme, locale, and CSS design tokens. */
+  hostContext?: McpUiHostContext;
+  /** Forwards a `tools/call` request issued by the mounted app to the owning MCP session via the app layer. */
+  onToolCall: (name: string, args: unknown) => Promise<CallToolResult>;
+}
+
 /** Content payload for attachments whose format cannot be previewed. */
 export interface UnsupportedCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
@@ -129,6 +151,8 @@ export interface ErrorCanvasContent {
   errorType: AttachmentErrorType;
   /** Remote URL of the file, if known. Ignored for download purposes when `errorType` is `Forbidden`. */
   url?: string;
+  /** Overrides the default `loadErrorLabel`/`forbiddenErrorLabel` message, for callers whose failed content isn't a generic "file" (e.g. an MCP App). */
+  label?: string;
 }
 
 /** The content payload passed to AttachmentCanvas. */
@@ -143,6 +167,7 @@ export type AttachmentCanvasContent =
   | CodeCanvasContent
   | HtmlCanvasContent
   | VisualizerCanvasContent
+  | McpAppCanvasContent
   | UnsupportedCanvasContent
   | ErrorCanvasContent;
 

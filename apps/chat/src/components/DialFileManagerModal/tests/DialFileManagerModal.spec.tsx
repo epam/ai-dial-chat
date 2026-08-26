@@ -567,9 +567,14 @@ describe('DialFileManagerModal', () => {
        this exact case for container/element.querySelector. */
     // eslint-disable-next-line testing-library/no-node-access
     const body = dialog.querySelector('.overflow-auto');
-    expect(body?.classList.contains('flex')).toBe(true);
-    expect(body?.classList.contains('min-h-0')).toBe(true);
-    expect(body?.classList.contains('flex-col')).toBe(true);
+    expect(body?.classList.contains('grow')).toBe(true);
+
+    // The flex layout wrapper is the direct content child inside the body.
+    // eslint-disable-next-line testing-library/no-node-access
+    const contentWrapper = body?.querySelector('.flex.min-h-0.flex-col');
+    expect(contentWrapper?.classList.contains('flex')).toBe(true);
+    expect(contentWrapper?.classList.contains('min-h-0')).toBe(true);
+    expect(contentWrapper?.classList.contains('flex-col')).toBe(true);
 
     // eslint-disable-next-line testing-library/no-node-access
     const footer = dialog.querySelector('.px-6.py-4');
