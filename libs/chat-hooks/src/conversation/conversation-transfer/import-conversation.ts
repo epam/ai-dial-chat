@@ -1,3 +1,4 @@
+import { generateUUID } from '@epam/ai-dial-chat-shared';
 import type {
   Conversation,
   ExportFolder,
@@ -130,7 +131,7 @@ export const rebaseConversationId = (
   const oldFileName =
     pathSegmentsAfterFolder.at(-1) ?? idSegments.at(-1) ?? rawId;
 
-  const newFileName = `${stripTrailingUuid(oldFileName)}__${crypto.randomUUID()}`;
+  const newFileName = `${stripTrailingUuid(oldFileName)}__${generateUUID()}`;
   const subPath = [
     ...folderSegments,
     ...deploymentPrefixSegments,

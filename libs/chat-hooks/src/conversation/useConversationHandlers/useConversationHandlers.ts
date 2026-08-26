@@ -10,6 +10,7 @@ import {
   type Attachment,
   type Conversation,
   type DisplayAttachment,
+  generateUUID,
   type MessageCustomContent,
   MessageRating,
   MessageRole,
@@ -187,7 +188,7 @@ export const useConversationHandlers = ({
         conversation.messages.length + 1,
         modelId,
         customContent,
-        crypto.randomUUID(),
+        generateUUID(),
         CompletionMode.Append,
       );
     },
@@ -250,7 +251,7 @@ export const useConversationHandlers = ({
         messageIndex,
         modelId,
         userMsg.custom_content,
-        crypto.randomUUID(),
+        generateUUID(),
         CompletionMode.Regenerate,
       );
     },
@@ -453,7 +454,7 @@ export const useConversationHandlers = ({
         conversation.messages.length + 1,
         modelId,
         customContent,
-        crypto.randomUUID(),
+        generateUUID(),
         CompletionMode.Append,
       );
     },
@@ -587,7 +588,7 @@ export const useConversationHandlers = ({
         updatedMessages.length - 1,
         modelId,
         updatedCustomContent,
-        crypto.randomUUID(),
+        generateUUID(),
         CompletionMode.Edit,
       );
 

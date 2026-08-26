@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { generateUUID } from '../../common/utils/generate-uuid';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
   ConversationMessageDto,
@@ -11,7 +12,7 @@ const makeUserMessage = (
   content: string,
   customContent?: MessageCustomContentDto,
 ): ConversationMessageDto => ({
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   role: ConversationMessageRole.User,
   content,
   timestamp: new Date().toISOString(),
@@ -45,7 +46,7 @@ const clearStateFromMessages = (
 const makeAssistantPlaceholder = (
   deploymentId: string,
 ): ConversationMessageDto => ({
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   role: ConversationMessageRole.Assistant,
   content: '',
   timestamp: new Date().toISOString(),

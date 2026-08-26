@@ -17,7 +17,7 @@ The system SHALL expose `POST /api/v1/conversations/duplicate?path=<sourcePath>`
 
 The returned `newPath` is the encoded full DIAL Core resource path and SHALL be treated as an opaque conversation identifier by callers.
 
-The duplicated conversation SHALL keep the source conversation's stored display name, sanitised via `prepareEntityName`, without adding a numeric title suffix. Its destination storage path SHALL always end with a fresh `crypto.randomUUID()` segment:
+The duplicated conversation SHALL keep the source conversation's stored display name, sanitised via `prepareEntityName`, without adding a numeric title suffix. Its destination storage path SHALL always end with a fresh `generateUUID()` segment:
 
 ```
 {deploymentId}__{displayName}__{uuid}

@@ -28,6 +28,7 @@ export * from './utils/format-price';
 export * from './utils/file-download';
 export * from './constants/entity-colors';
 export * from './utils/prompt-variables';
+export * from './utils/generate-uuid';
 export * from './constants/mime-types';
 export * from './constants/icon';
 export * from './constants/dial';
