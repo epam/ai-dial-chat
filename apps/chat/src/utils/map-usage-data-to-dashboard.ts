@@ -98,18 +98,18 @@ export const mapUsageDataToDashboard = (
   }[] = [
     {
       stats: usage?.dayCostStats,
-      titleKey: UsageI18nKeys.TodayTitle,
-      periodDescriptionKey: UsageI18nKeys.TodayPeriodDescription,
+      titleKey: UsageI18nKeys.TodayPeriodDescription,
+      periodDescriptionKey: UsageI18nKeys.TodayTitle,
     },
     {
       stats: usage?.weekCostStats,
-      titleKey: UsageI18nKeys.ThisWeekTitle,
-      periodDescriptionKey: UsageI18nKeys.ThisWeekPeriodDescription,
+      titleKey: UsageI18nKeys.ThisWeekPeriodDescription,
+      periodDescriptionKey: UsageI18nKeys.ThisWeekTitle,
     },
     {
       stats: usage?.monthCostStats,
-      titleKey: UsageI18nKeys.ThisMonthTitle,
-      periodDescriptionKey: UsageI18nKeys.ThisMonthPeriodDescription,
+      titleKey: UsageI18nKeys.ThisMonthPeriodDescription,
+      periodDescriptionKey: UsageI18nKeys.ThisMonthTitle,
     },
   ];
 

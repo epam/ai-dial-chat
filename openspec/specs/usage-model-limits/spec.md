@@ -183,6 +183,44 @@ status but at least one token or overall Cost limit is `Unlimited`, overall Stat
 
 ---
 
+### Requirement: Aggregate period cost cards
+
+The adapter (`apps/chat/src/utils/map-usage-data-to-dashboard.ts`) SHALL map the top-level
+`dayCostStats`, `weekCostStats`, and `monthCostStats` fields from `UserLimitStatsResponseDto` into
+`UsageLimitCardData[]` for `UsageLimitCardGroup`. A period whose stats are absent or non-finite
+SHALL be omitted from the array entirely. The card title for each period SHALL be the rolling-window
+label (`Last 24 hours`, `Last 7 days`, `Last 30 days`); the `periodDescription` field SHALL carry
+the calendar-anchor label (`Today`, `This week`, `This month`) for accessibility only and SHALL NOT
+be rendered visually.
+
+When a period's `total >= 2 ** 53` (the unlimited sentinel — Long.MAX_VALUE from the backend,
+meaning no cost limit is configured for that period), the adapter SHALL produce a card with
+`isUnlimited: true`. The library then renders only `usedLabel` (the spend so far) and the
+`Default` status badge — no progress bar, no used-of-total caption, no remaining caption, and no
+used-percent label. This is the expected behavior when an administrator has not configured a cost
+limit for the period; the absence of limit information is intentional and SHALL NOT be treated as a
+display error.
+
+#### Scenario: Unconfigured weekly limit shows spend only
+
+- **WHEN** `weekCostStats.total >= 2 ** 53` (no weekly cost limit configured)
+- **THEN** the "Last 7 days" aggregate card renders only the used spend label and the
+  `Default` (`Within limits`) badge — no progress bar, no `used of $total`, no remaining
+  amount, and no percentage
+
+#### Scenario: Configured daily limit shows full card
+
+- **WHEN** `dayCostStats.total < 2 ** 53` (a finite daily cost limit is set)
+- **THEN** the "Last 24 hours" aggregate card renders `usedLabel`, `used of $totalLabel`, a
+  progress bar, `remainingLabel`, and the used-percent label alongside the status badge
+
+#### Scenario: Period with absent stats is omitted
+
+- **WHEN** a period's stats field is absent or its `total`/`used` are non-finite
+- **THEN** no card is produced for that period and the remaining periods are unaffected
+
+---
+
 ### Requirement: Overall Cost period header indicators
 
 The adapter SHALL normalize the top-level `dayCostStats`, `weekCostStats`, and `monthCostStats` used
