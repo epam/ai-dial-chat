@@ -1,4 +1,5 @@
 import {
+  generateUUID,
   MessageRole,
   StatusEvent,
   StatusMessage,
@@ -19,7 +20,7 @@ export const createDeploymentChangedMessage = (
     new_deployment_id: newDeploymentId,
   };
   return {
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     role: MessageRole.Status,
     content: '',
     timestamp: new Date().toISOString(),
