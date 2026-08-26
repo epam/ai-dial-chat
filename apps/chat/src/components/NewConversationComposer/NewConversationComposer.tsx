@@ -111,6 +111,7 @@ interface Props {
   toolsMenuItems?: ToolMenuItem[];
   onToolToggle?: (toolId: string) => void;
   toolsMenuTitle?: string;
+  toolSelectedStateLabel?: string;
   toolsChipLabels?: ToolsChipLabels;
   /** Rendered below the composer input (e.g. starter buttons). */
   children?: ReactNode;
@@ -137,6 +138,7 @@ const NewConversationComposer: FC<Props> = ({
   toolsMenuItems,
   onToolToggle,
   toolsMenuTitle,
+  toolSelectedStateLabel,
   toolsChipLabels,
   children,
 }) => {
@@ -458,6 +460,7 @@ const NewConversationComposer: FC<Props> = ({
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           toolsMenuTitle={toolsMenuTitle}
+          toolSelectedStateLabel={toolSelectedStateLabel}
           toolsChipLabels={toolsChipLabels}
           usageLimitsSlot={
             <UsageLimitsControl

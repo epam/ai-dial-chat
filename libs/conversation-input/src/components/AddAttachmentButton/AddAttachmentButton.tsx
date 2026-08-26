@@ -13,7 +13,6 @@ import {
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
-  IconCheck,
   IconChevronRight,
   IconPaperclip,
   IconPlus,
@@ -29,6 +28,7 @@ import {
   useState,
 } from 'react';
 import type { ChatSettingsConfig } from '../../models/Input';
+import { buildToolMenuItems } from '../../utils/tools-menu';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import { ChatSettingsBottomSheet } from '../ChatSettingsBottomSheet/ChatSettingsBottomSheet';
@@ -78,6 +78,8 @@ interface AddAttachmentButtonProps {
   toolsMenuTitle?: string;
   /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
   toolsBackLabel?: string;
+  /** Screen-reader-only text marking a selected row in the Tools submenu. Defaults to `'Selected'`. */
+  toolSelectedStateLabel?: string;
   /**
    * When provided, adds a "Prompts" item above "Chat settings" whose submenu
    * (desktop flyout / mobile bottom sheet) renders this host-owned overlay.
@@ -121,6 +123,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   onToolToggle,
   toolsMenuTitle = 'Tools',
   toolsBackLabel = 'Back',
+  toolSelectedStateLabel = 'Selected',
   promptsMenuOverlay,
   promptsMenuTitle = 'Prompts',
   promptsBackLabel = 'Back',
@@ -147,32 +150,15 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
 
   const toolsSubmenuChildren = useMemo(
     () =>
-      toolsMenuItems.map((item) => ({
-        key: item.id,
-        label: (
-          <span className="flex flex-1 items-center gap-2">
-            <span className="flex-1">{item.label}</span>
-            {item.isSelected && (
-              <IconCheck
-                size={BASE_ICON_SIZE}
-                style={cssVars}
-                className={styles.selectedToolIcon}
-                aria-hidden
-              />
-            )}
-          </span>
-        ),
-        icon: (
-          <span
-            style={cssVars}
-            className={mergeClasses('flex items-center', styles.toolIcon)}
-          >
-            {item.icon}
-          </span>
-        ),
-        onClick: () => onToolToggle?.(item.id),
-      })),
-    [toolsMenuItems, onToolToggle, cssVars],
+      buildToolMenuItems({
+        items: toolsMenuItems,
+        onToolToggle: (toolId) => onToolToggle?.(toolId),
+        selectedStateLabel: toolSelectedStateLabel,
+        style: cssVars,
+        iconClassName: styles.toolIcon,
+        selectedIconClassName: styles.selectedToolIcon,
+      }),
+    [toolsMenuItems, onToolToggle, toolSelectedStateLabel, cssVars],
   );
 
   const menuItems = useMemo(

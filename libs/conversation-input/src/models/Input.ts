@@ -253,14 +253,16 @@ export interface InputProps {
    * Modal state is managed internally by the component.
    */
   chatSettings?: ChatSettingsConfig;
-  /** Resolved tool toggle items rendered in a "Tools" submenu. When empty or absent, no Tools item is shown. */
+  /** Resolved tool toggle items rendered by the permanent Tools button in the action bar and by the `+` menu's "Tools" submenu. When empty or absent, neither is shown. */
   toolsMenuItems?: ToolMenuItem[];
   /** Called when a tool row is toggled. Receives the tool id. */
   onToolToggle?: (toolId: string) => void;
-  /** Label for the "Tools" menu item and mobile sheet title. Defaults to `'Tools'`. */
+  /** Visible label of the Tools button, the `+` menu's "Tools" item, and the mobile sheet title. Defaults to `Tools`. */
   toolsMenuTitle?: string;
   /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
   toolsBackLabel?: string;
+  /** Screen-reader-only text marking a selected row in the tools menu. Defaults to `Selected`. */
+  toolSelectedStateLabel?: string;
   /** Labels for the selected-tools chip row shown in the input when tools are active. */
   toolsChipLabels?: ToolsChipLabels;
   /**

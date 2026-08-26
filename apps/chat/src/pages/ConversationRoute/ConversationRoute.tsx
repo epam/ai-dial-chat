@@ -331,6 +331,7 @@ const ConversationRoute: FC = () => {
         toolsMenuItems={toolsMenuItems}
         onToolToggle={onToolToggle}
         toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
+        toolSelectedStateLabel={t(ToolsI18nKeys.SelectedState)}
         toolsChipLabels={{
           countLabel: (count) => t(ToolsI18nKeys.SelectedCount, { count }),
           removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),

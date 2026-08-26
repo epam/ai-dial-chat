@@ -163,6 +163,7 @@ interface Props {
   toolsMenuItems?: ToolMenuItem[];
   onToolToggle?: (toolId: string) => void;
   toolsMenuTitle?: string;
+  toolSelectedStateLabel?: string;
   toolsChipLabels?: ToolsChipLabels;
   /**
    * Neutral content rendered inside the scrollable message container, above
@@ -205,6 +206,7 @@ const ConversationView: FC<Props> = ({
   toolsMenuItems,
   onToolToggle,
   toolsMenuTitle,
+  toolSelectedStateLabel,
   toolsChipLabels,
   topContent,
 }) => {
@@ -855,6 +857,7 @@ const ConversationView: FC<Props> = ({
                 toolsMenuItems={toolsMenuItems}
                 onToolToggle={onToolToggle}
                 toolsMenuTitle={toolsMenuTitle}
+                toolSelectedStateLabel={toolSelectedStateLabel}
                 toolsChipLabels={toolsChipLabels}
                 pendingDropFiles={!isEditActive ? pendingFiles : undefined}
                 pendingAttachments={

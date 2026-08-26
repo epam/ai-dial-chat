@@ -10,9 +10,9 @@ import styles from './ToolsBottomSheet.module.scss';
 export interface ToolsBottomSheetProps {
   /** Controls sheet visibility. */
   isOpen: boolean;
-  /** Called when the back arrow is tapped — returns to the previous sheet. */
-  onBack: () => void;
-  /** Accessible label for the back arrow button. Defaults to `'Back'`. */
+  /** Called when the back arrow is tapped — returns to the previous sheet. When omitted, no back arrow is shown (the sheet is a standalone destination). */
+  onBack?: () => void;
+  /** Accessible label for the back arrow button. Required when `onBack` is provided. Defaults to `Back`. */
   backLabel?: string;
   /** Called when the close (x) button is tapped — dismisses the sheet entirely. */
   onClose: () => void;
@@ -41,8 +41,9 @@ export interface ToolsBottomSheetColors {
 }
 
 /**
- * Mobile bottom sheet that renders a list of tool toggle rows with a back
- * arrow to return to the preceding add-menu bottom sheet.
+ * Mobile bottom sheet that renders a list of tool toggle rows. When `onBack` is
+ * provided a back arrow returns to the preceding add-menu bottom sheet;
+ * otherwise the sheet is a standalone destination.
  */
 export const ToolsBottomSheet: FC<ToolsBottomSheetProps> = ({
   isOpen,
@@ -69,7 +70,7 @@ export const ToolsBottomSheet: FC<ToolsBottomSheetProps> = ({
       closeLabel={closeLabel}
       onClose={onClose}
       onBack={onBack}
-      backLabel={backLabel}
+      backLabel={onBack != null ? backLabel : undefined}
       style={style}
     >
       <ul role="menu" className="flex flex-col pb-4" style={cssVars}>

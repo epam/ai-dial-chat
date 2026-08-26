@@ -1,0 +1,15 @@
+.icon {
+  color: var(--tb-icon, var(--text-secondary, #57647a));
+}
+
+.count {
+  color: var(--tb-count-text, var(--text-accent, #1d4ed8));
+}
+
+.selectedToolIcon {
+  color: var(--tb-selected-tool-icon, var(--text-accent, #1d4ed8));
+}
+
+.toolIcon {
+  color: var(--tb-tool-icon, var(--text-secondary, #57647a));
+}

@@ -53,6 +53,42 @@ import { ConversationInput } from '@epam/ai-dial-conversation-input';
 plain text becomes an attachment instead of inline content, and
 `maxMessageLength` (default `50000`) caps the message text.
 
+#### Tools
+
+Supplying `toolsMenuItems` together with `onToolToggle` renders a permanent
+Tools control in the action bar, next to the `+` button — a labelled dropdown on
+desktop and an icon button opening a bottom sheet on mobile. The `+` menu keeps
+a "Tools" entry as a secondary path to the same list. Selected tools also appear
+as removable chips above the action bar.
+
+```tsx
+import { ConversationInput } from '@epam/ai-dial-conversation-input';
+import { IconWorldSearch } from '@tabler/icons-react';
+
+<ConversationInput
+  onSend={handleSend}
+  toolsMenuItems={[
+    {
+      id: 'web_search',
+      label: 'Web search',
+      icon: <IconWorldSearch size={18} aria-hidden />,
+      isSelected: isWebSearchOn,
+    },
+  ]}
+  onToolToggle={handleToolToggle}
+  toolsMenuTitle="Tools"
+  toolSelectedStateLabel="Selected"
+  toolsChipLabels={{
+    countLabel: (count) => `${count} tools`,
+    removeLabel: (label) => `Remove ${label}`,
+  }}
+/>;
+```
+
+`toolsMenuItems` entries are `ToolMenuItem` values from
+`@epam/ai-dial-chat-shared`. `toolsChipLabels.countLabel` also supplies the
+selected-tools count appended to the Tools button's accessible name.
+
 ### EditMessageInput
 
 Renders the input in edit mode for revising an existing message. `onCancel` and `onSave` are required; `onSave` receives the new text, the attachments the user kept, and any newly added ones.

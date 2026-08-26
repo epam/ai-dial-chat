@@ -32,6 +32,7 @@ import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { SelectedToolsChips } from '../SelectedToolsChips/SelectedToolsChips';
+import { ToolsButton } from '../ToolsButton/ToolsButton';
 import { VoiceBar } from '../VoiceBar/VoiceBar';
 import { SendButton } from './Buttons/SendButton';
 import { StopButton } from './Buttons/StopButton';
@@ -95,6 +96,7 @@ export const Input: FC<InputProps> = ({
   onToolToggle,
   toolsMenuTitle,
   toolsBackLabel,
+  toolSelectedStateLabel,
   toolsChipLabels,
   promptsMenuOverlay,
   promptsMenuTitle,
@@ -246,6 +248,8 @@ export const Input: FC<InputProps> = ({
     !isStreaming && hasSendableContent,
     SEND_BUTTON_EXIT_MS,
   );
+  const hasToolsMenu =
+    (toolsMenuItems?.length ?? 0) > 0 && onToolToggle != null;
   const hasSelectedTools =
     (toolsMenuItems?.some((t) => t.isSelected) ?? false) &&
     onToolToggle != null;
@@ -417,10 +421,10 @@ export const Input: FC<InputProps> = ({
             isStackedLayout ? 'flex-wrap' : 'flex-wrap desktop:flex-nowrap',
           )}
         >
-          {!hideAddButton && (
+          {(!hideAddButton || hasToolsMenu) && (
             <div
               className={mergeClasses(
-                'flex',
+                'flex items-center gap-1',
                 'order-2',
                 !isStackedLayout && 'desktop:order-1',
               )}
@@ -435,28 +439,43 @@ export const Input: FC<InputProps> = ({
                 tabIndex={-1}
                 onChange={handleFileChange}
               />
-              <AddAttachmentButton
-                onAttachClick={
-                  hideAttachFile
-                    ? undefined
-                    : () => fileInputRef.current?.click()
-                }
-                attachLabel={attachLabel}
-                addMenuTitle={addMenuTitle}
-                menuTitle={menuTitle}
-                menuCloseLabel={menuCloseLabel}
-                style={cssVars}
-                isDisabled={isInputDisabled}
-                chatSettings={chatSettings}
-                extraMenuItems={dialFileSystemMenuItem}
-                toolsMenuItems={toolsMenuItems}
-                onToolToggle={onToolToggle}
-                toolsMenuTitle={toolsMenuTitle}
-                toolsBackLabel={toolsBackLabel}
-                promptsMenuOverlay={promptsMenuOverlay}
-                promptsMenuTitle={promptsMenuTitle}
-                promptsBackLabel={promptsBackLabel}
-              />
+              {!hideAddButton && (
+                <AddAttachmentButton
+                  onAttachClick={
+                    hideAttachFile
+                      ? undefined
+                      : () => fileInputRef.current?.click()
+                  }
+                  attachLabel={attachLabel}
+                  addMenuTitle={addMenuTitle}
+                  menuTitle={menuTitle}
+                  menuCloseLabel={menuCloseLabel}
+                  style={cssVars}
+                  isDisabled={isInputDisabled}
+                  chatSettings={chatSettings}
+                  extraMenuItems={dialFileSystemMenuItem}
+                  toolsMenuItems={toolsMenuItems}
+                  onToolToggle={onToolToggle}
+                  toolsMenuTitle={toolsMenuTitle}
+                  toolsBackLabel={toolsBackLabel}
+                  toolSelectedStateLabel={toolSelectedStateLabel}
+                  promptsMenuOverlay={promptsMenuOverlay}
+                  promptsMenuTitle={promptsMenuTitle}
+                  promptsBackLabel={promptsBackLabel}
+                />
+              )}
+              {toolsMenuItems != null && onToolToggle != null && (
+                <ToolsButton
+                  items={toolsMenuItems}
+                  onToolToggle={onToolToggle}
+                  label={toolsMenuTitle}
+                  closeLabel={menuCloseLabel}
+                  selectedStateLabel={toolSelectedStateLabel}
+                  countLabel={toolsChipLabels?.countLabel}
+                  isDisabled={isInputDisabled}
+                  style={cssVars}
+                />
+              )}
             </div>
           )}
           {isStackedLayout && hasSelectedTools && (
