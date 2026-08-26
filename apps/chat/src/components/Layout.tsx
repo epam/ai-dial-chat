@@ -98,6 +98,18 @@ export function Layout({
 
     dispatch(UIActions.setLocale(locale));
   }, [dispatch, router.defaultLocale, router.locale]);
+
+  useEffect(() => {
+    try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      if (timezone) {
+        dispatch(UIActions.setTimezone(timezone));
+      }
+    } catch {
+      // Timezone detection is best-effort; the header is simply omitted.
+    }
+  }, [dispatch]);
   useEffect(() => {
     setLoading(isApplyingModel);
   }, [isApplyingModel]);

@@ -16,6 +16,8 @@ const rootSelector = (state: RootState) => state.ui;
 
 const selectLocale = (state: RootState) => rootSelector(state).locale;
 
+const selectTimezone = (state: RootState) => rootSelector(state).timezone;
+
 const selectThemeState = (state: RootState) => rootSelector(state).theme;
 
 const selectEnterType = (state: RootState) => rootSelector(state).enterType;
@@ -150,6 +152,7 @@ const selectAllowEnterToSend = createSelector([selectEnterType], (enterType) =>
 
 export const UISelectors = {
   selectLocale,
+  selectTimezone,
   selectThemeState,
   selectEnterType,
   selectShowChatbar,

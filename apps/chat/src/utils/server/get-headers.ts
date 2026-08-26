@@ -5,12 +5,14 @@ export const getApiHeaders = ({
   jwt,
   jobTitle,
   language,
+  timezone,
   ifNoneMatch,
 }: {
   jwt?: string;
   chatReference?: string;
   jobTitle?: string;
   language?: string;
+  timezone?: string;
   ifNoneMatch?: string;
 }): Record<string, string> => {
   const headers: Record<string, string> = {
@@ -29,6 +31,10 @@ export const getApiHeaders = ({
   const proxyLanguageHeader = process.env.PROXY_LANGUAGE_HEADER;
   if (proxyLanguageHeader && language) {
     headers[proxyLanguageHeader] = language;
+  }
+
+  if (timezone) {
+    headers['X-Timezone'] = timezone;
   }
 
   if (jobTitle) {
