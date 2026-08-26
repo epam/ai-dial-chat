@@ -283,6 +283,239 @@ describe('ResponsesAdapter', () => {
       expect(request).not.toHaveProperty('max_tokens');
       expect(request).not.toHaveProperty('max_completion_tokens');
     });
+
+    it('forwards reasoning.effort as the first entry of reasoningEfforts when the list is non-empty', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [],
+        temperatureSupported: false,
+        reasoningEfforts: ['low', 'medium', 'high'],
+      });
+
+      expect(request.reasoning).toEqual({ effort: 'low' });
+    });
+
+    it('omits reasoning when reasoningEfforts is an empty array', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [],
+        temperatureSupported: false,
+        reasoningEfforts: [],
+      });
+
+      expect(request).not.toHaveProperty('reasoning');
+    });
+
+    it('omits reasoning when reasoningEfforts is absent', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [],
+        temperatureSupported: false,
+      });
+
+      expect(request).not.toHaveProperty('reasoning');
+    });
+
+    it('includes custom_fields.configuration when configuration is provided', () => {
+      const { adapter } = makeAdapter();
+      const configuration = { mode: 'deep-research', sources: 5 };
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [],
+        temperatureSupported: false,
+        configuration,
+      });
+
+      expect(request.custom_fields).toEqual({ configuration });
+    });
+
+    it('omits custom_fields when configuration is absent', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [],
+        temperatureSupported: false,
+      });
+
+      expect(request).not.toHaveProperty('custom_fields');
+    });
+  });
+
+  describe('buildInputItem — exercised via buildRequest', () => {
+    it('maps a URL-referenced image attachment to an input_image content part', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [
+          {
+            role: ConversationMessageRole.User,
+            content: 'Look at this',
+            custom_content: {
+              attachments: [{ type: 'image/png', url: 'files/bucket/img.png' }],
+            },
+          } as never,
+        ],
+        temperatureSupported: false,
+      });
+
+      expect(request.input[0]).toEqual({
+        role: 'user',
+        content: [
+          { type: 'input_text', text: 'Look at this' },
+          { type: 'input_image', image_url: 'files/bucket/img.png' },
+        ],
+      });
+    });
+
+    it('maps an inline base64 image to an input_image data-URI', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [
+          {
+            role: ConversationMessageRole.User,
+            content: 'Here',
+            custom_content: {
+              attachments: [{ type: 'image/jpeg', data: 'abc123' }],
+            },
+          } as never,
+        ],
+        temperatureSupported: false,
+      });
+
+      expect(request.input[0]).toEqual({
+        role: 'user',
+        content: [
+          { type: 'input_text', text: 'Here' },
+          { type: 'input_image', image_url: 'data:image/jpeg;base64,abc123' },
+        ],
+      });
+    });
+
+    it('strips MIME parameters from the type before building a base64 data-URI to keep the URI well-formed', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [
+          {
+            role: ConversationMessageRole.User,
+            content: 'Here',
+            custom_content: {
+              attachments: [
+                { type: 'image/png; charset=utf-8', data: 'abc123' },
+              ],
+            },
+          } as never,
+        ],
+        temperatureSupported: false,
+      });
+
+      expect(request.input[0]).toEqual({
+        role: 'user',
+        content: [
+          { type: 'input_text', text: 'Here' },
+          { type: 'input_image', image_url: 'data:image/png;base64,abc123' },
+        ],
+      });
+    });
+
+    it('drops non-image attachments and wraps the message text in an input_text part', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [
+          {
+            role: ConversationMessageRole.User,
+            content: 'See attached',
+            custom_content: {
+              attachments: [
+                {
+                  type: 'application/pdf',
+                  url: 'https://example.com/doc.pdf',
+                },
+              ],
+            },
+          } as never,
+        ],
+        temperatureSupported: false,
+      });
+
+      /*
+       * A non-image attachment has a url so it survives the data||url filter
+       * (validAttachments is non-empty), but it is excluded from imageParts.
+       * The code therefore takes the array-content path and wraps the message
+       * text into an input_text part rather than returning a plain string.
+       */
+      expect(request.input[0]).toEqual({
+        role: 'user',
+        content: [{ type: 'input_text', text: 'See attached' }],
+      });
+    });
+
+    it('drops attachments that have neither data nor url', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [
+          {
+            role: ConversationMessageRole.User,
+            content: 'Here',
+            custom_content: {
+              attachments: [{ type: 'image/png' }],
+            },
+          } as never,
+        ],
+        temperatureSupported: false,
+      });
+
+      expect(request.input[0]).toEqual({
+        role: 'user',
+        content: 'Here',
+      });
+    });
+
+    it('omits the input_text part when the message has no text content but has image attachments', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [
+          {
+            role: ConversationMessageRole.User,
+            content: '',
+            custom_content: {
+              attachments: [
+                {
+                  type: 'image/png',
+                  url: 'https://example.com/img.png',
+                },
+              ],
+            },
+          } as never,
+        ],
+        temperatureSupported: false,
+      });
+
+      expect(request.input[0]).toEqual({
+        role: 'user',
+        content: [
+          { type: 'input_image', image_url: 'https://example.com/img.png' },
+        ],
+      });
+    });
   });
 
   describe('relay', () => {
@@ -666,6 +899,31 @@ describe('ResponsesAdapter', () => {
       );
 
       expect(result.outcome).toBe('aborted');
+    });
+
+    it('does not forward response.reasoning_text.delta to the browser stream', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+      const { result, res } = await relay(adapter, mockDialClient, [
+        'data: {"type":"response.reasoning_text.delta","item_id":"rs-1","delta":"secret thinking"}\n\n',
+        'data: {"type":"response.completed","response":{"id":"resp-r1","status":"completed"}}\n\n',
+      ]);
+
+      expect(result.outcome).toBe('completed');
+      expect(res.getWritten()).not.toContain('secret thinking');
+    });
+
+    it('discards response.reasoning_text.delta — reasoning is not persisted in the assembled message stages', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+      const { result } = await relay(adapter, mockDialClient, [
+        'data: {"type":"response.reasoning_text.delta","item_id":"rs-2","delta":"Thinking step 1."}\n\n',
+        'data: {"type":"response.reasoning_text.delta","item_id":"rs-2","delta":" And more."}\n\n',
+        'data: {"type":"response.completed","response":{"id":"resp-r2","status":"completed"}}\n\n',
+      ]);
+
+      expect(result.outcome).toBe('completed');
+      if (result.outcome === 'completed') {
+        expect(result.assembledMessage.custom_content?.stages).toBeFalsy();
+      }
     });
   });
 });
