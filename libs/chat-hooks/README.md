@@ -33,6 +33,34 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Hooks
 
+### useUsageData
+
+Fetches a user's rolling cost and token usage stats from DIAL Core. The hook accepts the fetch function as a parameter — the host supplies an already-configured API call; the hook owns only the request lifecycle (in-flight state, cancellation on unmount, `enabled` guard).
+
+```tsx
+import { useUsageData } from '@epam/ai-dial-chat-hooks';
+import { getUserUsage } from './server-api/user-limits'; // host-owned configured call
+
+const { usage, isLoading, usageError } = useUsageData(getUserUsage, isEnabled);
+```
+
+#### API
+
+**Parameters**:
+
+| Name           | Type                                            | Description                                                                              |
+| -------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `getUserUsage` | `() => Promise<UserLimitStatsResponseDto>`      | Host-configured fetch function — the hook never constructs or imports a client itself.   |
+| `enabled`      | `boolean`                                       | When `false`, the fetch is skipped and `isLoading` is immediately `false`. Defaults to `true`. |
+
+**Returns** (`UseUsageDataResult`):
+
+| Name         | Type                                           | Description                                        |
+| ------------ | ---------------------------------------------- | -------------------------------------------------- |
+| `usage`      | `UserLimitStatsResponseDto \| undefined`       | The fetched stats, or `undefined` while loading.   |
+| `isLoading`  | `boolean`                                      | `true` while the fetch is in flight.               |
+| `usageError` | `Error \| undefined`                           | Set when the `getUserUsage` call rejects.          |
+
 ### useConversationScroll
 
 Owns chat message-list autoscroll: anchors a newly sent or regenerated turn near the top of the viewport, holds scroll position steady while a response streams in (using a temporary, imperatively-sized spacer element — not user-visible content), shows a "scroll to bottom" affordance once the user scrolls away from the latest content, and returns to the bottom on request.

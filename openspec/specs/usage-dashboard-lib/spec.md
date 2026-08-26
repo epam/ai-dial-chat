@@ -18,23 +18,30 @@ The system SHALL provide a buildable React library `libs/usage-dashboard`
 (package `@epam/ai-dial-usage-dashboard`, Nx tag `type:ui`), scaffolded via an Nx generator and
 matching the inferred-target structure used by `libs/settings-panel` (no hand-written
 `project.json`; `package.json` carries `"nx": { "tags": ["type:ui"] }`; build/test come from the
-`@nx/vite` and `@nx/vitest` inferred plugins via `vite.config.mts`). The library SHALL import only
-`react`, `react-dom`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, and
-`@tabler/icons-react` as peer/runtime dependencies — the last for its own internal empty-state icon
-(a generic, host-agnostic glyph chosen by the library itself, not supplied by the host), matching
-the same peer already declared by `@epam/ai-dial-scheduled-tasks` for its equivalent empty state. It
-SHALL NOT import `@epam/ai-dial-chat-api-client`, any `server-api/*` wrapper, any app
-context/hook/feature-flag/env/routing/storage/analytics module, or `react-i18next`.
+`@nx/vite` and `@nx/vitest` inferred plugins via `vite.config.mts`). The library's presentational
+components (see `UsageLimitCardGroup`/`UsageLimitCard`/`ModelLimitsSection` requirements below)
+SHALL import only `react`, `react-dom`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, and
+`@tabler/icons-react` as peer/runtime dependencies.
+
+The library additionally exports pure transform utilities (see `## Utilities` section below) that
+depend on `@epam/ai-dial-chat-api-client` types and runtime values. `@epam/ai-dial-chat-api-client`
+SHALL therefore be declared as a peer dependency in `package.json` and referenced in
+`tsconfig.lib.json`. This exception applies only to the transform utilities; the presentational
+components SHALL NOT import any generated client type directly.
+
+The library SHALL NOT import any `server-api/*` wrapper, any app
+context/hook/feature-flag/env/routing/storage/analytics module, or `react-i18next`. Transform
+utilities that need i18n strings SHALL accept a caller-supplied `Translate` callback instead.
 
 #### Scenario: Module boundary lint passes
 - **WHEN** `npm exec nx lint usage-dashboard` runs
 - **THEN** `@nx/enforce-module-boundaries` reports no violations, confirming the library depends
   only on `chat-shared`-tier, UI-kit, and `@tabler/icons-react` packages
 
-#### Scenario: No generated-client or i18n imports
+#### Scenario: No server-api or i18n imports
 - **WHEN** the library's source is inspected
-- **THEN** no file imports `@epam/ai-dial-chat-api-client`, `apps/chat/src/server-api/*`, or
-  `react-i18next`/`i18next`
+- **THEN** no file imports `apps/chat/src/server-api/*` or `react-i18next`/`i18next`; generated-client
+  imports are limited to the transform utilities described in the `## Utilities` section
 
 ---
 
@@ -394,3 +401,88 @@ target where it is shown on mobile.
 - **WHEN** CSS stacks a row at mobile width
 - **THEN** the same semantic table/row/cell nodes remain available and reading order is Item, Last
   24 hours, Last 7 days, Last 30 days, Status
+
+---
+
+## Utilities
+
+The library exports three pure transform functions in
+`libs/usage-dashboard/src/utils/` that map raw `UserLimitStatsResponseDto` data into the props
+consumed by the presentational components. Moving these utilities into the library means any app
+that hosts the Usage tab can share the DTO-interpretation logic without duplicating it.
+
+### Requirement: mapUsageDataToDashboard utility
+
+The library SHALL export `mapUsageDataToDashboard(usage, t)` and the companion const
+`USAGE_DATA_I18N_KEYS` from `libs/usage-dashboard/src/utils/map-usage-data-to-dashboard.ts`.
+
+`mapUsageDataToDashboard` SHALL accept `usage: UserLimitStatsResponseDto | undefined` and a
+caller-supplied `t: (key: string, options?) => string` translate callback, and SHALL return a
+`UsageLimitCardData[]` array mapping `dayCostStats` / `weekCostStats` / `monthCostStats` to Today /
+This week / This month cards in that fixed order. A period SHALL be omitted from the result when the
+response carries no usable stat for it. All DTO interpretation — the unlimited-sentinel check
+(`total >= 2**53`), status-threshold derivation (`RUNNING_LOW_THRESHOLD_PERCENT = 75`), and
+`formatCost` currency formatting — SHALL happen inside this utility.
+
+`USAGE_DATA_I18N_KEYS` SHALL be a `const` object whose values are the default i18n key strings the
+utility passes to `t`, so consuming apps know which keys to include in their translation bundle.
+
+#### Scenario: All three periods mapped
+- **WHEN** `usage` carries `dayCostStats`, `weekCostStats`, and `monthCostStats`
+- **THEN** the returned array contains three `UsageLimitCardData` entries in Today / This week /
+  This month order
+
+#### Scenario: Missing period omitted
+- **WHEN** `usage` has only `dayCostStats`
+- **THEN** the returned array contains exactly one entry for Today
+
+---
+
+### Requirement: mapUserUsageToModelLimits utility
+
+The library SHALL export `mapUserUsageToModelLimits(usage, deploymentItems, activeLocale, t,
+resolveIconUrl, resolveDisplayName)` and the companion const `USAGE_MODEL_LIMITS_I18N_KEYS` from
+`libs/usage-dashboard/src/utils/map-user-usage-to-model-limits.ts`.
+
+`mapUserUsageToModelLimits` SHALL accept:
+- `usage: UserLimitStatsResponseDto | undefined`
+- `deploymentItems: DeploymentItemDto[]`
+- `activeLocale: string`
+- `t: (key, options?) => string`
+- `resolveIconUrl: (iconUrl: string | undefined) => string | undefined` — host callback that
+  resolves a raw icon URL to the URL the avatar should load (e.g. through the app's icon-proxy)
+- `resolveDisplayName: (name: string | Record<string, string> | undefined | null, locale: string) => string`
+  — host callback that resolves a localized-text map or plain string to the display name
+
+These two callbacks keep host-specific URL construction and locale resolution out of the library.
+The app passes `resolveCatalogIconUrl` and `resolveLocalizedText` from its own utils.
+
+The function SHALL return `ModelLimitRow[]` built from `usage.deployments`, joining with
+`deploymentItems` for display name/version/icon metadata, applying the same period-to-field mapping
+defined in the `usage-model-limits` capability spec. Only deployments with nonzero usage in at
+least one displayed period SHALL be included.
+
+#### Scenario: Host callbacks invoked for icon and name resolution
+- **WHEN** `mapUserUsageToModelLimits` processes a deployment with a raw `iconUrl`
+- **THEN** `resolveIconUrl` is called with that raw value and its return is used as `avatarSrc`
+
+---
+
+### Requirement: mapOverallCostLimitsToPeriodStatuses utility
+
+The library SHALL export `mapOverallCostLimitsToPeriodStatuses(usage, activeLocale, t)` from
+`libs/usage-dashboard/src/utils/map-user-usage-to-model-limits.ts`.
+
+The function SHALL accept `usage: UserLimitStatsResponseDto | undefined`, `activeLocale: string`,
+and `t`, and SHALL return a `ModelLimitPeriodStatuses` object mapping the top-level
+`dayCostStats` / `weekCostStats` / `monthCostStats` fields to the three fixed period headers of
+`ModelLimitsSection`, with `status` and optional `tooltipLabel` for each period.
+
+#### Scenario: Limit-reached period header status
+- **WHEN** `dayCostStats` has `used >= total`
+- **THEN** `last24Hours.status` is `ModelLimitStatus.LimitReached` and `tooltipLabel` is a
+  non-empty string from `t`
+
+#### Scenario: Absent usage produces unavailable statuses
+- **WHEN** `usage` is `undefined`
+- **THEN** all three period statuses are `ModelLimitStatus.Unavailable` with no tooltip

@@ -27,8 +27,9 @@ side by side on desktop. `UsageLimitCard` is also exported standalone for a sing
 ## Peer Dependencies
 
 - `react` ^19.2.7
+- `@epam/ai-dial-chat-api-client` \*
+- `@epam/ai-dial-chat-shared` \*
 - `@epam/ai-dial-ui-kit`
-- `@epam/ai-dial-chat-shared`
 - `@tabler/icons-react`
 
 ## Components
@@ -237,6 +238,67 @@ selector state.
 
 The heading and row count remain visible when `rows` is empty; the table body switches to
 `labels.emptyStateLabel`. Pass `emptyStateIconSize` (default `48`) to resize the empty-state icon.
+
+## Utilities
+
+Three pure transform functions map raw `UserLimitStatsResponseDto` data (from `@epam/ai-dial-chat-api-client`) into the props each component consumes. They are host-agnostic: every user-visible string is produced by a caller-supplied `t` function that matches i18next's `TFunction` signature.
+
+### mapUsageDataToDashboard
+
+Maps a `UserLimitStatsResponseDto` into the `cards` array for `UsageLimitCardGroup`, in Today / This week / This month order. A period is omitted when the response carries no usable stat for it.
+
+```tsx
+import {
+  mapUsageDataToDashboard,
+  USAGE_DATA_I18N_KEYS,
+  UsageLimitCardGroup,
+} from '@epam/ai-dial-usage-dashboard';
+import type { UserLimitStatsResponseDto } from '@epam/ai-dial-chat-api-client';
+
+// In your component:
+const cards = mapUsageDataToDashboard(usage, t);
+// <UsageLimitCardGroup cards={cards} labels={labels} />
+```
+
+`USAGE_DATA_I18N_KEYS` is a const object of the default i18n key strings this function passes to `t`. Include those keys in your translation bundle.
+
+### mapUserUsageToModelLimits
+
+Maps `usage.deployments` into the `rows` array for `ModelLimitsSection`, joined with display metadata from a list of `DeploymentItemDto`. Only deployments that have nonzero usage in at least one displayed period are included. Requires two host-owned callbacks to stay host-agnostic:
+
+- `resolveIconUrl(iconUrl)` — resolves a deployment's raw `iconUrl` to the URL the avatar should load (typically the app's own icon-proxy endpoint).
+- `resolveDisplayName(name, locale)` — resolves a localized-text map or plain string to the display name for the active locale.
+
+```tsx
+import {
+  mapUserUsageToModelLimits,
+  USAGE_MODEL_LIMITS_I18N_KEYS,
+  ModelLimitsSection,
+} from '@epam/ai-dial-usage-dashboard';
+
+const rows = mapUserUsageToModelLimits(
+  usage,
+  deploymentItems,
+  activeLocale,
+  t,
+  (iconUrl) => resolveMyIconUrl(iconUrl),
+  (name, locale) => resolveLocalizedText(name, locale),
+);
+// <ModelLimitsSection rows={rows} labels={labels} periodStatuses={periodStatuses} />
+```
+
+`USAGE_MODEL_LIMITS_I18N_KEYS` is a const object of the default i18n key strings this function passes to `t`.
+
+### mapOverallCostLimitsToPeriodStatuses
+
+Maps the top-level Cost budget fields from `UserLimitStatsResponseDto` (the same source `mapUsageDataToDashboard` uses for the aggregate cards) into the `periodStatuses` prop for `ModelLimitsSection`. Produces an `{ status, tooltipLabel? }` entry for each of the three fixed periods.
+
+```tsx
+import { mapOverallCostLimitsToPeriodStatuses } from '@epam/ai-dial-usage-dashboard';
+
+const periodStatuses = mapOverallCostLimitsToPeriodStatuses(usage, activeLocale, t);
+// <ModelLimitsSection periodStatuses={periodStatuses} ... />
+```
 
 ## Types
 

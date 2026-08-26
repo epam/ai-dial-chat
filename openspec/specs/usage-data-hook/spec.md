@@ -45,10 +45,13 @@ notifications on fetch failure" below).
 ---
 
 ### Requirement: useUsageData hook fetches the usage endpoint on mount
-The system SHALL provide a `useUsageData` hook in `apps/chat/src/hooks/useUsageData.ts` that, on
-mount, calls `getUserUsage()` (`apps/chat/src/server-api/user-limits.ts`, wrapping
-`UserApi.getUserUsage` from `@epam/ai-dial-chat-api-client`, which calls `GET /api/v1/user/usage`),
-using a `useEffect` with a `cancelled` flag to avoid `setState` after unmount.
+The system SHALL provide a `useUsageData` hook in
+`libs/chat-hooks/src/usage/useUsageData/useUsageData.ts` (exported from `@epam/ai-dial-chat-hooks`)
+that, on mount, calls the caller-supplied `getUserUsage()` function using a `useEffect` with a
+`cancelled` flag to avoid `setState` after unmount. The hook accepts `getUserUsage: () =>
+Promise<UserLimitStatsResponseDto>` as its first parameter so the lib stays host-agnostic; the app
+passes `getUserUsage` from `apps/chat/src/server-api/user-limits.ts` (which wraps
+`UserApi.getUserUsage` from `@epam/ai-dial-chat-api-client`, calling `GET /api/v1/user/usage`).
 
 **Correction (supersedes the original design):** the hook previously also called `getUserLimits()`
 (`GET /api/v1/user/limits`) via `Promise.allSettled`, reasoning that only that endpoint guarantees
@@ -60,12 +63,12 @@ budget (identical field names and semantics per the `user-usage-limits-api` capa
 `getUserLimits()` wrapper itself is unchanged and MAY still be unused, per its own capability's
 "wrapper functions MAY be unused" allowance — this hook simply no longer calls it.
 
-The hook SHALL accept an `enabled: boolean` parameter, defaulting to `true`, following the
+The hook SHALL accept an `enabled: boolean` second parameter, defaulting to `true`, following the
 `useScheduledTasks(enabled)` pattern. When `enabled` is `false`, the effect SHALL NOT call
 `getUserUsage()`, and `isLoading` SHALL initialize to `false` (not the perpetual-loading state a
 disabled hook would otherwise report). The Usage tab component SHALL call
-`useUsageData(useFeatureFlag('settingsPageEnabled'))` (or receive the resolved flag value as a prop
-from `SettingsPage`), so the fetch only runs when `SettingsPageEnabled` is `true`.
+`useUsageData(getUserUsage, useFeatureFlag('settingsPageEnabled'))` (or receive the resolved flag
+value as a prop from `SettingsPage`), so the fetch only runs when `SettingsPageEnabled` is `true`.
 
 The hook SHALL return:
 
@@ -104,35 +107,40 @@ such as `hourRequestStats`, `dayRequestStats`, `minuteTokenStats`, `dayTokenStat
   so the endpoint is only called while a user is actually viewing the Usage tab
 
 #### Scenario: Fetch does not run when the feature flag is disabled
-- **WHEN** `SettingsPageEnabled` resolves to `false` and `useUsageData(false)` is invoked (directly,
-  or because the Usage tab was somehow rendered while the flag is off)
+- **WHEN** `SettingsPageEnabled` resolves to `false` and `useUsageData(getUserUsage, false)` is
+  invoked (directly, or because the Usage tab was somehow rendered while the flag is off)
 - **THEN** `GET /api/v1/user/usage` is not called, and the hook returns `isLoading: false`,
   `usage: undefined`, `usageError: undefined`
 
 #### Scenario: Fetch resumes when the feature flag becomes enabled
 - **WHEN** `useUsageData`'s `enabled` argument transitions from `false` to `true` between renders
 - **THEN** the hook's effect runs and calls `getUserUsage()`, matching the behavior of
-  `useUsageData(true)` on initial mount
+  `useUsageData(getUserUsage, true)` on initial mount
 
 ---
 
-### Requirement: Library isolation between apps/chat and libs/usage-dashboard
-The system SHALL keep `useUsageData`, the `Usage` tab component, and the app-level mapper
-(`apps/chat/src/utils/map-usage-data-to-dashboard.ts`) under `apps/chat/src/`, reusing the existing
-`apps/chat/src/server-api/user-limits.ts` wrappers and the generated `UserLimitStatsResponseDto`
-type from `@epam/ai-dial-chat-api-client` without modification. All DTO interpretation — the
-unlimited-sentinel check (`total >= 2**53`) and status-threshold derivation, currency formatting —
-SHALL happen in the app-level mapper, not in `libs/usage-dashboard`. The mapper reads its cost
-fields directly from `usage`; there is no second source to fall back between.
+### Requirement: Library isolation between apps/chat and libs
+`useUsageData` SHALL live in `libs/chat-hooks` and SHALL NOT import `apps/chat/src/server-api/*`,
+any app context, routing, auth/session/cookies, environment variables, feature flags, or
+`react-i18next`. It accepts `getUserUsage: () => Promise<UserLimitStatsResponseDto>` as a parameter
+so all DIAL Core wiring stays in the app. The app passes `getUserUsage` from
+`apps/chat/src/server-api/user-limits.ts` and the generated `UserLimitStatsResponseDto` type from
+`@epam/ai-dial-chat-api-client` without modification.
+
+All DTO interpretation — the unlimited-sentinel check (`total >= 2**53`), status-threshold
+derivation, and currency formatting — lives in `libs/usage-dashboard`'s transform utilities (see
+the `usage-dashboard-lib` capability). The `Usage` tab component imports those utilities from
+`@epam/ai-dial-usage-dashboard` and passes app-owned callbacks (`resolveCatalogIconUrl`,
+`resolveLocalizedText`) to keep host-specific URL construction and locale resolution out of the lib.
 
 The presentational rendering of the cards SHALL live in the hand-authored `libs/usage-dashboard`
-package (see the `usage-dashboard-lib` capability), which SHALL NOT import the generated API
-client or any `server-api/*` wrapper, per the repository's library isolation rule.
+package (see the `usage-dashboard-lib` capability), which SHALL NOT import any `server-api/*`
+wrapper or app context/hook/feature-flag/env/routing/storage/analytics module.
 
 #### Scenario: Static analysis passes module boundary lint
-- **WHEN** `npm exec nx lint chat` and `npm exec nx lint usage-dashboard` run after this change
+- **WHEN** `npm exec nx lint chat`, `npm exec nx lint chat-hooks`, and `npm exec nx lint usage-dashboard` run after this change
 - **THEN** `@nx/enforce-module-boundaries` reports no violations introduced by `useUsageData`, the
-  `Usage` tab component, the mapper, or `libs/usage-dashboard`
+  `Usage` tab component, or the transform utilities in `libs/usage-dashboard`
 
 ---
 
