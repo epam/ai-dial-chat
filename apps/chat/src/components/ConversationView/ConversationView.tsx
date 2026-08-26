@@ -1,4 +1,7 @@
-import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  useAttachmentCanvas,
+  useOpenAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   AttachmentValidationErrorReason,
   isMessageChanged,
@@ -66,8 +69,8 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAutoOpenMcpAppCanvas } from '../../hooks/attachment/useAutoOpenMcpAppCanvas';
-import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useOpenMcpAppCanvas } from '../../hooks/attachment/useOpenMcpAppCanvas';
+import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
 import { useMcpAppTools } from '../../hooks/conversation/useMcpAppTools';
@@ -237,7 +240,8 @@ const ConversationView: FC<Props> = ({
     Attachment[]
   >([]);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
-  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+  const { resolvers, options } = useAttachmentCanvasResolvers();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const { openMcpAppCanvas } = useOpenMcpAppCanvas();
   const { openCanvas, attachmentId: selectedAttachmentKey } =
     useAttachmentCanvas();
@@ -952,7 +956,7 @@ const ConversationView: FC<Props> = ({
                         {names.length === 1 ? (
                           <>
                             {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
-                            <span className="break-all text-primary">
+                            <span className="break-words text-primary">
                               &quot;{names[0].split('/').pop()}&quot;?
                             </span>
                           </>

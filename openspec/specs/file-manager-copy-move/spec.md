@@ -307,7 +307,7 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 
 ### Requirement: onCopyFiles wired on useDialFileManager
 
-`useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) SHALL expose `onCopyFiles(items: DialCopiedItem[], destinationFolder: string)`, wired to ui-kit's `DialFileManager.onCopyFiles` prop, that maps `DialCopiedItem[]` to `CopyItemDto[]` (via `virtualPathToApiPath`, same resolution as `onMoveToFiles`) and calls the `copyFiles` server-api wrapper.
+`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) SHALL expose `onCopyFiles(items: DialCopiedItem[], destinationFolder: string)`, wired to ui-kit's `DialFileManager.onCopyFiles` prop, that maps `DialCopiedItem[]` to `CopyItemDto[]` (via `virtualPathToApiPath`, same resolution as `onMoveToFiles`) and calls the `copyFiles` server-api wrapper.
 
 **State ownership**: `useDialFileManager` owns `isCopying` state; no new context is introduced.
 

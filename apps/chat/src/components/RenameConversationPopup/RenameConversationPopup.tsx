@@ -1,9 +1,10 @@
 import {
+  ButtonVariant,
   DIAL_ICON_SIZE,
-  DialFormPopup,
   Input,
   Spinner,
   GhostIconButton,
+  Popup,
   PopupSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconSparkles } from '@tabler/icons-react';
@@ -101,45 +102,57 @@ const RenameConversationPopup: FC<Props> = ({
   const renameWithAiLabel = t(ConversationPanelI18nKeys.RenameWithAiLabel);
 
   return (
-    <DialFormPopup
+    <Popup
       open={isOpen}
       header={t(ConversationPanelI18nKeys.RenameTitle)}
       size={PopupSize.Sm}
       onClose={onCancel}
-      onCancel={onCancel}
-      onSubmit={handleSave}
-      dividerFooter={true}
-      cancelLabel={t(ButtonsI18nKeys.Cancel)}
-      submitLabel={t(ButtonsI18nKeys.Save)}
-      isLoading={isSaving}
-      disableSubmitButton={isSaveDisabled}
+      mainButtons={
+        isSaving
+          ? undefined
+          : [
+              { label: t(ButtonsI18nKeys.Cancel), onClick: onCancel },
+              {
+                label: t(ButtonsI18nKeys.Save),
+                variant: ButtonVariant.Primary,
+                disabled: isSaveDisabled,
+                onClick: handleSave,
+              },
+            ]
+      }
     >
-      <div className="flex items-start gap-2 px-6 py-3">
-        <div className="min-w-0 flex-1">
-          <Input
-            inputRef={inputRef}
-            value={value}
-            placeholder={t(ConversationPanelI18nKeys.RenameInputPlaceholder)}
-            error={inputError}
-            onChange={(v) => setValue(sanitizeConversationName(v ?? ''))}
-            onKeyDown={handleKeyDown}
+      {isSaving ? (
+        <div className="h-[120px] px-6 py-4">
+          <Spinner size={50} />
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 px-6 py-3">
+          <div className="min-w-0 flex-1">
+            <Input
+              inputRef={inputRef}
+              value={value}
+              placeholder={t(ConversationPanelI18nKeys.RenameInputPlaceholder)}
+              error={inputError}
+              onChange={(v) => setValue(sanitizeConversationName(v ?? ''))}
+              onKeyDown={handleKeyDown}
+            />
+          </div>
+          <GhostIconButton
+            aria-label={renameWithAiLabel}
+            tooltipProps={{ tooltip: renameWithAiLabel }}
+            disabled={isGenerating || isSaving}
+            onClick={handleGenerateWithAi}
+            icon={
+              isGenerating ? (
+                <Spinner size={DIAL_ICON_SIZE.MD} />
+              ) : (
+                <IconSparkles size={DIAL_ICON_SIZE.MD} stroke={1.5} />
+              )
+            }
           />
         </div>
-        <GhostIconButton
-          aria-label={renameWithAiLabel}
-          tooltipProps={{ tooltip: renameWithAiLabel }}
-          disabled={isGenerating || isSaving}
-          onClick={handleGenerateWithAi}
-          icon={
-            isGenerating ? (
-              <Spinner size={DIAL_ICON_SIZE.MD} />
-            ) : (
-              <IconSparkles size={DIAL_ICON_SIZE.MD} stroke={1.5} />
-            )
-          }
-        />
-      </div>
-    </DialFormPopup>
+      )}
+    </Popup>
   );
 };
 

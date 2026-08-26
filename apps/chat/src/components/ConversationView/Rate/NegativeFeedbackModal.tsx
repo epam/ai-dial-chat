@@ -1,8 +1,8 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  DialFormPopup,
+  ButtonVariant,
+  Popup,
   PopupSize,
-  PrimaryButton,
   Select,
   Textarea,
 } from '@epam/ai-dial-ui-kit';
@@ -42,29 +42,26 @@ const NegativeFeedbackModal: FC<Props> = ({ onClose, onSubmit }) => {
     onSubmit(comment);
   }, [category, commentText, onSubmit]);
 
-  const footer = useMemo(
-    () => (
-      <div className="flex items-center justify-end gap-2 px-6 pb-6">
-        <PrimaryButton
-          label={t(ButtonsI18nKeys.Send)}
-          disabled={!category}
-          onClick={handleSubmit}
-        />
-      </div>
-    ),
+  const mainButtons = useMemo(
+    () => [
+      {
+        label: t(ButtonsI18nKeys.Send),
+        variant: ButtonVariant.Primary,
+        disabled: !category,
+        onClick: handleSubmit,
+      },
+    ],
     [category, handleSubmit, t],
   );
 
   return (
-    <DialFormPopup
+    <Popup
       open
       header={t(RateI18nKeys.NegativeFeedbackTitle)}
-      onSubmit={handleSubmit}
       onClose={onClose}
-      dividers={false}
       size={PopupSize.Sm}
       className="!h-[422px]"
-      footer={footer}
+      mainButtons={mainButtons}
     >
       <div className="flex h-full flex-col gap-4 px-6 py-4">
         <Select
@@ -87,7 +84,7 @@ const NegativeFeedbackModal: FC<Props> = ({ onClose, onSubmit }) => {
           />
         )}
       </div>
-    </DialFormPopup>
+    </Popup>
   );
 };
 

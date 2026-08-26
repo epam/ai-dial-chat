@@ -68,10 +68,6 @@ vi.mock('../../../context/SkillsContext', () => ({
   useSkills: vi.fn(),
 }));
 
-vi.mock('../../../hooks/attachment/useOpenAttachmentCanvas', () => ({
-  useOpenAttachmentCanvas: () => ({ openAttachmentCanvas: vi.fn() }),
-}));
-
 vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
@@ -87,8 +83,13 @@ vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
       openCanvas: vi.fn(),
       closeCanvas: vi.fn(),
     }),
+    useOpenAttachmentCanvas: () => ({ openAttachmentCanvas: vi.fn() }),
   };
 });
+
+vi.mock('../../../hooks/attachment/useAttachmentCanvasResolvers', () => ({
+  useAttachmentCanvasResolvers: () => ({ resolvers: {}, options: {} }),
+}));
 
 vi.mock('../../../server-api/skills.api', () => ({
   createSkill: vi.fn(),

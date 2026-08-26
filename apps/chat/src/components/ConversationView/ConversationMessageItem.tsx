@@ -1,8 +1,9 @@
+import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import { useAttachmentAction } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  COMPACT_MARKDOWN_CLASS_NAMES,
   CodeBlockTheme,
+  COMPACT_MARKDOWN_CLASS_NAMES,
   isStatusMessage,
   mergeClasses,
   MessageRole,
@@ -28,6 +29,8 @@ import {
   isReferenceOnlyAttachment,
   useAnnotations,
   useCitationCard,
+  useCitationMarkdownComponents,
+  type AnnotationGroup,
 } from '@epam/ai-dial-quotations';
 import { ErrorMessageNotification, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
@@ -42,13 +45,18 @@ import {
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
 import type { McpAppToolCallSeed } from '../../hooks/attachment/useOpenMcpAppCanvas';
-import { useCitationMarkdownComponents } from '../../hooks/citations/useCitationMarkdownComponents';
 import type { McpAppToolRef } from '../../hooks/conversation/useMcpAppTools';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
 import { openAnnotationAttachment } from '../../utils/annotation';
-import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
-import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
+import {
+  annotationToPdfCanvasContent,
+  referenceAttachmentToPdfCanvasContent,
+} from '../../utils/attachment-canvas';
+import {
+  annotationToDisplayAttachment,
+  attachmentDtosToDisplayAttachments,
+} from '../../utils/attachment-dto-to-display';
 import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
 import {
   findMcpAppForMessage,
@@ -231,6 +239,7 @@ const ConversationMessageItem: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
+  const { openCanvas } = useAttachmentCanvas();
   const isLikesEnabled = useUiFeature(OverlayFeature.Likes);
   const isEditUserMessageHidden = useUiFeature(
     OverlayFeature.HideEditUserMessage,
@@ -274,11 +283,69 @@ const ConversationMessageItem: FC<Props> = ({
   const markdownClassNames = isCompactTypography
     ? COMPACT_MARKDOWN_CLASS_NAMES
     : undefined;
+  const handleCitationPreview = useCallback(
+    (annotation: Annotation) => {
+      const pdfContent = annotationToPdfCanvasContent(
+        annotation,
+        citationGroups,
+      );
+      if (pdfContent != null) {
+        const attachment = annotation.body?.source?.attachment;
+        const rawSegment = attachment?.url?.split('/').pop() ?? '';
+        const fileName = attachment?.title ?? decodeURIComponent(rawSegment);
+        openCanvas(pdfContent, fileName);
+        return;
+      }
+      const display = annotationToDisplayAttachment(annotation);
+      if (display) handleAttachmentClick(display);
+    },
+    [citationGroups, openCanvas, handleAttachmentClick],
+  );
+  const handleCitationOpenInBrowser = useCallback((annotation: Annotation) => {
+    const attachment = annotation.body?.source?.attachment;
+    if (attachment) openAnnotationAttachment(attachment);
+  }, []);
+  const buildCitationLabels = useCallback(
+    (group: AnnotationGroup) => {
+      const cardLabels = {
+        ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
+          source: group.sourceName,
+        }),
+        previousCitation: t(CitationsI18nKeys.PopupPreviousCitation),
+        nextCitation: t(CitationsI18nKeys.PopupNextCitation),
+        formatSwitcherText: (current: number, total: number) =>
+          t(CitationsI18nKeys.PopupSwitcher, { current, total }),
+        preview: t(BasicI18nKeys.Preview),
+        openInBrowser: t(CitationsI18nKeys.PopupOpenInBrowser),
+        download: t(ButtonsI18nKeys.Download),
+      };
+      const markerLabels = {
+        ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
+          source: group.sourceName,
+        }),
+        label: t(CitationsI18nKeys.MarkerLabel, { source: group.sourceName }),
+        labelWithOverflow: t(CitationsI18nKeys.MarkerLabelWithOverflow, {
+          source: group.sourceName,
+          count: group.annotations.length - 1,
+        }),
+      };
+      return { cardLabels, markerLabels };
+    },
+    [t],
+  );
+  const citationCallbacks = useMemo(
+    () => ({
+      onPreview: handleCitationPreview,
+      onOpenInBrowser: handleCitationOpenInBrowser,
+      buildLabels: buildCitationLabels,
+    }),
+    [handleCitationPreview, handleCitationOpenInBrowser, buildCitationLabels],
+  );
   const { processedContent, markdownComponents } =
     useCitationMarkdownComponents(
       msg.content,
       citationGroups,
-      handleAttachmentClick,
+      citationCallbacks,
       isCompactTypography,
     );
   const referenceGroups = useMemo(

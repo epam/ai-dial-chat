@@ -6,7 +6,7 @@ Single-file download and the archive endpoint behind folder and bulk download, i
 
 ## State ownership
 
-`useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) owns download state.
+`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) owns download state.
 
 New state field:
 ```ts

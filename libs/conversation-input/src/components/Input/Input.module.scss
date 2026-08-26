@@ -10,10 +10,7 @@
   &.wrapperDisabled {
     color: var(
       --ci-text-disabled,
-      var(
-        --text-control-disable-primary,
-        var(--text-control-disable-alpha, #848e9c)
-      )
+      var(--text-control-disable-primary, #848e9c)
     );
     @apply cursor-not-allowed;
   }
@@ -29,10 +26,7 @@
   &:disabled {
     color: var(
       --ci-text-disabled,
-      var(
-        --text-control-disable-primary,
-        var(--text-control-disable-alpha, #848e9c)
-      )
+      var(--text-control-disable-primary, #848e9c)
     );
     @apply cursor-not-allowed;
   }
@@ -62,10 +56,7 @@
     .modelSelectorCaret {
       color: var(
         --ci-model-selector-disabled-color,
-        var(
-          --text-control-disable-primary,
-          var(--text-control-disable-alpha, #848e9c)
-        )
+        var(--text-control-disable-primary, #848e9c)
       );
     }
   }

@@ -1,4 +1,10 @@
 import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+  type UseDialFileManagerResult,
+} from '@epam/ai-dial-chat-hooks';
+import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
+import {
   DialFileManagerActions,
   DialFileManagerTabs,
   DialFileNodeType,
@@ -6,15 +12,16 @@ import {
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import * as useDialFileManagerModule from '../../../hooks/files/useDialFileManager';
-import type { UseDialFileManagerResult } from '../../../hooks/files/useDialFileManager';
-import {
-  DialFileManagerActionProfile,
-  DialFileManagerVariant,
-} from '../../../types/file-manager-variant';
 import DialFileManagerPage from '../DialFileManagerPage';
 
-vi.mock('../../../hooks/files/useDialFileManager');
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    useDialFileManager: vi.fn(),
+  };
+});
 
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => createNotificationContextValue(vi.fn()),
@@ -43,6 +50,7 @@ vi.mock('../../../context/AppConfigContext', () => ({
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
+    i18n: { language: 'en' },
   }),
 }));
 
@@ -142,9 +150,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
   };
 });
 
-const mockUseDialFileManager = vi.mocked(
-  useDialFileManagerModule.useDialFileManager,
-);
+const mockUseDialFileManager = vi.mocked(chatHooksModule.useDialFileManager);
 
 const defaultHookResult: UseDialFileManagerResult = {
   items: [
