@@ -6,7 +6,7 @@ import {
 import {
   Button,
   DIAL_ICON_SIZE,
-  DialSearch,
+  Search,
   ElementSize,
   Highlight,
 } from '@epam/ai-dial-ui-kit';
@@ -21,13 +21,13 @@ import styles from './ModelSelectorBottomSheet.module.scss';
 
 /** Color overrides for the `ModelSelectorBottomSheet` component, applied as CSS custom properties. */
 export interface ModelSelectorBottomSheetColors {
-  /** Divider color between the search field and the deployment list. Defaults to `--bg-layer-4`. */
+  /** Divider color between the search field and the deployment list. Defaults to `--stroke-secondary`. */
   divider?: string;
   /** Item label and state-label text color. Defaults to `--text-primary`/`--text-secondary`. */
   itemText?: string;
   /** Item hover background. Defaults to `--bg-layer-raised`. */
   itemHoverBg?: string;
-  /** Item active/pressed background. Defaults to `--bg-layer-4`. */
+  /** Item active/pressed background. Defaults to `--bg-control-neutral-active`. */
   itemActiveBg?: string;
   /** Item leading-icon color. Defaults to `--text-secondary`. */
   itemIcon?: string;
@@ -205,11 +205,11 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
         {hasDeployments && !isLoading && (
           <>
             <div className="flex-shrink-0 px-4 py-[10px]">
-              <DialSearch
+              <Search
                 value={query}
                 placeholder={searchPlaceholder}
                 size={ElementSize.Standard}
-                onChange={setQuery}
+                onChange={(value) => setQuery(value ?? '')}
               />
             </div>
             <div

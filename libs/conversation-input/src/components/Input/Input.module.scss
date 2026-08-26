@@ -8,7 +8,10 @@
   }
 
   &.wrapperDisabled {
-    color: var(--ci-text-disabled, var(--text-control-disable-beta, #848e9c));
+    color: var(
+      --ci-text-disabled,
+      var(--text-control-disable-primary, #848e9c)
+    );
     @apply cursor-not-allowed;
   }
 }
@@ -21,7 +24,10 @@
   }
 
   &:disabled {
-    color: var(--ci-text-disabled, var(--text-control-disable-beta, #848e9c));
+    color: var(
+      --ci-text-disabled,
+      var(--text-control-disable-primary, #848e9c)
+    );
     @apply cursor-not-allowed;
   }
 }
@@ -50,7 +56,7 @@
     .modelSelectorCaret {
       color: var(
         --ci-model-selector-disabled-color,
-        var(--text-control-disable-beta, #848e9c)
+        var(--text-control-disable-primary, #848e9c)
       );
     }
   }

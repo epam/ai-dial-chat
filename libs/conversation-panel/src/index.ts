@@ -10,9 +10,4 @@ export type {
   ConversationItem,
   FilterLabels,
 } from './models/panel-props';
-export type {
-  PillTabsColors,
-  PillTabsStyles,
-  PillTabsTypography,
-} from './components/PillTabs/PillTabs';
 export { FilterTab } from './types/conversation-classification';

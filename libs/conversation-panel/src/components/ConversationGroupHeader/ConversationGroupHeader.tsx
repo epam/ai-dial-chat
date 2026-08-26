@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import type { DragEvent, FC } from 'react';
 import { FilterTab } from '../../types/conversation-classification';
@@ -99,7 +99,7 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
           aria-hidden
         />
       )}
-      <DialEllipsisTooltip text={label} />
+      <EllipsisTooltip text={label} />
     </button>
   );
 };

@@ -7,10 +7,10 @@ import {
 import {
   DIAL_ICON_SIZE,
   GhostButton,
-  GhostIconButton,
-  DialEllipsisTooltip,
+  EllipsisTooltip,
   Highlight,
   Search,
+  ToggleIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconStar, IconStarFilled } from '@tabler/icons-react';
 import {
@@ -24,6 +24,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import styles from './DeploymentSelectorPanel.module.scss';
 
 /** Localizable string labels for `DeploymentSelectorPanel`. */
@@ -70,7 +71,7 @@ interface Props {
 }
 
 const SECTION_HEADING_CLASS_NAME =
-  'dial-tiny-lead-semi-text px-3 pb-0.5 pt-2 text-tertiary';
+  'dial-tiny-lead-semi-text px-3 pb-2 pt-2 text-tertiary';
 
 // Must match the .rowLeaving exit-animation duration in DeploymentSelectorPanel.module.scss.
 const ROW_LEAVE_ANIMATION_MS = 180;
@@ -176,6 +177,22 @@ const DeploymentSelectorPanel: FC<Props> = ({
     selectedRowRef.current?.scrollIntoView({ block: 'nearest' });
   }, []);
 
+  const isMobile = useIsMobile();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  /*
+   * The kit's 2.0 `Dropdown` mounts its overlay with `initialFocus={-1}`, so
+   * it never moves focus off the trigger — a keyboard user would open the
+   * panel and stay parked outside it. Claiming focus here is what makes the
+   * panel keyboard-operable. Skipped on mobile, where the same panel renders
+   * inside a bottom sheet and focusing the field would raise the on-screen
+   * keyboard over the list the user came to read.
+   */
+  useEffect(() => {
+    if (isMobile) return;
+    searchInputRef.current?.focus();
+  }, [isMobile]);
+
   const handleSelect = (item: CatalogItem) => {
     onSelect(item.id);
     onClose();
@@ -231,7 +248,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
             'flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5',
             'transition-colors hover:bg-layer-sunken',
             isSelected
-              ? 'border-info bg-accent-primary-alpha'
+              ? 'border-info bg-control-accent-alpha-active'
               : 'border-transparent',
           )}
           onClick={() => handleSelect(item)}
@@ -250,7 +267,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
                 className="dial-small-text min-w-0 !flex-initial"
               />
             ) : (
-              <DialEllipsisTooltip
+              <EllipsisTooltip
                 text={item.name}
                 className="dial-small-text min-w-0 !flex-initial"
               />
@@ -258,7 +275,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
             {item.version && (
               /* Capped at 30% of the row so a long version truncates instead of
                  squeezing the name out of the option. */
-              <DialEllipsisTooltip
+              <EllipsisTooltip
                 text={item.version}
                 className="dial-tiny-text max-w-[30%] shrink-0 text-secondary"
               />
@@ -271,30 +288,24 @@ const DeploymentSelectorPanel: FC<Props> = ({
               aria-hidden
             />
           )}
-          {isFavoriteRow ? (
-            <GhostIconButton
-              icon={
-                <IconStarFilled
-                  size={DIAL_ICON_SIZE.SM}
-                  className="text-warning-icon"
-                />
-              }
-              aria-label={removeFromFavoritesLabel}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggleFavorite(item.id, false);
-              }}
-            />
-          ) : (
-            <GhostIconButton
-              icon={<IconStar size={DIAL_ICON_SIZE.SM} />}
-              aria-label={addToFavoritesLabel}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggleFavorite(item.id, true);
-              }}
-            />
-          )}
+          <ToggleIconButton
+            icon={<IconStar size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            selectedIcon={
+              <IconStarFilled
+                size={DIAL_ICON_SIZE.SM}
+                className="text-warning-icon"
+                aria-hidden
+              />
+            }
+            isSelected={isFavoriteRow}
+            aria-label={
+              isFavoriteRow ? removeFromFavoritesLabel : addToFavoritesLabel
+            }
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleFavorite(item.id, !isFavoriteRow);
+            }}
+          />
         </div>
       </li>
     );
@@ -320,6 +331,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
         className="sticky top-0 z-10 bg-layer-raised px-1 pb-3 pt-2"
       >
         <Search
+          inputRef={searchInputRef}
           value={query}
           onChange={handleSearchChange}
           placeholder={searchPlaceholder}
@@ -341,14 +353,17 @@ const DeploymentSelectorPanel: FC<Props> = ({
               <p className={SECTION_HEADING_CLASS_NAME}>
                 {currentlySelectedLabel}
               </p>
-              <ul className="px-1 pb-1">{renderRow(selectedItem, false)}</ul>
+              <ul className="flex flex-col gap-1 px-1 pb-1">
+                {renderRow(selectedItem, false)}
+              </ul>
             </>
           )}
 
           {(showCurrentlySelected || filteredFavorites.length > 0) && (
             <p
               className={mergeClasses(
-                'dial-tiny-lead-semi-text sticky top-0 z-10 bg-layer-raised px-3 pb-2 pt-2 text-tertiary will-change-transform',
+                SECTION_HEADING_CLASS_NAME,
+                'sticky top-0 z-10 bg-layer-raised will-change-transform',
                 styles.stickyLabelSeamFix,
               )}
             >

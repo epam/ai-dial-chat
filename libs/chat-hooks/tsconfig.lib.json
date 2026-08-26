@@ -1,0 +1,53 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "../../dist/libs/chat-hooks",
+    "tsBuildInfoFile": "../../dist/libs/chat-hooks/tsconfig.lib.tsbuildinfo",
+    "emitDeclarationOnly": false,
+    "jsx": "react-jsx",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2022", "dom"],
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "references": [
+    {
+      "path": "../source-panel/tsconfig.lib.json"
+    },
+    {
+      "path": "../share/tsconfig.lib.json"
+    },
+    {
+      "path": "../quotations/tsconfig.lib.json"
+    },
+    {
+      "path": "../chat-shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../chat-api-client/tsconfig.lib.json"
+    },
+    {
+      "path": "../attachment-canvas/tsconfig.lib.json"
+    },
+    {
+      "path": "../attachment-input/tsconfig.lib.json"
+    }
+  ],
+  "exclude": [
+    "vite.config.ts",
+    "vite.config.mts",
+    "vitest.config.ts",
+    "vitest.config.mts",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.js",
+    "src/**/*.spec.js",
+    "src/**/*.test.jsx",
+    "src/**/*.spec.jsx"
+  ]
+}

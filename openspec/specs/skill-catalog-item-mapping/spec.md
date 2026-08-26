@@ -8,105 +8,54 @@ Defines the app-level types and pure mapping that turn DIAL Core skill metadata 
 
 ### Requirement: `SkillSource` enum and skill resource URL helpers
 
-`apps/chat/src/types/skill.ts` SHALL define a string enum `SkillSource` with members `Personal = 'personal'` and `Public = 'public'`, naming the namespace a listed skill came from.
+`SkillSource` SHALL contain `Personal`, `SharedWithMe`, and `Public`. `parseSkillResourceUrl` SHALL continue to parse `skills/{bucket}/{path}` into its owner bucket and relative path and reject malformed or differently-prefixed values.
 
-The same module SHALL export `parseSkillResourceUrl(url: string): { bucket: string; path: string } | null`, the frontend mirror of the backend's parser: it accepts a `skills/{bucket}/{path}` string and returns `null` for anything with a different prefix, an empty bucket, or an empty path.
+#### Scenario: Shared source is representable
 
-#### Scenario: Well-formed skill resource URL
-
-- **WHEN** `parseSkillResourceUrl('skills/user-bucket/analysis/revenue-skill')` is called
-- **THEN** it returns `{ bucket: 'user-bucket', path: 'analysis/revenue-skill' }`
-
-#### Scenario: Not a skill resource URL
-
-- **WHEN** `parseSkillResourceUrl('files/user-bucket/report.pdf')` is called
-- **THEN** it returns `null`
-
-#### Scenario: Missing path
-
-- **WHEN** `parseSkillResourceUrl('skills/user-bucket')` is called
-- **THEN** it returns `null`
+- **WHEN** a skill comes from the aggregate `sharedWithMe` array
+- **THEN** it is mapped with `SkillSource.SharedWithMe` without losing its owner bucket
 
 ---
 
 ### Requirement: `mapSkillToCatalogItem` maps skill metadata to a catalog item
 
-`apps/chat/src/utils/map-skill-to-catalog-item.ts` SHALL export
-
-```ts
-mapSkillToCatalogItem(
-  skill: SkillMetadataItemDto,
-  options: { t: TFunction; source: SkillSource; favoriteIds: ReadonlySet<string> },
-): CatalogItem
-```
-
-producing a `CatalogItem` with:
+`mapSkillToCatalogItem` SHALL keep `skill.url` as the catalog id and SHALL map ownership and editability as follows:
 
 | Field | Value |
 | --- | --- |
-| `id` | `skill.url` — the full `skills/{bucket}/{path}` resource URL |
-| `type` | `CatalogEntityType.Skill` |
-| `name` | `skill.name` |
-| `description` | `''` — skill metadata carries no description |
-| `version` | `''` — skill metadata carries no version |
-| `lastUsed` | `formatLastUsed(skill.updatedAt)` |
-| `createdAt` / `updatedAt` | the corresponding metadata timestamps |
-| `isFeatured` / `isHidden` | `false` |
-| `topics` | `[]` — the skills API exposes no topics |
-| `isUserFavorite` / `isStarred` | `favoriteIds.has(skill.url)` |
-| `isMyApp` | `source === SkillSource.Personal` |
-| `sharedWithMe` | `false` — no shared-skill listing exists |
-| `isEditable` | `false` — every skill is read-only |
-| `folder` | see the folder requirement below |
-| `details` | `undefined` — resolved lazily by the details fetch |
+| `isMyApp` | `false` outside the Personal source; for Personal, `skill.isMy` falling back to `true` for backward compatibility |
+| `sharedWithMe` | `skill.sharedWithMe`, falling back to whether the source is `SharedWithMe` |
+| `isEditable` | `false` for Public; otherwise `skill.canEdit`, falling back to personal-source editability |
 
-The mapper SHALL be a pure function: it performs no I/O, reads no context, and calls no hook.
+Every other field retains the canonical skill mapping. The mapper remains pure and performs no I/O.
 
-The `id` SHALL be the resource URL rather than a bucket-relative path, because two buckets are listed and the same relative path can exist in both.
+#### Scenario: Personal skill is editable
 
-#### Scenario: Personal skill maps to an owned catalog item
+- **WHEN** a personal skill is mapped
+- **THEN** it is owned, not shared-with-me, and editable
 
-- **WHEN** a `SkillMetadataItemDto` with `url: 'skills/me/revenue-skill'` is mapped with `source: SkillSource.Personal`
-- **THEN** the item has `id: 'skills/me/revenue-skill'`, `type: CatalogEntityType.Skill`, `isMyApp: true`, `isEditable: false`, and `sharedWithMe: false`
+#### Scenario: Writable shared skill is editable
 
-#### Scenario: Organisation skill is not owned
+- **WHEN** a shared skill carries `canEdit: true`, even if malformed metadata also claims `isMy: true`
+- **THEN** it is not owned, is marked shared-with-me, and has `isEditable: true`
 
-- **WHEN** a skill is mapped with `source: SkillSource.Public`
-- **THEN** the item has `isMyApp: false` and `isEditable: false`
+#### Scenario: Read-only shared skill is not editable
 
-#### Scenario: Favourite state comes from the passed set
+- **WHEN** a shared skill carries `canEdit: false`
+- **THEN** its details panel receives `isEditable: false`
 
-- **WHEN** `favoriteIds` contains the skill's resource URL
-- **THEN** the item has `isUserFavorite: true` and `isStarred: true`
+#### Scenario: Public skill ignores ownership and WRITE metadata
 
-#### Scenario: Absent description and version
-
-- **WHEN** any skill is mapped
-- **THEN** `description` is `''` and `version` is `''`, and neither is fabricated from the name or path
+- **WHEN** a public skill carries `isMy: true` and `canEdit: true` from an untrusted or older response
+- **THEN** the mapper still produces `isMyApp: false` and `isEditable: false`
 
 ---
 
 ### Requirement: Folder path derives from source label plus grouping-folder segments
 
-`folder` SHALL be `[<source label>, ...grouping folder segments]`, where the source label is `t(CatalogI18nKeys.FolderPersonal)` for `SkillSource.Personal` and `t(CatalogI18nKeys.FolderPublic)` for `SkillSource.Public` — the same keys `mapPromptToCatalogItem` uses.
+The source label SHALL be Personal for `SkillSource.Personal`, Shared for `SkillSource.SharedWithMe`, and Public for `SkillSource.Public`, followed by decoded `parentPath` segments. Root-level skills contain only their source label.
 
-Grouping folder segments SHALL come from `skill.parentPath`, split on `/`, with empty segments dropped and each segment passed through `safeDecodeURIComponent`.
+#### Scenario: Shared skill folder label
 
-A skill at the bucket root SHALL have `folder` equal to `[<source label>]` alone.
-
-Resolving the label through `t` keeps i18n at the app edge; `libs/catalog` receives already-resolved strings.
-
-#### Scenario: Nested skill
-
-- **WHEN** a personal skill has `parentPath: 'analysis/finance/'`
-- **THEN** `folder` is `[<Personal label>, 'analysis', 'finance']`
-
-#### Scenario: Root-level skill
-
-- **WHEN** an organisation skill has no `parentPath`
-- **THEN** `folder` is `[<Public label>]`
-
-#### Scenario: Percent-encoded segment
-
-- **WHEN** a skill has `parentPath: 'my%20folder/'`
-- **THEN** `folder`'s second entry is `'my folder'`
+- **WHEN** a shared skill has `parentPath: 'analysis/'`
+- **THEN** its folder is `[<Shared label>, 'analysis']`

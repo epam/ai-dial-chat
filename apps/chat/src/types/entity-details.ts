@@ -2,8 +2,6 @@ export enum AuthenticationType {
   None = 'NONE',
   ApiKey = 'API_KEY',
   OAuth = 'OAUTH',
-  ServiceAccount = 'SERVICE_ACCOUNT',
-  Pat = 'PAT',
 }
 
 // ---- Model entity ----
@@ -38,8 +36,6 @@ export interface ModelSpecification {
   contextWindowTokens?: number;
   maxOutputTokens?: number;
   inputTypes?: string[];
-  outputTypes?: string[];
-  languages?: string[];
   hostedBy?: string;
   createdAt?: number;
 }
@@ -54,9 +50,6 @@ export interface ModelPriceRow {
 export interface ModelPricing {
   /* Every price DIAL Core reports for the deployment, `unit` excluded. */
   prices?: ModelPriceRow[];
-  dailyLimit?: string;
-  weeklyLimit?: string;
-  monthlyLimit?: string;
 }
 
 export interface ModelApiDetails {
@@ -72,29 +65,7 @@ export interface ModelEntityDetails {
 
 // ---- Agent entity ----
 
-export enum AgentDomain {
-  Engineering = 'ENGINEERING',
-  Marketing = 'MARKETING',
-  Sales = 'SALES',
-  Operations = 'OPERATIONS',
-  Hr = 'HR',
-  Finance = 'FINANCE',
-  General = 'GENERAL',
-}
-
-export enum AgentMaturity {
-  Experimental = 'EXPERIMENTAL',
-  Beta = 'BETA',
-  Production = 'PRODUCTION',
-  Deprecated = 'DEPRECATED',
-}
-
 export interface AgentSpecification {
-  domain?: AgentDomain;
-  useCase?: string;
-  maturity?: AgentMaturity;
-  permissions?: string[];
-  skills?: string[];
   hostedBy?: string;
   createdAt?: number;
   routes?: string[];
@@ -122,29 +93,13 @@ export interface AgentCapabilities {
 }
 
 export interface AgentConfiguration {
-  baseModelId?: string;
   inputAttachmentTypes?: string[];
-  outputAttachmentTypes?: string[];
-  authentication?: AuthenticationType;
-}
-
-export interface AgentCapabilityLink {
-  id: string;
-  label: string;
-}
-
-export interface AgentApiDetails {
-  endpointUrl?: string;
-  requestExample?: string;
-  responseSchema?: string;
 }
 
 export interface AgentEntityDetails {
   specification?: AgentSpecification;
   configuration?: AgentConfiguration;
   capabilities?: AgentCapabilities;
-  capabilityLinks?: AgentCapabilityLink[];
-  api?: AgentApiDetails;
 }
 
 // ---- Toolset entity ----
@@ -160,7 +115,6 @@ export interface ToolsetAuthStatus {
 }
 
 export interface ToolsetSpecification {
-  provider?: string;
   authentication?: AuthenticationType;
   permissions?: string[];
   hostedBy?: string;
@@ -187,60 +141,6 @@ export interface ToolsetEntityDetails {
   capabilities?: ToolsetCapabilities;
 }
 
-// ---- Guardrail entity ----
-
-export enum GuardrailStage {
-  Input = 'INPUT',
-  Output = 'OUTPUT',
-  Both = 'BOTH',
-}
-
-export enum GuardrailType {
-  PiiRedaction = 'PII_REDACTION',
-  ContentModeration = 'CONTENT_MODERATION',
-  PromptInjectionGuard = 'PROMPT_INJECTION_GUARD',
-  CostRateControl = 'COST_RATE_CONTROL',
-  Logging = 'LOGGING',
-  Transformation = 'TRANSFORMATION',
-}
-
-export enum GuardrailAction {
-  Block = 'BLOCK',
-  Redact = 'REDACT',
-  Mask = 'MASK',
-  Flag = 'FLAG',
-  Fallback = 'FALLBACK',
-  Allow = 'ALLOW',
-}
-
-export enum GuardrailSensitivity {
-  None = 'NONE',
-  Low = 'LOW',
-  Medium = 'MEDIUM',
-  High = 'HIGH',
-}
-
-export enum GuardrailFailureMode {
-  FailOpen = 'FAIL_OPEN',
-  FailClosed = 'FAIL_CLOSED',
-}
-
-export interface GuardrailSpecification {
-  stage?: GuardrailStage;
-  type?: GuardrailType;
-  checks?: string[];
-  actionOnMatch?: GuardrailAction;
-  sensitivity?: GuardrailSensitivity;
-  compliance?: string[];
-  appliesTo?: string[];
-  failureMode?: GuardrailFailureMode;
-  hasLogging?: boolean;
-}
-
-export interface GuardrailEntityDetails {
-  specification?: GuardrailSpecification;
-}
-
 // ---- Discriminated union ----
 
 /*
@@ -251,5 +151,4 @@ export interface GuardrailEntityDetails {
 export type EntitySpecificDetails =
   | { type: 'MODEL'; data: ModelEntityDetails }
   | { type: 'AGENT'; data: AgentEntityDetails }
-  | { type: 'TOOLSET'; data: ToolsetEntityDetails }
-  | { type: 'GUARDRAIL'; data: GuardrailEntityDetails };
+  | { type: 'TOOLSET'; data: ToolsetEntityDetails };

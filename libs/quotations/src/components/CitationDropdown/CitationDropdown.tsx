@@ -1,5 +1,5 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
-import { DialTooltip } from '@epam/ai-dial-ui-kit';
+import { Tooltip } from '@epam/ai-dial-ui-kit';
 import { FC, memo, ReactNode, useCallback, useMemo } from 'react';
 import { useCitationCardContext } from '../../context/CitationCardContext';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
@@ -72,11 +72,16 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
     [onPreview, citationCard],
   );
 
+  /*
+   * Stays on the 1.0 tooltip: this is a controlled popover carrying an
+   * interactive card, and it needs `bottom-end` so the 400px card aligns with
+   * the marker instead of overhanging it. The 2.0 `Tooltip` narrows `placement`
+   * to the four `TooltipPlacement` sides, which cannot express `-end` alignment.
+   */
   return (
-    <DialTooltip
+    <Tooltip
       open={isOpen}
       onOpenChange={handleOpenChange}
-      placement="bottom-end"
       triggerClassName="ms-1 inline-flex align-middle"
       /* The tooltip's own arrow keeps its `stroke-primary` outline even though
          the container border is off, so it reads as a stray outlined notch next
@@ -105,7 +110,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
         labels={markerLabels}
         labelClassName={markerLabelClassName}
       />
-    </DialTooltip>
+    </Tooltip>
   );
 };
 

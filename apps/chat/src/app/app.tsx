@@ -2,6 +2,7 @@ import {
   AttachmentCanvasContainer,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
@@ -34,6 +35,7 @@ import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
+import { MIN_CONTENT_AREA_WIDTH } from '../constants/layout';
 import {
   getConversationRoute,
   normalizeConversationId,
@@ -43,6 +45,7 @@ import {
   ButtonsI18nKeys,
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
+import { useFeatureFlag } from '../context/AppConfigContext';
 import { useConversationPanel } from '../context/ConversationPanelContext';
 import { useDeployments } from '../context/DeploymentsContext';
 import { useOptionalOverlay } from '../context/overlay/OverlayContext';
@@ -51,9 +54,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import { useAppVersionCheck } from '../hooks/useAppVersionCheck/useAppVersionCheck';
-import usePanelMaxWidth, {
-  MIN_CONTENT_AREA_WIDTH,
-} from '../hooks/usePanelMaxWidth';
 import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
@@ -64,6 +64,7 @@ const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
 );
+const SettingsPage = lazy(() => import('../pages/SettingsPage/SettingsPage'));
 const ScheduledTasksPage = lazy(
   () => import('../pages/ScheduledTasksPage/ScheduledTasksPage'),
 );
@@ -118,7 +119,7 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
-  const canvasMaxWidth = usePanelMaxWidth();
+  const canvasMaxWidth = usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH);
   const canvasDefaultWidth = isMobile
     ? window.innerWidth
     : Math.min(
@@ -177,6 +178,7 @@ const App: FC = () => {
     OverlayFeature.AttachmentsManager,
   );
   const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
+  const isSettingsPageEnabled = useFeatureFlag('settingsPageEnabled');
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
@@ -317,7 +319,7 @@ const App: FC = () => {
           <main
             id="main-content"
             role="main"
-            className="relative flex min-h-0 min-w-0 flex-1 flex-col shadow-main-inset"
+            className="relative flex min-h-0 min-w-0 flex-1 flex-col"
           >
             <Header
               onMenuToggle={toggleNav}
@@ -377,6 +379,21 @@ const App: FC = () => {
                       <ConversationSharedInvitationPage />
                     </Suspense>
                   </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.Settings}
+                element={
+                  isSettingsPageEnabled ? (
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <SettingsPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  ) : (
+                    /* Keeps a direct /settings URL from bypassing the hidden gear icon. */
+                    <Navigate to={ROUTES.Root} replace />
+                  )
                 }
               />
               <Route

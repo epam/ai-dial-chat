@@ -1,5 +1,12 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
-import { useConversationScroll } from '@epam/ai-dial-chat-hooks';
+import {
+  AttachmentValidationErrorReason,
+  isMessageChanged,
+  useAttachmentValidation,
+  useChatSettingsFormConfig,
+  useConversationScroll,
+  usePageFileDrag,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DisplayAttachment,
@@ -42,6 +49,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
+  AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
@@ -56,14 +64,12 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
-import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
+import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
@@ -74,7 +80,6 @@ import {
 } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
-import { isMessageChanged } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
@@ -207,7 +212,7 @@ const ConversationView: FC<Props> = ({
   });
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { showErrorNotification } = useNotification();
+  const { showErrorNotification, showSuccessNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
@@ -274,7 +279,26 @@ const ConversationView: FC<Props> = ({
     isAttachmentsAllowed,
     validateAttachment,
     fileAccept,
-  } = useAttachmentValidation(selectedDeployment);
+  } = useAttachmentValidation({
+    allowedMimeTypes: selectedDeployment?.inputAttachmentTypes ?? [],
+    onValidationError: ({ reason, formats }) => {
+      const noTypesAllowed =
+        reason === AttachmentValidationErrorReason.NoTypesAllowed;
+      showErrorNotification({
+        title: t(
+          noTypesAllowed
+            ? AttachmentsI18nKeys.NoAttachmentsAllowedTitle
+            : AttachmentsI18nKeys.UnsupportedTypeTitle,
+        ),
+        message: t(
+          noTypesAllowed
+            ? AttachmentsI18nKeys.NoAttachmentsAllowedMessage
+            : AttachmentsI18nKeys.UnsupportedTypeMessage,
+          noTypesAllowed ? undefined : { formats },
+        ),
+      });
+    },
+  });
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
     isAttachmentsAllowed,
@@ -520,6 +544,7 @@ const ConversationView: FC<Props> = ({
     [isAssistantTyping, messages, onEditMessage, armAnchor],
   );
 
+  const chatSettingsLabels = useChatSettingsFormLabels();
   const chatSettings = useChatSettingsFormConfig({
     mode: 'conversation',
     conversation,
@@ -528,6 +553,11 @@ const ConversationView: FC<Props> = ({
     isQuickApp: isQuickAppSchema({
       id: selectedDeployment?.applicationTypeSchemaId,
     }),
+    labels: chatSettingsLabels,
+    onSaved: () =>
+      showSuccessNotification({
+        message: chatSettingsLabels.savedNotification,
+      }),
   });
 
   const handleAttachDialFiles = useCallback(
@@ -907,7 +937,7 @@ const ConversationView: FC<Props> = ({
                         {names.length === 1 ? (
                           <>
                             {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
-                            <span className="break-all text-primary">
+                            <span className="break-words text-primary">
                               &quot;{names[0].split('/').pop()}&quot;?
                             </span>
                           </>

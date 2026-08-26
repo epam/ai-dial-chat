@@ -1,0 +1,80 @@
+.card {
+  background: var(--uld-card-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
+.title {
+  color: var(--uld-title, var(--text-primary, #161b2d));
+}
+
+.secondaryAmount {
+  color: var(--uld-secondary-amount, var(--text-secondary, #57647a));
+}
+
+.usedPercentLabel {
+  color: var(--uld-used-percent-label, var(--text-secondary, #57647a));
+}
+
+/*
+ * Each status below splits into a *text* color (amount figure, read via `.amount.<x>Accent`)
+ * and a *progress* color (bar fill, read via `.progressFill<X> > div`). The two intentionally
+ * differ: the bar's brighter/lighter token is fine as a decorative fill but would fail text
+ * contrast, so the amount figure always uses the darker token of the pair.
+ */
+
+.amount.defaultAccent {
+  color: var(--uld-default-accent, var(--text-info, #1d4ed8));
+}
+
+.amount.warningAccent {
+  color: var(--uld-warning-accent, var(--text-warning, #7f6300));
+}
+
+.amount.errorAccent {
+  color: var(--uld-error-accent, var(--text-error, #ae2f2f));
+}
+
+/* !important overrides ProgressBar's own `bg-control-disable-primary` track utility class,
+ * which has equal CSS specificity and is not otherwise reliably out-cascaded. */
+.progressTrack {
+  background: var(
+    --uld-progress-track,
+    var(--bg-layer-sunken, #eef1f7)
+  ) !important;
+}
+
+/* Targets ProgressBar's inner fill element (its only child), which has no color-override prop. */
+.progressFillDefault > div {
+  background: var(
+    --uld-default-progress,
+    var(--text-control-accent-hover, #5976e9)
+  ) !important;
+}
+
+.progressFillWarning > div {
+  background: var(
+    --uld-warning-progress,
+    var(--text-warning-icon, #eec840)
+  ) !important;
+}
+
+.progressFillDanger > div {
+  background: var(
+    --uld-error-progress,
+    var(--bg-control-error-active, #cc4545)
+  ) !important;
+}
+
+.defaultBadge {
+  background: var(--uld-default-badge-bg, var(--bg-success, #dbf1eb));
+  color: var(--uld-default-badge-text, var(--text-success, #007274));
+}
+
+.warningBadge {
+  background: var(--uld-warning-badge-bg, var(--bg-warning, #faf0cf));
+  color: var(--uld-warning-badge-text, var(--text-warning, #7f6300));
+}
+
+.errorBadge {
+  background: var(--uld-error-badge-bg, var(--bg-error, #f3d6d8));
+  color: var(--uld-error-badge-text, var(--text-error, #ae2f2f));
+}

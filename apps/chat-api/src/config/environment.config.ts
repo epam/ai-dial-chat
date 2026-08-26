@@ -577,9 +577,9 @@ export class EnvironmentVariables {
   @IsString()
   FOOTER_HTML_MESSAGE?: string;
 
-  /* Deliberately unconstrained: this is an opaque display string that never
-   * reaches a filesystem path, an outbound URL, or a log line, and CI stamps
-   * take many shapes (0.45.0, 0.45.0-rc.3, 2026.08.10+a1b2c3d). */
+  /* Deliberately unconstrained: this is an opaque display string, and CI
+   * stamps take many shapes (0.45.0, 0.45.0-rc.3, 2026.08.10+a1b2c3d).
+   * Outbound HTTP metadata uses a separately normalized representation. */
   @IsOptional()
   @IsString()
   CHAT_VERSION?: string;
@@ -779,6 +779,26 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   SCHEDULED_TASKS_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'boolean') return value;
+    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  })
+  @IsBoolean()
+  SETTINGS_PAGE_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  SETTINGS_PAGE_ENABLED_ROLES?: string[] = [];
 
   @IsOptional()
   @IsString()

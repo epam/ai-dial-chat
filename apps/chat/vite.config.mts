@@ -34,7 +34,7 @@ export default defineConfig(() => ({
       ),
       '@epam/ai-dial-chat-hooks': path.resolve(
         __dirname,
-        '../../libs/ai-dial-chat-hooks/src/index.ts',
+        '../../libs/chat-hooks/src/index.ts',
       ),
       '@epam/ai-dial-chat-overlay': path.resolve(
         __dirname,
@@ -123,6 +123,14 @@ export default defineConfig(() => ({
       '@epam/ai-dial-prompts': path.resolve(
         __dirname,
         '../../libs/prompts/src/index.ts',
+      ),
+      '@epam/ai-dial-settings-panel': path.resolve(
+        __dirname,
+        '../../libs/settings-panel/src/index.ts',
+      ),
+      '@epam/ai-dial-usage-dashboard': path.resolve(
+        __dirname,
+        '../../libs/usage-dashboard/src/index.ts',
       ),
       '@epam/ai-dial-react-pdf-highlighter/styles.css': path.resolve(
         __dirname,

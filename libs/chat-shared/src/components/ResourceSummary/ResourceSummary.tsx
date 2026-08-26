@@ -1,4 +1,4 @@
-import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import type { EntityHeaderItem } from '../../models/entity';
 import { buildCssVars } from '../../utils/build-css-vars';
@@ -14,10 +14,24 @@ export interface ResourceSummaryColors {
   background?: string;
   /** Version tag border color. Defaults to `--stroke-tertiary`. */
   versionTagBorder?: string;
-  /** Version tag background color. Defaults to `--bg-accent-primary-alpha`. */
+  /** Version tag background color. Defaults to `--bg-control-accent-alpha`. */
   versionTagBackground?: string;
   /** Version tag text color. Defaults to `--text-accent`. */
   versionTagText?: string;
+}
+
+/** Typography overrides for the `ResourceSummary` row. */
+export interface ResourceSummaryTypography {
+  /** Typography class applied to the version tag. Defaults to `'dial-tiny-text'`. */
+  versionTagClassName?: string;
+}
+
+/** Style overrides for `ResourceSummary`. */
+export interface ResourceSummaryStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ResourceSummaryColors;
+  /** Typography class overrides. */
+  typography?: ResourceSummaryTypography;
 }
 
 /** Props for `ResourceSummary`. */
@@ -34,7 +48,9 @@ export interface ResourceSummaryProps {
   iconSize?: number;
   /** CSS class applied to the row. */
   className?: string;
-  /** Color overrides applied as CSS custom properties. */
+  /** Style overrides. */
+  styles?: ResourceSummaryStyles;
+  /** Color overrides applied as CSS custom properties. Prefer `styles.colors`. */
   colors?: ResourceSummaryColors;
 }
 
@@ -46,8 +62,12 @@ export const ResourceSummary: FC<ResourceSummaryProps> = ({
   hasVersionTag = true,
   iconSize = 40,
   className,
-  colors,
+  styles: stylesProp,
+  colors: colorsProp,
 }) => {
+  const colors = stylesProp?.colors ?? colorsProp;
+  const { versionTagClassName = 'dial-tiny-text' } =
+    stylesProp?.typography ?? {};
   const cssVars = buildCssVars({
     '--rs-border': colors?.border,
     '--rs-bg': colors?.background,
@@ -69,11 +89,12 @@ export const ResourceSummary: FC<ResourceSummaryProps> = ({
       {hasVersionTag && item.version && (
         <span
           className={mergeClasses(
-            'inline-flex h-[24px] max-w-[45%] shrink-0 items-center gap-1 rounded-lg border px-2 dial-tiny-text',
+            'inline-flex h-[24px] max-w-[45%] shrink-0 items-center gap-1 rounded-lg border px-2',
+            versionTagClassName,
             styles.versionTag,
           )}
         >
-          <DialEllipsisTooltip
+          <EllipsisTooltip
             text={versionLabel.replace('{version}', item.version)}
           />
         </span>

@@ -71,7 +71,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   }: { icon: ReactNode } & Record<string, unknown>) => (
     <button {...rest}>{icon}</button>
   ),
-  DialEllipsisTooltip: ({
+  EllipsisTooltip: ({
     text,
     className,
   }: {

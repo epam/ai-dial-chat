@@ -8,6 +8,7 @@
     "urlPlaceholder": "https://...",
     "preview": "Preview",
     "settings": "Settings",
+    "usage": "Usage",
     "attachFiles": "Attach files",
     "deleteConfirmDescription": "Are you sure you want to delete",
     "canView": "Can view",
@@ -97,6 +98,7 @@
     "featuredLabel": "Featured",
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
+    "viewToggleLabel": "View mode",
     "details": {
       "tabTools": "Tools",
       "tabContent": "Details",
@@ -121,8 +123,7 @@
         "license": "License",
         "knowledgeCutoffDate": "Knowledge cutoff date",
         "parameters": "Parameters",
-        "inputModalities": "Input modalities",
-        "outputModalities": "Output modalities"
+        "inputModalities": "Input modalities"
       },
       "limits": {
         "requestsPerHour": "Requests per hour",
@@ -169,7 +170,7 @@
         "personalDescription": "These credentials apply only to your account.",
         "organizationLabel": "Organization credentials",
         "organizationDescription": "Once added, these credentials will grant all users in your organization access to this toolset.",
-        "badgeLoggedOut": "LOGGED OUT",
+        "badgeLoggedOut": "Authorize to use this toolset.",
         "loginSuccessTitle": "Successful login",
         "loginSuccessOrg": "You have successfully logged into the \"{{name}}\" version {{version}} with credentials to entire organization.",
         "loginSuccessGlobal": "You have successfully logged into the \"{{name}}\" version {{version}}.",
@@ -206,6 +207,16 @@
         "error": "Failed to remove \"{{name}}\". Please try again.",
         "successTitle": "Removed from My List",
         "success": "\"{{name}}\" was removed from your list."
+      },
+      "unpublish": {
+        "confirmTitle": "Unpublish?",
+        "confirmMessage": "Unpublish \"{{name}}\" from \"{{folder}}\"? The request is submitted for admin approval.",
+        "selectFolderMessage": "Choose which folder to unpublish \"{{name}}\" from. The request is submitted for admin approval.",
+        "folderGroupAriaLabel": "Published folders",
+        "consequenceEveryoneLosesAccess": "Everyone loses access to the published copy",
+        "consequenceKeepsYourCopy": "Your own copy is not deleted",
+        "consequenceCanPublishAgain": "You can publish it again later",
+        "requestingStatus": "Requesting unpublish…"
       },
       "revokeShare": {
         "confirmTitle": "Revoke access?",
@@ -271,7 +282,7 @@
     },
     "folder": {
       "personal": "Personal",
-      "public": "Public",
+      "public": "Organization",
       "shared": "Shared with me"
     }
   },
@@ -279,7 +290,7 @@
     "title": "Talk to",
     "searchPlaceholder": "Search models, agents…",
     "emptyHint": "Star a model or agent to pin it here.",
-    "currentlySelectedLabel": "Currently selected",
+    "currentlySelectedLabel": "My Collection",
     "ariaLabel": "Select model",
     "loading": "Loading models…",
     "error": "Failed to load models",
@@ -293,6 +304,7 @@
   "promptSelector": {
     "addMenuLabel": "Prompts",
     "myCollectionLabel": "My Collection",
+    "browseLabel": "Catalog",
     "emptyHint": "Star a prompt to pin it here",
     "modalTitle": "Use prompt",
     "parametersTitle": "Prompt parameters",
@@ -350,6 +362,7 @@
     "logIn": "Log in",
     "retry": "Retry",
     "publish": "Publish",
+    "unpublish": "Unpublish",
     "manage": "Manage",
     "removeFromMyList": "Remove from My List",
     "revokeAccess": "Revoke access",
@@ -390,6 +403,7 @@
     "empty": "No conversations yet",
     "filter": {
       "all": "All",
+      "groupAriaLabel": "Filter chats",
       "shared": "Shared",
       "pinnedSection": "Pinned",
       "myChatsSection": "My chats"
@@ -447,10 +461,20 @@
     "invalidFolderNameError": "Folder name contains invalid characters.",
     "duplicateFolderNameError": "A folder with this name already exists."
   },
+  "conversationUnpublish": {
+    "confirmTitle": "Unpublish conversation?",
+    "confirmMessage": "Unpublish \"{{name}}\" from \"{{folder}}\"? The request is submitted for admin approval.",
+    "selectFolderMessage": "Choose which folder to unpublish \"{{name}}\" from. The request is submitted for admin approval.",
+    "folderGroupAriaLabel": "Published folders",
+    "requestingStatus": "Requesting unpublish…"
+  },
   "publish": {
     "failedTitle": "Publish failed",
     "failedMessage": "The publish request was not submitted. Please try again.",
     "networkErrorMessage": "The publish request was not submitted because your internet connection was lost. Please check your connection and try again.",
+    "unpublishFailedTitle": "Unpublish failed",
+    "unpublishFailedMessage": "The unpublish request was not submitted. Please try again.",
+    "unpublishNetworkErrorMessage": "The unpublish request was not submitted because your internet connection was lost. Please check your connection and try again.",
     "submitErrorCallout": "Publishing failed. Please try again."
   },
   "publishAccessRules": {
@@ -1247,7 +1271,9 @@
       "downloadedTitle": "Prompt downloaded successfully",
       "downloaded": "Prompt \"{{name}}\" is saved on your device.",
       "publishRequestedTitle": "Prompt publish requested",
-      "publishRequested": "Publish request for prompt \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for prompt \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Prompt unpublish requested",
+      "unpublishRequested": "Unpublish request for prompt \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "agent": {
       "createdTitle": "Agent created successfully",
@@ -1257,7 +1283,9 @@
       "deletedTitle": "Agent deleted successfully",
       "deleted": "Agent \"{{name}}\" is not available anymore.",
       "publishRequestedTitle": "Agent publish requested",
-      "publishRequested": "Publish request for agent \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for agent \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Agent unpublish requested",
+      "unpublishRequested": "Unpublish request for agent \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "quickApp": {
       "createdTitle": "Quick app created successfully",
@@ -1267,7 +1295,9 @@
       "deletedTitle": "Quick app deleted successfully",
       "deleted": "Quick app \"{{name}}\" is not available anymore.",
       "publishRequestedTitle": "Quick app publish requested",
-      "publishRequested": "Publish request for quick app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for quick app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Quick app unpublish requested",
+      "unpublishRequested": "Unpublish request for quick app \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "customApp": {
       "createdTitle": "Custom app created successfully",
@@ -1277,7 +1307,9 @@
       "deletedTitle": "Custom app deleted successfully",
       "deleted": "Custom app \"{{name}}\" is not available anymore.",
       "publishRequestedTitle": "Custom app publish requested",
-      "publishRequested": "Publish request for custom app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for custom app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Custom app unpublish requested",
+      "unpublishRequested": "Unpublish request for custom app \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "toolset": {
       "createdTitle": "Toolset created successfully",
@@ -1287,13 +1319,17 @@
       "deletedTitle": "Toolset deleted successfully",
       "deleted": "Toolset \"{{name}}\" is not available anymore.",
       "publishRequestedTitle": "Toolset publish requested",
-      "publishRequested": "Publish request for toolset \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for toolset \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Toolset unpublish requested",
+      "unpublishRequested": "Unpublish request for toolset \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "model": {
       "deletedTitle": "Model deleted successfully",
       "deleted": "Model \"{{name}}\" is not available anymore.",
       "publishRequestedTitle": "Model publish requested",
-      "publishRequested": "Publish request for model \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for model \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Model unpublish requested",
+      "unpublishRequested": "Unpublish request for model \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "skill": {
       "createdTitle": "Skill created successfully",
@@ -1303,7 +1339,9 @@
       "downloadedTitle": "Skill downloaded successfully",
       "downloaded": "Skill \"{{name}}\" is saved on your device.",
       "publishRequestedTitle": "Skill publish requested",
-      "publishRequested": "Publish request for skill \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for skill \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Skill unpublish requested",
+      "unpublishRequested": "Unpublish request for skill \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "conversation": {
       "renamedTitle": "Conversation renamed successfully",
@@ -1312,6 +1350,8 @@
       "duplicated": "A copy of conversation \"{{name}}\" is created.",
       "publishRequestedTitle": "Conversation publish requested",
       "publishRequested": "Publish request for conversation \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Conversation unpublish requested",
+      "unpublishRequested": "Unpublish request for conversation \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it.",
       "deletedTitle": "Conversation deleted successfully",
       "deleted": "Conversation \"{{name}}\" is not available anymore."
     },
@@ -1331,5 +1371,40 @@
       "downloadedTitle": "Folder downloaded successfully",
       "downloaded": "Folder \"{{name}}\" is saved on your device."
     }
+  },
+  "usage": {
+    "pageTitle": "Usage",
+    "pageDescription": "Cost, tokens and requests are metered independently — each can carry its own limit per day, week and month.",
+    "todayTitle": "Today",
+    "todayPeriodDescription": "Last 24 hours",
+    "thisWeekTitle": "This week",
+    "thisWeekPeriodDescription": "Last 7 days",
+    "thisMonthTitle": "This month",
+    "thisMonthPeriodDescription": "Last 30 days",
+    "defaultBadgeLabel": "Within limits",
+    "runningLowBadgeLabel": "Running low",
+    "limitReachedBadgeLabel": "Limit reached",
+    "usedOfTotalLabel": "used of {{total}}",
+    "remainingCaptionLabel": "{{remaining}} left",
+    "usedPercentLabel": "{{percent}}%",
+    "unlimitedProgressAriaLabel": "{{used}} used, unlimited",
+    "progressAriaLabel": "{{used}} of {{total}}, {{percent}}% used",
+    "fullLoadError": "We couldn't load your usage data. Please try again later.",
+    "loading": "Loading usage data…",
+    "modelLimitsHeading": "Model tokens limits",
+    "modelLimitsEmptyState": "No models to show yet.",
+    "spentLabel": "{{amount}} spent",
+    "followsCostLimitLabel": "Follows cost limit",
+    "followsCostLimitAriaLabel": "{{used}} used. Follows cost limit.",
+    "overallCostLimitRunningLowTooltip": "Overall {{period}} cost limit is running low.",
+    "overallCostLimitReachedTooltip": "Overall {{period}} cost limit is reached. Models can't be used until it resets, regardless of remaining token limits.",
+    "itemColumnLabel": "Item",
+    "costColumnLabel": "Cost",
+    "tokensColumnLabel": "Tokens",
+    "statusColumnLabel": "Status",
+    "modelTypeLabel": "Model",
+    "noLimitLabel": "No limit",
+    "unavailableLabel": "Not available",
+    "unavailableBadgeLabel": "Unavailable"
   }
 }

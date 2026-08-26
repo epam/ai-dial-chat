@@ -1,8 +1,13 @@
 import {
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+  type ConversationTransferJob,
+} from '@epam/ai-dial-chat-hooks';
+import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  DialEllipsisTooltip,
+  EllipsisTooltip,
   ElementSize,
   GhostIconButton,
   ProgressBar,
@@ -21,12 +26,25 @@ import {
   ButtonsI18nKeys,
   ConversationExportI18nKeys,
 } from '../../constants/translation-keys';
-import type { QueueJob } from '../../models/conversation-queue';
-import { ExportJobStatus } from '../../types/conversation-export';
+
+/** Derives the job row's primary label text from its structured subject. */
+const getJobLabel = (
+  job: ConversationTransferJob,
+  t: (key: ConversationExportI18nKeys) => string,
+): string =>
+  job.subject.kind === ConversationTransferSubjectKind.Single
+    ? job.subject.title
+    : t(ConversationExportI18nKeys.AllConversationsJobLabel);
+
+/** Derives the job row's secondary breadcrumb line, if any. */
+const getJobDescription = (job: ConversationTransferJob): string | undefined =>
+  job.subject.kind === ConversationTransferSubjectKind.Single
+    ? job.subject.sourceBreadcrumb
+    : undefined;
 
 interface Props {
   title: string;
-  jobs: QueueJob[];
+  jobs: ConversationTransferJob[];
   onClose: () => void;
   onDismiss: (jobId: string) => void;
   onRetry: (jobId: string) => void;
@@ -48,7 +66,7 @@ const getCloseConfirmDescriptionKey = (
 };
 
 interface JobRowProps {
-  job: QueueJob;
+  job: ConversationTransferJob;
   onDismiss: (jobId: string) => void;
   onRetry: (jobId: string) => void;
 }
@@ -62,37 +80,36 @@ const STATUS_SLOT_CLASS = 'flex size-7 shrink-0 items-center justify-center';
 
 const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
   const { t } = useTranslation();
+  const label = getJobLabel(job, t);
+  const description = getJobDescription(job);
 
   return (
     <div className="flex items-center gap-2 px-3 py-2">
       <div className="min-w-0 flex-1">
-        {job.description && (
-          <DialEllipsisTooltip
-            text={job.description}
+        {description && (
+          <EllipsisTooltip
+            text={description}
             className="dial-caption-text text-secondary"
             contentClassName="!z-[80]"
           />
         )}
-        <DialEllipsisTooltip
-          text={job.label}
+        <EllipsisTooltip
+          text={label}
           className="dial-small-text text-primary"
           contentClassName="!z-[80]"
         />
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        {job.status === ExportJobStatus.Success && (
+        {job.status === ConversationTransferJobStatus.Success && (
           <span className={STATUS_SLOT_CLASS}>
-            <IconCircleCheckFilled
-              size={16}
-              className="text-accent-secondary"
-            />
+            <IconCircleCheckFilled size={16} className="text-visual-green-2" />
           </span>
         )}
-        {job.status === ExportJobStatus.Failed && (
+        {job.status === ConversationTransferJobStatus.Failed && (
           <>
             <GhostIconButton
               aria-label={t(ConversationExportI18nKeys.RetryJobAriaLabel, {
-                title: job.label,
+                title: label,
               })}
               icon={
                 <IconRefresh
@@ -107,10 +124,10 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
             </span>
           </>
         )}
-        {job.status === ExportJobStatus.InProgress && (
+        {job.status === ConversationTransferJobStatus.InProgress && (
           <GhostIconButton
             aria-label={t(ConversationExportI18nKeys.CloseJobAriaLabel, {
-              title: job.label,
+              title: label,
             })}
             size={ElementSize.Small}
             icon={<IconX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}
@@ -137,8 +154,8 @@ const ImportExportQueue: FC<Props> = ({
   const handleClose = useCallback(() => {
     const hasActiveJobs = jobs.some(
       (job) =>
-        job.status === ExportJobStatus.InProgress ||
-        job.status === ExportJobStatus.Failed,
+        job.status === ConversationTransferJobStatus.InProgress ||
+        job.status === ConversationTransferJobStatus.Failed,
     );
     if (hasActiveJobs) {
       setIsConfirmOpen(true);
@@ -153,9 +170,11 @@ const ImportExportQueue: FC<Props> = ({
   }, [onClose]);
 
   const hasInProgress = jobs.some(
-    (job) => job.status === ExportJobStatus.InProgress,
+    (job) => job.status === ConversationTransferJobStatus.InProgress,
   );
-  const hasFailed = jobs.some((job) => job.status === ExportJobStatus.Failed);
+  const hasFailed = jobs.some(
+    (job) => job.status === ConversationTransferJobStatus.Failed,
+  );
   const canAutoClose = jobs.length > 0 && !hasInProgress && !hasFailed;
 
   useEffect(() => {
@@ -168,10 +187,10 @@ const ImportExportQueue: FC<Props> = ({
   if (jobs.length === 0) return null;
 
   const finishedCount = jobs.filter(
-    (job) => job.status !== ExportJobStatus.InProgress,
+    (job) => job.status !== ConversationTransferJobStatus.InProgress,
   ).length;
   const failedCount = jobs.filter(
-    (job) => job.status === ExportJobStatus.Failed,
+    (job) => job.status === ConversationTransferJobStatus.Failed,
   ).length;
   const percentage = Math.round((finishedCount / jobs.length) * 100);
 

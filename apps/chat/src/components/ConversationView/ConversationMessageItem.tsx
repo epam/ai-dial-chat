@@ -1,3 +1,4 @@
+import { useAttachmentAction } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   COMPACT_MARKDOWN_CLASS_NAMES,
@@ -40,13 +41,13 @@ import {
   CitationsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
-import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
 import { useCitationMarkdownComponents } from '../../hooks/citations/useCitationMarkdownComponents';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
 import { openAnnotationAttachment } from '../../utils/annotation';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
+import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
 import { messageHasStages } from '../../utils/message-utils';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
@@ -219,7 +220,9 @@ const ConversationMessageItem: FC<Props> = ({
   );
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
-  const { handleAttachmentClick: handleDownload } = useAttachmentAction();
+  const { handleAttachmentClick: handleDownload } = useAttachmentAction({
+    resolveDownloadUrl: resolveDialFileDownloadUrl,
+  });
   const handleAttachmentClick = onAttachmentClickProp ?? handleDownload;
   const handleDownloadAll = useCallback(
     (attachmentsToDownload: DisplayAttachment[]) => {

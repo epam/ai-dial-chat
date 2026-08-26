@@ -3,7 +3,7 @@
  * All values are applied as CSS custom properties with app theme fallbacks.
  */
 export interface CatalogColors {
-  /** Root container background color. Fallback: `--bg-layer-1`. */
+  /** Root container background color. Fallback: `--bg-layer-base`. */
   background?: string;
   /** Heading title text color. Fallback: `--text-primary`. */
   headingTitleText?: string;

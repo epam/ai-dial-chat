@@ -2,6 +2,7 @@ import {
   AttachmentContentType,
   createUnsupportedCanvasContent,
   extensionToLanguage,
+  getOoxmlFileType,
   isHtmlPreviewable,
   isTextPreviewable,
   useAttachmentCanvas,
@@ -25,6 +26,7 @@ import {
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
+  resolveOoxmlCanvasContent,
   resolvePdfCanvasContent,
   resolveTextCanvasContent,
   resolveVisualizerCanvasContent,
@@ -89,6 +91,20 @@ export const useOpenAttachmentCanvas = () => {
         }
       }
 
+      const mimeOoxmlFileType = getOoxmlFileType('', contentType);
+      if (mimeOoxmlFileType != null) {
+        const content = await resolveOoxmlCanvasContent(
+          attachment,
+          mimeOoxmlFileType,
+        );
+        openCanvas(
+          content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+          attachment.name,
+          canvasAttachmentId,
+        );
+        return true;
+      }
+
       switch (contentType) {
         case MIMEType.PDF: {
           const content = await resolvePdfCanvasContent(attachment);
@@ -125,6 +141,20 @@ export const useOpenAttachmentCanvas = () => {
       const fileName = attachment.name ?? '';
       const dotIdx = fileName.lastIndexOf('.');
       const ext = dotIdx !== -1 ? fileName.slice(dotIdx + 1).toLowerCase() : '';
+
+      const extensionOoxmlFileType = getOoxmlFileType(fileName);
+      if (extensionOoxmlFileType != null) {
+        const content = await resolveOoxmlCanvasContent(
+          attachment,
+          extensionOoxmlFileType,
+        );
+        openCanvas(
+          content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+          attachment.name,
+          canvasAttachmentId,
+        );
+        return true;
+      }
 
       switch (ext) {
         case FileExtension.Markdown:

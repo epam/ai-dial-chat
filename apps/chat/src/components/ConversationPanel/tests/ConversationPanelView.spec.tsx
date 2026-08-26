@@ -2,6 +2,14 @@ import {
   ConversationDeletionFailureDtoCodeEnum,
   type ConversationDeletionResultDto,
 } from '@epam/ai-dial-chat-api-client';
+import {
+  ConversationExportMode,
+  ConversationTransferErrorCode,
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+  useConversationExport,
+  useConversationImport,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   act,
@@ -11,23 +19,21 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { cloneElement, ReactElement, ReactNode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import { useConversationExport } from '../../../hooks/useConversationExport';
-import { useConversationImport } from '../../../hooks/useConversationImport';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import {
+  getConversationPublishHistory,
+  unpublishConversation,
+} from '../../../server-api/conversation-publish.api';
+import {
   discardSharedCatalogItem,
-  getShareRecipientsCount,
   revokeSharedAccess,
 } from '../../../server-api/share.api';
-import {
-  ConversationExportMode,
-  ExportJobStatus,
-} from '../../../types/conversation-export';
 import ConversationPanelView from '../ConversationPanelView';
 
 vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
@@ -214,6 +220,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconTrashX: () => null,
   IconUserOff: () => null,
   IconWorldShare: () => null,
+  IconWorldOff: () => null,
 }));
 
 vi.mock('react-i18next', () => ({
@@ -227,6 +234,21 @@ vi.mock('react-router', () => ({
 vi.mock('../../../context/ConversationsContext');
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../server-api/share.api');
+vi.mock('../../../server-api/conversation-publish.api', () => ({
+  getConversationPublishHistory: vi.fn().mockResolvedValue([]),
+  unpublishConversation: vi.fn().mockResolvedValue({
+    path: 'conversations/bucket-123/conv1',
+    folderPath: 'Organization/Shared chats',
+    requestedAt: '2026-08-13T10:00:00.000Z',
+    requestedBy: 'Test User',
+  }),
+}));
+const getShareRecipientsCount = vi.hoisted(() => vi.fn());
+vi.mock('../../../server-api/api-client', () => ({
+  shareApi: { getShareRecipientsCount },
+  conversationsApi: {},
+  filesApi: {},
+}));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({ items: [] }),
 }));
@@ -302,7 +324,11 @@ vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
     onRetry,
   }: {
     title: string;
-    jobs: Array<{ id: string; label: string; status: string }>;
+    jobs: Array<{
+      id: string;
+      subject: { kind: string; title?: string };
+      status: string;
+    }>;
     onClose: () => void;
     onDismiss: (jobId: string) => void;
     onRetry: (jobId: string) => void;
@@ -313,7 +339,7 @@ vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
         <span>{title}</span>
         {jobs.map((job) => (
           <div key={job.id}>
-            <span>{job.label}</span>
+            <span>{job.subject.title ?? 'All conversations'}</span>
             {job.status === 'failed' && (
               <button onClick={() => onRetry(job.id)}>Retry</button>
             )}
@@ -324,8 +350,18 @@ vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
     );
   },
 }));
-vi.mock('../../../hooks/useConversationExport');
-vi.mock('../../../hooks/useConversationImport');
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    useConversationExport: vi.fn(),
+    useConversationImport: vi.fn(),
+  };
+});
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => ({ user: { bucket: 'bucket' } }),
+}));
 vi.mock('../get-conversation-source', () => ({
   getConversationSource: () => undefined,
 }));
@@ -360,6 +396,7 @@ const PARTIAL_ERROR = 'conversationPanel.deleteAll.deleteAllPartialError';
 const DELETE_CONFIRM_BUTTON = 'buttons.delete';
 const SHARE_LABEL = 'share.title';
 const PUBLISH_LABEL = 'buttons.publish';
+const UNPUBLISH_LABEL = 'buttons.unpublish';
 
 const UNSHARE_BUTTON = 'buttons.removeFromMyList';
 const UNSHARE_CONFIRM_TITLE = 'conversationPanel.unshare.unshareConfirmTitle';
@@ -1159,6 +1196,51 @@ describe('ConversationPanelView — publish', () => {
   });
 });
 
+describe('ConversationPanelView — export/import notification mapping', () => {
+  it('maps a successful single-conversation export to a success notification with the title', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const params = vi.mocked(useConversationExport).mock.calls.at(-1)?.[0];
+
+    params?.onSuccess?.({ jobId: 'job-1', titles: ['My Chat'] });
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'conversationExport.successSingle',
+      }),
+    );
+  });
+
+  it('suppresses the export error notification for an unauthorized failure', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const params = vi.mocked(useConversationExport).mock.calls.at(-1)?.[0];
+    mockShowNotification.mockClear();
+
+    params?.onError?.({
+      jobId: 'job-1',
+      code: ConversationTransferErrorCode.Unauthorized,
+    });
+
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('maps an import UnsupportedFormat error to the unsupported-format notification', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const params = vi.mocked(useConversationImport).mock.calls.at(-1)?.[0];
+    mockShowNotification.mockClear();
+
+    params?.onError?.({
+      jobId: 'imp-1',
+      code: ConversationTransferErrorCode.UnsupportedFormat,
+    });
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'conversationImport.unsupportedFormat',
+      }),
+    );
+  });
+});
+
 describe('ConversationPanelView — export', () => {
   it('row action list contains an Export item (submenu trigger, no onClick of its own)', () => {
     render(<ConversationPanelView {...defaultProps} />);
@@ -1216,8 +1298,11 @@ describe('ConversationPanelView — export', () => {
       jobs: [
         {
           id: 'job-1',
-          label: 'Chat 1',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 1',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       exportSingle: mockExportSingle,
@@ -1242,7 +1327,14 @@ describe('ConversationPanelView — export', () => {
   it('clicking close on a queue job calls dismissJob with its id', () => {
     vi.mocked(useConversationExport).mockReturnValue({
       jobs: [
-        { id: 'job-2', label: 'Chat 2', status: ExportJobStatus.InProgress },
+        {
+          id: 'job-2',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 2',
+          },
+          status: ConversationTransferJobStatus.InProgress,
+        },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
@@ -1259,7 +1351,16 @@ describe('ConversationPanelView — export', () => {
 
   it('clicking retry on a failed queue job calls retryJob with its id', () => {
     vi.mocked(useConversationExport).mockReturnValue({
-      jobs: [{ id: 'job-3', label: 'Chat 3', status: ExportJobStatus.Failed }],
+      jobs: [
+        {
+          id: 'job-3',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 3',
+          },
+          status: ConversationTransferJobStatus.Failed,
+        },
+      ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
       dismissJob: mockDismissJob,
@@ -1338,8 +1439,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1357,7 +1461,14 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
   it('renders two separate queues with their own titles when both import and export jobs are present', () => {
     vi.mocked(useConversationExport).mockReturnValue({
       jobs: [
-        { id: 'job-1', label: 'Chat 1', status: ExportJobStatus.InProgress },
+        {
+          id: 'job-1',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 1',
+          },
+          status: ConversationTransferJobStatus.InProgress,
+        },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
@@ -1369,8 +1480,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1391,8 +1505,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1409,7 +1526,14 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
   it('shows the Exporting title when only export jobs are present', () => {
     vi.mocked(useConversationExport).mockReturnValue({
       jobs: [
-        { id: 'job-1', label: 'Chat 1', status: ExportJobStatus.InProgress },
+        {
+          id: 'job-1',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat 1',
+          },
+          status: ConversationTransferJobStatus.InProgress,
+        },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
@@ -1428,8 +1552,11 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       jobs: [
         {
           id: 'imp-1',
-          label: 'Imported Chat',
-          status: ExportJobStatus.InProgress,
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.InProgress,
         },
       ],
       importConversations: mockImportConversations,
@@ -1448,7 +1575,14 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
   it('wires the import queue retry button to the import hook', () => {
     vi.mocked(useConversationImport).mockReturnValue({
       jobs: [
-        { id: 'imp-1', label: 'Imported Chat', status: ExportJobStatus.Failed },
+        {
+          id: 'imp-1',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Imported Chat',
+          },
+          status: ConversationTransferJobStatus.Failed,
+        },
       ],
       importConversations: mockImportConversations,
       dismissJob: mockDismissImportJob,
@@ -1720,7 +1854,7 @@ describe('ConversationPanelView — revoke access', () => {
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
 
-    expect(getShareRecipientsCount).toHaveBeenCalledWith('conv1');
+    expect(getShareRecipientsCount).toHaveBeenCalledWith({ itemId: 'conv1' });
     expect(
       screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
     ).toBeTruthy();
@@ -1964,5 +2098,215 @@ describe('ConversationPanelView — UI feature gates', () => {
     expect(
       screen.getByRole('region', { name: 'conversation panel' }),
     ).toBeTruthy();
+  });
+});
+
+describe('ConversationPanelView — unpublish', () => {
+  const historyEntry = (folderPath: string) => ({
+    path: 'conversations/bucket-123/conv1',
+    folderPath,
+    publishedAt: '2026-07-15T10:00:00.000Z',
+    publishedBy: 'Test User',
+  });
+
+  const openActionMenu = async () =>
+    userEvent.click(
+      screen.getByRole('button', { name: 'action trigger conv1' }),
+    );
+
+  beforeEach(() => {
+    vi.mocked(getConversationPublishHistory).mockResolvedValue([]);
+  });
+
+  it('issues no history request while rendering the list', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    expect(getConversationPublishHistory).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: UNPUBLISH_LABEL })).toBeNull();
+  });
+
+  it('requests history once when the row action menu opens', async () => {
+    vi.mocked(getConversationPublishHistory).mockResolvedValue([
+      historyEntry('Organization/Shared chats'),
+    ]);
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+    await openActionMenu();
+
+    await waitFor(() =>
+      expect(getConversationPublishHistory).toHaveBeenCalledTimes(1),
+    );
+    expect(getConversationPublishHistory).toHaveBeenCalledWith('conv1');
+  });
+
+  it('shows Unpublish once history resolves with a folder', async () => {
+    vi.mocked(getConversationPublishHistory).mockResolvedValue([
+      historyEntry('Organization/Shared chats'),
+    ]);
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    expect(
+      await screen.findByRole('button', { name: UNPUBLISH_LABEL }),
+    ).toBeTruthy();
+  });
+
+  /* The two are mutually exclusive: the menu shows the conversation's state. */
+  it('replaces Publish with Unpublish once history resolves with a folder', async () => {
+    vi.mocked(getConversationPublishHistory).mockResolvedValue([
+      historyEntry('Organization/Shared chats'),
+    ]);
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    await screen.findByRole('button', { name: UNPUBLISH_LABEL });
+    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+  });
+
+  it('keeps Publish for a never-published conversation', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    await waitFor(() =>
+      expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
+    );
+    expect(screen.getByRole('button', { name: PUBLISH_LABEL })).toBeTruthy();
+  });
+
+  it('hides Unpublish for a never-published conversation', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    await waitFor(() =>
+      expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
+    );
+    expect(screen.queryByRole('button', { name: UNPUBLISH_LABEL })).toBeNull();
+  });
+
+  it('hides Unpublish and raises no notification when the lookup fails', async () => {
+    vi.mocked(getConversationPublishHistory).mockRejectedValue(
+      new Error('503'),
+    );
+    render(<ConversationPanelView {...defaultProps} />);
+
+    await openActionMenu();
+
+    await waitFor(() =>
+      expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
+    );
+    expect(screen.queryByRole('button', { name: UNPUBLISH_LABEL })).toBeNull();
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationPanelView — unpublish confirmation', () => {
+  const historyEntry = (folderPath: string) => ({
+    path: 'conversations/bucket-123/conv1',
+    folderPath,
+    publishedAt: '2026-07-15T10:00:00.000Z',
+    publishedBy: 'Test User',
+  });
+
+  const openUnpublishPopup = async (folders: string[]) => {
+    vi.mocked(getConversationPublishHistory).mockResolvedValue(
+      folders.map(historyEntry),
+    );
+    render(<ConversationPanelView {...defaultProps} />);
+    await userEvent.click(
+      screen.getByRole('button', { name: 'action trigger conv1' }),
+    );
+    await userEvent.click(
+      await screen.findByRole('button', { name: UNPUBLISH_LABEL }),
+    );
+  };
+
+  /* The row menu entry and the popup's confirm share the same label, so the
+   * confirm button is addressed through the dialog it lives in. */
+  const dialog = () => within(screen.getByRole('dialog'));
+  const confirmButton = () =>
+    dialog().getByRole('button', { name: UNPUBLISH_LABEL });
+
+  it('requests unpublish with the bucket-relative path and the single folder', async () => {
+    await openUnpublishPopup(['Organization/Shared chats']);
+
+    await userEvent.click(confirmButton());
+
+    expect(unpublishConversation).toHaveBeenCalledWith(
+      'conv1',
+      'Organization/Shared chats',
+    );
+  });
+
+  it('reports a submitted request and leaves the conversation list alone', async () => {
+    const mockRefresh = vi.fn();
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      refreshConversations: mockRefresh,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    await openUnpublishPopup(['Organization/Shared chats']);
+
+    await userEvent.click(confirmButton());
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'entityNotifications.conversation.unpublishRequestedTitle',
+        }),
+      ),
+    );
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it('requires a folder choice when the conversation is published to several', async () => {
+    await openUnpublishPopup(['Organization/Shared chats', 'Organization/Ops']);
+
+    const radios = dialog().getAllByRole('radio');
+    expect(radios).toHaveLength(2);
+    expect(radios.some((radio) => (radio as HTMLInputElement).checked)).toBe(
+      false,
+    );
+    expect(confirmButton().hasAttribute('disabled')).toBe(true);
+
+    await userEvent.click(
+      dialog().getByRole('radio', { name: 'Organization/Ops' }),
+    );
+
+    expect(confirmButton().hasAttribute('disabled')).toBe(false);
+
+    await userEvent.click(confirmButton());
+
+    expect(unpublishConversation).toHaveBeenCalledWith(
+      'conv1',
+      'Organization/Ops',
+    );
+  });
+
+  it('raises no success notification when the request fails', async () => {
+    vi.mocked(unpublishConversation).mockRejectedValue(new Error('Forbidden'));
+    await openUnpublishPopup(['Organization/Shared chats']);
+
+    await userEvent.click(confirmButton());
+
+    await waitFor(() => expect(unpublishConversation).toHaveBeenCalled());
+    expect(
+      mockShowNotification.mock.calls.some(
+        ([notification]) => notification.variant === 'success',
+      ),
+    ).toBe(false);
+  });
+
+  it('dismisses without a request when Cancel is clicked', async () => {
+    await openUnpublishPopup(['Organization/Shared chats']);
+
+    await userEvent.click(
+      dialog().getByRole('button', { name: 'buttons.cancel' }),
+    );
+
+    expect(unpublishConversation).not.toHaveBeenCalled();
   });
 });

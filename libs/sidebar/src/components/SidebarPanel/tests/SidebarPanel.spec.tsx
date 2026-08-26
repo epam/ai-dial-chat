@@ -13,9 +13,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     'aria-label': string;
     onClick: () => void;
   }) => <button type="button" aria-label={ariaLabel} onClick={onClick} />,
-  DialEllipsisTooltip: ({ text }: { text: React.ReactNode }) => (
-    <span>{text}</span>
-  ),
+  EllipsisTooltip: ({ text }: { text: React.ReactNode }) => <span>{text}</span>,
   ResizableContainerSide: {
     Left: 'left',
     Right: 'right',

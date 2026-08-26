@@ -1,0 +1,12 @@
+.viewer {
+  background: var(--ac-ooxml-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
+.statusOverlay {
+  background: var(--ac-ooxml-bg, var(--bg-layer-raised, #fcfcfc));
+  color: var(--ac-status-text, var(--text-secondary, #454545));
+}
+
+.errorIcon {
+  color: var(--ac-error-icon, var(--text-error, #a30000));
+}

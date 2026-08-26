@@ -18,7 +18,7 @@ export interface FavoritesColors {
   selectedCheckIcon?: string;
   /** Border color of the selected favorite card. Fallback: `--stroke-info`. */
   selectedCardBorder?: string;
-  /** Background color (tint) of the selected favorite card. Fallback: `--bg-accent-primary-alpha`. */
+  /** Background color (tint) of the selected favorite card. Fallback: `--bg-control-accent-alpha-active`. */
   selectedCardBackground?: string;
   /** Icon color of the pagination arrows. Fallback: `--text-accent`. */
   navButton?: string;
@@ -62,6 +62,6 @@ export interface FavoritesProps {
   removeFromFavoritesAriaLabel?: string;
   /** ID of an item to visually mark as selected (border, tint, and checkmark). */
   selectedItemId?: string;
-  /** Credentials-status badge label shown when a favorited item is signed out. Default: `'LOGGED OUT'`. */
+  /** Accessible label for the logged-out warning icon on a favorited item's avatar, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
 }

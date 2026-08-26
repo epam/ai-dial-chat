@@ -12,21 +12,6 @@ import {
 } from '../map-entity-details-to-catalog';
 
 describe('mapEntityDetailsToCatalogDetails', () => {
-  describe('AGENT', () => {
-    it('maps the single endpointUrl into the API resource', () => {
-      const result = mapEntityDetailsToCatalogDetails({
-        type: 'AGENT',
-        data: {
-          api: { endpointUrl: 'https://dial.example.com/deployments/my-agent' },
-        },
-      });
-
-      expect(result.api?.resource).toEqual({
-        endpointUrl: 'https://dial.example.com/deployments/my-agent',
-      });
-    });
-  });
-
   describe('MODEL', () => {
     it('maps the model id into the API resource', () => {
       const result = mapEntityDetailsToCatalogDetails({
@@ -247,7 +232,7 @@ describe('mapEntityDetailsToCatalogDetails', () => {
     it('omits Tools tab data when the toolset reports no tools', () => {
       const result = mapEntityDetailsToCatalogDetails({
         type: 'TOOLSET',
-        data: { specification: { provider: 'Anthropic' } },
+        data: { specification: { hostedBy: 'Anthropic' } },
       });
 
       expect(result.tools).toBeUndefined();

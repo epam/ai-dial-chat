@@ -28,11 +28,12 @@ export class RateService {
         body['comment'] = dto.comment;
       }
 
-      const response = await fetch(url, {
+      const response = await this.dialClient.fetchCore(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...getBearerAuthHeaders(accessToken),
+          'X-CONVERSATION-ID': dto.conversationId,
         },
         body: JSON.stringify(body),
       });

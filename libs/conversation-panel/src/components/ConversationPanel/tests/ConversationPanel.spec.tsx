@@ -44,14 +44,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label: string;
     selected?: boolean;
   }) => (
-    <button onClick={onClick} aria-selected={selected} role="tab">
+    <button onClick={onClick} aria-pressed={selected}>
       {label}
     </button>
   ),
-  DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
+  TagAppearance: { Outlined: 'outlined', Selectable: 'selectable' },
+  EllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   Dropdown: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Skeleton: () => null,
   SkeletonVariant: { Circular: 'circular' },
   Search: ({

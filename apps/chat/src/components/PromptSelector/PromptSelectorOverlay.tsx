@@ -5,7 +5,6 @@ import type {
 import { lazy, memo, Suspense, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ButtonsI18nKeys,
   FavoritesI18nKeys,
   PromptSelectorI18nKeys,
 } from '../../constants/translation-keys';
@@ -34,7 +33,7 @@ const PromptSelectorOverlay: FC<Props> = ({
   const labels: FavoritePromptsPanelLabels = {
     myCollectionLabel: t(PromptSelectorI18nKeys.MyCollectionLabel),
     emptyHintLabel: t(PromptSelectorI18nKeys.EmptyHint),
-    browseLabel: t(ButtonsI18nKeys.Browse),
+    browseLabel: t(PromptSelectorI18nKeys.BrowseLabel),
     removeFromFavoritesLabel: t(FavoritesI18nKeys.RemoveFromFavorites),
   };
 

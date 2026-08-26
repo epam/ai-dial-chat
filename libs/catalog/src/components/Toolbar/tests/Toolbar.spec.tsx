@@ -21,7 +21,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
       onChange={(e) => onChange(e.target.value)}
     />
   ),
-  DialEllipsisTooltip: ({
+  EllipsisTooltip: ({
     text,
     className,
   }: {

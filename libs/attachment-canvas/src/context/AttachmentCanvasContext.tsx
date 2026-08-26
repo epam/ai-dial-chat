@@ -27,7 +27,8 @@ const getRevocableObjectUrl = (
   if (
     content.type !== AttachmentContentType.Image &&
     content.type !== AttachmentContentType.Audio &&
-    content.type !== AttachmentContentType.Pdf
+    content.type !== AttachmentContentType.Pdf &&
+    content.type !== AttachmentContentType.Ooxml
   ) {
     return undefined;
   }

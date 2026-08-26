@@ -10,24 +10,33 @@
   color: var(--lt-value, var(--text-secondary, #57647a));
 }
 
-/* !important overrides ProgressBar's own `bg-control-disable` track utility class,
+/* !important overrides ProgressBar's own `bg-control-disable-primary` track utility class,
  * which has equal CSS specificity and is not otherwise reliably out-cascaded. */
 .progressTrack {
-  background: var(--lt-progress-track, var(--bg-layer-sunken, #eef1f7)) !important;
+  background: var(
+    --lt-progress-track,
+    var(--bg-layer-sunken, #eef1f7)
+  ) !important;
 }
 
 /* Targets ProgressBar's inner fill element (its only child), which has no color-override prop. */
 .progressFillDefault > div {
   background: var(
     --lt-progress-fill-default,
-    var(--text-control-blue-hover, #5976e9)
+    var(--text-control-accent-hover, #5976e9)
   ) !important;
 }
 
 .progressFillWarning > div {
-  background: var(--lt-progress-fill-warning, var(--text-warning-icon, #eec840)) !important;
+  background: var(
+    --lt-progress-fill-warning,
+    var(--text-warning-icon, #eec840)
+  ) !important;
 }
 
 .progressFillDanger > div {
-  background: var(--lt-progress-fill-danger, var(--bg-control-error-active, #cc4545)) !important;
+  background: var(
+    --lt-progress-fill-danger,
+    var(--bg-control-error-active, #cc4545)
+  ) !important;
 }

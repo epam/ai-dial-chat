@@ -62,6 +62,8 @@ export const Catalog: FC<CatalogProps> = ({
   onRevokeShare,
   onFetchRecipientsCount,
   isRevokeShareVisible,
+  onUnpublish,
+  isUnpublishVisible,
   onLogin,
   onLogout,
   onCreateClick,
@@ -98,6 +100,7 @@ export const Catalog: FC<CatalogProps> = ({
   const featuredLabel = titles?.featuredLabel ?? 'Featured';
   const gridViewLabel = titles?.gridViewLabel ?? 'Grid view';
   const listViewLabel = titles?.listViewLabel ?? 'List view';
+  const viewToggleLabel = titles?.viewToggleLabel ?? 'View mode';
   const resolvedAriaLabel = titles?.ariaLabel ?? 'Catalog';
 
   const sortOptions: DropdownItem[] = [
@@ -447,6 +450,7 @@ export const Catalog: FC<CatalogProps> = ({
             searchPlaceholder={searchPlaceholder}
             gridViewLabel={gridViewLabel}
             listViewLabel={listViewLabel}
+            viewToggleLabel={viewToggleLabel}
             sortOptions={sortOptions}
             filters={filters}
             onFiltersChange={handleFiltersChange}
@@ -565,6 +569,8 @@ export const Catalog: FC<CatalogProps> = ({
           onRevokeShare={onRevokeShare}
           onFetchRecipientsCount={onFetchRecipientsCount}
           isRevokeShareVisible={isRevokeShareVisible}
+          onUnpublish={onUnpublish}
+          isUnpublishVisible={isUnpublishVisible}
           onLogin={handleLogin}
           onLogout={handleLogout}
           texts={detailsTexts}

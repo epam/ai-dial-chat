@@ -48,12 +48,14 @@ export interface CatalogTitles {
   gridViewLabel?: string;
   /** Accessible label for switching to list view. Default: 'List view'. */
   listViewLabel?: string;
+  /** Accessible label naming the grid/list view toggle group. Default: 'View mode'. */
+  viewToggleLabel?: string;
   /** ARIA label for the page/grid. Default: 'Catalog'. */
   ariaLabel?: string;
   /**
    * Display labels for entity-type filter tabs. Only types present in `items`
    * are shown. Defaults: Model → 'Model', Agent → 'Agent', Toolset → 'Toolset',
-   * Guardrail → 'Guardrail', Skill → 'Skill', Mcp → 'MCP'.
+   * Skill → 'Skill', Mcp → 'MCP'.
    */
   tabLabels?: Partial<Record<CatalogEntityType, string>>;
   /** Label for the filter button when nothing is filtered. Default: 'From'. */
@@ -213,6 +215,23 @@ export interface CatalogProps {
    * when absent.
    */
   isRevokeShareVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Called when unpublish is confirmed via the details panel's confirmation
+   * step, with the published folder's path segments. May return a promise;
+   * the confirmation shows a loading state and prevents duplicate submission
+   * while pending. The published copy survives until an administrator
+   * approves, so the panel stays open and the item stays visible.
+   */
+  onUnpublish?: (
+    item: CatalogItem,
+    folderPath: string[],
+  ) => Promise<void> | void;
+  /**
+   * Narrows where the "Unpublish" action is offered, on top of the presence
+   * of `onUnpublish` and at least one resolved `getPublishHistory` entry.
+   * Defaults to `true` (visible) when absent.
+   */
+  isUnpublishVisible?: (item: CatalogItem) => boolean;
   /**
    * Renders the Share popover content anchored to the Share button in the
    * details panel. When provided, clicking Share opens this popover instead

@@ -1,13 +1,13 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialEllipsisTooltip,
-  DialTooltip,
+  EllipsisTooltip,
+  Tooltip,
   Dropdown,
   DropdownItemType,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import { IconLogout } from '@tabler/icons-react';
+import { IconLogout, IconSettings } from '@tabler/icons-react';
 import { memo, useMemo, type FC } from 'react';
 import type { UserMenuProps } from '../../models/user-menu-props';
 import { AvatarInitials } from '../common/AvatarInitials';
@@ -25,6 +25,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
     labels,
     groups,
     onLogout,
+    onSettings,
     isTooltipHidden,
     styles: menuStyles,
   }) => {
@@ -72,7 +73,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
           label: (
             <div className="flex h-[40px] min-w-0 items-center gap-3">
               <AvatarInitials shortName={profile.shortName} />
-              <DialEllipsisTooltip
+              <EllipsisTooltip
                 text={profile.displayName}
                 className={mergeClasses(
                   styles.identityText,
@@ -85,6 +86,18 @@ export const UserMenu: FC<UserMenuProps> = memo(
         },
         ...groupItems,
         { key: 'divider-1', type: DropdownItemType.Divider },
+        ...(onSettings
+          ? [
+              {
+                key: 'settings',
+                label: (
+                  <span className={labelClassName}>{labels.settings}</span>
+                ),
+                icon: <IconSettings size={DIAL_ICON_SIZE.SM} aria-hidden />,
+                onClick: onSettings,
+              },
+            ]
+          : []),
         {
           key: 'logout',
           label: <span className={labelClassName}>{labels.logOut}</span>,
@@ -96,7 +109,9 @@ export const UserMenu: FC<UserMenuProps> = memo(
       groups,
       labelClassName,
       labels.logOut,
+      labels.settings,
       onLogout,
+      onSettings,
       profile.displayName,
       profile.shortName,
     ]);
@@ -119,9 +134,9 @@ export const UserMenu: FC<UserMenuProps> = memo(
             )}
             aria-label={labels.trigger}
           >
-            <DialTooltip tooltip={profile.email} hideTooltip={isTooltipHidden}>
+            <Tooltip tooltip={profile.email} hideTooltip={isTooltipHidden}>
               <UserAvatar profile={profile} alt={labels.avatarAlt} />
-            </DialTooltip>
+            </Tooltip>
           </button>
         </Dropdown>
       </div>

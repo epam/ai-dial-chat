@@ -21,18 +21,6 @@ export interface ToolbarColors {
   countText?: string;
   /** Vertical divider color next to sort dropdown. Fallback: `--stroke-secondary`. */
   divider?: string;
-  /** Background color of the view-toggle wrapper. Fallback: `--bg-layer-sunken`. */
-  viewToggleBackground?: string;
-  /** Border color of the view-toggle wrapper. Fallback: `--stroke-tertiary`. */
-  viewToggleBorder?: string;
-  /** Background color of the active grid/list view-toggle button. Fallback: `--bg-layer-raised`. */
-  viewToggleActiveBackground?: string;
-  /** Icon color of the active grid/list view-toggle button. Fallback: `--text-accent`. */
-  viewToggleActiveText?: string;
-  /** Icon color of an inactive grid/list view-toggle button. Fallback: `--text-secondary`. */
-  viewToggleText?: string;
-  /** Icon color of an inactive grid/list view-toggle button on hover. Fallback: `--text-primary`. */
-  viewToggleTextHover?: string;
 }
 
 /** Grouped style overrides for `Toolbar`. */
@@ -63,6 +51,8 @@ export interface ToolbarProps {
   gridViewLabel?: string;
   /** Accessible label for switching to list view. Default: 'List view'. */
   listViewLabel?: string;
+  /** Accessible label naming the grid/list view toggle group. Default: 'View mode'. */
+  viewToggleLabel?: string;
   /** Grouped typography and color overrides. */
   styles?: ToolbarStyles;
   /** Currently selected topic filters. Empty set means no topic filter is active. */

@@ -16,7 +16,7 @@
       "path": "./libs/chat-shared"
     },
     {
-      "path": "./libs/ai-dial-chat-hooks"
+      "path": "./libs/chat-hooks"
     },
     {
       "path": "./libs/conversation-messages"
@@ -82,7 +82,13 @@
       "path": "./libs/prompts"
     },
     {
+      "path": "./libs/settings-panel"
+    },
+    {
       "path": "./libs/navigation-panel"
+    },
+    {
+      "path": "./libs/usage-dashboard"
     }
   ]
 }

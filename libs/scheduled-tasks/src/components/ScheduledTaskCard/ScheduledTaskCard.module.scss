@@ -3,7 +3,7 @@
 }
 
 .description {
-  color: var(--stc-desc-text, var(--text-control-disable-beta, #848e9c));
+  color: var(--stc-desc-text, var(--text-control-disable-primary, #848e9c));
 }
 
 .schedulePill {
@@ -14,7 +14,7 @@
 .scheduleLabel {
   color: var(
     --stc-schedule-label-text,
-    var(--text-control-disable-beta, #848e9c)
+    var(--text-control-disable-primary, #848e9c)
   );
 }
 
@@ -37,7 +37,7 @@
 }
 
 .pausedLabel {
-  color: var(--stc-paused-text, var(--text-control-disable-beta, #848e9c));
+  color: var(--stc-paused-text, var(--text-control-disable-primary, #848e9c));
 }
 
 .locationDivider {

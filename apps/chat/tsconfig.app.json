@@ -45,13 +45,16 @@
   ],
   "references": [
     {
-      "path": "../../libs/skill-editor/tsconfig.lib.json"
+      "path": "../../libs/usage-dashboard/tsconfig.lib.json"
     },
     {
       "path": "../../libs/prompt-editor/tsconfig.lib.json"
     },
     {
       "path": "../../libs/deployment-creation-form/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/settings-panel/tsconfig.lib.json"
     },
     {
       "path": "../../libs/starter-buttons/tsconfig.lib.json"
@@ -63,10 +66,10 @@
       "path": "../../libs/prompts/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/attachment-input/tsconfig.lib.json"
+      "path": "../../libs/navigation-panel/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/ai-dial-chat-hooks/tsconfig.lib.json"
+      "path": "../../libs/attachment-input/tsconfig.lib.json"
     },
     {
       "path": "../../libs/conversation-input/tsconfig.lib.json"
@@ -87,6 +90,9 @@
       "path": "../../libs/scheduled-tasks/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/skill-editor/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/publish-panel/tsconfig.lib.json"
     },
     {
@@ -105,10 +111,10 @@
       "path": "../../libs/chat-overlay/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/attachment-canvas/tsconfig.lib.json"
+      "path": "../../libs/chat-hooks/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/navigation-panel/tsconfig.lib.json"
+      "path": "../../libs/attachment-canvas/tsconfig.lib.json"
     }
   ]
 }

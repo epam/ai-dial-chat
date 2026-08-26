@@ -95,7 +95,7 @@ The endpoint:
 
 The `:toolsetName` path parameter MUST be validated to prevent path-traversal and injection, while still accepting the `/`-separated custom-toolset path format (`toolsets/{bucket}/{path}`).
 
-Validation MUST be applied to the value after route-parameter URL-decoding (the framework decodes `%XX` sequences before the DTO validator runs), so a percent-encoded traversal payload decodes to its literal form before the checks below run.
+Validation MUST be applied to the value after route-parameter URL-decoding (the framework decodes `%XX` sequences before the DTO validator runs). Any valid percent-encoded bytes that remain in that value MUST also be decoded for the path-segment safety check. This ensures that both single-encoded and double-encoded traversal payloads are evaluated as path segments before upstream proxying.
 
 Allowed characters: word characters, `. - : @ / ( )`, or a valid percent-encoded byte (`%XX`). In addition, no `/`-delimited path segment of the (decoded) value MAY be empty, `.`, or `..`.
 
@@ -115,6 +115,11 @@ Any value that fails either check SHALL cause the BFF to return `400 Bad Request
 
 - **WHEN** the path param is `..%2Fetc%2Fpasswd`, which decodes to the path segments `..`, `etc`, `passwd`
 - **THEN** the BFF returns `400 Bad Request` without calling DIAL Core, because the `..` segment is disallowed even though `/` itself is an allowed character
+
+#### Scenario: Double-encoded traversal payload is rejected
+
+- **WHEN** the path param is `..%252Fetc%252Fpasswd`, which the framework decodes to `..%2Fetc%2Fpasswd` and the path-segment safety check decodes to `../etc/passwd`
+- **THEN** the BFF returns `400 Bad Request` without calling DIAL Core
 
 ---
 

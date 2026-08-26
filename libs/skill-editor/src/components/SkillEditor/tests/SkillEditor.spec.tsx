@@ -364,6 +364,29 @@ describe('SkillEditor', () => {
     expect(onDirtyChange).toHaveBeenCalledWith(false);
   });
 
+  it('does not report a transient dirty state when initialValues are reseeded', () => {
+    const onDirtyChange = vi.fn();
+    const { rerender } = renderEditor({ onDirtyChange });
+
+    onDirtyChange.mockClear();
+    rerender(
+      <SkillEditor
+        initialValues={{
+          name: 'good-morning-breakfast',
+          description: 'A morning greeting skill',
+          instructions: '# Instructions',
+        }}
+        files={[]}
+        fileActions={fileActions}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+        onDirtyChange={onDirtyChange}
+      />,
+    );
+
+    expect(onDirtyChange).not.toHaveBeenCalledWith(true);
+  });
+
   it('renders a conflict message with a working Reload latest control', async () => {
     const onReloadLatest = vi.fn();
     const user = userEvent.setup({ delay: null });

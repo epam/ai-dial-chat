@@ -291,6 +291,7 @@ describe('ResponsesAdapter', () => {
       mockDialClient: DialClientService,
       streamChunks: string[],
       status = 200,
+      timezone?: string,
     ) => {
       vi.spyOn(mockDialClient.client, 'createResponse').mockResolvedValue({
         response: new Response(textToStream(streamChunks), {
@@ -305,9 +306,45 @@ describe('ResponsesAdapter', () => {
         new AbortController().signal,
         res as never,
         { role: ConversationMessageRole.Assistant, content: '' } as never,
+        undefined,
+        timezone,
       );
       return { result, res };
     };
+
+    it('forwards X-Timezone to DIAL Core when provided', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+
+      await relay(
+        adapter,
+        mockDialClient,
+        [
+          'data: {"type":"response.completed","response":{"status":"completed"}}\n\n',
+        ],
+        200,
+        'Europe/Warsaw',
+      );
+
+      expect(mockDialClient.client.createResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'X-Timezone': 'Europe/Warsaw',
+          }),
+        }),
+      );
+    });
+
+    it('omits X-Timezone when it is not provided', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+
+      await relay(adapter, mockDialClient, [
+        'data: {"type":"response.completed","response":{"status":"completed"}}\n\n',
+      ]);
+
+      const request = vi.mocked(mockDialClient.client.createResponse).mock
+        .calls[0][0];
+      expect(request.headers).not.toHaveProperty('X-Timezone');
+    });
 
     it('assembles text deltas into the assistant message and sets responseId on completion', async () => {
       const { adapter, mockDialClient } = makeAdapter();

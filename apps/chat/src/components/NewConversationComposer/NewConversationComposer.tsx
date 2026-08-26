@@ -1,4 +1,11 @@
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+import {
+  AttachmentValidationErrorReason,
+  useAttachmentUpload,
+  useAttachmentValidation,
+  useChatSettingsFormConfig,
+  usePageFileDrag,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ResponseFormat,
@@ -17,6 +24,7 @@ import { lazy, memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
+  AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
@@ -26,21 +34,20 @@ import {
   FileDndI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
+import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
-import { useAttachmentUpload } from '../../hooks/conversation/useAttachmentUpload';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
-import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
+import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { filesApi } from '../../server-api/api-client';
 import { getApiErrorDetails } from '../../server-api/api-error';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
@@ -134,7 +141,7 @@ const NewConversationComposer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { showErrorNotification } = useNotification();
+  const { showErrorNotification, showSuccessNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
 
@@ -179,7 +186,26 @@ const NewConversationComposer: FC<Props> = ({
     isAttachmentsAllowed,
     validateAttachment,
     fileAccept,
-  } = useAttachmentValidation(resolvedSelectedDeployment);
+  } = useAttachmentValidation({
+    allowedMimeTypes: resolvedSelectedDeployment?.inputAttachmentTypes ?? [],
+    onValidationError: ({ reason, formats }) => {
+      const noTypesAllowed =
+        reason === AttachmentValidationErrorReason.NoTypesAllowed;
+      showErrorNotification({
+        title: t(
+          noTypesAllowed
+            ? AttachmentsI18nKeys.NoAttachmentsAllowedTitle
+            : AttachmentsI18nKeys.UnsupportedTypeTitle,
+        ),
+        message: t(
+          noTypesAllowed
+            ? AttachmentsI18nKeys.NoAttachmentsAllowedMessage
+            : AttachmentsI18nKeys.UnsupportedTypeMessage,
+          noTypesAllowed ? undefined : { formats },
+        ),
+      });
+    },
+  });
 
   const handleNetworkUploadError = useCallback(
     (filenames: string[]) => {
@@ -194,8 +220,10 @@ const NewConversationComposer: FC<Props> = ({
   );
 
   const { handleUploadAttachment } = useAttachmentUpload({
+    filesApi,
     bucket,
     onNetworkError: handleNetworkUploadError,
+    debounceMs: NETWORK_ERROR_DEBOUNCE_MS,
   });
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
@@ -207,6 +235,7 @@ const NewConversationComposer: FC<Props> = ({
     selectedDeploymentId,
   });
 
+  const chatSettingsLabels = useChatSettingsFormLabels();
   const chatSettings = useChatSettingsFormConfig({
     mode: 'local',
     values: chatSettingsValues,
@@ -215,6 +244,11 @@ const NewConversationComposer: FC<Props> = ({
     isQuickApp: isQuickAppSchema({
       id: selectedDeployment?.applicationTypeSchemaId,
     }),
+    labels: chatSettingsLabels,
+    onSaved: () =>
+      showSuccessNotification({
+        message: chatSettingsLabels.savedNotification,
+      }),
   });
 
   const modelSelectorLabels = useModelSelectorLabels({
@@ -480,7 +514,7 @@ const NewConversationComposer: FC<Props> = ({
                 {names.length === 1 ? (
                   <>
                     {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
-                    <span className="break-all text-primary">
+                    <span className="break-words text-primary">
                       &quot;{names[0].split('/').pop()}&quot;?
                     </span>
                   </>
