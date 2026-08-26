@@ -232,6 +232,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
       editorStep !== MarketplaceEditorSteps.Settings
     )
       return;
+    if (appDetails?.reference && !modelFromState) return;
     if (previewConversationId) {
       dispatch(
         ConversationsActions.selectConversations({
@@ -249,6 +250,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
   }, [
     editorStep,
     appDetails?.reference,
+    modelFromState,
     areConversationsUploaded,
     areSelectedConversationsLoaded,
     dispatch,
