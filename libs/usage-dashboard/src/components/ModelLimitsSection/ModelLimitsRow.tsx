@@ -182,7 +182,7 @@ export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
         {hasStatusBadge ? (
           <span
             className={mergeClasses(
-              'inline-flex h-6 shrink-0 items-center rounded-full px-2',
+              'inline-flex h-6 shrink-0 items-center self-start rounded-full px-2',
               badgeClassName,
               getBadgeClassName(row.status),
             )}
