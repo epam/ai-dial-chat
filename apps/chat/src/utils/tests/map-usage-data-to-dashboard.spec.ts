@@ -44,13 +44,13 @@ describe('mapUsageDataToDashboard', () => {
     const result = mapUsageDataToDashboard(usage, t);
 
     expect(result.map((card) => card.title)).toEqual([
-      'Today',
-      'This week',
-      'This month',
+      'Last 24 hours',
+      'Last 7 days',
+      'Last 30 days',
     ]);
     expect(result[0]).toEqual({
-      title: 'Today',
-      periodDescription: 'Last 24 hours',
+      title: 'Last 24 hours',
+      periodDescription: 'Today',
       used: 3.6,
       total: 4,
       usedLabel: '$3.6',
@@ -68,7 +68,7 @@ describe('mapUsageDataToDashboard', () => {
       t,
     );
 
-    expect(result.map((card) => card.title)).toEqual(['Today']);
+    expect(result.map((card) => card.title)).toEqual(['Last 24 hours']);
   });
 
   it('rounds accumulated costs and remaining amounts to cents', () => {
@@ -122,8 +122,8 @@ describe('mapUsageDataToDashboard', () => {
     );
 
     expect(result[0]).toEqual({
-      title: 'Today',
-      periodDescription: 'Last 24 hours',
+      title: 'Last 24 hours',
+      periodDescription: 'Today',
       used: 12.5,
       total: 2 ** 53,
       usedLabel: '$12.5',
