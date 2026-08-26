@@ -1,18 +1,16 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
-import {
-  IconBuildingCommunity,
-  IconCircleCheckFilled,
-  IconUser,
-} from '@tabler/icons-react';
-import { FC, ReactNode } from 'react';
+import { IconBuildingCommunity, IconUser } from '@tabler/icons-react';
+import { FC } from 'react';
 import type { ItemDetailsTexts } from '../../../../models/item-details-props';
 import {
   CredentialsBannerState,
   ToolsetAuthenticationType,
 } from '../../../../types/toolset-auth';
+import {
+  CredentialsIconSurface,
+  CredentialsIdentityIcon,
+} from '../CredentialsIdentityIcon/CredentialsIdentityIcon';
 import { CredentialsInfoCard } from '../CredentialsInfoCard/CredentialsInfoCard';
-import styles from './CredentialsBanner.module.scss';
 
 /** Props for {@link CredentialsBanner}. */
 interface CredentialsBannerProps {
@@ -54,30 +52,6 @@ const defaultPersonalCredentialsActiveBannerTitle = (
 
 const BANNER_ICON_SIZE = 20;
 
-/**
- * Icon-box chip with an overlapping checkmark badge, shown only for the two
- * "active" banner states — the fallback nudge below renders a bare icon
- * instead, matching the design's distinction between "in effect" and "not
- * yet configured".
- */
-const ActiveCredentialsIcon: FC<{ icon: ReactNode }> = ({ icon }) => (
-  <span className="relative inline-flex shrink-0">
-    <span
-      className={mergeClasses(
-        'flex size-8 items-center justify-center rounded-lg',
-        styles.iconBox,
-      )}
-    >
-      {icon}
-    </span>
-    <IconCircleCheckFilled
-      size={DIAL_ICON_SIZE.MD}
-      aria-hidden
-      className={mergeClasses('absolute -end-2 -top-2', styles.activeIcon)}
-    />
-  </span>
-);
-
 /** Informational banner below the details header about which credentials are active: a fallback nudge for a non-admin, or an active-status note for an admin. */
 export const CredentialsBanner: FC<CredentialsBannerProps> = ({
   state,
@@ -95,8 +69,10 @@ export const CredentialsBanner: FC<CredentialsBannerProps> = ({
     return (
       <CredentialsInfoCard
         icon={
-          <ActiveCredentialsIcon
+          <CredentialsIdentityIcon
             icon={<IconUser size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            isActive
+            surface={CredentialsIconSurface.Raised}
           />
         }
         title={title}
@@ -112,10 +88,12 @@ export const CredentialsBanner: FC<CredentialsBannerProps> = ({
     return (
       <CredentialsInfoCard
         icon={
-          <ActiveCredentialsIcon
+          <CredentialsIdentityIcon
             icon={
               <IconBuildingCommunity size={DIAL_ICON_SIZE.SM} aria-hidden />
             }
+            isActive
+            surface={CredentialsIconSurface.Raised}
           />
         }
         title={title}

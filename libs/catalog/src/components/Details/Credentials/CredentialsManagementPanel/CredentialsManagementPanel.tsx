@@ -8,12 +8,7 @@ import {
   NeutralButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconBuildingCommunity,
-  IconCircleCheckFilled,
-  IconKey,
-  IconUser,
-} from '@tabler/icons-react';
+import { IconBuildingCommunity, IconKey, IconUser } from '@tabler/icons-react';
 import { FC, ReactNode, useCallback, useState } from 'react';
 import type { CatalogItem } from '../../../../models/catalog-item';
 import type {
@@ -25,6 +20,7 @@ import {
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '../../../../types/toolset-auth';
+import { CredentialsIdentityIcon } from '../CredentialsIdentityIcon/CredentialsIdentityIcon';
 import { CredentialsInfoCard } from '../CredentialsInfoCard/CredentialsInfoCard';
 import styles from './CredentialsManagementPanel.module.scss';
 
@@ -154,29 +150,11 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
 
   return (
     <div className="flex items-start gap-3 rounded-xl p-3">
-      <div className="relative shrink-0">
-        <div
-          className={mergeClasses(
-            'flex size-8 items-center justify-center rounded-lg',
-            styles.surface,
-          )}
-        >
-          {icon}
-        </div>
-        {isActive && (
-          <IconCircleCheckFilled
-            size={DIAL_ICON_SIZE.MD}
-            aria-hidden
-            className={mergeClasses(
-              'absolute -end-2 -top-2',
-              styles.activeIcon,
-            )}
-          />
-        )}
-        <span className="sr-only">
-          {isActive ? signedInLabel : signedOutLabel}
-        </span>
-      </div>
+      <CredentialsIdentityIcon
+        icon={icon}
+        isActive={isActive}
+        statusLabel={isActive ? signedInLabel : signedOutLabel}
+      />
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
@@ -196,13 +174,13 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
               <DangerButton
                 appearance={ButtonAppearance.Ghost}
                 label={logoutLabel}
-                className="w-28 shrink-0 justify-center whitespace-nowrap"
+                className="min-w-28 shrink-0 justify-center whitespace-nowrap"
                 onClick={handleRequestLogout}
               />
             ) : (
               <NeutralButton
                 label={loginLabel}
-                className="w-28 shrink-0 justify-center whitespace-nowrap"
+                className="min-w-28 shrink-0 justify-center whitespace-nowrap"
                 onClick={handleLogin}
               />
             ))}

@@ -189,7 +189,10 @@ describe('CredentialsManagementPanel', () => {
     expect(logoutButton.dataset.appearance).toBe('ghost');
   });
 
-  it('gives Log in and Log out the same fixed width so the two rows stay column-aligned', () => {
+  /* A minimum rather than a fixed width: the two rows' buttons line up at the
+     same size, and a longer translation is still allowed to grow instead of
+     being clipped by a hard 112px box. */
+  it('gives Log in and Log out the same minimum width so the two rows stay column-aligned', () => {
     const signedOutItem = makeItem();
     const { unmount } = render(
       <CredentialsManagementPanel item={signedOutItem} />,
@@ -204,6 +207,8 @@ describe('CredentialsManagementPanel', () => {
       name: 'Log out',
     }).className;
 
+    expect(loginClassName.split(' ')).toContain('min-w-28');
+    expect(loginClassName.split(' ')).not.toContain('w-28');
     expect(loginClassName).toBe(logoutClassName);
   });
 
