@@ -4,6 +4,7 @@ import {
   useConversationSources,
   usePanelMaxWidth,
   isDownloadableAttachment,
+  isExternalSourcePreviewable,
   downloadAttachment as triggerAttachmentDownload,
 } from '@epam/ai-dial-chat-hooks';
 import type {
@@ -51,7 +52,6 @@ import {
   ActiveScheduledTaskStatus,
 } from '../../types/active-scheduled-task';
 import { StorageKey } from '../../types/storage-key';
-import { isExternalSourcePreviewable } from '../../utils/attachment-canvas';
 import {
   isDialFileId,
   resolveDialFileDownloadUrl,

@@ -9,6 +9,7 @@
  * a flow-scoped `BroadcastChannel`.
  */
 import type { ToolsetLoginBodyDto } from '@epam/ai-dial-chat-api-client';
+import { parseExternalServiceUrl } from '@epam/ai-dial-chat-hooks';
 import type { FC } from 'react';
 import { memo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router';
@@ -36,7 +37,6 @@ import {
 import { signInOfflineCredentials } from '../../server-api/offline-credentials';
 import { loginToolset } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
-import { parseExternalServiceUrl } from '../../utils/external-services';
 import { getToolsetOAuthChannelName } from '../../utils/toolsets';
 
 const TOOLSET_OAUTH_RESULT_RETRY_INTERVAL_MS = 500;

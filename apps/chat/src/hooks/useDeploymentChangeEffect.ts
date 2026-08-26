@@ -1,7 +1,7 @@
+import { createDeploymentChangedMessage } from '@epam/ai-dial-chat-hooks';
 import { Message } from '@epam/ai-dial-chat-shared';
 import { useEffect, useRef } from 'react';
 import { useDeployments } from '../context/DeploymentsContext';
-import { createDeploymentChangedMessage } from '../utils/message-factory';
 
 /**
  * Watches the active deployment selection and appends a status message to the

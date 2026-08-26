@@ -1,42 +1,16 @@
-import type {
-  PublishConversationResultDto,
-  PublishHistoryEntryDto,
-} from '@epam/ai-dial-chat-api-client';
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import {
-  PublishAccessRulesLabels,
-  PublishHistoryEntry,
-} from '@epam/ai-dial-publish-panel';
+import { PublishAccessRulesLabels } from '@epam/ai-dial-publish-panel';
 import type { TFunction } from 'i18next';
 import {
   ButtonsI18nKeys,
   PublishAccessRulesI18nKeys,
 } from '../constants/translation-keys';
-import { CatalogPublishEntityType } from '../server-api/publish.api';
 
-const PUBLISHABLE_ENTITY_TYPES: Partial<
-  Record<CatalogEntityType, CatalogPublishEntityType>
-> = {
-  [CatalogEntityType.Model]: CatalogPublishEntityType.Model,
-  [CatalogEntityType.Toolset]: CatalogPublishEntityType.Toolset,
-  [CatalogEntityType.Agent]: CatalogPublishEntityType.Application,
-  [CatalogEntityType.Prompt]: CatalogPublishEntityType.Prompt,
-  [CatalogEntityType.Skill]: CatalogPublishEntityType.Skill,
-};
-
-/** Maps a catalog item's entity type to the publish API's entity-type path param, or `undefined` if that type is not publishable. */
-export const toPublishEntityType = (
-  type: CatalogEntityType,
-): CatalogPublishEntityType | undefined => PUBLISHABLE_ENTITY_TYPES[type];
-
-/** Maps a publish-history API response entry to the catalog lib's `PublishHistoryEntry` model. */
-export const mapPublishHistoryEntryDto = (
-  dto: PublishHistoryEntryDto,
-): PublishHistoryEntry => ({
-  version: dto.version,
-  publishedAt: Date.parse(dto.publishedAt),
-  folderPath: dto.folderPath.split('/').filter(Boolean),
-});
+export {
+  mapPublishConversationResultDto,
+  mapPublishHistoryEntryDto,
+  toPublishEntityType,
+  type CatalogPublishEntityType,
+} from '@epam/ai-dial-chat-hooks';
 
 /** Builds the translated `accessRulesLabels` overrides shared by every publish panel host (catalog, conversation). */
 export const getAccessRulesLabels = (
@@ -89,14 +63,4 @@ export const getAccessRulesLabels = (
     cancelLabel: t(ButtonsI18nKeys.Cancel),
     dialogAriaLabel: t(PublishAccessRulesI18nKeys.DialogAriaLabel),
   },
-});
-
-/** Maps a conversation publish-history API response entry to the publish panel's `PublishHistoryEntry` model. */
-export const mapPublishConversationResultDto = (
-  dto: PublishConversationResultDto,
-): PublishHistoryEntry => ({
-  /* A conversation carries no version, so any entry for a folder already means
-   * "published here" — see `usePublishFlow`. */
-  publishedAt: Date.parse(dto.publishedAt),
-  folderPath: dto.folderPath.split('/').filter(Boolean),
 });

@@ -4,7 +4,13 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import {
   AttachmentValidationErrorReason,
+  dialFilesToAttachments,
+  dialFolderPathToAttachment,
+  findDeploymentByIdOrReference,
+  getQuickAppConversationStarters,
   isMessageChanged,
+  isQuickAppSchema,
+  referenceAttachmentToPdfCanvasContent,
   useAttachmentValidation,
   useChatSettingsFormConfig,
   useConversationScroll,
@@ -74,16 +80,9 @@ import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelecto
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import { isQuickAppSchema } from '../../utils/application-schema';
-import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
-import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
-import {
-  dialFilesToAttachments,
-  dialFolderPathToAttachment,
-} from '../../utils/dial-file-to-attachment';
+import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
-import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import FooterMessage from '../FooterMessage/FooterMessage';
@@ -245,7 +244,10 @@ const ConversationView: FC<Props> = ({
     (annotation: Annotation) => {
       const attachment = annotation.body?.source?.attachment;
       if (!attachment) return;
-      const canvasContent = referenceAttachmentToPdfCanvasContent(attachment);
+      const canvasContent = referenceAttachmentToPdfCanvasContent(
+        attachment,
+        attachmentCanvasUrlResolvers,
+      );
       if (canvasContent) openCanvas(canvasContent, attachment.title);
     },
     [openCanvas],
@@ -566,7 +568,9 @@ const ConversationView: FC<Props> = ({
 
   const handleAttachDialFiles = useCallback(
     (result: AttachResult) => {
-      const fileAttachments = dialFilesToAttachments(result.files, bucket);
+      const fileAttachments = dialFilesToAttachments(result.files, bucket, {
+        resolvePreviewUrl: resolveCatalogIconUrl,
+      });
       const folderAttachments = result.folderPaths.map(
         dialFolderPathToAttachment,
       );

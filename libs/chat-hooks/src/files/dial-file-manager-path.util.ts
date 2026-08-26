@@ -3,12 +3,12 @@ import {
   DialFileNodeType,
   DialFilePermission,
 } from '@epam/ai-dial-react-file-manager';
+import { safeDecodeURI } from '../shared/string-utils';
 import {
   PATH_SEPARATOR_REGEXP,
   type SharedRootMeta,
 } from './dial-file-manager.model';
 import { DialFileManagerActionProfile } from './file-manager-variant';
-import { safeDecodeURI } from './string-utils';
 
 export const hasForbiddenNameSymbols = (
   name: string,

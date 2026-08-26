@@ -13,6 +13,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { parsePdfPageReference } from '@epam/ai-dial-quotations';
 import { useCallback } from 'react';
+import { isDialFileId } from '../../files/dial-file';
 
 /** Resolves a DIAL Core file id to a downloadable URL. Host-owned — encodes the app's own file-download endpoint. */
 export type ResolveDownloadUrl = (fileId: string) => string | undefined;
@@ -28,9 +29,6 @@ export interface UseAttachmentActionResult {
   /** Default click handler for an attachment tile: download, canvas-preview, or open-in-browser. */
   handleAttachmentClick: (attachment: DisplayAttachment) => void;
 }
-
-/** Returns true when a value looks like a DIAL Core file id (`files/{bucket}/{path}`). */
-export const isDialFileId = (url: string): boolean => url.startsWith('files/');
 
 /** Returns true when `downloadAttachment` can trigger a download for `attachment`. */
 export const isDownloadableAttachment = (

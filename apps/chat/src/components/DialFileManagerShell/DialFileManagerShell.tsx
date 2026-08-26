@@ -2,6 +2,7 @@ import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
   FileUploadStatus,
+  getParentFolderPath,
   useGridEditingScroll,
   type UseDialFileManagerResult,
 } from '@epam/ai-dial-chat-hooks';
@@ -22,7 +23,6 @@ import {
 import { memo, useEffect, useMemo, useState, type FC } from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
 import UploadProgressModal from '../../components/DialFileManagerModal/UploadProgressModal';
-import { getParentFolderPath } from '../../utils/resolve-dial-file-api-path';
 import type {
   DialFileManagerDestinationFolderPopupOptions,
   DialFileManagerShellLabels,

@@ -13,8 +13,9 @@ import {
   useRef,
   useState,
 } from 'react';
+import { safeDecodeURI } from '../../shared/string-utils';
 import { applyChunkToMessages } from './apply-chunk';
-import { getConversationPath, safeDecodeURI } from './conversation-path';
+import { getConversationPath } from './conversation-path';
 import { isAwaitingGenerationResume } from './generation-resume';
 
 /*

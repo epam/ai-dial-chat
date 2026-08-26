@@ -1,3 +1,11 @@
+import {
+  PROMPT_CONTENT_MAX_LENGTH,
+  PROMPT_DESCRIPTION_MAX_LENGTH,
+  PromptFieldError,
+  validatePromptContent,
+  validatePromptDescription,
+  validatePromptName,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   PromptEditor as PromptEditorForm,
@@ -30,16 +38,9 @@ import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
-import { parsePromptResourceUrl, PromptFieldError } from '../../types/prompt';
+import { parsePromptResourceUrl } from '../../types/prompt';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
-import {
-  PROMPT_CONTENT_MAX_LENGTH,
-  PROMPT_DESCRIPTION_MAX_LENGTH,
-  validatePromptContent,
-  validatePromptDescription,
-  validatePromptName,
-} from '../../utils/prompt';
 
 interface FormErrors {
   name?: PromptFieldError;

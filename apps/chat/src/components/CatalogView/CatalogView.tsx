@@ -11,7 +11,35 @@ import type {
   PromptResponseDto,
   ToolsetLogoutBodyDto,
 } from '@epam/ai-dial-chat-api-client';
-import { EXPORT_APP_NAME } from '@epam/ai-dial-chat-hooks';
+import {
+  buildConnectApi,
+  buildDeploymentConnectApi,
+  buildPromptExportEnvelope,
+  buildPromptExportFileName,
+  buildPromptOverview,
+  buildSkillContentTree,
+  buildSkillOverview,
+  EXPORT_APP_NAME,
+  findDeploymentByIdOrReference,
+  isOrganisationPromptItem,
+  isQuickAppSchema,
+  mapDeploymentDetailsDtoToEntityDetails,
+  mapEntityDetailsToCatalogDetails,
+  mapPromptToCatalogItem,
+  mapSkillToCatalogItem,
+  mapToolsetCredentials,
+  parseSkillManifestDocument,
+  readSkillFileBytes,
+  readSkillManifest,
+  resolveMcpResourceKind,
+  resolveSkillFileDownloadPath,
+  resolveSkillManifestFileId,
+  sanitizeFileName,
+  serializePromptExport,
+  type PromptOverviewLabels,
+  type SkillFileContent,
+  type SkillOverviewLabels,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   CatalogEntityType,
@@ -106,53 +134,20 @@ import {
   SkillSource,
   type ParsedSkillResourceUrl,
 } from '../../types/skill';
-import { isQuickAppSchema } from '../../utils/application-schema';
-import { buildDeploymentConnectApi } from '../../utils/deployment-endpoint-url';
-import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
-import {
-  buildPromptExportEnvelope,
-  buildPromptExportFileName,
-  serializePromptExport,
-} from '../../utils/export-prompt';
 import { resolveFavoriteEntityType } from '../../utils/favorites';
 import { triggerBrowserDownload } from '../../utils/file-download';
-import { sanitizeFileName } from '../../utils/file-name';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
+  buildDeploymentFolderLabels,
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
 } from '../../utils/map-deployment-to-catalog-item';
-import {
-  mapDeploymentDetailsDtoToEntityDetails,
-  mapEntityDetailsToCatalogDetails,
-  mapToolsetCredentials,
-} from '../../utils/map-entity-details-to-catalog';
-import {
-  buildPromptOverview,
-  isOrganisationPromptItem,
-  mapPromptToCatalogItem,
-} from '../../utils/map-prompt-to-catalog-item';
-import {
-  buildSkillContentTree,
-  buildSkillOverview,
-  mapSkillToCatalogItem,
-  readSkillFileBytes,
-  readSkillManifest,
-  resolveSkillFileDownloadPath,
-  resolveSkillManifestFileId,
-} from '../../utils/map-skill-to-catalog-item';
-import {
-  buildConnectApi,
-  resolveMcpResourceKind,
-} from '../../utils/mcp-endpoint-url';
 import {
   getAccessRulesLabels,
   mapPublishHistoryEntryDto,
   toPublishEntityType,
 } from '../../utils/publish';
-import type { SkillFileContent } from '../../utils/skill-file-preview';
-import { parseSkillManifest } from '../../utils/skill-manifest';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import { SkillDetailsFilePreview } from './SkillDetailsFilePreview';
 
@@ -321,7 +316,33 @@ const CatalogView: FC<Props> = ({
     showErrorNotification({ message: t(CatalogI18nKeys.SkillsLoadError) });
   }, [skillsError, showErrorNotification, t]);
 
+  const promptOverviewLabels: PromptOverviewLabels = useMemo(
+    () => ({
+      authorLabel: t(CatalogI18nKeys.DetailsPromptAuthor),
+      updatedLabel: t(CatalogI18nKeys.DetailsPromptUpdated),
+      sectionTitle: t(CatalogI18nKeys.DetailsPromptSection),
+    }),
+    [t],
+  );
+
+  const skillOverviewLabels: SkillOverviewLabels = useMemo(
+    () => ({
+      whenToUseLabel: t(CatalogI18nKeys.DetailsSkillWhenToUse),
+      allowedToolsLabel: t(CatalogI18nKeys.DetailsSkillAllowedTools),
+      bundledResourcesLabel: t(CatalogI18nKeys.DetailsSkillBundledResources),
+      specificationSectionTitle: t(
+        CatalogI18nKeys.DetailsSkillSpecificationSection,
+      ),
+      authorLabel: t(CatalogI18nKeys.DetailsSkillAuthor),
+      updatedLabel: t(CatalogI18nKeys.DetailsSkillUpdated),
+      fileCountLabel: t(CatalogI18nKeys.DetailsSkillFileCount),
+      detailsSectionTitle: t(CatalogI18nKeys.DetailsSkillSection),
+    }),
+    [t],
+  );
+
   const catalogItems = useMemo(() => {
+    const folderLabels = buildDeploymentFolderLabels(t);
     return [
       ...deployments.map((d) =>
         mapDeploymentToCatalogItem(d, {
@@ -346,21 +367,24 @@ const CatalogView: FC<Props> = ({
         ? [
             ...prompts.map((prompt) =>
               mapPromptToCatalogItem(prompt, {
-                t,
+                folderLabels,
+                overviewLabels: promptOverviewLabels,
                 source: PromptSource.Personal,
                 favoriteIds,
               }),
             ),
             ...sharedPrompts.map((prompt) =>
               mapPromptToCatalogItem(prompt, {
-                t,
+                folderLabels,
+                overviewLabels: promptOverviewLabels,
                 source: PromptSource.SharedWithMe,
                 favoriteIds,
               }),
             ),
             ...publicPrompts.map((prompt) =>
               mapPromptToCatalogItem(prompt, {
-                t,
+                folderLabels,
+                overviewLabels: promptOverviewLabels,
                 source: PromptSource.Public,
                 favoriteIds,
               }),
@@ -371,21 +395,21 @@ const CatalogView: FC<Props> = ({
         ? [
             ...skills.map((skill) =>
               mapSkillToCatalogItem(skill, {
-                t,
+                folderLabels,
                 source: SkillSource.Personal,
                 favoriteIds,
               }),
             ),
             ...sharedSkills.map((skill) =>
               mapSkillToCatalogItem(skill, {
-                t,
+                folderLabels,
                 source: SkillSource.SharedWithMe,
                 favoriteIds,
               }),
             ),
             ...publicSkills.map((skill) =>
               mapSkillToCatalogItem(skill, {
-                t,
+                folderLabels,
                 source: SkillSource.Public,
                 favoriteIds,
               }),
@@ -407,6 +431,7 @@ const CatalogView: FC<Props> = ({
     prompts,
     sharedPrompts,
     publicPrompts,
+    promptOverviewLabels,
     isSkillsEnabled,
     skills,
     sharedSkills,
@@ -494,7 +519,7 @@ const CatalogView: FC<Props> = ({
            */
           return {
             promptContent: { content: dto.content },
-            overview: buildPromptOverview(dto, t),
+            overview: buildPromptOverview(dto, promptOverviewLabels),
           };
         } catch {
           return undefined;
@@ -532,7 +557,7 @@ const CatalogView: FC<Props> = ({
          */
         const parsedManifest =
           manifest.status === 'fulfilled' && manifest.value != null
-            ? parseSkillManifest(manifest.value)
+            ? parseSkillManifestDocument(manifest.value)
             : undefined;
         const skill = [...skills, ...sharedSkills, ...publicSkills].find(
           (candidate) => candidate.url === item.id,
@@ -543,7 +568,7 @@ const CatalogView: FC<Props> = ({
                 skill,
                 files.value.items,
                 parsedManifest?.about,
-                t,
+                skillOverviewLabels,
               )
             : undefined;
 
@@ -584,10 +609,7 @@ const CatalogView: FC<Props> = ({
           limitsPromise,
         ]);
         const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
-        const catalogDetails = mapEntityDetailsToCatalogDetails(
-          entityDetails,
-          t,
-        );
+        const catalogDetails = mapEntityDetailsToCatalogDetails(entityDetails);
         const mcpResourceKind = resolveMcpResourceKind(
           item.type,
           item.supportsMcp,
@@ -635,6 +657,8 @@ const CatalogView: FC<Props> = ({
       sharedSkills,
       publicSkills,
       fetchPromptDto,
+      promptOverviewLabels,
+      skillOverviewLabels,
     ],
   );
 
@@ -1016,7 +1040,7 @@ const CatalogView: FC<Props> = ({
     if (text == null) return undefined;
 
     return filePath === SKILL_MANIFEST_FILE
-      ? parseSkillManifest(text).body
+      ? parseSkillManifestDocument(text).body
       : text;
   }, []);
 

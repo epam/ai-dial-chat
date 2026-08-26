@@ -1,7 +1,9 @@
+import {
+  mapDeploymentLimitsToInput,
+  type MonthlyUsageLimit,
+} from '@epam/ai-dial-chat-hooks';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getDeploymentLimits } from '../server-api/deployment-limits';
-import type { MonthlyUsageLimit } from '../utils/map-deployment-limits-to-input';
-import { mapDeploymentLimitsToInput } from '../utils/map-deployment-limits-to-input';
 
 export interface UseDeploymentUsageLimitsResult {
   /** Normalized monthly token limit for the selected deployment. */
