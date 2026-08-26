@@ -33,7 +33,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   errorLabel = 'Failed to load app',
 }) => {
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
-  const { html, sandboxUrl, toolName, toolInput, toolResult, onToolCall } =
+  const { html, sandboxUrl, toolName, toolInput, toolResult, hostContext, onToolCall } =
     content;
 
   return (
@@ -43,6 +43,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
         toolName={toolName}
         toolInput={toolInput}
         toolResult={toolResult}
+        hostContext={hostContext}
         sandbox={{ url: new URL(sandboxUrl) }}
         onCallTool={(params) => onToolCall(params.name, params.arguments)}
         /*

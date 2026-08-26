@@ -103,14 +103,35 @@ Response (`200`) `McpAppToolCallResponseDto { result: unknown }` — unwrapped f
 
 ---
 
-### Requirement: One new environment variable, exposed via existing client-config pipeline
+### Requirement: Two new environment variables, both exposed via existing client-config pipeline
 
 Both endpoints reuse the existing toolset-to-MCP-endpoint resolution already present for toolset invocation (`toolset-authoring`, `deployments-api`) — no new env var is needed for the GET/POST endpoints themselves. DIAL Core's `mcp_apps.domain_override` (`epam/ai-dial-core` PR #1745) is a per-deployment config an admin sets on the Core/deployment side, not an `ai-dial-chat`/`chat-api` environment variable.
 
-One new env var, `MCP_APP_SANDBOX_URL`, is added for the *sandbox-proxy* app's URL (see `mcp-app-sandbox-proxy`) — it is registered as a new client-visible key (`mcpAppSandboxUrl`) in `apps/chat-api/src/app-config`'s existing `CONFIG_DEFINITIONS`/`EnvConfigProvider`/`ClientConfigResponseDto` pipeline, the same mechanism `dialCoreExternalUrl` and `customVisualizers` already use — no new frontend-config mechanism is introduced. When unset, `mcpAppSandboxUrl` resolves to `null` and `apps/chat`'s `useOpenMcpAppCanvas` treats it as "feature unavailable" (see `mcp-app-trigger`), not an error.
+**`MCP_APP_SANDBOX_URL`** — added for the *sandbox-proxy* app's URL (see `mcp-app-sandbox-proxy`). Registered as client-visible key `mcpApps.sandboxUrl` → `ClientConfigResponseDto.config.mcpAppSandboxUrl` (`string | null`, defaults `null`). When unset, `mcpAppSandboxUrl` is `null` and `apps/chat`'s `useOpenMcpAppCanvas` treats it as "feature unavailable" (see `mcp-app-trigger`), not an error.
 
-#### Scenario: Boot is unaffected when MCP_APP_SANDBOX_URL is unset
+**`MCP_APP_THEME`** — optional admin override for the color theme delivered to all hosted MCP app Views via `hostContext.theme`. Registered as client-visible key `mcpApps.theme` → `ClientConfigResponseDto.config.mcpAppTheme` (`'light' | 'dark' | null`, defaults `null`). Both env vars follow the same `CONFIG_DEFINITIONS`/`EnvConfigProvider`/`ClientConfigResponseDto` pipeline already used by `dialCoreExternalUrl` and `customVisualizers` — no new frontend-config mechanism is introduced.
 
-- **WHEN** `apps/chat-api` boots with this capability present and `MCP_APP_SANDBOX_URL` unset
+**`MCP_APP_USER_AGENT`** — optional admin override for the host application identifier delivered to all hosted MCP App Views via `hostContext.userAgent`. Registered as client-visible key `mcpApps.userAgent` → `ClientConfigResponseDto.config.mcpAppUserAgent` (`string | null`, defaults `null`). When unset, the client falls back to `'ai-dial-chat'`.
+
+`EnvironmentVariables` (`apps/chat-api/src/config/environment.config.ts`) SHALL add:
+
+```ts
+@IsOptional()
+@IsEnum(['light', 'dark'])
+MCP_APP_THEME?: 'light' | 'dark';
+```
+
+When `MCP_APP_THEME` is set, all users receive that theme in their MCP app Views regardless of their own UI theme preference; when unset (`null`), each client's `useOpenMcpAppCanvas` hook falls back to the user's active theme from `ThemeContext` (always `'dark'` or `'light'` at that point, since system-theme resolves at runtime before the hook runs — see `mcp-app-trigger`).
+
+`AppConfigContext` (`apps/chat/src/context/AppConfigContext.tsx`) SHALL add `mcpAppTheme: 'light' | 'dark' | null` to `AppConfigState.config`, loaded from `response.config?.mcpAppTheme ?? null`, following the same pattern as `mcpAppSandboxUrl`.
+
+#### Scenario: Boot is unaffected when MCP_APP_SANDBOX_URL and MCP_APP_THEME are unset
+
+- **WHEN** `apps/chat-api` boots with this capability present and neither env var is set
 - **THEN** boot succeeds exactly as before this change
-- **AND** the client config response's `mcpAppSandboxUrl` is `null`
+- **AND** the client config response's `mcpAppSandboxUrl` is `null` and `mcpAppTheme` is `null`
+
+#### Scenario: MCP_APP_THEME admin override is reflected in client config
+
+- **WHEN** `MCP_APP_THEME=dark` is set
+- **THEN** the client config response's `mcpAppTheme` is `'dark'`

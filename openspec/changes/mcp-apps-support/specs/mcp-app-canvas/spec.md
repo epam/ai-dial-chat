@@ -7,16 +7,22 @@
 `libs/attachment-canvas/src/models/attachment-canvas.ts` SHALL add a new member to the `AttachmentCanvasContent` discriminated union:
 
 ```ts
+import { McpUiHostContext } from '@modelcontextprotocol/ext-apps/app-bridge';
+import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+
 interface McpAppCanvasContent {
   type: AttachmentContentType.McpApp;
-  html: string;                     // resource body fetched by the app layer from chat-api's raw-passthrough GET; passed straight to @mcp-ui/client's AppRenderer
-  sandboxUrl: string;                // isolated-origin mcp-app-sandbox-proxy URL, resolved by the app layer from client config
-  toolName: string;                 // the tool call that produced this resource — forwarded on every onToolCall
+  html: string;                               // resource body fetched by the app layer from chat-api's raw-passthrough GET; passed straight to @mcp-ui/client's AppRenderer
+  sandboxUrl: string;                          // isolated-origin mcp-app-sandbox-proxy URL, resolved by the app layer from client config
+  toolName: string;                           // the tool call that produced this resource — forwarded on every onToolCall
+  toolInput?: Record<string, unknown>;        // seed: arguments of the matched tool call, from resolveMcpAppToolCallSeed
+  toolResult?: CallToolResult;                // seed: result of the matched tool call, from resolveMcpAppToolCallSeed
+  hostContext?: McpUiHostContext;             // UI context sent to the View on ui/initialize; built by the app layer — see mcp-app-trigger requirement
   onToolCall: (name: string, args: unknown) => Promise<CallToolResult>; // proxies to chat-api; app-level adapter, no MCP/session knowledge in this type
 }
 ```
 
-`html` is the body of `chat-api`'s raw-passthrough mirror of DIAL Core's `GET /v1/deployments/{deploymentId}/mcp/resources?uri=...` (see `mcp-app-proxy-api`), fetched via JS by `useOpenMcpAppCanvas` (see `mcp-app-trigger`) — not loaded as an iframe `src` (see `design.md` D3 for why: `@mcp-ui/client`'s `AppRenderer` needs HTML content, not a URL). `sandboxUrl` points at the new `mcp-app-sandbox-proxy` app (see that capability) and is passed to `AppRenderer`'s `sandbox` prop. `CallToolResult` is imported from `@modelcontextprotocol/sdk/types.js` — the MCP protocol's own result shape for a `tools/call`, not a host-specific type.
+`html` is the body of `chat-api`'s raw-passthrough mirror of DIAL Core's `GET /v1/deployments/{deploymentId}/mcp/resources?uri=...` (see `mcp-app-proxy-api`), fetched via JS by `useOpenMcpAppCanvas` (see `mcp-app-trigger`) — not loaded as an iframe `src` (see `design.md` D3 for why: `@mcp-ui/client`'s `AppRenderer` needs HTML content, not a URL). `sandboxUrl` points at the new `mcp-app-sandbox-proxy` app (see that capability) and is passed to `AppRenderer`'s `sandbox` prop. `CallToolResult` is imported from `@modelcontextprotocol/sdk/types.js` — the MCP protocol's own result shape for a `tools/call`, not a host-specific type. `McpUiHostContext` is imported from `@modelcontextprotocol/ext-apps/app-bridge` — the MCP Apps protocol type for the `ui/initialize` response payload; `@modelcontextprotocol/ext-apps` is added as a **peer dependency** of `libs/attachment-canvas` alongside `@mcp-ui/client` (it is already a transitive dep through `@mcp-ui/client`, but the type import requires it to be declared as a direct peer so version changes don't silently break the type contract).
 
 `isDownloadable(content)` SHALL return `false` for an `McpAppCanvasContent` value — there is no underlying file to download.
 
@@ -41,7 +47,7 @@ interface McpAppCanvasContent {
 
 `libs/attachment-canvas/src/components/McpAppCanvasRenderer/McpAppCanvasRenderer.tsx` SHALL mount the app via `@mcp-ui/client`'s `AppRenderer` component (confirmed via spike, `design.md` D2). Behaviour:
 
-- Render `<AppRenderer html={content.html} sandbox={{ url: new URL(content.sandboxUrl) }} toolName={content.toolName} onCallTool={...} onError={...} />`. The `html` prop skips `AppRenderer`'s own resource-fetching path entirely — the renderer never issues its own network request for the resource.
+- Render `<AppRenderer html={content.html} sandbox={{ url: new URL(content.sandboxUrl) }} toolName={content.toolName} hostContext={content.hostContext} onCallTool={...} onError={...} />`. The `html` prop skips `AppRenderer`'s own resource-fetching path entirely — the renderer never issues its own network request for the resource. `hostContext` is forwarded verbatim from `content.hostContext`; when `undefined` (the field is optional), `AppRenderer` behaves as it did previously and sends `{}` in the `ui/initialize` response.
 - **Correction (found by runtime inspection of `@mcp-ui/client@<installed version>`'s bundled source):** the `sandbox` prop's `permissions` field does not exist in `@mcp-ui/client`'s actual `AppRenderer`/`AppFrame` implementation — only `sandbox.url` and `sandbox.csp` are read (`AppFrame`'s resource-ready message only ever sends `{ html, csp }`). A `permissions: 'allow-scripts'` value that was previously passed here was inert and has been removed; see the sandbox-attribute requirement below for where the inner iframe's `sandbox` attribute is actually controlled.
 - Every `tools/call` request the mounted app issues SHALL be forwarded to `content.onToolCall(name, args)` via `onCallTool`; the resolved/rejected result SHALL be relayed back to the app through `AppRenderer`'s response channel.
 - The component MUST NOT read from any app-level context (auth, theme, i18n, feature flags) — all data required is passed in through `McpAppCanvasContent`, matching the constraint already placed on `VisualizerCanvasRenderer`.

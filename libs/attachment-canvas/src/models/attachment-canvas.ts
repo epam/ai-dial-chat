@@ -4,6 +4,7 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
+import type { McpUiHostContext } from '@mcp-ui/client';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { CSSProperties } from 'react';
 import {
@@ -128,6 +129,8 @@ export interface McpAppCanvasContent {
   toolInput?: Record<string, unknown>;
   /** Result of the original tool call that produced this resource, passed to the mounted app so it renders that invocation immediately instead of an empty initial state. */
   toolResult?: CallToolResult;
+  /** UI context delivered to the View during the `ui/initialize` handshake; built by the app layer from the active theme, locale, and CSS design tokens. */
+  hostContext?: McpUiHostContext;
   /** Forwards a `tools/call` request issued by the mounted app to the owning MCP session via the app layer. */
   onToolCall: (name: string, args: unknown) => Promise<CallToolResult>;
 }

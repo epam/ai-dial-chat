@@ -128,12 +128,27 @@ This indirect source only ever adds entries alongside the direct source above; a
 
 ### Requirement: `useOpenMcpAppCanvas` hook opens the canvas for a discovered tool's UI resource
 
-**Revised** (supersedes the `Stage`-keyed signature — see `design.md` D5, third revision). `apps/chat/src/hooks/attachment/useOpenMcpAppCanvas.ts` SHALL expose `openMcpAppCanvas(match: McpAppToolRef, canvasKey?: string, toolCall?: McpAppToolCallSeed): Promise<boolean>`, following the `openCanvas`/`AttachmentCanvasContext` pattern already used by `useOpenAttachmentCanvas`:
+**Revised** (supersedes the `Stage`-keyed signature — see `design.md` D5, third revision). `apps/chat/src/hooks/attachment/useOpenMcpAppCanvas.ts` SHALL expose `openMcpAppCanvas(match: McpAppToolRef, canvasKey?: string, toolCall?: McpAppToolCallSeed): Promise<boolean>`, following the `openCanvas`/`AttachmentCanvasContext` pattern already used by `useOpenAttachmentCanvas`.
+
+The hook reads, at call site:
+- `mcpAppSandboxUrl` and `mcpAppTheme` from `AppConfigContext.config` (both follow the `CONFIG_DEFINITIONS`/`EnvConfigProvider` pipeline; `mcpAppTheme` is `'light' | 'dark' | null`).
+- `currentTheme` from `ThemeContext` — always `'dark'` or `'light'` at runtime (system-theme resolves before the hook runs).
+- `i18n` from `useTranslation()` (already present for `AttachmentCanvasI18nKeys`).
+
+Steps:
 
 1. Return `false` immediately if `mcpAppSandboxUrl` (from `AppConfigContext`, see `mcp-app-sandbox-proxy`) is unavailable — no sandbox proxy deployed/configured means this feature cannot render safely, same "absence isn't failure" posture as `mcp_apps.domain_override`.
 2. Call `closePanel()` and `closeSourcesPanel()` synchronously (same mutual-exclusivity contract as every other canvas trigger in the `canvas` capability), then `openCanvasLoading(title, canvasKey)` where `title` is the fixed `AttachmentCanvasI18nKeys.McpAppTitle` string, not any per-tool or per-stage name.
 3. Call `fetchMcpAppResourceHtml(match.toolsetId, match.resourceUri)` (`mcp-app-proxy-api` client wrapper, `apps/chat/src/server-api/mcp-apps.ts`) — a GET against the `mcp-app-resource` route, resolving to the response body's text.
-4. On success, build an `McpAppCanvasContent` with `html` set to the fetched text, `sandboxUrl: mcpAppSandboxUrl`, `toolName: match.toolName`, `toolInput: toolCall?.toolInput`, `toolResult: toolCall?.toolResult`, and `onToolCall` bound to a `apps/chat/src/server-api/mcp-apps.ts` wrapper that POSTs to the tool-call-forwarding endpoint with `match.toolsetId`. Call `openCanvas(content, title, canvasKey)` and return `true`.
+4. On success, build a `McpUiHostContext` (imported from `@modelcontextprotocol/ext-apps/app-bridge`) with the following fields populated — this is the UI context delivered to the View during `ui/initialize`:
+   - `theme`: `mcpAppTheme ?? currentTheme` — admin override when set, otherwise the user's active theme.
+   - `locale`: `i18n.language` — the active BCP 47 locale tag.
+   - `timeZone`: `Intl.DateTimeFormat().resolvedOptions().timeZone` — the user's IANA timezone.
+   - `userAgent`: `mcpAppUserAgent ?? 'ai-dial-chat'` — admin-configurable host identifier (`MCP_APP_USER_AGENT` env var, from `AppConfigContext.config.mcpAppUserAgent`); falls back to `'ai-dial-chat'` when unset.
+   - `platform`: `'web'` — static platform type.
+   - `displayMode`: `'inline'` — the View is always rendered in the attachment canvas panel, which is an inline embedded mode.
+   - `styles.variables`: a `Partial<Record<McpUiStyleVariableKey, string>>` built by reading each `McpUiStyleVariableKey` from `getComputedStyle(document.documentElement)` (calling `getPropertyValue(key).trim()`) and omitting keys whose resolved value is the empty string. The app SHALL define CSS variables with the exact `McpUiStyleVariableKey` names (e.g. `--color-background-primary`, `--color-text-primary`, …) mapped from its own design-token system in a global stylesheet, so that this read produces a complete set of theme values for the hosted View. `McpUiStyleVariableKey` is the union type of all standardized MCP UI CSS variable names (backgrounds, text, borders, rings, typography, border-radius/width, shadows) exported from `@modelcontextprotocol/ext-apps/app-bridge`.
+   Then build an `McpAppCanvasContent` with `html` set to the fetched text, `sandboxUrl: mcpAppSandboxUrl`, `toolName: match.mcpToolName` (real name, not correlation name — see `mcp-app-trigger` tool-discovery requirement), `toolInput: toolCall?.toolInput`, `toolResult: toolCall?.toolResult`, `hostContext` set to the `McpUiHostContext` built above, and `onToolCall` bound to a `apps/chat/src/server-api/mcp-apps.ts` wrapper that POSTs to the tool-call-forwarding endpoint with `match.toolsetId`. Call `openCanvas(content, title, canvasKey)` and return `true`.
 5. On failure (the fetch rejects or resolves with an error status), call `closeCanvas()` and return `false`.
 
 `ConversationView.tsx` SHALL pass `openMcpAppCanvas` as the `onOpenApp` prop to `ConversationMessageItem`, which uses it (per the trigger requirement above) to build the in-message "Open App" button's `onClick` handler, and separately calls it directly from the auto-open hook.

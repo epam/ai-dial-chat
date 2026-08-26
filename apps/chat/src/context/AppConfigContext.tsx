@@ -30,6 +30,8 @@ export interface AppConfigState {
     defaultDeploymentId: string | null;
     dialCoreExternalUrl: string | null;
     mcpAppSandboxUrl: string | null;
+    mcpAppTheme: 'light' | 'dark' | null;
+    mcpAppUserAgent: string | null;
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
@@ -56,6 +58,8 @@ const INITIAL_STATE: AppConfigState = {
     defaultDeploymentId: null,
     dialCoreExternalUrl: null,
     mcpAppSandboxUrl: null,
+    mcpAppTheme: null,
+    mcpAppUserAgent: null,
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
@@ -98,6 +102,8 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             defaultDeploymentId: response.config?.defaultDeploymentId ?? null,
             dialCoreExternalUrl: response.config?.dialCoreExternalUrl ?? null,
             mcpAppSandboxUrl: response.config?.mcpAppSandboxUrl ?? null,
+            mcpAppTheme: response.config?.mcpAppTheme ?? null,
+            mcpAppUserAgent: response.config?.mcpAppUserAgent ?? null,
             fileManagerTabs:
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,

@@ -52,6 +52,14 @@ export class EnvironmentVariables {
   MCP_APP_SANDBOX_URL?: string;
 
   @IsOptional()
+  @Matches(/^(light|dark)$/)
+  MCP_APP_THEME?: 'light' | 'dark';
+
+  @IsOptional()
+  @IsString()
+  MCP_APP_USER_AGENT?: string;
+
+  @IsOptional()
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}(-preview)?$/, {
     message:
