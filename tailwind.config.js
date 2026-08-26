@@ -102,7 +102,8 @@ const borderColors = {
   'gradient-1': 'var(--stroke-gradient-1, #5976E9)', // blue-300
   'gradient-2': 'var(--stroke-gradient-2, #885DF2)', // violet-300
   focus: 'var(--stroke-focus-black, var(--stroke-focus, #161B2D))', // grey-1000
-  'accent-focus': 'var(--stroke-focus-blue, #6785FB)', // blue-200
+  'accent-focus':
+    'var(--stroke-accent-focus, var(--stroke-focus-blue, #6785FB))', // blue-200
   'error-alpha': 'var(--stroke-error-alpha, #AE2F2F73)', // red-800 alpha-45
   'control-disable-primary':
     'var(--stroke-control-disable-primary, var(--text-control-disable-primary, var(--text-control-disable-alpha, #848E9C)))', // grey-600

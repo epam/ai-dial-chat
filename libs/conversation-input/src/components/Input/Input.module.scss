@@ -4,7 +4,10 @@
 
   &:focus-within,
   &:active {
-    outline-color: var(--ci-border-focus, var(--stroke-focus-blue, #6785fb));
+    outline-color: var(
+      --ci-border-focus,
+      var(--stroke-accent-focus, var(--stroke-focus-blue, #6785fb))
+    );
   }
 
   &.wrapperDisabled {
