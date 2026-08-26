@@ -6,8 +6,11 @@ import {
 } from '../../../../../types/toolset-auth';
 import { CredentialsBanner } from '../CredentialsBanner';
 
+/* The checkmark badge is decorative, so it carries no accessible name — the
+   mock renders text the queries can look for instead. */
 vi.mock('@tabler/icons-react', () => ({
   IconBuildingCommunity: () => <svg />,
+  IconCircleCheckFilled: () => <span>active badge</span>,
   IconUser: () => <svg />,
 }));
 
@@ -132,5 +135,28 @@ describe('CredentialsBanner', () => {
       />,
     );
     expect(screen.getByText('Custom personal banner')).toBeTruthy();
+  });
+
+  it('leaves the fallback nudge without the active-credentials checkmark', () => {
+    render(
+      <CredentialsBanner
+        state={CredentialsBannerState.UsingOrgCredentials}
+        authenticationType={ToolsetAuthenticationType.OAuth}
+      />,
+    );
+    expect(screen.queryByText('active badge')).toBeNull();
+  });
+
+  it.each([
+    ['personal', CredentialsBannerState.PersonalCredentialsActive],
+    ['organization', CredentialsBannerState.OrgCredentialsActive],
+  ])('marks the active %s state with the checkmark chip', (_, state) => {
+    render(
+      <CredentialsBanner
+        state={state}
+        authenticationType={ToolsetAuthenticationType.OAuth}
+      />,
+    );
+    expect(screen.getByText('active badge')).toBeTruthy();
   });
 });

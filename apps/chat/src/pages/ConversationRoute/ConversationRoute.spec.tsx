@@ -603,7 +603,7 @@ describe('ConversationRoute', () => {
       selectedDeploymentDetails: null,
       isDeploymentDetailsLoading: false,
       mergeSharedItem: function (
-        item: DeploymentItemDto | DialToolsetDto,
+        _item: DeploymentItemDto | DialToolsetDto,
       ): void {
         throw new Error('Function not implemented.');
       },
@@ -709,7 +709,7 @@ describe('ConversationRoute', () => {
       selectedDeploymentDetails: null,
       isDeploymentDetailsLoading: false,
       mergeSharedItem: function (
-        item: DeploymentItemDto | DialToolsetDto,
+        _item: DeploymentItemDto | DialToolsetDto,
       ): void {
         throw new Error('Function not implemented.');
       },

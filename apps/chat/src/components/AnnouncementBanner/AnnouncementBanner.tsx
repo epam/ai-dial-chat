@@ -137,8 +137,8 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
     >
       <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
         <span
-          className="dial-small-paragraph-semi-text"
-          // eslint-disable-next-line react/no-danger
+          className="dial-small-paragraph-semi-text text-center"
+          // eslint-disable-next-line react/no-danger -- HTML is sanitized by DOMPurify before use
           dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
       </div>

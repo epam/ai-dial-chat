@@ -204,7 +204,7 @@ stroke-primary      stroke-secondary     stroke-tertiary
 stroke-error        stroke-error-alpha   stroke-warning
 stroke-info         stroke-success       stroke-accent
 stroke-accent-alpha stroke-default       stroke-focus-black
-stroke-focus-blue   stroke-gradient-1    stroke-gradient-2
+stroke-accent-focus stroke-gradient-1    stroke-gradient-2
 stroke-control-disable-primary
 ```
 
@@ -255,9 +255,21 @@ loses the color:
 - The `stroke-control-accent-gradient-*` stops behind the selected tab's
   underline have no fallback chain. Rename them as in the table above.
 
-`stroke-focus-black` and `stroke-focus-blue` are unchanged as variables; only
-the Tailwind class names moved (`outline-focus-black` → `outline-focus`,
-`border-focus-blue` → `border-accent-focus`).
+`stroke-focus-black` is unchanged as a variable; only its Tailwind class name
+moved (`outline-focus-black` → `outline-focus`).
+
+### `stroke-focus-blue` → `stroke-accent-focus`
+
+The accent focus ring variable is named for the role it fills instead of its
+literal hue, matching the `border-accent-focus` / `outline-accent-focus`
+classes that consume it. The old name is still the next link in the fallback
+chain — in `tailwind.config.js` and in the `libs/*` chains that reference it —
+so a theme setting `stroke-focus-blue` keeps its focus-ring color. Rename it.
+
+One caveat: `@epam/ai-dial-ui-kit`'s own stylesheet reads
+`--stroke-focus-blue` directly, so the kit's focus rings do not pick up
+`--stroke-accent-focus`. Until the kit is updated, a theme that wants a custom
+accent focus ring everywhere has to set both variables.
 
 ## Migrating a theme from the legacy chat
 
@@ -300,7 +312,7 @@ same role) are omitted: `bg-error`, `bg-warning`, `bg-info`, `bg-success`,
 | `controls-text-disable`, `controls-text-primary-disable`, `controls-text-accent-disable`                                                          | `text-control-disable-primary`, `text-control-disable-secondary` — three states collapsed into two |
 | `text-accent-primary`                                                                                                                             | `text-accent`                                                                                      |
 | `stroke-hover`                                                                                                                                    | `stroke-accent-alpha`                                                                              |
-| `stroke-accent-primary`                                                                                                                           | `stroke-accent`, plus `stroke-focus-blue` for accent focus rings                                   |
+| `stroke-accent-primary`                                                                                                                           | `stroke-accent`, plus `stroke-accent-focus` for accent focus rings                                 |
 | `bg-accent-secondary`, `bg-accent-tertiary`, `stroke-accent-secondary`, `stroke-accent-tertiary`, `text-accent-secondary`, `text-accent-tertiary` | No equivalent — the three-accent scheme became a single accent                                     |
 | `bg-auth-layer-0`, `bg-auth-layer-1`                                                                                                              | No equivalent — the login page uses the shared surface tokens                                      |
 | `bg-model-icon`                                                                                                                                   | No equivalent                                                                                      |

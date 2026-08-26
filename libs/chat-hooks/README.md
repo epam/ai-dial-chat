@@ -227,7 +227,10 @@ const ShareLinkPanel = ({
 Derives the "deep research" tools submenu from the active deployment's configuration schema and the operator-configured tool id: detects the boolean-typed schema property, manages toggle state, resets on deployment change, and exposes a stable `toolConfigurationValue` record for inclusion in completion requests. Headless: the host supplies the translated fallback label via `labels` and the tool icon via `toolIcon`.
 
 ```tsx
-import { type UseToolsMenuParams, useToolsMenu } from '@epam/ai-dial-chat-hooks';
+import {
+  type UseToolsMenuParams,
+  useToolsMenu,
+} from '@epam/ai-dial-chat-hooks';
 
 const ToolsMenu = ({ params }: { params: UseToolsMenuParams }) => {
   const { toolsMenuItems, onToolToggle, toolConfigurationValue } =
@@ -258,13 +261,13 @@ const ToolsMenu = ({ params }: { params: UseToolsMenuParams }) => {
 
 **Parameters**: `useToolsMenu(params: UseToolsMenuParams)`
 
-| Name                                  | Type                                  | Description                                                                 |
-| ------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------- |
-| `deepResearchToolId`                  | `string \| null`                      | Operator-configured tool id; `null` yields an empty menu.                   |
-| `selectedItemId`                       | `string \| null`                      | Selected deployment id; changing it resets toggle state to the schema default. |
-| `selectedDeploymentConfiguration`     | `DeploymentConfigurationSchema \| null` | JSON-schema for the selected deployment; `null` yields an empty menu.       |
-| `labels`                              | `Partial<ToolsMenuLabels>`            | Override for the fallback label. Falls back to English `'Deep research'` only when the host omits `labels` entirely. |
-| `toolIcon`                            | `ReactNode`                           | Icon element for the tool item. Defaults to `null`.                         |
+| Name                              | Type                                    | Description                                                                                                          |
+| --------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `deepResearchToolId`              | `string \| null`                        | Operator-configured tool id; `null` yields an empty menu.                                                            |
+| `selectedItemId`                  | `string \| null`                        | Selected deployment id; changing it resets toggle state to the schema default.                                       |
+| `selectedDeploymentConfiguration` | `DeploymentConfigurationSchema \| null` | JSON-schema for the selected deployment; `null` yields an empty menu.                                                |
+| `labels`                          | `Partial<ToolsMenuLabels>`              | Override for the fallback label. Falls back to English `'Deep research'` only when the host omits `labels` entirely. |
+| `toolIcon`                        | `ReactNode`                             | Icon element for the tool item. Defaults to `null`.                                                                  |
 
 **Returns** (`UseToolsMenuResult`): `{ toolsMenuItems: ToolMenuItem[], onToolToggle, toolConfigurationValue: Record<string, boolean>, restoreToolConfiguration }` — `restoreToolConfiguration` re-applies a persisted tool-config record (e.g. from the last user message) on conversation load.
 
@@ -658,7 +661,11 @@ const ComposerSettings = ({
   deploymentFeatures,
   isQuickApp,
 }: {
-  values: { responseFormat: ResponseFormat; systemPrompt: string; temperature: number };
+  values: {
+    responseFormat: ResponseFormat;
+    systemPrompt: string;
+    temperature: number;
+  };
   onValuesChange: (v: typeof values) => void;
   deploymentFeatures?: DeploymentFeatures;
   isQuickApp?: boolean;
@@ -681,10 +688,10 @@ const ComposerSettings = ({
 
 **Parameters**: `useChatSettingsFormConfig(params)` where `params` is a discriminated union:
 
-| Mode              | Shape                                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------- |
-| `'local'`         | `{ mode: 'local'; values; onValuesChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }` |
-| `'conversation'`  | `{ mode: 'conversation'; conversation; onConversationChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }` |
+| Mode             | Shape                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `'local'`        | `{ mode: 'local'; values; onValuesChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }`                    |
+| `'conversation'` | `{ mode: 'conversation'; conversation; onConversationChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }` |
 
 `labels` (`Partial<ChatSettingsFormLabels>`) overrides English fallbacks for every visible string; `onSaved` is called after a successful save so the host can surface its own toast. `isQuickApp` forces the temperature field off regardless of `deploymentFeatures`.
 
@@ -1156,7 +1163,10 @@ apSchedulerDayToJsDay(0); // 1 (Monday -> JS Monday)
 `safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment.
 
 ```ts
-import { safeDecodeURI, stripSurroundingSlashes } from '@epam/ai-dial-chat-hooks';
+import {
+  safeDecodeURI,
+  stripSurroundingSlashes,
+} from '@epam/ai-dial-chat-hooks';
 
 safeDecodeURI('My%20File.txt'); // 'My File.txt'
 stripSurroundingSlashes('/reports/'); // 'reports'
@@ -1280,8 +1290,9 @@ Extracts starter-button options (and the schema property key and description) fr
 ```ts
 import { getStartersFromSchema } from '@epam/ai-dial-chat-hooks';
 
-const { starters, propertyKey, description } =
-  getStartersFromSchema(deploymentConfiguration);
+const { starters, propertyKey, description } = getStartersFromSchema(
+  deploymentConfiguration,
+);
 ```
 
 ### sanitizeAnnouncementHtml / hasStructuredAnnouncement / hasAnnouncementContent / buildAnnouncementSignature
@@ -1368,7 +1379,10 @@ const api = buildDeploymentConnectApi(baseUrl, deploymentId, {
 Resolves which MCP resource kind (toolset or application) a catalog item exposes, and builds the "Connect" tab's MCP endpoint data for it.
 
 ```ts
-import { resolveMcpResourceKind, buildConnectApi } from '@epam/ai-dial-chat-hooks';
+import {
+  resolveMcpResourceKind,
+  buildConnectApi,
+} from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
 const kind = resolveMcpResourceKind(CatalogEntityType.Toolset);
@@ -1477,7 +1491,12 @@ const overviewLabels: SkillOverviewLabels = {
   detailsSectionTitle: 'Details',
 };
 
-const overview = buildSkillOverview(skillMetadataDto, files, about, overviewLabels);
+const overview = buildSkillOverview(
+  skillMetadataDto,
+  files,
+  about,
+  overviewLabels,
+);
 ```
 
 ### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto
@@ -1584,7 +1603,8 @@ Splits a `SKILL.md` into its frontmatter fields (`name`, `description`, and reco
 ```ts
 import { parseSkillManifestDocument } from '@epam/ai-dial-chat-hooks';
 
-const { name, description, about, body } = parseSkillManifestDocument(rawManifestText);
+const { name, description, about, body } =
+  parseSkillManifestDocument(rawManifestText);
 ```
 
 ### skillFileToAttachment
@@ -1687,7 +1707,10 @@ Resolves where a download should be written: the browser's native "Save As" pick
 ```ts
 import { prepareDownloadDestination } from '@epam/ai-dial-chat-hooks';
 
-const destination = await prepareDownloadDestination('report.pdf', 'application/pdf');
+const destination = await prepareDownloadDestination(
+  'report.pdf',
+  'application/pdf',
+);
 ```
 
 ## Building

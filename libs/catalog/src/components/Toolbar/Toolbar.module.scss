@@ -1,5 +1,5 @@
 .section {
-  background: var(--cat-bg, #f5f7fa);
+  background: var(--cat-bg, var(--bg-layer-base, #f5f7fa));
 }
 
 .divider {
