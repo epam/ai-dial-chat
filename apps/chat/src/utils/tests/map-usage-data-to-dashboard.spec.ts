@@ -50,7 +50,7 @@ describe('mapUsageDataToDashboard', () => {
     ]);
     expect(result[0]).toEqual({
       title: 'Last 24 hours',
-      periodDescription: 'Today',
+      periodDescription: 'Last 24 hours',
       used: 3.6,
       total: 4,
       usedLabel: '$3.6',
@@ -123,7 +123,7 @@ describe('mapUsageDataToDashboard', () => {
 
     expect(result[0]).toEqual({
       title: 'Last 24 hours',
-      periodDescription: 'Today',
+      periodDescription: 'Last 24 hours',
       used: 12.5,
       total: 2 ** 53,
       usedLabel: '$12.5',
