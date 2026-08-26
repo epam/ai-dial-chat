@@ -490,6 +490,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       myChats: t(ConversationPanelI18nKeys.MyChatsSection),
       shared: t(ConversationPanelI18nKeys.FilterShared),
       organization: t(BasicI18nKeys.Organization),
+      groupAriaLabel: t(ConversationPanelI18nKeys.FilterGroupAriaLabel),
     }),
     [t],
   );
@@ -1005,7 +1006,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     try {
       await unpublishConversation(path, folderPath.join('/'));
     } catch (error) {
-      showPublishError(error);
+      showPublishError(error, EntityOperation.UnpublishRequested);
       setIsUnpublishing(false);
       setPendingUnpublishConversation(null);
       setSelectedUnpublishFolder(null);
@@ -1211,7 +1212,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isLoading={isDeleting}
         description={
           <>
-            <span className="break-all">
+            <span className="break-words">
               {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
               <span className="dial-small-text text-primary">
                 &ldquo;{pendingDeleteTitle}&rdquo;
@@ -1240,7 +1241,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         }
         description={
           <>
-            <span className="break-all">
+            <span className="break-words">
               {hasUnpublishFolderChoice
                 ? t(ConversationUnpublishI18nKeys.SelectFolderMessage, {
                     name: pendingUnpublishConversation?.title ?? '',
@@ -1295,7 +1296,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isLoading={isUnsharing}
         description={
           <>
-            <span className="break-all">
+            <span className="break-words">
               {t(ConversationPanelI18nKeys.UnshareConfirmMessage, {
                 name: pendingUnshareTitle,
               })}
@@ -1321,7 +1322,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isLoading={isRevoking}
         description={
           <>
-            <span className="break-all">
+            <span className="break-words">
               {t(ConversationPanelI18nKeys.RevokeConfirmMessage, {
                 name: pendingRevokeTitle,
               })}

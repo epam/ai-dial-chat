@@ -213,7 +213,7 @@ export class ScheduledTasksService {
     this.logger.debug(`Calling DIAL Scheduler: ${method} ${url} (${context})`);
 
     try {
-      const response = await fetch(url, {
+      const response = await this.dialClient.fetchCore(url, {
         method,
         headers: {
           ...getBearerAuthHeaders(accessToken),

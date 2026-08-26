@@ -35,16 +35,18 @@ function makeService(configOverrides: Record<string, unknown> = {}) {
   const sdkClient: SdkClient = {
     uploadFile: vi.fn(),
   };
+  const fetchCore = vi.fn();
 
   const dialClient = {
     client: sdkClient,
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
+    fetchCore,
   } as unknown as DialClientService;
 
   const service = new FilesUploadService(dialClient, configService);
 
-  return { service, sdkClient };
+  return { service, sdkClient, fetchCore };
 }
 
 const okUpload = (url: string) => ({
@@ -403,10 +405,8 @@ describe('FilesUploadService', () => {
 
   describe('uploadArchive', () => {
     it('uploads all entries successfully', async () => {
-      const { service } = makeService();
-      const fetchSpy = vi
-        .spyOn(globalThis, 'fetch')
-        .mockResolvedValue(okFetchUpload());
+      const { service, fetchCore } = makeService();
+      fetchCore.mockResolvedValue(okFetchUpload());
       const buffer = await buildZipBuffer([
         { name: 'a.txt' },
         { name: 'b.txt' },
@@ -420,9 +420,21 @@ describe('FilesUploadService', () => {
         { path: 'reports/a.txt', success: true },
         { path: 'reports/b.txt', success: true },
       ]);
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
-      expect(fetchSpy.mock.calls[0]?.[0]).toBe(
+      expect(fetchCore).toHaveBeenCalledTimes(2);
+      expect(fetchCore.mock.calls[0]?.[0]).toBe(
         'http://dial-core/v1/files/bucket/reports/a.txt',
+      );
+      const [, init] = fetchCore.mock.calls[0] as [string, RequestInit];
+      expect(init).toMatchObject({
+        method: 'PUT',
+        duplex: 'half',
+      });
+      expect(init.headers).toMatchObject({
+        Authorization: 'Bearer token',
+        'If-None-Match': '*',
+      });
+      expect((init.headers as Record<string, string>)['Content-Type']).toMatch(
+        /^multipart\/form-data; boundary=dial-upload-/,
       );
     });
 
@@ -438,10 +450,8 @@ describe('FilesUploadService', () => {
     });
 
     it('uploads archive entries to the bucket root when destination is empty', async () => {
-      const { service } = makeService();
-      const fetchSpy = vi
-        .spyOn(globalThis, 'fetch')
-        .mockResolvedValue(okFetchUpload());
+      const { service, fetchCore } = makeService();
+      fetchCore.mockResolvedValue(okFetchUpload());
       const buffer = await buildZipBuffer([{ name: 'a.txt' }]);
 
       const result = await withArchiveFixture(buffer, (archiveFile) =>
@@ -449,7 +459,7 @@ describe('FilesUploadService', () => {
       );
 
       expect(result.results).toEqual([{ path: 'a.txt', success: true }]);
-      expect(fetchSpy.mock.calls[0]?.[0]).toBe(
+      expect(fetchCore.mock.calls[0]?.[0]).toBe(
         'http://dial-core/v1/files/bucket/a.txt',
       );
     });
@@ -466,12 +476,10 @@ describe('FilesUploadService', () => {
     });
 
     it('rejects with 422 and zero uploads when the archive exceeds the file-count limit', async () => {
-      const { service } = makeService({
+      const { service, fetchCore } = makeService({
         ARCHIVE_UPLOAD_MAX_FILES: 1,
       });
-      const fetchSpy = vi
-        .spyOn(globalThis, 'fetch')
-        .mockResolvedValue(okFetchUpload());
+      fetchCore.mockResolvedValue(okFetchUpload());
       const buffer = await buildZipBuffer([
         { name: 'a.txt' },
         { name: 'b.txt' },
@@ -482,16 +490,14 @@ describe('FilesUploadService', () => {
           service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
         ).rejects.toThrow(UnprocessableEntityException);
       });
-      expect(fetchSpy).toHaveBeenCalledTimes(0);
+      expect(fetchCore).toHaveBeenCalledTimes(0);
     });
 
     it('aborts mid-extraction once cumulative uncompressed bytes exceed the limit, retaining prior successful uploads', async () => {
-      const { service } = makeService({
+      const { service, fetchCore } = makeService({
         ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES: 10,
       });
-      const fetchSpy = vi
-        .spyOn(globalThis, 'fetch')
-        .mockResolvedValue(okFetchUpload());
+      fetchCore.mockResolvedValue(okFetchUpload());
       const buffer = await buildZipBuffer([
         { name: 'small.txt', content: 'a'.repeat(5) },
         { name: 'big.txt', content: 'b'.repeat(50) },
@@ -502,16 +508,15 @@ describe('FilesUploadService', () => {
           service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
         ).rejects.toThrow(UnprocessableEntityException);
       });
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-      expect(fetchSpy.mock.calls[0]?.[0]).toBe(
+      expect(fetchCore).toHaveBeenCalledTimes(1);
+      expect(fetchCore.mock.calls[0]?.[0]).toBe(
         'http://dial-core/v1/files/bucket/reports/small.txt',
       );
     });
 
     it('uploads a conflicting entry with a deduplicated file name', async () => {
-      const { service } = makeService();
-      const fetchSpy = vi
-        .spyOn(globalThis, 'fetch')
+      const { service, fetchCore } = makeService();
+      fetchCore
         .mockResolvedValueOnce(new Response(null, { status: 412 }))
         .mockResolvedValueOnce(okFetchUpload())
         .mockResolvedValueOnce(okFetchUpload());
@@ -528,16 +533,15 @@ describe('FilesUploadService', () => {
         { path: 'reports/a (1).txt', success: true },
         { path: 'reports/b.txt', success: true },
       ]);
-      expect(fetchSpy).toHaveBeenCalledTimes(3);
-      expect(fetchSpy.mock.calls[1]?.[0]).toBe(
+      expect(fetchCore).toHaveBeenCalledTimes(3);
+      expect(fetchCore.mock.calls[1]?.[0]).toBe(
         'http://dial-core/v1/files/bucket/reports/a%20(1).txt',
       );
     });
 
     it('increments the deduplicated file name until upload succeeds', async () => {
-      const { service } = makeService();
-      const fetchSpy = vi
-        .spyOn(globalThis, 'fetch')
+      const { service, fetchCore } = makeService();
+      fetchCore
         .mockResolvedValueOnce(new Response(null, { status: 412 }))
         .mockResolvedValueOnce(new Response(null, { status: 412 }))
         .mockResolvedValueOnce(okFetchUpload());
@@ -550,17 +554,15 @@ describe('FilesUploadService', () => {
       expect(result.results).toEqual([
         { path: 'reports/a (2).txt', success: true },
       ]);
-      expect(fetchSpy).toHaveBeenCalledTimes(3);
-      expect(fetchSpy.mock.calls[2]?.[0]).toBe(
+      expect(fetchCore).toHaveBeenCalledTimes(3);
+      expect(fetchCore.mock.calls[2]?.[0]).toBe(
         'http://dial-core/v1/files/bucket/reports/a%20(2).txt',
       );
     });
 
     it('rejects path-traversal entries without attempting to upload them', async () => {
-      const { service } = makeService();
-      const fetchSpy = vi
-        .spyOn(globalThis, 'fetch')
-        .mockResolvedValue(okFetchUpload());
+      const { service, fetchCore } = makeService();
+      fetchCore.mockResolvedValue(okFetchUpload());
       const buffer = buildRawZipBuffer([
         { name: '../../etc/passwd' },
         { name: 'safe.txt' },
@@ -574,14 +576,14 @@ describe('FilesUploadService', () => {
         { path: '../../etc/passwd', success: false, error: 'Invalid path' },
         { path: 'reports/safe.txt', success: true },
       ]);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchCore).toHaveBeenCalledTimes(1);
     });
 
     it('throws ServiceUnavailableException and stops scheduling uploads when the timeout is exceeded', async () => {
-      const { service } = makeService({
+      const { service, fetchCore } = makeService({
         ARCHIVE_UPLOAD_TIMEOUT_MS: 250,
       });
-      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
+      fetchCore.mockImplementation(
         (_input, init) =>
           new Promise<Response>((resolve, reject) => {
             const signal = (init as RequestInit | undefined)?.signal;
@@ -610,14 +612,14 @@ describe('FilesUploadService', () => {
         ).rejects.toThrow(ServiceUnavailableException);
       });
       await new Promise((resolve) => setTimeout(resolve, 30));
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchCore).toHaveBeenCalledTimes(1);
     });
 
     it('throws ServiceUnavailableException when the final entry upload times out', async () => {
-      const { service } = makeService({
+      const { service, fetchCore } = makeService({
         ARCHIVE_UPLOAD_TIMEOUT_MS: 250,
       });
-      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
+      fetchCore.mockImplementation(
         (_input, init) =>
           new Promise<Response>((resolve, reject) => {
             const signal = (init as RequestInit | undefined)?.signal;
@@ -642,7 +644,7 @@ describe('FilesUploadService', () => {
           service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
         ).rejects.toThrow(ServiceUnavailableException);
       });
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchCore).toHaveBeenCalledTimes(1);
     });
   });
 });

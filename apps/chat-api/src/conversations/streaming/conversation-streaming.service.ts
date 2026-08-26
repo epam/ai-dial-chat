@@ -87,7 +87,11 @@ export class ConversationStreamingService {
     sub: string,
     model: string,
     token: string,
-  ): Promise<{ generationApi: GenerationApi; temperatureSupported: boolean }> {
+  ): Promise<{
+    generationApi: GenerationApi;
+    temperatureSupported: boolean;
+    reasoningEfforts?: string[];
+  }> {
     /*
      * getDeploymentDetails is not skipped when features.responsesApiEnabled is
      * disabled — it also performs the toolset rejection and temperature-
@@ -115,11 +119,19 @@ export class ConversationStreamingService {
         ? details.applicationDetails?.features
         : details.modelDetails?.features;
 
+    const generationApi = responsesApiEnabled
+      ? resolveGenerationApi(features)
+      : GenerationApi.ChatCompletions;
+
+    const safeModel = StringUtils.sanitizeForLog(model);
+    this.logger.debug(
+      `Generation API resolved for "${safeModel}" — api: ${generationApi}, responsesApiEnabled: ${responsesApiEnabled}, deployment.responsesApi: ${features?.responsesApi ?? false}`,
+    );
+
     return {
-      generationApi: responsesApiEnabled
-        ? resolveGenerationApi(features)
-        : GenerationApi.ChatCompletions,
+      generationApi,
       temperatureSupported: features?.temperature === true,
+      reasoningEfforts: features?.reasoningEfforts,
     };
   }
 
@@ -184,6 +196,7 @@ export class ConversationStreamingService {
     signal: AbortSignal,
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
+    timezone?: string,
     timing?: GenerationRelayTiming,
     conversationId?: string,
   ): AsyncGenerator<Uint8Array, RelayOutcome, void> {
@@ -200,6 +213,7 @@ export class ConversationStreamingService {
             ...(clientChannelId
               ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
               : {}),
+            ...(timezone ? { 'X-Timezone': timezone } : {}),
             ...(conversationId ? { 'X-CONVERSATION-ID': conversationId } : {}),
           },
           params: { query: { 'api-version': this.dialClient.dialApiVersion } },
@@ -390,6 +404,7 @@ export class ConversationStreamingService {
     onReadyToStream: () => void,
     sub: string,
     clientChannelId?: string,
+    timezone?: string,
   ): AsyncGenerator<Uint8Array | string, void, void> {
     this.logger.debug(
       `streamCompletion start — model: ${model}, bucket: ${bucket}, path: ${conversationPath}, mode: ${mode}`,
@@ -403,8 +418,9 @@ export class ConversationStreamingService {
 
     let generationApi: GenerationApi;
     let temperatureSupported: boolean;
+    let reasoningEfforts: string[] | undefined;
     try {
-      ({ generationApi, temperatureSupported } =
+      ({ generationApi, temperatureSupported, reasoningEfforts } =
         await this.resolveGenerationApiForDeployment(sub, model, token));
       generationCapabilityResolutionTotal.add(1, {
         outcome: 'resolved',
@@ -559,11 +575,14 @@ export class ConversationStreamingService {
               startConversation,
               messagesForCompletion,
               temperatureSupported,
+              reasoningEfforts,
+              configuration,
             }),
             token,
             abortController.signal,
             assembledMessage,
             clientChannelId,
+            timezone,
             timing,
             startConversation.id,
           )
@@ -574,6 +593,7 @@ export class ConversationStreamingService {
             abortController.signal,
             assembledMessage,
             clientChannelId,
+            timezone,
             timing,
             startConversation.id,
           );

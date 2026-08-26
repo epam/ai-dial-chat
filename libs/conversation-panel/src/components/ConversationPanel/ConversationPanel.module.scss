@@ -45,5 +45,8 @@
 }
 
 :export {
-  skeletonColor: var(--cp-skeleton-color, var(--bg-layer-4, #d1dbea));
+  skeletonColor: var(
+    --cp-skeleton-color,
+    var(--bg-control-disable-primary, #dce0e8)
+  );
 }

@@ -211,19 +211,28 @@ stroke-control-disable-primary
 **Shadows**
 
 ```text
-shadow-default           shadow-grey-1000
-shadow-blue-500          shadow-blue-500-alpha-20
-shadow-blue-500-alpha-4  shadow-blue-500-alpha-8
+shadow-xs-sm-1  shadow-xs-sm-2  shadow-md  shadow-lg
 ```
 
-`shadow-blue-500` is the fallback for all three alpha steps, so a theme that
-sets only it still tints every shadow size — at one opacity instead of three.
+The variables are named after the elevation that consumes them, not after their
+hue. `shadow-xs` and `shadow-sm` each paint two layers — a blue one from
+`shadow-xs-sm-1` and a grey one from `shadow-xs-sm-2` — and differ from each
+other only in offset and blur. `shadow-md` and `shadow-lg` are a single blue
+layer each, so they take one variable apiece.
+
+There are four elevations and no inset variant: a recessed seam between a panel
+and the content beside it is painted by the panel's own `shadow-sm`, not by an
+inset shadow on the content.
 
 ### Renamed in ui-kit 0.14
 
 The control tokens were renamed for the role they fill instead of their opacity
 or their literal hue. **A theme that sets the old variable names keeps its
-colors** — each one is still the next link in the new token's fallback chain:
+colors in the Tailwind utilities** — each one is still the next link in the new
+token's fallback chain in `tailwind.config.js`. The chains in `libs/*` are a
+separate mechanism and stop at the current name (see
+[Styling libraries](#styling-libraries)), so a theme still on the old names
+renders the hex fallback for a handful of library values. Rename them.
 
 | Pre-0.14 variable                                   | Preferred now                                 |
 | --------------------------------------------------- | --------------------------------------------- |
@@ -249,14 +258,6 @@ loses the color:
 `stroke-focus-black` and `stroke-focus-blue` are unchanged as variables; only
 the Tailwind class names moved (`outline-focus-black` → `outline-focus`,
 `border-focus-blue` → `border-accent-focus`).
-
-**Transitional — do not build a theme on these**
-
-`tailwind.config.js` still exposes `bg-layer-1`, `bg-layer-4`, `bg-layer-6`,
-`bg-layer-7`, `bg-overlay`, `bg-inverted`, `bg-accent-primary-alpha`,
-`bg-accent-tertiary-alpha`, and `text-accent-secondary`, grouped in the config
-as pending removal. They are honored today and will disappear without a
-replacement token.
 
 ## Migrating a theme from the legacy chat
 
@@ -288,23 +289,23 @@ same role) are omitted: `bg-error`, `bg-warning`, `bg-info`, `bg-success`,
 `text-secondary`, `text-error`, `text-warning`, `text-warning-icon`,
 `text-info`, `text-success`.
 
-| Legacy token                                                                                                             | Closest new token                                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| `bg-layer-0` … `bg-layer-4`                                                                                              | `bg-layer-sunken`, `bg-layer-base`, `bg-layer-raised` — five elevation steps collapsed into three  |
-| `bg-blackout`                                                                                                            | `bg-backdrop`                                                                                      |
-| `controls-bg-accent`, `bg-accent-primary`                                                                                | `bg-control-accent`                                                                                |
-| `controls-bg-accent-hover`                                                                                               | No solid hover token; the new controls use `bg-control-accent-alpha-hover` / `-active`             |
-| `controls-bg-disable`, `controls-bg-disable-accent`                                                                      | `bg-control-disable-primary`                                                                       |
-| `controls-text-permanent`                                                                                                | `text-control-permanent`                                                                           |
-| `controls-text-disable`, `controls-text-primary-disable`, `controls-text-accent-disable`                                 | `text-control-disable-primary`, `text-control-disable-secondary` — three states collapsed into two |
-| `text-accent-primary`                                                                                                    | `text-accent`                                                                                      |
-| `stroke-hover`                                                                                                           | `stroke-accent-alpha`                                                                              |
-| `stroke-accent-primary`                                                                                                  | `stroke-accent`, plus `stroke-focus-blue` for accent focus rings                                   |
-| `bg-accent-secondary`, `bg-accent-tertiary`, `stroke-accent-secondary`, `stroke-accent-tertiary`, `text-accent-tertiary` | No equivalent — the three-accent scheme became a single accent                                     |
-| `bg-auth-layer-0`, `bg-auth-layer-1`                                                                                     | No equivalent — the login page uses the shared surface tokens                                      |
-| `bg-model-icon`                                                                                                          | No equivalent                                                                                      |
-| `border-radius`                                                                                                          | No equivalent — radii are Tailwind classes, not a themeable variable                               |
-| `codeblock-font`, `theme-font`                                                                                           | No equivalent in practice — see [Fonts are not themeable](#fonts-are-not-themeable)                |
+| Legacy token                                                                                                                                      | Closest new token                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `bg-layer-0` … `bg-layer-4`                                                                                                                       | `bg-layer-sunken`, `bg-layer-base`, `bg-layer-raised` — five elevation steps collapsed into three  |
+| `bg-blackout`                                                                                                                                     | `bg-backdrop`                                                                                      |
+| `controls-bg-accent`, `bg-accent-primary`                                                                                                         | `bg-control-accent`                                                                                |
+| `controls-bg-accent-hover`                                                                                                                        | No solid hover token; the new controls use `bg-control-accent-alpha-hover` / `-active`             |
+| `controls-bg-disable`, `controls-bg-disable-accent`                                                                                               | `bg-control-disable-primary`                                                                       |
+| `controls-text-permanent`                                                                                                                         | `text-control-permanent`                                                                           |
+| `controls-text-disable`, `controls-text-primary-disable`, `controls-text-accent-disable`                                                          | `text-control-disable-primary`, `text-control-disable-secondary` — three states collapsed into two |
+| `text-accent-primary`                                                                                                                             | `text-accent`                                                                                      |
+| `stroke-hover`                                                                                                                                    | `stroke-accent-alpha`                                                                              |
+| `stroke-accent-primary`                                                                                                                           | `stroke-accent`, plus `stroke-focus-blue` for accent focus rings                                   |
+| `bg-accent-secondary`, `bg-accent-tertiary`, `stroke-accent-secondary`, `stroke-accent-tertiary`, `text-accent-secondary`, `text-accent-tertiary` | No equivalent — the three-accent scheme became a single accent                                     |
+| `bg-auth-layer-0`, `bg-auth-layer-1`                                                                                                              | No equivalent — the login page uses the shared surface tokens                                      |
+| `bg-model-icon`                                                                                                                                   | No equivalent                                                                                      |
+| `border-radius`                                                                                                                                   | No equivalent — radii are Tailwind classes, not a themeable variable                               |
+| `codeblock-font`, `theme-font`                                                                                                                    | No equivalent in practice — see [Fonts are not themeable](#fonts-are-not-themeable)                |
 
 New token groups with no legacy counterpart — `bg-visual-*`, `text-visual-*`,
 `bg-control-neutral*`, `bg-control-error*`, `text-control-accent-*`,
@@ -346,6 +347,11 @@ Inside this application the middle tier resolves, so libs pick up the deployment
 theme automatically. In a project without these tokens the hex fallback applies,
 and a host can still override individual values through each component's
 `styles={{ colors, typography }}` prop.
+
+The chain is exactly three tiers. The middle tier names the current token only —
+it does not carry the pre-0.14 aliases that `tailwind.config.js` keeps for its
+utilities, because a lib is not supposed to know this application's rename
+history.
 
 The full convention — variable naming, what belongs in `.module.scss` versus
 Tailwind, the `buildCssVars` helper, and the checks that catch styles which

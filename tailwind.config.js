@@ -10,10 +10,13 @@ const backgroundsColors = {
   info: 'var(--bg-info, #E1EAF9)', // blue-100
   success: 'var(--bg-success, #DBF1EB)', // green-100
   backdrop: 'var(--bg-backdrop, #161B2D4D)', // grey-1000 alpha-30
+};
 
-  // shadow colors
-  'shadow-blue': 'var(--shadow-blue-500, #2764D924)',
-  'shadow-grey': 'var(--shadow-grey-1000, #161B2D08)',
+const shadowColors = {
+  'xs-sm-1': 'var(--shadow-xs-sm-1, #2764D933)', // blue-500 alpha-20
+  'xs-sm-2': 'var(--shadow-xs-sm-2, #161B2D08)', // grey-1000 alpha-3
+  md: 'var(--shadow-md, #2764D90A)', // blue-500 alpha-4
+  lg: 'var(--shadow-lg, #2764D914)', // blue-500 alpha-8
 };
 
 const controlsBgColors = {
@@ -135,23 +138,6 @@ const controlsTextColors = {
     'var(--text-control-accent-active, var(--text-control-blue-active, #6785FB))', // blue-200
 };
 
-// remove
-const textColorsToRemove = {
-  'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
-};
-
-const bgColorsToRemove = {
-  'layer-1': 'var(--bg-layer-1, #E0E6F0)',
-  'layer-4': 'var(--bg-layer-4, #D1DBEA)',
-  'layer-6': 'var(--bg-layer-6, #F8FAFC)',
-  'layer-7': 'var(--bg-layer-7, #00000006)',
-  overlay: 'var(--bg-overlay, #FCFCFC80)',
-  inverted: 'var(--bg-inverted, #161B2D)',
-  'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
-  // Catalog tab bar — override via CSS custom properties for dark-theme support
-  'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
-};
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   blocklist: ['[-:=]'],
@@ -163,7 +149,6 @@ module.exports = {
   theme: {
     backgroundColor: {
       ...backgroundsColors,
-      ...bgColorsToRemove,
       ...controlsBgColors,
       ...visualBgColors,
     },
@@ -173,7 +158,6 @@ module.exports = {
     placeholderColor: placeholderColor,
     textColor: {
       ...textColors,
-      ...textColorsToRemove,
       ...controlsTextColors,
       ...visualTextColors,
     },
@@ -198,46 +182,23 @@ module.exports = {
        */
       fill: {
         ...backgroundsColors,
-        ...bgColorsToRemove,
         ...controlsBgColors,
         ...visualBgColors,
       },
       boxShadow: {
-        DEFAULT: '0 0 4px 0 var(--shadow-default, rgba(0, 0, 0, 0.30))',
-        'main-inset': 'inset 1px 0 8px rgba(0, 0, 0, 0.04)',
         // xs — Button-Pressed; sm — Button-Default, Side Panel
-        xs: '0 1px 4px 0 var(--shadow-grey-1000, #161B2D08), 0 1px 2px 0 var(--shadow-blue-500-alpha-20, var(--shadow-blue-500, #2764D933))',
-        sm: '0 2px 12px 0 var(--shadow-grey-1000, #161B2D08), 0 2px 6px 0 var(--shadow-blue-500-alpha-20, var(--shadow-blue-500, #2764D933))',
+        xs: `0 1px 4px 0 ${shadowColors['xs-sm-1']}, 0 1px 2px 0 ${shadowColors['xs-sm-2']}`,
+        sm: `0 2px 12px 0 ${shadowColors['xs-sm-1']}, 0 2px 6px 0 ${shadowColors['xs-sm-2']}`,
         /*
          * md — Button-Hover, Card-Default, Input; lg — Card-Hover. Both are a
          * single wide blue layer: the grey layer would only muddy it at this
          * size.
          */
-        md: '0 8px 24px 0 var(--shadow-blue-500-alpha-4, #2764D90A)',
-        lg: '0 8px 44px 0 var(--shadow-blue-500-alpha-8, #2764D914)',
-      },
-      backgroundImage: {
-        'control-accent-gradient':
-          'linear-gradient(99.78deg, var(--bg-gradient-1, var(--bg-control-accent-gradient-from, #1D4ED8)) 8.59%, var(--bg-gradient-2, var(--bg-control-accent-gradient-to, #885DF2)) 98.14%)',
-        'control-accent-gradient-hover':
-          'linear-gradient(99.78deg, var(--bg-gradient-1-hover, var(--bg-control-accent-gradient-hover-from, #6785FB)) 8.59%, var(--bg-gradient-2-hover, var(--bg-control-accent-gradient-to, #885DF2)) 98.14%)',
-        'control-accent-gradient-active':
-          'linear-gradient(99.78deg, var(--bg-gradient-1-active, var(--bg-control-accent-gradient-from, #1D4ED8)) 8.59%, var(--bg-gradient-2-active, var(--bg-control-accent-gradient-active-to, #7C3AED)) 98.14%)',
+        md: `0 8px 24px 0 ${shadowColors.md}`,
+        lg: `0 8px 44px 0 ${shadowColors.lg}`,
       },
       borderRadius: {
         DEFAULT: '4px',
-      },
-      opacity: {
-        15: '15%',
-      },
-      colors: {
-        transparent: 'transparent',
-      },
-      fontFamily: {
-        DEFAULT: ['var(--theme-font, var(--font-inter))'],
-      },
-      fontSize: {
-        xxs: '10px',
       },
       keyframes: {
         fadeIn: {
@@ -247,21 +208,6 @@ module.exports = {
       },
       animation: {
         fadeIn: 'fadeIn 100ms ease-in',
-      },
-      typography: {
-        DEFAULT: {
-          css: {
-            color: 'var(--text-primary, #161B2D)',
-            a: {
-              color: 'var(--text-accent, #1D4ED8)',
-            },
-            pre: {
-              border: 'none',
-              borderRadius: '0',
-              backgroundColor: 'transparent',
-            },
-          },
-        },
       },
     },
   },

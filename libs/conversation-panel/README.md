@@ -54,6 +54,7 @@ import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
       myChats: 'My chats',
       shared: 'Shared',
       organization: 'Organization',
+      groupAriaLabel: 'Filter chats',
     },
   }}
 />;
@@ -63,6 +64,15 @@ Pass `isFilterTabsHidden` to drop the All / My chats / Shared / Organization
 row. The list then stays on whichever tab is active — `FilterTab.All` unless
 `activeFilter` says otherwise — so every group remains visible; only the
 control disappears. `labels.filterLabels` stays required either way.
+
+The row renders each filter as a ui-kit `Tag` in its `TagAppearance.Selectable`
+appearance, so the chips take their colors from the active theme's tag tokens.
+It is a named `role="group"` of toggle chips — the selected one carries
+`aria-pressed` — not a `tablist`, because the chips filter the list in place
+rather than switching between panels. `labels.filterLabels.groupAriaLabel` names
+the group and defaults to `"Filter chats"`;
+`styles.typography.tabClassName` sets the label typography and defaults to
+`'dial-tiny-semi-text'`.
 
 ## Enums
 
@@ -89,9 +99,6 @@ import type {
   ConversationItem,
   ConversationMove,
   FilterLabels,
-  PillTabsColors,
-  PillTabsStyles,
-  PillTabsTypography,
 } from '@epam/ai-dial-conversation-panel';
 ```
 

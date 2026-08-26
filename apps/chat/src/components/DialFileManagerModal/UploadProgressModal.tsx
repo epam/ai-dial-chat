@@ -1,6 +1,6 @@
+import type { FileUploadBatchState } from '@epam/ai-dial-chat-hooks';
 import { DialFileName, Popup, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, type FC, type ReactNode } from 'react';
-import type { FileUploadBatchState } from './types/upload';
 
 interface Props {
   batchState: FileUploadBatchState;
@@ -26,7 +26,7 @@ const UploadProgressModal: FC<Props> = ({
 
     return (
       <div
-        className="h-1 w-full overflow-hidden rounded-full bg-layer-1"
+        className="h-1 w-full overflow-hidden rounded-full bg-control-disable-primary"
         data-qa="uploading-indicator"
         role="progressbar"
         aria-valuemin={0}

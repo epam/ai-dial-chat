@@ -1,6 +1,6 @@
 {
   "name": "@epam/ai-dial-attachment-canvas",
-  "description": "Canvas viewer for rendering attachment content — images, PDFs, JSON, markdown, and plain text",
+  "description": "Canvas viewer for rendering attachment content — images, PDFs, Office documents, JSON, markdown, and plain text",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
@@ -20,18 +20,20 @@
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "0.0.1",
+    "@epam/ai-dial-react-pdf-highlighter": "*",
     "@epam/ai-dial-shared": "0.48.0",
     "@epam/ai-dial-sidebar": "0.0.1",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
-    "@epam/ai-dial-ui-kit": "^0.14.0-dev.4",
+    "@epam/ai-dial-ui-kit": "^0.14.0-dev.6",
     "@epam/pdf-highlighter-kit": ">=0.0.14",
     "@tabler/icons-react": "^3.44.0",
     "react": "^19.0.0",
     "react-json-view-lite": "^2.5.0",
-    "react-syntax-highlighter": "^16.1.1",
-    "@epam/ai-dial-react-pdf-highlighter": "*"
+    "react-syntax-highlighter": "^16.1.1"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@silurus/ooxml": "^0.80.2"
+  },
   "nx": {
     "tags": [
       "publishable"

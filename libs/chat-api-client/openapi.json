@@ -2248,7 +2248,20 @@
       "post": {
         "description": "Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.",
         "operationId": "streamCompletion",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "X-Timezone",
+            "in": "header",
+            "description": "Current browser IANA timezone forwarded to DIAL Core for date- and time-sensitive tools.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 255,
+              "pattern": "^[A-Za-z0-9._+-]+(?:/[A-Za-z0-9._+-]+)*$",
+              "example": "Europe/Warsaw"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2264,7 +2277,7 @@
             "description": "SSE stream of completion chunks"
           },
           "400": {
-            "description": "Invalid request body"
+            "description": "Invalid request body or X-Timezone header"
           },
           "401": {
             "description": "Not authenticated"
@@ -9299,6 +9312,72 @@
           "title"
         ]
       },
+      "StageAttachmentDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Zero-based position in the list"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display name of the attachment"
+          },
+          "data": {
+            "type": "string",
+            "description": "Inline base-64 encoded content"
+          }
+        }
+      },
+      "StageDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Zero-based position in the list"
+          },
+          "name": {
+            "type": "string",
+            "description": "Stage title"
+          },
+          "content": {
+            "type": "string",
+            "description": "Stage text content"
+          },
+          "attachments": {
+            "description": "Files produced or referenced by this stage",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageAttachmentDto"
+            }
+          }
+        }
+      },
+      "AnnotationBodyDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Title of the cited source"
+          },
+          "quote": {
+            "type": "string",
+            "description": "Quoted excerpt from the cited source"
+          }
+        }
+      },
+      "AnnotationDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Zero-based position in the list"
+          },
+          "body": {
+            "$ref": "#/components/schemas/AnnotationBodyDto"
+          }
+        }
+      },
       "MessageCustomContentDto": {
         "type": "object",
         "properties": {
@@ -9308,6 +9387,24 @@
             "items": {
               "$ref": "#/components/schemas/AttachmentDto"
             }
+          },
+          "stages": {
+            "description": "Assistant \"thinking step\" output streamed alongside the message text",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageDto"
+            }
+          },
+          "annotations": {
+            "description": "Citations/annotations attached to the message text",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnotationDto"
+            }
+          },
+          "form_schema": {
+            "type": "object",
+            "description": "JSON schema describing an embedded form widget"
           },
           "configuration_value": {
             "type": "object",
@@ -9670,6 +9767,24 @@
             "items": {
               "$ref": "#/components/schemas/AttachmentDto"
             }
+          },
+          "stages": {
+            "description": "Assistant \"thinking step\" output streamed alongside the message text",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageDto"
+            }
+          },
+          "annotations": {
+            "description": "Citations/annotations attached to the message text",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnotationDto"
+            }
+          },
+          "form_schema": {
+            "type": "object",
+            "description": "JSON schema describing an embedded form widget"
           },
           "configuration_value": {
             "type": "object",

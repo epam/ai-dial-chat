@@ -75,7 +75,7 @@ export interface TableViewColors {
   rowAlt?: string;
   /** Row label text color. Fallback: `--text-secondary`. */
   label?: string;
-  /** Check icon color for `true` values. Fallback: `--text-accent-secondary`. */
+  /** Check icon color for `true` values. Fallback: `--text-visual-green-2`. */
   checkIcon?: string;
   /** Text color for `true` values. Fallback: `--text-primary`. */
   valueTrue?: string;

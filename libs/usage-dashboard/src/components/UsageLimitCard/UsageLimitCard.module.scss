@@ -46,7 +46,7 @@
 .progressFillDefault > div {
   background: var(
     --uld-default-progress,
-    var(--text-control-accent-hover, var(--text-control-blue-hover, #5976e9))
+    var(--text-control-accent-hover, #5976e9)
   ) !important;
 }
 

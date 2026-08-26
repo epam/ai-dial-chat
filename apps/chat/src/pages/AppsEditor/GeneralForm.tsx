@@ -270,7 +270,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         </div>
       </div>
 
-      <div className="flex w-full flex-col bg-layer-1 p-4 desktop:w-1/2">
+      <div className="flex w-full flex-col bg-layer-sunken p-4 desktop:w-1/2">
         <p className="dial-small-text text-secondary">
           {t(BasicI18nKeys.Preview)}
         </p>

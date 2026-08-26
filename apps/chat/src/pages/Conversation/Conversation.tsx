@@ -4,6 +4,7 @@ import {
   isAwaitingGenerationResume,
   useConversationHandlers,
   useConversationStream,
+  useToolsMenu,
 } from '@epam/ai-dial-chat-hooks';
 import {
   MessageRating,
@@ -14,8 +15,10 @@ import {
 import {
   ConfirmationPopupVariant,
   ConfirmationPopup,
+  DIAL_ICON_SIZE,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
+import { IconTelescope } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router';
@@ -31,6 +34,7 @@ import {
   ToolsI18nKeys,
 } from '../../constants/translation-keys';
 import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useClientChannel } from '../../context/ClientChannelContext';
 import { useConversations } from '../../context/ConversationsContext';
@@ -44,7 +48,6 @@ import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useActiveConversationBridge } from '../../hooks/conversation/useActiveConversationBridge';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
-import { useToolsMenu } from '../../hooks/conversation/useToolsMenu';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
 import {
   conversationsApi as configuredConversationsApi,
@@ -89,9 +92,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const restoredToolConfigIdRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { config } = useAppConfig();
   const {
     restoreSelectedItemId,
     selectedItemId: currentSelectedItemId,
+    selectedDeploymentConfiguration,
     isLoading: isDeploymentsLoading,
   } = useDeployments();
   const {
@@ -99,7 +104,15 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     onToolToggle,
     toolConfigurationValue,
     restoreToolConfiguration,
-  } = useToolsMenu();
+  } = useToolsMenu({
+    deepResearchToolId: config.deepResearchToolId,
+    selectedItemId: currentSelectedItemId,
+    selectedDeploymentConfiguration,
+    labels: {
+      deepResearchFallback: t(ToolsI18nKeys.DeepResearchFallback),
+    },
+    toolIcon: <IconTelescope size={DIAL_ICON_SIZE.SM} aria-hidden />,
+  });
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
   const { user } = useUser();

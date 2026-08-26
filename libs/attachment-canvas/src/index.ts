@@ -13,14 +13,24 @@ export { downloadAttachmentContent, isDownloadable } from './utils/download';
 export {
   isTextPreviewable,
   isHtmlPreviewable,
+  isOoxmlPreviewable,
+  getOoxmlFileType,
   extensionToLanguage,
   createUnsupportedCanvasContent,
   createLoadErrorCanvasContent,
   createForbiddenCanvasContent,
 } from './utils/content';
+export { findVisualizerForMime } from './utils/visualizer';
+export { useOpenAttachmentCanvas } from './hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas';
+export type {
+  UseOpenAttachmentCanvasResolvers,
+  UseOpenAttachmentCanvasOptions,
+  OpenAttachmentCanvas,
+} from './hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas';
 export {
   AttachmentContentType,
   AttachmentErrorType,
+  OoxmlFileType,
 } from './types/attachment-canvas';
 export type {
   AttachmentCanvasContent,
@@ -30,6 +40,7 @@ export type {
   MarkdownCanvasContent,
   JsonCanvasContent,
   PdfCanvasContent,
+  OoxmlCanvasContent,
   CodeCanvasContent,
   HtmlCanvasContent,
   VisualizerCanvasContent,

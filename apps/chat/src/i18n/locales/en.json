@@ -98,6 +98,7 @@
     "featuredLabel": "Featured",
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
+    "viewToggleLabel": "View mode",
     "details": {
       "tabTools": "Tools",
       "tabContent": "Details",
@@ -289,7 +290,7 @@
     "title": "Talk to",
     "searchPlaceholder": "Search models, agents…",
     "emptyHint": "Star a model or agent to pin it here.",
-    "currentlySelectedLabel": "Currently selected",
+    "currentlySelectedLabel": "My Collection",
     "ariaLabel": "Select model",
     "loading": "Loading models…",
     "error": "Failed to load models",
@@ -303,6 +304,7 @@
   "promptSelector": {
     "addMenuLabel": "Prompts",
     "myCollectionLabel": "My Collection",
+    "browseLabel": "Catalog",
     "emptyHint": "Star a prompt to pin it here",
     "modalTitle": "Use prompt",
     "parametersTitle": "Prompt parameters",
@@ -401,6 +403,7 @@
     "empty": "No conversations yet",
     "filter": {
       "all": "All",
+      "groupAriaLabel": "Filter chats",
       "shared": "Shared",
       "pinnedSection": "Pinned",
       "myChatsSection": "My chats"
@@ -469,6 +472,9 @@
     "failedTitle": "Publish failed",
     "failedMessage": "The publish request was not submitted. Please try again.",
     "networkErrorMessage": "The publish request was not submitted because your internet connection was lost. Please check your connection and try again.",
+    "unpublishFailedTitle": "Unpublish failed",
+    "unpublishFailedMessage": "The unpublish request was not submitted. Please try again.",
+    "unpublishNetworkErrorMessage": "The unpublish request was not submitted because your internet connection was lost. Please check your connection and try again.",
     "submitErrorCallout": "Publishing failed. Please try again."
   },
   "publishAccessRules": {
@@ -1385,17 +1391,18 @@
     "progressAriaLabel": "{{used}} of {{total}}, {{percent}}% used",
     "fullLoadError": "We couldn't load your usage data. Please try again later.",
     "loading": "Loading usage data…",
-    "modelLimitsHeading": "Model limits",
+    "modelLimitsHeading": "Model tokens limits",
     "modelLimitsEmptyState": "No models to show yet.",
-    "periodSelectorAriaLabel": "Select usage period",
+    "spentLabel": "{{amount}} spent",
+    "followsCostLimitLabel": "Follows cost limit",
+    "followsCostLimitAriaLabel": "{{used}} used. Follows cost limit.",
+    "overallCostLimitRunningLowTooltip": "Overall {{period}} cost limit is running low.",
+    "overallCostLimitReachedTooltip": "Overall {{period}} cost limit is reached. Models can't be used until it resets, regardless of remaining token limits.",
     "itemColumnLabel": "Item",
     "costColumnLabel": "Cost",
     "tokensColumnLabel": "Tokens",
-    "requestsColumnLabel": "Requests",
     "statusColumnLabel": "Status",
     "modelTypeLabel": "Model",
-    "periodLastMinuteLabel": "Last minute",
-    "periodLastHourLabel": "Last hour",
     "noLimitLabel": "No limit",
     "unavailableLabel": "Not available",
     "unavailableBadgeLabel": "Unavailable"

@@ -28,7 +28,7 @@ export interface ListViewColors {
   rowEvenBackground?: string;
   /** Border color of the selected row. Fallback: `--stroke-info`. */
   selectedRowBorder?: string;
-  /** Background color (tint) of the selected row. Fallback: `--bg-accent-primary-alpha`. */
+  /** Background color (tint) of the selected row. Fallback: `--bg-control-accent-alpha-active`. */
   selectedRowBackground?: string;
   /** Color of the checkmark icon in the selected row's name cell. Fallback: `--text-accent`. */
   selectedRowCheckIcon?: string;

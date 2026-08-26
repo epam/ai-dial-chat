@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   Logger,
   NotFoundException,
@@ -13,7 +14,7 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
@@ -44,6 +45,11 @@ import {
 import { SendCompletionDto } from './dto/send-completion.dto';
 import { StopCompletionDto } from './dto/stop-completion.dto';
 import { WatchConversationBodyDto } from './dto/watch-conversation.dto';
+import {
+  assertValidOptionalTimezone,
+  TIMEZONE_HEADER,
+  TIMEZONE_MAX_LENGTH,
+} from './utils/timezone-header';
 
 const SSE_KEEPALIVE_INTERVAL_MS = 15_000;
 const SSE_KEEPALIVE_PAYLOAD = ': keepalive\n\n';
@@ -195,8 +201,23 @@ export class ConversationController {
     description:
       'Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.',
   })
+  @ApiHeader({
+    name: TIMEZONE_HEADER,
+    required: false,
+    description:
+      'Current browser IANA timezone forwarded to DIAL Core for date- and time-sensitive tools.',
+    schema: {
+      type: 'string',
+      maxLength: TIMEZONE_MAX_LENGTH,
+      pattern: '^[A-Za-z0-9._+-]+(?:/[A-Za-z0-9._+-]+)*$',
+      example: 'Europe/Warsaw',
+    },
+  })
   @ApiResponse({ status: 200, description: 'SSE stream of completion chunks' })
-  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid request body or X-Timezone header',
+  })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
     status: 403,
@@ -214,8 +235,10 @@ export class ConversationController {
     @Req() req: Request,
     @Res() res: Response,
     @Body() dto: SendCompletionDto,
+    @Headers(TIMEZONE_HEADER) timezoneHeader: string | string[] | undefined,
   ): Promise<void> {
     const { at, bucket, sid, sub } = req.user as SessionUser;
+    const timezone = assertValidOptionalTimezone(timezoneHeader);
     const stream = this.conversationService.streamCompletion(
       dto.path,
       at,
@@ -235,6 +258,7 @@ export class ConversationController {
       },
       sub,
       dto.clientChannelId,
+      timezone,
     );
 
     for await (const chunk of stream) {

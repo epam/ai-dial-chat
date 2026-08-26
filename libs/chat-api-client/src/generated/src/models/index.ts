@@ -34,6 +34,44 @@ export interface AcceptInvitationResponseDto {
 /**
  *
  * @export
+ * @interface AnnotationBodyDto
+ */
+export interface AnnotationBodyDto {
+  /**
+   * Title of the cited source
+   * @type {string}
+   * @memberof AnnotationBodyDto
+   */
+  title?: string;
+  /**
+   * Quoted excerpt from the cited source
+   * @type {string}
+   * @memberof AnnotationBodyDto
+   */
+  quote?: string;
+}
+/**
+ *
+ * @export
+ * @interface AnnotationDto
+ */
+export interface AnnotationDto {
+  /**
+   * Zero-based position in the list
+   * @type {number}
+   * @memberof AnnotationDto
+   */
+  index?: number;
+  /**
+   *
+   * @type {AnnotationBodyDto}
+   * @memberof AnnotationDto
+   */
+  body?: AnnotationBodyDto;
+}
+/**
+ *
+ * @export
  * @interface AnnouncementItemDto
  */
 export interface AnnouncementItemDto {
@@ -820,6 +858,24 @@ export interface ConversationMessageCustomContentDto {
    * @memberof ConversationMessageCustomContentDto
    */
   attachments?: Array<AttachmentDto>;
+  /**
+   * Assistant "thinking step" output streamed alongside the message text
+   * @type {Array<StageDto>}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  stages?: Array<StageDto>;
+  /**
+   * Citations/annotations attached to the message text
+   * @type {Array<AnnotationDto>}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  annotations?: Array<AnnotationDto>;
+  /**
+   * JSON schema describing an embedded form widget
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  formSchema?: object;
   /**
    * Form/button submission value (e.g. `{ button: 1 }`).
    * @type {object}
@@ -4018,6 +4074,24 @@ export interface MessageCustomContentDto {
    */
   attachments?: Array<AttachmentDto>;
   /**
+   * Assistant "thinking step" output streamed alongside the message text
+   * @type {Array<StageDto>}
+   * @memberof MessageCustomContentDto
+   */
+  stages?: Array<StageDto>;
+  /**
+   * Citations/annotations attached to the message text
+   * @type {Array<AnnotationDto>}
+   * @memberof MessageCustomContentDto
+   */
+  annotations?: Array<AnnotationDto>;
+  /**
+   * JSON schema describing an embedded form widget
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  formSchema?: object;
+  /**
    * Form/button submission value (e.g. `{ button: 1 }`).
    * @type {object}
    * @memberof MessageCustomContentDto
@@ -5816,6 +5890,62 @@ export interface SkillsConfigDto {
    * @memberof SkillsConfigDto
    */
   installed: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface StageAttachmentDto
+ */
+export interface StageAttachmentDto {
+  /**
+   * Zero-based position in the list
+   * @type {number}
+   * @memberof StageAttachmentDto
+   */
+  index?: number;
+  /**
+   * Display name of the attachment
+   * @type {string}
+   * @memberof StageAttachmentDto
+   */
+  title?: string;
+  /**
+   * Inline base-64 encoded content
+   * @type {string}
+   * @memberof StageAttachmentDto
+   */
+  data?: string;
+}
+/**
+ *
+ * @export
+ * @interface StageDto
+ */
+export interface StageDto {
+  /**
+   * Zero-based position in the list
+   * @type {number}
+   * @memberof StageDto
+   */
+  index?: number;
+  /**
+   * Stage title
+   * @type {string}
+   * @memberof StageDto
+   */
+  name?: string;
+  /**
+   * Stage text content
+   * @type {string}
+   * @memberof StageDto
+   */
+  content?: string;
+  /**
+   * Files produced or referenced by this stage
+   * @type {Array<StageAttachmentDto>}
+   * @memberof StageDto
+   */
+  attachments?: Array<StageAttachmentDto>;
 }
 /**
  *

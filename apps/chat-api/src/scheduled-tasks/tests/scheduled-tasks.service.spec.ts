@@ -9,6 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { ScheduledTasksService } from '../scheduled-tasks.service';
 
+let fetchMock: ReturnType<typeof vi.fn>;
+
 const makeConfigService = (
   schedulerAppId?: string,
   timeoutMs = 10_000,
@@ -28,6 +30,7 @@ const makeDialClient = (): DialClientService =>
   ({
     baseUrl: 'http://dial-core',
     dialApiVersion: '2025-01-01-preview',
+    fetchCore: fetchMock,
   }) as unknown as DialClientService;
 
 const makeCacheManager = () => {
@@ -46,11 +49,8 @@ const makeCacheManager = () => {
 };
 
 describe('ScheduledTasksService', () => {
-  let fetchMock: ReturnType<typeof vi.fn>;
-
   beforeEach(() => {
     fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
   });
 
   afterEach(() => {

@@ -1219,7 +1219,7 @@ const CatalogView: FC<Props> = ({
       } catch (error) {
         /* Notified here, then rethrown so the panel's own rejection path runs
          * — matching `handlePublish`, which lets the error reach the lib. */
-        showPublishError(error);
+        showPublishError(error, EntityOperation.UnpublishRequested);
         throw error;
       }
       notifyOperationSuccess(
@@ -1673,6 +1673,7 @@ const CatalogView: FC<Props> = ({
           featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
           gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
           listViewLabel: t(CatalogI18nKeys.ListViewLabel),
+          viewToggleLabel: t(CatalogI18nKeys.ViewToggleLabel),
           ariaLabel: t(NavigationI18nKeys.Catalog),
           tabLabels: {
             [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
