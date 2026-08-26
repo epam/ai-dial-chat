@@ -32,6 +32,7 @@ export default defineConfig(() => ({
         'react',
         'react-dom',
         'react/jsx-runtime',
+        'react-markdown',
         '@epam/ai-dial-chat-shared',
         '@epam/ai-dial-ui-kit',
         '@epam/pdf-highlighter-kit',

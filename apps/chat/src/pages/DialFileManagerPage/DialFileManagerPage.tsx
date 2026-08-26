@@ -1,4 +1,10 @@
 import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+  useDialFileManager,
+  useDialFileManagerTabConfig,
+} from '@epam/ai-dial-chat-hooks';
+import {
   DialFileManagerTabs,
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
@@ -8,23 +14,21 @@ import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialFileManagerShell from '../../components/DialFileManagerShell/DialFileManagerShell';
 import type { DialFileManagerShellLabels } from '../../components/DialFileManagerShell/types/labels';
+import { useDialFileManagerHostOptions } from '../../components/DialFileManagerShell/useDialFileManagerHostOptions';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   DialFileManagerI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
-import { useNotification } from '../../context/NotificationContext';
-import { useDialFileManager } from '../../hooks/files/useDialFileManager';
-import { useDialFileManagerTabConfig } from '../../hooks/files/useDialFileManagerTabConfig';
-import {
-  DialFileManagerActionProfile,
-  DialFileManagerVariant,
-} from '../../types/file-manager-variant';
 
 const DialFileManagerPage: FC = () => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
+  const {
+    config: { fileManagerTabs },
+  } = useAppConfig();
+  const hostOptions = useDialFileManagerHostOptions();
   const { user } = useUser();
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
@@ -52,13 +56,14 @@ const DialFileManagerPage: FC = () => {
     activeTab,
     handleTabChange,
     allTabs,
+    fileManagerTabs,
   );
 
   const hookResult = useDialFileManager({
+    ...hostOptions,
     bucket,
     activeTab,
     rootLabel,
-    onNotification: showNotification,
     variant: DialFileManagerVariant.Standalone,
     actionProfile: DialFileManagerActionProfile.Full,
     forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,

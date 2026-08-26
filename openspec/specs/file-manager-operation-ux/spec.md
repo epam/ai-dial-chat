@@ -8,7 +8,7 @@ A shared in-progress flag and the consolidated blackout overlay covering long-ru
 
 ### Requirement: isAnyOperationInProgress derived flag on useDialFileManager
 
-`useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) SHALL expose `isAnyOperationInProgress: boolean` on `UseDialFileManagerResult`, computed via `useMemo` as the logical OR of exactly: `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, `isUnsharing`, `isRemovingAccess`, and `uploadBatchState != null`.
+`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) SHALL expose `isAnyOperationInProgress: boolean` on `UseDialFileManagerResult`, computed via `useMemo` as the logical OR of exactly: `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, `isUnsharing`, `isRemovingAccess`, and `uploadBatchState != null`.
 
 `isLoading`, `isSearching`, and `isFileMetadataLoading` SHALL NOT be included in this composition. Each is already fully contained by its own scoped loading UI: `isLoading` represents a read (listing fetch), a distinct concept from a mutating operation; `isSearching` is scoped to ui-kit's own search-progress UI; `isFileMetadataLoading` has its own `loading` state in `fileMetadataPopupOptions`.
 
