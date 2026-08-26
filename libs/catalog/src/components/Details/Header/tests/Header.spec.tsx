@@ -24,15 +24,18 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label,
     onClick,
     disabled,
+    className,
     'aria-busy': ariaBusy,
   }: {
     label: string;
     onClick: () => void;
     disabled?: boolean;
+    className?: string;
     'aria-busy'?: boolean;
   }) => (
     <button
-      className="primary"
+      data-variant="primary"
+      className={className}
       onClick={onClick}
       disabled={disabled}
       aria-busy={ariaBusy}
@@ -43,32 +46,25 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   NeutralButton: ({
     label,
     onClick,
+    className,
   }: {
     label: string;
     onClick: () => void;
+    className?: string;
   }) => (
-    <button className="neutral" onClick={onClick}>
-      {label}
-    </button>
-  ),
-  DangerButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => (
-    <button className="danger" onClick={onClick}>
+    <button data-variant="neutral" className={className} onClick={onClick}>
       {label}
     </button>
   ),
   NeutralIconButton: ({
     'aria-label': ariaLabel,
+    icon,
     onClick,
     onMouseEnter,
     onFocus,
   }: {
     'aria-label'?: string;
+    icon?: ReactNode;
     onClick?: () => void;
     onMouseEnter?: () => void;
     onFocus?: () => void;
@@ -78,7 +74,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onFocus={onFocus}
-    />
+    >
+      {icon}
+    </button>
   ),
   Dropdown: ({
     children,
@@ -126,7 +124,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconArrowRight: () => <svg />,
   IconChevronDown: () => <svg />,
-  IconDots: () => <svg />,
+  IconDots: ({ size }: { size?: number }) => <span>{`dots icon ${size}`}</span>,
   IconDownload: () => <svg />,
   IconKey: () => <svg />,
   IconLogin: () => <svg />,
@@ -1028,6 +1026,17 @@ describe('Header', () => {
     );
   });
 
+  it('draws the Manage trigger icon at the large icon size', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onRevokeShare={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('dots icon 24')).toBeTruthy();
+  });
+
   /* Hovering starts the lookup early; the subsequent click must not repeat it. */
   it('requests the recipient count once when the Manage button is hovered and then clicked', async () => {
     const onFetchRecipientsCount = vi.fn().mockResolvedValue(1);
@@ -1201,7 +1210,7 @@ describe('Header', () => {
       expect(screen.getByRole('button', { name: 'Log out' })).toBeTruthy();
     });
 
-    it('renders Log out with a danger style', () => {
+    it('renders Log out with the same neutral style as Log in, not a danger style', () => {
       render(
         <Header
           item={{
@@ -1214,9 +1223,11 @@ describe('Header', () => {
           onLogout={vi.fn()}
         />,
       );
-      expect(screen.getByRole('button', { name: 'Log out' }).className).toBe(
-        'danger',
-      );
+      const logoutButton = screen.getByRole('button', { name: 'Log out' });
+      expect(logoutButton.dataset.variant).toBe('neutral');
+      /* The fixed width this action used to carry moved to the credentials
+         sub-view's rows, where two stacked buttons need to line up. */
+      expect(logoutButton.className ?? '').not.toContain('w-28');
     });
 
     it('still renders plain "Log in" for a public item not signed in at USER level (org fallback is conveyed by the banner, not the button)', () => {
@@ -1310,7 +1321,7 @@ describe('Header', () => {
 
       const buttons = screen.getAllByRole('button');
       expect(buttons[0].textContent).toBe('Log in');
-      expect(buttons[0].className).toContain('primary');
+      expect(buttons[0].dataset.variant).toBe('primary');
     });
 
     it('keeps the credentials button as a non-primary, non-leading action for a non-Toolset item', () => {
@@ -1328,7 +1339,7 @@ describe('Header', () => {
       );
 
       const logInButton = screen.getByRole('button', { name: 'Log in' });
-      expect(logInButton.className).toBe('neutral');
+      expect(logInButton.dataset.variant).toBe('neutral');
     });
 
     it('calls onRequestLogout instead of logging in directly when signed in', async () => {
@@ -1403,8 +1414,8 @@ describe('Header', () => {
         />,
       );
       expect(
-        screen.getByRole('button', { name: 'API key' }).className,
-      ).toContain('primary');
+        screen.getByRole('button', { name: 'API key' }).dataset.variant,
+      ).toBe('primary');
     });
 
     it('drops the "Change API key" trigger to the low-emphasis style once a key is configured', () => {
@@ -1421,8 +1432,7 @@ describe('Header', () => {
         />,
       );
       const trigger = screen.getByRole('button', { name: 'Change API key' });
-      expect(trigger.className).not.toContain('primary');
-      expect(trigger.className).toContain('neutral');
+      expect(trigger.dataset.variant).toBe('neutral');
     });
 
     it('opens the personal API-key popover instead of calling onLogin directly', async () => {

@@ -1,3 +1,4 @@
+import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconBuildingCommunity, IconUser } from '@tabler/icons-react';
 import { FC } from 'react';
 import type { ItemDetailsTexts } from '../../../../models/item-details-props';
@@ -5,6 +6,10 @@ import {
   CredentialsBannerState,
   ToolsetAuthenticationType,
 } from '../../../../types/toolset-auth';
+import {
+  CredentialsIconSurface,
+  CredentialsIdentityIcon,
+} from '../CredentialsIdentityIcon/CredentialsIdentityIcon';
 import { CredentialsInfoCard } from '../CredentialsInfoCard/CredentialsInfoCard';
 
 /** Props for {@link CredentialsBanner}. */
@@ -63,7 +68,13 @@ export const CredentialsBanner: FC<CredentialsBannerProps> = ({
     )(authenticationType);
     return (
       <CredentialsInfoCard
-        icon={<IconUser size={BANNER_ICON_SIZE} aria-hidden />}
+        icon={
+          <CredentialsIdentityIcon
+            icon={<IconUser size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            isActive
+            surface={CredentialsIconSurface.Raised}
+          />
+        }
         title={title}
       />
     );
@@ -74,7 +85,20 @@ export const CredentialsBanner: FC<CredentialsBannerProps> = ({
       texts?.orgCredentialsActiveBannerTitle ??
       defaultOrgCredentialsActiveBannerTitle
     )(authenticationType);
-    return <CredentialsInfoCard icon={orgIcon} title={title} />;
+    return (
+      <CredentialsInfoCard
+        icon={
+          <CredentialsIdentityIcon
+            icon={
+              <IconBuildingCommunity size={DIAL_ICON_SIZE.SM} aria-hidden />
+            }
+            isActive
+            surface={CredentialsIconSurface.Raised}
+          />
+        }
+        title={title}
+      />
+    );
   }
 
   const title = (
