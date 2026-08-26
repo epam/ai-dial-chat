@@ -6,6 +6,7 @@ import { Theme, ThemesImages } from '@/src/types/themes';
 export interface UIState {
   initialized: boolean;
   locale: string;
+  timezone: string;
   theme: string;
   availableThemes: Theme[];
   themesImages: ThemesImages;
