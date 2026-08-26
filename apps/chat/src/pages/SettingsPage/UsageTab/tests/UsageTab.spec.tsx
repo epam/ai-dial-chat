@@ -105,9 +105,13 @@ describe('UsageTab', () => {
     expect(
       screen.getByRole('img', { name: UsageI18nKeys.Loading }),
     ).toBeTruthy();
-    expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
-    expect(screen.queryByText(UsageI18nKeys.ThisWeekTitle)).toBeNull();
-    expect(screen.queryByText(UsageI18nKeys.ThisMonthTitle)).toBeNull();
+    expect(screen.queryByText(UsageI18nKeys.TodayPeriodDescription)).toBeNull();
+    expect(
+      screen.queryByText(UsageI18nKeys.ThisWeekPeriodDescription),
+    ).toBeNull();
+    expect(
+      screen.queryByText(UsageI18nKeys.ThisMonthPeriodDescription),
+    ).toBeNull();
   });
 
   it('renders a visible loader, but no dashboard content, while deployments are loading', () => {
@@ -128,7 +132,7 @@ describe('UsageTab', () => {
     expect(
       screen.getByRole('img', { name: UsageI18nKeys.Loading }),
     ).toBeTruthy();
-    expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
+    expect(screen.queryByText(UsageI18nKeys.TodayPeriodDescription)).toBeNull();
     expect(screen.queryByText(UsageI18nKeys.ModelLimitsEmptyState)).toBeNull();
   });
 
@@ -149,9 +153,13 @@ describe('UsageTab', () => {
     expect(
       screen.getByRole('heading', { name: UsageI18nKeys.PageTitle }),
     ).toBeTruthy();
-    expect(screen.getByText(UsageI18nKeys.TodayTitle)).toBeTruthy();
-    expect(screen.getByText(UsageI18nKeys.ThisWeekTitle)).toBeTruthy();
-    expect(screen.getByText(UsageI18nKeys.ThisMonthTitle)).toBeTruthy();
+    expect(screen.getByText(UsageI18nKeys.TodayPeriodDescription)).toBeTruthy();
+    expect(
+      screen.getByText(UsageI18nKeys.ThisWeekPeriodDescription),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(UsageI18nKeys.ThisMonthPeriodDescription),
+    ).toBeTruthy();
     expect(showNotification).not.toHaveBeenCalled();
   });
 
@@ -164,9 +172,13 @@ describe('UsageTab', () => {
 
     render(<UsageTab />);
 
-    expect(screen.getByText(UsageI18nKeys.TodayTitle)).toBeTruthy();
-    expect(screen.queryByText(UsageI18nKeys.ThisWeekTitle)).toBeNull();
-    expect(screen.queryByText(UsageI18nKeys.ThisMonthTitle)).toBeNull();
+    expect(screen.getByText(UsageI18nKeys.TodayPeriodDescription)).toBeTruthy();
+    expect(
+      screen.queryByText(UsageI18nKeys.ThisWeekPeriodDescription),
+    ).toBeNull();
+    expect(
+      screen.queryByText(UsageI18nKeys.ThisMonthPeriodDescription),
+    ).toBeNull();
   });
 
   it('shows an error notification and no cards when the fetch fails', () => {
@@ -178,7 +190,7 @@ describe('UsageTab', () => {
 
     render(<UsageTab />);
 
-    expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
+    expect(screen.queryByText(UsageI18nKeys.TodayPeriodDescription)).toBeNull();
     expect(showNotification).toHaveBeenCalledOnce();
     expect(showNotification).toHaveBeenCalledWith(
       expect.objectContaining({ variant: NotificationVariant.Error }),
