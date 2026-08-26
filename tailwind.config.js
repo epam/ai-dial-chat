@@ -93,7 +93,6 @@ const borderColors = {
   info: 'var(--stroke-info, #1D4ED8)', // blue-500
   accent: 'var(--stroke-accent, #1D4ED8)', // blue-500
   success: 'var(--stroke-success, #007274)', // green-800
-  'accent-primary': 'var(--stroke-accent-primary, #1D4ED8)',
 
   // controls
   default: 'var(--stroke-default, #B2C2DD)', // grey-400

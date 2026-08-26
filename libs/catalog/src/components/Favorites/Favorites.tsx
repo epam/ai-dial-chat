@@ -82,6 +82,12 @@ export const Favorites: FC<FavoritesProps> = ({
     '--cat-fav-selected-bg': favoritesStyles?.colors?.selectedCardBackground,
     '--cat-fav-nav-btn': favoritesStyles?.colors?.navButton,
     '--cat-fav-nav-btn-disabled': favoritesStyles?.colors?.navButtonDisabled,
+    '--cat-fav-nav-btn-hover-bg':
+      favoritesStyles?.colors?.navButtonHoverBackground,
+    '--cat-fav-nav-btn-active-bg':
+      favoritesStyles?.colors?.navButtonActiveBackground,
+    '--cat-fav-page-nav-border': favoritesStyles?.colors?.pageNavBorder,
+    '--cat-fav-page-nav-bg': favoritesStyles?.colors?.pageNavBackground,
   });
   const sortedItems = useMemo(
     () =>

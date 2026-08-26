@@ -171,10 +171,10 @@ describe('SkillFileUploadDialog', () => {
     const dragEvent = { dataTransfer: { types: ['Files'], files: [] } };
 
     fireEvent.dragEnter(dropZone, dragEvent);
-    expect(dropZone.className).toContain('border-accent-primary');
+    expect(dropZone.className).toContain('border-accent');
 
     fireEvent.dragLeave(dropZone, dragEvent);
-    expect(dropZone.className).not.toContain('border-accent-primary');
+    expect(dropZone.className).not.toContain('border-accent');
   });
 
   it('stages dropped files and suppresses the browser default', () => {

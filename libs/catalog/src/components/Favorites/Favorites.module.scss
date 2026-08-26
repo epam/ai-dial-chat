@@ -1,6 +1,10 @@
 .pageNav {
-  border: 1px solid rgba(39, 100, 217, 0.2);
-  background: rgba(39, 100, 217, 0.06);
+  border: 1px solid
+    var(--cat-fav-page-nav-border, var(--stroke-accent-alpha, #2764d933));
+  background: var(
+    --cat-fav-page-nav-bg,
+    var(--bg-control-accent-alpha, #2764d90f)
+  );
 }
 
 .navBtn {
@@ -9,12 +13,18 @@
 
   @media (hover: hover) {
     &:hover:not(:disabled) {
-      background-color: rgba(39, 100, 217, 0.1);
+      background-color: var(
+        --cat-fav-nav-btn-hover-bg,
+        var(--bg-control-accent-alpha-hover, #2764d924)
+      );
     }
   }
 
   &:active:not(:disabled) {
-    background-color: rgba(39, 100, 217, 0.16);
+    background-color: var(
+      --cat-fav-nav-btn-active-bg,
+      var(--bg-control-accent-alpha-active, #2764d933)
+    );
   }
 
   &:disabled {
@@ -36,7 +46,7 @@
 }
 
 .selectedCard {
-  border-color: var(--cat-fav-selected-border, var(--stroke-info, #124ace));
+  border-color: var(--cat-fav-selected-border, var(--stroke-accent, #1d4ed8));
   background-color: var(
     --cat-fav-selected-bg,
     var(--bg-control-accent-alpha-active, #2764d933)
