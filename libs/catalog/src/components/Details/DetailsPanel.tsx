@@ -272,6 +272,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-confirm-footer-border': detailsColors?.confirmFooterBorder,
     '--cat-cred-surface-bg': detailsColors?.credentialsSurfaceBackground,
     '--cat-cred-active-icon': detailsColors?.credentialsActiveIcon,
+    '--cat-cred-banner-icon-bg': detailsColors?.credentialsBannerIconBackground,
     '--cat-cred-description-text': detailsColors?.credentialsDescriptionText,
     '--cat-cred-row-description-text':
       detailsColors?.credentialsRowDescriptionText,

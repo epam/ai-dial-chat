@@ -418,6 +418,8 @@ export interface ItemDetailsColors {
   credentialsSurfaceBackground?: string;
   /** Color of the checkmark marking the credentials level currently in effect. Fallback: `--text-success`. */
   credentialsActiveIcon?: string;
+  /** Background of the credentials banner's icon chip, which sits on the already-tinted status card rather than on the panel. Fallback: `--bg-layer-raised`. */
+  credentialsBannerIconBackground?: string;
   /** Text color of the credentials sub-screen's description. Fallback: `--text-primary`. */
   credentialsDescriptionText?: string;
   /** Text color of a credentials row's description. Fallback: `--text-tertiary`. */
