@@ -7,6 +7,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import {
   MessageRating,
+  generateUUID,
   MessageRole,
   ResponseFormat,
   type Attachment,
@@ -199,7 +200,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         withPlaceholder.messages.length - 1,
         appId,
         attachmentDtos?.length ? { attachments: attachmentDtos } : undefined,
-        crypto.randomUUID(),
+        generateUUID(),
         CompletionMode.ContinueLastUser,
       );
     },

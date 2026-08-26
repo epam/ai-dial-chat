@@ -1,3 +1,4 @@
+import { generateUUID } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   createContext,
@@ -59,7 +60,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const showNotification = useCallback((options: ShowNotificationOptions) => {
-    const id = crypto.randomUUID();
+    const id = generateUUID();
     setNotifications((prev) => [...prev, { ...options, id }]);
   }, []);
 

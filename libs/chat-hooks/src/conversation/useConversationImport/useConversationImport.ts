@@ -3,6 +3,7 @@ import type {
   ConversationsApi,
   FilesApi,
 } from '@epam/ai-dial-chat-api-client';
+import { generateUUID } from '@epam/ai-dial-chat-shared';
 import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import { runWithConcurrency } from '../conversation-transfer/async';
@@ -460,7 +461,7 @@ export const useConversationImport = ({
          * queue, retry, or dismiss. `jobId` is a transient correlation id
          * only, not a member of `jobs`. */
         onError?.({
-          jobId: crypto.randomUUID(),
+          jobId: generateUUID(),
           code: ConversationTransferErrorCode.UnsupportedFormat,
         });
         if (!(error instanceof UnsupportedImportFormatError)) {

@@ -6,6 +6,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
+import { generateUUID } from '../../common/utils/generate-uuid';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
@@ -60,7 +61,7 @@ export class ConversationLifecycleService {
     customContent?: MessageCustomContentDto,
   ): Promise<ConversationResponseDto> {
     const now = Date.now();
-    const uuid = crypto.randomUUID();
+    const uuid = generateUUID();
     const baseName = getConversationName('New chat', firstMessage);
     const name = baseName;
     const conversationPath = `${deploymentId}__${baseName}__${uuid}`;
@@ -313,7 +314,7 @@ export class ConversationLifecycleService {
       [...decodedFolderSegments, decodedRenamedFilename].join('/'),
     );
     const decodedFinalFilename = pathExists
-      ? `${decodedRenamedFilename}__${crypto.randomUUID()}`
+      ? `${decodedRenamedFilename}__${generateUUID()}`
       : decodedRenamedFilename;
     const decodedDestinationSubPath = [
       ...decodedFolderSegments,
