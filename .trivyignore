@@ -7,6 +7,10 @@ CVE-2026-59873 exp:2026-09-20
 CVE-2026-59874 exp:2026-09-20
 CVE-2026-73566 exp:2026-09-20
 
+# pdfjs-dist
+# Fix requires pdfjs-dist 6.x, which breaks the ^5.4.149 peer of @epam/pdf-highlighter-kit
+CVE-2026-16633 exp:2026-09-20
+
 # undici
 CVE-2026-12151 exp:2026-09-20
 
