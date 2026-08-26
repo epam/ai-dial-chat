@@ -1,6 +1,7 @@
 # brace-expansion
 CVE-2026-13149 exp:2026-09-20
 CVE-2026-14257 exp:2026-09-20
+CVE-2026-69152 exp:2026-09-20
 
 #  tar
 CVE-2026-59873 exp:2026-09-20
@@ -8,7 +9,6 @@ CVE-2026-59874 exp:2026-09-20
 CVE-2026-73566 exp:2026-09-20
 
 # pdfjs-dist
-# Fix requires pdfjs-dist 6.x, which breaks the ^5.4.149 peer of @epam/pdf-highlighter-kit
 CVE-2026-16633 exp:2026-09-20
 
 # undici
@@ -17,3 +17,7 @@ CVE-2026-12151 exp:2026-09-20
 # postcss
 CVE-2026-45623 exp:2026-09-20
 GHSA-r28c-9q8g-f849 exp:2026-09-20
+CVE-2026-73646 exp:2026-09-20
+
+#ip-address
+CVE-2026-69192 exp:2026-09-20
