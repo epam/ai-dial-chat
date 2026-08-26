@@ -10,6 +10,7 @@ export enum AttachmentContentType {
   Code = 'code',
   Html = 'html',
   Visualizer = 'visualizer',
+  McpApp = 'mcp_app',
   Unsupported = 'unsupported',
   Error = 'error',
 }

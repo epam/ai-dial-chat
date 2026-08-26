@@ -62,6 +62,42 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DIAL_CORE_EXTERNAL_URL',
   },
   {
+    key: 'mcpApps.sandboxUrl',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Isolated-origin URL of the deployed MCP Apps sandbox-proxy app (apps/mcp-app-sandbox). Null when MCP_APP_SANDBOX_URL is not configured — the "Open App" trigger and auto-open simply do not appear.',
+    owner: 'chat-team',
+    envVar: 'MCP_APP_SANDBOX_URL',
+  },
+  {
+    key: 'mcpApps.theme',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Admin-controlled color theme override for all MCP App Views. When set, all users receive this theme in hostContext.theme regardless of their own UI preference. Null when MCP_APP_THEME is not configured — each client falls back to its own active theme.',
+    owner: 'chat-team',
+    envVar: 'MCP_APP_THEME',
+  },
+  {
+    key: 'mcpApps.userAgent',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Host application identifier sent to MCP App Views in hostContext.userAgent. Defaults to "ai-dial-chat" when MCP_APP_USER_AGENT is not configured.',
+    owner: 'chat-team',
+    envVar: 'MCP_APP_USER_AGENT',
+  },
+  {
     key: 'app.version',
     type: 'config',
     valueType: 'string',

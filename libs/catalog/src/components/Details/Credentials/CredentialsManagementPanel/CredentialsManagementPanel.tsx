@@ -1,5 +1,6 @@
 import { EntityHeader, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonAppearance,
   DangerButton,
   DIAL_ICON_SIZE,
   Input,
@@ -7,12 +8,7 @@ import {
   NeutralButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconBuildingCommunity,
-  IconCircleCheckFilled,
-  IconKey,
-  IconUser,
-} from '@tabler/icons-react';
+import { IconBuildingCommunity, IconKey, IconUser } from '@tabler/icons-react';
 import { FC, ReactNode, useCallback, useState } from 'react';
 import type { CatalogItem } from '../../../../models/catalog-item';
 import type {
@@ -24,6 +20,7 @@ import {
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '../../../../types/toolset-auth';
+import { CredentialsIdentityIcon } from '../CredentialsIdentityIcon/CredentialsIdentityIcon';
 import { CredentialsInfoCard } from '../CredentialsInfoCard/CredentialsInfoCard';
 import styles from './CredentialsManagementPanel.module.scss';
 
@@ -152,30 +149,12 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
       : undefined;
 
   return (
-    <div className="flex items-start gap-3">
-      <div className="relative shrink-0">
-        <div
-          className={mergeClasses(
-            'flex size-8 items-center justify-center rounded-lg',
-            styles.surface,
-          )}
-        >
-          {icon}
-        </div>
-        {isActive && (
-          <IconCircleCheckFilled
-            size={DIAL_ICON_SIZE.SM}
-            aria-hidden
-            className={mergeClasses(
-              'absolute -end-1 -top-1',
-              styles.activeIcon,
-            )}
-          />
-        )}
-        <span className="sr-only">
-          {isActive ? signedInLabel : signedOutLabel}
-        </span>
-      </div>
+    <div className="flex items-start gap-3 rounded-xl p-3">
+      <CredentialsIdentityIcon
+        icon={icon}
+        isActive={isActive}
+        statusLabel={isActive ? signedInLabel : signedOutLabel}
+      />
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
@@ -193,14 +172,15 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
           {authenticationType === ToolsetAuthenticationType.OAuth &&
             (isSignedIn ? (
               <DangerButton
+                appearance={ButtonAppearance.Ghost}
                 label={logoutLabel}
-                className="shrink-0 justify-center whitespace-nowrap"
+                className="min-w-28 shrink-0 justify-center whitespace-nowrap"
                 onClick={handleRequestLogout}
               />
             ) : (
               <NeutralButton
                 label={loginLabel}
-                className="shrink-0 justify-center whitespace-nowrap"
+                className="min-w-28 shrink-0 justify-center whitespace-nowrap"
                 onClick={handleLogin}
               />
             ))}
@@ -366,7 +346,7 @@ export const CredentialsManagementPanel: FC<
         >
           {description}
         </span>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col">
           <CredentialsManagementRow
             item={item}
             level={CredentialsLevel.User}

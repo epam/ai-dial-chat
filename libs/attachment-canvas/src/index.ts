@@ -43,6 +43,7 @@ export type {
   OoxmlCanvasContent,
   CodeCanvasContent,
   HtmlCanvasContent,
+  McpAppCanvasContent,
   VisualizerCanvasContent,
   UnsupportedCanvasContent,
   ErrorCanvasContent,

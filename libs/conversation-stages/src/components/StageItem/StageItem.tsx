@@ -117,14 +117,16 @@ export const StageItem: FC<StageItemProps> = ({
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-expanded={isOpen}
-        className={mergeClasses(rowClassName, 'cursor-pointer text-start')}
-      >
-        {header}
-      </button>
+      <div className={rowClassName}>
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          aria-expanded={isOpen}
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-start"
+        >
+          {header}
+        </button>
+      </div>
       <div
         className={mergeClasses(
           'grid overflow-hidden transition-[grid-template-rows] duration-[250ms] ease-in-out',

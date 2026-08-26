@@ -16,6 +16,7 @@ import {
 } from '../../types/attachment-canvas';
 import { CodeContent } from '../CodeContent/CodeContent';
 import { HtmlContent } from '../HtmlContent/HtmlContent';
+import { McpAppCanvasRenderer } from '../McpAppCanvasRenderer/McpAppCanvasRenderer';
 import { OoxmlContent } from '../OoxmlContent/OoxmlContent';
 import { PdfContent } from '../PdfContent/PdfContent';
 import { VisualizerCanvasRenderer } from '../VisualizerCanvasRenderer/VisualizerCanvasRenderer';
@@ -161,6 +162,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
       case AttachmentContentType.Pdf:
       case AttachmentContentType.Ooxml:
       case AttachmentContentType.Visualizer:
+      case AttachmentContentType.McpApp:
       case AttachmentContentType.Code:
       case AttachmentContentType.Html:
         return 'h-full overflow-hidden';
@@ -311,6 +313,8 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             errorLabel={visualizerErrorLabel}
           />
         );
+      case AttachmentContentType.McpApp:
+        return <McpAppCanvasRenderer content={content} />;
       case AttachmentContentType.Unsupported:
         return (
           <p className={mergeClasses('text-center', styles.statusLabel)}>
