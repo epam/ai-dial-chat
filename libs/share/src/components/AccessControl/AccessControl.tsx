@@ -35,7 +35,7 @@ interface AccessControlProps {
   menuRef: RefObject<HTMLDivElement | null>;
   /** CSS class applied to the primary row text. Defaults to `'dial-small-semi-text'`. */
   titleClassName?: string;
-  /** CSS class applied to the secondary row text. Defaults to `'dial-tiny-text'`. */
+  /** CSS class applied to the secondary row text. Defaults to `'dial-small-text'`. */
   subtitleClassName?: string;
   /** CSS class applied to the access trigger label. Defaults to `'dial-small-semi-text'`. */
   accessTriggerLabelClassName?: string;
@@ -59,7 +59,7 @@ export const AccessControl: FC<AccessControlProps> = ({
   triggerRef,
   menuRef,
   titleClassName = 'dial-small-semi-text',
-  subtitleClassName = 'dial-tiny-text',
+  subtitleClassName = 'dial-small-text',
   accessTriggerLabelClassName = 'dial-small-semi-text',
   accessMenuItemLabelClassName = 'dial-small-text',
 }) => {
@@ -165,7 +165,7 @@ export const AccessControl: FC<AccessControlProps> = ({
             aria-haspopup="menu"
             aria-expanded={isOpen}
             className={mergeClasses(
-              'flex h-9 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2.5 outline-none',
+              'flex h-10 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 outline-none',
               styles.accessTriggerBtn,
               isOpen && styles.accessTriggerBtnOpen,
             )}
@@ -182,7 +182,7 @@ export const AccessControl: FC<AccessControlProps> = ({
               }
             </span>
             <IconChevronDown
-              size={14}
+              size={DIAL_ICON_SIZE.MD}
               strokeWidth={2.2}
               className={mergeClasses(
                 'shrink-0 transition-transform duration-150 rtl:scale-x-[-1]',
@@ -197,7 +197,7 @@ export const AccessControl: FC<AccessControlProps> = ({
         <span
           aria-label={accessAriaLabel}
           className={mergeClasses(
-            'flex h-9 shrink-0 items-center whitespace-nowrap rounded-lg px-2.5',
+            'flex h-10 shrink-0 items-center whitespace-nowrap rounded-full px-3',
             styles.accessTriggerBtn,
           )}
         >

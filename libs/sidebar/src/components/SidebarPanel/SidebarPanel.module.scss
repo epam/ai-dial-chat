@@ -1,6 +1,8 @@
 .wrapper {
   background: var(--sb-bg, var(--bg-layer-raised, #fcfcfc));
-  border-color: var(--sb-border, var(--stroke-tertiary, #e0e6f0));
+  /* grey-1000 alpha-6 — subtler than the solid stroke tokens, for the thin
+   * divider facing the navigation rail. */
+  border-color: var(--sb-border, #161b2d0f);
 }
 
 .header {

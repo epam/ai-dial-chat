@@ -3,10 +3,10 @@
     --shp-access-trigger-bg,
     var(--bg-layer-raised, #fcfcfc)
   );
-  border-color: var(
-    --shp-access-trigger-border,
-    var(--stroke-secondary, #d1dbea)
-  );
+  /* Transparent at rest to match the borderless Figma trigger; the 1px
+   * `border` utility stays on the element so hover/focus can swap in a
+   * visible color without changing layout. */
+  border-color: var(--shp-access-trigger-border, transparent);
 }
 
 /* Interactive states apply only to the dropdown trigger; the same class also
@@ -118,9 +118,11 @@ button.accessTriggerBtn {
   color: var(--shp-menu-item-check, var(--text-accent, #1d4ed8));
 }
 
-.sectionLabel {
+.linkRow {
+  background: var(--shp-link-row-bg, var(--bg-layer-base, #f5f7fa));
+
   input {
-    color: var(--shp-section-label, var(--text-secondary, #57647a)) !important;
+    color: var(--shp-link-text, var(--text-primary, #161b2d)) !important;
   }
 }
 
