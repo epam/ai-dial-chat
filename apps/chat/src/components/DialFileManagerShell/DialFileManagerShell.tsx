@@ -1,4 +1,11 @@
 import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+  FileUploadStatus,
+  useGridEditingScroll,
+  type UseDialFileManagerResult,
+} from '@epam/ai-dial-chat-hooks';
+import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
@@ -14,14 +21,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { memo, useEffect, useMemo, useState, type FC } from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
-import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
 import UploadProgressModal from '../../components/DialFileManagerModal/UploadProgressModal';
-import type { UseDialFileManagerResult } from '../../hooks/files/useDialFileManager';
-import { useGridEditingScroll } from '../../hooks/files/useGridEditingScroll';
-import {
-  DialFileManagerActionProfile,
-  DialFileManagerVariant,
-} from '../../types/file-manager-variant';
 import { getParentFolderPath } from '../../utils/resolve-dial-file-api-path';
 import type {
   DialFileManagerDestinationFolderPopupOptions,

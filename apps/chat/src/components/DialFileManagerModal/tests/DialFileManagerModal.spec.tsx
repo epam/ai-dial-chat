@@ -1,4 +1,10 @@
 import {
+  DialFileManagerVariant,
+  FileManagerNotificationReason,
+  type UseDialFileManagerResult,
+} from '@epam/ai-dial-chat-hooks';
+import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
+import {
   DialFileManagerActions,
   DialFileManagerTabs,
   DialFileNodeType,
@@ -8,12 +14,16 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import * as useDialFileManagerModule from '../../../hooks/files/useDialFileManager';
-import type { UseDialFileManagerResult } from '../../../hooks/files/useDialFileManager';
-import { DialFileManagerVariant } from '../../../types/file-manager-variant';
 import DialFileManagerModal from '../DialFileManagerModal';
 
-vi.mock('../../../hooks/files/useDialFileManager');
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    useDialFileManager: vi.fn(),
+  };
+});
 
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => createNotificationContextValue(mockShowNotification),
@@ -312,9 +322,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
   };
 });
 
-const mockUseDialFileManager = vi.mocked(
-  useDialFileManagerModule.useDialFileManager,
-);
+const mockUseDialFileManager = vi.mocked(chatHooksModule.useDialFileManager);
 
 const defaultHookResult: UseDialFileManagerResult = {
   items: [
@@ -559,9 +567,14 @@ describe('DialFileManagerModal', () => {
        this exact case for container/element.querySelector. */
     // eslint-disable-next-line testing-library/no-node-access
     const body = dialog.querySelector('.overflow-auto');
-    expect(body?.classList.contains('flex')).toBe(true);
-    expect(body?.classList.contains('min-h-0')).toBe(true);
-    expect(body?.classList.contains('flex-col')).toBe(true);
+    expect(body?.classList.contains('grow')).toBe(true);
+
+    // The flex layout wrapper is the direct content child inside the body.
+    // eslint-disable-next-line testing-library/no-node-access
+    const contentWrapper = body?.querySelector('.flex.min-h-0.flex-col');
+    expect(contentWrapper?.classList.contains('flex')).toBe(true);
+    expect(contentWrapper?.classList.contains('min-h-0')).toBe(true);
+    expect(contentWrapper?.classList.contains('flex-col')).toBe(true);
 
     // eslint-disable-next-line testing-library/no-node-access
     const footer = dialog.querySelector('.px-6.py-4');
@@ -787,12 +800,19 @@ describe('DialFileManagerModal', () => {
     ).toBe(true);
   });
 
-  it('passes global notification handler to the file manager hook', () => {
+  it('passes a notification handler that forwards translated folder-load errors to showNotification', () => {
     render(<DialFileManagerModal {...defaultProps} />);
 
-    expect(mockUseDialFileManager).toHaveBeenCalledWith(
-      expect.objectContaining({ onNotification: mockShowNotification }),
-    );
+    const passedOptions = mockUseDialFileManager.mock.calls[0][0];
+    passedOptions.onNotification?.({
+      variant: NotificationVariant.Error,
+      reason: FileManagerNotificationReason.FolderLoadFailed,
+    });
+
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: NotificationVariant.Error,
+      message: 'dialFileManager.folderLoadError',
+    });
   });
 
   it('disables upload and new folder when the hook reports no WRITE permission', () => {

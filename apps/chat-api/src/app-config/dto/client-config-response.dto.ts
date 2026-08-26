@@ -50,6 +50,38 @@ export class ClientConfigDto {
   @IsString()
   dialCoreExternalUrl!: string | null;
 
+  @ApiPropertyOptional({
+    description:
+      'Isolated-origin URL of the deployed MCP Apps sandbox-proxy app. Null when MCP_APP_SANDBOX_URL is not configured.',
+    example: 'https://mcp-app-sandbox.example.com',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  mcpAppSandboxUrl!: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Admin-controlled color theme override for MCP App Views. Null when MCP_APP_THEME is not configured — each client uses its own active theme.',
+    enum: ['light', 'dark'],
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  mcpAppTheme!: 'light' | 'dark' | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured — defaults to "ai-dial-chat" on the client.',
+    type: String,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  mcpAppUserAgent!: string | null;
+
   @ApiProperty({
     description:
       'Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.',

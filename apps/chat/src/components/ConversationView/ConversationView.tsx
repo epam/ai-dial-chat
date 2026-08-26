@@ -1,4 +1,7 @@
-import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  useAttachmentCanvas,
+  useOpenAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   AttachmentValidationErrorReason,
   isMessageChanged,
@@ -49,6 +52,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
+  AttachmentCanvasI18nKeys,
   AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -64,9 +68,12 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
+import { useAutoOpenMcpAppCanvas } from '../../hooks/attachment/useAutoOpenMcpAppCanvas';
+import { useOpenMcpAppCanvas } from '../../hooks/attachment/useOpenMcpAppCanvas';
+import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
+import { useMcpAppTools } from '../../hooks/conversation/useMcpAppTools';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
@@ -233,7 +240,9 @@ const ConversationView: FC<Props> = ({
     Attachment[]
   >([]);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
-  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+  const { resolvers, options } = useAttachmentCanvasResolvers();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+  const { openMcpAppCanvas } = useOpenMcpAppCanvas();
   const { openCanvas, attachmentId: selectedAttachmentKey } =
     useAttachmentCanvas();
 
@@ -260,6 +269,7 @@ const ConversationView: FC<Props> = ({
     selectedDeploymentConfiguration,
     isLoading,
     error,
+    toolsets,
   } = useDeployments();
   const activeDeploymentId = fixedModel?.id ?? selectedItemId;
 
@@ -273,6 +283,9 @@ const ConversationView: FC<Props> = ({
         }
       : undefined;
   }, [items, activeDeploymentId, language]);
+
+  const mcpAppTools = useMcpAppTools(selectedDeployment, messages, toolsets);
+  useAutoOpenMcpAppCanvas(messages, mcpAppTools);
 
   const {
     inputAttachmentTypes,
@@ -705,6 +718,12 @@ const ConversationView: FC<Props> = ({
                     thinkingLabel={t(ChatI18nKeys.Thinking)}
                     executedLabel={t(ConversationI18nKeys.StagesExecuted)}
                     stepsLabel={stepsLabel}
+                    onOpenApp={openMcpAppCanvas}
+                    mcpAppTools={mcpAppTools}
+                    openCanvasLabel={t(AttachmentCanvasI18nKeys.OpenAppLabel)}
+                    openedInCanvasLabel={t(
+                      AttachmentCanvasI18nKeys.OpenedInCanvasLabel,
+                    )}
                     onPreviewReference={handlePreviewReference}
                     pendingDropFiles={
                       isEditActive && isThisMessageEditing

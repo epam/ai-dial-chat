@@ -6,7 +6,7 @@ File upload in the file manager: validation, concurrency, per-file upload mode, 
 
 ## State ownership
 
-`useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) owns all upload state. No new React Context is introduced.
+`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) owns all upload state. No new React Context is introduced.
 
 New state fields added to the hook:
 
@@ -40,7 +40,7 @@ For cancellation, both transport paths accept `signal?: AbortSignal`.
 
 ## FileUploadStatus enum
 
-Defined in `apps/chat/src/hooks/files/useDialFileManager.ts` (co-located, or extracted to `apps/chat/src/components/DialFileManagerModal/types/`):
+Defined in `libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)` (co-located, or extracted to `apps/chat/src/components/DialFileManagerModal/types/`):
 
 ```ts
 enum FileUploadStatus {

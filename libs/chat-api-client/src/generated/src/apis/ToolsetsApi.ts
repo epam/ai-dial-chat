@@ -16,12 +16,20 @@ import * as runtime from '../runtime';
 import type {
   DialToolsetDto,
   DialToolsetListResponseDto,
+  ListMcpAppToolsResponseDto,
+  McpAppToolCallRequestDto,
+  McpAppToolCallResponseDto,
   MutatedToolsetDto,
   ToolsetAuthResultDto,
   ToolsetBodyDto,
   ToolsetLoginBodyDto,
   ToolsetLogoutBodyDto,
 } from '../models/index';
+
+export interface CallToolsetMcpAppToolRequest {
+  toolsetName: string;
+  mcpAppToolCallRequestDto: McpAppToolCallRequestDto;
+}
 
 export interface CreateToolsetRequest {
   toolsetBodyDto: ToolsetBodyDto;
@@ -33,6 +41,16 @@ export interface DeleteToolsetRequest {
 
 export interface GetToolsetRequest {
   toolsetName: string;
+}
+
+export interface GetToolsetMcpAppResourceRequest {
+  toolsetName: string;
+  resourceUri: string;
+}
+
+export interface ListMcpAppToolsRequest {
+  deploymentId: string;
+  kind: ListMcpAppToolsKindEnum;
 }
 
 export interface LoginToolsetRequest {
@@ -54,6 +72,69 @@ export interface UpdateToolsetRequest {
  *
  */
 export class ToolsetsApi extends runtime.BaseAPI {
+  /**
+   * Validates toolName against the tools the MCP session currently exposes, then forwards a tools/call JSON-RPC request through DIAL Core\'s existing generic MCP proxy for this toolset. Not cached — every call is a live, potentially side-effecting tool invocation.
+   * Forward an MCP App\'s self-initiated tool call
+   */
+  async callToolsetMcpAppToolRaw(
+    requestParameters: CallToolsetMcpAppToolRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<McpAppToolCallResponseDto>> {
+    if (requestParameters['toolsetName'] == null) {
+      throw new runtime.RequiredError(
+        'toolsetName',
+        'Required parameter "toolsetName" was null or undefined when calling callToolsetMcpAppTool().',
+      );
+    }
+
+    if (requestParameters['mcpAppToolCallRequestDto'] == null) {
+      throw new runtime.RequiredError(
+        'mcpAppToolCallRequestDto',
+        'Required parameter "mcpAppToolCallRequestDto" was null or undefined when calling callToolsetMcpAppTool().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/toolsets/{toolsetName}/mcp-app-tool-call`;
+    urlPath = urlPath.replace(
+      `{${'toolsetName'}}`,
+      encodeURIComponent(String(requestParameters['toolsetName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['mcpAppToolCallRequestDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<McpAppToolCallResponseDto>(response);
+  }
+
+  /**
+   * Validates toolName against the tools the MCP session currently exposes, then forwards a tools/call JSON-RPC request through DIAL Core\'s existing generic MCP proxy for this toolset. Not cached — every call is a live, potentially side-effecting tool invocation.
+   * Forward an MCP App\'s self-initiated tool call
+   */
+  async callToolsetMcpAppTool(
+    requestParameters: CallToolsetMcpAppToolRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<McpAppToolCallResponseDto> {
+    const response = await this.callToolsetMcpAppToolRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    * Creates a new toolset for the authenticated session user by proxying DIAL Core. Invalidates the toolset list cache on success.
    * Create a new toolset
@@ -202,6 +283,130 @@ export class ToolsetsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DialToolsetDto> {
     const response = await this.getToolsetRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Raw-passthrough proxy of DIAL Core\'s GET /v1/deployments/{deployment_name}/mcp/resources?uri=... — the response body is Core\'s resource body unchanged, forwarded with Content-Type/Content-Security-Policy/X-Content-Type-Options from Core. Cached server-side for 30 seconds per toolset+resourceUri.
+   * Fetch a toolset\'s MCP Apps ui:// resource
+   */
+  async getToolsetMcpAppResourceRaw(
+    requestParameters: GetToolsetMcpAppResourceRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['toolsetName'] == null) {
+      throw new runtime.RequiredError(
+        'toolsetName',
+        'Required parameter "toolsetName" was null or undefined when calling getToolsetMcpAppResource().',
+      );
+    }
+
+    if (requestParameters['resourceUri'] == null) {
+      throw new runtime.RequiredError(
+        'resourceUri',
+        'Required parameter "resourceUri" was null or undefined when calling getToolsetMcpAppResource().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['resourceUri'] != null) {
+      queryParameters['resourceUri'] = requestParameters['resourceUri'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/toolsets/{toolsetName}/mcp-app-resource`;
+    urlPath = urlPath.replace(
+      `{${'toolsetName'}}`,
+      encodeURIComponent(String(requestParameters['toolsetName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Raw-passthrough proxy of DIAL Core\'s GET /v1/deployments/{deployment_name}/mcp/resources?uri=... — the response body is Core\'s resource body unchanged, forwarded with Content-Type/Content-Security-Policy/X-Content-Type-Options from Core. Cached server-side for 30 seconds per toolset+resourceUri.
+   * Fetch a toolset\'s MCP Apps ui:// resource
+   */
+  async getToolsetMcpAppResource(
+    requestParameters: GetToolsetMcpAppResourceRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.getToolsetMcpAppResourceRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Calls DIAL Core\'s generic MCP JSON-RPC proxy\'s tools/list for the given deployment (toolset or application) and returns only the tools that declare an MCP Apps UI resource (`_meta.ui.resourceUri`).
+   * List MCP Apps-capable tools for an MCP-enabled deployment
+   */
+  async listMcpAppToolsRaw(
+    requestParameters: ListMcpAppToolsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListMcpAppToolsResponseDto>> {
+    if (requestParameters['deploymentId'] == null) {
+      throw new runtime.RequiredError(
+        'deploymentId',
+        'Required parameter "deploymentId" was null or undefined when calling listMcpAppTools().',
+      );
+    }
+
+    if (requestParameters['kind'] == null) {
+      throw new runtime.RequiredError(
+        'kind',
+        'Required parameter "kind" was null or undefined when calling listMcpAppTools().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['deploymentId'] != null) {
+      queryParameters['deploymentId'] = requestParameters['deploymentId'];
+    }
+
+    if (requestParameters['kind'] != null) {
+      queryParameters['kind'] = requestParameters['kind'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/toolsets/mcp-apps/tools`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListMcpAppToolsResponseDto>(response);
+  }
+
+  /**
+   * Calls DIAL Core\'s generic MCP JSON-RPC proxy\'s tools/list for the given deployment (toolset or application) and returns only the tools that declare an MCP Apps UI resource (`_meta.ui.resourceUri`).
+   * List MCP Apps-capable tools for an MCP-enabled deployment
+   */
+  async listMcpAppTools(
+    requestParameters: ListMcpAppToolsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListMcpAppToolsResponseDto> {
+    const response = await this.listMcpAppToolsRaw(
+      requestParameters,
+      initOverrides,
+    );
     return await response.value();
   }
 
@@ -431,3 +636,13 @@ export class ToolsetsApi extends runtime.BaseAPI {
     return await response.value();
   }
 }
+
+/**
+ * @export
+ */
+export const ListMcpAppToolsKindEnum = {
+  Toolset: 'toolset',
+  Application: 'application',
+} as const;
+export type ListMcpAppToolsKindEnum =
+  (typeof ListMcpAppToolsKindEnum)[keyof typeof ListMcpAppToolsKindEnum];

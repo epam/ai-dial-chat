@@ -1,7 +1,7 @@
+import { FileUploadStatus } from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { FileUploadStatus } from '../types/upload';
 import UploadProgressModal from '../UploadProgressModal';
 
 describe('UploadProgressModal', () => {

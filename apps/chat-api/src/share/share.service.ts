@@ -56,8 +56,14 @@ const RESOURCE_KIND_BY_PREFIX: [prefix: string, kind: ResourceKind][] = [
   ['skills/', 'SKILL'],
 ];
 
-const resolveResourceKind = (itemId: string): ResourceKind =>
-  RESOURCE_KIND_BY_PREFIX.find(([prefix]) => itemId.startsWith(prefix))![1];
+const resolveResourceKind = (itemId: string): ResourceKind => {
+  const match = RESOURCE_KIND_BY_PREFIX.find(([prefix]) =>
+    itemId.startsWith(prefix),
+  );
+  if (!match)
+    throw new Error(`Unrecognized resource kind for itemId: ${itemId}`);
+  return match[1];
+};
 
 /*
  * DIAL Core's `shareResource` endpoint does not return an expiry; the link

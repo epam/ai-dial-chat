@@ -34,6 +34,44 @@ export interface AcceptInvitationResponseDto {
 /**
  *
  * @export
+ * @interface AnnotationBodyDto
+ */
+export interface AnnotationBodyDto {
+  /**
+   * Title of the cited source
+   * @type {string}
+   * @memberof AnnotationBodyDto
+   */
+  title?: string;
+  /**
+   * Quoted excerpt from the cited source
+   * @type {string}
+   * @memberof AnnotationBodyDto
+   */
+  quote?: string;
+}
+/**
+ *
+ * @export
+ * @interface AnnotationDto
+ */
+export interface AnnotationDto {
+  /**
+   * Zero-based position in the list
+   * @type {number}
+   * @memberof AnnotationDto
+   */
+  index?: number;
+  /**
+   *
+   * @type {AnnotationBodyDto}
+   * @memberof AnnotationDto
+   */
+  body?: AnnotationBodyDto;
+}
+/**
+ *
+ * @export
  * @interface AnnouncementItemDto
  */
 export interface AnnouncementItemDto {
@@ -531,6 +569,24 @@ export interface ClientConfigDto {
    */
   dialCoreExternalUrl?: string | null;
   /**
+   * Isolated-origin URL of the deployed MCP Apps sandbox-proxy app. Null when MCP_APP_SANDBOX_URL is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppSandboxUrl?: string | null;
+  /**
+   * Admin-controlled color theme override for MCP App Views. Null when MCP_APP_THEME is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppTheme?: 'light' | 'dark' | null;
+  /**
+   * Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppUserAgent?: string | null;
+  /**
    * Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.
    * @type {Array<string>}
    * @memberof ClientConfigDto
@@ -820,6 +876,24 @@ export interface ConversationMessageCustomContentDto {
    * @memberof ConversationMessageCustomContentDto
    */
   attachments?: Array<AttachmentDto>;
+  /**
+   * Assistant "thinking step" output streamed alongside the message text
+   * @type {Array<StageDto>}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  stages?: Array<StageDto>;
+  /**
+   * Citations/annotations attached to the message text
+   * @type {Array<AnnotationDto>}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  annotations?: Array<AnnotationDto>;
+  /**
+   * JSON schema describing an embedded form widget
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  formSchema?: object;
   /**
    * Form/button submission value (e.g. `{ button: 1 }`).
    * @type {object}
@@ -3897,6 +3971,19 @@ export interface ListFilesResponseDto {
 /**
  *
  * @export
+ * @interface ListMcpAppToolsResponseDto
+ */
+export interface ListMcpAppToolsResponseDto {
+  /**
+   *
+   * @type {Array<McpAppToolSummaryDto>}
+   * @memberof ListMcpAppToolsResponseDto
+   */
+  tools: Array<McpAppToolSummaryDto>;
+}
+/**
+ *
+ * @export
  * @interface ListScheduledTaskRunsResponseDto
  */
 export interface ListScheduledTaskRunsResponseDto {
@@ -4008,6 +4095,73 @@ export interface LocaleTextEntryDto {
 /**
  *
  * @export
+ * @interface McpAppToolCallRequestDto
+ */
+export interface McpAppToolCallRequestDto {
+  /**
+   *
+   * @type {string}
+   * @memberof McpAppToolCallRequestDto
+   */
+  toolName: string;
+  /**
+   *
+   * @type {object}
+   * @memberof McpAppToolCallRequestDto
+   */
+  arguments: object;
+  /**
+   * Which of Core's MCP proxy route prefixes to use for this deployment.
+   * @type {string}
+   * @memberof McpAppToolCallRequestDto
+   */
+  kind: McpAppToolCallRequestDtoKindEnum;
+}
+
+/**
+ * @export
+ */
+export const McpAppToolCallRequestDtoKindEnum = {
+  Toolset: 'toolset',
+  Application: 'application',
+} as const;
+export type McpAppToolCallRequestDtoKindEnum =
+  (typeof McpAppToolCallRequestDtoKindEnum)[keyof typeof McpAppToolCallRequestDtoKindEnum];
+/**
+ *
+ * @export
+ * @interface McpAppToolCallResponseDto
+ */
+export interface McpAppToolCallResponseDto {
+  /**
+   * Unwrapped `result` field of the tool's JSON-RPC response.
+   * @type {object}
+   * @memberof McpAppToolCallResponseDto
+   */
+  result: object;
+}
+/**
+ *
+ * @export
+ * @interface McpAppToolSummaryDto
+ */
+export interface McpAppToolSummaryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof McpAppToolSummaryDto
+   */
+  toolName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof McpAppToolSummaryDto
+   */
+  resourceUri: string;
+}
+/**
+ *
+ * @export
  * @interface MessageCustomContentDto
  */
 export interface MessageCustomContentDto {
@@ -4017,6 +4171,24 @@ export interface MessageCustomContentDto {
    * @memberof MessageCustomContentDto
    */
   attachments?: Array<AttachmentDto>;
+  /**
+   * Assistant "thinking step" output streamed alongside the message text
+   * @type {Array<StageDto>}
+   * @memberof MessageCustomContentDto
+   */
+  stages?: Array<StageDto>;
+  /**
+   * Citations/annotations attached to the message text
+   * @type {Array<AnnotationDto>}
+   * @memberof MessageCustomContentDto
+   */
+  annotations?: Array<AnnotationDto>;
+  /**
+   * JSON schema describing an embedded form widget
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  formSchema?: object;
   /**
    * Form/button submission value (e.g. `{ button: 1 }`).
    * @type {object}
@@ -5816,6 +5988,62 @@ export interface SkillsConfigDto {
    * @memberof SkillsConfigDto
    */
   installed: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface StageAttachmentDto
+ */
+export interface StageAttachmentDto {
+  /**
+   * Zero-based position in the list
+   * @type {number}
+   * @memberof StageAttachmentDto
+   */
+  index?: number;
+  /**
+   * Display name of the attachment
+   * @type {string}
+   * @memberof StageAttachmentDto
+   */
+  title?: string;
+  /**
+   * Inline base-64 encoded content
+   * @type {string}
+   * @memberof StageAttachmentDto
+   */
+  data?: string;
+}
+/**
+ *
+ * @export
+ * @interface StageDto
+ */
+export interface StageDto {
+  /**
+   * Zero-based position in the list
+   * @type {number}
+   * @memberof StageDto
+   */
+  index?: number;
+  /**
+   * Stage title
+   * @type {string}
+   * @memberof StageDto
+   */
+  name?: string;
+  /**
+   * Stage text content
+   * @type {string}
+   * @memberof StageDto
+   */
+  content?: string;
+  /**
+   * Files produced or referenced by this stage
+   * @type {Array<StageAttachmentDto>}
+   * @memberof StageDto
+   */
+  attachments?: Array<StageAttachmentDto>;
 }
 /**
  *

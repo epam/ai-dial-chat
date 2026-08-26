@@ -1,17 +1,17 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+  FileUploadStatus,
+  type UseDialFileManagerResult,
+} from '@epam/ai-dial-chat-hooks';
+import {
   DialFileManagerActions,
   DialFileManagerTabs,
 } from '@epam/ai-dial-react-file-manager';
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { UseDialFileManagerResult } from '../../../hooks/files/useDialFileManager';
-import {
-  DialFileManagerActionProfile,
-  DialFileManagerVariant,
-} from '../../../types/file-manager-variant';
-import { FileUploadStatus } from '../../DialFileManagerModal/types/upload';
 import DialFileManagerShell from '../DialFileManagerShell';
 import type { DialFileManagerShellLabels } from '../types/labels';
 

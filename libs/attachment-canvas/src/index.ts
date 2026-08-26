@@ -20,6 +20,13 @@ export {
   createLoadErrorCanvasContent,
   createForbiddenCanvasContent,
 } from './utils/content';
+export { findVisualizerForMime } from './utils/visualizer';
+export { useOpenAttachmentCanvas } from './hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas';
+export type {
+  UseOpenAttachmentCanvasResolvers,
+  UseOpenAttachmentCanvasOptions,
+  OpenAttachmentCanvas,
+} from './hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas';
 export {
   AttachmentContentType,
   AttachmentErrorType,
@@ -36,6 +43,7 @@ export type {
   OoxmlCanvasContent,
   CodeCanvasContent,
   HtmlCanvasContent,
+  McpAppCanvasContent,
   VisualizerCanvasContent,
   UnsupportedCanvasContent,
   ErrorCanvasContent,

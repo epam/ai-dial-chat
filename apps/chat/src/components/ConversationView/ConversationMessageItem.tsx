@@ -1,8 +1,9 @@
+import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import { useAttachmentAction } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  COMPACT_MARKDOWN_CLASS_NAMES,
   CodeBlockTheme,
+  COMPACT_MARKDOWN_CLASS_NAMES,
   isStatusMessage,
   mergeClasses,
   MessageRole,
@@ -28,8 +29,10 @@ import {
   isReferenceOnlyAttachment,
   useAnnotations,
   useCitationCard,
+  useCitationMarkdownComponents,
+  type AnnotationGroup,
 } from '@epam/ai-dial-quotations';
-import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,13 +44,25 @@ import {
   CitationsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
-import { useCitationMarkdownComponents } from '../../hooks/citations/useCitationMarkdownComponents';
+import type { McpAppToolCallSeed } from '../../hooks/attachment/useOpenMcpAppCanvas';
+import type { McpAppToolRef } from '../../hooks/conversation/useMcpAppTools';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
 import { openAnnotationAttachment } from '../../utils/annotation';
-import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
-import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
+import {
+  annotationToPdfCanvasContent,
+  referenceAttachmentToPdfCanvasContent,
+} from '../../utils/attachment-canvas';
+import {
+  annotationToDisplayAttachment,
+  attachmentDtosToDisplayAttachments,
+} from '../../utils/attachment-dto-to-display';
 import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
+import {
+  findMcpAppForMessage,
+  mcpAppCanvasKey,
+  resolveMcpAppToolCallSeed,
+} from '../../utils/mcp-app';
 import { messageHasStages } from '../../utils/message-utils';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
@@ -120,6 +135,18 @@ interface Props {
   thinkingLabel: string;
   executedLabel: string;
   stepsLabel: (count: number) => string;
+  /** Called with the message's matched MCP App tool (its canvas key, and a toolInput/toolResult seed) when the user activates the "Open App" message action, or when it auto-opens. Omit to hide the action entirely. */
+  onOpenApp?: (
+    match: McpAppToolRef,
+    canvasKey?: string,
+    toolCall?: McpAppToolCallSeed,
+  ) => void;
+  /** The active deployment's tools that declare an MCP Apps UI resource. */
+  mcpAppTools: McpAppToolRef[];
+  /** Visible label for the "Open App" message action. */
+  openCanvasLabel?: string;
+  /** Label shown instead of the "Open App" button when this message's canvas is the one currently open. */
+  openedInCanvasLabel?: string;
   /** Called when the user clicks the preview button on a PDF citation. */
   onPreviewReference?: (annotation: Annotation) => void;
   validateAttachment?: (
@@ -190,6 +217,10 @@ const ConversationMessageItem: FC<Props> = ({
   thinkingLabel,
   executedLabel,
   stepsLabel,
+  onOpenApp,
+  mcpAppTools,
+  openCanvasLabel,
+  openedInCanvasLabel,
   onPreviewReference,
   validateAttachment,
   isAttachmentsEnabled,
@@ -208,6 +239,7 @@ const ConversationMessageItem: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
+  const { openCanvas } = useAttachmentCanvas();
   const isLikesEnabled = useUiFeature(OverlayFeature.Likes);
   const isEditUserMessageHidden = useUiFeature(
     OverlayFeature.HideEditUserMessage,
@@ -251,11 +283,69 @@ const ConversationMessageItem: FC<Props> = ({
   const markdownClassNames = isCompactTypography
     ? COMPACT_MARKDOWN_CLASS_NAMES
     : undefined;
+  const handleCitationPreview = useCallback(
+    (annotation: Annotation) => {
+      const pdfContent = annotationToPdfCanvasContent(
+        annotation,
+        citationGroups,
+      );
+      if (pdfContent != null) {
+        const attachment = annotation.body?.source?.attachment;
+        const rawSegment = attachment?.url?.split('/').pop() ?? '';
+        const fileName = attachment?.title ?? decodeURIComponent(rawSegment);
+        openCanvas(pdfContent, fileName);
+        return;
+      }
+      const display = annotationToDisplayAttachment(annotation);
+      if (display) handleAttachmentClick(display);
+    },
+    [citationGroups, openCanvas, handleAttachmentClick],
+  );
+  const handleCitationOpenInBrowser = useCallback((annotation: Annotation) => {
+    const attachment = annotation.body?.source?.attachment;
+    if (attachment) openAnnotationAttachment(attachment);
+  }, []);
+  const buildCitationLabels = useCallback(
+    (group: AnnotationGroup) => {
+      const cardLabels = {
+        ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
+          source: group.sourceName,
+        }),
+        previousCitation: t(CitationsI18nKeys.PopupPreviousCitation),
+        nextCitation: t(CitationsI18nKeys.PopupNextCitation),
+        formatSwitcherText: (current: number, total: number) =>
+          t(CitationsI18nKeys.PopupSwitcher, { current, total }),
+        preview: t(BasicI18nKeys.Preview),
+        openInBrowser: t(CitationsI18nKeys.PopupOpenInBrowser),
+        download: t(ButtonsI18nKeys.Download),
+      };
+      const markerLabels = {
+        ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
+          source: group.sourceName,
+        }),
+        label: t(CitationsI18nKeys.MarkerLabel, { source: group.sourceName }),
+        labelWithOverflow: t(CitationsI18nKeys.MarkerLabelWithOverflow, {
+          source: group.sourceName,
+          count: group.annotations.length - 1,
+        }),
+      };
+      return { cardLabels, markerLabels };
+    },
+    [t],
+  );
+  const citationCallbacks = useMemo(
+    () => ({
+      onPreview: handleCitationPreview,
+      onOpenInBrowser: handleCitationOpenInBrowser,
+      buildLabels: buildCitationLabels,
+    }),
+    [handleCitationPreview, handleCitationOpenInBrowser, buildCitationLabels],
+  );
   const { processedContent, markdownComponents } =
     useCitationMarkdownComponents(
       msg.content,
       citationGroups,
-      handleAttachmentClick,
+      citationCallbacks,
       isCompactTypography,
     );
   const referenceGroups = useMemo(
@@ -345,6 +435,10 @@ const ConversationMessageItem: FC<Props> = ({
   }
 
   const hasStages = messageHasStages(msg);
+  const mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools);
+  const mcpAppKey = mcpAppMatch ? mcpAppCanvasKey(index) : undefined;
+  const isMcpAppOpenedInCanvas =
+    mcpAppKey != null && selectedAttachmentKey === mcpAppKey;
   const { starters: activeStarters, onSelectStarter: handleSelectStarter } =
     getMessageStarterProps(
       msg,
@@ -433,6 +527,7 @@ const ConversationMessageItem: FC<Props> = ({
         afterContent={
           referenceGroups.length > 0 ||
           hasStages ||
+          mcpAppMatch != null ||
           msg.streamErrorMessage != null ? (
             <>
               {referenceGroups.length > 0 && (
@@ -499,6 +594,30 @@ const ConversationMessageItem: FC<Props> = ({
                   labels={{ executedLabel, stepsLabel }}
                 />
               )}
+              {mcpAppMatch &&
+                onOpenApp &&
+                (isMcpAppOpenedInCanvas ? (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="bg-layer-2 flex h-[120px] w-[280px] items-center justify-center rounded"
+                  >
+                    <span className="dial-body-text text-primary">
+                      {openedInCanvasLabel}
+                    </span>
+                  </div>
+                ) : (
+                  <PrimaryButton
+                    label={openCanvasLabel}
+                    onClick={() =>
+                      onOpenApp(
+                        mcpAppMatch,
+                        mcpAppKey,
+                        resolveMcpAppToolCallSeed(msg, mcpAppMatch.toolName),
+                      )
+                    }
+                  />
+                ))}
               {msg.streamErrorMessage != null && (
                 <div className="w-full">
                   <ErrorMessageNotification

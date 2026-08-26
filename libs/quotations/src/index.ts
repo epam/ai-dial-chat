@@ -25,6 +25,8 @@ export type { CitationCardHook } from './context/CitationCardContext';
 // Hooks
 export { useAnnotations } from './utils/useAnnotations';
 export { useCitationCard } from './utils/useCitationCard';
+export { useCitationMarkdownComponents } from './hooks/useCitationMarkdownComponents/useCitationMarkdownComponents';
+export type { UseCitationMarkdownComponentsCallbacks } from './hooks/useCitationMarkdownComponents/useCitationMarkdownComponents';
 
 // Utils
 export { groupAnnotationsBySource } from './utils/group-annotations-by-source';

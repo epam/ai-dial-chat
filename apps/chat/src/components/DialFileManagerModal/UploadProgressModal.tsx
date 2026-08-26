@@ -1,6 +1,6 @@
+import type { FileUploadBatchState } from '@epam/ai-dial-chat-hooks';
 import { DialFileName, Popup, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, type FC, type ReactNode } from 'react';
-import type { FileUploadBatchState } from './types/upload';
 
 interface Props {
   batchState: FileUploadBatchState;

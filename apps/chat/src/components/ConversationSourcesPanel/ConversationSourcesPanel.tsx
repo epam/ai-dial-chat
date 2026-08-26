@@ -1,3 +1,4 @@
+import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import {
   useAttachmentAction,
   useConversationSources,
@@ -41,7 +42,7 @@ import {
 import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
-import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
+import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -81,7 +82,8 @@ const ConversationSourcesPanelContainer: FC = () => {
   const { handleAttachmentClick: downloadAttachment } = useAttachmentAction({
     resolveDownloadUrl: resolveDialFileDownloadUrl,
   });
-  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+  const { resolvers, options } = useAttachmentCanvasResolvers();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const activeScheduledTask = useActiveScheduledTask();
   const { items: deploymentItems } = useDeployments();
   const isTaskConversation =

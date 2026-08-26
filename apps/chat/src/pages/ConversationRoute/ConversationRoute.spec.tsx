@@ -37,8 +37,17 @@ const overlayMocks = vi.hoisted(() => ({
   notifyConversationLoaded: vi.fn(),
 }));
 
-vi.mock('../../hooks/attachment/useOpenAttachmentCanvas', () => ({
-  useOpenAttachmentCanvas: () => ({ openAttachmentCanvas: vi.fn() }),
+vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
+  return {
+    ...actual,
+    useOpenAttachmentCanvas: () => ({ openAttachmentCanvas: vi.fn() }),
+  };
+});
+
+vi.mock('../../hooks/attachment/useAttachmentCanvasResolvers', () => ({
+  useAttachmentCanvasResolvers: () => ({ resolvers: {}, options: {} }),
 }));
 vi.mock(
   '../../components/DeploymentSelector/useDeploymentSelectorOverlay',
@@ -594,7 +603,7 @@ describe('ConversationRoute', () => {
       selectedDeploymentDetails: null,
       isDeploymentDetailsLoading: false,
       mergeSharedItem: function (
-        item: DeploymentItemDto | DialToolsetDto,
+        _item: DeploymentItemDto | DialToolsetDto,
       ): void {
         throw new Error('Function not implemented.');
       },
@@ -700,7 +709,7 @@ describe('ConversationRoute', () => {
       selectedDeploymentDetails: null,
       isDeploymentDetailsLoading: false,
       mergeSharedItem: function (
-        item: DeploymentItemDto | DialToolsetDto,
+        _item: DeploymentItemDto | DialToolsetDto,
       ): void {
         throw new Error('Function not implemented.');
       },

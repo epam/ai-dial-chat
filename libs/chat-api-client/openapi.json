@@ -1517,6 +1517,178 @@
         ]
       }
     },
+    "/api/v1/toolsets/{toolsetName}/mcp-app-resource": {
+      "get": {
+        "description": "Raw-passthrough proxy of DIAL Core's GET /v1/deployments/{deployment_name}/mcp/resources?uri=... — the response body is Core's resource body unchanged, forwarded with Content-Type/Content-Security-Policy/X-Content-Type-Options from Core. Cached server-side for 30 seconds per toolset+resourceUri.",
+        "operationId": "getToolsetMcpAppResource",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-toolset",
+              "type": "string"
+            }
+          },
+          {
+            "name": "resourceUri",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": "ui://widget/1",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "HTML widget content"
+          },
+          "400": {
+            "description": "Invalid resourceUri"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "404": {
+            "description": "Toolset or resource not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          }
+        },
+        "summary": "Fetch a toolset's MCP Apps ui:// resource",
+        "tags": ["toolsets"]
+      }
+    },
+    "/api/v1/toolsets/mcp-apps/tools": {
+      "get": {
+        "description": "Calls DIAL Core's generic MCP JSON-RPC proxy's tools/list for the given deployment (toolset or application) and returns only the tools that declare an MCP Apps UI resource (`_meta.ui.resourceUri`).",
+        "operationId": "listMcpAppTools",
+        "parameters": [
+          {
+            "name": "deploymentId",
+            "required": true,
+            "in": "query",
+            "description": "DIAL deployment identifier (toolset or application) to list MCP Apps-capable tools for.",
+            "schema": {
+              "maxLength": 2048,
+              "example": "toolsets/bucket/weather__0.0.1",
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "required": true,
+            "in": "query",
+            "description": "Which of Core's MCP proxy route prefixes to use for this deployment.",
+            "schema": {
+              "type": "string",
+              "enum": ["toolset", "application"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListMcpAppToolsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid deploymentId or kind"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "404": {
+            "description": "Deployment not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core's proxied tools/list failed"
+          }
+        },
+        "summary": "List MCP Apps-capable tools for an MCP-enabled deployment",
+        "tags": ["toolsets"]
+      }
+    },
+    "/api/v1/toolsets/{toolsetName}/mcp-app-tool-call": {
+      "post": {
+        "description": "Validates toolName against the tools the MCP session currently exposes, then forwards a tools/call JSON-RPC request through DIAL Core's existing generic MCP proxy for this toolset. Not cached — every call is a live, potentially side-effecting tool invocation.",
+        "operationId": "callToolsetMcpAppTool",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-toolset",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpAppToolCallRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpAppToolCallResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or toolName is not exposed by this toolset"
+          },
+          "404": {
+            "description": "Toolset not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core's proxied tools/call failed"
+          }
+        },
+        "summary": "Forward an MCP App's self-initiated tool call",
+        "tags": ["toolsets"]
+      }
+    },
     "/api/v1/chat/completions": {
       "post": {
         "operationId": "sendCompletion",
@@ -6888,6 +7060,12 @@
             "example": "https://dial.example.com",
             "nullable": true
           },
+          "mcpAppSandboxUrl": {
+            "type": "string",
+            "description": "Isolated-origin URL of the deployed MCP Apps sandbox-proxy app. Null when MCP_APP_SANDBOX_URL is not configured.",
+            "example": "https://mcp-app-sandbox.example.com",
+            "nullable": true
+          },
           "fileManagerTabs": {
             "description": "Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.",
             "example": [
@@ -9275,6 +9453,63 @@
           "credentialsLevel"
         ]
       },
+      "McpAppToolSummaryDto": {
+        "type": "object",
+        "properties": {
+          "toolName": {
+            "type": "string",
+            "example": "refresh_data"
+          },
+          "resourceUri": {
+            "type": "string",
+            "example": "ui://widget/1"
+          }
+        },
+        "required": ["toolName", "resourceUri"]
+      },
+      "ListMcpAppToolsResponseDto": {
+        "type": "object",
+        "properties": {
+          "tools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/McpAppToolSummaryDto"
+            }
+          }
+        },
+        "required": ["tools"]
+      },
+      "McpAppToolCallRequestDto": {
+        "type": "object",
+        "properties": {
+          "toolName": {
+            "type": "string",
+            "example": "refresh_data"
+          },
+          "arguments": {
+            "type": "object",
+            "example": {
+              "range": "7d"
+            }
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["toolset", "application"],
+            "description": "Which of Core's MCP proxy route prefixes to use for this deployment."
+          }
+        },
+        "required": ["toolName", "arguments", "kind"]
+      },
+      "McpAppToolCallResponseDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "object",
+            "description": "Unwrapped `result` field of the tool's JSON-RPC response."
+          }
+        },
+        "required": ["result"]
+      },
       "AttachmentDto": {
         "type": "object",
         "properties": {
@@ -9312,6 +9547,72 @@
           "title"
         ]
       },
+      "StageAttachmentDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Zero-based position in the list"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display name of the attachment"
+          },
+          "data": {
+            "type": "string",
+            "description": "Inline base-64 encoded content"
+          }
+        }
+      },
+      "StageDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Zero-based position in the list"
+          },
+          "name": {
+            "type": "string",
+            "description": "Stage title"
+          },
+          "content": {
+            "type": "string",
+            "description": "Stage text content"
+          },
+          "attachments": {
+            "description": "Files produced or referenced by this stage",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageAttachmentDto"
+            }
+          }
+        }
+      },
+      "AnnotationBodyDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Title of the cited source"
+          },
+          "quote": {
+            "type": "string",
+            "description": "Quoted excerpt from the cited source"
+          }
+        }
+      },
+      "AnnotationDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Zero-based position in the list"
+          },
+          "body": {
+            "$ref": "#/components/schemas/AnnotationBodyDto"
+          }
+        }
+      },
       "MessageCustomContentDto": {
         "type": "object",
         "properties": {
@@ -9321,6 +9622,24 @@
             "items": {
               "$ref": "#/components/schemas/AttachmentDto"
             }
+          },
+          "stages": {
+            "description": "Assistant \"thinking step\" output streamed alongside the message text",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageDto"
+            }
+          },
+          "annotations": {
+            "description": "Citations/annotations attached to the message text",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnotationDto"
+            }
+          },
+          "form_schema": {
+            "type": "object",
+            "description": "JSON schema describing an embedded form widget"
           },
           "configuration_value": {
             "type": "object",
@@ -9683,6 +10002,24 @@
             "items": {
               "$ref": "#/components/schemas/AttachmentDto"
             }
+          },
+          "stages": {
+            "description": "Assistant \"thinking step\" output streamed alongside the message text",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageDto"
+            }
+          },
+          "annotations": {
+            "description": "Citations/annotations attached to the message text",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnotationDto"
+            }
+          },
+          "form_schema": {
+            "type": "object",
+            "description": "JSON schema describing an embedded form widget"
           },
           "configuration_value": {
             "type": "object",

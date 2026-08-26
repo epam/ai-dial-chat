@@ -1,9 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsObject, IsOptional, ValidateNested } from 'class-validator';
+import { AnnotationDto } from './annotation.dto';
 import { AttachmentDto } from './attachment.dto';
+import { IsShallowObject } from './is-shallow-object.validator';
+import { StageDto } from './stage.dto';
 
-/** Optional DIAL extra payload attached to a user message. */
+/** Optional DIAL extra payload attached to a user or assistant message. */
 export class MessageCustomContentDto {
   @ApiPropertyOptional({
     description: 'DIAL API attachments to include with the message',
@@ -14,6 +17,35 @@ export class MessageCustomContentDto {
   @ValidateNested({ each: true })
   @Type(() => AttachmentDto)
   attachments?: AttachmentDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Assistant "thinking step" output streamed alongside the message text',
+    type: [StageDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => StageDto)
+  stages?: StageDto[];
+
+  @ApiPropertyOptional({
+    description: 'Citations/annotations attached to the message text',
+    type: [AnnotationDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AnnotationDto)
+  annotations?: AnnotationDto[];
+
+  @ApiPropertyOptional({
+    description: 'JSON schema describing an embedded form widget',
+  })
+  @IsOptional()
+  @IsObject()
+  @IsShallowObject({ maxDepth: 10, maxKeys: 500 })
+  form_schema?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Form/button submission value (e.g. `{ button: 1 }`).',

@@ -3,6 +3,12 @@ import {
   mimeTypesToExtensionLabels,
 } from '@epam/ai-dial-attachment-input';
 import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+  useDialFileManager,
+  useDialFileManagerTabConfig,
+} from '@epam/ai-dial-chat-hooks';
+import {
   DialFileManagerTabs,
   DialFileNodeType,
   useDialFileManagerTabs,
@@ -30,13 +36,8 @@ import {
   ButtonsI18nKeys,
   DialFileManagerI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useDialFileManager } from '../../hooks/files/useDialFileManager';
-import { useDialFileManagerTabConfig } from '../../hooks/files/useDialFileManagerTabConfig';
-import {
-  DialFileManagerActionProfile,
-  DialFileManagerVariant,
-} from '../../types/file-manager-variant';
 import {
   mimeTypesToAttachmentExtensionLabels,
   mimeTypesToDialFileAcceptTypes,
@@ -45,6 +46,7 @@ import { isHiddenPath } from '../../utils/file-path';
 import { formatFileSize } from '../../utils/string-utils';
 import DialFileManagerShell from '../DialFileManagerShell/DialFileManagerShell';
 import type { DialFileManagerShellLabels } from '../DialFileManagerShell/types/labels';
+import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';
 import type { AttachResult } from './types/attach-result';
 
 interface Props {
@@ -119,8 +121,11 @@ const DialFileManagerModal: FC<Props> = ({
   autoSelectUploadedItems = false,
 }) => {
   const { t } = useTranslation();
-  const { showInfoNotification, showErrorNotification, showNotification } =
-    useNotification();
+  const { showInfoNotification, showErrorNotification } = useNotification();
+  const {
+    config: { fileManagerTabs },
+  } = useAppConfig();
+  const hostOptions = useDialFileManagerHostOptions();
 
   const tabLabels = useMemo(
     () => ({
@@ -145,13 +150,14 @@ const DialFileManagerModal: FC<Props> = ({
     activeTab,
     handleTabChange,
     allTabs,
+    fileManagerTabs,
   );
 
   const hookResult = useDialFileManager({
+    ...hostOptions,
     bucket,
     activeTab,
     rootLabel,
-    onNotification: showNotification,
     variant: DialFileManagerVariant.Attach,
     forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
   });
@@ -638,9 +644,9 @@ const DialFileManagerModal: FC<Props> = ({
           )}
         </div>
       }
+      ariaLabel={title}
       size={PopupSize.Lg}
       className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken"
-      bodyClassName="flex min-h-0 flex-col"
       onClose={onClose}
       footer={
         <div className="flex justify-end px-6 py-4">
@@ -656,23 +662,25 @@ const DialFileManagerModal: FC<Props> = ({
         </div>
       }
     >
-      <DialFileManagerShell
-        hookResult={hookResult}
-        labels={labels}
-        activeTab={activeTab}
-        tabs={tabs}
-        onTabChange={handleTabChangeWithReset}
-        selectedPaths={selectedPaths}
-        onSelectedPathsChange={handleSelectedPathsChange}
-        variant={DialFileManagerVariant.Attach}
-        actionProfile={DialFileManagerActionProfile.Attach}
-        autoSelectUploadedItems={autoSelectUploadedItems}
-        allowedFileTypes={allowedFileTypes}
-        maxSelectableFileSize={maxSelectableFileSize}
-        isRowSelectable={isRowSelectable}
-        getDisabledTooltip={getDisabledTooltip}
-        unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
-      />
+      <div className="flex min-h-0 flex-col">
+        <DialFileManagerShell
+          hookResult={hookResult}
+          labels={labels}
+          activeTab={activeTab}
+          tabs={tabs}
+          onTabChange={handleTabChangeWithReset}
+          selectedPaths={selectedPaths}
+          onSelectedPathsChange={handleSelectedPathsChange}
+          variant={DialFileManagerVariant.Attach}
+          actionProfile={DialFileManagerActionProfile.Attach}
+          autoSelectUploadedItems={autoSelectUploadedItems}
+          allowedFileTypes={allowedFileTypes}
+          maxSelectableFileSize={maxSelectableFileSize}
+          isRowSelectable={isRowSelectable}
+          getDisabledTooltip={getDisabledTooltip}
+          unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
+        />
+      </div>
     </Popup>
   );
 };

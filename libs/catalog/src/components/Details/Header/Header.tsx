@@ -4,7 +4,6 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
-  DangerButton,
   DIAL_ICON_SIZE,
   Dropdown,
   FolderPath,
@@ -557,9 +556,6 @@ export const Header: FC<HeaderProps> = ({
   const isApiKeyConfigured =
     authenticationType === ToolsetAuthenticationType.ApiKey &&
     credentialsUiState === CredentialsUiState.LogOut;
-  /* Only the OAuth Log in/Log out toggle needs a fixed width and a danger
-   * treatment when signed in — "Manage credentials"/"API key" wording is
-   * variable-length by design and keeps its normal styling. */
   const isOAuthLoginLogoutButton =
     authenticationType !== ToolsetAuthenticationType.ApiKey &&
     credentialsUiState !== CredentialsUiState.ManageCredentials;
@@ -633,10 +629,7 @@ export const Header: FC<HeaderProps> = ({
     ) : undefined;
 
   const renderCredentialsButton = (
-    ButtonComponent:
-      | typeof PrimaryButton
-      | typeof NeutralButton
-      | typeof DangerButton,
+    ButtonComponent: typeof PrimaryButton | typeof NeutralButton,
   ) => {
     const button = (
       <ButtonComponent
@@ -646,7 +639,6 @@ export const Header: FC<HeaderProps> = ({
         onClick={handleCredentialsClick}
         aria-haspopup={isApiKeyOverlayTrigger ? 'dialog' : undefined}
         aria-expanded={isApiKeyOverlayTrigger ? isApiKeyOverlayOpen : undefined}
-        className={isOAuthLoginLogoutButton ? 'w-28 justify-center' : undefined}
       />
     );
     if (!isApiKeyOverlayTrigger || item.credentials == null) {
@@ -698,11 +690,9 @@ export const Header: FC<HeaderProps> = ({
       <div className="flex flex-wrap items-center gap-2 ps-[60px]">
         {isCredentialsActionPrimary &&
           renderCredentialsButton(
-            (() => {
-              if (isApiKeyConfigured) return NeutralButton;
-              if (isOAuthLogoutState) return DangerButton;
-              return PrimaryButton;
-            })(),
+            isApiKeyConfigured || isOAuthLogoutState
+              ? NeutralButton
+              : PrimaryButton,
           )}
         {shouldShowPrimaryAction && (
           <PrimaryButton
@@ -742,9 +732,7 @@ export const Header: FC<HeaderProps> = ({
         />
         {shouldShowCredentialsAction &&
           !isCredentialsActionPrimary &&
-          renderCredentialsButton(
-            isOAuthLogoutState ? DangerButton : NeutralButton,
-          )}
+          renderCredentialsButton(NeutralButton)}
         {manageItems.length > 0 && (
           <Dropdown
             items={manageItems}
@@ -757,7 +745,7 @@ export const Header: FC<HeaderProps> = ({
              * "Unpublish" entries are usually already settled by the time the
              * menu opens. */}
             <NeutralIconButton
-              icon={<IconDots size={DIAL_ICON_SIZE.MD} aria-hidden />}
+              icon={<IconDots size={DIAL_ICON_SIZE.LG} aria-hidden />}
               aria-label={texts?.manageActionLabel ?? 'Manage'}
               aria-haspopup="menu"
               onMouseEnter={handleManageTriggerIntent}

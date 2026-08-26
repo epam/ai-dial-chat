@@ -8,7 +8,7 @@ The file Info action and the metadata popup behind it.
 
 ### Requirement: onGetInfo wired on useDialFileManager
 
-`useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) SHALL expose `onGetInfo(file: DialFile)`, wired to ui-kit's `DialFileManager.onGetInfo` prop, that resolves `file` to its Core-addressable `{ bucket, path }` using the same per-tab resolution already used by `onDownloadFiles` (current user bucket on `my_files`; the item's own normalized bucket for root-level `shared` items; `sharedRootMetaRef`/`resolveOwnerCoords` for nested `shared` folder children; the public bucket on `organization`), then calls the existing `getFileMetadata` server-api wrapper (`apps/chat/src/server-api/files.api.ts`, unchanged by this capability).
+`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) SHALL expose `onGetInfo(file: DialFile)`, wired to ui-kit's `DialFileManager.onGetInfo` prop, that resolves `file` to its Core-addressable `{ bucket, path }` using the same per-tab resolution already used by `onDownloadFiles` (current user bucket on `my_files`; the item's own normalized bucket for root-level `shared` items; `sharedRootMetaRef`/`resolveOwnerCoords` for nested `shared` folder children; the public bucket on `organization`), then calls the existing `getFileMetadata` server-api wrapper (`apps/chat/src/server-api/files.api.ts`, unchanged by this capability).
 
 **State ownership**: `useDialFileManager` owns `fileMetadata: DialFile | undefined` and `isFileMetadataLoading: boolean`. No new context is introduced.
 
