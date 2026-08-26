@@ -22,6 +22,6 @@
 
 .resizeHandler {
   width: 4px !important;
-  color: var(--sb-resize-handler, var(--text-info, #1d4ed8)) !important;
-  background: var(--sb-resize-handler, var(--text-info, #1d4ed8));
+  color: var(--sb-resize-handler, var(--text-accent, #1d4ed8)) !important;
+  background: var(--sb-resize-handler, var(--text-accent, #1d4ed8));
 }
