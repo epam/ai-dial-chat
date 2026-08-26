@@ -3,7 +3,8 @@
     --cat-filter-btn-bg,
     #ffffff
   ); /* TODO: connect to design token */
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid
+    var(--cat-filter-btn-border, var(--stroke-tertiary, #e0e6f0));
   transition:
     border-color 150ms ease,
     outline-color 150ms ease,
@@ -11,7 +12,10 @@
 
   @media (hover: hover) {
     &:hover:not(:focus-visible) {
-      border-color: rgba(0, 0, 0, 0.12);
+      border-color: var(
+        --cat-filter-btn-border-hover,
+        var(--stroke-secondary, #d1dbea)
+      );
     }
   }
 
@@ -70,8 +74,10 @@
     --cat-filter-overlay-bg,
     #ffffff
   ); /* TODO: connect to design token */
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 16px 40px rgba(16, 24, 40, 0.12);
+  border: 1px solid
+    var(--cat-filter-overlay-border, var(--stroke-tertiary, #e0e6f0));
+  box-shadow: 0 16px 40px
+    var(--cat-filter-overlay-shadow, var(--shadow-lg, #2764d914));
 }
 
 /* Checkbox row ------------------------------------------------ */
@@ -87,7 +93,8 @@
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px rgba(125, 164, 255, 0.5);
+    box-shadow: 0 0 0 2px
+      var(--cat-filter-row-focus-ring, var(--stroke-accent-focus, #6785fb));
   }
 }
 
@@ -111,44 +118,8 @@
   color: var(--cat-filter-row-label, var(--text-primary, #161b2d));
 }
 
-/* Custom 20 × 20 checkbox ------------------------------------ */
-
-.checkbox {
-  border: 1.5px solid
-    var(--cat-filter-checkbox-border, var(--stroke-tertiary, #e0e6f0));
-  background: var(
-    --cat-filter-checkbox-bg,
-    #ffffff
-  ); /* TODO: connect to design token */
-  transition:
-    border-color 150ms ease,
-    background-color 150ms ease;
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-}
-
-.checkboxChecked {
-  background-color: #3664e2; /* controls-bg-accent-primary */
-  border-color: #3664e2;
-
-  /* Checkmark drawn from two border sides of a rotated element.
-     border-left is physical here — the ✓ glyph must not flip in RTL. */
-  &::after {
-    @apply mr-[1px] mt-[1px] block;
-    content: '';
-    width: 5px;
-    height: 10px;
-    border: 2px solid #ffffff;
-    border-top: none;
-    border-left: none;
-    transform: rotate(45deg) translate(-1px, -2px);
-  }
-}
-
 .divider {
-  background: rgba(0, 0, 0, 0.05); /* stroke-primary */
+  background: var(--cat-filter-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
 .sectionLabel {
@@ -156,5 +127,6 @@
 }
 
 .footer {
-  border-top: 1px solid rgba(0, 0, 0, 0.05); /* stroke-primary */
+  border-top: 1px solid
+    var(--cat-filter-footer-border, var(--stroke-tertiary, #e0e6f0));
 }

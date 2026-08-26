@@ -24,6 +24,14 @@ export interface FavoritesColors {
   navButton?: string;
   /** Icon color of a disabled pagination arrow. Fallback: `--stroke-secondary`. */
   navButtonDisabled?: string;
+  /** Background of a pagination arrow on hover. Fallback: `--bg-control-accent-alpha-hover`. */
+  navButtonHoverBackground?: string;
+  /** Background of a pagination arrow while pressed. Fallback: `--bg-control-accent-alpha-active`. */
+  navButtonActiveBackground?: string;
+  /** Border color of the pagination control. Fallback: `--stroke-accent-alpha`. */
+  pageNavBorder?: string;
+  /** Background of the pagination control. Fallback: `--bg-control-accent-alpha`. */
+  pageNavBackground?: string;
 }
 
 /** Grouped style overrides for `CatalogFavorites`. */

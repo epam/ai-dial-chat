@@ -1,5 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  CheckboxBox,
   DIAL_ICON_SIZE,
   Dropdown,
   PrimaryButton,
@@ -24,6 +25,10 @@ import styles from './Filter.module.scss';
 export interface FilterColors {
   /** Trigger button background. Fallback: `#ffffff`. */
   buttonBackground?: string;
+  /** Trigger button border color at rest. Fallback: `--stroke-tertiary`. */
+  buttonBorder?: string;
+  /** Trigger button border color on hover. Fallback: `--stroke-secondary`. */
+  buttonBorderHover?: string;
   /** Trigger button border color while the dropdown has focus. Fallback: `--stroke-accent`. */
   buttonBorderFocus?: string;
   /** Trigger button border color while a filter is applied. Fallback: `--stroke-accent`. */
@@ -38,18 +43,24 @@ export interface FilterColors {
   buttonChevron?: string;
   /** Dropdown overlay background. Fallback: `#ffffff`. */
   overlayBackground?: string;
+  /** Dropdown overlay border color. Fallback: `--stroke-tertiary`. */
+  overlayBorder?: string;
+  /** Dropdown overlay drop-shadow color. Fallback: `--shadow-lg`. */
+  overlayShadow?: string;
   /** Row background on hover. Fallback: `--bg-layer-raised`. */
   rowHoverBackground?: string;
   /** Background of a checked row. Fallback: `--bg-control-accent-alpha-active`. */
   rowCheckedBackground?: string;
+  /** Focus ring color of a keyboard-focused row. Fallback: `--stroke-accent-focus`. */
+  rowFocusRing?: string;
   /** Row label text color. Fallback: `--text-primary`. */
   rowLabel?: string;
-  /** Checkbox border color in its unchecked state. Fallback: `--stroke-tertiary`. */
-  checkboxBorder?: string;
-  /** Checkbox background in its unchecked state. Fallback: `#ffffff`. */
-  checkboxBackground?: string;
   /** Section heading ("Topics") text color. Fallback: `--text-tertiary`. */
   sectionLabel?: string;
+  /** Divider line color between filter sections. Fallback: `--stroke-tertiary`. */
+  divider?: string;
+  /** Footer top-border color. Fallback: `--stroke-tertiary`. */
+  footerBorder?: string;
 }
 
 export interface FilterProps {
@@ -125,6 +136,8 @@ export const Filter: FC<FilterProps> = ({
    * its overlay, so it is not a DOM descendant of the trigger. */
   const cssVars = buildCssVars({
     '--cat-filter-btn-bg': colors?.buttonBackground,
+    '--cat-filter-btn-border': colors?.buttonBorder,
+    '--cat-filter-btn-border-hover': colors?.buttonBorderHover,
     '--cat-filter-btn-border-focus': colors?.buttonBorderFocus,
     '--cat-filter-btn-border-active': colors?.buttonBorderActive,
     '--cat-filter-btn-border-open': colors?.buttonBorderOpen,
@@ -132,12 +145,15 @@ export const Filter: FC<FilterProps> = ({
     '--cat-filter-btn-funnel': colors?.buttonFunnel,
     '--cat-filter-btn-chevron': colors?.buttonChevron,
     '--cat-filter-overlay-bg': colors?.overlayBackground,
+    '--cat-filter-overlay-border': colors?.overlayBorder,
+    '--cat-filter-overlay-shadow': colors?.overlayShadow,
     '--cat-filter-row-hover-bg': colors?.rowHoverBackground,
     '--cat-filter-row-checked-bg': colors?.rowCheckedBackground,
+    '--cat-filter-row-focus-ring': colors?.rowFocusRing,
     '--cat-filter-row-label': colors?.rowLabel,
-    '--cat-filter-checkbox-border': colors?.checkboxBorder,
-    '--cat-filter-checkbox-bg': colors?.checkboxBackground,
     '--cat-filter-section-label': colors?.sectionLabel,
+    '--cat-filter-divider': colors?.divider,
+    '--cat-filter-footer-border': colors?.footerBorder,
   });
 
   const topics = useMemo(
@@ -279,14 +295,7 @@ export const Filter: FC<FilterProps> = ({
             onClick={() => setPendingMyApps(!pendingMyApps)}
             onKeyDown={makeRowKeyDown(() => setPendingMyApps(!pendingMyApps))}
           >
-            <span
-              className={mergeClasses(
-                'flex size-5 shrink-0 items-center justify-center rounded-md',
-                styles.checkbox,
-                pendingMyApps && styles.checkboxChecked,
-              )}
-              aria-hidden
-            />
+            <CheckboxBox isSelected={pendingMyApps} className="shrink-0" />
             <span
               className={mergeClasses(
                 styles.rowLabel,
@@ -338,13 +347,9 @@ export const Filter: FC<FilterProps> = ({
                       onClick={toggle}
                       onKeyDown={makeRowKeyDown(toggle)}
                     >
-                      <span
-                        className={mergeClasses(
-                          'flex size-5 shrink-0 items-center justify-center rounded-md',
-                          styles.checkbox,
-                          isChecked && styles.checkboxChecked,
-                        )}
-                        aria-hidden
+                      <CheckboxBox
+                        isSelected={isChecked}
+                        className="shrink-0"
                       />
                       <span className={styles.rowLabel}>{topic}</span>
                     </div>
