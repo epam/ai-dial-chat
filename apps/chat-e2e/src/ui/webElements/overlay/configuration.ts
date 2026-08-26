@@ -10,6 +10,12 @@ export class Configuration extends BaseElement {
   public setConfigurationButton = this.getChildElementBySelector(
     EventSelectors.setConfigurationButton,
   );
+  public disableSendButton = this.getChildElementBySelector(
+    EventSelectors.disableSendButton,
+  );
+  public disablePlaybackControlsButton = this.getChildElementBySelector(
+    EventSelectors.disablePlaybackControlsButton,
+  );
 
   // Setting overlay options no longer re-reads the selected conversation, so
   // there is no response to wait for; the assertions that follow retry on their

@@ -3,6 +3,7 @@ import Link from 'next/link';
 enum OverlayCases {
   modelIdSetSandboxOverlay = '/cases/overlay/model-id-set-sandbox',
   OverlayManager = '/cases/overlay-manager',
+  OverlayManagerFullWidth = '/cases/overlay-manager-full-width',
   disabledHeaderOverlay = '/cases/overlay/disabled-header-sandbox',
   enabledHeaderOverlay = '/cases/overlay/enabled-header-sandbox',
   enabledOnlyHeaderOverlay = '/cases/overlay/enabled-only-header-sandbox',

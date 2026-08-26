@@ -472,6 +472,12 @@ export class ChatMessages extends BaseElement {
       .first();
   }
 
+  public getUserMessageIcon(index: number) {
+    return this.chatMessages
+      .getNthElement(index)
+      .locator(IconSelectors.userIcon);
+  }
+
   public async getGeneratedChatContent(messagesCount: number) {
     const chatContent = await this.chatMessages.getElementsInnerContent();
     return chatContent.slice(0, messagesCount - 1).join('\n');

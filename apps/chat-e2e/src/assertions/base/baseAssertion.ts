@@ -310,6 +310,20 @@ export class BaseAssertion {
       .toHaveCSS(Styles.color, expectedColor);
   }
 
+  public async assertElementTextAlignment(
+    element: BaseElement | Locator,
+    expectedAlignment: string,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = BaseElement.getElementLocator(element);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.elementTextAlignmentIsValid,
+      )
+      .toHaveCSS(Styles.textAlign, expectedAlignment);
+  }
+
   public async assertElementTextIsSelected(element: BaseElement | Locator) {
     const elementLocator = BaseElement.getElementLocator(element);
     await expect
