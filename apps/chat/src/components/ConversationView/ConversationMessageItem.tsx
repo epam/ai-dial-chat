@@ -2,8 +2,8 @@ import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import { useAttachmentAction } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  COMPACT_MARKDOWN_CLASS_NAMES,
   CodeBlockTheme,
+  COMPACT_MARKDOWN_CLASS_NAMES,
   isStatusMessage,
   mergeClasses,
   MessageRole,
@@ -32,7 +32,7 @@ import {
   useCitationMarkdownComponents,
   type AnnotationGroup,
 } from '@epam/ai-dial-quotations';
-import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -44,6 +44,8 @@ import {
   CitationsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
+import type { McpAppToolCallSeed } from '../../hooks/attachment/useOpenMcpAppCanvas';
+import type { McpAppToolRef } from '../../hooks/conversation/useMcpAppTools';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
 import { openAnnotationAttachment } from '../../utils/annotation';
@@ -56,6 +58,11 @@ import {
   attachmentDtosToDisplayAttachments,
 } from '../../utils/attachment-dto-to-display';
 import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
+import {
+  findMcpAppForMessage,
+  mcpAppCanvasKey,
+  resolveMcpAppToolCallSeed,
+} from '../../utils/mcp-app';
 import { messageHasStages } from '../../utils/message-utils';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
@@ -128,6 +135,18 @@ interface Props {
   thinkingLabel: string;
   executedLabel: string;
   stepsLabel: (count: number) => string;
+  /** Called with the message's matched MCP App tool (its canvas key, and a toolInput/toolResult seed) when the user activates the "Open App" message action, or when it auto-opens. Omit to hide the action entirely. */
+  onOpenApp?: (
+    match: McpAppToolRef,
+    canvasKey?: string,
+    toolCall?: McpAppToolCallSeed,
+  ) => void;
+  /** The active deployment's tools that declare an MCP Apps UI resource. */
+  mcpAppTools: McpAppToolRef[];
+  /** Visible label for the "Open App" message action. */
+  openCanvasLabel?: string;
+  /** Label shown instead of the "Open App" button when this message's canvas is the one currently open. */
+  openedInCanvasLabel?: string;
   /** Called when the user clicks the preview button on a PDF citation. */
   onPreviewReference?: (annotation: Annotation) => void;
   validateAttachment?: (
@@ -198,6 +217,10 @@ const ConversationMessageItem: FC<Props> = ({
   thinkingLabel,
   executedLabel,
   stepsLabel,
+  onOpenApp,
+  mcpAppTools,
+  openCanvasLabel,
+  openedInCanvasLabel,
   onPreviewReference,
   validateAttachment,
   isAttachmentsEnabled,
@@ -412,6 +435,10 @@ const ConversationMessageItem: FC<Props> = ({
   }
 
   const hasStages = messageHasStages(msg);
+  const mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools);
+  const mcpAppKey = mcpAppMatch ? mcpAppCanvasKey(index) : undefined;
+  const isMcpAppOpenedInCanvas =
+    mcpAppKey != null && selectedAttachmentKey === mcpAppKey;
   const { starters: activeStarters, onSelectStarter: handleSelectStarter } =
     getMessageStarterProps(
       msg,
@@ -500,6 +527,7 @@ const ConversationMessageItem: FC<Props> = ({
         afterContent={
           referenceGroups.length > 0 ||
           hasStages ||
+          mcpAppMatch != null ||
           msg.streamErrorMessage != null ? (
             <>
               {referenceGroups.length > 0 && (
@@ -566,6 +594,30 @@ const ConversationMessageItem: FC<Props> = ({
                   labels={{ executedLabel, stepsLabel }}
                 />
               )}
+              {mcpAppMatch &&
+                onOpenApp &&
+                (isMcpAppOpenedInCanvas ? (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="bg-layer-2 flex h-[120px] w-[280px] items-center justify-center rounded"
+                  >
+                    <span className="dial-body-text text-primary">
+                      {openedInCanvasLabel}
+                    </span>
+                  </div>
+                ) : (
+                  <PrimaryButton
+                    label={openCanvasLabel}
+                    onClick={() =>
+                      onOpenApp(
+                        mcpAppMatch,
+                        mcpAppKey,
+                        resolveMcpAppToolCallSeed(msg, mcpAppMatch.toolName),
+                      )
+                    }
+                  />
+                ))}
               {msg.streamErrorMessage != null && (
                 <div className="w-full">
                   <ErrorMessageNotification

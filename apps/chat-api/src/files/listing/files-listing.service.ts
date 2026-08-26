@@ -10,7 +10,6 @@ import { DialClientService } from '../../dial/dial-client.service';
 import { toRelativePath } from '../dial-resource-path.util';
 import type { FileMetadataResponseDto } from '../dto/file-metadata-response.dto';
 import type { ListFilesResponseDto } from '../dto/list-files.dto';
-import { summarizeDialRawItems } from '../list-items-debug';
 import type { DialFileItem } from '../normalize-file-item';
 import { normalizeFileItem } from '../normalize-file-item';
 import { resolveListingPermissions } from '../resolve-listing-permissions';

@@ -569,6 +569,24 @@ export interface ClientConfigDto {
    */
   dialCoreExternalUrl?: string | null;
   /**
+   * Isolated-origin URL of the deployed MCP Apps sandbox-proxy app. Null when MCP_APP_SANDBOX_URL is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppSandboxUrl?: string | null;
+  /**
+   * Admin-controlled color theme override for MCP App Views. Null when MCP_APP_THEME is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppTheme?: 'light' | 'dark' | null;
+  /**
+   * Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppUserAgent?: string | null;
+  /**
    * Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.
    * @type {Array<string>}
    * @memberof ClientConfigDto
@@ -3953,6 +3971,19 @@ export interface ListFilesResponseDto {
 /**
  *
  * @export
+ * @interface ListMcpAppToolsResponseDto
+ */
+export interface ListMcpAppToolsResponseDto {
+  /**
+   *
+   * @type {Array<McpAppToolSummaryDto>}
+   * @memberof ListMcpAppToolsResponseDto
+   */
+  tools: Array<McpAppToolSummaryDto>;
+}
+/**
+ *
+ * @export
  * @interface ListScheduledTaskRunsResponseDto
  */
 export interface ListScheduledTaskRunsResponseDto {
@@ -4060,6 +4091,73 @@ export interface LocaleTextEntryDto {
    * @memberof LocaleTextEntryDto
    */
   description?: string;
+}
+/**
+ *
+ * @export
+ * @interface McpAppToolCallRequestDto
+ */
+export interface McpAppToolCallRequestDto {
+  /**
+   *
+   * @type {string}
+   * @memberof McpAppToolCallRequestDto
+   */
+  toolName: string;
+  /**
+   *
+   * @type {object}
+   * @memberof McpAppToolCallRequestDto
+   */
+  arguments: object;
+  /**
+   * Which of Core's MCP proxy route prefixes to use for this deployment.
+   * @type {string}
+   * @memberof McpAppToolCallRequestDto
+   */
+  kind: McpAppToolCallRequestDtoKindEnum;
+}
+
+/**
+ * @export
+ */
+export const McpAppToolCallRequestDtoKindEnum = {
+  Toolset: 'toolset',
+  Application: 'application',
+} as const;
+export type McpAppToolCallRequestDtoKindEnum =
+  (typeof McpAppToolCallRequestDtoKindEnum)[keyof typeof McpAppToolCallRequestDtoKindEnum];
+/**
+ *
+ * @export
+ * @interface McpAppToolCallResponseDto
+ */
+export interface McpAppToolCallResponseDto {
+  /**
+   * Unwrapped `result` field of the tool's JSON-RPC response.
+   * @type {object}
+   * @memberof McpAppToolCallResponseDto
+   */
+  result: object;
+}
+/**
+ *
+ * @export
+ * @interface McpAppToolSummaryDto
+ */
+export interface McpAppToolSummaryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof McpAppToolSummaryDto
+   */
+  toolName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof McpAppToolSummaryDto
+   */
+  resourceUri: string;
 }
 /**
  *
