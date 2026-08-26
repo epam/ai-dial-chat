@@ -24,6 +24,8 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       defaultDeploymentId: null,
       dialCoreExternalUrl: null,
       mcpAppSandboxUrl: null,
+      mcpAppTheme: null,
+      mcpAppUserAgent: null,
       fileManagerTabs: [],
       overlayEnabled: false,
       overlayAllowedOrigins: [],

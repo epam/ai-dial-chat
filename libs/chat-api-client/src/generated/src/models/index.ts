@@ -575,6 +575,18 @@ export interface ClientConfigDto {
    */
   mcpAppSandboxUrl?: string | null;
   /**
+   * Admin-controlled color theme override for MCP App Views. Null when MCP_APP_THEME is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppTheme?: 'light' | 'dark' | null;
+  /**
+   * Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppUserAgent?: string | null;
+  /**
    * Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.
    * @type {Array<string>}
    * @memberof ClientConfigDto

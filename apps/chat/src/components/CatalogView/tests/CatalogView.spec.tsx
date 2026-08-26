@@ -773,6 +773,8 @@ describe('CatalogView', () => {
         defaultDeploymentId: null,
         dialCoreExternalUrl: 'https://dial.example.com',
         mcpAppSandboxUrl: null,
+        mcpAppTheme: null,
+        mcpAppUserAgent: null,
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,
         overlayAllowedOrigins: [],
