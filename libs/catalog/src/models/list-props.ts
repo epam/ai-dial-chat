@@ -26,7 +26,7 @@ export interface ListViewColors {
   starFilled?: string;
   /** Background color of even-indexed grid rows. Fallback: `--bg-layer-base`. */
   rowEvenBackground?: string;
-  /** Border color of the selected row. Fallback: `--stroke-info`. */
+  /** Border color of the selected row. Fallback: `--stroke-accent`. */
   selectedRowBorder?: string;
   /** Background color (tint) of the selected row. Fallback: `--bg-control-accent-alpha-active`. */
   selectedRowBackground?: string;

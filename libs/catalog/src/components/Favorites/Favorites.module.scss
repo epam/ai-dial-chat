@@ -36,7 +36,7 @@
 }
 
 .selectedCard {
-  border-color: var(--cat-fav-selected-border, var(--stroke-info, #124ace));
+  border-color: var(--cat-fav-selected-border, var(--stroke-accent, #1d4ed8));
   background-color: var(
     --cat-fav-selected-bg,
     var(--bg-control-accent-alpha-active, #2764d933)

@@ -51,9 +51,9 @@ export interface PublishAccessRuleEditorColors {
   selectBorder?: string;
   /** Picker hover border color. Defaults to `--stroke-secondary`. */
   selectBorderHover?: string;
-  /** Open picker border color. Defaults to `--stroke-info`. */
+  /** Open picker border color. Defaults to `--stroke-accent`. */
   selectBorderOpen?: string;
-  /** Focused picker border color. Defaults to `--stroke-info`. */
+  /** Focused picker border color. Defaults to `--stroke-accent`. */
   selectBorderFocus?: string;
 }
 

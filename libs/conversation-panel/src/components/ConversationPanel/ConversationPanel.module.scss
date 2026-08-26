@@ -23,7 +23,7 @@
 
 .dropZoneActive {
   @apply ring-1 ring-inset;
-  --tw-ring-color: var(--cp-drop-zone-ring, var(--stroke-info, #124ace));
+  --tw-ring-color: var(--cp-drop-zone-ring, var(--stroke-accent, #1d4ed8));
 }
 
 .triggerActive {

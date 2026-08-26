@@ -16,7 +16,7 @@ export interface FavoritesColors {
   countText?: string;
   /** Color of the checkmark icon on the selected favorite card. Fallback: `--text-accent`. */
   selectedCheckIcon?: string;
-  /** Border color of the selected favorite card. Fallback: `--stroke-info`. */
+  /** Border color of the selected favorite card. Fallback: `--stroke-accent`. */
   selectedCardBorder?: string;
   /** Background color (tint) of the selected favorite card. Fallback: `--bg-control-accent-alpha-active`. */
   selectedCardBackground?: string;
