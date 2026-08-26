@@ -23,17 +23,17 @@ import styles from './Filter.module.scss';
 /** Props for Filter. */
 /** Color overrides for `Filter`, applied as CSS custom properties. */
 export interface FilterColors {
-  /** Trigger button background. Fallback: `#ffffff`. */
+  /** Trigger button background. Fallback: `--bg-control-neutral`. */
   buttonBackground?: string;
   /** Trigger button border color at rest. Fallback: `--stroke-tertiary`. */
   buttonBorder?: string;
   /** Trigger button border color on hover. Fallback: `--stroke-secondary`. */
   buttonBorderHover?: string;
-  /** Trigger button border color while the dropdown has focus. Fallback: `--stroke-accent`. */
+  /** Trigger button border color while the dropdown has focus. Fallback: `--stroke-accent-focus`. */
   buttonBorderFocus?: string;
   /** Trigger button border color while a filter is applied. Fallback: `--stroke-accent`. */
   buttonBorderActive?: string;
-  /** Trigger button border color while the dropdown is open. Fallback: `--stroke-accent`. */
+  /** Trigger button border color while the dropdown is open. Fallback: `--stroke-accent-alpha`. */
   buttonBorderOpen?: string;
   /** Trigger button label color. Fallback: `--text-primary`. */
   buttonLabel?: string;
@@ -41,13 +41,11 @@ export interface FilterColors {
   buttonFunnel?: string;
   /** Chevron icon color in the trigger button. Fallback: `--text-tertiary`. */
   buttonChevron?: string;
-  /** Dropdown overlay background. Fallback: `#ffffff`. */
+  /** Dropdown overlay background. Fallback: `--bg-layer-raised`. */
   overlayBackground?: string;
   /** Dropdown overlay border color. Fallback: `--stroke-tertiary`. */
   overlayBorder?: string;
-  /** Dropdown overlay drop-shadow color. Fallback: `--shadow-lg`. */
-  overlayShadow?: string;
-  /** Row background on hover. Fallback: `--bg-layer-raised`. */
+  /** Row background on hover. Fallback: `--bg-control-accent-alpha-hover`. */
   rowHoverBackground?: string;
   /** Background of a checked row. Fallback: `--bg-control-accent-alpha-active`. */
   rowCheckedBackground?: string;
@@ -146,7 +144,6 @@ export const Filter: FC<FilterProps> = ({
     '--cat-filter-btn-chevron': colors?.buttonChevron,
     '--cat-filter-overlay-bg': colors?.overlayBackground,
     '--cat-filter-overlay-border': colors?.overlayBorder,
-    '--cat-filter-overlay-shadow': colors?.overlayShadow,
     '--cat-filter-row-hover-bg': colors?.rowHoverBackground,
     '--cat-filter-row-checked-bg': colors?.rowCheckedBackground,
     '--cat-filter-row-focus-ring': colors?.rowFocusRing,

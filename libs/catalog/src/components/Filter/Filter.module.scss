@@ -1,8 +1,8 @@
 .filterBtn {
   background-color: var(
     --cat-filter-btn-bg,
-    #ffffff
-  ); /* TODO: connect to design token */
+    var(--bg-control-neutral, #fcfcfc)
+  );
   border: 1px solid
     var(--cat-filter-btn-border, var(--stroke-tertiary, #e0e6f0));
   transition:
@@ -22,11 +22,7 @@
   &:focus-visible {
     border-color: transparent;
     outline: 1px solid
-      color-mix(
-        in srgb,
-        var(--cat-filter-btn-border-focus, var(--stroke-accent, #1d4ed8)) 50%,
-        transparent
-      );
+      var(--cat-filter-btn-border-focus, var(--stroke-accent-focus, #6785fb));
     outline-offset: -1px;
     box-shadow: none;
   }
@@ -40,10 +36,9 @@
 }
 
 .filterBtnOpen {
-  border-color: color-mix(
-    in srgb,
-    var(--cat-filter-btn-border-open, var(--stroke-accent, #1d4ed8)) 50%,
-    transparent
+  border-color: var(
+    --cat-filter-btn-border-open,
+    var(--stroke-accent-alpha, #2764d933)
   );
 }
 
@@ -65,19 +60,11 @@
   }
 }
 
-/* ============================================================
- * Dropdown overlay
- * ============================================================ */
-
 .overlay {
-  background: var(
-    --cat-filter-overlay-bg,
-    #ffffff
-  ); /* TODO: connect to design token */
+  background: var(--cat-filter-overlay-bg, var(--bg-layer-raised, #fcfcfc));
   border: 1px solid
     var(--cat-filter-overlay-border, var(--stroke-tertiary, #e0e6f0));
-  box-shadow: 0 16px 40px
-    var(--cat-filter-overlay-shadow, var(--shadow-lg, #2764d914));
+  @apply shadow-lg;
 }
 
 /* Checkbox row ------------------------------------------------ */
@@ -87,7 +74,7 @@
     &:hover {
       background: var(
         --cat-filter-row-hover-bg,
-        var(--bg-layer-raised, #fcfcfc)
+        var(--bg-control-accent-alpha-hover, #2764d924)
       );
     }
   }
