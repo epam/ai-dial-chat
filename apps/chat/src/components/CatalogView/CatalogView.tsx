@@ -28,7 +28,9 @@ import {
   mapPromptToCatalogItem,
   mapSkillToCatalogItem,
   mapToolsetCredentials,
+  parsePromptResourceUrl,
   parseSkillManifestDocument,
+  PromptSource,
   readSkillFileBytes,
   readSkillManifest,
   resolveMcpResourceKind,
@@ -126,7 +128,6 @@ import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
-import { parsePromptResourceUrl, PromptSource } from '../../types/prompt';
 import { ROUTES } from '../../types/routes';
 import {
   parseSkillResourceUrl,

@@ -2,6 +2,7 @@ import {
   PROMPT_CONTENT_MAX_LENGTH,
   PROMPT_DESCRIPTION_MAX_LENGTH,
   PromptFieldError,
+  parsePromptResourceUrl,
   validatePromptContent,
   validatePromptDescription,
   validatePromptName,
@@ -38,7 +39,6 @@ import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
-import { parsePromptResourceUrl } from '../../types/prompt';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 
