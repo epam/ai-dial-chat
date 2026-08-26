@@ -20,12 +20,15 @@ Canvas/viewer component for rendering attachment content inline — images, audi
 
 - `react`
 - `@epam/ai-dial-chat-shared`
+- `@epam/ai-dial-shared`
 - `@epam/ai-dial-sidebar`
+- `@epam/ai-dial-visualizer-connector`
 - `@epam/ai-dial-ui-kit`
 - `@epam/pdf-highlighter-kit`
 - `@epam/ai-dial-react-pdf-highlighter`
 - `@tabler/icons-react`
 - `react-json-view-lite`
+- `react-syntax-highlighter`
 
 The library uses `@silurus/ooxml` as a bundled runtime dependency. Its DOCX,
 XLSX, and PPTX entry points are loaded independently on demand, so opening one
@@ -130,6 +133,67 @@ openCanvas(
   'report.pdf',
   attachment.id,
 );
+```
+
+## Hooks
+
+### useOpenAttachmentCanvas
+
+Decides whether and how to open the attachment canvas for a given `DisplayAttachment`, dispatching on its type (`Image`/`Audio`/`File`/`Pasted`/`Prompt`) and, for `File` attachments, on MIME type, extension, and custom-visualizer registry matches. The hook owns all of the dispatch logic; the host supplies the content resolvers, the custom-visualizer registry, the active theme, and an optional panel-coordination callback.
+
+```tsx
+import {
+  useOpenAttachmentCanvas,
+  type UseOpenAttachmentCanvasResolvers,
+  type UseOpenAttachmentCanvasOptions,
+} from '@epam/ai-dial-attachment-canvas';
+
+const resolvers: UseOpenAttachmentCanvasResolvers = {
+  resolveImageContent,
+  resolveTextContent,
+  resolveMarkdownContent,
+  resolveCodeContent,
+  resolveHtmlContent,
+  resolvePdfContent,
+  resolveJsonContent,
+  resolveVisualizerContent,
+  resolveReferencePdfContent,
+  resolveContentUrl,
+};
+
+const options: UseOpenAttachmentCanvasOptions = {
+  customVisualizers,
+  themeId,
+  onBeforeOpen: () => {
+    closeConversationPanel();
+    closeSourcesSidebar();
+  },
+};
+
+const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+
+const opened = await openAttachmentCanvas(attachment);
+if (!opened) {
+  // fall back to downloading the attachment
+}
+```
+
+`openAttachmentCanvas` resolves `true` when the canvas was opened and `false`
+when the attachment could not be previewed. `onBeforeOpen` runs for
+`Image`/`File`/`Pasted`/`Prompt` attachments, never for `Audio`.
+
+### findVisualizerForMime
+
+Pure lookup used internally by `useOpenAttachmentCanvas` to match an
+attachment's MIME type against a custom-visualizer registry entry's
+comma-separated `contentType` list. Exported for hosts that need the same
+matching logic outside the hook (e.g. to decide whether to offer a visualizer
+before the canvas opens).
+
+```tsx
+import { findVisualizerForMime } from '@epam/ai-dial-attachment-canvas';
+
+const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 ```
 
 ## Content Types

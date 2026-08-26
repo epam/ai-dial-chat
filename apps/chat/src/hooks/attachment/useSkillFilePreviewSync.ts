@@ -1,4 +1,7 @@
-import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  useAttachmentCanvas,
+  useOpenAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   SkillFileNodeKind,
   type SkillFileTreeNode,
@@ -7,7 +10,7 @@ import { useEffect } from 'react';
 import { SKILL_MANIFEST_FILE } from '../../utils/skill';
 import { skillFileToAttachment } from '../../utils/skill-file-preview';
 import type { SkillFileContent } from '../../utils/skill-file-preview';
-import { useOpenAttachmentCanvas } from './useOpenAttachmentCanvas';
+import { useAttachmentCanvasResolvers } from './useAttachmentCanvasResolvers';
 
 interface UseSkillFilePreviewSyncParams {
   selectedPath: string;
@@ -25,7 +28,8 @@ export const useSkillFilePreviewSync = ({
   files,
   filesContentRef,
 }: UseSkillFilePreviewSyncParams): void => {
-  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+  const { resolvers, options } = useAttachmentCanvasResolvers();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const {
     closeCanvas,
     isOpen: isCanvasOpen,

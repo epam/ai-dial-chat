@@ -34,10 +34,13 @@
   ],
   "references": [
     {
-      "path": "../chat-shared/tsconfig.lib.json"
+      "path": "../quotations/tsconfig.lib.json"
     },
     {
       "path": "../sidebar/tsconfig.lib.json"
+    },
+    {
+      "path": "../chat-shared/tsconfig.lib.json"
     }
   ]
 }

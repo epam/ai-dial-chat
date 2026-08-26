@@ -8,7 +8,7 @@ The delete capability on `useDialFileManager` and its wiring into the file-manag
 
 ### Requirement: useDialFileManager — delete capability
 
-`useDialFileManager` in `apps/chat/src/hooks/files/useDialFileManager.ts` SHALL expose `onDeleteFiles` and `isDeleting`, and SHALL surface delete results through the `onNotification` option passed by `DialFileManagerModal`.
+`useDialFileManager` in `libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)` SHALL expose `onDeleteFiles` and `isDeleting`, and SHALL surface delete results through the `onNotification` option passed by `DialFileManagerModal`.
 
 #### State ownership
 
@@ -421,7 +421,7 @@ Not gated. Delete is available to all authenticated users with WRITE permission 
 
 ## Tests
 
-**`useDialFileManager.spec.tsx`** (`apps/chat/src/hooks/files/tests/useDialFileManager.spec.tsx`):
+**`useDialFileManager.spec.tsx`** (`libs/chat-hooks/src/files/useDialFileManager/tests/useDialFileManager.spec.tsx`):
 - `onDeleteFiles` success: cache invalidated, retryCounter incremented, `isDeleting` transitions
 - `onDeleteFiles` partial failure: success and error notifications emitted
 - `onDeleteFiles` total failure: error notification emitted
