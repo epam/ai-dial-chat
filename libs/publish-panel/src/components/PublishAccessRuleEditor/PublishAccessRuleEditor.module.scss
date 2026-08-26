@@ -39,7 +39,7 @@
     &:focus-within {
       border-color: var(
         --pare-select-border-focus,
-        var(--stroke-info, #124ace)
+        var(--stroke-accent, #1d4ed8)
       ) !important;
     }
   }
@@ -49,7 +49,7 @@
   &:global(.dial-kit-input) {
     border-color: var(
       --pare-select-border-open,
-      var(--stroke-info, #124ace)
+      var(--stroke-accent, #1d4ed8)
     ) !important;
   }
 }

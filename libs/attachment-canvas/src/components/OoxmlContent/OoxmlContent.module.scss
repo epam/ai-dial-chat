@@ -4,9 +4,9 @@
 
 .statusOverlay {
   background: var(--ac-ooxml-bg, var(--bg-layer-raised, #fcfcfc));
-  color: var(--ac-status-text, var(--text-secondary, #454545));
+  color: var(--ac-status-text, var(--text-secondary, #57647a));
 }
 
 .errorIcon {
-  color: var(--ac-error-icon, var(--text-error, #a30000));
+  color: var(--ac-error-icon, var(--text-error, #ae2f2f));
 }
