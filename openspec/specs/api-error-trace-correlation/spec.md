@@ -9,18 +9,30 @@ A single helper that normalizes any API error into a message and trace ID, so a 
 ### Requirement: One normalization helper resolves message and trace ID from any API error
 `@epam/ai-dial-chat-hooks` SHALL export an async `getApiErrorDetails(error: unknown)`
 helper returning `{ status?: number; message: string | null; traceId?: string }`, supporting both
-the generated `@epam/chat-api-client` `ResponseError` (which retains the original `Response`) and
-the raw `apps/chat/src/server-api/base.ts` request error shape. The existing
-`getApiErrorMessage`/`getApiErrorStatus` exports SHALL continue to work unchanged for callers that
-only need a message or status. `apps/chat/src/server-api/api-error.ts` SHALL re-export these
-`@epam/ai-dial-chat-hooks` names until every one of its 21 consumer files is migrated to import
-directly from `@epam/ai-dial-chat-hooks`, at which point the app file SHALL be removed.
+the generated `@epam/ai-dial-chat-api-client` `ResponseError` (which retains the original
+`Response`) and a host's own raw-fetch request error, such as `ApiRequestError` from
+`apps/chat/src/server-api/base.ts`.
+
+The helper SHALL identify a response by duck-typing — any error carrying a `response` property
+whose `json` is a function — rather than by importing either error class, so it supports both
+shapes without the library knowing anything about the host's request layer.
+
+The existing `getApiErrorMessage`/`getApiErrorStatus` exports SHALL continue to work unchanged for
+callers that only need a message or status. `apps/chat/src/server-api/api-error.ts` SHALL re-export
+these `@epam/ai-dial-chat-hooks` names — `getApiErrorDetails`, `getApiErrorMessage`,
+`getApiErrorStatus`, `isConversationNotFoundError`, and the `ApiErrorDetails` type — until every one
+of its consumer files is migrated to import directly from `@epam/ai-dial-chat-hooks`, at which point
+the app file SHALL be removed.
 
 Resolution order SHALL be: parse a `traceparent` from the JSON error body first; if the body has no
 valid `traceparent` or cannot be parsed as JSON, fall back to the response's `traceparent` header.
 The message SHALL continue to resolve in the existing order (`message[]` joined, then `message`,
-then `error`, then `Error.message`). The response body SHALL be read via `response.clone()` (or an
-equivalent single-consumption-safe strategy) so no caller can trigger a "body already used" error.
+then `error`, then `Error.message`). The `Error.message` fallback SHALL apply only when the body
+parsed successfully but carried no usable message, or when the error carries no response at all: a
+body that cannot be parsed as JSON SHALL yield `message: null`, matching `getApiErrorMessage`'s
+existing behavior rather than diverging from it. The response body SHALL be read via
+`response.clone()` (or an equivalent single-consumption-safe strategy) so no caller can trigger a
+"body already used" error.
 
 #### Scenario: Trace ID resolved from a JSON error body
 - **WHEN** an API call fails and the response JSON body includes a valid `traceparent`
@@ -42,10 +54,15 @@ equivalent single-consumption-safe strategy) so no caller can trigger a "body al
 - **THEN** `getApiErrorDetails` still returns the resolved `message` (and `status` when available),
   with `traceId` left `undefined`
 
+#### Scenario: A body that is not JSON yields no message fallback
+- **WHEN** an error carries a response whose body cannot be parsed as JSON, and the error is an
+  `Error` with a non-empty `message`
+- **THEN** `getApiErrorDetails` returns `message: null` rather than falling back to `Error.message`
+
 #### Scenario: `apps/chat` consumers resolve the same behavior through the re-export
-- **WHEN** any of `apps/chat`'s 21 current consumer files import `getApiErrorDetails` from
+- **WHEN** any `apps/chat` consumer file imports `getApiErrorDetails` from
   `apps/chat/src/server-api/api-error.ts` during the migration window
-- **THEN** they receive the exact same implementation and behavior as importing directly from
+- **THEN** it receives the exact same implementation and behavior as importing directly from
   `@epam/ai-dial-chat-hooks`
 
 ### Requirement: Malformed or absent trace data is never surfaced
@@ -64,9 +81,26 @@ helper SHALL NOT throw and SHALL still return the resolved `message`.
   number of dash-separated segments
 - **THEN** `getApiErrorDetails` returns `traceId: undefined` without throwing
 
+### Requirement: Library hooks take trace-ID resolution from the host
+Hooks in `@epam/ai-dial-chat-hooks` that attach a trace ID to a failure event SHALL accept it
+through an optional host-supplied `resolveErrorTraceId(error: unknown) => Promise<string |
+undefined>` callback rather than calling `getApiErrorDetails` themselves, and SHALL default that
+callback to one resolving `undefined`. A host that supplies no callback SHALL still receive working
+failure events, simply without a trace ID.
+
+#### Scenario: Host supplies the resolver
+- **WHEN** a host passes `resolveErrorTraceId` to a conversation transfer hook and an operation fails
+  with a response carrying a valid `traceparent`
+- **THEN** the emitted failure event carries the resolved trace ID
+
+#### Scenario: Host omits the resolver
+- **WHEN** a host mounts the same hook without passing `resolveErrorTraceId` and an operation fails
+- **THEN** the failure event is still emitted, with no trace ID attached and no error thrown
+
 ### Requirement: Batch failures surface exactly one trace ID
-When a caller aggregates results from multiple operations and one representative failure must be shown, the caller SHALL call `getApiErrorDetails` on the first failing operation in the existing
-iteration order and use only that result's `traceId`. Trace IDs from other failed operations in the
+When a caller aggregates results from multiple operations and one representative failure must be shown, the caller SHALL resolve the trace ID from the first failing operation in the existing
+iteration order — via `getApiErrorDetails`, or via the injected `resolveErrorTraceId` when inside a
+library hook — and use only that result's `traceId`. Trace IDs from other failed operations in the
 same batch SHALL NOT be concatenated or otherwise included in the same notification.
 
 #### Scenario: Multiple failures in one batch show only the first trace ID

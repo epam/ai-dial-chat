@@ -93,11 +93,18 @@ The client SHALL NOT re-validate link hrefs, since the `client-config-endpoint` 
 
 ### Requirement: The popover closes on outside click and on Escape
 
+Opening the popover SHALL move focus into it, onto the named region that wraps the list, so the rows and their links are reachable without tabbing past the trigger. Focus SHALL land on the region rather than on the first row link, keeping the whole list one step ahead in the reading order.
+
 The popover SHALL close when the user clicks outside it, and when the user presses `Escape`. Closing via `Escape` SHALL return focus to the pill so keyboard navigation is not lost.
 
 The `Escape` handler SHALL be bound in a way that works while focus is inside the popover, including when the popover renders in a portal.
 
 Focus restoration SHALL NOT depend on a ui-kit component forwarding a `ref` to its underlying element. Any test covering this requirement SHALL move focus into the popover before pressing `Escape`, so it cannot pass on focus the pill merely retained from the opening click.
+
+#### Scenario: Opening the popover moves focus into it
+
+- **WHEN** the user activates the pill
+- **THEN** focus lands on the popover region rather than remaining on the pill
 
 #### Scenario: Outside click closes the popover
 
@@ -154,9 +161,21 @@ The system SHALL meet WCAG 2.1 AAA expectations:
 
 ### Requirement: The popover bounds its own height
 
-The popover SHALL cap its height and scroll its content internally rather than growing past the viewport, regardless of how many announcements are configured.
+The popover SHALL cap its height and scroll its content internally rather than growing past the viewport, regardless of how many announcements are configured. Capping the height SHALL NOT drop rows: every configured announcement SHALL remain in the DOM and reachable by scrolling.
+
+The scrolling region SHALL be focusable so a keyboard-only user can reach the scroll container and page through the rows with the arrow keys — rows are not guaranteed to contain a link, so tabbing between links is not a sufficient way to scroll the list.
 
 #### Scenario: A long list scrolls inside the popover
 
 - **WHEN** enough announcements are configured that the list exceeds the popover's maximum height
 - **THEN** the popover keeps its maximum height and its content scrolls internally, without the page scrolling
+
+#### Scenario: Capping the height drops no rows
+
+- **WHEN** more announcements are configured than fit within the popover's maximum height
+- **THEN** every configured announcement is still rendered as a row and reachable by scrolling
+
+#### Scenario: A keyboard-only user can reach the scroll container
+
+- **WHEN** the popover is open on a list long enough to scroll
+- **THEN** the scrolling region is focusable and can be scrolled from the keyboard without tabbing through the row links

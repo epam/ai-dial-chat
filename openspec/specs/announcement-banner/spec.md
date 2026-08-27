@@ -41,7 +41,9 @@ The banner SHALL render only when the app-config `status` is ready AND the annou
 
 ### Requirement: Banner content is sanitized before rendering
 
-The system SHALL sanitize operator-supplied HTML before rendering it as markup. This applies to both `config.announcementDescription` and the legacy `config.announcementHtml`. Sanitization SHALL run in the application layer (not in a presentational library component) and SHALL allow only a safe subset of tags (`a`, `b`, `strong`, `em`, `br`, `span`) and attributes (`href`, `target`, `rel`). This client-side pass SHALL remain in place even though the backend also sanitizes the description, so the component is safe regardless of which backend version serves it.
+The system SHALL sanitize operator-supplied HTML before rendering it as markup. This applies to both `config.announcementDescription` and the legacy `config.announcementHtml`. Sanitization SHALL be invoked by the application component — never by a presentational library component — through the shared, host-agnostic `sanitizeAnnouncementHtml` helper exported from `@epam/ai-dial-chat-hooks`, and SHALL allow only a safe subset of tags (`a`, `b`, `strong`, `em`, `br`, `span`) and attributes (`href`, `target`, `rel`). The allowed set SHALL be kept in lockstep with the backend allowlist in `apps/chat-api/src/app-config/html-sanitizer.ts`, so the server never returns markup this pass silently strips. This client-side pass SHALL remain in place even though the backend also sanitizes the description, so the component is safe regardless of which backend version serves it.
+
+Links that the sanitized markup opens in a new tab SHALL carry `rel="noopener noreferrer"`, applied by the sanitizer rather than trusted from operator input. Content that sanitizes down to nothing SHALL be treated as absent: the banner SHALL render no element and reserve no vertical space for it.
 
 `config.announcementTitle` SHALL be rendered as a text node — never via `dangerouslySetInnerHTML` — so any markup an operator puts in the title is displayed literally rather than interpreted.
 
@@ -60,6 +62,16 @@ The system SHALL sanitize operator-supplied HTML before rendering it as markup. 
 - **WHEN** the description or the legacy message contains `<a href="javascript:alert(1)">x</a>`
 - **THEN** the rendered link does not carry an executable `javascript:` URL
 
+#### Scenario: New-tab links are hardened
+
+- **WHEN** the sanitized markup contains an anchor with `target="_blank"`
+- **THEN** the rendered anchor carries `rel="noopener noreferrer"`, regardless of the `rel` the operator supplied
+
+#### Scenario: Content that sanitizes to nothing renders no banner
+
+- **WHEN** the only configured announcement content is markup that sanitization removes entirely (e.g. `<script>alert(1)</script>` as the legacy message)
+- **THEN** no banner element is rendered and no vertical space is reserved for it
+
 #### Scenario: Title markup is displayed literally
 
 - **WHEN** `config.announcementTitle` is `Release <b>3.0</b>`
@@ -69,11 +81,13 @@ The system SHALL sanitize operator-supplied HTML before rendering it as markup. 
 
 ### Requirement: Dismissal is content-keyed and persisted in browser storage
 
-The system SHALL provide a close control on the banner. Dismissing SHALL persist a signature of the currently-displayed announcement to browser `localStorage` under the `TextOfClosedAnnouncement` storage key. The banner SHALL remain hidden only while the signature of the currently-configured announcement equals the stored value; if the operator changes the title, the description, or the legacy message, the banner SHALL become visible again automatically without requiring a stored version counter or manual reset.
+The system SHALL provide a close control on the banner. Dismissing SHALL persist a signature of the currently-displayed announcement to browser `localStorage` under the `TextOfClosedAnnouncement` storage key. The banner SHALL remain hidden only while the signature of the currently-configured announcement equals the stored value; if the operator changes any field the signature covers, the banner SHALL become visible again automatically without requiring a stored version counter or manual reset.
 
 Dismissal SHALL be persistent, not session-scoped: a dismissed announcement SHALL stay hidden across browser restarts for as long as its content is unchanged.
 
-The signature SHALL be computed by a shared helper in `apps/chat/src/utils/` and SHALL be deterministic for a given announcement payload. When the announcement consists only of the legacy `announcementHtml` (no title, no description), the signature SHALL be exactly that HTML string, so dismissals recorded before the structured fields existed remain valid without a storage migration.
+The signature SHALL be computed by a shared, host-agnostic helper (`buildAnnouncementSignature`, exported from `@epam/ai-dial-chat-hooks`) and SHALL be deterministic for a given announcement payload. Browser-storage access SHALL stay at the app edge — the `useAnnouncementDismissal` hook under `apps/chat/src/hooks/` — because libraries must not read or write browser storage directly.
+
+When the announcement consists only of the legacy `announcementHtml` (no title, no description), the signature SHALL be exactly that HTML string, so dismissals recorded before the structured fields existed remain valid without a storage migration. When structured content is present, the signature SHALL cover the title and the description only; the legacy `announcementHtml` is excluded, matching the fact that a structured banner never renders it.
 
 #### Scenario: Closing hides the banner and persists the signature
 
@@ -100,6 +114,11 @@ The signature SHALL be computed by a shared helper in `apps/chat/src/utils/` and
 - **WHEN** a user has dismissed a legacy-only announcement and the operator later changes `ANNOUNCEMENT_HTML_MESSAGE` to different text
 - **THEN** the banner is shown again on next load
 
+#### Scenario: Changing the ignored legacy message does not re-show a structured banner
+
+- **WHEN** a user has dismissed a structured announcement and the operator later changes only `ANNOUNCEMENT_HTML_MESSAGE`, leaving the title and description unchanged
+- **THEN** the banner stays hidden, because the structured signature does not cover a message the structured layout never renders
+
 #### Scenario: A pre-existing legacy dismissal survives the upgrade
 
 - **WHEN** `localStorage["textOfClosedAnnouncement"]` holds a message string dismissed before the structured fields existed, and the deployment still configures only `ANNOUNCEMENT_HTML_MESSAGE` with that same string
@@ -109,12 +128,19 @@ The signature SHALL be computed by a shared helper in `apps/chat/src/utils/` and
 
 ### Requirement: Banner component is a single app-local component
 
-The system SHALL implement the banner entirely within `apps/chat` as a single component that reads app config, browser storage, and i18n directly and renders the sanitized message. The banner SHALL NOT be exported from `libs/chat-shared` or any other shared library, since it has a single consumer and no cross-app reuse requirement.
+The system SHALL implement the banner within `apps/chat` as a single component that reads app config and i18n directly and renders the sanitized message. Browser-storage access SHALL live in an app-local hook (`useAnnouncementDismissal`) rather than in the component or in a library. The pure content helpers the component depends on — sanitization, content detection, and signature building — MAY live in `libs/chat-hooks`, because they are host-agnostic utilities with no rendering, no storage, and no app-context knowledge.
 
-#### Scenario: Component renders from app config without a shared-library dependency
+No presentational banner shell SHALL be exported from `libs/chat-shared` or any other shared library, since the banner has a single consumer and no cross-app reuse requirement.
+
+#### Scenario: Component renders from app config without a shared presentational shell
 
 - **WHEN** the app-local component reads a non-empty, non-dismissed `announcementHtml` from `useAppConfig()`
-- **THEN** it renders the sanitized content and invokes dismissal on close, with no `libs/chat-shared` presentational shell involved
+- **THEN** it renders the sanitized content and invokes dismissal on close, with no presentational banner shell from `libs/chat-shared` involved
+
+#### Scenario: Storage stays at the app edge
+
+- **WHEN** the user dismisses the banner
+- **THEN** the `localStorage` write is performed by the app-local dismissal hook, and no library reads or writes browser storage on the banner's behalf
 
 ---
 
@@ -165,6 +191,8 @@ When the announcement has structured content — a non-empty `announcementTitle`
 Each part SHALL be conditional: an unset title or description SHALL render no element at all, with no reserved space and no empty wrapper. When both are present the title SHALL precede the description.
 
 When structured content is present, the legacy `announcementHtml` SHALL be ignored rather than appended.
+
+When announcements are configured, the count pill specified by the `announcements-popover` capability SHALL sit between the text and the close control; the close control SHALL remain the trailing element of the line either way.
 
 #### Scenario: Title and description both configured
 
