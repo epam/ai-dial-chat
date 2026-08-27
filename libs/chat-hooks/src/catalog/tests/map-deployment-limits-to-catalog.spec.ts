@@ -1,21 +1,7 @@
 import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
-import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
-import { CatalogI18nKeys } from '../../constants/translation-keys';
+import type { DeploymentLimitsLabels } from '../map-deployment-limits-to-catalog';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../map-deployment-limits-to-catalog';
-
-const labels: Partial<Record<CatalogI18nKeys, string>> = {
-  [CatalogI18nKeys.DetailsLimitsRequestsPerHour]: 'Requests per hour',
-  [CatalogI18nKeys.DetailsLimitsRequestsPerDay]: 'Requests per day',
-  [CatalogI18nKeys.DetailsLimitsTokensPerMinute]: 'Tokens per minute',
-  [CatalogI18nKeys.DetailsLimitsTokensPerDay]: 'Tokens per day',
-  [CatalogI18nKeys.DetailsLimitsTokensPerWeek]: 'Tokens per week',
-  [CatalogI18nKeys.DetailsLimitsTokensPerMonth]: 'Tokens per month',
-  [CatalogI18nKeys.DetailsLimitsCostPerMinute]: 'Cost per minute',
-  [CatalogI18nKeys.DetailsLimitsCostPerDay]: 'Cost per day',
-  [CatalogI18nKeys.DetailsLimitsCostPerWeek]: 'Cost per week',
-  [CatalogI18nKeys.DetailsLimitsCostPerMonth]: 'Cost per month',
-};
 
 const format = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 2,
@@ -27,18 +13,22 @@ const costFormat = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 2,
 }).format;
 
-const t = ((key: string, params?: Record<string, string>) => {
-  if (key === CatalogI18nKeys.DetailsLimitsValue) {
-    return `${params?.used} / ${params?.total}`;
-  }
-  if (key === CatalogI18nKeys.DetailsLimitsUnlimitedValue) {
-    return 'Unlimited';
-  }
-  if (key === CatalogI18nKeys.DetailsLimitsProgressAriaLabel) {
-    return `${params?.label}: ${params?.used} of ${params?.total} used`;
-  }
-  return labels[key as CatalogI18nKeys] ?? key;
-}) as TFunction;
+const labels: DeploymentLimitsLabels = {
+  requestsPerHour: 'Requests per hour',
+  requestsPerDay: 'Requests per day',
+  tokensPerMinute: 'Tokens per minute',
+  tokensPerDay: 'Tokens per day',
+  tokensPerWeek: 'Tokens per week',
+  tokensPerMonth: 'Tokens per month',
+  costPerMinute: 'Cost per minute',
+  costPerDay: 'Cost per day',
+  costPerWeek: 'Cost per week',
+  costPerMonth: 'Cost per month',
+  unlimitedValue: 'Unlimited',
+  formatValueLabel: (used, total) => `${used} / ${total}`,
+  formatProgressAriaLabel: ({ label, used, total }) =>
+    `${label}: ${used} of ${total} used`,
+};
 
 describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
   it('maps supported deployment limit stats into progress rows in display order', () => {
@@ -48,7 +38,7 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
       monthCostStats: { used: 12.345, total: 25 },
     };
 
-    expect(mapDeploymentLimitsDtoToCatalogLimits(dto, t)).toEqual({
+    expect(mapDeploymentLimitsDtoToCatalogLimits(dto, labels)).toEqual({
       rows: [
         {
           label: 'Requests per hour',
@@ -86,8 +76,10 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
       dayRequestStats: { used: 5, total: 0 },
     };
 
-    expect(mapDeploymentLimitsDtoToCatalogLimits(dto, t)).toBeUndefined();
-    expect(mapDeploymentLimitsDtoToCatalogLimits(undefined, t)).toBeUndefined();
+    expect(mapDeploymentLimitsDtoToCatalogLimits(dto, labels)).toBeUndefined();
+    expect(
+      mapDeploymentLimitsDtoToCatalogLimits(undefined, labels),
+    ).toBeUndefined();
   });
 
   it('keeps unlimited stats and formats their value as Unlimited', () => {
@@ -100,7 +92,7 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
       monthCostStats: { used: 3.64120297, total: 500 },
     };
 
-    expect(mapDeploymentLimitsDtoToCatalogLimits(dto, t)).toEqual({
+    expect(mapDeploymentLimitsDtoToCatalogLimits(dto, labels)).toEqual({
       rows: [
         {
           label: 'Tokens per minute',

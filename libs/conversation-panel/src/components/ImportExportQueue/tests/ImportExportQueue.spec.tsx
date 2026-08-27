@@ -2,16 +2,15 @@ import {
   ConversationTransferJobStatus,
   ConversationTransferSubjectKind,
   type ConversationTransferJob,
-} from '@epam/ai-dial-chat-hooks';
-import { render, screen } from '@testing-library/react';
+} from '@epam/ai-dial-chat-shared';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import ImportExportQueue from '../ImportExportQueue';
-
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+import {
+  ImportExportQueue,
+  type ImportExportQueueLabels,
+} from '../ImportExportQueue';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   ProgressBar: ({
@@ -37,39 +36,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       className={className}
     />
   ),
-  IconButton: ({
-    'aria-label': ariaLabel,
-    onClick,
-    className,
-  }: {
-    'aria-label'?: string;
-    onClick?: () => void;
-    className?: string;
-  }) => (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      onClick={onClick}
-      className={className}
-    />
-  ),
-  DialIconButton: ({
-    'aria-label': ariaLabel,
-    onClick,
-    className,
-  }: {
-    'aria-label'?: string;
-    onClick?: () => void;
-    className?: string;
-  }) => (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      onClick={onClick}
-      className={className}
-    />
-  ),
-  ButtonAppearance: { Ghost: 'ghost', Solid: 'solid' },
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ConfirmationPopup: ({
@@ -116,6 +82,21 @@ vi.mock('@tabler/icons-react', () => ({
   IconChevronUp: () => null,
 }));
 
+const DEFAULT_LABELS: ImportExportQueueLabels = {
+  allConversationsJobLabel: 'All conversations',
+  closeJobAriaLabel: (title) => `Dismiss ${title}`,
+  retryJobAriaLabel: (title) => `Retry ${title}`,
+  collapseQueueAriaLabel: 'Collapse queue',
+  expandQueueAriaLabel: 'Expand queue',
+  closeQueueAriaLabel: 'Close queue',
+  closeQueueConfirmHeader: 'Close queue?',
+  closeQueueConfirmDescriptionInProgress: 'Jobs are still in progress.',
+  closeQueueConfirmDescriptionFailed: 'Some jobs have failed.',
+  closeQueueConfirmDescriptionMixed: 'Some jobs are in progress or failed.',
+  closeLabel: 'Close',
+  cancelLabel: 'Cancel',
+};
+
 const makeJob = ({
   id = 'job-1',
   title = 'My Chat',
@@ -147,6 +128,7 @@ describe('ImportExportQueue', () => {
       onDismiss: (id: string) => void;
       onRetry: (id: string) => void;
       onClose: () => void;
+      labels: ImportExportQueueLabels;
     }> = {},
   ) =>
     render(
@@ -156,6 +138,7 @@ describe('ImportExportQueue', () => {
         onDismiss={props.onDismiss ?? vi.fn()}
         onRetry={props.onRetry ?? vi.fn()}
         onClose={props.onClose ?? vi.fn()}
+        labels={props.labels ?? DEFAULT_LABELS}
       />,
     );
 
@@ -186,8 +169,7 @@ describe('ImportExportQueue', () => {
 
   it('renders job rows without divider borders between them', () => {
     renderQueue([makeJob({ id: 'a' }), makeJob({ id: 'b' })]);
-    /* CSS-level assertion (class/attribute presence, not text or role) —
-       no semantic query applies. */
+    /* CSS-level assertion — no semantic query applies. */
     // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelector('.divide-y')).toBeNull();
   });
@@ -200,8 +182,7 @@ describe('ImportExportQueue', () => {
       makeJob({ id: 'd', status: ConversationTransferJobStatus.InProgress }),
     ]);
     // 2 of 4 jobs finished (success or failed) = 50%
-    /* CSS-level assertion (class/attribute presence, not text or role) —
-       no semantic query applies. */
+    /* CSS-level assertion — no semantic query applies. */
     // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelector('[data-progress="50"]')).toBeTruthy();
   });
@@ -210,11 +191,7 @@ describe('ImportExportQueue', () => {
     const onDismiss = vi.fn();
     renderQueue([makeJob({ id: 'job-x', title: 'Chat X' })], { onDismiss });
 
-    await user.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.closeJobAriaLabel',
-      }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Dismiss Chat X' }));
 
     expect(onDismiss).toHaveBeenCalledWith('job-x');
   });
@@ -228,11 +205,7 @@ describe('ImportExportQueue', () => {
       }),
     ]);
 
-    expect(
-      screen.queryByRole('button', {
-        name: 'conversationExport.closeJobAriaLabel',
-      }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Dismiss Chat Y' })).toBeNull();
   });
 
   it('a failed job shows a retry button but no per-job close button', async () => {
@@ -248,18 +221,10 @@ describe('ImportExportQueue', () => {
       { onRetry },
     );
 
-    await user.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.retryJobAriaLabel',
-      }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Retry Chat Z' }));
     expect(onRetry).toHaveBeenCalledWith('job-z');
 
-    expect(
-      screen.queryByRole('button', {
-        name: 'conversationExport.closeJobAriaLabel',
-      }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Dismiss Chat Z' })).toBeNull();
   });
 
   it('collapsing the panel hides job rows without removing the header', async () => {
@@ -269,7 +234,7 @@ describe('ImportExportQueue', () => {
 
     await user.click(
       screen.getByRole('button', {
-        name: 'conversationExport.collapseQueueAriaLabel',
+        name: DEFAULT_LABELS.collapseQueueAriaLabel,
       }),
     );
 
@@ -277,9 +242,7 @@ describe('ImportExportQueue', () => {
     expect(screen.getByText(TITLE)).toBeTruthy();
 
     await user.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.expandQueueAriaLabel',
-      }),
+      screen.getByRole('button', { name: DEFAULT_LABELS.expandQueueAriaLabel }),
     );
     expect(screen.getByText('Chat A')).toBeTruthy();
   });
@@ -291,9 +254,7 @@ describe('ImportExportQueue', () => {
     });
 
     await user.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.closeQueueAriaLabel',
-      }),
+      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
     );
 
     expect(onClose).toHaveBeenCalledOnce();
@@ -308,16 +269,12 @@ describe('ImportExportQueue', () => {
     );
 
     await user.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.closeQueueAriaLabel',
-      }),
+      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
     );
 
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(
-      screen.getByText(
-        'conversationExport.closeQueueConfirmDescriptionInProgress',
-      ),
+      screen.getByText(DEFAULT_LABELS.closeQueueConfirmDescriptionInProgress),
     ).toBeTruthy();
     expect(onClose).not.toHaveBeenCalled();
   });
@@ -329,14 +286,12 @@ describe('ImportExportQueue', () => {
     });
 
     await user.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.closeQueueAriaLabel',
-      }),
+      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
     );
 
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(
-      screen.getByText('conversationExport.closeQueueConfirmDescriptionFailed'),
+      screen.getByText(DEFAULT_LABELS.closeQueueConfirmDescriptionFailed),
     ).toBeTruthy();
     expect(onClose).not.toHaveBeenCalled();
   });
@@ -352,14 +307,12 @@ describe('ImportExportQueue', () => {
     );
 
     await user.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.closeQueueAriaLabel',
-      }),
+      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
     );
 
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(
-      screen.getByText('conversationExport.closeQueueConfirmDescriptionMixed'),
+      screen.getByText(DEFAULT_LABELS.closeQueueConfirmDescriptionMixed),
     ).toBeTruthy();
     expect(onClose).not.toHaveBeenCalled();
   });
@@ -372,14 +325,10 @@ describe('ImportExportQueue', () => {
     );
 
     await user.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.closeQueueAriaLabel',
-      }),
+      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
     );
     await user.click(
-      screen.getByRole('button', {
-        name: 'buttons.close',
-      }),
+      screen.getByRole('button', { name: DEFAULT_LABELS.closeLabel }),
     );
 
     expect(onClose).toHaveBeenCalledOnce();
@@ -398,16 +347,16 @@ describe('ImportExportQueue', () => {
     );
 
     await user.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.closeQueueAriaLabel',
-      }),
+      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
     );
     expect(screen.getByRole('dialog')).toBeTruthy();
 
-    await user.click(screen.getByRole('button', { name: 'buttons.close' }));
+    await user.click(
+      screen.getByRole('button', { name: DEFAULT_LABELS.closeLabel }),
+    );
     expect(onClose).toHaveBeenCalledOnce();
 
-    // Parent clears jobs in response to onClose — component stays mounted, renders null.
+    /* Parent clears jobs in response to onClose — component stays mounted, renders null. */
     rerender(
       <ImportExportQueue
         title={TITLE}
@@ -415,11 +364,12 @@ describe('ImportExportQueue', () => {
         onDismiss={vi.fn()}
         onRetry={vi.fn()}
         onClose={onClose}
+        labels={DEFAULT_LABELS}
       />,
     );
     expect(screen.queryByRole('status')).toBeNull();
 
-    // A new export starts — the panel reappears and must not reopen the stale confirmation.
+    /* A new export starts — the panel reappears and must not reopen the stale confirmation. */
     rerender(
       <ImportExportQueue
         title={TITLE}
@@ -432,6 +382,7 @@ describe('ImportExportQueue', () => {
         onDismiss={vi.fn()}
         onRetry={vi.fn()}
         onClose={onClose}
+        labels={DEFAULT_LABELS}
       />,
     );
 
@@ -446,9 +397,7 @@ describe('ImportExportQueue', () => {
     );
 
     await user.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.closeQueueAriaLabel',
-      }),
+      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
     );
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
@@ -491,9 +440,97 @@ describe('ImportExportQueue', () => {
     renderQueue([makeJob({ title: 'My Chat' })]);
 
     expect(screen.getByText('My Chat')).toBeTruthy();
-    /* CSS-level assertion (class/attribute presence, not text or role) —
-       no semantic query applies. */
+    /* CSS-level assertion — no semantic query applies. */
     // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelectorAll('.text-secondary').length).toBe(0);
+  });
+
+  it('uses allConversationsJobLabel for All-subject jobs', () => {
+    renderQueue([
+      {
+        id: 'job-all',
+        subject: { kind: ConversationTransferSubjectKind.All },
+        status: ConversationTransferJobStatus.InProgress,
+      },
+    ]);
+
+    expect(
+      screen.getByText(DEFAULT_LABELS.allConversationsJobLabel),
+    ).toBeTruthy();
+  });
+
+  it('automatically closes eight seconds after every job succeeds', () => {
+    vi.useFakeTimers();
+    try {
+      const onClose = vi.fn();
+      renderQueue(
+        [makeJob({ status: ConversationTransferJobStatus.Success })],
+        { onClose },
+      );
+
+      act(() => vi.advanceTimersByTime(7999));
+      expect(onClose).not.toHaveBeenCalled();
+      act(() => vi.advanceTimersByTime(1));
+      expect(onClose).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not auto-close while a job is failed or in progress', () => {
+    vi.useFakeTimers();
+    try {
+      const onClose = vi.fn();
+      renderQueue(
+        [
+          makeJob({ id: 'a', status: ConversationTransferJobStatus.Failed }),
+          makeJob({
+            id: 'b',
+            status: ConversationTransferJobStatus.InProgress,
+          }),
+        ],
+        { onClose },
+      );
+
+      act(() => vi.advanceTimersByTime(16000));
+      expect(onClose).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('cancels an auto-close countdown when a new in-progress job arrives', () => {
+    vi.useFakeTimers();
+    try {
+      const onClose = vi.fn();
+      const successfulJob = makeJob({
+        id: 'done',
+        status: ConversationTransferJobStatus.Success,
+      });
+      const { rerender } = renderQueue([successfulJob], { onClose });
+
+      act(() => vi.advanceTimersByTime(4000));
+      rerender(
+        <ImportExportQueue
+          title={TITLE}
+          jobs={[
+            successfulJob,
+            makeJob({
+              id: 'new',
+              status: ConversationTransferJobStatus.InProgress,
+            }),
+          ]}
+          onDismiss={vi.fn()}
+          onRetry={vi.fn()}
+          onClose={onClose}
+          labels={DEFAULT_LABELS}
+        />,
+      );
+      act(() => vi.advanceTimersByTime(8000));
+
+      expect(onClose).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

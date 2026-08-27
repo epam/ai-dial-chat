@@ -1,12 +1,8 @@
 import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+  FavoriteEntityType,
+  useFavoriteEntitiesState,
+} from '@epam/ai-dial-chat-hooks';
+import { createContext, ReactNode, useCallback, useContext } from 'react';
 import {
   getUserConfig,
   updateInstalledDeployment,
@@ -15,12 +11,7 @@ import {
   updateInstalledToolset,
 } from '../server-api/user-config.api';
 
-export enum FavoriteEntityType {
-  Deployment = 'deployment',
-  Toolset = 'toolset',
-  Prompt = 'prompt',
-  Skill = 'skill',
-}
+export { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 
 const INSTALL_BY_ENTITY_TYPE: Record<
   FavoriteEntityType,
@@ -46,6 +37,16 @@ export const FavoriteApplicationsContext = createContext<
   FavoriteApplicationsContextType | undefined
 >(undefined);
 
+const loadFavorites = async () => {
+  const config = await getUserConfig();
+  return {
+    deployments: config.deployments?.installed ?? [],
+    toolsets: config.toolsets?.installed ?? [],
+    prompts: config.prompts?.installed ?? [],
+    skills: config.skills?.installed ?? [],
+  };
+};
+
 /**
  * Mounted once near the app root so every consumer (the catalog and the
  * in-chat model selector) reads and mutates the same favorites state — a
@@ -57,86 +58,16 @@ export const FavoriteApplicationsProvider = ({
 }: {
   children: ReactNode;
 }) => {
-  const [favoriteIds, setFavoriteIds] = useState<ReadonlySet<string>>(
-    new Set(),
-  );
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const cancelled = { value: false };
-
-    const load = async () => {
-      try {
-        const config = await getUserConfig();
-        if (!cancelled.value) {
-          setFavoriteIds(
-            new Set([
-              ...(config.deployments?.installed ?? []),
-              ...(config.toolsets?.installed ?? []),
-              ...(config.prompts?.installed ?? []),
-              ...(config.skills?.installed ?? []),
-            ]),
-          );
-        }
-      } catch {
-        // silently fall back to empty set
-      } finally {
-        if (!cancelled.value) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    load();
-
-    return () => {
-      cancelled.value = true;
-    };
-  }, []);
-
-  const toggleFavorite = useCallback(
-    async (
-      id: string,
-      isFavorite: boolean,
-      entityType = FavoriteEntityType.Deployment,
-    ): Promise<void> => {
-      setFavoriteIds((prev) => {
-        const next = new Set(prev);
-        if (isFavorite) {
-          next.add(id);
-        } else {
-          next.delete(id);
-        }
-        return next;
-      });
-
-      const updateInstalled = INSTALL_BY_ENTITY_TYPE[entityType];
-
-      try {
-        await updateInstalled(id, isFavorite);
-      } catch (error) {
-        setFavoriteIds((prev) => {
-          const restored = new Set(prev);
-          if (isFavorite) {
-            restored.delete(id);
-          } else {
-            restored.add(id);
-          }
-          return restored;
-        });
-        throw error;
-      }
-    },
+  const updateFavorite = useCallback(
+    (id: string, isFavorite: boolean, entityType: FavoriteEntityType) =>
+      INSTALL_BY_ENTITY_TYPE[entityType](id, isFavorite),
     [],
   );
 
-  const contextValue = useMemo(
-    () => ({ favoriteIds, isLoading, toggleFavorite }),
-    [favoriteIds, isLoading, toggleFavorite],
-  );
+  const state = useFavoriteEntitiesState({ loadFavorites, updateFavorite });
 
   return (
-    <FavoriteApplicationsContext.Provider value={contextValue}>
+    <FavoriteApplicationsContext.Provider value={state}>
       {children}
     </FavoriteApplicationsContext.Provider>
   );

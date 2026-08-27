@@ -1,10 +1,10 @@
-import { generateUUID } from '@epam/ai-dial-chat-shared';
-import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ConversationTransferJobStatus,
+  generateUUID,
   type ConversationTransferJob,
   type ConversationTransferSubject,
-} from './types';
+} from '@epam/ai-dial-chat-shared';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Shared job-queue primitive underlying both `useConversationExport` and `useConversationImport`. */
 export interface ConversationTransferQueue {

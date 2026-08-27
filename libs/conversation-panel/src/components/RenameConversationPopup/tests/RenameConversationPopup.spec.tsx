@@ -1,12 +1,17 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { KeyboardEventHandler, ReactNode, Ref } from 'react';
+import { type KeyboardEventHandler, type ReactNode, type Ref } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  ButtonsI18nKeys,
-  ConversationPanelI18nKeys,
-} from '../../../constants/translation-keys';
-import RenameConversationPopup from '../RenameConversationPopup';
+  RenameConversationPopup,
+  type RenameConversationPopupLabels,
+} from '../RenameConversationPopup';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   PopupSize: { Sm: 'sm' },
@@ -101,6 +106,16 @@ vi.mock('@tabler/icons-react', () => ({
   IconSparkles: () => <svg aria-hidden="true" />,
 }));
 
+const DEFAULT_LABELS: RenameConversationPopupLabels = {
+  popupTitle: 'Rename conversation',
+  inputPlaceholder: 'Enter conversation name',
+  renameWithAiLabel: 'Rename with AI',
+  renameWithAiError: 'Failed to generate name with AI',
+  nameTooLongError: 'Name is too long',
+  saveLabel: 'Save',
+  cancelLabel: 'Cancel',
+};
+
 const DEFAULT_PROPS = {
   isOpen: true,
   currentTitle: 'My Chat',
@@ -109,15 +124,16 @@ const DEFAULT_PROPS = {
   onSave: vi.fn(),
   onCancel: vi.fn(),
   onGenerateWithAi: vi.fn().mockResolvedValue('AI Suggested Name'),
+  labels: DEFAULT_LABELS,
 };
 
 const getSaveButton = () =>
   screen.getByRole('button', {
-    name: ButtonsI18nKeys.Save,
+    name: DEFAULT_LABELS.saveLabel,
   }) as HTMLButtonElement;
 const getCancelButton = () =>
   screen.getByRole('button', {
-    name: ButtonsI18nKeys.Cancel,
+    name: DEFAULT_LABELS.cancelLabel,
   }) as HTMLButtonElement;
 const getInput = () =>
   screen.getByRole('textbox', {
@@ -125,7 +141,7 @@ const getInput = () =>
   }) as HTMLInputElement;
 const getAiButton = () =>
   screen.getByRole('button', {
-    name: ConversationPanelI18nKeys.RenameWithAiLabel,
+    name: DEFAULT_LABELS.renameWithAiLabel,
   }) as HTMLButtonElement;
 
 describe('RenameConversationPopup', () => {
@@ -157,10 +173,10 @@ describe('RenameConversationPopup', () => {
     expect(screen.getByRole('status')).toBeTruthy();
     expect(screen.queryByRole('textbox')).toBeNull();
     expect(
-      screen.queryByRole('button', { name: ButtonsI18nKeys.Save }),
+      screen.queryByRole('button', { name: DEFAULT_LABELS.saveLabel }),
     ).toBeNull();
     expect(
-      screen.queryByRole('button', { name: ButtonsI18nKeys.Cancel }),
+      screen.queryByRole('button', { name: DEFAULT_LABELS.cancelLabel }),
     ).toBeNull();
   });
 
@@ -180,11 +196,43 @@ describe('RenameConversationPopup', () => {
     expect(onSave).toHaveBeenCalledWith('New Title');
   });
 
+  it('saves a valid changed value when Enter is pressed', async () => {
+    const onSave = vi.fn();
+    render(<RenameConversationPopup {...DEFAULT_PROPS} onSave={onSave} />);
+    await user.clear(getInput());
+    await user.type(getInput(), 'New title{Enter}');
+
+    expect(onSave).toHaveBeenCalledWith('New title');
+  });
+
+  it('strips trailing dots only when saving', async () => {
+    const onSave = vi.fn();
+    render(<RenameConversationPopup {...DEFAULT_PROPS} onSave={onSave} />);
+    await user.clear(getInput());
+    await user.type(getInput(), 'New title...');
+
+    expect(getInput().value).toBe('New title...');
+    await user.click(getSaveButton());
+    expect(onSave).toHaveBeenCalledWith('New title');
+  });
+
+  it('preserves leading and internal dots and allowed special characters', async () => {
+    const onSave = vi.fn();
+    render(<RenameConversationPopup {...DEFAULT_PROPS} onSave={onSave} />);
+    fireEvent.change(getInput(), {
+      target: { value: ".start.middle !@#$^*()_+-[]'" },
+    });
+
+    expect(getInput().value).toBe(".start.middle !@#$^*()_+-[]'");
+    await user.click(getSaveButton());
+    expect(onSave).toHaveBeenCalledWith(".start.middle !@#$^*()_+-[]'");
+  });
+
   it('calls onCancel on Cancel click', async () => {
     const onCancel = vi.fn();
     render(<RenameConversationPopup {...DEFAULT_PROPS} onCancel={onCancel} />);
     await user.click(getCancelButton());
-    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledOnce();
   });
 
   it('shows API error message when error prop is provided', () => {
@@ -206,12 +254,63 @@ describe('RenameConversationPopup', () => {
   it('shows byte-length validation error when title exceeds 255 UTF-8 bytes', async () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} currentTitle="" />);
     await user.type(getInput(), 'a'.repeat(256));
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toContain(
+      DEFAULT_LABELS.nameTooLongError,
+    );
+  });
+
+  it('byte-length error takes precedence over the error prop', async () => {
+    render(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        currentTitle=""
+        error="API error message"
+      />,
+    );
+    await user.type(getInput(), 'a'.repeat(256));
+    expect(screen.getByRole('alert').textContent).toContain(
+      DEFAULT_LABELS.nameTooLongError,
+    );
+    expect(screen.getByRole('alert').textContent).not.toContain(
+      'API error message',
+    );
   });
 
   it('does not render when isOpen is false', () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} isOpen={false} />);
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('resets to the latest title and focuses the input every time it reopens', async () => {
+    vi.useFakeTimers();
+    try {
+      const { rerender } = render(
+        <RenameConversationPopup {...DEFAULT_PROPS} />,
+      );
+      act(() => vi.runOnlyPendingTimers());
+      expect(getInput()).toHaveProperty(
+        'ownerDocument.activeElement',
+        getInput(),
+      );
+
+      fireEvent.change(getInput(), { target: { value: 'Unsaved edit' } });
+      rerender(<RenameConversationPopup {...DEFAULT_PROPS} isOpen={false} />);
+      rerender(
+        <RenameConversationPopup
+          {...DEFAULT_PROPS}
+          currentTitle="Latest title"
+        />,
+      );
+      act(() => vi.runOnlyPendingTimers());
+
+      expect(getInput().value).toBe('Latest title');
+      expect(getInput()).toHaveProperty(
+        'ownerDocument.activeElement',
+        getInput(),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('renders the AI rename button', () => {
@@ -270,9 +369,109 @@ describe('RenameConversationPopup', () => {
 
     await waitFor(() =>
       expect(screen.getByRole('alert').textContent).toContain(
-        ConversationPanelI18nKeys.RenameWithAiError,
+        DEFAULT_LABELS.renameWithAiError,
       ),
     );
     expect(getInput().value).toBe('My Chat');
+  });
+
+  it('shows only the AI error when generation fails alongside an API error', async () => {
+    render(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        error="API error"
+        onGenerateWithAi={vi.fn().mockRejectedValue(new Error('boom'))}
+      />,
+    );
+
+    await user.click(getAiButton());
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toContain(
+        DEFAULT_LABELS.renameWithAiError,
+      ),
+    );
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+    expect(screen.getByRole('alert').textContent).not.toContain('API error');
+  });
+
+  it('a second generation attempt while one is in flight is ignored', async () => {
+    let resolveGenerate: (name: string) => void = () => undefined;
+    const onGenerateWithAi = vi.fn().mockReturnValue(
+      new Promise<string>((resolve) => {
+        resolveGenerate = resolve;
+      }),
+    );
+    render(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        onGenerateWithAi={onGenerateWithAi}
+      />,
+    );
+
+    await user.click(getAiButton());
+    /* Button is now disabled — a second click should not call onGenerateWithAi again. */
+    await user.click(getAiButton());
+
+    expect(onGenerateWithAi).toHaveBeenCalledOnce();
+
+    resolveGenerate('Done');
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+  });
+
+  it('ignores an AI result from a previous popup session', async () => {
+    let resolveGenerate: (name: string) => void = () => undefined;
+    const onGenerateWithAi = vi.fn().mockReturnValue(
+      new Promise<string>((resolve) => {
+        resolveGenerate = resolve;
+      }),
+    );
+    const { rerender } = render(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        onGenerateWithAi={onGenerateWithAi}
+      />,
+    );
+
+    await user.click(getAiButton());
+    rerender(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        isOpen={false}
+        onGenerateWithAi={onGenerateWithAi}
+      />,
+    );
+    rerender(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        currentTitle="New session title"
+        onGenerateWithAi={onGenerateWithAi}
+      />,
+    );
+
+    resolveGenerate('Stale AI title');
+
+    await waitFor(() => expect(getInput().value).toBe('New session title'));
+    expect(getAiButton().disabled).toBe(false);
+  });
+
+  it('prohibited characters are stripped while typing', async () => {
+    render(<RenameConversationPopup {...DEFAULT_PROPS} currentTitle="" />);
+    await user.type(getInput(), 'hello:world');
+    expect(getInput().value).toBe('helloworld');
+  });
+
+  it('AI-generated name is sanitized before populating the input', async () => {
+    const onGenerateWithAi = vi.fn().mockResolvedValue('Name:With/Slash');
+    render(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        onGenerateWithAi={onGenerateWithAi}
+      />,
+    );
+
+    await user.click(getAiButton());
+
+    await waitFor(() => expect(getInput().value).toBe('NameWithSlash'));
   });
 });

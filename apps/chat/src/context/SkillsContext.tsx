@@ -1,14 +1,7 @@
 import type { SkillMetadataItemDto } from '@epam/ai-dial-chat-api-client';
+import { useSkillsState } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { createContext, ReactNode, useContext, useMemo } from 'react';
 import { useUiFeature } from '../hooks/useUiFeature';
 import { listCatalogSkills } from '../server-api/skills.api';
 import { AuthStatus } from '../types/auth-status';
@@ -40,93 +33,27 @@ export const SkillsContext = createContext<SkillsContextType | undefined>(
  * listing per session.
  */
 export const SkillsProvider = ({ children }: { children: ReactNode }) => {
-  const [skills, setSkills] = useState<SkillMetadataItemDto[]>([]);
-  const [publicSkills, setPublicSkills] = useState<SkillMetadataItemDto[]>([]);
-  const [sharedWithMe, setSharedWithMe] = useState<SkillMetadataItemDto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
-
-  const isSkillsEnabled = useUiFeature(OverlayFeature.Skills);
+  const enabled = useUiFeature(OverlayFeature.Skills);
   const { status } = useUser();
-  const isProfileSettled = status !== AuthStatus.Loading;
+  const ready = status !== AuthStatus.Loading;
 
-  const refetchSkills = useCallback(async () => {
-    try {
-      const response = await listCatalogSkills();
-      setSkills(response.skills);
-      setSharedWithMe(response.sharedWithMe);
-      setPublicSkills(response.publicSkills);
-      setError(null);
-    } catch (err) {
-      setError(err);
-    }
-  }, []);
+  const state = useSkillsState({
+    listSkills: listCatalogSkills,
+    enabled,
+    ready,
+  });
 
-  useEffect(() => {
-    if (!isSkillsEnabled) {
-      setSkills([]);
-      setSharedWithMe([]);
-      setPublicSkills([]);
-      setError(null);
-      setIsLoading(false);
-      return;
-    }
-
-    /* Keep the catalog skeleton visible until session identity is settled. */
-    if (!isProfileSettled) return;
-
-    const cancelled = { value: false };
-
-    const load = async () => {
-      const response = await listCatalogSkills().catch((reason: unknown) => {
-        if (!cancelled.value) setError(reason);
-        return null;
-      });
-      if (cancelled.value) return;
-
-      if (response != null) {
-        setSkills(response.skills);
-        setSharedWithMe(response.sharedWithMe);
-        setPublicSkills(response.publicSkills);
-        setError(null);
-      }
-
-      setIsLoading(false);
-    };
-
-    load();
-
-    return () => {
-      cancelled.value = true;
-    };
-  }, [isProfileSettled, isSkillsEnabled]);
-
-  const mergeSharedSkill = useCallback((item: SkillMetadataItemDto) => {
-    setSharedWithMe((prev) => [
-      ...prev.filter((skill) => skill.url !== item.url),
-      item,
-    ]);
-  }, []);
-
-  const contextValue = useMemo(
+  const contextValue = useMemo<SkillsContextType>(
     () => ({
-      skills,
-      sharedWithMe,
-      publicSkills,
-      isLoading,
-      error,
-      refetchSkills,
-      mergeSharedSkill,
+      skills: state.skills,
+      sharedWithMe: state.sharedWithMe,
+      publicSkills: state.publicSkills,
+      isLoading: state.isLoading,
+      error: state.error,
+      refetchSkills: state.refetch,
+      mergeSharedSkill: state.mergeSharedSkill,
     }),
-    [
-      skills,
-      sharedWithMe,
-      publicSkills,
-      isLoading,
-      error,
-      refetchSkills,
-      mergeSharedSkill,
-    ],
+    [state],
   );
 
   return (
