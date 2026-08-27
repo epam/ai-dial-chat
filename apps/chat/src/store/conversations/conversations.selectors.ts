@@ -56,6 +56,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
@@ -791,8 +792,9 @@ const selectIsNotAllowed = createSelector(
     ModelsSelectors.selectModelsMap,
     ModelsSelectors.selectModels,
     ModelsSelectors.selectAreModelsLoaded,
+    ApplicationSelectors.selectApplicationDetail,
   ],
-  (selectedConversations, modelsMap, models, areModelsLoaded) => {
+  (selectedConversations, modelsMap, models, areModelsLoaded, appDetails) => {
     if (!areModelsLoaded) {
       return false;
     }
@@ -806,9 +808,13 @@ const selectIsNotAllowed = createSelector(
     ) {
       return true;
     }
-    return selectedConversations.some((conv) =>
-      checkIsNotAllowedModelUtil(conv, modelsMap),
-    );
+    return selectedConversations.some((conv) => {
+      if (appDetails?.reference && conv.model.id === appDetails.reference) {
+        return false;
+      }
+
+      return checkIsNotAllowedModelUtil(conv, modelsMap);
+    });
   },
 );
 
