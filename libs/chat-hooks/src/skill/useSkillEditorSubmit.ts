@@ -1,28 +1,19 @@
-import {
-  buildSkillManifest,
-  buildSkillManifestFromFrontmatter,
-  isValidSkillRelativePath,
-  normalizeSkillName,
-  type SkillFileContent,
-} from '@epam/ai-dial-chat-hooks';
-import {
-  SkillFileNodeKind,
-  type SkillEditorErrors,
-  type SkillEditorValues,
-  type SkillFileTreeNode,
+import type { SkillUploadResponseDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  SkillEditorErrors,
+  SkillEditorValues,
+  SkillFileTreeNode,
 } from '@epam/ai-dial-skill-editor';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
-import { SkillEditorI18nKeys } from '../../../constants/translation-keys';
-import { useNotification } from '../../../context/NotificationContext';
+import { getApiErrorDetails, getApiErrorStatus } from '../api-error/api-error';
 import {
-  getApiErrorDetails,
-  getApiErrorStatus,
-} from '../../../server-api/api-error';
-import { createSkill, updateSkill } from '../../../server-api/skills.api';
-import { toBlob } from '../utils/skill-file-tree';
+  buildSkillFilesPayload,
+  buildSkillManifestForSubmit,
+  isValidSkillRelativePath,
+  normalizeSkillName,
+} from './skill';
+import type { SkillFileContent } from './skill-file-preview';
 
 /*
  * Phase names collapse the tasks.md-specified `initial`/`dirty` distinction
@@ -55,32 +46,118 @@ interface LastAttempt {
   files: Blob[];
 }
 
-interface UseSkillEditorSubmitParams {
-  bucket: string | undefined;
-  isEditMode: boolean;
-  files: SkillFileTreeNode[];
-  filesContentRef: React.MutableRefObject<Map<string, SkillFileContent>>;
-  frontmatterRef: React.MutableRefObject<Record<string, unknown>>;
-  loadedPathRef: React.MutableRefObject<string | undefined>;
-  etagRef: React.MutableRefObject<string | undefined>;
-  returnUrl: string;
-  refetchSkills: () => Promise<void>;
+/** Already-configured DIAL Core write operations `useSkillEditorSubmit` needs. */
+export interface SkillEditorSubmitClient {
+  /** Creates a new skill. */
+  createSkill: (
+    bucket: string,
+    path: string,
+    skillManifest: string,
+    filePaths: string[],
+    files: Blob[],
+  ) => Promise<SkillUploadResponseDto>;
+  /** Updates an existing skill, sending `ifMatch` as the concurrency guard. */
+  updateSkill: (
+    bucket: string,
+    path: string,
+    skillManifest: string,
+    filePaths: string[],
+    files: Blob[],
+    ifMatch: string,
+  ) => Promise<SkillUploadResponseDto>;
 }
 
-interface UseSkillEditorSubmitResult {
+/** Localized messages `useSkillEditorSubmit` needs. */
+export interface SkillEditorSubmitMessages {
+  /** Shown when a required field is empty. */
+  required: string;
+  /** Shown when the normalized skill name fails DIAL's naming rules. */
+  nameInvalid: string;
+  /** Shown when the skill name already exists (409), or defensively on an unreachable create-mode 412. */
+  nameConflict: string;
+  /** Shown when the submitted package exceeds the server's size limit (413). */
+  archiveTooLarge: string;
+  /** Shown when the backend is temporarily unavailable (503). */
+  serviceUnavailable: string;
+  /** Fallback shown for a 400 whose response body carries no message. */
+  pathInvalid: string;
+  /** Generic fallback shown for any other error status. */
+  saveError: string;
+  /** Notification title on a successful create. */
+  saveSuccessTitle: string;
+  /** Notification message on a successful create, given the created name. */
+  createSuccess: (name: string) => string;
+  /** Notification title on a successful update. */
+  updateSuccessTitle: string;
+  /** Notification message on a successful update, given the skill's name. */
+  updateSuccess: (name: string) => string;
+  /** Shown when a save hits a stale-ETag conflict (412) in edit mode. */
+  conflictMessage: string;
+}
+
+/** A host notification `useSkillEditorSubmit` asks to be shown. */
+export interface SkillEditorSubmitNotification {
+  /** Notification style. */
+  variant: NotificationVariant;
+  /** Optional heading. */
+  title?: string;
+  /** Body text. */
+  message: string;
+  /** W3C trace ID, when the triggering error carried one. */
+  requestId?: string;
+}
+
+/** Parameters accepted by {@link useSkillEditorSubmit}. */
+export interface UseSkillEditorSubmitParams {
+  /** DIAL Core bucket the skill is saved to. */
+  bucket: string | undefined;
+  /** Whether the form is editing an existing skill rather than creating a new one. */
+  isEditMode: boolean;
+  /** The editor's current supporting-file tree. */
+  files: SkillFileTreeNode[];
+  /** In-memory bytes for every supporting file, keyed by relative path. */
+  filesContentRef: React.MutableRefObject<Map<string, SkillFileContent>>;
+  /** The loaded (or imported) manifest's full parsed frontmatter. */
+  frontmatterRef: React.MutableRefObject<Record<string, unknown>>;
+  /** The path the currently loaded edit-mode state belongs to. */
+  loadedPathRef: React.MutableRefObject<string | undefined>;
+  /** The concurrency ETag from the load, sent back as `If-Match` on save. */
+  etagRef: React.MutableRefObject<string | undefined>;
+  /** Where to navigate on a successful save. */
+  returnUrl: string;
+  /** Refetches the host's skill listing after a successful save. */
+  refetchSkills: () => Promise<void>;
+  /** Already-configured create/update operations. */
+  client: SkillEditorSubmitClient;
+  /** Localized messages, resolved by the host. */
+  messages: SkillEditorSubmitMessages;
+  /** Called with `returnUrl` after a successful save. */
+  onNavigate: (url: string) => void;
+  /** Called to surface a host notification (success toast or unexpected-error toast). */
+  onNotify: (notification: SkillEditorSubmitNotification) => void;
+}
+
+/** Return value of {@link useSkillEditorSubmit}. */
+export interface UseSkillEditorSubmitResult {
+  /** Current submit-phase. */
   phase: SubmitPhase;
+  /** Inline field validation errors. */
   errors: SkillEditorErrors;
+  /** General submit-time error, distinct from a stale-edit `conflict`. */
   submitError: string | undefined;
+  /** Present when the last save hit a stale-ETag conflict. */
   conflict: { message: string } | undefined;
+  /** Clears `conflict`, e.g. once the host has reloaded the latest skill. */
   clearConflict: () => void;
+  /** Validates and submits the given form values. */
   handleSubmit: (values: SkillEditorValues) => Promise<void>;
 }
 
 /**
  * Owns the Skill Editor's create/edit submission flow: field validation,
  * building and (in edit mode) merging the `SKILL.md` manifest, calling
- * `createSkill`/`updateSkill`, and mapping the resulting success/error/
- * conflict outcomes to presentable state.
+ * `client.createSkill`/`client.updateSkill`, and mapping the resulting
+ * success/error/conflict outcomes to presentable state.
  */
 export const useSkillEditorSubmit = ({
   bucket,
@@ -92,11 +169,11 @@ export const useSkillEditorSubmit = ({
   etagRef,
   returnUrl,
   refetchSkills,
+  client,
+  messages,
+  onNavigate,
+  onNotify,
 }: UseSkillEditorSubmitParams): UseSkillEditorSubmitResult => {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { showNotification } = useNotification();
-
   const [errors, setErrors] = useState<SkillEditorErrors>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
   const [conflict, setConflict] = useState<{ message: string } | undefined>();
@@ -108,7 +185,7 @@ export const useSkillEditorSubmit = ({
       const status = getApiErrorStatus(err);
       switch (status) {
         case 409:
-          setErrors({ name: t(SkillEditorI18nKeys.ErrorNameConflict) });
+          setErrors({ name: messages.nameConflict });
           return;
         case 412:
           /*
@@ -118,13 +195,13 @@ export const useSkillEditorSubmit = ({
            * `If-Match`) — treated defensively the same as `409` should it
            * ever occur, which would indicate an unexpected upstream change.
            */
-          setErrors({ name: t(SkillEditorI18nKeys.ErrorNameConflict) });
+          setErrors({ name: messages.nameConflict });
           return;
         case 413:
-          setSubmitError(t(SkillEditorI18nKeys.ErrorArchiveTooLarge));
+          setSubmitError(messages.archiveTooLarge);
           return;
         case 503:
-          setSubmitError(t(SkillEditorI18nKeys.ErrorServiceUnavailable));
+          setSubmitError(messages.serviceUnavailable);
           return;
         case 400: {
           /*
@@ -134,28 +211,28 @@ export const useSkillEditorSubmit = ({
            * instead of a fixed, potentially misleading guess.
            */
           const { message } = await getApiErrorDetails(err);
-          setSubmitError(message ?? t(SkillEditorI18nKeys.ErrorPathInvalid));
+          setSubmitError(message ?? messages.pathInvalid);
           return;
         }
         default: {
           const { traceId } = await getApiErrorDetails(err);
-          setSubmitError(t(SkillEditorI18nKeys.ErrorSave));
-          showNotification({
+          setSubmitError(messages.saveError);
+          onNotify({
             variant: NotificationVariant.Error,
-            message: t(SkillEditorI18nKeys.ErrorSave),
+            message: messages.saveError,
             requestId: traceId,
           });
         }
       }
     },
-    [showNotification, t],
+    [messages, onNotify],
   );
 
   const handleSubmitCreate = useCallback(
     async (values: SkillEditorValues) => {
       const normalizedName = normalizeSkillName(values.name);
       if (!normalizedName || !isValidSkillRelativePath(normalizedName)) {
-        setErrors({ name: t(SkillEditorI18nKeys.ErrorNameInvalid) });
+        setErrors({ name: messages.nameInvalid });
         return;
       }
 
@@ -176,28 +253,16 @@ export const useSkillEditorSubmit = ({
          * rather than always building a fresh one — `frontmatterRef` stays
          * `{}` unless a manifest was imported in this create session.
          */
-        skillManifest =
-          Object.keys(frontmatterRef.current).length > 0
-            ? buildSkillManifestFromFrontmatter(
-                frontmatterRef.current,
-                normalizedName,
-                values.description,
-                values.instructions,
-              )
-            : buildSkillManifest({
-                name: normalizedName,
-                description: values.description,
-                instructions: values.instructions,
-              });
-        const fileNodes = files.filter(
-          (node) => node.kind === SkillFileNodeKind.File,
+        skillManifest = buildSkillManifestForSubmit(
+          frontmatterRef.current,
+          normalizedName,
+          values.description,
+          values.instructions,
         );
-        filePaths = fileNodes.map((node) => node.path);
-        fileBlobs = fileNodes.map((node) =>
-          toBlob(
-            filesContentRef.current.get(node.path)?.bytes ?? new Uint8Array(0),
-          ),
-        );
+        ({ filePaths, files: fileBlobs } = buildSkillFilesPayload(
+          files,
+          filesContentRef.current,
+        ));
       }
 
       setPhase('submitting');
@@ -211,7 +276,7 @@ export const useSkillEditorSubmit = ({
       };
 
       try {
-        await createSkill(
+        await client.createSkill(
           bucket as string,
           path,
           skillManifest,
@@ -221,14 +286,12 @@ export const useSkillEditorSubmit = ({
         await refetchSkills();
 
         setPhase('success');
-        showNotification({
+        onNotify({
           variant: NotificationVariant.Success,
-          title: t(SkillEditorI18nKeys.SaveSuccessTitle),
-          message: t(SkillEditorI18nKeys.CreateSuccess, {
-            name: normalizedName,
-          }),
+          title: messages.saveSuccessTitle,
+          message: messages.createSuccess(normalizedName),
         });
-        navigate(returnUrl);
+        onNavigate(returnUrl);
       } catch (err) {
         setPhase('failure');
         await applyUploadErrorStatus(err);
@@ -239,9 +302,10 @@ export const useSkillEditorSubmit = ({
       files,
       filesContentRef,
       frontmatterRef,
-      t,
-      showNotification,
-      navigate,
+      messages,
+      client,
+      onNotify,
+      onNavigate,
       returnUrl,
       refetchSkills,
       applyUploadErrorStatus,
@@ -253,29 +317,24 @@ export const useSkillEditorSubmit = ({
       const path = loadedPathRef.current;
       const etag = etagRef.current;
       if (!path || !etag) {
-        setSubmitError(t(SkillEditorI18nKeys.ErrorSave));
+        setSubmitError(messages.saveError);
         return;
       }
 
-      const skillManifest = buildSkillManifestFromFrontmatter(
+      const skillManifest = buildSkillManifestForSubmit(
         frontmatterRef.current,
         values.name,
         values.description,
         values.instructions,
       );
-      const fileNodes = files.filter(
-        (node) => node.kind === SkillFileNodeKind.File,
-      );
-      const filePaths = fileNodes.map((node) => node.path);
-      const fileBlobs = fileNodes.map((node) =>
-        toBlob(
-          filesContentRef.current.get(node.path)?.bytes ?? new Uint8Array(0),
-        ),
+      const { filePaths, files: fileBlobs } = buildSkillFilesPayload(
+        files,
+        filesContentRef.current,
       );
 
       setPhase('submitting');
       try {
-        const result = await updateSkill(
+        const result = await client.updateSkill(
           bucket as string,
           path,
           skillManifest,
@@ -287,19 +346,17 @@ export const useSkillEditorSubmit = ({
         await refetchSkills();
 
         setPhase('success');
-        showNotification({
+        onNotify({
           variant: NotificationVariant.Success,
-          title: t(SkillEditorI18nKeys.UpdateSuccessTitle),
-          message: t(SkillEditorI18nKeys.UpdateSuccess, {
-            name: values.name,
-          }),
+          title: messages.updateSuccessTitle,
+          message: messages.updateSuccess(values.name),
         });
-        navigate(returnUrl);
+        onNavigate(returnUrl);
       } catch (err) {
         setPhase('failure');
         const status = getApiErrorStatus(err);
         if (status === 412) {
-          setConflict({ message: t(SkillEditorI18nKeys.ConflictMessage) });
+          setConflict({ message: messages.conflictMessage });
           return;
         }
         await applyUploadErrorStatus(err);
@@ -312,9 +369,10 @@ export const useSkillEditorSubmit = ({
       frontmatterRef,
       loadedPathRef,
       etagRef,
-      t,
-      showNotification,
-      navigate,
+      messages,
+      client,
+      onNotify,
+      onNavigate,
       returnUrl,
       refetchSkills,
       applyUploadErrorStatus,
@@ -326,13 +384,12 @@ export const useSkillEditorSubmit = ({
       if (phase === 'submitting' || !bucket) return;
 
       const nextErrors: SkillEditorErrors = {};
-      if (!values.name.trim())
-        nextErrors.name = t(SkillEditorI18nKeys.ErrorRequired);
+      if (!values.name.trim()) nextErrors.name = messages.required;
       if (!values.description.trim()) {
-        nextErrors.description = t(SkillEditorI18nKeys.ErrorRequired);
+        nextErrors.description = messages.required;
       }
       if (!values.instructions.trim()) {
-        nextErrors.instructions = t(SkillEditorI18nKeys.ErrorRequired);
+        nextErrors.instructions = messages.required;
       }
       if (Object.keys(nextErrors).length > 0) {
         setErrors(nextErrors);
@@ -349,7 +406,7 @@ export const useSkillEditorSubmit = ({
         await handleSubmitCreate(values);
       }
     },
-    [phase, bucket, t, isEditMode, handleSubmitEdit, handleSubmitCreate],
+    [phase, bucket, messages, isEditMode, handleSubmitEdit, handleSubmitCreate],
   );
 
   return {
