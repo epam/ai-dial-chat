@@ -7,6 +7,7 @@ import {
   getConversationPath,
   safeDecodeURIComponent,
 } from '@epam/ai-dial-chat-hooks';
+import { generateUUID } from '@epam/ai-dial-chat-shared';
 import {
   createContext,
   type ReactNode,
@@ -365,7 +366,7 @@ export const ConversationsProvider = ({
   const duplicateConversation = useCallback(
     async (id: string) => {
       const source = conversationsRef.current.find((c) => c.id === id);
-      const tempId = crypto.randomUUID();
+      const tempId = generateUUID();
       setConversations((prev) => [
         {
           id: tempId,

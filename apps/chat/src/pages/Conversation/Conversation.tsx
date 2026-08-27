@@ -10,6 +10,7 @@ import {
   useToolsMenu,
 } from '@epam/ai-dial-chat-hooks';
 import {
+  generateUUID,
   MessageRating,
   MessageRole,
   type Conversation,
@@ -414,7 +415,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
               withPlaceholder.messages.length - 1,
               lastDeploymentId ?? result.model.id,
               lastMsg.custom_content,
-              crypto.randomUUID(),
+              generateUUID(),
               CompletionMode.ContinueLastUser,
             );
           }

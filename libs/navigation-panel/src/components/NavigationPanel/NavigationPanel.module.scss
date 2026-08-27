@@ -20,8 +20,6 @@
     );
   }
 
-  /* The rail button is not tabbable — the wrapping link takes focus — so the
-     keyboard affordance has to be painted from the focused ancestor. */
   a:focus-visible > & {
     background: var(
       --np-item-hover-bg,

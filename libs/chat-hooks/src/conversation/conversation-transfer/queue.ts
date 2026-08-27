@@ -1,3 +1,4 @@
+import { generateUUID } from '@epam/ai-dial-chat-shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ConversationTransferJobStatus,
@@ -52,7 +53,7 @@ export const useConversationTransferQueue = (): ConversationTransferQueue => {
   );
 
   const addJob = useCallback((subject: ConversationTransferSubject): string => {
-    const jobId = crypto.randomUUID();
+    const jobId = generateUUID();
     setJobs((prev) => [
       ...prev,
       { id: jobId, subject, status: ConversationTransferJobStatus.InProgress },
