@@ -303,6 +303,11 @@ export interface CatalogProps {
   /** Text overrides forwarded to the item details panel. */
   detailsTexts?: ItemDetailsTexts;
   /**
+   * Footer note forwarded to the item details panel's Limits tab, e.g. a
+   * link to a full usage-limits page. Omitted (the default) hides the footer.
+   */
+  detailsLimitsFooterNote?: ReactNode;
+  /**
    * Externally-controlled active sort key. When omitted, `Catalog` manages
    * its own sort state internally, defaulting to `CatalogSortKey.RecentlyUpdated`.
    */

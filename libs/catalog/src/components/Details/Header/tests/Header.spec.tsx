@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
+import { CatalogLimitStatus } from '../../../../models/item-details-data';
 import {
   CredentialsLevel,
   CredentialStatus,
@@ -138,7 +139,18 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
-  EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
+  EntityHeader: ({
+    item,
+    statusBadge,
+  }: {
+    item: CatalogItem;
+    statusBadge?: ReactNode;
+  }) => (
+    <div>
+      {item.name}
+      {statusBadge}
+    </div>
+  ),
 }));
 vi.mock('../ShareButton/ShareButton', () => ({
   ShareButton: ({ label }: { label?: string }) => (
@@ -1511,6 +1523,66 @@ describe('Header', () => {
       );
       expect(onOpenCredentialsManagement).toHaveBeenCalledOnce();
       expect(screen.queryByText('Add popover content')).toBeNull();
+    });
+  });
+
+  describe('limit status', () => {
+    it('renders no badge and keeps Use in chat enabled without limits data', () => {
+      render(<Header item={makeItem(CatalogEntityType.Model)} />);
+      expect(screen.queryByText('Running low')).toBeNull();
+      expect(screen.queryByText('Limit reached')).toBeNull();
+      const button = screen.getByRole('button', { name: 'Use in chat' });
+      expect(button.hasAttribute('disabled')).toBe(false);
+    });
+
+    it('shows a "Running low" badge but keeps Use in chat enabled', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Model),
+            details: {
+              limits: { groups: [], status: CatalogLimitStatus.RunningLow },
+            },
+          }}
+        />,
+      );
+      expect(screen.getByText('Running low')).toBeTruthy();
+      const button = screen.getByRole('button', { name: 'Use in chat' });
+      expect(button.hasAttribute('disabled')).toBe(false);
+    });
+
+    it('shows a "Limit reached" badge and disables Use in chat', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Model),
+            details: {
+              limits: { groups: [], status: CatalogLimitStatus.LimitReached },
+            },
+          }}
+        />,
+      );
+      expect(screen.getByText('Limit reached')).toBeTruthy();
+      expect(
+        screen
+          .getByRole('button', { name: 'Use in chat' })
+          .hasAttribute('disabled'),
+      ).toBe(true);
+    });
+
+    it('uses custom limit status labels from texts', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Model),
+            details: {
+              limits: { groups: [], status: CatalogLimitStatus.LimitReached },
+            },
+          }}
+          texts={{ limitReachedLabel: 'No more requests' }}
+        />,
+      );
+      expect(screen.getByText('No more requests')).toBeTruthy();
     });
   });
 });

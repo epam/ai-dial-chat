@@ -1118,7 +1118,12 @@ describe('DetailsPanel', () => {
       item: makeItem({
         details: {
           limits: {
-            rows: [{ label: 'Tokens per day', used: 12, total: 20 }],
+            groups: [
+              {
+                label: 'Token limits',
+                rows: [{ label: 'Tokens per day', used: 12, total: 20 }],
+              },
+            ],
           },
         },
       }),
@@ -1508,7 +1513,7 @@ describe('DetailsPanel', () => {
           details: {
             overview: { sections: [] },
             pricing: {},
-            limits: { rows: [] },
+            limits: { groups: [] },
             api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
           },
         })}

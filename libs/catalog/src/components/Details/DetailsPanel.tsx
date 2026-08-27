@@ -231,6 +231,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onLogout,
   texts,
   styles: detailsStyles,
+  limitsFooterNote,
 }) => {
   const {
     subViewTitleClassName = 'dial-body-semi-text',
@@ -1378,8 +1379,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 {activeTab === CatalogDetailsTab.Limits && (
                   <LimitsTab
                     limits={item.details?.limits}
-                    costCapsSectionLabel={texts?.limitsCostCapsSectionLabel}
-                    unlimitedSectionLabel={texts?.limitsUnlimitedSectionLabel}
+                    footerNote={limitsFooterNote}
                   />
                 )}
                 {activeTab === CatalogDetailsTab.Api &&

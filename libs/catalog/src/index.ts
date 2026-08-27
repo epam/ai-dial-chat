@@ -1,6 +1,7 @@
 // Types
 export { CodeLanguage } from './types/code-language';
 export { CatalogDetailsTab } from './types/detail-tab';
+export { CatalogLimitStatus } from './models/item-details-data';
 export {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
@@ -52,6 +53,7 @@ export type {
   ToolAnnotation,
   ToolDefinition,
   ToolInputParam,
+  UsageLimitGroup,
   UsageLimitProgressRow,
   UsageLimitRow,
 } from './models/item-details-data';

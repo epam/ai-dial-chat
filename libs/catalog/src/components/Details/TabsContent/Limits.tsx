@@ -1,8 +1,9 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ElementSize, ProgressBar } from '@epam/ai-dial-ui-kit';
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
 import type {
   CatalogItemLimits,
+  UsageLimitGroup,
   UsageLimitProgressRow,
 } from '../../../models/item-details-data';
 import styles from './Limits.module.scss';
@@ -55,12 +56,14 @@ const getProgressStatus = (row: UsageLimitProgressRow): ProgressStatus => {
 
 /** Color overrides for `LimitsTab`, applied as CSS custom properties. */
 export interface LimitsTabColors {
-  /** Section heading text color. Fallback: `--text-secondary`. */
+  /** Group heading text color. Fallback: `--text-secondary`. */
   sectionHeading?: string;
-  /** Row label text color, for both capped and unlimited rows. Fallback: `--text-secondary`. */
+  /** Row label text color, and the secondary half of a value/note line. Fallback: `--text-secondary`. */
   label?: string;
-  /** Row value text color, for both capped and unlimited rows. Fallback: `--text-secondary`. */
-  value?: string;
+  /** Emphasized value text color: the used-amount figure of a capped row, and a no-progress row's value. Fallback: `--text-primary`. */
+  valuePrimary?: string;
+  /** Row divider line color. Fallback: `--stroke-tertiary`. */
+  divider?: string;
   /** Progress-bar track color for capped rows. Fallback: `--bg-layer-sunken`. */
   progressTrack?: string;
   /** Progress-bar fill color below 75% usage. Fallback: `--text-control-accent-hover`. */
@@ -75,50 +78,191 @@ export interface LimitsTabColors {
 export interface LimitsTabProps {
   /** Limits data to render. */
   limits?: CatalogItemLimits;
-  /** "Cost caps" section heading, shown above capped/progress rows. Defaults to `'Cost caps'`. */
-  costCapsSectionLabel?: string;
-  /** "Unlimited" section heading, shown above unlimited rows. Defaults to `'Unlimited'`. */
-  unlimitedSectionLabel?: string;
-  /** CSS class for capped-row labels. Defaults to `'dial-small-semi-text'`. */
+  /** CSS class for a row's label. Defaults to `'dial-small-semi-text'`. */
   labelClassName?: string;
-  /** CSS class for unlimited-row labels. Defaults to `'dial-tiny-text'`. */
-  unlimitedLabelClassName?: string;
-  /** CSS class for capped-row values. Defaults to `'dial-small-text'`. */
+  /** CSS class for a row's secondary caption under the label (`row.captionLabel`). Defaults to `'dial-caption-text'`. */
+  captionClassName?: string;
+  /** CSS class for a capped row's used/total figures. Defaults to `'dial-tiny-text'`. */
   valueClassName?: string;
-  /** CSS class for unlimited-row values, including the "Unlimited" text. Defaults to `'dial-tiny-text'`. */
-  unlimitedValueClassName?: string;
-  /** CSS class for section headings. Defaults to `'dial-caption-text'`. */
+  /** CSS class for a no-progress row's value (e.g. "Unlimited"). Defaults to `'dial-tiny-semi-text'`. */
+  noteValueClassName?: string;
+  /** CSS class for a no-progress row's secondary caption (`row.noteLabel`). Defaults to `'dial-caption-text'`. */
+  noteClassName?: string;
+  /** CSS class for each group's heading. Defaults to `'dial-caption-text'`. */
   sectionClassName?: string;
-  /** CSS class for a capped row's limit (total) figure, heavier than `valueClassName`. Defaults to `'dial-small-semi-text'`. */
-  limitClassName?: string;
+  /** CSS class for `footerNote`'s wrapper. Defaults to `'dial-caption-text'`. */
+  footerClassName?: string;
+  /**
+   * Footer note rendered below the groups, e.g. a link to a full usage-limits
+   * page. Omitted (the default) hides the footer entirely.
+   */
+  footerNote?: ReactNode;
   /** Color overrides applied as CSS custom properties. */
   colors?: LimitsTabColors;
 }
 
-/** Renders model usage limits, split into a "cost caps" progress-bar section and an "unlimited" rows section. */
+interface LimitRowProps {
+  row: UsageLimitProgressRow;
+  labelClassName: string;
+  captionClassName: string;
+  valueClassName: string;
+  noteValueClassName: string;
+  noteClassName: string;
+}
+
+const LimitRow: FC<LimitRowProps> = ({
+  row,
+  labelClassName,
+  captionClassName,
+  valueClassName,
+  noteValueClassName,
+  noteClassName,
+}) => {
+  const valueLabel = getValueLabel(row);
+
+  return (
+    <li
+      className={mergeClasses(
+        'flex items-center justify-between gap-5 border-b py-4 first:pt-0 last:border-b-0 last:pb-0',
+        styles.divider,
+      )}
+    >
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span
+          className={mergeClasses('break-words', labelClassName, styles.label)}
+        >
+          {row.label}
+        </span>
+        {row.captionLabel != null && (
+          <span
+            className={mergeClasses(
+              'break-words',
+              captionClassName,
+              styles.label,
+            )}
+          >
+            {row.captionLabel}
+          </span>
+        )}
+      </div>
+
+      {isCapped(row) ? (
+        <div className="flex w-32 shrink-0 flex-col items-end gap-2">
+          <div className={mergeClasses('flex gap-1', valueClassName)}>
+            {row.usedLabel != null && row.totalLabel != null ? (
+              <>
+                <span className={styles.valuePrimary}>{row.usedLabel}</span>
+                <span className={styles.label}>{` / ${row.totalLabel}`}</span>
+              </>
+            ) : (
+              <span className={styles.label}>{valueLabel}</span>
+            )}
+          </div>
+          <ProgressBar
+            value={getProgressValue(row)}
+            max={getProgressMax(row.total)}
+            size={ElementSize.Small}
+            className={mergeClasses(
+              '!h-1 w-full',
+              styles.progressTrack,
+              getProgressStatus(row) === ProgressStatus.Default &&
+                styles.progressFillDefault,
+              getProgressStatus(row) === ProgressStatus.Warning &&
+                styles.progressFillWarning,
+              getProgressStatus(row) === ProgressStatus.Danger &&
+                styles.progressFillDanger,
+            )}
+            aria-label={row.label}
+            aria-valuetext={row.ariaLabel ?? valueLabel}
+          />
+        </div>
+      ) : (
+        <div className="flex shrink-0 flex-col items-end">
+          <span
+            className={mergeClasses(noteValueClassName, styles.valuePrimary)}
+          >
+            {valueLabel}
+          </span>
+          {row.noteLabel != null && (
+            <span className={mergeClasses(noteClassName, styles.label)}>
+              {row.noteLabel}
+            </span>
+          )}
+        </div>
+      )}
+    </li>
+  );
+};
+
+interface LimitGroupSectionProps {
+  group: UsageLimitGroup;
+  sectionClassName: string;
+  labelClassName: string;
+  captionClassName: string;
+  valueClassName: string;
+  noteValueClassName: string;
+  noteClassName: string;
+}
+
+const LimitGroupSection: FC<LimitGroupSectionProps> = ({
+  group,
+  sectionClassName,
+  labelClassName,
+  captionClassName,
+  valueClassName,
+  noteValueClassName,
+  noteClassName,
+}) => (
+  <section>
+    <p
+      className={mergeClasses(
+        'mb-3 mt-0',
+        sectionClassName,
+        styles.sectionHeading,
+      )}
+    >
+      {group.label}
+    </p>
+    <ul className="m-0 flex list-none flex-col p-0">
+      {group.rows.map((row) => (
+        <LimitRow
+          key={row.label}
+          row={row}
+          labelClassName={labelClassName}
+          captionClassName={captionClassName}
+          valueClassName={valueClassName}
+          noteValueClassName={noteValueClassName}
+          noteClassName={noteClassName}
+        />
+      ))}
+    </ul>
+  </section>
+);
+
+/** Renders model usage limits as named groups (e.g. token limits, cost limits), each a list of capped progress rows or plain-value rows. */
 export const LimitsTab: FC<LimitsTabProps> = ({
   limits,
-  costCapsSectionLabel = 'Cost caps',
-  unlimitedSectionLabel = 'Unlimited',
   labelClassName = 'dial-small-semi-text',
-  unlimitedLabelClassName = 'dial-tiny-text',
-  valueClassName = 'dial-small-text',
-  unlimitedValueClassName = 'dial-tiny-text',
+  captionClassName = 'dial-caption-text',
+  valueClassName = 'dial-tiny-text',
+  noteValueClassName = 'dial-tiny-semi-text',
+  noteClassName = 'dial-caption-text',
   sectionClassName = 'dial-caption-text',
-  limitClassName = 'dial-small-semi-text',
+  footerClassName = 'dial-caption-text',
+  footerNote,
   colors,
 }) => {
-  if (limits == null || limits.rows.length === 0) {
+  const groups = limits?.groups.filter((group) => group.rows.length > 0);
+
+  if (groups == null || groups.length === 0) {
     return null;
   }
-
-  const cappedRows = limits.rows.filter(isCapped);
-  const unlimitedRows = limits.rows.filter((row) => !isCapped(row));
 
   const cssVars = buildCssVars({
     '--lt-section-heading': colors?.sectionHeading,
     '--lt-label': colors?.label,
-    '--lt-value': colors?.value,
+    '--lt-value-primary': colors?.valuePrimary,
+    '--lt-divider': colors?.divider,
     '--lt-progress-track': colors?.progressTrack,
     '--lt-progress-fill-default': colors?.progressFillDefault,
     '--lt-progress-fill-warning': colors?.progressFillWarning,
@@ -127,124 +271,30 @@ export const LimitsTab: FC<LimitsTabProps> = ({
 
   return (
     <div className="flex flex-col gap-6" style={cssVars}>
-      {cappedRows.length > 0 && (
-        <section>
-          <p
-            className={mergeClasses(
-              'mb-3 mt-0',
-              sectionClassName,
-              styles.sectionHeading,
-            )}
-          >
-            {costCapsSectionLabel}
-          </p>
-          <ul className="m-0 flex list-none flex-col gap-4 p-0">
-            {cappedRows.map((row) => {
-              const valueLabel = getValueLabel(row);
-              const status = getProgressStatus(row);
+      {groups.map((group) => (
+        <LimitGroupSection
+          key={group.label}
+          group={group}
+          sectionClassName={sectionClassName}
+          labelClassName={labelClassName}
+          captionClassName={captionClassName}
+          valueClassName={valueClassName}
+          noteValueClassName={noteValueClassName}
+          noteClassName={noteClassName}
+        />
+      ))}
 
-              return (
-                <li key={row.label}>
-                  <ProgressBar
-                    value={getProgressValue(row)}
-                    max={getProgressMax(row.total)}
-                    size={ElementSize.Small}
-                    className={mergeClasses(
-                      '!h-2 w-full',
-                      styles.progressTrack,
-                      status === ProgressStatus.Default &&
-                        styles.progressFillDefault,
-                      status === ProgressStatus.Warning &&
-                        styles.progressFillWarning,
-                      status === ProgressStatus.Danger &&
-                        styles.progressFillDanger,
-                    )}
-                    labelProps={{
-                      label: (
-                        <span
-                          className={mergeClasses(labelClassName, styles.label)}
-                        >
-                          {row.label}
-                        </span>
-                      ),
-                    }}
-                    valueLabel={
-                      row.usedLabel != null && row.totalLabel != null ? (
-                        <>
-                          <span
-                            className={mergeClasses(
-                              valueClassName,
-                              styles.value,
-                            )}
-                          >
-                            {row.usedLabel}
-                          </span>{' '}
-                          /{' '}
-                          <span
-                            className={mergeClasses(
-                              limitClassName,
-                              styles.value,
-                            )}
-                          >
-                            {row.totalLabel}
-                          </span>
-                        </>
-                      ) : (
-                        <span
-                          className={mergeClasses(valueClassName, styles.value)}
-                        >
-                          {valueLabel}
-                        </span>
-                      )
-                    }
-                    aria-valuetext={row.ariaLabel ?? valueLabel}
-                  />
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
-
-      {unlimitedRows.length > 0 && (
-        <section>
-          <p
-            className={mergeClasses(
-              'mb-3 mt-0',
-              sectionClassName,
-              styles.sectionHeading,
-            )}
-          >
-            {unlimitedSectionLabel}
-          </p>
-          <ul className="m-0 list-none p-0">
-            {unlimitedRows.map((row) => (
-              <li
-                key={row.label}
-                className="flex items-center justify-between gap-3 py-[4.8px]"
-              >
-                <span
-                  className={mergeClasses(
-                    'min-w-0 break-words',
-                    unlimitedLabelClassName,
-                    styles.label,
-                  )}
-                >
-                  {row.label}
-                </span>
-                <span
-                  className={mergeClasses(
-                    'shrink-0',
-                    unlimitedValueClassName,
-                    styles.value,
-                  )}
-                >
-                  {getValueLabel(row)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+      {footerNote != null && (
+        <p
+          className={mergeClasses(
+            'm-0 border-t pt-4',
+            footerClassName,
+            styles.divider,
+            styles.label,
+          )}
+        >
+          {footerNote}
+        </p>
       )}
     </div>
   );
