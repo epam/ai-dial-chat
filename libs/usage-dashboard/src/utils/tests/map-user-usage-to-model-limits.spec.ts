@@ -4,57 +4,60 @@ import type {
   UserLimitStatsResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { DeploymentItemDtoTypeEnum } from '@epam/ai-dial-chat-api-client';
+import { describe, expect, it, vi } from 'vitest';
 import {
   ModelLimitMetricKind,
   ModelLimitStatus,
-} from '@epam/ai-dial-usage-dashboard';
-import type { TFunction } from 'i18next';
-import { describe, expect, it } from 'vitest';
-import { UsageI18nKeys } from '../../constants/translation-keys';
+} from '../../models/model-limits-props';
 import {
+  USAGE_MODEL_LIMITS_I18N_KEYS,
   mapOverallCostLimitsToPeriodStatuses,
   mapUserUsageToModelLimits,
 } from '../map-user-usage-to-model-limits';
 
-const t = ((key: string, params?: Record<string, unknown>) => {
-  if (key === UsageI18nKeys.UnlimitedProgressAriaLabel) {
+type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+const t: Translate = (key, params) => {
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.unlimitedProgressAriaLabel) {
     return `${params?.used} used, unlimited`;
   }
-  if (key === UsageI18nKeys.ProgressAriaLabel) {
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.progressAriaLabel) {
     return `${params?.used} of ${params?.total}, ${params?.percent}% used`;
   }
-  if (key === UsageI18nKeys.UnavailableLabel) {
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.unavailableLabel)
     return 'Not available';
-  }
-  if (key === UsageI18nKeys.NoLimitLabel) {
-    return 'No limit';
-  }
-  if (key === UsageI18nKeys.FollowsCostLimitLabel) {
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.noLimitLabel) return 'No limit';
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.followsCostLimitLabel)
     return 'Follows cost limit';
-  }
-  if (key === UsageI18nKeys.FollowsCostLimitAriaLabel) {
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.followsCostLimitAriaLabel) {
     return `${params?.used} used. Follows cost limit.`;
   }
-  if (key === UsageI18nKeys.SpentLabel) {
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.spentLabel)
     return `${params?.amount} spent`;
-  }
-  if (key === UsageI18nKeys.TodayPeriodDescription) {
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.todayPeriodDescription)
     return 'Last 24 hours';
-  }
-  if (key === UsageI18nKeys.ThisWeekPeriodDescription) {
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.thisWeekPeriodDescription)
     return 'Last 7 days';
-  }
-  if (key === UsageI18nKeys.ThisMonthPeriodDescription) {
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.thisMonthPeriodDescription)
     return 'Last 30 days';
-  }
-  if (key === UsageI18nKeys.OverallCostLimitRunningLowTooltip) {
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.overallCostLimitRunningLowTooltip) {
     return `Overall ${params?.period} cost limit is running low.`;
   }
-  if (key === UsageI18nKeys.OverallCostLimitReachedTooltip) {
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.overallCostLimitReachedTooltip) {
     return `Overall ${params?.period} cost limit is reached. Models can't be used until it resets, regardless of remaining token limits.`;
   }
   return key;
-}) as TFunction;
+};
+
+const defaultResolveIconUrl = (iconUrl: string | undefined) => iconUrl;
+const defaultResolveDisplayName = (
+  name: string | Record<string, string> | undefined | null,
+  _locale: string,
+): string => {
+  if (!name) return '';
+  if (typeof name === 'string') return name;
+  return Object.values(name)[0] ?? '';
+};
 
 const modelItem = (
   overrides: Partial<DeploymentItemDto> = {},
@@ -73,7 +76,22 @@ const withUsage = (
 const mapUsage = (
   usage: UserLimitStatsResponseDto | undefined,
   items: DeploymentItemDto[] = [modelItem()],
-) => mapUserUsageToModelLimits(usage, items, 'en', t);
+  overrides?: {
+    resolveIconUrl?: (iconUrl: string | undefined) => string | undefined;
+    resolveDisplayName?: (
+      name: string | Record<string, string> | undefined | null,
+      locale: string,
+    ) => string;
+  },
+) =>
+  mapUserUsageToModelLimits(
+    usage,
+    items,
+    'en',
+    t,
+    overrides?.resolveIconUrl ?? defaultResolveIconUrl,
+    overrides?.resolveDisplayName ?? defaultResolveDisplayName,
+  );
 
 describe('mapUserUsageToModelLimits', () => {
   it('returns one row per deployment with usage in a displayed period', () => {
@@ -91,9 +109,12 @@ describe('mapUserUsageToModelLimits', () => {
     expect(rows.map((row) => row.name)).toEqual(['GPT-4o', 'Claude 3']);
   });
 
-  it('returns an empty array when usage or deployments is absent', () => {
+  it('returns an empty array when usage is absent', () => {
     expect(mapUsage(undefined)).toEqual([]);
-    expect(mapUsage({})).toEqual([]);
+  });
+
+  it('returns an empty array when deployments is empty', () => {
+    expect(mapUsage(withUsage({}))).toEqual([]);
   });
 
   it('excludes a deployment with no non-zero usage across displayed periods', () => {
@@ -152,7 +173,7 @@ describe('mapUserUsageToModelLimits', () => {
     expect(rows).toEqual([]);
   });
 
-  it('falls back to the deployment ID and initials avatar data when metadata is missing', () => {
+  it('falls back to the deployment ID and no avatar when metadata is missing', () => {
     const [row] = mapUsage(
       withUsage({
         'unknown-model': { dayTokenStats: { used: 1, total: 10 } },
@@ -164,22 +185,25 @@ describe('mapUserUsageToModelLimits', () => {
     expect(row.avatarSrc).toBeUndefined();
   });
 
-  it('resolves a model icon URL before passing it to the dashboard row', () => {
+  it('calls resolveIconUrl and forwards its result to avatarSrc', () => {
+    const resolveIconUrl = vi
+      .fn()
+      .mockImplementation((iconUrl: string | undefined) =>
+        iconUrl ? `resolved:${iconUrl}` : undefined,
+      );
     const [row] = mapUsage(
-      withUsage({
-        'gpt-4o': { dayTokenStats: { used: 1, total: 10 } },
-      }),
-      [modelItem({ iconUrl: 'model icon.svg' })],
+      withUsage({ 'gpt-4o': { dayTokenStats: { used: 1, total: 10 } } }),
+      [modelItem({ iconUrl: 'model-icon.svg' })],
+      { resolveIconUrl },
     );
 
-    expect(row.avatarSrc).toBe('/api/themes/icon?iconName=model%20icon.svg');
+    expect(resolveIconUrl).toHaveBeenCalledWith('model-icon.svg');
+    expect(row.avatarSrc).toBe('resolved:model-icon.svg');
   });
 
   it('does not enrich a model row from a non-model deployment item', () => {
     const [row] = mapUsage(
-      withUsage({
-        shared_id: { dayTokenStats: { used: 1, total: 10 } },
-      }),
+      withUsage({ shared_id: { dayTokenStats: { used: 1, total: 10 } } }),
       [
         modelItem({
           id: 'shared_id',
@@ -207,11 +231,9 @@ describe('mapUserUsageToModelLimits', () => {
     expect(rows.map((row) => row.id)).toEqual(['a', 'b']);
   });
 
-  it('never adds an accessible model absent from usage.deployments', () => {
+  it('never adds a deployment absent from usage.deployments', () => {
     const rows = mapUsage(
-      withUsage({
-        used: { dayTokenStats: { used: 1, total: 10 } },
-      }),
+      withUsage({ used: { dayTokenStats: { used: 1, total: 10 } } }),
       [modelItem({ id: 'used' }), modelItem({ id: 'never-used' })],
     );
 
@@ -278,9 +300,7 @@ describe('mapUserUsageToModelLimits', () => {
     it('classifies well-formed cost as unlimited attributed spend', () => {
       const [row] = mapUsage(
         withUsage({
-          'gpt-4o': {
-            dayCostStats: { used: 0.242753, total: 2 ** 53 },
-          },
+          'gpt-4o': { dayCostStats: { used: 0.242753, total: 2 ** 53 } },
         }),
       );
 
@@ -291,9 +311,7 @@ describe('mapUserUsageToModelLimits', () => {
 
     it('classifies missing cost as unavailable', () => {
       const [row] = mapUsage(
-        withUsage({
-          'gpt-4o': { dayTokenStats: { used: 1, total: 10 } },
-        }),
+        withUsage({ 'gpt-4o': { dayTokenStats: { used: 1, total: 10 } } }),
       );
 
       expect(row.last24Hours.cost.kind).toBe(ModelLimitMetricKind.Unavailable);
@@ -301,9 +319,7 @@ describe('mapUserUsageToModelLimits', () => {
 
     it('keeps finite token percentages uncapped', () => {
       const [row] = mapUsage(
-        withUsage({
-          'gpt-4o': { dayTokenStats: { used: 1500, total: 1000 } },
-        }),
+        withUsage({ 'gpt-4o': { dayTokenStats: { used: 1500, total: 1000 } } }),
       );
 
       expect(row.last24Hours.tokens.kind).toBe(ModelLimitMetricKind.Finite);
@@ -330,11 +346,7 @@ describe('mapUserUsageToModelLimits', () => {
     it('shows that unlimited model tokens follow the matching finite overall Cost limit', () => {
       const [row] = mapUsage(
         withUsage(
-          {
-            'gpt-4o': {
-              weekTokenStats: { used: 10, total: 2 ** 53 },
-            },
-          },
+          { 'gpt-4o': { weekTokenStats: { used: 10, total: 2 ** 53 } } },
           { weekCostStats: { used: 5, total: 100 } },
         ),
       );
@@ -347,9 +359,7 @@ describe('mapUserUsageToModelLimits', () => {
 
     it('uses compact visible token values and full accessible values', () => {
       const [row] = mapUsage(
-        withUsage({
-          'gpt-4o': { dayTokenStats: { used: 1000, total: 2000 } },
-        }),
+        withUsage({ 'gpt-4o': { dayTokenStats: { used: 1000, total: 2000 } } }),
       );
 
       expect(row.last24Hours.tokens.usedLabel).toBe('1K');
@@ -404,9 +414,7 @@ describe('mapUserUsageToModelLimits', () => {
     it('uses NoLimit only when no finite token period exists', () => {
       const [row] = mapUsage(
         withUsage({
-          'gpt-4o': {
-            weekTokenStats: { used: 10, total: 2 ** 53 },
-          },
+          'gpt-4o': { weekTokenStats: { used: 10, total: 2 ** 53 } },
         }),
       );
 

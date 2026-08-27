@@ -6,19 +6,29 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import { DeploymentItemDtoTypeEnum } from '@epam/ai-dial-chat-api-client';
 import { formatCost } from '@epam/ai-dial-chat-shared';
-import {
+import type {
   ModelLimitMetricCell,
-  ModelLimitMetricKind,
   ModelLimitPeriodCell,
   ModelLimitPeriodStatus,
   ModelLimitPeriodStatuses,
   ModelLimitRow,
+} from '../models/model-limits-props';
+import {
+  ModelLimitMetricKind,
   ModelLimitStatus,
-} from '@epam/ai-dial-usage-dashboard';
-import type { TFunction } from 'i18next';
-import { UsageI18nKeys } from '../constants/translation-keys';
-import { resolveCatalogIconUrl } from './icon-path';
-import { resolveLocalizedText } from './locale';
+} from '../models/model-limits-props';
+
+/** A translate function compatible with i18next's `TFunction`. */
+type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+/** A callback that resolves an icon URL from a deployment's raw `iconUrl` field. */
+type ResolveIconUrl = (iconUrl: string | undefined) => string | undefined;
+
+/** A callback that resolves a display name from a localized-text value. */
+type ResolveDisplayName = (
+  name: string | Record<string, string> | undefined | null,
+  locale: string,
+) => string;
 
 /** Upstream sentinel (`Long.MAX_VALUE` exceeds this): a `total` at or above it means "unlimited". */
 const UNLIMITED_TOTAL_THRESHOLD = 2 ** 53;
@@ -36,6 +46,38 @@ const numberFormatter = new Intl.NumberFormat(undefined, {
 const fullNumberFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 2,
 });
+
+/**
+ * i18n key strings that the consuming app's translation bundle must define for
+ * `mapUserUsageToModelLimits` and `mapOverallCostLimitsToPeriodStatuses` to produce
+ * correctly translated strings. The values are the default key paths used by AI DIAL Chat.
+ */
+export const USAGE_MODEL_LIMITS_I18N_KEYS = {
+  /** Period label used in tooltip text. Receives no interpolation. */
+  todayPeriodDescription: 'usage.todayPeriodDescription',
+  /** Period label used in tooltip text. Receives no interpolation. */
+  thisWeekPeriodDescription: 'usage.thisWeekPeriodDescription',
+  /** Period label used in tooltip text. Receives no interpolation. */
+  thisMonthPeriodDescription: 'usage.thisMonthPeriodDescription',
+  /** Tooltip when the overall cost limit is running low. Receives `{ period: string }`. */
+  overallCostLimitRunningLowTooltip: 'usage.overallCostLimitRunningLowTooltip',
+  /** Tooltip when the overall cost limit is reached. Receives `{ period: string }`. */
+  overallCostLimitReachedTooltip: 'usage.overallCostLimitReachedTooltip',
+  /** Aria label for a metric cell with no data. */
+  unavailableLabel: 'usage.unavailableLabel',
+  /** Supporting label when a token limit follows the cost limit. */
+  followsCostLimitLabel: 'usage.followsCostLimitLabel',
+  /** Supporting label when there is no per-deployment token limit. */
+  noLimitLabel: 'usage.noLimitLabel',
+  /** Aria label when token usage has no limit but follows the cost limit. Receives `{ used: string }`. */
+  followsCostLimitAriaLabel: 'usage.followsCostLimitAriaLabel',
+  /** Aria label when there is no limit. Receives `{ used: string }`. */
+  unlimitedProgressAriaLabel: 'usage.unlimitedProgressAriaLabel',
+  /** Aria label for a progress bar with a finite limit. Receives `{ used: string, total: string, percent: number }`. */
+  progressAriaLabel: 'usage.progressAriaLabel',
+  /** Label for the spent-cost cell. Receives `{ amount: string }`. */
+  spentLabel: 'usage.spentLabel',
+} as const;
 
 /**
  * Which `DeploymentLimitsResponseDto` fields back one fixed comparison-period column.
@@ -66,21 +108,21 @@ const PERIOD_FIELD_MAPPINGS = {
 const OVERALL_COST_PERIODS = {
   last24Hours: {
     field: 'dayCostStats',
-    labelKey: UsageI18nKeys.TodayPeriodDescription,
+    labelKey: USAGE_MODEL_LIMITS_I18N_KEYS.todayPeriodDescription,
   },
   last7Days: {
     field: 'weekCostStats',
-    labelKey: UsageI18nKeys.ThisWeekPeriodDescription,
+    labelKey: USAGE_MODEL_LIMITS_I18N_KEYS.thisWeekPeriodDescription,
   },
   last30Days: {
     field: 'monthCostStats',
-    labelKey: UsageI18nKeys.ThisMonthPeriodDescription,
+    labelKey: USAGE_MODEL_LIMITS_I18N_KEYS.thisMonthPeriodDescription,
   },
 } satisfies Record<
   keyof ModelLimitPeriodStatuses,
   {
     field: 'dayCostStats' | 'weekCostStats' | 'monthCostStats';
-    labelKey: UsageI18nKeys;
+    labelKey: string;
   }
 >;
 
@@ -124,17 +166,17 @@ const buildOverallCostPeriodStatus = (
   usage: UserLimitStatsResponseDto | undefined,
   period: (typeof OVERALL_COST_PERIODS)[keyof ModelLimitPeriodStatuses],
   activeLocale: string,
-  t: TFunction,
+  t: Translate,
 ): ModelLimitPeriodStatus => {
   const status = getOverallCostStatus(usage?.[period.field]);
   const periodLabel = t(period.labelKey).toLocaleLowerCase(activeLocale);
   const tooltipLabel =
     status === ModelLimitStatus.LimitReached
-      ? t(UsageI18nKeys.OverallCostLimitReachedTooltip, {
+      ? t(USAGE_MODEL_LIMITS_I18N_KEYS.overallCostLimitReachedTooltip, {
           period: periodLabel,
         })
       : status === ModelLimitStatus.RunningLow
-        ? t(UsageI18nKeys.OverallCostLimitRunningLowTooltip, {
+        ? t(USAGE_MODEL_LIMITS_I18N_KEYS.overallCostLimitRunningLowTooltip, {
             period: periodLabel,
           })
         : undefined;
@@ -146,7 +188,7 @@ const buildOverallCostPeriodStatus = (
 export const mapOverallCostLimitsToPeriodStatuses = (
   usage: UserLimitStatsResponseDto | undefined,
   activeLocale: string,
-  t: TFunction,
+  t: Translate,
 ): ModelLimitPeriodStatuses => ({
   last24Hours: buildOverallCostPeriodStatus(
     usage,
@@ -168,19 +210,19 @@ export const mapOverallCostLimitsToPeriodStatuses = (
   ),
 });
 
-const buildUnavailableCell = (t: TFunction): ModelLimitMetricCell => ({
+const buildUnavailableCell = (t: Translate): ModelLimitMetricCell => ({
   kind: ModelLimitMetricKind.Unavailable,
-  ariaLabel: t(UsageI18nKeys.UnavailableLabel),
+  ariaLabel: t(USAGE_MODEL_LIMITS_I18N_KEYS.unavailableLabel),
 });
 
-/**
+/*
  * Classifies a Tokens stat into a finite (progress-capable), unlimited, or unavailable
  * cell. Never treats a missing/invalid stat as zero usage or as unlimited.
  */
 const buildFiniteMetricCell = (
   stats: LimitStatsDto | undefined,
   overallCostStatus: ModelLimitStatus,
-  t: TFunction,
+  t: Translate,
 ): ModelLimitMetricCell => {
   if (!isUsableStats(stats)) {
     return buildUnavailableCell(t);
@@ -195,12 +237,12 @@ const buildFiniteMetricCell = (
       kind: ModelLimitMetricKind.Unlimited,
       usedLabel,
       supportingLabel: followsCostLimit
-        ? t(UsageI18nKeys.FollowsCostLimitLabel)
-        : t(UsageI18nKeys.NoLimitLabel),
+        ? t(USAGE_MODEL_LIMITS_I18N_KEYS.followsCostLimitLabel)
+        : t(USAGE_MODEL_LIMITS_I18N_KEYS.noLimitLabel),
       ariaLabel: t(
         followsCostLimit
-          ? UsageI18nKeys.FollowsCostLimitAriaLabel
-          : UsageI18nKeys.UnlimitedProgressAriaLabel,
+          ? USAGE_MODEL_LIMITS_I18N_KEYS.followsCostLimitAriaLabel
+          : USAGE_MODEL_LIMITS_I18N_KEYS.unlimitedProgressAriaLabel,
         { used: fullNumberFormatter.format(used) },
       ),
     };
@@ -217,7 +259,7 @@ const buildFiniteMetricCell = (
     totalLabel,
     usedPercent,
     status,
-    ariaLabel: t(UsageI18nKeys.ProgressAriaLabel, {
+    ariaLabel: t(USAGE_MODEL_LIMITS_I18N_KEYS.progressAriaLabel, {
       used: fullNumberFormatter.format(used),
       total: fullNumberFormatter.format(total),
       percent: Math.round(usedPercent),
@@ -225,14 +267,14 @@ const buildFiniteMetricCell = (
   };
 };
 
-/**
+/*
  * Classifies the Cost stat. Per the upstream contract, a well-formed per-deployment cost entry is
  * always the unlimited sentinel (attributed spend against no per-deployment cap) — this never
  * produces a `Finite` cell or a finite cost status, regardless of the reported `total`.
  */
 const buildCostMetricCell = (
   stats: LimitStatsDto | undefined,
-  t: TFunction,
+  t: Translate,
 ): ModelLimitMetricCell => {
   if (!isUsableStats(stats)) {
     return buildUnavailableCell(t);
@@ -240,7 +282,9 @@ const buildCostMetricCell = (
 
   const used = Math.max(0, stats.used);
   const amountLabel = formatCost(used);
-  const usedLabel = t(UsageI18nKeys.SpentLabel, { amount: amountLabel });
+  const usedLabel = t(USAGE_MODEL_LIMITS_I18N_KEYS.spentLabel, {
+    amount: amountLabel,
+  });
 
   return {
     kind: ModelLimitMetricKind.Unlimited,
@@ -253,7 +297,7 @@ const buildPeriodCell = (
   deploymentStats: DeploymentLimitsResponseDto,
   fields: PeriodFieldMapping,
   overallCostStatus: ModelLimitStatus,
-  t: TFunction,
+  t: Translate,
 ): ModelLimitPeriodCell => ({
   tokens: buildFiniteMetricCell(
     deploymentStats[fields.tokens],
@@ -263,9 +307,7 @@ const buildPeriodCell = (
   cost: buildCostMetricCell(deploymentStats[fields.cost], t),
 });
 
-/**
- * Reduces the three rolling-period Tokens cells to the row's most severe status.
- */
+/** Reduces the three rolling-period Tokens cells to the row's most severe status. */
 const getRowStatus = (
   tokenCells: ModelLimitMetricCell[],
   overallCostStatuses: ModelLimitStatus[],
@@ -295,25 +337,26 @@ const getRowStatus = (
   return ModelLimitStatus.Unavailable;
 };
 
-/**
- * Whether at least one displayed day/week/month Cost or Tokens stat has nonzero usage.
- */
+/** Whether at least one displayed day/week/month Cost or Tokens stat has nonzero usage. */
 const hasUsageAcrossDisplayedPeriods = (
   stats: (LimitStatsDto | undefined)[],
 ): boolean => stats.some((stat) => isUsableStats(stat) && stat.used > 0);
 
 /**
- * Maps `usage.deployments` (already fetched by `useUsageData`) into `ModelLimitsSection`'s `rows`
- * prop, joined with model identity from `useDeployments().items`. Every returned row contains the
- * fixed Last 24 hours, Last 7 days, and Last 30 days Cost/Tokens comparison. Candidate rows come
- * only from `usage.deployments` and are retained when any displayed stat has nonzero usable usage.
- * Order follows `Object.keys(deployments)` and `items` is enrichment-only.
+ * Maps `usage.deployments` into `ModelLimitsSection`'s `rows` prop, joined with model identity
+ * from `deploymentItems`. Rows are included only when any displayed period stat has nonzero usage.
+ * Order follows `Object.keys(deployments)` — `deploymentItems` is enrichment-only.
+ *
+ * @param resolveIconUrl - Resolves a deployment's raw `iconUrl` to the URL the avatar should load.
+ * @param resolveDisplayName - Resolves a localized-text map or plain string to the display name for `activeLocale`.
  */
 export const mapUserUsageToModelLimits = (
   usage: UserLimitStatsResponseDto | undefined,
-  items: DeploymentItemDto[],
+  deploymentItems: DeploymentItemDto[],
   activeLocale: string,
-  t: TFunction,
+  t: Translate,
+  resolveIconUrl: ResolveIconUrl,
+  resolveDisplayName: ResolveDisplayName,
 ): ModelLimitRow[] => {
   const deployments = usage?.deployments;
   if (deployments == null) {
@@ -321,7 +364,7 @@ export const mapUserUsageToModelLimits = (
   }
 
   const modelItemById = new Map(
-    items
+    deploymentItems
       .filter((item) => item.type === DeploymentItemDtoTypeEnum.Model)
       .map((item) => [item.id, item]),
   );
@@ -330,15 +373,16 @@ export const mapUserUsageToModelLimits = (
     activeLocale,
     t,
   );
+
   return Object.keys(deployments)
     .map((id) => {
       const item = modelItemById.get(id);
       const name =
         item != null
-          ? resolveLocalizedText(item.displayName, activeLocale) || item.id
+          ? resolveDisplayName(item.displayName, activeLocale) || item.id
           : id;
       const deploymentStats = deployments[id];
-      const avatarSrc = resolveCatalogIconUrl(item?.iconUrl);
+      const avatarSrc = resolveIconUrl(item?.iconUrl);
 
       const last24Hours = buildPeriodCell(
         deploymentStats,

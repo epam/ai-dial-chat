@@ -3,20 +3,17 @@ import type {
   UserLimitStatsResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { formatCost } from '@epam/ai-dial-chat-shared';
-import {
-  UsageLimitCardData,
-  UsageLimitStatus,
-} from '@epam/ai-dial-usage-dashboard';
-import type { TFunction } from 'i18next';
-import { UsageI18nKeys } from '../constants/translation-keys';
+import type { UsageLimitCardData } from '../models/usage-limit-card-props';
+import { UsageLimitStatus } from '../models/usage-limit-card-props';
+
+/** A translate function compatible with i18next's `TFunction`. */
+type Translate = (key: string, options?: Record<string, unknown>) => string;
 
 /** Upstream sentinel (`Long.MAX_VALUE` exceeds this): a `total` at or above it means "unlimited". */
 const UNLIMITED_TOTAL_THRESHOLD = 2 ** 53;
 
 /** Percentage at/above which a card is `RunningLow` — below this it's `Default` ("within limits"). */
 const RUNNING_LOW_THRESHOLD_PERCENT = 75;
-
-// TODO: Investigate whether usage limits support configurable currencies or USD only.
 
 const isUsableStats = (
   stats: LimitStatsDto | undefined,
@@ -37,7 +34,7 @@ const mapStatsToCardData = (
   stats: LimitStatsDto,
   title: string,
   periodDescription: string,
-  t: TFunction,
+  t: Translate,
 ): UsageLimitCardData => {
   const used = Math.max(0, stats.used);
   const usedLabel = formatCost(used);
@@ -51,7 +48,7 @@ const mapStatsToCardData = (
       usedLabel,
       isUnlimited: true,
       status: UsageLimitStatus.Default,
-      progressAriaLabel: t(UsageI18nKeys.UnlimitedProgressAriaLabel, {
+      progressAriaLabel: t(USAGE_DATA_I18N_KEYS.unlimitedProgressAriaLabel, {
         used: usedLabel,
       }),
     };
@@ -72,7 +69,7 @@ const mapStatsToCardData = (
     remainingLabel: formatCost(remaining),
     usedPercent: uncappedUsedPercent,
     status: getStatus(uncappedUsedPercent),
-    progressAriaLabel: t(UsageI18nKeys.ProgressAriaLabel, {
+    progressAriaLabel: t(USAGE_DATA_I18N_KEYS.progressAriaLabel, {
       used: usedLabel,
       total: totalLabel,
       percent: Math.round(uncappedUsedPercent),
@@ -81,35 +78,57 @@ const mapStatsToCardData = (
 };
 
 /**
- * Maps `useUsageData`'s `usage` response into `UsageLimitCardGroup`'s `cards` prop, in Today/This
- * week/This month order. A period is omitted entirely when the response carries no usable stat
- * for it. The top-level `dayCostStats`/`weekCostStats`/`monthCostStats` fields are the caller's
- * real global cost budget — the same semantics `GET /api/v1/user/limits` would report — so no
- * second source or fallback is needed here.
+ * i18n key strings that the consuming app's translation bundle must define for
+ * `mapUsageDataToDashboard` to produce correctly translated strings. The
+ * values are the default key paths used by AI DIAL Chat.
+ */
+export const USAGE_DATA_I18N_KEYS = {
+  /** Title for the "today" card (e.g. `'Daily'`). */
+  todayTitle: 'usage.todayTitle',
+  /** Period description for the "today" card (e.g. `'Today'`). */
+  todayPeriodDescription: 'usage.todayPeriodDescription',
+  /** Title for the "this week" card. */
+  thisWeekTitle: 'usage.thisWeekTitle',
+  /** Period description for the "this week" card. */
+  thisWeekPeriodDescription: 'usage.thisWeekPeriodDescription',
+  /** Title for the "this month" card. */
+  thisMonthTitle: 'usage.thisMonthTitle',
+  /** Period description for the "this month" card. */
+  thisMonthPeriodDescription: 'usage.thisMonthPeriodDescription',
+  /** Aria label when there is no limit. Receives `{ used: string }`. */
+  unlimitedProgressAriaLabel: 'usage.unlimitedProgressAriaLabel',
+  /** Aria label for a progress bar with a finite limit. Receives `{ used: string, total: string, percent: number }`. */
+  progressAriaLabel: 'usage.progressAriaLabel',
+} as const;
+
+/**
+ * Maps a `UserLimitStatsResponseDto` into `UsageLimitCardGroup`'s `cards` prop,
+ * in Today / This week / This month order. A period is omitted entirely when
+ * the response carries no usable stat for it.
  */
 export const mapUsageDataToDashboard = (
   usage: UserLimitStatsResponseDto | undefined,
-  t: TFunction,
+  t: Translate,
 ): UsageLimitCardData[] => {
   const periods: {
     stats: LimitStatsDto | undefined;
-    titleKey: UsageI18nKeys;
-    periodDescriptionKey: UsageI18nKeys;
+    titleKey: string;
+    periodDescriptionKey: string;
   }[] = [
     {
       stats: usage?.dayCostStats,
-      titleKey: UsageI18nKeys.TodayPeriodDescription,
-      periodDescriptionKey: UsageI18nKeys.TodayPeriodDescription,
+      titleKey: USAGE_DATA_I18N_KEYS.todayPeriodDescription,
+      periodDescriptionKey: USAGE_DATA_I18N_KEYS.todayPeriodDescription,
     },
     {
       stats: usage?.weekCostStats,
-      titleKey: UsageI18nKeys.ThisWeekPeriodDescription,
-      periodDescriptionKey: UsageI18nKeys.ThisWeekPeriodDescription,
+      titleKey: USAGE_DATA_I18N_KEYS.thisWeekPeriodDescription,
+      periodDescriptionKey: USAGE_DATA_I18N_KEYS.thisWeekPeriodDescription,
     },
     {
       stats: usage?.monthCostStats,
-      titleKey: UsageI18nKeys.ThisMonthPeriodDescription,
-      periodDescriptionKey: UsageI18nKeys.ThisMonthPeriodDescription,
+      titleKey: USAGE_DATA_I18N_KEYS.thisMonthPeriodDescription,
+      periodDescriptionKey: USAGE_DATA_I18N_KEYS.thisMonthPeriodDescription,
     },
   ];
 
