@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { LimitsTab } from '../Limits';
-import styles from '../Limits.module.scss';
+import { LimitsTab } from '../Limits/Limits';
+import styles from '../Limits/Limits.module.scss';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },

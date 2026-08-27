@@ -65,7 +65,7 @@ import styles from './DetailsPanel.module.scss';
 import { Header } from './Header/Header';
 import { AboutTab } from './TabsContent/About';
 import { ContentTab } from './TabsContent/Content';
-import { LimitsTab } from './TabsContent/Limits';
+import { LimitsTab } from './TabsContent/Limits/Limits';
 import { Overview } from './TabsContent/Overview';
 import { Pricing } from './TabsContent/Pricing';
 import { Tools } from './TabsContent/Tools/Tools';
