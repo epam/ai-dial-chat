@@ -22,6 +22,12 @@ export interface CardGridProps {
   query?: string;
   /** Called when a card's star is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /**
+   * Additional caller-supplied rule for whether the favorite star is shown on a
+   * card. Returning `false` hides the star and makes the item non-favoritable.
+   * Defaults to **visible** when omitted.
+   */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
   /** Grouped empty-state text overrides. */
   titles?: CardGridTitles;
   /** Called when a card body is clicked. */

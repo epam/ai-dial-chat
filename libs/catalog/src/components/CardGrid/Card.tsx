@@ -33,6 +33,7 @@ export const Card: FC<CardProps> = ({
   onClick,
   initialIsStarred = false,
   onToggle,
+  isFavoriteVisible,
   featuredLabel = 'Featured',
   addToFavoritesAriaLabel = 'Add to favorites',
   removeFromFavoritesAriaLabel = 'Remove from favorites',
@@ -185,18 +186,22 @@ export const Card: FC<CardProps> = ({
               />
             )}
           </div>
-          <StarToggleButton
-            isStarred={isStarred}
-            size={ElementSize.Small}
-            onClick={handleStarToggle}
-            ariaLabel={
-              isStarred ? removeFromFavoritesAriaLabel : addToFavoritesAriaLabel
-            }
-            className={mergeClasses(
-              styles.starBtn,
-              !isStarred && styles.emptyStarHidden,
-            )}
-          />
+          {isFavoriteVisible?.(item) !== false && (
+            <StarToggleButton
+              isStarred={isStarred}
+              size={ElementSize.Small}
+              onClick={handleStarToggle}
+              ariaLabel={
+                isStarred
+                  ? removeFromFavoritesAriaLabel
+                  : addToFavoritesAriaLabel
+              }
+              className={mergeClasses(
+                styles.starBtn,
+                !isStarred && styles.emptyStarHidden,
+              )}
+            />
+          )}
         </div>
       </div>
     </CardShell>

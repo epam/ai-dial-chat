@@ -470,6 +470,11 @@ hide the recipient-side "Remove from My List", the owner-side "Revoke access",
 and "Unpublish" for items whose backing capability does not exist, without the
 lib knowing why. All three default to **visible** when omitted.
 
+`isFavoriteVisible` is the same family for the favorite star: returning `false`
+for an item hides the star in the browse grid, the list view, the favorites
+strip, and the details panel, and makes that item non-favoritable. It defaults
+to **visible** when omitted, so a predicate can only narrow visibility.
+
 ```tsx
 <Catalog
   items={items}
@@ -478,6 +483,8 @@ lib knowing why. All three default to **visible** when omitted.
   isUnshareVisible={(item) => item.type !== CatalogEntityType.Prompt}
   isRevokeShareVisible={(item) => item.type !== CatalogEntityType.Prompt}
   isUnpublishVisible={(item) => item.type !== CatalogEntityType.Prompt}
+  // Models are platform-managed, not user-owned apps — suppress the star.
+  isFavoriteVisible={(item) => item.type !== CatalogEntityType.Model}
   onUnshare={handleUnshare}
   onRevokeShare={handleRevokeShare}
   onUnpublish={handleUnpublish}
@@ -488,7 +495,8 @@ Each is combined (AND) with its built-in rule — `sharedWithMe`/`isMyApp` for
 unshare, `isMyApp` plus the recipient count resolved by
 `onFetchRecipientsCount` for revoke, and at least one resolved
 `getPublishHistory` folder for unpublish — so a predicate can only ever narrow
-visibility, never widen it.
+visibility, never widen it. `isFavoriteVisible` has no built-in rule beyond
+"visible by default", so it gates the star on its own.
 
 ## Types
 

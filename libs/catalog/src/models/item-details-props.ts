@@ -462,6 +462,12 @@ export interface DetailsPanelProps {
   /** Called when the star/favorite button is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /**
+   * Additional caller-supplied rule for whether the favorite star is shown in
+   * the panel header. Returning `false` hides the star and makes the item
+   * non-favoritable from the panel. Defaults to **visible** when omitted.
+   */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
+  /**
    * Additional caller-supplied rule for whether the "Remove from My List"
    * action is shown, combined (AND) with the built-in
    * `sharedWithMe`/`isMyApp` rule. Defaults to `true` when absent.

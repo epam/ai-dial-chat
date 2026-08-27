@@ -380,6 +380,23 @@ const renderPanel = (props?: Partial<ComponentProps<typeof DetailsPanel>>) =>
     />,
   );
 
+describe('DetailsPanel — header favorite star', () => {
+  it('renders the star toggle in the header by default', () => {
+    renderPanel();
+    expect(screen.getByText('Star')).toBeTruthy();
+  });
+
+  it('hides the star toggle when isFavoriteVisible returns false for the item', () => {
+    renderPanel({ isFavoriteVisible: () => false });
+    expect(screen.queryByText('Star')).toBeNull();
+  });
+
+  it('renders the star toggle when isFavoriteVisible returns true', () => {
+    renderPanel({ isFavoriteVisible: () => true });
+    expect(screen.getByText('Star')).toBeTruthy();
+  });
+});
+
 describe('DetailsPanel — Content tab', () => {
   const promptOverview = {
     sections: [
