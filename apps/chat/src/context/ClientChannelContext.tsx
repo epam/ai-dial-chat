@@ -106,38 +106,6 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   const isStreamingCapablePage = !!(matchConversations ?? matchAppsEditor);
   const isActive = isEnabled && isStreamingCapablePage;
 
-  /*
-   * Without this, a dormant channel is indistinguishable from one that simply
-   * is not needed: completions go out without `clientChannelId`, and an app
-   * that requires mid-stream sign-in fails with its own generic error message.
-   * Log which gate is closed so the cause is readable in the console instead
-   * of only inferable from the network tab.
-   */
-  useEffect(() => {
-    if (isActive) return;
-    const detail = {
-      liveChatInteractionFeature: isEnabled,
-      isStreamingCapablePage,
-      pathname: window.location.pathname,
-    };
-    /*
-     * Dormant on a page that can stream is a misconfiguration worth a warning;
-     * dormant merely because the current route never streams is expected, so
-     * it stays at debug level rather than firing on ordinary navigation.
-     */
-    if (isStreamingCapablePage) {
-      console.warn(
-        '[ClientChannel] Inactive on a streaming-capable page — completions will be sent without clientChannelId.',
-        detail,
-      );
-      return;
-    }
-    console.debug(
-      '[ClientChannel] Inactive — current route never streams.',
-      detail,
-    );
-  }, [isActive, isEnabled, isStreamingCapablePage]);
-
   const [channelId, setChannelId] = useState<string | null>(null);
   const [pendingEvents, setPendingEvents] = useState<PendingSigninEvent[]>([]);
 
@@ -254,13 +222,9 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
         abortControllerRef.current = null;
         scheduleReconnect();
       }
-    } catch (error) {
+    } catch {
       abortControllerRef.current = null;
       if (!controller.signal.aborted) {
-        console.warn(
-          '[ClientChannel] Subscribe failed; retrying with backoff.',
-          error,
-        );
         scheduleReconnect();
       }
     }
