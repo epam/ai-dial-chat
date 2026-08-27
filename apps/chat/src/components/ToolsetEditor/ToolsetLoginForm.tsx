@@ -1,11 +1,12 @@
 import { IconLogin, IconLogout } from '@tabler/icons-react';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import {
   Controller,
   useFormContext,
   useFormState,
   useWatch,
 } from 'react-hook-form';
+import { MultiValue } from 'react-select';
 
 import classNames from 'classnames';
 
@@ -125,7 +126,7 @@ export const ToolsetLoginForm = ({
     ? [DialNeutralButton, IconLogout]
     : [DialPrimaryButton, IconLogin];
 
-  const { register, getValues, trigger, control, clearErrors } =
+  const { register, getValues, trigger, control, setValue } =
     useFormContext<ToolsetLoginFormType>();
   const { isValid, errors } = useFormState<ToolsetLoginFormType>({ control });
 
@@ -153,13 +154,20 @@ export const ToolsetLoginForm = ({
     }
   }, [isSignedIn, onLogout, trigger, getValues, onLogin]);
 
-  useEffect(() => {
-    if (endpointAuthMethod === TokenEndpointAuthMethod.None) {
-      clearErrors('clientSecret');
-    } else {
-      clearErrors('codeChallengeMethod');
-    }
-  }, [clearErrors, endpointAuthMethod]);
+  const handleEndpointAuthMethodChange = useCallback(
+    (option: MultiValue<DropdownSelectorOption>) => {
+      const value = (option as unknown as DropdownSelectorOption)
+        .value as TokenEndpointAuthMethod;
+
+      setValue('tokenEndpointAuthMethod', value, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+      void trigger(['codeChallengeMethod', 'clientSecret']);
+    },
+    [setValue, trigger],
+  );
 
   return (
     <div
@@ -260,11 +268,7 @@ export const ToolsetLoginForm = ({
                       value,
                     }}
                     options={tokenEndpointAuthMethodOptions}
-                    onChange={(option) =>
-                      field.onChange(
-                        (option as unknown as DropdownSelectorOption).value,
-                      )
-                    }
+                    onChange={handleEndpointAuthMethodChange}
                     closeMenuOnSelect
                     isDisabled={disabled}
                     tooltip={fieldsTooltip}

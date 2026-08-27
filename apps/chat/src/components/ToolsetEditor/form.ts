@@ -91,8 +91,9 @@ export const ToolsetLoginFormSchema = zodValidation
         });
       }
       if (
-        data.codeChallengeMethod === PkceMethod.None &&
-        data.tokenEndpointAuthMethod === TokenEndpointAuthMethod.None
+        data.tokenEndpointAuthMethod === TokenEndpointAuthMethod.None &&
+        (!data.codeChallengeMethod ||
+          data.codeChallengeMethod === PkceMethod.None)
       ) {
         ctx.addIssue({
           code: 'custom',
