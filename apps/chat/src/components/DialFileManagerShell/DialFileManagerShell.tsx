@@ -275,8 +275,17 @@ const DialFileManagerShell: FC<Props> = ({
       dateOptions,
       additionalGridOptions: {
         domLayout: 'normal' as const,
+        /*
+           The file manager's grid draws its own selection column, so this
+           override contributes `isRowSelectable` only. AG Grid defaults both
+           checkbox flags to `true` for `multiRow`, and the object replaces the
+           grid's own `rowSelection` wholesale — leaving them out puts a second
+           checkbox column next to the grid's.
+         */
         rowSelection: {
           mode: 'multiRow' as const,
+          checkboxes: false,
+          headerCheckbox: false,
           isRowSelectable: isRowSelectable ?? ((): boolean => true),
         },
       },
