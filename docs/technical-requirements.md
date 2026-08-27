@@ -141,6 +141,7 @@ ring and percentage use the theme error color.
 | NFR-2.3 | `helmet` enforces CSP, HSTS, and standard security headers by default; local HTTP smoke mode disables HSTS and CSP `upgrade-insecure-requests`                 |
 | NFR-2.4 | No auth tokens or user credentials are ever passed to or stored by UI libraries                                                                                |
 | NFR-2.5 | Conversation completions endpoint is rate-limited to 10 req/min per session                                                                                    |
+| NFR-2.6 | CSP permits OOXML WebAssembly compilation without permitting JavaScript `eval`                                                                                 |
 
 ### NFR-3 — Accessibility
 
