@@ -23,6 +23,7 @@ export enum Styles {
   wordBreak = 'word-break',
   textWrapMode = 'text-wrap-mode',
   display = 'display',
+  textAlign = 'text-align',
 }
 
 // CSS Class Names: Defines utility class names, likely from a framework like Tailwind CSS.
@@ -41,6 +42,8 @@ export enum StyleValues {
   wrap = 'wrap',
   breakWord = 'break-word',
   block = 'block',
+  end = 'end',
+  start = 'start',
 }
 
 // Cursor-specific CSS Values: Defines values for the 'cursor' property.

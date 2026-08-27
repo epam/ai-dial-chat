@@ -20,6 +20,9 @@ export const EventSelectors = {
   newConversationNameField: '[data-qa="conversation-new-name"]',
   configurationContainer: '#configuration',
   setConfigurationButton: '[data-qa="set-configuration"]',
+  disableSendButton: '[data-qa="set-configuration-disable-send"]',
+  disablePlaybackControlsButton:
+    '[data-qa="set-configuration-disable-playback-controls"]',
   createLocalConversationButton: '[data-qa="create-local-conversation"]',
   deleteConversationByIdButton: '[data-qa="delete-conversation-by-id"]',
   playbackConversationByIdButton: '[data-qa="playback-conversation-by-id"]',

@@ -43,4 +43,11 @@ export const OverlaySandboxUrls = {
     '/cases/overlay/enabled-edit-all-assistant-content-sandbox', //sandbox to test 'EPMDIAL-2313'
   enableEditLastAssistantContentUrl:
     '/cases/overlay/edit-last-assistant-message', //sandbox to test 'EPMDIAL-2314', 'EPMDIAL-2316'
+  overlayManagerFullWidthUrl: '/cases/overlay-manager-full-width', //sandbox to test 'EPMDIAL-2323'
+  featuresDataUrl: '/cases/overlay/features-data', //sandbox to test 'EPMDIAL-2308'
+  enabledPanelTogglesUrl: '/cases/overlay/enabled-panel-toggles-sandbox', //sandbox to test 'EPMDIAL-2328'
+  enableUserMessageAlignEndUrl:
+    '/cases/overlay/enabled-user-message-align-end-sandbox', //sandbox to test 'EPMDIAL-2327'
+  enableCompareModeDisabledUrl:
+    '/cases/overlay/enabled-compare-mode-disabled-sandbox', //sandbox to test 'EPMDIAL-2329'
 };
