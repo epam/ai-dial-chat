@@ -38,6 +38,7 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
           '--np-bg': colors?.background,
           '--np-item-text': colors?.itemText,
           '--np-item-active-text': colors?.itemActiveText,
+          '--np-item-selected-bg': colors?.itemSelectedBackground,
           '--np-item-hover-bg': colors?.itemHoverBackground,
           '--np-item-active-bg': colors?.itemActiveBackground,
           '--np-font-family': typography?.fontFamily,
@@ -82,7 +83,7 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
                     tabIndex={-1}
                     className={mergeClasses(
                       styles.item,
-                      'rounded',
+                      'rounded-xl',
                       item.isActive && styles.itemActive,
                     )}
                   />,
