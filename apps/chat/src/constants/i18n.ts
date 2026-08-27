@@ -793,6 +793,7 @@ export enum ChatI18nKeys {
   PublishTo = 'Publish to',
   Path = 'Path',
   OwnersPath = "Owner's path",
+  Owner = 'Owner',
   Change = 'Change',
   NoValidItemsToPublish = 'There are no valid items to publish',
   Unknown = 'Unknown',
