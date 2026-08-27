@@ -1,11 +1,3 @@
-import {
-  isValidSkillRelativePath,
-  parseSkillManifest,
-  SKILL_FILE_UPLOAD_MAX_BYTES,
-  SKILL_MANIFEST_FILE,
-  SKILL_UPLOAD_MAX_FILES,
-  SKILL_UPLOAD_MAX_TOTAL_BYTES,
-} from '@epam/ai-dial-chat-hooks';
 import { formatFileSize } from '@epam/ai-dial-chat-shared';
 import {
   SkillFileCandidateKind,
@@ -14,11 +6,76 @@ import {
   type SkillFileUploadCandidate,
   type SkillFileValidationResult,
 } from '@epam/ai-dial-skill-editor';
-import type {
-  SkillFileBatchValidationContext,
-  SkillFileBatchValidationOutcome,
-  SkillManifestImportCandidate,
-} from '../models/skill-file-batch-validation';
+import {
+  isValidSkillRelativePath,
+  parseSkillManifest,
+  SKILL_FILE_UPLOAD_MAX_BYTES,
+  SKILL_MANIFEST_FILE,
+  SKILL_UPLOAD_MAX_FILES,
+  SKILL_UPLOAD_MAX_TOTAL_BYTES,
+} from './skill';
+
+/** A recognized, structurally valid manifest candidate from a staged batch. */
+export interface SkillManifestImportCandidate {
+  /** The `SkillFileUploadCandidate.id` this manifest came from. */
+  candidateId: string;
+  /** The imported manifest's `name` field. */
+  name: string;
+  /** The imported manifest's `description` field. */
+  description: string;
+  /** The imported manifest's full parsed frontmatter, including unknown fields. */
+  frontmatter: Record<string, unknown>;
+  /** The imported manifest's instructions body. */
+  instructions: string;
+}
+
+/** Localized messages the batch validator needs, resolved by the caller. */
+export interface SkillFileBatchValidationMessages {
+  /** Shown when a required field (e.g. a candidate's path) is empty. */
+  required: string;
+  /** Shown when a candidate's path collides with a reserved entry name. */
+  pathReserved: string;
+  /** Shown when a candidate's path fails DIAL's relative-path rules. */
+  pathInvalid: string;
+  /** Shown when a candidate's path duplicates another candidate or an existing file. */
+  pathDuplicate: string;
+  /** Shown when a candidate exceeds the per-file size limit; receives the formatted limit. */
+  fileTooLarge: (maxSize: string) => string;
+  /** Shown when a root-level `SKILL.md`-like path has the wrong casing. */
+  manifestCasingInvalid: string;
+  /** Shown when the batch stages more than one root `SKILL.md`. */
+  manifestDuplicate: string;
+  /** Shown when a root `SKILL.md`'s bytes are not valid UTF-8. */
+  manifestInvalidUtf8: string;
+  /** Shown when a root `SKILL.md`'s frontmatter is missing or missing `name`/`description`. */
+  manifestInvalidFrontmatter: string;
+  /** Shown when the batch's projected total package size exceeds the limit. */
+  totalSizeExceeded: string;
+  /** Shown when the batch's projected total file count exceeds the limit. */
+  totalCountExceeded: string;
+}
+
+/** Snapshot of editor state the batch validator projects new totals against. */
+export interface SkillFileBatchValidationContext {
+  /** Paths already present in the editor's supporting-file tree. */
+  existingPaths: string[];
+  /** Sum of the bytes already held for existing supporting files. */
+  existingTotalBytes: number;
+  /** UTF-8 byte length of the currently generated/loaded root `SKILL.md`. */
+  manifestByteLength: number;
+  /** Localized messages. */
+  messages: SkillFileBatchValidationMessages;
+}
+
+/** Result of validating a whole staged batch. */
+export interface SkillFileBatchValidationOutcome {
+  /** One result per candidate, in the same order as the input. */
+  results: SkillFileValidationResult[];
+  /** Batch-level errors (projected total size/count, multiple manifests). */
+  batchErrors: SkillFileBatchError[];
+  /** The single accepted manifest import, when the batch has exactly one valid `SKILL.md`. */
+  manifestCandidate?: SkillManifestImportCandidate;
+}
 
 /**
  * Validates a whole staged upload batch against per-file limits, path

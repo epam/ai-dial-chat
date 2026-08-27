@@ -1,9 +1,9 @@
+import * as useUsageDataModule from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BasicI18nKeys } from '../../../constants/translation-keys';
 import { createDeploymentsContextValue } from '../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import * as useUsageDataModule from '@epam/ai-dial-chat-hooks';
 import SettingsPage from '../SettingsPage';
 
 const mockUseFeatureFlag = vi.fn();
