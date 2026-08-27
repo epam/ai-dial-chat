@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { CatalogItemLimits } from '../../../../models/item-details-data';
+import type { CatalogItemLimits } from './item-details-data';
 
 /** Color overrides for `LimitsTab`, applied as CSS custom properties. */
 export interface LimitsTabColors {

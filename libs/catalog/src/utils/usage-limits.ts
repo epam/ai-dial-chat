@@ -1,4 +1,4 @@
-import type { UsageLimitProgressRow } from '../../../../models/item-details-data';
+import type { UsageLimitProgressRow } from '../models/item-details-data';
 
 const numberFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 2,

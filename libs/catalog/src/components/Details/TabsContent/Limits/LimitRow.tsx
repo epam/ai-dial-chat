@@ -2,7 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ElementSize, ProgressBar } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { UsageLimitProgressRow } from '../../../../models/item-details-data';
-import type { LimitRowClassNames } from './limits-props';
+import type { LimitRowClassNames } from '../../../../models/limits-props';
 import {
   getProgressMax,
   getProgressStatus,
@@ -10,7 +10,7 @@ import {
   getValueLabel,
   isCapped,
   ProgressStatus,
-} from './limits-utils';
+} from '../../../../utils/usage-limits';
 import styles from './Limits.module.scss';
 
 interface LimitRowProps extends LimitRowClassNames {

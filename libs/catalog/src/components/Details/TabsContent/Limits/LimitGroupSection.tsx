@@ -1,8 +1,8 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
 import type { UsageLimitGroup } from '../../../../models/item-details-data';
+import type { LimitRowClassNames } from '../../../../models/limits-props';
 import { LimitRow } from './LimitRow';
-import type { LimitRowClassNames } from './limits-props';
 import styles from './Limits.module.scss';
 
 interface LimitGroupSectionProps extends LimitRowClassNames {

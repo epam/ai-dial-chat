@@ -1,14 +1,8 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
+import type { LimitsTabProps } from '../../../../models/limits-props';
 import { LimitGroupSection } from './LimitGroupSection';
-import type { LimitsTabProps } from './limits-props';
 import styles from './Limits.module.scss';
-
-export type {
-  LimitRowClassNames,
-  LimitsTabColors,
-  LimitsTabProps,
-} from './limits-props';
 
 /** Renders model usage limits as named groups (e.g. token limits, cost limits), each a list of capped progress rows or plain-value rows. */
 export const LimitsTab: FC<LimitsTabProps> = ({
