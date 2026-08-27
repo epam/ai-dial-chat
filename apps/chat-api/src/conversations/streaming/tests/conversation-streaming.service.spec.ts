@@ -1303,5 +1303,75 @@ describe('ConversationStreamingService', () => {
       );
       expect(mockGenerationService.error).not.toHaveBeenCalled();
     });
+
+    it('stops and saves a pending tool-call stream without waiting for another upstream event', async () => {
+      vi.spyOn(
+        service['dialClient'].client,
+        'getConversation',
+      ).mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(service['dialClient'].client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      const generationAbortController = new AbortController();
+      vi.mocked(mockGenerationService.register).mockReturnValue(
+        generationAbortController,
+      );
+      vi.mocked(mockGenerationService.getStatus).mockReturnValue(
+        GenerationStatus.Stopped,
+      );
+
+      const encoder = new TextEncoder();
+      const cancel = vi.fn();
+      const pendingToolCallStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"choices":[{"delta":{"custom_content":{"stages":[{"index":0,"name":"Calling tool","status":"in_progress"}]}}}]}\n\n',
+            ),
+          );
+        },
+        cancel,
+      });
+      vi.spyOn(
+        service['dialClient'].client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(pendingToolCallStream, { status: 200 }),
+      } as never);
+
+      const res = makeMockRes();
+      const streamPromise = runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Use a tool',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+      await vi.waitFor(() => expect(res.write).toHaveBeenCalled());
+
+      generationAbortController.abort();
+      await streamPromise;
+
+      expect(cancel).toHaveBeenCalledTimes(1);
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const stoppedSave = saveConversationSpy.mock.calls[1][2].body as {
+        messages: { wasStoppedByUser?: boolean }[];
+      };
+      expect(stoppedSave.messages.at(-1)?.wasStoppedByUser).toBe(true);
+      expect(mockGenerationService.complete).not.toHaveBeenCalled();
+      expect(mockGenerationService.error).toHaveBeenCalledWith(
+        'test-session-id',
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-gen-id',
+      );
+    });
   });
 });
