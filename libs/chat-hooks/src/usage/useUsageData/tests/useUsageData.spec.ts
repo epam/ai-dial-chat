@@ -34,8 +34,9 @@ describe('useUsageData', () => {
   });
 
   it('does not update state after unmount', async () => {
-    let resolveUsage: (value: { deployments: Record<string, never> }) => void =
-      () => undefined;
+    let resolveUsage: (value: {
+      deployments: Record<string, never>;
+    }) => void = () => undefined;
     const usagePromise = new Promise<{ deployments: Record<string, never> }>(
       (resolve) => {
         resolveUsage = resolve;
@@ -43,7 +44,9 @@ describe('useUsageData', () => {
     );
     mockGetUserUsage.mockImplementation(() => usagePromise);
 
-    const { result, unmount } = renderHook(() => useUsageData(mockGetUserUsage));
+    const { result, unmount } = renderHook(() =>
+      useUsageData(mockGetUserUsage),
+    );
     unmount();
     resolveUsage({ deployments: {} });
 

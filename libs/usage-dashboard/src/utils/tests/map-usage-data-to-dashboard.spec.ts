@@ -16,11 +16,14 @@ const t: Translate = (key, params) => {
     return `${params?.used} of ${params?.total}, ${params?.percent}% used`;
   }
   if (key === USAGE_DATA_I18N_KEYS.todayTitle) return 'Today';
-  if (key === USAGE_DATA_I18N_KEYS.todayPeriodDescription) return 'Last 24 hours';
+  if (key === USAGE_DATA_I18N_KEYS.todayPeriodDescription)
+    return 'Last 24 hours';
   if (key === USAGE_DATA_I18N_KEYS.thisWeekTitle) return 'This week';
-  if (key === USAGE_DATA_I18N_KEYS.thisWeekPeriodDescription) return 'Last 7 days';
+  if (key === USAGE_DATA_I18N_KEYS.thisWeekPeriodDescription)
+    return 'Last 7 days';
   if (key === USAGE_DATA_I18N_KEYS.thisMonthTitle) return 'This month';
-  if (key === USAGE_DATA_I18N_KEYS.thisMonthPeriodDescription) return 'Last 30 days';
+  if (key === USAGE_DATA_I18N_KEYS.thisMonthPeriodDescription)
+    return 'Last 30 days';
   return key;
 };
 
