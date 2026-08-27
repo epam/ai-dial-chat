@@ -1,11 +1,15 @@
 # applications-write-api Specification
 
 ## Purpose
-TBD - created by archiving change add-intro-field-quick-app-toolset. Update Purpose after archive.
+
+The application write endpoints — create, update, and delete — their DTO contracts, the DIAL Core merge and resource-resolution rules they follow, and the cache invalidation each performs.
 ## Requirements
 ### Requirement: Create application endpoint
-The backend SHALL expose `POST /api/v1/applications` that creates a Quick App by proxying
-DIAL Core (`saveCustomApplication`) using the caller's session access token. The request body
+The backend SHALL expose `POST /api/v1/applications` that creates an application — a Quick App
+or a plain custom application — by proxying DIAL Core (`saveCustomApplication`) using the
+caller's session access token. The full request/response contract and DIAL Core body mapping
+are owned by the `application-create-api` capability; this requirement covers only the write
+surface shared with update and delete. The request body
 SHALL be validated via `CreateApplicationBodyDto`. The per-user applications list cache SHALL
 be invalidated on success, and DIAL Core error statuses SHALL be mapped to typed HTTP
 responses. `CreateApplicationBodyDto` SHALL NOT define an `intro` field — the `intro` field is
@@ -73,7 +77,8 @@ declare a `@Throttle` rate limit, and SHALL document every response status via
 #### Scenario: OpenAPI contract regenerated after intro removal
 - **WHEN** the `intro` field is removed from `CreateApplicationBodyDto`
 - **THEN** `npm run openapi` regenerates the spec, `npm run openapi:check` passes, and the
-  generated `@epam/chat-api-client` `CreateApplicationBodyDto` type no longer includes `intro`
+  generated `@epam/ai-dial-chat-api-client` `CreateApplicationBodyDto` type no longer includes
+  `intro`
 
 #### Scenario: Authentication required
 - **WHEN** a request to the create endpoint has no valid session cookie
@@ -85,18 +90,31 @@ The backend SHALL expose `PATCH /api/v1/applications/:applicationName` that upda
 General-step fields (`name`, `description`, `iconUrl`, `topics`) of an existing
 Quick App for the authenticated session user. The `applicationName` path parameter SHALL
 be validated the same way as the delete endpoint's `GetApplicationDto`. The request body
-SHALL be validated via `UpdateApplicationBodyDto`, which carries the same field
-constraints as `CreateApplicationBodyDto` minus `type` and `version` (immutable on
-update). `UpdateApplicationBodyDto` SHALL NOT define an `intro` field. The service SHALL
-resolve the existing DIAL Core application resource (bucket + path) the same way
-`deleteApplication` does, fetch the current stored application via DIAL Core
-(`getCustomApplication`), merge only the supplied General-step fields into it —
-preserving `application_type_schema_id`, `displayVersion`, and `application_properties`
-(including orchestrator/tool set settings) untouched — and persist the merged result via
-`saveCustomApplication` at the same resource path. On success, the per-user applications
-list cache and deployments list cache SHALL both be invalidated, mirroring
-`deleteApplication`'s cache invalidation. DIAL Core error statuses SHALL be mapped to
-typed HTTP responses.
+SHALL be validated via `UpdateApplicationBodyDto`. That DTO SHALL exclude `type` and
+`applicationProperties`, so this endpoint can never mutate a Quick App's schema type or its
+orchestrator/tool-set configuration. It SHALL accept, in addition to the General-step fields:
+`version` (the human-readable `displayVersion`, a General-step field for plain custom apps),
+`endpoint`, `features`, `inputAttachmentTypes`, and `maxInputAttachments` — the deployment-level
+fields the custom-app editor owns — plus `locales`/`primaryLocale`. It SHALL NOT define an
+`intro` field.
+
+The service SHALL resolve the existing DIAL Core application resource (bucket + path) the same
+way `deleteApplication` does, fetch the current stored application via DIAL Core
+(`getCustomApplication`), spread it, and overwrite only the supplied fields —
+`application_type_schema_id` and `application_properties` (including orchestrator/tool set
+settings) are never in the body and therefore always carried through untouched, and
+`displayVersion` is carried through unless the body supplies `version`. `displayName` SHALL be
+replaced outright on every update; the remaining optional fields SHALL be written only when
+present in the body. The merged result SHALL be persisted via `saveCustomApplication` at the
+same resource path, and the endpoint SHALL respond `200` with
+`{ id: "applications/{bucket}/{path}" }`, where `path` is the encoded resource path used for
+the DIAL Core call.
+
+On success, the per-user applications list cache and the deployments list cache SHALL both be
+invalidated, mirroring `deleteApplication`'s cache invalidation. Because the DIAL Core write has
+already succeeded at that point, a failure of the invalidation step SHALL be logged and
+swallowed rather than turning a successful update into an error response. DIAL Core error
+statuses SHALL be mapped to typed HTTP responses.
 
 The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`,
 rate-limited via `@Throttle({ default: { limit: 10, ttl: 60000 } })` (same limit as
@@ -110,16 +128,31 @@ additional role restriction.
   with updated `name`, `description`, `iconUrl`, and `topics` for an application
   they own
 - **THEN** the service fetches the existing stored application, merges in only the
-  supplied General-step fields, persists it at the same resource path, invalidates the
-  applications and deployments list caches, and responds `200 OK` with the updated
-  application identifier
+  supplied fields, persists it at the same resource path, invalidates the
+  applications and deployments list caches, and responds `200 OK` with an
+  `UpdatedApplicationDto` carrying the application identifier
 
 #### Scenario: Settings-step configuration is preserved
 - **WHEN** the update request omits `applicationProperties`/orchestrator or tool set data
   (the update endpoint does not accept those fields at all)
-- **THEN** the existing `application_properties`, `application_type_schema_id`, and
-  `displayVersion` already stored for that application are carried through unchanged in
-  the merged body sent to DIAL Core
+- **THEN** the existing `application_properties` and `application_type_schema_id` already
+  stored for that application are carried through unchanged in the merged body sent to DIAL
+  Core
+
+#### Scenario: The stored version is kept unless the body supplies one
+- **WHEN** the update request omits `version`
+- **THEN** the stored `displayVersion` is carried through unchanged
+- **AND** when the request does supply `version`, it replaces `displayVersion`
+
+#### Scenario: Deployment-level fields are written only when supplied
+- **WHEN** the update request omits `endpoint`, `features`, `inputAttachmentTypes`, or
+  `maxInputAttachments`
+- **THEN** each omitted field keeps the value already stored on the application
+
+#### Scenario: A cache-invalidation failure does not fail the update
+- **WHEN** the DIAL Core save succeeds but clearing the applications or deployments list cache
+  throws
+- **THEN** the endpoint still responds `200`, and the cache failure is only logged
 
 #### Scenario: Invalid update body
 - **WHEN** the request body fails DTO validation (for example, `name` contains disallowed
@@ -151,8 +184,8 @@ additional role restriction.
 - **WHEN** `UpdateApplicationBodyDto` and the `updateApplication` operation no longer
   include `intro`
 - **THEN** `npm run openapi` regenerates the spec, `npm run openapi:check` passes, and the
-  generated `@epam/chat-api-client` exposes `ApplicationsApi.updateApplication(...)` with
-  an `UpdateApplicationBodyDto` type that has no `intro` field
+  generated `@epam/ai-dial-chat-api-client` exposes `ApplicationsApi.updateApplication(...)`
+  with an `UpdateApplicationBodyDto` type that has no `intro` field
 
 ### Requirement: Delete application endpoint
 
