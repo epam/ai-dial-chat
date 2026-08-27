@@ -1,0 +1,6 @@
+.content {
+  > svg {
+    fill: var(--cc-card-bg, var(--bg-layer-raised, #fcfcfc));
+    stroke: transparent;
+  }
+}

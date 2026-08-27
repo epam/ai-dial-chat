@@ -46,13 +46,23 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   NeutralButton: ({
     label,
     onClick,
+    onMouseEnter,
+    onFocus,
     className,
   }: {
     label: string;
     onClick: () => void;
+    onMouseEnter?: () => void;
+    onFocus?: () => void;
     className?: string;
   }) => (
-    <button data-variant="neutral" className={className} onClick={onClick}>
+    <button
+      data-variant="neutral"
+      className={className}
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onFocus={onFocus}
+    >
       {label}
     </button>
   ),
@@ -131,6 +141,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconLogout: () => <svg />,
   IconPencil: () => <svg />,
   IconPlayerPlayFilled: () => <svg />,
+  IconShare: () => <svg />,
   IconTrash: () => <svg />,
   IconUserOff: () => <svg />,
   IconWorldOff: () => <svg />,
@@ -1512,5 +1523,178 @@ describe('Header', () => {
       expect(onOpenCredentialsManagement).toHaveBeenCalledOnce();
       expect(screen.queryByText('Add popover content')).toBeNull();
     });
+  });
+});
+
+/*
+ * Which of Share and Publish sits in the action row and which sits in the
+ * Manage menu is host-configurable. The defaults are the historical
+ * arrangement (covered above); these cover the opt-in swap.
+ */
+describe('Header action-surface arrangement', () => {
+  it('keeps Share in the action row and Publish in the Manage menu by default', async () => {
+    render(<Header item={makeItem(CatalogEntityType.Model)} />);
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+  });
+
+  it('moves Share into the Manage menu when isSharePrimary returns false', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isSharePrimary={() => false}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+  });
+
+  it('calls onShare with the item when the Manage-menu Share entry is clicked', async () => {
+    const onShare = vi.fn();
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isSharePrimary={() => false}
+        onShare={onShare}
+      />,
+    );
+    await openManage();
+    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
+    expect(onShare).toHaveBeenCalledWith(makeItem(CatalogEntityType.Model));
+  });
+
+  it('opens the share overlay from the Manage trigger instead of calling onShare', async () => {
+    const onShare = vi.fn();
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isSharePrimary={() => false}
+        onShare={onShare}
+        shareOverlay={() => <div>share overlay content</div>}
+      />,
+    );
+    await openManage();
+    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
+    expect(screen.getByText('share overlay content')).toBeTruthy();
+    expect(onShare).not.toHaveBeenCalled();
+  });
+
+  it('does not offer Share in the Manage menu for an item the user does not own', async () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Agent),
+          isMyApp: false,
+          isEditable: true,
+        }}
+        isSharePrimary={() => false}
+        onEdit={vi.fn()}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+  });
+
+  it('honours isShareVisible for the Manage-menu Share entry', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isSharePrimary={() => false}
+        isShareVisible={() => false}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+  });
+
+  it('promotes Publish to the action row when isPublishPrimary returns true', async () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Model), isEditable: true }}
+        isPublishPrimary={() => true}
+        onEdit={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+    await openManage();
+    /* Promoted to the row means gone from the menu — one surface, never both. */
+    expect(screen.getAllByRole('button', { name: 'Publish' })).toHaveLength(1);
+  });
+
+  it('promotes Unpublish to the action row once the item has a published folder', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isPublishPrimary={() => true}
+        onOpenUnpublish={vi.fn()}
+        hasPublishedFolders
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Unpublish' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+  });
+
+  it('calls onOpenPublish when the promoted Publish button is clicked', async () => {
+    const onOpenPublish = vi.fn();
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isPublishPrimary={() => true}
+        onOpenPublish={onOpenPublish}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(onOpenPublish).toHaveBeenCalledOnce();
+  });
+
+  it('starts the publish-history lookup on hover of the promoted Publish button', async () => {
+    const onRequestPublishHistory = vi.fn();
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isPublishPrimary={() => true}
+        onRequestPublishHistory={onRequestPublishHistory}
+      />,
+    );
+    await userEvent.hover(screen.getByRole('button', { name: 'Publish' }));
+    expect(onRequestPublishHistory).toHaveBeenCalled();
+  });
+
+  it('keeps the publish-history lookup on the Manage trigger when Publish is promoted', async () => {
+    const onRequestPublishHistory = vi.fn();
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Model), isEditable: true }}
+        isPublishPrimary={() => true}
+        isPublishVisible={() => false}
+        onEdit={vi.fn()}
+        onRequestPublishHistory={onRequestPublishHistory}
+      />,
+    );
+    /* No Publish button to hover, so the Manage trigger has to keep the
+     * lookup alive or "Unpublish" could never resolve. */
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    await userEvent.hover(screen.getByRole('button', { name: 'Manage' }));
+    expect(onRequestPublishHistory).toHaveBeenCalled();
+  });
+
+  it('renders Use in chat and Publish in the row with Share and Delete in the menu when both predicates are flipped', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Agent)}
+        onDelete={vi.fn()}
+        isSharePrimary={() => false}
+        isPublishPrimary={() => true}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
   });
 });
