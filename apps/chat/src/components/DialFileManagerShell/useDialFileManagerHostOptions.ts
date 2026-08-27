@@ -1,4 +1,7 @@
-import type { UseDialFileManagerOptions } from '@epam/ai-dial-chat-hooks';
+import {
+  prepareDownloadDestination,
+  type UseDialFileManagerOptions,
+} from '@epam/ai-dial-chat-hooks';
 import { DialFileManagerActions } from '@epam/ai-dial-react-file-manager';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,10 +12,7 @@ import {
 import { useNotification } from '../../context/NotificationContext';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { dialFilesApiAdapter } from '../../server-api/dial-files-api.adapter';
-import {
-  prepareDownloadDestination,
-  triggerBrowserDownload,
-} from '../../utils/file-download';
+import { triggerBrowserDownload } from '../../utils/file-download';
 import {
   buildFileManagerNotificationOptions,
   buildValidationErrorMessage,

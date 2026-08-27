@@ -1,11 +1,4 @@
-/** Decodes a percent-encoded path segment, leaving it unchanged if decoding fails. */
-export const safeDecodeURI = (path: string): string => {
-  try {
-    return decodeURIComponent(path);
-  } catch {
-    return path;
-  }
-};
+import { safeDecodeURI } from '../../shared/string-utils';
 
 /**
  * Strips the leading bucket segment from a conversation id and decodes any

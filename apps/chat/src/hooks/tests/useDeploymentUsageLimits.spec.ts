@@ -1,21 +1,26 @@
+import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
-import { mapDeploymentLimitsToInput } from '../../utils/map-deployment-limits-to-input';
 import { useDeploymentUsageLimits } from '../useDeploymentUsageLimits';
 
 vi.mock('../../server-api/deployment-limits', () => ({
   getDeploymentLimits: vi.fn(),
 }));
 
-vi.mock('../../utils/map-deployment-limits-to-input', () => ({
-  mapDeploymentLimitsToInput: vi.fn(() => ({
-    used: 2500,
-    total: 10000,
-    remaining: 7500,
-    usedPercent: 25,
-  })),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    mapDeploymentLimitsToInput: vi.fn(() => ({
+      used: 2500,
+      total: 10000,
+      remaining: 7500,
+      usedPercent: 25,
+    })),
+  };
+});
 
 const mockGetDeploymentLimits = vi.mocked(getDeploymentLimits);
 const mockMapDeploymentLimitsToInput = vi.mocked(mapDeploymentLimitsToInput);

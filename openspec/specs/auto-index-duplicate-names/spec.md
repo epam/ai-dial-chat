@@ -90,7 +90,7 @@ The DIAL Core storage path for a newly **created** conversation SHALL always be:
 {deploymentId}__{baseName}__{uuid}
 ```
 
-where `{baseName}` is the sanitised display name and `{uuid}` is `crypto.randomUUID()` generated at create time. The UUID segment is unconditional — `createConversation` SHALL NOT perform a path-existence check before building the path. `conversation.name` SHALL remain the unsuffixed `{baseName}`.
+where `{baseName}` is the sanitised display name and `{uuid}` is `generateUUID()` generated at create time. The UUID segment is unconditional — `createConversation` SHALL NOT perform a path-existence check before building the path. `conversation.name` SHALL remain the unsuffixed `{baseName}`.
 
 For versioned or multi-segment deployment IDs, the invariant is the fresh trailing UUID rather than a fixed total number of `__`-separated segments.
 
@@ -121,7 +121,7 @@ The DIAL Core storage path for every **duplicated** conversation SHALL be:
 {deploymentId}__{baseName}__{uuid}
 ```
 
-where `{baseName}` is the sanitised display name and `{uuid}` is `crypto.randomUUID()` generated at duplicate time. The UUID segment is unconditional, including when no resource exists at the corresponding unsuffixed path. `conversation.name` SHALL remain the unsuffixed `{baseName}`.
+where `{baseName}` is the sanitised display name and `{uuid}` is `generateUUID()` generated at duplicate time. The UUID segment is unconditional, including when no resource exists at the corresponding unsuffixed path. `conversation.name` SHALL remain the unsuffixed `{baseName}`.
 
 `duplicateConversation` SHALL NOT call `getConversationMetadata` to check whether `{deploymentId}__{baseName}` exists. The destination path SHALL use a fresh UUID rather than reusing a trailing UUID from the source path.
 

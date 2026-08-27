@@ -1,3 +1,4 @@
+import { emitToolsetLoginSuccess } from '@epam/ai-dial-chat-hooks';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -11,7 +12,6 @@ import {
   loginToolset,
   logoutToolset,
 } from '../../../server-api/toolsets';
-import { emitToolsetLoginSuccess } from '../../../utils/toolset-login-events';
 import {
   initiateOAuthLogin,
   navigateToolsetOAuthPopup,
@@ -33,9 +33,11 @@ vi.mock('../../../utils/toolsets', () => ({
   waitForToolsetOAuthResult: vi.fn(),
 }));
 
-vi.mock('../../../utils/toolset-login-events', () => ({
-  emitToolsetLoginSuccess: vi.fn(),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return { ...actual, emitToolsetLoginSuccess: vi.fn() };
+});
 
 describe('useToolsetLogin', () => {
   beforeEach(() => {

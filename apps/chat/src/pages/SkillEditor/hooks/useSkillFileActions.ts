@@ -1,4 +1,11 @@
 import {
+  buildSkillManifest,
+  buildSkillManifestFromFrontmatter,
+  getUtf8ByteLength,
+  SKILL_MANIFEST_FILE,
+  type SkillFileContent,
+} from '@epam/ai-dial-chat-hooks';
+import {
   SkillFileNodeKind,
   type SkillEditorFileActions,
   type SkillEditorValues,
@@ -9,13 +16,6 @@ import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SkillEditorI18nKeys } from '../../../constants/translation-keys';
-import {
-  buildSkillManifest,
-  buildSkillManifestFromFrontmatter,
-  SKILL_MANIFEST_FILE,
-} from '../../../utils/skill';
-import type { SkillFileContent } from '../../../utils/skill-file-preview';
-import { getUtf8ByteLength } from '../../../utils/string-utils';
 import type { SkillFileBatchValidationMessages } from '../models/skill-file-batch-validation';
 import { validateSkillFileBatch } from '../utils/skill-file-batch-validation';
 import { nameFromPath } from '../utils/skill-file-tree';

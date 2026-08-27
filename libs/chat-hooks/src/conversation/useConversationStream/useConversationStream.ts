@@ -1,6 +1,7 @@
 import { SendCompletionDtoModeEnum } from '@epam/ai-dial-chat-api-client';
 import {
   type Conversation,
+  generateUUID,
   type MessageCustomContent,
   type StreamChunk,
 } from '@epam/ai-dial-chat-shared';
@@ -13,8 +14,9 @@ import {
   useRef,
   useState,
 } from 'react';
+import { safeDecodeURI } from '../../shared/string-utils';
 import { applyChunkToMessages } from './apply-chunk';
-import { getConversationPath, safeDecodeURI } from './conversation-path';
+import { getConversationPath } from './conversation-path';
 import { isAwaitingGenerationResume } from './generation-resume';
 
 /*
@@ -205,7 +207,7 @@ export const useConversationStream = ({
       generationId?: string,
       mode: SendCompletionDtoModeEnum = SendCompletionDtoModeEnum.Append,
     ) => {
-      const genId = generationId ?? crypto.randomUUID();
+      const genId = generationId ?? generateUUID();
       const conversationPath = getConversationPath(currentConversationId);
       activeGenerationIdRef.current = genId;
       activeGenerationPathRef.current = conversationPath;

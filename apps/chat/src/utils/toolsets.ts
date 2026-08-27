@@ -3,6 +3,7 @@ import type {
   ToolsetBodyDto,
 } from '@epam/ai-dial-chat-api-client';
 import { ResponseError } from '@epam/ai-dial-chat-api-client';
+import { generateUUID } from '@epam/ai-dial-chat-shared';
 import { validateDeploymentCreationFields } from '@epam/ai-dial-deployment-creation-form';
 import {
   DEFAULT_TOOLSET_NAME,
@@ -90,7 +91,7 @@ const isSignedIn = (status?: string): boolean =>
  * human-readable id (e.g. `toolsets/<bucket>/My Toolset__1.0`), unlike the
  * already-encoded `id`/`toolset` field chat's own `listToolsets()`/
  * `DialToolsetDto` returns — mirrors `encodeDeploymentId`
- * (`utils/deployment-id.ts`), which exists for the identical reason on the
+ * (`@epam/ai-dial-chat-hooks`'s `deployment-id.ts`), which exists for the identical reason on the
  * applications side.
  */
 export const encodeToolsetId = (id: string): string =>
@@ -225,7 +226,7 @@ export const navigateToolsetOAuthPopup = (
   resourceKind: OAuthResourceKind = OAuthResourceKind.Toolset,
 ): ToolsetOAuthInitiationResult => {
   const redirectUri = getToolsetRedirectUri();
-  const state = crypto.randomUUID();
+  const state = generateUUID();
   const url = buildToolsetAuthorizeUrl(auth, redirectUri, state);
   if (!url) {
     popup.close();
@@ -260,7 +261,7 @@ export const initiateOAuthLogin = (
   credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
 ): ToolsetOAuthInitiationResult => {
   const redirectUri = getToolsetRedirectUri();
-  const state = crypto.randomUUID();
+  const state = generateUUID();
   const url = buildToolsetAuthorizeUrl(auth, redirectUri, state);
   if (!url) return { type: ToolsetOAuthInitiationResultType.InvalidConfig };
 

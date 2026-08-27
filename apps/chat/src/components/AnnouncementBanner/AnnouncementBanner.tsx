@@ -1,3 +1,9 @@
+import {
+  hasAnnouncementContent,
+  hasStructuredAnnouncement,
+  sanitizeAnnouncementHtml,
+  type AnnouncementContent,
+} from '@epam/ai-dial-chat-hooks';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, StaticIconButton } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
@@ -8,12 +14,6 @@ import { AnnouncementBannerI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useAnnouncementDismissal } from '../../hooks/useAnnouncementDismissal/useAnnouncementDismissal';
 import { UserConfigStatus } from '../../types/user-config-status';
-import type { AnnouncementContent } from '../../utils/announcement-message';
-import {
-  hasAnnouncementContent,
-  hasStructuredAnnouncement,
-  sanitizeAnnouncementHtml,
-} from '../../utils/announcement-message';
 import AnnouncementsPopover from '../AnnouncementsPopover/AnnouncementsPopover';
 
 interface Props {

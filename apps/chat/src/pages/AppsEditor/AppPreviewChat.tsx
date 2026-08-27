@@ -1,12 +1,16 @@
 import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   attachmentsToDtos,
+  findDeploymentByIdOrReference,
   getConversationPath,
+  getQuickAppConversationStarters,
+  getStarterPopulateText,
   useConversationHandlers,
   useConversationStream,
 } from '@epam/ai-dial-chat-hooks';
 import {
   MessageRating,
+  generateUUID,
   MessageRole,
   ResponseFormat,
   type Attachment,
@@ -58,10 +62,7 @@ import {
 } from '../../server-api/conversations.api';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
-import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
-import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
-import { getStarterPopulateText } from '../../utils/starter-option';
 
 interface Props {
   appId: string;
@@ -199,7 +200,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         withPlaceholder.messages.length - 1,
         appId,
         attachmentDtos?.length ? { attachments: attachmentDtos } : undefined,
-        crypto.randomUUID(),
+        generateUUID(),
         CompletionMode.ContinueLastUser,
       );
     },

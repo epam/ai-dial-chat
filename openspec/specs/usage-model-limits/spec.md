@@ -2,13 +2,19 @@
 
 ## Purpose
 
-Defines the app-level integration that adds a per-model "Model limits" table to the `Usage` tab:
-the DTO-to-row adapter that turns `useUsageData()`'s already-fetched `usage.deployments` into
+Defines the integration that adds a per-model "Model limits" table to the `Usage` tab: the
+DTO-to-row adapter that turns `useUsageData()`'s already-fetched `usage.deployments` into
 `@epam/ai-dial-usage-dashboard`'s `ModelLimitsSection` rows for the fixed Last 24 hours/Last 7
 days/Last 30 days comparison, without any additional API call. The adapter owns all DTO
 interpretation (period-to-field mapping, finite/unlimited/unavailable detection, status derivation,
 formatting, and the join against `useDeployments().items`); the library only renders the rows it is
 given.
+
+The adapter functions (`mapUserUsageToModelLimits`, `mapOverallCostLimitsToPeriodStatuses`) live in
+`libs/usage-dashboard/src/utils/map-user-usage-to-model-limits.ts` (exported from
+`@epam/ai-dial-usage-dashboard`) so they can be reused by other apps hosting this tab. They accept
+host-owned callbacks (`resolveIconUrl`, `resolveDisplayName`) to keep URL construction and locale
+resolution in the app. See the `usage-dashboard-lib` capability spec for the utility API details.
 
 ## Requirements
 
@@ -183,14 +189,54 @@ status but at least one token or overall Cost limit is `Unlimited`, overall Stat
 
 ---
 
+### Requirement: Aggregate period cost cards
+
+The `mapUsageDataToDashboard` utility (in `libs/usage-dashboard`, see the `usage-dashboard-lib`
+capability) SHALL map the top-level
+`dayCostStats`, `weekCostStats`, and `monthCostStats` fields from `UserLimitStatsResponseDto` into
+`UsageLimitCardData[]` for `UsageLimitCardGroup`. A period whose stats are absent or non-finite
+SHALL be omitted from the array entirely. The card title for each period SHALL be the rolling-window
+label (`Last 24 hours`, `Last 7 days`, `Last 30 days`); the `periodDescription` field SHALL carry
+the calendar-anchor label (`Today`, `This week`, `This month`) for accessibility only and SHALL NOT
+be rendered visually.
+
+When a period's `total >= 2 ** 53` (the unlimited sentinel — Long.MAX_VALUE from the backend,
+meaning no cost limit is configured for that period), the adapter SHALL produce a card with
+`isUnlimited: true`. The library then renders only `usedLabel` (the spend so far) and the
+`Default` status badge — no progress bar, no used-of-total caption, no remaining caption, and no
+used-percent label. This is the expected behavior when an administrator has not configured a cost
+limit for the period; the absence of limit information is intentional and SHALL NOT be treated as a
+display error.
+
+#### Scenario: Unconfigured weekly limit shows spend only
+
+- **WHEN** `weekCostStats.total >= 2 ** 53` (no weekly cost limit configured)
+- **THEN** the "Last 7 days" aggregate card renders only the used spend label and the
+  `Default` (`Within limits`) badge — no progress bar, no `used of $total`, no remaining
+  amount, and no percentage
+
+#### Scenario: Configured daily limit shows full card
+
+- **WHEN** `dayCostStats.total < 2 ** 53` (a finite daily cost limit is set)
+- **THEN** the "Last 24 hours" aggregate card renders `usedLabel`, `used of $totalLabel`, a
+  progress bar, `remainingLabel`, and the used-percent label alongside the status badge
+
+#### Scenario: Period with absent stats is omitted
+
+- **WHEN** a period's stats field is absent or its `total`/`used` are non-finite
+- **THEN** no card is produced for that period and the remaining periods are unaffected
+
+---
+
 ### Requirement: Overall Cost period header indicators
 
-The adapter SHALL normalize the top-level `dayCostStats`, `weekCostStats`, and `monthCostStats` used
-by the aggregate cards into Last 24 hours, Last 7 days, and Last 30 days header statuses. It SHALL
-provide an error icon tooltip for `LimitReached`, a warning icon tooltip for `RunningLow`, and no
-icon for `WithinLimits`, `NoLimit`, or `Unavailable`. Tooltip text SHALL name its own period. A
-reached tooltip SHALL state that models cannot be used until the overall Cost limit resets,
-regardless of remaining token limits.
+The `mapOverallCostLimitsToPeriodStatuses` utility (in `libs/usage-dashboard`, see the
+`usage-dashboard-lib` capability) SHALL normalize the top-level `dayCostStats`, `weekCostStats`, and
+`monthCostStats` into Last 24 hours, Last 7 days, and Last 30 days header statuses. It SHALL provide
+an error icon tooltip for `LimitReached`, a warning icon tooltip for `RunningLow`, and no icon for
+`WithinLimits`, `NoLimit`, or `Unavailable`. Tooltip text SHALL name its own period. A reached
+tooltip SHALL state that models cannot be used until the overall Cost limit resets, regardless of
+remaining token limits.
 
 #### Scenario: Header indicator uses the same overall Cost budget as its card
 - **WHEN** top-level `weekCostStats` is finite and 80% used
@@ -233,19 +279,25 @@ minute/hour, and Requests keys SHALL only be removed if unused elsewhere.
 
 ### Requirement: Library isolation for the adapter
 
-The fixed period mapping, DTO-to-row adapter, and `UsageTab` integration SHALL live under
-`apps/chat/src/`, reusing `useUsageData` and `useDeployments()` without modification. All DTO field
-selection, unlimited-sentinel checks, status thresholds, currency/number formatting, locale/icon
-resolution, and deployment joins SHALL happen in the app adapter. `libs/usage-dashboard` SHALL
-receive only normalized rows and localized labels and SHALL NOT import app code, generated clients,
-API DTOs, contexts, feature flags, or other host/external integration details.
+All DTO field selection, unlimited-sentinel checks, status thresholds, currency/number formatting,
+locale/icon resolution, and deployment joins SHALL happen inside `libs/usage-dashboard`'s transform
+utilities (`mapUserUsageToModelLimits`, `mapOverallCostLimitsToPeriodStatuses`). The utilities
+accept host-owned callbacks (`resolveIconUrl`, `resolveDisplayName`) and a caller-supplied translate
+function for all user-visible strings, keeping app-specific URL construction and locale resolution
+out of the library. `libs/usage-dashboard` SHALL NOT import app code, app contexts, feature flags,
+routing, storage, or analytics. `ModelLimitsSection` and `UsageLimitCardGroup` receive only
+normalized rows/cards and localized labels.
+
+`UsageTab` wires the transform utilities from `@epam/ai-dial-usage-dashboard` with
+`useUsageData(getUserUsage, ...)` from `@epam/ai-dial-chat-hooks` and `useDeployments()` from the
+app context. No new context or hook is introduced.
 
 #### Scenario: Library public API stays normalized
 - **WHEN** `libs/usage-dashboard` public types are inspected
-- **THEN** they expose period-shaped presentation props but no DTO field such as `dayTokenStats`, API
-  path/client type, unlimited sentinel, locale resolver, or status threshold
+- **THEN** they expose period-shaped presentation props but no raw DTO field such as `dayTokenStats`,
+  API path/client type, unlimited sentinel, or status threshold in the component props
 
 #### Scenario: Existing feature ownership remains unchanged
 - **WHEN** the comparison table renders
-- **THEN** `useUsageData` and `useDeployments` remain the only existing owners of fetched Usage and
-  deployment state; no new context or hook is introduced
+- **THEN** `useUsageData` and `useDeployments` remain the only owners of fetched Usage and deployment
+  state; no new context or hook is introduced

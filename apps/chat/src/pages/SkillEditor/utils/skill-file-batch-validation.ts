@@ -1,19 +1,19 @@
 import {
-  SkillFileCandidateKind,
-  SkillFileValidationStatus,
-  type SkillFileBatchError,
-  type SkillFileUploadCandidate,
-  type SkillFileValidationResult,
-} from '@epam/ai-dial-skill-editor';
-import {
   isValidSkillRelativePath,
   parseSkillManifest,
   SKILL_FILE_UPLOAD_MAX_BYTES,
   SKILL_MANIFEST_FILE,
   SKILL_UPLOAD_MAX_FILES,
   SKILL_UPLOAD_MAX_TOTAL_BYTES,
-} from '../../../utils/skill';
-import { formatFileSize } from '../../../utils/string-utils';
+} from '@epam/ai-dial-chat-hooks';
+import { formatFileSize } from '@epam/ai-dial-chat-shared';
+import {
+  SkillFileCandidateKind,
+  SkillFileValidationStatus,
+  type SkillFileBatchError,
+  type SkillFileUploadCandidate,
+  type SkillFileValidationResult,
+} from '@epam/ai-dial-skill-editor';
 import type {
   SkillFileBatchValidationContext,
   SkillFileBatchValidationOutcome,

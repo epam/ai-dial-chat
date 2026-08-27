@@ -1,3 +1,4 @@
+import { buildToolsetMcpUrl } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
@@ -25,7 +26,6 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../../models/toolsets';
-import { buildToolsetMcpUrl } from '../../../utils/mcp-endpoint-url';
 import AuthSection from './AuthSection';
 
 interface Props {

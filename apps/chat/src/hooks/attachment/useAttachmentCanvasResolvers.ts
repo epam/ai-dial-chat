@@ -2,10 +2,6 @@ import type {
   UseOpenAttachmentCanvasOptions,
   UseOpenAttachmentCanvasResolvers,
 } from '@epam/ai-dial-attachment-canvas';
-import { useCallback, useMemo } from 'react';
-import { useConversationPanel } from '../../context/ConversationPanelContext';
-import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
-import { useTheme } from '../../context/ThemeContext';
 import {
   hasAttachmentTextSource,
   referenceAttachmentToPdfCanvasContent,
@@ -18,41 +14,67 @@ import {
   resolvePdfCanvasContent,
   resolveTextCanvasContent,
   resolveVisualizerCanvasContent,
-} from '../../utils/attachment-canvas';
+} from '@epam/ai-dial-chat-hooks';
+import { useCallback, useMemo } from 'react';
+import { useConversationPanel } from '../../context/ConversationPanelContext';
+import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
+import { useTheme } from '../../context/ThemeContext';
+import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
 import { resolveDialUrl } from '../../utils/dial-file';
 import { useCustomVisualizers } from './useCustomVisualizers';
 
 /*
- * Every resolver but `resolveVisualizerContent`/`resolveReferencePdfContent`
- * already matches `UseOpenAttachmentCanvasResolvers`'s shape exactly and
- * needs no per-render wrapping, so the object is built once at module scope.
+ * Every resolver wraps the shared content resolver with the app's injected
+ * DIAL-URL resolution (`attachmentCanvasUrlResolvers`); none of it depends on
+ * per-render state, so the object is built once at module scope.
  */
 const resolvers: UseOpenAttachmentCanvasResolvers = {
-  resolveImageContent: resolveImageCanvasContent,
-  resolveTextContent: resolveTextCanvasContent,
-  resolveMarkdownContent: resolveMarkdownCanvasContent,
-  resolveCodeContent: resolveCodeCanvasContent,
-  resolveHtmlContent: resolveHtmlCanvasContent,
-  resolvePdfContent: resolvePdfCanvasContent,
-  resolveOoxmlContent: resolveOoxmlCanvasContent,
-  resolveJsonContent: resolveJsonCanvasContent,
+  resolveImageContent: (attachment) =>
+    resolveImageCanvasContent(attachment, attachmentCanvasUrlResolvers),
+  resolveTextContent: (attachment) =>
+    resolveTextCanvasContent(attachment, attachmentCanvasUrlResolvers),
+  resolveMarkdownContent: (attachment) =>
+    resolveMarkdownCanvasContent(attachment, attachmentCanvasUrlResolvers),
+  resolveCodeContent: (attachment, language) =>
+    resolveCodeCanvasContent(
+      attachment,
+      attachmentCanvasUrlResolvers,
+      language,
+    ),
+  resolveHtmlContent: (attachment) =>
+    resolveHtmlCanvasContent(attachment, attachmentCanvasUrlResolvers),
+  resolvePdfContent: (attachment) =>
+    resolvePdfCanvasContent(attachment, attachmentCanvasUrlResolvers),
+  resolveOoxmlContent: (attachment, format) =>
+    resolveOoxmlCanvasContent(attachment, attachmentCanvasUrlResolvers, format),
+  resolveJsonContent: (attachment) =>
+    resolveJsonCanvasContent(attachment, attachmentCanvasUrlResolvers),
   /* The app resolver's `themeId` is required; the lib's contract allows it to
    * be omitted, so a missing theme falls back to an empty string. */
   resolveVisualizerContent: (attachment, visualizer, themeId) =>
-    resolveVisualizerCanvasContent(attachment, visualizer, themeId ?? ''),
+    resolveVisualizerCanvasContent(
+      attachment,
+      attachmentCanvasUrlResolvers,
+      visualizer,
+      themeId ?? '',
+    ),
   /* `referenceAttachmentToPdfCanvasContent` takes an `AttachmentResource`
    * (type/url/title), not a `DisplayAttachment` — the hook only calls this
    * resolver when `attachment.referenceUrl` is set, so the reference URL
    * (not `attachment.url`, which is null in that branch) is what gets
    * checked for a PDF page reference. */
   resolveReferencePdfContent: (attachment) =>
-    referenceAttachmentToPdfCanvasContent({
-      type: attachment.contentType,
-      url: attachment.referenceUrl ?? '',
-      title: attachment.name,
-    }),
+    referenceAttachmentToPdfCanvasContent(
+      {
+        type: attachment.contentType,
+        url: attachment.referenceUrl ?? '',
+        title: attachment.name,
+      },
+      attachmentCanvasUrlResolvers,
+    ),
   resolveContentUrl: resolveDialUrl,
-  hasTextSource: hasAttachmentTextSource,
+  hasTextSource: (attachment) =>
+    hasAttachmentTextSource(attachment, attachmentCanvasUrlResolvers),
 };
 
 /**

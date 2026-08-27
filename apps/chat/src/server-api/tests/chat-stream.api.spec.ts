@@ -1,11 +1,16 @@
+import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getBrowserTimezone } from '../../utils/browser-timezone';
 import { setCsrfToken } from '../base';
 import { stopCompletion, streamCompletion } from '../chat-stream.api';
 
-vi.mock('../../utils/browser-timezone', () => ({
-  getBrowserTimezone: vi.fn(() => undefined),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    getBrowserTimezone: vi.fn(() => undefined),
+  };
+});
 
 describe('chat-stream api', () => {
   const fetchMock = vi.fn();

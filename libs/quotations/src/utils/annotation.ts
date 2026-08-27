@@ -13,7 +13,7 @@ import type {
 
 const CITATION_HIGHLIGHT_STYLE: HighlightStyle = {
   backgroundColor: 'transparent',
-  borderColor: 'var(--stroke-info, #124ACE)',
+  borderColor: 'var(--stroke-accent, #1D4ED8)',
   borderWidth: '2px',
   opacity: 0.5,
   hoverOpacity: 0.5,

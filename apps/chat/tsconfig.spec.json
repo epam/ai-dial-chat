@@ -35,5 +35,10 @@
     "src/**/*.spec.jsx",
     "src/**/*.d.ts",
     "src/**/*.json"
+  ],
+  "references": [
+    {
+      "path": "../../libs/attachment-canvas/tsconfig.lib.json"
+    }
   ]
 }
