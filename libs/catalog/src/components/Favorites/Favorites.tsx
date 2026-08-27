@@ -57,6 +57,7 @@ export const Favorites: FC<FavoritesProps> = ({
   totalCount,
   title = 'Your Favorites',
   onToggleFavorite,
+  isFavoriteVisible,
   onItemClick,
   styles: favoritesStyles,
   isLeaving,
@@ -461,6 +462,7 @@ export const Favorites: FC<FavoritesProps> = ({
               key={`${favPage}-${item.id}`}
               item={item}
               onToggle={onToggleFavorite}
+              isFavoriteVisible={isFavoriteVisible}
               onClick={onItemClick}
               addToFavoritesAriaLabel={addToFavoritesAriaLabel}
               removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
