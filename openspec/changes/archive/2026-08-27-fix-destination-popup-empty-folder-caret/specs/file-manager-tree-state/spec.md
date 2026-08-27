@@ -1,9 +1,5 @@
-# file-manager-tree-state Specification
+## MODIFIED Requirements
 
-## Purpose
-
-Ownership of `expandedPaths` and `loadedPaths` in `useDialFileManager`, and the tree header i18n it passes down.
-## Requirements
 ### Requirement: useDialFileManager owns expandedPaths and loadedPaths
 
 `useDialFileManager` SHALL expose `expandedPaths: Set<string>` and `loadedPaths: Set<string>` as controlled tree state passed to `DialFileManager`. `useDialFileListing` SHALL own `expandedPaths` state and SHALL derive `loadedPaths` from the shared per-folder listing cache for the union of outer-tree expanded paths and destination-popup-observed paths.
@@ -50,27 +46,7 @@ State ownership: `useDialFileListing` owns `expandedPaths`, destination-popup ca
 - **THEN** `expandedPaths`, destination-popup candidate/loading paths, and the listing cache are reset
 - **AND** derived `loadedPaths` is empty and the tree on the new tab starts fully collapsed
 
-### Requirement: DialFileManagerShell passes tree header i18n via treeOptions
-
-`DialFileManagerShell` SHALL pass `treeOptions` to `DialFileManager` with a localized header title per active tab using `dialFileManager.*` i18n keys. The tree header SHALL use the same tab-label keys already used for the tab selector to avoid key duplication.
-
-i18n keys for tree headers:
-- My Files: `dialFileManager.myFiles.treeHeader`
-- Shared: `dialFileManager.shared.treeHeader`
-- Organization: `dialFileManager.organization.treeHeader`
-
-RTL: `DialFileManager` ui-kit component handles tree layout direction; no host-level RTL handling required.
-Memoisation: `treeOptions` object in `useMemo` keyed on active tab.
-
-#### Scenario: Tree header shows tab-specific label
-
-- **WHEN** the My Files tab is active and the tree panel is visible
-- **THEN** the tree header displays the value of `dialFileManager.myFiles.treeHeader`
-
-#### Scenario: Tree header updates on tab switch
-
-- **WHEN** user switches from My Files to Shared tab
-- **THEN** the tree header updates to the value of `dialFileManager.shared.treeHeader`
+## ADDED Requirements
 
 ### Requirement: DialFileManagerShell forwards destination-popup tree state
 

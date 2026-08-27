@@ -244,7 +244,7 @@ export interface UseDialFileManagerResult {
 
   /** Tree: controlled set of expanded folder virtual paths. */
   expandedPaths: Set<string>;
-  /** Tree: virtual paths whose children are already in the cache (derived). */
+  /** Tree: expanded or destination-popup virtual paths whose children are already cached. */
   loadedPaths: Set<string>;
   /** Tree: called by DialFileManager when a folder is expanded/collapsed. */
   onExpandedPathsChange: (paths: Set<string>) => void;

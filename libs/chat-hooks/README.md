@@ -849,6 +849,8 @@ const { items, isLoading, path, onPathChange, onSearchFiles, searchResults } =
 
 **Returns** (`UseDialFileListingResult`): `items`, `isLoading`, `error`, `path`/`folderPath`/`onPathChange`, `retry`, search (`onSearchFiles`/`isSearching`/`searchResults`/`clearSearchResults`), tree state (`expandedPaths`/`loadedPaths`/`onExpandedPathsChange`), folder-popup preload state, `sharedWithMeIds`/`sharedByMePaths`/`currentFolder`, and the cache-ownership seam other sub-hooks consume (`cache`, `listingPermissionsCache`, `sharedRootMetaRef`, `setFolderPath`, `invalidateFolders`, `mergeCreatedFolder`, `bumpRetry`).
 
+`loadedPaths` includes both expanded outer-tree folders and destination-popup folders whose listings are present in the cache. `folderPopupLoadingPaths` contains destination-popup folders whose listings are still being fetched.
+
 ### useDialFileMetadata
 
 Fetches and holds single-file metadata for a file-details popup — the only sub-hook with no interaction with the shared listing cache.

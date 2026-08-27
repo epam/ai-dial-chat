@@ -37,11 +37,6 @@ type DestinationFolderPopupOptions =
     filesLoading?: boolean;
   };
 
-const normalizeVirtualFolderPath = (value: string): string => {
-  const trimmed = value.replace(/\/+$/, '');
-  return trimmed || '/';
-};
-
 interface OverlayFlags {
   isDownloading: boolean;
   isDeleting: boolean;
@@ -296,6 +291,7 @@ const DialFileManagerShell: FC<Props> = ({
       header: labels.treeHeaderByTab[activeTab],
       expandedPaths,
       loadedPaths,
+      loadingPaths: folderPopupLoadingPaths,
       onExpandedPathsChange,
       actionLabels,
     }),
@@ -304,6 +300,7 @@ const DialFileManagerShell: FC<Props> = ({
       activeTab,
       expandedPaths,
       loadedPaths,
+      folderPopupLoadingPaths,
       onExpandedPathsChange,
       actionLabels,
     ],
@@ -393,9 +390,7 @@ const DialFileManagerShell: FC<Props> = ({
 
   const isDestinationFolderLoading =
     destinationFolderPath != null &&
-    folderPopupLoadingPaths.has(
-      normalizeVirtualFolderPath(destinationFolderPath),
-    );
+    folderPopupLoadingPaths.has(destinationFolderPath);
 
   const disabledDestinationPath = isDestinationFolderLoading
     ? destinationFolderPath
