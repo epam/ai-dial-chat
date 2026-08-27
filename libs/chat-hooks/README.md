@@ -1677,10 +1677,21 @@ const { filePaths, files } = buildSkillFilesPayload(fileTreeNodes, filesContent)
 Owns the edit-mode skill download/unpack/parse flow: the in-memory supporting-file map, the loaded manifest values and frontmatter, the concurrency ETag, and the `SkillEditorLoadState` machine driving a skill-editing form's loading/error/forbidden/not-found presentation. Create mode never leaves `Loaded` and starts with empty state. Accepts an already-configured `client` (the host's own `downloadSkill`/`downloadSkillFile`/`listSkillFiles` wrappers) rather than importing or configuring one itself.
 
 ```ts
-import { useSkillEditorLoad, SkillEditorLoadState } from '@epam/ai-dial-chat-hooks';
-import { downloadSkill, downloadSkillFile, listSkillFiles } from './server-api/skills.api';
+import {
+  useSkillEditorLoad,
+  SkillEditorLoadState,
+  type SkillEditorLoadClient,
+} from '@epam/ai-dial-chat-hooks';
 
-const client = { downloadSkill, downloadSkillFile, listSkillFiles };
+// Host-owned adapter over the generated `SkillsApi` client — see
+// `SkillEditorLoadClient` for the exact shape. The library never imports or
+// configures a client itself.
+const client: SkillEditorLoadClient = {
+  downloadSkill: (bucket, path) => skillsApi.downloadSkill(bucket, path),
+  downloadSkillFile: (bucket, path, filePath) =>
+    skillsApi.downloadSkillFile(bucket, path, filePath),
+  listSkillFiles: (params) => skillsApi.listSkillFiles(params),
+};
 
 const { loadState, loadedValues, files, filesContentRef, retryLoad } =
   useSkillEditorLoad({ isEditMode, bucket, skillPath, client });
@@ -1688,6 +1699,57 @@ const { loadState, loadedValues, files, filesContentRef, retryLoad } =
 if (loadState === SkillEditorLoadState.Loading) {
   // render a loading state
 }
+```
+
+### useSkillEditorSubmit
+
+Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself.
+
+```ts
+import {
+  useSkillEditorSubmit,
+  type SkillEditorSubmitClient,
+} from '@epam/ai-dial-chat-hooks';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+
+// Host-owned adapter over the generated `SkillsApi` client — see
+// `SkillEditorSubmitClient` for the exact shape.
+const client: SkillEditorSubmitClient = {
+  createSkill: (bucket, path, skillManifest, filePaths, files) =>
+    skillsApi.createSkill(bucket, path, skillManifest, filePaths, files),
+  updateSkill: (bucket, path, skillManifest, filePaths, files, ifMatch) =>
+    skillsApi.updateSkill(bucket, path, skillManifest, filePaths, files, ifMatch),
+};
+
+const { phase, errors, submitError, conflict, clearConflict, handleSubmit } =
+  useSkillEditorSubmit({
+    bucket,
+    isEditMode,
+    files,
+    filesContentRef,
+    frontmatterRef,
+    loadedPathRef,
+    etagRef,
+    returnUrl,
+    refetchSkills,
+    client,
+    messages: {
+      required: 'Required',
+      nameInvalid: 'Invalid name',
+      nameConflict: 'A skill with this name already exists',
+      archiveTooLarge: 'The uploaded content is too large',
+      serviceUnavailable: 'Service is temporarily unavailable',
+      pathInvalid: 'Invalid path',
+      saveError: 'Could not save the skill',
+      saveSuccessTitle: 'Skill created',
+      createSuccess: (name) => `"${name}" has been created.`,
+      updateSuccessTitle: 'Skill updated',
+      updateSuccess: (name) => `"${name}" has been updated.`,
+      conflictMessage: 'Someone else changed this skill',
+    },
+    onNavigate: (url) => navigate(url),
+    onNotify: (notification) => showNotification(notification),
+  });
 ```
 
 ### useSkillFileActions

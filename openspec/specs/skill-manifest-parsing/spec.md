@@ -2,14 +2,14 @@
 
 ## Purpose
 
-Defines `apps/chat/src/utils/skill-manifest.ts`'s `parseSkillManifest`: the lenient frontmatter/body split used by the details panel's Content tab and preview paths, its degradation behavior for missing or malformed frontmatter, and its distinction from the Skill Builder's own separate, stricter manifest parser.
+Defines `libs/chat-hooks/src/skill/skill-manifest.ts`'s `parseSkillManifestDocument`: the lenient frontmatter/body split used by the Catalog view's Content tab and preview paths, its degradation behavior for missing or malformed frontmatter, and its distinction from the Skill Editor's own separate, stricter manifest parser (`parseSkillManifest` in `libs/chat-hooks/src/skill/skill.ts`, which throws when a manifest has no frontmatter block, since the editor always writes one).
 
 ## Requirements
 
 
-### Requirement: `parseSkillManifest` splits a manifest into frontmatter and body
+### Requirement: `parseSkillManifestDocument` splits a manifest into frontmatter and body
 
-`apps/chat/src/utils/skill-manifest.ts` SHALL export `parseSkillManifest(raw: string): SkillManifest`, where `SkillManifest` is `{ name?: string; description?: string; about?: SkillAboutDetails; body: string }`.
+`libs/chat-hooks/src/skill/skill-manifest.ts` SHALL export `parseSkillManifestDocument(raw: string): SkillManifestDocument`, where `SkillManifestDocument` is `{ name?: string; description?: string; about?: SkillAboutDetails; body: string }`.
 
 The split SHALL be a leading-fence scan, not a YAML parse of the whole file:
 
@@ -19,7 +19,7 @@ The split SHALL be a leading-fence scan, not a YAML parse of the whole file:
 
 `body` SHALL never be `undefined`: a manifest that is nothing but frontmatter yields an empty-string body.
 
-Parsing SHALL use the `yaml` package. `yaml` SHALL be listed in the root `package.json` `dependencies` (it is currently a `devDependencies` entry at `2.8.3`).
+Parsing SHALL use the `yaml` package, declared as a `dependencies` entry of `libs/chat-hooks/package.json`.
 
 #### Scenario: Manifest with frontmatter
 
@@ -100,14 +100,14 @@ Values SHALL be type-checked after parsing:
 
 ### Requirement: A malformed manifest degrades to body-only, never to a failure
 
-A `yaml` parse throw SHALL be caught inside `parseSkillManifest` and downgraded to the no-frontmatter result: the **entire** `raw` string — fence included — becomes `body`, and no frontmatter field is populated. `parseSkillManifest` SHALL NOT throw for any string input.
+A `yaml` parse throw SHALL be caught inside `parseSkillManifestDocument` and downgraded to the no-frontmatter result: the **entire** `raw` string — fence included — becomes `body`, and no frontmatter field is populated. `parseSkillManifestDocument` SHALL NOT throw for any string input.
 
 Parse failure is strictly weaker than fetch failure. A manifest that downloaded successfully but failed to parse SHALL still produce a `promptContent`, so the Content tab renders. It SHALL NOT cause `onFetchDetails` to resolve `undefined`, and it SHALL NOT surface a user-visible notification — the body is intact and no information was lost.
 
 #### Scenario: Malformed YAML in the fence
 
 - **WHEN** the frontmatter contains unbalanced quotes that make `yaml.parse` throw
-- **THEN** `parseSkillManifest` returns the whole input as `body` with no frontmatter fields, and does not throw
+- **THEN** `parseSkillManifestDocument` returns the whole input as `body` with no frontmatter fields, and does not throw
 
 #### Scenario: Parse failure still renders Content
 
@@ -118,11 +118,11 @@ Parse failure is strictly weaker than fetch failure. A manifest that downloaded 
 
 ### Requirement: The size guard runs before the parse
 
-`readSkillManifest` (`apps/chat/src/utils/map-skill-to-catalog-item.ts`) SHALL keep its existing behaviour unchanged: it checks the declared `content-length` and the decoded byte length against `SKILL_MANIFEST_MAX_BYTES` and returns `null` for an oversized body, before any decoding.
+`readSkillManifest` (`libs/chat-hooks/src/catalog/map-skill-to-catalog-item.ts`) SHALL keep its existing behaviour unchanged: it checks the declared `content-length` and the decoded byte length against `SKILL_MANIFEST_MAX_BYTES` (via `readSkillFileBytes`) and returns `null` for an oversized body, before any decoding.
 
-`parseSkillManifest` SHALL run only on a string that guard already accepted. An oversized manifest SHALL never reach the YAML parser.
+`parseSkillManifestDocument` SHALL run only on a string that guard already accepted. An oversized manifest SHALL never reach the YAML parser.
 
 #### Scenario: Oversized manifest is never parsed
 
 - **WHEN** a skill's `SKILL.md` exceeds `SKILL_MANIFEST_MAX_BYTES`
-- **THEN** `readSkillManifest` returns `null`, `parseSkillManifest` is not called, and the panel behaves as it does today for an unreadable manifest
+- **THEN** `readSkillManifest` returns `null`, `parseSkillManifestDocument` is not called, and the panel behaves as it does today for an unreadable manifest
