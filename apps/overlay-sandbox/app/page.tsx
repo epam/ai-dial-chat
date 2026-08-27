@@ -33,6 +33,12 @@ enum OverlayCases {
   disabledDefaultButtons = '/cases/overlay/disabled-default-buttons',
   featuresData = '/cases/overlay/features-data',
   signInEmail = '/cases/overlay/sign-in-email',
+  enabledLikesSandbox = '/cases/overlay/enabled-likes-sandbox',
+  enabledHideCustomAppCreationSandbox = '/cases/enabled-hide-custom-app-creation-sandbox',
+  enabledEditAllAssistantContentSandbox = '/cases/overlay/enabled-edit-all-assistant-content-sandbox',
+  enabledPanelTogglesSandbox = '/cases/overlay/enabled-panel-toggles-sandbox',
+  enabledUserMessageAlignEndSandbox = '/cases/overlay/enabled-user-message-align-end-sandbox',
+  enabledCompareModeDisabledSandbox = '/cases/overlay/enabled-compare-mode-disabled-sandbox',
 }
 
 export default async function Index() {

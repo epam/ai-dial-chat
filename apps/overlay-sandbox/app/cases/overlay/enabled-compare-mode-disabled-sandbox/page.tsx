@@ -11,7 +11,7 @@ const overlayOptions = {
     Feature.Header,
     Feature.ConversationsSection,
     Feature.CompareModeDisabled,
-    Feature.TopSettings
+    Feature.TopSettings,
   ],
 };
 

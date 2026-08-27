@@ -15,7 +15,7 @@ const overlayOptions = {
     Feature.TopClearConversation,
     Feature.TopSettings,
     Feature.TopChatModelSettings,
-    Feature.TopChatInfo
+    Feature.TopChatInfo,
   ],
 };
 
