@@ -1,8 +1,6 @@
 .avatar {
-  /* No DIAL token covers the initials badge, so the palette lives here as the
-     overridable default rather than in a host Tailwind config. */
-  background: var(--np-avatar-bg, #60d239);
-  color: var(--np-avatar-text, #000000);
+  background: var(--np-avatar-bg, var(--bg-control-accent, #1d4ed8));
+  color: var(--np-avatar-text, var(--text-control-permanent, #fcfcfc));
 }
 
 .label {

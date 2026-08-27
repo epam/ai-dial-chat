@@ -34,6 +34,7 @@ export const Catalog: FC<CatalogProps> = ({
   isPrimaryActionVisible,
   onShare,
   isPublishVisible,
+  isPublishPrimary,
   getPublishHistory,
   publishFolderItems,
   publishExpandedPaths,
@@ -49,6 +50,7 @@ export const Catalog: FC<CatalogProps> = ({
   onFetchExistingRules,
   shareOverlay,
   isShareVisible,
+  isSharePrimary,
   onFetchDetails,
   onEdit,
   onDownload,
@@ -546,6 +548,7 @@ export const Catalog: FC<CatalogProps> = ({
           isPrimaryActionVisible={isPrimaryActionVisible}
           onShare={onShare}
           isPublishVisible={isPublishVisible}
+          isPublishPrimary={isPublishPrimary}
           getPublishHistory={getPublishHistory}
           publishFolderItems={publishFolderItems}
           publishExpandedPaths={publishExpandedPaths}
@@ -561,6 +564,7 @@ export const Catalog: FC<CatalogProps> = ({
           onFetchExistingRules={onFetchExistingRules}
           shareOverlay={shareOverlay}
           isShareVisible={isShareVisible}
+          isSharePrimary={isSharePrimary}
           onEdit={onEdit}
           onDownload={onDownload}
           isDownloadVisible={isDownloadVisible}

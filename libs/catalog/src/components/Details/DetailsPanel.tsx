@@ -198,6 +198,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   isPrimaryActionVisible,
   onShare,
   isPublishVisible,
+  isPublishPrimary,
   getPublishHistory,
   publishFolderItems = EMPTY_PUBLISH_FOLDERS,
   publishExpandedPaths,
@@ -213,6 +214,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onFetchExistingRules,
   shareOverlay,
   isShareVisible,
+  isSharePrimary,
   onEdit,
   onDownload,
   isDownloadVisible,
@@ -1252,7 +1254,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onShare={onShare}
                 shareOverlay={shareOverlay}
                 isShareVisible={isShareVisible}
+                isSharePrimary={isSharePrimary}
                 isPublishVisible={isPublishVisible}
+                isPublishPrimary={isPublishPrimary}
                 onOpenPublish={handleOpenPublish}
                 isUnpublishVisible={isUnpublishVisible}
                 hasPublishedFolders={hasPublishedFolders}
