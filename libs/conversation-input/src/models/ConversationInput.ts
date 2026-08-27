@@ -318,7 +318,7 @@ export interface ConversationInputProps {
   toolsMenuTitle?: string;
   /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
   toolsBackLabel?: string;
-  /** Labels for the selected-tools chip row shown in the input when tools are active. */
+  /** Labels for the tool chips rendered in the input. */
   toolsChipLabels?: ToolsChipLabels;
   /**
    * When provided, a "Prompts" item is added to the `+` menu above "Chat

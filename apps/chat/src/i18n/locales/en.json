@@ -1097,9 +1097,6 @@
   },
   "tools": {
     "menuTitle": "Tools",
-    "deepResearchFallback": "Deep research",
-    "selectedCount_one": "{{count}} tool",
-    "selectedCount_other": "{{count}} tools",
     "removeTool": "Remove {{label}}"
   },
   "conversationInput": {

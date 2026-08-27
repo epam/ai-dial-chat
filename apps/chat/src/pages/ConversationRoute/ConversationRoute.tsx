@@ -43,7 +43,6 @@ import {
   PromptSelectorI18nKeys,
   ToolsI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
@@ -62,7 +61,6 @@ import { resolveLocalizedText } from '../../utils/locale';
  */
 const ConversationRoute: FC = () => {
   const { t } = useTranslation();
-  const { config } = useAppConfig();
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { pathname, state } = useLocation();
@@ -162,12 +160,8 @@ const ConversationRoute: FC = () => {
 
   const { toolsMenuItems, onToolToggle, toolConfigurationValue } = useToolsMenu(
     {
-      deepResearchToolId: config.deepResearchToolId,
       selectedItemId,
       selectedDeploymentConfiguration,
-      labels: {
-        deepResearchFallback: t(ToolsI18nKeys.DeepResearchFallback),
-      },
       toolIcon: <IconTelescope size={DIAL_ICON_SIZE.SM} aria-hidden />,
     },
   );
@@ -332,7 +326,6 @@ const ConversationRoute: FC = () => {
         onToolToggle={onToolToggle}
         toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
         toolsChipLabels={{
-          countLabel: (count) => t(ToolsI18nKeys.SelectedCount, { count }),
           removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
         }}
       >

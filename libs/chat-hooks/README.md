@@ -48,18 +48,18 @@ const { usage, isLoading, usageError } = useUsageData(getUserUsage, isEnabled);
 
 **Parameters**:
 
-| Name           | Type                                            | Description                                                                              |
-| -------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `getUserUsage` | `() => Promise<UserLimitStatsResponseDto>`      | Host-configured fetch function — the hook never constructs or imports a client itself.   |
-| `enabled`      | `boolean`                                       | When `false`, the fetch is skipped and `isLoading` is immediately `false`. Defaults to `true`. |
+| Name           | Type                                       | Description                                                                                    |
+| -------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `getUserUsage` | `() => Promise<UserLimitStatsResponseDto>` | Host-configured fetch function — the hook never constructs or imports a client itself.         |
+| `enabled`      | `boolean`                                  | When `false`, the fetch is skipped and `isLoading` is immediately `false`. Defaults to `true`. |
 
 **Returns** (`UseUsageDataResult`):
 
-| Name         | Type                                           | Description                                        |
-| ------------ | ---------------------------------------------- | -------------------------------------------------- |
-| `usage`      | `UserLimitStatsResponseDto \| undefined`       | The fetched stats, or `undefined` while loading.   |
-| `isLoading`  | `boolean`                                      | `true` while the fetch is in flight.               |
-| `usageError` | `Error \| undefined`                           | Set when the `getUserUsage` call rejects.          |
+| Name         | Type                                     | Description                                      |
+| ------------ | ---------------------------------------- | ------------------------------------------------ |
+| `usage`      | `UserLimitStatsResponseDto \| undefined` | The fetched stats, or `undefined` while loading. |
+| `isLoading`  | `boolean`                                | `true` while the fetch is in flight.             |
+| `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.        |
 
 ### useConversationScroll
 
@@ -252,7 +252,7 @@ const ShareLinkPanel = ({
 
 ### useToolsMenu
 
-Derives the "deep research" tools submenu from the active deployment's configuration schema and the operator-configured tool id: detects the boolean-typed schema property, manages toggle state, resets on deployment change, and exposes a stable `toolConfigurationValue` record for inclusion in completion requests. Headless: the host supplies the translated fallback label via `labels` and the tool icon via `toolIcon`.
+Derives the tools submenu from the active deployment's configuration schema: every boolean-typed property becomes a toggle, labelled by its schema `title` (falling back to a humanized property key). Manages toggle state, resets on deployment change, and exposes a stable `toolConfigurationValue` record for inclusion in completion requests. Headless: the host supplies the tool icon via `toolIcon`.
 
 ```tsx
 import {
@@ -289,13 +289,11 @@ const ToolsMenu = ({ params }: { params: UseToolsMenuParams }) => {
 
 **Parameters**: `useToolsMenu(params: UseToolsMenuParams)`
 
-| Name                              | Type                                    | Description                                                                                                          |
-| --------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `deepResearchToolId`              | `string \| null`                        | Operator-configured tool id; `null` yields an empty menu.                                                            |
-| `selectedItemId`                  | `string \| null`                        | Selected deployment id; changing it resets toggle state to the schema default.                                       |
-| `selectedDeploymentConfiguration` | `DeploymentConfigurationSchema \| null` | JSON-schema for the selected deployment; `null` yields an empty menu.                                                |
-| `labels`                          | `Partial<ToolsMenuLabels>`              | Override for the fallback label. Falls back to English `'Deep research'` only when the host omits `labels` entirely. |
-| `toolIcon`                        | `ReactNode`                             | Icon element for the tool item. Defaults to `null`.                                                                  |
+| Name                              | Type                                    | Description                                                                    |
+| --------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------ |
+| `selectedItemId`                  | `string \| null`                        | Selected deployment id; changing it resets toggle state to the schema default. |
+| `selectedDeploymentConfiguration` | `DeploymentConfigurationSchema \| null` | JSON-schema for the selected deployment; `null` yields an empty menu.          |
+| `toolIcon`                        | `ReactNode`                             | Icon element rendered on every tool item. Defaults to `null`.                  |
 
 **Returns** (`UseToolsMenuResult`): `{ toolsMenuItems: ToolMenuItem[], onToolToggle, toolConfigurationValue: Record<string, boolean>, restoreToolConfiguration }` — `restoreToolConfiguration` re-applies a persisted tool-config record (e.g. from the last user message) on conversation load.
 

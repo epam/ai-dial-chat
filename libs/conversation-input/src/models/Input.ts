@@ -69,11 +69,9 @@ export interface ModelSelectorLabels {
   unavailableTooltip?: string;
 }
 
-/** Labels for the selected-tools chip row that appears in the input when tools are active. */
+/** Labels for the tool chips rendered in the conversation input. */
 export interface ToolsChipLabels {
-  /** Formats the consolidated count label for the mobile chip. Receives the number of selected tools. Defaults to English pluralization. */
-  countLabel?: (count: number) => string;
-  /** Returns the accessible label for the close button on a desktop chip. Receives the tool label. Defaults to `"Remove {toolLabel}"`. */
+  /** Returns the accessible label for a chip's × button, which drops the tool from the input. Receives the tool label. Defaults to `"Remove {toolLabel}"`. */
   removeLabel?: (toolLabel: string) => string;
 }
 
@@ -261,7 +259,7 @@ export interface InputProps {
   toolsMenuTitle?: string;
   /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
   toolsBackLabel?: string;
-  /** Labels for the selected-tools chip row shown in the input when tools are active. */
+  /** Labels for the tool chips rendered in the input. */
   toolsChipLabels?: ToolsChipLabels;
   /**
    * When provided, a "Prompts" item is added to the `+` menu above "Chat
