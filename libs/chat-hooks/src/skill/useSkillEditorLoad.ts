@@ -1,11 +1,7 @@
-import type { SkillMetadataItemDto } from '@epam/ai-dial-chat-api-client';
-import {
-  parseSkillManifest,
-  SKILL_MANIFEST_FILE,
-  stripSurroundingSlashes,
-  unpackSkillArchive,
-  type SkillFileContent,
-} from '@epam/ai-dial-chat-hooks';
+import type {
+  SkillFileListResponseDto,
+  SkillMetadataItemDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   SkillFileNodeKind,
   type SkillEditorValues,
@@ -13,14 +9,48 @@ import {
 } from '@epam/ai-dial-skill-editor';
 import type { Dispatch, SetStateAction } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { getApiErrorStatus } from '../../../server-api/api-error';
+import { getApiErrorStatus } from '../api-error/api-error';
+import { stripSurroundingSlashes } from '../shared/string-utils';
 import {
-  downloadSkill,
-  downloadSkillFile,
-  listSkillFiles,
-} from '../../../server-api/skills.api';
-import { SkillEditorLoadState } from '../../../types/skill-editor-load-state';
-import { nameFromPath } from '../utils/skill-file-tree';
+  nameFromPath,
+  parseSkillManifest,
+  SKILL_MANIFEST_FILE,
+  unpackSkillArchive,
+} from './skill';
+import type { SkillFileContent } from './skill-file-preview';
+
+/** Edit-mode load state for a skill-authoring form; create mode never leaves `Loaded`. */
+export enum SkillEditorLoadState {
+  /** The edit-mode download/parse flow is in flight. */
+  Loading = 'loading',
+  /** The skill loaded successfully (or create mode, which starts here). */
+  Loaded = 'loaded',
+  /** The download/parse flow failed for a reason other than 403/404. */
+  Error = 'error',
+  /** The caller lacks permission to read the skill. */
+  Forbidden = 'forbidden',
+  /** The skill no longer exists at the given path. */
+  NotFound = 'not-found',
+}
+
+/** Already-configured DIAL Core download operations `useSkillEditorLoad` needs. */
+export interface SkillEditorLoadClient {
+  /** Downloads the whole-skill ZIP archive. */
+  downloadSkill: (bucket: string, path: string) => Promise<Response>;
+  /** Downloads one file within the skill (the manifest or a supporting file). */
+  downloadSkillFile: (
+    bucket: string,
+    path: string,
+    filePath: string,
+  ) => Promise<Response>;
+  /** Lists the skill's files when the whole-skill ZIP route is unusable. */
+  listSkillFiles: (params: {
+    bucket: string;
+    path?: string;
+    filePath: string;
+    recursive?: boolean;
+  }) => Promise<SkillFileListResponseDto>;
+}
 
 interface LoadedSkill {
   etag: string;
@@ -54,10 +84,11 @@ const resolveSkillFilePath = (
 };
 
 const loadSkillArchive = async (
+  client: SkillEditorLoadClient,
   bucket: string,
   skillPath: string,
 ): Promise<LoadedSkill> => {
-  const response = await downloadSkill(bucket, skillPath);
+  const response = await client.downloadSkill(bucket, skillPath);
   const etag = response.headers.get('etag');
   if (!etag) throw new InvalidSkillArchiveError('Skill ETag is missing');
 
@@ -71,12 +102,13 @@ const loadSkillArchive = async (
 };
 
 const loadSkillFiles = async (
+  client: SkillEditorLoadClient,
   bucket: string,
   skillPath: string,
 ): Promise<LoadedSkill> => {
   const [manifestResponse, listing] = await Promise.all([
-    downloadSkillFile(bucket, skillPath, SKILL_MANIFEST_FILE),
-    listSkillFiles({
+    client.downloadSkillFile(bucket, skillPath, SKILL_MANIFEST_FILE),
+    client.listSkillFiles({
       bucket,
       path: skillPath,
       filePath: '',
@@ -100,7 +132,7 @@ const loadSkillFiles = async (
     );
   const downloadedFiles = await Promise.all(
     fileItems.map(async ({ path }) => {
-      const response = await downloadSkillFile(bucket, skillPath, path);
+      const response = await client.downloadSkillFile(bucket, skillPath, path);
       return [path, new Uint8Array(await response.arrayBuffer())] as const;
     }),
   );
@@ -112,21 +144,37 @@ const loadSkillFiles = async (
   };
 };
 
-interface UseSkillEditorLoadParams {
+/** Parameters accepted by {@link useSkillEditorLoad}. */
+export interface UseSkillEditorLoadParams {
+  /** Whether the form is editing an existing skill rather than creating a new one. */
   isEditMode: boolean;
+  /** DIAL Core bucket holding the skill. Load is skipped until this resolves. */
   bucket: string | undefined;
+  /** Path to the skill within `bucket`. */
   skillPath: string | null | undefined;
+  /** Already-configured download operations. */
+  client: SkillEditorLoadClient;
 }
 
-interface UseSkillEditorLoadResult {
+/** Return value of {@link useSkillEditorLoad}. */
+export interface UseSkillEditorLoadResult {
+  /** Current load-state machine value driving the form's presentation. */
   loadState: SkillEditorLoadState;
+  /** The loaded (or, in create mode, seeded) manifest values. */
   loadedValues: SkillEditorValues | undefined;
+  /** Updates `loadedValues`, e.g. after a manifest import. */
   setLoadedValues: Dispatch<SetStateAction<SkillEditorValues | undefined>>;
+  /** The loaded supporting-file tree. */
   files: SkillFileTreeNode[];
+  /** Updates `files`, e.g. after a batch commit or node removal. */
   setFiles: Dispatch<SetStateAction<SkillFileTreeNode[]>>;
+  /** In-memory bytes for every supporting file, keyed by relative path. */
   filesContentRef: React.MutableRefObject<Map<string, SkillFileContent>>;
+  /** The loaded manifest's full parsed frontmatter, including fields the form never renders. */
   frontmatterRef: React.MutableRefObject<Record<string, unknown>>;
+  /** The concurrency ETag from the load, sent back as `If-Match` on save. */
   etagRef: React.MutableRefObject<string | undefined>;
+  /** The skill path the currently loaded state belongs to. */
   loadedPathRef: React.MutableRefObject<string | undefined>;
   /** Re-attempts the edit-mode download (load-error retry or post-conflict reload). */
   retryLoad: () => void;
@@ -143,6 +191,7 @@ export const useSkillEditorLoad = ({
   isEditMode,
   bucket,
   skillPath,
+  client,
 }: UseSkillEditorLoadParams): UseSkillEditorLoadResult => {
   const [loadState, setLoadState] = useState<SkillEditorLoadState>(
     isEditMode ? SkillEditorLoadState.Loading : SkillEditorLoadState.Loaded,
@@ -180,7 +229,7 @@ export const useSkillEditorLoad = ({
       try {
         let loadedSkill: LoadedSkill;
         try {
-          loadedSkill = await loadSkillArchive(bucket, skillPath);
+          loadedSkill = await loadSkillArchive(client, bucket, skillPath);
         } catch (error) {
           const status = getApiErrorStatus(error);
           if (!(error instanceof InvalidSkillArchiveError) && status !== 400) {
@@ -192,7 +241,7 @@ export const useSkillEditorLoad = ({
            * compatibility path when the ZIP route resolves the skill as a
            * grouping folder or returns an unusable archive.
            */
-          loadedSkill = await loadSkillFiles(bucket, skillPath);
+          loadedSkill = await loadSkillFiles(client, bucket, skillPath);
         }
         const { frontmatter, instructions } = parseSkillManifest(
           loadedSkill.manifestText,
@@ -233,7 +282,7 @@ export const useSkillEditorLoad = ({
     return () => {
       cancelled = true;
     };
-  }, [isEditMode, bucket, skillPath, loadAttempt]);
+  }, [isEditMode, bucket, skillPath, loadAttempt, client]);
 
   return {
     loadState,
