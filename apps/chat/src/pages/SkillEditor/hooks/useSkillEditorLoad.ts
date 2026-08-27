@@ -1,5 +1,12 @@
 import type { SkillMetadataItemDto } from '@epam/ai-dial-chat-api-client';
 import {
+  parseSkillManifest,
+  SKILL_MANIFEST_FILE,
+  stripSurroundingSlashes,
+  unpackSkillArchive,
+  type SkillFileContent,
+} from '@epam/ai-dial-chat-hooks';
+import {
   SkillFileNodeKind,
   type SkillEditorValues,
   type SkillFileTreeNode,
@@ -13,13 +20,6 @@ import {
   listSkillFiles,
 } from '../../../server-api/skills.api';
 import { SkillEditorLoadState } from '../../../types/skill-editor-load-state';
-import {
-  parseSkillManifest,
-  SKILL_MANIFEST_FILE,
-  unpackSkillArchive,
-} from '../../../utils/skill';
-import type { SkillFileContent } from '../../../utils/skill-file-preview';
-import { stripSurroundingSlashes } from '../../../utils/string-utils';
 import { nameFromPath } from '../utils/skill-file-tree';
 
 interface LoadedSkill {

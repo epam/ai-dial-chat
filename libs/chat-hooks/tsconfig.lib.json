@@ -18,22 +18,40 @@
       "path": "../source-panel/tsconfig.lib.json"
     },
     {
+      "path": "../skill-editor/tsconfig.lib.json"
+    },
+    {
       "path": "../share/tsconfig.lib.json"
+    },
+    {
+      "path": "../scheduled-tasks/tsconfig.lib.json"
     },
     {
       "path": "../quotations/tsconfig.lib.json"
     },
     {
+      "path": "../publish-panel/tsconfig.lib.json"
+    },
+    {
+      "path": "../deployment-creation-form/tsconfig.lib.json"
+    },
+    {
       "path": "../chat-shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../chat-overlay/tsconfig.lib.json"
     },
     {
       "path": "../chat-api-client/tsconfig.lib.json"
     },
     {
-      "path": "../attachment-canvas/tsconfig.lib.json"
+      "path": "../catalog/tsconfig.lib.json"
     },
     {
       "path": "../attachment-input/tsconfig.lib.json"
+    },
+    {
+      "path": "../attachment-canvas/tsconfig.lib.json"
     }
   ],
   "exclude": [

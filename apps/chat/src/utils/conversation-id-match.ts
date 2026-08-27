@@ -1,5 +1,5 @@
+import { safeDecodeURIComponent } from '@epam/ai-dial-chat-hooks';
 import { normalizeConversationId } from '../constants/routes';
-import { safeDecodeURIComponent } from './string-utils';
 
 /** Canonical id used in the conversation panel and route matching. */
 export const toPanelConversationId = (id: string): string =>

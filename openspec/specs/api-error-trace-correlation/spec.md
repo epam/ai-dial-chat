@@ -7,12 +7,14 @@ A single helper that normalizes any API error into a message and trace ID, so a 
 ## Requirements
 
 ### Requirement: One normalization helper resolves message and trace ID from any API error
-`apps/chat/src/server-api/api-error.ts` SHALL export an async `getApiErrorDetails(error: unknown)`
+`@epam/ai-dial-chat-hooks` SHALL export an async `getApiErrorDetails(error: unknown)`
 helper returning `{ status?: number; message: string | null; traceId?: string }`, supporting both
 the generated `@epam/chat-api-client` `ResponseError` (which retains the original `Response`) and
 the raw `apps/chat/src/server-api/base.ts` request error shape. The existing
 `getApiErrorMessage`/`getApiErrorStatus` exports SHALL continue to work unchanged for callers that
-only need a message or status.
+only need a message or status. `apps/chat/src/server-api/api-error.ts` SHALL re-export these
+`@epam/ai-dial-chat-hooks` names until every one of its 21 consumer files is migrated to import
+directly from `@epam/ai-dial-chat-hooks`, at which point the app file SHALL be removed.
 
 Resolution order SHALL be: parse a `traceparent` from the JSON error body first; if the body has no
 valid `traceparent` or cannot be parsed as JSON, fall back to the response's `traceparent` header.
@@ -39,6 +41,12 @@ equivalent single-consumption-safe strategy) so no caller can trigger a "body al
 - **WHEN** a response has no valid trace context anywhere
 - **THEN** `getApiErrorDetails` still returns the resolved `message` (and `status` when available),
   with `traceId` left `undefined`
+
+#### Scenario: `apps/chat` consumers resolve the same behavior through the re-export
+- **WHEN** any of `apps/chat`'s 21 current consumer files import `getApiErrorDetails` from
+  `apps/chat/src/server-api/api-error.ts` during the migration window
+- **THEN** they receive the exact same implementation and behavior as importing directly from
+  `@epam/ai-dial-chat-hooks`
 
 ### Requirement: Malformed or absent trace data is never surfaced
 `getApiErrorDetails` SHALL validate any candidate `traceparent` against the W3C Trace Context shape

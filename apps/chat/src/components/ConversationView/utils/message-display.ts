@@ -1,11 +1,13 @@
 import {
+  getStartersFromSchema,
+  safeDecodeURIComponent,
+} from '@epam/ai-dial-chat-hooks';
+import {
   MessageRole,
   type Message,
   type StarterOption,
   type StatusMessage,
 } from '@epam/ai-dial-chat-shared';
-import { getStartersFromSchema } from '../../../utils/starter-option';
-import { safeDecodeURIComponent } from '../../../utils/string-utils';
 
 /*
  * Extracts a human-readable name from a raw deployment ID.

@@ -1,3 +1,4 @@
+import { buildExternalServiceScopeId } from '@epam/ai-dial-chat-hooks';
 import { useCallback } from 'react';
 import {
   OAuthResourceKind,
@@ -14,7 +15,6 @@ import {
   signInExternalService,
   signOutExternalService,
 } from '../../server-api/external-services';
-import { buildExternalServiceScopeId } from '../../utils/external-services';
 import {
   navigateToolsetOAuthPopup,
   openToolsetOAuthPopup,

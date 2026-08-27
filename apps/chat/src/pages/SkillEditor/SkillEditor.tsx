@@ -1,4 +1,10 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  isValidSkillRelativePath,
+  parseSkillResourceUrl,
+  PUBLIC_SKILL_BUCKET,
+  SKILL_MANIFEST_FILE,
+} from '@epam/ai-dial-chat-hooks';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
@@ -29,13 +35,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { useSkillFilePreviewSync } from '../../hooks/attachment/useSkillFilePreviewSync';
 import { EditorQuery } from '../../types/editor-query';
 import { ROUTES } from '../../types/routes';
-import { parseSkillResourceUrl, PUBLIC_SKILL_BUCKET } from '../../types/skill';
 import { SkillEditorLoadState } from '../../types/skill-editor-load-state';
 import { ThemeId } from '../../types/theme-id';
-import {
-  isValidSkillRelativePath,
-  SKILL_MANIFEST_FILE,
-} from '../../utils/skill';
 import { useSkillEditorLoad } from './hooks/useSkillEditorLoad';
 import { useSkillEditorSubmit } from './hooks/useSkillEditorSubmit';
 import { useSkillFileActions } from './hooks/useSkillFileActions';

@@ -192,12 +192,13 @@ status but at least one token or overall Cost limit is `Unlimited`, overall Stat
 ### Requirement: Aggregate period cost cards
 
 The `mapUsageDataToDashboard` utility (in `libs/usage-dashboard`, see the `usage-dashboard-lib`
-capability) SHALL map the top-level `dayCostStats`, `weekCostStats`, and `monthCostStats` fields
-from `UserLimitStatsResponseDto` into `UsageLimitCardData[]` for `UsageLimitCardGroup`. A period
-whose stats are absent or non-finite SHALL be omitted from the array entirely. The card `title` for
-each period SHALL be the calendar-anchor label (`Today`, `This week`, `This month`); the
-`periodDescription` field SHALL carry the rolling-window label (`Last 24 hours`, `Last 7 days`,
-`Last 30 days`) for accessibility context.
+capability) SHALL map the top-level
+`dayCostStats`, `weekCostStats`, and `monthCostStats` fields from `UserLimitStatsResponseDto` into
+`UsageLimitCardData[]` for `UsageLimitCardGroup`. A period whose stats are absent or non-finite
+SHALL be omitted from the array entirely. The card title for each period SHALL be the rolling-window
+label (`Last 24 hours`, `Last 7 days`, `Last 30 days`); the `periodDescription` field SHALL carry
+the calendar-anchor label (`Today`, `This week`, `This month`) for accessibility only and SHALL NOT
+be rendered visually.
 
 When a period's `total >= 2 ** 53` (the unlimited sentinel — Long.MAX_VALUE from the backend,
 meaning no cost limit is configured for that period), the adapter SHALL produce a card with

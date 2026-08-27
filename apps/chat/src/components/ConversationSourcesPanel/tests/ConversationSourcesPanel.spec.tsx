@@ -123,6 +123,7 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
     await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
   return {
     ...actual,
+    isDialFileId: (url: string) => url.startsWith('files/'),
     usePanelMaxWidth: () => 800,
     downloadAttachment: (attachment: DisplayAttachment) =>
       mockDownloadAttachment(attachment),
@@ -142,7 +143,6 @@ vi.mock('../../../hooks/useLocalStorage', () => ({
 }));
 
 vi.mock('../../../utils/dial-file', () => ({
-  isDialFileId: (url: string) => url.startsWith('files/'),
   resolveDialFileDownloadUrl: (fileId: string) =>
     `/api/v1/files/download?path=${fileId}`,
 }));

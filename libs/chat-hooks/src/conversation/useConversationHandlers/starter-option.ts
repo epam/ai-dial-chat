@@ -1,17 +1,5 @@
 import type { StarterOption } from '@epam/ai-dial-chat-shared';
-
-/**
- * Returns the text to populate in the input when a starter button is selected.
- * Falls back to the button title if `populateText` is empty.
- *
- * Deliberate private duplicate of `apps/chat/src/utils/starter-option.ts`'s
- * exported `getStarterPopulateText`, kept in sync with it by hand (same
- * pattern as `isDialFileId`/`splitFileNameExtension` elsewhere in this
- * extraction) — the app copy is still used directly by other app-side
- * consumers, so it could not simply be re-exported from here.
- */
-const getStarterPopulateText = (starter: StarterOption): string =>
-  starter['dial:widgetOptions'].populateText || starter.title;
+import { getStarterPopulateText } from '../starter-option';
 
 /**
  * Returns the text to start/populate a conversation from a selected starter button.

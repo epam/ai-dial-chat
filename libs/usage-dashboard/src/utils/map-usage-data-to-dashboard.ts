@@ -117,17 +117,17 @@ export const mapUsageDataToDashboard = (
   }[] = [
     {
       stats: usage?.dayCostStats,
-      titleKey: USAGE_DATA_I18N_KEYS.todayTitle,
+      titleKey: USAGE_DATA_I18N_KEYS.todayPeriodDescription,
       periodDescriptionKey: USAGE_DATA_I18N_KEYS.todayPeriodDescription,
     },
     {
       stats: usage?.weekCostStats,
-      titleKey: USAGE_DATA_I18N_KEYS.thisWeekTitle,
+      titleKey: USAGE_DATA_I18N_KEYS.thisWeekPeriodDescription,
       periodDescriptionKey: USAGE_DATA_I18N_KEYS.thisWeekPeriodDescription,
     },
     {
       stats: usage?.monthCostStats,
-      titleKey: USAGE_DATA_I18N_KEYS.thisMonthTitle,
+      titleKey: USAGE_DATA_I18N_KEYS.thisMonthPeriodDescription,
       periodDescriptionKey: USAGE_DATA_I18N_KEYS.thisMonthPeriodDescription,
     },
   ];

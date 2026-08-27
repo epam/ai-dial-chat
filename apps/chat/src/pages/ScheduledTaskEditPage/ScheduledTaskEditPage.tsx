@@ -1,5 +1,9 @@
 import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import {
+  mapFormValuesToUpdateBody,
+  mapScheduledTaskDtoToFormValues,
+} from '@epam/ai-dial-chat-hooks';
+import {
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
@@ -39,10 +43,6 @@ import {
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
-import {
-  mapFormValuesToUpdateBody,
-  mapScheduledTaskDtoToFormValues,
-} from '../../utils/scheduled-task-trigger';
 import NotFoundPage from '../NotFound/NotFound';
 
 const ScheduledTaskEditPage: FC = () => {

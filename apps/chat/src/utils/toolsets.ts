@@ -91,7 +91,7 @@ const isSignedIn = (status?: string): boolean =>
  * human-readable id (e.g. `toolsets/<bucket>/My Toolset__1.0`), unlike the
  * already-encoded `id`/`toolset` field chat's own `listToolsets()`/
  * `DialToolsetDto` returns — mirrors `encodeDeploymentId`
- * (`utils/deployment-id.ts`), which exists for the identical reason on the
+ * (`@epam/ai-dial-chat-hooks`'s `deployment-id.ts`), which exists for the identical reason on the
  * applications side.
  */
 export const encodeToolsetId = (id: string): string =>

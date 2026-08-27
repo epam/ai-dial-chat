@@ -1,14 +1,14 @@
 import {
+  SKILL_FILE_UPLOAD_MAX_BYTES,
+  SKILL_UPLOAD_MAX_FILES,
+  SKILL_UPLOAD_MAX_TOTAL_BYTES,
+} from '@epam/ai-dial-chat-hooks';
+import {
   SkillFileCandidateKind,
   SkillFileValidationStatus,
   type SkillFileUploadCandidate,
 } from '@epam/ai-dial-skill-editor';
 import { describe, expect, it } from 'vitest';
-import {
-  SKILL_FILE_UPLOAD_MAX_BYTES,
-  SKILL_UPLOAD_MAX_FILES,
-  SKILL_UPLOAD_MAX_TOTAL_BYTES,
-} from '../../../../utils/skill';
 import type { SkillFileBatchValidationMessages } from '../../models/skill-file-batch-validation';
 import { validateSkillFileBatch } from '../skill-file-batch-validation';
 

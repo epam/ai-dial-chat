@@ -1,4 +1,5 @@
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
+import { buildExternalServiceScopeId } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DIAL_ICON_SIZE,
@@ -56,7 +57,6 @@ import {
   type PendingSigninEvent,
 } from '../../types/client-channel';
 import { RowAuthType } from '../../types/signin-interrupt';
-import { buildExternalServiceScopeId } from '../../utils/external-services';
 import {
   resolveExternalServiceInfo,
   resolveToolsetInfo,
