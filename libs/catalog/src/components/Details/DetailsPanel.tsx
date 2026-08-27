@@ -193,10 +193,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   isDetailsLoading = false,
   onClose,
   onToggleFavorite,
+  isFavoriteVisible,
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
   isPublishVisible,
+  isPublishPrimary,
   getPublishHistory,
   publishFolderItems = EMPTY_PUBLISH_FOLDERS,
   publishExpandedPaths,
@@ -212,6 +214,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onFetchExistingRules,
   shareOverlay,
   isShareVisible,
+  isSharePrimary,
   onEdit,
   onDownload,
   isDownloadVisible,
@@ -1131,11 +1134,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           {subViewHeader == null && (
             <>
               <div className="flex-1" />
-              <StarToggleButton
-                isStarred={isStarred}
-                ariaLabel={starAriaLabel}
-                onClick={handleToggleFavorite}
-              />
+              {isFavoriteVisible?.(item) !== false && (
+                <StarToggleButton
+                  isStarred={isStarred}
+                  ariaLabel={starAriaLabel}
+                  onClick={handleToggleFavorite}
+                />
+              )}
               <CloseButton
                 onClose={onClose}
                 size={ElementSize.Standard}
@@ -1250,7 +1255,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onShare={onShare}
                 shareOverlay={shareOverlay}
                 isShareVisible={isShareVisible}
+                isSharePrimary={isSharePrimary}
                 isPublishVisible={isPublishVisible}
+                isPublishPrimary={isPublishPrimary}
                 onOpenPublish={handleOpenPublish}
                 isUnpublishVisible={isUnpublishVisible}
                 hasPublishedFolders={hasPublishedFolders}

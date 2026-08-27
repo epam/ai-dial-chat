@@ -80,6 +80,14 @@ export interface CatalogProps {
   error?: Error | null;
   /** Called when any item's star is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /**
+   * Additional caller-supplied rule for whether the favorite star is shown for
+   * an item, in the browse grid, the list view, the favorites strip, and the
+   * details panel. Returning `false` hides the star everywhere and makes the
+   * item non-favoritable. Defaults to **visible** when omitted, so a predicate
+   * can only ever narrow visibility, never widen it.
+   */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Use in chat" button is clicked in the details panel. */
   onUseInChat?: (item: CatalogItem) => void;
   /** Controls whether the primary action button is shown for an item. */
@@ -88,6 +96,12 @@ export interface CatalogProps {
   onShare?: (item: CatalogItem) => void;
   /** Controls whether the "Publish" action is shown for an item. */
   isPublishVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether whichever of "Publish"/"Unpublish" applies renders as its
+   * own button in the details header rather than an entry in its "Manage"
+   * menu. Defaults to `false` — the menu entry.
+   */
+  isPublishPrimary?: (item: CatalogItem) => boolean;
   /** Resolves previously published versions for an item, most recent first. */
   getPublishHistory?: (item: CatalogItem) => Promise<PublishHistoryEntry[]>;
   /** Root-level destination folder nodes offered by the publish flow. */
@@ -244,6 +258,12 @@ export interface CatalogProps {
    * Absent means the built-in rule alone decides.
    */
   isShareVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether "Share" renders as its own button in the details header
+   * rather than an entry in its "Manage" menu. Defaults to `true` — the
+   * button. Returning `false` moves it into the menu, beside "Delete".
+   */
+  isSharePrimary?: (item: CatalogItem) => boolean;
   /**
    * Called when the credentials login form is submitted in the details
    * panel, for the given credentials `level` (`USER` or `GLOBAL`). May

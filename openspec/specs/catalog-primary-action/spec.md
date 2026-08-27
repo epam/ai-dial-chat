@@ -81,6 +81,53 @@ An item whose Download is **not** primary (every entity type other than Skill, u
 
 ---
 
+### Requirement: Share and Publish each render on one host-selected surface
+
+`Header.tsx` SHALL accept two predicates, threaded from `CatalogProps` through `DetailsPanel` alongside the existing `isDownloadPrimary`:
+
+| Prop | Default | `true` | `false` |
+|---|---|---|---|
+| `isSharePrimary?: (item) => boolean` | `true` | Share renders as its own button in the action row | Share renders as a Manage-menu entry, first, above Edit |
+| `isPublishPrimary?: (item) => boolean` | `false` | Whichever of Publish/Unpublish applies renders as a `NeutralButton` in the action row, after the primary action | It renders as a Manage-menu entry, in its existing position |
+
+The defaults reproduce the arrangement that predates these props, so a host that passes neither SHALL see no change: Share in the action row, Publish in the Manage menu.
+
+Neither predicate widens or narrows *whether* an action is offered — the visibility rules (`isShareVisible` AND the built-in `isMyApp` ownership rule; `isPublishVisible`, `isUnpublishVisible`, `hasPublishedFolders`, and the Publish/Unpublish mutual exclusion) SHALL apply identically on either surface. Each action SHALL render on exactly one surface, never both.
+
+The Share popover (`shareOverlay`) SHALL anchor to whichever surface carries Share. In the action row that is `ShareButton`'s own node; in the Manage menu the entry is unmounted by the time the popover opens, so the popover SHALL anchor to the Manage trigger instead.
+
+The publish-history lookup (`onRequestPublishHistory`) SHALL stay wired to the Manage trigger's hover/focus and open in both arrangements, in addition to the promoted button's own hover/focus. An item whose Publish button is hidden by `isPublishVisible` has no button to hover, and its Unpublish state could otherwise never resolve.
+
+#### Scenario: A host passing neither predicate is unaffected
+
+- **WHEN** a details header renders with neither `isSharePrimary` nor `isPublishPrimary` supplied
+- **THEN** Share renders as an action-row button and Publish renders as a Manage-menu entry, exactly as before these props existed
+
+#### Scenario: Both predicates flipped
+
+- **GIVEN** `isSharePrimary` returns `false` and `isPublishPrimary` returns `true` for an owned Agent
+- **WHEN** its details header renders
+- **THEN** the action row carries "Use in chat" and "Publish", and the Manage menu carries "Share" and "Delete"
+
+#### Scenario: Neither action is rendered twice
+
+- **WHEN** any item is inspected under any combination of the two predicates
+- **THEN** at most one Share affordance and at most one Publish/Unpublish affordance is rendered for it
+
+#### Scenario: Visibility rules are unchanged by the surface
+
+- **GIVEN** `isShareVisible` returns `false`, or the item is not owned by the current user
+- **WHEN** `isSharePrimary` returns `false`
+- **THEN** no Share entry appears in the Manage menu, matching what the action-row button would have done
+
+#### Scenario: The Manage trigger keeps the publish-history lookup
+
+- **GIVEN** `isPublishPrimary` returns `true` and `isPublishVisible` returns `false`, so no publish button renders
+- **WHEN** the Manage trigger is hovered or focused
+- **THEN** `onRequestPublishHistory` is still called
+
+---
+
 ### Requirement: The promoted Download button reflects a pending request; the Manage-menu entry's contract is unchanged
 
 `onDownload?: (item: CatalogItem) => Promise<void> | void` SHALL keep its existing signature. When invoked from the Manage-menu entry, it SHALL continue to be fire-and-forget, exactly as documented before this capability existed.

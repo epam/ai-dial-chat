@@ -20,6 +20,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = ({
   columnCount,
   query,
   onToggleFavorite,
+  isFavoriteVisible,
   onItemClick,
   featuredLabel,
   addToFavoritesAriaLabel,
@@ -50,6 +51,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = ({
                 query={query}
                 initialIsStarred={item.isStarred}
                 onToggle={onToggleFavorite}
+                isFavoriteVisible={isFavoriteVisible}
                 onClick={onItemClick}
                 featuredLabel={featuredLabel}
                 addToFavoritesAriaLabel={addToFavoritesAriaLabel}
