@@ -274,6 +274,13 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     ],
   );
 
+  const isSectionError = useCallback(
+    (fields: (keyof QuickApp2FormType)[]) => {
+      return fields.some((field) => !!errors[field]?.message);
+    },
+    [errors],
+  );
+
   return (
     <div
       className="flex size-full grow flex-col divide-y divide-tertiary overflow-hidden overflow-y-auto bg-layer-2"
@@ -284,6 +291,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         description={t(MarketplaceI18nKeys.OrchestratorDescription)}
         openByDefault
         dataQa="orchestrator-section"
+        isError={isSectionError(['model'])}
       >
         <ModelsSelectorField
           label={t(MarketplaceI18nKeys.ModelMarketplace)}
@@ -355,6 +363,11 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         description={t(MarketplaceI18nKeys.ContextAndToolsDescription)}
         openByDefault
         dataQa="context-tools-section"
+        isError={isSectionError([
+          'agentsAndToolsetsJson',
+          'agentsAndToolsets',
+          'documentRelativeUrl',
+        ])}
       >
         <div data-qa="agents-and-toolsets-field">
           <AgentsAndToolsetsField onAutoSave={onAutoSave} />
@@ -471,6 +484,10 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         name={t(MarketplaceI18nKeys.UserAttachments)}
         description={t(MarketplaceI18nKeys.UserAttachmentsDescription)}
         dataQa="attachments-section"
+        isError={isSectionError([
+          'inputAttachmentTypes',
+          'maxInputAttachments',
+        ])}
       >
         <Controller
           name="inputAttachmentTypes"
@@ -524,6 +541,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         name={t(MarketplaceI18nKeys.ConversationStarters)}
         description={t(MarketplaceI18nKeys.StartersDescription)}
         dataQa="conversation-starters-section"
+        isError={isSectionError(['starters', 'introText'])}
       >
         <Controller
           name="starters"

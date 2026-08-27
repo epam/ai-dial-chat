@@ -1,5 +1,5 @@
 import { IconChevronDown } from '@tabler/icons-react';
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -11,6 +11,7 @@ interface FormSectionProps {
   openByDefault?: boolean;
   description?: ReactNode;
   dataQa?: string;
+  isError?: boolean;
 }
 
 export const FormCollapsibleSection = ({
@@ -19,12 +20,17 @@ export const FormCollapsibleSection = ({
   openByDefault = false,
   description,
   dataQa,
+  isError = false,
 }: FormSectionProps) => {
   const [isOpen, setIsOpen] = useState(openByDefault);
 
   const handleToggle = useCallback(() => {
     setIsOpen((prev) => !prev);
   }, []);
+
+  useEffect(() => {
+    if (isError) setIsOpen(true);
+  }, [isError]);
 
   return (
     <div className="flex flex-col px-5 py-4" data-qa={dataQa}>

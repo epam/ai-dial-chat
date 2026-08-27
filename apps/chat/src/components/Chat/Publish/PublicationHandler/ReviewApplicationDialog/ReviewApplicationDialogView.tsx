@@ -7,11 +7,16 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationType,
+  getModelDescription,
+  getModelName,
   isExecutableApp,
   isQuickApp2,
 } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
+import {
+  getEntityLocals,
+  getLocalizedEntityIdName,
+} from '@/src/utils/app/marketplace-localization';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -21,7 +26,7 @@ import { ApplicationActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors, UISelectors } from '@/src/store/selectors';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
 
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
@@ -30,7 +35,6 @@ import { IconButton } from '@/src/components/Common/IconButton';
 import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
-import { MarketplaceEntityLocalizedInfoRow } from '../MarketplaceEntityLocalizedInfoRow';
 import { ReviewCodeAppSection } from './ReviewCodeAppSection';
 import { ReviewExternalAppSection } from './ReviewExternalAppSection';
 import { ReviewQuickApp2Section } from './ReviewQuickApp2Section';
@@ -46,6 +50,7 @@ export function ReviewApplicationDialogView({
   application,
 }: ReviewApplicationDialogViewProps) {
   const { t } = useTranslation(Translation.Chat);
+  const { t: CommonT } = useTranslation(Translation.Common);
   const dispatch = useAppDispatch();
 
   const locale = useAppSelector(UISelectors.selectLocale);
@@ -114,6 +119,14 @@ export function ReviewApplicationDialogView({
       ? application.completionUrl
       : null;
 
+  const configuredLocales = useMemo(
+    () =>
+      getEntityLocals(application, true)
+        .map(({ locale }) => `[${locale.toUpperCase()}]`)
+        .join(', '),
+    [application],
+  );
+
   return (
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
@@ -122,11 +135,9 @@ export function ReviewApplicationDialogView({
         </h2>
 
         <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
-          <MarketplaceEntityLocalizedInfoRow
-            entity={application}
-            locale={locale}
-            field="name"
+          <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Name)}
+            value={getModelName(application, locale)}
             dataQa="entity-name"
           />
           <MarketplaceEntityInfoRow
@@ -146,13 +157,17 @@ export function ReviewApplicationDialogView({
             }
             valueClassName=""
           />
-          <MarketplaceEntityLocalizedInfoRow
-            entity={application}
-            locale={locale}
-            field="description"
+          <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Description)}
+            value={getModelDescription(application, locale)}
             dataQa="entity-description"
           />
+          {!!configuredLocales && (
+            <MarketplaceEntityInfoRow
+              label={CommonT(CommonI18nKeys.Locales)}
+              value={configuredLocales}
+            />
+          )}
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Topics)}
             value={
