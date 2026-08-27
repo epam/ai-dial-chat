@@ -549,11 +549,13 @@ interface Props {
 `apps/chat/src/server-api/applications.ts` SHALL export:
 
 ```ts
-export const createApplication = (body: CreateApplicationRequest): Promise<CreatedApplicationDto> =>
-  applicationsApi.createApplication({ createApplicationRequest: body });
+export const createApplication = (
+  body: CreateApplicationBodyDto,
+): Promise<CreatedApplicationDto> =>
+  applicationsApi.createApplication({ createApplicationBodyDto: body });
 ```
 
-Where `applicationsApi` is the generated `ApplicationsApi` instance (from `api-client.ts`), `CreateApplicationRequest` is the generated request model, and `CreatedApplicationDto` is the generated response model.
+Where `applicationsApi` is the generated `ApplicationsApi` instance (from `api-client.ts`), and `CreateApplicationBodyDto` / `CreatedApplicationDto` are the generated request and response models from `@epam/ai-dial-chat-api-client`.
 
 **i18n impact**: None.
 
