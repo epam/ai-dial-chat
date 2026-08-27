@@ -83,8 +83,10 @@ This override exists to let developers point the QuickApps 2.0 editor iframe at 
 | 401 | No valid session cookie / upstream returns 401 |
 | 403 | Caller lacks permission to list schemas |
 | 429 | Rate limit exceeded (60 req/60 s per user) |
-| 502 | DIAL Core returned a non-OK status |
+| 502 | DIAL Core returned a 5xx, or any status the shared mapper has no more specific exception for |
 | 503 | DIAL Core is unreachable or timed out |
+
+Status translation is delegated to the shared `mapDialHttpStatus` / `handleDialFetchError` helpers, so this endpoint maps a given upstream status exactly the way every other `chat-api` domain does — it does not fold every non-OK status into 502.
 
 ## Rate Limiting
 
@@ -96,6 +98,7 @@ This override exists to let developers point the QuickApps 2.0 editor iframe at 
 - TTL: 60 seconds
 - Scope: per authenticated user
 - On cache hit: upstream SDK is not called; cached `ApplicationSchemasResponseDto` is returned directly.
+- Implemented through the shared `withCachedDialRequest` helper (see the `cached-dial-request` capability), which owns the read-through, the TTL write, and mapping a thrown transport error via `handleDialFetchError`.
 
 ## Generated Client
 
@@ -130,6 +133,11 @@ export const getApplicationSchemas = (): Promise<ApplicationSchemasResponseDto> 
 
 - **WHEN** DIAL Core returns an empty array
 - **THEN** the response is `200` with `{ schemas: [] }`
+
+#### Scenario: A non-array upstream payload degrades to an empty list
+
+- **WHEN** DIAL Core returns a successful response whose body is not an array
+- **THEN** the response is `200` with `{ schemas: [] }` rather than an error
 
 #### Scenario: Optional upstream fields stay optional
 
@@ -182,7 +190,7 @@ The response SHALL be cached under `application-schemas:list:<userSub>` with a 6
 
 ### Requirement: Upstream failures map to typed HTTP exceptions
 
-An upstream `401` or `403` SHALL surface unchanged; any other non-OK status SHALL map to `502 Bad Gateway`; a network or timeout failure SHALL map to `503 Service Unavailable`. The route SHALL carry `@Throttle({ default: { limit: 60, ttl: 60000 } })`, matching `GET /api/v1/applications`.
+Upstream non-OK statuses SHALL be translated by the shared `mapDialHttpStatus` helper, so `401` and `403` surface unchanged and a `5xx` becomes `502 Bad Gateway`; a network or timeout failure SHALL be translated by `handleDialFetchError` into `503 Service Unavailable`. The route SHALL carry `@Throttle({ default: { limit: 60, ttl: 60000 } })`, matching `GET /api/v1/applications`.
 
 #### Scenario: Client-error statuses pass through
 
