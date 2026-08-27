@@ -1,6 +1,7 @@
-import { formatFileSize, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { formatFileSize } from '@epam/ai-dial-chat-shared';
 import {
   ErrorText,
+  FileDropzone,
   GhostButton,
   GhostIconButton,
   Popup,
@@ -8,10 +9,9 @@ import {
   PrimaryButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconFileText, IconTrashX, IconUpload } from '@tabler/icons-react';
-import type { ChangeEvent, FC } from 'react';
-import { useEffect, useId, useRef, useState } from 'react';
-import { useSkillFileDropZone } from '../../hooks/useSkillFileDropZone';
+import { IconFileText, IconTrashX } from '@tabler/icons-react';
+import type { FC } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type {
   SkillEditorFileActions,
   SkillEditorLabels,
@@ -62,7 +62,6 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
   labels,
 }) => {
   const t = labels ?? {};
-  const inputRef = useRef<HTMLInputElement>(null);
   const [candidates, setCandidates] = useState<SkillFileUploadCandidate[]>([]);
   const [results, setResults] = useState<
     Map<string, SkillFileValidationResult>
@@ -87,8 +86,6 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
   const removeCandidate = (id: string) => {
     setCandidates((prev) => prev.filter((candidate) => candidate.id !== id));
   };
-
-  const { isDragActive, dropZoneHandlers } = useSkillFileDropZone(addFiles);
 
   // Reset all staged state whenever the dialog transitions closed -> open,
   // immediately staging any files it was opened with (e.g. dropped before
@@ -133,12 +130,6 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the staged id list identity, not fileActions
   }, [candidates, isOpen]);
-
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []);
-    event.target.value = '';
-    if (files.length > 0) addFiles(files);
-  };
 
   const hasInvalidCandidate = candidates.some(
     (candidate) =>
@@ -211,41 +202,24 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
       }
     >
       <div className="flex flex-col gap-4 px-6 py-4">
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label={t.uploadDropZoneAriaLabel ?? 'Upload files'}
-          className={mergeClasses(
-            'bg-layer-2 flex min-h-[164px] cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-secondary px-6 py-9 focus-visible:outline focus-visible:outline-focus',
-            isDragActive && 'bg-layer-3 border-accent',
-            isAllInvalid && 'border-error',
-          )}
-          onClick={() => inputRef.current?.click()}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              inputRef.current?.click();
-            }
-          }}
-          {...dropZoneHandlers}
-        >
-          <IconUpload size={32} aria-hidden />
-          <div className="flex flex-col items-center gap-2 text-center">
-            <span className="dial-small-text desktop:hidden">
-              {t.uploadDropZoneMobileLabel ?? 'Click here to upload'}
-            </span>
-            <span className="dial-small-text hidden desktop:inline">
-              {t.uploadDropZoneLabel ??
-                'Drag and drop it or click here to upload'}
-            </span>
-          </div>
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
+        <FileDropzone
+          label={
+            <>
+              <span className="desktop:hidden">
+                {t.uploadDropZoneMobileLabel ?? 'Click here to upload'}
+              </span>
+              <span className="hidden desktop:inline">
+                {t.uploadDropZoneLabel ??
+                  'Drag and drop it or click here to upload'}
+              </span>
+            </>
+          }
+          ariaLabel={t.uploadDropZoneAriaLabel ?? 'Upload files'}
           multiple
-          className="hidden"
-          onChange={handleInputChange}
+          className={
+            isAllInvalid ? 'border-error hover:border-error' : undefined
+          }
+          onChange={addFiles}
         />
 
         <span

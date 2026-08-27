@@ -36,18 +36,13 @@ export const LinkView: FC<LinkViewProps> = ({
         styles.linkRow,
       )}
     >
-      {/* `border-0 bg-transparent` blends the input into the pill's own
-       * background, matching the Figma spec's borderless field. */}
       <Input
         readOnly
         value={url}
         aria-label={linkAriaLabel}
         containerClassName="min-w-0 flex-1"
-        wrapperClassName="border-0 bg-transparent px-0"
+        wrapperClassName="border-0 bg-transparent px-0 outline-none"
       />
-      {/* `GhostIconButton` (not the shared `CopyIconButton`, which renders a
-       * `ToggleIconButton` with a non-circular hover shape) matches the
-       * circular icon-button pattern used everywhere else in the app. */}
       <GhostIconButton
         icon={
           isCopied ? (

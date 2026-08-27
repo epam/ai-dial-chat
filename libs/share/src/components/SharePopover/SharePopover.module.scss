@@ -3,14 +3,9 @@
     --shp-access-trigger-bg,
     var(--bg-layer-raised, #fcfcfc)
   );
-  /* Transparent at rest to match the borderless Figma trigger; the 1px
-   * `border` utility stays on the element so hover/focus can swap in a
-   * visible color without changing layout. */
   border-color: var(--shp-access-trigger-border, transparent);
 }
 
-/* Interactive states apply only to the dropdown trigger; the same class also
- * styles the read-only access label, which must not react to pointer or focus. */
 button.accessTriggerBtn {
   @media (hover: hover) {
     &:hover {
@@ -21,10 +16,6 @@ button.accessTriggerBtn {
     }
   }
 
-  /* Focus ring is an `outline`, not a `border-color` swap — outline is painted
-   * outside the border box, so it costs no layout and is preserved in
-   * forced-colors mode. `outline-offset: -1px` keeps it in the border's place
-   * (the border itself goes transparent) so nothing grows or jitters. */
   &:focus-visible {
     border-color: transparent;
     outline: 1px solid
@@ -72,7 +63,7 @@ button.accessTriggerBtn {
     transition: none;
   }
 }
-// TODO: replace after implementing the new design for the access control popover
+
 .accessMenuItem {
   @media (hover: hover) {
     &:hover {
