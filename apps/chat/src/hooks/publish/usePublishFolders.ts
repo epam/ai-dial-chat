@@ -1,5 +1,6 @@
 import type { ListFilesItemDto } from '@epam/ai-dial-chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
+import { safeDecodeURI } from '@epam/ai-dial-chat-hooks';
 import {
   fromFolderPathKey,
   mergeFolderPaths,
@@ -9,7 +10,6 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listPublicFiles } from '../../server-api/files.api';
 import { StorageKey } from '../../types/storage-key';
-import { safeDecodeURI } from '../../utils/string-utils';
 import useLocalStorage from '../useLocalStorage';
 
 /**

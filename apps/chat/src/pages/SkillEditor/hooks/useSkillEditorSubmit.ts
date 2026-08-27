@@ -1,4 +1,11 @@
 import {
+  buildSkillManifest,
+  buildSkillManifestFromFrontmatter,
+  isValidSkillRelativePath,
+  normalizeSkillName,
+  type SkillFileContent,
+} from '@epam/ai-dial-chat-hooks';
+import {
   SkillFileNodeKind,
   type SkillEditorErrors,
   type SkillEditorValues,
@@ -15,13 +22,6 @@ import {
   getApiErrorStatus,
 } from '../../../server-api/api-error';
 import { createSkill, updateSkill } from '../../../server-api/skills.api';
-import {
-  buildSkillManifest,
-  buildSkillManifestFromFrontmatter,
-  isValidSkillRelativePath,
-  normalizeSkillName,
-} from '../../../utils/skill';
-import type { SkillFileContent } from '../../../utils/skill-file-preview';
 import { toBlob } from '../utils/skill-file-tree';
 
 /*

@@ -1,7 +1,10 @@
 import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   getConversationPath,
+  getLastDeploymentId,
+  getLastUserMessageToolConfiguration,
   isAwaitingGenerationResume,
+  shouldWatchForDisplayNameUpdate,
   useConversationHandlers,
   useConversationStream,
   useToolsMenu,
@@ -65,11 +68,6 @@ import { ActiveScheduledTaskStatus } from '../../types/active-scheduled-task';
 import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
-import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
-import {
-  getLastDeploymentId,
-  getLastUserMessageToolConfiguration,
-} from '../../utils/message-utils';
 
 interface Props {
   onDuplicateReadonly?: () => void;

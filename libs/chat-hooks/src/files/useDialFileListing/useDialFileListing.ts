@@ -10,6 +10,7 @@ import {
 } from '@epam/ai-dial-react-file-manager';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { safeDecodeURI } from '../../shared/string-utils';
 import {
   buildFromCache,
   fetchByTab,
@@ -31,7 +32,6 @@ import {
 } from '../dial-file-manager.types';
 import type { DialFilesApi } from '../dial-files-api';
 import { virtualPathToApiPath } from '../resolve-dial-file-api-path';
-import { safeDecodeURI } from '../string-utils';
 
 /** Options accepted by `useDialFileListing`. */
 export interface UseDialFileListingOptions {

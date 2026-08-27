@@ -1,5 +1,5 @@
+import { safeDecodeURIComponent } from '@epam/ai-dial-chat-hooks';
 import { ROUTES } from '../types/routes';
-import { safeDecodeURIComponent } from '../utils/string-utils';
 
 const CONVERSATION_ROUTE_PREFIX = `${ROUTES.Conversations}/`;
 const CONVERSATION_ROUTE_PREFIX_NO_LEADING_SLASH =

@@ -9,6 +9,7 @@ import {
   DialFileManagerTabs,
   DialFileNodeType,
 } from '@epam/ai-dial-react-file-manager';
+import { safeDecodeURI } from '../shared/string-utils';
 import { dialCorePathToRelative } from './dial-file-manager-path.util';
 import {
   CORE_PERMISSION_MAP,
@@ -16,7 +17,6 @@ import {
   type SharedRootMeta,
 } from './dial-file-manager.model';
 import type { DialFilesApi } from './dial-files-api';
-import { safeDecodeURI } from './string-utils';
 import type {
   FileUploadBatchState,
   FileUploadEntry,

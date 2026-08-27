@@ -3,7 +3,10 @@ import type {
   ConversationListItemDto,
   ConversationResponseDto,
 } from '@epam/ai-dial-chat-api-client';
-import { getConversationPath } from '@epam/ai-dial-chat-hooks';
+import {
+  getConversationPath,
+  safeDecodeURIComponent,
+} from '@epam/ai-dial-chat-hooks';
 import { generateUUID } from '@epam/ai-dial-chat-shared';
 import {
   createContext,
@@ -28,7 +31,6 @@ import {
   watchConversation,
 } from '../server-api/conversations.api';
 import { conversationIdsMatch } from '../utils/conversation-id-match';
-import { safeDecodeURIComponent } from '../utils/string-utils';
 import { useUser } from './auth/UserContext';
 import { useOptionalOverlay } from './overlay/OverlayContext';
 import { useUserConfig } from './UserConfigContext';

@@ -5,9 +5,13 @@ import {
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
+  isHiddenPath,
+  mimeTypesToAttachmentExtensionLabels,
+  mimeTypesToDialFileAcceptTypes,
   useDialFileManager,
   useDialFileManagerTabConfig,
 } from '@epam/ai-dial-chat-hooks';
+import { formatFileSize } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
   DialFileNodeType,
@@ -38,12 +42,6 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
-import {
-  mimeTypesToAttachmentExtensionLabels,
-  mimeTypesToDialFileAcceptTypes,
-} from '../../utils/attachment-types';
-import { isHiddenPath } from '../../utils/file-path';
-import { formatFileSize } from '../../utils/string-utils';
 import DialFileManagerShell from '../DialFileManagerShell/DialFileManagerShell';
 import type { DialFileManagerShellLabels } from '../DialFileManagerShell/types/labels';
 import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';

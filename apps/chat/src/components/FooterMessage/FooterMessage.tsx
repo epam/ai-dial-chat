@@ -1,3 +1,4 @@
+import { formatAppVersion, sanitizeFooterHtml } from '@epam/ai-dial-chat-hooks';
 import { mergeClasses } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
@@ -5,10 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { FooterMessageI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { UserConfigStatus } from '../../types/user-config-status';
-import {
-  formatAppVersion,
-  sanitizeFooterHtml,
-} from '../../utils/footer-message';
 
 const FooterMessage: FC = () => {
   const { t } = useTranslation();

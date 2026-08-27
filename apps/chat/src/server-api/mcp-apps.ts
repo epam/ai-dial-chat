@@ -4,7 +4,7 @@ import {
   type ListMcpAppToolsKindEnum,
   type McpAppToolSummaryDto,
 } from '@epam/ai-dial-chat-api-client';
-import { safeDecodeURIComponent } from '../utils/string-utils';
+import { safeDecodeURIComponent } from '@epam/ai-dial-chat-hooks';
 import { toolsetsApi } from './api-client';
 
 /** Which of Core's two MCP proxy route prefixes a deployment id resolves through. */

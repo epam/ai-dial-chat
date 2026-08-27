@@ -1,5 +1,10 @@
 import type { CatalogItemCredentials } from '@epam/ai-dial-catalog';
 import type { ApplicationSchemaSummaryDto } from '@epam/ai-dial-chat-api-client';
+import {
+  mapDeploymentDetailsDtoToEntityDetails,
+  mapToolsetCredentials,
+  subscribeToolsetLoginSuccess,
+} from '@epam/ai-dial-chat-hooks';
 import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,
@@ -30,11 +35,6 @@ import type {
   TriggerSaveMessage,
 } from '../../types/apps-editor';
 import { AppsEditorEvent } from '../../types/apps-editor';
-import {
-  mapDeploymentDetailsDtoToEntityDetails,
-  mapToolsetCredentials,
-} from '../../utils/map-entity-details-to-catalog';
-import { subscribeToolsetLoginSuccess } from '../../utils/toolset-login-events';
 import {
   decodeToolsetId,
   encodeToolsetId,
@@ -438,7 +438,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     useEffect(() => {
       if (!targetOrigin) return undefined;
       let isStale = false;
-      const unsubscribe = subscribeToolsetLoginSuccess(
+      const unsubscribe = subscribeToolsetLoginSuccess<ToolsetCredentialsLevel>(
         ({ toolsetId, credentialsLevel }) => {
           const rawToolsetId = decodeToolsetId(toolsetId);
           void (async () => {

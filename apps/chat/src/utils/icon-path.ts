@@ -1,11 +1,6 @@
+import { isDialFileId } from '@epam/ai-dial-chat-hooks';
 import { ApiEndpoints } from '../server-api/base';
-import { isDialFileId, resolveDialFileDownloadUrl } from './dial-file';
-
-export {
-  isDialFileId,
-  resolveDialFileDownloadUrl,
-  resolveRelativeDialFilePath,
-} from './dial-file';
+import { resolveDialFileDownloadUrl } from './dial-file';
 
 export const getIconPath = (iconName?: string): string => {
   return `${ApiEndpoints.THEME_ICON}?iconName=${encodeURIComponent(iconName || '')}`;

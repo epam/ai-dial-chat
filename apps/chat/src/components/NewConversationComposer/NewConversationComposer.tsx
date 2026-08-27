@@ -2,6 +2,8 @@ import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import {
   AttachmentValidationErrorReason,
+  getTimeOfDayGreeting,
+  isQuickAppSchema,
   useAttachmentUpload,
   useAttachmentValidation,
   useChatSettingsFormConfig,
@@ -50,9 +52,7 @@ import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { filesApi } from '../../server-api/api-client';
 import { getApiErrorDetails } from '../../server-api/api-error';
-import { isQuickAppSchema } from '../../utils/application-schema';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
-import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveLocalizedText } from '../../utils/locale';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';

@@ -1,3 +1,6 @@
+export * from './api-error/api-error';
+export * from './api-transport/create-csrf-middleware';
+export * from './api-transport/create-unauthorized-middleware';
 export * from './attachment/useAttachmentAction/useAttachmentAction';
 export * from './attachment/useAttachmentValidation/useAttachmentValidation';
 export { EXPORT_APP_NAME } from './conversation/conversation-transfer/export-conversation';
@@ -6,7 +9,37 @@ export {
   formatDateYMD,
 } from './conversation/conversation-transfer/date';
 export { formatQuotedNameList } from './conversation/conversation-transfer/import-conversation';
+export * from './catalog/deployment-endpoint-url';
+export * from './catalog/deployment-id';
+export * from './catalog/entity-details';
+export * from './catalog/map-deployment-limits-to-input';
+export * from './catalog/map-deployment-to-catalog-item';
+export * from './catalog/map-entity-details-to-catalog';
+export * from './catalog/map-prompt-to-catalog-item';
+export * from './catalog/map-skill-to-catalog-item';
+export * from './catalog/mcp-endpoint-url';
+export * from './catalog/publish';
+export * from './conversation/announcement-message';
 export * from './conversation/conversation-transfer/types';
+export * from './conversation/create-chat-stream-api';
+export * from './conversation/display-name-watch';
+export * from './conversation/footer-message';
+export * from './conversation/get-model-id-from-conversation-id';
+export * from './conversation/greeting';
+export * from './conversation/message-factory';
+export * from './conversation/message-utils';
+export * from './conversation/overlay-messages';
+export * from './conversation/quick-app-conversation-starters';
+export * from './conversation/starter-option';
+export * from './prompt/export-prompt';
+export * from './prompt/prompt';
+export * from './prompt/prompt-resource';
+export * from './scheduled-task/scheduled-task-mapping';
+export * from './scheduled-task/scheduled-task-trigger';
+export * from './skill/skill';
+export * from './skill/skill-file-preview';
+export * from './skill/skill-manifest';
+export * from './skill/skill-types';
 export * from './conversation/useAttachmentUpload/useAttachmentUpload';
 export * from './conversation/useConversationExport/useConversationExport';
 export {
@@ -38,9 +71,24 @@ export * from './files/dial-file-manager.model';
 export * from './files/dial-file-manager-copy-move.util';
 export * from './files/dial-file-manager-mapping.util';
 export * from './files/dial-file-manager-path.util';
+export * from './files/attachment-types';
+export * from './files/create-files-api';
+export * from './files/create-upload-file-with-progress';
+export * from './files/annotation';
+export * from './files/attachment-canvas';
+export * from './files/attachment-dto-to-display';
+export * from './files/dial-file';
+export * from './files/dial-file-to-attachment';
 export * from './files/download-destination';
+export * from './files/prepare-download-destination';
+export * from './files/file-path';
+export * from './files/resolve-dial-file-api-path';
 export * from './files/file-manager-variant';
-export { sanitizeFileName } from './files/file-name';
+export {
+  sanitizeFileName,
+  splitFileNameExtension,
+  trimFileNameToByteLimit,
+} from './files/file-name';
 export * from './files/upload-batch.types';
 export * from './files/useDialFileListing/useDialFileListing';
 export * from './files/useDialFileManager/useDialFileManager';
@@ -50,6 +98,15 @@ export * from './files/useDialFileMutations/useDialFileMutations';
 export * from './files/useDialFileSharing/useDialFileSharing';
 export * from './files/useDialFileUploadBatch/useDialFileUploadBatch';
 export * from './files/useGridEditingScroll/useGridEditingScroll';
+export * from './shared/application-schema';
+export * from './shared/browser-timezone';
+export * from './shared/cron-weekday';
+export * from './shared/custom-apps';
+export * from './shared/external-services';
+export * from './shared/formatting';
+export * from './shared/locale';
+export * from './shared/string-utils';
+export * from './shared/toolset-login-events';
 export * from './useChatSettingsFormConfig/useChatSettingsFormConfig';
 export * from './usePageFileDrag/usePageFileDrag';
 export * from './usePanelMaxWidth/usePanelMaxWidth';
