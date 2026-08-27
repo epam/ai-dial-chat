@@ -2,8 +2,12 @@ import { useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getModelDescription, getModelName } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getLocalizedEntityIdName } from '@/src/utils/app/marketplace-localization';
+import {
+  getEntityLocals,
+  getLocalizedEntityIdName,
+} from '@/src/utils/app/marketplace-localization';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -16,7 +20,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
 import { AUTH_TYPE_OPTIONS } from '@/src/constants/toolsets';
 
@@ -26,7 +30,6 @@ import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
-import { MarketplaceEntityLocalizedInfoRow } from '../MarketplaceEntityLocalizedInfoRow';
 
 interface ReviewToolsetDialogContentProps {
   toolset: ToolsetModel;
@@ -36,6 +39,7 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
   toolset: ToolsetSelectors.selectToolsetDetails,
 })(({ toolset }: ReviewToolsetDialogContentProps) => {
   const { t } = useTranslation(Translation.Chat);
+  const { t: CommonT } = useTranslation(Translation.Common);
 
   const locale = useAppSelector(UISelectors.selectLocale);
   const selectedPublicationUrl = useAppSelector(
@@ -57,6 +61,15 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
     }),
     [toolset.id, toolset.name],
   );
+
+  const configuredLocales = useMemo(
+    () =>
+      getEntityLocals(toolset, true)
+        .map(({ locale }) => `[${locale.toUpperCase()}]`)
+        .join(', '),
+    [toolset],
+  );
+
   return (
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
@@ -64,11 +77,9 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
           {`${isResourceUnpublishing ? t(ChatI18nKeys.Unpublish) : t(ChatI18nKeys.Publish)} ${t(ChatI18nKeys.Toolset)}`}
         </h2>
         <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
-          <MarketplaceEntityLocalizedInfoRow
-            entity={toolset}
-            locale={locale}
-            field="name"
+          <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Name)}
+            value={getModelName(toolset, locale)}
             dataQa="entity-name"
           />
           <MarketplaceEntityInfoRow
@@ -88,13 +99,17 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
             }
             valueClassName=""
           />
-          <MarketplaceEntityLocalizedInfoRow
-            entity={toolset}
-            locale={locale}
-            field="description"
+          <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Description)}
+            value={getModelDescription(toolset, locale)}
             dataQa="entity-description"
           />
+          {!!configuredLocales && (
+            <MarketplaceEntityInfoRow
+              label={CommonT(CommonI18nKeys.Locales)}
+              value={configuredLocales}
+            />
+          )}
           {toolset.topics?.length > 0 && (
             <MarketplaceEntityInfoRow
               label={t(ChatI18nKeys.Topics)}
