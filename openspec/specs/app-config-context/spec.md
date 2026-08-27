@@ -12,18 +12,27 @@ The system SHALL rewrite `apps/chat/src/context/AppConfigContext.tsx` to expose 
 
 ```typescript
 interface AppConfigState {
-  status: 'loading' | 'ready' | 'error';
+  status: UserConfigStatus; // the shared enum: Idle | Loading | Ready | Error
   features: Record<string, boolean>;
   config: {
     asrModelId: string | null;
     transcribeSizeLimitBytes: number;
     dialCoreExternalUrl: string | null;
+    /* Further fields are contributed by the requirements below and by other
+     * capabilities that surface their own client-config values through this
+     * same context (overlay, announcements, custom visualizers, UI feature
+     * toggles, file-manager tabs, footer message, default deployment, and so
+     * on). They are not repeated here. */
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
 ```
 
-The initial value (before the API call completes) SHALL use `status='loading'`, `features={}`, and safe default values for `config`, including `dialCoreExternalUrl: null`. On success, `status='ready'` and `config.dialCoreExternalUrl` is set from the `GET /api/v1/client-config` response's `config.dialCoreExternalUrl` field. On error, `status='error'` and defaults are retained.
+`status` SHALL be typed with the shared `UserConfigStatus` enum (`apps/chat/src/types/user-config-status.ts`) rather than a string-literal union, so the three states this context uses stay comparable with the other config-loading contexts that share the enum.
+
+The initial value (before the API call completes) SHALL use `status=Loading`, `features={}`, and safe default values for `config`, including `dialCoreExternalUrl: null`. On success, `status=Ready` and `config.dialCoreExternalUrl` is set from the `GET /api/v1/client-config` response's `config.dialCoreExternalUrl` field.
+
+On error, `status=Error` and the previously held `config` SHALL be preserved rather than reset — on a first-load failure that is the initial defaults, and on a failed re-fetch it is the last config that did load, so a transient failure never blanks a working configuration.
 
 Pattern MUST follow `ThemeContext.tsx`: `createContext<AppConfigState | undefined>(undefined)`, context value wrapped in `useMemo`, guard hook throws `Error` when used outside provider.
 
@@ -73,9 +82,11 @@ Pattern MUST follow `ThemeContext.tsx`: `createContext<AppConfigState | undefine
 
 The provider SHALL fetch config using `async`/`await` with an `AbortController` inside `useEffect`. A `cancelled` flag SHALL prevent `setState` after unmount. The pattern MUST follow `useFavicon.ts`.
 
-The provider SHALL call `AppConfigApi.getClientConfig({ appId: 'chat-ui' })` from the server-api wrapper `apps/chat/src/server-api/app-config.api.ts`, which wraps the generated `@epam/chat-api-client` `AppConfigApi`. The provider MUST NOT call `fetch` directly or use `config.api.ts`.
+The provider SHALL call the `getClientConfig(signal?)` wrapper from `apps/chat/src/server-api/app-config.api.ts`, which passes `{ appId: 'chat-ui' }` to the generated `@epam/ai-dial-chat-api-client` `AppConfigApi`. The provider MUST NOT call `fetch` directly or use `config.api.ts`.
 
-One bootstrap load only. No automatic polling or refresh in this slice (reserved for future).
+The load SHALL be gated on authentication status: while `useUser().status` is `AuthStatus.Loading` the provider SHALL not issue a request, and it SHALL re-run the load whenever that status settles or changes, so the config reflects the signed-in user rather than a pre-auth response. `AppConfigProvider` therefore SHALL be mounted inside `UserProvider`.
+
+There SHALL be no polling or timed refresh — the only re-fetch trigger is a change in authentication status.
 
 **RTL impact:** None. **i18n impact:** None.
 
@@ -88,8 +99,18 @@ One bootstrap load only. No automatic polling or refresh in this slice (reserved
 #### Scenario: Uses generated client, not base.ts
 
 - **WHEN** the server-api wrapper `app-config.api.ts` is inspected
-- **THEN** it imports from `@epam/chat-api-client` (or `../api-client.ts` which re-exports the configured instance)
+- **THEN** it uses the configured generated-client instance from `./api-client` and types from `@epam/ai-dial-chat-api-client`
 - **AND** it does NOT import `get` from `./base`
+
+#### Scenario: No request is issued while authentication is still resolving
+
+- **WHEN** `AppConfigProvider` mounts while `useUser().status` is `AuthStatus.Loading`
+- **THEN** no client-config request is issued and `status` stays `Loading`
+
+#### Scenario: Authentication settling triggers the load
+
+- **WHEN** the authentication status changes away from `AuthStatus.Loading`
+- **THEN** the provider issues the client-config request, aborting any request left in flight from a previous status
 
 ---
 
@@ -120,14 +141,14 @@ The system SHALL export `useFeatureFlag(key: string): boolean` from `AppConfigCo
 
 ### Requirement: AppConfigProvider is mounted before RequireAuth in main.tsx
 
-`AppConfigProvider` SHALL be moved to wrap the router before `RequireAuth` in `apps/chat/src/main.tsx`. It SHALL appear after `ThemeProvider` but before `RequireAuth`, so config is available on the login page and in auth error boundaries.
+`AppConfigProvider` SHALL be moved to wrap the router before `RequireAuth` in `apps/chat/src/main.tsx`. It SHALL appear inside `UserProvider` (whose status gates the load) and after `ThemeProvider`, but before `RequireAuth`, so config is available on the login page and in auth error boundaries.
 
 **RTL impact:** None. **i18n impact:** None.
 
 #### Scenario: Config loads before RequireAuth renders
 
 - **WHEN** `main.tsx` renders
-- **THEN** `AppConfigProvider` is an ancestor of `RequireAuth` in the component tree
+- **THEN** `AppConfigProvider` is a descendant of `UserProvider` and an ancestor of `RequireAuth` in the component tree
 - **AND** `useFeatureFlag` is callable from within the login page components without throwing
 
 ---
@@ -196,13 +217,13 @@ Callers currently access `useAppConfig().asrModelId` and `useAppConfig().transcr
 
 ### Requirement: AppConfigContext exposes customVisualizers
 
-`AppConfigContext` (`apps/chat/src/context/AppConfigContext.tsx`) SHALL surface the parsed `customVisualizers: CustomVisualizer[]` field from the `/api/v1/config` response to client consumers.
+`AppConfigContext` (`apps/chat/src/context/AppConfigContext.tsx`) SHALL surface the `customVisualizers: CustomVisualizer[]` field from the `GET /api/v1/client-config` response to client consumers.
 
 Behaviour:
 
-- The field SHALL be readable via the existing `useAppConfig()` accessor and via a dedicated `useCustomVisualizers()` hook exported from `apps/chat/src/hooks/attachment/useCustomVisualizers.ts` (see the `custom-visualizers` capability).
+- The field SHALL live on `AppConfigState.config`, readable as `useAppConfig().config.customVisualizers` and via a dedicated `useCustomVisualizers()` hook exported from `apps/chat/src/hooks/attachment/useCustomVisualizers.ts` (see the `custom-visualizers` capability).
 - While the config request is loading OR on error, both accessors SHALL return `[]`.
-- The returned array reference SHALL remain stable across renders as long as the underlying config has not changed (memoise the parse result).
+- The array reference SHALL remain stable across renders as long as the underlying config has not changed. The not-ready branch of `useCustomVisualizers()` SHALL return a module-level constant rather than an inline `[]`, so a consumer's `useMemo`/`useCallback` dependencies are not invalidated on every render while config loads.
 - The type imported by the app SHALL be the same `CustomVisualizer` type exported from `@epam/ai-dial-chat-shared`.
 
 Libs SHALL NOT read `AppConfigContext` for the registry — the app resolves the registry and passes concrete `VisualizerCanvasContent` values into libs.
@@ -216,13 +237,13 @@ Libs SHALL NOT read `AppConfigContext` for the registry — the app resolves the
 #### Scenario: customVisualizers is exposed when config is ready
 
 - **WHEN** `AppConfigProvider` has fetched a config with `customVisualizers: [{ contentType: 'application/x-my-viz', url: 'https://viz.example.com' }]`
-- **THEN** `useAppConfig().customVisualizers` returns that same array
+- **THEN** `useAppConfig().config.customVisualizers` returns that same array
 - **AND** `useCustomVisualizers()` returns the same array (identical reference)
 
 #### Scenario: customVisualizers defaults to empty during loading and on error
 
 - **WHEN** the config request is in flight
-- **THEN** both `useAppConfig().customVisualizers` and `useCustomVisualizers()` return `[]`
+- **THEN** both `useAppConfig().config.customVisualizers` and `useCustomVisualizers()` return `[]`
 - **AND** the same holds after the request rejects
 
 ---

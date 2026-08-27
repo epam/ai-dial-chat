@@ -41,22 +41,26 @@ const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 
 ### Requirement: Apps-editor query param contract
 
-`apps/chat/src/constants/apps-editor.ts` SHALL export:
+`apps/chat/src/types/apps-editor.ts` SHALL export the query and step enums:
 
 ```ts
 export enum AppsEditorQuery {
-  Step      = 'step',
-  Schema    = 'schema',
+  Step = 'step',
+  Schema = 'schema',
   ReturnUrl = 'returnUrl',
   IsCreating = 'isCreating',
-  AppId     = 'appId',
+  AppId = 'appId',
 }
 
 export enum AppsEditorStep {
-  General  = 'general',
+  General = 'general',
   Settings = 'settings',
 }
+```
 
+`apps/chat/src/constants/apps-editor.ts` SHALL export the shared truthy query value:
+
+```ts
 export const QUERY_VALUE_TRUE = '1';
 ```
 
@@ -79,12 +83,18 @@ State owned locally via `useState`:
 - `pendingSaveAction: 'save' | 'preview' | null` — distinguishes Save & Exit from Preview-triggered saves
 - `isPreviewing: boolean` — true while the Settings step shows the in-page chat preview instead of the editor iframe
 - `createdAppId: string | null` — populated after step-1 create succeeds
-- `isSaving: boolean` — true while a create (step 1) or save (step 2) action is in-flight; disables the header's Cancel/Save buttons
+- `submittedAppInfo: { displayName?, iconUrl? } | null` — the name/icon the General step submitted, used for the preview pane and the success notification before a refetch lands
+- `isSaving: boolean` — true while a create (step 1) or save (step 2) action is in-flight; disables the header's Cancel/Save buttons and renders the saving overlay
 - `saveError: string` — inline error message shown above the Settings step when a save fails
+- `isSettingsReady: boolean` / `isLoggedOut: boolean` — readiness signals from the embedded editor that gate Save and Preview (owned by the `quick-app-authoring` capability)
+- `previewResetKey: number` — bumped when a save reports a real configuration change, remounting the preview pane (owned by the `app-preview-chat` capability)
+- `hasVisitedGeneralStep: boolean` — once the General step has been shown, `GeneralForm` stays mounted and is merely hidden while the Settings step renders, so its in-memory values survive the step switch and can be forwarded on save
 
 Refs:
-- `generalFormRef: Ref<GeneralFormHandle>` — imperative handle exposing `submit()` on `GeneralForm`
-- `settingsStepRef: Ref<SettingsStepHandle>` — imperative handle exposing `triggerSave()` on `SettingsStep`
+- `generalFormRef: Ref<GeneralFormHandle>` — imperative handle exposing `submit()` and `getValues()` on `GeneralForm`
+- `settingsStepRef: Ref<SettingsStepHandle>` — imperative handle exposing `triggerSave(general?)` on `SettingsStep`
+- `saveTimeoutRef` — the in-flight save's safety-net timeout (see `quick-app-authoring`)
+- `hasExistingAppOnMountRef` — captures once whether this editor session started against an already-existing app, since `createdAppId` later makes that indistinguishable from a fresh create
 
 Navigation between steps is reflected in URL search params (update via `setSearchParams`) so that:
 - `?step=general` shows the General form
@@ -96,44 +106,51 @@ The page root SHALL use `className="flex min-h-0 flex-1 flex-col"` (not `size-fu
 
 The page header SHALL be the shared `EditorHeader` component (see "Shared editor header component" below), given:
 - `title`: the schema `displayName` (resolved from `useDeployments().schemas`)
-- `steps` / `currentStep`: the two-step stepper
-- `saveButtonLabel`: `appsEditor.generalForm.nextButton` ("Next") while on the General step, `appsEditor.saveButton` ("Save & Exit") while on the Settings step
-- `onSave`: on the General step, calls `generalFormRef.current.submit()`; on the Settings step, clears `saveError` and calls `settingsStepRef.current.triggerSave()`
-- `onPreview`: on the Settings step, exits preview when `isPreviewing` is true; otherwise clears `saveError`, sets `pendingSaveAction = 'preview'`, and calls `settingsStepRef.current.triggerSave()`
+- `steps` / `currentStep`: the two-step stepper. Each step carries `status: StepStatus.VALID` once the app exists, and no status before that
+- `navAriaLabel`: `editor.stepsNavAriaLabel` ("Editor steps")
+- `saveButtonLabel`: `editor.nextButton` ("Next") while on the General step, `editor.saveButton` ("Save & Exit") while on the Settings step
+- `isSaveDisabled`: true on the Settings step until the embedded editor reports it is ready to save
+- `onSave`: on the General step, sets `isSaving` and calls `generalFormRef.current.submit()`; on the Settings step, clears `saveError`, sets `pendingSaveAction = 'save'`, arms the save timeout, and calls `settingsStepRef.current.triggerSave(general)` — forwarding the current General values only when the session started against an existing app (see `quick-app-authoring`)
+- `onPreview`: on the Settings step, exits preview when `isPreviewing` is true; otherwise clears `saveError`, sets `pendingSaveAction = 'preview'`, arms the save timeout, and calls `settingsStepRef.current.triggerSave()` with no General payload
 - `onCancel`: navigates to `returnUrl`
 
-**i18n keys** (under `appsEditor.*` unless noted; the mobile header's two keys are shared under `editor.*` — see "Shared editor header component"):
+**i18n keys.** Copy shared with the toolset/custom-app editors lives in the `editor.*` namespace (`EditorI18nKeys`); copy unique to this flow lives under `appsEditor.*` (`AppsEditorI18nKeys`); generic words come from the shared `basic.*` / `buttons.*` namespaces.
 
 | Key | English |
 |---|---|
-| `appsEditor.stepGeneral` | `General` |
-| `appsEditor.stepSettings` | `Settings` |
+| `editor.stepGeneral` | `General` |
+| `basic.settings` | `Settings` |
+| `editor.stepsNavAriaLabel` | `Editor steps` |
 | `editor.stepOfTotal` | `Step {{current}} of {{total}}` |
 | `editor.moreActionsLabel` | `More actions` |
-| `appsEditor.backAriaLabel` | `Back` |
-| `appsEditor.saveButton` | `Save & Exit` |
-| `appsEditor.generalForm.nameLabel` | `Name` |
+| `editor.saveButton` | `Save & Exit` |
+| `editor.nextButton` | `Next` |
+| `buttons.cancel` | `Cancel` |
+| `basic.preview` | `Preview` |
+| `appsEditor.exitPreviewButton` | `Exit preview` |
+| `appsEditor.savingOverlay` | `Saving in progress…` |
+| `editor.nameLabel` | `Name` |
+| `editor.nameRequired` | `Name is required` |
+| `editor.descriptionLabel` | `Description` |
+| `editor.iconUrlLabel` | `Icon URL` |
+| `editor.versionLabel` | `Version` |
+| `editor.topicsLabel` | `Topics` |
 | `appsEditor.generalForm.namePlaceholder` | `Enter application name` |
-| `appsEditor.generalForm.descriptionLabel` | `Description` |
 | `appsEditor.generalForm.descriptionPlaceholder` | `Describe your application` |
-| `appsEditor.generalForm.iconUrlLabel` | `Icon URL` |
-| `appsEditor.generalForm.iconUrlPlaceholder` | `https://...` |
-| `appsEditor.generalForm.versionLabel` | `Version` |
-| `appsEditor.generalForm.versionPlaceholder` | `e.g. 1.0.0` |
-| `appsEditor.generalForm.topicsLabel` | `Topics` |
-| `appsEditor.generalForm.topicsPlaceholder` | `Add a topic` |
-| `appsEditor.generalForm.previewTitle` | `Preview` |
-| `appsEditor.generalForm.nextButton` | `Next` |
-| `appsEditor.generalForm.cancelButton` | `Cancel` |
-| `appsEditor.generalForm.nameRequired` | `Name is required` |
+| `appsEditor.generalForm.nameInvalid` | `Name may only contain letters, digits, spaces, underscores, dots, and dashes` |
+| `appsEditor.generalForm.versionInvalid` | `Version may only contain letters, digits, dots, underscores, and dashes` |
 | `appsEditor.settingsStep.loadingLabel` | `Loading editor…` |
 | `appsEditor.settingsStep.noEditorPlaceholder` | `Editor not available for this application type yet.` |
 | `appsEditor.error.createFailed` | `Failed to create application. Please try again.` |
 | `appsEditor.error.saveFailed` | `Failed to save application settings. Please try again.` |
+| `appsEditor.error.saveTimeout` | `Saving timed out. Please try again.` |
+| `appsEditor.error.settingsNotReady` | `The Settings editor did not report readiness. Please reload and try again.` |
+
+The additional-locale field labels the General step renders come from the `editor.locales.*` keys owned by the deployment-creation-form capability.
 
 **Memoisation**: The resolved schema object and the `returnUrl` value SHALL be wrapped in `useMemo`. The `handleCreated`, `handleSave`, `handlePreview`, `handleSettingsUpdated`, `handleSaveSuccess`, and `handleSaveError` callbacks SHALL be wrapped in `useCallback`.
 
-**Accessibility**: The step indicator region SHALL have `role="navigation"` and `aria-label="Editor steps"`.
+**Accessibility**: The step indicator region SHALL be a `<nav>` labelled with `editor.stepsNavAriaLabel` ("Editor steps"). While a save is in flight the step content SHALL be marked `inert` behind the saving overlay rather than merely visually dimmed.
 
 **RTL / UI impact**: Horizontal layout uses logical CSS properties (`start`/`end` not `left`/`right`).
 
@@ -181,6 +198,11 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 - **THEN** `isSaving` becomes true and `settingsStepRef.current.triggerSave()` is called
 - **AND** when the iframe posts back a `SAVE_SUCCESS` message, `refetchDeployments()` is awaited
 - **AND** the page navigates to `returnUrl`
+
+#### Scenario: The General form stays mounted after advancing to Settings
+
+- **WHEN** the user completes the General step and the Settings step renders
+- **THEN** `GeneralForm` remains mounted but hidden, so its current values are still readable through `generalFormRef.current.getValues()`
 
 #### Scenario: Preview on Settings step uses freshly saved deployment settings
 
@@ -282,42 +304,47 @@ interface Props {
 
 `apps/chat/src/pages/AppsEditor/GeneralForm.tsx` SHALL render a mobile-first layout: the two sections stack vertically (full width, page-scrollable) on mobile and become a fixed two-column row (each `desktop:w-1/2`, independently scrollable) on desktop (`≥769px`). The form root is `className="flex h-full w-full flex-col overflow-y-auto desktop:flex-row desktop:overflow-hidden"`.
 
-**Left column** — form fields (scrollable, `desktop:w-1/2`, `border-b` on mobile / `desktop:border-e`):
+**Left column** — form fields (scrollable, `desktop:w-1/2`, `border-b` on mobile / `desktop:border-e`).
 
-- **Name** (`Input`, required): maps to `CreateApplicationBodyDto.name`.
-- **Description** (`Textarea`, optional): maps to `CreateApplicationBodyDto.description`.
-- **Icon URL** (`Input`, optional): maps to `CreateApplicationBodyDto.iconUrl`.
-- **Version** (`Input`, optional): maps to `CreateApplicationBodyDto.version`.
-- **Topics** (`DialTagInput`, optional): maps to `CreateApplicationBodyDto.topics`.
+The fields SHALL NOT be hand-rolled here: the column renders the shared `DeploymentCreationForm` component from `@epam/ai-dial-deployment-creation-form`, driven by a single `DeploymentCreationFormValues` state object (`name`, `description`, `iconUrl`, `version`, `topics`, `otherLocales`) and a `DeploymentCreationFormFieldErrors` object, with labels supplied by this page. Those values map onto the create request as `name`, `description`, `iconUrl`, `version`, `topics`, plus the locale payload composed from `otherLocales`.
 
 `GeneralForm` no longer renders its own Cancel/Next footer buttons — those live in the shared `EditorHeader` (see "Shared editor header component"). Instead, `GeneralForm` SHALL be wrapped in `forwardRef<GeneralFormHandle, Props>` and expose, via `useImperativeHandle`:
 
 ```ts
 export interface GeneralFormHandle {
   submit: () => Promise<void>;
+  /** Current in-memory values, trimmed. Carries `display_version`; excludes the backend `version` field. */
+  getValues: () => TriggerSaveGeneralPayload;
 }
 ```
 
 `submit` SHALL run the same validation/create-and-callback logic the Next button previously triggered on click, and SHALL be a no-op (return without calling the API) if a submit is already in flight (`isSubmitting`).
 
+`getValues` SHALL let the host read the current General values without submitting them, so a Settings-step save can forward them to the embedded editor (see `quick-app-authoring`).
+
 **Right column** — live preview (`desktop:w-1/2`, `bg-layer-1`):
 
-- A "Preview" label (`appsEditor.generalForm.previewTitle`) pinned to the top-left.
-- A `<Card>` from `@epam/ai-dial-catalog` centered vertically and horizontally in the remaining space, `w-full max-w-[280px]` so the card never overflows a narrow mobile viewport, driven by a `useMemo`-derived `CatalogItem` built from the current form state (`name`, `version`, `description`, `topics`, `iconUrl`). Uses `CatalogEntityType.Model` to match how existing applications appear in the catalog.
+- A "Preview" label (`basic.preview`) pinned to the top-left.
+- A `<Card>` from `@epam/ai-dial-catalog` centered vertically and horizontally in the remaining space, `w-full max-w-[280px]` so the card never overflows a narrow mobile viewport, driven by a `useMemo`-derived `CatalogItem` built from the current form state (`name`, `version`, `description`, `topics`, `iconUrl`). Uses `CatalogEntityType.Agent` to match how these applications appear in the catalog.
+
+The column's surface is `bg-layer-sunken`.
 
 State owned locally via `useState`:
-- `name`, `description`, `iconUrl`, `version` — controlled string values
-- `topics: string[]` — controlled array value
-- `nameError: string` — inline error shown below the Name field
+- `values: DeploymentCreationFormValues` — the single controlled value object for every field
+- `errors: DeploymentCreationFormFieldErrors` — per-field inline errors
 - `isSubmitting: boolean` — true while the create API call is in-flight
 - `submitError: string` — inline error shown when the API call fails
 
-Client-side validation: only the Name field is validated (must be non-empty). No URL format validation is performed on the icon URL field; that is enforced server-side only.
+`initialValues`, when supplied, SHALL seed `values` exactly once (guarded by a ref) so later edits are never overwritten by a re-render of the host.
+
+Client-side validation SHALL run through `validateDeploymentCreationFields` with both `validateNamePattern` and `validateVersionPattern` enabled: the Name field is required and must match the allowed-character pattern, and the Version field — when non-empty — must match its own pattern. No URL format validation is performed on the icon URL field; that is enforced server-side only.
 
 Submitting the form (via the imperative `submit()` handle, or the underlying `<form onSubmit>` if the user presses Enter):
 - Is a no-op while `isSubmitting` is already true.
-- Validates name is non-empty, then calls `createApplication({ name, type: schemaId, description, iconUrl, version, topics })` via the server-api wrapper.
-- On success, invokes the `onCreated(appId)` callback prop.
+- Validates the fields above and renders `editor.nameRequired`, `appsEditor.generalForm.nameInvalid`, or `appsEditor.generalForm.versionInvalid` without calling the API when any check fails.
+- When `appId` is set (an existing app is being edited), SHALL NOT call the create API at all — it invokes `onCreated(appId, name, iconUrl)` so the flow simply advances to the Settings step, leaving persistence to the Settings-step save.
+- Otherwise calls `createApplication({ name, type: schemaId, description, iconUrl, version, topics, applicationProperties, locales, primaryLocale })` via the server-api wrapper, where `applicationProperties` seeds an empty orchestrator/contexts/tool_sets object for a Quick App schema and is omitted for any other schema.
+- On success, invokes `onCreated(appId, name, iconUrl)`.
 
 Cancelling is handled by the parent `AppsEditor` page via the shared header's `onCancel`, not by `GeneralForm` itself.
 
@@ -325,11 +352,15 @@ Props:
 ```ts
 interface Props {
   schemaId: string;
-  onCreated: (appId: string) => void;
+  /** Id of the app being edited. When set, submitting advances to the next step instead of creating a new app. */
+  appId?: string;
+  /** Existing app values used to prefill the form when editing an app. */
+  initialValues?: GeneralFormInitialValues;
+  onCreated: (appId: string, displayName?: string, iconUrl?: string) => void;
 }
 ```
 
-**Accessibility**: Each input uses `Input`/`Textarea`/`DialTagInput` label props for associated labels.
+**Accessibility**: Field labelling is the shared `DeploymentCreationForm`'s responsibility; this page supplies the label strings.
 
 #### Scenario: Empty name prevents submission
 
@@ -369,22 +400,30 @@ interface Props {
 
 When rendering `AppEditorIframe`, `SettingsStep` SHALL pass `onUpdated`, `onSaveSuccess`, and `onSaveError` through unchanged.
 
-`SettingsStep` SHALL be wrapped in `forwardRef<SettingsStepHandle, Props>` and expose, via `useImperativeHandle`, a `triggerSave()` that forwards to the inner `AppEditorIframe`'s own `triggerSave()` (a no-op when no iframe is rendered):
+`SettingsStep` SHALL be wrapped in `forwardRef<SettingsStepHandle, Props>` and expose, via `useImperativeHandle`, a `triggerSave(general?)` that forwards to the inner `AppEditorIframe`'s own `triggerSave(general?)` (a no-op when no iframe is rendered):
 
 ```ts
 export interface SettingsStepHandle {
-  triggerSave: () => void;
+  triggerSave: (general?: TriggerSaveGeneralPayload) => void;
 }
 ```
+
+When an editor is rendered, `SettingsStep` SHALL keep the iframe mounted and merely hide it while the preview pane is shown, rendering `AppPreviewChat` as an absolutely-positioned sibling (see the `app-preview-chat` capability) rather than swapping the iframe out — so entering and leaving preview never reloads the editor.
 
 Props:
 ```ts
 interface Props {
   schema: ApplicationSchemaSummaryDto | undefined;
   appId: string;
+  appDisplayName?: string;
+  appIconUrl?: string;
+  isPreviewing?: boolean;
   onUpdated?: () => void;
-  onSaveSuccess?: () => void;
+  onSaveSuccess?: (hasChanges: boolean) => void;
   onSaveError?: (error: string) => void;
+  onReadyChange?: (isReady: boolean) => void;
+  onLoggedOutChange?: (isLoggedOut: boolean) => void;
+  previewResetKey?: number;
 }
 ```
 
@@ -423,14 +462,14 @@ interface Props {
 - In `handleMessage`, after verifying `event.origin` matches `schema.editorUrl`'s origin:
   - `event.data.type === \`${displayName}/${AppsEditorEvent.ReadyToInteract}\`` → set loading=false
   - `event.data.type === \`${displayName}/${AppsEditorEvent.UpdatedSuccess}\`` → call the optional `onUpdated` callback prop
-  - `event.data.type === AppsEditorEvent.SaveSuccess` → call the optional `onSaveSuccess` callback prop
+  - `event.data.type === AppsEditorEvent.SaveSuccess` → call the optional `onSaveSuccess` callback prop with the message's `hasChanges` normalized to a strict boolean
   - `event.data.type === AppsEditorEvent.SaveError` → call the optional `onSaveError` callback prop with `event.data.error ?? ''`
-- `AppsEditorEvent` (in `apps/chat/src/types/apps-editor.ts`) SHALL include `ReadyToInteract = 'readyToInteract'`, `UpdatedSuccess = 'updatedApplicationSuccess'`, `TriggerSave = 'TRIGGER_SAVE'`, `SaveSuccess = 'SAVE_SUCCESS'`, `SaveError = 'SAVE_ERROR'`.
-- Be wrapped in `forwardRef<AppEditorIframeHandle, Props>` and expose, via `useImperativeHandle`, a `triggerSave()` that posts `{ type: AppsEditorEvent.TriggerSave }` to the iframe's `contentWindow` targeted at `schema.editorUrl`'s origin (a no-op when `schema.editorUrl` is falsy):
+- `AppsEditorEvent` (in `apps/chat/src/types/apps-editor.ts`) SHALL include at least `ReadyToInteract = 'readyToInteract'`, `UpdatedSuccess = 'updatedApplicationSuccess'`, `TriggerSave = 'TRIGGER_SAVE'`, `SaveSuccess = 'SAVE_SUCCESS'`, `SaveError = 'SAVE_ERROR'`. Further members carry the readiness and toolset-login parts of the protocol and are owned by the `quick-app-authoring` capability.
+- Be wrapped in `forwardRef<AppEditorIframeHandle, Props>` and expose, via `useImperativeHandle`, a `triggerSave(general?)` that posts a `TriggerSaveMessage` (`{ type: AppsEditorEvent.TriggerSave, general }`) to the iframe's `contentWindow` targeted at `schema.editorUrl`'s origin (a no-op when that origin cannot be resolved):
 
 ```ts
 export interface AppEditorIframeHandle {
-  triggerSave: () => void;
+  triggerSave: (general?: TriggerSaveGeneralPayload) => void;
 }
 ```
 
@@ -440,8 +479,10 @@ interface Props {
   schema: ApplicationSchemaSummaryDto;
   appId: string;
   onUpdated?: () => void;
-  onSaveSuccess?: () => void;
+  onSaveSuccess?: (hasChanges: boolean) => void;
   onSaveError?: (error: string) => void;
+  onReadyChange?: (isReady: boolean) => void;
+  onLoggedOutChange?: (isLoggedOut: boolean) => void;
 }
 ```
 
@@ -484,12 +525,12 @@ interface Props {
 #### Scenario: triggerSave posts TRIGGER_SAVE to the iframe
 
 - **WHEN** `iframeRef.current.triggerSave()` is called and `schema.editorUrl` is `"https://editor.example.com"`
-- **THEN** `iframe.contentWindow.postMessage({ type: 'TRIGGER_SAVE' }, "https://editor.example.com")` is called
+- **THEN** `iframe.contentWindow.postMessage({ type: 'TRIGGER_SAVE', general: undefined }, "https://editor.example.com")` is called
 
 #### Scenario: SAVE_SUCCESS message calls onSaveSuccess
 
 - **WHEN** a `message` event arrives with `data.type === 'SAVE_SUCCESS'`
-- **THEN** the `onSaveSuccess` callback prop is called
+- **THEN** the `onSaveSuccess` callback prop is called with the message's `hasChanges`, or `false` when the message omits it
 
 #### Scenario: SAVE_ERROR message calls onSaveError with the error string
 
@@ -528,10 +569,14 @@ Where `applicationsApi` is the generated `ApplicationsApi` instance (from `api-c
 `apps/chat/src/pages/AppsEditor/tests/GeneralForm.spec.tsx` SHALL cover:
 
 1. Renders name, description, and icon URL fields.
-2. Empty name — validation error shown, API not called.
-3. Valid form — API called with correct body, `onCreated` invoked on success.
-4. Next button disabled while submitting.
-5. API failure — error message rendered, button re-enabled.
+2. Empty name — required error shown, API not called.
+3. Name with forbidden characters — invalid-format error shown, API not called.
+4. Version with forbidden characters — invalid-format error shown, API not called.
+5. Valid form — API called with the correct body, `onCreated` invoked on success.
+6. Quick App schema — the create body carries the seeded `applicationProperties` defaults.
+7. Existing app (`appId` set) — `onCreated` is invoked without calling the create API.
+8. `getValues()` — returns trimmed current values, carries `display_version`, omits the backend `version`, and includes `locales`/`primaryLocale` when additional locales are configured.
+9. API failure — error message rendered.
 
 All API calls SHALL be mocked via `vi.mock`.
 
