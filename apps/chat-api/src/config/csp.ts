@@ -36,7 +36,12 @@ export const createHelmetOptions = (
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       /* `data:` covers fonts the bundler inlines as base64 data URIs. */
       fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
-      scriptSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        /* Allows the attachment canvas to compile its same-origin OOXML WASM
+         * parsers without enabling arbitrary JavaScript evaluation. */
+        "'wasm-unsafe-eval'",
+      ],
       workerSrc: ["'self'", 'blob:'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
       mediaSrc: ["'self'", 'blob:'],
