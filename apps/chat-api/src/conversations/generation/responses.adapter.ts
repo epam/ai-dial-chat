@@ -184,6 +184,9 @@ export class ResponsesAdapter {
   ): AsyncGenerator<string, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+    const cancelUpstreamOnAbort = (): void => {
+      void upstreamReader?.cancel().catch(() => undefined);
+    };
 
     try {
       const dialResult = (await this.dialClient.client.createResponse({
@@ -248,6 +251,8 @@ export class ResponsesAdapter {
       }
 
       upstreamReader = dialResult.response.body.getReader();
+      signal.addEventListener('abort', cancelUpstreamOnAbort, { once: true });
+      if (signal.aborted) cancelUpstreamOnAbort();
       const decoder = new TextDecoder();
       let sseBuffer = '';
       /*
@@ -378,6 +383,9 @@ export class ResponsesAdapter {
 
       while (true) {
         const { done, value } = await upstreamReader.read();
+        if (signal.aborted) {
+          return { outcome: 'aborted', assembledMessage };
+        }
         if (done) break;
 
         sseBuffer += decoder.decode(value, { stream: true });
@@ -449,12 +457,14 @@ export class ResponsesAdapter {
       };
     } catch (err) {
       const isAbort =
-        err instanceof Error &&
-        (err.name === 'AbortError' || err.name === 'DOMException');
+        signal.aborted ||
+        (err instanceof Error &&
+          (err.name === 'AbortError' || err.name === 'DOMException'));
       return isAbort
         ? { outcome: 'aborted', assembledMessage }
         : { outcome: 'error', error: err, assembledMessage };
     } finally {
+      signal.removeEventListener('abort', cancelUpstreamOnAbort);
       if (upstreamReader) {
         try {
           await upstreamReader.cancel();

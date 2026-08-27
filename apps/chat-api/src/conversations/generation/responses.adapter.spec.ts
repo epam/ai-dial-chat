@@ -901,6 +901,43 @@ describe('ResponsesAdapter', () => {
       expect(result.outcome).toBe('aborted');
     });
 
+    it('cancels a pending upstream read when the signal aborts during a tool call', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+      const encoder = new TextEncoder();
+      const cancel = vi.fn();
+      const pendingToolCallStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"type":"response.created","response":{"id":"resp-tool"}}\n\n',
+            ),
+          );
+        },
+        cancel,
+      });
+      vi.spyOn(mockDialClient.client, 'createResponse').mockResolvedValue({
+        response: new Response(pendingToolCallStream, { status: 200 }),
+      } as never);
+      const abortController = new AbortController();
+      const res = makeMockRes();
+
+      const relayPromise = adapter.relay(
+        { model: 'gpt-4o', input: [], stream: true, store: false },
+        'test-token',
+        abortController.signal,
+        res as never,
+        { role: ConversationMessageRole.Assistant, content: '' } as never,
+      );
+      await vi.waitFor(() => expect(res.write).toHaveBeenCalled());
+
+      abortController.abort();
+
+      await expect(relayPromise).resolves.toMatchObject({
+        outcome: 'aborted',
+      });
+      expect(cancel).toHaveBeenCalledTimes(1);
+    });
+
     it('does not forward response.reasoning_text.delta to the browser stream', async () => {
       const { adapter, mockDialClient } = makeAdapter();
       const { result, res } = await relay(adapter, mockDialClient, [
