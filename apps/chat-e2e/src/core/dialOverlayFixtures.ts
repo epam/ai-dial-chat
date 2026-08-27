@@ -23,6 +23,7 @@ import {
   SendMessage,
   TalkToAgentDialog,
   Toast,
+  TooltipPortal,
 } from '../ui/webElements';
 
 import config from '@/config/overlay.playwright.config';
@@ -37,6 +38,7 @@ import {
   MenuAssertion,
   PromptAssertion,
   TalkToAgentDialogAssertion,
+  TooltipPortalAssertion,
 } from '@/src/assertions';
 import { OverlayAssertion } from '@/src/assertions/overlay/overlayAssertion';
 import test from '@/src/core/baseFixtures';
@@ -120,6 +122,7 @@ const dialOverlayTest = test.extend<{
   overlayPromptBar: PromptBar;
   overlayPrompts: PromptsTree;
   overlayConversationDropdownMenu: DropdownMenu;
+  overlayConversationDropdownMenuAssertion: MenuAssertion;
   overlayPromptDropdownMenu: DropdownMenu;
   overlayAppsDropdownMenu: DropdownMenu;
   overlayAppsDropdownMenuAssertion: MenuAssertion;
@@ -131,6 +134,8 @@ const dialOverlayTest = test.extend<{
   overlayConfirmationDialog: ConfirmationDialog;
   overlayModelInfoTooltip: ModelInfoTooltip;
   overlayToast: Toast;
+  overlayTooltipPortal: TooltipPortal;
+  overlayTooltipPortalAssertion: TooltipPortalAssertion;
   overlayRequestApiKeyModal: RequestApiKeyModal;
   overlayReportAnIssueModal: ReportAnIssueModal;
   overlayPlaybackControl: PlaybackControl;
@@ -172,6 +177,7 @@ const dialOverlayTest = test.extend<{
   overlayMarketplaceEntitiesSection: MarketplaceEntitiesSection;
   overlayMarketplaceEntities: MarketplaceEntities;
   overlayAgentDropdownMenu: DropdownMenu;
+  accountSettingsDropdownMenu: DropdownMenu;
 }>({
   storageState: async ({}, use) => {
     await use(overlayStateFilePath(+process.env.TEST_PARALLEL_INDEX!));
@@ -343,6 +349,15 @@ const dialOverlayTest = test.extend<{
     );
     await use(overlayConversationDropdownMenu);
   },
+  overlayConversationDropdownMenuAssertion: async (
+    { overlayConversationDropdownMenu },
+    use,
+  ) => {
+    const overlayConversationDropdownMenuAssertion = new MenuAssertion(
+      overlayConversationDropdownMenu,
+    );
+    await use(overlayConversationDropdownMenuAssertion);
+  },
   overlayPromptDropdownMenu: async ({ page, overlayHomePage }, use) => {
     const overlayPromptDropdownMenu = new DropdownMenu(
       page,
@@ -418,6 +433,19 @@ const dialOverlayTest = test.extend<{
       overlayHomePage.getOverlayContainer().getElementLocator(),
     );
     await use(overlayToast);
+  },
+  overlayTooltipPortal: async ({ page, overlayHomePage }, use) => {
+    const overlayTooltipPortal = new TooltipPortal(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayTooltipPortal);
+  },
+  overlayTooltipPortalAssertion: async ({ overlayTooltipPortal }, use) => {
+    const overlayTooltipPortalAssertion = new TooltipPortalAssertion(
+      overlayTooltipPortal,
+    );
+    await use(overlayTooltipPortalAssertion);
   },
   overlayRequestApiKeyModal: async ({ page, overlayHomePage }, use) => {
     const overlayRequestApiKeyModal = new RequestApiKeyModal(
@@ -653,6 +681,13 @@ const dialOverlayTest = test.extend<{
       overlayMarketplacePage.getOverlayContainer().getElementLocator(),
     );
     await use(overlayAgentDropdownMenu);
+  },
+  accountSettingsDropdownMenu: async ({ page, overlayHomePage }, use) => {
+    const accountSettingsDropdownMenu = new DropdownMenu(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(accountSettingsDropdownMenu);
   },
 });
 
