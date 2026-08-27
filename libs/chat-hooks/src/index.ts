@@ -113,4 +113,5 @@ export * from './usePanelMaxWidth/usePanelMaxWidth';
 export * from './useShareLink/useShareLink';
 export * from './useShareRecipientsCount/useShareRecipientsCount';
 export * from './useToolsMenu/useToolsMenu';
+export * from './usage/useUsageData/useUsageData';
 export * from './useViewportWidth/useViewportWidth';

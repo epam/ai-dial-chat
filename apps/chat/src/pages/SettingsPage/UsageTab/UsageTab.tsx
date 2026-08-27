@@ -1,5 +1,9 @@
+import { useUsageData } from '@epam/ai-dial-chat-hooks';
 import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
+  mapOverallCostLimitsToPeriodStatuses,
+  mapUsageDataToDashboard,
+  mapUserUsageToModelLimits,
   ModelLimitsSection,
   UsageLimitCardGroup,
 } from '@epam/ai-dial-usage-dashboard';
@@ -10,15 +14,14 @@ import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useLanguage } from '../../../hooks/language/useLanguage';
-import { useUsageData } from '../../../hooks/useUsageData';
-import { mapUsageDataToDashboard } from '../../../utils/map-usage-data-to-dashboard';
-import {
-  mapOverallCostLimitsToPeriodStatuses,
-  mapUserUsageToModelLimits,
-} from '../../../utils/map-user-usage-to-model-limits';
+import { getUserUsage } from '../../../server-api/user-limits';
+import { resolveCatalogIconUrl } from '../../../utils/icon-path';
+import { resolveLocalizedText } from '../../../utils/locale';
 
 const UsageTab: FC = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation() as {
+    t: (s: string, params?: Record<string, unknown>) => string;
+  };
   const { language: activeLocale } = useLanguage();
   const { showErrorNotification } = useNotification();
   const isSettingsPageEnabled = useFeatureFlag('settingsPageEnabled');
@@ -26,7 +29,7 @@ const UsageTab: FC = () => {
     usage,
     isLoading: isUsageLoading,
     usageError,
-  } = useUsageData(isSettingsPageEnabled);
+  } = useUsageData(getUserUsage, isSettingsPageEnabled);
   const { items: deploymentItems, isLoading: isDeploymentsLoading } =
     useDeployments();
   const isLoading = isUsageLoading || isDeploymentsLoading;
@@ -78,7 +81,15 @@ const UsageTab: FC = () => {
   );
 
   const modelLimitRows = useMemo(
-    () => mapUserUsageToModelLimits(usage, deploymentItems, activeLocale, t),
+    () =>
+      mapUserUsageToModelLimits(
+        usage,
+        deploymentItems,
+        activeLocale,
+        t,
+        resolveCatalogIconUrl,
+        resolveLocalizedText,
+      ),
     [usage, deploymentItems, activeLocale, t],
   );
   const modelLimitPeriodStatuses = useMemo(

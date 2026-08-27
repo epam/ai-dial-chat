@@ -1,28 +1,31 @@
 import type { UserLimitStatsResponseDto } from '@epam/ai-dial-chat-api-client';
-import { UsageLimitStatus } from '@epam/ai-dial-usage-dashboard';
-import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
-import { UsageI18nKeys } from '../../constants/translation-keys';
-import { mapUsageDataToDashboard } from '../map-usage-data-to-dashboard';
+import { UsageLimitStatus } from '../../models/usage-limit-card-props';
+import {
+  USAGE_DATA_I18N_KEYS,
+  mapUsageDataToDashboard,
+} from '../map-usage-data-to-dashboard';
 
-const labels: Partial<Record<UsageI18nKeys, string>> = {
-  [UsageI18nKeys.TodayTitle]: 'Today',
-  [UsageI18nKeys.TodayPeriodDescription]: 'Last 24 hours',
-  [UsageI18nKeys.ThisWeekTitle]: 'This week',
-  [UsageI18nKeys.ThisWeekPeriodDescription]: 'Last 7 days',
-  [UsageI18nKeys.ThisMonthTitle]: 'This month',
-  [UsageI18nKeys.ThisMonthPeriodDescription]: 'Last 30 days',
-};
+type Translate = (key: string, options?: Record<string, unknown>) => string;
 
-const t = ((key: string, params?: Record<string, unknown>) => {
-  if (key === UsageI18nKeys.UnlimitedProgressAriaLabel) {
+const t: Translate = (key, params) => {
+  if (key === USAGE_DATA_I18N_KEYS.unlimitedProgressAriaLabel) {
     return `${params?.used} used, unlimited`;
   }
-  if (key === UsageI18nKeys.ProgressAriaLabel) {
+  if (key === USAGE_DATA_I18N_KEYS.progressAriaLabel) {
     return `${params?.used} of ${params?.total}, ${params?.percent}% used`;
   }
-  return labels[key as UsageI18nKeys] ?? key;
-}) as TFunction;
+  if (key === USAGE_DATA_I18N_KEYS.todayTitle) return 'Today';
+  if (key === USAGE_DATA_I18N_KEYS.todayPeriodDescription)
+    return 'Last 24 hours';
+  if (key === USAGE_DATA_I18N_KEYS.thisWeekTitle) return 'This week';
+  if (key === USAGE_DATA_I18N_KEYS.thisWeekPeriodDescription)
+    return 'Last 7 days';
+  if (key === USAGE_DATA_I18N_KEYS.thisMonthTitle) return 'This month';
+  if (key === USAGE_DATA_I18N_KEYS.thisMonthPeriodDescription)
+    return 'Last 30 days';
+  return key;
+};
 
 const withStats = (
   fields: Partial<
