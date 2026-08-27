@@ -23,6 +23,7 @@ import {
   IconLogout,
   IconPencil,
   IconPlayerPlayFilled,
+  IconShare,
   IconTrash,
   IconUserOff,
   IconWorldOff,
@@ -66,8 +67,10 @@ interface HeaderProps {
   isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   onShare?: (item: CatalogItem) => void;
   /**
-   * Renders the Share popover content anchored to the Share button. When
-   * provided, clicking Share opens this popover instead of calling `onShare`.
+   * Renders the Share popover content. When provided, choosing Share opens
+   * this popover instead of calling `onShare`. It anchors to whichever surface
+   * carries Share: the header button, or the Manage trigger when
+   * `isSharePrimary` has moved the entry into that menu.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   /**
@@ -75,6 +78,13 @@ interface HeaderProps {
    * (AND) with the built-in ownership/type rule.
    */
   isShareVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether Share renders as its own header button rather than a
+   * Manage-menu entry. Defaults to `true` — the header button. Returning
+   * `false` moves Share into the Manage menu, beside Delete. Share renders on
+   * one surface or the other, never both.
+   */
+  isSharePrimary?: (item: CatalogItem) => boolean;
   onEdit?: (item: CatalogItem) => void;
   /**
    * Called when "Download" is clicked. In the Manage menu, fire-and-forget:
@@ -128,10 +138,16 @@ interface HeaderProps {
   /**
    * Controls whether the "Publish" action is shown. Defaults to the same rule
    * as the primary action. Returning `true` is not sufficient on its own:
-   * "Publish" is suppressed whenever "Unpublish" is shown, so the menu carries
-   * one of the two, never both.
+   * "Publish" is suppressed whenever "Unpublish" is shown, so the panel
+   * carries one of the two, never both.
    */
   isPublishVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether whichever of "Publish"/"Unpublish" applies renders as its
+   * own header button rather than a Manage-menu entry. Defaults to `false` —
+   * the menu entry. It renders on one surface or the other, never both.
+   */
+  isPublishPrimary?: (item: CatalogItem) => boolean;
   /** Called when the "Publish" button is clicked; the host swaps this panel's content to the publish view. */
   onOpenPublish?: () => void;
   /**
@@ -149,14 +165,25 @@ interface HeaderProps {
    */
   hasPublishedFolders?: boolean;
   /**
-   * Starts the panel's publish-history lookup, called on Manage-menu open and
-   * on hover/focus of its trigger. Guarded once per item by the panel.
+   * Starts the panel's publish-history lookup, called on hover/focus of the
+   * Manage trigger and on Manage-menu open, plus on hover/focus of the publish
+   * button where `isPublishPrimary` promoted it into the action row. Guarded
+   * once per item by the panel.
    */
   onRequestPublishHistory?: () => void;
-  /** Called when the "Unpublish" entry is clicked; the host swaps this panel's content to the unpublish confirmation. */
+  /** Called when the "Unpublish" button is clicked; the host swaps this panel's content to the unpublish confirmation. */
   onOpenUnpublish?: () => void;
 }
-/** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit, Publish or Unpublish, and Delete), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. */
+/**
+ * Details panel header bar: entity identity (icon + name + version), action
+ * buttons, and inline credentials section. By default the action row carries
+ * the primary action and Share, with a "Manage" menu for Edit, Publish or
+ * Unpublish, and Delete; `isSharePrimary` and `isPublishPrimary` let a host
+ * swap which of the two sits in the row and which sits in the menu. For
+ * Toolsets, the credentials action (Log in / Log out / manage) renders first
+ * and styled as the primary action, since Toolsets have no "Use in chat"
+ * action.
+ */
 export const Header: FC<HeaderProps> = ({
   item,
   onUseInChat,
@@ -164,6 +191,7 @@ export const Header: FC<HeaderProps> = ({
   onShare,
   shareOverlay,
   isShareVisible,
+  isSharePrimary,
   onEdit,
   onDownload,
   isDownloadVisible,
@@ -181,6 +209,7 @@ export const Header: FC<HeaderProps> = ({
   texts,
   detailsStyles,
   isPublishVisible,
+  isPublishPrimary,
   onOpenPublish,
   isUnpublishVisible,
   hasPublishedFolders = false,
@@ -242,6 +271,31 @@ export const Header: FC<HeaderProps> = ({
     };
     void run();
   }, [item, onDownload, isDownloading]);
+
+  /*
+   * Open state for the Share popover in the Manage-menu arrangement only. The
+   * header-button arrangement keeps its own state inside `ShareButton`, which
+   * anchors the popover to the button itself; here the entry that opened it is
+   * unmounted by the time the popover appears, so the state and the anchor
+   * both have to live out here.
+   */
+  const [isShareOverlayOpen, setIsShareOverlayOpen] = useState(false);
+
+  useEffect(() => {
+    setIsShareOverlayOpen(false);
+  }, [item.id]);
+
+  const handleShare = useCallback(() => {
+    if (shareOverlay) {
+      setIsShareOverlayOpen(true);
+      return;
+    }
+    onShare?.(item);
+  }, [item, onShare, shareOverlay]);
+
+  const handleCloseShareOverlay = useCallback(() => {
+    setIsShareOverlayOpen(false);
+  }, []);
 
   const handleUnshare = useCallback(() => {
     onUnshare?.(item);
@@ -319,12 +373,24 @@ export const Header: FC<HeaderProps> = ({
     [requestRecipientsCount, onRequestPublishHistory],
   );
 
-  /* Both Manage-menu lookups share one hover/focus trigger, so each is issued
-   * at most once per item before the click lands. */
+  /*
+   * Both lookups share one hover/focus trigger, so each is issued at most once
+   * per item before the click lands. The publish-history lookup stays wired to
+   * this trigger in either arrangement: with Publish promoted to the row, an
+   * item whose Publish button is hidden by `isPublishVisible` would otherwise
+   * have nothing to hover, and its "Unpublish" state could never resolve.
+   */
   const handleManageTriggerIntent = useCallback(() => {
     requestRecipientsCount();
     onRequestPublishHistory?.();
   }, [requestRecipientsCount, onRequestPublishHistory]);
+
+  /* The promoted publish button's identity — "Publish" or "Unpublish" —
+   * depends on the same lookup, so reaching for it starts the request before
+   * the click lands. */
+  const handlePublishTriggerIntent = useCallback(() => {
+    onRequestPublishHistory?.();
+  }, [onRequestPublishHistory]);
 
   const shouldShowPrimaryAction =
     texts?.hasPrimaryAction !== false &&
@@ -345,19 +411,21 @@ export const Header: FC<HeaderProps> = ({
     (isUnpublishVisible?.(item) ?? true);
 
   /*
-   * "Publish" and "Unpublish" are mutually exclusive: the menu offers whichever
-   * one matches the item's current state, never both at once. An item with no
-   * published copy offers "Publish"; once history resolves to at least one
-   * published folder, "Unpublish" takes its place.
+   * "Publish" and "Unpublish" are mutually exclusive: the panel offers
+   * whichever one matches the item's current state, never both at once. An
+   * item with no published copy offers "Publish"; once history resolves to at
+   * least one published folder, "Unpublish" takes its place.
    *
    * This does hide a second publish of an already-published item (to another
-   * folder, or a re-publish of the same one). That is the trade the single-state
-   * menu buys, and republishing stays reachable by unpublishing first.
+   * folder, or a re-publish of the same one). That is the trade the
+   * single-state action buys, and republishing stays reachable by unpublishing
+   * first.
    *
-   * Because the history lookup is lazy (see `handleManageTriggerIntent`), the
-   * entry can start as "Publish" and become "Unpublish" once the response
-   * arrives — which is why the lookup is fired on hover/focus of the trigger
-   * rather than on open, so it is usually settled before the menu is visible.
+   * Because the history lookup is lazy (see `handleManageTriggerIntent` and
+   * `handlePublishTriggerIntent`), it can start as "Publish" and become
+   * "Unpublish" once the response arrives — which is why the lookup is fired
+   * on hover/focus of the trigger rather than on click, so it is usually
+   * settled before the action becomes visible.
    */
   const shouldShowPublish =
     !shouldShowUnpublish &&
@@ -367,6 +435,24 @@ export const Header: FC<HeaderProps> = ({
         item.type === CatalogEntityType.Agent));
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
+
+  /*
+   * Sharing is limited to entities the current user owns (deployments and
+   * toolsets in their personal space), not the whole catalog — anything else
+   * would offer an entry with no defined behavior. `ShareButton` applies the
+   * same rule itself, so this only gates the Manage-menu arrangement.
+   */
+  const shouldShowShareAction =
+    item.isMyApp === true && (isShareVisible?.(item) ?? true);
+
+  /*
+   * Which surface each of Share and Publish lands on. The defaults are the
+   * historical arrangement — Share as its own button in the action row,
+   * Publish inside the Manage menu — and a host that wants the reverse flips
+   * one or both. Each action renders on exactly one of the two surfaces.
+   */
+  const isShareInActionRow = isSharePrimary?.(item) ?? true;
+  const isPublishInActionRow = isPublishPrimary?.(item) ?? false;
 
   const authenticationType =
     item.credentials?.authenticationType ?? ToolsetAuthenticationType.None;
@@ -430,6 +516,20 @@ export const Header: FC<HeaderProps> = ({
 
   const manageItems = useMemo<DropdownItem[]>(() => {
     const items: DropdownItem[] = [];
+    if (!isShareInActionRow && shouldShowShareAction) {
+      items.push({
+        key: 'share',
+        label: texts?.shareLabel ?? 'Share',
+        icon: (
+          <IconShare
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            className="text-secondary"
+          />
+        ),
+        onClick: handleShare,
+      });
+    }
     if (shouldShowEditAction) {
       items.push({
         key: 'edit',
@@ -458,7 +558,7 @@ export const Header: FC<HeaderProps> = ({
         onClick: handleDownload,
       });
     }
-    if (shouldShowPublish) {
+    if (!isPublishInActionRow && shouldShowPublish) {
       items.push({
         key: 'publish',
         label: texts?.publishLabel ?? 'Publish',
@@ -472,7 +572,7 @@ export const Header: FC<HeaderProps> = ({
         onClick: handleOpenPublish,
       });
     }
-    if (shouldShowUnpublish) {
+    if (!isPublishInActionRow && shouldShowUnpublish) {
       /* Not `danger`: unpublishing removes a published copy but destroys
        * nothing the owner holds — the source item is untouched and can be
        * published again — so it sits with Edit/Download/Publish. */
@@ -525,8 +625,11 @@ export const Header: FC<HeaderProps> = ({
     }
     return items;
   }, [
+    isShareInActionRow,
+    shouldShowShareAction,
     shouldShowEditAction,
     shouldShowDownloadAction,
+    isPublishInActionRow,
     shouldShowPublish,
     shouldShowUnpublish,
     shouldShowDeleteAction,
@@ -534,6 +637,7 @@ export const Header: FC<HeaderProps> = ({
     recipientsCount,
     shouldShowUnshareAction,
     texts,
+    handleShare,
     handleEdit,
     handleDownload,
     handleOpenPublish,
@@ -670,6 +774,48 @@ export const Header: FC<HeaderProps> = ({
     );
   };
 
+  const renderManageMenu = (): ReactNode => {
+    const menu = (
+      <Dropdown
+        items={manageItems}
+        placement="bottom-end"
+        matchReferenceWidth={false}
+        onOpenChange={handleManageOpenChange}
+      >
+        {/* Hover and focus start the recipient-count and publish-history
+         * lookups before the click lands, so the "Revoke access" entry — and
+         * the publish button's own state — are usually already settled by the
+         * time the menu opens. */}
+        <NeutralIconButton
+          icon={<IconDots size={DIAL_ICON_SIZE.LG} aria-hidden />}
+          aria-label={texts?.manageActionLabel ?? 'Manage'}
+          aria-haspopup="menu"
+          onMouseEnter={handleManageTriggerIntent}
+          onFocus={handleManageTriggerIntent}
+        />
+      </Dropdown>
+    );
+    if (isShareInActionRow || !shareOverlay || !shouldShowShareAction) {
+      return menu;
+    }
+    /* With Share inside the menu, its popover is anchored to this trigger
+     * instead: the entry that opens it is unmounted by the time the popover
+     * appears, so it has no node of its own to hang from. */
+    return (
+      <Dropdown
+        placement="bottom-end"
+        matchReferenceWidth={false}
+        open={isShareOverlayOpen}
+        onOpenChange={setIsShareOverlayOpen}
+        trigger={[]}
+        outsideClosable
+        renderOverlay={() => shareOverlay(item, handleCloseShareOverlay)}
+      >
+        {menu}
+      </Dropdown>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
       <EntityHeader
@@ -723,36 +869,41 @@ export const Header: FC<HeaderProps> = ({
             )}
           </>
         )}
-        <ShareButton
-          item={item}
-          onShare={onShare}
-          shareOverlay={shareOverlay}
-          isShareVisible={isShareVisible}
-          label={texts?.shareLabel}
-        />
+        {isShareInActionRow && (
+          <ShareButton
+            item={item}
+            onShare={onShare}
+            shareOverlay={shareOverlay}
+            isShareVisible={isShareVisible}
+            label={texts?.shareLabel}
+          />
+        )}
+        {/* Promoted out of the Manage menu by `isPublishPrimary`, for hosts
+         * where publishing is the action owners reach for most after using an
+         * item. "Unpublish" takes the same slot once the item is published, so
+         * the row carries whichever one applies — never both. */}
+        {isPublishInActionRow && shouldShowUnpublish && (
+          <NeutralButton
+            label={texts?.unpublishLabel ?? 'Unpublish'}
+            iconBefore={<IconWorldOff size={DIAL_ICON_SIZE.MD} aria-hidden />}
+            onClick={handleOpenUnpublish}
+            onMouseEnter={handlePublishTriggerIntent}
+            onFocus={handlePublishTriggerIntent}
+          />
+        )}
+        {isPublishInActionRow && shouldShowPublish && (
+          <NeutralButton
+            label={texts?.publishLabel ?? 'Publish'}
+            iconBefore={<IconWorldShare size={DIAL_ICON_SIZE.MD} aria-hidden />}
+            onClick={handleOpenPublish}
+            onMouseEnter={handlePublishTriggerIntent}
+            onFocus={handlePublishTriggerIntent}
+          />
+        )}
         {shouldShowCredentialsAction &&
           !isCredentialsActionPrimary &&
           renderCredentialsButton(NeutralButton)}
-        {manageItems.length > 0 && (
-          <Dropdown
-            items={manageItems}
-            placement="bottom-end"
-            matchReferenceWidth={false}
-            onOpenChange={handleManageOpenChange}
-          >
-            {/* Hover and focus start the recipient-count and publish-history
-             * lookups before the click lands, so the "Revoke access" and
-             * "Unpublish" entries are usually already settled by the time the
-             * menu opens. */}
-            <NeutralIconButton
-              icon={<IconDots size={DIAL_ICON_SIZE.LG} aria-hidden />}
-              aria-label={texts?.manageActionLabel ?? 'Manage'}
-              aria-haspopup="menu"
-              onMouseEnter={handleManageTriggerIntent}
-              onFocus={handleManageTriggerIntent}
-            />
-          </Dropdown>
-        )}
+        {manageItems.length > 0 && renderManageMenu()}
       </div>
     </div>
   );
