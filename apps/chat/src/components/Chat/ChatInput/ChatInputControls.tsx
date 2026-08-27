@@ -36,6 +36,9 @@ export const ChatInputControls = ({
   const isReadOnly = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
+  const isNotAllowed = useAppSelector(
+    ConversationsSelectors.selectIsNotAllowed,
+  );
 
   const isPublic =
     selectedConversations.length > 0 &&
@@ -55,7 +58,7 @@ export const ChatInputControls = ({
 
   const shouldShowExternalControls = isPublic || isReadOnly;
   const shouldShowModelsControl =
-    !isChatReadyForInput && (!isReadOnly || (isPublic && !isReadOnly));
+    !isChatReadyForInput && !isReadOnly && !isNotAllowed;
 
   if (!shouldShowExternalControls && !shouldShowModelsControl) {
     return null;
