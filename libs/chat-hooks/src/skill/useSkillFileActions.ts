@@ -1,11 +1,4 @@
 import {
-  buildSkillManifest,
-  buildSkillManifestFromFrontmatter,
-  getUtf8ByteLength,
-  SKILL_MANIFEST_FILE,
-  type SkillFileContent,
-} from '@epam/ai-dial-chat-hooks';
-import {
   SkillFileNodeKind,
   type SkillEditorFileActions,
   type SkillEditorValues,
@@ -14,25 +7,56 @@ import {
 } from '@epam/ai-dial-skill-editor';
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { SkillEditorI18nKeys } from '../../../constants/translation-keys';
-import type { SkillFileBatchValidationMessages } from '../models/skill-file-batch-validation';
-import { validateSkillFileBatch } from '../utils/skill-file-batch-validation';
-import { nameFromPath } from '../utils/skill-file-tree';
+import { getUtf8ByteLength } from '../shared/string-utils';
+import {
+  buildSkillManifest,
+  buildSkillManifestFromFrontmatter,
+  nameFromPath,
+  SKILL_MANIFEST_FILE,
+} from './skill';
+import {
+  validateSkillFileBatch,
+  type SkillFileBatchValidationMessages,
+} from './skill-file-batch-validation';
+import type { SkillFileContent } from './skill-file-preview';
 
-interface UseSkillFileActionsParams {
-  files: SkillFileTreeNode[];
-  setFiles: Dispatch<SetStateAction<SkillFileTreeNode[]>>;
-  filesContentRef: React.MutableRefObject<Map<string, SkillFileContent>>;
-  frontmatterRef: React.MutableRefObject<Record<string, unknown>>;
-  loadedValues: SkillEditorValues | undefined;
-  setLoadedValues: Dispatch<SetStateAction<SkillEditorValues | undefined>>;
-  isEditMode: boolean;
-  isDirty: boolean;
-  setSelectedPath: Dispatch<SetStateAction<string>>;
+/** Localized messages `useSkillFileActions` needs beyond per-candidate batch validation. */
+export interface SkillFileActionsMessages extends SkillFileBatchValidationMessages {
+  /** Returned as the commit error when an imported manifest's `name` doesn't match the skill being edited. */
+  manifestNameMismatch: string;
+  /** Returned as the commit error when the user declines the manifest-import confirmation. */
+  manifestImportDeclined: string;
+  /** Generic fallback commit error for a batch with invalid candidates but no specific batch error. */
+  saveError: string;
 }
 
-interface UseSkillFileActionsResult {
+/** Parameters accepted by {@link useSkillFileActions}. */
+export interface UseSkillFileActionsParams {
+  /** The editor's current supporting-file tree. */
+  files: SkillFileTreeNode[];
+  /** Updates `files`. */
+  setFiles: Dispatch<SetStateAction<SkillFileTreeNode[]>>;
+  /** In-memory bytes for every supporting file, keyed by relative path. */
+  filesContentRef: React.MutableRefObject<Map<string, SkillFileContent>>;
+  /** The loaded (or imported) manifest's full parsed frontmatter. */
+  frontmatterRef: React.MutableRefObject<Record<string, unknown>>;
+  /** The seeded baseline manifest values, used to approximate the projected total size. */
+  loadedValues: SkillEditorValues | undefined;
+  /** Updates `loadedValues` after a manifest import. */
+  setLoadedValues: Dispatch<SetStateAction<SkillEditorValues | undefined>>;
+  /** Whether the form is editing an existing skill rather than creating a new one. */
+  isEditMode: boolean;
+  /** Whether the form currently diverges from its seeded baseline. */
+  isDirty: boolean;
+  /** Updates the currently selected file-tree node path. */
+  setSelectedPath: Dispatch<SetStateAction<string>>;
+  /** Localized messages, resolved by the host. */
+  messages: SkillFileActionsMessages;
+}
+
+/** Return value of {@link useSkillFileActions}. */
+export interface UseSkillFileActionsResult {
+  /** File-tree mutation operations, passed straight to `SkillEditor`'s `fileActions` prop. */
   fileActions: SkillEditorFileActions;
   /** Whether the "replace Skill metadata?" confirmation prompt should be shown. */
   pendingManifestImport: boolean;
@@ -56,40 +80,20 @@ export const useSkillFileActions = ({
   isEditMode,
   isDirty,
   setSelectedPath,
+  messages,
 }: UseSkillFileActionsParams): UseSkillFileActionsResult => {
-  const { t } = useTranslation();
   const [pendingManifestImport, setPendingManifestImport] = useState(false);
   const manifestImportResolveRef = useRef<((accepted: boolean) => void) | null>(
     null,
   );
 
-  const batchValidationMessages = useMemo<SkillFileBatchValidationMessages>(
-    () => ({
-      required: t(SkillEditorI18nKeys.ErrorRequired),
-      pathReserved: t(SkillEditorI18nKeys.ErrorPathReserved),
-      pathInvalid: t(SkillEditorI18nKeys.ErrorPathInvalid),
-      pathDuplicate: t(SkillEditorI18nKeys.ErrorPathDuplicate),
-      fileTooLarge: (maxSize) =>
-        t(SkillEditorI18nKeys.ErrorFileTooLarge, { maxSize }),
-      manifestCasingInvalid: t(SkillEditorI18nKeys.ErrorManifestCasingInvalid),
-      manifestDuplicate: t(SkillEditorI18nKeys.ErrorManifestDuplicate),
-      manifestInvalidUtf8: t(SkillEditorI18nKeys.ErrorManifestInvalidUtf8),
-      manifestInvalidFrontmatter: t(
-        SkillEditorI18nKeys.ErrorManifestInvalidFrontmatter,
-      ),
-      totalSizeExceeded: t(SkillEditorI18nKeys.ErrorTotalSizeExceeded),
-      totalCountExceeded: t(SkillEditorI18nKeys.ErrorTotalCountExceeded),
-    }),
-    [t],
-  );
-
   /*
    * The live in-progress name/description/instructions the user is typing
-   * live only inside `libs/skill-editor`'s internal form state — this page
-   * only ever sees them via `onSubmit`. `loadedValues` (the seeded baseline)
-   * is therefore the closest available approximation of "the current
-   * manifest" for the projected-total-size check; the BFF remains the
-   * authoritative gate regardless of this estimate's precision.
+   * live only inside `libs/skill-editor`'s internal form state — this hook
+   * only ever sees them via the host's `onSubmit`. `loadedValues` (the seeded
+   * baseline) is therefore the closest available approximation of "the
+   * current manifest" for the projected-total-size check; the BFF remains
+   * the authoritative gate regardless of this estimate's precision.
    */
   const buildBatchValidationContext = useCallback(() => {
     const existingPaths = files
@@ -117,7 +121,7 @@ export const useSkillFileActions = ({
       existingPaths,
       existingTotalBytes,
       manifestByteLength: getUtf8ByteLength(manifestText),
-      messages: batchValidationMessages,
+      messages,
     };
   }, [
     files,
@@ -125,7 +129,7 @@ export const useSkillFileActions = ({
     isEditMode,
     frontmatterRef,
     loadedValues,
-    batchValidationMessages,
+    messages,
   ]);
 
   const confirmManifestImport = useCallback((): Promise<boolean> => {
@@ -159,7 +163,7 @@ export const useSkillFileActions = ({
         const hasInvalid = results.some((result) => result.error !== undefined);
         if (hasInvalid || batchErrors.length > 0) {
           return {
-            error: batchErrors[0]?.message ?? t(SkillEditorI18nKeys.ErrorSave),
+            error: batchErrors[0]?.message ?? messages.saveError,
           };
         }
 
@@ -168,14 +172,12 @@ export const useSkillFileActions = ({
             isEditMode &&
             manifestCandidate.name !== (loadedValues?.name ?? '')
           ) {
-            return { error: t(SkillEditorI18nKeys.ErrorManifestNameMismatch) };
+            return { error: messages.manifestNameMismatch };
           }
           if (isEditMode || isDirty) {
             const accepted = await confirmManifestImport();
             if (!accepted) {
-              return {
-                error: t(SkillEditorI18nKeys.ErrorManifestImportDeclined),
-              };
+              return { error: messages.manifestImportDeclined };
             }
           }
         }
@@ -256,7 +258,7 @@ export const useSkillFileActions = ({
       setFiles,
       setLoadedValues,
       setSelectedPath,
-      t,
+      messages,
     ],
   );
 

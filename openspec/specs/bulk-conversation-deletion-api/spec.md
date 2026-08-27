@@ -10,7 +10,7 @@ Endpoints for deleting selected conversations and for clearing the entire user b
 
 ### Requirement: POST /api/v1/conversations/deletions — delete selected owned conversations
 
-The backend SHALL expose `POST /api/v1/conversations/deletions` in `apps/chat-api/src/conversations/conversation.controller.ts`. The handler MUST be named `deleteConversations` so the generator produces an identically-named SDK method. The controller MUST be versioned (`version: '1'`), annotated `@ApiTags('conversations')`, and delegate all logic to `ConversationService`.
+The backend SHALL expose `POST /api/v1/conversations/deletions` in `apps/chat-api/src/conversations/conversation.controller.ts` — a `@Post('deletions')` route on the existing conversations controller, not a separate top-level resource. The handler MUST be named `deleteConversations` so the generator produces an identically-named SDK method, MUST carry `@HttpCode(200)` (a `POST` would otherwise default to 201), and the controller MUST be versioned (`version: '1'`), annotated `@ApiTags('conversations')`, and delegate all logic to `ConversationService`, which forwards to `ConversationLifecycleService`.
 
 Request body validated by `DeleteConversationsBodyDto`:
 
@@ -49,7 +49,7 @@ The service SHALL:
 3. For each owned ID, extract the bucket-relative path (everything after `conversations/{sessionBucket}/`) and call `client.deleteConversation(bucket, encodeDialResourcePath(path), { headers: getBearerAuthHeaders(token) })`.
 4. All DIAL Core calls run concurrently via `Promise.allSettled`.
 5. Classify each result per §10 of design.md.
-6. For each successfully deleted conversation, fire a fire-and-forget call to remove the pin state.
+6. For each successfully deleted conversation, fire a fire-and-forget `userConfigService.updatePin(id, false, …)` to drop the pin state.
 7. Return `ConversationDeletionResultDto`. The service MUST NOT throw — all outcomes are encoded in the DTO.
 
 HTTP 200 is returned even when every item failed. The caller inspects `failed` to determine per-item outcomes.
@@ -162,7 +162,9 @@ Error codes:
 
 ### Requirement: POST /api/v1/conversations/deletions/all — delete every conversation in the user bucket
 
-The backend SHALL expose `POST /api/v1/conversations/deletions/all`. The handler MUST be named `deleteAllConversations`. The endpoint requires explicit confirmation to prevent accidental collection deletion.
+The backend SHALL expose `POST /api/v1/conversations/deletions/all` — a `@Post('deletions/all')` route on the same conversations controller, also carrying `@HttpCode(200)`. The handler MUST be named `deleteAllConversations`. The endpoint requires explicit confirmation to prevent accidental collection deletion.
+
+The confirmation is enforced entirely by DTO validation: the handler binds the body only so the `ValidationPipe` runs, and does not read `confirm` itself — a request that reaches the handler has already been proven to carry `confirm: true`.
 
 Request body validated by `DeleteAllConversationsBodyDto`:
 
@@ -340,7 +342,7 @@ Tests follow the existing pattern: mock `ConversationService` via `{ provide: Co
 Unit tests in `apps/chat-api/src/conversations/lifecycle/tests/conversation-lifecycle.service.spec.ts` SHALL cover the service deletion methods:
 
 - `deleteConversations`: deduplication; ownership rejection (FORBIDDEN); DIAL Core 404 → alreadyAbsent; DIAL Core success → deleted; DIAL Core 5xx → UPSTREAM_ERROR in failed; mixed outcomes; fire-and-forget pin cleanup called for deleted IDs only
-- `deleteAllConversations`: empty bucket returns zero counts immediately; non-empty bucket delegates to `deleteConversations`; metadata listing error throws BadGatewayException
+- `deleteAllConversations`: empty bucket returns zero counts immediately; non-empty bucket delegates to `deleteConversations` with the listed ids; metadata listing error throws BadGatewayException
 
 #### Scenario: Service deduplicates before counting
 
