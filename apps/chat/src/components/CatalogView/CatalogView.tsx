@@ -29,6 +29,7 @@ import {
   mapSkillToCatalogItem,
   mapToolsetCredentials,
   parsePromptResourceUrl,
+  parseSkillResourceUrl,
   parseSkillManifestDocument,
   PromptSource,
   readSkillFileBytes,
@@ -38,6 +39,11 @@ import {
   resolveSkillManifestFileId,
   sanitizeFileName,
   serializePromptExport,
+  SKILL_MANIFEST_FILE,
+  SkillSource,
+  mapPublishHistoryEntryDto,
+  toPublishEntityType,
+  type ParsedSkillResourceUrl,
   type PromptOverviewLabels,
   type SkillFileContent,
   type SkillOverviewLabels,
@@ -129,12 +135,6 @@ import {
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import {
-  parseSkillResourceUrl,
-  SKILL_MANIFEST_FILE,
-  SkillSource,
-  type ParsedSkillResourceUrl,
-} from '../../types/skill';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { resolveFavoriteEntityType } from '../../utils/favorites';
 import { triggerBrowserDownload } from '../../utils/file-download';
@@ -144,11 +144,7 @@ import {
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
 } from '../../utils/map-deployment-to-catalog-item';
-import {
-  getAccessRulesLabels,
-  mapPublishHistoryEntryDto,
-  toPublishEntityType,
-} from '../../utils/publish';
+import { getAccessRulesLabels } from '../../utils/publish';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import { SkillDetailsFilePreview } from './SkillDetailsFilePreview';
 

@@ -11,16 +11,12 @@ import type {
 } from '@epam/ai-dial-chat-hooks';
 import {
   mapDeploymentToCatalogItem as mapDeploymentToCatalogItemLib,
-  mapDeploymentToolsetCredentials,
   mapToolsetToCatalogItem as mapToolsetToCatalogItemLib,
 } from '@epam/ai-dial-chat-hooks';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
 import { resolveCatalogIconUrl } from './icon-path';
 import { PRIMARY_LOCALE } from './locale';
-
-export type { EntitySpecificDetails };
-export { mapDeploymentToolsetCredentials as mapToolsetCredentials };
 
 /** Builds the translated Personal/Shared/Public folder labels the lib's folder resolvers need. */
 export const buildDeploymentFolderLabels = (

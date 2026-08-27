@@ -4,8 +4,6 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
 
-export { prepareDownloadDestination } from '@epam/ai-dial-chat-hooks';
-
 const extractFilename = (contentDisposition: string | null): string | null => {
   if (!contentDisposition) return null;
   const match = /filename[^;=\n]*=(?:(\\?['"])(.*?)\1|([^;\n]*))/i.exec(

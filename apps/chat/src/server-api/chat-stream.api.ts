@@ -6,7 +6,6 @@ import {
 import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
 
 export { SendCompletionDtoModeEnum as CompletionMode };
-export type { ChatStreamCompletionOptions } from '@epam/ai-dial-chat-hooks';
 
 const chatStreamApi = createChatStreamApi({
   getCsrfToken,

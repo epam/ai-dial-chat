@@ -1,8 +1,8 @@
+import { mapPublishConversationResultDto } from '@epam/ai-dial-chat-hooks';
 import type { PublishHistoryEntry } from '@epam/ai-dial-publish-panel';
 import { useCallback, useRef, useState } from 'react';
 import { getConversationPublishHistory } from '../../server-api/conversation-publish.api';
 import { PublishHistoryStatus } from '../../types/publish-history';
-import { mapPublishConversationResultDto } from '../../utils/publish';
 
 /** State of one conversation's publish-history lookup. */
 export interface PublishHistoryEntryState {

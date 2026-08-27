@@ -5,13 +5,6 @@ import {
   PublishAccessRulesI18nKeys,
 } from '../constants/translation-keys';
 
-export {
-  mapPublishConversationResultDto,
-  mapPublishHistoryEntryDto,
-  toPublishEntityType,
-  type CatalogPublishEntityType,
-} from '@epam/ai-dial-chat-hooks';
-
 /** Builds the translated `accessRulesLabels` overrides shared by every publish panel host (catalog, conversation). */
 export const getAccessRulesLabels = (
   t: TFunction,

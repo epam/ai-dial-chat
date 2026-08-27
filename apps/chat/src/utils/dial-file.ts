@@ -4,12 +4,6 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 
-export {
-  isDialFileId,
-  resolveRelativeDialFilePath,
-  resolveDialFileBucketAndPath,
-} from '@epam/ai-dial-chat-hooks';
-
 /**
  * Converts a DIAL file ID (`files/{bucket}/{path}`) to the BFF download URL.
  * Returns `undefined` if the input does not start with `files/` or has no path segment.

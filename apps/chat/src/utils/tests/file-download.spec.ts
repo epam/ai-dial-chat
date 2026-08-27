@@ -1,9 +1,9 @@
-import { DownloadDestinationType } from '@epam/ai-dial-chat-hooks';
-import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  DownloadDestinationType,
   prepareDownloadDestination,
-  triggerBrowserDownload,
-} from '../file-download';
+} from '@epam/ai-dial-chat-hooks';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { triggerBrowserDownload } from '../file-download';
 
 afterEach(() => {
   Reflect.deleteProperty(window, 'showSaveFilePicker');

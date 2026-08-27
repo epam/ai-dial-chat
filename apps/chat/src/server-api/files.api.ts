@@ -2,8 +2,6 @@ import { createFilesApiClient } from '@epam/ai-dial-chat-hooks';
 import { filesApi } from './api-client';
 import { uploadFileWithProgress } from './upload-file-with-progress';
 
-export type { UploadFileOptions } from '@epam/ai-dial-chat-hooks';
-
 const filesApiClient = createFilesApiClient(filesApi, uploadFileWithProgress);
 
 export const listPublicFiles = filesApiClient.listPublicFiles;
