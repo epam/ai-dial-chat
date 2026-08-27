@@ -3,13 +3,15 @@ import {
   useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
 import {
+  SKILL_MANIFEST_FILE,
+  skillFileToAttachment,
+  type SkillFileContent,
+} from '@epam/ai-dial-chat-hooks';
+import {
   SkillFileNodeKind,
   type SkillFileTreeNode,
 } from '@epam/ai-dial-skill-editor';
 import { useEffect } from 'react';
-import { SKILL_MANIFEST_FILE } from '../../utils/skill';
-import { skillFileToAttachment } from '../../utils/skill-file-preview';
-import type { SkillFileContent } from '../../utils/skill-file-preview';
 import { useAttachmentCanvasResolvers } from './useAttachmentCanvasResolvers';
 
 interface UseSkillFilePreviewSyncParams {

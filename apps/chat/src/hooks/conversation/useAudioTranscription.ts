@@ -1,8 +1,8 @@
+import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { isAudioTranscriptionSupported } from '@epam/ai-dial-chat-shared';
 import { useMemo } from 'react';
 import { useDeployments } from '../../context/DeploymentsContext';
-import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { useUiFeature } from '../useUiFeature';
 
 interface Params {

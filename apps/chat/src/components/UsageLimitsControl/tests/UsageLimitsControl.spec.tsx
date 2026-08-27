@@ -1,9 +1,9 @@
+import type { MonthlyUsageLimit } from '@epam/ai-dial-chat-hooks';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDeploymentUsageLimits } from '../../../hooks/useDeploymentUsageLimits';
 import type { UseDeploymentUsageLimitsResult } from '../../../hooks/useDeploymentUsageLimits';
-import type { MonthlyUsageLimit } from '../../../utils/map-deployment-limits-to-input';
 import UsageLimitsControl from '../UsageLimitsControl';
 import type { UsageLimitsLabels } from '../UsageLimitsControl';
 

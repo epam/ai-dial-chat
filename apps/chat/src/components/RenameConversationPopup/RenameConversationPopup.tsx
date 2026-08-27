@@ -1,4 +1,9 @@
 import {
+  getUtf8ByteLength,
+  sanitizeConversationName,
+  stripTrailingDots,
+} from '@epam/ai-dial-chat-hooks';
+import {
   ButtonVariant,
   DIAL_ICON_SIZE,
   Input,
@@ -22,11 +27,6 @@ import {
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
 } from '../../constants/translation-keys';
-import {
-  getUtf8ByteLength,
-  sanitizeConversationName,
-  stripTrailingDots,
-} from '../../utils/string-utils';
 
 interface Props {
   isOpen: boolean;

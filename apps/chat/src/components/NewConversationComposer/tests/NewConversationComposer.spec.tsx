@@ -127,23 +127,28 @@ vi.mock(
   }),
 );
 
-vi.mock('@epam/ai-dial-chat-hooks', () => ({
-  usePageFileDrag: () => ({
-    isDragging: false,
-    pendingFiles: [],
-    onFilesConsumed: vi.fn(),
-  }),
-  useAttachmentUpload: () => ({
-    handleUploadAttachment: vi.fn(),
-  }),
-  useChatSettingsFormConfig: () => ({}),
-  useAttachmentValidation: () => ({
-    inputAttachmentTypes: [],
-    isAttachmentsAllowed: true,
-    validateAttachment: vi.fn(),
-    fileAccept: undefined,
-  }),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    usePageFileDrag: () => ({
+      isDragging: false,
+      pendingFiles: [],
+      onFilesConsumed: vi.fn(),
+    }),
+    useAttachmentUpload: () => ({
+      handleUploadAttachment: vi.fn(),
+    }),
+    useChatSettingsFormConfig: () => ({}),
+    useAttachmentValidation: () => ({
+      inputAttachmentTypes: [],
+      isAttachmentsAllowed: true,
+      validateAttachment: vi.fn(),
+      fileAccept: undefined,
+    }),
+  };
+});
 
 vi.mock('../../../hooks/user-profile/useUserProfile', () => ({
   useUserProfile: () => ({

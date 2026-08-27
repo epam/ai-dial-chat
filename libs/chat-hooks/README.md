@@ -227,7 +227,10 @@ const ShareLinkPanel = ({
 Derives the "deep research" tools submenu from the active deployment's configuration schema and the operator-configured tool id: detects the boolean-typed schema property, manages toggle state, resets on deployment change, and exposes a stable `toolConfigurationValue` record for inclusion in completion requests. Headless: the host supplies the translated fallback label via `labels` and the tool icon via `toolIcon`.
 
 ```tsx
-import { type UseToolsMenuParams, useToolsMenu } from '@epam/ai-dial-chat-hooks';
+import {
+  type UseToolsMenuParams,
+  useToolsMenu,
+} from '@epam/ai-dial-chat-hooks';
 
 const ToolsMenu = ({ params }: { params: UseToolsMenuParams }) => {
   const { toolsMenuItems, onToolToggle, toolConfigurationValue } =
@@ -258,13 +261,13 @@ const ToolsMenu = ({ params }: { params: UseToolsMenuParams }) => {
 
 **Parameters**: `useToolsMenu(params: UseToolsMenuParams)`
 
-| Name                                  | Type                                  | Description                                                                 |
-| ------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------- |
-| `deepResearchToolId`                  | `string \| null`                      | Operator-configured tool id; `null` yields an empty menu.                   |
-| `selectedItemId`                       | `string \| null`                      | Selected deployment id; changing it resets toggle state to the schema default. |
-| `selectedDeploymentConfiguration`     | `DeploymentConfigurationSchema \| null` | JSON-schema for the selected deployment; `null` yields an empty menu.       |
-| `labels`                              | `Partial<ToolsMenuLabels>`            | Override for the fallback label. Falls back to English `'Deep research'` only when the host omits `labels` entirely. |
-| `toolIcon`                            | `ReactNode`                           | Icon element for the tool item. Defaults to `null`.                         |
+| Name                              | Type                                    | Description                                                                                                          |
+| --------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `deepResearchToolId`              | `string \| null`                        | Operator-configured tool id; `null` yields an empty menu.                                                            |
+| `selectedItemId`                  | `string \| null`                        | Selected deployment id; changing it resets toggle state to the schema default.                                       |
+| `selectedDeploymentConfiguration` | `DeploymentConfigurationSchema \| null` | JSON-schema for the selected deployment; `null` yields an empty menu.                                                |
+| `labels`                          | `Partial<ToolsMenuLabels>`              | Override for the fallback label. Falls back to English `'Deep research'` only when the host omits `labels` entirely. |
+| `toolIcon`                        | `ReactNode`                             | Icon element for the tool item. Defaults to `null`.                                                                  |
 
 **Returns** (`UseToolsMenuResult`): `{ toolsMenuItems: ToolMenuItem[], onToolToggle, toolConfigurationValue: Record<string, boolean>, restoreToolConfiguration }` — `restoreToolConfiguration` re-applies a persisted tool-config record (e.g. from the last user message) on conversation load.
 
@@ -658,7 +661,11 @@ const ComposerSettings = ({
   deploymentFeatures,
   isQuickApp,
 }: {
-  values: { responseFormat: ResponseFormat; systemPrompt: string; temperature: number };
+  values: {
+    responseFormat: ResponseFormat;
+    systemPrompt: string;
+    temperature: number;
+  };
   onValuesChange: (v: typeof values) => void;
   deploymentFeatures?: DeploymentFeatures;
   isQuickApp?: boolean;
@@ -681,10 +688,10 @@ const ComposerSettings = ({
 
 **Parameters**: `useChatSettingsFormConfig(params)` where `params` is a discriminated union:
 
-| Mode              | Shape                                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------- |
-| `'local'`         | `{ mode: 'local'; values; onValuesChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }` |
-| `'conversation'`  | `{ mode: 'conversation'; conversation; onConversationChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }` |
+| Mode             | Shape                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `'local'`        | `{ mode: 'local'; values; onValuesChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }`                    |
+| `'conversation'` | `{ mode: 'conversation'; conversation; onConversationChange; deploymentFeatures?; isQuickApp?; labels?; onSaved? }` |
 
 `labels` (`Partial<ChatSettingsFormLabels>`) overrides English fallbacks for every visible string; `onSaved` is called after a successful save so the host can surface its own toast. `isQuickApp` forces the temperature field off regardless of `deploymentFeatures`.
 
@@ -966,6 +973,745 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 - **`DownloadDestinationHandlers`** / **`DownloadDestination`** / **`DownloadDestinationType`** — the host-injected "Save As" / blob-download seam for `useDialFileMutations.onDownloadFiles`. `DownloadDestinationType` is `Blob | Stream | Cancelled`; `DownloadDestination` is the matching discriminated union (the `Stream` member carries a `WritableStream<Uint8Array>`); `DownloadDestinationHandlers` is `{ resolveDestination(filename, mimeType), triggerDownload(response, fallbackName, destination) }`.
 - **`FileUploadStatus`** / **`FileUploadEntry`** / **`FileUploadBatchState`** — an upload batch's progress model. `FileUploadStatus` is `Queued | Uploading | Completed | Failed | Cancelled`; `FileUploadEntry` is `{ id, name, status, percent? }`; `FileUploadBatchState` is `{ files: FileUploadEntry[], isOpen: boolean }`.
 - **`DialFileManagerVariant`** / **`DialFileManagerActionProfile`** — identify which host is driving `useDialFileManager` (`Attach | Standalone | FolderPicker`) and which action set that gates (`Attach | Browse | Full`); `deriveActionProfile(variant)` maps the former to the latter.
+
+## Conversation & File Utilities
+
+### getModelIdFromConversationId
+
+Extracts the deployment/model ID from a DIAL Core conversation ID (`{deploymentId}__{title}`, including scheduler paths and versioned application IDs).
+
+```ts
+import { getModelIdFromConversationId } from '@epam/ai-dial-chat-hooks';
+
+getModelIdFromConversationId('conversations/bucket/gpt-4__My%20chat'); // 'gpt-4'
+```
+
+### virtualPathToApiPath / getParentFolderPath / resolveDialFileApiPath
+
+Pure path-algebra helpers shared by the file-manager domain layer and by any host resolving a DIAL file to its bucket-relative API path.
+
+```ts
+import { getParentFolderPath } from '@epam/ai-dial-chat-hooks';
+
+getParentFolderPath('reports/file.txt'); // 'reports/'
+```
+
+### dialFileToAttachment / dialFilesToAttachments / dialFolderPathToAttachment
+
+Maps a selected DIAL file (or folder path) into the composer's `Attachment` shape. Image previews are resolved through an injected `resolvePreviewUrl` callback — the host owns bucket/icon-URL construction, not the library.
+
+```ts
+import { dialFilesToAttachments } from '@epam/ai-dial-chat-hooks';
+
+const attachments = dialFilesToAttachments(selectedFiles, bucket, {
+  resolvePreviewUrl: (url) => resolveCatalogIconUrl(url),
+});
+```
+
+### mimeTypesToFileAccept / isDialFileAcceptType / mimeTypesToDialFileAcceptTypes / mimeTypesToAttachmentExtensionLabels
+
+MIME/accept-type helpers for file pickers. `mimeTypesToFileAccept` always filters through `isDialFileAcceptType`, so it never disagrees with `mimeTypesToDialFileAcceptTypes` about which types are acceptable.
+
+```ts
+import { mimeTypesToFileAccept } from '@epam/ai-dial-chat-hooks';
+
+mimeTypesToFileAccept(['image/*', 'application/pdf']); // 'image/*,application/pdf'
+```
+
+## API Transport
+
+Host-agnostic factories over the browser API transport `apps/chat/src/server-api/*` uses. Every factory takes the host's own CSRF/session state, generated-client instance, or `fetch`/`XMLHttpRequest` implementation as a plain parameter — none of them read global state or construct a client `Configuration` themselves.
+
+### createCsrfMiddleware / createUnauthorizedMiddleware
+
+Generated-client `Middleware` factories: CSRF header injection/rotation, and 401 handling with an invalid-CSRF refresh-and-retry.
+
+```ts
+import {
+  createCsrfMiddleware,
+  createUnauthorizedMiddleware,
+} from '@epam/ai-dial-chat-hooks';
+
+const config = new Configuration({
+  basePath: '',
+  credentials: 'include',
+  middleware: [
+    createCsrfMiddleware({ getCsrfToken, setCsrfToken }),
+    createUnauthorizedMiddleware({
+      notifyUnauthorized,
+      refreshCsrfToken: refreshCsrfTokenOutcome,
+      isInvalidCsrfErrorBody,
+      getCsrfToken,
+      setCsrfToken,
+      createUnauthorizedError: (url) => new UnauthorizedError(url),
+    }),
+  ],
+});
+```
+
+### createFilesApiClient
+
+Builds the DIAL files API wrapper functions (`listFiles`, `uploadFile`, `downloadFile`, `copyFiles`, …) over an already-configured generated `FilesApi` instance and an injected progress-reporting upload function.
+
+```ts
+import { createFilesApiClient } from '@epam/ai-dial-chat-hooks';
+
+const files = createFilesApiClient(filesApi, uploadFileWithProgress);
+```
+
+### createUploadFileWithProgress
+
+Builds a progress-reporting file-upload function backed by `XMLHttpRequest`, parameterized by the host's CSRF state, unauthorized callback, and upload URL.
+
+```ts
+import { createUploadFileWithProgress } from '@epam/ai-dial-chat-hooks';
+
+const uploadFileWithProgress = createUploadFileWithProgress({
+  getCsrfToken,
+  setCsrfToken,
+  notifyUnauthorized,
+  createUnauthorizedError: (url) => new UnauthorizedError(url),
+  uploadUrl: '/api/v1/files',
+});
+```
+
+### createChatStreamApi
+
+Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and an optional timezone resolver.
+
+```ts
+import { createChatStreamApi } from '@epam/ai-dial-chat-hooks';
+
+const { streamCompletion, stopCompletion } = createChatStreamApi({
+  getCsrfToken,
+  setCsrfToken,
+  completionsBasePath: '/api/v1/conversations',
+  getTimezone: getBrowserTimezone,
+});
+```
+
+### getApiErrorDetails / getApiErrorMessage / getApiErrorStatus / isConversationNotFoundError
+
+Host-agnostic API error/trace-ID normalization. Works identically for a generated-client `ResponseError` or any host's own raw-fetch request-error shape.
+
+```ts
+import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
+
+const { status, message, traceId } = await getApiErrorDetails(error);
+```
+
+## Locale Utilities
+
+### toBaseLocale / resolveLocalizedText / appendLocaleCode
+
+Resolves DIAL Core's `LocalizedText` shape (a plain string, or a map of locale code to translated value) to a single display string, with base-language and primary-locale fallback.
+
+```ts
+import { resolveLocalizedText } from '@epam/ai-dial-chat-hooks';
+
+resolveLocalizedText({ en: 'Name', fr: 'Nom' }, 'fr-FR', 'en'); // 'Nom'
+```
+
+### composeLocalePayload / decomposeLocalizedFields / buildAdditionalLocaleOptions
+
+Round-trips a deployment-creation form's "Add locale" popup entries against DIAL Core's `LocaleTextEntryDto[]` write payload, and builds the popup's selectable locale options.
+
+```ts
+import {
+  composeLocalePayload,
+  decomposeLocalizedFields,
+} from '@epam/ai-dial-chat-hooks';
+
+const payload = composeLocalePayload(otherLocales, 'en'); // LocaleTextEntryDto[] | undefined
+const rows = decomposeLocalizedFields(displayName, description, 'en');
+```
+
+## Shared Utilities
+
+### formatCalendarDate / padTwoDigits
+
+`formatCalendarDate` formats a Unix timestamp (ms) as a locale-formatted calendar date; `padTwoDigits` pads a number or numeric string to at least 2 digits.
+
+```ts
+import { formatCalendarDate } from '@epam/ai-dial-chat-hooks';
+
+formatCalendarDate(Date.now()); // e.g. '26/8/2026'
+```
+
+### getBrowserTimezone
+
+Resolves the browser's current IANA timezone (`Intl.DateTimeFormat().resolvedOptions().timeZone`), or `undefined` if detection fails.
+
+```ts
+import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks';
+
+getBrowserTimezone(); // e.g. 'Europe/Warsaw'
+```
+
+### apSchedulerDayToJsDay / jsDayToApSchedulerDay
+
+Converts between DIAL Scheduler's APScheduler weekday convention (Monday=0..Sunday=6) and JS `Date`'s weekday convention (Sunday=0..Saturday=6).
+
+```ts
+import { apSchedulerDayToJsDay } from '@epam/ai-dial-chat-hooks';
+
+apSchedulerDayToJsDay(0); // 1 (Monday -> JS Monday)
+```
+
+### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes
+
+`safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment.
+
+```ts
+import {
+  safeDecodeURI,
+  stripSurroundingSlashes,
+} from '@epam/ai-dial-chat-hooks';
+
+safeDecodeURI('My%20File.txt'); // 'My File.txt'
+stripSurroundingSlashes('/reports/'); // 'reports'
+```
+
+### isCustomAppSchema / isQuickAppSchema
+
+Classifies an application schema as the custom-app (code app) schema, or as a Quick App 2.0 schema.
+
+```ts
+import { isCustomAppSchema } from '@epam/ai-dial-chat-hooks';
+
+isCustomAppSchema({ id: 'custom_app' }); // true
+```
+
+### isValidAbsoluteUrl / parseFeaturesData / isValidFeaturesData
+
+Validation helpers for a custom application's `featuresData` JSON field: `isValidAbsoluteUrl` checks a well-formed `http(s)://` URL, `parseFeaturesData` parses the field, and `isValidFeaturesData` checks it contains only the allowed keys (`rate_endpoint`, `configuration_endpoint`).
+
+```ts
+import { isValidFeaturesData } from '@epam/ai-dial-chat-hooks';
+
+isValidFeaturesData('{"rate_endpoint": "https://example.com/rate"}'); // true
+```
+
+### parseExternalServiceUrl / buildExternalServiceScopeId / getExternalServiceFallbackName
+
+Splits/rebuilds the scope id an `external-service/signin` event carries (`applications/{bucket}/{app}/external_services/{name}`), and derives a fallback display name from the raw service name.
+
+```ts
+import { parseExternalServiceUrl } from '@epam/ai-dial-chat-hooks';
+
+parseExternalServiceUrl('applications/bucket/app/external_services/jira');
+// { appId: 'applications/bucket/app', serviceName: 'jira' }
+```
+
+## Toolset Login Events
+
+### emitToolsetLoginSuccess / subscribeToolsetLoginSuccess
+
+Broadcasts (and subscribes to) a successful toolset login within the current window — a same-document `EventTarget`, not `postMessage`, for notifying another mounted React tree (e.g. an `AppEditorIframe`) rather than a cross-origin iframe. Generic over the host's own credentials-level type.
+
+```ts
+import {
+  emitToolsetLoginSuccess,
+  subscribeToolsetLoginSuccess,
+  type ToolsetLoginSuccessDetail,
+} from '@epam/ai-dial-chat-hooks';
+
+const unsubscribe = subscribeToolsetLoginSuccess<'SIGNED_IN'>((detail) => {
+  console.log(detail.toolsetId, detail.credentialsLevel);
+});
+
+emitToolsetLoginSuccess<'SIGNED_IN'>({
+  toolsetId: 'toolsets/public/jira',
+  credentialsLevel: 'SIGNED_IN',
+});
+```
+
+## Conversation Utilities
+
+### createDeploymentChangedMessage
+
+Creates a `StatusMessage` recording a deployment change in the conversation timeline. Status messages are never forwarded to DIAL Core.
+
+```ts
+import { createDeploymentChangedMessage } from '@epam/ai-dial-chat-hooks';
+
+const statusMessage = createDeploymentChangedMessage('gpt-4', 'gpt-4o');
+```
+
+### isMessageStreaming / getLastDeploymentId / messageHasStages / getLastUserMessageToolConfiguration / normalizeResponseFormat
+
+Pure predicates/lookups over a conversation's `Message[]`: whether a message is the actively-streaming assistant response, the last deployment a `model_changed` status message recorded, whether a message carries any stages, the last user message's persisted tool-configuration value, and normalizing a legacy `responseFormat` string to the current enum.
+
+```ts
+import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks';
+
+getLastDeploymentId(conversation.messages); // string | null
+```
+
+### getTimeOfDayGreeting
+
+Returns a time-of-day greeting string (morning/afternoon/evening/night, with/without a first name) from a pre-translated `GreetingTranslations` object.
+
+```ts
+import {
+  getTimeOfDayGreeting,
+  type GreetingTranslations,
+} from '@epam/ai-dial-chat-hooks';
+
+const translations: GreetingTranslations = {
+  morningWithName: 'Good morning, {{name}}',
+  morningNoName: 'Good morning',
+  afternoonWithName: 'Good afternoon, {{name}}',
+  afternoonNoName: 'Good afternoon',
+  eveningWithName: 'Good evening, {{name}}',
+  eveningNoName: 'Good evening',
+  nightWithName: 'Good night, {{name}}',
+  nightNoName: 'Good night',
+};
+
+getTimeOfDayGreeting(new Date().getHours(), translations, 'Ada');
+```
+
+### getQuickAppConversationStarters
+
+Parses a Quick App's raw `conversationStarters` schema value into starter options, intro text, and whether the chat input should stay disabled.
+
+```ts
+import { getQuickAppConversationStarters } from '@epam/ai-dial-chat-hooks';
+
+const { starters, introText, isChatMessageInputDisabled } =
+  getQuickAppConversationStarters(schema.conversationStarters);
+```
+
+### getStarterPopulateText / getStartersFromSchema
+
+Extracts starter-button options (and the schema property key and description) from a deployment configuration schema, and resolves the text to populate when a starter is selected.
+
+```ts
+import { getStartersFromSchema } from '@epam/ai-dial-chat-hooks';
+
+const { starters, propertyKey, description } = getStartersFromSchema(
+  deploymentConfiguration,
+);
+```
+
+### sanitizeAnnouncementHtml / hasStructuredAnnouncement / hasAnnouncementContent / buildAnnouncementSignature
+
+Announcement-banner helpers: sanitizes operator-supplied HTML to an allowed tag/attribute set, checks whether structured (`title`/`description`) or any content is present, and builds the content-keyed signature used to track dismissal.
+
+```ts
+import {
+  hasAnnouncementContent,
+  type AnnouncementContent,
+} from '@epam/ai-dial-chat-hooks';
+
+const content: AnnouncementContent = {
+  title: 'Maintenance window',
+  description: null,
+  html: null,
+};
+
+hasAnnouncementContent(content); // true
+```
+
+### sanitizeFooterHtml / formatAppVersion
+
+Sanitizes footer-message HTML to an allowed tag/attribute set, and normalises a version string for display (`'0.45.0'` -> `'v0.45.0'`, `'v0.45.0'` left unchanged).
+
+```ts
+import { formatAppVersion } from '@epam/ai-dial-chat-hooks';
+
+formatAppVersion('0.45.0'); // 'v0.45.0'
+```
+
+### shouldWatchForDisplayNameUpdate
+
+Returns `true` when a conversation's first user/assistant exchange is complete and LLM-generated naming may still run for it.
+
+```ts
+import { shouldWatchForDisplayNameUpdate } from '@epam/ai-dial-chat-hooks';
+
+if (shouldWatchForDisplayNameUpdate(conversation)) {
+  // poll for the generated display name
+}
+```
+
+### toOverlayMessages
+
+Maps chat messages to the DIAL Chat Overlay protocol's message shape.
+
+```ts
+import { toOverlayMessages } from '@epam/ai-dial-chat-hooks';
+
+const overlayMessages = toOverlayMessages(conversation.messages);
+```
+
+## Catalog Mapping Utilities
+
+Pure mappers from DIAL Core deployment/prompt/skill/toolset DTOs into `@epam/ai-dial-catalog`'s `CatalogItem`/`CatalogItemTabData` shapes. Every label is a fixed English string — i18n stays at the app edge, passed in via a `*Labels` parameter.
+
+### encodeDeploymentId / findDeploymentByIdOrReference
+
+Percent-encodes each `/`-separated segment of a deployment/application id, and finds a deployment matching an id or (fallback) `reference`.
+
+```ts
+import { encodeDeploymentId } from '@epam/ai-dial-chat-hooks';
+
+encodeDeploymentId('applications/bucket/My App__1.0');
+// 'applications/bucket/My%20App__1.0'
+```
+
+### buildChatCompletionsUrl / buildResponsesUrl / buildDeploymentConnectApi
+
+Builds the "Connect" tab's Chat Completions and/or Responses API endpoint entries for a model or application deployment, based on which generation APIs it reports supporting.
+
+```ts
+import { buildDeploymentConnectApi } from '@epam/ai-dial-chat-hooks';
+
+const api = buildDeploymentConnectApi(baseUrl, deploymentId, {
+  hasChatCompletion: true,
+  hasResponsesApi: false,
+});
+```
+
+### McpResourceKind / resolveMcpResourceKind / buildConnectApi / buildToolsetMcpUrl / buildApplicationMcpUrl
+
+Resolves which MCP resource kind (toolset or application) a catalog item exposes, and builds the "Connect" tab's MCP endpoint data for it.
+
+```ts
+import {
+  resolveMcpResourceKind,
+  buildConnectApi,
+} from '@epam/ai-dial-chat-hooks';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+const kind = resolveMcpResourceKind(CatalogEntityType.Toolset);
+const api = kind && buildConnectApi(baseUrl, toolsetId, kind);
+```
+
+### mapDeploymentLimitsToInput
+
+Maps a deployment's monthly token-limit response into a display-ready `MonthlyUsageLimit` (`used`/`total`/`remaining`/`usedPercent`), or `undefined` when the backend reports no usable limit.
+
+```ts
+import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
+
+const usage = mapDeploymentLimitsToInput(deploymentLimitsDto);
+```
+
+### mapEntityDetailsToCatalogDetails / mapDeploymentDetailsDtoToEntityDetails / mapToolsetCredentials
+
+Converts a backend `DeploymentDetailsDto` (model/application/toolset) into the strongly-typed `EntitySpecificDetails` domain model, then into the catalog UI's `CatalogItemTabData`; `mapToolsetCredentials` maps a toolset's specification into the credential-status shape used to refresh the details panel after login/logout.
+
+```ts
+import {
+  mapDeploymentDetailsDtoToEntityDetails,
+  mapEntityDetailsToCatalogDetails,
+} from '@epam/ai-dial-chat-hooks';
+
+const entityDetails = mapDeploymentDetailsDtoToEntityDetails(detailsDto);
+const tabData = mapEntityDetailsToCatalogDetails(entityDetails);
+```
+
+### mapDeploymentToCatalogItem / mapToolsetToCatalogItem / mapDeploymentToolsetCredentials / resolveDeploymentFolder
+
+Maps a deployment or toolset listing row into a catalog `CatalogItem`. Both take a `folderLabels` (`DeploymentFolderLabels`, the translated Personal/Shared/Public folder labels) and a `resolveIconUrl` callback — the host owns icon-URL construction, not the library.
+
+```ts
+import {
+  mapDeploymentToCatalogItem,
+  type DeploymentFolderLabels,
+} from '@epam/ai-dial-chat-hooks';
+
+const folderLabels: DeploymentFolderLabels = {
+  personal: 'My workspace',
+  shared: 'Shared with me',
+  public: 'Public',
+};
+
+const item = mapDeploymentToCatalogItem(deploymentDto, {
+  folderLabels,
+  activeLocale: 'en-US',
+  primaryLocale: 'en',
+  resolveIconUrl: (iconUrl) => iconUrl && resolveMyIconUrl(iconUrl),
+});
+```
+
+### mapPromptToCatalogItem / buildPromptOverview / isOrganisationPromptItem
+
+Maps a prompt DTO into a catalog `CatalogItem`, given the source namespace it came from (`PromptSource`), folder labels, Overview-tab labels, and favorited-id lookup.
+
+```ts
+import {
+  mapPromptToCatalogItem,
+  PromptSource,
+  type PromptOverviewLabels,
+} from '@epam/ai-dial-chat-hooks';
+
+const overviewLabels: PromptOverviewLabels = {
+  authorLabel: 'Author',
+  updatedLabel: 'Updated',
+  sectionTitle: 'Details',
+};
+
+const item = mapPromptToCatalogItem(promptDto, {
+  folderLabels,
+  overviewLabels,
+  source: PromptSource.Personal,
+  favoriteIds: new Set(['my-prompt-path']),
+});
+```
+
+### mapSkillToCatalogItem / buildSkillOverview / buildSkillContentTree / resolveSkillManifestFileId / resolveSkillFileDownloadPath / readSkillFileBytes / readSkillManifest
+
+Maps a skill's DIAL Core metadata into a catalog `CatalogItem`; the remaining functions build the Overview tab's specification/details sections, the Content tab's hierarchical file tree, resolve the manifest file's opaque listing id, resolve a file-listing id to its download path, and read a skill file/manifest response's bytes/text bounded by `SKILL_MANIFEST_MAX_BYTES`.
+
+```ts
+import {
+  mapSkillToCatalogItem,
+  buildSkillOverview,
+  SkillSource,
+  type SkillOverviewLabels,
+} from '@epam/ai-dial-chat-hooks';
+
+const item = mapSkillToCatalogItem(skillMetadataDto, {
+  folderLabels,
+  source: SkillSource.Personal,
+  favoriteIds: new Set(['skills/my-bucket/my-skill']),
+});
+
+const overviewLabels: SkillOverviewLabels = {
+  whenToUseLabel: 'When to use',
+  allowedToolsLabel: 'Allowed tools',
+  bundledResourcesLabel: 'Bundled resources',
+  specificationSectionTitle: 'Specification',
+  authorLabel: 'Author',
+  updatedLabel: 'Updated',
+  fileCountLabel: 'Files',
+  detailsSectionTitle: 'Details',
+};
+
+const overview = buildSkillOverview(
+  skillMetadataDto,
+  files,
+  about,
+  overviewLabels,
+);
+```
+
+### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto
+
+Maps a catalog entity type to the publish API's entity-type path param (`CatalogPublishEntityType`), and maps publish-history API responses into the publish panel's `PublishHistoryEntry` model.
+
+```ts
+import { toPublishEntityType } from '@epam/ai-dial-chat-hooks';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+toPublishEntityType(CatalogEntityType.Skill); // 'skill'
+```
+
+## Prompt Utilities
+
+### validatePromptName / validatePromptDescription / validatePromptContent / getRemainingCharacters / buildPromptPath
+
+Client-side mirrors of the backend's prompt-editor validation rules (name pattern/length, description/content length limits), plus a character-remaining counter for length-limited fields and a folder-path/name joiner.
+
+```ts
+import {
+  validatePromptName,
+  PromptFieldError,
+  getRemainingCharacters,
+  PROMPT_NAME_MAX_LENGTH,
+} from '@epam/ai-dial-chat-hooks';
+
+const error = validatePromptName('My Prompt'); // PromptFieldError | null
+const remaining = getRemainingCharacters('My Prompt', PROMPT_NAME_MAX_LENGTH);
+```
+
+### PromptSource / buildPromptResourceUrl / parsePromptResourceUrl
+
+Builds/parses the `prompts/{bucket}/{path}` resource URL used to address a prompt outside the caller's own bucket (e.g. a shared-with-me prompt).
+
+```ts
+import { buildPromptResourceUrl, PromptSource } from '@epam/ai-dial-chat-hooks';
+
+buildPromptResourceUrl({ bucket: 'other-user-bucket', path: 'My Prompt' });
+// 'prompts/other-user-bucket/My Prompt'
+```
+
+### buildPromptExportEnvelope / serializePromptExport / buildPromptExportFileName
+
+Builds a prompt's download envelope (including its folder chain), serializes it to a pretty-printed JSON `Blob`, and builds the download file name.
+
+```ts
+import {
+  buildPromptExportEnvelope,
+  serializePromptExport,
+  buildPromptExportFileName,
+} from '@epam/ai-dial-chat-hooks';
+
+const envelope = buildPromptExportEnvelope(promptDto);
+const blob = serializePromptExport(envelope);
+const fileName = buildPromptExportFileName(promptDto.name, 'ai_dial');
+```
+
+## Scheduled-Task Utilities
+
+### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
+
+Maps validated scheduled-task create/edit form values to their request bodies (converting local wall-clock time to the UTC cron fields DIAL Scheduler expects), and inverts that mapping back to editable form values — failing closed with an `UnsupportedTriggerReason` when a task's trigger cannot be represented losslessly by the editor.
+
+```ts
+import {
+  mapFormValuesToCreateBody,
+  mapScheduledTaskDtoToFormValues,
+} from '@epam/ai-dial-chat-hooks';
+
+const body = mapFormValuesToCreateBody(formValues);
+const result = mapScheduledTaskDtoToFormValues(scheduledTaskDto);
+if (result.ok) {
+  // result.values: ScheduledTaskCreateFormValues
+}
+```
+
+## Skill Utilities
+
+### isValidSkillRelativePath / normalizeSkillName / buildSkillManifest / buildSkillManifestFromFrontmatter / parseSkillManifest / unpackSkillArchive
+
+Client-side skill-authoring helpers: validates a relative file path against the backend's naming rules (inline feedback only — the server stays authoritative), normalizes a skill name to the DIAL naming convention, builds/parses a `SKILL.md`'s YAML frontmatter plus instructions body, and unpacks a whole-skill ZIP archive.
+
+```ts
+import {
+  buildSkillManifest,
+  parseSkillManifest,
+  normalizeSkillName,
+} from '@epam/ai-dial-chat-hooks';
+
+const manifestText = buildSkillManifest({
+  name: normalizeSkillName('My Skill'),
+  description: 'Summarizes documents',
+  instructions: 'You are a summarization assistant...',
+});
+
+const { frontmatter, instructions } = parseSkillManifest(manifestText);
+```
+
+### parseSkillManifestDocument
+
+Splits a `SKILL.md` into its frontmatter fields (`name`, `description`, and recognised `about.*` fields) and its prose body. Never throws — a file with no frontmatter fence resolves to the whole input as `body`.
+
+```ts
+import { parseSkillManifestDocument } from '@epam/ai-dial-chat-hooks';
+
+const { name, description, about, body } =
+  parseSkillManifestDocument(rawManifestText);
+```
+
+### skillFileToAttachment
+
+Converts a skill supporting file's in-memory bytes into the `Attachment` shape the chat attachment-canvas pipeline expects, so it can be previewed the same way a chat attachment is.
+
+```ts
+import { skillFileToAttachment } from '@epam/ai-dial-chat-hooks';
+
+const attachment = skillFileToAttachment(fileTreeNode, {
+  bytes: fileBytes,
+  mimeType: 'text/markdown',
+});
+```
+
+### Supporting types and constants
+
+- **`SkillSource`** — which skill namespace a catalog skill item came from: `Personal`, `SharedWithMe`, `Public`.
+- **`PUBLIC_SKILL_BUCKET`** — the DIAL Core bucket holding organisation-wide skills.
+- **`SKILL_MANIFEST_MAX_BYTES`** / **`SKILL_LISTING_PAGE_SIZE`** / **`SKILL_LISTING_MAX_PAGES`** — size/pagination bounds for skill manifest reads and skill listings.
+- **`SkillEntityDetails`** — a skill's parsed manifest details (`{ about?: SkillAboutDetails }`).
+- **`ParsedSkillResourceUrl`** / **`parseSkillResourceUrl`** — splits a `skills/{bucket}/{path}` resource URL into its bucket and path, or `null` if it doesn't match that shape.
+
+## File & Attachment Utilities
+
+### sanitizeFileName / splitFileNameExtension / trimFileNameToByteLimit
+
+Sanitizes a filename for upload (forbidden characters replaced, trailing dots/whitespace trimmed, capped to 255 UTF-8 bytes), splitting/trimming helpers it is built on.
+
+```ts
+import { sanitizeFileName } from '@epam/ai-dial-chat-hooks';
+
+sanitizeFileName('report:final?.pdf'); // 'report_final_.pdf'
+```
+
+### isDialFileId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
+
+Recognizes a DIAL Core file id (`files/{bucket}/{path}`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
+
+```ts
+import { resolveDialFileBucketAndPath } from '@epam/ai-dial-chat-hooks';
+
+resolveDialFileBucketAndPath('files/my-bucket/reports/q1.pdf');
+// { bucket: 'my-bucket', path: 'reports/q1.pdf' }
+```
+
+### openAnnotationAttachment
+
+Default click behavior for a cited/referenced attachment: triggers a browser download for DIAL-hosted files via the injected `resolveDownloadUrl`, otherwise opens the URL in a new tab.
+
+```ts
+import { openAnnotationAttachment } from '@epam/ai-dial-chat-hooks';
+
+openAnnotationAttachment(attachmentResource, (fileId) =>
+  myResolveFileDownloadUrl(fileId),
+);
+```
+
+### Attachment canvas content resolvers
+
+A family of resolvers that turn a `DisplayAttachment` into the content payload `@epam/ai-dial-attachment-canvas` renders (image, plain text, markdown, code, HTML, PDF, OOXML, JSON, or a custom visualizer), plus the annotation-specific PDF resolvers and the shared LRU fetch cache they use. Every resolver takes the same host-injected `AttachmentCanvasUrlResolvers` — DIAL-file URL resolution is host-owned, since it encodes the app's own file-download endpoint.
+
+```ts
+import {
+  resolveMarkdownCanvasContent,
+  resolvePdfCanvasContent,
+  clearAttachmentCache,
+  type AttachmentCanvasUrlResolvers,
+} from '@epam/ai-dial-chat-hooks';
+
+const resolvers: AttachmentCanvasUrlResolvers = {
+  resolveDialFileDownloadUrl: (fileId) => myResolveFileDownloadUrl(fileId),
+  resolveDialUrl: (attachment) => myResolveDisplayAttachmentUrl(attachment),
+};
+
+const content = await resolveMarkdownCanvasContent(attachment, resolvers);
+
+// on conversation navigation:
+clearAttachmentCache();
+```
+
+Also exports `resolveImageCanvasContent`, `resolveTextCanvasContent`, `resolveCodeCanvasContent`, `resolveHtmlCanvasContent`, `resolveOoxmlCanvasContent`, `resolveJsonCanvasContent`, `resolveVisualizerCanvasContent`, `annotationToPdfCanvasContent`, `referenceAttachmentToPdfCanvasContent`, `hasAttachmentTextSource`, `getUrlFileName`, and `isExternalSourcePreviewable`.
+
+### attachmentDtoToDisplayAttachment / attachmentDtosToDisplayAttachments / annotationToDisplayAttachment
+
+Maps Chat API message-attachment DTOs (and an annotation's source attachment) to the display-only `DisplayAttachment` model UI components consume.
+
+```ts
+import { attachmentDtosToDisplayAttachments } from '@epam/ai-dial-chat-hooks';
+
+const displayAttachments = attachmentDtosToDisplayAttachments(dtos, {
+  resolvePreviewUrl: (url) => resolveMyIconUrl(url),
+});
+```
+
+### prepareDownloadDestination
+
+Resolves where a download should be written: the browser's native "Save As" picker (`window.showSaveFilePicker`) when available, otherwise a plain blob download. Resolves to `Cancelled` if the user dismisses the picker.
+
+```ts
+import { prepareDownloadDestination } from '@epam/ai-dial-chat-hooks';
+
+const destination = await prepareDownloadDestination(
+  'report.pdf',
+  'application/pdf',
+);
+```
 
 ## Building
 

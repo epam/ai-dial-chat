@@ -261,9 +261,6 @@ vi.mock('../../../constants/routes', () => ({
   getConversationRoute: (id: string) => `/conversations/${id}`,
   normalizeConversationId: (id: string) => id,
 }));
-vi.mock('../../../utils/get-model-id-from-conversation-id', () => ({
-  getModelIdFromConversationId: () => undefined,
-}));
 vi.mock('../../../utils/icon-path', () => ({
   resolveCatalogIconUrl: (url: string) => url,
 }));

@@ -1,3 +1,4 @@
+import { mapFormValuesToCreateBody } from '@epam/ai-dial-chat-hooks';
 import {
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
@@ -25,7 +26,6 @@ import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
-import { mapFormValuesToCreateBody } from '../../utils/scheduled-task-trigger';
 import NotFoundPage from '../NotFound/NotFound';
 
 const MAX_ASCII_CONTROL_CODE = 31;

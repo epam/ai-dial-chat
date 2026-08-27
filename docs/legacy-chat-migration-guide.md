@@ -160,6 +160,7 @@ redirect_uri`.
   See the
   [Chat API deployment setup](../apps/chat-api/README.md#dial-core-oauth-redirect-allowlist)
   for the Core configuration example.
+
 - Existing sessions do not carry over. Users log in once after the switch.
 - Provider configuration keeps the legacy shape: one set of discrete
   `AUTH_{PROVIDER}_*` variables per provider, registered when its `CLIENT_ID` is

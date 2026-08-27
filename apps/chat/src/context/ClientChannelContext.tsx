@@ -1,3 +1,4 @@
+import { parseExternalServiceUrl } from '@epam/ai-dial-chat-hooks';
 import {
   createContext,
   type FC,
@@ -24,7 +25,6 @@ import {
   TOOLSET_SIGNIN_METHOD,
 } from '../types/client-channel';
 import { ROUTES } from '../types/routes';
-import { parseExternalServiceUrl } from '../utils/external-services';
 import { useFeatureFlag } from './AppConfigContext';
 
 /** Capped exponential backoff for reconnect attempts (ms). After these are exhausted, the provider waits for `ensureConnected` (e.g. the next completion) or tab visibility to resume. */

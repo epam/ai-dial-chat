@@ -121,9 +121,7 @@ For example, the relevant part of `aidial.settings.json` is:
 {
   "toolsets": {
     "security": {
-      "allowedRedirectUris": [
-        "https://chat.example.com/auth/toolset-signin"
-      ]
+      "allowedRedirectUris": ["https://chat.example.com/auth/toolset-signin"]
     }
   }
 }

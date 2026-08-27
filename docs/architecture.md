@@ -88,7 +88,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | Package                                  | Path                       | Purpose                                                                      |
 | ---------------------------------------- | -------------------------- | ---------------------------------------------------------------------------- |
 | `@epam/ai-dial-chat-shared`              | `chat-shared`              | Shared domain models, utilities, and UI primitives consumed by every lib     |
-| `@epam/ai-dial-chat-hooks`               | `chat-hooks`               | Headless React hooks for reusable chat-interface behavior                     |
+| `@epam/ai-dial-chat-hooks`               | `chat-hooks`               | Headless React hooks for reusable chat-interface behavior                    |
 | `@epam/ai-dial-chat-api-client`          | `chat-api-client`          | Generated OpenAPI client for the chat API (see the exception below)          |
 | `@epam/ai-dial-chat-overlay`             | `chat-overlay`             | Embeddable `ChatOverlay` / `ChatOverlayManager` and the postMessage protocol |
 | `@epam/ai-dial-catalog`                  | `catalog`                  | Catalog for browsing models, applications, tools, prompts, and skills        |
@@ -526,13 +526,13 @@ Import direction is a convention today, not a lint constraint: `@nx/enforce-modu
 
 The intended direction, enforced in review:
 
-| Consumer      | May import from                       |
-| ------------- | ------------------------------------- |
-| `apps/*`      | any `libs/*`                          |
-| Feature libs  | `chat-shared` only                    |
-| `chat-shared` | nothing in the workspace              |
+| Consumer      | May import from                                                    |
+| ------------- | ------------------------------------------------------------------ |
+| `apps/*`      | any `libs/*`                                                       |
+| Feature libs  | `chat-shared` only                                                 |
+| `chat-shared` | nothing in the workspace                                           |
 | Any lib       | not `chat-api-client`; `chat-hooks` has the narrow exception above |
-| `apps/*`      | not another `apps/*`                  |
+| `apps/*`      | not another `apps/*`                                               |
 
 ---
 

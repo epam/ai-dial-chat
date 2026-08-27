@@ -1,7 +1,9 @@
+import {
+  buildAnnouncementSignature,
+  type AnnouncementContent,
+} from '@epam/ai-dial-chat-hooks';
 import { useCallback } from 'react';
 import { StorageKey } from '../../types/storage-key';
-import type { AnnouncementContent } from '../../utils/announcement-message';
-import { buildAnnouncementSignature } from '../../utils/announcement-message';
 import useLocalStorage from '../useLocalStorage';
 
 interface UseAnnouncementDismissalResult {

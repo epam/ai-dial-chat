@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { MessageRole, StageStatus } from '@epam/ai-dial-chat-shared';
 import type { Message, StreamChunk } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';

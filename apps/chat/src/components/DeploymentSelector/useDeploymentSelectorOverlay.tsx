@@ -1,3 +1,4 @@
+import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
 import {
   lazy,
   Suspense,
@@ -10,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
 const DeploymentSelectorOverlay = lazy(
