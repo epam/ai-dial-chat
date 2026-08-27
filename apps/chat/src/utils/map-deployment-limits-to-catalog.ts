@@ -18,7 +18,6 @@ interface DeploymentLimitMapping {
   costKey: keyof DeploymentLimitsResponseDto;
 }
 
-/** Ordered smallest period to largest. */
 const LIMIT_STAT_MAPPINGS: DeploymentLimitMapping[] = [
   {
     key: 'dayTokenStats',
