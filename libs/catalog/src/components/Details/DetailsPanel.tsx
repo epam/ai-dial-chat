@@ -193,6 +193,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   isDetailsLoading = false,
   onClose,
   onToggleFavorite,
+  isFavoriteVisible,
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
@@ -1130,11 +1131,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           {subViewHeader == null && (
             <>
               <div className="flex-1" />
-              <StarToggleButton
-                isStarred={isStarred}
-                ariaLabel={starAriaLabel}
-                onClick={handleToggleFavorite}
-              />
+              {isFavoriteVisible?.(item) !== false && (
+                <StarToggleButton
+                  isStarred={isStarred}
+                  ariaLabel={starAriaLabel}
+                  onClick={handleToggleFavorite}
+                />
+              )}
               <CloseButton
                 onClose={onClose}
                 size={ElementSize.Standard}

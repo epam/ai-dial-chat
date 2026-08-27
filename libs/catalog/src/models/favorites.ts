@@ -44,6 +44,8 @@ export interface FavoritesProps {
   title?: string;
   /** Called when a favorite card's star is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /** Rule for whether the favorite star is shown on a favorite card; `false` hides it and makes the item non-favoritable. Defaults to visible when omitted. */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
   /** Called when a favorite card body is clicked. Opens the details panel. */
   onItemClick?: (item: CatalogItem) => void;
   /** Grouped typography and color overrides for the section. */

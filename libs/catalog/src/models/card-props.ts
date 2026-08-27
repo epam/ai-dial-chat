@@ -56,6 +56,8 @@ export interface CardProps {
   initialIsStarred?: boolean;
   /** Called when the star button is toggled. */
   onToggle?: (id: string, isStarred: boolean) => void;
+  /** Rule for whether the favorite star is shown; `false` hides the star and makes the item non-favoritable. Defaults to visible when omitted. */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
   /** Called when the card body is clicked (excluding the star button). */
   onClick?: (item: CatalogItem) => void;
   /** Grouped color and typography overrides. */

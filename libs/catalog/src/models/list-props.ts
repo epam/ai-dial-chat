@@ -58,6 +58,8 @@ export interface ListViewProps {
   styles?: ListViewStyles;
   /** Called when the star icon is toggled on a row. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /** Rule for whether the favorite star is shown on a row; `false` hides it and makes the item non-favoritable. Defaults to visible when omitted. */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
   /** Called when a table row is clicked (excluding the star column). */
   onItemClick?: (item: CatalogItem) => void;
   /**

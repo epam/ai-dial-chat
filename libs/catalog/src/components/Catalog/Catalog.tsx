@@ -29,6 +29,7 @@ export const Catalog: FC<CatalogProps> = ({
   favorites,
   titles,
   onToggleFavorite,
+  isFavoriteVisible,
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
@@ -427,6 +428,7 @@ export const Catalog: FC<CatalogProps> = ({
               totalCount={favorites.length}
               title={favoritesTitle}
               onToggleFavorite={onToggleFavorite}
+              isFavoriteVisible={isFavoriteVisible}
               onItemClick={onCardClick ?? handleOpenDetails}
               isLeaving={isFavoritesLeaving}
               onExitComplete={handleFavoritesExitComplete}
@@ -496,6 +498,7 @@ export const Catalog: FC<CatalogProps> = ({
               items={tabFiltered}
               query={query}
               onToggleFavorite={onToggleFavorite}
+              isFavoriteVisible={isFavoriteVisible}
               onItemClick={onCardClick ?? handleOpenDetails}
               titles={cardGridTitles}
               selectedItemId={selectedItemId}
@@ -517,6 +520,7 @@ export const Catalog: FC<CatalogProps> = ({
                 ariaLabel={resolvedAriaLabel}
                 emptyStateTitle={emptyTitle}
                 onToggleFavorite={onToggleFavorite}
+                isFavoriteVisible={isFavoriteVisible}
                 onItemClick={onCardClick ?? handleOpenDetails}
                 stickyHeaderTop={0}
                 selectedItemId={selectedItemId}
@@ -537,6 +541,7 @@ export const Catalog: FC<CatalogProps> = ({
           isDetailsLoading={isDetailsLoading}
           onClose={handleCloseDetails}
           onToggleFavorite={onToggleFavorite}
+          isFavoriteVisible={isFavoriteVisible}
           onUseInChat={onUseInChat}
           isPrimaryActionVisible={isPrimaryActionVisible}
           onShare={onShare}

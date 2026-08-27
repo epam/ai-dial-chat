@@ -36,6 +36,32 @@ describe('StarCellRenderer', () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it('renders nothing when isFavoriteVisible returns false for the row', () => {
+    const onToggleFavorite = vi.fn();
+    const { container } = render(
+      <StarCellRenderer
+        {...makeParams(makeItem({ id: 'abc', isStarred: true }), {
+          onToggleFavorite,
+          isFavoriteVisible: () => false,
+        })}
+      />,
+    );
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(container.firstChild).toBeNull();
+    expect(onToggleFavorite).not.toHaveBeenCalled();
+  });
+
+  it('renders the toggle when isFavoriteVisible returns true', () => {
+    render(
+      <StarCellRenderer
+        {...makeParams(makeItem(), { isFavoriteVisible: () => true })}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Toggle favorite' }),
+    ).toBeTruthy();
+  });
+
   it('renders the toggle for a prompt row like any other entity type', () => {
     render(
       <StarCellRenderer

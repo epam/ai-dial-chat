@@ -1,6 +1,6 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import {
   CredentialStatus,
@@ -39,6 +39,41 @@ describe('FavoriteCard — selected state', () => {
     expect(card.className).toContain('selectedCard');
     // eslint-disable-next-line testing-library/no-node-access
     expect(card.querySelector('svg[aria-hidden]')).toBeTruthy();
+  });
+});
+
+describe('FavoriteCard — favorite visibility', () => {
+  it('renders the star button by default for a favorited item', () => {
+    render(<FavoriteCard item={makeItem()} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Remove from favorites' }),
+    ).toBeTruthy();
+  });
+
+  it('hides the star button and keeps the item non-favoritable when isFavoriteVisible returns false', () => {
+    render(
+      <FavoriteCard
+        item={makeItem()}
+        isFavoriteVisible={() => false}
+        onToggle={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Remove from favorites' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Add to favorites' }),
+    ).toBeNull();
+  });
+
+  it('renders the star button when isFavoriteVisible returns true', () => {
+    render(<FavoriteCard item={makeItem()} isFavoriteVisible={() => true} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Remove from favorites' }),
+    ).toBeTruthy();
   });
 });
 
