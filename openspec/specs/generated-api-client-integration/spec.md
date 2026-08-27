@@ -40,7 +40,7 @@ Defines how frontend domain modules consume the generated `@epam/chat-api-client
 ---
 
 ### Requirement: Unauthorized (401) middleware
-`apps/chat/src/server-api/api-client.ts` SHALL obtain its unauthorized middleware by calling `@epam/ai-dial-chat-hooks`'s `createUnauthorizedMiddleware({ notifyUnauthorized, refreshCsrfToken, isInvalidCsrfErrorBody })` with `apps/chat/src/server-api/base.ts`'s existing implementations, instead of defining `unauthorizedMiddleware` inline. The middleware SHALL intercept HTTP 401 responses, notify all registered `onUnauthorized` listeners, throw `UnauthorizedError` with the request URL, and refresh-and-retry exactly once on a classified invalid-CSRF response.
+`apps/chat/src/server-api/api-client.ts` SHALL obtain its unauthorized middleware by calling `@epam/ai-dial-chat-hooks`'s `createUnauthorizedMiddleware({ notifyUnauthorized, refreshCsrfToken, refreshUnauthorizedUrl, isInvalidCsrfErrorBody })` with `apps/chat/src/server-api/base.ts`'s existing implementations and `ApiEndpoints.AUTH_ME` as `refreshUnauthorizedUrl`, instead of defining `unauthorizedMiddleware` inline. The middleware SHALL intercept HTTP 401 responses, notify all registered `onUnauthorized` listeners, throw `UnauthorizedError` with the request URL, and refresh-and-retry exactly once on a classified invalid-CSRF response. If the CSRF refresh itself is unauthorized, notification and the thrown error SHALL use `ApiEndpoints.AUTH_ME`, preserving the pre-extraction behavior.
 
 #### Scenario: 401 response received
 - **WHEN** the backend returns HTTP 401 for any request made via a generated API class
@@ -175,4 +175,3 @@ The telemetry middleware SHALL record the HTTP method, URL, response status, and
 #### Scenario: No hand-edited generated files
 - **WHEN** the skills OpenAPI contract changes
 - **THEN** `npm run openapi` and `npm run openapi:check` regenerate `libs/chat-api-client`'s `SkillsApi` and model classes — no file under `libs/chat-api-client/` is hand-edited
-

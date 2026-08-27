@@ -1040,6 +1040,7 @@ const config = new Configuration({
     createUnauthorizedMiddleware({
       notifyUnauthorized,
       refreshCsrfToken: refreshCsrfTokenOutcome,
+      refreshUnauthorizedUrl: '/api/v1/auth/me',
       isInvalidCsrfErrorBody,
       getCsrfToken,
       setCsrfToken,

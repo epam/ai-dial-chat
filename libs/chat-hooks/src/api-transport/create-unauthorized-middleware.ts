@@ -19,6 +19,8 @@ export interface CreateUnauthorizedMiddlewareDeps {
   notifyUnauthorized: (url: string) => void;
   /** Attempts to refresh the CSRF token, de-duplicating concurrent calls. */
   refreshCsrfToken: () => Promise<CsrfRefreshOutcome>;
+  /** URL reported when the CSRF refresh itself is unauthorized. */
+  refreshUnauthorizedUrl: string;
   /** Classifies a response body as an invalid-CSRF error. */
   isInvalidCsrfErrorBody: (body: string) => boolean;
   /** Returns the currently held CSRF token, or `null` when none is set. */
@@ -85,8 +87,8 @@ export const createUnauthorizedMiddleware = (
 
     const refreshed = await deps.refreshCsrfToken();
     if (refreshed.status === 'unauthorized') {
-      deps.notifyUnauthorized(context.url);
-      throw deps.createUnauthorizedError(context.url);
+      deps.notifyUnauthorized(deps.refreshUnauthorizedUrl);
+      throw deps.createUnauthorizedError(deps.refreshUnauthorizedUrl);
     }
     if (refreshed.status !== 'ok') {
       throw new Error(`CSRF refresh failed for ${context.url}`);

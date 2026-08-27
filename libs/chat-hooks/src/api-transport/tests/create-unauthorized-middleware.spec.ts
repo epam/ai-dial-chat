@@ -46,6 +46,7 @@ const makeConfig = (
       createUnauthorizedMiddleware({
         notifyUnauthorized,
         refreshCsrfToken,
+        refreshUnauthorizedUrl: '/api/v1/auth/me',
         isInvalidCsrfErrorBody,
         getCsrfToken,
         setCsrfToken,
@@ -300,16 +301,20 @@ describe('createUnauthorizedMiddleware', () => {
     const api = new ConversationsApi(
       makeConfig(refreshCsrfToken, notifyUnauthorized),
     );
-    await expect(
-      api.createConversation({
-        createConversationDto: {
-          firstMessage: 'hi',
-          deploymentId: 'test-deployment',
-        },
-      }),
-    ).rejects.toBeInstanceOf(TestUnauthorizedError);
+    const request = api.createConversation({
+      createConversationDto: {
+        firstMessage: 'hi',
+        deploymentId: 'test-deployment',
+      },
+    });
 
-    expect(notifyUnauthorized).toHaveBeenCalledOnce();
+    await expect(request).rejects.toBeInstanceOf(TestUnauthorizedError);
+    await expect(request).rejects.toMatchObject({
+      status: 401,
+      url: '/api/v1/auth/me',
+    });
+
+    expect(notifyUnauthorized).toHaveBeenCalledWith('/api/v1/auth/me');
   });
 
   it('throws a plain error without notifying when CSRF refresh fails without a token', async () => {

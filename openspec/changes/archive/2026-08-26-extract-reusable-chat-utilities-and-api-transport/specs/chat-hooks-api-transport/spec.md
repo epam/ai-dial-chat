@@ -2,7 +2,7 @@
 
 ### Requirement: CSRF and unauthorized generated-client middleware are host-configurable factories
 
-`@epam/ai-dial-chat-hooks` SHALL export `createCsrfMiddleware(deps: { getCsrfToken: () => string | null; setCsrfToken: (token: string | null) => void }): Middleware` and `createUnauthorizedMiddleware(deps: { notifyUnauthorized: (url: string) => void; refreshCsrfToken: () => Promise<CsrfRefreshResult>; isInvalidCsrfErrorBody: (body: string) => boolean }): Middleware`, each returning a `@epam/chat-api-client`-compatible `Middleware` object whose observable behavior is identical to `apps/chat/src/server-api/api-client.ts`'s current inline `csrfMiddleware`/`unauthorizedMiddleware`. Neither factory SHALL construct a `Configuration`, read `apps/chat`'s CSRF token directly, or import `apps/chat/src/server-api/base.ts`.
+`@epam/ai-dial-chat-hooks` SHALL export `createCsrfMiddleware(deps: { getCsrfToken: () => string | null; setCsrfToken: (token: string | null) => void }): Middleware` and `createUnauthorizedMiddleware(deps: { notifyUnauthorized: (url: string) => void; refreshCsrfToken: () => Promise<CsrfRefreshResult>; refreshUnauthorizedUrl: string; isInvalidCsrfErrorBody: (body: string) => boolean }): Middleware`, each returning a `@epam/chat-api-client`-compatible `Middleware` object whose observable behavior is identical to `apps/chat/src/server-api/api-client.ts`'s current inline `csrfMiddleware`/`unauthorizedMiddleware`. Neither factory SHALL construct a `Configuration`, read `apps/chat`'s CSRF token directly, or import `apps/chat/src/server-api/base.ts`.
 
 #### Scenario: CSRF token injected on non-GET requests
 - **WHEN** `deps.getCsrfToken()` returns a non-null token
@@ -24,6 +24,10 @@
 #### Scenario: Invalid-CSRF response refreshes and retries exactly once
 - **WHEN** a response is classified invalid-CSRF by `deps.isInvalidCsrfErrorBody`
 - **THEN** the middleware calls `deps.refreshCsrfToken()`, retries the original request exactly once with any newly-set token, and surfaces that retry's outcome (success, a second invalid-CSRF/401 response, or a non-CSRF error) exactly as `apps/chat/src/server-api/api-client.ts`'s current implementation does today
+
+#### Scenario: Unauthorized CSRF refresh reports the refresh endpoint
+- **WHEN** `deps.refreshCsrfToken()` returns an unauthorized outcome
+- **THEN** the middleware calls `deps.notifyUnauthorized(deps.refreshUnauthorizedUrl)` and creates the unauthorized error with `deps.refreshUnauthorizedUrl`
 
 #### Scenario: Concurrent requests reuse an in-flight refresh
 - **WHEN** two requests concurrently trigger an invalid-CSRF retry

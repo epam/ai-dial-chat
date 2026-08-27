@@ -2,6 +2,7 @@ import { ConversationsApi, ModelsApi } from '@epam/ai-dial-chat-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApiConfiguration } from '../api-client';
 import {
+  ApiEndpoints,
   UnauthorizedError,
   getCsrfToken,
   onUnauthorized,
@@ -77,6 +78,41 @@ describe('createApiConfiguration', () => {
     const api = new ModelsApi(createApiConfiguration());
     await expect(api.listModels()).rejects.toBeInstanceOf(UnauthorizedError);
     expect(listener).toHaveBeenCalledOnce();
+    expect(getCsrfToken()).toBeNull();
+
+    cleanup();
+  });
+
+  it('reports the auth endpoint when the CSRF refresh is unauthorized', async () => {
+    setCsrfToken('stale-token');
+    global.fetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        makeResponse(403, {
+          code: 'CSRF_INVALID',
+          message: 'Invalid CSRF token',
+          error: 'Forbidden',
+          statusCode: 403,
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 401 }));
+    const listener = vi.fn();
+    const cleanup = onUnauthorized(listener);
+    const api = new ConversationsApi(createApiConfiguration());
+
+    const request = api.createConversation({
+      createConversationDto: {
+        firstMessage: 'hi',
+        deploymentId: 'test-deployment',
+      },
+    });
+
+    await expect(request).rejects.toBeInstanceOf(UnauthorizedError);
+    await expect(request).rejects.toMatchObject({
+      status: 401,
+      url: ApiEndpoints.AUTH_ME,
+    });
+    expect(listener).toHaveBeenCalledWith(ApiEndpoints.AUTH_ME);
     expect(getCsrfToken()).toBeNull();
 
     cleanup();

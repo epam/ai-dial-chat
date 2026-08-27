@@ -27,6 +27,7 @@ import {
   type CsrfRefreshOutcome,
 } from '@epam/ai-dial-chat-hooks';
 import {
+  ApiEndpoints,
   CsrfRefreshStatus,
   UnauthorizedError,
   getCsrfToken,
@@ -59,6 +60,7 @@ const refreshCsrfTokenOutcome = async (): Promise<CsrfRefreshOutcome> => {
 const unauthorizedMiddleware = createUnauthorizedMiddleware({
   notifyUnauthorized,
   refreshCsrfToken: refreshCsrfTokenOutcome,
+  refreshUnauthorizedUrl: ApiEndpoints.AUTH_ME,
   isInvalidCsrfErrorBody,
   getCsrfToken,
   setCsrfToken,
