@@ -2,7 +2,7 @@ import { CatalogEntityType } from '../types/entity-type';
 
 /** Text color per entity type — used for the type label, featured chip, and drop shadow. */
 export const ENTITY_TYPE_COLOR: Record<CatalogEntityType, string> = {
-  [CatalogEntityType.Model]: 'var(--text-accent, #1D4ED8)',
+  [CatalogEntityType.Model]: 'var(--text-visual-blue, #1189C8)',
   [CatalogEntityType.Agent]: 'var(--text-visual-green-1, #059669)',
   [CatalogEntityType.Skill]: 'var(--text-visual-violet-1, #7C3AED)',
   [CatalogEntityType.Toolset]: 'var(--text-visual-brown-2, #B45309)',
