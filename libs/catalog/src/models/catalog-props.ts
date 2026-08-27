@@ -80,6 +80,14 @@ export interface CatalogProps {
   error?: Error | null;
   /** Called when any item's star is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /**
+   * Additional caller-supplied rule for whether the favorite star is shown for
+   * an item, in the browse grid, the list view, the favorites strip, and the
+   * details panel. Returning `false` hides the star everywhere and makes the
+   * item non-favoritable. Defaults to **visible** when omitted, so a predicate
+   * can only ever narrow visibility, never widen it.
+   */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Use in chat" button is clicked in the details panel. */
   onUseInChat?: (item: CatalogItem) => void;
   /** Controls whether the primary action button is shown for an item. */

@@ -10,6 +10,8 @@ export interface CardRowData {
   query: string;
   /** Called when a card's star is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /** Rule for whether the favorite star is shown on a card; `false` hides it. Defaults to visible when omitted. */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
   /** Called when a card body is clicked. */
   onItemClick?: (item: CatalogItem) => void;
   /** Label for the "Featured" tag rendered on featured cards. */
