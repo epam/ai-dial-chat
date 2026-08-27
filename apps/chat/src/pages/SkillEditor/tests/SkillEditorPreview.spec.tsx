@@ -43,6 +43,7 @@ vi.mock('../../../server-api/skills.api', () => ({
   updateSkill: vi.fn(),
   downloadSkill: vi.fn(),
   downloadSkillFile: vi.fn(),
+  listSkillFiles: vi.fn(),
 }));
 
 vi.mock('../../../hooks/attachment/useCustomVisualizers', () => ({
