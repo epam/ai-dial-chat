@@ -152,12 +152,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
             }
       }
       className={mergeClasses(
-        'h-full flex-shrink-0 gap-3 overflow-hidden shadow-[0_2px_6px_0_var(--shadow-xs-sm-2,#161B2D08)]',
-        /*
-         * A Left-anchored panel sits flush against the navigation rail on its
-         * inline-start edge, so the shadow cast on that edge is never visible
-         * and is clipped here to avoid it showing through on top of the rail.
-         */
+        'h-full flex-shrink-0 gap-3 overflow-hidden shadow-md',
         orientation === SidebarOrientation.Left &&
           '[clip-path:inset(-24px_-24px_-24px_0)] rtl:[clip-path:inset(-24px_0_-24px_-24px)]',
         !isResizing && 'transition-[width] duration-200 ease-in-out',
