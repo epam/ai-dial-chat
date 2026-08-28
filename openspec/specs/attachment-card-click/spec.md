@@ -93,7 +93,7 @@ The DIAL-file-id-to-URL step is host-owned — it encodes the application's own 
 
 When `handleAttachmentClick` is called with an attachment:
 
-1. If `attachment.url` or inline `attachment.data` is set, delegate to `downloadAttachment`, which downloads a DIAL file id through `resolveDownloadUrl` + `triggerAnchorDownload`, or builds a blob from inline base64 `data` and downloads it through `triggerBlobDownload`. A `url` that is set but is not a DIAL file id, with no `data`, resolves to no download.
+1. If `attachment.url` or inline `attachment.data` is set, delegate to `downloadAttachment`, which downloads a DIAL file id through `resolveDownloadUrl` + `triggerAnchorDownload`, or builds a blob from inline base64 `data` and downloads it through `triggerBlobDownload`. The download filename is produced by `ensureDownloadFilename(name, url, contentType)` — if the attachment's `name` already ends with a file extension, it is used as-is; otherwise the extension is derived first from the last path segment of `url`, then from `MIME_TYPE_EXT_MAP[contentType]`. A `url` that is set but is not a DIAL file id, with no `data`, resolves to no download.
 2. Otherwise, if `attachment.referenceUrl` is set (a reference-only attachment — no `url`, e.g. a RAG/search-grounding chunk):
    - If the reference targets a PDF (optionally with a `#page=N` fragment), open the canvas with the resulting `PdfCanvasContent` via `openCanvas(content, attachment.name)`. A referenced page is expressed as a single transparent, zero-area highlight plus a matching `selectedHighlightId`, so the viewer scrolls to that page without painting anything over it.
    - Otherwise, download DIAL-hosted files through `resolveDownloadUrl` or open external URLs via `window.open(url, '_blank', 'noopener,noreferrer')`.
@@ -108,7 +108,22 @@ The returned callback SHALL be stable across re-renders (wrapped in `useCallback
 #### Scenario: DIAL file attachment triggers a download
 
 - **WHEN** `handleAttachmentClick` is called with an attachment whose `url` is `'files/my-bucket/folder/file.pdf'`
-- **THEN** `triggerAnchorDownload` is called with the URL that `resolveDownloadUrl` returned and the attachment's name
+- **THEN** `triggerAnchorDownload` is called with the URL that `resolveDownloadUrl` returned and the filename produced by `ensureDownloadFilename`
+
+#### Scenario: Download filename preserves an already-present extension
+
+- **WHEN** `handleAttachmentClick` is called with an attachment whose `name` is `'Q3_2026_Financial_Performance.xlsx'`
+- **THEN** `triggerAnchorDownload` is called with the filename `'Q3_2026_Financial_Performance.xlsx'` unchanged
+
+#### Scenario: Download filename gains extension from the URL path when the name has none
+
+- **WHEN** `handleAttachmentClick` is called with an attachment whose `name` is `'Thermo Fisher 10-K Summary'` and whose `url` ends with `'ThermoFisher_2024.xlsx'`
+- **THEN** `triggerAnchorDownload` is called with the filename `'Thermo Fisher 10-K Summary.xlsx'`
+
+#### Scenario: Download filename falls back to MIME type when neither name nor URL carries an extension
+
+- **WHEN** `handleAttachmentClick` is called with an attachment whose `name` has no extension, whose `url` path segment has no extension, and whose `contentType` is `'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'`
+- **THEN** `triggerAnchorDownload` is called with a filename ending in `.xlsx`
 
 #### Scenario: Inline data attachment downloads as a blob
 
