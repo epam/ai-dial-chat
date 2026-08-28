@@ -247,7 +247,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
           onClick={item.href ? undefined : () => onSelectConversation(item.id)}
           tabIndex={item.href ? -1 : undefined}
           className={mergeClasses(
-            'h-8 w-full justify-start gap-2 rounded-xl py-2 ps-0',
+            'h-8 w-full justify-start gap-2 rounded-xl py-2 ps-0 after:pointer-events-none',
             buttonPaddingEnd,
             styles.item,
             isActive && styles.itemActive,

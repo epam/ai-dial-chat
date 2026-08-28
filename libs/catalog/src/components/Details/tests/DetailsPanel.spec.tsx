@@ -265,7 +265,7 @@ vi.mock('../TabsContent/Overview', () => ({
 vi.mock('../TabsContent/Pricing', () => ({
   Pricing: () => <div>Pricing</div>,
 }));
-vi.mock('../TabsContent/Limits', () => ({
+vi.mock('../TabsContent/Limits/Limits', () => ({
   LimitsTab: () => <div>Limits content</div>,
 }));
 vi.mock('../TabsContent/Tools/Tools', () => ({
