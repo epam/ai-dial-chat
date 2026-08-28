@@ -10,26 +10,11 @@ import type {
   DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType, formatLastUsed } from '@epam/ai-dial-chat-shared';
+import { isPublicToolsetId } from '../oauth/toolset-id';
 import { resolveLocalizedText } from '../shared/locale';
 import { safeDecodeURIComponent } from '../shared/string-utils';
 import type { EntitySpecificDetails } from './entity-details';
 import { mapEntityDetailsToCatalogDetails } from './map-entity-details-to-catalog';
-
-/** `toolsetId` prefix identifying a DIAL toolset resource. */
-const TOOLSETS_ID_PREFIX = 'toolsets/';
-/** Bucket segment marking a toolset as shared org-wide rather than personal. */
-const PUBLIC_BUCKET_SEGMENT = 'public';
-
-/*
- * Private duplicate of `apps/chat/src/utils/toolsets.ts`'s `isPublicToolsetId`
- * — that file is host-owned (session/OAuth/window flow) and stays app-owned,
- * so this 4-line pure check is copied rather than importing the whole file.
- */
-const isPublicToolsetId = (toolsetId: string): boolean => {
-  if (!toolsetId.startsWith(TOOLSETS_ID_PREFIX)) return false;
-  const bucket = toolsetId.slice(TOOLSETS_ID_PREFIX.length).split('/')[0];
-  return bucket === PUBLIC_BUCKET_SEGMENT;
-};
 
 const AUTHENTICATION_TYPE_MAP: Record<
   DialToolsetAuthSettingsDto['authenticationType'],

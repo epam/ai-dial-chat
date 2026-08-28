@@ -3,6 +3,18 @@ import type {
   ToolsetLogoutBodyDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  initiateOAuthLogin,
+  navigateToolsetOAuthPopup,
+  openToolsetOAuthPopup,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  type ToolsetOAuthInitiationResult,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
+  waitForToolsetOAuthResult,
+  WithLogin,
+} from '@epam/ai-dial-chat-hooks';
+import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   ConfirmationPopup,
@@ -16,14 +28,7 @@ import {
 import type { FC } from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  AUTH_TYPE_OPTIONS,
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetOAuthInitiationResultType,
-  ToolsetOAuthResultType,
-  WithLogin,
-} from '../../../constants/toolsets';
+import { AUTH_TYPE_OPTIONS } from '../../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
@@ -34,18 +39,14 @@ import { useNotification } from '../../../context/NotificationContext';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
-  ToolsetOAuthInitiationResult,
 } from '../../../models/toolsets';
 import { getApiErrorDetails } from '../../../server-api/api-error';
 import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
+import { ROUTES } from '../../../types/routes';
 import {
   fetchToolsetAuthSettings,
-  initiateOAuthLogin,
   isToolsetAuthValid,
   isValidEndpointUrl,
-  navigateToolsetOAuthPopup,
-  openToolsetOAuthPopup,
-  waitForToolsetOAuthResult,
 } from '../../../utils/toolsets';
 
 interface Props {
@@ -152,6 +153,7 @@ const AuthSection: FC<Props> = ({
       {
         toolsetId: savedToolsetId,
         credentialsLevel: ToolsetCredentialsLevel.User,
+        callbackPath: ROUTES.ToolsetSignIn,
       },
     );
     setIsAuthBusy(false);
@@ -249,6 +251,7 @@ const AuthSection: FC<Props> = ({
             popup,
             resolvedAuth,
             savedToolsetId,
+            ROUTES.ToolsetSignIn,
             ToolsetCredentialsLevel.User,
           );
           await handleOAuthInitiation(initiation, savedToolsetId);
@@ -261,7 +264,11 @@ const AuthSection: FC<Props> = ({
       const savedToolsetId = await onEnsureSaved();
       if (!savedToolsetId) return;
 
-      const initiation = initiateOAuthLogin(auth, savedToolsetId);
+      const initiation = initiateOAuthLogin(
+        auth,
+        savedToolsetId,
+        ROUTES.ToolsetSignIn,
+      );
       await handleOAuthInitiation(initiation, savedToolsetId);
       return;
     }

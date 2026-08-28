@@ -88,7 +88,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | Package                                  | Path                       | Purpose                                                                      |
 | ---------------------------------------- | -------------------------- | ---------------------------------------------------------------------------- |
 | `@epam/ai-dial-chat-shared`              | `chat-shared`              | Shared domain models, utilities, and UI primitives consumed by every lib     |
-| `@epam/ai-dial-chat-hooks`               | `chat-hooks`               | Headless React hooks for reusable chat-interface behavior                    |
+| `@epam/ai-dial-chat-hooks`               | `chat-hooks`               | Headless React hooks for reusable chat-interface behavior, plus the shared OAuth authorization-code popup flow (`src/oauth/`) |
 | `@epam/ai-dial-chat-api-client`          | `chat-api-client`          | Generated OpenAPI client for the chat API (see the exception below)          |
 | `@epam/ai-dial-chat-overlay`             | `chat-overlay`             | Embeddable `ChatOverlay` / `ChatOverlayManager` and the postMessage protocol |
 | `@epam/ai-dial-catalog`                  | `catalog`                  | Catalog for browsing models, applications, tools, prompts, and skills        |

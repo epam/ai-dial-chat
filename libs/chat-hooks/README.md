@@ -48,18 +48,18 @@ const { usage, isLoading, usageError } = useUsageData(getUserUsage, isEnabled);
 
 **Parameters**:
 
-| Name           | Type                                            | Description                                                                              |
-| -------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `getUserUsage` | `() => Promise<UserLimitStatsResponseDto>`      | Host-configured fetch function — the hook never constructs or imports a client itself.   |
-| `enabled`      | `boolean`                                       | When `false`, the fetch is skipped and `isLoading` is immediately `false`. Defaults to `true`. |
+| Name           | Type                                       | Description                                                                                    |
+| -------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `getUserUsage` | `() => Promise<UserLimitStatsResponseDto>` | Host-configured fetch function — the hook never constructs or imports a client itself.         |
+| `enabled`      | `boolean`                                  | When `false`, the fetch is skipped and `isLoading` is immediately `false`. Defaults to `true`. |
 
 **Returns** (`UseUsageDataResult`):
 
-| Name         | Type                                           | Description                                        |
-| ------------ | ---------------------------------------------- | -------------------------------------------------- |
-| `usage`      | `UserLimitStatsResponseDto \| undefined`       | The fetched stats, or `undefined` while loading.   |
-| `isLoading`  | `boolean`                                      | `true` while the fetch is in flight.               |
-| `usageError` | `Error \| undefined`                           | Set when the `getUserUsage` call rejects.          |
+| Name         | Type                                     | Description                                      |
+| ------------ | ---------------------------------------- | ------------------------------------------------ |
+| `usage`      | `UserLimitStatsResponseDto \| undefined` | The fetched stats, or `undefined` while loading. |
+| `isLoading`  | `boolean`                                | `true` while the fetch is in flight.             |
+| `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.        |
 
 ### useConversationScroll
 
@@ -776,7 +776,13 @@ const PromptCatalog = ({
   } = usePromptsState({ listPrompts });
 
   if (isLoading) return <Spinner />;
-  return <ul>{prompts.map((p) => <li key={p.id}>{p.name}</li>)}</ul>;
+  return (
+    <ul>
+      {prompts.map((p) => (
+        <li key={p.id}>{p.name}</li>
+      ))}
+    </ul>
+  );
 };
 ```
 
@@ -784,23 +790,23 @@ const PromptCatalog = ({
 
 **Parameters** (`UsePromptsStateParams`):
 
-| Name          | Type                                    | Description                                                                                    |
-| ------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `listPrompts` | `() => Promise<PromptListResponseDto>`  | Host-configured fetch function — the hook never constructs or imports a client itself.         |
+| Name          | Type                                   | Description                                                                            |
+| ------------- | -------------------------------------- | -------------------------------------------------------------------------------------- |
+| `listPrompts` | `() => Promise<PromptListResponseDto>` | Host-configured fetch function — the hook never constructs or imports a client itself. |
 
 **Returns** (`UsePromptsStateResult`):
 
-| Name                   | Type                          | Description                                                          |
-| ---------------------- | ----------------------------- | -------------------------------------------------------------------- |
-| `prompts`              | `PromptResponseDto[]`         | The caller's own prompts.                                            |
-| `folders`              | `PromptFolderResponseDto[]`   | Folders in the caller's own namespace.                               |
-| `sharedWithMe`         | `PromptResponseDto[]`         | Prompts other users have shared with the caller.                     |
-| `publicPrompts`        | `PromptResponseDto[]`         | Organisation-wide (public) prompts; absent if the API omits them.    |
-| `publicFolders`        | `PromptFolderResponseDto[]`   | Folders in the organisation namespace; absent if the API omits them. |
-| `isLoading`            | `boolean`                     | `true` while the initial fetch is in flight.                         |
-| `error`                | `unknown`                     | Rejection reason of the most recent failed listing, or `null`.       |
-| `refetch`              | `() => Promise<void>`         | Re-reads all namespaces and replaces the current state.              |
-| `refetchPublicPrompts` | `() => Promise<void>`         | Backward-compat alias for `refetch`.                                 |
+| Name                   | Type                        | Description                                                          |
+| ---------------------- | --------------------------- | -------------------------------------------------------------------- |
+| `prompts`              | `PromptResponseDto[]`       | The caller's own prompts.                                            |
+| `folders`              | `PromptFolderResponseDto[]` | Folders in the caller's own namespace.                               |
+| `sharedWithMe`         | `PromptResponseDto[]`       | Prompts other users have shared with the caller.                     |
+| `publicPrompts`        | `PromptResponseDto[]`       | Organisation-wide (public) prompts; absent if the API omits them.    |
+| `publicFolders`        | `PromptFolderResponseDto[]` | Folders in the organisation namespace; absent if the API omits them. |
+| `isLoading`            | `boolean`                   | `true` while the initial fetch is in flight.                         |
+| `error`                | `unknown`                   | Rejection reason of the most recent failed listing, or `null`.       |
+| `refetch`              | `() => Promise<void>`       | Re-reads all namespaces and replaces the current state.              |
+| `refetchPublicPrompts` | `() => Promise<void>`       | Backward-compat alias for `refetch`.                                 |
 
 ### useFavoriteEntitiesState
 
@@ -817,7 +823,11 @@ const CatalogCard = ({
   updateFavorite,
 }: {
   loadFavorites: () => Promise<FavoritesPayload>;
-  updateFavorite: (id: string, isFavorite: boolean, entityType: FavoriteEntityType) => Promise<void>;
+  updateFavorite: (
+    id: string,
+    isFavorite: boolean,
+    entityType: FavoriteEntityType,
+  ) => Promise<void>;
 }) => {
   const { favoriteIds, isLoading, toggleFavorite } = useFavoriteEntitiesState({
     loadFavorites,
@@ -825,7 +835,9 @@ const CatalogCard = ({
   });
 
   return (
-    <button onClick={() => toggleFavorite('gpt-4o', !favoriteIds.has('gpt-4o'))}>
+    <button
+      onClick={() => toggleFavorite('gpt-4o', !favoriteIds.has('gpt-4o'))}
+    >
       {favoriteIds.has('gpt-4o') ? 'Unfavorite' : 'Favorite'}
     </button>
   );
@@ -847,18 +859,18 @@ const CatalogCard = ({
 
 **Parameters** (`UseFavoriteEntitiesStateParams`):
 
-| Name             | Type                                                                                         | Description                                                                        |
-| ---------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `loadFavorites`  | `() => Promise<FavoritesPayload>`                                                            | Host-configured fetch function — the hook never constructs a client itself.        |
-| `updateFavorite` | `(id: string, isFavorite: boolean, entityType: FavoriteEntityType) => Promise<void>`         | Persists a single toggle; the hook calls this after updating the optimistic state. |
+| Name             | Type                                                                                 | Description                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `loadFavorites`  | `() => Promise<FavoritesPayload>`                                                    | Host-configured fetch function — the hook never constructs a client itself.        |
+| `updateFavorite` | `(id: string, isFavorite: boolean, entityType: FavoriteEntityType) => Promise<void>` | Persists a single toggle; the hook calls this after updating the optimistic state. |
 
 **Returns** (`UseFavoriteEntitiesStateResult`):
 
-| Name             | Type                                                                                         | Description                                                                                 |
-| ---------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `favoriteIds`    | `ReadonlySet<string>`                                                                        | Current set of favorited IDs across all entity types.                                       |
-| `isLoading`      | `boolean`                                                                                    | `true` while the initial load is in flight.                                                 |
-| `toggleFavorite` | `(id: string, isFavorite: boolean, entityType?: FavoriteEntityType) => Promise<void>`        | Optimistically updates `favoriteIds`, calls `updateFavorite`, and rolls back on rejection. `entityType` defaults to `FavoriteEntityType.Deployment`. |
+| Name             | Type                                                                                  | Description                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `favoriteIds`    | `ReadonlySet<string>`                                                                 | Current set of favorited IDs across all entity types.                                                                                                |
+| `isLoading`      | `boolean`                                                                             | `true` while the initial load is in flight.                                                                                                          |
+| `toggleFavorite` | `(id: string, isFavorite: boolean, entityType?: FavoriteEntityType) => Promise<void>` | Optimistically updates `favoriteIds`, calls `updateFavorite`, and rolls back on rejection. `entityType` defaults to `FavoriteEntityType.Deployment`. |
 
 ### useSkillsState
 
@@ -888,7 +900,13 @@ const SkillCatalog = ({
 
   if (!isEnabled) return null;
   if (isLoading) return <Spinner />;
-  return <ul>{skills.map((s) => <li key={s.url}>{s.name}</li>)}</ul>;
+  return (
+    <ul>
+      {skills.map((s) => (
+        <li key={s.url}>{s.name}</li>
+      ))}
+    </ul>
+  );
 };
 ```
 
@@ -896,23 +914,23 @@ const SkillCatalog = ({
 
 **Parameters** (`UseSkillsStateParams`):
 
-| Name         | Type                                               | Description                                                                            |
-| ------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `listSkills` | `() => Promise<SkillCatalogListResponseDto>`       | Host-configured fetch function — the hook never constructs a client itself.            |
-| `enabled`    | `boolean`                                          | When `false`, clears all arrays and resolves `isLoading` to `false` without fetching. |
-| `ready`      | `boolean`                                          | When `false`, defers the fetch and keeps `isLoading: true` until it becomes `true`.   |
+| Name         | Type                                         | Description                                                                           |
+| ------------ | -------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `listSkills` | `() => Promise<SkillCatalogListResponseDto>` | Host-configured fetch function — the hook never constructs a client itself.           |
+| `enabled`    | `boolean`                                    | When `false`, clears all arrays and resolves `isLoading` to `false` without fetching. |
+| `ready`      | `boolean`                                    | When `false`, defers the fetch and keeps `isLoading: true` until it becomes `true`.   |
 
 **Returns** (`UseSkillsStateResult`):
 
-| Name              | Type                                     | Description                                                                  |
-| ----------------- | ---------------------------------------- | ---------------------------------------------------------------------------- |
-| `skills`          | `SkillMetadataItemDto[]`                 | The caller's own skills.                                                     |
-| `publicSkills`    | `SkillMetadataItemDto[]`                 | Organisation-wide skills.                                                    |
-| `sharedWithMe`    | `SkillMetadataItemDto[]`                 | Skills other users have shared with the caller.                              |
-| `isLoading`       | `boolean`                                | `true` while the initial fetch is in flight or deferred by `ready: false`.   |
-| `error`           | `unknown`                                | Rejection reason of the most recent failed listing, or `null`.               |
-| `refetch`         | `() => Promise<void>`                    | Re-reads all namespaces and replaces the current state.                      |
-| `mergeSharedSkill`| `(item: SkillMetadataItemDto) => void`   | Upserts a skill into `sharedWithMe` by `url`, appending it if not present.   |
+| Name               | Type                                   | Description                                                                |
+| ------------------ | -------------------------------------- | -------------------------------------------------------------------------- |
+| `skills`           | `SkillMetadataItemDto[]`               | The caller's own skills.                                                   |
+| `publicSkills`     | `SkillMetadataItemDto[]`               | Organisation-wide skills.                                                  |
+| `sharedWithMe`     | `SkillMetadataItemDto[]`               | Skills other users have shared with the caller.                            |
+| `isLoading`        | `boolean`                              | `true` while the initial fetch is in flight or deferred by `ready: false`. |
+| `error`            | `unknown`                              | Rejection reason of the most recent failed listing, or `null`.             |
+| `refetch`          | `() => Promise<void>`                  | Re-reads all namespaces and replaces the current state.                    |
+| `mergeSharedSkill` | `(item: SkillMetadataItemDto) => void` | Upserts a skill into `sharedWithMe` by `url`, appending it if not present. |
 
 ## File Manager
 
@@ -1359,7 +1377,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 
 sanitizeConversationName('bad:name/here'); // 'badnamehere'
-stripTrailingDots('My Chat...');           // 'My Chat'
+stripTrailingDots('My Chat...'); // 'My Chat'
 ```
 
 ### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes
@@ -1405,6 +1423,290 @@ import { parseExternalServiceUrl } from '@epam/ai-dial-chat-hooks';
 
 parseExternalServiceUrl('applications/bucket/app/external_services/jira');
 // { appId: 'applications/bucket/app', serviceName: 'jira' }
+```
+
+## OAuth Popup Flow
+
+Host-agnostic OAuth authorization-code popup orchestration. Three resource kinds share this machinery — toolsets, an application's external services, and Scheduled Tasks offline-credentials consent — which is why the module is named for the concern rather than for toolsets.
+
+The module imports only browser APIs, `@epam/ai-dial-chat-shared`, and `@epam/ai-dial-chat-api-client` **types**. It knows no application route: every entry point that needs the callback location takes a `callbackPath` string supplied by the host.
+
+### OAuth enums and models
+
+| Name                                | Kind      | Purpose                                                                                              |
+| ----------------------------------- | --------- | ---------------------------------------------------------------------------------------------------- |
+| `ToolsetAuthTypes`                  | enum      | `NONE` / `API_KEY` / `OAUTH` — the mechanism a toolset requires.                                     |
+| `ToolsetAuthStatus`                 | enum      | `SIGNED_IN` / `SIGNED_OUT` / `FAILED` — sign-in state for one credentials level.                     |
+| `ToolsetCredentialsLevel`           | enum      | `GLOBAL` / `USER` / `APP` — scope the submitted credentials apply to.                                |
+| `WithLogin`                         | enum      | `with-login` / `without-login` / `with-config`.                                                      |
+| `OAuthResourceKind`                 | enum      | `toolset` / `external-service` / `offline-credentials`.                                              |
+| `ToolsetOAuthInitiationResultType`  | enum      | `started` / `blocked` / `invalid-config`.                                                            |
+| `ToolsetOAuthResultType`            | enum      | `success` / `failure` / `cancelled`.                                                                 |
+| `ToolsetOAuthFailureReason`         | enum      | `missing-code` / `missing-redirect-state` / `state-mismatch` / `login-request-failed`.               |
+| `ToolsetOAuthChannelControlType`    | enum      | `result-acknowledged` — the opener's consumption acknowledgement.                                    |
+| `ToolsetOAuthCallbackQuery`         | enum      | `toolsetOAuthResult` / `toolsetOAuthFailureReason` — query keys written into the callback popup URL. |
+| `TOOLSET_REDIRECT_STATE_KEY`        | const     | `sessionStorage` key the redirect state is written under, inside the popup.                          |
+| `ToolsetOAuthSettings`              | interface | `clientId` / `authorizationEndpoint` / `scopes` / `codeChallenge` / `codeChallengeMethod`.           |
+| `ToolsetRedirectState`              | interface | State handed to the popup: `toolsetId`, `credentialsLevel`, `redirectUri`, `state`, `resourceKind`.  |
+| `ToolsetOAuthInitiationResult`      | type      | Discriminated result of opening/navigating the popup.                                                |
+| `ToolsetOAuthResult`                | type      | Discriminated result resolved to the initiating tab.                                                 |
+| `ToolsetOAuthChannelMessage`        | type      | Non-secret success/failure message posted by the callback.                                           |
+| `ToolsetOAuthResultAcknowledgement` | interface | Control message confirming the opener consumed a result.                                             |
+
+These declarations live in the package rather than being copied per host: TypeScript string enums are nominal, so a structurally identical host-side copy would not type-check against a lib signature that names the enum.
+
+```ts
+import {
+  OAuthResourceKind,
+  TOOLSET_REDIRECT_STATE_KEY,
+  ToolsetCredentialsLevel,
+  type ToolsetRedirectState,
+} from '@epam/ai-dial-chat-hooks';
+
+const redirectState: ToolsetRedirectState = {
+  toolsetId: 'toolsets/public/jira',
+  credentialsLevel: ToolsetCredentialsLevel.User,
+  resourceKind: OAuthResourceKind.Toolset,
+};
+
+popup.sessionStorage.setItem(
+  TOOLSET_REDIRECT_STATE_KEY,
+  JSON.stringify(redirectState),
+);
+```
+
+### encodeToolsetId / decodeToolsetId / isPublicToolsetId
+
+`encodeToolsetId` percent-encodes each `/`-separated segment of a toolset id so it satisfies the backend's id pattern, keeping `/` as a literal separator — the counterpart of `encodeDeploymentId` on the applications side. `decodeToolsetId` inverts it, passing a malformed percent-encoded segment through unchanged rather than throwing, since it decodes externally-sourced ids. `isPublicToolsetId` reports whether an id lives in the org-wide `public` bucket.
+
+```ts
+import {
+  decodeToolsetId,
+  encodeToolsetId,
+  isPublicToolsetId,
+} from '@epam/ai-dial-chat-hooks';
+
+encodeToolsetId('toolsets/b/My Toolset__1.0.0');
+// 'toolsets/b/My%20Toolset__1.0.0'
+
+decodeToolsetId('toolsets/b/My%20Toolset__1.0.0');
+// 'toolsets/b/My Toolset__1.0.0'
+
+isPublicToolsetId('toolsets/public/jira__1.0.0'); // true
+```
+
+### getToolsetRedirectUri / buildToolsetAuthorizeUrl
+
+`getToolsetRedirectUri` resolves the host's own callback path against `window.location.origin`. `buildToolsetAuthorizeUrl` builds an authorization-code URL carrying `response_type=code`, `client_id`, `redirect_uri` and `state`, plus `code_challenge`/`code_challenge_method` and a space-joined `scope` when the supplied settings carry them. It returns `null` — never throws — for a configuration that cannot produce a valid URL: a missing or blank `clientId`/`authorizationEndpoint`, an unparseable endpoint, or a protocol other than `http:`/`https:`.
+
+**Parameters** (`buildToolsetAuthorizeUrl`):
+
+| Name          | Type                   | Description                                                              |
+| ------------- | ---------------------- | ------------------------------------------------------------------------ |
+| `auth`        | `ToolsetOAuthSettings` | OAuth client settings. A wider host form model is accepted structurally. |
+| `redirectUri` | `string`               | Absolute callback URI, typically from `getToolsetRedirectUri`.           |
+| `state`       | `string`               | Per-flow CSRF state, which also doubles as the flow id.                  |
+
+```ts
+import {
+  buildToolsetAuthorizeUrl,
+  getToolsetRedirectUri,
+} from '@epam/ai-dial-chat-hooks';
+
+const redirectUri = getToolsetRedirectUri('/auth/toolset-signin');
+const url = buildToolsetAuthorizeUrl(
+  {
+    clientId: 'client',
+    authorizationEndpoint: 'https://auth.example.com/authorize',
+    scopes: ['read', 'write'],
+  },
+  redirectUri,
+  crypto.randomUUID(),
+);
+```
+
+### openToolsetOAuthPopup / navigateToolsetOAuthPopup / initiateOAuthLogin
+
+`openToolsetOAuthPopup` opens a blank, same-origin popup. Call it as the very first synchronous statement of a click handler, before any `await` — that ordering is what makes a blocked popup detectable and keeps the browser treating the open as user-triggered.
+
+`initiateOAuthLogin` is the one-shot path for a config already known synchronously: it validates the config, opens the popup, writes the redirect state into **the popup's own** `sessionStorage`, sets the popup's `opener` to `null`, and navigates it to the provider. `navigateToolsetOAuthPopup` is the deferred path for a config that can only be fetched after the popup is open — it closes the already-open popup and returns `InvalidConfig` when no authorize URL can be built.
+
+**Parameters** (`navigateToolsetOAuthPopup`):
+
+| Name               | Type                      | Description                                                                  |
+| ------------------ | ------------------------- | ---------------------------------------------------------------------------- |
+| `popup`            | `Window`                  | The already-open blank popup.                                                |
+| `auth`             | `ToolsetOAuthSettings`    | OAuth client settings.                                                       |
+| `toolsetId`        | `string`                  | Resource id, or an opaque correlation id for the non-toolset resource kinds. |
+| `callbackPath`     | `string`                  | The host's own OAuth callback route.                                         |
+| `credentialsLevel` | `ToolsetCredentialsLevel` | Defaults to `ToolsetCredentialsLevel.User`.                                  |
+| `resourceKind`     | `OAuthResourceKind`       | Defaults to `OAuthResourceKind.Toolset`.                                     |
+
+`initiateOAuthLogin` takes `(auth, toolsetId, callbackPath, credentialsLevel?)` — same meanings, and it opens the popup itself.
+
+```ts
+import {
+  initiateOAuthLogin,
+  navigateToolsetOAuthPopup,
+  openToolsetOAuthPopup,
+  ToolsetOAuthInitiationResultType,
+} from '@epam/ai-dial-chat-hooks';
+
+// Config known up front.
+const initiation = initiateOAuthLogin(
+  {
+    clientId: 'client',
+    authorizationEndpoint: 'https://auth.example.com/authorize',
+  },
+  'toolsets/public/jira',
+  '/auth/toolset-signin',
+);
+if (initiation.type === ToolsetOAuthInitiationResultType.Blocked) return;
+
+// Config fetched after the click.
+const popup = openToolsetOAuthPopup();
+if (!popup) return;
+const settings = await fetchSettings();
+const deferred = navigateToolsetOAuthPopup(
+  popup,
+  settings,
+  'toolsets/public/jira',
+  '/auth/toolset-signin',
+);
+```
+
+### getToolsetOAuthChannelName / waitForToolsetOAuthResult
+
+`getToolsetOAuthChannelName` names the same-origin `BroadcastChannel` an OAuth flow's opener and its callback popup share. `waitForToolsetOAuthResult` resolves success, failure, or cancellation over three redundant channels: that `BroadcastChannel`, a poll of the popup's same-origin URL for the completion marker, and a focus listener on the initiating window.
+
+Two subtleties it exists to handle. A closed popup is treated as cancelled **only** via the focus check, never from the poll alone — cross-origin navigation can make a retained window reference report `closed` while the popup is in fact open. And the flow channel stays open past the settling tick so the consumption acknowledgement is actually delivered, which is what lets a callback popup whose `WindowProxy` was severed close itself.
+
+**Options**:
+
+| Name               | Type                      | Description                                                                                           |
+| ------------------ | ------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `toolsetId`        | `string`                  | Resource id echoed back in a success result.                                                          |
+| `credentialsLevel` | `ToolsetCredentialsLevel` | Credentials level echoed back in a success result.                                                    |
+| `callbackPath`     | `string`                  | The route this flow's popup was opened against; a same-origin popup URL on any other path is ignored. |
+| `timeoutMs`        | `number`                  | Defaults to 5 minutes, after which the popup is closed and the flow resolves cancelled.               |
+| `pollIntervalMs`   | `number`                  | Defaults to `500`.                                                                                    |
+
+```ts
+import {
+  waitForToolsetOAuthResult,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthResultType,
+} from '@epam/ai-dial-chat-hooks';
+
+const result = await waitForToolsetOAuthResult(popup, flowId, {
+  toolsetId: 'toolsets/public/jira',
+  credentialsLevel: ToolsetCredentialsLevel.User,
+  callbackPath: '/auth/toolset-signin',
+});
+
+if (result.type === ToolsetOAuthResultType.Success) {
+  // refresh status
+}
+```
+
+### useToolsetLogin
+
+Toolset API-key and OAuth login orchestration, so no two surfaces fork the popup handshake or the stale-credential-clearing rule. Every backend call arrives as an injected callback — the hook constructs no client instance and reads no app context. It resolves an outcome and shows nothing itself; mapping an outcome to notifications is the caller's job.
+
+For OAuth, a reported cancellation is re-checked against the backend through `getToolset` and upgraded to success when the target level reads signed in, so a login that completed server-side is never reported as cancelled.
+
+**Parameters**:
+
+| Name            | Type                                                                  | Description                                           |
+| --------------- | --------------------------------------------------------------------- | ----------------------------------------------------- |
+| `callbackPath`  | `string`                                                              | The host's OAuth callback route.                      |
+| `loginToolset`  | `(toolsetId: string, body: ToolsetLoginBodyDto) => Promise<unknown>`  | Submits credentials at one level.                     |
+| `logoutToolset` | `(toolsetId: string, body: ToolsetLogoutBodyDto) => Promise<unknown>` | Clears credentials at one level.                      |
+| `getToolset`    | `(toolsetId: string) => Promise<DialToolsetDto>`                      | Re-reads a toolset to verify a reported cancellation. |
+
+**Returns**: `{ login: (params: ToolsetLoginParams) => Promise<ToolsetLoginOutcome> }` — `login` is `useCallback`-stable while the injected callbacks are unchanged.
+
+```tsx
+import {
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetLoginOutcomeType,
+  useToolsetLogin,
+} from '@epam/ai-dial-chat-hooks';
+
+const { login } = useToolsetLogin({
+  callbackPath: '/auth/toolset-signin',
+  loginToolset,
+  logoutToolset,
+  getToolset,
+});
+
+const outcome = await login({
+  toolsetId: 'toolsets/public/jira',
+  credentialsLevel: ToolsetCredentialsLevel.User,
+  authenticationType: ToolsetAuthTypes.OAuth,
+  oauthSettings: {
+    clientId: 'client',
+    authorizationEndpoint: 'https://auth.example.com/authorize',
+  },
+});
+
+if (outcome.type === ToolsetLoginOutcomeType.PopupBlocked) {
+  showPopupBlockedNotification();
+}
+```
+
+### useOAuthCallbackCompletion
+
+Runs inside the OAuth callback popup and completes the flow: reads and clears the redirect state from the popup's own `sessionStorage`, removes the authorization code from the visible URL **before** any request, validates the returned `state` against the stored one, performs the exchange through the injected callback, then reports the outcome into the popup URL and over the flow channel until the opener acknowledges it, closing the popup afterwards. It runs its effect once per mount even under StrictMode double-invocation, renders nothing, and produces no user-visible text.
+
+Per-resource-kind dispatch stays in the host page — the hook sees only the one injected `exchange` callback.
+
+**Parameters**:
+
+| Name           | Type                                                                          | Description                                                                                                                               |
+| -------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `searchParams` | `URLSearchParams`                                                             | Callback query parameters; `code` and `state` are read from it.                                                                           |
+| `callbackPath` | `string`                                                                      | Used to build the echoed `redirect_uri` when the stored redirect state carries none.                                                      |
+| `exchange`     | `(params: OAuthExchangeParams) => Promise<ToolsetOAuthFailureReason \| null>` | Performs the exchange. Resolve `null` for success, a reason for a host-side validation failure; a rejection reports `LoginRequestFailed`. |
+
+**Returns**:
+
+| Name            | Type                                | Description                                                    |
+| --------------- | ----------------------------------- | -------------------------------------------------------------- |
+| `isInProgress`  | `boolean`                           | `true` until the flow has reported an outcome.                 |
+| `failureReason` | `ToolsetOAuthFailureReason \| null` | The failure reason, or `null` while in progress or on success. |
+
+```tsx
+import {
+  useOAuthCallbackCompletion,
+  type OAuthExchangeParams,
+} from '@epam/ai-dial-chat-hooks';
+
+const exchange = useCallback(
+  async ({
+    code,
+    redirectUri,
+    credentialsLevel,
+    redirectState,
+  }: OAuthExchangeParams) => {
+    await loginToolset(redirectState.toolsetId, {
+      url: redirectState.toolsetId,
+      credentialsLevel,
+      authenticationType: 'OAUTH',
+      code,
+      redirectUri,
+    });
+    return null;
+  },
+  [],
+);
+
+const { isInProgress, failureReason } = useOAuthCallbackCompletion({
+  searchParams,
+  callbackPath: '/auth/toolset-signin',
+  exchange,
+});
 ```
 
 ## Toolset Login Events
@@ -1876,7 +2178,10 @@ const skillManifest = buildSkillManifestForSubmit(
   'Summarizes documents',
   'You are a summarization assistant...',
 );
-const { filePaths, files } = buildSkillFilesPayload(fileTreeNodes, filesContent);
+const { filePaths, files } = buildSkillFilesPayload(
+  fileTreeNodes,
+  filesContent,
+);
 ```
 
 ### useSkillEditorLoad
@@ -1925,7 +2230,14 @@ const client: SkillEditorSubmitClient = {
   createSkill: (bucket, path, skillManifest, filePaths, files) =>
     skillsApi.createSkill(bucket, path, skillManifest, filePaths, files),
   updateSkill: (bucket, path, skillManifest, filePaths, files, ifMatch) =>
-    skillsApi.updateSkill(bucket, path, skillManifest, filePaths, files, ifMatch),
+    skillsApi.updateSkill(
+      bucket,
+      path,
+      skillManifest,
+      filePaths,
+      files,
+      ifMatch,
+    ),
 };
 
 const { phase, errors, submitError, conflict, clearConflict, handleSubmit } =
@@ -2003,9 +2315,8 @@ Validates a staged skill-file upload batch against per-file/limit and path-safet
 ```ts
 import { validateSkillFileBatch } from '@epam/ai-dial-chat-hooks';
 
-const { results, batchErrors, manifestCandidate } = await validateSkillFileBatch(
-  candidates,
-  {
+const { results, batchErrors, manifestCandidate } =
+  await validateSkillFileBatch(candidates, {
     existingPaths: ['agents/analyzer.md'],
     existingTotalBytes: 2048,
     manifestByteLength: 256,
@@ -2022,8 +2333,7 @@ const { results, batchErrors, manifestCandidate } = await validateSkillFileBatch
       totalSizeExceeded: 'Total size exceeded',
       totalCountExceeded: 'Total count exceeded',
     },
-  },
-);
+  });
 ```
 
 ### Supporting types and constants
@@ -2129,7 +2439,10 @@ Maps `ConversationListItemDto[]` to `ConversationItem[]` for `ConversationPanel`
 
 ```tsx
 import { useConversationPanelItems } from '@epam/ai-dial-chat-hooks';
-import type { ConversationListItemDto, DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ConversationListItemDto,
+  DeploymentItemDto,
+} from '@epam/ai-dial-chat-api-client';
 
 const conversations = useConversationPanelItems({
   items,
@@ -2137,10 +2450,13 @@ const conversations = useConversationPanelItems({
   isDeploymentsLoading,
   toPanelConversationId,
   resolveIconUrl: (d?: DeploymentItemDto) => d?.iconUrl ?? undefined,
-  resolveIconTooltip: (d: DeploymentItemDto | undefined, fallback: string) => d?.displayName ?? fallback,
+  resolveIconTooltip: (d: DeploymentItemDto | undefined, fallback: string) =>
+    d?.displayName ?? fallback,
   resolveHref: (id) => `/chat/${id}`,
   resolveTaskBadge: (item: ConversationListItemDto) =>
-    item.isScheduledTask ? { label: 'Task', isUnread: item.isUnread ?? false } : undefined,
+    item.isScheduledTask
+      ? { label: 'Task', isUnread: item.isUnread ?? false }
+      : undefined,
 });
 ```
 
@@ -2148,16 +2464,16 @@ const conversations = useConversationPanelItems({
 
 **Parameters** (`UseConversationPanelItemsParams`):
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `items` | `ConversationListItemDto[]` | Raw DTOs from the API. |
-| `deployments` | `DeploymentItemDto[]` | Current deployment catalogue used for icon/tooltip resolution. |
-| `isDeploymentsLoading` | `boolean` | When `true`, all items are returned with `isIconLoading: true`. |
-| `toPanelConversationId` | `(id: string) => string` | Maps a DTO `id` to the panel-space identifier. |
-| `resolveIconUrl` | `(deployment?: DeploymentItemDto) => string \| undefined` | Returns the resolved icon URL for a deployment. |
-| `resolveIconTooltip` | `(deployment?: DeploymentItemDto, fallback: string) => string \| undefined` | Returns the tooltip text for the icon. |
-| `resolveHref` | `(id: string) => string` | Converts a panel-space ID to a navigation href. |
-| `resolveTaskBadge` | `(item: ConversationListItemDto) => { label: string; isUnread: boolean } \| undefined` | Optional; returns the badge descriptor for scheduled-task conversations. |
+| Name                    | Type                                                                                   | Description                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `items`                 | `ConversationListItemDto[]`                                                            | Raw DTOs from the API.                                                   |
+| `deployments`           | `DeploymentItemDto[]`                                                                  | Current deployment catalogue used for icon/tooltip resolution.           |
+| `isDeploymentsLoading`  | `boolean`                                                                              | When `true`, all items are returned with `isIconLoading: true`.          |
+| `toPanelConversationId` | `(id: string) => string`                                                               | Maps a DTO `id` to the panel-space identifier.                           |
+| `resolveIconUrl`        | `(deployment?: DeploymentItemDto) => string \| undefined`                              | Returns the resolved icon URL for a deployment.                          |
+| `resolveIconTooltip`    | `(deployment?: DeploymentItemDto, fallback: string) => string \| undefined`            | Returns the tooltip text for the icon.                                   |
+| `resolveHref`           | `(id: string) => string`                                                               | Converts a panel-space ID to a navigation href.                          |
+| `resolveTaskBadge`      | `(item: ConversationListItemDto) => { label: string; isUnread: boolean } \| undefined` | Optional; returns the badge descriptor for scheduled-task conversations. |
 
 **Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs.
 
@@ -2187,25 +2503,25 @@ const { toContextId, getRawItem } = useConversationLookupMaps({
   toPanelConversationId,
 });
 
-const contextId = toContextId(panelItem.id);           // string | undefined
-const rawItem   = getRawItem(panelItem.id);             // ConversationListItemDto | undefined
+const contextId = toContextId(panelItem.id); // string | undefined
+const rawItem = getRawItem(panelItem.id); // ConversationListItemDto | undefined
 ```
 
 #### API
 
 **Parameters** (`UseConversationLookupMapsParams`):
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `items` | `ConversationListItemDto[]` | Raw DTOs from the API. |
-| `toPanelConversationId` | `(id: string) => string` | Maps a DTO `id` to the panel-space identifier. |
+| Name                    | Type                        | Description                                    |
+| ----------------------- | --------------------------- | ---------------------------------------------- |
+| `items`                 | `ConversationListItemDto[]` | Raw DTOs from the API.                         |
+| `toPanelConversationId` | `(id: string) => string`    | Maps a DTO `id` to the panel-space identifier. |
 
 **Returns** (`ConversationLookupMaps`):
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `toContextId` | `(panelId: string) => string \| undefined` | Reverse-maps a panel id back to its context (DTO) id. |
-| `getRawItem` | `(panelId: string) => ConversationListItemDto \| undefined` | Returns the raw DTO for a panel id. |
+| Name          | Type                                                        | Description                                           |
+| ------------- | ----------------------------------------------------------- | ----------------------------------------------------- |
+| `toContextId` | `(panelId: string) => string \| undefined`                  | Reverse-maps a panel id back to its context (DTO) id. |
+| `getRawItem`  | `(panelId: string) => ConversationListItemDto \| undefined` | Returns the raw DTO for a panel id.                   |
 
 ### useActiveConversationSync
 
@@ -2228,14 +2544,14 @@ const panelActiveConversationId = useActiveConversationSync({
 
 **Parameters** (`UseActiveConversationSyncParams`):
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `activeConversationId` | `string \| undefined` | The app's currently active conversation (context-space). |
-| `items` | `ConversationListItemDto[]` | Raw DTOs from the API. |
-| `refreshConversations` | `() => Promise<void>` | Called when the active conversation is not found in `items`. |
-| `markConversationViewed` | `(id: string) => Promise<void>` | Called with the matching raw DTO id when the active conversation or matching item changes. |
-| `conversationIdsMatch` | `(a: string, b: string) => boolean` | Equality predicate for context-space ids. |
-| `toPanelConversationId` | `(id: string) => string` | Maps a DTO `id` to the panel-space identifier. |
+| Name                     | Type                                | Description                                                                                |
+| ------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------ |
+| `activeConversationId`   | `string \| undefined`               | The app's currently active conversation (context-space).                                   |
+| `items`                  | `ConversationListItemDto[]`         | Raw DTOs from the API.                                                                     |
+| `refreshConversations`   | `() => Promise<void>`               | Called when the active conversation is not found in `items`.                               |
+| `markConversationViewed` | `(id: string) => Promise<void>`     | Called with the matching raw DTO id when the active conversation or matching item changes. |
+| `conversationIdsMatch`   | `(a: string, b: string) => boolean` | Equality predicate for context-space ids.                                                  |
+| `toPanelConversationId`  | `(id: string) => string`            | Maps a DTO `id` to the panel-space identifier.                                             |
 
 **Returns**: `string | undefined` — the panel-space id to highlight.
 
@@ -2256,7 +2572,7 @@ await deleteDialog.confirm(
   async (id) => {
     await deleteItem(id);
   },
-  (e) => e instanceof Error ? e.message : 'Delete failed',
+  (e) => (e instanceof Error ? e.message : 'Delete failed'),
 );
 
 // Cancel:
@@ -2267,15 +2583,15 @@ if (!deleteDialog.isRunning) deleteDialog.close();
 
 **Returns** (`AsyncConfirmDialogControls<T>`):
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `pending` | `T \| null` | The value passed to `open()`, or `null` when the dialog is closed. |
-| `isPending` | `boolean` | `true` while `pending` is non-null (dialog is open). |
-| `isRunning` | `boolean` | `true` while `confirm`'s `run` callback is executing. |
-| `error` | `string \| null` | Error message from the most recent failed `confirm`, or `null`. |
-| `open` | `(value: T) => void` | Opens the dialog with `value` as the pending payload; clears any prior error. |
-| `close` | `() => void` | Closes the dialog and clears pending + error. |
-| `confirm` | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
+| Name        | Type                                                                                   | Description                                                                                      |
+| ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `pending`   | `T \| null`                                                                            | The value passed to `open()`, or `null` when the dialog is closed.                               |
+| `isPending` | `boolean`                                                                              | `true` while `pending` is non-null (dialog is open).                                             |
+| `isRunning` | `boolean`                                                                              | `true` while `confirm`'s `run` callback is executing.                                            |
+| `error`     | `string \| null`                                                                       | Error message from the most recent failed `confirm`, or `null`.                                  |
+| `open`      | `(value: T) => void`                                                                   | Opens the dialog with `value` as the pending payload; clears any prior error.                    |
+| `close`     | `() => void`                                                                           | Closes the dialog and clears pending + error.                                                    |
+| `confirm`   | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
 
 ### useImportFilePicker
 
@@ -2298,17 +2614,17 @@ const { inputRef, triggerImport, handleFileChange } = useImportFilePicker({
 
 **Parameters** (`UseImportFilePickerParams`):
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `accept` | `string \| undefined` | Host-resolved `accept` string (e.g. `'.json,.zip'`); omit it to remove the attribute. |
-| `onFileSelected` | `(file: File) => void` | Called with the first selected file when the picker resolves. |
+| Name             | Type                   | Description                                                                           |
+| ---------------- | ---------------------- | ------------------------------------------------------------------------------------- |
+| `accept`         | `string \| undefined`  | Host-resolved `accept` string (e.g. `'.json,.zip'`); omit it to remove the attribute. |
+| `onFileSelected` | `(file: File) => void` | Called with the first selected file when the picker resolves.                         |
 
 **Returns** (`UseImportFilePickerResult`):
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `inputRef` | `RefObject<HTMLInputElement \| null>` | Attach to the hidden `<input type="file">`. |
-| `triggerImport` | `() => void` | Programmatically clicks the input to open the file picker. |
+| Name               | Type                                             | Description                                                                         |
+| ------------------ | ------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `inputRef`         | `RefObject<HTMLInputElement \| null>`            | Attach to the hidden `<input type="file">`.                                         |
+| `triggerImport`    | `() => void`                                     | Programmatically clicks the input to open the file picker.                          |
 | `handleFileChange` | `(event: ChangeEvent<HTMLInputElement>) => void` | `onChange` handler for the hidden input; passes the first file to `onFileSelected`. |
 
 ### deriveConversationRowActionState
@@ -2335,21 +2651,21 @@ const {
 
 **Parameters**:
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `item` | `Pick<ConversationListItemDto, 'sharedWithMe' \| 'publishedWithMe' \| 'isReadonly'>` | Sharing/readonly flags from the DTO. |
-| `publishHistory` | `PublishHistoryEntry[] \| undefined` | Resolved publish history entries, or `undefined` while loading. |
-| `recipients` | `RecipientsCountEntry` | Current recipient count entry for the conversation. |
+| Name             | Type                                                                                 | Description                                                     |
+| ---------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| `item`           | `Pick<ConversationListItemDto, 'sharedWithMe' \| 'publishedWithMe' \| 'isReadonly'>` | Sharing/readonly flags from the DTO.                            |
+| `publishHistory` | `PublishHistoryEntry[] \| undefined`                                                 | Resolved publish history entries, or `undefined` while loading. |
+| `recipients`     | `RecipientsCountEntry`                                                               | Current recipient count entry for the conversation.             |
 
 **Returns**:
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `isReadonly` | `boolean` | `true` when the conversation is owned by someone else or is a published copy. |
-| `publishedFolders` | `string[]` | Slash-delimited destination folder paths the conversation is currently published to. |
-| `isRevokeVisible` | `boolean` | `true` when a revoke-access menu item should be shown. |
-| `isPublishApplicable` | `boolean` | `true` when a publish menu item should be offered. |
-| `isUnpublishApplicable` | `boolean` | `true` when an unpublish menu item should be offered. |
+| Name                    | Type       | Description                                                                          |
+| ----------------------- | ---------- | ------------------------------------------------------------------------------------ |
+| `isReadonly`            | `boolean`  | `true` when the conversation is owned by someone else or is a published copy.        |
+| `publishedFolders`      | `string[]` | Slash-delimited destination folder paths the conversation is currently published to. |
+| `isRevokeVisible`       | `boolean`  | `true` when a revoke-access menu item should be shown.                               |
+| `isPublishApplicable`   | `boolean`  | `true` when a publish menu item should be offered.                                   |
+| `isUnpublishApplicable` | `boolean`  | `true` when an unpublish menu item should be offered.                                |
 
 ## Building
 

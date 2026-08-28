@@ -1,5 +1,10 @@
 import type { ToolsetLoginBodyDto } from '@epam/ai-dial-chat-api-client';
 import {
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  WithLogin,
+} from '@epam/ai-dial-chat-hooks';
+import {
   DeploymentCreationFieldErrorCode,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
@@ -10,10 +15,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import {
   ToolsetEditorQuery,
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
   ToolsetEditorSteps,
-  WithLogin,
 } from '../../constants/toolsets';
 import {
   ToolsetEditorI18nKeys,

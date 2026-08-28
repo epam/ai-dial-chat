@@ -19,6 +19,7 @@ import {
   buildPromptOverview,
   buildSkillContentTree,
   buildSkillOverview,
+  type DeploymentLimitsLabels,
   EXPORT_APP_NAME,
   findDeploymentByIdOrReference,
   isOrganisationPromptItem,
@@ -27,11 +28,14 @@ import {
   mapDeploymentLimitsDtoToCatalogLimits,
   mapEntityDetailsToCatalogDetails,
   mapPromptToCatalogItem,
+  mapPublishHistoryEntryDto,
   mapSkillToCatalogItem,
   mapToolsetCredentials,
+  type ParsedSkillResourceUrl,
   parsePromptResourceUrl,
-  parseSkillResourceUrl,
   parseSkillManifestDocument,
+  parseSkillResourceUrl,
+  type PromptOverviewLabels,
   PromptSource,
   readSkillFileBytes,
   readSkillManifest,
@@ -41,14 +45,13 @@ import {
   sanitizeFileName,
   serializePromptExport,
   SKILL_MANIFEST_FILE,
-  SkillSource,
-  mapPublishHistoryEntryDto,
-  toPublishEntityType,
-  type DeploymentLimitsLabels,
-  type ParsedSkillResourceUrl,
-  type PromptOverviewLabels,
   type SkillFileContent,
   type SkillOverviewLabels,
+  SkillSource,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetLoginOutcomeType,
+  toPublishEntityType,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
@@ -63,11 +66,7 @@ import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetEditorQuery,
-} from '../../constants/toolsets';
+import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
@@ -91,10 +90,7 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useSkillArchiveImport } from '../../hooks/skills/useSkillArchiveImport';
-import {
-  ToolsetLoginOutcomeType,
-  useToolsetLogin,
-} from '../../hooks/toolsets/useToolsetLogin';
+import { useToolsetLogin } from '../../hooks/toolsets/useToolsetLogin';
 import { useCatalogActiveTabPreference } from '../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useOperationNotification } from '../../hooks/useOperationNotification';

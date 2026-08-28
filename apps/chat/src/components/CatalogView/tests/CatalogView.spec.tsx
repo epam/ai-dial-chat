@@ -9,7 +9,10 @@ import {
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import {
   FavoriteEntityType,
+  getToolsetOAuthChannelName,
   SKILL_MANIFEST_MAX_BYTES,
+  ToolsetOAuthCallbackQuery,
+  ToolsetOAuthResultType,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
@@ -28,10 +31,6 @@ import {
   type ReactNode,
 } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  ToolsetOAuthCallbackQuery,
-  ToolsetOAuthResultType,
-} from '../../../constants/toolsets';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
 import { DEFAULT_ENABLED_UI_FEATURES } from '../../../constants/ui-features';
 import { useAppConfig } from '../../../context/AppConfigContext';
@@ -81,7 +80,6 @@ import {
 import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
 import { UserConfigStatus } from '../../../types/user-config-status';
-import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
 import { SkillDetailsFilePreview } from '../SkillDetailsFilePreview';
 

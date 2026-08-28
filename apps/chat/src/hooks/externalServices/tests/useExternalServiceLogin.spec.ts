@@ -1,9 +1,12 @@
-import { renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  navigateToolsetOAuthPopup,
+  openToolsetOAuthPopup,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
-} from '../../../constants/toolsets';
+  waitForToolsetOAuthResult,
+} from '@epam/ai-dial-chat-hooks';
+import { renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ExternalServiceAuthType,
   ExternalServiceCredentialsLevel,
@@ -11,11 +14,7 @@ import {
   signInExternalService,
   signOutExternalService,
 } from '../../../server-api/external-services';
-import {
-  navigateToolsetOAuthPopup,
-  openToolsetOAuthPopup,
-  waitForToolsetOAuthResult,
-} from '../../../utils/toolsets';
+import { ROUTES } from '../../../types/routes';
 import {
   ExternalServiceLoginOutcomeType,
   useExternalServiceLogin,
@@ -41,11 +40,16 @@ vi.mock('../../../server-api/external-services', () => ({
   signOutExternalService: vi.fn(),
 }));
 
-vi.mock('../../../utils/toolsets', () => ({
-  navigateToolsetOAuthPopup: vi.fn(),
-  openToolsetOAuthPopup: vi.fn(),
-  waitForToolsetOAuthResult: vi.fn(),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    navigateToolsetOAuthPopup: vi.fn(),
+    openToolsetOAuthPopup: vi.fn(),
+    waitForToolsetOAuthResult: vi.fn(),
+  };
+});
 
 describe('useExternalServiceLogin', () => {
   beforeEach(() => {
@@ -150,6 +154,7 @@ describe('useExternalServiceLogin', () => {
         fakePopup,
         expect.any(Object),
         SCOPE_ID,
+        ROUTES.ToolsetSignIn,
         'USER',
         'external-service',
       );

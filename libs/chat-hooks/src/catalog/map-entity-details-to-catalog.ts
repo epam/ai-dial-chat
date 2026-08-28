@@ -16,6 +16,7 @@ import type {
   DeploymentFeaturesDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
 import { formatUnitPrice } from '@epam/ai-dial-chat-shared';
+import { isPublicToolsetId } from '../oauth/toolset-id';
 import { formatCalendarDate } from '../shared/formatting';
 import {
   AuthenticationType,
@@ -23,26 +24,10 @@ import {
   type EntitySpecificDetails,
   type ModelEntityDetails,
   type ModelPricing,
-  type ToolsetAuthStatus,
+  type ToolsetAuthStatusDetails,
   type ToolsetEntityDetails,
   type ToolsetSpecification,
 } from './entity-details';
-
-/** `toolsetId` prefix identifying a DIAL toolset resource. */
-const TOOLSETS_ID_PREFIX = 'toolsets/';
-/** Bucket segment marking a toolset as shared org-wide rather than personal. */
-const PUBLIC_BUCKET_SEGMENT = 'public';
-
-/*
- * Private duplicate of `apps/chat/src/utils/toolsets.ts`'s `isPublicToolsetId`
- * — that file is host-owned (session/OAuth/window flow) and stays app-owned,
- * so this 4-line pure check is copied rather than importing the whole file.
- */
-const isPublicToolsetId = (toolsetId: string): boolean => {
-  if (!toolsetId.startsWith(TOOLSETS_ID_PREFIX)) return false;
-  const bucket = toolsetId.slice(TOOLSETS_ID_PREFIX.length).split('/')[0];
-  return bucket === PUBLIC_BUCKET_SEGMENT;
-};
 
 const formatTokens = (n: number): string =>
   n >= 1_000_000
@@ -544,7 +529,7 @@ const mapToolsetAuthStatus = (
   authSettings: NonNullable<
     DeploymentDetailsDto['toolsetDetails']
   >['authSettings'],
-): ToolsetAuthStatus | undefined => {
+): ToolsetAuthStatusDetails | undefined => {
   if (authSettings == null) return undefined;
   const {
     globalAuthStatus,
