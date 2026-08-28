@@ -27,9 +27,12 @@ import {
   isConversationWithFormSchema,
   isFormSchemaValid,
 } from '@/src/utils/app/form-schema';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 import { parseLocalizedField } from '@/src/utils/app/marketplace-localization';
 import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
   Conversation,
@@ -635,6 +638,15 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
       !isSchemaCompareWarningVisible) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
 
+  const isDuplicateControlShownInsteadOfError =
+    isExternal &&
+    !isApproveRequiredEntity &&
+    selectedConversations.some(
+      (conv) =>
+        (isEntityIdPublic(conv) || isEntityReadOnly(conv)) &&
+        isEntityIdExternal(conv),
+    );
+
   const shouldShowIntroText =
     selectedConversations.length === 1 &&
     !selectedConversations[0].messages.find(
@@ -929,6 +941,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
                     )}
 
                     {!isPlayback &&
+                    !isDuplicateControlShownInsteadOfError &&
                     (!isApproveRequiredEntity || isApproveRequiredInput) &&
                     notAvailableEntityType &&
                     notAllowedItemsForDisplay.length ? (
