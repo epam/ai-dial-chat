@@ -2,10 +2,55 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   base64ToBlob,
   downloadTextFile,
+  ensureDownloadFilename,
   getFileExtensionForLanguage,
   triggerAnchorDownload,
   tryBase64ToBytes,
 } from '../file-download';
+
+describe('ensureDownloadFilename', () => {
+  it('returns the name unchanged when it already has an extension', () => {
+    expect(ensureDownloadFilename('report.xlsx', undefined, undefined)).toBe(
+      'report.xlsx',
+    );
+  });
+
+  it('appends the extension extracted from the url path segment', () => {
+    expect(
+      ensureDownloadFilename(
+        'Thermo Fisher Scientific - 10-K Risk Factors',
+        'files/bucket/appdata/ThermoFisher_2024.xlsx',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ),
+    ).toBe('Thermo Fisher Scientific - 10-K Risk Factors.xlsx');
+  });
+
+  it('falls back to the MIME type extension when the url has no extension', () => {
+    expect(
+      ensureDownloadFilename(
+        'Q3 Financial Summary',
+        'files/bucket/appdata/document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ),
+    ).toBe('Q3 Financial Summary.xlsx');
+  });
+
+  it('returns the name unchanged when neither url nor contentType provide an extension', () => {
+    expect(ensureDownloadFilename('unknown file', undefined, undefined)).toBe(
+      'unknown file',
+    );
+  });
+
+  it('strips query string and fragment from the url before extracting the extension', () => {
+    expect(
+      ensureDownloadFilename(
+        'Report',
+        'files/bucket/report.pdf?token=abc#page=2',
+        undefined,
+      ),
+    ).toBe('Report.pdf');
+  });
+});
 
 describe('getFileExtensionForLanguage', () => {
   it('maps known language identifiers to their file extension', () => {
