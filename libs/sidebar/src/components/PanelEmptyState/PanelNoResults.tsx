@@ -18,10 +18,6 @@ export const PanelNoResults: FC<PanelNoResultsProps> = memo(
     <PanelEmptyState
       icon={<Icon aria-hidden size={iconSize} stroke={1} />}
       label={label}
-      colors={{
-        icon: 'var(--text-tertiary, #848e9c)',
-        label: 'var(--text-secondary, #57647a)',
-      }}
       containerClassName="pt-6"
     />
   ),
