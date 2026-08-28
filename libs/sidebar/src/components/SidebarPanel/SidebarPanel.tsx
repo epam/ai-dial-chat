@@ -152,7 +152,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
             }
       }
       className={mergeClasses(
-        'h-full flex-shrink-0 gap-3 overflow-hidden shadow-md',
+        'h-full flex-shrink-0 gap-3 overflow-hidden shadow-sm',
         orientation === SidebarOrientation.Left &&
           '[clip-path:inset(-24px_-24px_-24px_0)] rtl:[clip-path:inset(-24px_0_-24px_-24px)]',
         !isResizing && 'transition-[width] duration-200 ease-in-out',

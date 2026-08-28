@@ -52,7 +52,7 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
         style={{ ...cssVars, ...railCssVars }}
         className={mergeClasses(
           styles.rail,
-          'relative z-10 flex h-full w-[60px] flex-col justify-between shadow-md',
+          'relative z-10 flex h-full w-[60px] flex-col justify-between shadow-sm',
           typography?.fontClassName,
           className,
         )}

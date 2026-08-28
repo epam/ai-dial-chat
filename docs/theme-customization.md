@@ -211,18 +211,25 @@ stroke-control-disable-primary
 **Shadows**
 
 ```text
-shadow-xs-sm-1  shadow-xs-sm-2  shadow-md  shadow-lg
+shadow-xs-1  shadow-xs-2  shadow-sm  shadow-md  shadow-lg
 ```
 
 The variables are named after the elevation that consumes them, not after their
-hue. `shadow-xs` and `shadow-sm` each paint two layers — a blue one from
-`shadow-xs-sm-1` and a grey one from `shadow-xs-sm-2` — and differ from each
-other only in offset and blur. `shadow-md` and `shadow-lg` are a single blue
-layer each, so they take one variable apiece.
+hue. `shadow-xs` paints two layers — a wide blue one from `shadow-xs-1` and a
+tight grey one from `shadow-xs-2`. `shadow-sm`, `shadow-md`, and `shadow-lg`
+are a single blue layer each, so they take one variable apiece. Themes that set
+the pre-spec `shadow-xs-sm-1` / `shadow-xs-sm-2` need to move to the
+`shadow-xs-*` names; `shadow-sm` was retuned for the side panels and now has
+its own variable.
 
-There are four elevations and no inset variant: a recessed seam between a panel
-and the content beside it is painted by the panel's own `shadow-sm`, not by an
-inset shadow on the content.
+Besides the four scale steps there is `shadow-chat-button`, the resting shadow
+the chat button kept when `shadow-sm` was retuned. It is not a foundations
+elevation and has no variable of its own — it paints the same two variables as
+`shadow-xs` at a wider offset and blur.
+
+There is no inset variant: a recessed seam between a panel and the content
+beside it is painted by the panel's own `shadow-sm`, not by an inset shadow on
+the content.
 
 ### Renamed in ui-kit 0.14
 
