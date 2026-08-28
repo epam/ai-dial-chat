@@ -391,7 +391,10 @@ export class ShareService {
       );
     }
 
-    const itemId = peekResult.data?.resources?.[0]?.url;
+    const resources = peekResult.data?.resources ?? [];
+    const itemId =
+      resources.find((r) => !r.url?.startsWith(FILE_RESOURCE_PREFIX))?.url ??
+      resources[0]?.url;
     if (itemId == null) {
       this.logger.error(
         `DIAL Core returned an invitation with no shared resource for invitationId=${invitationId}`,
