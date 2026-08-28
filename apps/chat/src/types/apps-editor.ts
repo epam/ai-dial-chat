@@ -1,6 +1,6 @@
 import type { CatalogItemCredentials } from '@epam/ai-dial-catalog';
 import type { LocaleTextEntryDto } from '@epam/ai-dial-chat-api-client';
-import type { ToolsetCredentialsLevel } from '../constants/toolsets';
+import { type ToolsetCredentialsLevel } from '@epam/ai-dial-chat-hooks';
 
 export enum AppsEditorQuery {
   Step = 'step',

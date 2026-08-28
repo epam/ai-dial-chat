@@ -1,24 +1,21 @@
-import { render, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  TOOLSET_REDIRECT_STATE_KEY,
-  ToolsetOAuthCallbackQuery,
+  getToolsetOAuthChannelName,
   OAuthResourceKind,
+  TOOLSET_REDIRECT_STATE_KEY,
   ToolsetAuthTypes,
-  ToolsetOAuthChannelControlType,
   ToolsetCredentialsLevel,
+  ToolsetOAuthChannelControlType,
+  type ToolsetOAuthChannelMessage,
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
-} from '../../../constants/toolsets';
-import type {
-  ToolsetOAuthChannelMessage,
-  ToolsetRedirectState,
-} from '../../../models/toolsets';
+  type ToolsetRedirectState,
+} from '@epam/ai-dial-chat-hooks';
+import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as externalServicesApi from '../../../server-api/external-services';
 import * as offlineCredentialsApi from '../../../server-api/offline-credentials';
 import * as toolsetsApi from '../../../server-api/toolsets';
-import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import ToolsetAuthCallback from '../ToolsetAuthCallback';
 
 const setRedirectState = (state: ToolsetRedirectState) =>
@@ -75,6 +72,13 @@ const renderCallback = (
     </MemoryRouter>,
   );
 
+/*
+ * The completion flow itself — redirect-state handling, code scrubbing, state
+ * validation, the acknowledged `BroadcastChannel` report, and the popup close —
+ * is covered by `useOAuthCallbackCompletion`'s own suite in
+ * `@epam/ai-dial-chat-hooks`. What remains here is what this page owns: the
+ * per-resource-kind dispatch of the exchange call, and its rendering.
+ */
 describe('ToolsetAuthCallback', () => {
   const mockClose = vi.fn();
   const mockReplaceState = vi.fn();
@@ -88,24 +92,23 @@ describe('ToolsetAuthCallback', () => {
     );
   });
 
-  it('closes the window when sessionStorage state is missing', async () => {
-    renderCallback();
-    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
+  /*
+   * `listenForResult` resolves before the popup's own channel has received the
+   * acknowledgement, so its `window.close()` lands a task later. Drain it here
+   * or it is counted against the next test's close assertions.
+   */
+  afterEach(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 20));
   });
 
-  it('closes the window when the toolsetId in state is absent', async () => {
-    setRedirectState({ toolsetId: '' });
-    renderCallback();
-    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
-  });
-
-  it('closes the window when the code query param is absent', async () => {
+  it('renders the route fallback while the flow runs', () => {
     setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0' });
-    renderCallback('');
-    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
+    renderCallback();
+
+    expect(screen.getByText('Loading')).toBeTruthy();
   });
 
-  it('calls loginToolset with code and redirectUri, then closes the window', async () => {
+  it('dispatches to loginToolset when the redirect state names no resource kind', async () => {
     setRedirectState({
       toolsetId: 'toolsets/b/my__1.0.0',
       credentialsLevel: ToolsetCredentialsLevel.User,
@@ -119,25 +122,21 @@ describe('ToolsetAuthCallback', () => {
       expect(toolsetsApi.loginToolset).toHaveBeenCalledWith(
         'toolsets/b/my__1.0.0',
         expect.objectContaining({
+          url: 'toolsets/b/my__1.0.0',
+          credentialsLevel: ToolsetCredentialsLevel.User,
           authenticationType: ToolsetAuthTypes.OAuth,
           code: 'auth-code-xyz',
           redirectUri: 'http://localhost/auth/toolset-signin',
         }),
       ),
     );
-    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
-    /*
-     * Regression guard (task 12.3): the default (no-resourceKind) Toolset
-     * branch must never call the sibling ExternalService/OfflineCredentials
-     * BFF endpoints, unaffected by the `OAuthResourceKind` extension.
-     */
     expect(externalServicesApi.signInExternalService).not.toHaveBeenCalled();
     expect(
       offlineCredentialsApi.signInOfflineCredentials,
     ).not.toHaveBeenCalled();
   });
 
-  it('calls signInExternalService with the appId/serviceId parsed from the scope id instead of loginToolset when resourceKind is ExternalService', async () => {
+  it('dispatches to signInExternalService with the appId/serviceId parsed from the scope id', async () => {
     setRedirectState({
       toolsetId:
         'applications/public/finhub-via-openapi__1.0.0/external_services/finhub-api2',
@@ -156,6 +155,7 @@ describe('ToolsetAuthCallback', () => {
         'applications/public/finhub-via-openapi__1.0.0',
         'finhub-api2',
         expect.objectContaining({
+          credentialsLevel: 'USER',
           authenticationType: 'OAUTH',
           code: 'auth-code-xyz',
           redirectUri: 'http://localhost/auth/toolset-signin',
@@ -166,10 +166,27 @@ describe('ToolsetAuthCallback', () => {
     expect(
       offlineCredentialsApi.signInOfflineCredentials,
     ).not.toHaveBeenCalled();
-    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
   });
 
-  it('calls signInOfflineCredentials with code/redirectUri instead of loginToolset/signInExternalService when resourceKind is OfflineCredentials', async () => {
+  it('reports a missing-redirect-state failure without an exchange when the external-service scope id is unparseable', async () => {
+    setRedirectState({
+      toolsetId: 'not-a-scope-id',
+      state: 'flow-unparseable-scope',
+      resourceKind: OAuthResourceKind.ExternalService,
+    });
+    const reported = listenForResult('flow-unparseable-scope');
+
+    renderCallback('?code=auth-code-xyz&state=flow-unparseable-scope');
+
+    await expect(reported).resolves.toEqual({
+      type: ToolsetOAuthResultType.Failure,
+      reason: ToolsetOAuthFailureReason.MissingRedirectState,
+    });
+    expect(externalServicesApi.signInExternalService).not.toHaveBeenCalled();
+    expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
+  });
+
+  it('dispatches to signInOfflineCredentials for the offline-credentials resource kind', async () => {
     setRedirectState({
       toolsetId: 'offline-credentials',
       credentialsLevel: ToolsetCredentialsLevel.User,
@@ -192,19 +209,9 @@ describe('ToolsetAuthCallback', () => {
     );
     expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
     expect(externalServicesApi.signInExternalService).not.toHaveBeenCalled();
-    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
   });
 
-  it('posts a failure message when signInOfflineCredentials rejects, never a Toolset/ExternalService call', async () => {
-    /*
-     * Uses a flow id distinct from the `'flow-1'` reused by many other tests
-     * in this file, and explicitly waits for the popup's own `window.close()`
-     * before finishing — the shared `reportResult` ack round trip
-     * (`listenForResult` resolving on the first posted message, before the
-     * component's own ack-triggered close has necessarily run) can otherwise
-     * leave a stray async `window.close()` call to land inside whichever
-     * test runs next, inflating its `mockClose` call count.
-     */
+  it('reports a login-request failure and no sibling call when the offline-credentials exchange rejects', async () => {
     setRedirectState({
       toolsetId: 'offline-credentials',
       state: 'flow-offline-credentials-1',
@@ -213,215 +220,31 @@ describe('ToolsetAuthCallback', () => {
     vi.mocked(offlineCredentialsApi.signInOfflineCredentials).mockRejectedValue(
       new Error('network error'),
     );
+    const reported = listenForResult('flow-offline-credentials-1');
 
-    const resultPromise = listenForResult('flow-offline-credentials-1');
     renderCallback('?code=auth-code-xyz&state=flow-offline-credentials-1');
 
-    await expect(resultPromise).resolves.toEqual({
+    await expect(reported).resolves.toEqual({
       type: ToolsetOAuthResultType.Failure,
       reason: ToolsetOAuthFailureReason.LoginRequestFailed,
     });
     expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
     expect(externalServicesApi.signInExternalService).not.toHaveBeenCalled();
-    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
   });
 
-  it('closes the window even when loginToolset throws', async () => {
+  it('falls back to the editor callback route for a redirect state that stored no redirect URI', async () => {
     setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0' });
-    vi.mocked(toolsetsApi.loginToolset).mockRejectedValue(
-      new Error('network error'),
-    );
+    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
 
     renderCallback('?code=auth-code-xyz');
 
-    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
-  });
-
-  it('removes the redirect state from sessionStorage after running', async () => {
-    setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0' });
-    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
-
-    renderCallback('?code=any-code');
-
     await waitFor(() =>
-      expect(sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY)).toBeNull(),
-    );
-  });
-
-  it('posts a success message on the flow channel after a successful login', async () => {
-    setRedirectState({
-      toolsetId: 'toolsets/b/my__1.0.0',
-      credentialsLevel: ToolsetCredentialsLevel.Global,
-      state: 'flow-1',
-    });
-    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
-
-    const resultPromise = listenForResult('flow-1');
-    renderCallback('?code=auth-code-xyz&state=flow-1');
-
-    await expect(resultPromise).resolves.toEqual({
-      type: ToolsetOAuthResultType.Success,
-      toolsetId: 'toolsets/b/my__1.0.0',
-      credentialsLevel: ToolsetCredentialsLevel.Global,
-    });
-  });
-
-  it('writes the result into the popup URL and closes after opener acknowledgement', async () => {
-    setRedirectState({
-      toolsetId: 'toolsets/b/my__1.0.0',
-      credentialsLevel: ToolsetCredentialsLevel.User,
-      state: 'flow-1',
-    });
-    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
-
-    const resultPromise = listenForResult('flow-1');
-    renderCallback('?code=auth-code-xyz&state=flow-1');
-
-    await resultPromise;
-    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
-    const lastUrl = new URL(
-      String(mockReplaceState.mock.calls.at(-1)?.[2]),
-      window.location.origin,
-    );
-    expect(lastUrl.searchParams.get(ToolsetOAuthCallbackQuery.Result)).toBe(
-      ToolsetOAuthResultType.Success,
-    );
-    expect(lastUrl.searchParams.has('code')).toBe(false);
-  });
-
-  it('ignores malformed acknowledgement messages', async () => {
-    setRedirectState({
-      toolsetId: 'toolsets/b/my__1.0.0',
-      credentialsLevel: ToolsetCredentialsLevel.User,
-      state: 'flow-1',
-    });
-    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
-    const channel = new BroadcastChannel(getToolsetOAuthChannelName('flow-1'));
-    const resultPromise = new Promise<ToolsetOAuthChannelMessage>((resolve) => {
-      channel.onmessage = (event) => {
-        resolve(event.data as ToolsetOAuthChannelMessage);
-      };
-    });
-
-    try {
-      renderCallback('?code=auth-code-xyz&state=flow-1');
-      await expect(resultPromise).resolves.toMatchObject({
-        type: ToolsetOAuthResultType.Success,
-      });
-
-      channel.postMessage(null);
-      channel.postMessage({
-        type: ToolsetOAuthChannelControlType.ResultAcknowledged,
-      });
-
-      await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
-    } finally {
-      channel.close();
-    }
-  });
-
-  it('retries the result when the opener missed the first channel event', async () => {
-    setRedirectState({
-      toolsetId: 'toolsets/b/my__1.0.0',
-      credentialsLevel: ToolsetCredentialsLevel.User,
-      state: 'flow-1',
-    });
-    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
-
-    renderCallback('?code=auth-code-xyz&state=flow-1');
-    await waitFor(() =>
-      expect(mockReplaceState).toHaveBeenCalledWith(
-        {},
-        document.title,
-        expect.stringContaining(
-          `${ToolsetOAuthCallbackQuery.Result}=${ToolsetOAuthResultType.Success}`,
-        ),
+      expect(toolsetsApi.loginToolset).toHaveBeenCalledWith(
+        'toolsets/b/my__1.0.0',
+        expect.objectContaining({
+          redirectUri: `${window.location.origin}/toolset-editor/callback`,
+        }),
       ),
     );
-
-    await expect(listenForResult('flow-1')).resolves.toMatchObject({
-      type: ToolsetOAuthResultType.Success,
-    });
-    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
-  });
-
-  it('closes its sending channel after opener acknowledgement', async () => {
-    const closeChannelSpy = vi.spyOn(BroadcastChannel.prototype, 'close');
-    try {
-      setRedirectState({
-        toolsetId: 'toolsets/b/my__1.0.0',
-        credentialsLevel: ToolsetCredentialsLevel.User,
-        state: 'flow-1',
-      });
-      vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
-
-      const resultPromise = listenForResult('flow-1');
-      renderCallback('?code=auth-code-xyz&state=flow-1');
-
-      await resultPromise;
-      await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
-      expect(closeChannelSpy).toHaveBeenCalledTimes(2);
-    } finally {
-      closeChannelSpy.mockRestore();
-    }
-  });
-
-  it('posts a failure message on the flow channel when the OAuth state mismatches', async () => {
-    setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0', state: 'flow-1' });
-
-    const resultPromise = listenForResult('flow-1');
-    renderCallback('?code=auth-code-xyz&state=different-flow');
-
-    await expect(resultPromise).resolves.toEqual({
-      type: ToolsetOAuthResultType.Failure,
-      reason: ToolsetOAuthFailureReason.StateMismatch,
-    });
-  });
-
-  it('posts a failure message on the flow channel when the code query param is missing', async () => {
-    setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0', state: 'flow-1' });
-
-    const resultPromise = listenForResult('flow-1');
-    renderCallback('?state=flow-1');
-
-    await expect(resultPromise).resolves.toEqual({
-      type: ToolsetOAuthResultType.Failure,
-      reason: ToolsetOAuthFailureReason.MissingCode,
-    });
-  });
-
-  it('posts a failure message on the flow channel when redirect state is missing', async () => {
-    const resultPromise = listenForResult('flow-1');
-    renderCallback('?code=auth-code-xyz&state=flow-1');
-
-    await expect(resultPromise).resolves.toEqual({
-      type: ToolsetOAuthResultType.Failure,
-      reason: ToolsetOAuthFailureReason.MissingRedirectState,
-    });
-  });
-
-  it('posts a failure message on the flow channel when loginToolset rejects', async () => {
-    setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0', state: 'flow-1' });
-    vi.mocked(toolsetsApi.loginToolset).mockRejectedValue(
-      new Error('network error'),
-    );
-
-    const resultPromise = listenForResult('flow-1');
-    renderCallback('?code=auth-code-xyz&state=flow-1');
-
-    await expect(resultPromise).resolves.toEqual({
-      type: ToolsetOAuthResultType.Failure,
-      reason: ToolsetOAuthFailureReason.LoginRequestFailed,
-    });
-    const lastUrl = new URL(
-      String(mockReplaceState.mock.calls.at(-1)?.[2]),
-      window.location.origin,
-    );
-    expect(lastUrl.searchParams.get(ToolsetOAuthCallbackQuery.Result)).toBe(
-      ToolsetOAuthResultType.Failure,
-    );
-    expect(
-      lastUrl.searchParams.get(ToolsetOAuthCallbackQuery.FailureReason),
-    ).toBe(ToolsetOAuthFailureReason.LoginRequestFailed);
   });
 });

@@ -1,9 +1,7 @@
+import type { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import type { FilterTab } from '../types/conversation-classification';
 import { VirtualRowKind } from '../types/virtual-row';
 import type { ConversationItem } from './panel-props';
-
-export { VirtualRowKind };
 
 /** A collapsible group header row in the virtual list. */
 export interface GroupHeaderRow {

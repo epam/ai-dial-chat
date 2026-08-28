@@ -1,17 +1,16 @@
-import { useCallback } from 'react';
 import {
+  navigateToolsetOAuthPopup,
   OAuthResourceKind,
+  openToolsetOAuthPopup,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
-  WithLogin,
-} from '../../constants/toolsets';
-import {
-  navigateToolsetOAuthPopup,
-  openToolsetOAuthPopup,
   waitForToolsetOAuthResult,
-} from '../../utils/toolsets';
+  WithLogin,
+} from '@epam/ai-dial-chat-hooks';
+import { useCallback } from 'react';
+import { ROUTES } from '../../types/routes';
 import type {
   OfflineCredentialsConnectSettings,
   OfflineCredentialsStatusResult,
@@ -89,6 +88,7 @@ export const useOfflineCredentialsLogin = (): {
         popup,
         authFormData,
         OFFLINE_CREDENTIALS_CORRELATION_ID,
+        ROUTES.ToolsetSignIn,
         ToolsetCredentialsLevel.User,
         OAuthResourceKind.OfflineCredentials,
       );
@@ -104,6 +104,7 @@ export const useOfflineCredentialsLogin = (): {
         {
           toolsetId: OFFLINE_CREDENTIALS_CORRELATION_ID,
           credentialsLevel: ToolsetCredentialsLevel.User,
+          callbackPath: ROUTES.ToolsetSignIn,
           timeoutMs: OAUTH_RESULT_TIMEOUT_MS,
         },
       );

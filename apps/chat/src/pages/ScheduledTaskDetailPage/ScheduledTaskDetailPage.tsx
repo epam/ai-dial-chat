@@ -1,5 +1,9 @@
 import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import {
+  getApiErrorDetails,
+  getApiErrorStatus,
+} from '@epam/ai-dial-chat-hooks';
+import {
   ScheduledTaskDetailView,
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
@@ -29,10 +33,6 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
-import {
-  getApiErrorDetails,
-  getApiErrorStatus,
-} from '../../server-api/api-error';
 import {
   deleteScheduledTask,
   getScheduledTask,

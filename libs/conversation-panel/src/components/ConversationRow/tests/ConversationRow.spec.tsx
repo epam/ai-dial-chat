@@ -1,7 +1,7 @@
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { FilterTab } from '../../../types/conversation-classification';
 import { ConversationRow } from '../ConversationRow';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({

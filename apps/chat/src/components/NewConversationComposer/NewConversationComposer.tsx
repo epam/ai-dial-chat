@@ -1,7 +1,9 @@
 import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import { FileDndOverlay } from '@epam/ai-dial-attachment-input';
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import {
   AttachmentValidationErrorReason,
+  getApiErrorDetails,
   getTimeOfDayGreeting,
   isQuickAppSchema,
   useAttachmentUpload,
@@ -17,10 +19,9 @@ import {
   type DisplayAttachment,
   type ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
-import {
-  FileDndOverlay,
-  type ConversationInputStyles,
-  type ToolsChipLabels,
+import type {
+  ConversationInputStyles,
+  ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import type { FC, ReactNode } from 'react';
 import { lazy, memo, useCallback, useMemo, useState } from 'react';
@@ -51,7 +52,6 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { filesApi } from '../../server-api/api-client';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { resolveLocalizedText } from '../../utils/locale';
 import FooterMessage from '../FooterMessage/FooterMessage';

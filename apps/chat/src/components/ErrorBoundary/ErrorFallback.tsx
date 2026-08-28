@@ -10,8 +10,6 @@ interface Props extends FallbackProps {
   actionLabel?: ParseKeys<'translation'>;
 }
 
-export type { Props as ErrorFallbackProps };
-
 const ErrorFallback: FC<Props> = ({
   error: _,
   resetErrorBoundary,

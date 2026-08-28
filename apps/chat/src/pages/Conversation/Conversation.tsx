@@ -1,5 +1,6 @@
 import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
+  getApiErrorDetails,
   getConversationPath,
   getLastDeploymentId,
   getLastUserMessageToolConfiguration,
@@ -57,7 +58,6 @@ import {
   filesApi as configuredFilesApi,
   rateApi as configuredRateApi,
 } from '../../server-api/api-client';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   getConversation as apiGetConversation,

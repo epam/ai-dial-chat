@@ -2,6 +2,7 @@ import {
   useAttachmentCanvas,
   useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import { FileDndOverlay } from '@epam/ai-dial-attachment-input';
 import {
   AttachmentValidationErrorReason,
   dialFilesToAttachments,
@@ -30,10 +31,7 @@ import {
   type StarterOption,
   type ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
-import {
-  FileDndOverlay,
-  type ToolsChipLabels,
-} from '@epam/ai-dial-conversation-input';
+import type { ToolsChipLabels } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,

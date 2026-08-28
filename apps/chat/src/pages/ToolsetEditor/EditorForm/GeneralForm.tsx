@@ -1,3 +1,4 @@
+import { appendLocaleCode } from '@epam/ai-dial-chat-hooks';
 import type {
   DeploymentCreationFormLabels,
   DeploymentCreationFormValues,
@@ -13,7 +14,6 @@ import {
 import type { CustomAppGeneralFormData } from '../../../models/custom-apps';
 import type { ToolsetFormErrors } from '../../../models/toolsets';
 import {
-  appendLocaleCode,
   buildAdditionalLocaleOptions,
   buildLocaleFieldLabels,
   PRIMARY_LOCALE,

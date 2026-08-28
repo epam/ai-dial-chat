@@ -1,8 +1,9 @@
 import {
+  getApiErrorDetails,
+  parsePromptResourceUrl,
   PROMPT_CONTENT_MAX_LENGTH,
   PROMPT_DESCRIPTION_MAX_LENGTH,
   PromptFieldError,
-  parsePromptResourceUrl,
   validatePromptContent,
   validatePromptDescription,
   validatePromptName,
@@ -28,7 +29,6 @@ import { usePrompts } from '../../context/PromptsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createPrompt,
   getPrompt,

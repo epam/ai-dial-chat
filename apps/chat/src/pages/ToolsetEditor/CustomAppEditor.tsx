@@ -3,7 +3,10 @@ import type {
   DeploymentDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  composeLocalePayload,
+  decomposeLocalizedFields,
   findDeploymentByIdOrReference,
+  getApiErrorDetails,
   isValidAbsoluteUrl,
   isValidFeaturesData,
   parseFeaturesData,
@@ -41,7 +44,6 @@ import type {
   CustomAppFormErrors,
   CustomAppGeneralFormData,
 } from '../../models/custom-apps';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createApplication,
   updateApplication,
@@ -52,12 +54,7 @@ import {
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import {
-  composeLocalePayload,
-  decomposeLocalizedFields,
-  PRIMARY_LOCALE,
-  resolveLocalizedText,
-} from '../../utils/locale';
+import { PRIMARY_LOCALE, resolveLocalizedText } from '../../utils/locale';
 import CustomAppEditorView from './CustomAppEditorView';
 import ToolsetEditorHeader from './ToolsetEditorHeader';
 

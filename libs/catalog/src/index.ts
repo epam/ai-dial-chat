@@ -123,9 +123,6 @@ export type {
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
 
-export { FolderPath } from '@epam/ai-dial-ui-kit';
-export type { FolderPathProps } from '@epam/ai-dial-ui-kit';
-
 export { Filter } from './components/Filter/Filter';
 export type { FilterColors, FilterProps } from './components/Filter/Filter';
 

@@ -1,4 +1,7 @@
-import { mapFormValuesToCreateBody } from '@epam/ai-dial-chat-hooks';
+import {
+  getApiErrorDetails,
+  mapFormValuesToCreateBody,
+} from '@epam/ai-dial-chat-hooks';
 import {
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
@@ -20,7 +23,6 @@ import {
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';

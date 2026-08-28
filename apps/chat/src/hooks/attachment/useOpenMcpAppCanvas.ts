@@ -3,6 +3,7 @@ import {
   AttachmentErrorType,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import { getApiErrorMessage } from '@epam/ai-dial-chat-hooks';
 import type { McpUiHostContext } from '@mcp-ui/client';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { useCallback } from 'react';
@@ -12,7 +13,6 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useTheme } from '../../context/ThemeContext';
-import { getApiErrorMessage } from '../../server-api/api-error';
 import {
   callMcpAppTool,
   fetchMcpAppResourceHtml,

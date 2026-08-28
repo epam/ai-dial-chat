@@ -30,8 +30,8 @@ if (typeof Blob !== 'undefined' && !Blob.prototype.arrayBuffer) {
 
 if (typeof Blob !== 'undefined' && !Blob.prototype.text) {
   Blob.prototype.text = function (): Promise<string> {
-    return this.arrayBuffer().then(
-      (buf) => new TextDecoder('utf-8', { fatal: false }).decode(buf),
+    return this.arrayBuffer().then((buf) =>
+      new TextDecoder('utf-8', { fatal: false }).decode(buf),
     );
   };
 }

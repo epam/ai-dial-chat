@@ -1,4 +1,8 @@
-import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  DeploymentIcon,
+  FilterTab,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   Button,
   DIAL_ICON_SIZE,
@@ -14,7 +18,6 @@ import { IconClock, IconDotsVertical } from '@tabler/icons-react';
 import { useCallback, useRef, useState, type DragEvent, type FC } from 'react';
 import { ConversationItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
-import { FilterTab } from '../../types/conversation-classification';
 import { getButtonPaddingEnd } from '../../utils/conversation-row';
 import { getDropAfterId } from '../../utils/drag';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';

@@ -3,8 +3,13 @@ import type {
   ConversationsApi,
   FilesApi,
 } from '@epam/ai-dial-chat-api-client';
-import { generateUUID } from '@epam/ai-dial-chat-shared';
-import type { Conversation } from '@epam/ai-dial-chat-shared';
+import {
+  type ConversationTransferJob,
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+  generateUUID,
+  Conversation,
+} from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import { runWithConcurrency } from '../conversation-transfer/async';
 import {
@@ -24,12 +29,9 @@ import {
 import { useConversationTransferQueue } from '../conversation-transfer/queue';
 import {
   ConversationTransferErrorCode,
-  ConversationTransferJobStatus,
-  ConversationTransferSubjectKind,
-  ConversationTransferWarningCode,
   type ConversationTransferErrorEvent,
-  type ConversationTransferJob,
   type ConversationTransferSuccessEvent,
+  ConversationTransferWarningCode,
   type ConversationTransferWarningEvent,
 } from '../conversation-transfer/types';
 import { parseDialArchive } from '../conversation-transfer/zip-import';
