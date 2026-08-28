@@ -39,6 +39,8 @@ than performed in sequence. Per-slice verification was unchanged.
       `libs/chat-hooks/src/catalog/map-entity-details-to-catalog.ts` **and**
       `catalog/map-deployment-to-catalog-item.ts` (there were two, not one — design **D15**) and
       import the shared one, closing the compromise recorded in the prior extraction's design notes.
+      Reversing it also required a `chat-hooks-domain-utilities` spec delta, since the live spec
+      mandates the duplication by name.
 - [x] 2.3 Move `buildToolsetAuthorizeUrl` into `libs/chat-hooks/src/oauth/authorize-url.ts`, taking
       `redirectUri` as it already does and narrowing its `auth` parameter to `ToolsetOAuthSettings`
       so the editor form model stays app-owned (design **D12**). Move its tests, and add
@@ -136,6 +138,17 @@ than performed in sequence. Per-slice verification was unchanged.
       four pass with `vitest run --maxWorkers=4` — a pre-existing local worker-count limit, not a
       regression from this change.
 
+## 9. Security review follow-up (PR #8493)
+
+- [x] 9.1 Require `https:` for the authorization endpoint in
+      `libs/chat-hooks/src/oauth/authorize-url.ts`, accepting plain `http:` only on the loopback
+      interface (design **D16**), and record it as a spec delta since it changes behaviour relative
+      to the pre-move code.
+- [x] 9.2 Cover the new rule: https accepted; remote http refused; `localhost`/`127.0.0.0/8`/`[::1]`
+      accepted; `localhost.evil.com`, `notlocalhost`, `127.0.0.1.evil.com` and `1270.0.0.1` refused.
+- [x] 9.3 Confirm nothing in tree relied on a remote `http:` authorization endpoint (no fixture or
+      call site in either repo sets one).
+
 ## 8. Follow-ups — recorded, not done here
 
 These three are deliberately left unchecked: 8.1 and 8.2 ask for *new change proposals* (one here,
@@ -149,6 +162,18 @@ one in `pg-chat`) rather than code in this change, and 8.3 needs a human at a re
       `hooks/toolsets/useToolsetLogin.ts`, the callback page's flow half) and consume the package.
       Blocked only on a published build and a version bump there; nothing in `pg-chat` breaks in the
       meantime.
+- [ ] 8.4 Tighten the editor's own validation so an `http:` authorization endpoint is rejected at
+      save time with a specific message. `isToolsetAuthValid` still accepts it via
+      `isOptionalValidEndpointUrl` (which allows `http`/`https`/`sse` for the *toolset* endpoint), so
+      after design **D16** such a toolset saves cleanly and then fails at login with the generic
+      "OAuth configuration is missing" error. It fails closed, which is correct, but the message
+      points at the wrong thing.
+- [ ] 8.5 Harden the OAuth callback's CSRF `state` check to an unconditional equality comparison,
+      per the `info` item in PR #8493's security review. It is currently skipped when the stored
+      redirect state carries no `state` field, for redirect states written before that field
+      existed. Exploiting it needs same-origin code execution (writing a crafted state into the
+      popup's own `sessionStorage`), so the review records no required change; the prerequisite is
+      confirming no old-format states remain in circulation.
 - [ ] 8.3 Manual verification against a live provider — this change alters the acknowledgement
       timing, which unit tests cover with fake timers but cannot prove end to end. Needs a human:
       OAuth login through a real popup for a toolset, an external service, and offline credentials;

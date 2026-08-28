@@ -55,9 +55,16 @@ settings — `code_challenge`, `code_challenge_method`, and a space-joined `scop
 `null` rather than throw for a configuration that cannot produce a valid URL. The `state` value SHALL
 be generated per flow by the caller-facing entry points and SHALL double as the flow id.
 
+The authorization endpoint SHALL be reachable only over a secure transport: `https:` SHALL be
+accepted, and plain `http:` SHALL be accepted **only** when the host is on the loopback interface
+(`localhost`, `127.0.0.0/8`, or `[::1]`), matched exactly so a public host that merely begins with
+`localhost` is never treated as loopback. A remote `http:` endpoint SHALL yield `null`: the
+provider's redirect carries the authorization code in the URL, so plain HTTP would expose it to any
+passive observer, and PKCE does not close that gap when the challenge is verified server-side.
+
 #### Scenario: Complete configuration
 
-- **WHEN** the auth settings carry a `clientId` and an `http:`/`https:` `authorizationEndpoint`
+- **WHEN** the auth settings carry a `clientId` and an `https:` `authorizationEndpoint`
 - **THEN** the returned URL carries `response_type=code`, that client id, the redirect URI, and the
   generated state
 
@@ -66,6 +73,24 @@ be generated per flow by the caller-facing entry points and SHALL double as the 
 - **WHEN** `clientId` or `authorizationEndpoint` is absent, blank, unparseable, or uses a protocol
   other than `http:`/`https:`
 - **THEN** the builder returns `null` and no exception escapes
+
+#### Scenario: A remote plain-HTTP authorization endpoint is refused
+
+- **WHEN** the authorization endpoint uses `http:` with a host that is not on the loopback interface
+- **THEN** the builder returns `null`, so no flow can start against a transport that would expose the
+  returned authorization code
+
+#### Scenario: Loopback HTTP stays usable for local development
+
+- **WHEN** the authorization endpoint uses `http:` with `localhost`, a `127.0.0.0/8` address, or
+  `[::1]`
+- **THEN** the builder returns a URL, since loopback traffic never reaches an observable network
+
+#### Scenario: A public host resembling loopback is not treated as loopback
+
+- **WHEN** the authorization endpoint is `http://localhost.evil.com/authorize` (or another public
+  host whose name merely contains or begins with a loopback name)
+- **THEN** the builder returns `null`
 
 #### Scenario: PKCE and scopes forwarded when present
 

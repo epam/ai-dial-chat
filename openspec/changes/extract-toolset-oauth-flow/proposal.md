@@ -105,6 +105,9 @@ prior audit concluded.
 
 ### Modified Capabilities
 
+- `chat-hooks-domain-utilities`: the requirement that `isPublicToolsetId` be a private,
+  non-exported duplicate inside each mapping module is reversed — the helper now has one shared
+  declaration in `oauth/toolset-id.ts` (design **D15**).
 - `toolset-authentication`: the OAuth redirect/callback handshake requirement gains the
   acknowledgement-delivery guarantee that the current implementation silently fails (the channel
   must stay open long enough for the acknowledgement to reach the popup). Observable behaviour is

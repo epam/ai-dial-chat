@@ -1483,7 +1483,7 @@ isPublicToolsetId('toolsets/public/jira__1.0.0'); // true
 
 ### getToolsetRedirectUri / buildToolsetAuthorizeUrl
 
-`getToolsetRedirectUri` resolves the host's own callback path against `window.location.origin`. `buildToolsetAuthorizeUrl` builds an authorization-code URL carrying `response_type=code`, `client_id`, `redirect_uri` and `state`, plus `code_challenge`/`code_challenge_method` and a space-joined `scope` when the supplied settings carry them. It returns `null` — never throws — for a configuration that cannot produce a valid URL: a missing or blank `clientId`/`authorizationEndpoint`, an unparseable endpoint, or a protocol other than `http:`/`https:`.
+`getToolsetRedirectUri` resolves the host's own callback path against `window.location.origin`. `buildToolsetAuthorizeUrl` builds an authorization-code URL carrying `response_type=code`, `client_id`, `redirect_uri` and `state`, plus `code_challenge`/`code_challenge_method` and a space-joined `scope` when the supplied settings carry them. It returns `null` — never throws — for a configuration that cannot produce a valid URL: a missing or blank `clientId`/`authorizationEndpoint`, an unparseable endpoint, or an endpoint that is not reachable over a secure transport. `https:` is required; plain `http:` is accepted only on the loopback interface (`localhost`, `127.0.0.0/8`, `[::1]`), where the request never reaches a network that could observe the authorization code the provider returns.
 
 **Parameters** (`buildToolsetAuthorizeUrl`):
 

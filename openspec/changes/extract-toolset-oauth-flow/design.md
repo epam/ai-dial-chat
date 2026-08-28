@@ -243,6 +243,41 @@ its own `TOOLSETS_ID_PREFIX`/`PUBLIC_BUCKET_SEGMENT` pair and the identical apol
 now import the shared helper. Leaving the second copy would have left the compromise D8 exists to
 close half-open.
 
+The live `chat-hooks-domain-utilities` spec explicitly requires that duplication ("SHALL become a
+private, non-exported duplicate inside each moved module that needs it"), so reversing it needs a
+spec delta rather than only a design note — carried as this change's
+`specs/chat-hooks-domain-utilities/spec.md` MODIFIED requirement.
+
+### D16 — HTTPS is required for the authorization endpoint, loopback excepted
+
+The automated security review on PR #8493 flagged the moved `buildToolsetAuthorizeUrl` as
+`medium`: its protocol check accepted `http:` as readily as `https:`, so a toolset could be
+configured with a plain-HTTP authorization endpoint. The provider's redirect carries the
+authorization `code` in the URL, so on an untrusted network that code is exposed to a passive
+observer — and PKCE does not close the gap when the `code_challenge` is verified server-side.
+
+The check now requires `https:`, with one exception: plain `http:` is accepted when the host is on
+the loopback interface (`localhost`, `127.0.0.0/8`, `[::1]`), matched exactly so
+`localhost.evil.com` is not mistaken for loopback. The grounds are RFC 8252 §7.3 — loopback traffic
+never reaches a network that could observe it, so the attack the finding describes does not exist
+there, while a developer running a local IdP keeps working.
+
+**Alternatives rejected.** *Unconditional `https:`-only*, as the review literally suggested: closes
+the hole but breaks local IdP development, and the review itself offered the escape hatch as an
+acceptable alternative. *A build flag or config flag for dev-mode HTTP*: strictly worse than the
+host check, because a flag is a thing that can ship enabled, whereas "is this address loopback" is
+decidable from the URL itself with nothing to misconfigure.
+
+This is a **behaviour change relative to the pre-move code**, not merely a refactor, so it is
+recorded as a spec delta on the authorize-URL requirement rather than folded in silently — the same
+treatment D5 gives the acknowledgement fix. No fixture or call site in either repo used a remote
+`http:` authorization endpoint, so nothing in tree regresses.
+
+The three `info` items in the same review were positive confirmations of controls this change
+preserves (opener severing, same-origin `BroadcastChannel` scoping, code scrubbing before the
+exchange); the fourth, on the backward-compatible `state` check, states that no code change is
+required and is carried as follow-up 8.4.
+
 ## Risks / Trade-offs
 
 - **[Four consumers, three resource kinds, one shared primitive]** → A signature that fits toolsets
