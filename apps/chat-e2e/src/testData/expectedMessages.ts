@@ -407,6 +407,7 @@ export const ExpectedMessages = {
   menuIsNotVisible: 'Menu is not visible',
   elementWidthIsValid: 'Element width is valid',
   elementHeightIsValid: 'Element height is valid',
+  elementPositionIsValid: 'Element position is valid',
   footerIsVisible: 'Footer is visible',
   footerIsNotVisible: 'Footer is not visible',
   footerContentIsNotEmpty: 'Footer content is not empty',

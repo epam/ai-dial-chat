@@ -2,16 +2,17 @@ import { PopupSelectors } from '@/src/ui/selectors';
 import { ToolsetLoginEventsModalSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement, Button } from '@/src/ui/webElements';
 import { Popup } from '@/src/ui/webElements/common/popup';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 // The "Toolset login required" modal shown in the App editor preview when the
 // orchestration needs a logged-out toolset (ChatEventsModal/ToolsetLoginEvents).
 // Several DialPopups may be open at once, so scope to the one holding the list.
 export class ToolsetLoginEventsModal extends Popup {
-  constructor(page: Page) {
+  constructor(page: Page, parentLocator?: Locator) {
     super(
       page,
       `${PopupSelectors.popupContainer}:has(${ToolsetLoginEventsModalSelectors.list})`,
+      parentLocator,
     );
   }
 

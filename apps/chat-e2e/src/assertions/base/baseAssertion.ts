@@ -577,6 +577,16 @@ export class BaseAssertion {
       .toHaveCSS(Styles.display, expectedDisplay);
   }
 
+  public async assertElementPositionStyle(
+    element: BaseElement | Locator,
+    expectedPosition: string,
+  ) {
+    const elementLocator = BaseElement.getElementLocator(element);
+    await expect
+      .soft(elementLocator, ExpectedMessages.elementPositionIsValid)
+      .toHaveCSS(Styles.position, expectedPosition);
+  }
+
   public async assertElementWidthStyle(
     element: BaseElement | Locator,
     option: { hasFullWidth: boolean },

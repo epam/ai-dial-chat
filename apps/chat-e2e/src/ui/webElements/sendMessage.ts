@@ -60,6 +60,10 @@ export class SendMessage extends BaseElement {
     SendMessageSelectors.scrollDownButton,
   );
 
+  public voiceRecordButton = this.getChildElementBySelector(
+    SendMessageSelectors.voiceRecord,
+  );
+
   public stopGenerating = this.getChildElementBySelector(
     SendMessageSelectors.stopGenerating,
   );

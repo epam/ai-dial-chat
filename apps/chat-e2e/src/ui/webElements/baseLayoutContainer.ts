@@ -1,4 +1,4 @@
-import { layoutContainer } from '@/src/ui/selectors';
+import { layoutContainer, tab } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { Page } from '@playwright/test';
@@ -20,5 +20,11 @@ export abstract class BaseLayoutContainer<
       this.navigationPanel = new NavigationPanel(this.page, this.rootLocator);
     }
     return this.navigationPanel;
+  }
+
+  public getTab(name: string) {
+    return this.getChildElementBySelector(tab).getElementLocatorByText(
+      new RegExp(`^${name}$`),
+    );
   }
 }

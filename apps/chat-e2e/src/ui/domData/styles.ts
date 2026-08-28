@@ -24,6 +24,7 @@ export enum Styles {
   textWrapMode = 'text-wrap-mode',
   display = 'display',
   textAlign = 'text-align',
+  position = 'position',
 }
 
 // CSS Class Names: Defines utility class names, likely from a framework like Tailwind CSS.
