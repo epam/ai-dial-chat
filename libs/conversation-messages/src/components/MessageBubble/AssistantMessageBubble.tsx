@@ -1,3 +1,4 @@
+import { AttachmentGroup } from '@epam/ai-dial-attachment-input';
 import {
   AttachmentType,
   buildCssVars,
@@ -7,7 +8,6 @@ import {
   mergeClasses,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
-import { AttachmentGroup } from '@epam/ai-dial-conversation-input';
 import { NeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { AssistantMessageBubbleProps } from '../../models/message-bubble';

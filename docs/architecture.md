@@ -112,7 +112,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-scheduled-tasks`          | `scheduled-tasks`          | Scheduled Tasks page shell — header, toolbar, empty state                    |
 | `@epam/ai-dial-usage-dashboard`          | `usage-dashboard`          | Aggregate daily/monthly cost-limit cards for the Settings Usage tab          |
 
-Conversation-history reuse is split across three acyclic layers. `chat-shared` owns the canonical `FilterTab`, transfer-job contracts, and conversation-name utilities. `chat-hooks` owns headless resource-state and conversation-panel controller hooks, with host-specific routing, labels, feature policy, and configured clients injected by `apps/chat`. `conversation-panel` owns the virtualized panel plus the labels-driven `ImportExportQueue` and `RenameConversationPopup` presentation components, and re-exports the shared `FilterTab` contract.
+Conversation-history reuse is split across three acyclic layers. `chat-shared` owns the canonical `FilterTab`, transfer-job contracts, and conversation-name utilities. `chat-hooks` owns headless resource-state and conversation-panel controller hooks, with host-specific routing, labels, feature policy, and configured clients injected by `apps/chat`. `conversation-panel` owns the virtualized panel plus the labels-driven `ImportExportQueue` and `RenameConversationPopup` presentation components, and consumes `FilterTab` from `chat-shared` directly rather than re-exporting it.
 
 `libs/ai-dial-kit/` is a leftover build-output directory from a removed library — no `package.json`, no sources, no importers. Do not add to it.
 

@@ -5,12 +5,14 @@ import {
 import {
   ConversationExportMode,
   ConversationTransferErrorCode,
-  ConversationTransferJobStatus,
-  ConversationTransferSubjectKind,
   useConversationExport,
   useConversationImport,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import {
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+} from '@epam/ai-dial-chat-shared';
 import {
   act,
   fireEvent,

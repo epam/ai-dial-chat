@@ -22,6 +22,7 @@ import {
   type DeploymentLimitsLabels,
   EXPORT_APP_NAME,
   findDeploymentByIdOrReference,
+  getApiErrorDetails,
   isOrganisationPromptItem,
   isQuickAppSchema,
   mapDeploymentDetailsDtoToEntityDetails,
@@ -95,7 +96,6 @@ import { useCatalogActiveTabPreference } from '../../hooks/useCatalogActiveTabPr
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';

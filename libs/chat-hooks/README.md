@@ -449,7 +449,7 @@ const ExportButton = ({
 
 **Returns** (`UseConversationImportResult`): `{ jobs, importConversations(file), dismissJob(jobId), retryJob(jobId), dismissAll() }`.
 
-`ConversationTransferJob` is `{ id: string; subject: ConversationTransferSubject; status: ConversationTransferJobStatus }`, where `ConversationTransferSubject` is `{ kind: Single; title: string; sourceBreadcrumb?: string } | { kind: All }` — render `label`/`description` text from `subject` at the call site (e.g. `subject.kind === Single ? subject.title : t('allConversations')`), never from a library-owned string. `ConversationTransferErrorEvent`/`WarningEvent`/`SuccessEvent` carry a `jobId`, a library-owned code (`ConversationTransferErrorCode`/`WarningCode`), and structured facts (`titles`, `names`, `traceId`) — never translated text.
+`ConversationTransferJob`, `ConversationTransferSubject`, `ConversationTransferJobStatus` and `ConversationTransferSubjectKind` are owned and exported by `@epam/ai-dial-chat-shared` — import them from there, not from this package. `ConversationTransferJob` is `{ id: string; subject: ConversationTransferSubject; status: ConversationTransferJobStatus }`, where `ConversationTransferSubject` is `{ kind: Single; title: string; sourceBreadcrumb?: string } | { kind: All }` — render `label`/`description` text from `subject` at the call site (e.g. `subject.kind === Single ? subject.title : t('allConversations')`), never from a library-owned string. `ConversationTransferErrorEvent`/`WarningEvent`/`SuccessEvent` carry a `jobId`, a library-owned code (`ConversationTransferErrorCode`/`WarningCode`), and structured facts (`titles`, `names`, `traceId`) — never translated text.
 
 Also exports `EXPORT_APP_NAME` and `formatQuotedNameList` (the standalone functions the hooks are built on) for hosts that render their own export file names or name lists outside the hooks' own notifications.
 
@@ -1364,20 +1364,6 @@ Converts between DIAL Scheduler's APScheduler weekday convention (Monday=0..Sund
 import { apSchedulerDayToJsDay } from '@epam/ai-dial-chat-hooks';
 
 apSchedulerDayToJsDay(0); // 1 (Monday -> JS Monday)
-```
-
-### sanitizeConversationName / stripTrailingDots / PROHIBITED_CONVERSATION_NAME_CHARS_RE
-
-Re-exported from `@epam/ai-dial-chat-shared`. Strips characters DIAL Core rejects in conversation names (tab, `"`, `:`, `;`, `/`, `\`, `,`, `=`, `{`, `}`, `%`, `&`), strips trailing dots, and exposes the compiled regex for callers that need to test a value.
-
-```ts
-import {
-  sanitizeConversationName,
-  stripTrailingDots,
-} from '@epam/ai-dial-chat-hooks';
-
-sanitizeConversationName('bad:name/here'); // 'badnamehere'
-stripTrailingDots('My Chat...'); // 'My Chat'
 ```
 
 ### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes

@@ -3,6 +3,7 @@ import type {
   ToolsetLogoutBodyDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  getApiErrorDetails,
   initiateOAuthLogin,
   navigateToolsetOAuthPopup,
   openToolsetOAuthPopup,
@@ -40,7 +41,6 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
 } from '../../../models/toolsets';
-import { getApiErrorDetails } from '../../../server-api/api-error';
 import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
 import { ROUTES } from '../../../types/routes';
 import {

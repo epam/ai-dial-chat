@@ -1,8 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { FilterTab, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import type { DragEvent, FC } from 'react';
-import { FilterTab } from '../../types/conversation-classification';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
 /** Props for `ConversationGroupHeader`. */

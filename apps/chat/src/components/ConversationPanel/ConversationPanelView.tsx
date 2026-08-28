@@ -6,9 +6,13 @@ import {
 import {
   ConversationExportMode,
   ConversationTransferErrorCode,
+  type ConversationTransferErrorEvent,
+  type ConversationTransferSuccessEvent,
   ConversationTransferWarningCode,
+  type ConversationTransferWarningEvent,
   deriveConversationRowActionState,
   formatQuotedNameList,
+  getApiErrorDetails,
   getConversationPath,
   safeDecodeURIComponent,
   useActiveConversationSync,
@@ -19,15 +23,11 @@ import {
   useConversationPanelItems,
   useImportFilePicker,
   useShareRecipientsCount,
-  type ConversationTransferErrorEvent,
-  type ConversationTransferSuccessEvent,
-  type ConversationTransferWarningEvent,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { FilterTab, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
-  FilterTab,
   ImportExportQueue,
   RenameConversationPopup,
   type ConversationItem,
@@ -88,7 +88,6 @@ import {
   filesApi,
   shareApi,
 } from '../../server-api/api-client';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { UnauthorizedError } from '../../server-api/base';
 import { unpublishConversation } from '../../server-api/conversation-publish.api';
 import {

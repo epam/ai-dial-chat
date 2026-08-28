@@ -1,5 +1,7 @@
 import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import {
+  getApiErrorDetails,
+  getApiErrorStatus,
   mapFormValuesToUpdateBody,
   mapScheduledTaskDtoToFormValues,
 } from '@epam/ai-dial-chat-hooks';
@@ -32,10 +34,6 @@ import {
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
-import {
-  getApiErrorDetails,
-  getApiErrorStatus,
-} from '../../server-api/api-error';
 import {
   getScheduledTask,
   updateScheduledTask,

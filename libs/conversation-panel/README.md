@@ -76,12 +76,13 @@ the group and defaults to `"Filter chats"`;
 
 ## Enums
 
-`FilterTab` is the canonical enum from `@epam/ai-dial-chat-shared`; this
-package re-exports the same runtime value so panel consumers do not need a
-second import.
+`FilterTab` is owned and exported by `@epam/ai-dial-chat-shared`, and this
+package does not re-export it — import it from its own package alongside this
+one. It identifies a filter tab, a collapsible group, and a conversation's
+source/ownership.
 
 ```tsx
-import { FilterTab } from '@epam/ai-dial-conversation-panel';
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 
 FilterTab.All; // 'all'
 FilterTab.Pinned; // 'pinned' — also identifies the Pinned collapsible group
@@ -175,7 +176,10 @@ const labels: ImportExportQueueLabels = {
   jobs={[
     {
       id: 'job-1',
-      subject: { kind: ConversationTransferSubjectKind.Single, title: 'My chat' },
+      subject: {
+        kind: ConversationTransferSubjectKind.Single,
+        title: 'My chat',
+      },
       status: ConversationTransferJobStatus.InProgress,
     },
   ]}
@@ -192,20 +196,20 @@ const labels: ImportExportQueueLabels = {
 
 ### ImportExportQueueLabels
 
-| Field | Type | Description |
-|---|---|---|
-| `allConversationsJobLabel` | `string` | Label for a job targeting all conversations |
-| `closeJobAriaLabel` | `(title: string) => string` | Accessible name for dismissing an in-progress job |
-| `retryJobAriaLabel` | `(title: string) => string` | Accessible name for retrying a failed job |
-| `collapseQueueAriaLabel` | `string` | Accessible name for the collapse toggle |
-| `expandQueueAriaLabel` | `string` | Accessible name for the expand toggle |
-| `closeQueueAriaLabel` | `string` | Accessible name for the close button |
-| `closeQueueConfirmHeader` | `string` | Heading of the close-confirmation dialog |
-| `closeQueueConfirmDescriptionInProgress` | `string` | Dialog description when jobs are in progress |
-| `closeQueueConfirmDescriptionFailed` | `string` | Dialog description when jobs have failed |
-| `closeQueueConfirmDescriptionMixed` | `string` | Dialog description when jobs are both in-progress and failed |
-| `closeLabel` | `string` | Confirm button label in the dialog |
-| `cancelLabel` | `string` | Cancel button label in the dialog |
+| Field                                    | Type                        | Description                                                  |
+| ---------------------------------------- | --------------------------- | ------------------------------------------------------------ |
+| `allConversationsJobLabel`               | `string`                    | Label for a job targeting all conversations                  |
+| `closeJobAriaLabel`                      | `(title: string) => string` | Accessible name for dismissing an in-progress job            |
+| `retryJobAriaLabel`                      | `(title: string) => string` | Accessible name for retrying a failed job                    |
+| `collapseQueueAriaLabel`                 | `string`                    | Accessible name for the collapse toggle                      |
+| `expandQueueAriaLabel`                   | `string`                    | Accessible name for the expand toggle                        |
+| `closeQueueAriaLabel`                    | `string`                    | Accessible name for the close button                         |
+| `closeQueueConfirmHeader`                | `string`                    | Heading of the close-confirmation dialog                     |
+| `closeQueueConfirmDescriptionInProgress` | `string`                    | Dialog description when jobs are in progress                 |
+| `closeQueueConfirmDescriptionFailed`     | `string`                    | Dialog description when jobs have failed                     |
+| `closeQueueConfirmDescriptionMixed`      | `string`                    | Dialog description when jobs are both in-progress and failed |
+| `closeLabel`                             | `string`                    | Confirm button label in the dialog                           |
+| `cancelLabel`                            | `string`                    | Cancel button label in the dialog                            |
 
 ### ImportExportQueueStyles
 
@@ -248,15 +252,15 @@ const labels: RenameConversationPopupLabels = {
 
 ### RenameConversationPopupLabels
 
-| Field | Type | Description |
-|---|---|---|
-| `popupTitle` | `string` | Popup dialog heading |
-| `inputPlaceholder` | `string` | Placeholder text for the name input |
-| `renameWithAiLabel` | `string` | Accessible name and tooltip for the AI-generation button |
-| `renameWithAiError` | `string` | Error shown when AI name generation fails |
-| `nameTooLongError` | `string` | Error shown when the trimmed name exceeds 255 UTF-8 bytes |
-| `saveLabel` | `string` | Label for the save/confirm button |
-| `cancelLabel` | `string` | Label for the cancel button |
+| Field               | Type     | Description                                               |
+| ------------------- | -------- | --------------------------------------------------------- |
+| `popupTitle`        | `string` | Popup dialog heading                                      |
+| `inputPlaceholder`  | `string` | Placeholder text for the name input                       |
+| `renameWithAiLabel` | `string` | Accessible name and tooltip for the AI-generation button  |
+| `renameWithAiError` | `string` | Error shown when AI name generation fails                 |
+| `nameTooLongError`  | `string` | Error shown when the trimmed name exceeds 255 UTF-8 bytes |
+| `saveLabel`         | `string` | Label for the save/confirm button                         |
+| `cancelLabel`       | `string` | Label for the cancel button                               |
 
 ### RenameConversationPopupStyles
 

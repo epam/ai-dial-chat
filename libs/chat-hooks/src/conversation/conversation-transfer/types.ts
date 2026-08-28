@@ -1,10 +1,3 @@
-export {
-  ConversationTransferJobStatus,
-  ConversationTransferSubjectKind,
-  type ConversationTransferSubject,
-  type ConversationTransferJob,
-} from '@epam/ai-dial-chat-shared';
-
 /** Whether an export includes the conversation's attachments. */
 export enum ConversationExportMode {
   WithAttachments = 'withAttachments',

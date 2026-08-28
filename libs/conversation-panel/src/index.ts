@@ -24,4 +24,3 @@ export type {
   ConversationItem,
   FilterLabels,
 } from './models/panel-props';
-export { FilterTab } from './types/conversation-classification';

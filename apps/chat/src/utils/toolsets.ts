@@ -4,6 +4,8 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import { ResponseError } from '@epam/ai-dial-chat-api-client';
 import {
+  composeLocalePayload,
+  decomposeLocalizedFields,
   getToolsetRedirectUri as resolveOAuthRedirectUri,
   ToolsetAuthStatus,
   ToolsetAuthTypes,
@@ -18,12 +20,7 @@ import {
 import type { ToolsetAuthFormData, ToolsetFormData } from '../models/toolsets';
 import { getToolset } from '../server-api/toolsets';
 import { ROUTES } from '../types/routes';
-import {
-  composeLocalePayload,
-  decomposeLocalizedFields,
-  PRIMARY_LOCALE,
-  resolveLocalizedText,
-} from './locale';
+import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
 
 /**
  * Returns a storage-safe toolset name that does not collide with any existing

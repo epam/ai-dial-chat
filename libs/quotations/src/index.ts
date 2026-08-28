@@ -38,7 +38,6 @@ export {
   normalizeRawAnnotations,
   resolveMessageAnnotations,
 } from './utils/annotation';
-export type { AttachmentResource } from './utils/annotation';
 
 export {
   injectCitationSentinels,

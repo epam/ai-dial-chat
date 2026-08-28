@@ -1,5 +1,6 @@
 import type { ToolsetLoginBodyDto } from '@epam/ai-dial-chat-api-client';
 import {
+  getApiErrorDetails,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   WithLogin,
@@ -29,7 +30,6 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../models/toolsets';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createToolset,
   getToolset,

@@ -1,5 +1,7 @@
-import { triggerAnchorDownload } from '@epam/ai-dial-chat-shared';
-import type { AttachmentResource } from '@epam/ai-dial-quotations';
+import {
+  type AttachmentResource,
+  triggerAnchorDownload,
+} from '@epam/ai-dial-chat-shared';
 import type { ResolveDownloadUrl } from '../attachment/useAttachmentAction/useAttachmentAction';
 import { isDialFileId } from './dial-file';
 

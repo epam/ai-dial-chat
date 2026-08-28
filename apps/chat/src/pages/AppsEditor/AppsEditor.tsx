@@ -1,5 +1,8 @@
 import type { ApplicationSchemaSummaryDto } from '@epam/ai-dial-chat-api-client';
-import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
+import {
+  decomposeLocalizedFields,
+  findDeploymentByIdOrReference,
+} from '@epam/ai-dial-chat-hooks';
 import {
   Spinner,
   ErrorMessageNotification,
@@ -25,11 +28,7 @@ import {
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import {
-  decomposeLocalizedFields,
-  PRIMARY_LOCALE,
-  resolveLocalizedText,
-} from '../../utils/locale';
+import { PRIMARY_LOCALE, resolveLocalizedText } from '../../utils/locale';
 import type {
   GeneralFormHandle,
   GeneralFormInitialValues,

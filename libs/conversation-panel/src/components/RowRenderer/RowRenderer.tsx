@@ -1,6 +1,7 @@
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { RowComponentProps } from 'react-window';
-import { type RowRendererData, VirtualRowKind } from '../../models/virtual-row';
-import { FilterTab } from '../../types/conversation-classification';
+import type { RowRendererData } from '../../models/virtual-row';
+import { VirtualRowKind } from '../../types/virtual-row';
 import { ConversationGroupHeader } from '../ConversationGroupHeader/ConversationGroupHeader';
 import { ConversationRow } from '../ConversationRow/ConversationRow';
 

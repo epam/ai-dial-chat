@@ -7,8 +7,7 @@ import {
   usePanelMaxWidth,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
-import { FilterTab } from '@epam/ai-dial-conversation-panel';
+import { CodeBlockTheme, FilterTab } from '@epam/ai-dial-chat-shared';
 import {
   lazy,
   memo,
