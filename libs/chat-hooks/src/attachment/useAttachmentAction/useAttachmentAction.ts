@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import {
   base64ToBlob,
+  ensureDownloadFilename,
   triggerAnchorDownload,
   triggerBlobDownload,
   MIMEType,
@@ -54,7 +55,10 @@ export const downloadAttachment = (
     const downloadUrl = resolveDownloadUrl(url);
     if (downloadUrl == null) return false;
 
-    triggerAnchorDownload(downloadUrl, name);
+    triggerAnchorDownload(
+      downloadUrl,
+      ensureDownloadFilename(name, url, contentType),
+    );
     return true;
   }
 
@@ -64,7 +68,7 @@ export const downloadAttachment = (
   if (data != null) {
     triggerBlobDownload(
       base64ToBlob(data, contentType || MIMEType.Plain),
-      name,
+      ensureDownloadFilename(name, url, contentType),
     );
     return true;
   }
@@ -83,9 +87,10 @@ const openAnnotationAttachment = (
   if (isDialFileId(fileId)) {
     const downloadUrl = resolveDownloadUrl(fileId);
     if (downloadUrl == null) return;
+    const displayName = attachment.title ?? fileId.split('/').pop() ?? '';
     triggerAnchorDownload(
       downloadUrl,
-      attachment.title ?? fileId.split('/').pop() ?? '',
+      ensureDownloadFilename(displayName, fileId, attachment.type),
     );
   } else {
     window.open(url, '_blank', 'noopener,noreferrer');

@@ -62,6 +62,13 @@ accept a required `resolveDownloadUrl: (fileId: string) => string | undefined`
 parameter and use it wherever a DIAL file id needs to become a downloadable
 URL.
 
+Before passing the filename to `triggerAnchorDownload` or `triggerBlobDownload`,
+the hook SHALL call `ensureDownloadFilename(name, url, contentType)` to guarantee
+a file extension is present. The function returns `name` unchanged when it already
+ends with an extension; otherwise it appends the extension extracted from the last
+path segment of `url`, then falls back to `MIME_TYPE_EXT_MAP[contentType]`, and
+finally returns `name` as-is when neither source provides an extension.
+
 The hook SHALL return `{ handleAttachmentClick: (attachment: DisplayAttachment)
 => void }`. It SHALL also export the standalone `isDownloadableAttachment:
 (attachment: DisplayAttachment) => boolean` and `downloadAttachment:
@@ -75,7 +82,22 @@ action).
 - **WHEN** a consumer calls `handleAttachmentClick` with a `DisplayAttachment`
   whose `url` is a DIAL file id
 - **THEN** the hook calls the supplied `resolveDownloadUrl` with that file id
-  and triggers a browser download from the resolved URL
+  and triggers a browser download from the resolved URL, using a filename
+  produced by `ensureDownloadFilename`
+
+#### Scenario: Download filename gets extension from the URL when the name has none
+
+- **WHEN** a consumer calls `handleAttachmentClick` with a `DisplayAttachment`
+  whose `name` is `'Thermo Fisher 10-K Summary'` and whose `url` path ends with
+  `'ThermoFisher_2024.xlsx'`
+- **THEN** the triggered download uses the filename `'Thermo Fisher 10-K Summary.xlsx'`
+
+#### Scenario: Download filename falls back to MIME-type extension when the URL has none
+
+- **WHEN** a consumer calls `handleAttachmentClick` with a `DisplayAttachment`
+  whose `name` has no extension, whose `url` path segment has no extension, and
+  whose `contentType` is `'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'`
+- **THEN** the triggered download uses a filename ending in `.xlsx`
 
 #### Scenario: Canvas-previewable reference attachment opens the canvas
 
