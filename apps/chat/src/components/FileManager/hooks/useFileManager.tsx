@@ -78,6 +78,7 @@ import {
 } from '@epam/ai-dial-ui-kit/dist/src/components/FileManager/FileManager';
 
 import { FilesUploadingModalOptions } from '../FilesUploadingModal';
+import { buildFileManagerColumnDefs } from '../fileManagerGridColumnDefs';
 import {
   findConflictResolutionPopupRoot,
   findDestinationFolderPopupRoot,
@@ -1066,8 +1067,27 @@ export const useFileManager = ({
       modifiedDate: translateChat(ChatI18nKeys.ModifiedDate),
       size: translateChat(ChatI18nKeys.Size),
       author: translateChat(ChatI18nKeys.Author),
+      owner: translateChat(ChatI18nKeys.Owner),
     }),
     [translateChat, activeTab],
+  );
+
+  const gridColumnDefs = useMemo(
+    () =>
+      buildFileManagerColumnDefs({
+        labels: gridColumnHeaderLabels,
+        visibleColumns,
+        isSearchMode: isSearching,
+        rootItemPath: rootFolder?.path,
+        rootItemLabel: rootFolder?.label,
+      }),
+    [
+      gridColumnHeaderLabels,
+      visibleColumns,
+      isSearching,
+      rootFolder?.path,
+      rootFolder?.label,
+    ],
   );
 
   const searchEmptyTitle = useMemo(
@@ -1322,6 +1342,7 @@ export const useFileManager = ({
       dateOptions: dateOptions,
       actionLabels: gridActionLabels,
       visibleColumns: visibleColumns,
+      columnDefs: gridColumnDefs,
       selectionMode: GridSelectionMode.MULTIPLE,
       ...(isSearching && {
         emptyStateTitle: searchEmptyTitle,
@@ -1371,6 +1392,7 @@ export const useFileManager = ({
       applyGridHeaderLabels,
       dateLocale,
       gridActionLabels,
+      gridColumnDefs,
       gridEditingOptions,
       isSearching,
       loadingOverlayText,
