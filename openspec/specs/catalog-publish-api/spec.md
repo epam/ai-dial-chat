@@ -149,13 +149,24 @@ OpenAPI operation `publishCatalogEntity` SHALL expose `PublishCatalogEntityDto.v
 ### Requirement: Publish history endpoint derives history from Core publications, not chat-api storage
 The backend SHALL expose `GET /api/v1/catalog/{entityType}/{entityId}/publish-history` returning publish entries for the given entity **across every folder it has ever been published to** (folder-scoping happens client-side, in `PublishPanel`), most recent first. It SHALL call DIAL Core's `getPublications` with a `ResourceLink` body scoped to the caller's own-bucket publication list (`{ url: "publications/{bucket}/" }`, built by `getPublicationsListScope`), then narrow the response to publications whose `resources[].sourceUrl` reference the entity's own resource url, mapped to `PublishHistoryEntryDto[]`. Core exposes no per-resource publication filter, so a bucket-wide scan plus a local narrowing is the only available shape.
 
-That narrowing SHALL NOT read `resources` off the list response. Core's `getPublications` returns publication **metadata only** — `url`, `status`, `targetFolder`, `createdAt`, `author` — with no `resources` array, so filtering the list on `resources[].sourceUrl` matches nothing: a live Core returned 60 publications and history still came back empty, hiding `Unpublish` on an entity that was demonstrably published. Each candidate SHALL therefore be re-read through Core's `getPublication` (`{ url: publication.url }`) and matched on that detailed record. Only publications whose `status` is `APPROVED` SHALL be candidates — a `PENDING` request has not created a published copy yet and a `REJECTED` one never will, so neither describes a folder the entity is published to, and skipping them keeps the number of detail lookups proportional to real publications. A publication that already carries `resources` SHALL be matched without a round trip. The lookups SHALL be batched rather than issued all at once, and a failed lookup SHALL drop that one publication rather than fail the request: history is informational, and one unreadable publication must not take down the publish panel for the whole entity.
+That narrowing SHALL NOT read `resources` off the list response. Core's `getPublications` returns publication **metadata only** — `url`, `status`, `targetFolder`, `createdAt`, `author` — with no `resources` array, so filtering the list on `resources[].sourceUrl` matches nothing: a live Core returned 60 publications and history still came back empty, hiding `Unpublish` on an entity that was demonstrably published. Each candidate SHALL therefore be re-read through Core's `getPublication` (`{ url: publication.url }`) and matched on that detailed record. Candidacy SHALL be defined by exclusion, not inclusion: a publication is a candidate unless Core positively reports it as `PENDING` or `REJECTED`. A `PENDING` request has not created a published copy yet and a `REJECTED` one never will, so neither describes a folder the entity is published to, and skipping them keeps the number of detail lookups proportional to real publications. A publication with **no** status is still read — an absent field is not evidence that the publication is unfinished, and dropping it would silently shorten history.
+
+A publication that already carries `resources` SHALL be matched without a round trip. The lookups SHALL be issued in bounded-concurrency batches rather than all at once, and a failed lookup SHALL drop that one publication rather than fail the request: history is informational, and one unreadable publication must not take down the publish panel for the whole entity.
 
 The `getPublications` response SHALL be accepted both as the bare array the SDK types (`ListPublication = Publication[]`) and as the `{ publications: [...] }` envelope a live Core returns. Calling `.filter` straight on the envelope threw `TypeError: (result.data ?? []).filter is not a function`, which `handleDialFetchError` reported as "DIAL Core is currently unavailable" (503) — this, not a Core outage, is what [GH #7897](https://github.com/epam/ai-dial-chat/issues/7897) actually was, and what led to both frontend publish-history fetches being stubbed out. An unrecognised shape SHALL degrade to an empty list with a warning, never a throw.
 
 Resource-url comparison SHALL tolerate a percent-encoding difference between the url Core echoes and the url the service built, so an encoded `sourceUrl` cannot silently produce an empty history for a working publication. `entityId` SHALL be resolved to that resource url through the same `toSourceUrl` helper the publish path uses, so a prompt's bucket-relative id (`Work/AI/summarize`) is qualified with the caller's bucket before it is compared. Each entry's `folderPath` SHALL have Core's `public/` prefix and trailing slash stripped back off before being returned, so it matches the plain folder-path form the frontend sends when publishing and uses for `selectedFolderPath` comparisons. Each entry's `version` SHALL be recovered from `entityId`'s own `{name}__{version}` suffix (the same value for every entry in a single call, since `entityId` — and therefore its version — is fixed for the whole request), never from `Publication.name`; an unversioned Prompt or Skill yields an empty version.
 
-A publication whose matching resource carries `action: 'DELETE'` SHALL be excluded from the result. Such a publication is a pending removal request submitted by the unpublish endpoint (see `catalog-unpublish-api`), not a publication of the entity. Including it would list the same folder twice — once for the original `ADD`, once for the pending `DELETE` — and would read as a second publish to that folder. Until an administrator approves the removal the entity genuinely is still published there, so the folder SHALL continue to appear exactly once, sourced from its `ADD` publication.
+A publication whose matching resource carries `action: 'DELETE'` SHALL never itself appear in the result. Such a publication is a removal request submitted by the unpublish endpoint (see `catalog-unpublish-api`), not a publication of the entity. Including it would list the same folder twice — once for the original `ADD`, once for the `DELETE` — and would read as a second publish to that folder.
+
+Whether the removal also cancels the `ADD` it targets depends on its status, and the two cases differ:
+
+- A removal Core has **not** positively approved leaves the `ADD` alone. Until an administrator approves it the entity genuinely is still published there, so the folder SHALL continue to appear exactly once, sourced from its `ADD`.
+- An **approved** removal SHALL cancel every `ADD` for the same target folder that is not newer than it, removing the folder from history. Offering Unpublish for a copy Core has already deleted is exactly the failure this cancellation prevents.
+
+The stricter test for a removal than for a detail candidate is deliberate: cancelling an `ADD` on an *assumed* approval is the more expensive mistake, because it both hides Unpublish for a live copy and offers a Publish that Core then rejects for an already-occupied target.
+
+When a publication carries no usable `createdAt`, the comparison SHALL fall back asymmetrically — an undateable approved removal counts as infinitely recent, an undateable `ADD` as infinitely old — so a removal wins any comparison it cannot make on timestamps. That deliberately also cancels a genuine re-publish created after the removal; the trade is that this outcome is recoverable (the panel lists the folder and the resulting error names the conflict) while the alternative leaves an unpublish request that can never succeed. Core stamps every publication, so the fallback fires only on a malformed response, and SHALL be logged as a warning rather than applied silently.
 
 This filter is what makes the endpoint safe to use as the visibility source for the Unpublish action (see `catalog-unpublish-flow`): the folder list it returns is the set of folders a published copy currently exists in.
 
@@ -200,6 +211,21 @@ Rate limiting: default global throttle applies (read endpoint, no stricter overr
 - **WHEN** history is requested
 - **THEN** the folder appears exactly once, sourced from the `ADD` publication
 
+#### Scenario: An approved removal drops the folder
+- **GIVEN** the entity has an `ADD` publication and a later **approved** `DELETE` publication for the same folder
+- **WHEN** history is requested
+- **THEN** the folder does not appear at all
+
+#### Scenario: A re-publish after an approved removal is listed again
+- **GIVEN** an approved `DELETE` for a folder, followed by a newer `ADD` for that same folder
+- **WHEN** history is requested
+- **THEN** the folder appears once, sourced from the newer `ADD`
+
+#### Scenario: An undateable approved removal cancels its folder and is logged
+- **GIVEN** an approved `DELETE` whose `createdAt` is missing or unusable
+- **WHEN** history is requested
+- **THEN** every `ADD` for that folder is cancelled, including one created later, and a warning naming the publication is logged
+
 #### Scenario: An entity whose only publication is a pending removal
 - **GIVEN** the entity's only matching publication carries `action: 'DELETE'`
 - **WHEN** history is requested
@@ -214,6 +240,11 @@ Rate limiting: default global throttle applies (read endpoint, no stricter overr
 - **GIVEN** the bucket's publication list contains `PENDING` and `REJECTED` publications
 - **WHEN** history is requested
 - **THEN** no `getPublication` call is made for them and they contribute no entries
+
+#### Scenario: A publication with no status is still re-read
+- **GIVEN** a listed publication carries no `status` field at all
+- **WHEN** history is requested
+- **THEN** it is treated as a candidate and re-read, rather than skipped
 
 #### Scenario: One unreadable publication does not fail the request
 - **GIVEN** one candidate's `getPublication` call fails while another succeeds and matches
