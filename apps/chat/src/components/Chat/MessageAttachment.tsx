@@ -32,6 +32,7 @@ import {
   getAttachmentSpacingClass,
 } from '@/src/utils/app/compact-mode';
 import { getFileName, isSafeLinkUrl } from '@/src/utils/app/file';
+import { isFileId } from '@/src/utils/app/id';
 
 import { Translation } from '@/src/types/translation';
 
@@ -81,7 +82,9 @@ interface AttachmentDataRendererProps {
 }
 
 const getDownloadName = (attachment: Attachment): string => {
-  const urlName = getFileName(attachment.url);
+  const urlName = isFileId(attachment.url)
+    ? getFileName(attachment.url)
+    : undefined;
   if (urlName) return urlName;
   const title = attachment.title;
   if (title && title.includes('.')) return title;
