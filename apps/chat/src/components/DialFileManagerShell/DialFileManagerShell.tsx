@@ -275,6 +275,11 @@ const DialFileManagerShell: FC<Props> = ({
       dateOptions,
       additionalGridOptions: {
         domLayout: 'normal' as const,
+        /*
+           The file manager's grid merges this into its own selection config
+           and keeps ownership of `mode` and the checkbox flags, so this
+           override contributes `isRowSelectable` only.
+         */
         rowSelection: {
           mode: 'multiRow' as const,
           isRowSelectable: isRowSelectable ?? ((): boolean => true),

@@ -29,10 +29,12 @@ export const Catalog: FC<CatalogProps> = ({
   favorites,
   titles,
   onToggleFavorite,
+  isFavoriteVisible,
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
   isPublishVisible,
+  isPublishPrimary,
   getPublishHistory,
   publishFolderItems,
   publishExpandedPaths,
@@ -48,6 +50,7 @@ export const Catalog: FC<CatalogProps> = ({
   onFetchExistingRules,
   shareOverlay,
   isShareVisible,
+  isSharePrimary,
   onFetchDetails,
   onEdit,
   onDownload,
@@ -427,6 +430,7 @@ export const Catalog: FC<CatalogProps> = ({
               totalCount={favorites.length}
               title={favoritesTitle}
               onToggleFavorite={onToggleFavorite}
+              isFavoriteVisible={isFavoriteVisible}
               onItemClick={onCardClick ?? handleOpenDetails}
               isLeaving={isFavoritesLeaving}
               onExitComplete={handleFavoritesExitComplete}
@@ -496,6 +500,7 @@ export const Catalog: FC<CatalogProps> = ({
               items={tabFiltered}
               query={query}
               onToggleFavorite={onToggleFavorite}
+              isFavoriteVisible={isFavoriteVisible}
               onItemClick={onCardClick ?? handleOpenDetails}
               titles={cardGridTitles}
               selectedItemId={selectedItemId}
@@ -517,6 +522,7 @@ export const Catalog: FC<CatalogProps> = ({
                 ariaLabel={resolvedAriaLabel}
                 emptyStateTitle={emptyTitle}
                 onToggleFavorite={onToggleFavorite}
+                isFavoriteVisible={isFavoriteVisible}
                 onItemClick={onCardClick ?? handleOpenDetails}
                 stickyHeaderTop={0}
                 selectedItemId={selectedItemId}
@@ -537,10 +543,12 @@ export const Catalog: FC<CatalogProps> = ({
           isDetailsLoading={isDetailsLoading}
           onClose={handleCloseDetails}
           onToggleFavorite={onToggleFavorite}
+          isFavoriteVisible={isFavoriteVisible}
           onUseInChat={onUseInChat}
           isPrimaryActionVisible={isPrimaryActionVisible}
           onShare={onShare}
           isPublishVisible={isPublishVisible}
+          isPublishPrimary={isPublishPrimary}
           getPublishHistory={getPublishHistory}
           publishFolderItems={publishFolderItems}
           publishExpandedPaths={publishExpandedPaths}
@@ -556,6 +564,7 @@ export const Catalog: FC<CatalogProps> = ({
           onFetchExistingRules={onFetchExistingRules}
           shareOverlay={shareOverlay}
           isShareVisible={isShareVisible}
+          isSharePrimary={isSharePrimary}
           onEdit={onEdit}
           onDownload={onDownload}
           isDownloadVisible={isDownloadVisible}

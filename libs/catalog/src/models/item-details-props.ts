@@ -462,6 +462,12 @@ export interface DetailsPanelProps {
   /** Called when the star/favorite button is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /**
+   * Additional caller-supplied rule for whether the favorite star is shown in
+   * the panel header. Returning `false` hides the star and makes the item
+   * non-favoritable from the panel. Defaults to **visible** when omitted.
+   */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
+  /**
    * Additional caller-supplied rule for whether the "Remove from My List"
    * action is shown, combined (AND) with the built-in
    * `sharedWithMe`/`isMyApp` rule. Defaults to `true` when absent.
@@ -475,6 +481,12 @@ export interface DetailsPanelProps {
   onShare?: (item: CatalogItem) => void;
   /** Controls whether the "Publish" action is shown for the item. */
   isPublishVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether whichever of "Publish"/"Unpublish" applies renders as its
+   * own button in the details header rather than an entry in its "Manage"
+   * menu. Defaults to `false` — the menu entry.
+   */
+  isPublishPrimary?: (item: CatalogItem) => boolean;
   /** Resolves previously published versions for an item, most recent first. */
   getPublishHistory?: (item: CatalogItem) => Promise<PublishHistoryEntry[]>;
   /** Root-level destination folder nodes offered by the publish flow. */
@@ -518,8 +530,10 @@ export interface DetailsPanelProps {
    */
   onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
   /**
-   * Renders the Share popover content anchored to the Share button. When
-   * provided, clicking Share opens this popover instead of calling `onShare`.
+   * Renders the Share popover content, anchored to whichever surface carries
+   * Share — the header button, or the Manage trigger when `isSharePrimary`
+   * has moved the entry into that menu. When provided, choosing Share opens
+   * this popover instead of calling `onShare`.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   /**
@@ -528,6 +542,12 @@ export interface DetailsPanelProps {
    * Absent means the built-in rule alone decides.
    */
   isShareVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether "Share" renders as its own button in the details header
+   * rather than an entry in its "Manage" menu. Defaults to `true` — the
+   * button. Returning `false` moves it into the menu, beside "Delete".
+   */
+  isSharePrimary?: (item: CatalogItem) => boolean;
   /** Called when the "Edit" button is clicked. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**

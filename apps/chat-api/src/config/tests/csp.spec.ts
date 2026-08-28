@@ -75,6 +75,20 @@ describe('Helmet security headers', () => {
     );
   });
 
+  it('allows OOXML WebAssembly parsers without enabling JavaScript eval', async () => {
+    app = await createTestApp([]);
+    const response = await request(app.getHttpServer())
+      .get('/ping')
+      .expect(200);
+
+    expect(response.headers['content-security-policy']).toContain(
+      "script-src 'self' 'wasm-unsafe-eval'",
+    );
+    expect(response.headers['content-security-policy']).not.toContain(
+      "'unsafe-eval'",
+    );
+  });
+
   it("sends frame-ancestors 'none' and keeps X-Frame-Options when the allowlist is empty", async () => {
     app = await createTestApp([]);
     const response = await request(app.getHttpServer())

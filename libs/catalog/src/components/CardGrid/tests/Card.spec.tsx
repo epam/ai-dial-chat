@@ -1,7 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import {
   CredentialStatus,
@@ -64,6 +64,31 @@ describe('Card — long version', () => {
 describe('Card — favorite visibility', () => {
   it('renders the star button for every entity type, prompts included', () => {
     render(<Card item={makeItem({ type: CatalogEntityType.Prompt })} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Add to favorites' }),
+    ).toBeTruthy();
+  });
+
+  it('hides the star button and keeps the item non-favoritable when isFavoriteVisible returns false', () => {
+    render(
+      <Card
+        item={makeItem()}
+        isFavoriteVisible={() => false}
+        onToggle={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Add to favorites' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Remove from favorites' }),
+    ).toBeNull();
+  });
+
+  it('renders the star button when isFavoriteVisible returns true', () => {
+    render(<Card item={makeItem()} isFavoriteVisible={() => true} />);
 
     expect(
       screen.getByRole('button', { name: 'Add to favorites' }),

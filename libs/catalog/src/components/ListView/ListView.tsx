@@ -1,5 +1,5 @@
 import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
-import { DialGrid, mergeClasses } from '@epam/ai-dial-ui-kit';
+import { Grid, mergeClasses } from '@epam/ai-dial-ui-kit';
 import type { GridApi } from 'ag-grid-community';
 import {
   type CSSProperties,
@@ -41,6 +41,7 @@ export const ListView: FC<ListViewProps> = ({
   emptyStateTitle,
   styles: listStyles,
   onToggleFavorite,
+  isFavoriteVisible,
   onItemClick,
   stickyHeaderTop,
   selectedItemId,
@@ -149,7 +150,7 @@ export const ListView: FC<ListViewProps> = ({
       className={mergeClasses('w-full rounded-xl border', styles.listContainer)}
     >
       <div className={mergeClasses('rounded-xl', styles.gridClip)}>
-        <DialGrid<CatalogItem>
+        <Grid<CatalogItem>
           columnDefs={CATALOG_COLUMNS(type)}
           rowData={windowedItems}
           getRowId={(r) => r.id}
@@ -165,6 +166,7 @@ export const ListView: FC<ListViewProps> = ({
               searchQuery: query,
               typography,
               onToggleFavorite,
+              isFavoriteVisible,
               selectedItemId,
               credentialsBadgeLoggedOutLabel,
             } satisfies GridContext,

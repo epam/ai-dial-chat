@@ -2,41 +2,38 @@
 
 ## Purpose
 
-Specifies how `AttachmentCard` gains an optional click handler, how `resolveDialFileDownloadUrl` is exported from `icon-path.ts`, and how the `useAttachmentAction` hook resolves and triggers the correct action (download, canvas preview, or external open for reference-only attachments) when a card is activated.
+Specifies how `AttachmentCard` exposes an optional click handler, how `resolveDialFileDownloadUrl` turns a DIAL file id into a BFF download URL, and how the `useAttachmentAction` hook resolves and triggers the correct action (download, canvas preview, or external open for reference-only attachments) when a card is activated.
 
 ---
 
 ## Requirements
 
-### Requirement: `AttachmentCard` accepts an `onClick` callback and becomes interactive when provided
+### Requirement: `AttachmentCard` accepts an `onClick` callback
 
-`libs/conversation-input/src/models/AttachmentCard.ts` SHALL add the following optional prop to `AttachmentCardProps`:
+`libs/attachment-input/src/models/attachment-card.ts` SHALL declare the following optional members of `AttachmentCardProps`:
 
 - `onClick?: (id: string) => void` — Called when the user clicks or keyboard-activates the card. Receives the attachment `id`.
-- `clickLabel?: string` — Accessible label applied to the card root when it is interactive. Defaults to `'Open attachment'`.
+- `clickLabel?: string` — Accessible label applied to the card root. Its default depends on the tile variant, because the two do different things: the file tile defaults to `'Download attachment'` and the image/pasted tile to `'Open attachment'`.
 
-When `onClick` is provided, `AttachmentCard` SHALL:
-- Set `role="button"` on the card root element.
-- Set `tabIndex={0}` on the card root element.
-- Set `aria-label={clickLabel}` on the card root element.
-- Add `cursor-pointer` to the card root class list.
+`AttachmentCard` SHALL:
+- Render the card root as `role="button"` with `tabIndex={0}`, `aria-label={clickLabel}`, and `cursor-pointer`.
 - Call `onClick(id)` on left-click and on `Enter` or `Space` key press.
-- Ensure that clicks on inner action buttons (`onRemove`, `onRetry`) do NOT propagate to the card-level `onClick`.
+- Ensure that clicks on inner action buttons (`onRemove`, `onRetry`, download) do NOT propagate to the card-level `onClick`.
 
-When `onClick` is not provided, the card SHALL remain inert (no `role`, no `tabIndex`, no keyboard handler added for card activation).
+The interactive attributes are unconditional rather than gated on `onClick`: the tile is the primary affordance for its attachment in every surface that renders it, and toggling `role`/`tabIndex` per prop would make the same visual tile focusable in one list and skipped in another.
 
 The `onClick` prop SHALL be independent of `onExpand`. When both are supplied, `onExpand` takes precedence for pasted-text cards (existing behaviour unchanged); `onClick` applies only when `onExpand` is not active.
 
-#### Scenario: Card is inert without `onClick`
+#### Scenario: Card root is interactive
 
-- **WHEN** `AttachmentCard` is rendered without an `onClick` prop
-- **THEN** the card root has no `role="button"`, no `tabIndex`, and no `cursor-pointer` class
-
-#### Scenario: Card is interactive with `onClick`
-
-- **WHEN** `AttachmentCard` is rendered with an `onClick` prop
+- **WHEN** `AttachmentCard` is rendered
 - **THEN** the card root has `role="button"`, `tabIndex={0}`, and `cursor-pointer`
-- **AND** the `aria-label` on the card root equals the `clickLabel` prop value (or `'Open attachment'` if omitted)
+- **AND** the `aria-label` on the card root equals the `clickLabel` prop value
+
+#### Scenario: The default label matches the tile variant
+
+- **WHEN** `clickLabel` is omitted
+- **THEN** a file tile is labelled `'Download attachment'` and an image or pasted tile `'Open attachment'`
 
 #### Scenario: Mouse click invokes `onClick`
 
@@ -60,9 +57,9 @@ The `onClick` prop SHALL be independent of `onExpand`. When both are supplied, `
 
 ---
 
-### Requirement: `resolveDialFileDownloadUrl` is exported from `icon-path.ts`
+### Requirement: `resolveDialFileDownloadUrl` turns a DIAL file id into a BFF download URL
 
-`apps/chat/src/utils/icon-path.ts` SHALL export the `resolveDialFileDownloadUrl(fileId: string): string | undefined` function. The function SHALL convert a DIAL file identifier (`files/{bucket}/{path}`) to the BFF download query string URL (`/api/v1/files/download?bucket=…&path=…`). If the file ID does not start with `files/` or contains no path segment after the bucket, the function SHALL return `undefined`.
+`apps/chat/src/utils/dial-file.ts` SHALL export `resolveDialFileDownloadUrl(fileId: string): string | undefined`; `icon-path.ts` imports it from there rather than owning it, so icon URLs and attachment downloads resolve through one implementation. The function SHALL convert a DIAL file identifier (`files/{bucket}/{path}`) to the BFF download query string URL (`/api/v1/files/download?bucket=…&path=…`). If the file ID does not start with `files/` or contains no path segment after the bucket, the function SHALL return `undefined`.
 
 The path segment SHALL be decoded with `decodeURIComponent` before being set as the `path` query parameter; if decoding throws, the raw segment SHALL be used.
 
@@ -90,29 +87,38 @@ The path segment SHALL be decoded with `decodeURIComponent` before being set as 
 
 ### Requirement: `useAttachmentAction` hook resolves and triggers the correct action per attachment
 
-`apps/chat/src/hooks/attachment/useAttachmentAction.ts` SHALL export `useAttachmentAction()` returning a stable callback `handleAttachmentClick: (attachment: DisplayAttachment) => void`.
+`libs/chat-hooks/src/attachment/useAttachmentAction/useAttachmentAction.ts` SHALL export `useAttachmentAction({ resolveDownloadUrl })` returning a stable callback `handleAttachmentClick: (attachment: DisplayAttachment) => void`.
+
+The DIAL-file-id-to-URL step is host-owned — it encodes the application's own file-download endpoint — so it SHALL be injected as the `resolveDownloadUrl` parameter rather than imported by the hook. `apps/chat` passes `resolveDialFileDownloadUrl`.
 
 When `handleAttachmentClick` is called with an attachment:
 
-1. If `attachment.url` is set: if it is a DIAL file ID (starts with `files/`), resolve the BFF download URL via `resolveDialFileDownloadUrl` and trigger a browser download by programmatically clicking a temporary `<a>` element with `href` set to the resolved URL and the `download` attribute set to `attachment.name`. If `attachment.url` is set but is not a DIAL file ID, do nothing.
+1. If `attachment.url` or inline `attachment.data` is set, delegate to `downloadAttachment`, which downloads a DIAL file id through `resolveDownloadUrl` + `triggerAnchorDownload`, or builds a blob from inline base64 `data` and downloads it through `triggerBlobDownload`. A `url` that is set but is not a DIAL file id, with no `data`, resolves to no download.
 2. Otherwise, if `attachment.referenceUrl` is set (a reference-only attachment — no `url`, e.g. a RAG/search-grounding chunk):
-   - If `referenceAttachmentToPdfCanvasContent` (built from `{ type: attachment.contentType, url: attachment.referenceUrl, title: attachment.name }`) returns non-`null` (the reference targets a PDF, optionally with a `#page=N` fragment), open the canvas with that content via `openCanvas(content, attachment.name)`.
-   - Otherwise, call `openAnnotationAttachment({ type: attachment.contentType, url: attachment.referenceUrl, title: attachment.name })`, which downloads DIAL-hosted files or opens external URLs via `window.open`.
-3. If neither `attachment.url` nor `attachment.referenceUrl` is set, do nothing.
+   - If the reference targets a PDF (optionally with a `#page=N` fragment), open the canvas with the resulting `PdfCanvasContent` via `openCanvas(content, attachment.name)`. A referenced page is expressed as a single transparent, zero-area highlight plus a matching `selectedHighlightId`, so the viewer scrolls to that page without painting anything over it.
+   - Otherwise, download DIAL-hosted files through `resolveDownloadUrl` or open external URLs via `window.open(url, '_blank', 'noopener,noreferrer')`.
+3. If neither `attachment.url`, `attachment.data`, nor `attachment.referenceUrl` is set, do nothing.
+
+The module SHALL also export `downloadAttachment(attachment, resolveDownloadUrl): boolean` and `isDownloadableAttachment(attachment): boolean`, so callers can skip reference-only attachments without duplicating the DIAL-file-id and inline-data checks.
 
 The hook SHALL be extensible: future handlers for different MIME types, attachment types, or metadata SHALL be addable by extending the routing logic inside `useAttachmentAction` without modifying callers.
 
-The returned callback SHALL be stable across re-renders (wrapped in `useCallback`, with `openCanvas` as its only dependency).
+The returned callback SHALL be stable across re-renders (wrapped in `useCallback` over `openCanvas` and `resolveDownloadUrl`).
 
 #### Scenario: DIAL file attachment triggers a download
 
 - **WHEN** `handleAttachmentClick` is called with an attachment whose `url` is `'files/my-bucket/folder/file.pdf'`
-- **THEN** a temporary anchor with `href` equal to the resolved BFF URL and `download` set to `attachment.name` is clicked programmatically
+- **THEN** `triggerAnchorDownload` is called with the URL that `resolveDownloadUrl` returned and the attachment's name
+
+#### Scenario: Inline data attachment downloads as a blob
+
+- **WHEN** `handleAttachmentClick` is called with an attachment that has no DIAL `url` but carries inline base64 `data`
+- **THEN** a blob is built from that data using the attachment's content type and downloaded through `triggerBlobDownload`
 
 #### Scenario: Attachment without a DIAL file URL or referenceUrl is a no-op
 
-- **WHEN** `handleAttachmentClick` is called with an attachment whose `url` is `undefined` or an absolute external URL, and `referenceUrl` is also `undefined`
-- **THEN** no anchor is created, no canvas is opened, and no navigation occurs
+- **WHEN** `handleAttachmentClick` is called with an attachment whose `url` is `undefined` or an absolute external URL, and both `data` and `referenceUrl` are also `undefined`
+- **THEN** no download is triggered, no canvas is opened, and no navigation occurs
 
 #### Scenario: Callback reference is stable
 

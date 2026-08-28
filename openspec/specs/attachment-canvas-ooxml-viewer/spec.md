@@ -461,11 +461,12 @@ The download button MUST remain available in every Office state, including the e
 
 ### Requirement: `resolveOoxmlCanvasContent` app-layer resolver
 
-`apps/chat/src/utils/attachment-canvas.ts` SHALL export:
+`libs/chat-hooks/src/files/attachment-canvas.ts` SHALL export, from `@epam/ai-dial-chat-hooks`:
 
 ```ts
 export const resolveOoxmlCanvasContent = async (
   attachment: DisplayAttachment,
+  resolvers: AttachmentCanvasUrlResolvers,
   format: OoxmlFileType,
 ): Promise<OoxmlCanvasContent | ErrorCanvasContent | null>
 ```
@@ -478,7 +479,7 @@ The function SHALL delegate to the existing `resolveAttachmentBlobUrl` helper an
 
 This is the same three-way shape as `resolvePdfCanvasContent`, and reusing `resolveAttachmentBlobUrl` is deliberate: Office files inherit the blob LRU cache, the `403 → Forbidden` / other-failure → `LoadFailed` classification, and support for locally-picked `File`s, DIAL download URLs, `previewUrl`, and inline base64 — identically to PDFs, with no duplicated fetch logic.
 
-**Adapter contract (library isolation).** This function is the app-level adapter that keeps host knowledge out of `libs/attachment-canvas`. DIAL URL construction (`resolveDialUrl`), the fetch, the cache, CSRF/auth, and HTTP status classification all live here. What crosses into the library is a resolved `url` string and an `OoxmlFileType` — nothing more. No new backend endpoint is introduced; Office bytes are served by the existing DIAL file download route.
+**Adapter contract (library isolation).** This function keeps host knowledge out of `libs/attachment-canvas`. The fetch, the blob cache, and the HTTP status classification live in `libs/chat-hooks`, which is host-agnostic; the genuinely app-specific part — DIAL URL construction, CSRF/auth — is injected as the `resolvers` argument by `apps/chat/src/hooks/attachment/useAttachmentCanvasResolvers.ts`, which binds this function and exposes it to the canvas hook as `resolveOoxmlContent(attachment, format)`. What crosses into `libs/attachment-canvas` is a resolved `url` string and an `OoxmlFileType` — nothing more. No new backend endpoint is introduced; Office bytes are served by the existing DIAL file download route.
 
 #### Scenario: dial attachment resolves to an object url
 
@@ -502,19 +503,19 @@ This is the same three-way shape as `resolvePdfCanvasContent`, and reusing `reso
 
 #### Scenario: the format argument is passed through unchanged
 
-- **WHEN** `resolveOoxmlCanvasContent(attachment, OoxmlFileType.Pptx)` resolves successfully
+- **WHEN** `resolveOoxmlCanvasContent(attachment, resolvers, OoxmlFileType.Pptx)` resolves successfully
 - **THEN** the returned payload's `format` is `OoxmlFileType.Pptx`
 
 ---
 
 ### Requirement: routing — Office attachments open the `Ooxml` content type
 
-`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`'s internal `openFileCanvas` SHALL add **two** Office branches, each placed immediately before the dispatch that consumes the same signal:
+The canvas hook's internal `openFileCanvas` SHALL add **two** Office branches — in `libs/attachment-canvas/src/hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas.ts` — each placed immediately before the dispatch that consumes the same signal:
 
 1. **MIME branch** — before the `switch (contentType)`: call `getOoxmlFileType('', contentType)`; when it yields a format, resolve and open the canvas.
 2. **Extension branch** — before the `switch (ext)`: call `getOoxmlFileType(fileName)`; when it yields a format, resolve and open the canvas.
 
-Each branch SHALL call `resolveOoxmlCanvasContent(attachment, format)`, then `openCanvas(content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)), attachment.name, canvasAttachmentId)`, then return `true`.
+Each branch SHALL call the injected `resolvers.resolveOoxmlContent(attachment, format)`, then `openCanvas(content ?? createUnsupportedCanvasContent(resolvers.resolveContentUrl(attachment)), attachment.name, canvasAttachmentId)`, then return `true`.
 
 Both branches SHALL return `true` even when resolution fails, because the attachment **was** recognized as a supported Office format. The unsupported panel — which still offers a download when a URL is available — is the correct outcome, and returning `false` would make the caller fall back to a bare browser download and lose the panel entirely.
 

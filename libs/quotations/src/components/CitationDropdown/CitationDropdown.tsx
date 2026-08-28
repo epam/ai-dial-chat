@@ -1,4 +1,5 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Tooltip } from '@epam/ai-dial-ui-kit';
 import { FC, memo, ReactNode, useCallback, useMemo } from 'react';
 import { useCitationCardContext } from '../../context/CitationCardContext';
@@ -12,6 +13,7 @@ import {
   CitationMarker,
   type CitationMarkerLabels,
 } from '../CitationMarker/CitationMarker';
+import styles from './CitationDropdown.module.scss';
 
 /** Props for the `CitationDropdown` component. */
 export interface CitationDropdownProps {
@@ -83,12 +85,10 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
       open={isOpen}
       onOpenChange={handleOpenChange}
       triggerClassName="ms-1 inline-flex align-middle"
-      /* The tooltip's own arrow keeps its `stroke-primary` outline even though
-         the container border is off, so it reads as a stray outlined notch next
-         to the card — `[&>svg]` targets that arrow and clears the stroke.
-         `stroke-transparent`, not `stroke-none`: the Tailwind theme replaces the
-         default stroke scale with the border palette, which has no `none`. */
-      contentClassName="!p-0 !bg-transparent !border-0 !shadow-none !max-w-none !rounded-none [&>svg]:stroke-transparent"
+      contentClassName={mergeClasses(
+        '!p-0 !bg-transparent !border-0 !shadow-none !max-w-none !rounded-none',
+        styles.content,
+      )}
       tooltip={
         <CitationCard
           group={group}

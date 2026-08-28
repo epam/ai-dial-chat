@@ -24,6 +24,7 @@ export const StarCellRenderer: FC<
   }, [data?.id, data?.isStarred]);
 
   if (!data) return null;
+  if (context?.isFavoriteVisible?.(data) === false) return null;
   const handleToggle = (e: MouseEvent<HTMLElement>) => {
     e.stopPropagation();
     const next = !isStarred;

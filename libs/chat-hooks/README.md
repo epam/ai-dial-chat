@@ -1855,6 +1855,177 @@ const attachment = skillFileToAttachment(fileTreeNode, {
 });
 ```
 
+### nameFromPath / skillFileBytesToBlob / buildSkillManifestForSubmit / buildSkillFilesPayload
+
+Small file-tree and submit-payload helpers shared by skill-editing UI: resolves a skill-relative path's display name (its final segment), wraps raw supporting-file bytes in a `Blob` (copying them so the source buffer can be reused) ahead of an upload request, builds `SKILL.md` for a create/edit submission (reassigning onto the loaded/imported frontmatter when one exists, otherwise building fresh), and builds the ordered `filePaths`/`files` payload `createSkill`/`updateSkill` expect from the editor's file tree and in-memory content map.
+
+```ts
+import {
+  buildSkillFilesPayload,
+  buildSkillManifestForSubmit,
+  nameFromPath,
+  skillFileBytesToBlob,
+} from '@epam/ai-dial-chat-hooks';
+
+nameFromPath('agents/analyzer.md'); // 'analyzer.md'
+const blob = skillFileBytesToBlob(fileBytes);
+
+const skillManifest = buildSkillManifestForSubmit(
+  frontmatter,
+  'good-morning',
+  'Summarizes documents',
+  'You are a summarization assistant...',
+);
+const { filePaths, files } = buildSkillFilesPayload(fileTreeNodes, filesContent);
+```
+
+### useSkillEditorLoad
+
+Owns the edit-mode skill download/unpack/parse flow: the in-memory supporting-file map, the loaded manifest values and frontmatter, the concurrency ETag, and the `SkillEditorLoadState` machine driving a skill-editing form's loading/error/forbidden/not-found presentation. Create mode never leaves `Loaded` and starts with empty state. Accepts an already-configured `client` (the host's own `downloadSkill`/`downloadSkillFile`/`listSkillFiles` wrappers) rather than importing or configuring one itself.
+
+```ts
+import {
+  useSkillEditorLoad,
+  SkillEditorLoadState,
+  type SkillEditorLoadClient,
+} from '@epam/ai-dial-chat-hooks';
+
+// Host-owned adapter over the generated `SkillsApi` client — see
+// `SkillEditorLoadClient` for the exact shape. The library never imports or
+// configures a client itself.
+const client: SkillEditorLoadClient = {
+  downloadSkill: (bucket, path) => skillsApi.downloadSkill(bucket, path),
+  downloadSkillFile: (bucket, path, filePath) =>
+    skillsApi.downloadSkillFile(bucket, path, filePath),
+  listSkillFiles: (params) => skillsApi.listSkillFiles(params),
+};
+
+const { loadState, loadedValues, files, filesContentRef, retryLoad } =
+  useSkillEditorLoad({ isEditMode, bucket, skillPath, client });
+
+if (loadState === SkillEditorLoadState.Loading) {
+  // render a loading state
+}
+```
+
+### useSkillEditorSubmit
+
+Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself.
+
+```ts
+import {
+  useSkillEditorSubmit,
+  type SkillEditorSubmitClient,
+} from '@epam/ai-dial-chat-hooks';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+
+// Host-owned adapter over the generated `SkillsApi` client — see
+// `SkillEditorSubmitClient` for the exact shape.
+const client: SkillEditorSubmitClient = {
+  createSkill: (bucket, path, skillManifest, filePaths, files) =>
+    skillsApi.createSkill(bucket, path, skillManifest, filePaths, files),
+  updateSkill: (bucket, path, skillManifest, filePaths, files, ifMatch) =>
+    skillsApi.updateSkill(bucket, path, skillManifest, filePaths, files, ifMatch),
+};
+
+const { phase, errors, submitError, conflict, clearConflict, handleSubmit } =
+  useSkillEditorSubmit({
+    bucket,
+    isEditMode,
+    files,
+    filesContentRef,
+    frontmatterRef,
+    loadedPathRef,
+    etagRef,
+    returnUrl,
+    refetchSkills,
+    client,
+    messages: {
+      required: 'Required',
+      nameInvalid: 'Invalid name',
+      nameConflict: 'A skill with this name already exists',
+      archiveTooLarge: 'The uploaded content is too large',
+      serviceUnavailable: 'Service is temporarily unavailable',
+      pathInvalid: 'Invalid path',
+      saveError: 'Could not save the skill',
+      saveSuccessTitle: 'Skill created',
+      createSuccess: (name) => `"${name}" has been created.`,
+      updateSuccessTitle: 'Skill updated',
+      updateSuccess: (name) => `"${name}" has been updated.`,
+      conflictMessage: 'Someone else changed this skill',
+    },
+    onNavigate: (url) => navigate(url),
+    onNotify: (notification) => showNotification(notification),
+  });
+```
+
+### useSkillFileActions
+
+Owns a Skill Editor's batch file upload workflow: validating a staged batch, committing it atomically (supporting files plus an optional `SKILL.md` manifest import, with a confirmation gate), and removing already-committed nodes. Accepts a `messages` object (host-translated strings) rather than resolving them itself.
+
+```ts
+import { useSkillFileActions } from '@epam/ai-dial-chat-hooks';
+
+const { fileActions, pendingManifestImport, resolveManifestImport } =
+  useSkillFileActions({
+    files,
+    setFiles,
+    filesContentRef,
+    frontmatterRef,
+    loadedValues,
+    setLoadedValues,
+    isEditMode,
+    isDirty,
+    setSelectedPath,
+    messages: {
+      required: 'Required',
+      pathReserved: 'Reserved name',
+      pathInvalid: 'Invalid path',
+      pathDuplicate: 'Duplicate path',
+      fileTooLarge: (maxSize) => `File exceeds ${maxSize}`,
+      manifestCasingInvalid: 'Must be exactly SKILL.md',
+      manifestDuplicate: 'Only one SKILL.md allowed',
+      manifestInvalidUtf8: 'Invalid UTF-8',
+      manifestInvalidFrontmatter: 'Invalid frontmatter',
+      totalSizeExceeded: 'Total size exceeded',
+      totalCountExceeded: 'Total count exceeded',
+      manifestNameMismatch: "Manifest name doesn't match this skill",
+      manifestImportDeclined: 'Manifest import was declined',
+      saveError: 'Could not save the skill',
+    },
+  });
+```
+
+### validateSkillFileBatch
+
+Validates a staged skill-file upload batch against per-file/limit and path-safety rules, in-batch and against-existing duplicates, and projected total size/count — mirroring the BFF's authoritative limits for immediate feedback; the server remains the final gate. Detects at most one root `SKILL.md` in the batch as a manifest-import candidate.
+
+```ts
+import { validateSkillFileBatch } from '@epam/ai-dial-chat-hooks';
+
+const { results, batchErrors, manifestCandidate } = await validateSkillFileBatch(
+  candidates,
+  {
+    existingPaths: ['agents/analyzer.md'],
+    existingTotalBytes: 2048,
+    manifestByteLength: 256,
+    messages: {
+      required: 'Required',
+      pathReserved: 'Reserved name',
+      pathInvalid: 'Invalid path',
+      pathDuplicate: 'Duplicate path',
+      fileTooLarge: (maxSize) => `File exceeds ${maxSize}`,
+      manifestCasingInvalid: 'Must be exactly SKILL.md',
+      manifestDuplicate: 'Only one SKILL.md allowed',
+      manifestInvalidUtf8: 'Invalid UTF-8',
+      manifestInvalidFrontmatter: 'Invalid frontmatter',
+      totalSizeExceeded: 'Total size exceeded',
+      totalCountExceeded: 'Total count exceeded',
+    },
+  },
+);
+```
+
 ### Supporting types and constants
 
 - **`SkillSource`** — which skill namespace a catalog skill item came from: `Personal`, `SharedWithMe`, `Public`.

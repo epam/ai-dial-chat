@@ -111,6 +111,9 @@ export class ChatCompletionsAdapter {
   ): AsyncGenerator<Uint8Array, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+    const cancelUpstreamOnAbort = (): void => {
+      void upstreamReader?.cancel().catch(() => undefined);
+    };
 
     try {
       const dialResult =
@@ -165,6 +168,8 @@ export class ChatCompletionsAdapter {
       }
 
       upstreamReader = dialResult.response.body.getReader();
+      signal.addEventListener('abort', cancelUpstreamOnAbort, { once: true });
+      if (signal.aborted) cancelUpstreamOnAbort();
       const decoder = new TextDecoder();
       let sseBuffer = '';
       let receivedDone = false;
@@ -172,6 +177,9 @@ export class ChatCompletionsAdapter {
 
       while (true) {
         const { done, value } = await upstreamReader.read();
+        if (signal.aborted) {
+          return { outcome: 'aborted', assembledMessage };
+        }
         if (done) {
           this.logger.debug(
             `relayModelCompletion upstream socket closed without [DONE] — model: ${model}`,
@@ -267,8 +275,9 @@ export class ChatCompletionsAdapter {
       return { outcome: 'completed', assembledMessage };
     } catch (err) {
       const isAbort =
-        err instanceof Error &&
-        (err.name === 'AbortError' || err.name === 'DOMException');
+        signal.aborted ||
+        (err instanceof Error &&
+          (err.name === 'AbortError' || err.name === 'DOMException'));
       this.logger.debug(
         `relayModelCompletion outcome: ${isAbort ? 'aborted' : 'error'} — model: ${model}: ${err instanceof Error ? err.message : String(err)}`,
       );
@@ -276,6 +285,7 @@ export class ChatCompletionsAdapter {
         ? { outcome: 'aborted', assembledMessage }
         : { outcome: 'error', error: err, assembledMessage };
     } finally {
+      signal.removeEventListener('abort', cancelUpstreamOnAbort);
       if (upstreamReader) {
         try {
           /*

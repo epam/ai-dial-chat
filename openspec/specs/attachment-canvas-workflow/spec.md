@@ -3,19 +3,22 @@
 ## Purpose
 
 Specifies the host-agnostic attachment-opening workflow exported from
-`@epam/ai-dial-attachment-canvas` — the generalized form of `apps/chat`'s
-`useOpenAttachmentCanvas` — covering attachment-type dispatch (Image/Audio/
-File/Pasted/Prompt), the File content-type routing precedence (reference-only
-PDF, custom visualizers, plain text, MIME, extension, HTML, code fallback),
-and the pure `findVisualizerForMime` matcher, all driven by injected content
-resolvers and callbacks instead of application React contexts.
+`@epam/ai-dial-attachment-canvas`, covering attachment-type dispatch
+(Image/Audio/File/Pasted/Prompt), the File content-type routing precedence
+(reference-only PDF, custom visualizers, plain text, Office, MIME, extension,
+HTML, code fallback), and the pure `findVisualizerForMime` matcher, all driven
+by injected content resolvers and callbacks instead of application React
+contexts.
+
+The hook now lives entirely in the library; `apps/chat` owns no
+`useOpenAttachmentCanvas` of its own, only the
+`useAttachmentCanvasResolvers` adapter that binds the injected resolvers.
 
 ## Requirements
 
 ### Requirement: Attachment-opening hook exported from the package root
 
-`@epam/ai-dial-attachment-canvas` SHALL export a hook (the generalized form
-of `apps/chat`'s `useOpenAttachmentCanvas`) that, given a `DisplayAttachment`
+`@epam/ai-dial-attachment-canvas` SHALL export a hook that, given a `DisplayAttachment`
 (from `@epam/ai-dial-chat-shared`) and an optional caller-scoped
 `canvasAttachmentId`, decides whether and how to open the attachment canvas,
 using only injected content resolvers, an injected `resolveContentUrl`
@@ -30,8 +33,9 @@ hook SHALL return `{ openAttachmentCanvas: (attachment, canvasAttachmentId?)
 - **WHEN** a host calls the exported hook with its own
   `resolveImageContent`/`resolveTextContent`/`resolveMarkdownContent`/
   `resolveCodeContent`/`resolveHtmlContent`/`resolvePdfContent`/
-  `resolveJsonContent`/`resolveVisualizerContent`/`resolveReferencePdfContent`/
-  `resolveContentUrl` callbacks and a `customVisualizers` array
+  `resolveOoxmlContent`/`resolveJsonContent`/`resolveVisualizerContent`/
+  `resolveReferencePdfContent`/`resolveContentUrl`/`hasTextSource` callbacks
+  and a `customVisualizers` array
 - **THEN** the hook never imports or reads any React context, and every
   content decision is made by calling the supplied resolver for the matched
   content type
@@ -80,16 +84,29 @@ pre-empts every other routing; (2) custom-visualizer matching by MIME type
 against the supplied `customVisualizers`, which short-circuits all further
 routing including PDF/Markdown/JSON when content resolves; (3) plain-text
 resolution when `contentType` is empty and inline `data` is present; (4)
-MIME-type-based routing for PDF/Markdown/JSON, falling back to an
+Office detection from the MIME type via `getOoxmlFileType('', contentType)`;
+(5) MIME-type-based routing for PDF/Markdown/JSON, falling back to an
 "unsupported" content and returning `true` when the matched resolver
-returns no content; (5) extension-based routing for `.pdf`/`.md`/`.markdown`/
-`.json`, returning `false` (not "unsupported") when the matched resolver
-returns no content; (6) HTML detection by either the attachment's display
-name or its URL's filename; (7) an "unsupported" gate for any named
-attachment that is neither text- nor HTML-previewable; (8) HTML resolution,
-falling back to a direct URL iframe only when nothing was fetched, and to
-"unsupported" when fetched content was rejected by the resolver; (9) a code
-resolver as the final fallback.
+returns no content; (6) Office detection from the file name via
+`getOoxmlFileType(fileName)`; (7) extension-based routing for
+`.pdf`/`.md`/`.markdown`/`.json`, returning `false` (not "unsupported") when
+the matched resolver returns no content; (8) HTML detection by either the
+attachment's display name or its URL's filename; (9) an "unsupported" gate
+for any named attachment that is neither text- nor HTML-previewable; (10)
+HTML resolution, falling back to a direct URL iframe only when nothing was
+fetched, and to "unsupported" when fetched content was rejected by the
+resolver; (11) a code resolver as the final fallback.
+
+Each Office branch sits immediately ahead of the switch keyed on the same
+signal, so the pairing stays local; both return `true` even when the resolver
+yields nothing, opening "unsupported" content instead — the format *was*
+recognised (see the `attachment-canvas-ooxml-viewer` capability).
+
+#### Scenario: Office MIME detection pre-empts the content-type switch
+
+- **WHEN** a `File` attachment's `contentType` is the canonical DOCX MIME type
+- **THEN** `resolveOoxmlContent` is called and the `contentType` switch is
+  never reached
 
 #### Scenario: MIME-routed resolver failure opens Unsupported content
 
