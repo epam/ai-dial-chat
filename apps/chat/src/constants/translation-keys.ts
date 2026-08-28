@@ -1107,8 +1107,6 @@ export enum VoiceRecordingI18nKeys {
 
 export enum ToolsI18nKeys {
   MenuTitle = 'tools.menuTitle',
-  DeepResearchFallback = 'tools.deepResearchFallback',
-  SelectedCount = 'tools.selectedCount',
   RemoveTool = 'tools.removeTool',
 }
 

@@ -1450,9 +1450,8 @@
             "name": "toolsetName",
             "required": true,
             "in": "path",
-            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -1561,9 +1560,8 @@
             "name": "toolsetName",
             "required": true,
             "in": "path",
-            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-toolset",
               "type": "string"
             }
@@ -6743,6 +6741,17 @@
             "example": "https://mcp-app-sandbox.example.com",
             "nullable": true
           },
+          "mcpAppTheme": {
+            "type": "string",
+            "description": "Admin-controlled color theme override for MCP App Views. Null when MCP_APP_THEME is not configured — each client uses its own active theme.",
+            "enum": ["light", "dark"],
+            "nullable": true
+          },
+          "mcpAppUserAgent": {
+            "type": "string",
+            "description": "Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured — defaults to \"ai-dial-chat\" on the client.",
+            "nullable": true
+          },
           "fileManagerTabs": {
             "description": "Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.",
             "example": ["my_files", "shared", "organization"],
@@ -6802,12 +6811,6 @@
             "items": {
               "$ref": "#/components/schemas/AnnouncementItemDto"
             }
-          },
-          "deepResearchToolId": {
-            "type": "string",
-            "description": "Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.",
-            "example": "deep_research",
-            "nullable": true
           },
           "footerHtmlMessage": {
             "type": "string",

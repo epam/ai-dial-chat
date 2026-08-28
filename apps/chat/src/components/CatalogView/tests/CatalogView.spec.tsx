@@ -778,7 +778,6 @@ describe('CatalogView', () => {
         announcementDescription: null,
         announcements: [],
         footerHtmlMessage: '',
-        deepResearchToolId: null,
         customVisualizers: [],
         publicationFilterSources: ['title', 'role', 'dial_roles'],
       },

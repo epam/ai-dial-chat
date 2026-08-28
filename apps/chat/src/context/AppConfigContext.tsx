@@ -40,7 +40,6 @@ export interface AppConfigState {
     announcementTitle: string | null;
     announcementDescription: string | null;
     announcements: AnnouncementItem[];
-    deepResearchToolId: string | null;
     footerHtmlMessage: string;
     customVisualizers: CustomVisualizer[];
     publicationFilterSources: string[];
@@ -68,7 +67,6 @@ const INITIAL_STATE: AppConfigState = {
     announcementTitle: null,
     announcementDescription: null,
     announcements: [],
-    deepResearchToolId: null,
     footerHtmlMessage: '',
     customVisualizers: [],
     publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
@@ -116,7 +114,6 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             announcements: Array.isArray(response.config?.announcements)
               ? response.config.announcements
               : [],
-            deepResearchToolId: response.config?.deepResearchToolId ?? null,
             footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
             customVisualizers: response.config?.customVisualizers ?? [],
             publicationFilterSources:
