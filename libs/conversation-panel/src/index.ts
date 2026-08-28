@@ -4,11 +4,15 @@ export { RenameConversationPopup } from './components/RenameConversationPopup/Re
 export type {
   RenameConversationPopupProps,
   RenameConversationPopupLabels,
-} from './components/RenameConversationPopup/RenameConversationPopup';
+  RenameConversationPopupStyles,
+} from './models/rename-conversation-popup';
 export type {
   ImportExportQueueProps,
   ImportExportQueueLabels,
-} from './components/ImportExportQueue/ImportExportQueue';
+  ImportExportQueueColors,
+  ImportExportQueueTypography,
+  ImportExportQueueStyles,
+} from './models/import-export-queue';
 export type {
   ConversationMove,
   ConversationPanelProps,

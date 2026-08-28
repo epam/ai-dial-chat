@@ -22,44 +22,13 @@ import {
   type FC,
   type KeyboardEvent,
 } from 'react';
+import type { RenameConversationPopupProps } from '../../models/rename-conversation-popup';
 
-/** Labels for every user-visible string in `RenameConversationPopup`. */
-export interface RenameConversationPopupLabels {
-  /** Popup dialog heading. */
-  popupTitle: string;
-  /** Placeholder text for the name input. */
-  inputPlaceholder: string;
-  /** Accessible name and tooltip for the AI-generation trigger button. */
-  renameWithAiLabel: string;
-  /** Error shown when the AI name generation request fails. */
-  renameWithAiError: string;
-  /** Error shown when the trimmed name's UTF-8 byte length exceeds 255. */
-  nameTooLongError: string;
-  /** Label for the save/confirm button. */
-  saveLabel: string;
-  /** Label for the cancel button. */
-  cancelLabel: string;
-}
-
-/** Props accepted by `RenameConversationPopup`. */
-export interface RenameConversationPopupProps {
-  /** Whether the popup is visible. */
-  isOpen: boolean;
-  /** The conversation's current name, pre-filled into the input on open. */
-  currentTitle: string;
-  /** While `true`, the input/buttons are replaced by a loading indicator. */
-  isSaving: boolean;
-  /** API-level error message, or `null` when none. */
-  error: string | null;
-  /** Called with the trimmed, sanitized new name when the user confirms. */
-  onSave: (newTitle: string) => void;
-  /** Called when the user cancels or closes the popup. */
-  onCancel: () => void;
-  /** Called to request an AI-generated name; must resolve with the generated string. */
-  onGenerateWithAi: () => Promise<string>;
-  /** User-visible string labels. */
-  labels: RenameConversationPopupLabels;
-}
+export type {
+  RenameConversationPopupLabels,
+  RenameConversationPopupProps,
+  RenameConversationPopupStyles,
+} from '../../models/rename-conversation-popup';
 
 /** Popup dialog for renaming a conversation, with validation and AI-generation affordance. */
 export const RenameConversationPopup: FC<RenameConversationPopupProps> = memo(
@@ -72,6 +41,7 @@ export const RenameConversationPopup: FC<RenameConversationPopupProps> = memo(
     onCancel,
     onGenerateWithAi,
     labels,
+    styles,
   }) => {
     const [value, setValue] = useState(currentTitle);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -171,37 +141,39 @@ export const RenameConversationPopup: FC<RenameConversationPopupProps> = memo(
               ]
         }
       >
-        {isSaving ? (
-          <div className="h-[120px] px-6 py-4">
-            <Spinner size={50} />
-          </div>
-        ) : (
-          <div className="flex items-start gap-2 px-6 py-3">
-            <div className="min-w-0 flex-1">
-              <Input
-                inputRef={inputRef}
-                value={value}
-                placeholder={labels.inputPlaceholder}
-                error={inputError}
-                onChange={(v) => setValue(sanitizeConversationName(v ?? ''))}
-                onKeyDown={handleKeyDown}
+        <div className={styles?.bodyClassName} style={styles?.cssVars}>
+          {isSaving ? (
+            <div className="h-[120px] px-6 py-4">
+              <Spinner size={50} />
+            </div>
+          ) : (
+            <div className="flex items-start gap-2 px-6 py-3">
+              <div className="min-w-0 flex-1">
+                <Input
+                  inputRef={inputRef}
+                  value={value}
+                  placeholder={labels.inputPlaceholder}
+                  error={inputError}
+                  onChange={(v) => setValue(sanitizeConversationName(v ?? ''))}
+                  onKeyDown={handleKeyDown}
+                />
+              </div>
+              <GhostIconButton
+                aria-label={labels.renameWithAiLabel}
+                tooltipProps={{ tooltip: labels.renameWithAiLabel }}
+                disabled={isGenerating || isSaving}
+                onClick={handleGenerateWithAi}
+                icon={
+                  isGenerating ? (
+                    <Spinner size={DIAL_ICON_SIZE.MD} />
+                  ) : (
+                    <IconSparkles size={DIAL_ICON_SIZE.MD} stroke={1.5} />
+                  )
+                }
               />
             </div>
-            <GhostIconButton
-              aria-label={labels.renameWithAiLabel}
-              tooltipProps={{ tooltip: labels.renameWithAiLabel }}
-              disabled={isGenerating || isSaving}
-              onClick={handleGenerateWithAi}
-              icon={
-                isGenerating ? (
-                  <Spinner size={DIAL_ICON_SIZE.MD} />
-                ) : (
-                  <IconSparkles size={DIAL_ICON_SIZE.MD} stroke={1.5} />
-                )
-              }
-            />
-          </div>
-        )}
+          )}
+        </div>
       </Popup>
     );
   },

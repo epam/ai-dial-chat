@@ -6,7 +6,12 @@ import {
   waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type KeyboardEventHandler, type ReactNode, type Ref } from 'react';
+import {
+  type CSSProperties,
+  type KeyboardEventHandler,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   RenameConversationPopup,
@@ -154,6 +159,28 @@ describe('RenameConversationPopup', () => {
   it('pre-fills the input with currentTitle', () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} />);
     expect(getInput().value).toBe('My Chat');
+  });
+
+  it('applies body class and CSS-variable overrides', () => {
+    render(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        styles={{
+          bodyClassName: 'custom-popup-body',
+          cssVars: {
+            '--consumer-popup-color': '#abcdef',
+          } as CSSProperties,
+        }}
+      />,
+    );
+
+    const dialog = screen.getByRole('dialog');
+    // eslint-disable-next-line testing-library/no-node-access
+    const body = dialog.querySelector('.custom-popup-body') as HTMLElement;
+    expect(body).toBeTruthy();
+    expect(body.style.getPropertyValue('--consumer-popup-color')).toBe(
+      '#abcdef',
+    );
   });
 
   it('Save button is disabled when value is unchanged', () => {

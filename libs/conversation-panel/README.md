@@ -144,8 +144,11 @@ Floating queue panel that shows the status of in-flight or recently completed ex
 ```tsx
 import {
   ImportExportQueue,
+  type ImportExportQueueColors,
   type ImportExportQueueLabels,
   type ImportExportQueueProps,
+  type ImportExportQueueStyles,
+  type ImportExportQueueTypography,
 } from '@epam/ai-dial-conversation-panel';
 import {
   ConversationTransferJobStatus,
@@ -180,6 +183,10 @@ const labels: ImportExportQueueLabels = {
   onDismiss={handleDismiss}
   onRetry={handleRetry}
   labels={labels}
+  styles={{
+    colors: { background: '#fff', text: '#161b2d' },
+    typography: { titleClassName: 'dial-small-semi-text' },
+  }}
 />;
 ```
 
@@ -200,6 +207,10 @@ const labels: ImportExportQueueLabels = {
 | `closeLabel` | `string` | Confirm button label in the dialog |
 | `cancelLabel` | `string` | Cancel button label in the dialog |
 
+### ImportExportQueueStyles
+
+`styles?: ImportExportQueueStyles` groups all customization hooks. `colors?: ImportExportQueueColors` overrides the panel background, primary/secondary text, status icons, and failed-count badge through CSS custom properties. `typography?: ImportExportQueueTypography` provides classes for the title, job label, job description, and failed-count badge. `rootClassName` and `bodyClassName` target the queue root and scrollable job list; `cssVars` is the last-resort CSS-variable escape hatch.
+
 ## RenameConversationPopup
 
 Modal dialog for renaming a conversation. Validates the name (non-empty, ≤ 255 UTF-8 bytes, sanitized of DIAL-prohibited characters), shows a byte-length error, supports AI-generated names via `onGenerateWithAi`, and guards against concurrent generation requests.
@@ -209,6 +220,7 @@ import {
   RenameConversationPopup,
   type RenameConversationPopupLabels,
   type RenameConversationPopupProps,
+  type RenameConversationPopupStyles,
 } from '@epam/ai-dial-conversation-panel';
 
 const labels: RenameConversationPopupLabels = {
@@ -230,6 +242,7 @@ const labels: RenameConversationPopupLabels = {
   onCancel={handleCancel}
   onGenerateWithAi={generateConversationTitle}
   labels={labels}
+  styles={{ bodyClassName: 'my-popup-body' }}
 />;
 ```
 
@@ -244,3 +257,7 @@ const labels: RenameConversationPopupLabels = {
 | `nameTooLongError` | `string` | Error shown when the trimmed name exceeds 255 UTF-8 bytes |
 | `saveLabel` | `string` | Label for the save/confirm button |
 | `cancelLabel` | `string` | Label for the cancel button |
+
+### RenameConversationPopupStyles
+
+`styles?: RenameConversationPopupStyles` exposes `bodyClassName` for the popup content wrapper and `cssVars` for custom properties inherited by the input, spinner, and AI-generation control. The popup shell and action buttons continue to use the UI kit theme.

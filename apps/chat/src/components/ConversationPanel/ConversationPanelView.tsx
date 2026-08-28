@@ -422,8 +422,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     triggerImport: handleImportClick,
     handleFileChange: handleImportFileChange,
   } = useImportFilePicker({
-    isMobile,
-    accept: IMPORT_FILE_ACCEPT,
+    accept: isMobile ? undefined : IMPORT_FILE_ACCEPT,
     onFileSelected: handleFileSelected,
   });
 

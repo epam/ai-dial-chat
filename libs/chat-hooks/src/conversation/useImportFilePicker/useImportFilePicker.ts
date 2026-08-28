@@ -9,14 +9,9 @@ import {
 /** Parameters for `useImportFilePicker`. */
 export interface UseImportFilePickerParams {
   /**
-   * When `true`, the native file picker opens without an `accept` filter so
-   * iOS can show all files (iOS ignores `accept` inconsistently). When
-   * `false`, `accept` is applied to the hidden input.
-   */
-  isMobile: boolean;
-  /**
    * MIME types / file-extension filter string passed to the hidden input's
-   * `accept` attribute when `isMobile` is `false`.
+   * `accept` attribute. The host resolves any platform-specific policy before
+   * passing this value.
    */
   accept?: string;
   /** Called with the selected `File` after the user confirms their choice. */
@@ -43,22 +38,21 @@ export interface UseImportFilePickerResult {
  * same file always fires `onChange` (the value is reset after each selection).
  */
 export const useImportFilePicker = ({
-  isMobile,
   accept,
   onFileSelected,
 }: UseImportFilePickerParams): UseImportFilePickerResult => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  /* Keep the input's accept attribute in sync with isMobile / accept. */
+  /* Keep the input's accept attribute in sync with the host-resolved value. */
   useLayoutEffect(() => {
     const el = inputRef.current;
     if (!el) return;
-    if (isMobile) {
+    if (accept === undefined || accept === '') {
       el.removeAttribute('accept');
     } else {
-      el.accept = accept ?? '';
+      el.accept = accept;
     }
-  }, [isMobile, accept]);
+  }, [accept]);
 
   const triggerImport = useCallback(() => {
     inputRef.current?.click();

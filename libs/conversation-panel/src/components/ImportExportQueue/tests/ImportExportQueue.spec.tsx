@@ -5,11 +5,12 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   ImportExportQueue,
   type ImportExportQueueLabels,
+  type ImportExportQueueStyles,
 } from '../ImportExportQueue';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -129,6 +130,7 @@ describe('ImportExportQueue', () => {
       onRetry: (id: string) => void;
       onClose: () => void;
       labels: ImportExportQueueLabels;
+      styles: ImportExportQueueStyles;
     }> = {},
   ) =>
     render(
@@ -139,6 +141,7 @@ describe('ImportExportQueue', () => {
         onRetry={props.onRetry ?? vi.fn()}
         onClose={props.onClose ?? vi.fn()}
         labels={props.labels ?? DEFAULT_LABELS}
+        styles={props.styles}
       />,
     );
 
@@ -434,6 +437,47 @@ describe('ImportExportQueue', () => {
 
     expect(screen.getByText('Folder 1 / Folder 2')).toBeTruthy();
     expect(screen.getByText('My Chat')).toBeTruthy();
+  });
+
+  it('applies typed color, typography, and class overrides', () => {
+    renderQueue([makeJob({ title: 'My Chat', description: 'Folder' })], {
+      styles: {
+        colors: { background: '#ffffff', text: '#111111' },
+        typography: {
+          titleClassName: 'custom-title',
+          jobLabelClassName: 'custom-job-label',
+          jobDescriptionClassName: 'custom-job-description',
+        },
+        rootClassName: 'custom-root',
+        bodyClassName: 'custom-body',
+        cssVars: {
+          '--consumer-override': '#abcdef',
+        } as CSSProperties,
+      },
+    });
+
+    const region = screen.getByRole('status');
+    expect(region.classList.contains('custom-root')).toBe(true);
+    expect(region.style.getPropertyValue('--cp-transfer-queue-bg')).toBe(
+      '#ffffff',
+    );
+    expect(region.style.getPropertyValue('--cp-transfer-queue-text')).toBe(
+      '#111111',
+    );
+    expect(region.style.getPropertyValue('--consumer-override')).toBe(
+      '#abcdef',
+    );
+    expect(screen.getByText(TITLE).classList.contains('custom-title')).toBe(
+      true,
+    );
+    expect(
+      screen.getByText('My Chat').classList.contains('custom-job-label'),
+    ).toBe(true);
+    expect(
+      screen.getByText('Folder').classList.contains('custom-job-description'),
+    ).toBe(true);
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(region.querySelector('.custom-body')).toBeTruthy();
   });
 
   it('renders no secondary line when a job has no description', () => {

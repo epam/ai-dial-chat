@@ -1,6 +1,8 @@
 import {
+  buildCssVars,
   ConversationTransferJobStatus,
   ConversationTransferSubjectKind,
+  mergeClasses,
   type ConversationTransferJob,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -21,50 +23,18 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { memo, useCallback, useEffect, useState, type FC } from 'react';
+import type {
+  ImportExportQueueLabels,
+  ImportExportQueueProps,
+  ImportExportQueueStyles,
+} from '../../models/import-export-queue';
+import classes from './ImportExportQueue.module.scss';
 
-/** Labels for every user-visible string in `ImportExportQueue`. */
-export interface ImportExportQueueLabels {
-  /** Primary label for a job targeting all conversations. */
-  allConversationsJobLabel: string;
-  /** Returns the accessible name for the dismiss control of an in-progress job. */
-  closeJobAriaLabel: (title: string) => string;
-  /** Returns the accessible name for the retry control of a failed job. */
-  retryJobAriaLabel: (title: string) => string;
-  /** Accessible name for the queue collapse toggle when the panel is expanded. */
-  collapseQueueAriaLabel: string;
-  /** Accessible name for the queue expand toggle when the panel is collapsed. */
-  expandQueueAriaLabel: string;
-  /** Accessible name for the queue close button. */
-  closeQueueAriaLabel: string;
-  /** Heading text of the close-confirmation dialog. */
-  closeQueueConfirmHeader: string;
-  /** Confirmation dialog description when at least one job is InProgress and none are Failed. */
-  closeQueueConfirmDescriptionInProgress: string;
-  /** Confirmation dialog description when at least one job is Failed and none are InProgress. */
-  closeQueueConfirmDescriptionFailed: string;
-  /** Confirmation dialog description when there are both InProgress and Failed jobs. */
-  closeQueueConfirmDescriptionMixed: string;
-  /** Label for the confirmation dialog's confirm button. */
-  closeLabel: string;
-  /** Label for the confirmation dialog's cancel button. */
-  cancelLabel: string;
-}
-
-/** Props accepted by `ImportExportQueue`. */
-export interface ImportExportQueueProps {
-  /** Queue panel heading (e.g. `"Exporting"`). */
-  title: string;
-  /** Current list of transfer jobs. */
-  jobs: ConversationTransferJob[];
-  /** Called when the queue should close (after confirmation if needed). */
-  onClose: () => void;
-  /** Called with the job id when the user dismisses an in-progress job. */
-  onDismiss: (jobId: string) => void;
-  /** Called with the job id when the user retries a failed job. */
-  onRetry: (jobId: string) => void;
-  /** User-visible string labels. */
-  labels: ImportExportQueueLabels;
-}
+export type {
+  ImportExportQueueLabels,
+  ImportExportQueueProps,
+  ImportExportQueueStyles,
+} from '../../models/import-export-queue';
 
 const AUTO_CLOSE_DELAY_MS = 8000;
 
@@ -103,11 +73,19 @@ interface JobRowProps {
   labels: ImportExportQueueLabels;
   onDismiss: (jobId: string) => void;
   onRetry: (jobId: string) => void;
+  styles?: ImportExportQueueStyles;
 }
 
-const JobRow: FC<JobRowProps> = ({ job, labels, onDismiss, onRetry }) => {
+const JobRow: FC<JobRowProps> = ({
+  job,
+  labels,
+  onDismiss,
+  onRetry,
+  styles,
+}) => {
   const label = getJobLabel(job, labels.allConversationsJobLabel);
   const description = getJobDescription(job);
+  const typography = styles?.typography;
 
   return (
     <div className="flex items-center gap-2 px-3 py-2">
@@ -115,20 +93,26 @@ const JobRow: FC<JobRowProps> = ({ job, labels, onDismiss, onRetry }) => {
         {description && (
           <EllipsisTooltip
             text={description}
-            className="dial-caption-text text-secondary"
+            className={mergeClasses(
+              classes.textSecondary,
+              typography?.jobDescriptionClassName || 'dial-caption-text',
+            )}
             contentClassName="!z-[80]"
           />
         )}
         <EllipsisTooltip
           text={label}
-          className="dial-small-text text-primary"
+          className={mergeClasses(
+            classes.text,
+            typography?.jobLabelClassName || 'dial-small-text',
+          )}
           contentClassName="!z-[80]"
         />
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {job.status === ConversationTransferJobStatus.Success && (
           <span className={STATUS_SLOT_CLASS}>
-            <IconCircleCheckFilled size={16} className="text-visual-green-2" />
+            <IconCircleCheckFilled size={16} className={classes.successIcon} />
           </span>
         )}
         {job.status === ConversationTransferJobStatus.Failed && (
@@ -138,13 +122,13 @@ const JobRow: FC<JobRowProps> = ({ job, labels, onDismiss, onRetry }) => {
               icon={
                 <IconRefresh
                   size={DIAL_ICON_SIZE.SM}
-                  className="text-secondary"
+                  className={classes.textSecondary}
                 />
               }
               onClick={() => onRetry(job.id)}
             />
             <span className={STATUS_SLOT_CLASS}>
-              <IconAlertCircleFilled size={16} className="text-error" />
+              <IconAlertCircleFilled size={16} className={classes.errorIcon} />
             </span>
           </>
         )}
@@ -152,7 +136,12 @@ const JobRow: FC<JobRowProps> = ({ job, labels, onDismiss, onRetry }) => {
           <GhostIconButton
             aria-label={labels.closeJobAriaLabel(label)}
             size={ElementSize.Small}
-            icon={<IconX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}
+            icon={
+              <IconX
+                size={DIAL_ICON_SIZE.SM}
+                className={classes.textSecondary}
+              />
+            }
             onClick={() => onDismiss(job.id)}
             className={STATUS_SLOT_CLASS}
           />
@@ -164,9 +153,23 @@ const JobRow: FC<JobRowProps> = ({ job, labels, onDismiss, onRetry }) => {
 
 /** Floating queue panel showing the status of in-flight or recently completed export/import jobs. */
 export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
-  ({ title, jobs, onClose, onDismiss, onRetry, labels }) => {
+  ({ title, jobs, onClose, onDismiss, onRetry, labels, styles }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const colors = styles?.colors;
+    const typography = styles?.typography;
+    const cssVars = {
+      ...buildCssVars({
+        '--cp-transfer-queue-bg': colors?.background,
+        '--cp-transfer-queue-text': colors?.text,
+        '--cp-transfer-queue-text-secondary': colors?.textSecondary,
+        '--cp-transfer-queue-success-icon': colors?.successIcon,
+        '--cp-transfer-queue-error-icon': colors?.errorIcon,
+        '--cp-transfer-queue-failure-count-bg': colors?.failureCountBackground,
+        '--cp-transfer-queue-failure-count-text': colors?.failureCountText,
+      }),
+      ...styles?.cssVars,
+    };
 
     const hasInProgress = jobs.some(
       (job) => job.status === ConversationTransferJobStatus.InProgress,
@@ -210,13 +213,31 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
       <div
         role="status"
         aria-live="polite"
-        className="w-[320px] rounded-lg bg-layer-base shadow-lg"
+        style={cssVars}
+        className={mergeClasses(
+          classes.root,
+          'w-[320px] rounded-lg shadow-lg',
+          styles?.rootClassName,
+        )}
       >
         <div className="flex items-center justify-between px-3 py-2">
           <div className="flex items-center gap-2">
-            <span className="dial-small-semi-text text-primary">{title}</span>
+            <span
+              className={mergeClasses(
+                classes.text,
+                typography?.titleClassName || 'dial-small-semi-text',
+              )}
+            >
+              {title}
+            </span>
             {failedCount > 0 && (
-              <span className="dial-small-semi-text inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-control-error px-1 text-tertiary">
+              <span
+                className={mergeClasses(
+                  classes.failureCount,
+                  'inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1',
+                  typography?.failureCountClassName || 'dial-small-semi-text',
+                )}
+              >
                 {failedCount}
               </span>
             )}
@@ -233,12 +254,12 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
                 isCollapsed ? (
                   <IconChevronUp
                     size={DIAL_ICON_SIZE.SM}
-                    className="text-secondary"
+                    className={classes.textSecondary}
                   />
                 ) : (
                   <IconChevronDown
                     size={DIAL_ICON_SIZE.SM}
-                    className="text-secondary"
+                    className={classes.textSecondary}
                   />
                 )
               }
@@ -248,7 +269,12 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
             <GhostIconButton
               aria-label={labels.closeQueueAriaLabel}
               size={ElementSize.Small}
-              icon={<IconX size={DIAL_ICON_SIZE.SM} />}
+              icon={
+                <IconX
+                  size={DIAL_ICON_SIZE.SM}
+                  className={classes.textSecondary}
+                />
+              }
               onClick={handleClose}
               className={STATUS_SLOT_CLASS}
             />
@@ -263,7 +289,12 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
           />
         </div>
         {!isCollapsed && (
-          <div className="flex max-h-[40vh] flex-col overflow-y-auto">
+          <div
+            className={mergeClasses(
+              'flex max-h-[40vh] flex-col overflow-y-auto',
+              styles?.bodyClassName,
+            )}
+          >
             {jobs.map((job) => (
               <JobRow
                 key={job.id}
@@ -271,6 +302,7 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
                 labels={labels}
                 onDismiss={onDismiss}
                 onRetry={onRetry}
+                styles={styles}
               />
             ))}
           </div>

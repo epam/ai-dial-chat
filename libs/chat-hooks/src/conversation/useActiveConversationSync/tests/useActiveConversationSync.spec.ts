@@ -10,6 +10,7 @@ describe('useActiveConversationSync', () => {
   it('refreshes once when the active conversation is missing without looping on item changes', async () => {
     const refreshConversations = vi.fn(() => Promise.resolve());
     const markConversationViewed = vi.fn(() => Promise.resolve());
+    const conversationIdsMatch = (a: string, b: string) => a === b;
     const { rerender } = renderHook(
       ({ items }) =>
         useActiveConversationSync({
@@ -17,7 +18,7 @@ describe('useActiveConversationSync', () => {
           items,
           refreshConversations,
           markConversationViewed,
-          conversationIdsMatch: (a, b) => a === b,
+          conversationIdsMatch,
           toPanelConversationId: (id) => id,
         }),
       { initialProps: { items: [] as ConversationListItemDto[] } },
@@ -52,5 +53,32 @@ describe('useActiveConversationSync', () => {
     await waitFor(() =>
       expect(markConversationViewed).toHaveBeenCalledWith('ctx-1'),
     );
+  });
+
+  it('rechecks the active conversation when the injected id matcher changes', async () => {
+    const refreshConversations = vi.fn(() => Promise.resolve());
+    const item = makeItem('active');
+    const toPanelConversationId = (id: string) => id;
+    const { rerender } = renderHook(
+      ({ conversationIdsMatch }) =>
+        useActiveConversationSync({
+          activeConversationId: 'active',
+          items: [item],
+          refreshConversations,
+          markConversationViewed: () => Promise.resolve(),
+          conversationIdsMatch,
+          toPanelConversationId,
+        }),
+      {
+        initialProps: {
+          conversationIdsMatch: (a: string, b: string) => a === b,
+        },
+      },
+    );
+
+    expect(refreshConversations).not.toHaveBeenCalled();
+    rerender({ conversationIdsMatch: () => false });
+
+    await waitFor(() => expect(refreshConversations).toHaveBeenCalledOnce());
   });
 });

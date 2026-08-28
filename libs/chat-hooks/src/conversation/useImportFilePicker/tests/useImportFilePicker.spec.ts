@@ -16,7 +16,7 @@ describe('useImportFilePicker', () => {
       value: [file],
     });
     const { result } = renderHook(() =>
-      useImportFilePicker({ isMobile: false, onFileSelected }),
+      useImportFilePicker({ onFileSelected }),
     );
 
     act(() => {
@@ -37,12 +37,27 @@ describe('useImportFilePicker', () => {
     const input = document.createElement('input');
     const click = vi.spyOn(input, 'click');
     const { result } = renderHook(() =>
-      useImportFilePicker({ isMobile: false, onFileSelected: vi.fn() }),
+      useImportFilePicker({ onFileSelected: vi.fn() }),
     );
     result.current.inputRef.current = input;
 
     act(() => result.current.triggerImport());
 
     expect(click).toHaveBeenCalledOnce();
+  });
+
+  it('applies and clears the host-resolved accept value', () => {
+    const input = document.createElement('input');
+    const { result, rerender } = renderHook(
+      ({ accept }) => useImportFilePicker({ accept, onFileSelected: vi.fn() }),
+      { initialProps: { accept: undefined as string | undefined } },
+    );
+    result.current.inputRef.current = input;
+
+    rerender({ accept: 'application/json,.json' });
+    expect(input.accept).toBe('application/json,.json');
+
+    rerender({ accept: undefined });
+    expect(input.hasAttribute('accept')).toBe(false);
   });
 });

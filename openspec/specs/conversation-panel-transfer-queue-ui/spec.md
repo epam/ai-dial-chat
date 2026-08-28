@@ -9,7 +9,7 @@ Component-level contract for `ImportExportQueue`, a controlled, labels-driven qu
 ### Requirement: ImportExportQueue is a controlled, labels-driven component owned by `libs/conversation-panel`
 
 `@epam/ai-dial-conversation-panel` SHALL export an `ImportExportQueue` component and its
-`ImportExportQueueProps`/`ImportExportQueueLabels` types from the package root. The component SHALL
+`ImportExportQueueProps`/`ImportExportQueueLabels`/`ImportExportQueueStyles` types from the package root. The component SHALL
 accept `title: string`, `jobs: ConversationTransferJob[]`, `onClose: () => void`,
 `onDismiss: (jobId: string) => void`, `onRetry: (jobId: string) => void`, and a `labels` object carrying
 every user-visible string the component renders. The component SHALL NOT import `react-i18next`, any
@@ -25,6 +25,16 @@ SHALL be imported from `@epam/ai-dial-chat-shared`, not from `@epam/ai-dial-chat
 - **WHEN** `libs/conversation-panel` is linted and type-checked
 - **THEN** `ImportExportQueue`'s source file contains no `react-i18next` import and no import from
   `@epam/ai-dial-chat-hooks`
+
+### Requirement: ImportExportQueue exposes portable style overrides
+
+`ImportExportQueue` SHALL accept an optional `styles` prop that groups typed colors, typography
+classes, root/body class hooks, and arbitrary CSS custom properties. Themeable colors SHALL use
+component-scoped CSS variables with app-theme and hex fallbacks.
+
+#### Scenario: Consumer overrides queue styling
+- **WHEN** the host passes `styles.colors`, `styles.typography`, class hooks, or `styles.cssVars`
+- **THEN** the overrides are applied without importing host theme code into the library
 
 ### Requirement: Job label, breadcrumb, and status-slot rendering are preserved
 

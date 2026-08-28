@@ -145,12 +145,13 @@ keyed on whether `publishedFolders` is empty.
 
 ### Requirement: `useImportFilePicker` wraps the hidden file input without any i18n or context dependency
 
-`@epam/ai-dial-chat-hooks` SHALL export `useImportFilePicker(params: { isMobile: boolean; accept?:
-string; onFileSelected: (file: File) => void }): { inputRef: RefObject<HTMLInputElement | null>;
+`@epam/ai-dial-chat-hooks` SHALL export `useImportFilePicker(params: { accept?: string;
+onFileSelected: (file: File) => void }): { inputRef: RefObject<HTMLInputElement | null>;
 triggerImport: () => void; handleFileChange: (event: ChangeEvent<HTMLInputElement>) => void }`.
 `triggerImport` SHALL programmatically click the input; `handleFileChange` SHALL read
 `event.target.files[0]`, call `onFileSelected` with it, and reset the input's `value` to `''` so
-re-selecting the same file fires `onChange` again.
+re-selecting the same file fires `onChange` again. The hook SHALL apply the host-resolved `accept`
+value and remove the attribute when that value is omitted; it SHALL NOT decide breakpoint policy.
 
 #### Scenario: Selecting a file calls the callback and resets the input
 - **WHEN** the user selects a file through the hidden input
@@ -159,6 +160,10 @@ re-selecting the same file fires `onChange` again.
 #### Scenario: Re-selecting the same file fires again
 - **WHEN** the user selects the same file a second time in a row
 - **THEN** `onFileSelected` is called again for that selection
+
+#### Scenario: Host omits the accept policy
+- **WHEN** the host passes `accept: undefined`
+- **THEN** the hook removes the input's `accept` attribute without inspecting the viewport
 
 ### Requirement: Extracted controller code has no `apps/**` or i18n imports
 

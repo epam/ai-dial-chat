@@ -1950,7 +1950,7 @@ const destination = await prepareDownloadDestination(
 
 ## Conversation Panel Controller
 
-Six hooks and one utility function extracted from `ConversationPanelView.tsx` make the conversation-panel controller logic reusable. They carry no dependency on `@epam/ai-dial-conversation-panel` or `ConversationItem`. Both libraries consume the canonical `FilterTab` enum from `@epam/ai-dial-chat-shared`, so neither library depends on the other.
+Five hooks and two utility functions extracted from `ConversationPanelView.tsx` make the conversation-panel controller logic reusable. They carry no dependency on `@epam/ai-dial-conversation-panel` or `ConversationItem`. Both libraries consume the canonical `FilterTab` enum from `@epam/ai-dial-chat-shared`, so neither library depends on the other.
 
 ### useConversationPanelItems
 
@@ -1989,6 +1989,20 @@ const conversations = useConversationPanelItems({
 | `resolveTaskBadge` | `(item: ConversationListItemDto) => { label: string; isUnread: boolean } \| undefined` | Optional; returns the badge descriptor for scheduled-task conversations. |
 
 **Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs.
+
+### getConversationSource
+
+Classifies a conversation using the canonical `FilterTab` values without depending on the conversation-panel package.
+
+```ts
+import { FilterTab } from '@epam/ai-dial-chat-shared';
+import { getConversationSource } from '@epam/ai-dial-chat-hooks';
+
+getConversationSource({ sharedWithMe: true, publishedWithMe: false });
+// FilterTab.Shared
+```
+
+The function accepts `Pick<ConversationListItemDto, 'sharedWithMe' | 'publishedWithMe'>`. `sharedWithMe` takes precedence over `publishedWithMe`; conversations with neither flag return `FilterTab.MyChats`.
 
 ### useConversationLookupMaps
 
@@ -2094,14 +2108,13 @@ if (!deleteDialog.isRunning) deleteDialog.close();
 
 ### useImportFilePicker
 
-Manages a hidden `<input type="file">` element for conversation import: applies the app-provided `isMobile` and `accept` policy via `useLayoutEffect`, then returns the ref and event handlers. The host still owns the breakpoint and allowed-file policy; the hook owns only DOM wiring.
+Manages a hidden `<input type="file">` element for conversation import: applies an already resolved `accept` value via `useLayoutEffect`, then returns the ref and event handlers. The host owns breakpoint and allowed-file policy; the hook owns only DOM wiring.
 
 ```tsx
 import { useImportFilePicker } from '@epam/ai-dial-chat-hooks';
 
 const { inputRef, triggerImport, handleFileChange } = useImportFilePicker({
-  isMobile,
-  accept: '.json',
+  accept: isMobile ? undefined : '.json',
   onFileSelected: (file) => void importConversations(file),
 });
 
@@ -2116,8 +2129,7 @@ const { inputRef, triggerImport, handleFileChange } = useImportFilePicker({
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| `isMobile` | `boolean` | When `true`, the `accept` attribute is cleared so all file types are shown on mobile. |
-| `accept` | `string` | The `accept` string to apply on non-mobile (e.g. `'.json,.zip'`). |
+| `accept` | `string \| undefined` | Host-resolved `accept` string (e.g. `'.json,.zip'`); omit it to remove the attribute. |
 | `onFileSelected` | `(file: File) => void` | Called with the first selected file when the picker resolves. |
 
 **Returns** (`UseImportFilePickerResult`):

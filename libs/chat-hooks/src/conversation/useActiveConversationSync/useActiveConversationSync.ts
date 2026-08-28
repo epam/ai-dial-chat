@@ -58,7 +58,7 @@ export const useActiveConversationSync = ({
     if (!isListed) void refreshConversations();
     // Intentionally not including items or refreshConversations in the
     // dependency array to avoid re-triggering on every list update.
-  }, [panelActiveConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [panelActiveConversationId, conversationIdsMatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /*
    * Effect 2: single shared entry point for marking a scheduler-created

@@ -9,7 +9,7 @@ Component-level contract for `RenameConversationPopup`, a controlled, labels-dri
 ### Requirement: RenameConversationPopup is a controlled, labels-driven component owned by `libs/conversation-panel`
 
 `@epam/ai-dial-conversation-panel` SHALL export a `RenameConversationPopup` component and its
-`RenameConversationPopupProps`/`RenameConversationPopupLabels` types from the package root. The component
+`RenameConversationPopupProps`/`RenameConversationPopupLabels`/`RenameConversationPopupStyles` types from the package root. The component
 SHALL accept `isOpen: boolean`, `currentTitle: string`, `isSaving: boolean`, `error: string | null`,
 `onSave: (newTitle: string) => void`, `onCancel: () => void`,
 `onGenerateWithAi: () => Promise<string>`, and a `labels` object carrying every user-visible string. The
@@ -20,6 +20,16 @@ call, or a routing utility.
 - **WHEN** `libs/conversation-panel` is linted and type-checked
 - **THEN** `RenameConversationPopup`'s source file contains no `react-i18next` import, no application
   Context import, and no `server-api`/generated-client import
+
+### Requirement: RenameConversationPopup exposes portable style overrides
+
+`RenameConversationPopup` SHALL accept an optional `styles` prop with a popup-body class hook and
+arbitrary CSS custom properties inherited by its content. The UI-kit popup shell remains themed by
+the UI kit.
+
+#### Scenario: Consumer overrides popup content styling
+- **WHEN** the host passes `styles.bodyClassName` or `styles.cssVars`
+- **THEN** the override is applied to the popup content without an app dependency
 
 ### Requirement: Title reset and deferred focus on open
 
