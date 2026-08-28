@@ -3,7 +3,11 @@ import {
   mergeClasses,
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, EllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  EllipsisTooltip,
+} from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import { StageRow } from '../../models/stage-grouping';
@@ -108,12 +112,17 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
         )}
         <span className={mergeClasses('flex-none', styles.iconSecondary)}>
           {isOpen ? (
-            <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
+            <IconChevronDown
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
           ) : (
             <IconChevronRight
               size={DIAL_ICON_SIZE.SM}
               className="rtl:scale-x-[-1]"
               aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
             />
           )}
         </span>

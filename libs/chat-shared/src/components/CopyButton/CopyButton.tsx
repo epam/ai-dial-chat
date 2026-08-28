@@ -1,5 +1,6 @@
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   NeutralButton,
   ToggleIconButton,
@@ -34,9 +35,19 @@ export const CopyIconButton: FC<CopyButtonProps> = ({
       size={size}
       icon={
         isCopied ? (
-          <IconCheck size={iconSize} stroke={1.5} aria-hidden />
+          <IconCheck
+            size={iconSize}
+            stroke={DIAL_KIT_ICON_STROKE}
+            aria-hidden
+          />
         ) : (
-          (iconCopy ?? <IconCopy size={iconSize} stroke={1.5} aria-hidden />)
+          (iconCopy ?? (
+            <IconCopy
+              size={iconSize}
+              stroke={DIAL_KIT_ICON_STROKE}
+              aria-hidden
+            />
+          ))
         )
       }
       aria-label={isCopied ? copiedLabel : (ariaLabel ?? copyLabel)}
@@ -61,9 +72,17 @@ export const CopyButton: FC<CopyButtonProps> = ({
       label={isCopied ? copiedLabel : copyLabel}
       iconBefore={
         isCopied ? (
-          <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
+          <IconCheck
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
         ) : (
-          <IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />
+          <IconCopy
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
         )
       }
       onClick={onClick}

@@ -6,7 +6,10 @@
   }
 
   &.itemActive {
-    background: var(--cp-item-active, var(--bg-layer-sunken, #eef1f7));
+    background: var(
+      --cp-item-active,
+      var(--bg-control-accent-alpha, #2764d90f)
+    );
     color: var(--cp-text, var(--text-primary, #161b2d));
   }
 }

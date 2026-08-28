@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { markdownToRichTextHtml } from '../copy-to-clipboard';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  copyMarkdownAsRichText,
+  markdownToRichTextHtml,
+} from '../copy-to-clipboard';
 
 const TABLE_MARKDOWN = [
   '| Year | Song |',
@@ -108,5 +111,94 @@ describe('markdownToRichTextHtml', () => {
     expect(html).not.toContain('<script');
     expect(html).toContain('Before');
     expect(html).toContain('After');
+  });
+});
+
+const originalClipboard = navigator.clipboard;
+const originalClipboardItem = globalThis.ClipboardItem;
+
+const setClipboard = (clipboard: unknown): void => {
+  Object.defineProperty(navigator, 'clipboard', {
+    value: clipboard,
+    configurable: true,
+  });
+};
+
+/** jsdom's `Blob` has no `text()`, so the bytes come back through `FileReader`. */
+const readBlob = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(blob);
+  });
+
+/** Reads back the flavours of the single `ClipboardItem` handed to `write`. */
+const writtenFlavours = async (
+  write: ReturnType<typeof vi.fn>,
+): Promise<Record<string, string>> => {
+  const [items] = write.mock.calls[0] as [ClipboardItem[]];
+  const item = items[0];
+  const entries = await Promise.all(
+    item.types.map(
+      async (type) => [type, await readBlob(await item.getType(type))] as const,
+    ),
+  );
+  return Object.fromEntries(entries);
+};
+
+describe('copyMarkdownAsRichText', () => {
+  beforeEach(() => {
+    /* jsdom ships no ClipboardItem, so the multi-format path needs a stand-in
+       that keeps its blobs readable. */
+    globalThis.ClipboardItem = class {
+      constructor(private readonly data: Record<string, Blob>) {}
+      get types(): string[] {
+        return Object.keys(this.data);
+      }
+      getType(type: string): Promise<Blob> {
+        return Promise.resolve(this.data[type]);
+      }
+    } as unknown as typeof ClipboardItem;
+  });
+
+  afterEach(() => {
+    setClipboard(originalClipboard);
+    globalThis.ClipboardItem = originalClipboardItem;
+  });
+
+  it('offers the rich flavour alongside the plain one a text editor reads', async () => {
+    const write = vi.fn(async () => undefined);
+    setClipboard({ write, writeText: vi.fn(async () => undefined) });
+
+    await expect(copyMarkdownAsRichText('# hi')).resolves.toBe(true);
+
+    const flavours = await writtenFlavours(write);
+    expect(Object.keys(flavours).sort()).toEqual(['text/html', 'text/plain']);
+    expect(flavours['text/html']).toContain('<h1 style="font-size:20px');
+    /* Plain-text targets get the markdown source — the alternative today is an
+       empty paste. */
+    expect(flavours['text/plain']).toBe('# hi');
+  });
+
+  it('falls back to the plain-text copy when the clipboard write is refused', async () => {
+    const writeText = vi.fn(async () => undefined);
+    setClipboard({
+      write: vi.fn(async () => {
+        throw new Error('denied');
+      }),
+      writeText,
+    });
+
+    await expect(copyMarkdownAsRichText('# hi')).resolves.toBe(true);
+    expect(writeText).toHaveBeenCalledWith('# hi');
+  });
+
+  it('falls back to the plain-text copy when the multi-format API is absent', async () => {
+    const writeText = vi.fn(async () => undefined);
+    setClipboard({ writeText });
+
+    await expect(copyMarkdownAsRichText('# hi')).resolves.toBe(true);
+    expect(writeText).toHaveBeenCalledWith('# hi');
   });
 });

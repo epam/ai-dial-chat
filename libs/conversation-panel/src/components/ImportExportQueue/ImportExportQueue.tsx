@@ -9,8 +9,9 @@ import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  EllipsisTooltip,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
+  EllipsisTooltip,
   GhostIconButton,
   ProgressBar,
 } from '@epam/ai-dial-ui-kit';
@@ -123,6 +124,7 @@ const JobRow: FC<JobRowProps> = ({
                 <IconRefresh
                   size={DIAL_ICON_SIZE.SM}
                   className={classes.textSecondary}
+                  stroke={DIAL_KIT_ICON_STROKE}
                 />
               }
               onClick={() => onRetry(job.id)}
@@ -140,6 +142,7 @@ const JobRow: FC<JobRowProps> = ({
               <IconX
                 size={DIAL_ICON_SIZE.SM}
                 className={classes.textSecondary}
+                stroke={DIAL_KIT_ICON_STROKE}
               />
             }
             onClick={() => onDismiss(job.id)}
@@ -255,11 +258,13 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
                   <IconChevronUp
                     size={DIAL_ICON_SIZE.SM}
                     className={classes.textSecondary}
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 ) : (
                   <IconChevronDown
                     size={DIAL_ICON_SIZE.SM}
                     className={classes.textSecondary}
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 )
               }
@@ -273,6 +278,7 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
                 <IconX
                   size={DIAL_ICON_SIZE.SM}
                   className={classes.textSecondary}
+                  stroke={DIAL_KIT_ICON_STROKE}
                 />
               }
               onClick={handleClose}

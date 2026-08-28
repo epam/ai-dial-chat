@@ -73,4 +73,6 @@ export interface ListViewProps {
   selectedItemId?: string;
   /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
+  /** Renders the list read-only: the "Favorite" column is dropped entirely. Default: false. */
+  isReadonly?: boolean;
 }

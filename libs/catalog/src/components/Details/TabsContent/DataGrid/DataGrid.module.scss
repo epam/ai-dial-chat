@@ -9,7 +9,9 @@
 
 .cell {
   color: var(--cat-grid-cell-text, var(--text-primary, #161b2d));
-  border-top: 1px solid
+  /* Row divider, so the thin stroke (0.5px); the wrapper above frames the
+     table and stays on the 1px main stroke. */
+  border-top: 0.5px solid
     var(--cat-grid-cell-divider, var(--stroke-secondary, #d1dbea));
 }
 

@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { memo, type FC, type ReactNode } from 'react';
 import styles from './MenuPrimitives.module.scss';
@@ -40,6 +40,7 @@ export const MenuItemLabel: FC<MenuItemLabelProps> = memo(
             size={DIAL_ICON_SIZE.SM}
             aria-hidden
             className={styles.activeIcon}
+            stroke={DIAL_KIT_ICON_STROKE}
           />
         )}
       </span>

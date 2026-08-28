@@ -301,6 +301,17 @@ export interface CatalogProps {
   onCreateClick?: () => void;
   /** Hides the "Create" button entirely, e.g. when rendering as a read-only picker. Default: false. */
   hideCreateButton?: boolean;
+  /**
+   * Renders the whole catalog as a read-only browsing surface. Browse cards
+   * lose their favorite star, footer divider, and "Featured" tag; the list
+   * view loses its "Favorite" column; the "Create" button and the favorites
+   * strip are not rendered; and the details panel withholds its favorite star
+   * and every mutating action (Share, Publish/Unpublish, Edit, Delete,
+   * "Remove from My List", "Revoke access", and the credentials Log in / Log
+   * out / manage button). The non-mutating actions — the primary "Use in
+   * chat" and Download — still render. Default: false.
+   */
+  isReadonly?: boolean;
   /** Hides the page heading (title row), e.g. when the host renders its own title outside the catalog. Default: false. */
   hidePageTitle?: boolean;
   /** Initial Browse view mode (grid or list). Default: `CatalogViewMode.Grid`. */

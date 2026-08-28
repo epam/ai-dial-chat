@@ -49,6 +49,7 @@ interface MockDropdownItem {
 /* The real Dropdown renders into a floating overlay; the mock renders items
    inline so the assertions stay about menu content, not positioning. */
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   BASE_ICON_SIZE: 20,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ElementSize: { Standard: 'standard' },

@@ -19,6 +19,7 @@ import {
 } from '../RenameConversationPopup';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   PopupSize: { Sm: 'sm' },
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
   Popup: ({

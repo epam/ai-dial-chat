@@ -38,6 +38,7 @@ import type {
 } from '@epam/ai-dial-conversation-messages';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
@@ -812,7 +813,12 @@ const ConversationView: FC<Props> = ({
             )}
             <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
-              iconBefore={<IconCopy size={DIAL_ICON_SIZE.MD} />}
+              iconBefore={
+                <IconCopy
+                  size={DIAL_ICON_SIZE.MD}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               onClick={onDuplicateConversation}
             />
           </div>

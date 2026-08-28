@@ -37,9 +37,10 @@ import {
   type RenameConversationPopupLabels,
 } from '@epam/ai-dial-conversation-panel';
 import {
+  ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  ConfirmationPopup,
+  DIAL_KIT_ICON_STROKE,
   Popup,
   PopupSize,
   RadioGroup,
@@ -645,7 +646,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             className="text-secondary"
           />
         ) : (
-          <IconPin size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+          <IconPin
+            size={DIAL_ICON_SIZE.SM}
+            className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
         ),
         onClick: () => pinConversation(contextId, !panelItem.isPinned),
       };
@@ -653,7 +658,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       const duplicateAction: DropdownItem = {
         key: 'duplicate',
         label: t(ButtonsI18nKeys.Duplicate),
-        icon: <IconCopy size={DIAL_ICON_SIZE.SM} className="text-secondary" />,
+        icon: (
+          <IconCopy
+            size={DIAL_ICON_SIZE.SM}
+            className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        ),
         onClick: async () => {
           try {
             const newPath = await duplicateConversation(contextId);
@@ -688,7 +699,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         key: 'export',
         label: t(ConversationExportI18nKeys.ExportLabel),
         icon: (
-          <IconDownload size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+          <IconDownload
+            size={DIAL_ICON_SIZE.SM}
+            className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
         ),
         children: [
           {
@@ -711,7 +726,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           readonlyActions.push({
             key: 'unshare',
             label: t(ButtonsI18nKeys.RemoveFromMyList),
-            icon: <IconTrashX size={DIAL_ICON_SIZE.SM} />,
+            icon: (
+              <IconTrashX
+                size={DIAL_ICON_SIZE.SM}
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            ),
             onClick: () => openUnshareDialog(contextId),
           });
         }
@@ -727,6 +747,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             <IconPencilMinus
               size={DIAL_ICON_SIZE.SM}
               className="text-secondary"
+              stroke={DIAL_KIT_ICON_STROKE}
             />
           ),
           onClick: () =>
@@ -743,6 +764,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                   <IconShare
                     size={DIAL_ICON_SIZE.SM}
                     className="text-secondary"
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 ),
                 onClick: () => setPendingShareConversationPath(contextId),
@@ -766,6 +788,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                   <IconWorldShare
                     size={DIAL_ICON_SIZE.SM}
                     className="text-secondary"
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 ),
                 /*
@@ -802,6 +825,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                     size={DIAL_ICON_SIZE.SM}
                     aria-hidden
                     className="text-secondary"
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 ),
                 onClick: () => {
@@ -840,6 +864,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                   <IconUserOff
                     size={DIAL_ICON_SIZE.SM}
                     className="text-secondary"
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 ),
                 onClick: () => openRevokeDialog(contextId),
@@ -849,7 +874,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         {
           key: 'delete',
           label: t(ButtonsI18nKeys.Delete),
-          icon: <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-error" />,
+          icon: (
+            <IconTrashX
+              size={DIAL_ICON_SIZE.SM}
+              className="text-error"
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          ),
           className: 'text-error',
           onClick: () => openDeleteDialog(contextId),
         },

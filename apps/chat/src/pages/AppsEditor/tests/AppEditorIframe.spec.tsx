@@ -29,6 +29,7 @@ vi.mock('../../../server-api/deployments', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
     <div role="status" aria-label={ariaLabel ?? 'Loading'} />

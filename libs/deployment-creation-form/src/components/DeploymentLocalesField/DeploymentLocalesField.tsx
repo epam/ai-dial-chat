@@ -4,6 +4,7 @@ import {
   ButtonVariant,
   DangerIconButton,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   Input,
   LinkButton,
@@ -158,7 +159,13 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
       </span>
       <LinkButton
         label={editLabel}
-        iconBefore={<IconPencil size={DIAL_ICON_SIZE.SM} aria-hidden />}
+        iconBefore={
+          <IconPencil
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        }
         className="!px-0"
         onClick={handleOpen}
       />
@@ -195,7 +202,13 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
                   <DangerIconButton
                     appearance={ButtonAppearance.Ghost}
                     size={ElementSize.Small}
-                    icon={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
+                    icon={
+                      <IconTrashX
+                        size={DIAL_ICON_SIZE.SM}
+                        aria-hidden
+                        stroke={DIAL_KIT_ICON_STROKE}
+                      />
+                    }
                     aria-label={`${deleteAriaLabel} ${index + 1}`}
                     onClick={() => handleRowDelete(entry.id)}
                   />
@@ -262,7 +275,13 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
           })}
           <LinkButton
             label={addLocaleLabel}
-            iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            iconBefore={
+              <IconPlus
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             className="self-start"
             onClick={handleAddRow}
             disabled={draftEntries.length >= availableLocaleOptions.length}

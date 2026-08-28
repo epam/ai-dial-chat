@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
   Highlight,
@@ -115,7 +116,11 @@ const SourcesSection: FC<SourcesSectionProps> = ({
               <GhostIconButton
                 size={ElementSize.Small}
                 icon={
-                  <IconCopy size={DIAL_ICON_SIZE.SM} stroke={1.5} aria-hidden />
+                  <IconCopy
+                    size={DIAL_ICON_SIZE.SM}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
+                  />
                 }
                 aria-label={copyLabel}
                 onClick={() => void handleCopy(source.url)}

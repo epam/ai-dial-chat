@@ -6,10 +6,11 @@ import {
 import {
   ButtonVariant,
   DIAL_ICON_SIZE,
-  Spinner,
+  DIAL_KIT_ICON_STROKE,
   GhostButton,
   GhostIconButton,
   NeutralButton,
+  Spinner,
   Switch,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -128,6 +129,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
                 size={DIAL_ICON_SIZE.LG}
                 className="rtl:scale-x-[-1]"
                 aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
               />
             }
             aria-label={labels.backAriaLabel}
@@ -164,7 +166,13 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
             <GhostButton
               variant={ButtonVariant.Danger}
               label={labels.deleteButtonLabel}
-              iconBefore={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
+              iconBefore={
+                <IconTrashX
+                  size={DIAL_ICON_SIZE.SM}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               onClick={onDelete}
               disabled={isDeleting}
               className="shrink-0"
@@ -175,7 +183,11 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
             <NeutralButton
               label={labels.editButtonLabel}
               iconBefore={
-                <IconPencilMinus size={DIAL_ICON_SIZE.SM} aria-hidden />
+                <IconPencilMinus
+                  size={DIAL_ICON_SIZE.SM}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
               }
               onClick={onEdit}
               disabled={isDeleting}

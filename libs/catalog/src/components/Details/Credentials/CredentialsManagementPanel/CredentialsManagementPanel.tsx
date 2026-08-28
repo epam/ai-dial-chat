@@ -3,6 +3,7 @@ import {
   ButtonAppearance,
   DangerButton,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Input,
   LinkButton,
   NeutralButton,
@@ -235,7 +236,13 @@ const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
           isSignedIn && (
             <div className="animate-fadeIn pt-1">
               <CredentialsInfoCard
-                icon={<IconKey size={DIAL_ICON_SIZE.SM} aria-hidden />}
+                icon={
+                  <IconKey
+                    size={DIAL_ICON_SIZE.SM}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                }
                 title={configuredMessage}
                 description={addedWhenLabel}
                 titleClassName={keyCardTitleClassName}
@@ -355,7 +362,13 @@ export const CredentialsManagementPanel: FC<
               texts?.personalCredentialsDescription ??
               'These credentials apply only to your account.'
             }
-            icon={<IconUser size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            icon={
+              <IconUser
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             status={credentials.userStatus}
             isActive={isUserActive}
             authenticationType={credentials.authenticationType}
@@ -382,7 +395,11 @@ export const CredentialsManagementPanel: FC<
               'Once added, these credentials will grant all users in your organization access to this toolset.'
             }
             icon={
-              <IconBuildingCommunity size={DIAL_ICON_SIZE.SM} aria-hidden />
+              <IconBuildingCommunity
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
             }
             status={credentials.globalStatus}
             isActive={isGlobalActive}

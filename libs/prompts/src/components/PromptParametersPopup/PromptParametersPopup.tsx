@@ -5,6 +5,7 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
+  DIAL_KIT_ICON_STROKE,
   GhostIconButton,
   NeutralButton,
   Popup,
@@ -71,7 +72,13 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
     <div className="flex items-center gap-2">
       {onBack != null && (
         <GhostIconButton
-          icon={<IconChevronLeft className="rtl:scale-x-[-1]" aria-hidden />}
+          icon={
+            <IconChevronLeft
+              className="rtl:scale-x-[-1]"
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          }
           aria-label={backLabel}
           onClick={onBack}
         />

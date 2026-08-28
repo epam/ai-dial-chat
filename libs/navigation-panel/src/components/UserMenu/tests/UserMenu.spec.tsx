@@ -15,6 +15,7 @@ interface MockDropdownItem {
 /* The real Dropdown renders its items in a floating overlay on open; the mock
    renders them inline so assertions stay about content, not positioning. */
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16 },
   DropdownItemType: { PlainText: 'plainText', Divider: 'divider' },
   Tooltip: ({ children }: { children: ReactNode }) => children,

@@ -1,6 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
-import { DIAL_ICON_SIZE, GhostIconButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  GhostIconButton,
+} from '@epam/ai-dial-ui-kit';
 import {
   IconCheck,
   IconCode,
@@ -182,13 +186,13 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
                   isHtmlSourceView ? (
                     <IconEye
                       size={DIAL_ICON_SIZE.LG}
-                      stroke={1.5}
+                      stroke={DIAL_KIT_ICON_STROKE}
                       aria-hidden
                     />
                   ) : (
                     <IconCode
                       size={DIAL_ICON_SIZE.LG}
-                      stroke={1.5}
+                      stroke={DIAL_KIT_ICON_STROKE}
                       aria-hidden
                     />
                   )
@@ -211,13 +215,13 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
                   isCopiedText ? (
                     <IconCheck
                       size={DIAL_ICON_SIZE.LG}
-                      stroke={1.5}
+                      stroke={DIAL_KIT_ICON_STROKE}
                       aria-hidden
                     />
                   ) : (
                     <IconCopy
                       size={DIAL_ICON_SIZE.LG}
-                      stroke={1.5}
+                      stroke={DIAL_KIT_ICON_STROKE}
                       aria-hidden
                     />
                   )
@@ -235,13 +239,13 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
                   isCopiedMarkdown ? (
                     <IconCheck
                       size={DIAL_ICON_SIZE.LG}
-                      stroke={1.5}
+                      stroke={DIAL_KIT_ICON_STROKE}
                       aria-hidden
                     />
                   ) : (
                     <IconMarkdown
                       size={DIAL_ICON_SIZE.LG}
-                      stroke={1.5}
+                      stroke={DIAL_KIT_ICON_STROKE}
                       aria-hidden
                     />
                   )
@@ -263,13 +267,13 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
                   isCopiedJson ? (
                     <IconCheck
                       size={DIAL_ICON_SIZE.LG}
-                      stroke={1.5}
+                      stroke={DIAL_KIT_ICON_STROKE}
                       aria-hidden
                     />
                   ) : (
                     <IconCopy
                       size={DIAL_ICON_SIZE.LG}
-                      stroke={1.5}
+                      stroke={DIAL_KIT_ICON_STROKE}
                       aria-hidden
                     />
                   )
@@ -283,7 +287,12 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
             )}
             {showDownload && (
               <GhostIconButton
-                icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+                icon={
+                  <IconDownload
+                    size={DIAL_ICON_SIZE.LG}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                }
                 aria-label={downloadLabel}
                 tooltipProps={{ tooltip: downloadLabel }}
                 onClick={onDownload}

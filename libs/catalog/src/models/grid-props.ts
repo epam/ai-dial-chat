@@ -40,4 +40,6 @@ export interface CardGridProps {
   skeletonColor?: string;
   /** Background color of a skeleton placeholder card. Fallback: `--bg-layer-raised`. */
   skeletonCardBackground?: string;
+  /** Renders every card read-only: no favorite star, no footer divider, and no "Featured" tag. Default: false. */
+  isReadonly?: boolean;
 }

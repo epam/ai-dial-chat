@@ -25,6 +25,7 @@ export const CardGrid: FC<CardGridProps> = memo(
     selectedItemId,
     skeletonColor = styles.skeletonColor,
     skeletonCardBackground,
+    isReadonly = false,
   }) => {
     const noResultsTitle = titles?.noResultsTitle ?? 'No results';
     const featuredLabel = titles?.featuredLabel ?? 'Featured';
@@ -52,6 +53,7 @@ export const CardGrid: FC<CardGridProps> = memo(
         removeFromFavoritesAriaLabel,
         selectedItemId,
         credentialsBadgeLoggedOutLabel,
+        isReadonly,
       }),
       [
         items,
@@ -65,6 +67,7 @@ export const CardGrid: FC<CardGridProps> = memo(
         removeFromFavoritesAriaLabel,
         selectedItemId,
         credentialsBadgeLoggedOutLabel,
+        isReadonly,
       ],
     );
 

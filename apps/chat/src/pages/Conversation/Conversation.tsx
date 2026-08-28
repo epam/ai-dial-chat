@@ -18,9 +18,10 @@ import {
   type Message,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ConfirmationPopupVariant,
   ConfirmationPopup,
+  ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconTelescope } from '@tabler/icons-react';
@@ -104,7 +105,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   } = useToolsMenu({
     selectedItemId: currentSelectedItemId,
     selectedDeploymentConfiguration,
-    toolIcon: <IconTelescope size={DIAL_ICON_SIZE.SM} aria-hidden />,
+    toolIcon: (
+      <IconTelescope
+        size={DIAL_ICON_SIZE.SM}
+        aria-hidden
+        stroke={DIAL_KIT_ICON_STROKE}
+      />
+    ),
   });
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();

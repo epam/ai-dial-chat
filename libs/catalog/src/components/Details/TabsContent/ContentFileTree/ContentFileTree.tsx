@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconFolder } from '@tabler/icons-react';
 import {
   FC,
@@ -213,6 +213,7 @@ export const ContentFileTree: FC<ContentFileTreeProps> = ({
             size={DIAL_ICON_SIZE.SM}
             className="shrink-0"
             aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
           />
           <span
             className={mergeClasses(
@@ -229,6 +230,7 @@ export const ContentFileTree: FC<ContentFileTreeProps> = ({
               !isExpanded && '-rotate-90 rtl:rotate-90',
             )}
             aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
           />
         </div>
         {isExpanded && node.items.length > 0 && (

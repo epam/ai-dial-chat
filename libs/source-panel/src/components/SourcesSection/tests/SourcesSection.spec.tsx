@@ -5,6 +5,7 @@ import { QuotationSource } from '../../../models/quotation-source';
 import SourcesSection from '../SourcesSection';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16 },
   ElementSize: { Small: 'small' },
   mergeClasses: (...classes: (string | undefined)[]) =>
