@@ -11,7 +11,6 @@ import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   GhostIconButton,
-  StaticIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
 import {
