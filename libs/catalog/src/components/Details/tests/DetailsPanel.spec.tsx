@@ -265,7 +265,7 @@ vi.mock('../TabsContent/Overview', () => ({
 vi.mock('../TabsContent/Pricing', () => ({
   Pricing: () => <div>Pricing</div>,
 }));
-vi.mock('../TabsContent/Limits', () => ({
+vi.mock('../TabsContent/Limits/Limits', () => ({
   LimitsTab: () => <div>Limits content</div>,
 }));
 vi.mock('../TabsContent/Tools/Tools', () => ({
@@ -1135,7 +1135,12 @@ describe('DetailsPanel', () => {
       item: makeItem({
         details: {
           limits: {
-            rows: [{ label: 'Tokens per day', used: 12, total: 20 }],
+            groups: [
+              {
+                label: 'Token limits',
+                rows: [{ label: 'Tokens per day', used: 12, total: 20 }],
+              },
+            ],
           },
         },
       }),
@@ -1525,7 +1530,7 @@ describe('DetailsPanel', () => {
           details: {
             overview: { sections: [] },
             pricing: {},
-            limits: { rows: [] },
+            limits: { groups: [] },
             api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
           },
         })}

@@ -39,6 +39,7 @@ import {
   type ReactNode,
 } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
+import { CatalogLimitStatus } from '../../../models/item-details-data';
 import type {
   ItemDetailsStyles,
   ItemDetailsTexts,
@@ -60,6 +61,29 @@ const defaultManageCredentialsActionLabel = (
   authenticationType === ToolsetAuthenticationType.ApiKey
     ? 'Manage API keys'
     : 'Manage credentials';
+
+const LIMIT_STATUS_CLASSES: Record<CatalogLimitStatus, string> = {
+  [CatalogLimitStatus.LimitReached]: 'bg-error text-error',
+  [CatalogLimitStatus.RunningLow]: 'bg-warning text-warning',
+};
+
+interface LimitStatusBadgeProps {
+  status: CatalogLimitStatus;
+  label: string;
+}
+
+/** Small status pill matching `FeaturedChip`'s shape, shown in the same header corner. */
+const LimitStatusBadge: FC<LimitStatusBadgeProps> = ({ status, label }) => (
+  <div
+    className={mergeClasses(
+      'flex h-[24px] items-center justify-center gap-1 whitespace-nowrap rounded-2xl px-2',
+      'dial-caption-lead-semi-text',
+      LIMIT_STATUS_CLASSES[status],
+    )}
+  >
+    {label}
+  </div>
+);
 
 interface HeaderProps {
   item: CatalogItem;
@@ -174,16 +198,7 @@ interface HeaderProps {
   /** Called when the "Unpublish" button is clicked; the host swaps this panel's content to the unpublish confirmation. */
   onOpenUnpublish?: () => void;
 }
-/**
- * Details panel header bar: entity identity (icon + name + version), action
- * buttons, and inline credentials section. By default the action row carries
- * the primary action and Share, with a "Manage" menu for Edit, Publish or
- * Unpublish, and Delete; `isSharePrimary` and `isPublishPrimary` let a host
- * swap which of the two sits in the row and which sits in the menu. For
- * Toolsets, the credentials action (Log in / Log out / manage) renders first
- * and styled as the primary action, since Toolsets have no "Use in chat"
- * action.
- */
+/** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit, Publish or Unpublish, and Delete), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. Shows a "Running low"/"Limit reached" badge from `item.details?.limits?.status`, disabling "Use in chat" once a limit is reached. */
 export const Header: FC<HeaderProps> = ({
   item,
   onUseInChat,
@@ -221,6 +236,19 @@ export const Header: FC<HeaderProps> = ({
     folderLabelClassName = 'dial-tiny-text',
     folderLeafClassName = 'dial-tiny-semi-text',
   } = detailsStyles?.typography ?? {};
+
+  const limitStatus = item.details?.limits?.status;
+  const statusBadge =
+    limitStatus != null ? (
+      <LimitStatusBadge
+        status={limitStatus}
+        label={
+          limitStatus === CatalogLimitStatus.LimitReached
+            ? (texts?.limitReachedLabel ?? 'Limit reached')
+            : (texts?.limitRunningLowLabel ?? 'Running low')
+        }
+      />
+    ) : undefined;
 
   const handleUseInChat = useCallback(() => {
     onUseInChat?.(item);
@@ -823,6 +851,7 @@ export const Header: FC<HeaderProps> = ({
         iconSize={52}
         nameClassName={mergeClasses(nameClassName, styles.name)}
         featuredLabel={texts?.featuredLabel ?? 'Featured'}
+        statusBadge={statusBadge}
         footer={
           item.folder.length > 0 ? (
             <FolderPath
@@ -845,6 +874,7 @@ export const Header: FC<HeaderProps> = ({
             label={texts?.primaryActionLabel ?? 'Use in chat'}
             iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
             onClick={handleUseInChat}
+            disabled={limitStatus === CatalogLimitStatus.LimitReached}
           />
         )}
         {isDownloadActionPrimary && (

@@ -337,17 +337,13 @@ const CatalogView: FC<Props> = ({
 
   const deploymentLimitsLabels: DeploymentLimitsLabels = useMemo(
     () => ({
-      requestsPerHour: t(CatalogI18nKeys.DetailsLimitsRequestsPerHour),
-      requestsPerDay: t(CatalogI18nKeys.DetailsLimitsRequestsPerDay),
-      tokensPerMinute: t(CatalogI18nKeys.DetailsLimitsTokensPerMinute),
+      tokenGroup: t(CatalogI18nKeys.DetailsLimitsTokenGroupLabel),
       tokensPerDay: t(CatalogI18nKeys.DetailsLimitsTokensPerDay),
       tokensPerWeek: t(CatalogI18nKeys.DetailsLimitsTokensPerWeek),
       tokensPerMonth: t(CatalogI18nKeys.DetailsLimitsTokensPerMonth),
-      costPerMinute: t(CatalogI18nKeys.DetailsLimitsCostPerMinute),
-      costPerDay: t(CatalogI18nKeys.DetailsLimitsCostPerDay),
-      costPerWeek: t(CatalogI18nKeys.DetailsLimitsCostPerWeek),
-      costPerMonth: t(CatalogI18nKeys.DetailsLimitsCostPerMonth),
-      unlimitedValue: t(CatalogI18nKeys.DetailsLimitsUnlimitedValue),
+      followsCostLimit: t(CatalogI18nKeys.DetailsLimitsFollowsCostLimitLabel),
+      formatSpentCaption: (amount) =>
+        t(CatalogI18nKeys.DetailsLimitsSpentLabel, { amount }),
       formatValueLabel: (used, total) =>
         t(CatalogI18nKeys.DetailsLimitsValue, { used, total }),
       formatProgressAriaLabel: ({ label, used, total }) =>
@@ -355,6 +351,11 @@ const CatalogView: FC<Props> = ({
           label,
           used,
           total,
+        }),
+      formatFollowsCostLimitAriaLabel: ({ label, used }) =>
+        t(CatalogI18nKeys.DetailsLimitsFollowsCostLimitAriaLabel, {
+          label,
+          used,
         }),
     }),
     [t],

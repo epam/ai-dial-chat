@@ -57,6 +57,10 @@ export interface ItemDetailsTexts {
   contentFileUnsupportedLabel?: string;
   /** Label on the "Featured" tag chip shown when the entity is featured. Default: `'Featured'`. */
   featuredLabel?: string;
+  /** Label on the header badge shown when `item.details?.limits?.status` is `CatalogLimitStatus.RunningLow`. Default: `'Running low'`. */
+  limitRunningLowLabel?: string;
+  /** Label on the header badge shown when `item.details?.limits?.status` is `CatalogLimitStatus.LimitReached`. Default: `'Limit reached'`. */
+  limitReachedLabel?: string;
   /** Primary action button label. Default: `'Use in chat'`. */
   primaryActionLabel?: string;
   /** "Publish" action button label. Default: `'Publish'`. */
@@ -93,10 +97,6 @@ export interface ItemDetailsTexts {
   pricingPricesSectionLabel?: string;
   /** "Usage limits" section heading in the Pricing tab. Default: `'Usage limits'`. */
   pricingLimitsSectionLabel?: string;
-  /** "Cost caps" section heading in the Limits tab. Default: `'Cost caps'`. */
-  limitsCostCapsSectionLabel?: string;
-  /** "Unlimited" section heading in the Limits tab. Default: `'Unlimited'`. */
-  limitsUnlimitedSectionLabel?: string;
   /** Accessible label for the loading placeholder shown next to the tab row while structured details are being fetched. Default: `'Loading details'`. */
   detailsLoadingAriaLabel?: string;
   /** "Log in" action button label, shown when the item's credentials are not signed in. Default: `'Log in'`. */
@@ -676,4 +676,9 @@ export interface DetailsPanelProps {
   texts?: ItemDetailsTexts;
   /** Grouped style overrides. */
   styles?: ItemDetailsStyles;
+  /**
+   * Footer note rendered below the Limits tab's rows, e.g. a link to a
+   * full usage-limits page. Omitted (the default) hides the footer entirely.
+   */
+  limitsFooterNote?: ReactNode;
 }

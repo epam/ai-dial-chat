@@ -79,6 +79,27 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
   ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
+  FileDropzone: ({
+    label,
+    ariaLabel,
+    multiple,
+    onChange,
+  }: {
+    label: ReactNode;
+    ariaLabel?: string;
+    multiple?: boolean;
+    onChange: (files: File[]) => void;
+  }) => (
+    <div>
+      <span>{label}</span>
+      <input
+        type="file"
+        multiple={multiple}
+        aria-label={ariaLabel}
+        onChange={(event) => onChange(Array.from(event.target.files ?? []))}
+      />
+    </div>
+  ),
   GhostButton: ({
     label,
     onClick,
@@ -236,9 +257,9 @@ const openUploadDialog = async (user: ReturnType<typeof userEvent.setup>) => {
 };
 
 const stageFile = (file: File) => {
-  // eslint-disable-next-line testing-library/no-node-access -- the upload <input type="file"> is visually hidden and carries no accessible name/role to query by
-  const input = document.querySelector('input[type="file"]');
-  fireEvent.change(input as Element, { target: { files: [file] } });
+  fireEvent.change(screen.getByLabelText('Upload files'), {
+    target: { files: [file] },
+  });
 };
 
 const renderEditor = (

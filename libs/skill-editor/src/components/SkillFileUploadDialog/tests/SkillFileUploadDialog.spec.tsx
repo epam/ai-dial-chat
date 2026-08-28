@@ -37,6 +37,27 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       </div>
     ) : null,
   ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
+  FileDropzone: ({
+    label,
+    ariaLabel,
+    multiple,
+    onChange,
+  }: {
+    label: ReactNode;
+    ariaLabel?: string;
+    multiple?: boolean;
+    onChange: (files: File[]) => void;
+  }) => (
+    <div>
+      <span>{label}</span>
+      <input
+        type="file"
+        multiple={multiple}
+        aria-label={ariaLabel}
+        onChange={(event) => onChange(Array.from(event.target.files ?? []))}
+      />
+    </div>
+  ),
   GhostButton: ({
     label,
     onClick,
@@ -76,7 +97,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconUpload: () => <svg />,
   IconFileText: () => <svg />,
   IconTrashX: () => <svg />,
 }));
@@ -92,9 +112,9 @@ const buildFileActions = (
 });
 
 const stageFile = (file: File) => {
-  // eslint-disable-next-line testing-library/no-node-access -- the upload <input type="file"> is visually hidden and carries no accessible name/role to query by
-  const input = document.querySelector('input[type="file"]') as HTMLElement;
-  fireEvent.change(input, { target: { files: [file] } });
+  fireEvent.change(screen.getByLabelText('Upload files'), {
+    target: { files: [file] },
+  });
 };
 
 describe('SkillFileUploadDialog', () => {
@@ -146,9 +166,7 @@ describe('SkillFileUploadDialog', () => {
       />,
     );
 
-    // eslint-disable-next-line testing-library/no-node-access -- the upload <input type="file"> is visually hidden and carries no accessible name/role to query by
-    const input = document.querySelector('input[type="file"]') as HTMLElement;
-    fireEvent.change(input, {
+    fireEvent.change(screen.getByLabelText('Upload files'), {
       target: {
         files: [new File(['a'], 'a.md'), new File(['b'], 'b.md')],
       },
@@ -156,43 +174,6 @@ describe('SkillFileUploadDialog', () => {
 
     expect(await screen.findByText('a.md')).toBeTruthy();
     expect(screen.getByText('b.md')).toBeTruthy();
-  });
-
-  it('activates the drop zone on a file-bearing drag and reverts on drag-leave', () => {
-    render(
-      <SkillFileUploadDialog
-        isOpen
-        onClose={vi.fn()}
-        fileActions={buildFileActions()}
-      />,
-    );
-
-    const dropZone = screen.getByRole('button', { name: 'Upload files' });
-    const dragEvent = { dataTransfer: { types: ['Files'], files: [] } };
-
-    fireEvent.dragEnter(dropZone, dragEvent);
-    expect(dropZone.className).toContain('border-accent-primary');
-
-    fireEvent.dragLeave(dropZone, dragEvent);
-    expect(dropZone.className).not.toContain('border-accent-primary');
-  });
-
-  it('stages dropped files and suppresses the browser default', () => {
-    render(
-      <SkillFileUploadDialog
-        isOpen
-        onClose={vi.fn()}
-        fileActions={buildFileActions()}
-      />,
-    );
-
-    const dropZone = screen.getByRole('button', { name: 'Upload files' });
-    const file = new File(['content'], 'dropped.md');
-    fireEvent.drop(dropZone, {
-      dataTransfer: { types: ['Files'], files: [file] },
-    });
-
-    expect(screen.getByText('dropped.md')).toBeTruthy();
   });
 
   it('disables confirm while any staged item is invalid', async () => {
@@ -271,7 +252,7 @@ describe('SkillFileUploadDialog', () => {
       );
 
       expect(screen.getByRole('dialog')).toBeTruthy();
-      expect(screen.getByRole('button', { name: 'Upload files' })).toBeTruthy();
+      expect(screen.getByLabelText('Upload files')).toBeTruthy();
     } finally {
       document.documentElement.dir = '';
     }

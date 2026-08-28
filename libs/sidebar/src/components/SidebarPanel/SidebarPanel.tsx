@@ -119,8 +119,16 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
    */
   const hasFullWidthClass = className?.includes('w-full');
 
-  const dividerClass =
-    orientation === SidebarOrientation.Right ? 'border-s' : 'border-e';
+  /*
+   * A Left-anchored panel sits next to the navigation rail with no divider
+   * of its own on that edge; add one (reusing the same --sb-border /
+   * --stroke-tertiary token the wrapper's border-color already resolves to)
+   * once the panel is open, so the rail and the panel read as two distinct
+   * surfaces. The panel's other edge (facing the main content) stays
+   * divider-less.
+   */
+  const navDividerClass =
+    orientation === SidebarOrientation.Left && isOpen ? 'border-s' : undefined;
   const resizableSide =
     orientation === SidebarOrientation.Right
       ? ResizableContainerSide.Left
@@ -144,7 +152,9 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
             }
       }
       className={mergeClasses(
-        'h-full flex-shrink-0 gap-3 overflow-hidden shadow-sm',
+        'h-full flex-shrink-0 gap-3 overflow-hidden shadow-md',
+        orientation === SidebarOrientation.Left &&
+          '[clip-path:inset(-24px_-24px_-24px_0)] rtl:[clip-path:inset(-24px_0_-24px_-24px)]',
         !isResizing && 'transition-[width] duration-200 ease-in-out',
         isOpen && 'relative z-50',
         className,
@@ -173,7 +183,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
             styles.wrapper,
             'flex h-full w-full flex-col gap-3',
             isOpen && styles.appear,
-            dividerClass,
+            navDividerClass,
             typography?.fontClassName,
           )}
         >

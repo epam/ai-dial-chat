@@ -22,7 +22,7 @@ interface SharePopoverHeaderProps {
   linkLabel: string;
   /** Called with the view the user switched to. */
   onViewChange: (view: SharePopoverView) => void;
-  /** CSS class applied to the title text. Defaults to `'dial-small-semi-text'`. */
+  /** CSS class applied to the title text. Defaults to `'dial-h3-text'`. */
   titleClassName?: string;
 }
 
@@ -33,9 +33,9 @@ export const SharePopoverHeader: FC<SharePopoverHeaderProps> = ({
   qrButtonLabel,
   linkLabel,
   onViewChange,
-  titleClassName = 'dial-small-semi-text',
+  titleClassName = 'dial-h3-text',
 }) => (
-  <div className="flex items-center gap-2 px-4 py-3">
+  <div className="flex items-center gap-2">
     <span className={mergeClasses(titleClassName, styles.title)}>{title}</span>
     {view === SharePopoverView.Link ? (
       <GhostButton

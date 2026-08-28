@@ -226,7 +226,8 @@ import { CatalogEntityType, FeaturedChip } from '@epam/ai-dial-chat-shared';
 
 Entity identity block: deployment icon, type label, name, version, and an
 optional featured chip. `item` needs only the `EntityHeaderItem` fields, so any
-richer catalog model can be passed directly.
+richer catalog model can be passed directly. `statusBadge` renders an
+arbitrary badge in the same corner, ahead of the featured chip.
 
 ```tsx
 import { EntityHeader } from '@epam/ai-dial-chat-shared';

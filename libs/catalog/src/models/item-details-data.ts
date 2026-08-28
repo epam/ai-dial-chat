@@ -80,12 +80,34 @@ export interface UsageLimitProgressRow {
   totalLabel?: string;
   /** Accessible value text for the progress bar (`aria-valuetext`), overriding the default `used / total` reading. */
   ariaLabel?: string;
+  /** Secondary caption shown under the value for a row with no progress bar (`isUnlimited` or no usable total), e.g. "Follows cost limit". Omitted when absent. */
+  noteLabel?: string;
+  /** Secondary caption shown under the row's label, e.g. "$20.00 spent". Omitted when absent. */
+  captionLabel?: string;
+}
+
+/** A named, ordered group of rows in the Limits tab, e.g. token limits vs. cost limits. */
+export interface UsageLimitGroup {
+  /** Group heading, e.g. "Token limits" or "Cost limits". */
+  label: string;
+  /** Ordered rows in this group. */
+  rows: UsageLimitProgressRow[];
+}
+
+/** Worst-case usage status across a `CatalogItemLimits`' capped rows. */
+export enum CatalogLimitStatus {
+  /** At least one capped row is at or above 75% usage, none has reached its limit. */
+  RunningLow = 'runningLow',
+  /** At least one capped row has reached (or exceeded) its limit. */
+  LimitReached = 'limitReached',
 }
 
 /** Complete data for the Limits tab. */
 export interface CatalogItemLimits {
-  /** Ordered progress rows to render. */
-  rows: UsageLimitProgressRow[];
+  /** Ordered groups of rows to render, each under its own heading. */
+  groups: UsageLimitGroup[];
+  /** Worst-case status across all capped rows. Absent when every row is comfortably under the running-low threshold. */
+  status?: CatalogLimitStatus;
 }
 
 /** Complete data for the Pricing tab. */
