@@ -1,9 +1,10 @@
 import { BASE_MD_ICON_PROPS } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import {
+  ButtonAppearance,
+  DIAL_KIT_ICON_STROKE,
   Dropdown,
   NeutralButton,
-  ButtonAppearance,
   NeutralIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconDots, IconDotsVertical } from '@tabler/icons-react';
@@ -150,9 +151,12 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
                 appearance={ButtonAppearance.Outlined}
                 icon={
                   isMobile ? (
-                    <IconDots {...iconProps} />
+                    <IconDots {...iconProps} stroke={DIAL_KIT_ICON_STROKE} />
                   ) : (
-                    <IconDotsVertical {...iconProps} />
+                    <IconDotsVertical
+                      {...iconProps}
+                      stroke={DIAL_KIT_ICON_STROKE}
+                    />
                   )
                 }
                 aria-label={labels.overflow}

@@ -1,5 +1,11 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, Dropdown, Input, Spinner } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  Dropdown,
+  Input,
+  Spinner,
+} from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
 import {
   memo,
@@ -138,6 +144,7 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
                   isOpen && 'rotate-180',
                 )}
                 aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
               />
             )
           }

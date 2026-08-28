@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Skeleton,
   SkeletonVariant,
 } from '@epam/ai-dial-ui-kit';
@@ -131,6 +132,7 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
                 size={DIAL_ICON_SIZE.LG}
                 className={styles.typeText}
                 aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
               />
             }
             className="absolute inset-0 rounded-xl"

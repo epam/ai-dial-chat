@@ -15,7 +15,7 @@ import type {
   DeploymentItem,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconTelescope } from '@tabler/icons-react';
 import {
   FC,
@@ -162,7 +162,13 @@ const ConversationRoute: FC = () => {
     {
       selectedItemId,
       selectedDeploymentConfiguration,
-      toolIcon: <IconTelescope size={DIAL_ICON_SIZE.SM} aria-hidden />,
+      toolIcon: (
+        <IconTelescope
+          size={DIAL_ICON_SIZE.SM}
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      ),
     },
   );
 

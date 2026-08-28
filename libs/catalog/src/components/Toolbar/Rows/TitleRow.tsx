@@ -4,11 +4,12 @@ import {
   ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   DropdownItem,
+  ElementSize,
   Search,
   SegmentedControl,
   SegmentedControlItem,
-  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 import { FC, useMemo } from 'react';
@@ -74,12 +75,24 @@ export const TitleRow: FC<TitleRowProps> = ({
     () => [
       {
         value: CatalogViewMode.Grid,
-        icon: <IconLayoutGrid size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        icon: (
+          <IconLayoutGrid
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        ),
         'aria-label': gridViewLabel,
       },
       {
         value: CatalogViewMode.List,
-        icon: <IconLayoutList size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        icon: (
+          <IconLayoutList
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        ),
         'aria-label': listViewLabel,
       },
     ],

@@ -6,6 +6,7 @@ import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   FolderPath: ({ segments }: { segments: string[] }) => (
     <>{segments.join(' / ')}</>
   ),

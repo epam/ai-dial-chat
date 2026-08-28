@@ -84,15 +84,9 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
       )}
     >
       {isExpanded ? (
-        <IconCaretDownFilled
-          stroke={0.5}
-          size={12}
-          className="shrink-0"
-          aria-hidden
-        />
+        <IconCaretDownFilled size={12} className="shrink-0" aria-hidden />
       ) : (
         <IconCaretRightFilled
-          stroke={0.5}
           size={12}
           className="shrink-0 rtl:scale-x-[-1]"
           aria-hidden

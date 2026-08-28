@@ -15,4 +15,6 @@ export interface GridContext {
   selectedItemId?: string;
   /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. */
   credentialsBadgeLoggedOutLabel?: string;
+  /** Renders the list read-only: the "Favorite" column is dropped entirely. */
+  isReadonly?: boolean;
 }

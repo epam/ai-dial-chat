@@ -1,5 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, Dropdown } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  Dropdown,
+} from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconChevronDown, IconWorld } from '@tabler/icons-react';
 import { FC, type KeyboardEvent, type RefObject } from 'react';
 import { ShareLinkAccess } from '../../types/share';
@@ -79,7 +83,11 @@ export const AccessControl: FC<AccessControlProps> = ({
           styles.linkIconBadge,
         )}
       >
-        <IconWorld size={DIAL_ICON_SIZE.MD} aria-hidden />
+        <IconWorld
+          size={DIAL_ICON_SIZE.MD}
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
       </span>
       <div className="min-w-0 flex-1">
         <p
@@ -148,7 +156,7 @@ export const AccessControl: FC<AccessControlProps> = ({
                     {isChecked && (
                       <IconCheck
                         size={DIAL_ICON_SIZE.SM}
-                        stroke={2}
+                        stroke={DIAL_KIT_ICON_STROKE}
                         className={styles.accessMenuItemCheck}
                         aria-hidden
                       />
@@ -183,7 +191,7 @@ export const AccessControl: FC<AccessControlProps> = ({
             </span>
             <IconChevronDown
               size={DIAL_ICON_SIZE.MD}
-              strokeWidth={2.2}
+              stroke={DIAL_KIT_ICON_STROKE}
               className={mergeClasses(
                 'shrink-0 transition-transform duration-150 rtl:scale-x-[-1]',
                 styles.accessTriggerChevron,

@@ -1,9 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  GhostButton,
   NeutralButton,
   PrimaryButton,
-  GhostButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconArrowLeft,
@@ -69,12 +70,22 @@ const NotFoundPage: FC = () => {
           <div className="mt-8 flex flex-col items-stretch gap-3 desktop:flex-row desktop:items-center">
             <PrimaryButton
               label={t(NotFoundI18nKeys.OpenCatalog)}
-              iconBefore={<IconLayoutGrid size={DIAL_ICON_SIZE.SM} />}
+              iconBefore={
+                <IconLayoutGrid
+                  size={DIAL_ICON_SIZE.SM}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               onClick={() => navigate(ROUTES.Catalog)}
             />
             <NeutralButton
               label={t(ButtonsI18nKeys.NewChat)}
-              iconBefore={<IconMessagePlus size={DIAL_ICON_SIZE.SM} />}
+              iconBefore={
+                <IconMessagePlus
+                  size={DIAL_ICON_SIZE.SM}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               onClick={() => navigate(ROUTES.Root)}
             />
           </div>
@@ -87,6 +98,7 @@ const NotFoundPage: FC = () => {
                 size={DIAL_ICON_SIZE.SM}
                 className="rtl:scale-x-[-1]"
                 aria-hidden="true"
+                stroke={DIAL_KIT_ICON_STROKE}
               />
             }
             onClick={() => navigate(-1)}

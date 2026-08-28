@@ -15,6 +15,7 @@ import {
 } from '@epam/ai-dial-publish-panel';
 import {
   CloseButton,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
   RadioGroup,
@@ -191,6 +192,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   isOpen,
   isStarred: initialIsStarred = false,
   isDetailsLoading = false,
+  isReadonly = false,
   onClose,
   onToggleFavorite,
   isFavoriteVisible,
@@ -1115,7 +1117,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           {subViewHeader != null && (
             <>
               <GhostIconButton
-                icon={<IconChevronLeft className="rtl:scale-x-[-1]" />}
+                icon={
+                  <IconChevronLeft
+                    className="rtl:scale-x-[-1]"
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                }
                 aria-label={backToDetailsAriaLabel}
                 disabled={subViewHeader.isBackDisabled}
                 onClick={subViewHeader.onBack}
@@ -1134,7 +1141,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           {subViewHeader == null && (
             <>
               <div className="flex-1" />
-              {isFavoriteVisible?.(item) !== false && (
+              {!isReadonly && isFavoriteVisible?.(item) !== false && (
                 <StarToggleButton
                   isStarred={isStarred}
                   ariaLabel={starAriaLabel}
@@ -1283,6 +1290,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onRequestLogout={handleRequestLogout}
                 texts={texts}
                 detailsStyles={detailsStyles}
+                isReadonly={isReadonly}
               />
 
               {item.credentials != null &&

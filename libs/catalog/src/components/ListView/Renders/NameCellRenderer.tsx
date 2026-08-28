@@ -3,7 +3,7 @@ import {
   ItemHeader,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { FC } from 'react';
@@ -50,6 +50,7 @@ export const NameCellRenderer: FC<
               size={DIAL_ICON_SIZE.SM}
               className={mergeClasses('shrink-0', styles.selectedCheck)}
               aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
             />
           ) : undefined
         }

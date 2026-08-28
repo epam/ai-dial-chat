@@ -6,12 +6,13 @@ import {
 import {
   Button,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Dropdown,
+  ElementSize,
   GhostIconButton,
+  Highlight,
   Skeleton,
   SkeletonVariant,
-  ElementSize,
-  Highlight,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconClock, IconDotsVertical } from '@tabler/icons-react';
@@ -168,7 +169,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         taskBadgeClassName,
       )}
     >
-      <IconClock size={12} aria-hidden />
+      <IconClock size={12} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
       {item.taskBadgeLabel}
     </span>
   ) : undefined;
@@ -281,6 +282,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
                   size={DIAL_ICON_SIZE.SM}
                   className={styles.triggerIcon}
                   aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
                 />
               }
               size={ElementSize.Small}

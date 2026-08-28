@@ -10,7 +10,8 @@ import {
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
-  StaticIconButton,
+  DIAL_KIT_ICON_STROKE,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
 import {
@@ -143,7 +144,13 @@ export const Input: FC<InputProps> = ({
             {
               key: 'dial-fs',
               label: dialFileSystemLabel ?? 'DIAL file system',
-              icon: <IconFile size={BASE_ICON_SIZE} aria-hidden />,
+              icon: (
+                <IconFile
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
               onClick: onDialFileSystemClick,
             },
           ]
@@ -562,10 +569,16 @@ export const Input: FC<InputProps> = ({
             )}
 
             {shouldShowMicButton && (
-              <StaticIconButton
-                icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
+              <GhostIconButton
+                icon={
+                  <IconMicrophone
+                    size={DIAL_ICON_SIZE.LG}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
+                  />
+                }
                 aria-label={micLabel}
-                className="size-8 flex-shrink-0"
+                className="size-[40px] flex-shrink-0"
                 onClick={startRecording}
                 disabled={isInputDisabled || isStreaming}
               />

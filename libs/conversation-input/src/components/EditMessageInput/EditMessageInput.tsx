@@ -2,6 +2,7 @@ import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { RequestStatus, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   NeutralButton,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
@@ -119,7 +120,13 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
             {
               key: 'dial-fs',
               label: dialFileSystemLabel ?? 'DIAL file system',
-              icon: <IconFile size={BASE_ICON_SIZE} aria-hidden />,
+              icon: (
+                <IconFile
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
               onClick: onDialFileSystemClick,
             },
           ]

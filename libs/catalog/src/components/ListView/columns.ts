@@ -11,6 +11,7 @@ import { TagsCellRenderer } from './Renders/TagsCellRenderer';
 /** Column definitions for the catalog ag-grid list view. A stable module-level constant so ag-grid never sees a new array/closures on each render. */
 export const CATALOG_COLUMNS = (
   type: CatalogEntityType,
+  isReadonly = false,
 ): ColDef<CatalogItem>[] => {
   return [
     {
@@ -60,6 +61,7 @@ export const CATALOG_COLUMNS = (
       filter: false,
       sortable: false,
       resizable: false,
+      hide: isReadonly,
       headerClass: styles.favHeader,
       cellRenderer: StarCellRenderer,
     },

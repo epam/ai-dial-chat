@@ -53,6 +53,7 @@ fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
 - For partial mocks of real modules use `vi.mock('module', async (importOriginal) => { const actual = await importOriginal(); return { ...actual, ... }; })`.
 - Prefer `vi.mocked(fn)` for typed access to mocked imports.
 - Call `vi.clearAllMocks()` in `beforeEach` whenever shared mock state could leak between tests.
+- An object-literal mock of `@epam/ai-dial-ui-kit` must include `DIAL_KIT_ICON_STROKE: 1.5` — every icon in the component under test reads it, and a missing export fails the whole file at import time, not at an assertion.
 
 ## Describe / it naming
 

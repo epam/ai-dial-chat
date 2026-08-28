@@ -1,5 +1,6 @@
 import { formatFileSize } from '@epam/ai-dial-chat-shared';
 import {
+  DIAL_KIT_ICON_STROKE,
   ErrorText,
   FileDropzone,
   GhostButton,
@@ -252,7 +253,11 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
                   key={candidate.id}
                   className="flex items-center gap-2 rounded-lg border border-tertiary p-2"
                 >
-                  <IconFileText size={20} aria-hidden />
+                  <IconFileText
+                    size={20}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="dial-small-text truncate">
                       {candidate.path}
@@ -271,7 +276,13 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
                     )}
                   </div>
                   <GhostIconButton
-                    icon={<IconTrashX size={16} aria-hidden />}
+                    icon={
+                      <IconTrashX
+                        size={16}
+                        aria-hidden
+                        stroke={DIAL_KIT_ICON_STROKE}
+                      />
+                    }
                     aria-label={
                       t.uploadRemoveCandidateLabel?.(candidate.path) ??
                       `Remove ${candidate.path}`

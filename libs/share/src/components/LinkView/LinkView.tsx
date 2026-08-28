@@ -1,5 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, GhostIconButton, Input } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  GhostIconButton,
+  Input,
+} from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 import { FC } from 'react';
 import styles from '../SharePopover/SharePopover.module.scss';
@@ -46,9 +51,17 @@ export const LinkView: FC<LinkViewProps> = ({
       <GhostIconButton
         icon={
           isCopied ? (
-            <IconCheck size={DIAL_ICON_SIZE.LG} aria-hidden />
+            <IconCheck
+              size={DIAL_ICON_SIZE.LG}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
           ) : (
-            <IconCopy size={DIAL_ICON_SIZE.LG} aria-hidden />
+            <IconCopy
+              size={DIAL_ICON_SIZE.LG}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
           )
         }
         aria-label={isCopied ? copiedButtonLabel : copyButtonLabel}

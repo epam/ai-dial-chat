@@ -65,6 +65,7 @@ Apply in order, stop at the first match:
 | `docs`     | Design docs and Markdown documentation (`docs/**`, README)                               |
 | `agents`   | Agent config: `.agents/**`, `.claude/**`, `.cursor/**`, `AGENTS.md`, `CLAUDE.md`, skills |
 | `e2e`      | End-to-end tests                                                                         |
+| `styles`   | Styling, theming, and shadow token configuration (`tailwind.config.js`, theme variables) |
 
 ## Self-extend (append-only)
 

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { CredentialsIdentityIcon } from '../CredentialsIdentityIcon';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
 }));
 

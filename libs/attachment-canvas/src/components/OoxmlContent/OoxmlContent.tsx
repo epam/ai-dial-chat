@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Spinner } from '@epam/ai-dial-ui-kit';
+import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useRef, useState } from 'react';
 import type { OoxmlCanvasContent } from '../../models/attachment-canvas';
@@ -133,7 +133,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
               <IconAlertTriangle
                 aria-hidden="true"
                 size={60}
-                stroke={1.5}
+                stroke={DIAL_KIT_ICON_STROKE}
                 className={styles.errorIcon}
               />
               <p className="text-center">{loadErrorLabel}</p>

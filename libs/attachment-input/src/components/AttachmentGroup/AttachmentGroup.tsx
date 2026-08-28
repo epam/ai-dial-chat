@@ -6,6 +6,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -118,7 +119,13 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
         </div>
         {attachments.length >= 2 && (onDownloadAll || onAttachmentClick) && (
           <GhostIconButton
-            icon={<IconDownload size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            icon={
+              <IconDownload
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             size={ElementSize.Small}
             aria-label={downloadAllLabel}
             onClick={handleDownloadAll}

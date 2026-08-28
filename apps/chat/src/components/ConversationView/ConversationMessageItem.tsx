@@ -40,7 +40,11 @@ import {
   useCitationMarkdownComponents,
   type AnnotationGroup,
 } from '@epam/ai-dial-quotations';
-import { ErrorMessageNotification, PrimaryButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_KIT_ICON_STROKE,
+  ErrorMessageNotification,
+  PrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -558,7 +562,13 @@ const ConversationMessageItem: FC<Props> = ({
                           isPdfPagePreviewable ? onPreviewReference : undefined
                         }
                         onOpenInBrowser={handleOpenReferenceInBrowser}
-                        icon={<IconLink size={14} aria-hidden />}
+                        icon={
+                          <IconLink
+                            size={14}
+                            aria-hidden
+                            stroke={DIAL_KIT_ICON_STROKE}
+                          />
+                        }
                         cardLabels={{
                           ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
                             source: group.sourceName,

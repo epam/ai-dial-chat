@@ -17,7 +17,7 @@
   @apply pointer-events-none absolute inset-x-0 bottom-0 h-12;
   background: linear-gradient(
     to bottom,
-    var(--cm-bubble-fade-start, var(--shadow-xs-sm-2, #161b2d08)),
+    var(--cm-bubble-fade-start, var(--shadow-xs-2, #161b2d08)),
     var(--cm-bubble-user-bg, var(--bg-layer-sunken, #eef1f7))
   );
 }

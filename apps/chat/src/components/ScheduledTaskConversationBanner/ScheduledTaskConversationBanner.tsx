@@ -1,4 +1,9 @@
-import { GhostButton, Skeleton, SkeletonVariant } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_KIT_ICON_STROKE,
+  GhostButton,
+  Skeleton,
+  SkeletonVariant,
+} from '@epam/ai-dial-ui-kit';
 import { IconChevronRight } from '@tabler/icons-react';
 import { FC, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -122,7 +127,12 @@ const ScheduledTaskConversationBanner: FC = () => {
         className="dial-tiny-semi-text flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-accent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus"
       >
         {t(ScheduledTasksI18nKeys.ConversationBannerTaskDetailsLabel)}
-        <IconChevronRight size={16} className="rtl:scale-x-[-1]" aria-hidden />
+        <IconChevronRight
+          size={16}
+          className="rtl:scale-x-[-1]"
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
       </Link>
     </div>
   );

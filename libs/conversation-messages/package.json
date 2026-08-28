@@ -24,7 +24,7 @@
     "react-markdown": "^10.1.0",
     "@epam/ai-dial-attachment-input": "*",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.14.0-dev.13"
+    "@epam/ai-dial-ui-kit": "^0.14.0-dev.15"
   },
   "nx": {
     "tags": [

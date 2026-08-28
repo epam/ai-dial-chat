@@ -15,12 +15,14 @@
 }
 
 .headerRow {
-  border-block-end: 1px solid
+  /* Dividers inside the table sit on the thin stroke (0.5px), one step below
+     the 1px main stroke controls and standalone dividers use. */
+  border-block-end: 0.5px solid
     var(--mls-row-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
 .row {
-  border-block-start: 1px solid
+  border-block-start: 0.5px solid
     var(--mls-row-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
