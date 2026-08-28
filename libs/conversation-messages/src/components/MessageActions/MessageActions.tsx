@@ -7,6 +7,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   ToggleIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -89,7 +90,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
                 <IconPencilMinus
                   size={DIAL_ICON_SIZE.SM}
                   aria-hidden
-                  stroke={1.5}
+                  stroke={DIAL_KIT_ICON_STROKE}
                 />
               }
               size={ElementSize.Small}
@@ -103,7 +104,11 @@ export const MessageActions: FC<MessageActionsProps> = ({
           {onDelete && (
             <ToggleIconButton
               icon={
-                <IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden stroke={1.5} />
+                <IconTrashX
+                  size={DIAL_ICON_SIZE.SM}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
               }
               size={ElementSize.Small}
               aria-label={ariaLabels?.deleteMessage ?? 'Delete message'}
@@ -120,7 +125,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
                 <IconRefresh
                   size={DIAL_ICON_SIZE.SM}
                   aria-hidden
-                  stroke={1.5}
+                  stroke={DIAL_KIT_ICON_STROKE}
                 />
               }
               size={ElementSize.Small}
@@ -152,7 +157,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
                 <IconMarkdown
                   size={DIAL_ICON_SIZE.SM}
                   aria-hidden
-                  stroke={1.5}
+                  stroke={DIAL_KIT_ICON_STROKE}
                 />
               }
               copyLabel={tooltips?.copyMarkdown ?? 'Copy as Markdown'}
@@ -168,14 +173,13 @@ export const MessageActions: FC<MessageActionsProps> = ({
                   <IconThumbUpFilled
                     className={styles.activeRating}
                     size={DIAL_ICON_SIZE.SM}
-                    stroke={1.5}
                     aria-hidden
                   />
                 ) : (
                   <IconThumbUp
                     size={DIAL_ICON_SIZE.SM}
                     aria-hidden
-                    stroke={1.5}
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 )
               }
@@ -194,13 +198,12 @@ export const MessageActions: FC<MessageActionsProps> = ({
                     className={styles.activeRating}
                     size={DIAL_ICON_SIZE.SM}
                     aria-hidden
-                    stroke={1.5}
                   />
                 ) : (
                   <IconThumbDown
                     size={DIAL_ICON_SIZE.SM}
                     aria-hidden
-                    stroke={1.5}
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 )
               }

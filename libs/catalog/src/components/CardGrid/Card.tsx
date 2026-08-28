@@ -6,6 +6,7 @@ import {
 import {
   CardShell,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   FolderPath,
 } from '@epam/ai-dial-ui-kit';
@@ -140,6 +141,7 @@ export const Card: FC<CardProps> = ({
             styles.checkIcon,
           )}
           aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
         />
       )}
 

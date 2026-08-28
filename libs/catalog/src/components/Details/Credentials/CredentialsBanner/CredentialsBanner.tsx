@@ -1,4 +1,4 @@
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconBuildingCommunity, IconUser } from '@tabler/icons-react';
 import { FC } from 'react';
 import type { ItemDetailsTexts } from '../../../../models/item-details-props';
@@ -59,7 +59,13 @@ export const CredentialsBanner: FC<CredentialsBannerProps> = ({
   texts,
 }) => {
   /* Color comes from `CredentialsInfoCard`'s icon slot, which the icon inherits. */
-  const orgIcon = <IconBuildingCommunity size={BANNER_ICON_SIZE} aria-hidden />;
+  const orgIcon = (
+    <IconBuildingCommunity
+      size={BANNER_ICON_SIZE}
+      aria-hidden
+      stroke={DIAL_KIT_ICON_STROKE}
+    />
+  );
 
   if (state === CredentialsBannerState.PersonalCredentialsActive) {
     const title = (
@@ -70,7 +76,13 @@ export const CredentialsBanner: FC<CredentialsBannerProps> = ({
       <CredentialsInfoCard
         icon={
           <CredentialsIdentityIcon
-            icon={<IconUser size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            icon={
+              <IconUser
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             isActive
             surface={CredentialsIconSurface.Raised}
           />
@@ -90,7 +102,11 @@ export const CredentialsBanner: FC<CredentialsBannerProps> = ({
         icon={
           <CredentialsIdentityIcon
             icon={
-              <IconBuildingCommunity size={DIAL_ICON_SIZE.SM} aria-hidden />
+              <IconBuildingCommunity
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
             }
             isActive
             surface={CredentialsIconSurface.Raised}

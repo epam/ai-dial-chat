@@ -31,7 +31,7 @@ import {
  * 8. Update `openspec/specs/custom-visualizers/spec.md` accordingly.
  */
 import { VisualizerConnectorRequests } from '@epam/ai-dial-shared';
-import { Spinner } from '@epam/ai-dial-ui-kit';
+import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useRef, useState } from 'react';
@@ -168,7 +168,7 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <IconAlertTriangle
             size={60}
-            stroke={1.5}
+            stroke={DIAL_KIT_ICON_STROKE}
             aria-hidden
             className={styles.errorIcon}
           />

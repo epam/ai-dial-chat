@@ -524,7 +524,7 @@ describe('useOpenAttachmentCanvas routing', () => {
       expect(mockOpenCanvas).toHaveBeenCalledWith(
         htmlContent,
         'PG AI Factory scope roadmap',
-        undefined,
+        'PG AI Factory scope roadmap',
       );
     });
 

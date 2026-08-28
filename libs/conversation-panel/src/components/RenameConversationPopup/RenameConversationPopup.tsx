@@ -6,6 +6,7 @@ import {
 import {
   ButtonVariant,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   GhostIconButton,
   Input,
   Popup,
@@ -167,7 +168,10 @@ export const RenameConversationPopup: FC<RenameConversationPopupProps> = memo(
                   isGenerating ? (
                     <Spinner size={DIAL_ICON_SIZE.MD} />
                   ) : (
-                    <IconSparkles size={DIAL_ICON_SIZE.MD} stroke={1.5} />
+                    <IconSparkles
+                      size={DIAL_ICON_SIZE.MD}
+                      stroke={DIAL_KIT_ICON_STROKE}
+                    />
                   )
                 }
               />

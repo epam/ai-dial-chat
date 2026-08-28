@@ -54,6 +54,7 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
 });
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   PrimaryButton: ({
     label,
     onClick,

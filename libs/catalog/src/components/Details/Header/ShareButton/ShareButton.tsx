@@ -1,4 +1,9 @@
-import { DIAL_ICON_SIZE, NeutralButton, Dropdown } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  Dropdown,
+  NeutralButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconShare } from '@tabler/icons-react';
 import { FC, type ReactNode, useCallback, useState } from 'react';
 import { CatalogItem } from '../../../../models/catalog-item';
@@ -61,8 +66,15 @@ export const ShareButton: FC<ShareButtonProps> = ({
   const button = (
     <NeutralButton
       label={label}
-      iconBefore={<IconShare size={DIAL_ICON_SIZE.MD} />}
-      iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.MD} />}
+      iconBefore={
+        <IconShare size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />
+      }
+      iconAfter={
+        <IconChevronDown
+          size={DIAL_ICON_SIZE.MD}
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      }
       onClick={handleClick}
       aria-haspopup={shareOverlay ? 'menu' : undefined}
       aria-expanded={shareOverlay ? isOpen : undefined}

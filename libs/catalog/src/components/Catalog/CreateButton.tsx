@@ -3,6 +3,7 @@ import {
   ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   DropdownItem,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
@@ -34,7 +35,9 @@ export const CreateButton: FC<CreateButtonProps> = ({
     return (
       <PrimaryButton
         label={label}
-        iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
+        iconBefore={
+          <IconPlus size={DIAL_ICON_SIZE.SM} stroke={DIAL_KIT_ICON_STROKE} />
+        }
         onClick={onClick}
       />
     );
@@ -45,7 +48,9 @@ export const CreateButton: FC<CreateButtonProps> = ({
       <ButtonDropdown
         appearance={ButtonAppearance.Solid}
         label={label}
-        iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
+        iconBefore={
+          <IconPlus size={DIAL_ICON_SIZE.SM} stroke={DIAL_KIT_ICON_STROKE} />
+        }
         variant={ButtonVariant.Primary}
         items={options}
       />

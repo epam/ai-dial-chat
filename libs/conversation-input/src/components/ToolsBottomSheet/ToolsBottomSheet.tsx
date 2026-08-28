@@ -1,6 +1,10 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { ToolMenuItem } from '@epam/ai-dial-chat-shared';
-import { BASE_ICON_SIZE, Button } from '@epam/ai-dial-ui-kit';
+import {
+  BASE_ICON_SIZE,
+  Button,
+  DIAL_KIT_ICON_STROKE,
+} from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import type { CSSProperties, FC } from 'react';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
@@ -92,7 +96,11 @@ export const ToolsBottomSheet: FC<ToolsBottomSheetProps> = ({
                   <span
                     className={mergeClasses('ms-auto', styles.selectedIcon)}
                   >
-                    <IconCheck size={BASE_ICON_SIZE} aria-hidden />
+                    <IconCheck
+                      size={BASE_ICON_SIZE}
+                      aria-hidden
+                      stroke={DIAL_KIT_ICON_STROKE}
+                    />
                   </span>
                 ) : null
               }

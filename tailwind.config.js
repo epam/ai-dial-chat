@@ -16,7 +16,7 @@ const shadowColors = {
   'xs-1': 'var(--shadow-xs-1, #2764D933)', // blue-500 alpha-20
   'xs-2': 'var(--shadow-xs-2, #161B2D08)', // grey-1000 alpha-3
   sm: 'var(--shadow-sm, #2764D914)', // blue-500 alpha-8
-  md: 'var(--shadow-md, #2764D90A)', // blue-500 alpha-4
+  md: 'var(--shadow-md, #2764D90F)', // blue-500 alpha-6
   lg: 'var(--shadow-lg, #2764D914)', // blue-500 alpha-8
 };
 

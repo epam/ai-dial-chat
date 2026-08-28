@@ -6,9 +6,10 @@ import {
   MIMEType,
 } from '@epam/ai-dial-chat-shared';
 import {
+  DIAL_KIT_ICON_STROKE,
+  ElementSize,
   EllipsisTooltip,
   GhostIconButton,
-  ElementSize,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
@@ -153,7 +154,13 @@ export const CitationCard: FC<CitationCardProps> = ({
         {hasSwitcher && (
           <div className="flex shrink-0 items-center gap-1">
             <GhostIconButton
-              icon={<IconChevronLeft size={14} className="rtl:scale-x-[-1]" />}
+              icon={
+                <IconChevronLeft
+                  size={14}
+                  className="rtl:scale-x-[-1]"
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               size={ElementSize.Small}
               aria-label={labels.previousCitation}
               onClick={() => onIndexChange((activeIndex - 1 + total) % total)}
@@ -162,7 +169,13 @@ export const CitationCard: FC<CitationCardProps> = ({
               {labels.formatSwitcherText(activeIndex + 1, total)}
             </span>
             <GhostIconButton
-              icon={<IconChevronRight size={14} className="rtl:scale-x-[-1]" />}
+              icon={
+                <IconChevronRight
+                  size={14}
+                  className="rtl:scale-x-[-1]"
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               size={ElementSize.Small}
               aria-label={labels.nextCitation}
               onClick={() => onIndexChange((activeIndex + 1) % total)}

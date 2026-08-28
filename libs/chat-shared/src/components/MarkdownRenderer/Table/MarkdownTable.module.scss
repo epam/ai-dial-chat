@@ -43,7 +43,10 @@ tbody .row:nth-child(even) td {
 }
 
 .rowDivider {
-  border-color: var(--cm-table-row-divider, var(--stroke-tertiary, #e0e6f0));
+  /* Dividers inside a table sit on the thin stroke (0.5px), one step below the
+     1px main stroke controls and standalone dividers use. */
+  border-block-end: 0.5px solid
+    var(--cm-table-row-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
 tbody .row:hover td {

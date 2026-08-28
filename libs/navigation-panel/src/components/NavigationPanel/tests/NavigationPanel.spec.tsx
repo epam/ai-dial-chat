@@ -5,6 +5,7 @@ import type { NavigationPanelItem } from '../../../models/navigation-item';
 import { NavigationPanel } from '../NavigationPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24 },
   IconButton: ({
     'aria-label': ariaLabel,

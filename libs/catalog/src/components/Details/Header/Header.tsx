@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Dropdown,
   FolderPath,
   NeutralButton,
@@ -566,6 +567,7 @@ export const Header: FC<HeaderProps> = ({
             size={DIAL_ICON_SIZE.SM}
             aria-hidden
             className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
           />
         ),
         onClick: handleShare,
@@ -580,6 +582,7 @@ export const Header: FC<HeaderProps> = ({
             size={DIAL_ICON_SIZE.SM}
             aria-hidden
             className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
           />
         ),
         onClick: handleEdit,
@@ -594,6 +597,7 @@ export const Header: FC<HeaderProps> = ({
             size={DIAL_ICON_SIZE.SM}
             aria-hidden
             className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
           />
         ),
         onClick: handleDownload,
@@ -608,6 +612,7 @@ export const Header: FC<HeaderProps> = ({
             size={DIAL_ICON_SIZE.SM}
             aria-hidden
             className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
           />
         ),
         onClick: handleOpenPublish,
@@ -625,6 +630,7 @@ export const Header: FC<HeaderProps> = ({
             size={DIAL_ICON_SIZE.SM}
             aria-hidden
             className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
           />
         ),
         onClick: handleOpenUnpublish,
@@ -634,7 +640,13 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'delete',
         label: texts?.deleteActionLabel ?? 'Delete',
-        icon: <IconTrash size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        icon: (
+          <IconTrash
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        ),
         danger: true,
         onClick: handleDelete,
       });
@@ -650,7 +662,13 @@ export const Header: FC<HeaderProps> = ({
           recipientsCount == null
             ? revokeShareLabel
             : formatWithCount(recipientsCount),
-        icon: <IconUserOff size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        icon: (
+          <IconUserOff
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        ),
         danger: true,
         onClick: handleRevokeShare,
       });
@@ -659,7 +677,13 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'unshare',
         label: texts?.unshareLabel ?? 'Remove from My List',
-        icon: <IconTrash size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        icon: (
+          <IconTrash
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        ),
 
         onClick: handleUnshare,
       });
@@ -754,23 +778,27 @@ export const Header: FC<HeaderProps> = ({
 
   const credentialsIconBefore = (() => {
     if (credentialsUiState === CredentialsUiState.ManageCredentials) {
-      return <IconKey size={DIAL_ICON_SIZE.MD} />;
+      return <IconKey size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />;
     }
     if (authenticationType === ToolsetAuthenticationType.ApiKey) {
-      return <IconKey size={DIAL_ICON_SIZE.MD} />;
+      return <IconKey size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />;
     }
     return credentialsUiState === CredentialsUiState.LogOut ? (
-      <IconLogout size={DIAL_ICON_SIZE.MD} />
+      <IconLogout size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />
     ) : (
-      <IconLogin size={DIAL_ICON_SIZE.MD} />
+      <IconLogin size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />
     );
   })();
 
   const credentialsIconAfter =
     credentialsUiState === CredentialsUiState.ManageCredentials ? (
-      <IconArrowRight size={DIAL_ICON_SIZE.MD} className="rtl:scale-x-[-1]" />
+      <IconArrowRight
+        size={DIAL_ICON_SIZE.MD}
+        className="rtl:scale-x-[-1]"
+        stroke={DIAL_KIT_ICON_STROKE}
+      />
     ) : isApiKeyOverlayTrigger ? (
-      <IconChevronDown size={DIAL_ICON_SIZE.MD} />
+      <IconChevronDown size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />
     ) : undefined;
 
   const renderCredentialsButton = (
@@ -828,7 +856,13 @@ export const Header: FC<HeaderProps> = ({
          * the publish button's own state — are usually already settled by the
          * time the menu opens. */}
         <NeutralIconButton
-          icon={<IconDots size={DIAL_ICON_SIZE.LG} aria-hidden />}
+          icon={
+            <IconDots
+              size={DIAL_ICON_SIZE.LG}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          }
           aria-label={texts?.manageActionLabel ?? 'Manage'}
           aria-haspopup="menu"
           onMouseEnter={handleManageTriggerIntent}
@@ -898,7 +932,11 @@ export const Header: FC<HeaderProps> = ({
                 isDownloading ? (
                   <Spinner size={DIAL_ICON_SIZE.MD} aria-hidden />
                 ) : (
-                  <IconDownload size={DIAL_ICON_SIZE.MD} aria-hidden />
+                  <IconDownload
+                    size={DIAL_ICON_SIZE.MD}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
                 )
               }
               onClick={handleDownloadPrimary}
@@ -928,7 +966,13 @@ export const Header: FC<HeaderProps> = ({
         {isPublishInActionRow && shouldShowUnpublish && (
           <NeutralButton
             label={texts?.unpublishLabel ?? 'Unpublish'}
-            iconBefore={<IconWorldOff size={DIAL_ICON_SIZE.MD} aria-hidden />}
+            iconBefore={
+              <IconWorldOff
+                size={DIAL_ICON_SIZE.MD}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             onClick={handleOpenUnpublish}
             onMouseEnter={handlePublishTriggerIntent}
             onFocus={handlePublishTriggerIntent}
@@ -937,7 +981,13 @@ export const Header: FC<HeaderProps> = ({
         {isPublishInActionRow && shouldShowPublish && (
           <NeutralButton
             label={texts?.publishLabel ?? 'Publish'}
-            iconBefore={<IconWorldShare size={DIAL_ICON_SIZE.MD} aria-hidden />}
+            iconBefore={
+              <IconWorldShare
+                size={DIAL_ICON_SIZE.MD}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             onClick={handleOpenPublish}
             onMouseEnter={handlePublishTriggerIntent}
             onFocus={handlePublishTriggerIntent}

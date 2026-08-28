@@ -15,6 +15,7 @@ import {
 } from '@epam/ai-dial-publish-panel';
 import {
   CloseButton,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
   RadioGroup,
@@ -1116,7 +1117,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           {subViewHeader != null && (
             <>
               <GhostIconButton
-                icon={<IconChevronLeft className="rtl:scale-x-[-1]" />}
+                icon={
+                  <IconChevronLeft
+                    className="rtl:scale-x-[-1]"
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                }
                 aria-label={backToDetailsAriaLabel}
                 disabled={subViewHeader.isBackDisabled}
                 onClick={subViewHeader.onBack}

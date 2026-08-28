@@ -31,6 +31,7 @@ vi.mock('../../../server-api/auth.api', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   ConfirmationPopup: ({
     open,
     confirmLabel,

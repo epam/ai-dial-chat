@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   EllipsisTooltip,
   LinkButton,
   Spinner,
@@ -192,6 +193,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
           size={DIAL_ICON_SIZE.SM}
           className={styles.doneIcon}
           aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
         />
         <span
           className={mergeClasses(
@@ -227,12 +229,17 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         aria-expanded={isOpen}
         iconAfter={
           isOpen ? (
-            <IconChevronDown size={12} aria-hidden />
+            <IconChevronDown
+              size={12}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
           ) : (
             <IconChevronRight
               size={12}
               className="rtl:scale-x-[-1]"
               aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
             />
           )
         }

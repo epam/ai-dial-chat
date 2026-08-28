@@ -208,6 +208,24 @@ stroke-accent-focus stroke-gradient-1    stroke-gradient-2
 stroke-control-disable-primary
 ```
 
+These name the stroke _colour_. Stroke _width_ is not themable: the design
+scale is four fixed widths, written as plain Tailwind utilities, because
+`borderColor` already owns names like `warning` and `error` and a
+`border-warning` utility would then set a width and a colour at once.
+
+| Width | Written as                    | Used for                                    |
+| ----- | ----------------------------- | ------------------------------------------- |
+| 0.5px | `0.5px solid` in a stylesheet | Dividers inside a table                     |
+| 1px   | `border`                      | Controls, standalone dividers, table frames |
+| 1.5px | `DIAL_KIT_ICON_STROKE`        | Tabler icon `stroke` (its own default is 2) |
+| 2px   | `border-2`                    | Active/selected highlighting                |
+
+Tabler renders every outline icon at 2px unless told otherwise, so the icon
+weight has to be passed explicitly on each icon:
+`<IconPlus stroke={DIAL_KIT_ICON_STROKE} />`. Two departures are deliberate:
+empty-state illustrations stay lighter (`stroke={1}`), since 1.5px reads as a
+fence at 48px, and filled glyphs carry no icon stroke at all.
+
 **Shadows**
 
 ```text

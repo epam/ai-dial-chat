@@ -1,4 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconPlus } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
 import type { NewChatButtonColors } from '../../models/panel-props';
@@ -35,7 +36,11 @@ export const NewChatButton: FC<NewChatButtonProps> = memo(
             styles.button,
           )}
         >
-          <IconPlus size={18} stroke={2} className="shrink-0" />
+          <IconPlus
+            size={18}
+            stroke={DIAL_KIT_ICON_STROKE}
+            className="shrink-0"
+          />
           <span className={labelClassName}>{label}</span>
         </button>
       </div>

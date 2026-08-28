@@ -2,9 +2,10 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   CheckboxBox,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Dropdown,
-  PrimaryButton,
   GhostButton,
+  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconFilter } from '@tabler/icons-react';
 import {
@@ -394,7 +395,7 @@ export const Filter: FC<FilterProps> = ({
       >
         <IconFilter
           size={DIAL_ICON_SIZE.SM}
-          strokeWidth={1.8}
+          stroke={DIAL_KIT_ICON_STROKE}
           className={mergeClasses('shrink-0', styles.filterBtnFunnel)}
           aria-hidden
         />
@@ -408,7 +409,7 @@ export const Filter: FC<FilterProps> = ({
         </span>
         <IconChevronDown
           size={14}
-          strokeWidth={2.2}
+          stroke={DIAL_KIT_ICON_STROKE}
           className={mergeClasses(
             'shrink-0 transition-transform duration-150',
             styles.filterBtnChevron,

@@ -1,4 +1,4 @@
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { useSheetNavigation } from '../../hooks/useSheetNavigation';
@@ -31,7 +31,7 @@ export const OptionListPage: FC<OptionListPageProps> = memo(
               option.isActive ? (
                 <IconCheck
                   size={DIAL_ICON_SIZE.SM}
-                  stroke={2}
+                  stroke={DIAL_KIT_ICON_STROKE}
                   aria-hidden
                   className={styles.activeIcon}
                 />

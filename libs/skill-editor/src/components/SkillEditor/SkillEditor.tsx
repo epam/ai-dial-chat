@@ -5,7 +5,7 @@ import {
   Accordion,
   CaptionText,
   DIAL_ICON_SIZE,
-  type DropdownItem,
+  DIAL_KIT_ICON_STROKE,
   EditorThemes,
   ErrorText,
   GhostButton,
@@ -15,6 +15,7 @@ import {
   PrimaryButton,
   Spinner,
   Textarea,
+  type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconPlus, IconTrashX } from '@tabler/icons-react';
 import {
@@ -234,6 +235,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
               size={DIAL_ICON_SIZE.SM}
               className={removeIconClassName}
               aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
             />
           ),
           onClick: () => handleRemoveNode(item.path),
@@ -254,7 +256,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         </span>
         <NeutralButton
           label={t.addUploadLabel ?? 'Upload from device'}
-          iconBefore={<IconPlus size={16} aria-hidden />}
+          iconBefore={
+            <IconPlus size={16} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
+          }
           onClick={() => {
             setDroppedFiles(undefined);
             setIsUploadDialogOpen(true);

@@ -1,3 +1,4 @@
+import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { FC, memo } from 'react';
 
 interface Props {
@@ -5,7 +6,10 @@ interface Props {
   stroke?: number;
 }
 
-const ScheduledTasksIcon: FC<Props> = ({ size = 20, stroke = 1.5 }) => (
+const ScheduledTasksIcon: FC<Props> = ({
+  size = 20,
+  stroke = DIAL_KIT_ICON_STROKE,
+}) => (
   <svg
     width={size}
     height={size}
