@@ -6,8 +6,12 @@
   color: var(--lt-label, var(--text-secondary, #57647a));
 }
 
-.value {
-  color: var(--lt-value, var(--text-secondary, #57647a));
+.valuePrimary {
+  color: var(--lt-value-primary, var(--text-primary, #161b2d));
+}
+
+.divider {
+  border-color: var(--lt-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
 /* !important overrides ProgressBar's own `bg-control-disable-primary` track utility class,

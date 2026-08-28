@@ -94,14 +94,14 @@ describe('SidebarPanel', () => {
     );
   });
 
-  it('side=right: applies border-s divider', () => {
+  it('side=right: renders without a divider', () => {
     render(
       <SidebarPanel {...defaultProps} orientation={SidebarOrientation.Right}>
         <span />
       </SidebarPanel>,
     );
     const aside = screen.getByRole('complementary');
-    expect(aside.classList.contains('border-s')).toBe(true);
+    expect(aside.classList.contains('border-s')).toBe(false);
     expect(aside.classList.contains('border-e')).toBe(false);
   });
 
@@ -122,15 +122,34 @@ describe('SidebarPanel', () => {
     );
   });
 
-  it('side=left: applies border-e divider', () => {
+  it('side=left, open: applies the border-s divider facing the navigation rail', () => {
     render(
-      <SidebarPanel {...defaultProps} orientation={SidebarOrientation.Left}>
+      <SidebarPanel
+        {...defaultProps}
+        orientation={SidebarOrientation.Left}
+        isOpen
+      >
         <span />
       </SidebarPanel>,
     );
     const aside = screen.getByRole('complementary');
-    expect(aside.classList.contains('border-e')).toBe(true);
+    expect(aside.classList.contains('border-s')).toBe(true);
+    expect(aside.classList.contains('border-e')).toBe(false);
+  });
+
+  it('side=left, closed: renders without a divider', () => {
+    render(
+      <SidebarPanel
+        {...defaultProps}
+        orientation={SidebarOrientation.Left}
+        isOpen={false}
+      >
+        <span />
+      </SidebarPanel>,
+    );
+    const aside = screen.getByRole('complementary');
     expect(aside.classList.contains('border-s')).toBe(false);
+    expect(aside.classList.contains('border-e')).toBe(false);
   });
 
   it('close button calls onClose', async () => {

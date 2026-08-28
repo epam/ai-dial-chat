@@ -49,6 +49,27 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
   ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
+  FileDropzone: ({
+    label,
+    ariaLabel,
+    multiple,
+    onChange,
+  }: {
+    label: ReactNode;
+    ariaLabel?: string;
+    multiple?: boolean;
+    onChange: (files: File[]) => void;
+  }) => (
+    <div>
+      <span>{label}</span>
+      <input
+        type="file"
+        multiple={multiple}
+        aria-label={ariaLabel}
+        onChange={(event) => onChange(Array.from(event.target.files ?? []))}
+      />
+    </div>
+  ),
   GhostButton: ({
     label,
     onClick,

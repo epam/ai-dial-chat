@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { ReactNode, useId } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { LimitsTab } from '../Limits';
-import styles from '../Limits.module.scss';
+import { LimitsTab } from '../Limits/Limits';
+import styles from '../Limits/Limits.module.scss';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
@@ -12,57 +11,52 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     max,
     size,
     className,
-    labelProps,
-    valueLabel,
+    'aria-label': ariaLabel,
     'aria-valuetext': ariaValueText,
   }: {
     value: number;
     max?: number;
     size?: string;
     className?: string;
-    labelProps?: { label?: ReactNode };
-    valueLabel?: ReactNode;
+    'aria-label'?: string;
     'aria-valuetext'?: string;
-  }) => {
-    const labelId = useId();
-    return (
-      <div>
-        <span id={labelId}>{labelProps?.label}</span>
-        <div
-          role="progressbar"
-          className={className}
-          aria-labelledby={labelId}
-          aria-valuenow={value}
-          aria-valuemax={max}
-          aria-valuetext={ariaValueText}
-          data-size={size}
-        >
-          {valueLabel}
-        </div>
-      </div>
-    );
-  },
+  }) => (
+    <div
+      role="progressbar"
+      className={className}
+      aria-label={ariaLabel}
+      aria-valuenow={value}
+      aria-valuemax={max}
+      aria-valuetext={ariaValueText}
+      data-size={size}
+    />
+  ),
 }));
 
 describe('LimitsTab', () => {
-  it('renders capped rows as progress bars under the "Cost caps" section', () => {
+  it('renders capped rows as progress bars under their group heading', () => {
     render(
       <LimitsTab
         limits={{
-          rows: [
+          groups: [
             {
-              label: 'Tokens per day',
-              used: 12,
-              total: 20,
-              valueLabel: '12 / 20',
-              ariaLabel: '12 of 20 tokens',
+              label: 'Token limits',
+              rows: [
+                {
+                  label: 'Tokens per day',
+                  used: 12,
+                  total: 20,
+                  valueLabel: '12 / 20',
+                  ariaLabel: '12 of 20 tokens',
+                },
+              ],
             },
           ],
         }}
       />,
     );
 
-    expect(screen.getByText('Cost caps')).toBeTruthy();
+    expect(screen.getByText('Token limits')).toBeTruthy();
     expect(screen.getByText('12 / 20')).toBeTruthy();
 
     const progress = screen.getByRole('progressbar', {
@@ -74,137 +68,249 @@ describe('LimitsTab', () => {
     expect(progress.getAttribute('data-size')).toBe('small');
   });
 
-  it('renders nothing without limit rows', () => {
-    const { container } = render(<LimitsTab limits={{ rows: [] }} />);
+  it("renders a row's optional captionLabel under its label", () => {
+    render(
+      <LimitsTab
+        limits={{
+          groups: [
+            {
+              label: 'Token limits',
+              rows: [
+                {
+                  label: 'Last 24 hours',
+                  used: 12,
+                  total: 20,
+                  captionLabel: '$0.50 spent',
+                },
+              ],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Last 24 hours')).toBeTruthy();
+    expect(screen.getByText('$0.50 spent')).toBeTruthy();
+  });
+
+  it('omits the captionLabel line when absent', () => {
+    render(
+      <LimitsTab
+        limits={{
+          groups: [
+            {
+              label: 'Token limits',
+              rows: [{ label: 'Last 24 hours', used: 12, total: 20 }],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.queryByText(/spent/)).toBeNull();
+  });
+
+  it('renders nothing without limit groups', () => {
+    const { container } = render(<LimitsTab limits={{ groups: [] }} />);
 
     // Component renders null; no semantic query can assert total absence of output.
     // eslint-disable-next-line testing-library/no-node-access
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders unlimited rows as plain label/value rows under the "Unlimited" section, even when total is a large sentinel value', () => {
+  it('renders nothing when every group has no rows', () => {
+    const { container } = render(
+      <LimitsTab
+        limits={{
+          groups: [
+            { label: 'Token limits', rows: [] },
+            { label: 'Cost limits', rows: [] },
+          ],
+        }}
+      />,
+    );
+
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('omits an empty group while still rendering a non-empty one', () => {
     render(
       <LimitsTab
         limits={{
-          rows: [
+          groups: [
+            { label: 'Token limits', rows: [] },
             {
-              label: 'Cost per week',
-              used: 0.119012,
-              // Backend reports unlimited rows with a large sentinel total
-              // (see map-deployment-limits-to-catalog.ts), not zero.
-              total: Number.MAX_SAFE_INTEGER,
-              isUnlimited: true,
-              valueLabel: 'Unlimited',
+              label: 'Cost limits',
+              rows: [{ label: 'Last 24 hours', used: 0, total: 100 }],
             },
           ],
         }}
       />,
     );
 
-    expect(screen.getByText('Unlimited', { selector: 'p' })).toBeTruthy();
-    expect(screen.getByText('Cost per week')).toBeTruthy();
-    expect(screen.getByText('Unlimited', { selector: 'span' })).toBeTruthy();
+    expect(screen.queryByText('Token limits')).toBeNull();
+    expect(screen.getByText('Cost limits')).toBeTruthy();
+  });
+
+  it('renders each group under its own heading, in the supplied order', () => {
+    render(
+      <LimitsTab
+        limits={{
+          groups: [
+            {
+              label: 'Token limits',
+              rows: [{ label: 'Tokens per minute', used: 0, total: 100 }],
+            },
+            {
+              label: 'Cost limits',
+              rows: [{ label: 'Last minute', used: 0, total: 100 }],
+            },
+          ],
+        }}
+      />,
+    );
+
+    const headings = screen.getAllByText(/Token limits|Cost limits/);
+    expect(headings.map((el) => el.textContent)).toEqual([
+      'Token limits',
+      'Cost limits',
+    ]);
+  });
+
+  it('renders a row with no usable total as a plain value with no progress bar, even when total is a large sentinel value', () => {
+    render(
+      <LimitsTab
+        limits={{
+          groups: [
+            {
+              label: 'Cost limits',
+              rows: [
+                {
+                  label: 'Last 7 days',
+                  used: 0.119012,
+                  // Backend reports unlimited rows with a large sentinel total
+                  // (see map-deployment-limits-to-catalog.ts), not zero.
+                  total: Number.MAX_SAFE_INTEGER,
+                  isUnlimited: true,
+                  valueLabel: 'Unlimited',
+                },
+              ],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Last 7 days')).toBeTruthy();
+    expect(screen.getByText('Unlimited')).toBeTruthy();
     expect(screen.queryByRole('progressbar')).toBeNull();
   });
 
-  it('renders unlimited rows as plain listitems with no divider or zebra styling', () => {
+  it("renders a no-progress row's optional noteLabel as a secondary caption under the value", () => {
     render(
       <LimitsTab
         limits={{
-          rows: [
+          groups: [
             {
-              label: 'Requests per hour',
-              used: 0,
-              total: Number.MAX_SAFE_INTEGER,
-              isUnlimited: true,
-              valueLabel: 'Unlimited',
-            },
-            {
-              label: 'Requests per day',
-              used: 0,
-              total: Number.MAX_SAFE_INTEGER,
-              isUnlimited: true,
-              valueLabel: 'Unlimited',
+              label: 'Token limits',
+              rows: [
+                {
+                  label: 'Tokens per day',
+                  used: 210000,
+                  total: Number.MAX_SAFE_INTEGER,
+                  isUnlimited: true,
+                  valueLabel: '210k',
+                  noteLabel: 'Follows cost limit',
+                },
+              ],
             },
           ],
         }}
       />,
     );
 
-    const rows = screen.getAllByRole('listitem');
-    expect(rows).toHaveLength(2);
-    rows.forEach((row) => {
-      expect(row.className).not.toContain('divider');
-      expect(row.className).not.toContain('rowAlt');
-    });
+    expect(screen.getByText('210k')).toBeTruthy();
+    expect(screen.getByText('Follows cost limit')).toBeTruthy();
   });
 
-  it('renders unlimited-row labels and values in tiny text by default', () => {
+  it('omits the noteLabel caption when absent', () => {
     render(
       <LimitsTab
         limits={{
-          rows: [
+          groups: [
             {
-              label: 'Requests per hour',
-              used: 0,
-              total: Number.MAX_SAFE_INTEGER,
-              isUnlimited: true,
-              valueLabel: 'Unlimited',
+              label: 'Token limits',
+              rows: [
+                {
+                  label: 'Tokens per minute',
+                  used: 0,
+                  total: Number.MAX_SAFE_INTEGER,
+                  isUnlimited: true,
+                  valueLabel: 'Unlimited',
+                },
+              ],
             },
           ],
         }}
       />,
     );
 
-    const label = screen.getByText('Requests per hour');
-    const value = screen.getByText('Unlimited', { selector: 'span' });
-    expect(label.className).toContain('dial-tiny-text');
-    expect(label.className).not.toContain('dial-small-semi-text');
-    expect(value.className).toContain('dial-tiny-text');
+    expect(screen.queryByText('Follows cost limit')).toBeNull();
   });
 
-  it('splits rows into "Cost caps" and "Unlimited" sections using the isUnlimited flag, not just total', () => {
+  it('renders capped and no-progress rows together within the same group', () => {
     render(
       <LimitsTab
         limits={{
-          rows: [
+          groups: [
             {
-              label: 'Cost per day',
-              used: 0,
-              total: 100,
-              valueLabel: '$0 / $100',
-            },
-            {
-              label: 'Requests per hour',
-              used: 0,
-              total: Number.MAX_SAFE_INTEGER,
-              isUnlimited: true,
-              valueLabel: 'Unlimited',
+              label: 'Cost limits',
+              rows: [
+                {
+                  label: 'Last 24 hours',
+                  used: 0,
+                  total: 100,
+                  valueLabel: '$0 / $100',
+                },
+                {
+                  label: 'Last 7 days',
+                  used: 0,
+                  total: Number.MAX_SAFE_INTEGER,
+                  isUnlimited: true,
+                  valueLabel: 'Unlimited',
+                },
+              ],
             },
           ],
         }}
       />,
     );
 
-    expect(screen.getByText('Cost caps')).toBeTruthy();
-    expect(screen.getByText('Unlimited', { selector: 'p' })).toBeTruthy();
+    expect(screen.getAllByText('Cost limits')).toHaveLength(1);
     expect(
-      screen.getByRole('progressbar', { name: 'Cost per day' }),
+      screen.getByRole('progressbar', { name: 'Last 24 hours' }),
     ).toBeTruthy();
-    expect(screen.getByText('Requests per hour')).toBeTruthy();
+    expect(screen.getByText('Last 7 days')).toBeTruthy();
     expect(screen.getAllByRole('progressbar')).toHaveLength(1);
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
   });
 
   it('applies the default fill class under 75% usage', () => {
     render(
       <LimitsTab
         limits={{
-          rows: [{ label: 'Cost per day', used: 50, total: 100 }],
+          groups: [
+            {
+              label: 'Cost limits',
+              rows: [{ label: 'Last 24 hours', used: 50, total: 100 }],
+            },
+          ],
         }}
       />,
     );
 
-    const progress = screen.getByRole('progressbar', { name: 'Cost per day' });
+    const progress = screen.getByRole('progressbar', { name: 'Last 24 hours' });
     expect(progress.className).toContain(styles.progressFillDefault);
     expect(progress.className).not.toContain(styles.progressFillWarning);
     expect(progress.className).not.toContain(styles.progressFillDanger);
@@ -214,12 +320,17 @@ describe('LimitsTab', () => {
     render(
       <LimitsTab
         limits={{
-          rows: [{ label: 'Cost per day', used: 75, total: 100 }],
+          groups: [
+            {
+              label: 'Cost limits',
+              rows: [{ label: 'Last 24 hours', used: 75, total: 100 }],
+            },
+          ],
         }}
       />,
     );
 
-    const progress = screen.getByRole('progressbar', { name: 'Cost per day' });
+    const progress = screen.getByRole('progressbar', { name: 'Last 24 hours' });
     expect(progress.className).toContain(styles.progressFillWarning);
     expect(progress.className).not.toContain(styles.progressFillDanger);
   });
@@ -228,38 +339,81 @@ describe('LimitsTab', () => {
     render(
       <LimitsTab
         limits={{
-          rows: [{ label: 'Cost per day', used: 100, total: 100 }],
+          groups: [
+            {
+              label: 'Cost limits',
+              rows: [{ label: 'Last 24 hours', used: 100, total: 100 }],
+            },
+          ],
         }}
       />,
     );
 
-    const progress = screen.getByRole('progressbar', { name: 'Cost per day' });
+    const progress = screen.getByRole('progressbar', { name: 'Last 24 hours' });
     expect(progress.className).toContain(styles.progressFillDanger);
     expect(progress.className).not.toContain(styles.progressFillWarning);
   });
 
-  it('renders the limit figure with heavier emphasis than the used figure', () => {
+  it("renders a capped row's used figure with primary emphasis and its total figure secondary", () => {
     render(
       <LimitsTab
         limits={{
-          rows: [
+          groups: [
             {
-              label: 'Cost per day',
-              used: 0,
-              total: 100,
-              usedLabel: '$0.00',
-              totalLabel: '$100.00',
+              label: 'Cost limits',
+              rows: [
+                {
+                  label: 'Last 24 hours',
+                  used: 0,
+                  total: 100,
+                  usedLabel: '$0.00',
+                  totalLabel: '$100.00',
+                },
+              ],
             },
           ],
         }}
-        valueClassName="dial-small-text"
-        limitClassName="dial-small-semi-text"
       />,
     );
 
     const usedText = screen.getByText('$0.00');
-    const limitText = screen.getByText('$100.00');
-    expect(usedText.className).toContain('dial-small-text');
-    expect(limitText.className).toContain('dial-small-semi-text');
+    const totalText = screen.getByText('/ $100.00');
+    expect(usedText.className).toContain(styles.valuePrimary);
+    expect(totalText.className).toContain(styles.label);
+  });
+
+  it('hides the footer note by default', () => {
+    render(
+      <LimitsTab
+        limits={{
+          groups: [
+            {
+              label: 'Cost limits',
+              rows: [{ label: 'Last 24 hours', used: 0, total: 100 }],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.queryByText('View full usage limits')).toBeNull();
+  });
+
+  it('renders the footer note when supplied', () => {
+    render(
+      <LimitsTab
+        limits={{
+          groups: [
+            {
+              label: 'Cost limits',
+              rows: [{ label: 'Last 24 hours', used: 0, total: 100 }],
+            },
+          ],
+        }}
+        footerNote="View full usage limits"
+      />,
+    );
+
+    expect(screen.getByText('View full usage limits')).toBeTruthy();
   });
 });

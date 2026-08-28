@@ -79,6 +79,7 @@ export const Catalog: FC<CatalogProps> = ({
   isLoading,
   styles: catalogStyles,
   detailsTexts,
+  detailsLimitsFooterNote,
   initialDetailsItemId,
   sortKey: controlledSortKey,
   onSortChange,
@@ -583,6 +584,7 @@ export const Catalog: FC<CatalogProps> = ({
           onLogin={handleLogin}
           onLogout={handleLogout}
           texts={detailsTexts}
+          limitsFooterNote={detailsLimitsFooterNote}
         />
       )}
     </section>

@@ -32,6 +32,8 @@ export interface EntityHeaderProps {
   footer?: ReactNode;
   /** CSS class for the featured chip. */
   featuredChipClassName?: string;
+  /** Arbitrary badge rendered before the featured chip, in the same top-end corner. Omitted (the default) renders nothing in that slot. */
+  statusBadge?: ReactNode;
 }
 
 /** Reusable entity identity block: deployment icon, type label, name, version, and optional featured chip. */
@@ -48,6 +50,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   iconSize = 48,
   query,
   footer,
+  statusBadge,
 }) => {
   return (
     <div className="flex items-start gap-2">
@@ -66,13 +69,16 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
       >
         <div className="relative flex flex-row items-center justify-between">
           <EntityTypeLabel type={item.type} className={typeClassName} />
-          {hasFeaturedTag && item.isFeatured && (
-            <div className="absolute end-0 top-[-6px]">
-              <FeaturedChip
-                type={item.type}
-                label={featuredLabel}
-                className={featuredChipClassName}
-              />
+          {(statusBadge != null || (hasFeaturedTag && item.isFeatured)) && (
+            <div className="absolute end-0 top-[-6px] flex items-center gap-2">
+              {statusBadge}
+              {hasFeaturedTag && item.isFeatured && (
+                <FeaturedChip
+                  type={item.type}
+                  label={featuredLabel}
+                  className={featuredChipClassName}
+                />
+              )}
             </div>
           )}
         </div>
