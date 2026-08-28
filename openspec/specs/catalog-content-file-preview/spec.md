@@ -9,7 +9,7 @@ Defines the generic, entity-agnostic typed file preview rendered by `libs/catalo
 
 ### Requirement: `CatalogContentFilePreview` is an entity-agnostic, typed preview model
 
-`libs/catalog/src/models/item-details-data.ts` SHALL add:
+`libs/catalog/src/types/catalog-content-type.ts` SHALL declare the discriminant, beside the sibling `CatalogContentNodeType` enum that discriminates a tree node:
 
 ```ts
 export enum CatalogContentPreviewType {
@@ -18,7 +18,11 @@ export enum CatalogContentPreviewType {
   Image = 'image',
   Unsupported = 'unsupported',
 }
+```
 
+and `libs/catalog/src/models/item-details-data.ts` SHALL declare the payload shapes, importing that enum:
+
+```ts
 export interface CatalogContentMarkdownPreview {
   type: CatalogContentPreviewType.Markdown;
   text: string;
@@ -83,6 +87,8 @@ onLoadContentFilePreview?: (fileId: string) => Promise<CatalogContentFilePreview
 3. If neither is supplied, picking a file SHALL have no effect beyond what the existing `catalog-content-file-picker` capability already specifies.
 
 A rejection from either callback, or either callback resolving `undefined`, SHALL render `texts.contentFileErrorLabel` as the body, identically regardless of which callback was used. The panel SHALL NOT throw.
+
+The failure is expressed as a synthesized `{ type: Text, text: contentFileErrorLabel }` preview rather than as a distinct error state, so it flows through the same rendering path as any other text preview and needs no separate renderer. A picked file therefore always has a preview to display: `null` means "not yet resolved, or resolution failed", and the panel substitutes the error text at render time.
 
 Reselecting the file named by `selectedFileId` SHALL restore the original `promptContent.content` (rendered as `{ type: Markdown, text: promptContent.content }`) without calling either callback — that text is already in hand, unchanged from the existing `catalog-content-file-picker` behavior.
 
@@ -213,7 +219,9 @@ This applies identically whether the newer selection is another file in the same
 
 ### Requirement: Image preview object URLs are revoked exactly once ownership ends, and never for a non-blob URL
 
-`DetailsPanel` SHALL call `URL.revokeObjectURL` on an `image` preview's `url` when, and only when, both of the following hold: the url string starts with `blob:`, and that preview is about to stop being displayed — because a different file was picked, the panel switched to a different catalog item, or the panel unmounted.
+`DetailsPanel` SHALL call `URL.revokeObjectURL` on an `image` preview's `url` whenever that url starts with `blob:` and the panel is done with it — because a different file was picked, the panel switched to a different catalog item, or the panel unmounted.
+
+One further case is easy to miss and SHALL be handled explicitly: a **stale resolution that is about to be discarded**. The panel tracks the currently-displayed blob URL through the state setter, so a preview that never reaches state is never tracked and would leak. Its `blob:` URL SHALL therefore be revoked at the point the stale result is dropped, before returning.
 
 A `url` that does not start with `blob:` SHALL NOT be revoked under any circumstance.
 
@@ -231,6 +239,11 @@ A `url` that does not start with `blob:` SHALL NOT be revoked under any circumst
 
 - **WHEN** the details panel unmounts while an `image` preview with a `blob:` URL is displayed
 - **THEN** that URL is revoked
+
+#### Scenario: A discarded stale resolution revokes its own blob URL
+
+- **WHEN** a preview request resolves an `image` preview with a `blob:` URL after a newer selection has already superseded it
+- **THEN** that URL is revoked as the stale result is discarded, even though it was never displayed
 
 #### Scenario: A non-blob URL is never revoked
 
