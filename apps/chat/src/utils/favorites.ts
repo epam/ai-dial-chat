@@ -1,5 +1,5 @@
+import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { FavoriteEntityType } from '../context/FavoriteApplicationsContext';
 
 /*
  * Each favoritable entity type writes to its own user-config section, so the

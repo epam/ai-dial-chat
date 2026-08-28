@@ -752,6 +752,168 @@ const AttachmentTile = ({ attachment }: { attachment: DisplayAttachment }) => {
 
 Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler.
 
+### usePromptsState
+
+Fetches a user's personal, shared-with-me, and organisation prompts in a single call on mount and on explicit refetch. The hook owns the request lifecycle (in-flight state, unmount cancellation, error state); the host supplies the fetch function so the hook never imports or constructs an API client.
+
+```tsx
+import { usePromptsState } from '@epam/ai-dial-chat-hooks';
+
+const PromptCatalog = ({
+  listPrompts,
+}: {
+  listPrompts: () => Promise<PromptListResponseDto>;
+}) => {
+  const {
+    prompts,
+    folders,
+    sharedWithMe,
+    publicPrompts,
+    publicFolders,
+    isLoading,
+    error,
+    refetch,
+  } = usePromptsState({ listPrompts });
+
+  if (isLoading) return <Spinner />;
+  return <ul>{prompts.map((p) => <li key={p.id}>{p.name}</li>)}</ul>;
+};
+```
+
+#### API
+
+**Parameters** (`UsePromptsStateParams`):
+
+| Name          | Type                                    | Description                                                                                    |
+| ------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `listPrompts` | `() => Promise<PromptListResponseDto>`  | Host-configured fetch function — the hook never constructs or imports a client itself.         |
+
+**Returns** (`UsePromptsStateResult`):
+
+| Name                   | Type                          | Description                                                          |
+| ---------------------- | ----------------------------- | -------------------------------------------------------------------- |
+| `prompts`              | `PromptResponseDto[]`         | The caller's own prompts.                                            |
+| `folders`              | `PromptFolderResponseDto[]`   | Folders in the caller's own namespace.                               |
+| `sharedWithMe`         | `PromptResponseDto[]`         | Prompts other users have shared with the caller.                     |
+| `publicPrompts`        | `PromptResponseDto[]`         | Organisation-wide (public) prompts; absent if the API omits them.    |
+| `publicFolders`        | `PromptFolderResponseDto[]`   | Folders in the organisation namespace; absent if the API omits them. |
+| `isLoading`            | `boolean`                     | `true` while the initial fetch is in flight.                         |
+| `error`                | `unknown`                     | Rejection reason of the most recent failed listing, or `null`.       |
+| `refetch`              | `() => Promise<void>`         | Re-reads all namespaces and replaces the current state.              |
+| `refetchPublicPrompts` | `() => Promise<void>`         | Backward-compat alias for `refetch`.                                 |
+
+### useFavoriteEntitiesState
+
+Loads the IDs of installed (favorited) deployments, toolsets, prompts, and skills from a single `loadFavorites` call; exposes an optimistic `toggleFavorite` that updates the local set immediately and rolls back to the pre-toggle state if the write fails.
+
+```tsx
+import {
+  FavoriteEntityType,
+  useFavoriteEntitiesState,
+} from '@epam/ai-dial-chat-hooks';
+
+const CatalogCard = ({
+  loadFavorites,
+  updateFavorite,
+}: {
+  loadFavorites: () => Promise<FavoritesPayload>;
+  updateFavorite: (id: string, isFavorite: boolean, entityType: FavoriteEntityType) => Promise<void>;
+}) => {
+  const { favoriteIds, isLoading, toggleFavorite } = useFavoriteEntitiesState({
+    loadFavorites,
+    updateFavorite,
+  });
+
+  return (
+    <button onClick={() => toggleFavorite('gpt-4o', !favoriteIds.has('gpt-4o'))}>
+      {favoriteIds.has('gpt-4o') ? 'Unfavorite' : 'Favorite'}
+    </button>
+  );
+};
+```
+
+#### API
+
+**`FavoriteEntityType`** (enum):
+
+| Member       | Value          |
+| ------------ | -------------- |
+| `Deployment` | `'deployment'` |
+| `Toolset`    | `'toolset'`    |
+| `Prompt`     | `'prompt'`     |
+| `Skill`      | `'skill'`      |
+
+**`FavoritesPayload`**: `{ deployments: string[]; toolsets: string[]; prompts: string[]; skills: string[] }`.
+
+**Parameters** (`UseFavoriteEntitiesStateParams`):
+
+| Name             | Type                                                                                         | Description                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `loadFavorites`  | `() => Promise<FavoritesPayload>`                                                            | Host-configured fetch function — the hook never constructs a client itself.        |
+| `updateFavorite` | `(id: string, isFavorite: boolean, entityType: FavoriteEntityType) => Promise<void>`         | Persists a single toggle; the hook calls this after updating the optimistic state. |
+
+**Returns** (`UseFavoriteEntitiesStateResult`):
+
+| Name             | Type                                                                                         | Description                                                                                 |
+| ---------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `favoriteIds`    | `ReadonlySet<string>`                                                                        | Current set of favorited IDs across all entity types.                                       |
+| `isLoading`      | `boolean`                                                                                    | `true` while the initial load is in flight.                                                 |
+| `toggleFavorite` | `(id: string, isFavorite: boolean, entityType?: FavoriteEntityType) => Promise<void>`        | Optimistically updates `favoriteIds`, calls `updateFavorite`, and rolls back on rejection. `entityType` defaults to `FavoriteEntityType.Deployment`. |
+
+### useSkillsState
+
+Fetches a user's personal, shared-with-me, and organisation skills from a single listing call, with an `enabled`/`ready` guard to defer the fetch until both the feature flag and user-auth state are settled. Also exposes `mergeSharedSkill` to splice an invitation-accepted skill into the shared list without a full refetch.
+
+```tsx
+import { useSkillsState } from '@epam/ai-dial-chat-hooks';
+
+const SkillCatalog = ({
+  listSkills,
+  isEnabled,
+  isReady,
+}: {
+  listSkills: () => Promise<SkillCatalogListResponseDto>;
+  isEnabled: boolean;
+  isReady: boolean;
+}) => {
+  const {
+    skills,
+    publicSkills,
+    sharedWithMe,
+    isLoading,
+    error,
+    refetch,
+    mergeSharedSkill,
+  } = useSkillsState({ listSkills, enabled: isEnabled, ready: isReady });
+
+  if (!isEnabled) return null;
+  if (isLoading) return <Spinner />;
+  return <ul>{skills.map((s) => <li key={s.url}>{s.name}</li>)}</ul>;
+};
+```
+
+#### API
+
+**Parameters** (`UseSkillsStateParams`):
+
+| Name         | Type                                               | Description                                                                            |
+| ------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `listSkills` | `() => Promise<SkillCatalogListResponseDto>`       | Host-configured fetch function — the hook never constructs a client itself.            |
+| `enabled`    | `boolean`                                          | When `false`, clears all arrays and resolves `isLoading` to `false` without fetching. |
+| `ready`      | `boolean`                                          | When `false`, defers the fetch and keeps `isLoading: true` until it becomes `true`.   |
+
+**Returns** (`UseSkillsStateResult`):
+
+| Name              | Type                                     | Description                                                                  |
+| ----------------- | ---------------------------------------- | ---------------------------------------------------------------------------- |
+| `skills`          | `SkillMetadataItemDto[]`                 | The caller's own skills.                                                     |
+| `publicSkills`    | `SkillMetadataItemDto[]`                 | Organisation-wide skills.                                                    |
+| `sharedWithMe`    | `SkillMetadataItemDto[]`                 | Skills other users have shared with the caller.                              |
+| `isLoading`       | `boolean`                                | `true` while the initial fetch is in flight or deferred by `ready: false`.   |
+| `error`           | `unknown`                                | Rejection reason of the most recent failed listing, or `null`.               |
+| `refetch`         | `() => Promise<void>`                    | Re-reads all namespaces and replaces the current state.                      |
+| `mergeSharedSkill`| `(item: SkillMetadataItemDto) => void`   | Upserts a skill into `sharedWithMe` by `url`, appending it if not present.   |
+
 ## File Manager
 
 A domain-specific set of hooks (and their supporting types/utilities) implementing the DIAL file manager: browsing/search, upload, create/rename/move/copy/delete, sharing, and metadata, composed against an injected `DialFilesApi` port instead of a configured REST client or React context. `useDialFileManager` is the composed entry point most consumers reach for; the six sub-hooks it composes (`useDialFileListing`, `useDialFileMetadata`, `useDialFileMutations`, `useDialFileSharing`, `useDialFileUploadBatch`) and the two standalone hooks (`useDialFileManagerTabConfig`, `useGridEditingScroll`) are exported individually for hosts that need only part of the surface, or that render `@epam/ai-dial-react-file-manager`'s `DialFileManager` grid directly.
@@ -1186,6 +1348,20 @@ import { apSchedulerDayToJsDay } from '@epam/ai-dial-chat-hooks';
 apSchedulerDayToJsDay(0); // 1 (Monday -> JS Monday)
 ```
 
+### sanitizeConversationName / stripTrailingDots / PROHIBITED_CONVERSATION_NAME_CHARS_RE
+
+Re-exported from `@epam/ai-dial-chat-shared`. Strips characters DIAL Core rejects in conversation names (tab, `"`, `:`, `;`, `/`, `\`, `,`, `=`, `{`, `}`, `%`, `&`), strips trailing dots, and exposes the compiled regex for callers that need to test a value.
+
+```ts
+import {
+  sanitizeConversationName,
+  stripTrailingDots,
+} from '@epam/ai-dial-chat-hooks';
+
+sanitizeConversationName('bad:name/here'); // 'badnamehere'
+stripTrailingDots('My Chat...');           // 'My Chat'
+```
+
 ### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes
 
 `safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment.
@@ -1425,6 +1601,37 @@ Maps a deployment's monthly token-limit response into a display-ready `MonthlyUs
 import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
 
 const usage = mapDeploymentLimitsToInput(deploymentLimitsDto);
+```
+
+### mapDeploymentLimitsDtoToCatalogLimits
+
+Maps a deployment limits DTO into display-ready `CatalogItemLimits` (rows of `UsageLimitProgressRow`), or `undefined` when no qualifying stats exist. Stat labels and value/aria formatters are injected through a `DeploymentLimitsLabels` object so the function stays i18n-free.
+
+```ts
+import {
+  mapDeploymentLimitsDtoToCatalogLimits,
+  type DeploymentLimitsLabels,
+} from '@epam/ai-dial-chat-hooks';
+
+const labels: DeploymentLimitsLabels = {
+  requestsPerHour: t('catalog.details.limits.requestsPerHour'),
+  requestsPerDay: t('catalog.details.limits.requestsPerDay'),
+  tokensPerMinute: t('catalog.details.limits.tokensPerMinute'),
+  tokensPerDay: t('catalog.details.limits.tokensPerDay'),
+  tokensPerWeek: t('catalog.details.limits.tokensPerWeek'),
+  tokensPerMonth: t('catalog.details.limits.tokensPerMonth'),
+  costPerMinute: t('catalog.details.limits.costPerMinute'),
+  costPerDay: t('catalog.details.limits.costPerDay'),
+  costPerWeek: t('catalog.details.limits.costPerWeek'),
+  costPerMonth: t('catalog.details.limits.costPerMonth'),
+  unlimitedValue: t('catalog.details.limits.unlimitedValue'),
+  formatValueLabel: (used, total) =>
+    t('catalog.details.limits.value', { used, total }),
+  formatProgressAriaLabel: ({ label, used, total }) =>
+    t('catalog.details.limits.progressAriaLabel', { label, used, total }),
+};
+
+const limits = mapDeploymentLimitsDtoToCatalogLimits(dto, labels);
 ```
 
 ### mapEntityDetailsToCatalogDetails / mapDeploymentDetailsDtoToEntityDetails / mapToolsetCredentials
@@ -1911,6 +2118,238 @@ const destination = await prepareDownloadDestination(
   'application/pdf',
 );
 ```
+
+## Conversation Panel Controller
+
+Five hooks and two utility functions extracted from `ConversationPanelView.tsx` make the conversation-panel controller logic reusable. They carry no dependency on `@epam/ai-dial-conversation-panel` or `ConversationItem`. Both libraries consume the canonical `FilterTab` enum from `@epam/ai-dial-chat-shared`, so neither library depends on the other.
+
+### useConversationPanelItems
+
+Maps `ConversationListItemDto[]` to `ConversationItem[]` for `ConversationPanel`, resolving icons, tooltips, hrefs, and task badges through injected callbacks so the hook stays free of `/api` routes, `resolveCatalogIconUrl`, or routing utilities.
+
+```tsx
+import { useConversationPanelItems } from '@epam/ai-dial-chat-hooks';
+import type { ConversationListItemDto, DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+
+const conversations = useConversationPanelItems({
+  items,
+  deployments,
+  isDeploymentsLoading,
+  toPanelConversationId,
+  resolveIconUrl: (d?: DeploymentItemDto) => d?.iconUrl ?? undefined,
+  resolveIconTooltip: (d: DeploymentItemDto | undefined, fallback: string) => d?.displayName ?? fallback,
+  resolveHref: (id) => `/chat/${id}`,
+  resolveTaskBadge: (item: ConversationListItemDto) =>
+    item.isScheduledTask ? { label: 'Task', isUnread: item.isUnread ?? false } : undefined,
+});
+```
+
+#### API
+
+**Parameters** (`UseConversationPanelItemsParams`):
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `items` | `ConversationListItemDto[]` | Raw DTOs from the API. |
+| `deployments` | `DeploymentItemDto[]` | Current deployment catalogue used for icon/tooltip resolution. |
+| `isDeploymentsLoading` | `boolean` | When `true`, all items are returned with `isIconLoading: true`. |
+| `toPanelConversationId` | `(id: string) => string` | Maps a DTO `id` to the panel-space identifier. |
+| `resolveIconUrl` | `(deployment?: DeploymentItemDto) => string \| undefined` | Returns the resolved icon URL for a deployment. |
+| `resolveIconTooltip` | `(deployment?: DeploymentItemDto, fallback: string) => string \| undefined` | Returns the tooltip text for the icon. |
+| `resolveHref` | `(id: string) => string` | Converts a panel-space ID to a navigation href. |
+| `resolveTaskBadge` | `(item: ConversationListItemDto) => { label: string; isUnread: boolean } \| undefined` | Optional; returns the badge descriptor for scheduled-task conversations. |
+
+**Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs.
+
+### getConversationSource
+
+Classifies a conversation using the canonical `FilterTab` values without depending on the conversation-panel package.
+
+```ts
+import { FilterTab } from '@epam/ai-dial-chat-shared';
+import { getConversationSource } from '@epam/ai-dial-chat-hooks';
+
+getConversationSource({ sharedWithMe: true, publishedWithMe: false });
+// FilterTab.Shared
+```
+
+The function accepts `Pick<ConversationListItemDto, 'sharedWithMe' | 'publishedWithMe'>`. `sharedWithMe` takes precedence over `publishedWithMe`; conversations with neither flag return `FilterTab.MyChats`.
+
+### useConversationLookupMaps
+
+Maintains two `Map`-backed lookups — panel-id → context-id and panel-id → raw DTO — rebuilt only when `items` or `toPanelConversationId` changes.
+
+```tsx
+import { useConversationLookupMaps } from '@epam/ai-dial-chat-hooks';
+
+const { toContextId, getRawItem } = useConversationLookupMaps({
+  items,
+  toPanelConversationId,
+});
+
+const contextId = toContextId(panelItem.id);           // string | undefined
+const rawItem   = getRawItem(panelItem.id);             // ConversationListItemDto | undefined
+```
+
+#### API
+
+**Parameters** (`UseConversationLookupMapsParams`):
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `items` | `ConversationListItemDto[]` | Raw DTOs from the API. |
+| `toPanelConversationId` | `(id: string) => string` | Maps a DTO `id` to the panel-space identifier. |
+
+**Returns** (`ConversationLookupMaps`):
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `toContextId` | `(panelId: string) => string \| undefined` | Reverse-maps a panel id back to its context (DTO) id. |
+| `getRawItem` | `(panelId: string) => ConversationListItemDto \| undefined` | Returns the raw DTO for a panel id. |
+
+### useActiveConversationSync
+
+Keeps the panel's highlighted row in sync with the app's active conversation and marks a viewed conversation when the panel renders it. Returns the panel-space id to highlight, or `undefined` when none is active.
+
+```tsx
+import { useActiveConversationSync } from '@epam/ai-dial-chat-hooks';
+
+const panelActiveConversationId = useActiveConversationSync({
+  activeConversationId,
+  items,
+  refreshConversations,
+  markConversationViewed,
+  conversationIdsMatch,
+  toPanelConversationId,
+});
+```
+
+#### API
+
+**Parameters** (`UseActiveConversationSyncParams`):
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `activeConversationId` | `string \| undefined` | The app's currently active conversation (context-space). |
+| `items` | `ConversationListItemDto[]` | Raw DTOs from the API. |
+| `refreshConversations` | `() => Promise<void>` | Called when the active conversation is not found in `items`. |
+| `markConversationViewed` | `(id: string) => Promise<void>` | Called with the matching raw DTO id when the active conversation or matching item changes. |
+| `conversationIdsMatch` | `(a: string, b: string) => boolean` | Equality predicate for context-space ids. |
+| `toPanelConversationId` | `(id: string) => string` | Maps a DTO `id` to the panel-space identifier. |
+
+**Returns**: `string | undefined` — the panel-space id to highlight.
+
+### useAsyncConfirmDialog
+
+Generic single-slot pending/loading/error state machine for confirmation dialogs. The `confirm` method calls `run(pending)`, closes the dialog on success, or sets an error message and keeps the dialog open on throw.
+
+```tsx
+import { useAsyncConfirmDialog } from '@epam/ai-dial-chat-hooks';
+
+const deleteDialog = useAsyncConfirmDialog<string>();
+
+// Open the dialog with the item id as the pending value:
+deleteDialog.open(itemId);
+
+// Confirm:
+await deleteDialog.confirm(
+  async (id) => {
+    await deleteItem(id);
+  },
+  (e) => e instanceof Error ? e.message : 'Delete failed',
+);
+
+// Cancel:
+if (!deleteDialog.isRunning) deleteDialog.close();
+```
+
+#### API
+
+**Returns** (`AsyncConfirmDialogControls<T>`):
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `pending` | `T \| null` | The value passed to `open()`, or `null` when the dialog is closed. |
+| `isPending` | `boolean` | `true` while `pending` is non-null (dialog is open). |
+| `isRunning` | `boolean` | `true` while `confirm`'s `run` callback is executing. |
+| `error` | `string \| null` | Error message from the most recent failed `confirm`, or `null`. |
+| `open` | `(value: T) => void` | Opens the dialog with `value` as the pending payload; clears any prior error. |
+| `close` | `() => void` | Closes the dialog and clears pending + error. |
+| `confirm` | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
+
+### useImportFilePicker
+
+Manages a hidden `<input type="file">` element for conversation import: applies an already resolved `accept` value via `useLayoutEffect`, then returns the ref and event handlers. The host owns breakpoint and allowed-file policy; the hook owns only DOM wiring.
+
+```tsx
+import { useImportFilePicker } from '@epam/ai-dial-chat-hooks';
+
+const { inputRef, triggerImport, handleFileChange } = useImportFilePicker({
+  accept: isMobile ? undefined : '.json',
+  onFileSelected: (file) => void importConversations(file),
+});
+
+// In JSX:
+<input ref={inputRef} type="file" className="sr-only" onChange={handleFileChange} />
+<button onClick={triggerImport}>Import</button>
+```
+
+#### API
+
+**Parameters** (`UseImportFilePickerParams`):
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `accept` | `string \| undefined` | Host-resolved `accept` string (e.g. `'.json,.zip'`); omit it to remove the attribute. |
+| `onFileSelected` | `(file: File) => void` | Called with the first selected file when the picker resolves. |
+
+**Returns** (`UseImportFilePickerResult`):
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `inputRef` | `RefObject<HTMLInputElement \| null>` | Attach to the hidden `<input type="file">`. |
+| `triggerImport` | `() => void` | Programmatically clicks the input to open the file picker. |
+| `handleFileChange` | `(event: ChangeEvent<HTMLInputElement>) => void` | `onChange` handler for the hidden input; passes the first file to `onFileSelected`. |
+
+### deriveConversationRowActionState
+
+Pure function that derives the action-menu visibility flags for a conversation row from its sharing/publish metadata, resolved publish history, and current recipient count.
+
+```tsx
+import { deriveConversationRowActionState } from '@epam/ai-dial-chat-hooks';
+
+const {
+  isReadonly,
+  publishedFolders,
+  isRevokeVisible,
+  isPublishApplicable,
+  isUnpublishApplicable,
+} = deriveConversationRowActionState(
+  { sharedWithMe, publishedWithMe, isReadonly: rawItem.isReadonly },
+  publishHistory,
+  recipients,
+);
+```
+
+#### API
+
+**Parameters**:
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `item` | `Pick<ConversationListItemDto, 'sharedWithMe' \| 'publishedWithMe' \| 'isReadonly'>` | Sharing/readonly flags from the DTO. |
+| `publishHistory` | `PublishHistoryEntry[] \| undefined` | Resolved publish history entries, or `undefined` while loading. |
+| `recipients` | `RecipientsCountEntry` | Current recipient count entry for the conversation. |
+
+**Returns**:
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `isReadonly` | `boolean` | `true` when the conversation is owned by someone else or is a published copy. |
+| `publishedFolders` | `string[]` | Slash-delimited destination folder paths the conversation is currently published to. |
+| `isRevokeVisible` | `boolean` | `true` when a revoke-access menu item should be shown. |
+| `isPublishApplicable` | `boolean` | `true` when a publish menu item should be offered. |
+| `isUnpublishApplicable` | `boolean` | `true` when an unpublish menu item should be offered. |
 
 ## Building
 

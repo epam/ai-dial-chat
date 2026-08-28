@@ -68,6 +68,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', () => ({
+  FilterTab: {
+    All: 'all',
+    Pinned: 'pinned',
+    MyChats: 'my-chats',
+    Shared: 'shared',
+    Organization: 'organization',
+  },
   mergeClasses: (...classes: (string | undefined | null | false)[]) =>
     classes.filter(Boolean).join(' '),
   DeploymentIcon: ({ src, tooltip }: { src?: string; tooltip?: string }) => (

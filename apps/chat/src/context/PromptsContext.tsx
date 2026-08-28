@@ -2,15 +2,8 @@ import type {
   PromptFolderResponseDto,
   PromptResponseDto,
 } from '@epam/ai-dial-chat-api-client';
-import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { usePromptsState } from '@epam/ai-dial-chat-hooks';
+import { createContext, ReactNode, useContext, useMemo } from 'react';
 import { listPrompts } from '../server-api/prompts.api';
 
 export interface PromptsContextType {
@@ -46,88 +39,21 @@ export const PromptsContext = createContext<PromptsContextType | undefined>(
  * authority on prompt paths.
  */
 export const PromptsProvider = ({ children }: { children: ReactNode }) => {
-  const [prompts, setPrompts] = useState<PromptResponseDto[]>([]);
-  const [folders, setFolders] = useState<PromptFolderResponseDto[]>([]);
-  const [sharedWithMe, setSharedWithMe] = useState<PromptResponseDto[]>([]);
-  const [publicPrompts, setPublicPrompts] = useState<PromptResponseDto[]>([]);
-  const [publicFolders, setPublicFolders] = useState<PromptFolderResponseDto[]>(
-    [],
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
+  const state = usePromptsState({ listPrompts });
 
-  const refetchPrompts = useCallback(async () => {
-    try {
-      const response = await listPrompts();
-      setPrompts(response.prompts);
-      setFolders(response.folders);
-      setSharedWithMe(response.sharedWithMe);
-      setPublicPrompts(response.publicPrompts ?? []);
-      setPublicFolders(response.publicFolders ?? []);
-      setError(null);
-    } catch (err) {
-      setError(err);
-    }
-  }, []);
-
-  const refetchPublicPrompts = refetchPrompts;
-
-  /*
-   * The BFF aggregates personal, shared, and organisation prompts, so the
-   * browser makes one request and receives one ownership-aware snapshot.
-   */
-  useEffect(() => {
-    const cancelled = { value: false };
-
-    const load = async () => {
-      const response = await listPrompts().catch((reason: unknown) => {
-        if (!cancelled.value) setError(reason);
-        return null;
-      });
-      if (cancelled.value) return;
-
-      if (response != null) {
-        setPrompts(response.prompts);
-        setFolders(response.folders);
-        setSharedWithMe(response.sharedWithMe);
-        setPublicPrompts(response.publicPrompts ?? []);
-        setPublicFolders(response.publicFolders ?? []);
-        setError(null);
-      }
-
-      setIsLoading(false);
-    };
-
-    load();
-
-    return () => {
-      cancelled.value = true;
-    };
-  }, []);
-
-  const contextValue = useMemo(
+  const contextValue = useMemo<PromptsContextType>(
     () => ({
-      prompts,
-      folders,
-      sharedWithMe,
-      publicPrompts,
-      publicFolders,
-      isLoading,
-      error,
-      refetchPrompts,
-      refetchPublicPrompts,
+      prompts: state.prompts,
+      folders: state.folders,
+      sharedWithMe: state.sharedWithMe,
+      publicPrompts: state.publicPrompts,
+      publicFolders: state.publicFolders,
+      isLoading: state.isLoading,
+      error: state.error,
+      refetchPrompts: state.refetch,
+      refetchPublicPrompts: state.refetchPublicPrompts,
     }),
-    [
-      prompts,
-      folders,
-      sharedWithMe,
-      publicPrompts,
-      publicFolders,
-      isLoading,
-      error,
-      refetchPrompts,
-      refetchPublicPrompts,
-    ],
+    [state],
   );
 
   return (
