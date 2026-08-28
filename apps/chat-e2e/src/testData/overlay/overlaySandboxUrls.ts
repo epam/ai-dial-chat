@@ -50,4 +50,14 @@ export const OverlaySandboxUrls = {
     '/cases/overlay/enabled-user-message-align-end-sandbox', //sandbox to test 'EPMDIAL-2327'
   enableCompareModeDisabledUrl:
     '/cases/overlay/enabled-compare-mode-disabled-sandbox', //sandbox to test 'EPMDIAL-2329'
+  enableVoiceInputUrl: '/cases/overlay/enabled-voice-input-sandbox', //sandbox to test 'EPMDIAL-2326'
+  enableCodeInterpreterUrl: '/cases/overlay/enabled-code-interpreter-sandbox', //sandbox to test 'EPMDIAL-2299'
+  disableCodeInterpreterUrl: '/cases/overlay/disabled-code-interpreter-sandbox', //sandbox to test 'EPMDIAL-2299'
+  enableLiveChatInteractionUrl:
+    '/cases/overlay/enabled-live-chat-interaction-sandbox', //sandbox to test 'EPMDIAL-2330'
+  disableLiveChatInteractionUrl:
+    '/cases/overlay/disabled-live-chat-interaction-sandbox', //sandbox to test 'EPMDIAL-2330'
+  overlayManagerMdBreakpointUrl: '/cases/overlay-manager-md-breakpoint', //sandbox to test 'EPMDIAL-2331'
+  overlayManagerDefaultBreakpointUrl:
+    '/cases/overlay-manager-default-breakpoint', //sandbox to test 'EPMDIAL-2331'
 };

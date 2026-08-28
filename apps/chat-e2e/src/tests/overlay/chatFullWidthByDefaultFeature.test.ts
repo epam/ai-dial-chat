@@ -44,7 +44,7 @@ dialOverlayTest(
     await dialOverlayTest.step(
       'Open settings under the user name and verify "Chat width" setting does not exist',
       async () => {
-        await overlayAccountSettings.click();
+        await overlayAccountSettings.click({ force: true });
         await accountSettingsDropdownMenu.selectMenuOption(
           AccountMenuOptions.settings,
         );

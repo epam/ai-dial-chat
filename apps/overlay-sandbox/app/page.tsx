@@ -4,6 +4,8 @@ enum OverlayCases {
   modelIdSetSandboxOverlay = '/cases/overlay/model-id-set-sandbox',
   OverlayManager = '/cases/overlay-manager',
   OverlayManagerFullWidth = '/cases/overlay-manager-full-width',
+  OverlayManagerMdBreakpoint = '/cases/overlay-manager-md-breakpoint',
+  OverlayManagerDefaultBreakpoint = '/cases/overlay-manager-default-breakpoint',
   disabledHeaderOverlay = '/cases/overlay/disabled-header-sandbox',
   enabledHeaderOverlay = '/cases/overlay/enabled-header-sandbox',
   enabledOnlyHeaderOverlay = '/cases/overlay/enabled-only-header-sandbox',
@@ -39,6 +41,11 @@ enum OverlayCases {
   enabledPanelTogglesSandbox = '/cases/overlay/enabled-panel-toggles-sandbox',
   enabledUserMessageAlignEndSandbox = '/cases/overlay/enabled-user-message-align-end-sandbox',
   enabledCompareModeDisabledSandbox = '/cases/overlay/enabled-compare-mode-disabled-sandbox',
+  enabledVoiceInputSandbox = '/cases/overlay/enabled-voice-input-sandbox',
+  enabledCodeInterpreterSandbox = '/cases/overlay/enabled-code-interpreter-sandbox',
+  disabledCodeInterpreterSandbox = '/cases/overlay/disabled-code-interpreter-sandbox',
+  enabledLiveChatInteractionSandbox = '/cases/overlay/enabled-live-chat-interaction-sandbox',
+  disabledLiveChatInteractionSandbox = '/cases/overlay/disabled-live-chat-interaction-sandbox',
 }
 
 export default async function Index() {

@@ -10,6 +10,7 @@ import {
   ConversationSettingsModal,
   DislikeCommentModal,
   DropdownMenu,
+  EntityEditorHeader,
   FileDropArea,
   Marketplace,
   MarketplaceEntities,
@@ -20,9 +21,11 @@ import {
   PromptBar,
   PublishingApprovalModal,
   PublishingRequestDialog,
+  QuickApp2EditorViewForm,
   SendMessage,
   TalkToAgentDialog,
   Toast,
+  ToolsetLoginEventsModal,
   TooltipPortal,
 } from '../ui/webElements';
 
@@ -52,10 +55,12 @@ import {
   ModelApiHelper,
   PublicationApiHelper,
   ShareApiHelper,
+  ToolsetApiHelper,
 } from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
+import { ToolsetSignInMockHelper } from '@/src/testData/toolsets/toolsetSignInMockHelper';
 import { OverlayHomePage } from '@/src/ui/pages/overlay/overlayHomePage';
 import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
 import {
@@ -178,6 +183,11 @@ const dialOverlayTest = test.extend<{
   overlayMarketplaceEntities: MarketplaceEntities;
   overlayAgentDropdownMenu: DropdownMenu;
   accountSettingsDropdownMenu: DropdownMenu;
+  overlayEntityEditorHeader: EntityEditorHeader;
+  overlayQuickApp2EditorViewForm: QuickApp2EditorViewForm;
+  overlayToolsetApiHelper: ToolsetApiHelper;
+  overlayToolsetSignInMock: ToolsetSignInMockHelper;
+  overlayToolsetLoginEventsModal: ToolsetLoginEventsModal;
 }>({
   storageState: async ({}, use) => {
     await use(overlayStateFilePath(+process.env.TEST_PARALLEL_INDEX!));
@@ -688,6 +698,35 @@ const dialOverlayTest = test.extend<{
       overlayHomePage.getOverlayContainer().getElementLocator(),
     );
     await use(accountSettingsDropdownMenu);
+  },
+  overlayEntityEditorHeader: async ({ page, overlayHomePage }, use) => {
+    const overlayEntityEditorHeader = new EntityEditorHeader(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayEntityEditorHeader);
+  },
+  overlayQuickApp2EditorViewForm: async ({ page, overlayHomePage }, use) => {
+    const overlayQuickApp2EditorViewForm = new QuickApp2EditorViewForm(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayQuickApp2EditorViewForm);
+  },
+  overlayToolsetApiHelper: async ({ request }, use) => {
+    const overlayToolsetApiHelper = new ToolsetApiHelper(request);
+    await use(overlayToolsetApiHelper);
+  },
+  overlayToolsetSignInMock: async ({ page }, use) => {
+    const overlayToolsetSignInMock = new ToolsetSignInMockHelper(page);
+    await use(overlayToolsetSignInMock);
+  },
+  overlayToolsetLoginEventsModal: async ({ page, overlayHomePage }, use) => {
+    const overlayToolsetLoginEventsModal = new ToolsetLoginEventsModal(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayToolsetLoginEventsModal);
   },
 });
 
