@@ -1605,7 +1605,7 @@ const usage = mapDeploymentLimitsToInput(deploymentLimitsDto);
 
 ### mapDeploymentLimitsDtoToCatalogLimits
 
-Maps a deployment limits DTO into display-ready `CatalogItemLimits` (rows of `UsageLimitProgressRow`), or `undefined` when no qualifying stats exist. Stat labels and value/aria formatters are injected through a `DeploymentLimitsLabels` object so the function stays i18n-free.
+Maps a deployment limits DTO into display-ready `CatalogItemLimits` — a single "token limits" group of day/week/month `UsageLimitProgressRow` entries plus the worst-case `CatalogLimitStatus` across them — or `undefined` when no qualifying stats exist. Each row carries a "spent" caption built from the sibling cost stat for the same period, and a row whose total is effectively unlimited gets a "follows cost limit" note instead of a total. Stat labels and value/aria formatters are injected through a `DeploymentLimitsLabels` object so the function stays i18n-free.
 
 ```ts
 import {
@@ -1614,21 +1614,19 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 
 const labels: DeploymentLimitsLabels = {
-  requestsPerHour: t('catalog.details.limits.requestsPerHour'),
-  requestsPerDay: t('catalog.details.limits.requestsPerDay'),
-  tokensPerMinute: t('catalog.details.limits.tokensPerMinute'),
+  tokenGroup: t('catalog.details.limits.tokenGroup'),
   tokensPerDay: t('catalog.details.limits.tokensPerDay'),
   tokensPerWeek: t('catalog.details.limits.tokensPerWeek'),
   tokensPerMonth: t('catalog.details.limits.tokensPerMonth'),
-  costPerMinute: t('catalog.details.limits.costPerMinute'),
-  costPerDay: t('catalog.details.limits.costPerDay'),
-  costPerWeek: t('catalog.details.limits.costPerWeek'),
-  costPerMonth: t('catalog.details.limits.costPerMonth'),
-  unlimitedValue: t('catalog.details.limits.unlimitedValue'),
+  followsCostLimit: t('catalog.details.limits.followsCostLimit'),
+  formatSpentCaption: (amount) =>
+    t('catalog.details.limits.spentLabel', { amount }),
   formatValueLabel: (used, total) =>
     t('catalog.details.limits.value', { used, total }),
   formatProgressAriaLabel: ({ label, used, total }) =>
     t('catalog.details.limits.progressAriaLabel', { label, used, total }),
+  formatFollowsCostLimitAriaLabel: ({ label, used }) =>
+    t('catalog.details.limits.followsCostLimitAriaLabel', { label, used }),
 };
 
 const limits = mapDeploymentLimitsDtoToCatalogLimits(dto, labels);

@@ -180,11 +180,9 @@ const SkillEditorPage: FC = () => {
       pathInvalid: t(SkillEditorI18nKeys.ErrorPathInvalid),
       saveError: t(SkillEditorI18nKeys.ErrorSave),
       saveSuccessTitle: t(SkillEditorI18nKeys.SaveSuccessTitle),
-      createSuccess: (name) =>
-        t(SkillEditorI18nKeys.CreateSuccess, { name }),
+      createSuccess: (name) => t(SkillEditorI18nKeys.CreateSuccess, { name }),
       updateSuccessTitle: t(SkillEditorI18nKeys.UpdateSuccessTitle),
-      updateSuccess: (name) =>
-        t(SkillEditorI18nKeys.UpdateSuccess, { name }),
+      updateSuccess: (name) => t(SkillEditorI18nKeys.UpdateSuccess, { name }),
       conflictMessage: t(SkillEditorI18nKeys.ConflictMessage),
     }),
     [t],
