@@ -131,7 +131,7 @@ The conversation panel library (`libs/conversation-panel`) SHALL remain host-agn
 1. A per-conversation "Export" item added to the `DropdownItem[]` returned by the app's `getActions` callback in `apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx` (the library's `ConversationRow` renders whatever items the app supplies). This item SHALL use the ui-kit's native nested-item support (`DropdownItem.children`) to expose a hover-revealed submenu with two items, "with attachments" and "without attachments" — mirroring the existing "Language"/"Keyboard shortcuts" submenu pattern in `apps/chat/src/components/Navigation/UserMenu.tsx`. The parent "Export" item SHALL NOT have its own `onClick` and SHALL NOT open a modal/popup; each child item's `onClick` starts the corresponding export directly.
 2. An "Export all conversations" item added to the panel header overflow menu. That menu is the app component `apps/chat/src/components/ConversationPanel/ConversationPanelHeaderMenu.tsx` (currently exposing only "Delete all chats"), which is injected into the library via the opaque `headerActions` slot (see `conversation-panel-header-menu`). Activating it starts export-all directly.
 
-The transient export state (the job queue, each job's status and step-count progress) SHALL be owned by a dedicated app-level hook in `apps/chat/src/hooks/` (e.g. `useConversationExport`) that consumes the server-api wrappers; the library receives only callbacks/nodes. All host/API knowledge stays outside the lib boundary. The `getActions` callback SHALL remain memoized (`useCallback`) so conversation rows do not re-render on every parent render. The export entry points and the queue panel itself SHALL NOT use a modal/popup (`DialPopup` or similar) — see the export-queue requirement for the non-modal design; the sole exception is the queue's own panel-level close confirmation (see the confirmation requirement below), which deliberately uses `DialConfirmationPopup` when closing would abort or discard unfinished work.
+The transient export state (the job queue, each job's status and step-count progress) SHALL be owned by a dedicated app-level hook that consumes `useConversationExport` from `@epam/ai-dial-chat-hooks`; the queue is rendered by the `ImportExportQueue` component from `@epam/ai-dial-conversation-panel` (see `conversation-panel-transfer-queue-ui`), which the app supplies with `jobs`, `onDismiss`/`onRetry`/`onClose` callbacks, and a translated `labels` object — the app builds the labels object via `useTranslation` and passes it down; the queue component itself has no i18n import. All host/API knowledge stays outside the lib boundary. The `getActions` callback SHALL remain memoized (`useCallback`) so conversation rows do not re-render on every parent render. The export entry points and the queue panel itself SHALL NOT use a modal/popup (`DialPopup` or similar) — see the export-queue requirement for the non-modal design; the sole exception is the queue's own panel-level close confirmation (see the confirmation requirement below), which deliberately uses a confirmation dialog when closing would abort or discard unfinished work.
 
 #### Scenario: Context-menu export reveals a submenu, not a modal
 
@@ -149,6 +149,11 @@ The transient export state (the job queue, each job's status and step-count prog
 
 - **WHEN** `libs/conversation-panel` is linted and type-checked
 - **THEN** no import of `@epam/chat-api-client`, `apps/chat/src/server-api`, app contexts, routing utilities, `useTranslation`, `fflate`, or `process.env` is present in any lib source file
+
+#### Scenario: App wires the library queue component with translated labels
+
+- **WHEN** `ConversationPanelView` renders the export queue
+- **THEN** it renders `@epam/ai-dial-conversation-panel`'s `ImportExportQueue` with a `labels` object built from `useTranslation`, not an app-owned queue component
 
 ---
 
@@ -237,7 +242,7 @@ An **in-progress** job row SHALL expose a per-row close control that dismisses t
 
 ### Requirement: Confirming panel-level close when work would be lost
 
-Activating the panel-level close control SHALL clear the queue immediately, without confirmation, only when every job has already succeeded. If at least one job is still **in progress** or has **failed**, activating the panel-level close control SHALL first show a `DialConfirmationPopup` (`role="dialog"`) asking the user to confirm, since closing would abort in-progress work or discard the record of a failure the user has not yet retried or acknowledged. Confirming clears the queue exactly as described above; cancelling the confirmation dismisses only the dialog and leaves the queue untouched. This confirmation is the one deliberate, user-triggered exception to the panel's otherwise non-modal design (see the queue-panel requirement above).
+Activating the panel-level close control SHALL clear the queue immediately, without confirmation, only when every job has already succeeded. If at least one job is still **in progress** or has **failed**, activating the panel-level close control SHALL first show the `ImportExportQueue` component's own confirmation dialog (`role="dialog"`) asking the user to confirm, since closing would abort in-progress work or discard the record of a failure the user has not yet retried or acknowledged. Confirming clears the queue exactly as described above; cancelling the confirmation dismisses only the dialog and leaves the queue untouched. This confirmation is the one deliberate, user-triggered exception to the panel's otherwise non-modal design (see the queue-panel requirement above), and it is rendered by the library component itself, driven by the `labels` object the app supplies.
 
 #### Scenario: Closing an all-succeeded queue needs no confirmation
 

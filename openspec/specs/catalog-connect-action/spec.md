@@ -146,15 +146,15 @@ Unlike a UI-triggered popover, this override is unconditional: it runs regardles
 
 ### Requirement: MCP endpoint URL helper
 
-`apps/chat` SHALL provide a URL-building utility (`apps/chat/src/utils/mcp-endpoint-url.ts`) that composes an MCP endpoint URL from a DIAL Core external base URL and an entity id. The utility SHALL:
+`libs/chat-hooks/src/catalog/mcp-endpoint-url.ts` SHALL provide a URL-building utility, exported from `@epam/ai-dial-chat-hooks`, that composes an MCP endpoint URL from a DIAL Core external base URL and an entity id. It is host-agnostic — the base URL is always passed in, never read from configuration here — so any DIAL-Core-backed host can reuse it. The utility SHALL:
 
 - Trim exactly one trailing `/` from the base URL, if present.
 - Split the entity id on `/` and encode each segment independently: decode the segment defensively first (ignoring decode failures, keeping the raw segment), then re-encode with `encodeURIComponent` — matching the segment-handling behavior of `apps/chat-api/src/common/utils/encode-dial-path.ts`. This means:
   - A literal `%2F` already present inside one segment (i.e., not a `/` path separator) is preserved rather than being treated as introducing an extra path segment.
   - A segment already containing an encoded character (e.g. `%20` for a space) is not double-encoded.
 - Expose `buildToolsetMcpUrl(baseUrl, id)` returning `` `${trimmedBaseUrl}/v1/toolset/${encodedId}/mcp` `` and `buildApplicationMcpUrl(baseUrl, id)` returning `` `${trimmedBaseUrl}/v1/deployments/${encodedId}/mcp` ``, both built on the one shared segment-encoder.
-- Expose a `McpResourceKind` string enum (`apps/chat/src/types/mcp.ts`) with members `Toolset` and `Application`, and `resolveMcpResourceKind(type, supportsMcp)` returning the kind for a catalog item or `null` when the item exposes no MCP endpoint.
-- Expose `buildConnectApi(baseUrl, id, kind)` returning a `CatalogItemApiDetails` (per the requirement above) built from the URL builder the kind maps to. `kind` is required — there is no default, so a new call site cannot silently inherit the toolset shape.
+- Expose a `McpResourceKind` string enum from that same module (members `Toolset = 'toolset'` and `Application = 'application'`) and `resolveMcpResourceKind(type, supportsMcp)` returning the kind for a catalog item or `null` when the item exposes no MCP endpoint.
+- Expose `buildConnectApi(baseUrl, id, kind)` returning a `CatalogItemApiDetails` (per the requirement above) built from the URL builder the kind maps to, selected through a `Record<McpResourceKind, …>` lookup so adding a kind is a compile-time change. `kind` is required — there is no default, so a new call site cannot silently inherit the toolset shape. The catalog details panel is not the only consumer: the toolset editor renders the same endpoint through these builders, which is exactly why the shape must be chosen explicitly.
 
 **Feature flag:** Not gated. **RTL impact:** None (URL string, not rendered UI). **i18n impact:** None.
 
@@ -204,7 +204,7 @@ Unlike a UI-triggered popover, this override is unconditional: it runs regardles
 
 ### Requirement: Generation-API (Chat Completions / Responses) endpoint URL helper
 
-`apps/chat` SHALL provide a URL-building utility (`apps/chat/src/utils/deployment-endpoint-url.ts`), separate from the MCP endpoint helper above, for the OpenAI-compatible generation endpoints DIAL Core exposes uniformly for models and applications. The utility SHALL:
+`libs/chat-hooks/src/catalog/deployment-endpoint-url.ts` SHALL provide a URL-building utility, separate from the MCP endpoint helper above, for the OpenAI-compatible generation endpoints DIAL Core exposes uniformly for models and applications. It is kept as its own module because the two share only the trailing-slash and segment-encoding primitives, not the URL shapes or the support flags that gate them. The utility SHALL:
 
 - Expose `buildChatCompletionsUrl(baseUrl, id)` returning `` `${trimmedBaseUrl}/openai/deployments/${encodedId}/chat/completions` ``, where `encodedId` is built by the same decode-then-encode-per-segment rule as the MCP helper (each `/`-separated segment is defensively decoded, then re-encoded with `encodeURIComponent`, preserving `/` as a structural separator and avoiding double-encoding an already-percent-encoded segment).
 - Expose `buildResponsesUrl(baseUrl)` returning `` `${trimmedBaseUrl}/openai/v1/responses` `` — this endpoint is not deployment-scoped in its path; the target deployment id is instead carried in the `model` field of the JSON request body.
@@ -246,7 +246,7 @@ Unlike a UI-triggered popover, this override is unconditional: it runs regardles
 
 `CatalogItem` (`libs/catalog/src/models/catalog-item.ts`) SHALL gain an optional field `supportsMcp?: boolean`, documented as "Whether this application supports the MCP protocol; only meaningful for `Application` items." `libs/catalog` SHALL NOT interpret this field beyond exposing it — the Connect-data decision based on it lives entirely in `apps/chat` (see the requirement above).
 
-`apps/chat/src/utils/map-deployment-to-catalog-item.ts`'s `mapDeploymentToCatalogItem` SHALL set `supportsMcp: deployment.features?.mcp === true`. `mapToolsetToCatalogItem` SHALL NOT set `supportsMcp` (toolsets get Connect data gated on `type === Toolset` alone, not on this flag).
+`mapDeploymentToCatalogItem` (`libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts`) SHALL set `supportsMcp: deployment.features?.mcp === true`. `mapToolsetToCatalogItem` SHALL NOT set `supportsMcp` (toolsets get Connect data gated on `type === Toolset` alone, not on this flag).
 
 **Feature flag:** Not gated. **RTL impact:** None. **i18n impact:** None.
 

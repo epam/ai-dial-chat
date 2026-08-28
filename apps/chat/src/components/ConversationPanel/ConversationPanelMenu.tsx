@@ -1,3 +1,4 @@
+import { useAsyncConfirmDialog } from '@epam/ai-dial-chat-hooks';
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
@@ -66,14 +67,14 @@ const ConversationPanelMenu: FC<Props> = ({
   const navigate = useNavigate();
   const { deleteAllConversations } = useConversations();
   const { showSuccessNotification, showErrorNotification } = useNotification();
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  const handleOpen = useCallback(() => {
-    setDeleteError(null);
-    setIsPopupOpen(true);
-  }, []);
+  const {
+    isPending: isDeletePending,
+    isRunning: isDeleting,
+    error: deleteError,
+    open: openDeleteDialog,
+    close: closeDeleteDialog,
+    confirm: confirmDeleteDialog,
+  } = useAsyncConfirmDialog<true>();
 
   const menuItems: DropdownItem[] = useMemo(
     () => [
@@ -103,51 +104,45 @@ const ConversationPanelMenu: FC<Props> = ({
         key: 'delete-all',
         label: t(ConversationPanelI18nKeys.DeleteAllChatsLabel),
         icon: <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-error" />,
-        onClick: handleOpen,
+        onClick: () => openDeleteDialog(true),
         className: 'text-error',
       },
     ],
-    [handleOpen, onExportAll, onImport, t],
+    [openDeleteDialog, onExportAll, onImport, t],
   );
 
   const handleConfirm = useCallback(async () => {
-    setIsDeleting(true);
-    setDeleteError(null);
+    await confirmDeleteDialog(
+      async () => {
+        const deletionResult = await deleteAllConversations();
+        const isTotalFailure =
+          deletionResult.failed.length > 0 &&
+          deletionResult.deleted === 0 &&
+          deletionResult.alreadyAbsent === 0;
 
-    try {
-      const deletionResult = await deleteAllConversations();
-      const isTotalFailure =
-        deletionResult.failed.length > 0 &&
-        deletionResult.deleted === 0 &&
-        deletionResult.alreadyAbsent === 0;
+        if (isTotalFailure) {
+          throw new Error();
+        }
 
-      if (isTotalFailure) {
-        setDeleteError(t(ConversationPanelI18nKeys.DeleteAllError));
-        return;
-      }
+        if (deletionResult.failed.length > 0) {
+          showErrorNotification({
+            message: t(ConversationPanelI18nKeys.DeleteAllPartialError),
+          });
+        }
 
-      setIsPopupOpen(false);
+        if (activeConversationId) {
+          navigate(ROUTES.Root);
+        }
 
-      if (deletionResult.failed.length > 0) {
-        showErrorNotification({
-          message: t(ConversationPanelI18nKeys.DeleteAllPartialError),
+        showSuccessNotification({
+          title: t(ConversationPanelI18nKeys.DeleteAllSuccessTitle),
+          message: t(ConversationPanelI18nKeys.DeleteAllSuccess),
         });
-      }
-
-      if (activeConversationId) {
-        navigate(ROUTES.Root);
-      }
-
-      showSuccessNotification({
-        title: t(ConversationPanelI18nKeys.DeleteAllSuccessTitle),
-        message: t(ConversationPanelI18nKeys.DeleteAllSuccess),
-      });
-    } catch {
-      setDeleteError(t(ConversationPanelI18nKeys.DeleteAllError));
-    } finally {
-      setIsDeleting(false);
-    }
+      },
+      () => t(ConversationPanelI18nKeys.DeleteAllError),
+    );
   }, [
+    confirmDeleteDialog,
     activeConversationId,
     deleteAllConversations,
     showErrorNotification,
@@ -158,9 +153,8 @@ const ConversationPanelMenu: FC<Props> = ({
 
   const handleCancel = useCallback(() => {
     if (isDeleting) return;
-    setIsPopupOpen(false);
-    setDeleteError(null);
-  }, [isDeleting]);
+    closeDeleteDialog();
+  }, [isDeleting, closeDeleteDialog]);
 
   return (
     <>
@@ -169,7 +163,7 @@ const ConversationPanelMenu: FC<Props> = ({
         label={t(ConversationPanelI18nKeys.PanelActionsLabel)}
       />
       <ConfirmationPopup
-        open={isPopupOpen}
+        open={isDeletePending}
         header={t(ConversationPanelI18nKeys.DeleteAllConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.DeleteAll)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}

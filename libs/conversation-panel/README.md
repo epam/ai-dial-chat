@@ -76,6 +76,10 @@ the group and defaults to `"Filter chats"`;
 
 ## Enums
 
+`FilterTab` is the canonical enum from `@epam/ai-dial-chat-shared`; this
+package re-exports the same runtime value so panel consumers do not need a
+second import.
+
 ```tsx
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
 
@@ -132,3 +136,128 @@ recency ordering is the host's job. Grouping is derived from `isPinned` and
 Payload for a completed drag-and-drop move: the dragged `draggedId`, the
 `targetGroupKey` it landed in, and `afterId` — the item to insert after, or
 `null` for the top of that group.
+
+## ImportExportQueue
+
+Floating queue panel that shows the status of in-flight or recently completed export/import jobs. Returns `null` when `jobs` is empty. Auto-closes 8 seconds after all jobs succeed. Prompts for confirmation before closing when any job is still in-progress or has failed.
+
+```tsx
+import {
+  ImportExportQueue,
+  type ImportExportQueueColors,
+  type ImportExportQueueLabels,
+  type ImportExportQueueProps,
+  type ImportExportQueueStyles,
+  type ImportExportQueueTypography,
+} from '@epam/ai-dial-conversation-panel';
+import {
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+} from '@epam/ai-dial-chat-shared';
+
+const labels: ImportExportQueueLabels = {
+  allConversationsJobLabel: 'All conversations',
+  closeJobAriaLabel: (title) => `Cancel ${title}`,
+  retryJobAriaLabel: (title) => `Retry ${title}`,
+  collapseQueueAriaLabel: 'Collapse queue',
+  expandQueueAriaLabel: 'Expand queue',
+  closeQueueAriaLabel: 'Close queue',
+  closeQueueConfirmHeader: 'Cancel export?',
+  closeQueueConfirmDescriptionInProgress: 'Export is still in progress.',
+  closeQueueConfirmDescriptionFailed: 'Some exports failed.',
+  closeQueueConfirmDescriptionMixed: 'Some exports are in progress or failed.',
+  closeLabel: 'Close',
+  cancelLabel: 'Cancel',
+};
+
+<ImportExportQueue
+  title="Exporting"
+  jobs={[
+    {
+      id: 'job-1',
+      subject: { kind: ConversationTransferSubjectKind.Single, title: 'My chat' },
+      status: ConversationTransferJobStatus.InProgress,
+    },
+  ]}
+  onClose={handleClose}
+  onDismiss={handleDismiss}
+  onRetry={handleRetry}
+  labels={labels}
+  styles={{
+    colors: { background: '#fff', text: '#161b2d' },
+    typography: { titleClassName: 'dial-small-semi-text' },
+  }}
+/>;
+```
+
+### ImportExportQueueLabels
+
+| Field | Type | Description |
+|---|---|---|
+| `allConversationsJobLabel` | `string` | Label for a job targeting all conversations |
+| `closeJobAriaLabel` | `(title: string) => string` | Accessible name for dismissing an in-progress job |
+| `retryJobAriaLabel` | `(title: string) => string` | Accessible name for retrying a failed job |
+| `collapseQueueAriaLabel` | `string` | Accessible name for the collapse toggle |
+| `expandQueueAriaLabel` | `string` | Accessible name for the expand toggle |
+| `closeQueueAriaLabel` | `string` | Accessible name for the close button |
+| `closeQueueConfirmHeader` | `string` | Heading of the close-confirmation dialog |
+| `closeQueueConfirmDescriptionInProgress` | `string` | Dialog description when jobs are in progress |
+| `closeQueueConfirmDescriptionFailed` | `string` | Dialog description when jobs have failed |
+| `closeQueueConfirmDescriptionMixed` | `string` | Dialog description when jobs are both in-progress and failed |
+| `closeLabel` | `string` | Confirm button label in the dialog |
+| `cancelLabel` | `string` | Cancel button label in the dialog |
+
+### ImportExportQueueStyles
+
+`styles?: ImportExportQueueStyles` groups all customization hooks. `colors?: ImportExportQueueColors` overrides the panel background, primary/secondary text, status icons, and failed-count badge through CSS custom properties. `typography?: ImportExportQueueTypography` provides classes for the title, job label, job description, and failed-count badge. `rootClassName` and `bodyClassName` target the queue root and scrollable job list; `cssVars` is the last-resort CSS-variable escape hatch.
+
+## RenameConversationPopup
+
+Modal dialog for renaming a conversation. Validates the name (non-empty, ≤ 255 UTF-8 bytes, sanitized of DIAL-prohibited characters), shows a byte-length error, supports AI-generated names via `onGenerateWithAi`, and guards against concurrent generation requests.
+
+```tsx
+import {
+  RenameConversationPopup,
+  type RenameConversationPopupLabels,
+  type RenameConversationPopupProps,
+  type RenameConversationPopupStyles,
+} from '@epam/ai-dial-conversation-panel';
+
+const labels: RenameConversationPopupLabels = {
+  popupTitle: 'Rename conversation',
+  inputPlaceholder: 'Enter conversation name',
+  renameWithAiLabel: 'Rename with AI',
+  renameWithAiError: 'Failed to generate name with AI',
+  nameTooLongError: 'Name is too long',
+  saveLabel: 'Save',
+  cancelLabel: 'Cancel',
+};
+
+<RenameConversationPopup
+  isOpen={isRenameOpen}
+  currentTitle={conversation.title}
+  isSaving={isRenaming}
+  error={renameError}
+  onSave={handleSave}
+  onCancel={handleCancel}
+  onGenerateWithAi={generateConversationTitle}
+  labels={labels}
+  styles={{ bodyClassName: 'my-popup-body' }}
+/>;
+```
+
+### RenameConversationPopupLabels
+
+| Field | Type | Description |
+|---|---|---|
+| `popupTitle` | `string` | Popup dialog heading |
+| `inputPlaceholder` | `string` | Placeholder text for the name input |
+| `renameWithAiLabel` | `string` | Accessible name and tooltip for the AI-generation button |
+| `renameWithAiError` | `string` | Error shown when AI name generation fails |
+| `nameTooLongError` | `string` | Error shown when the trimmed name exceeds 255 UTF-8 bytes |
+| `saveLabel` | `string` | Label for the save/confirm button |
+| `cancelLabel` | `string` | Label for the cancel button |
+
+### RenameConversationPopupStyles
+
+`styles?: RenameConversationPopupStyles` exposes `bodyClassName` for the popup content wrapper and `cssVars` for custom properties inherited by the input, spinner, and AI-generation control. The popup shell and action buttons continue to use the UI kit theme.

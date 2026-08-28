@@ -48,6 +48,45 @@ import {
 } from '@epam/ai-dial-chat-shared';
 ```
 
+### ConversationTransfer
+
+Types for the queued export/import job model. Consumed by `@epam/ai-dial-conversation-panel`'s `ImportExportQueue` component.
+
+```tsx
+import {
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+} from '@epam/ai-dial-chat-shared';
+import type {
+  ConversationTransferJob,
+  ConversationTransferSubject,
+} from '@epam/ai-dial-chat-shared';
+
+const job: ConversationTransferJob = {
+  id: 'job-1',
+  subject: { kind: ConversationTransferSubjectKind.Single, title: 'My chat' },
+  status: ConversationTransferJobStatus.InProgress,
+};
+```
+
+`ConversationTransferJobStatus` values: `InProgress`, `Success`, `Failed`.
+`ConversationTransferSubjectKind` values: `Single` (one named conversation), `All` (entire history).
+`ConversationTransferSubject` is a discriminated union on `kind`; the `Single` variant carries `title` and optional `sourceBreadcrumb`.
+
+### FilterTab
+
+Canonical conversation ownership/grouping identifiers shared by the headless mapping hooks and the conversation panel. `@epam/ai-dial-conversation-panel` re-exports the same enum for compatibility.
+
+```tsx
+import { FilterTab } from '@epam/ai-dial-chat-shared';
+
+FilterTab.All; // 'all'
+FilterTab.Pinned; // 'pinned'
+FilterTab.MyChats; // 'my-chats'
+FilterTab.Shared; // 'shared'
+FilterTab.Organization; // 'organization'
+```
+
 `CatalogEntityType` is the entity taxonomy (`MODEL`, `AGENT`, `TOOLSET`,
 `SKILL`, `PROMPT`) shared by the catalog UI. `ENTITY_TYPE_COLOR` and
 `ENTITY_TYPE_BG_COLOR` map each type to its text and surface color.
@@ -258,6 +297,9 @@ import {
   triggerBlobDownload,
   getUtf8ByteLength,
   truncateToUtf8Bytes,
+  sanitizeConversationName,
+  stripTrailingDots,
+  PROHIBITED_CONVERSATION_NAME_CHARS_RE,
 } from '@epam/ai-dial-chat-shared';
 
 // Merge conditional class names — the only supported way to compose classes
@@ -285,6 +327,15 @@ formatUnitPrice('0.000003', 'token'); // '$3/M tokens'
 // Derive an avatar's initials and its deterministic color from a name
 const initials = extractInitials(user.displayName);
 const { background, foreground } = pickAvatarColor(user.displayName);
+
+// Strip characters DIAL Core rejects in a conversation name (tab, ": ; / \ , = { } % &)
+sanitizeConversationName('bad:name/here'); // 'badnamehere'
+
+// Strip trailing dots from a conversation name
+stripTrailingDots('My Chat...'); // 'My Chat'
+
+// Regex of the prohibited characters (useful for testing a value before mutating it)
+PROHIBITED_CONVERSATION_NAME_CHARS_RE.test('clean name'); // false
 ```
 
 ## Constants

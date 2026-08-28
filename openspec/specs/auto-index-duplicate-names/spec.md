@@ -45,11 +45,12 @@ When `POST /api/v1/conversations` is called, the backend SHALL set `conversation
 
 When `duplicateConversation` creates a copy, the new conversation's `name` SHALL equal the source display name — read from the source conversation's JSON `name` field (which may have been updated by LLM naming), sanitised via `prepareEntityName` — with **no numeric suffix appended**.
 
-Path uniqueness SHALL be handled by the same unconditional UUID-segment mechanism as `createConversation`: every copy is stored at `{deploymentId}__{name}__{uuid}`, where `{uuid}` is freshly generated for the duplicate. `conversation.name` remains the unsuffixed base name. A trailing UUID from the source path is never carried over.
+Path uniqueness SHALL be handled by a single targeted collision check rather than by a bucket scan: the duplicate is written to `{deploymentId}__{name}`, and only when a resource already exists at that path is a freshly generated `__{uuid}` appended. `conversation.name` remains the unsuffixed base name either way, and a trailing UUID from the source path is never carried over.
+
+The duplicate SHALL stay in the source conversation's folder — the source path's folder segments are preserved and only the filename is rebuilt.
 
 `duplicateConversation` SHALL NOT call `fetchAllUserTitles`.
 `duplicateConversation` SHALL NOT call `resolveUniqueConversationName`.
-`duplicateConversation` SHALL NOT perform a destination path-existence check.
 `duplicateConversation` SHALL NOT invoke `ConversationNamingService`, SHALL NOT call the utility model, and SHALL NOT read or write `llmNamingDone`.
 
 #### Scenario: Duplicate preserves source name as-is
@@ -68,7 +69,7 @@ Path uniqueness SHALL be handled by the same unconditional UUID-segment mechanis
 
 - **GIVEN** a source conversation whose storage path encodes the original first-message name but whose JSON `name` field was updated by LLM naming to `"AI Discussion"`
 - **WHEN** `duplicateConversation` is called
-- **THEN** the duplicate display name is `"AI Discussion"` and the destination path is `gpt-4o__AI Discussion__<fresh-uuid>`
+- **THEN** the duplicate display name is `"AI Discussion"` and the destination filename is built from `gpt-4o__AI Discussion`, gaining a `__<fresh-uuid>` suffix only if that path is already taken
 
 #### Scenario: No bucket scan during duplicate
 
@@ -115,34 +116,33 @@ For versioned or multi-segment deployment IDs, the invariant is the fresh traili
 
 ### Requirement: `duplicateConversation` path always ends with a fresh UUID segment
 
-The DIAL Core storage path for every **duplicated** conversation SHALL be:
+The DIAL Core storage filename for a **duplicated** conversation SHALL be `{deploymentKey}__{baseName}`, or `{deploymentKey}__{baseName}__{uuid}` when a resource already exists at the former. `{deploymentKey}` is the deployment segment recovered from the source filename (which may itself be multi-part for a versioned application deployment), `{baseName}` is the sanitised display name, and `{uuid}` is `generateUUID()` generated at duplicate time. `conversation.name` SHALL remain the unsuffixed `{baseName}` in both cases.
 
-```
-{deploymentId}__{baseName}__{uuid}
-```
+The existence check SHALL be a single lookup of that one candidate path — never a listing of the user's conversations. A trailing UUID from the source path SHALL NOT be reused.
 
-where `{baseName}` is the sanitised display name and `{uuid}` is `generateUUID()` generated at duplicate time. The UUID segment is unconditional, including when no resource exists at the corresponding unsuffixed path. `conversation.name` SHALL remain the unsuffixed `{baseName}`.
+This differs deliberately from `createConversation`, which always appends a UUID: a create happens on every new chat and cannot afford a round trip, while a duplicate is a rare, explicit action where keeping the clean path when it is free is worth one lookup.
 
-`duplicateConversation` SHALL NOT call `getConversationMetadata` to check whether `{deploymentId}__{baseName}` exists. The destination path SHALL use a fresh UUID rather than reusing a trailing UUID from the source path.
+#### Scenario: Duplicate keeps the clean path when it is free
 
-#### Scenario: Duplicate path has a UUID when the unsuffixed path is free
+- **WHEN** a conversation is duplicated with base name `"Hello"` and no resource exists at `gpt-4o__Hello`
+- **THEN** the DIAL Core filename is `gpt-4o__Hello`, with no UUID segment
 
-- **WHEN** a conversation is duplicated with `deploymentId: "gpt-4o"` and base name `"Hello"` and no resource exists at `gpt-4o__Hello`
-- **THEN** the DIAL Core path is `gpt-4o__Hello__<fresh-uuid>`
-- **AND** `conversation.id` is `{bucket}/gpt-4o__Hello__<fresh-uuid>`
-- **AND** `getConversationMetadata` is NOT called to check the unsuffixed path
+#### Scenario: Duplicate gains a UUID when the clean path is taken
 
-#### Scenario: Repeated duplicates receive different paths
+- **WHEN** the same conversation is duplicated again and `gpt-4o__Hello` already exists
+- **THEN** the DIAL Core filename is `gpt-4o__Hello__<fresh-uuid>`
+- **AND** `conversation.name` is still `"Hello"`
 
-- **WHEN** the same conversation is duplicated twice with base name `"Hello"`
-- **THEN** both copies have `conversation.name: "Hello"`
-- **AND** their paths end with different freshly generated UUIDs
+#### Scenario: Duplicate stays in the source folder
+
+- **WHEN** the source conversation lives at `folder/sub/gpt-4o__Hello`
+- **THEN** the duplicate is written under `folder/sub/` as well
 
 ---
 
 ### Requirement: `getConversationTitleFromName` supports legacy unsuffixed and current UUID-suffixed filenames
 
-`getConversationTitleFromName(name)` in `apps/chat-api/src/conversations/utils/conversation.utils.ts` SHALL extract the human-readable title from a DIAL Core filename under both storage formats:
+`getConversationTitleFromName(name, isApplicationDeployment)` in `apps/chat-api/src/conversations/utils/conversation.utils.ts` SHALL extract the human-readable title from a DIAL Core filename under both storage formats. The second argument is required and supplied by the caller, because a versioned application deployment id is itself `__`-separated and the filename alone cannot say where the deployment segment ends:
 
 | Format | Example filename | Returned title |
 |---|---|---|
@@ -150,23 +150,32 @@ where `{baseName}` is the sanitised display name and `{uuid}` is `generateUUID()
 | Current UUID-suffixed | `gpt-4o__Hello__<uuid>` | `"Hello"` |
 | 1-part fallback | `orphan` | `"orphan"` |
 
-Titles that themselves contain `__` are preserved correctly in the current UUID-suffixed format by joining the title segments before the trailing UUID. Legacy unsuffixed paths remain supported where their title boundary is unambiguous.
+Suffix detection depends on the deployment shape. For a versioned application deployment the last segment counts as a suffix only when it actually parses as a UUID; for a plain deployment id any filename with three or more segments is treated as having a trailing suffix.
+
+Titles that themselves contain `__` are therefore preserved in the UUID-suffixed format — the segments between the deployment id and the trailing UUID are rejoined — but a legacy **unsuffixed** filename whose title contains `__` is ambiguous, and its last segment is read as a suffix rather than as part of the title.
 
 #### Scenario: Legacy unsuffixed filename returns its title
 
-- **WHEN** `getConversationTitleFromName("gpt-4o__Hello")` is called
+- **WHEN** `getConversationTitleFromName("gpt-4o__Hello", false)` is called
 - **THEN** the result is `"Hello"`
 
 #### Scenario: UUID-suffixed filename returns its unsuffixed title
 
-- **WHEN** `getConversationTitleFromName("gpt-4o__Hello__<uuid>")` is called
+- **WHEN** `getConversationTitleFromName("gpt-4o__Hello__<uuid>", false)` is called
 - **THEN** the result is `"Hello"`
+
+#### Scenario: A versioned application deployment keeps a non-UUID last segment in the title
+
+- **WHEN** the filename ends in a segment that is not a UUID and `isApplicationDeployment` is `true`
+- **THEN** that segment is treated as part of the title, not as a suffix
 
 ---
 
 ### Requirement: `buildRenamedConversationPath` supports legacy unsuffixed and current UUID-suffixed filenames
 
-`buildRenamedConversationPath(conversationPath, sanitisedTitle)` SHALL replace only the title segment of the filename while preserving the `deploymentId` prefix and — for current UUID-suffixed filenames — the UUID suffix.
+`buildRenamedConversationPath(conversationPath, sanitisedTitle)` SHALL replace only the title segment of the filename while preserving the folder segments, the `deploymentId` prefix, and — for current UUID-suffixed filenames — the UUID suffix. It operates on a full path and derives `isApplicationDeployment` itself from the folder segments.
+
+The filename-level helper it delegates to, `buildRenamedFilename(filename, sanitisedTitle, isApplicationDeployment)`, takes that flag explicitly and SHALL only be given a bare filename — it is safe to use on a decoded filename whose deployment name contains a literal slash, which the path-level helper is not.
 
 | Input path | New title | Output path |
 |---|---|---|

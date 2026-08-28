@@ -8,21 +8,25 @@ Specifies the validation and error notification flow when a user attaches a file
 
 ### Requirement: Validate file MIME type against deployment inputAttachmentTypes before upload
 
-Before calling `onUploadAttachment`, the app SHALL validate each attachment's MIME type against the selected deployment's `inputAttachmentTypes`. Validation uses the `validateAttachment` prop on `ConversationInput` / `Input`, which the app supplies.
+Before calling `onUploadAttachment`, the app SHALL validate each attachment's MIME type against the selected deployment's `inputAttachmentTypes`. Validation uses the `validateAttachment` prop on `ConversationInput` / `Input`, which the app supplies from the shared `useAttachmentValidation` hook — the hook owns the matching rules, the accepted-format list, and the `fileAccept` string, and reports failures through a single `onValidationError({ reason, formats })` callback so each surface only decides how to present them.
 
 A file is invalid when none of the allowed MIME entries match: exact equality (`application/pdf`) OR wildcard prefix match (`image/*` matches `image/jpeg`). Global wildcards `*` and `*/*` match any MIME type. When `inputAttachmentTypes` is empty or undefined, the attachment button is hidden; however, clipboard paste of images can still add attachments and will reach this validation path. Long pasted plain text is handled separately — see the `isAttachmentsEnabled` requirement in `conversation-input-attachments`.
 
 Invalid files SHALL be placed immediately into `status: RequestStatus.Error` with `errorReason: AttachmentErrorReason.UnsupportedType` without calling `onUploadAttachment`.
 
-After processing a batch of added files (from file picker, drag-and-drop, or clipboard), if any were invalid the app SHALL show exactly one `Notification` (variant `Error`) with:
+After processing a batch of added files (from file picker, drag-and-drop, or clipboard), if any were invalid the app SHALL show exactly one error notification through the variant-specific `showErrorNotification` helper, with:
 - **title**: i18n key `attachments.unsupportedType.title` → "File extension not supported"
 - **message**: i18n key `attachments.unsupportedType.message` → "This model can only process {{formats}}. Please upload a file in a supported format.", where `{{formats}}` is a comma-separated human-readable list of accepted types derived from `inputAttachmentTypes`.
 
-The `formats` list is produced by a pure app-level utility `mimeTypesToExtensionLabels(types: string[]): string` that converts MIME entries to uppercase extension labels (e.g., `image/jpeg` → `JPEG`, `application/pdf` → `PDF`, `text/csv` → `CSV`; wildcard `image/*` → `Image files`).
+When the failure reason is that the deployment accepts **no** attachment types at all, the pair `attachments.noAttachmentsAllowed.title` / `.message` ("Attachments not supported" / "This model does not support file attachments.") SHALL be used instead, with no `{{formats}}` interpolation — listing zero accepted formats would produce an empty sentence.
 
-**i18n keys added:**
+The `formats` list is produced by the pure `mimeTypesToExtensionLabels(types: string[], wildcardLabels?: Record<string, string>): string` utility exported from `@epam/ai-dial-attachment-input`, which converts MIME entries to uppercase extension labels (e.g. `image/jpeg` → `JPEG`, `application/pdf` → `PDF`, `text/csv` → `CSV`) and maps a `<major>/*` wildcard through a label table (`image/*` → `Image files`, `audio/*` → `Audio files`, `video/*` → `Video files`, `text/*` → `Text files`, `*/*` → `All files`), falling back to `<major> files` for an unlisted major type. A host may override that table through the second argument.
+
+**i18n keys:**
 - `attachments.unsupportedType.title`
 - `attachments.unsupportedType.message` (supports `{{formats}}` interpolation)
+- `attachments.noAttachmentsAllowed.title`
+- `attachments.noAttachmentsAllowed.message`
 
 **Feature flag**: none.
 
@@ -30,7 +34,7 @@ The `formats` list is produced by a pure app-level utility `mimeTypesToExtension
 
 **Accessibility**: `Notification` carries `role="alert"`; no additional ARIA required.
 
-**Memoisation**: `validateAttachment` callback on `ConversationView` / `ConversationRoute` SHALL be wrapped in `useCallback` keyed on `inputAttachmentTypes`. Because it is keyed on `inputAttachmentTypes`, its identity changes whenever the user switches the selected model/deployment; `useAttachments` uses that identity change as the trigger to re-validate attachments already in the tray (see `conversation-input-attachments` — "Attachments already in the tray are re-validated when validateAttachment changes").
+**Memoisation**: the `validateAttachment` callback returned by `useAttachmentValidation` SHALL be memoised on the allowed-MIME-type list. Because it is keyed on `inputAttachmentTypes`, its identity changes whenever the user switches the selected model/deployment; `useAttachments` uses that identity change as the trigger to re-validate attachments already in the tray (see `conversation-input-attachments` — "Attachments already in the tray are re-validated when validateAttachment changes").
 
 #### Scenario: File with unsupported MIME type is added
 
@@ -66,3 +70,8 @@ The `formats` list is produced by a pure app-level utility `mimeTypesToExtension
 - **WHEN** the user picks three unsupported files in one selection
 - **THEN** exactly one "File extension not supported" notification appears
 - **AND** the notification body lists all accepted formats (not the rejected files)
+
+#### Scenario: A deployment that accepts nothing gets its own message
+
+- **WHEN** validation fails because the deployment's `inputAttachmentTypes` is empty
+- **THEN** the "Attachments not supported" title and message are shown instead, with no `{{formats}}` list

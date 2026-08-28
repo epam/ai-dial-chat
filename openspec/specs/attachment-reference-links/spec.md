@@ -8,12 +8,14 @@ Specifies how reference-only attachments (RAG/search-grounding chunks that carry
 
 ### Requirement: Reference-only attachments are identified and grouped by source
 
-`apps/chat/src/utils/reference-attachment.ts` SHALL export:
+`libs/quotations/src/utils/reference-attachment.ts` SHALL export, from `@epam/ai-dial-quotations`:
 
 ```ts
 isReferenceOnlyAttachment(dto: MessageAttachment): boolean
 getReferenceAttachmentGroups(dtos: MessageAttachment[] | undefined): AnnotationGroup[]
 ```
+
+These live beside the inline-citation grouping they reuse, and are host-agnostic: they transform DTOs only, with no URL resolution, fetching, or app context.
 
 `isReferenceOnlyAttachment` SHALL return `true` when `dto.url == null && dto.reference_url != null`, and `false` otherwise.
 
@@ -23,7 +25,6 @@ getReferenceAttachmentGroups(dtos: MessageAttachment[] | undefined): AnnotationG
   ```ts
   {
     body: {
-      title: dto.title,
       quote: dto.data,
       source: {
         type: 'attachment',
@@ -32,7 +33,8 @@ getReferenceAttachmentGroups(dtos: MessageAttachment[] | undefined): AnnotationG
     },
   }
   ```
-- Pass the resulting `Annotation[]` through the existing `groupAnnotationsBySource` (`apps/chat/src/utils/group-annotations-by-source.ts`) and return its result unchanged.
+  The annotation body SHALL carry no `title`: the popup already shows `dto.title` as its source header, and setting it here would render the same string twice.
+- Pass the resulting `Annotation[]` through the existing `groupAnnotationsBySource` (`libs/quotations/src/utils/group-annotations-by-source.ts`) and return its result unchanged.
 - Return `[]` when `dtos` is `undefined` or contains no reference-only entries.
 
 **i18n**: none — pure data transformation.
@@ -63,8 +65,8 @@ getReferenceAttachmentGroups(dtos: MessageAttachment[] | undefined): AnnotationG
 
 ### Requirement: Shared "open source" action used by both inline citations and reference chips
 
-`apps/chat/src/utils/annotation.ts` SHALL export `openAnnotationAttachment(attachment: AttachmentResource): void` that:
-- When `attachment.url` is a DIAL file id (`isDialFileId`): resolves the download URL via `resolveDialFileDownloadUrl`, then triggers a browser download using a programmatically created `<a download>` element, with `download` set to `attachment.title` when present, otherwise the last path segment of the URL.
+`libs/chat-hooks/src/files/annotation.ts` SHALL export `openAnnotationAttachment(attachment: AttachmentResource, resolveDownloadUrl: ResolveDownloadUrl): void` that:
+- When `attachment.url` is a DIAL file id (`isDialFileId`, applied to the URL with any `#` fragment stripped): resolves the download URL through the injected `resolveDownloadUrl` — host-owned, since it encodes the app's own download endpoint — then triggers a browser download via the shared `triggerAnchorDownload`, naming the file `attachment.title` when present, otherwise the last path segment of the URL.
 - Otherwise: calls `window.open(attachment.url, '_blank', 'noopener,noreferrer')`.
 - No-ops when `attachment.url` is missing or the resolved download URL is `undefined`.
 
@@ -76,7 +78,7 @@ getReferenceAttachmentGroups(dtos: MessageAttachment[] | undefined): AnnotationG
 #### Scenario: DIAL file id triggers anchor-download
 
 - **WHEN** `openAnnotationAttachment` is called with an attachment whose `url` is a DIAL file id
-- **THEN** a resolved download URL is fetched and a hidden `<a download>` click is dispatched; `window.open` is NOT called
+- **THEN** `resolveDownloadUrl` is consulted and `triggerAnchorDownload` is called with the result; `window.open` is NOT called
 
 #### Scenario: External URL calls window.open
 
@@ -120,11 +122,11 @@ getReferenceAttachmentGroups(dtos: MessageAttachment[] | undefined): AnnotationG
 
 ### Requirement: Reference-only PDF-page attachments open in the canvas at the referenced page
 
-`apps/chat/src/utils/reference-attachment.ts` SHALL export `parsePdfPageReference(url: string): { baseUrl: string; page: number | null } | null` that matches a URL ending in `.pdf`, optionally followed by a `#page=N` fragment, returning `null` for any other URL shape.
+`libs/quotations/src/utils/reference-attachment.ts` SHALL export `parsePdfPageReference(url: string): PdfPageReference | null` — `{ baseUrl, page }` — matching a URL ending in `.pdf` (case-insensitively), optionally followed by a `#page=N` fragment, and returning `null` for any other URL shape.
 
-`apps/chat/src/utils/attachment-canvas.ts` SHALL export `referenceAttachmentToPdfCanvasContent(attachment: AttachmentResource): PdfCanvasContent | null` that:
+`libs/chat-hooks/src/files/attachment-canvas.ts` SHALL export `referenceAttachmentToPdfCanvasContent(attachment: AttachmentResource, resolvers: AttachmentCanvasUrlResolvers): PdfCanvasContent | null` that:
 - Returns `null` when `parsePdfPageReference(attachment.url)` returns `null`.
-- Resolves `baseUrl` to a DIAL download URL when it is a DIAL file id, otherwise uses it as-is; returns `null` if resolution fails.
+- Resolves `baseUrl` to a DIAL download URL through the injected `resolvers.resolveDialFileDownloadUrl` when it is a DIAL file id, otherwise uses it as-is; returns `null` if resolution fails.
 - When no page fragment is present, returns `{ type: Pdf, url }` with no highlights.
 - When a page is present, returns `{ type: Pdf, url, highlights: [...], selectedHighlightId }` with a single invisible (`opacity: 0`, zero-size bbox) highlight scoped to that page, whose `id`/`selectedHighlightId` is `` `reference-page-${page}` `` — unique per page number, so switching between two chips of the same PDF at different pages while the canvas is already open produces a different `selectedHighlightId` and re-triggers the scroll.
 
@@ -133,8 +135,8 @@ getReferenceAttachmentGroups(dtos: MessageAttachment[] | undefined): AnnotationG
 In `ConversationMessageItem.tsx`, each reference-chip `CitationDropdown` SHALL be given an `onPreview` handler (opening the canvas via `referenceAttachmentToPdfCanvasContent` + `openCanvas`) when its group's `primaryAnnotation` attachment is PDF-page-detectable, and no `onPreview` otherwise (existing behavior). `onOpenInBrowser` SHALL continue to be passed unconditionally and SHALL continue to download the raw file, regardless of `onPreview`.
 
 This routing SHALL also apply outside the reference-chip row, so any `DisplayAttachment` click path resolves the same way:
-- `useOpenAttachmentCanvas`'s `openFileCanvas` SHALL try `referenceAttachmentToPdfCanvasContent` first, whenever `attachment.url == null && attachment.referenceUrl != null`, before its normal MIME-type/extension routing.
-- `useAttachmentAction`'s `handleAttachmentClick` (used by any attachment card with no explicit `onAttachmentClick` override, including stage attachments rendered inside `CollapsedGroup`) SHALL route reference-only attachments the same way: PDF-page canvas preview when detectable, otherwise `openAnnotationAttachment` (DIAL-file download or `window.open`).
+- The canvas hook's `openFileCanvas` SHALL try its injected `resolveReferencePdfContent` resolver first, whenever `attachment.url == null && attachment.referenceUrl != null`, before its normal MIME-type/extension routing. The app binds that resolver to `referenceAttachmentToPdfCanvasContent`.
+- `useAttachmentAction`'s `handleAttachmentClick` (used by any attachment card with no explicit `onAttachmentClick` override, including stage attachments rendered inside `CollapsedGroup`) SHALL route reference-only attachments the same way: PDF-page canvas preview when detectable, otherwise the DIAL-file download or `window.open` fallback.
 
 **i18n**: none new.
 **RTL**: none — canvas panel layout is unaffected.

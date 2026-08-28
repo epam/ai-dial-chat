@@ -24,6 +24,7 @@ import {
   isOrganisationPromptItem,
   isQuickAppSchema,
   mapDeploymentDetailsDtoToEntityDetails,
+  mapDeploymentLimitsDtoToCatalogLimits,
   mapEntityDetailsToCatalogDetails,
   mapPromptToCatalogItem,
   mapSkillToCatalogItem,
@@ -43,6 +44,7 @@ import {
   SkillSource,
   mapPublishHistoryEntryDto,
   toPublishEntityType,
+  type DeploymentLimitsLabels,
   type ParsedSkillResourceUrl,
   type PromptOverviewLabels,
   type SkillFileContent,
@@ -138,7 +140,6 @@ import { ROUTES } from '../../types/routes';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { resolveFavoriteEntityType } from '../../utils/favorites';
 import { triggerBrowserDownload } from '../../utils/file-download';
-import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
   buildDeploymentFolderLabels,
   mapDeploymentToCatalogItem,
@@ -334,6 +335,31 @@ const CatalogView: FC<Props> = ({
       updatedLabel: t(CatalogI18nKeys.DetailsSkillUpdated),
       fileCountLabel: t(CatalogI18nKeys.DetailsSkillFileCount),
       detailsSectionTitle: t(CatalogI18nKeys.DetailsSkillSection),
+    }),
+    [t],
+  );
+
+  const deploymentLimitsLabels: DeploymentLimitsLabels = useMemo(
+    () => ({
+      requestsPerHour: t(CatalogI18nKeys.DetailsLimitsRequestsPerHour),
+      requestsPerDay: t(CatalogI18nKeys.DetailsLimitsRequestsPerDay),
+      tokensPerMinute: t(CatalogI18nKeys.DetailsLimitsTokensPerMinute),
+      tokensPerDay: t(CatalogI18nKeys.DetailsLimitsTokensPerDay),
+      tokensPerWeek: t(CatalogI18nKeys.DetailsLimitsTokensPerWeek),
+      tokensPerMonth: t(CatalogI18nKeys.DetailsLimitsTokensPerMonth),
+      costPerMinute: t(CatalogI18nKeys.DetailsLimitsCostPerMinute),
+      costPerDay: t(CatalogI18nKeys.DetailsLimitsCostPerDay),
+      costPerWeek: t(CatalogI18nKeys.DetailsLimitsCostPerWeek),
+      costPerMonth: t(CatalogI18nKeys.DetailsLimitsCostPerMonth),
+      unlimitedValue: t(CatalogI18nKeys.DetailsLimitsUnlimitedValue),
+      formatValueLabel: (used, total) =>
+        t(CatalogI18nKeys.DetailsLimitsValue, { used, total }),
+      formatProgressAriaLabel: ({ label, used, total }) =>
+        t(CatalogI18nKeys.DetailsLimitsProgressAriaLabel, {
+          label,
+          used,
+          total,
+        }),
     }),
     [t],
   );
@@ -636,7 +662,10 @@ const CatalogView: FC<Props> = ({
                   mcpResourceKind,
                 )
               : (deploymentConnectApi ?? catalogDetails.api),
-          limits: mapDeploymentLimitsDtoToCatalogLimits(limitsDto, t),
+          limits: mapDeploymentLimitsDtoToCatalogLimits(
+            limitsDto,
+            deploymentLimitsLabels,
+          ),
           credentials:
             entityDetails.type === 'TOOLSET'
               ? mapToolsetCredentials(item.id, entityDetails.data, isAdmin)
@@ -648,7 +677,7 @@ const CatalogView: FC<Props> = ({
     },
     [
       isAdmin,
-      t,
+      deploymentLimitsLabels,
       dialCoreExternalUrl,
       skills,
       sharedSkills,

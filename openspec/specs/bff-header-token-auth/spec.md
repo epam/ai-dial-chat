@@ -54,7 +54,11 @@ The extraction of today's cookie-decrypt, transparent-refresh, CSRF-token-stabil
 
 ### Requirement: Header bearer token authentication
 
-When `AUTH_HEADER_TOKEN_ENABLED` is `true`, the system SHALL authenticate requests carrying an `Authorization: Bearer <token>` header by verifying the token's signature locally against the JWKS of a registered OIDC provider matching the token's `iss` claim, and checking `exp`, `nbf`, and `aud` with the configured clock tolerance. The token's issuer MUST also be present in `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`. When resolving the registered provider for an Azure AD tenant, an `iss` claim in the Azure AD v1 format (`https://sts.windows.net/{tenant}/`) SHALL be treated as equivalent to the same tenant's v2 format (`https://login.microsoftonline.com/{tenant}/v2.0`) if no provider is registered under the exact issuer string presented.
+When `AUTH_HEADER_TOKEN_ENABLED` is `true`, the system SHALL authenticate requests carrying an `Authorization: Bearer <token>` header by verifying the token's signature locally against the JWKS of a registered OIDC provider matching the token's `iss` claim, and checking `iss`, `exp`, and `nbf` with the configured clock tolerance.
+
+The `aud` claim is deliberately **not** constrained: the trust boundary here is the pair of checks that the issuer is on the operator's `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS` allowlist **and** that a provider is registered for it, after which DIAL Core itself authorizes the token. Constraining `aud` would additionally require operators to enumerate every client id allowed to call the BFF.
+
+The order of checks SHALL be: decode the token unverified to read `iss`; reject an undecodable token; reject a token with no `iss`; reject an issuer absent from `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`; reject an allowlisted issuer with no registered provider; then verify the signature and time claims. Reading `iss` before verification is safe because it is only used to select which JWKS to verify against, and the allowlist is consulted before any key is fetched. When resolving the registered provider for an Azure AD tenant, an `iss` claim in the Azure AD v1 format (`https://sts.windows.net/{tenant}/`) SHALL be treated as equivalent to the same tenant's v2 format (`https://login.microsoftonline.com/{tenant}/v2.0`) if no provider is registered under the exact issuer string presented.
 
 #### Scenario: Valid token from a registered, allowlisted issuer authenticates the request
 
@@ -91,6 +95,21 @@ When `AUTH_HEADER_TOKEN_ENABLED` is `true`, the system SHALL authenticate reques
 - **WHEN** a request carries an `Authorization` header using a non-`Bearer` scheme, an empty token value, or multiple `Authorization` header values
 - **THEN** the response is `401` with error code `AUTH_HEADER_MALFORMED`
 
+#### Scenario: A token that is not a decodable JWT is rejected as malformed
+
+- **WHEN** the bearer value parses as a header but is not a decodable JWT
+- **THEN** the response is `401` with error code `AUTH_HEADER_MALFORMED`
+
+#### Scenario: A token with no `iss` claim is rejected as invalid
+
+- **WHEN** the bearer token decodes but carries no `iss` claim
+- **THEN** the response is `401` with error code `AUTH_HEADER_TOKEN_INVALID`
+
+#### Scenario: A token for another audience is still accepted
+
+- **WHEN** a request carries a signed, unexpired token from an allowlisted, registered issuer whose `aud` is some other client id
+- **THEN** the request authenticates, because `aud` is not part of the verification contract
+
 #### Scenario: Feature flag off ignores the header entirely
 
 - **WHEN** `AUTH_HEADER_TOKEN_ENABLED` is `false` (the default) and a request carries an `Authorization: Bearer <token>` header along with a valid session cookie
@@ -98,7 +117,7 @@ When `AUTH_HEADER_TOKEN_ENABLED` is `true`, the system SHALL authenticate reques
 
 ### Requirement: JWKS caching, not per-request fetch
 
-The system SHALL cache the remote JWK set used to verify header tokens per provider for the process lifetime, refreshed at most every `AUTH_HEADER_TOKEN_JWKS_CACHE_TTL_SECONDS`, and SHALL NOT fetch a provider's JWKS document on every request.
+The system SHALL cache the remote JWK set used to verify header tokens in an in-process map keyed by provider id, recreating a provider's key resolver only once `AUTH_HEADER_TOKEN_JWKS_CACHE_TTL_SECONDS` has elapsed since it was created, and SHALL NOT fetch a provider's JWKS document on every request. The cache is per-process and not shared through the app cache, so it needs no invalidation beyond that TTL.
 
 #### Scenario: Repeated requests reuse the cached JWK set
 
@@ -186,9 +205,9 @@ The system SHALL NOT attempt token refresh for a header-authenticated request, a
 
 ### Requirement: OpenAPI documents both authentication schemes
 
-`apps/chat-api`'s OpenAPI document SHALL declare a `bearer` HTTP security scheme alongside the existing `session` cookie scheme, and operations reachable under both auth sources SHALL be annotated with both security requirements.
+`apps/chat-api`'s OpenAPI document SHALL declare a `bearer` HTTP security scheme (`scheme: bearer`, `bearerFormat: JWT`) alongside the existing `session` cookie scheme — both registered on the document builder in `apps/chat-api/src/openapi/openapi.config.ts` — and operations reachable under both auth sources SHALL be annotated with both security requirements.
 
 #### Scenario: Generated OpenAPI document lists both schemes
 
 - **WHEN** the OpenAPI document is generated via `npm run openapi`
-- **THEN** the `components.securitySchemes` object contains both a cookie-based scheme and a `bearer` HTTP scheme with `scheme: bearer`
+- **THEN** the `components.securitySchemes` object contains both a cookie-based `session` scheme and a `bearer` HTTP scheme with `scheme: bearer` and `bearerFormat: JWT`
