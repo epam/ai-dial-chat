@@ -64,6 +64,31 @@ confirmation step and calls them only once the user confirms:
 />
 ```
 
+#### Read-only mode
+
+`isReadonly` turns the whole catalog into a pure browsing surface. It is a
+single switch — the host does not have to withhold each callback by hand:
+
+- Browse cards drop the favorite star, the footer divider, and the "Featured"
+  tag. The footer row goes away entirely for an item with no folder path, since
+  the path is the only thing left in it.
+- The list view drops its "Favorite" column.
+- The "Create" button and the favorites strip are not rendered.
+- The details panel withholds its favorite star and every action that mutates
+  the item or the caller's relationship to it: Share, Publish, Unpublish, Edit,
+  Delete, "Remove from My List", "Revoke access", and the credentials
+  Log in / Log out / manage button.
+
+The non-mutating actions stay: the primary "Use in chat" and Download still
+render, as do search, sort, filters, tabs, and the details tabs.
+
+```tsx
+<Catalog items={catalogItems} favorites={[]} isReadonly />
+```
+
+`Card`, `CardGrid`, `ListView`, and `DetailsPanel` each accept `isReadonly`
+directly too, for hosts composing their own layout instead of using `Catalog`.
+
 ### CardGrid
 
 Virtualized grid view of catalog cards.

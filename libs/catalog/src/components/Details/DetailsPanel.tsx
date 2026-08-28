@@ -191,6 +191,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   isOpen,
   isStarred: initialIsStarred = false,
   isDetailsLoading = false,
+  isReadonly = false,
   onClose,
   onToggleFavorite,
   isFavoriteVisible,
@@ -1134,7 +1135,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           {subViewHeader == null && (
             <>
               <div className="flex-1" />
-              {isFavoriteVisible?.(item) !== false && (
+              {!isReadonly && isFavoriteVisible?.(item) !== false && (
                 <StarToggleButton
                   isStarred={isStarred}
                   ariaLabel={starAriaLabel}
@@ -1283,6 +1284,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onRequestLogout={handleRequestLogout}
                 texts={texts}
                 detailsStyles={detailsStyles}
+                isReadonly={isReadonly}
               />
 
               {item.credentials != null &&

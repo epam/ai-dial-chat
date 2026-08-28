@@ -1770,3 +1770,71 @@ describe('Header action-surface arrangement', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
   });
 });
+
+describe('Header — read-only', () => {
+  it('withholds Share, Publish, Edit, and Delete — leaving no Manage menu at all', () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Model), isEditable: true }}
+        onShare={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        isPublishPrimary={() => true}
+        isReadonly
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
+  });
+
+  it('withholds Unpublish and "Revoke access" even once their lookups have resolved', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        onOpenUnpublish={vi.fn()}
+        hasPublishedFolders
+        isPublishPrimary={() => true}
+        onRevokeShare={vi.fn()}
+        isReadonly
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Unpublish' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
+  });
+
+  it('withholds the credentials Log in button for a signed-out toolset', () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            userStatus: CredentialStatus.SignedOut,
+          },
+        }}
+        onLogin={vi.fn()}
+        isReadonly
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Log in' })).toBeNull();
+  });
+
+  it('keeps the non-mutating actions — "Use in chat" and Download', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        onUseInChat={vi.fn()}
+        onDownload={vi.fn()}
+        isDownloadPrimary={() => true}
+        isReadonly
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+  });
+});

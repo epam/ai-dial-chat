@@ -197,6 +197,14 @@ interface HeaderProps {
   onRequestPublishHistory?: () => void;
   /** Called when the "Unpublish" button is clicked; the host swaps this panel's content to the unpublish confirmation. */
   onOpenUnpublish?: () => void;
+  /**
+   * Renders the header read-only: every action that mutates the item or the
+   * caller's relationship to it — Share, Publish/Unpublish, Edit, Delete,
+   * "Remove from My List", "Revoke access", and the credentials Log in / Log
+   * out / manage button — is withheld. The non-mutating actions (the primary
+   * "Use in chat" and Download) still render. Default: false.
+   */
+  isReadonly?: boolean;
 }
 /** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit, Publish or Unpublish, and Delete), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. Shows a "Running low"/"Limit reached" badge from `item.details?.limits?.status`, disabling "Use in chat" once a limit is reached. */
 export const Header: FC<HeaderProps> = ({
@@ -230,6 +238,7 @@ export const Header: FC<HeaderProps> = ({
   hasPublishedFolders = false,
   onRequestPublishHistory,
   onOpenUnpublish,
+  isReadonly = false,
 }) => {
   const {
     nameClassName = 'dial-body-semi-text',
@@ -434,6 +443,7 @@ export const Header: FC<HeaderProps> = ({
    * request, so an entry shown without one could not do anything if clicked.
    */
   const shouldShowUnpublish =
+    !isReadonly &&
     !!onOpenUnpublish &&
     hasPublishedFolders &&
     (isUnpublishVisible?.(item) ?? true);
@@ -456,13 +466,14 @@ export const Header: FC<HeaderProps> = ({
    * settled before the action becomes visible.
    */
   const shouldShowPublish =
+    !isReadonly &&
     !shouldShowUnpublish &&
     (isPublishVisible?.(item) ??
       (item.type === CatalogEntityType.Model ||
         item.type === CatalogEntityType.Toolset ||
         item.type === CatalogEntityType.Agent));
 
-  const shouldShowEditAction = !!onEdit && !!item.isEditable;
+  const shouldShowEditAction = !isReadonly && !!onEdit && !!item.isEditable;
 
   /*
    * Sharing is limited to entities the current user owns (deployments and
@@ -471,7 +482,7 @@ export const Header: FC<HeaderProps> = ({
    * same rule itself, so this only gates the Manage-menu arrangement.
    */
   const shouldShowShareAction =
-    item.isMyApp === true && (isShareVisible?.(item) ?? true);
+    !isReadonly && item.isMyApp === true && (isShareVisible?.(item) ?? true);
 
   /*
    * Which surface each of Share and Publish lands on. The defaults are the
@@ -490,7 +501,7 @@ export const Header: FC<HeaderProps> = ({
       ? getCredentialsUiState(item.credentials)
       : undefined;
   const shouldShowCredentialsAction =
-    credentialsUiState != null && (!!onLogin || !!onLogout);
+    !isReadonly && credentialsUiState != null && (!!onLogin || !!onLogout);
   /* Toolsets have no "Use in chat" primary action, so the credentials
    * button (Log in / Log out / manage) takes over as their primary,
    * leading action instead. */
@@ -507,7 +518,7 @@ export const Header: FC<HeaderProps> = ({
   /* A promoted Download renders in the primary slot only — never duplicated in the Manage menu. */
   const shouldShowDownloadAction =
     isDownloadActionEnabled && !isDownloadActionPrimary;
-  const shouldShowDeleteAction = item.isMyApp;
+  const shouldShowDeleteAction = !isReadonly && item.isMyApp;
   /*
    * The recipient-side "Remove from My List" action is the counterpart of
    * Delete: it discards only the current user's own access, so it shows
@@ -516,6 +527,7 @@ export const Header: FC<HeaderProps> = ({
    * render at the same time.
    */
   const shouldShowUnshareAction =
+    !isReadonly &&
     !!onUnshare &&
     item.isMyApp !== true &&
     item.sharedWithMe === true &&
@@ -534,6 +546,7 @@ export const Header: FC<HeaderProps> = ({
    * revoke.
    */
   const shouldShowRevokeShareAction =
+    !isReadonly &&
     !!onRevokeShare &&
     item.isMyApp === true &&
     (!onFetchRecipientsCount ||
@@ -899,7 +912,7 @@ export const Header: FC<HeaderProps> = ({
             )}
           </>
         )}
-        {isShareInActionRow && (
+        {isShareInActionRow && shouldShowShareAction && (
           <ShareButton
             item={item}
             onShare={onShare}
