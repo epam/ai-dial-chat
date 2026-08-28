@@ -33,7 +33,6 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       announcementTitle: null,
       announcementDescription: null,
       announcements: [],
-      deepResearchToolId: null,
       enabledUiFeatures,
       footerHtmlMessage: '',
       customVisualizers: [],
