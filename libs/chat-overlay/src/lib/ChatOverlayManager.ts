@@ -15,7 +15,7 @@ import type {
   SetTemperatureResponse,
 } from '../protocol';
 import { ChatOverlay } from './ChatOverlay';
-import { setStyles } from './internal/dom-styles';
+import { injectStyleSheet, setStyles } from './internal/dom-styles';
 
 const MOBILE_BREAKPOINT_PX = 768;
 const DEFAULT_WIDTH = 380;
@@ -32,13 +32,7 @@ const ICON_FULLSCREEN =
 
 const STYLE_ELEMENT_ID = 'dial-overlay-manager-styles';
 
-const ensureManagerStylesInjected = (): void => {
-  if (document.getElementById(STYLE_ELEMENT_ID)) {
-    return;
-  }
-  const style = document.createElement('style');
-  style.id = STYLE_ELEMENT_ID;
-  style.textContent = `
+const MANAGER_CSS = `
 .dial-overlay-btn {
   display: inline-flex;
   align-items: center;
@@ -58,7 +52,9 @@ const ensureManagerStylesInjected = (): void => {
   outline-offset: 2px;
 }
 `;
-  document.head.appendChild(style);
+
+const ensureManagerStylesInjected = (): void => {
+  injectStyleSheet(STYLE_ELEMENT_ID, MANAGER_CSS);
 };
 
 const createButton = (

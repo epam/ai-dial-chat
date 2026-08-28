@@ -168,8 +168,8 @@ manager.destroy();
 | ----------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | `domain`                | `string`                                                   | Full URL of the chat app instance to embed (origin + optional path).                   |
 | `requestTimeout`        | `number?`                                                  | Milliseconds to wait for a request's response before rejecting. Defaults to `10000`.   |
-| `loaderStyles`          | `Record<string, string>?`                                  | Inline CSS properties applied to the loader element while visible.                     |
-| `loaderClass`           | `string?`                                                  | CSS class applied to the loader element.                                               |
+| `loaderStyles`          | `Record<string, string>?`                                  | Inline CSS properties applied to the loader element, overriding the injected defaults. |
+| `loaderClass`           | `string?`                                                  | CSS class added to the loader element alongside `dial-overlay-loader`.                 |
 | `loaderInnerHTML`       | `string?`                                                  | Custom HTML rendered inside the loader, replacing the default spinner.                 |
 | `loaderHideEvent`       | `OverlayEventType?`                                        | Event whose receipt hides the loader. Defaults to `OverlayEventType.Ready`.            |
 | `enabledFeatures`       | `OverlayFeature[]?`                                        | Embed-time features to enable, e.g. `OverlayFeature.VoiceInput` for microphone access. |
@@ -192,6 +192,24 @@ manager.destroy();
 | `GptEndGenerating`           | When a generation completes normally (not on user-initiated stop).     |
 | `StopGenerating`             | When the user (or host) stops an in-flight generation.                 |
 | `ConversationsUpdated`       | Whenever the app's conversation list changes.                          |
+
+## Styling
+
+The overlay ships no CSS file — the first `ChatOverlay` constructed appends a
+`<style id="dial-overlay-styles">` element to `document.head`, once per document,
+and elements carry classes instead of inline styles:
+
+| Class                          | Applied to                                                                      |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| `dial-overlay-root`            | The host root element, only when its computed `position` is `static`.            |
+| `dial-overlay-iframe`          | The embedded chat iframe.                                                       |
+| `dial-overlay-loader`          | The loader element.                                                             |
+| `dial-overlay-loader--hidden`  | The loader once `loaderHideEvent` arrives (`display: none !important`).          |
+
+Host CSS of equal or higher specificity can restyle any of these; `loaderStyles`
+remains an inline-style escape hatch that wins over both. `ChatOverlayManager`
+injects its own `<style id="dial-overlay-manager-styles">` element for the
+`dial-overlay-btn` chrome buttons.
 
 ## Deployment prerequisites
 
