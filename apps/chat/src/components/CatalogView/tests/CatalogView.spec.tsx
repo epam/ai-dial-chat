@@ -7,7 +7,10 @@ import {
   getCredentialsUiState,
 } from '@epam/ai-dial-catalog';
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
-import { SKILL_MANIFEST_MAX_BYTES } from '@epam/ai-dial-chat-hooks';
+import {
+  FavoriteEntityType,
+  SKILL_MANIFEST_MAX_BYTES,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   CatalogEntityType,
@@ -34,10 +37,7 @@ import { DEFAULT_ENABLED_UI_FEATURES } from '../../../constants/ui-features';
 import { useAppConfig } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
-import {
-  FavoriteEntityType,
-  useFavoriteApplications,
-} from '../../../context/FavoriteApplicationsContext';
+import { useFavoriteApplications } from '../../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
 import { useSkills } from '../../../context/SkillsContext';
@@ -615,12 +615,6 @@ vi.mock('../../../context/NotificationContext', () => ({
 }));
 
 vi.mock('../../../context/FavoriteApplicationsContext', () => ({
-  FavoriteEntityType: {
-    Deployment: 'deployment',
-    Toolset: 'toolset',
-    Prompt: 'prompt',
-    Skill: 'skill',
-  },
   useFavoriteApplications: vi.fn(),
 }));
 vi.mock('../../../hooks/useUiFeature', async () => {

@@ -1,3 +1,21 @@
+/** Characters prohibited in conversation names: tab, ", :, ;, /, \, ,, =, {, }, %, & */
+export const PROHIBITED_CONVERSATION_NAME_CHARS_RE = /[\t":;/\\,={}%&]/g;
+
+/** Strips characters DIAL Core rejects in a conversation name. */
+export const sanitizeConversationName = (name: string): string =>
+  name.replace(PROHIBITED_CONVERSATION_NAME_CHARS_RE, '');
+
+/** Strips trailing `.` characters from a name. */
+export const stripTrailingDots = (name: string): string => {
+  let end = name.length;
+
+  while (end > 0 && name[end - 1] === '.') {
+    end -= 1;
+  }
+
+  return name.slice(0, end);
+};
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 

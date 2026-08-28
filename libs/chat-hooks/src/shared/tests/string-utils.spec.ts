@@ -85,6 +85,10 @@ describe('stripTrailingDots', () => {
     expect(stripTrailingDots('name...')).toBe('name');
   });
 
+  it('removes a long sequence of trailing dots', () => {
+    expect(stripTrailingDots(`name${'.'.repeat(100_000)}`)).toBe('name');
+  });
+
   it('preserves a dot at the start of the name', () => {
     expect(stripTrailingDots('.hiddenfile')).toBe('.hiddenfile');
   });

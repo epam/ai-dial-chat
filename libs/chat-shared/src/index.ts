@@ -1,4 +1,6 @@
 export * from './models/annotation';
+export * from './models/conversation-transfer';
+export * from './models/conversation-classification';
 export * from './models/chat';
 export * from './models/theme';
 export * from './models/auth';
