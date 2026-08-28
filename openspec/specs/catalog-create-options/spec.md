@@ -1,7 +1,7 @@
 # catalog-create-options Specification
 
 ## Purpose
-Specifies the entries `CatalogView`'s Create dropdown offers (Custom App, Skill) and their associated navigation/edit affordances.
+Specifies the Custom App, Skill, and Prompt entries in `CatalogView`'s Create dropdown and their associated navigation and edit affordances. The full ordered menu, including the Quick App and Toolset entries and every gate, is specified by `catalog-create-app`.
 
 ## Requirements
 
@@ -23,7 +23,7 @@ The system SHALL add a "Custom App" option to the `CatalogView` create button wh
 ### Requirement: Edit button for schema-less custom apps
 When `OverlayFeature.CustomApps` is enabled, `CatalogView` SHALL show the Edit button on catalog items that are owned by the user (`isMy` or `canEdit`), have `type = 'application'`, and have **no** `applicationTypeSchemaId`. Clicking Edit navigates to `CustomAppEditor` with the item's `id`.
 
-The `mapDeploymentToCatalogItem` utility accepts a 6th param `isCustomAppsEditable`; when `true`, schema-less application items are marked `isEditable`.
+`mapDeploymentToCatalogItem` takes its configuration as a single options object (not positional arguments), one field of which is `isCustomAppsEditable`, defaulting to `false`; when `true`, schema-less application items are marked `isEditable`.
 
 #### Scenario: Edit button visible for schema-less app
 - **WHEN** `OverlayFeature.CustomApps` is enabled and the user owns a schema-less application
@@ -45,7 +45,7 @@ The `HideCustomAppCreation = 'hide-custom-app-creation'` modifier flag SHALL sup
 ### Requirement: Skill create option in catalog
 The system SHALL add a "Skill" option to the `CatalogView` create button, unconditionally (no `OverlayFeature` gate), alongside the existing Prompt/Toolset/Custom App/Quick App entries. The "Skill" option SHALL be a nested submenu with two children: "Write instructions", which navigates to `ROUTES.SkillEditor` with a `returnUrl` query param pointing back to `ROUTES.Catalog` (unchanged from the prior direct-action behavior), and "Upload", which opens a native file picker restricted to a single ZIP archive and imports it as a new Skill (see `skill-archive-import`).
 
-The submenu SHALL be operable by keyboard (arrow-key navigation into and within the submenu, `Enter`/`Space` to activate a child, `Escape` to close) and SHALL NOT require hover to open or navigate on touch/mobile viewports. Both the "Skill" parent item and its "Write instructions"/"Upload" children SHALL meet the existing 44×44 px minimum touch-target size used elsewhere in the Catalog's interactive controls.
+The submenu SHALL be operable by keyboard (arrow-key navigation into and within the submenu, `Enter`/`Space` to activate a child, `Escape` to close) and SHALL NOT require hover to open or navigate on touch/mobile viewports. The parent item and both children SHALL meet the touch-target size the shared `Dropdown` applies to every menu row — the menu is rendered by the ui-kit component, so this capability inherits that sizing rather than setting its own.
 
 #### Scenario: Skill option is always present
 - **WHEN** `CatalogView`'s Create dropdown is opened
@@ -75,11 +75,11 @@ The submenu SHALL be operable by keyboard (arrow-key navigation into and within 
 
 ### Requirement: Prompt create option in catalog
 
-The system SHALL add a "Prompt" option to the `CatalogView` create button when `OverlayFeature.Prompts` is enabled. The option SHALL be absent when the feature is disabled. Its label comes from `CatalogI18nKeys.CreatePrompt` (`catalog.createPrompt`, English `'Prompt'`).
+The system SHALL add a "Prompt" option to the `CatalogView` create button when `OverlayFeature.Prompts` is enabled. The option SHALL be absent when the feature is disabled. Its label comes from `CatalogI18nKeys.CreatePrompt` (`catalog.create.prompt`), which shares the `catalog.create.*` prefix with every other create-menu label.
 
-Clicking it SHALL navigate to `ROUTES.PromptEditor` in create mode with `PromptEditorQuery.ReturnUrl` set to `ROUTES.Catalog`, so cancelling or saving returns the user to the catalog. It carries no `id` param — an `id` is what distinguishes edit mode.
+Clicking it SHALL navigate to `ROUTES.PromptEditor` in create mode with the shared `EditorQuery.ReturnUrl` parameter set to `ROUTES.Catalog`, so cancelling or saving returns the user to the catalog. It carries no `id` param — an `id` is what distinguishes edit mode.
 
-The entry SHALL be appended after the existing Quick App, Toolset, and Custom App entries, preserving their relative order. No existing create option's visibility rule changes.
+The entry SHALL be appended last, after the Quick App, Toolset, Custom App, and Skill entries, preserving their relative order. No existing create option's visibility rule changes.
 
 #### Scenario: Option visible when feature enabled
 
@@ -100,7 +100,7 @@ The entry SHALL be appended after the existing Quick App, Toolset, and Custom Ap
 #### Scenario: Existing create options are unchanged
 
 - **WHEN** `OverlayFeature.Prompts` is enabled alongside `CustomApps` and `Toolsets`
-- **THEN** the Quick App, Toolset, and Custom App entries appear with their existing labels, order, and navigation targets, and the Prompt entry follows them
+- **THEN** the Quick App, Toolset, Custom App, and Skill entries appear with their existing labels, order, and navigation targets, and the Prompt entry follows them
 
 #### Scenario: Create button is still hidden in selector mode
 
@@ -111,14 +111,16 @@ The entry SHALL be appended after the existing Quick App, Toolset, and Custom Ap
 
 ### Requirement: Edit action for owned prompts opens the prompt editor
 
-`CatalogView`'s `handleEdit` SHALL branch on `CatalogEntityType.Prompt` before its toolset and deployment branches, navigating to `ROUTES.PromptEditor` with `PromptEditorQuery.Id` set to the prompt's `id` and `PromptEditorQuery.ReturnUrl` set to `ROUTES.Catalog`.
+`CatalogView`'s `handleEdit` SHALL branch on `CatalogEntityType.Prompt` first, navigating to `ROUTES.PromptEditor` with the shared `EditorQuery.Id` set to the prompt's `id` and `EditorQuery.ReturnUrl` set to `ROUTES.Catalog`. The branch order is Prompt, then Skill, then Toolset, then the deployment fallback — each of the first three keyed on `item.type` and returning early, so a prompt never reaches the deployment lookup.
+
+Prompt and Skill share the same `EditorQuery` parameter names, differing only in the route they navigate to.
 
 The Edit action's visibility is governed by the lib's existing `!!onEdit && !!item.isEditable` rule with no change. `mapPromptToCatalogItem` derives `isEditable` from the permission-aware listing: personal prompts and shared prompts with `canEdit: true` may expose Edit, while read-only shared and organisation prompts do not. A shared prompt's qualified id SHALL be preserved in the editor URL.
 
 #### Scenario: Editing an owned prompt opens it in the editor
 
 - **WHEN** the user opens their own prompt's details panel and activates Edit
-- **THEN** the app navigates to `/prompt-editor?id=<prompt path>&returnUrl=/catalog`
+- **THEN** the app navigates to `/prompt-editor` with the prompt's path as `id` and the catalog as `returnUrl`
 - **AND** the editor loads that prompt in edit mode
 
 #### Scenario: Read-only shared prompt has no Edit action
@@ -136,6 +138,11 @@ The Edit action's visibility is governed by the lib's existing `!!onEdit && !!it
 
 - **WHEN** the user opens the details panel for an organisation prompt, even if upstream metadata reports `WRITE`
 - **THEN** no Edit action is present in the Manage menu
+
+#### Scenario: Skill edit routing sits between the prompt and toolset branches
+
+- **WHEN** the user activates Edit on a skill
+- **THEN** it navigates to `ROUTES.SkillEditor` with the same `EditorQuery.Id` / `EditorQuery.ReturnUrl` pair the prompt branch uses
 
 #### Scenario: Toolset and application edit routing is unchanged
 
