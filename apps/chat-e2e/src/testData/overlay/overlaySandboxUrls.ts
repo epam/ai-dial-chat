@@ -57,7 +57,7 @@ export const OverlaySandboxUrls = {
     '/cases/overlay/enabled-live-chat-interaction-sandbox', //sandbox to test 'EPMDIAL-2330'
   disableLiveChatInteractionUrl:
     '/cases/overlay/disabled-live-chat-interaction-sandbox', //sandbox to test 'EPMDIAL-2330'
-  overlayManagerMdBreakpointUrl: '/cases/overlay-manager-md-breakpoint', //sandbox to test 'EPMDIAL-2331'
-  overlayManagerDefaultBreakpointUrl:
-    '/cases/overlay-manager-default-breakpoint', //sandbox to test 'EPMDIAL-2331'
+  fullWidthMdBreakpointUrl: '/cases/overlay/full-width-md-breakpoint-sandbox', //sandbox to test 'EPMDIAL-2331'
+  fullWidthDefaultBreakpointUrl:
+    '/cases/overlay/full-width-default-breakpoint-sandbox', //sandbox to test 'EPMDIAL-2331'
 };

@@ -4,11 +4,22 @@ import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import { OverlaySandboxUrls } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
+const recordableAudioMimeTypes = [
+  'audio/ogg',
+  'audio/webm',
+  'audio/mp4',
+  'audio/wav',
+];
+
 let modelWithAudioInput: DialAIEntityModel;
 dialOverlayTest.beforeAll(async () => {
   modelWithAudioInput = GeneratorUtil.randomArrayElement(
     ModelsUtil.getLatestModels().filter((m) =>
-      m.inputAttachmentTypes?.some((type) => type.startsWith('audio/')),
+      m.inputAttachmentTypes?.some(
+        (type) =>
+          type.toLowerCase() === 'audio/*' ||
+          recordableAudioMimeTypes.includes(type.toLowerCase()),
+      ),
     ),
   );
 });

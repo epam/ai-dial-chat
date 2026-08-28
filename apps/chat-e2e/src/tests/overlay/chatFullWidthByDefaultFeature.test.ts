@@ -9,6 +9,7 @@ import { getElementWidth } from '@/src/ui/domData';
 dialOverlayTest(
   '[Overlay] enable Feature.ChatFullWidthByDefault',
   async ({
+    page,
     overlayHomePage,
     overlayAssertion,
     overlayBaseAssertion,
@@ -38,13 +39,14 @@ dialOverlayTest(
         await overlayHomePage.waitForPageLoaded();
         sendMessageInitialWidth = await getElementWidth(overlaySendMessage);
         await overlayHomePage.overlayFullScreenButton.click();
+        await page.waitForFunction(() => document.fullscreenElement !== null);
       },
     );
 
     await dialOverlayTest.step(
       'Open settings under the user name and verify "Chat width" setting does not exist',
       async () => {
-        await overlayAccountSettings.click({ force: true });
+        await overlayAccountSettings.click();
         await accountSettingsDropdownMenu.selectMenuOption(
           AccountMenuOptions.settings,
         );

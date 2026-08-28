@@ -7,13 +7,13 @@ const breakpointCases = [
   {
     description:
       'Feature.MdSidebarOverlayBreakpoint is disabled (default xl breakpoint)',
-    url: OverlaySandboxUrls.overlayManagerDefaultBreakpointUrl,
+    url: OverlaySandboxUrls.fullWidthDefaultBreakpointUrl,
     breakpoint: 1280,
   },
   {
     description:
       'Feature.MdSidebarOverlayBreakpoint is enabled (md breakpoint)',
-    url: OverlaySandboxUrls.overlayManagerMdBreakpointUrl,
+    url: OverlaySandboxUrls.fullWidthMdBreakpointUrl,
     breakpoint: 768,
   },
 ];
@@ -27,34 +27,20 @@ for (const { description, url, breakpoint } of breakpointCases) {
       overlayHeader,
       overlayChatBar,
       overlayPromptBar,
-      overlayAssertion,
       overlayBaseAssertion,
       setTestIds,
     }) => {
       setTestIds('EPMDIAL-2331');
 
-      const openOverlayFullscreen = async () => {
-        await overlayHomePage.navigateToUrl(url);
-        await overlayBaseAssertion.assertElementState(
-          overlayHomePage.overlayChatIcon,
-          'visible',
-        );
-        await overlayHomePage.overlayChatIcon.click();
-        await overlayAssertion.assertOverlayManagerIsVisible(
-          overlayHomePage.overlayManagerContainer,
-        );
-        await overlayHomePage.waitForPageLoaded();
-        await overlayHomePage.overlayFullScreenButton.click();
-      };
-
       await dialOverlayTest.step(
-        `Set the viewport below the ${breakpoint}px breakpoint and verify the chat and prompt panels float over the chat`,
+        `Set the viewport below the ${breakpoint}px breakpoint, open the sandbox and verify the chat and prompt panels float over the chat`,
         async () => {
           await page.setViewportSize({
             width: breakpoint - 1,
             height: viewportHeight,
           });
-          await openOverlayFullscreen();
+          await overlayHomePage.navigateToUrl(url);
+          await overlayHomePage.waitForPageLoaded();
           await overlayHeader.leftPanelToggle.click();
           await overlayBaseAssertion.assertElementPositionStyle(
             overlayChatBar,
@@ -77,7 +63,6 @@ for (const { description, url, breakpoint } of breakpointCases) {
             width: breakpoint,
             height: viewportHeight,
           });
-          await openOverlayFullscreen();
           await overlayHeader.leftPanelToggle.click();
           await overlayBaseAssertion.assertElementPositionStyle(
             overlayChatBar,
