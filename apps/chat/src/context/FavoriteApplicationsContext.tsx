@@ -11,8 +11,6 @@ import {
   updateInstalledToolset,
 } from '../server-api/user-config.api';
 
-export { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
-
 const INSTALL_BY_ENTITY_TYPE: Record<
   FavoriteEntityType,
   (id: string, isInstalled: boolean) => Promise<void>

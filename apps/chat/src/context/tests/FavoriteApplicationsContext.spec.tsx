@@ -1,3 +1,4 @@
+import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -9,7 +10,6 @@ import {
 } from '../../server-api/user-config.api';
 import {
   FavoriteApplicationsProvider,
-  FavoriteEntityType,
   useFavoriteApplications,
 } from '../FavoriteApplicationsContext';
 
