@@ -501,6 +501,33 @@ describe('useOpenAttachmentCanvas routing', () => {
       );
     });
 
+    it('routes a cited source whose title has no extension by its DIAL-relative .html url', async () => {
+      /*
+       * A DIAL resource path is relative, so `new URL(url)` throws for it —
+       * the file name still has to be recovered from the last path segment.
+       */
+      const htmlContent = { type: 'html', srcdoc: '<p>roadmap</p>' };
+      mockResolveHtml.mockResolvedValue(htmlContent);
+
+      const attachment = {
+        id: 'PG AI Factory scope roadmap',
+        name: 'PG AI Factory scope roadmap',
+        contentType: 'text/html',
+        type: AttachmentType.File,
+        url: 'files/7bKTZyWQAe8Aht4USAmWYAHdXd9qgc3aFhBJ5V9tg27DrzkZDvwwaXoQnRLkchfngQ/uploads/2026-08/pg_ai_factory_scope_roadmap.html',
+      } as DisplayAttachment;
+
+      const { result } = renderOpenAttachmentCanvas();
+      const opened = await result.current.openAttachmentCanvas(attachment);
+
+      expect(opened).toBe(true);
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        htmlContent,
+        'PG AI Factory scope roadmap',
+        undefined,
+      );
+    });
+
     it('opens unsupported canvas when the html resolver rejects fetched text', async () => {
       /*
        * The resolver returns null for text that exceeded the srcdoc size
