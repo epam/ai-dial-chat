@@ -2,6 +2,7 @@ import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   attachmentsToDtos,
   findDeploymentByIdOrReference,
+  getApiErrorDetails,
   getConversationPath,
   getQuickAppConversationStarters,
   getStarterPopulateText,
@@ -53,7 +54,6 @@ import {
   filesApi as configuredFilesApi,
   rateApi as configuredRateApi,
 } from '../../server-api/api-client';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   createConversation as apiCreateConversation,

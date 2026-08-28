@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Specifies the `@epam/ai-dial-attachment-input` library extracted from `libs/conversation-input`. The library owns the attachment display components (`AttachmentCard`, `AttachmentTray`, `AttachmentGroup`, `FileDndOverlay`), the clipboard and lazy-image hooks, and the attachment/MIME utilities that previously lived in `apps/chat`. `libs/conversation-input` re-exports the moved symbols for backwards compatibility, and keeps the composer-side controls (such as `AddAttachmentButton`) that belong to the input itself rather than to attachment display.
+Specifies the `@epam/ai-dial-attachment-input` library extracted from `libs/conversation-input`. The library owns the attachment display components (`AttachmentCard`, `AttachmentTray`, `AttachmentGroup`, `FileDndOverlay`), the clipboard and lazy-image hooks, and the attachment/MIME utilities that previously lived in `apps/chat`. `libs/conversation-input` keeps the composer-side controls (such as `AddAttachmentButton`) that belong to the input itself rather than to attachment display, and does not re-export the moved symbols — consumers import them from `@epam/ai-dial-attachment-input` directly.
 
 ---
 

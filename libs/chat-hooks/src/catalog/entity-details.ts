@@ -116,7 +116,7 @@ export interface AgentEntityDetails {
 // ---- Toolset entity ----
 
 /** Sign-in status at both the personal and org-wide (global) level for a toolset. */
-export interface ToolsetAuthStatus {
+export interface ToolsetAuthStatusDetails {
   global?: string;
   appLevel?: string;
   userLevel?: string;
@@ -131,7 +131,7 @@ export interface ToolsetSpecification {
   authentication?: AuthenticationType;
   permissions?: string[];
   hostedBy?: string;
-  authStatus?: ToolsetAuthStatus;
+  authStatus?: ToolsetAuthStatusDetails;
   createdAt?: number;
   /** Names of all tools the underlying MCP server supports, not just the allow-listed subset in `permissions`. */
   allTools?: string[];

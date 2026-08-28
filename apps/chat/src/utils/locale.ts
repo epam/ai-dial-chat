@@ -1,10 +1,6 @@
 import {
-  appendLocaleCode,
   buildAdditionalLocaleOptions as buildAdditionalLocaleOptionsLib,
-  composeLocalePayload,
-  decomposeLocalizedFields,
   resolveLocalizedText as resolveLocalizedTextLib,
-  toBaseLocale,
   type LocalizedText,
 } from '@epam/ai-dial-chat-hooks';
 import type {
@@ -14,14 +10,6 @@ import type {
 import type { TFunction } from 'i18next';
 import { ButtonsI18nKeys, EditorI18nKeys } from '../constants/translation-keys';
 import { SUPPORTED_LANGUAGES } from '../hooks/language/useLanguage';
-
-export {
-  appendLocaleCode,
-  composeLocalePayload,
-  decomposeLocalizedFields,
-  toBaseLocale,
-};
-export type { LocalizedText };
 
 /**
  * The fixed content language of the primary Name/Description fields.

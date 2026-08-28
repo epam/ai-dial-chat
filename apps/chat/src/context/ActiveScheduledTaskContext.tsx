@@ -1,4 +1,5 @@
 import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
+import { getApiErrorStatus } from '@epam/ai-dial-chat-hooks';
 import {
   createContext,
   type ReactNode,
@@ -14,7 +15,6 @@ import {
   useScheduledTaskRuns,
   type UseScheduledTaskRunsResult,
 } from '../hooks/scheduled-tasks/useScheduledTaskRuns';
-import { getApiErrorStatus } from '../server-api/api-error';
 import { getScheduledTask } from '../server-api/scheduled-tasks.api';
 import {
   ActiveScheduledTaskDetailState,

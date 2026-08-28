@@ -1,12 +1,9 @@
+import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  ToolsetAuthTypes,
-  ToolsetTransportType,
-  WithLogin,
-} from '../../../../constants/toolsets';
+import { ToolsetTransportType } from '../../../../constants/toolsets';
 import {
   ButtonsI18nKeys,
   CatalogI18nKeys,

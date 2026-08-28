@@ -1,6 +1,5 @@
 import type {
   Annotation,
-  AttachmentResource,
   Message,
   MessageAttachment,
   PdfBBoxSelector,
@@ -178,6 +177,3 @@ export const resolveMessageAnnotations = (message: Message): Annotation[] => {
     message.custom_content?.attachments ?? [],
   );
 };
-
-/* Re-export AttachmentResource so consumers of the lib can type openAnnotationAttachment callbacks. */
-export type { AttachmentResource };

@@ -1,10 +1,12 @@
+import {
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+} from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { strToU8, zipSync } from 'fflate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ConversationTransferErrorCode,
-  ConversationTransferJobStatus,
-  ConversationTransferSubjectKind,
   ConversationTransferWarningCode,
 } from '../../conversation-transfer/types';
 import {

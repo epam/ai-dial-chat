@@ -1,4 +1,4 @@
-import type { AttachmentResource } from '@epam/ai-dial-quotations';
+import type { AttachmentResource } from '@epam/ai-dial-chat-shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { openAnnotationAttachment } from '../annotation';
 

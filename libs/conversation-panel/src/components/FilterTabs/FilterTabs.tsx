@@ -1,7 +1,7 @@
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { Tag, TagAppearance, mergeClasses } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
 import { type FilterLabels } from '../../models/panel-props';
-import { FilterTab } from '../../types/conversation-classification';
 
 /** Props for `FilterTabs`. */
 export interface FilterTabsProps {

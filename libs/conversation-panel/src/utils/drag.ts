@@ -1,7 +1,7 @@
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DragEvent } from 'react';
 import type { ConversationItem } from '../models/panel-props';
 import type { VirtualRow } from '../models/virtual-row';
-import { FilterTab } from '../types/conversation-classification';
 import { VirtualRowKind } from '../types/virtual-row';
 
 /** Resolves a conversation's `source` to its group, defaulting to `MyChats` when unset. */

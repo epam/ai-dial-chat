@@ -10,7 +10,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     classes.filter(Boolean).join(' '),
 }));
 
-vi.mock('@epam/ai-dial-conversation-input', () => ({
+vi.mock('@epam/ai-dial-attachment-input', () => ({
   AttachmentCard: ({
     attachment,
     onClick,

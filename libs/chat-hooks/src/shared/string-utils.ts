@@ -1,10 +1,3 @@
-export {
-  getUtf8ByteLength,
-  sanitizeConversationName,
-  stripTrailingDots,
-  PROHIBITED_CONVERSATION_NAME_CHARS_RE,
-} from '@epam/ai-dial-chat-shared';
-
 /** Case-insensitive substring match. */
 export const includesIgnoreCase = (str: string, query: string): boolean =>
   str.toLowerCase().includes(query.toLowerCase());

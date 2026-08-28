@@ -2,7 +2,11 @@ import type {
   ConversationListItemDto,
   ConversationResponseDto,
 } from '@epam/ai-dial-chat-api-client';
-import { getConversationPath } from '@epam/ai-dial-chat-hooks';
+import {
+  getApiErrorMessage,
+  getApiErrorStatus,
+  getConversationPath,
+} from '@epam/ai-dial-chat-hooks';
 import type {
   CreateConversationResponse,
   DeleteConversationResponse,
@@ -17,10 +21,6 @@ import { getConversationRoute } from '../../constants/routes';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
-import {
-  getApiErrorMessage,
-  getApiErrorStatus,
-} from '../../server-api/api-error';
 import {
   createConversation as apiCreateConversation,
   saveConversation,

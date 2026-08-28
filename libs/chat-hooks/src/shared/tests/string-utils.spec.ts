@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest';
 import {
   getUtf8ByteLength,
   PROHIBITED_CONVERSATION_NAME_CHARS_RE,
   sanitizeConversationName,
   stripTrailingDots,
-} from '../string-utils';
+} from '@epam/ai-dial-chat-shared';
+import { describe, expect, it } from 'vitest';
 
 describe('PROHIBITED_CONVERSATION_NAME_CHARS_RE', () => {
   const prohibited = [

@@ -1,6 +1,6 @@
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
-import { FilterTab } from '../types/conversation-classification';
 
 /** Labels for each filter tab. */
 export interface FilterLabels {

@@ -1,3 +1,4 @@
+import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
   createContext,
@@ -10,7 +11,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserConfigI18nKeys } from '../constants/translation-keys';
-import { getApiErrorDetails } from '../server-api/api-error';
 import {
   getUserConfig,
   pinConversation as apiPinConversation,

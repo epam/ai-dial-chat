@@ -1,3 +1,4 @@
+import { getUtf8ByteLength } from '@epam/ai-dial-chat-shared';
 import {
   SkillFileNodeKind,
   type SkillEditorFileActions,
@@ -7,7 +8,6 @@ import {
 } from '@epam/ai-dial-skill-editor';
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { getUtf8ByteLength } from '../shared/string-utils';
 import {
   buildSkillManifest,
   buildSkillManifestFromFrontmatter,

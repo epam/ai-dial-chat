@@ -1,12 +1,12 @@
+import {
+  getApiErrorDetails,
+  getApiErrorStatus,
+} from '@epam/ai-dial-chat-hooks';
 import { ChangeEvent, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SkillArchiveImportI18nKeys } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useSkills } from '../../context/SkillsContext';
-import {
-  getApiErrorDetails,
-  getApiErrorStatus,
-} from '../../server-api/api-error';
 import { importSkillArchive as requestSkillArchiveImport } from '../../server-api/skills.api';
 import {
   EntityOperation,

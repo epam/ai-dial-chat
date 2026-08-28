@@ -2,6 +2,7 @@ import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   attachmentsToDtos,
   findDeploymentByIdOrReference,
+  getApiErrorDetails,
   getConversationPath,
   getQuickAppConversationStarters,
   getStarterConversationText,
@@ -47,7 +48,6 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createConversation as apiCreateConversation,
   saveConversation,
