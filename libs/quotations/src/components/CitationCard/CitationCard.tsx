@@ -56,6 +56,8 @@ export interface CitationCardTypography {
   titleClassName?: string;
   /** CSS class applied to the quoted excerpt. Defaults to `'dial-small-text'`. */
   quoteClassName?: string;
+  /** CSS class applied to bold spans inside the quoted excerpt. Defaults to `'dial-small-semi-text'` — the semibold step matching the default `quoteClassName`. */
+  quoteStrongClassName?: string;
   /** CSS class applied to the pagination switcher text. Defaults to `'dial-tiny-text'`. */
   switcherClassName?: string;
 }
@@ -101,7 +103,6 @@ export const CitationCard: FC<CitationCardProps> = ({
   const total = group.annotations.length;
   const annotation = group.annotations[activeIndex] ?? group.primaryAnnotation;
   const hasSwitcher = total > 1;
-  const groupHasTitle = group.annotations.some((a) => a.body?.title);
   const sourceContentType =
     group.primaryAnnotation.body?.source?.attachment?.type;
   const isWebLink =
@@ -113,6 +114,8 @@ export const CitationCard: FC<CitationCardProps> = ({
     typography?.sourceNameClassName ?? 'dial-tiny-text';
   const titleClassName = typography?.titleClassName ?? 'dial-body-semi-text';
   const quoteClassName = typography?.quoteClassName ?? 'dial-small-text';
+  const quoteStrongClassName =
+    typography?.quoteStrongClassName ?? 'dial-small-semi-text';
   const switcherClassName = typography?.switcherClassName ?? 'dial-tiny-text';
 
   const cssVars = buildCssVars({
@@ -170,29 +173,34 @@ export const CitationCard: FC<CitationCardProps> = ({
 
       {(annotation.body?.title || annotation.body?.quote || hasSwitcher) && (
         <div className="flex flex-col gap-3">
-          {(annotation.body?.title || (hasSwitcher && groupHasTitle)) && (
+          {annotation.body?.title && (
             <p
               className={mergeClasses(
                 titleClassName,
                 styles.title,
                 'break-words',
-                hasSwitcher && groupHasTitle && 'min-h-[1lh]',
               )}
             >
-              {annotation.body?.title}
+              {annotation.body.title}
             </p>
           )}
           {(annotation.body?.quote || hasSwitcher) && (
-            <div className={mergeClasses(hasSwitcher && 'min-h-[3lh]')}>
+            <div
+              className={mergeClasses(
+                quoteClassName,
+                styles.quote,
+                'line-clamp-6 break-words',
+                hasSwitcher && 'min-h-[3lh]',
+              )}
+            >
               {annotation.body?.quote && (
                 <MarkdownRenderer
                   content={annotation.body.quote}
                   classNames={{
-                    p: mergeClasses(
-                      quoteClassName,
-                      'line-clamp-6',
-                      styles.quote,
-                    ),
+                    p: mergeClasses(quoteClassName, styles.quote),
+                    ul: mergeClasses(quoteClassName, 'ps-3'),
+                    ol: mergeClasses(quoteClassName, 'ps-3'),
+                    strong: quoteStrongClassName,
                   }}
                 />
               )}
