@@ -235,14 +235,21 @@ Tests in `apps/chat/src/components/ShareConversationPopoverContainer/tests/Share
 
 `ShareService.acceptInvitation` (`apps/chat-api/src/share/share.service.ts`) SHALL resolve the shared resource's `itemId` from a **peek** call to DIAL Core's `getInvitation(invitationId)` **without** the `accept` query parameter, before issuing a **separate** call with `accept=true` to perform the actual grant. The accepting call's response body SHALL NOT be relied upon for `itemId` resolution — DIAL Core returns an empty body (`Content-Length: 0`, no `error`) for the accepting call once the grant succeeds, even though its documented schema for `GET /v1/invitations/{id}` claims a full `Invitation` payload on any `200`.
 
-Both calls SHALL forward the caller's DIAL Core access token via `Authorization: Bearer <token>`. An `error` response or thrown network/timeout error from either call SHALL map through the existing `mapDialHttpStatus`/`handleDialFetchError` machinery with a call-specific context string (`'peek invitation'` / `'accept invitation'`) for diagnosability — **except** when the accepting call returns `400` with a body indicating the caller already owns the resource (DIAL Core's own wording: a string containing `"already belong"`, e.g. `"Resource <id> already belong to you"`). DIAL Core returns this when the invited user opens their own share link, or re-opens a link they already accepted; the resource is already accessible to them, so `acceptInvitation` SHALL treat this specific case as a successful accept rather than throwing — proceeding to cache invalidation and summary resolution exactly as it does for a genuine `200`, using the `itemId` already resolved from the peek call. If the peek call succeeds but returns no `resources[0].url`, `acceptInvitation` SHALL throw `BadGatewayException('DIAL Core returned an invitation with no shared resource')` without attempting the accepting call.
+Both calls SHALL forward the caller's DIAL Core access token via `Authorization: Bearer <token>`. An `error` response or thrown network/timeout error from either call SHALL map through the existing `mapDialHttpStatus`/`handleDialFetchError` machinery with a call-specific context string (`'peek invitation'` / `'accept invitation'`) for diagnosability — **except** when the accepting call returns `400` with a body indicating the caller already owns the resource (DIAL Core's own wording: a string containing `"already belong"`, e.g. `"Resource <id> already belong to you"`). DIAL Core returns this when the invited user opens their own share link, or re-opens a link they already accepted; the resource is already accessible to them, so `acceptInvitation` SHALL treat this specific case as a successful accept rather than throwing — proceeding to cache invalidation and summary resolution exactly as it does for a genuine `200`, using the `itemId` already resolved from the peek call. If the peek call succeeds but returns a `resources` array with no resolvable primary resource URL, `acceptInvitation` SHALL throw `BadGatewayException('DIAL Core returned an invitation with no shared resource')` without attempting the accepting call.
 
-#### Scenario: Peek call resolves itemId, accept call grants access
+The `itemId` SHALL be the URL of the **primary resource** in the peek response: the first resource whose URL does not start with `files/`. If every resource URL starts with `files/`, `resources[0].url` is used as a fallback. DIAL Core does not guarantee resource array order; `itemId` MUST NOT be assumed to be at index 0.
 
-- **WHEN** `acceptInvitation(accessToken, invitationId, userSub)` is called for a valid, unexpired invitation
-- **THEN** DIAL Core's `getInvitation` is called first without `accept`, and its `resources[0].url` becomes the returned `itemId`
+#### Scenario: Peek call resolves itemId from the primary (non-file) resource
+
+- **WHEN** `acceptInvitation(accessToken, invitationId, userSub)` is called for a valid, unexpired invitation whose `resources` contains a conversation URL at a non-zero index and file URLs elsewhere
+- **THEN** DIAL Core's `getInvitation` is called first without `accept`, and the first non-`files/` resource URL becomes the returned `itemId`
 - **AND** DIAL Core's `getInvitation` is called a second time with `accept=true`
 - **AND** the accepting call's response body (or absence of one) does not affect the returned `itemId`
+
+#### Scenario: File-first resource order does not corrupt the itemId
+
+- **WHEN** the peek response has `resources[0].url` starting with `files/` and `resources[1].url` starting with `conversations/`
+- **THEN** `resources[1].url` is used as `itemId`, not the file path
 
 #### Scenario: Empty-bodied accept response no longer produces a 502
 
