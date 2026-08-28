@@ -293,6 +293,7 @@ import {
   extractInitials,
   pickAvatarColor,
   isAudioTranscriptionSupported,
+  ensureDownloadFilename,
   downloadTextFile,
   triggerBlobDownload,
   getUtf8ByteLength,
@@ -327,6 +328,10 @@ formatUnitPrice('0.000003', 'token'); // '$3/M tokens'
 // Derive an avatar's initials and its deterministic color from a name
 const initials = extractInitials(user.displayName);
 const { background, foreground } = pickAvatarColor(user.displayName);
+
+// Ensure a download filename carries a file extension; derives one from the url path or MIME type when absent
+ensureDownloadFilename('Q3 Summary', 'files/bucket/Q3_2026.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); // 'Q3 Summary.xlsx'
+ensureDownloadFilename('report.pdf', undefined, undefined); // 'report.pdf' — unchanged
 
 // Strip characters DIAL Core rejects in a conversation name (tab, ": ; / \ , = { } % &)
 sanitizeConversationName('bad:name/here'); // 'badnamehere'
