@@ -170,8 +170,7 @@ export const migrateConfig = (raw: unknown): UserConfig => {
   const toolsetsInstalled = readInstalledIds(toolsetsObj);
 
   const deploymentsObj = obj['deployments'] as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   const deploymentsInstalled = readInstalledIds(deploymentsObj);
 
   /* v3→v4: prompts favorites. Absent in every earlier shape. */

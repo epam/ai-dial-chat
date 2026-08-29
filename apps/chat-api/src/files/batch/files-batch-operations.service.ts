@@ -63,8 +63,7 @@ interface FolderFanOutFailure {
 }
 
 type FolderFanOutOutcome<TChildResult> =
-  | FolderFanOutSuccess<TChildResult>
-  | FolderFanOutFailure;
+  FolderFanOutSuccess<TChildResult> | FolderFanOutFailure;
 
 @Injectable()
 export class FilesBatchOperationsService {

@@ -4,8 +4,7 @@ type MiddlewarePostContext = Parameters<NonNullable<Middleware['post']>>[0];
 
 /** Outcome of a CSRF-token refresh attempt, reported back to {@link createUnauthorizedMiddleware}. */
 export type CsrfRefreshOutcome =
-  | { status: 'ok'; token: string }
-  | { status: 'unauthorized' | 'failed' };
+  { status: 'ok'; token: string } | { status: 'unauthorized' | 'failed' };
 
 /** An error thrown to indicate the caller is unauthenticated. */
 export interface UnauthorizedErrorLike extends Error {

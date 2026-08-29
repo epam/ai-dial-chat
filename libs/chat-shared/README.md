@@ -330,7 +330,11 @@ const initials = extractInitials(user.displayName);
 const { background, foreground } = pickAvatarColor(user.displayName);
 
 // Ensure a download filename carries a file extension; derives one from the url path or MIME type when absent
-ensureDownloadFilename('Q3 Summary', 'files/bucket/Q3_2026.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); // 'Q3 Summary.xlsx'
+ensureDownloadFilename(
+  'Q3 Summary',
+  'files/bucket/Q3_2026.xlsx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+); // 'Q3 Summary.xlsx'
 ensureDownloadFilename('report.pdf', undefined, undefined); // 'report.pdf' — unchanged
 
 // Strip characters DIAL Core rejects in a conversation name (tab, ": ; / \ , = { } % &)

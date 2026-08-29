@@ -1,8 +1,5 @@
 .root {
-  background: var(
-    --cp-transfer-queue-bg,
-    var(--bg-layer-base, #f5f7fa)
-  );
+  background: var(--cp-transfer-queue-bg, var(--bg-layer-base, #f5f7fa));
 }
 
 .text {

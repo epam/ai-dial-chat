@@ -78,8 +78,7 @@ export const mapDialExternalServiceToDto = (
   description: data.description,
   authenticationType:
     (data.auth_settings?.authentication_type as
-      | ExternalServiceAuthType
-      | undefined) ?? ExternalServiceAuthType.None,
+      ExternalServiceAuthType | undefined) ?? ExternalServiceAuthType.None,
   userLevelAuthStatus: data.auth_settings?.user_level_auth_status,
   globalAuthStatus: data.auth_settings?.global_auth_status,
   clientId: data.auth_settings?.client_id,
