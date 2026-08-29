@@ -208,4 +208,32 @@ describe('Card — read-only state', () => {
     const card = screen.getByRole('article', { hidden: true });
     expect(card.innerHTML).not.toContain('pt-3');
   });
+
+  /*
+   * `isReadonly` is not the only way the star disappears: a host that narrows
+   * `isFavoriteVisible` for one kind of item reaches the same empty footer,
+   * and used to get a bare divider under the topics because the row was drawn
+   * unconditionally outside read-only mode.
+   */
+  it('drops the footer row when the host hides the star and there is no folder path', () => {
+    render(<Card item={makeItem()} isFavoriteVisible={() => false} />);
+
+    const card = screen.getByRole('article', { hidden: true });
+    expect(card.innerHTML).not.toContain('pt-3');
+    expect(card.innerHTML).not.toContain('border-t');
+  });
+
+  it('keeps the footer when the host hides the star but a folder path remains', () => {
+    render(
+      <Card
+        item={makeItem({ folder: ['Root', 'Team'] })}
+        isFavoriteVisible={() => false}
+      />,
+    );
+
+    expect(screen.getByText('Team')).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Add to favorites' }),
+    ).toBeNull();
+  });
 });
