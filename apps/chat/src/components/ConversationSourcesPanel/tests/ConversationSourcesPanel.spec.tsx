@@ -22,9 +22,7 @@ let mockGenerated: DisplayAttachment[] = [];
 
 const activeScheduledTaskMock = vi.hoisted(() => ({
   status: 'not-a-task-conversation' as
-    | 'resolving'
-    | 'not-a-task-conversation'
-    | 'task-conversation',
+    'resolving' | 'not-a-task-conversation' | 'task-conversation',
   scheduleId: undefined as string | undefined,
   runId: undefined as string | undefined,
   conversationUpdatedAt: undefined as number | undefined,

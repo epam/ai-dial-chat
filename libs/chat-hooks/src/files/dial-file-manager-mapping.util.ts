@@ -157,8 +157,7 @@ export const updateEntry = (
   prev: FileUploadBatchState | null,
   index: number,
   patch:
-    | FileUploadStatus
-    | Partial<Pick<FileUploadEntry, 'status' | 'percent'>>,
+    FileUploadStatus | Partial<Pick<FileUploadEntry, 'status' | 'percent'>>,
 ): FileUploadBatchState | null => {
   if (!prev) return prev;
   const changes = typeof patch === 'string' ? { status: patch } : patch;

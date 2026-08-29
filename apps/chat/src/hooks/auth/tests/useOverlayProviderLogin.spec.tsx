@@ -99,8 +99,7 @@ describe('useOverlayProviderLogin', () => {
 
   it('discards a provider result after unmount', async () => {
     let resolveProviders:
-      | ((value: { id: string; label: string }[]) => void)
-      | undefined;
+      ((value: { id: string; label: string }[]) => void) | undefined;
     vi.mocked(authApi.getProviders).mockReturnValue(
       new Promise((resolve) => {
         resolveProviders = resolve;

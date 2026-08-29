@@ -60,8 +60,7 @@ describe('ToolsetEditorHeader', () => {
     );
 
     const props = mockEditorHeader.mock.calls[0]?.[0] as
-      | MockEditorHeaderProps
-      | undefined;
+      MockEditorHeaderProps | undefined;
 
     expect(props?.steps).toEqual([
       {
@@ -91,8 +90,7 @@ describe('ToolsetEditorHeader', () => {
     );
 
     const props = mockEditorHeader.mock.calls[0]?.[0] as
-      | MockEditorHeaderProps
-      | undefined;
+      MockEditorHeaderProps | undefined;
 
     expect(props?.steps).toEqual([
       {
@@ -145,8 +143,7 @@ describe('ToolsetEditorHeader', () => {
     );
 
     const props = mockEditorHeader.mock.calls[0]?.[0] as
-      | MockEditorHeaderProps
-      | undefined;
+      MockEditorHeaderProps | undefined;
 
     expect(props?.isSaveDisabled).toBe(true);
   });
