@@ -6569,6 +6569,12 @@ export interface ToolsetLoginBodyDto {
    * @memberof ToolsetLoginBodyDto
    */
   redirectUri?: string;
+  /**
+   * Whether the user consents to an application using this credential while they are offline. Required for on-behalf-of use (e.g. scheduled runs).
+   * @type {boolean}
+   * @memberof ToolsetLoginBodyDto
+   */
+  offlineUsageConsent?: boolean;
 }
 
 /**

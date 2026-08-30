@@ -93,6 +93,8 @@ const ToolsetAuthCallback: FC = () => {
           ToolsetAuthTypes.OAuth as ToolsetLoginBodyDto['authenticationType'],
         code,
         redirectUri,
+        /* Decided before the redirect; the exchange happens here — see the external-service branch. */
+        offlineUsageConsent: redirectState.offlineUsageConsent,
       };
       await loginToolset(redirectState.toolsetId, body);
       return null;

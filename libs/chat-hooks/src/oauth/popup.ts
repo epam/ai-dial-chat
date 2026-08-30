@@ -122,6 +122,7 @@ export const initiateOAuthLogin = (
   toolsetId: string,
   callbackPath: string,
   credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
+  offlineUsageConsent?: boolean,
 ): ToolsetOAuthInitiationResult => {
   const redirectUri = getToolsetRedirectUri(callbackPath);
   const state = generateUUID();
@@ -138,5 +139,7 @@ export const initiateOAuthLogin = (
     toolsetId,
     credentialsLevel,
     redirectUri,
+    OAuthResourceKind.Toolset,
+    offlineUsageConsent,
   );
 };

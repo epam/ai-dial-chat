@@ -450,6 +450,7 @@ const SigninInterruptDialog: FC = () => {
           apiKey: rowState.apiKey,
           oauthSettings: info.oauthSettings,
           forceStale: true,
+          offlineUsageConsent,
         });
         if (outcome.type === ToolsetLoginOutcomeType.Success) {
           await refetchToolsets();
@@ -481,6 +482,7 @@ const SigninInterruptDialog: FC = () => {
       finishLogin,
       setRowState,
       t,
+      offlineUsageConsent,
     ],
   );
 
@@ -610,17 +612,13 @@ const SigninInterruptDialog: FC = () => {
             );
           })}
         </div>
-        {pendingEvents.some(
-          (event) => event.kind === PendingSigninEventKind.ExternalService,
-        ) && (
-          <Checkbox
-            className="mt-2"
-            isSelected={offlineUsageConsent}
-            onChange={setOfflineUsageConsent}
-            labelProps={{ label: t(ToolsetSigninI18nKeys.OfflineUsageConsent) }}
-            caption={t(ToolsetSigninI18nKeys.OfflineUsageConsentHint)}
-          />
-        )}
+        <Checkbox
+          className="mt-2"
+          isSelected={offlineUsageConsent}
+          onChange={setOfflineUsageConsent}
+          labelProps={{ label: t(ToolsetSigninI18nKeys.OfflineUsageConsent) }}
+          caption={t(ToolsetSigninI18nKeys.OfflineUsageConsentHint)}
+        />
       </div>
     </Popup>
   );
