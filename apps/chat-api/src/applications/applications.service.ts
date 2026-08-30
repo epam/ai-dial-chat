@@ -16,6 +16,10 @@ import {
   composeLocalizedFields,
   toLocalizedValue,
 } from '../common/utils/compose-localized-fields';
+import {
+  parseDialApplicationResource,
+  type DialApplicationResource,
+} from '../common/utils/dial-application-resource';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
@@ -31,30 +35,6 @@ import type {
 } from './dto/update-application.dto';
 
 type DialApplication = components['schemas']['Application'];
-
-const APPLICATION_RESOURCE_PREFIX = 'applications/';
-
-interface DialApplicationResource {
-  bucket: string;
-  path: string;
-}
-
-const parseDialApplicationResource = (
-  applicationName: string,
-): DialApplicationResource | undefined => {
-  if (!applicationName.startsWith(APPLICATION_RESOURCE_PREFIX)) {
-    return undefined;
-  }
-
-  const resource = applicationName.slice(APPLICATION_RESOURCE_PREFIX.length);
-  const [bucket, ...pathSegments] = resource.split('/');
-  const path = pathSegments.join('/');
-  if (!bucket || !path) {
-    return undefined;
-  }
-
-  return { bucket, path: encodeDialResourcePath(path) };
-};
 
 @Injectable()
 export class ApplicationsService {
