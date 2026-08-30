@@ -7,7 +7,7 @@
     "start": "nx serve chat",
     "start:api": "nx serve chat-api",
     "start:mcp-app-sandbox": "nx serve mcp-app-sandbox",
-    "start:api:dev": "cd apps/chat-api && webpack-cli build --config webpack.hmr.config.js --watch --node-env=development",
+    "start:api:dev": "cd apps/chat-api && webpack-cli build --config webpack.hmr.config.js --watch --config-node-env=development",
     "start:all": "nx run-many --target=serve --projects=chat,chat-api --parallel",
     "build": "nx build chat",
     "build:api": "nx build chat-api",
