@@ -32,6 +32,7 @@ const writeRedirectStateAndNavigate = (
   credentialsLevel: ToolsetCredentialsLevel,
   redirectUri: string,
   resourceKind: OAuthResourceKind = OAuthResourceKind.Toolset,
+  offlineUsageConsent?: boolean,
 ): ToolsetOAuthInitiationResult => {
   const redirectState: ToolsetRedirectState = {
     toolsetId,
@@ -39,6 +40,7 @@ const writeRedirectStateAndNavigate = (
     redirectUri,
     state,
     resourceKind,
+    offlineUsageConsent,
   };
   popup.sessionStorage.setItem(
     TOOLSET_REDIRECT_STATE_KEY,
@@ -84,6 +86,7 @@ export const navigateToolsetOAuthPopup = (
   callbackPath: string,
   credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
   resourceKind: OAuthResourceKind = OAuthResourceKind.Toolset,
+  offlineUsageConsent?: boolean,
 ): ToolsetOAuthInitiationResult => {
   const redirectUri = getToolsetRedirectUri(callbackPath);
   const state = generateUUID();
@@ -100,6 +103,7 @@ export const navigateToolsetOAuthPopup = (
     credentialsLevel,
     redirectUri,
     resourceKind,
+    offlineUsageConsent,
   );
 };
 

@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString, ValidateIf } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateIf,
+} from 'class-validator';
 
 export enum ExternalServiceAuthType {
   None = 'NONE',
@@ -103,6 +110,24 @@ export class ExternalServiceSigninBodyDto {
   @IsString()
   @IsNotEmpty()
   redirectUri?: string;
+
+  /*
+   * Whether the user permits the application to use this credential while they
+   * are not present. Core records it on the credential and gates every
+   * on-behalf-of mint on it, so a credential signed in without it fails with
+   * `consent-required` the moment an application uses it in the background.
+   *
+   * Optional and defaulted by the caller, never by this DTO: standing consent
+   * has to be a choice the user actually made.
+   */
+  @ApiPropertyOptional({
+    description:
+      'Whether the user consents to the application using this credential while ' +
+      'they are offline. Required for on-behalf-of use (e.g. scheduled runs).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  offlineUsageConsent?: boolean;
 }
 
 export class ExternalServiceLogoutBodyDto {

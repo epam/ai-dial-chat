@@ -73,6 +73,46 @@ describe('toDialExternalServiceSigninBody', () => {
   });
 });
 
+describe('toDialExternalServiceSigninBody offline usage consent', () => {
+  /*
+   * Core gates every on-behalf-of mint on this flag, so an application that
+   * works in the background cannot use a credential signed in without it —
+   * the sign-in succeeds and the later mint fails with `consent-required`.
+   */
+  it('forwards the consent when the user granted it', () => {
+    const body = toDialExternalServiceSigninBody(APP_ID, SERVICE_ID, {
+      credentialsLevel: ExternalServiceCredentialsLevel.User,
+      authenticationType: ExternalServiceAuthType.OAuth,
+      code: 'auth-code',
+      redirectUri: 'https://chat.example.com/auth/toolset-signin',
+      offlineUsageConsent: true,
+    });
+
+    expect(body.offlineUsageConsent).toBe(true);
+  });
+
+  it('forwards a declined consent as false rather than dropping it', () => {
+    const body = toDialExternalServiceSigninBody(APP_ID, SERVICE_ID, {
+      credentialsLevel: ExternalServiceCredentialsLevel.User,
+      authenticationType: ExternalServiceAuthType.ApiKey,
+      apiKey: 'k',
+      offlineUsageConsent: false,
+    });
+
+    expect(body.offlineUsageConsent).toBe(false);
+  });
+
+  it('leaves it undefined when the caller did not ask — never granted by default', () => {
+    const body = toDialExternalServiceSigninBody(APP_ID, SERVICE_ID, {
+      credentialsLevel: ExternalServiceCredentialsLevel.User,
+      authenticationType: ExternalServiceAuthType.ApiKey,
+      apiKey: 'k',
+    });
+
+    expect(body.offlineUsageConsent).toBeUndefined();
+  });
+});
+
 describe('toDialExternalServiceSignoutBody', () => {
   it('maps the sign-out request with the reconstructed scope id as url', () => {
     expect(

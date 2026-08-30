@@ -47,6 +47,13 @@ export interface ToolsetRedirectState {
    * require structurally.
    */
   resourceKind?: OAuthResourceKind;
+  /**
+   * Whether the user agreed the application may use the resulting credential
+   * while they are away. Carried through the popup because the choice is made
+   * before the redirect and the code exchange happens after it — the callback
+   * route has no other way to learn it. Absent means "not granted".
+   */
+  offlineUsageConsent?: boolean;
 }
 
 export type ToolsetOAuthInitiationResult =
