@@ -1,27 +1,148 @@
 {
   "migrations": [
     {
-      "cli": "nx",
-      "version": "22.7.0-beta.0",
-      "description": "Adds .nx/polygraph to .gitignore",
-      "implementation": "./dist/src/migrations/update-22-7-0/add-polygraph-to-git-ignore",
+      "version": "23.0.0-beta.16",
+      "description": "Consolidates any remaining legacy releaseTag* flat properties into the nested releaseTag object. The flat properties were removed in Nx 23.",
+      "implementation": "./dist/src/migrations/update-23-0-0/consolidate-release-tag-config",
       "package": "nx",
-      "name": "22-7-0-add-polygraph-to-git-ignore"
+      "name": "23-0-0-consolidate-release-tag-config"
+    },
+    {
+      "version": "23.0.0-beta.18",
+      "description": "Adds .nx/migrate-runs to .gitignore",
+      "implementation": "./dist/src/migrations/update-23-0-0/add-migrate-runs-to-git-ignore",
+      "package": "nx",
+      "name": "23-0-0-add-migrate-runs-to-git-ignore"
     },
     {
       "cli": "nx",
-      "version": "22.7.0-beta.0",
-      "description": "Adds .nx/self-healing to .gitignore",
-      "implementation": "./dist/src/migrations/update-22-2-0/add-self-healing-to-gitignore",
-      "package": "nx",
-      "name": "22-7-0-add-self-healing-to-gitignore"
+      "version": "23.0.0-beta.10",
+      "description": "Rewrites imports of NxTsconfigPathsWebpackPlugin from '@nx/webpack' to the sub-path '@nx/webpack/tsconfig-paths-plugin'.",
+      "factory": "./dist/src/migrations/update-23-0-0/remove-nx-tsconfig-paths-webpack-plugin-import",
+      "documentation": "./dist/src/migrations/update-23-0-0/remove-nx-tsconfig-paths-webpack-plugin-import.md",
+      "package": "@nx/webpack",
+      "name": "update-23-0-0-remove-nx-tsconfig-paths-webpack-plugin-import"
     },
     {
-      "version": "22.7.0-beta.12",
-      "description": "Add missing inputs to @nx/eslint:lint executor target defaults",
-      "implementation": "./src/migrations/update-21-6-0/update-executor-lint-inputs",
+      "version": "23.0.0-beta.24",
+      "description": "Rewrites `@nx/webpack/src/*` subpath imports now that the `./src/*` subpath is no longer exposed by `@nx/webpack`'s exports map. Named imports/exports of public symbols are routed to `@nx/webpack` and the rest to the new `@nx/webpack/internal` entry; `require`, dynamic `import` and `jest.mock` calls reference the whole module and are routed to `@nx/webpack/internal`.",
+      "implementation": "./dist/src/migrations/update-23-0-0/rewrite-internal-subpath-imports",
+      "package": "@nx/webpack",
+      "name": "rewrite-webpack-internal-subpath-imports"
+    },
+    {
+      "version": "23.0.0-beta.24",
+      "description": "Rename imports of `createNodesV2` from `@nx/webpack/plugin` to the canonical `createNodes` export.",
+      "implementation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes",
+      "documentation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes.md",
+      "package": "@nx/webpack",
+      "name": "update-23-0-0-migrate-create-nodes-v2-import"
+    },
+    {
+      "version": "23.0.0-beta.24",
+      "description": "Rename imports of `createNodesV2` from `@nx/vitest` to the canonical `createNodes` export.",
+      "implementation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes",
+      "documentation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes.md",
+      "package": "@nx/vitest",
+      "name": "update-23-0-0-migrate-create-nodes-v2-import"
+    },
+    {
+      "version": "23.0.0-beta.17",
+      "description": "Rewrites `@nx/eslint/src/*` subpath imports now that the `./src/*` subpath is no longer exposed by `@nx/eslint`'s exports map. Named imports/exports of public symbols are routed to `@nx/eslint` and the rest to the new `@nx/eslint/internal` entry; `require`, dynamic `import` and `jest.mock` calls reference the whole module and are routed to `@nx/eslint/internal`.",
+      "implementation": "./dist/src/migrations/update-23-0-0/rewrite-internal-subpath-imports",
       "package": "@nx/eslint",
-      "name": "update-executor-lint-inputs"
+      "name": "rewrite-eslint-internal-subpath-imports"
+    },
+    {
+      "version": "23.0.0-beta.24",
+      "description": "Rename imports of `createNodesV2` from `@nx/eslint/plugin` to the canonical `createNodes` export.",
+      "implementation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes",
+      "documentation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes.md",
+      "package": "@nx/eslint",
+      "name": "update-23-0-0-migrate-create-nodes-v2-import"
+    },
+    {
+      "version": "23.1.0-beta.5",
+      "description": "Handle typescript-eslint rules removed in v8 in ESLint flat configs, since referencing a removed rule stops the config from loading. Deletes the removed formatting/extension rules (e.g. @typescript-eslint/no-extra-semi) and rewrites the safe 1:1 renames (no-throw-literal -> only-throw-error, no-useless-template-literals -> no-unnecessary-template-expression) to preserve enforcement.",
+      "implementation": "./dist/src/migrations/update-23-1-0/remove-removed-typescript-eslint-extension-rules",
+      "package": "@nx/eslint",
+      "name": "update-23-1-0-remove-removed-typescript-eslint-extension-rules"
+    },
+    {
+      "version": "23.1.0-beta.5",
+      "description": "Migrate the removed @typescript-eslint/ban-types rule to its v8 successors (no-empty-object-type, no-unsafe-function-type, no-wrapper-object-types), whose options do not map 1:1 - so it is driven by an AI prompt rather than a deterministic codemod.",
+      "prompt": "tools/ai-migrations/@nx/eslint/23.1.2/migrate-ban-types-rule.md",
+      "package": "@nx/eslint",
+      "name": "update-23-1-0-migrate-ban-types-rule"
+    },
+    {
+      "version": "23.0.0-beta.14",
+      "description": "Rewrites `@nx/js/src/*` subpath imports to the new `@nx/js/internal` entry. The `./src/*` wildcard has been removed from `@nx/js`'s exports map; `@nx/js/src/release/version-actions` is preserved as a non-wildcard entry for back-compat with existing nx.json release configs. If a rewritten import resolves to a symbol that lives on the public `@nx/js` entry (e.g. `libraryGenerator`, `extractTsConfigBase`, `resolvePathsBaseUrl`), change the specifier to `@nx/js`.",
+      "factory": "./dist/src/migrations/update-23-0-0/rewrite-internal-subpath-imports",
+      "package": "@nx/js",
+      "name": "23-0-0-rewrite-internal-subpath-imports"
+    },
+    {
+      "version": "23.0.0-beta.24",
+      "description": "Rename imports of `createNodesV2` from `@nx/js/typescript` to the canonical `createNodes` export.",
+      "implementation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes",
+      "documentation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes.md",
+      "package": "@nx/js",
+      "name": "update-23-0-0-migrate-create-nodes-v2-import"
+    },
+    {
+      "version": "23.0.0-beta.25",
+      "description": "Rewrites `@nx/web/src/*` subpath imports now that the `./src/*` subpath is no longer exposed by `@nx/web`'s exports map. Named imports/exports of public symbols are routed to `@nx/web` and the rest to the new `@nx/web/internal` entry; `require`, dynamic `import` and `jest.mock` calls reference the whole module and are routed to `@nx/web/internal`.",
+      "implementation": "./dist/src/migrations/update-23-0-0/rewrite-internal-subpath-imports",
+      "package": "@nx/web",
+      "name": "rewrite-web-internal-subpath-imports"
+    },
+    {
+      "version": "23.0.0-beta.25",
+      "description": "Rewrites `@nx/node/src/*` subpath imports now that the `./src/*` subpath is no longer exposed by `@nx/node`'s exports map. Named imports/exports of public symbols are routed to `@nx/node` and the rest to the new `@nx/node/internal` entry; `require`, dynamic `import` and `jest.mock` calls reference the whole module and are routed to `@nx/node/internal`.",
+      "implementation": "./dist/src/migrations/update-23-0-0/rewrite-internal-subpath-imports",
+      "package": "@nx/node",
+      "name": "rewrite-node-internal-subpath-imports"
+    },
+    {
+      "version": "23.0.0-beta.10",
+      "description": "Safety net: ensure any remaining @nx/vite:test executor usages are swapped to @nx/vitest:test and @nx/vitest is installed.",
+      "implementation": "./dist/src/migrations/update-23-0-0/ensure-vitest-package-migration",
+      "documentation": "./dist/src/migrations/update-23-0-0/ensure-vitest-package-migration.md",
+      "package": "@nx/vite",
+      "name": "ensure-vitest-package-migration-23"
+    },
+    {
+      "version": "23.0.0-beta.24",
+      "description": "Rename imports of `createNodesV2` from `@nx/vite/plugin` to the canonical `createNodes` export.",
+      "implementation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes",
+      "documentation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes.md",
+      "package": "@nx/vite",
+      "name": "update-23-0-0-migrate-create-nodes-v2-import"
+    },
+    {
+      "cli": "nx",
+      "version": "23.0.0-beta.10",
+      "description": "Rewrites imports of NxReactWebpackPlugin from '@nx/react' to the sub-path '@nx/react/webpack-plugin'.",
+      "factory": "./dist/src/migrations/update-23-0-0/remove-nx-react-webpack-plugin-import",
+      "documentation": "./dist/src/migrations/update-23-0-0/remove-nx-react-webpack-plugin-import.md",
+      "package": "@nx/react",
+      "name": "update-23-0-0-remove-nx-react-webpack-plugin-import"
+    },
+    {
+      "version": "23.0.0-beta.24",
+      "description": "Rename imports of `createNodesV2` from `@nx/react/router-plugin` to the canonical `createNodes` export.",
+      "implementation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes",
+      "documentation": "./dist/src/migrations/update-23-0-0/migrate-create-nodes-v2-to-create-nodes.md",
+      "package": "@nx/react",
+      "name": "update-23-0-0-migrate-create-nodes-v2-import"
+    },
+    {
+      "version": "23.0.0-beta.25",
+      "description": "Rewrites `@nx/react/src/*` subpath imports now that the `./src/*` subpath is no longer exposed by `@nx/react`'s exports map. Named imports/exports of public symbols are routed to `@nx/react` and the rest to the new `@nx/react/internal` entry; `require`, dynamic `import` and `jest.mock` calls reference the whole module and are routed to `@nx/react/internal`.",
+      "implementation": "./dist/src/migrations/update-23-0-0/rewrite-internal-subpath-imports",
+      "package": "@nx/react",
+      "name": "rewrite-react-internal-subpath-imports"
     }
   ]
 }

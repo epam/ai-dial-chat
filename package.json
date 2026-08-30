@@ -42,16 +42,16 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
-    "@nx/eslint": "22.7.5",
-    "@nx/eslint-plugin": "22.7.5",
-    "@nx/js": "22.7.5",
-    "@nx/nest": "22.7.5",
-    "@nx/node": "22.7.5",
-    "@nx/react": "22.7.5",
-    "@nx/vite": "22.7.5",
-    "@nx/vitest": "22.7.5",
-    "@nx/web": "22.7.5",
-    "@nx/webpack": "22.7.5",
+    "@nx/eslint": "23.1.2",
+    "@nx/eslint-plugin": "23.1.2",
+    "@nx/js": "23.1.2",
+    "@nx/nest": "23.1.2",
+    "@nx/node": "23.1.2",
+    "@nx/react": "23.1.2",
+    "@nx/vite": "23.1.2",
+    "@nx/vitest": "23.1.2",
+    "@nx/web": "23.1.2",
+    "@nx/webpack": "23.1.2",
     "@openapitools/openapi-generator-cli": "^2.33.1",
     "@swc-node/register": "1.12.1",
     "@swc/cli": "~0.8.0",
@@ -83,9 +83,9 @@
     "eslint-plugin-tailwindcss": "^3.18.3",
     "eslint-plugin-testing-library": "^7.16.2",
     "jiti": "2.7.0",
-    "jsdom": "~30.0.1",
+    "jsdom": "~22.1.0",
     "jsonc-eslint-parser": "^3.3.0",
-    "nx": "22.7.5",
+    "nx": "23.1.2",
     "playwright": "^1.62.1",
     "postcss": "^8.5.26",
     "prettier": "^3.9.6",
@@ -102,8 +102,10 @@
     "vite-plugin-dts": "~5.0.3",
     "vite-plugin-svgr": "^5.2.0",
     "vitest": "~4.1.11",
-    "webpack-cli": "^5.1.4",
-    "webpack-node-externals": "^3.0.0"
+    "webpack-cli": "^7.0.0",
+    "webpack-node-externals": "^3.0.0",
+    "webpack": "^5.101.3",
+    "webpack-dev-server": "^5.2.1"
   },
   "dependencies": {
     "@epam/ai-dial-react-file-manager": "0.2.0-dev.9",
@@ -175,7 +177,10 @@
     "brace-expansion@1.1.15": "1.1.16",
     "brace-expansion@2.1.1": "2.1.4",
     "brace-expansion@5.0.6": "5.0.9",
-    "js-yaml": "4.3.1"
+    "js-yaml": "4.3.1",
+    "@nx/react": {
+      "express": "$express"
+    }
   },
   "workspaces": [
     "packages/*",
