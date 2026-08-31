@@ -1,6 +1,5 @@
 import {
   getApiErrorDetails,
-  parsePromptResourceUrl,
   PROMPT_CONTENT_MAX_LENGTH,
   PROMPT_DESCRIPTION_MAX_LENGTH,
   PromptFieldError,
