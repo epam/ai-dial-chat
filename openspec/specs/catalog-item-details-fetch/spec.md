@@ -55,7 +55,7 @@ When `onFetchDetails` resolves data, it SHALL **replace** any statically-provide
 
 For model catalog items only, `CatalogView.tsx` SHALL also call the existing `getDeploymentLimits(item.id)` wrapper from `apps/chat/src/server-api/deployment-limits.ts` in parallel with `getDeploymentDetails(item.id)`. The returned `DeploymentLimitsResponseDto` SHALL be converted by an app-level mapper (for example `mapDeploymentLimitsDtoToCatalogLimits`) into `CatalogItemLimits` and merged into the returned `CatalogItemTabData` as `limits`. This mapper is the only place that knows DIAL Core's limit-stat field names (`minuteTokenStats`, `dayCostStats`, etc.); `libs/catalog` receives only resolved display data and numeric progress values.
 
-**Prompt items (`CatalogEntityType.Prompt`).** `CatalogView.tsx` SHALL branch before the deployment path and resolve the item's body through the prompts wrappers in `apps/chat/src/server-api/prompts.api.ts`: `getPublicPrompt(item.id)` for the organisation source, `getPrompt(item.id)` for personal, and `getPrompt(path, ownerBucket)` after parsing a shared item's qualified id. The result SHALL be returned as `{ promptContent: { content: dto.content }, overview }`. The `overview` is **not** optional decoration: because a fetch result replaces `item.details` wholesale, returning only `promptContent` would make the Overview tab the list mapper had already populated disappear the moment the panel finished loading. It is therefore rebuilt from the same DTO through a dedicated prompt-overview builder.
+**Prompt items (`CatalogEntityType.Prompt`).** `CatalogView.tsx` SHALL branch before the deployment path and resolve the item's body through the prompts wrappers in `apps/chat/src/server-api/prompts.api.ts`: `getPublicPrompt` with the parsed bucket-relative sub-path for the organisation source, and `getPrompt(item.id)` for a personal or shared prompt (the full `prompts/{bucket}/{path}` id passed unmodified, whether the prompt is the caller's own or shared with them). The result SHALL be returned as `{ promptContent: { content: dto.content }, overview }`. The `overview` is **not** optional decoration: because a fetch result replaces `item.details` wholesale, returning only `promptContent` would make the Overview tab the list mapper had already populated disappear the moment the panel finished loading. It is therefore rebuilt from the same DTO through a dedicated prompt-overview builder.
 
 A prompt MUST NOT trigger `getDeploymentDetails` or `getDeploymentLimits`, since neither endpoint accepts a prompt path.
 
@@ -118,12 +118,12 @@ If a details server-api call rejects (network error or a mapped HTTP exception s
 #### Scenario: Organisation prompt detail fetch uses the public wrapper
 
 - **WHEN** a user opens the details panel for a prompt from the organisation bucket
-- **THEN** `onFetchDetails` calls `getPublicPrompt(item.id)` and no personal-prompt request is dispatched
+- **THEN** `onFetchDetails` calls `getPublicPrompt` with the prompt's bucket-relative sub-path and no personal-prompt request is dispatched
 
 #### Scenario: Shared prompt detail fetch preserves the owner bucket
 
 - **WHEN** a user opens `prompts/owner-bucket/Work/summarize`
-- **THEN** `onFetchDetails` calls `getPrompt('Work/summarize', 'owner-bucket')`
+- **THEN** `onFetchDetails` calls `getPrompt('prompts/owner-bucket/Work/summarize')`
 
 #### Scenario: Prompt fetch never reaches the deployment endpoints
 

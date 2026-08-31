@@ -18,7 +18,7 @@ The prompt body SHALL travel as router state, never as a query parameter — a p
 
 The state SHALL be one-shot: `ConversationRoute` consumes it on mount and clears it with `navigate(…, { replace: true })`, so a later back-navigation to `/` does not silently re-inject stale text. This mirrors how `CatalogView` already clears the one-shot `itemId` search param.
 
-When the prompt's body has not yet been resolved at click time, the handler SHALL resolve a public prompt through `getPublicPrompt`, a personal prompt through `getPrompt(path)`, and a shared prompt through `getPrompt(path, ownerBucket)` after parsing its qualified id. On failure it SHALL surface an error notification and stay on the catalog rather than navigating with empty text.
+When the prompt's body has not yet been resolved at click time, the handler SHALL resolve a public prompt through `getPublicPrompt` (with its bucket-relative sub-path), and a personal or shared prompt through `getPrompt(item.id)` — the full `prompts/{bucket}/{path}` id passed unmodified, whether the prompt is the caller's own or shared with them. On failure it SHALL surface an error notification and stay on the catalog rather than navigating with empty text.
 
 #### Scenario: Use in chat on a Model navigates to the new-conversation screen with that model selected
 
@@ -65,7 +65,7 @@ When the prompt's body has not yet been resolved at click time, the handler SHAL
 #### Scenario: Shared prompt body resolves from the owner bucket
 
 - **WHEN** the user activates Use in chat for `prompts/owner-bucket/Work/summarize` before its body is resolved
-- **THEN** `getPrompt('Work/summarize', 'owner-bucket')` is called before navigation
+- **THEN** `getPrompt('prompts/owner-bucket/Work/summarize')` is called before navigation
 
 #### Scenario: Pre-filled text is not re-injected on back-navigation
 
@@ -165,8 +165,8 @@ in `CatalogView`, not in `resolveCatalogPrimaryAction`.
 When the prompt's body has not yet been resolved at click time,
 `resolveCatalogPrimaryAction` SHALL call a narrow host-supplied prompt fetch
 callback. The app callback SHALL preserve the current public/personal/shared
-dispatch (`getPublicPrompt(item.id)`, `getPrompt(path)`, or
-`getPrompt(path, ownerBucket)`). On failure `CatalogView` SHALL surface an
+dispatch (`getPublicPrompt` with the
+bucket-relative sub-path, or `getPrompt(item.id)`). On failure `CatalogView` SHALL surface an
 error notification with the request id and stay on the catalog rather than
 navigating with empty text.
 
@@ -215,7 +215,7 @@ navigating with empty text.
 #### Scenario: Shared prompt body resolves from the owner bucket
 
 - **WHEN** the user activates Use in chat for `prompts/owner-bucket/Work/summarize` before its body is resolved
-- **THEN** `getPrompt('Work/summarize', 'owner-bucket')` is called before navigation
+- **THEN** `getPrompt('prompts/owner-bucket/Work/summarize')` is called before navigation
 
 #### Scenario: Pre-filled text is not re-injected on back-navigation
 
