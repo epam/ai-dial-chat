@@ -14,7 +14,7 @@ import type { DeploymentsService } from '../../deployments/deployments.service';
 import type { DialClientService } from '../../dial/dial-client.service';
 import type { SkillsLookupService } from '../../skills/lookup/skills-lookup.service';
 import type { ToolsetsService } from '../../toolsets/toolsets.service';
-import { ShareAccess, ShareResourceKind } from '../dto/create-share-link.dto';
+import { ShareAccess } from '../dto/create-share-link.dto';
 import { ShareService } from '../share.service';
 
 const okResponse = (data: unknown) =>
@@ -127,6 +127,37 @@ describe('ShareService', () => {
         body: {
           invitationType: 'LINK',
           resources: [{ url: 'my-app-id', permissions: ['READ', 'WRITE'] }],
+        },
+      });
+    });
+
+    /*
+     * Regression: `itemId` is a resource's public id, kept unencoded and
+     * human-readable end to end (see `buildPromptId`), but DIAL Core's own
+     * `shareResource` expects a percent-encoded resource url — sending the
+     * raw id straight through used to 400 for any name containing a space.
+     */
+    it('percent-encodes a resource id containing spaces before sending it to DIAL Core', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/abc' }));
+
+      await service.createShareLink('my-token', 'my-bucket', {
+        itemId: 'prompts/owner-bucket/Work/AI/tone of voice',
+        access: [ShareAccess.View],
+      });
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer my-token' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'prompts/owner-bucket/Work/AI/tone%20of%20voice',
+              permissions: ['READ'],
+            },
+          ],
         },
       });
     });
@@ -329,16 +360,15 @@ describe('ShareService', () => {
       expect(result.url).toBe('https://example.com/catalog/shared/skill-abc');
     });
 
-    it("qualifies a prompt itemId with the caller's bucket", async () => {
+    it('creates a share link for a full prompts/{bucket}/{path} itemId, unmodified', async () => {
       const { service, dialClient } = makeService();
       const spy = vi
         .spyOn(service['dialClient'].client, 'shareResource')
         .mockResolvedValue(okResponse({ invitationLink: '/invite/p1' }));
 
       const result = await service.createShareLink('token-abc', 'my-bucket', {
-        itemId: 'Work/AI/summarize',
+        itemId: 'prompts/my-bucket/Work/AI/summarize',
         access: [ShareAccess.View],
-        resourceKind: ShareResourceKind.Prompt,
       });
 
       expect(spy).toHaveBeenCalledWith({
@@ -358,34 +388,7 @@ describe('ShareService', () => {
       expect(dialClient.client.getConversation).not.toHaveBeenCalled();
     });
 
-    it('percent-encodes a prompt itemId nested inside a folder with a space in its name', async () => {
-      const { service } = makeService();
-      const spy = vi
-        .spyOn(service['dialClient'].client, 'shareResource')
-        .mockResolvedValue(okResponse({ invitationLink: '/invite/p2' }));
-
-      const result = await service.createShareLink('token-abc', 'my-bucket', {
-        itemId: 'New folder 1/Prompt 1',
-        access: [ShareAccess.View],
-        resourceKind: ShareResourceKind.Prompt,
-      });
-
-      expect(spy).toHaveBeenCalledWith({
-        headers: { Authorization: 'Bearer token-abc' },
-        body: {
-          invitationType: 'LINK',
-          resources: [
-            {
-              url: 'prompts/my-bucket/New%20folder%201/Prompt%201',
-              permissions: ['READ'],
-            },
-          ],
-        },
-      });
-      expect(result.url).toBe('https://example.com/catalog/shared/p2');
-    });
-
-    it('leaves itemId untouched when no resourceKind is given', async () => {
+    it('leaves any itemId untouched, with no per-kind qualification', async () => {
       const { service } = makeService();
       const spy = vi
         .spyOn(service['dialClient'].client, 'shareResource')
@@ -826,6 +829,38 @@ describe('ShareService', () => {
       );
     });
 
+    /*
+     * Only prompts need `toShareResourceUrl` to re-encode `itemId` before it
+     * reaches DIAL Core — every other kind's listing already passes through
+     * whatever encoded/unencoded form DIAL Core itself uses for that url
+     * (see `toShareResourceUrl`'s comment), so a skill name with a space is
+     * sent through unchanged here, exactly as it was before prompts needed
+     * this exception.
+     */
+    it('discards a shared skill whose name has a space, unmodified', async () => {
+      const { service } = makeService();
+      mockSharedResources(service, [
+        { url: 'skills/owner-bucket/team a/docs helper' },
+      ]);
+      const discardSpy = vi
+        .spyOn(service['dialClient'].client, 'discardSharedResources')
+        .mockResolvedValue(okResponse(undefined));
+
+      const result = await service.discardShared(
+        'skills/owner-bucket/team a/docs helper',
+        'token-abc',
+        'user-sub-1',
+      );
+
+      expect(discardSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          resources: [{ url: 'skills/owner-bucket/team a/docs helper' }],
+        },
+      });
+      expect(result).toEqual({ success: true });
+    });
+
     it('calls DIAL Core discardSharedResources with a conversation resource url unchanged', async () => {
       const { service } = makeService();
       mockSharedResources(service, [
@@ -958,6 +993,57 @@ describe('ShareService', () => {
       await expect(
         service.discardShared('applications/x/y', 'token', 'user-sub-1'),
       ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('discards a full prompts/{bucket}/{path} itemId, using the owner bucket embedded in it', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
+      const sharedSpy = mockSharedResources(service, [
+        { url: 'prompts/owner-bucket/Work/AI/summarize' },
+      ]);
+      const discardSpy = vi
+        .spyOn(service['dialClient'].client, 'discardSharedResources')
+        .mockResolvedValue(okResponse(undefined));
+
+      const result = await service.discardShared(
+        'prompts/owner-bucket/Work/AI/summarize',
+        'token-abc',
+        'user-sub-1',
+      );
+
+      expect(sharedSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: { resourceTypes: ['PROMPT'], with: 'me' },
+      });
+      expect(discardSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          resources: [{ url: 'prompts/owner-bucket/Work/AI/summarize' }],
+        },
+      });
+      expect(result).toEqual({ success: true });
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+      expect(toolsetsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+    });
+
+    it('throws ForbiddenException for a prompt itemId not shared with the caller', async () => {
+      const { service } = makeService();
+      mockSharedResources(service, []);
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockResolvedValue(okResponse(undefined));
+
+      await expect(
+        service.discardShared(
+          'prompts/owner-bucket/Work/AI/summarize',
+          'token-abc',
+          'user-sub-1',
+        ),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -1139,6 +1225,27 @@ describe('ShareService', () => {
         service.revokeShared('applications/x/y', 'token', 'user-sub-1'),
       ).rejects.toThrow(ServiceUnavailableException);
     });
+
+    it('revokes a full prompts/{bucket}/{path} itemId, unmodified', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'revokeSharedResources')
+        .mockResolvedValue(okResponse(undefined));
+
+      const result = await service.revokeShared(
+        'prompts/my-bucket/Work/AI/summarize',
+        'token-abc',
+        'user-sub-1',
+      );
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          resources: [{ url: 'prompts/my-bucket/Work/AI/summarize' }],
+        },
+      });
+      expect(result).toEqual({ success: true });
+    });
   });
 
   describe('getRecipientsCount', () => {
@@ -1308,6 +1415,40 @@ describe('ShareService', () => {
       await expect(
         service.getRecipientsCount('applications/x/y', 'token'),
       ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('counts the accepted recipients of a full prompts/{bucket}/{path} itemId', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'getSharedResources')
+        .mockResolvedValue(
+          okResponse({
+            resources: [
+              {
+                url: 'prompts/my-bucket/Work/AI/summarize',
+                sharedWith: [{ user: 'a' }],
+              },
+            ],
+          }),
+        );
+
+      const result = await service.getRecipientsCount(
+        'prompts/my-bucket/Work/AI/summarize',
+        'token-abc',
+      );
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          resourceTypes: ['PROMPT'],
+          with: 'others',
+          includeUserInfo: true,
+        },
+      });
+      expect(result).toEqual({
+        itemId: 'prompts/my-bucket/Work/AI/summarize',
+        recipientsCount: 1,
+      });
     });
   });
 });

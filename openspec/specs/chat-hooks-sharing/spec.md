@@ -12,12 +12,16 @@ Reusable sharing hooks exported by `@epam/ai-dial-chat-hooks`: the share-link re
 `apps/chat`'s `useShareLink`) that owns a loading/error/stale-response-guard/
 re-fetch state machine for creating a DIAL share link. The hook SHALL accept
 an already-configured generated-client API instance capable of calling the
-DIAL `createShareLink` operation, plus the resource identifier, resource kind
-(`CreateShareLinkDtoResourceKindEnum`, imported from `@epam/ai-dial-chat-api-client`),
-and an initial access list (`ShareLinkAccess[]`, from `@epam/ai-dial-share`).
-The hook SHALL NOT construct, configure, or hold any base URL, auth header,
-or CSRF token itself — that configuration is the caller's responsibility and
-is fully contained in the client instance passed in.
+DIAL `createShareLink` operation, the resource's full DIAL Core resource path
+as its identifier, and an initial access list (`ShareLinkAccess[]`, from
+`@epam/ai-dial-share`). The hook SHALL NOT accept, forward, or reference a
+resource-kind parameter — `CreateShareLinkDtoResourceKindEnum` and the
+`ShareResourceKind` it mirrored no longer exist, because every resource's
+identifier, prompts included, is already a self-sufficient full resource
+path (see `prompts-api`, `prompt-share-link`). The hook SHALL NOT construct,
+configure, or hold any base URL, auth header, or CSRF token itself — that
+configuration is the caller's responsibility and is fully contained in the
+client instance passed in.
 
 The hook SHALL return `{ data: ShareLinkData | null, isLoading: boolean,
 error: unknown, setAccess: (access: ShareLinkAccess[]) => void }`. Calling
@@ -38,6 +42,11 @@ recent call.
   the initial fetch has resolved
 - **THEN** the hook calls the client instance's share-link operation again
   with the new access array and updates `data`/`isLoading` accordingly
+
+#### Scenario: A prompt resource is requested the same way as any other
+
+- **WHEN** a consumer renders the hook with a prompt's full `prompts/{bucket}/{path}` id as the resource identifier
+- **THEN** the hook calls the client instance's share-link operation with that id and no resource-kind argument, identically to how it is called for an application, toolset, conversation, or skill id
 
 #### Scenario: Stale response is discarded
 
