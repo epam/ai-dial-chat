@@ -42,6 +42,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetLoginOutcomeType,
   toPublishEntityType,
+  toPublishRuleDto,
   useCatalogItemDetails,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
@@ -93,10 +94,7 @@ import {
   getPrompt,
   getPublicPrompt,
 } from '../../server-api/prompts.api';
-import {
-  getPublishRules,
-  toPublishRuleDto,
-} from '../../server-api/publish-rules.api';
+import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
   getCatalogPublishHistory,
   publishCatalogEntity,

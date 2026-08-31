@@ -49,8 +49,8 @@ export interface CatalogDetailsApi {
   getDeploymentLimits(
     deploymentId: string,
   ): Promise<DeploymentLimitsResponseDto>;
-  /** Fetches a personal or bucket-scoped prompt by path. */
-  getPrompt(path: string, bucket?: string): Promise<PromptResponseDto>;
+  /** Fetches a personal or shared prompt by its full `prompts/{bucket}/{path}` resource path. */
+  getPrompt(id: string): Promise<PromptResponseDto>;
   /** Fetches a public (organisation) prompt by path. */
   getPublicPrompt(path: string): Promise<PromptResponseDto>;
   /** Downloads a raw skill file, returning the raw fetch `Response`. */
@@ -118,17 +118,18 @@ export interface UseCatalogItemDetailsResult {
 
 /*
  * Dispatches to the prompt endpoints for all prompt source variants.
- * Organisation prompts must use the public endpoint so the correct bucket
- * is resolved; personal/shared prompts use the personal endpoint (with an
- * explicit bucket when the id is a full resource URL).
+ * `item.id` is always the full `prompts/{bucket}/{path}` resource path — the
+ * owner bucket for a shared prompt, the caller's own bucket otherwise — so the
+ * personal endpoint takes it unconditionally. The organisation source routes
+ * through the public endpoint, which kept its bucket-relative `path` argument,
+ * so its qualified id is parsed back down to that sub-path first.
  */
 const buildFetchPromptDto =
   (api: CatalogDetailsApi) =>
   (item: CatalogItem): Promise<PromptResponseDto> => {
-    if (isOrganisationPromptItem(item)) return api.getPublicPrompt(item.id);
+    if (!isOrganisationPromptItem(item)) return api.getPrompt(item.id);
     const ref = parsePromptResourceUrl(item.id);
-    if (ref == null) return api.getPrompt(item.id);
-    return api.getPrompt(ref.path, ref.bucket);
+    return api.getPublicPrompt(ref?.path ?? item.id);
   };
 
 /**

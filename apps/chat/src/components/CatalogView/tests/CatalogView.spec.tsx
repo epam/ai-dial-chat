@@ -158,15 +158,6 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
 
 vi.mock('../../../server-api/publish-rules.api', () => ({
   getPublishRules: vi.fn().mockResolvedValue([]),
-  toPublishRuleDto: (rule: {
-    source: string;
-    function: string;
-    targets: string[];
-  }) => ({
-    source: rule.source,
-    function: rule.function,
-    targets: rule.targets,
-  }),
 }));
 
 vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
@@ -3181,7 +3172,11 @@ describe('CatalogView', () => {
         ...personalPrompt,
         id: 'prompts/owner-bucket/Work/AI/summarize',
       };
-      mockPrompts({ prompts: [], sharedWithMe: [sharedPrompt], refetchPrompts });
+      mockPrompts({
+        prompts: [],
+        sharedWithMe: [sharedPrompt],
+        refetchPrompts,
+      });
       vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
 
       render(<CatalogView />);

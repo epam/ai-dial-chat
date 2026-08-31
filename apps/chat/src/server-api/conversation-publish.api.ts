@@ -2,9 +2,9 @@ import type {
   PublishConversationResultDto,
   UnpublishConversationResultDto,
 } from '@epam/ai-dial-chat-api-client';
+import { toPublishRuleDto } from '@epam/ai-dial-chat-hooks';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { conversationsApi } from './api-client';
-import { toPublishRuleDto } from './publish-rules.api';
 
 export const publishConversation = (
   path: string,

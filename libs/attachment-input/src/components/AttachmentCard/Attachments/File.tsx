@@ -110,7 +110,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
       title={displayName}
       className={mergeClasses(
         typography?.nameClassName ?? 'dial-caption-text',
-        'line-clamp-2 min-w-0 break-all',
+        'line-clamp-2 min-w-0 break-words',
         styles.nameText,
         !isError && cornerIconSpacing,
       )}
