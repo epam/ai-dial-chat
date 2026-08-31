@@ -132,7 +132,7 @@ Selector mode (`isSelectorMode`) SHALL NOT show prompts: `PICKER_VISIBLE_TYPES` 
 
 ### Requirement: Prompt details resolve through the prompts endpoints
 
-`handleFetchDetails` in `CatalogView` SHALL branch before its deployment path: for `CatalogEntityType.Prompt` it calls `getPublicPrompt(item.id)` when the item came from the organisation source, `getPrompt(item.id)` for a personal prompt, and parses a shared prompt's qualified id before calling `getPrompt(path, ownerBucket)`. It resolves `{ promptContent: { content } }` and SHALL NOT call `getDeploymentDetails` or `getDeploymentLimits` for a prompt.
+`handleFetchDetails` in `CatalogView` SHALL branch before its deployment path: for `CatalogEntityType.Prompt` it calls `getPublicPrompt` with the parsed bucket-relative sub-path when the item came from the organisation source, and `getPrompt(item.id)` for a personal or shared prompt (the full `prompts/{bucket}/{path}` id passed unmodified, whether the prompt is the caller's own or shared with them). It resolves `{ promptContent: { content } }` and SHALL NOT call `getDeploymentDetails` or `getDeploymentLimits` for a prompt.
 
 Failures SHALL resolve `undefined` exactly as the existing deployment path does, so the panel falls back to the `promptContent` the mapper already seeded and never throws out of the callback.
 
@@ -144,12 +144,12 @@ Failures SHALL resolve `undefined` exactly as the existing deployment path does,
 #### Scenario: Opening an organisation prompt's details uses the public endpoint
 
 - **WHEN** the user opens the details panel for a prompt whose source is Public
-- **THEN** `getPublicPrompt(item.id)` is called and no personal-prompt request is issued
+- **THEN** `getPublicPrompt` is called with the prompt's bucket-relative sub-path and no personal-prompt request is issued
 
 #### Scenario: Opening a shared prompt's details uses the owner bucket
 
 - **WHEN** the user opens `prompts/owner-bucket/Work/AI/summarize`
-- **THEN** `getPrompt('Work/AI/summarize', 'owner-bucket')` is called
+- **THEN** `getPrompt('prompts/owner-bucket/Work/AI/summarize')` is called
 
 #### Scenario: Prompt details never call the deployment endpoints
 
@@ -275,9 +275,9 @@ Failures SHALL resolve `undefined` exactly as the existing deployment path does,
 The stable `onFetchDetails` callback SHALL be returned by
 `@epam/ai-dial-chat-hooks`'s `useCatalogItemDetails` and branch before its
 deployment path: for `CatalogEntityType.Prompt` it calls the injected public
-prompt operation when the item came from the organisation source, the injected
-personal prompt operation for a personal prompt, and parses a shared prompt's
-qualified id before calling that operation with `path` and `ownerBucket`.
+prompt operation with the parsed bucket-relative sub-path when the item came
+from the organisation source, and the injected personal prompt operation with
+the prompt's full `prompts/{bucket}/{path}` id for a personal or shared prompt.
 
 It SHALL resolve prompt content plus the rebuilt overview required because
 fetched details replace static details wholesale. It SHALL NOT call deployment
