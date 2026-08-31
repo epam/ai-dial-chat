@@ -124,13 +124,12 @@ describe('ShareController (integration)', () => {
       );
     });
 
-    it('forwards resourceKind for a bucket-relative prompt path', async () => {
+    it('accepts a full prompts/{bucket}/{path} itemId', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/share')
         .send({
-          itemId: 'Work/AI/summarize',
+          itemId: 'prompts/owner-bucket/Work/AI/summarize',
           access: [ShareAccess.View],
-          resourceKind: 'prompt',
         })
         .expect(201);
 
@@ -138,20 +137,19 @@ describe('ShareController (integration)', () => {
         TEST_USER.at,
         TEST_USER.bucket,
         {
-          itemId: 'Work/AI/summarize',
+          itemId: 'prompts/owner-bucket/Work/AI/summarize',
           access: [ShareAccess.View],
-          resourceKind: 'prompt',
         },
       );
     });
 
-    it('returns 400 for an unknown resourceKind', async () => {
+    it('returns 400 for an unknown resourceKind field', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/share')
         .send({
-          itemId: 'Work/AI/summarize',
+          itemId: 'prompts/owner-bucket/Work/AI/summarize',
           access: [ShareAccess.View],
-          resourceKind: 'conversation',
+          resourceKind: 'prompt',
         })
         .expect(400);
     });
@@ -288,6 +286,41 @@ describe('ShareController (integration)', () => {
         TEST_USER.at,
         TEST_USER.sub,
       );
+    });
+
+    it('accepts a full prompts/{bucket}/{path} itemId', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send({ itemId: 'prompts/owner-bucket/Work/AI/summarize' })
+        .expect(200);
+
+      expect(res.body).toEqual(discardedSuccess);
+      expect(service.discardShared).toHaveBeenCalledWith(
+        'prompts/owner-bucket/Work/AI/summarize',
+        TEST_USER.at,
+        TEST_USER.sub,
+      );
+    });
+
+    it('returns 400 for a bucket-relative prompt path with no prefix', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send({ itemId: 'Work/AI/summarize' })
+        .expect(400);
+
+      expect(service.discardShared).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for an unknown resourceKind field', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send({
+          itemId: 'prompts/owner-bucket/Work/AI/summarize',
+          resourceKind: 'prompt',
+        })
+        .expect(400);
+
+      expect(service.discardShared).not.toHaveBeenCalled();
     });
 
     it('returns 400 when itemId is missing', async () => {
@@ -434,6 +467,20 @@ describe('ShareController (integration)', () => {
       );
     });
 
+    it('accepts a full prompts/{bucket}/{path} itemId', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/share/revoke')
+        .send({ itemId: 'prompts/owner-bucket/Work/AI/summarize' })
+        .expect(200);
+
+      expect(res.body).toEqual(revokedSuccess);
+      expect(service.revokeShared).toHaveBeenCalledWith(
+        'prompts/owner-bucket/Work/AI/summarize',
+        TEST_USER.at,
+        TEST_USER.sub,
+      );
+    });
+
     it('returns 400 when itemId is missing', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/share/revoke')
@@ -463,7 +510,6 @@ describe('ShareController (integration)', () => {
 
     it.each([
       'files/owner-bucket/report.pdf',
-      'prompts/owner-bucket/my-prompt',
       'gpt-4o',
       'applications/owner-bucket',
     ])(
@@ -615,6 +661,18 @@ describe('ShareController (integration)', () => {
       );
     });
 
+    it('accepts a full prompts/{bucket}/{path} itemId', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/share/recipients')
+        .query({ itemId: 'prompts/owner-bucket/Work/AI/summarize' })
+        .expect(200);
+
+      expect(service.getRecipientsCount).toHaveBeenCalledWith(
+        'prompts/owner-bucket/Work/AI/summarize',
+        TEST_USER.at,
+      );
+    });
+
     it('returns 400 when itemId is missing', async () => {
       await request(app.getHttpServer())
         .get('/api/v1/share/recipients')
@@ -625,7 +683,6 @@ describe('ShareController (integration)', () => {
 
     it.each([
       'files/owner-bucket/report.pdf',
-      'prompts/owner-bucket/my-prompt',
       'gpt-4o',
       'applications/owner-bucket',
       '../etc/passwd',

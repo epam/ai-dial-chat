@@ -73,7 +73,7 @@ The flat column SHALL be capped at `max-w-[1180px]` and horizontally centered (`
 
 `apps/chat/src/types/prompt-editor.ts` SHALL define a `PromptEditorQuery` string enum with `Id = 'id'` and `ReturnUrl = 'returnUrl'`, mirroring `ToolsetEditorQuery`.
 
-Mode resolution: `?id=<promptPath>` opens edit mode for a personal prompt; `?id=prompts/{ownerBucket}/{promptPath}` opens edit mode for a shared prompt while preserving the owner bucket; an absent `id` opens create mode. On save or cancel the page navigates to `returnUrl` when present, otherwise `ROUTES.Catalog`.
+Mode resolution: `?id=<full resource path>` opens edit mode, where `<full resource path>` is exactly the value `PromptResponseDto.id` returns — `prompts/{bucket}/{path}` whether the prompt is the caller's own or shared with them; an absent `id` opens create mode. There is no separate personal-vs-shared id shape to distinguish: the same `id` query value is passed straight to `getPrompt` regardless of whose bucket it names. On save or cancel the page navigates to `returnUrl` when present, otherwise `ROUTES.Catalog`.
 
 When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Catalog` without issuing any prompt request.
 
@@ -82,15 +82,15 @@ When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Ca
 - **WHEN** the user navigates to `/prompt-editor?returnUrl=/catalog`
 - **THEN** the page renders empty name, description, and content fields
 
-#### Scenario: Edit mode loads the prompt
+#### Scenario: Edit mode loads the prompt by its full id
 
-- **WHEN** the user navigates to `/prompt-editor?id=Work%2FAI%2Fsummarize&returnUrl=/catalog`
-- **THEN** `getPrompt('Work/AI/summarize')` is called and the form is populated with the prompt's name, description, and content (the prompt's stored folder is not shown or editable on this screen — see design.md D16)
+- **WHEN** the user navigates to `/prompt-editor?id=prompts%2Fmy-bucket%2FWork%2FAI%2Fsummarize&returnUrl=/catalog`
+- **THEN** `getPrompt('prompts/my-bucket/Work/AI/summarize')` is called and the form is populated with the prompt's name, description, and content (the prompt's stored folder is not shown or editable on this screen — see design.md D16)
 
-#### Scenario: Shared edit mode loads from the owner bucket
+#### Scenario: Shared edit mode loads the same way, by the prompt's own full id
 
 - **WHEN** the user navigates to `/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize`
-- **THEN** `getPrompt('Work/AI/summarize', 'owner-bucket')` is called
+- **THEN** `getPrompt('prompts/owner-bucket/Work/AI/summarize')` is called — the identical call shape used for a personal prompt, with no separate owner-bucket argument
 - **AND** no folder selector is rendered, consistently with the flattened editor layout
 
 #### Scenario: Editing a non-existent prompt shows an error state
@@ -114,7 +114,7 @@ When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Ca
 
 **Revised (see design.md D16):** `createPrompt` SHALL no longer send a `folderId` — new prompts land at root, since the screen has no folder control to derive one from. `updatePrompt` was already folder-agnostic and is unchanged.
 
-Create SHALL call `createPrompt({ name, description, content })`. A personal update SHALL call `updatePrompt(path, { name, description, content })`; a shared update SHALL call `updatePrompt(path, { name, description, content }, ownerBucket)`. The update payload carries the form's current name, description, and content values.
+Create SHALL call `createPrompt({ name, description, content })`. An update — personal or shared — SHALL call `updatePrompt(id, { name, description, content })`, where `id` is the prompt's full resource path exactly as loaded; there is no separate owner-bucket argument to thread through. The update payload carries the form's current name, description, and content values.
 
 On success the page SHALL call `refetchPrompts()`, show a success notification, and navigate back only after the refetch settles.
 
@@ -127,18 +127,18 @@ On success the page SHALL call `refetchPrompts()`, show a success notification, 
 #### Scenario: Updating content only
 
 - **WHEN** the user edits only the content field and saves
-- **THEN** `updatePrompt(path, { name: <current name>, description: <current description>, content: <new value> })` is dispatched
+- **THEN** `updatePrompt(id, { name: <current name>, description: <current description>, content: <new value> })` is dispatched
 - **AND** no `movePrompt` call is made
 
 #### Scenario: Renaming a prompt
 
 - **WHEN** the user changes the name and saves
-- **THEN** `updatePrompt(path, { name: <new name> })` is dispatched and the prompt's `id` changes to the new path
+- **THEN** `updatePrompt(id, { name: <new name> })` is dispatched and the prompt's `id` changes to reflect the new path within the same bucket
 
-#### Scenario: Saving a writable shared prompt preserves its owner bucket
+#### Scenario: Saving a writable shared prompt uses the same call shape as a personal one
 
 - **WHEN** the user saves changes to `prompts/owner-bucket/Work/AI/summarize`
-- **THEN** `updatePrompt('Work/AI/summarize', <body>, 'owner-bucket')` is dispatched
+- **THEN** `updatePrompt('prompts/owner-bucket/Work/AI/summarize', <body>)` is dispatched — identical in shape to the personal-prompt update call, with no separate owner-bucket argument
 
 #### Scenario: Duplicate name shows an inline field error
 

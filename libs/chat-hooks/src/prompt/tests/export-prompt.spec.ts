@@ -18,8 +18,7 @@ const readBlobAsText = (blob: Blob): Promise<string> =>
 const makePrompt = (
   overrides: Partial<PromptResponseDto> = {},
 ): PromptResponseDto => ({
-  id: 'Work/AI/summarize',
-  bucket: 'my-bucket',
+  id: 'prompts/my-bucket/Work/AI/summarize',
   name: 'summarize',
   description: 'Summarize a document',
   content: 'Summarize:\n\n{{document}}',
@@ -36,7 +35,7 @@ describe('buildPromptExportEnvelope', () => {
     expect(envelope.version).toBe(5);
     expect(envelope.prompts).toEqual([
       {
-        id: 'Work/AI/summarize',
+        id: 'prompts/my-bucket/Work/AI/summarize',
         name: 'summarize',
         description: 'Summarize a document',
         content: 'Summarize:\n\n{{document}}',

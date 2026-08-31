@@ -74,7 +74,6 @@ describe('SharePopoverContainer', () => {
     expect(chatHooksModule.useShareLink).toHaveBeenCalledWith(
       shareApi,
       'item-1',
-      undefined,
     );
 
     expect(mockSharePopover).toHaveBeenCalledWith(
@@ -121,7 +120,7 @@ describe('SharePopoverContainer', () => {
     );
   });
 
-  it('tags a prompt with the prompt resource kind so the backend can qualify its path', () => {
+  it('calls useShareLink with the item id for a prompt, same as any other type', () => {
     mockUseShareLink();
     render(
       <SharePopoverContainer
@@ -133,7 +132,6 @@ describe('SharePopoverContainer', () => {
     expect(chatHooksModule.useShareLink).toHaveBeenCalledWith(
       shareApi,
       'item-1',
-      'prompt',
     );
   });
 

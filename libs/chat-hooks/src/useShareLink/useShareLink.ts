@@ -1,6 +1,5 @@
 import {
   ShareLinkResponseDtoAccessEnum,
-  type CreateShareLinkDtoResourceKindEnum,
   type ShareApi,
 } from '@epam/ai-dial-chat-api-client';
 import { ShareLinkAccess, ShareLinkData } from '@epam/ai-dial-share';
@@ -50,7 +49,6 @@ const withOrigin = (url: string, origin: string): string => {
 export const useShareLink = (
   shareApi: Pick<ShareApi, 'createShareLink'>,
   itemId: string,
-  resourceKind?: CreateShareLinkDtoResourceKindEnum,
   origin: string = window.location.origin,
 ): UseShareLinkResult => {
   const [data, setData] = useState<ShareLinkData>();
@@ -71,7 +69,7 @@ export const useShareLink = (
 
       try {
         const response = await shareApi.createShareLink({
-          createShareLinkDto: { itemId, resourceKind, access },
+          createShareLinkDto: { itemId, access },
         });
         if (requestIdRef.current === requestId) {
           setData({
@@ -92,7 +90,7 @@ export const useShareLink = (
         if (requestIdRef.current === requestId) setIsLoading(false);
       }
     },
-    [itemId, origin, resourceKind, shareApi],
+    [itemId, origin, shareApi],
   );
 
   useEffect(() => {

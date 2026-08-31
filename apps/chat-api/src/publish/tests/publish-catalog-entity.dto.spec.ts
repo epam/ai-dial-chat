@@ -97,15 +97,10 @@ describe('CatalogEntityParamsDto — entityType', () => {
     expect(errors).toHaveLength(0);
   });
 
-  /*
-   * A prompt's entityId is bucket-relative, unlike every other kind: the
-   * prompts endpoints never expose a bucket, so `publish.service.ts` re-attaches
-   * the caller's own before calling DIAL Core.
-   */
-  it('accepts entityType: prompt with a bucket-relative prompt entityId', async () => {
+  it('accepts entityType: prompt with a full prompts/{bucket}/{path} entityId', async () => {
     const errors = await validateParams({
       entityType: CatalogEntityType.Prompt,
-      entityId: 'Work/AI/summarize',
+      entityId: 'prompts/bucket-123/Work/AI/summarize',
     });
     expect(errors).toHaveLength(0);
   });
