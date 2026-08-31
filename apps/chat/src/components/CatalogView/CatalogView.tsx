@@ -1,7 +1,6 @@
 import {
   Catalog,
   CatalogItem,
-  CatalogViewMode,
   CredentialsLevel,
   CredentialStatus,
   ToolsetAuthenticationType,
@@ -243,9 +242,6 @@ const CatalogView: FC<Props> = ({
   );
 
   const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
-  const isCatalogTableViewEnabled = useUiFeature(
-    OverlayFeature.CatalogTableView,
-  );
   const isCatalogHideMyAppsEnabled = useUiFeature(
     OverlayFeature.CatalogHideMyApps,
   );
@@ -784,8 +780,14 @@ const CatalogView: FC<Props> = ({
         return;
       }
 
+      /*
+       * The pick is persisted as the user's own preference *and* carried in
+       * router state: the new-chat route resets an unstated selection back to
+       * the configured default on mount, which would otherwise discard this
+       * one before the persisted value has propagated.
+       */
       setSelectedItemId(action.id);
-      navigate(ROUTES.Root);
+      navigate(ROUTES.Root, { state: { deploymentId: action.id } });
     },
     [setSelectedItemId, navigate, showErrorNotification, t, fetchPromptDto],
   );
@@ -1404,9 +1406,6 @@ const CatalogView: FC<Props> = ({
         createOptions={createOptions}
         hideCreateButton={isSelectorMode}
         hidePageTitle={isSelectorMode}
-        initialViewMode={
-          isCatalogTableViewEnabled ? CatalogViewMode.List : undefined
-        }
         selectedItemId={
           isSelectorMode ? (selectedItemId ?? undefined) : undefined
         }

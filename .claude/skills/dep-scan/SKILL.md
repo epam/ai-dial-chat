@@ -1,5 +1,6 @@
 ---
 name: dep-scan
+disable-model-invocation: true
 description: Runs Trivy filesystem scan against the repo root and emits structured vulnerability findings (CVE, package, versions) in the SDLC reviewer schema. Use when an agent needs to detect known CVEs in project dependencies for downstream triage or human review.
 ---
 

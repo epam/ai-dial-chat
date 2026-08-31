@@ -1,5 +1,6 @@
 ---
 name: snyk-jira-ingest
+disable-model-invocation: true
 description: Pull REAL Snyk SAST findings from EPAM Jira (Data Center) via the search-export API using a Personal Access Token, and emit them as a stage-output.json artifact for a downstream triage stage. Use when you want the actual Jira-tracked Snyk findings (the same set a human gets by clicking Export on the security filter) rather than a synthetic fixture.
 ---
 

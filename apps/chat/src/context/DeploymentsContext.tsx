@@ -456,6 +456,18 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [rawDeployments, schemas]);
 
+  /*
+   * `restoreDefaultSelection` is a one-shot action fired when the new-chat
+   * route mounts, not a reaction to the catalog changing. Reading `items`
+   * through a ref keeps that callback's identity stable, so a deployments
+   * refetch — which rebuilds `items` — cannot re-fire the caller's effect and
+   * silently discard the selection the user just made.
+   */
+  const itemsRef = useRef(items);
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
   const resolvedSelectedDeploymentId = useMemo(
     () =>
       selectedItemId == null
@@ -527,13 +539,13 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       ? defaultDeploymentIdRef.current
       : null;
     const resolved = resolveInitialSelection(
-      items,
+      itemsRef.current,
       null,
       userConfigSelectedIdRef.current,
       effectiveDefaultDeploymentId,
     );
     if (resolved != null) setSelectedItemIdState(resolved);
-  }, [items]);
+  }, []);
 
   const contextValue = useMemo(
     () => ({

@@ -566,6 +566,38 @@ Where `applicationsApi` is the generated `ApplicationsApi` instance (from `api-c
 
 ---
 
+### Requirement: Application ID encoding contract
+
+Application IDs returned by `POST /api/v1/applications` (`createApplication` in `apps/chat-api/src/applications/applications.service.ts`) SHALL have their name component percent-encoded (`encodeURIComponent`) before being included in the response `id` field. This makes the create response consistent with IDs returned by `GET /api/v1/applications`, which are passed through from DIAL Core where they are always stored percent-encoded.
+
+**Invariant**: `CreatedApplicationDto.id` satisfies `/^(?:[\w.\-:@/()]|%[\dA-Fa-f]{2})+$/` — the same pattern `DEPLOYMENT_ID_PATTERN` enforces on `CreateConversationDto.deploymentId` in `apps/chat-api/src/conversations/`.
+
+`AppPreviewChat` SHALL normalize the `appId` prop before forwarding it as `deploymentId` to `createConversation`. The normalization (`normalizeDeploymentId` in `AppPreviewChat.tsx`) is idempotent: it splits on `/`, decodes each segment with `decodeURIComponent` (falling back to `encodeURIComponent` on malformed sequences), then re-encodes with `encodeURIComponent`. This handles both:
+- Already-encoded IDs — from apps created after the encoding fix (no double-encoding).
+- Legacy IDs with raw spaces — from apps created before the fix, where `searchParams.get(AppsEditorQuery.AppId)` returns the raw percent-decoded string after a page reload.
+
+**`startStream` is exempt**: `appId` forwarded as the model identifier to `startStream` is the raw prop value; it is not sent as `deploymentId` to the conversations creation endpoint and is not subject to `DEPLOYMENT_ID_PATTERN`.
+
+#### Scenario: createApplication response ID is percent-encoded
+
+- **WHEN** `POST /api/v1/applications` is called with `name = "No Temp 3"` and `version = "0.0.1"`
+- **THEN** the response `id` is `"applications/<bucket>/No%20Temp%203__0.0.1"` (space → `%20`)
+- **AND** `GET /api/v1/applications` returns the same percent-encoded ID for this application
+
+#### Scenario: AppPreviewChat normalizes a legacy raw-space appId before creating a conversation
+
+- **WHEN** `AppPreviewChat` receives `appId = "applications/<bucket>/No Temp 3__0.0.1"` (raw space, from a pre-fix app)
+- **AND** the user sends a first message
+- **THEN** `POST /api/v1/conversations` is called with `deploymentId = "applications/<bucket>/No%20Temp%203__0.0.1"`
+- **AND** the request succeeds (no 400 from `DEPLOYMENT_ID_PATTERN`)
+
+#### Scenario: normalizeDeploymentId is idempotent on already-encoded IDs
+
+- **WHEN** `appId = "applications/<bucket>/No%20Temp%203__0.0.1"` (already encoded, from a post-fix app)
+- **THEN** `POST /api/v1/conversations` is called with `deploymentId = "applications/<bucket>/No%20Temp%203__0.0.1"` (unchanged — no double-encoding to `%2520`)
+
+---
+
 ### Requirement: Unit tests for GeneralForm
 
 `apps/chat/src/pages/AppsEditor/tests/GeneralForm.spec.tsx` SHALL cover:

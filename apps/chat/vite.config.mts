@@ -29,115 +29,115 @@ export default defineConfig(() => ({
        * delimiters that LLMs commonly emit. */
       'micromark-extension-math': 'micromark-extension-llm-math',
       '@epam/ai-dial-chat-shared': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/chat-shared/src/index.ts',
       ),
       '@epam/ai-dial-chat-hooks': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/chat-hooks/src/index.ts',
       ),
       '@epam/ai-dial-chat-overlay': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/chat-overlay/src/index.ts',
       ),
       '@epam/ai-dial-conversation-input': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/conversation-input/src/index.ts',
       ),
       '@epam/ai-dial-conversation-messages': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/conversation-messages/src/index.ts',
       ),
       '@epam/ai-dial-conversation-stages': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/conversation-stages/src/index.ts',
       ),
       '@epam/ai-dial-chat-api-client': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/chat-api-client/src/index.ts',
       ),
       '@epam/ai-dial-conversation-panel': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/conversation-panel/src/index.ts',
       ),
       '@epam/ai-dial-sidebar': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/sidebar/src/index.ts',
       ),
       '@epam/ai-dial-navigation-panel': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/navigation-panel/src/index.ts',
       ),
       '@epam/ai-dial-starter-buttons': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/starter-buttons/src/index.ts',
       ),
       '@epam/ai-dial-catalog': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/catalog/src/index.ts',
       ),
       '@epam/ai-dial-publish-panel': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/publish-panel/src/index.ts',
       ),
       '@epam/ai-dial-source-panel': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/source-panel/src/index.ts',
       ),
       '@epam/ai-dial-attachment-canvas': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/attachment-canvas/src/index.ts',
       ),
       '@epam/ai-dial-attachment-input': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/attachment-input/src/index.ts',
       ),
       '@epam/ai-dial-share': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/share/src/index.ts',
       ),
       '@epam/ai-dial-deployment-creation-form': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/deployment-creation-form/src/index.ts',
       ),
       '@epam/ai-dial-scheduled-tasks': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/scheduled-tasks/src/index.ts',
       ),
       '@epam/ai-dial-quotations': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/quotations/src/index.ts',
       ),
       '@epam/ai-dial-builder-form': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/builder-form/src/index.ts',
       ),
       '@epam/ai-dial-skill-editor': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/skill-editor/src/index.ts',
       ),
       '@epam/ai-dial-prompt-editor': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/prompt-editor/src/index.ts',
       ),
       '@epam/ai-dial-prompts': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/prompts/src/index.ts',
       ),
       '@epam/ai-dial-settings-panel': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/settings-panel/src/index.ts',
       ),
       '@epam/ai-dial-usage-dashboard': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../libs/usage-dashboard/src/index.ts',
       ),
       '@epam/ai-dial-react-pdf-highlighter/styles.css': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../node_modules/@epam/ai-dial-react-pdf-highlighter/dist/index.css',
       ),
       '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css': path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../node_modules/@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css',
       ),
     },

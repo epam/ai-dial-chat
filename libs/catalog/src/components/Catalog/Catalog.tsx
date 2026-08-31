@@ -74,7 +74,7 @@ export const Catalog: FC<CatalogProps> = ({
   hideCreateButton = false,
   hidePageTitle = false,
   isReadonly = false,
-  initialViewMode = CatalogViewMode.Grid,
+  initialViewMode = CatalogViewMode.List,
   selectedItemId,
   onCardClick,
   isLoading,
