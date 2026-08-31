@@ -4,6 +4,7 @@ import { Attributes } from '@/src/ui/domData';
 export const layoutContainer = '#theme-main';
 export const overlayFrame = '[name="overlay"]';
 export const favicon = 'link[rel="icon"]';
+export const tab = '[data-qa="tab-button"]';
 
 export const SendMessageSelectors = {
   sendMessageContainer: '[data-qa="send-message-container"]',
@@ -11,6 +12,7 @@ export const SendMessageSelectors = {
   proceedGenerating: '[data-qa="proceed-reply"]',
   sendMessage: '[data-qa="send"]',
   scrollDownButton: '[data-qa="scroll-down-button"]',
+  voiceRecord: '[data-qa="voice-record"]',
 };
 
 export const ChatSettingsSelectors = {
