@@ -1,7 +1,6 @@
 import {
   Catalog,
   CatalogItem,
-  CatalogViewMode,
   CredentialsLevel,
   CredentialStatus,
   ToolsetAuthenticationType,
@@ -243,9 +242,6 @@ const CatalogView: FC<Props> = ({
   );
 
   const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
-  const isCatalogTableViewEnabled = useUiFeature(
-    OverlayFeature.CatalogTableView,
-  );
   const isCatalogHideMyAppsEnabled = useUiFeature(
     OverlayFeature.CatalogHideMyApps,
   );
@@ -1410,9 +1406,6 @@ const CatalogView: FC<Props> = ({
         createOptions={createOptions}
         hideCreateButton={isSelectorMode}
         hidePageTitle={isSelectorMode}
-        initialViewMode={
-          isCatalogTableViewEnabled ? CatalogViewMode.List : undefined
-        }
         selectedItemId={
           isSelectorMode ? (selectedItemId ?? undefined) : undefined
         }
