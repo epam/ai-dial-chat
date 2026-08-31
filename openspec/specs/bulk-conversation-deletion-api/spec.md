@@ -8,9 +8,9 @@ Endpoints for deleting selected conversations and for clearing the entire user b
 
 ---
 
-### Requirement: POST /api/v1/conversation-deletions — delete selected owned conversations
+### Requirement: POST /api/v1/conversations/deletions — delete selected owned conversations
 
-The backend SHALL expose `POST /api/v1/conversation-deletions` in `apps/chat-api/src/conversations/conversation.controller.ts`. The handler MUST be named `deleteConversations` so the generator produces an identically-named SDK method. The controller MUST be versioned (`version: '1'`), annotated `@ApiTags('conversations')`, and delegate all logic to `ConversationService`.
+The backend SHALL expose `POST /api/v1/conversations/deletions` in `apps/chat-api/src/conversations/conversation.controller.ts` — a `@Post('deletions')` route on the existing conversations controller, not a separate top-level resource. The handler MUST be named `deleteConversations` so the generator produces an identically-named SDK method, MUST carry `@HttpCode(200)` (a `POST` would otherwise default to 201), and the controller MUST be versioned (`version: '1'`), annotated `@ApiTags('conversations')`, and delegate all logic to `ConversationService`, which forwards to `ConversationLifecycleService`.
 
 Request body validated by `DeleteConversationsBodyDto`:
 
@@ -49,7 +49,7 @@ The service SHALL:
 3. For each owned ID, extract the bucket-relative path (everything after `conversations/{sessionBucket}/`) and call `client.deleteConversation(bucket, encodeDialResourcePath(path), { headers: getBearerAuthHeaders(token) })`.
 4. All DIAL Core calls run concurrently via `Promise.allSettled`.
 5. Classify each result per §10 of design.md.
-6. For each successfully deleted conversation, fire a fire-and-forget call to remove the pin state.
+6. For each successfully deleted conversation, fire a fire-and-forget `userConfigService.updatePin(id, false, …)` to drop the pin state.
 7. Return `ConversationDeletionResultDto`. The service MUST NOT throw — all outcomes are encoded in the DTO.
 
 HTTP 200 is returned even when every item failed. The caller inspects `failed` to determine per-item outcomes.
@@ -69,19 +69,19 @@ Error codes:
 #### Scenario: All owned IDs deleted successfully
 
 - **GIVEN** the user owns conversations `["conversations/b/id-1", "conversations/b/id-2"]`
-- **WHEN** `POST /api/v1/conversation-deletions` is called with `{ "ids": ["conversations/b/id-1", "conversations/b/id-2"] }` and DIAL Core deletes both
+- **WHEN** `POST /api/v1/conversations/deletions` is called with `{ "ids": ["conversations/b/id-1", "conversations/b/id-2"] }` and DIAL Core deletes both
 - **THEN** the response is 200 with `{ requested: 2, deleted: 2, alreadyAbsent: 0, failed: [] }`
 
 #### Scenario: Duplicate IDs are deduplicated before processing
 
 - **GIVEN** the user owns conversation `"conversations/b/id-1"`
-- **WHEN** `POST /api/v1/conversation-deletions` is called with `{ "ids": ["conversations/b/id-1", "conversations/b/id-2", "conversations/b/id-1"] }` (id-1 duplicated; id-2 already absent from DIAL Core)
+- **WHEN** `POST /api/v1/conversations/deletions` is called with `{ "ids": ["conversations/b/id-1", "conversations/b/id-2", "conversations/b/id-1"] }` (id-1 duplicated; id-2 already absent from DIAL Core)
 - **THEN** the service deduplicates to 2 unique IDs; the response has `requested: 2`
 
 #### Scenario: Already-absent IDs are treated as success
 
 - **GIVEN** `"conversations/b/id-1"` no longer exists in DIAL Core (returns 404)
-- **WHEN** `POST /api/v1/conversation-deletions` is called with `{ "ids": ["conversations/b/id-1"] }`
+- **WHEN** `POST /api/v1/conversations/deletions` is called with `{ "ids": ["conversations/b/id-1"] }`
 - **THEN** the response is 200 with `{ requested: 1, deleted: 0, alreadyAbsent: 1, failed: [] }`
 
 #### Scenario: Retrying the same request is idempotent
@@ -92,28 +92,28 @@ Error codes:
 
 #### Scenario: Empty IDs array returns 400
 
-- **WHEN** `POST /api/v1/conversation-deletions` is called with `{ "ids": [] }`
+- **WHEN** `POST /api/v1/conversations/deletions` is called with `{ "ids": [] }`
 - **THEN** the response is 400 with a validation error referencing `ids`
 
 #### Scenario: More than 100 IDs returns 400
 
-- **WHEN** `POST /api/v1/conversation-deletions` is called with 101 IDs
+- **WHEN** `POST /api/v1/conversations/deletions` is called with 101 IDs
 - **THEN** the response is 400 with a validation error referencing `ids`
 
 #### Scenario: Missing body returns 400
 
-- **WHEN** `POST /api/v1/conversation-deletions` is called with no body
+- **WHEN** `POST /api/v1/conversations/deletions` is called with no body
 - **THEN** the response is 400
 
 #### Scenario: Malformed IDs (non-string elements) returns 400
 
-- **WHEN** `POST /api/v1/conversation-deletions` is called with `{ "ids": [123] }`
+- **WHEN** `POST /api/v1/conversations/deletions` is called with `{ "ids": [123] }`
 - **THEN** the response is 400 with a validation error
 
 #### Scenario: IDs from another user's bucket are rejected as FORBIDDEN
 
 - **GIVEN** the session bucket is `"my-bucket"` and the request contains `"conversations/other-bucket/id-1"`
-- **WHEN** `POST /api/v1/conversation-deletions` is called
+- **WHEN** `POST /api/v1/conversations/deletions` is called
 - **THEN** the response is 200 with `failed: [{ id: "conversations/other-bucket/id-1", code: "FORBIDDEN" }]` and no DIAL Core delete call is made for that ID
 
 #### Scenario: Shared conversation IDs are rejected as FORBIDDEN
@@ -131,25 +131,25 @@ Error codes:
 #### Scenario: Partial upstream failure returns 200 with mixed result
 
 - **GIVEN** the user owns `["conversations/b/id-1", "conversations/b/id-2"]` and DIAL Core deletes `id-1` but returns 5xx for `id-2`
-- **WHEN** `POST /api/v1/conversation-deletions` is called with both IDs
+- **WHEN** `POST /api/v1/conversations/deletions` is called with both IDs
 - **THEN** the response is 200 with `{ requested: 2, deleted: 1, alreadyAbsent: 0, failed: [{ id: "conversations/b/id-2", code: "UPSTREAM_ERROR" }] }`
 
 #### Scenario: Complete upstream failure returns 200 with all items failed
 
 - **GIVEN** DIAL Core returns 5xx for every ID in the request
-- **WHEN** `POST /api/v1/conversation-deletions` is called with 3 IDs
+- **WHEN** `POST /api/v1/conversations/deletions` is called with 3 IDs
 - **THEN** the response is 200 with `{ requested: 3, deleted: 0, alreadyAbsent: 0, failed: [<3 items with code UPSTREAM_ERROR>] }`
 
 #### Scenario: Pin state is cleaned up for deleted conversations
 
 - **GIVEN** `"conversations/b/id-1"` is successfully deleted from DIAL Core and was pinned
-- **WHEN** `POST /api/v1/conversation-deletions` is called
+- **WHEN** `POST /api/v1/conversations/deletions` is called
 - **THEN** `userConfigService.updatePin("conversations/b/id-1", false, ...)` is called (fire-and-forget; result does not affect the HTTP response)
 
 #### Scenario: Rate limit is enforced
 
 - **GIVEN** 5 requests have already been processed within the current 60-second window
-- **WHEN** a 6th `POST /api/v1/conversation-deletions` is sent
+- **WHEN** a 6th `POST /api/v1/conversations/deletions` is sent
 - **THEN** the response is 429
 
 #### Scenario: Raw DIAL Core error details are not exposed
@@ -160,9 +160,11 @@ Error codes:
 
 ---
 
-### Requirement: POST /api/v1/conversation-deletions/all — delete every conversation in the user bucket
+### Requirement: POST /api/v1/conversations/deletions/all — delete every conversation in the user bucket
 
-The backend SHALL expose `POST /api/v1/conversation-deletions/all`. The handler MUST be named `deleteAllConversations`. The endpoint requires explicit confirmation to prevent accidental collection deletion.
+The backend SHALL expose `POST /api/v1/conversations/deletions/all` — a `@Post('deletions/all')` route on the same conversations controller, also carrying `@HttpCode(200)`. The handler MUST be named `deleteAllConversations`. The endpoint requires explicit confirmation to prevent accidental collection deletion.
+
+The confirmation is enforced entirely by DTO validation: the handler binds the body only so the `ValidationPipe` runs, and does not read `confirm` itself — a request that reaches the handler has already been proven to carry `confirm: true`.
 
 Request body validated by `DeleteAllConversationsBodyDto`:
 
@@ -202,59 +204,59 @@ Error codes:
 #### Scenario: All conversations deleted when bucket is non-empty
 
 - **GIVEN** the user has 3 conversations in their bucket
-- **WHEN** `POST /api/v1/conversation-deletions/all` is called with `{ "confirm": true }` and DIAL Core deletes all 3
+- **WHEN** `POST /api/v1/conversations/deletions/all` is called with `{ "confirm": true }` and DIAL Core deletes all 3
 - **THEN** the response is 200 with `{ requested: 3, deleted: 3, alreadyAbsent: 0, failed: [] }`
 
 #### Scenario: Empty bucket returns 200 with zero counts
 
 - **GIVEN** the user's bucket contains no conversations
-- **WHEN** `POST /api/v1/conversation-deletions/all` is called with `{ "confirm": true }`
+- **WHEN** `POST /api/v1/conversations/deletions/all` is called with `{ "confirm": true }`
 - **THEN** the response is 200 with `{ requested: 0, deleted: 0, alreadyAbsent: 0, failed: [] }` and no delete calls are made
 
 #### Scenario: confirm missing returns 400
 
-- **WHEN** `POST /api/v1/conversation-deletions/all` is called with `{}`
+- **WHEN** `POST /api/v1/conversations/deletions/all` is called with `{}`
 - **THEN** the response is 400 with a validation error referencing `confirm`
 
 #### Scenario: confirm false returns 400
 
-- **WHEN** `POST /api/v1/conversation-deletions/all` is called with `{ "confirm": false }`
+- **WHEN** `POST /api/v1/conversations/deletions/all` is called with `{ "confirm": false }`
 - **THEN** the response is 400
 
 #### Scenario: Metadata listing failure returns 502
 
 - **GIVEN** DIAL Core returns a 5xx when listing the user's bucket metadata
-- **WHEN** `POST /api/v1/conversation-deletions/all` is called
+- **WHEN** `POST /api/v1/conversations/deletions/all` is called
 - **THEN** the response is 502 and no delete calls are made
 
 #### Scenario: Metadata listing unreachable returns 503
 
 - **GIVEN** DIAL Core is unreachable (network timeout) during metadata listing
-- **WHEN** `POST /api/v1/conversation-deletions/all` is called
+- **WHEN** `POST /api/v1/conversations/deletions/all` is called
 - **THEN** the response is 503
 
 #### Scenario: Partial upstream failure during all-delete returns 200 with mixed result
 
 - **GIVEN** the bucket has 3 conversations and DIAL Core deletes 2 but returns 5xx for 1
-- **WHEN** `POST /api/v1/conversation-deletions/all` is called
+- **WHEN** `POST /api/v1/conversations/deletions/all` is called
 - **THEN** the response is 200 with `{ requested: 3, deleted: 2, alreadyAbsent: 0, failed: [{ code: "UPSTREAM_ERROR" }] }`
 
 #### Scenario: Retrying all-delete on partially-cleared bucket
 
 - **GIVEN** a first call deleted 5 of 8 conversations; 3 remain
-- **WHEN** `POST /api/v1/conversation-deletions/all` is called again
+- **WHEN** `POST /api/v1/conversations/deletions/all` is called again
 - **THEN** only the 3 remaining conversations are listed and deleted; the previously-deleted 5 are no longer in the bucket and are not counted
 
 #### Scenario: Pin state is cleaned up for all deleted conversations
 
 - **GIVEN** 2 of the 3 conversations were pinned
-- **WHEN** `POST /api/v1/conversation-deletions/all` is called and all 3 are deleted
+- **WHEN** `POST /api/v1/conversations/deletions/all` is called and all 3 are deleted
 - **THEN** `userConfigService.updatePin` is called for all 3 IDs (fire-and-forget; result does not affect the HTTP response)
 
 #### Scenario: Rate limit is enforced
 
 - **GIVEN** 2 requests have already been processed within the current 60-second window
-- **WHEN** a 3rd `POST /api/v1/conversation-deletions/all` is sent
+- **WHEN** a 3rd `POST /api/v1/conversations/deletions/all` is sent
 - **THEN** the response is 429
 
 ---
@@ -306,31 +308,31 @@ Neither wrapper SHALL call `base.ts` helpers or construct `/api/v1/...` strings 
 
 Integration tests in `apps/chat-api/src/conversations/tests/conversation.controller.integration.spec.ts` SHALL cover:
 
-- `POST /api/v1/conversation-deletions` — 200 with valid body, 400 with empty array, 400 with array of 101 IDs, 400 with non-string element, 400 with missing body
-- `POST /api/v1/conversation-deletions/all` — 200 with `{ confirm: true }`, 400 with `{ confirm: false }`, 400 with missing `confirm`
+- `POST /api/v1/conversations/deletions` — 200 with valid body, 400 with empty array, 400 with array of 101 IDs, 400 with non-string element, 400 with missing body
+- `POST /api/v1/conversations/deletions/all` — 200 with `{ confirm: true }`, 400 with `{ confirm: false }`, 400 with missing `confirm`
 
 Tests follow the existing pattern: mock `ConversationService` via `{ provide: ConversationService, useValue: service }`, stub service methods with `vi.fn()`, and assert HTTP status codes and response body shapes.
 
 #### Scenario: deleteConversations returns 200 with mocked result
 
 - **GIVEN** the service mock returns `{ requested: 2, deleted: 2, alreadyAbsent: 0, failed: [] }`
-- **WHEN** `POST /api/v1/conversation-deletions` is called with `{ "ids": ["conversations/b/id-1", "conversations/b/id-2"] }`
+- **WHEN** `POST /api/v1/conversations/deletions` is called with `{ "ids": ["conversations/b/id-1", "conversations/b/id-2"] }`
 - **THEN** the response is 200 and the body matches the mocked result
 
 #### Scenario: Empty ids array returns 400
 
-- **WHEN** `POST /api/v1/conversation-deletions` is called with `{ "ids": [] }`
+- **WHEN** `POST /api/v1/conversations/deletions` is called with `{ "ids": [] }`
 - **THEN** the response is 400 and the service is never called
 
 #### Scenario: deleteAllConversations returns 200 with mocked result
 
 - **GIVEN** the service mock returns `{ requested: 5, deleted: 5, alreadyAbsent: 0, failed: [] }`
-- **WHEN** `POST /api/v1/conversation-deletions/all` is called with `{ "confirm": true }`
+- **WHEN** `POST /api/v1/conversations/deletions/all` is called with `{ "confirm": true }`
 - **THEN** the response is 200 and the body matches the mocked result
 
 #### Scenario: confirm false returns 400 and service is never called
 
-- **WHEN** `POST /api/v1/conversation-deletions/all` is called with `{ "confirm": false }`
+- **WHEN** `POST /api/v1/conversations/deletions/all` is called with `{ "confirm": false }`
 - **THEN** the response is 400 and the service mock is never called
 
 ---
@@ -340,7 +342,7 @@ Tests follow the existing pattern: mock `ConversationService` via `{ provide: Co
 Unit tests in `apps/chat-api/src/conversations/lifecycle/tests/conversation-lifecycle.service.spec.ts` SHALL cover the service deletion methods:
 
 - `deleteConversations`: deduplication; ownership rejection (FORBIDDEN); DIAL Core 404 → alreadyAbsent; DIAL Core success → deleted; DIAL Core 5xx → UPSTREAM_ERROR in failed; mixed outcomes; fire-and-forget pin cleanup called for deleted IDs only
-- `deleteAllConversations`: empty bucket returns zero counts immediately; non-empty bucket delegates to `deleteConversations`; metadata listing error throws BadGatewayException
+- `deleteAllConversations`: empty bucket returns zero counts immediately; non-empty bucket delegates to `deleteConversations` with the listed ids; metadata listing error throws BadGatewayException
 
 #### Scenario: Service deduplicates before counting
 

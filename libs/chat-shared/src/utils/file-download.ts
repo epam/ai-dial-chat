@@ -1,3 +1,33 @@
+import { MIME_TYPE_EXT_MAP } from '../constants/mime-types';
+
+/**
+ * Returns `name` with a file extension appended when it lacks one.
+ * Priority: extension already present → extension from the last segment of `url` → extension from `contentType` via `MIME_TYPE_EXT_MAP`.
+ */
+export const ensureDownloadFilename = (
+  name: string,
+  url: string | undefined,
+  contentType: string | undefined,
+): string => {
+  const dot = name.lastIndexOf('.');
+  if (dot > 0 && dot < name.length - 1) return name;
+
+  if (url != null) {
+    const segment = url.split(/[?#]/)[0].split('/').pop() ?? '';
+    const segDot = segment.lastIndexOf('.');
+    if (segDot > 0 && segDot < segment.length - 1) {
+      return `${name}.${segment.slice(segDot + 1)}`;
+    }
+  }
+
+  if (contentType != null) {
+    const ext = MIME_TYPE_EXT_MAP[contentType];
+    if (ext != null) return `${name}.${ext}`;
+  }
+
+  return name;
+};
+
 /** Maps a fenced-code-block language identifier to a file extension (without the leading dot). */
 const LANGUAGE_EXTENSIONS: Record<string, string> = {
   typescript: 'ts',

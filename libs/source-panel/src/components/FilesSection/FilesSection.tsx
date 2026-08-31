@@ -1,6 +1,6 @@
+import { AttachmentCard } from '@epam/ai-dial-attachment-input';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { AttachmentCard } from '@epam/ai-dial-conversation-input';
 import { memo, type FC } from 'react';
 
 /** Props for the FilesSection component. */

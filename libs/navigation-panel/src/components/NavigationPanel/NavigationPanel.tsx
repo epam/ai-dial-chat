@@ -1,5 +1,9 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, IconButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  IconButton,
+} from '@epam/ai-dial-ui-kit';
 import { Fragment, memo, useMemo, type FC, type ReactNode } from 'react';
 import type {
   NavigationLinkRenderer,
@@ -38,6 +42,7 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
           '--np-bg': colors?.background,
           '--np-item-text': colors?.itemText,
           '--np-item-active-text': colors?.itemActiveText,
+          '--np-item-selected-bg': colors?.itemSelectedBackground,
           '--np-item-hover-bg': colors?.itemHoverBackground,
           '--np-item-active-bg': colors?.itemActiveBackground,
           '--np-font-family': typography?.fontFamily,
@@ -75,14 +80,19 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
                 {renderLink(
                   item,
                   <IconButton
-                    icon={<item.icon size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+                    icon={
+                      <item.icon
+                        size={DIAL_ICON_SIZE.LG}
+                        stroke={DIAL_KIT_ICON_STROKE}
+                      />
+                    }
                     aria-label={item.label}
                     aria-current={item.isActive ? 'page' : undefined}
                     tooltipProps={{ tooltip: item.label }}
                     tabIndex={-1}
                     className={mergeClasses(
                       styles.item,
-                      'rounded',
+                      'rounded-xl',
                       item.isActive && styles.itemActive,
                     )}
                   />,

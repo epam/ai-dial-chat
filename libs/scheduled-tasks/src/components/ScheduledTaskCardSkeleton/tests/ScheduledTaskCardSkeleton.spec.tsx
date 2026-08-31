@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ScheduledTaskCardSkeleton } from '../ScheduledTaskCardSkeleton';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   // Read by @epam/ai-dial-chat-shared at module init, not by the component
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   CardShell: ({

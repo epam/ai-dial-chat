@@ -5,12 +5,14 @@ import {
 import {
   ConversationExportMode,
   ConversationTransferErrorCode,
-  ConversationTransferJobStatus,
-  ConversationTransferSubjectKind,
   useConversationExport,
   useConversationImport,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import {
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+} from '@epam/ai-dial-chat-shared';
 import {
   act,
   fireEvent,
@@ -132,6 +134,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       description,
       onConfirm,
       onCancel,
+      onClose,
       isLoading,
       disableConfirmButton,
     }: {
@@ -141,7 +144,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       cancelLabel: string;
       description?: ReactNode;
       onConfirm: () => void;
-      onCancel: () => void;
+      onCancel?: () => void;
+      onClose?: () => void;
       isLoading?: boolean;
       disableConfirmButton?: boolean;
     }) => {
@@ -156,7 +160,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
           >
             {confirmLabel}
           </button>
-          <button onClick={onCancel}>{cancelLabel}</button>
+          <button onClick={onCancel ?? onClose}>{cancelLabel}</button>
         </div>
       );
     },
@@ -200,9 +204,43 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         {closable && <button onClick={onClose}>Close notification</button>}
       </div>
     ),
-    Popup: ({ open, children }: { open: boolean; children?: ReactNode }) => {
+    Popup: ({
+      open,
+      header,
+      children,
+      onClose,
+      mainButtons,
+    }: {
+      open: boolean;
+      header?: ReactNode;
+      children?: ReactNode;
+      onClose?: () => void;
+      mainButtons?: Array<{
+        label: ReactNode;
+        disabled?: boolean;
+        onClick?: () => void;
+      }>;
+    }) => {
       if (!open) return null;
-      return <div role="dialog">{children}</div>;
+      return (
+        <div
+          role="dialog"
+          aria-label={typeof header === 'string' ? header : undefined}
+        >
+          {header && <h2>{header}</h2>}
+          <button aria-label="Close popup" onClick={onClose} />
+          {children}
+          {mainButtons?.map((button, index) => (
+            <button
+              key={index}
+              disabled={button.disabled}
+              onClick={button.onClick}
+            >
+              {button.label}
+            </button>
+          ))}
+        </div>
+      );
     },
   };
 });
@@ -221,11 +259,55 @@ vi.mock('@tabler/icons-react', () => ({
   IconUserOff: () => null,
   IconWorldShare: () => null,
   IconWorldOff: () => null,
+  IconAlertCircleFilled: () => null,
+  IconChevronDown: () => null,
+  IconChevronUp: () => null,
+  IconCircleCheckFilled: () => null,
+  IconRefresh: () => null,
+  IconSparkles: () => null,
+  IconX: () => null,
 }));
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
-}));
+vi.mock('react-i18next', async () => {
+  const { default: en } = await import('../../../i18n/locales/en.json');
+  const translatedKeys = new Set([
+    'conversationPanel.rename.renameTitle',
+    'conversationPanel.rename.renameInputPlaceholder',
+    'conversationPanel.rename.renameWithAiLabel',
+    'conversationPanel.rename.renameWithAiError',
+    'conversationPanel.rename.renameTitleTooLong',
+    'conversationExport.queueTitle',
+    'conversationExport.allConversationsJobLabel',
+    'conversationExport.closeJobAriaLabel',
+    'conversationExport.retryJobAriaLabel',
+    'conversationExport.collapseQueueAriaLabel',
+    'conversationExport.expandQueueAriaLabel',
+    'conversationExport.closeQueueAriaLabel',
+  ]);
+
+  const resolveTranslation = (key: string): string | undefined => {
+    const value = key.split('.').reduce<unknown>((current, segment) => {
+      if (typeof current !== 'object' || current === null) return undefined;
+      return (current as Record<string, unknown>)[segment];
+    }, en);
+
+    return typeof value === 'string' ? value : undefined;
+  };
+
+  return {
+    useTranslation: () => ({
+      t: (key: string, params?: { title?: string }) => {
+        if (!translatedKeys.has(key)) return key;
+
+        return (resolveTranslation(key) ?? key).replace(
+          '{{title}}',
+          params?.title ?? '',
+        );
+      },
+      i18n: { language: 'en' },
+    }),
+  };
+});
 
 vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
@@ -261,38 +343,10 @@ vi.mock('../../../constants/routes', () => ({
   getConversationRoute: (id: string) => `/conversations/${id}`,
   normalizeConversationId: (id: string) => id,
 }));
-vi.mock('../../../utils/get-model-id-from-conversation-id', () => ({
-  getModelIdFromConversationId: () => undefined,
-}));
 vi.mock('../../../utils/icon-path', () => ({
   resolveCatalogIconUrl: (url: string) => url,
 }));
-vi.mock('../../RenameConversationPopup/RenameConversationPopup', () => ({
-  default: ({
-    isOpen,
-    currentTitle,
-    error,
-    onSave,
-    onCancel,
-  }: {
-    isOpen: boolean;
-    currentTitle: string;
-    isSaving: boolean;
-    error: string | null;
-    onSave: (newTitle: string) => void;
-    onCancel: () => void;
-  }) => {
-    if (!isOpen) return null;
-    return (
-      <div role="dialog" aria-label="rename conversation">
-        <span>{currentTitle}</span>
-        {error && <span role="alert">{error}</span>}
-        <button onClick={() => onSave('New Title')}>Save</button>
-        <button onClick={onCancel}>Cancel</button>
-      </div>
-    );
-  },
-}));
+
 vi.mock(
   '../../PublishConversationPanelContainer/PublishConversationPanelContainer',
   () => ({
@@ -316,40 +370,6 @@ vi.mock(
     ),
   }),
 );
-vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
-  default: ({
-    title,
-    jobs,
-    onDismiss,
-    onRetry,
-  }: {
-    title: string;
-    jobs: Array<{
-      id: string;
-      subject: { kind: string; title?: string };
-      status: string;
-    }>;
-    onClose: () => void;
-    onDismiss: (jobId: string) => void;
-    onRetry: (jobId: string) => void;
-  }) => {
-    if (jobs.length === 0) return null;
-    return (
-      <div role="status">
-        <span>{title}</span>
-        {jobs.map((job) => (
-          <div key={job.id}>
-            <span>{job.subject.title ?? 'All conversations'}</span>
-            {job.status === 'failed' && (
-              <button onClick={() => onRetry(job.id)}>Retry</button>
-            )}
-            <button onClick={() => onDismiss(job.id)}>Close</button>
-          </div>
-        ))}
-      </div>
-    );
-  },
-}));
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
@@ -417,6 +437,7 @@ const mockRetryJob = vi.fn();
 const mockImportConversations = vi.fn().mockResolvedValue(undefined);
 const mockDismissImportJob = vi.fn();
 const mockRetryImportJob = vi.fn();
+const mockGenerateConversationTitle = vi.fn().mockResolvedValue('AI title');
 
 const EXPORT_LABEL = 'conversationExport.exportLabel';
 const EXPORT_ALL_LABEL = 'conversationExport.exportAllLabel';
@@ -446,6 +467,7 @@ const baseContextValue = {
   markConversationViewed: vi.fn(),
   deleteConversation: vi.fn(),
   renameConversation: vi.fn(),
+  generateConversationTitle: mockGenerateConversationTitle,
   duplicateConversation: vi.fn(),
   refreshConversations: vi.fn(),
   deleteAllConversations: mockDeleteAllConversations,
@@ -990,15 +1012,18 @@ describe('ConversationPanelView — rename', () => {
     });
   });
 
-  it('clicking rename opens the popup with the current title', () => {
+  it('clicking rename opens the popup with the current title', async () => {
+    const user = userEvent.setup();
     render(<ConversationPanelView {...defaultProps} />);
 
-    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+    await user.click(screen.getByRole('button', { name: RENAME_LABEL }));
 
     const dialog = screen.getByRole('dialog', {
-      name: 'rename conversation',
+      name: 'Rename Chat',
     });
-    expect(within(dialog).getByText('Chat 1')).toBeTruthy();
+    expect(
+      (within(dialog).getByRole('textbox') as HTMLInputElement).value,
+    ).toBe('Chat 1');
   });
 
   it('confirming rename does not navigate', async () => {
@@ -1012,9 +1037,14 @@ describe('ConversationPanelView — rename', () => {
     fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
 
     const dialog = screen.getByRole('dialog', {
-      name: 'rename conversation',
+      name: 'Rename Chat',
     });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    fireEvent.change(within(dialog).getByRole('textbox'), {
+      target: { value: 'New Title' },
+    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'buttons.save' }),
+    );
 
     expect(mockRenameConversation).toHaveBeenCalledWith('conv1', 'New Title');
     expect(mockNavigate).not.toHaveBeenCalled();
@@ -1029,22 +1059,57 @@ describe('ConversationPanelView — rename', () => {
   });
 
   it('a failed rename keeps the popup open and raises no success notification', async () => {
+    const user = userEvent.setup();
     vi.mocked(useConversations).mockReturnValue({
       ...baseContextValue,
       renameConversation: vi.fn().mockRejectedValue(new Error('boom')),
     } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+    await user.click(screen.getByRole('button', { name: RENAME_LABEL }));
 
     const dialog = screen.getByRole('dialog', {
-      name: 'rename conversation',
+      name: 'Rename Chat',
     });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await user.clear(within(dialog).getByRole('textbox'));
+    await user.type(within(dialog).getByRole('textbox'), 'New Title');
+    await user.click(
+      within(dialog).getByRole('button', { name: 'buttons.save' }),
+    );
 
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'conversationPanel.rename.renameError',
+    );
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(mockShowNotification).not.toHaveBeenCalledWith(
       expect.objectContaining({ variant: 'success' }),
+    );
+  });
+
+  it('passes translated popupTitle label to the rename popup', async () => {
+    const user = userEvent.setup();
+    render(<ConversationPanelView {...defaultProps} />);
+    await user.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Rename Chat' });
+    expect(
+      within(dialog).getByRole('heading', {
+        name: 'Rename Chat',
+      }),
+    ).toBeTruthy();
+  });
+
+  it('wires AI title generation into the real rename popup', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rename with AI' }));
+
+    expect(mockGenerateConversationTitle).toHaveBeenCalledWith('conv1');
+    await waitFor(() =>
+      expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe(
+        'AI title',
+      ),
     );
   });
 });
@@ -1077,10 +1142,11 @@ describe('ConversationPanelView — share', () => {
     expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
   });
 
-  it('clicking Share opens the popover for the conversation path', () => {
+  it('clicking Share opens the popover for the conversation path', async () => {
+    const user = userEvent.setup();
     render(<ConversationPanelView {...defaultProps} />);
 
-    fireEvent.click(screen.getByRole('button', { name: SHARE_LABEL }));
+    await user.click(screen.getByRole('button', { name: SHARE_LABEL }));
 
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText('conv1')).toBeTruthy();
@@ -1159,10 +1225,11 @@ describe('ConversationPanelView — publish', () => {
     expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
   });
 
-  it('clicking Publish opens the panel for the conversation path and title', () => {
+  it('clicking Publish opens the panel for the conversation path and title', async () => {
+    const user = userEvent.setup();
     render(<ConversationPanelView {...defaultProps} />);
 
-    fireEvent.click(screen.getByRole('button', { name: PUBLISH_LABEL }));
+    await user.click(screen.getByRole('button', { name: PUBLISH_LABEL }));
 
     const dialog = screen.getByRole('dialog', {
       name: 'publish conversation',
@@ -1344,7 +1411,7 @@ describe('ConversationPanelView — export', () => {
     });
 
     render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close "Chat 2"' }));
 
     expect(mockDismissJob).toHaveBeenCalledWith('job-2');
   });
@@ -1369,9 +1436,37 @@ describe('ConversationPanelView — export', () => {
     });
 
     render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry "Chat 3"' }));
 
     expect(mockRetryJob).toHaveBeenCalledWith('job-3');
+  });
+
+  it('renders the real export queue with its translated collapse label', () => {
+    vi.mocked(useConversationExport).mockReturnValue({
+      jobs: [
+        {
+          id: 'job-label',
+          subject: {
+            kind: ConversationTransferSubjectKind.Single,
+            title: 'Chat Label',
+          },
+          status: ConversationTransferJobStatus.InProgress,
+        },
+      ],
+      exportSingle: mockExportSingle,
+      exportAll: mockExportAll,
+      dismissJob: mockDismissJob,
+      retryJob: mockRetryJob,
+      dismissAll: vi.fn(),
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Collapse queue',
+      }),
+    ).toBeTruthy();
   });
 });
 
@@ -1496,7 +1591,7 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
     render(<ConversationPanelView {...defaultProps} />);
 
     expect(screen.getAllByRole('status')).toHaveLength(2);
-    expect(screen.getByText('conversationExport.queueTitle')).toBeTruthy();
+    expect(screen.getByText('Exporting')).toBeTruthy();
     expect(screen.getByText('conversationImport.queueTitle')).toBeTruthy();
   });
 
@@ -1544,7 +1639,7 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
 
     render(<ConversationPanelView {...defaultProps} />);
 
-    expect(screen.getByText('conversationExport.queueTitle')).toBeTruthy();
+    expect(screen.getByText('Exporting')).toBeTruthy();
   });
 
   it('wires the import queue dismiss button to the import hook', () => {
@@ -1566,7 +1661,9 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
     });
 
     render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Close "Imported Chat"' }),
+    );
 
     expect(mockDismissImportJob).toHaveBeenCalledWith('imp-1');
     expect(mockDismissJob).not.toHaveBeenCalled();
@@ -1591,7 +1688,9 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
     });
 
     render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Retry "Imported Chat"' }),
+    );
 
     expect(mockRetryImportJob).toHaveBeenCalledWith('imp-1');
     expect(mockRetryJob).not.toHaveBeenCalled();

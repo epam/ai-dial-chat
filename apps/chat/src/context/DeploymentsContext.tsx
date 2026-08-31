@@ -5,6 +5,10 @@ import {
   type DeploymentItemDto,
   type DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
+import {
+  findDeploymentByIdOrReference,
+  getApiErrorDetails,
+} from '@epam/ai-dial-chat-hooks';
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import {
   createContext,
@@ -19,7 +23,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { DeploymentSelectorI18nKeys } from '../constants/translation-keys';
 import { useLanguage } from '../hooks/language/useLanguage';
-import { getApiErrorDetails } from '../server-api/api-error';
 import { getApplicationSchemas } from '../server-api/application-schemas';
 import {
   getDeploymentConfiguration,
@@ -27,7 +30,6 @@ import {
 } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
 import { listToolsets } from '../server-api/toolsets';
-import { findDeploymentByIdOrReference } from '../utils/deployment-id';
 import { resolveLocalizedText } from '../utils/locale';
 import { useAppConfig } from './AppConfigContext';
 import { useUser } from './auth/UserContext';

@@ -64,6 +64,31 @@ confirmation step and calls them only once the user confirms:
 />
 ```
 
+#### Read-only mode
+
+`isReadonly` turns the whole catalog into a pure browsing surface. It is a
+single switch — the host does not have to withhold each callback by hand:
+
+- Browse cards drop the favorite star, the footer divider, and the "Featured"
+  tag. The footer row goes away entirely for an item with no folder path, since
+  the path is the only thing left in it.
+- The list view drops its "Favorite" column.
+- The "Create" button and the favorites strip are not rendered.
+- The details panel withholds its favorite star and every action that mutates
+  the item or the caller's relationship to it: Share, Publish, Unpublish, Edit,
+  Delete, "Remove from My List", "Revoke access", and the credentials
+  Log in / Log out / manage button.
+
+The non-mutating actions stay: the primary "Use in chat" and Download still
+render, as do search, sort, filters, tabs, and the details tabs.
+
+```tsx
+<Catalog items={catalogItems} favorites={[]} isReadonly />
+```
+
+`Card`, `CardGrid`, `ListView`, and `DetailsPanel` each accept `isReadonly`
+directly too, for hosts composing their own layout instead of using `Catalog`.
+
 ### CardGrid
 
 Virtualized grid view of catalog cards.
@@ -470,6 +495,11 @@ hide the recipient-side "Remove from My List", the owner-side "Revoke access",
 and "Unpublish" for items whose backing capability does not exist, without the
 lib knowing why. All three default to **visible** when omitted.
 
+`isFavoriteVisible` is the same family for the favorite star: returning `false`
+for an item hides the star in the browse grid, the list view, the favorites
+strip, and the details panel, and makes that item non-favoritable. It defaults
+to **visible** when omitted, so a predicate can only narrow visibility.
+
 ```tsx
 <Catalog
   items={items}
@@ -478,6 +508,8 @@ lib knowing why. All three default to **visible** when omitted.
   isUnshareVisible={(item) => item.type !== CatalogEntityType.Prompt}
   isRevokeShareVisible={(item) => item.type !== CatalogEntityType.Prompt}
   isUnpublishVisible={(item) => item.type !== CatalogEntityType.Prompt}
+  // Models are platform-managed, not user-owned apps — suppress the star.
+  isFavoriteVisible={(item) => item.type !== CatalogEntityType.Model}
   onUnshare={handleUnshare}
   onRevokeShare={handleRevokeShare}
   onUnpublish={handleUnpublish}
@@ -488,7 +520,8 @@ Each is combined (AND) with its built-in rule — `sharedWithMe`/`isMyApp` for
 unshare, `isMyApp` plus the recipient count resolved by
 `onFetchRecipientsCount` for revoke, and at least one resolved
 `getPublishHistory` folder for unpublish — so a predicate can only ever narrow
-visibility, never widen it.
+visibility, never widen it. `isFavoriteVisible` has no built-in rule beyond
+"visible by default", so it gates the star on its own.
 
 ## Types
 

@@ -1,9 +1,9 @@
+import * as useUsageDataModule from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BasicI18nKeys } from '../../../constants/translation-keys';
 import { createDeploymentsContextValue } from '../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import * as useUsageDataModule from '../../../hooks/useUsageData';
 import SettingsPage from '../SettingsPage';
 
 const mockUseFeatureFlag = vi.fn();
@@ -19,9 +19,14 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
 
-vi.mock('../../../hooks/useUsageData', () => ({
-  useUsageData: vi.fn(),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    useUsageData: vi.fn(),
+  };
+});
 
 vi.mocked(useUsageDataModule.useUsageData).mockReturnValue({
   usage: undefined,
@@ -61,7 +66,10 @@ describe('SettingsPage', () => {
   it('invokes useUsageData with the settingsPageEnabled flag when the Usage tab is active', () => {
     render(<SettingsPage />);
 
-    expect(useUsageDataModule.useUsageData).toHaveBeenCalledWith(true);
+    expect(useUsageDataModule.useUsageData).toHaveBeenCalledWith(
+      expect.any(Function),
+      true,
+    );
   });
 
   it('invokes useUsageData with enabled=false when the settingsPageEnabled flag is disabled', () => {
@@ -69,6 +77,9 @@ describe('SettingsPage', () => {
 
     render(<SettingsPage />);
 
-    expect(useUsageDataModule.useUsageData).toHaveBeenCalledWith(false);
+    expect(useUsageDataModule.useUsageData).toHaveBeenCalledWith(
+      expect.any(Function),
+      false,
+    );
   });
 });

@@ -1,5 +1,11 @@
-import { CopyButton, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input } from '@epam/ai-dial-ui-kit';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  GhostIconButton,
+  Input,
+} from '@epam/ai-dial-ui-kit';
+import { IconCheck, IconCopy } from '@tabler/icons-react';
 import { FC } from 'react';
 import styles from '../SharePopover/SharePopover.module.scss';
 
@@ -7,56 +13,61 @@ import styles from '../SharePopover/SharePopover.module.scss';
 interface LinkViewProps {
   /** The share URL shown in the read-only input. */
   url: string;
-  /** Label above the URL field. */
-  linkLabel: string;
   /** `aria-label` for the URL input. */
   linkAriaLabel: string;
   /** Whether the URL was just copied to the clipboard. */
   isCopied: boolean;
-  /** Copy button default label. */
+  /** Copy button default label, used for its `aria-label`/tooltip. */
   copyButtonLabel: string;
-  /** Copy button label after copying. */
+  /** Copy button label after copying, used for its `aria-label`/tooltip. */
   copiedButtonLabel: string;
   /** Called when the Copy button is clicked. */
   onCopy: () => void;
-  /** CSS class applied to the section label above the URL field. Defaults to `'dial-tiny-lead-semi-text'`. */
-  sectionLabelClassName?: string;
 }
 
-/** Read-only URL field with a copy-to-clipboard button. */
+/** Pill-shaped read-only URL field with an icon-only copy-to-clipboard button. */
 export const LinkView: FC<LinkViewProps> = ({
   url,
-  linkLabel,
   linkAriaLabel,
   isCopied,
   copyButtonLabel,
   copiedButtonLabel,
   onCopy,
-  sectionLabelClassName = 'dial-tiny-lead-semi-text',
 }) => (
   <>
-    <p
-      className={mergeClasses(
-        sectionLabelClassName,
-        'mt-3',
-        styles.sectionLabel,
-      )}
-    >
-      {linkLabel}
-    </p>
     <div
-      className={mergeClasses('flex items-center gap-2', styles.sectionLabel)}
+      className={mergeClasses(
+        'flex items-center gap-3 rounded-full px-4 py-2',
+        styles.linkRow,
+      )}
     >
       <Input
         readOnly
         value={url}
         aria-label={linkAriaLabel}
         containerClassName="min-w-0 flex-1"
+        wrapperClassName="border-0 bg-transparent px-0 outline-none"
       />
-      <CopyButton
-        copiedLabel={copiedButtonLabel}
-        copyLabel={copyButtonLabel}
-        isCopied={isCopied}
+      <GhostIconButton
+        icon={
+          isCopied ? (
+            <IconCheck
+              size={DIAL_ICON_SIZE.LG}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          ) : (
+            <IconCopy
+              size={DIAL_ICON_SIZE.LG}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          )
+        }
+        aria-label={isCopied ? copiedButtonLabel : copyButtonLabel}
+        tooltipProps={{
+          tooltip: isCopied ? copiedButtonLabel : copyButtonLabel,
+        }}
         onClick={onCopy}
       />
     </div>

@@ -1,4 +1,4 @@
-import { BASE_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { BASE_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconUser } from '@tabler/icons-react';
 import { memo, type FC, type ReactNode } from 'react';
 import { useSheetNavigation } from '../../hooks/useSheetNavigation';
@@ -74,7 +74,12 @@ export const NavigationMenuPage: FC<NavigationMenuPageProps> = memo(
               key={item.id}
               label={item.label}
               textClassName={textClassName}
-              icon={<item.icon size={BASE_ICON_SIZE} stroke={1.5} />}
+              icon={
+                <item.icon
+                  size={BASE_ICON_SIZE}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               onClick={() => handleSelectItem(item)}
             />
           ))}
@@ -82,7 +87,13 @@ export const NavigationMenuPage: FC<NavigationMenuPageProps> = memo(
             <SheetRow
               label={profileLabel}
               textClassName={textClassName}
-              icon={<IconUser size={BASE_ICON_SIZE} stroke={1.5} aria-hidden />}
+              icon={
+                <IconUser
+                  size={BASE_ICON_SIZE}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  aria-hidden
+                />
+              }
               onClick={handleOpenProfile}
             />
           )}

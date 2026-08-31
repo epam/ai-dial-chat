@@ -8,6 +8,7 @@ import {
   ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostButton,
   PrimaryButton,
@@ -222,7 +223,13 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
 
         <PrimaryButton
           label={labels.createButtonLabel}
-          iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
+          iconBefore={
+            <IconPlus
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          }
           onClick={onCreateClick}
           className="shrink-0"
         />

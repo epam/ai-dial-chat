@@ -192,7 +192,6 @@ export class AppConfigService {
     let announcementTitle: string | null = null;
     let announcementDescription: string | null = null;
     let announcements: AnnouncementItemDto[] = [];
-    let deepResearchToolId: string | null = null;
     let footerHtmlMessage = '';
     let customVisualizers: CustomVisualizerDto[] = [];
     let publicationFilterSources: string[] = DEFAULT_PUBLICATION_FILTER_SOURCES;
@@ -214,8 +213,6 @@ export class AppConfigService {
           typeof resolved === 'number' ? resolved : 5 * 1024 * 1024;
       } else if (def.key === 'deployments.defaultDeploymentId') {
         defaultDeploymentId = typeof resolved === 'string' ? resolved : null;
-      } else if (def.key === 'deployments.deepResearchToolId') {
-        deepResearchToolId = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'dialCore.externalUrl') {
         dialCoreExternalUrl = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'mcpApps.sandboxUrl') {
@@ -299,7 +296,6 @@ export class AppConfigService {
         announcements,
         footerHtmlMessage,
         enabledUiFeatures,
-        deepResearchToolId,
         customVisualizers,
         publicationFilterSources,
       },

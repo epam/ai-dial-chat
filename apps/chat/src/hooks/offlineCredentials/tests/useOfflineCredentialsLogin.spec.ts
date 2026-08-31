@@ -1,25 +1,29 @@
-import { renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  OAuthResourceKind,
-  ToolsetOAuthInitiationResultType,
-  ToolsetOAuthResultType,
-} from '../../../constants/toolsets';
 import {
   navigateToolsetOAuthPopup,
+  OAuthResourceKind,
   openToolsetOAuthPopup,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
   waitForToolsetOAuthResult,
-} from '../../../utils/toolsets';
+} from '@epam/ai-dial-chat-hooks';
+import { renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ROUTES } from '../../../types/routes';
 import {
   OfflineCredentialsLoginOutcomeType,
   useOfflineCredentialsLogin,
 } from '../useOfflineCredentialsLogin';
 
-vi.mock('../../../utils/toolsets', () => ({
-  navigateToolsetOAuthPopup: vi.fn(),
-  openToolsetOAuthPopup: vi.fn(),
-  waitForToolsetOAuthResult: vi.fn(),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    navigateToolsetOAuthPopup: vi.fn(),
+    openToolsetOAuthPopup: vi.fn(),
+    waitForToolsetOAuthResult: vi.fn(),
+  };
+});
 
 const CONNECT = {
   clientId: 'dial-chat',
@@ -71,6 +75,7 @@ describe('useOfflineCredentialsLogin', () => {
       fakePopup,
       expect.any(Object),
       'offline-credentials',
+      ROUTES.ToolsetSignIn,
       'USER',
       OAuthResourceKind.OfflineCredentials,
     );

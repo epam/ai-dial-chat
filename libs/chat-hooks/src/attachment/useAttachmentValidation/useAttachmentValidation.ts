@@ -6,39 +6,10 @@ import {
   AttachmentErrorReason,
   type Attachment,
 } from '@epam/ai-dial-chat-shared';
-import type { DialFileAcceptType } from '@epam/ai-dial-react-file-manager';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { mimeTypesToFileAccept } from '../../files/attachment-types';
 
 const DEFAULT_UNSUPPORTED_TYPE_DEBOUNCE_MS = 100;
-
-const ALL_FILES_ACCEPT_TYPE: DialFileAcceptType = '*/*';
-
-const isDialFileAcceptType = (type: string): type is DialFileAcceptType =>
-  type.startsWith('.') || type.includes('/');
-
-const mimeTypesToDialFileAcceptTypes = (
-  types?: string[],
-): DialFileAcceptType[] | undefined => {
-  if (types == null) {
-    return undefined;
-  }
-
-  return types
-    .map((type) => (type === '*' ? ALL_FILES_ACCEPT_TYPE : type))
-    .filter(isDialFileAcceptType);
-};
-
-/** Builds an `<input accept>` string from resolved MIME types, or `undefined` when any type accepts everything. */
-const mimeTypesToFileAccept = (types?: string[]): string | undefined => {
-  const dialFileAcceptTypes = mimeTypesToDialFileAcceptTypes(types);
-  if (dialFileAcceptTypes == null || dialFileAcceptTypes.length === 0) {
-    return undefined;
-  }
-  if (dialFileAcceptTypes.some((type) => type === ALL_FILES_ACCEPT_TYPE)) {
-    return undefined;
-  }
-  return dialFileAcceptTypes.join(',');
-};
 
 /** Reason a rejected attachment failed validation. */
 export enum AttachmentValidationErrorReason {

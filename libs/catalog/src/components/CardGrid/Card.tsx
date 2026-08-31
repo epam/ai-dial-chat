@@ -6,6 +6,7 @@ import {
 import {
   CardShell,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   FolderPath,
 } from '@epam/ai-dial-ui-kit';
@@ -33,6 +34,7 @@ export const Card: FC<CardProps> = ({
   onClick,
   initialIsStarred = false,
   onToggle,
+  isFavoriteVisible,
   featuredLabel = 'Featured',
   addToFavoritesAriaLabel = 'Add to favorites',
   removeFromFavoritesAriaLabel = 'Remove from favorites',
@@ -40,6 +42,7 @@ export const Card: FC<CardProps> = ({
   className,
   styles: cardStyles,
   credentialsBadgeLoggedOutLabel,
+  isReadonly = false,
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
 
@@ -70,6 +73,12 @@ export const Card: FC<CardProps> = ({
     '--cg-check-icon': cardStyles?.colors?.checkIcon,
     '--cg-footer-border': cardStyles?.colors?.footerBorder,
   });
+
+  const isFeaturedVisible = !isReadonly && item.isFeatured === true;
+  const isStarVisible = !isReadonly && isFavoriteVisible?.(item) !== false;
+  /* Read-only cards drop the whole footer row once the folder path — the only
+   * thing left in it without the star — has nothing to render. */
+  const isFooterVisible = !isReadonly || item.folder.length > 0;
 
   const handleClick = onClick ? () => onClick(item) : undefined;
 
@@ -109,12 +118,12 @@ export const Card: FC<CardProps> = ({
       className={mergeClasses(
         'box-border cursor-pointer gap-3',
         styles.card,
-        item.isFeatured ? styles.featuredCard : undefined,
+        isFeaturedVisible ? styles.featuredCard : undefined,
         isSelected ? styles.selectedCard : undefined,
         className,
       )}
     >
-      {item.isFeatured && (
+      {isFeaturedVisible && (
         <div className="absolute end-[22px] top-0 -translate-y-1/2">
           <FeaturedChip
             label={featuredLabel}
@@ -132,6 +141,7 @@ export const Card: FC<CardProps> = ({
             styles.checkIcon,
           )}
           aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
         />
       )}
 
@@ -174,31 +184,42 @@ export const Card: FC<CardProps> = ({
         <TopicsLine topics={item.topics} />
       </div>
 
-      <div className={mergeClasses('border-t pt-3', styles.footer)}>
-        <div className="flex items-center gap-2">
-          <div className="min-w-0 flex-1">
-            {item.folder.length > 0 && (
-              <FolderPath
-                segments={item.folder}
-                labelClassName={folderLabelClassName}
-                leafClassName={folderLeafClassName}
+      {isFooterVisible && (
+        <div
+          className={mergeClasses(
+            'pt-3',
+            !isReadonly && mergeClasses('border-t', styles.footer),
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              {item.folder.length > 0 && (
+                <FolderPath
+                  segments={item.folder}
+                  labelClassName={folderLabelClassName}
+                  leafClassName={folderLeafClassName}
+                />
+              )}
+            </div>
+            {isStarVisible && (
+              <StarToggleButton
+                isStarred={isStarred}
+                size={ElementSize.Small}
+                onClick={handleStarToggle}
+                ariaLabel={
+                  isStarred
+                    ? removeFromFavoritesAriaLabel
+                    : addToFavoritesAriaLabel
+                }
+                className={mergeClasses(
+                  styles.starBtn,
+                  !isStarred && styles.emptyStarHidden,
+                )}
               />
             )}
           </div>
-          <StarToggleButton
-            isStarred={isStarred}
-            size={ElementSize.Small}
-            onClick={handleStarToggle}
-            ariaLabel={
-              isStarred ? removeFromFavoritesAriaLabel : addToFavoritesAriaLabel
-            }
-            className={mergeClasses(
-              styles.starBtn,
-              !isStarred && styles.emptyStarHidden,
-            )}
-          />
         </div>
-      </div>
+      )}
     </CardShell>
   );
 };

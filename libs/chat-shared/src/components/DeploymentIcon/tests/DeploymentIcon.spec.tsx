@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type DeploymentIconProps, DeploymentIcon } from '../DeploymentIcon';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 

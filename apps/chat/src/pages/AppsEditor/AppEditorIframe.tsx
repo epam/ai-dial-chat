@@ -1,5 +1,19 @@
 import type { CatalogItemCredentials } from '@epam/ai-dial-catalog';
 import type { ApplicationSchemaSummaryDto } from '@epam/ai-dial-chat-api-client';
+import {
+  decodeToolsetId,
+  encodeToolsetId,
+  mapDeploymentDetailsDtoToEntityDetails,
+  mapToolsetCredentials,
+  navigateToolsetOAuthPopup,
+  openToolsetOAuthPopup,
+  subscribeToolsetLoginSuccess,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
+  waitForToolsetOAuthResult,
+} from '@epam/ai-dial-chat-hooks';
 import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,
@@ -12,12 +26,6 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetOAuthInitiationResultType,
-  ToolsetOAuthResultType,
-} from '../../constants/toolsets';
 import { AppsEditorI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -30,19 +38,8 @@ import type {
   TriggerSaveMessage,
 } from '../../types/apps-editor';
 import { AppsEditorEvent } from '../../types/apps-editor';
-import {
-  mapDeploymentDetailsDtoToEntityDetails,
-  mapToolsetCredentials,
-} from '../../utils/map-entity-details-to-catalog';
-import { subscribeToolsetLoginSuccess } from '../../utils/toolset-login-events';
-import {
-  decodeToolsetId,
-  encodeToolsetId,
-  navigateToolsetOAuthPopup,
-  openToolsetOAuthPopup,
-  toolsetDtoToForm,
-  waitForToolsetOAuthResult,
-} from '../../utils/toolsets';
+import { ROUTES } from '../../types/routes';
+import { toolsetDtoToForm } from '../../utils/toolsets';
 
 export interface AppEditorIframeHandle {
   triggerSave: (general?: TriggerSaveGeneralPayload) => void;
@@ -254,6 +251,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           popup,
           auth,
           encodedToolsetId,
+          ROUTES.ToolsetSignIn,
           credentialsLevel,
         );
         if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
@@ -271,6 +269,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           {
             toolsetId: encodedToolsetId,
             credentialsLevel,
+            callbackPath: ROUTES.ToolsetSignIn,
           },
         );
         if (result.type === ToolsetOAuthResultType.Success) {
@@ -438,7 +437,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     useEffect(() => {
       if (!targetOrigin) return undefined;
       let isStale = false;
-      const unsubscribe = subscribeToolsetLoginSuccess(
+      const unsubscribe = subscribeToolsetLoginSuccess<ToolsetCredentialsLevel>(
         ({ toolsetId, credentialsLevel }) => {
           const rawToolsetId = decodeToolsetId(toolsetId);
           void (async () => {

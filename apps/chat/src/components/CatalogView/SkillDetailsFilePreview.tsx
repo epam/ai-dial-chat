@@ -3,13 +3,13 @@ import {
   createLoadErrorCanvasContent,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import type { SkillFileContent } from '@epam/ai-dial-chat-hooks';
 import {
   SkillFileNodeKind,
   type SkillFileTreeNode,
 } from '@epam/ai-dial-skill-editor';
 import { type FC, useEffect, useMemo, useRef, useState } from 'react';
 import { useSkillFilePreviewSync } from '../../hooks/attachment/useSkillFilePreviewSync';
-import type { SkillFileContent } from '../../utils/skill-file-preview';
 import { SkillFilePreview } from '../SkillFilePreview/SkillFilePreview';
 
 interface Props {

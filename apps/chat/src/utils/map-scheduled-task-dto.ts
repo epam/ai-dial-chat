@@ -1,9 +1,12 @@
 import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
+import {
+  apSchedulerDayToJsDay,
+  jsDayToApSchedulerDay,
+  padTwoDigits,
+} from '@epam/ai-dial-chat-hooks';
 import type { ScheduledTaskItem } from '@epam/ai-dial-scheduled-tasks';
 import type { TFunction } from 'i18next';
 import { ScheduledTasksI18nKeys } from '../constants/translation-keys';
-import { apSchedulerDayToJsDay, jsDayToApSchedulerDay } from './cron-weekday';
-import { padTwoDigits } from './formatting';
 
 const EVERY_N_MINUTES_PATTERN = /^\*\/(\d+)$/;
 
@@ -50,7 +53,7 @@ const formatSubHourlyScheduleLabel = (
 /**
  * Converts stored UTC `hour`/`minute`/`day_of_week`/`day` cron fields back to
  * the browser's local time, mirroring `buildCronFields`'s local-to-UTC
- * conversion (apps/chat/src/utils/scheduled-task-trigger.ts) in reverse, so
+ * conversion (`@epam/ai-dial-chat-hooks`'s `scheduled-task-trigger.ts`) in reverse, so
  * the displayed schedule always matches what will actually execute.
  */
 const convertCronFieldsToLocal = (

@@ -121,9 +121,7 @@ For example, the relevant part of `aidial.settings.json` is:
 {
   "toolsets": {
     "security": {
-      "allowedRedirectUris": [
-        "https://chat.example.com/auth/toolset-signin"
-      ]
+      "allowedRedirectUris": ["https://chat.example.com/auth/toolset-signin"]
     }
   }
 }
@@ -525,7 +523,7 @@ property so a client failure can be correlated with server traces and logs.
 - **Input Validation**: A global `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`) plus per-endpoint DTOs with validation decorators
 - **Path Traversal Protection**: Any string reaching a path, URL, or log line is constrained by an allowlist regex
 - **Session Security**: Encrypted session cookie, `HttpOnly` + `Secure` + `SameSite=Lax`, `__Host-` prefixed when host-scoped, with CSRF protection on state-changing requests
-- **Security Headers**: Helmet middleware with CSP, HSTS, and other security headers; `frame-ancestors` driven by `ALLOWED_IFRAME_ORIGINS`. Local HTTP smoke mode (`AUTH_COOKIE_SECURE=false`) disables HSTS and CSP `upgrade-insecure-requests`
+- **Security Headers**: Helmet middleware with CSP, HSTS, and other security headers; `script-src` permits WebAssembly compilation for the OOXML attachment viewer without permitting JavaScript `eval`, and `frame-ancestors` is driven by `ALLOWED_IFRAME_ORIGINS`. Local HTTP smoke mode (`AUTH_COOKIE_SECURE=false`) disables HSTS and CSP `upgrade-insecure-requests`
 - **CORS Configuration**: Restricted to configured origin with credentials support
 - **Rate Limiting**: Throttling to prevent abuse (100 req/min default, customizable per endpoint)
 - **Secret Hygiene**: Tokens, refresh tokens, and cookie payloads are never logged

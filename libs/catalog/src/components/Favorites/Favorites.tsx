@@ -3,6 +3,7 @@ import {
   ItemHeader,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
+import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import {
   FC,
@@ -57,6 +58,7 @@ export const Favorites: FC<FavoritesProps> = ({
   totalCount,
   title = 'Your Favorites',
   onToggleFavorite,
+  isFavoriteVisible,
   onItemClick,
   styles: favoritesStyles,
   isLeaving,
@@ -415,7 +417,11 @@ export const Favorites: FC<FavoritesProps> = ({
                     styles.navBtn,
                   )}
                 >
-                  <IconChevronLeft size={14} className="rtl:scale-x-[-1]" />
+                  <IconChevronLeft
+                    size={14}
+                    className="rtl:scale-x-[-1]"
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
                 </button>
                 <span
                   className={mergeClasses(
@@ -435,7 +441,11 @@ export const Favorites: FC<FavoritesProps> = ({
                     styles.navBtn,
                   )}
                 >
-                  <IconChevronRight size={14} className="rtl:scale-x-[-1]" />
+                  <IconChevronRight
+                    size={14}
+                    className="rtl:scale-x-[-1]"
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
                 </button>
               </div>
             ) : undefined
@@ -455,6 +465,7 @@ export const Favorites: FC<FavoritesProps> = ({
               key={`${favPage}-${item.id}`}
               item={item}
               onToggle={onToggleFavorite}
+              isFavoriteVisible={isFavoriteVisible}
               onClick={onItemClick}
               addToFavoritesAriaLabel={addToFavoritesAriaLabel}
               removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}

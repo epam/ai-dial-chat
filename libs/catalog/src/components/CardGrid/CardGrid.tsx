@@ -18,12 +18,14 @@ export const CardGrid: FC<CardGridProps> = memo(
     items,
     query = '',
     onToggleFavorite,
+    isFavoriteVisible,
     onItemClick,
     titles,
     isLoading,
     selectedItemId,
     skeletonColor = styles.skeletonColor,
     skeletonCardBackground,
+    isReadonly = false,
   }) => {
     const noResultsTitle = titles?.noResultsTitle ?? 'No results';
     const featuredLabel = titles?.featuredLabel ?? 'Featured';
@@ -44,24 +46,28 @@ export const CardGrid: FC<CardGridProps> = memo(
         columnCount,
         query,
         onToggleFavorite,
+        isFavoriteVisible,
         onItemClick,
         featuredLabel,
         addToFavoritesAriaLabel,
         removeFromFavoritesAriaLabel,
         selectedItemId,
         credentialsBadgeLoggedOutLabel,
+        isReadonly,
       }),
       [
         items,
         columnCount,
         query,
         onToggleFavorite,
+        isFavoriteVisible,
         onItemClick,
         featuredLabel,
         addToFavoritesAriaLabel,
         removeFromFavoritesAriaLabel,
         selectedItemId,
         credentialsBadgeLoggedOutLabel,
+        isReadonly,
       ],
     );
 

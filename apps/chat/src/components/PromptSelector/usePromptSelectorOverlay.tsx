@@ -1,4 +1,5 @@
 import type { PromptResponseDto } from '@epam/ai-dial-chat-api-client';
+import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   extractPromptParams,
@@ -13,10 +14,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import {
-  FavoriteEntityType,
-  useFavoriteApplications,
-} from '../../context/FavoriteApplicationsContext';
+import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useUiFeature } from '../../hooks/useUiFeature';
 

@@ -34,10 +34,10 @@
   ],
   "references": [
     {
-      "path": "../conversation-input/tsconfig.lib.json"
+      "path": "../chat-shared/tsconfig.lib.json"
     },
     {
-      "path": "../chat-shared/tsconfig.lib.json"
+      "path": "../attachment-input/tsconfig.lib.json"
     }
   ]
 }

@@ -1,3 +1,4 @@
+import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import type { ParseKeys } from 'i18next';
 import { memo, type FC } from 'react';
@@ -9,8 +10,6 @@ import AlertShell from '../AlertShell/AlertShell';
 interface Props extends FallbackProps {
   actionLabel?: ParseKeys<'translation'>;
 }
-
-export type { Props as ErrorFallbackProps };
 
 const ErrorFallback: FC<Props> = ({
   error: _,
@@ -25,7 +24,7 @@ const ErrorFallback: FC<Props> = ({
         <IconAlertTriangle
           aria-hidden="true"
           size={48}
-          stroke={1.5}
+          stroke={DIAL_KIT_ICON_STROKE}
           className="text-error"
         />
       }

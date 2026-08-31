@@ -56,6 +56,8 @@ export interface CardProps {
   initialIsStarred?: boolean;
   /** Called when the star button is toggled. */
   onToggle?: (id: string, isStarred: boolean) => void;
+  /** Rule for whether the favorite star is shown; `false` hides the star and makes the item non-favoritable. Defaults to visible when omitted. */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
   /** Called when the card body is clicked (excluding the star button). */
   onClick?: (item: CatalogItem) => void;
   /** Grouped color and typography overrides. */
@@ -70,4 +72,10 @@ export interface CardProps {
   isSelected?: boolean;
   /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
+  /**
+   * Renders the card as a read-only browsing surface: no favorite star, no
+   * footer divider, and no "Featured" tag. The footer row is dropped entirely
+   * when the item has no folder path left to show. Default: false.
+   */
+  isReadonly?: boolean;
 }

@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ErrorText,
   GhostIconButton,
   PrimaryIconButton,
@@ -179,7 +180,13 @@ export const VoiceBar: FC<VoiceBarProps> = ({
   const controls = (
     <div className="flex flex-shrink-0 items-center justify-end gap-1">
       <GhostIconButton
-        icon={<IconX size={DIAL_ICON_SIZE.LG} aria-hidden />}
+        icon={
+          <IconX
+            size={DIAL_ICON_SIZE.LG}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        }
         aria-label={discardLabel}
         onClick={onDiscard}
       />

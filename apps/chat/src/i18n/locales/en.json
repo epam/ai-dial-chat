@@ -126,18 +126,14 @@
         "inputModalities": "Input modalities"
       },
       "limits": {
-        "requestsPerHour": "Requests per hour",
-        "requestsPerDay": "Requests per day",
-        "tokensPerMinute": "Tokens per minute",
-        "tokensPerDay": "Tokens per day",
-        "tokensPerWeek": "Tokens per week",
-        "tokensPerMonth": "Tokens per month",
-        "costPerMinute": "Cost per minute",
-        "costPerDay": "Cost per day",
-        "costPerWeek": "Cost per week",
-        "costPerMonth": "Cost per month",
+        "tokenGroup": "Token limits",
+        "tokensPerDay": "Last 24 hours",
+        "tokensPerWeek": "Last 7 days",
+        "tokensPerMonth": "Last 30 days",
+        "spentLabel": "{{amount}} spent",
         "value": "{{used}} / {{total}}",
-        "unlimitedValue": "Unlimited",
+        "followsCostLimit": "Follows cost limit",
+        "followsCostLimitAriaLabel": "{{label}}: {{used}} used. Follows cost limit.",
         "progressAriaLabel": "{{label}}: {{used}} of {{total}} used"
       },
       "credentials": {
@@ -1097,9 +1093,6 @@
   },
   "tools": {
     "menuTitle": "Tools",
-    "deepResearchFallback": "Deep research",
-    "selectedCount_one": "{{count}} tool",
-    "selectedCount_other": "{{count}} tools",
     "removeTool": "Remove {{label}}"
   },
   "conversationInput": {

@@ -1,20 +1,24 @@
-import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  DeploymentIcon,
+  FilterTab,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   Button,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Dropdown,
+  ElementSize,
   GhostIconButton,
+  Highlight,
   Skeleton,
   SkeletonVariant,
-  ElementSize,
-  Highlight,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconClock, IconDotsVertical } from '@tabler/icons-react';
 import { useCallback, useRef, useState, type DragEvent, type FC } from 'react';
 import { ConversationItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
-import { FilterTab } from '../../types/conversation-classification';
 import { getButtonPaddingEnd } from '../../utils/conversation-row';
 import { getDropAfterId } from '../../utils/drag';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
@@ -165,7 +169,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         taskBadgeClassName,
       )}
     >
-      <IconClock size={12} aria-hidden />
+      <IconClock size={12} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
       {item.taskBadgeLabel}
     </span>
   ) : undefined;
@@ -247,7 +251,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
           onClick={item.href ? undefined : () => onSelectConversation(item.id)}
           tabIndex={item.href ? -1 : undefined}
           className={mergeClasses(
-            'h-8 w-full justify-start gap-2 rounded-xl py-2 ps-0',
+            'h-8 w-full justify-start gap-2 rounded-xl py-2 ps-0 after:pointer-events-none',
             buttonPaddingEnd,
             styles.item,
             isActive && styles.itemActive,
@@ -278,6 +282,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
                   size={DIAL_ICON_SIZE.SM}
                   className={styles.triggerIcon}
                   aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
                 />
               }
               size={ElementSize.Small}

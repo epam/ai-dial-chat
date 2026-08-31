@@ -1,6 +1,6 @@
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { DialFileNodeType } from '@epam/ai-dial-react-file-manager';
-import { safeDecodeURI } from './string-utils';
+import { safeDecodeURI } from '../shared/string-utils';
 
 /*
  * Local copy of `apps/chat/src/utils/dial-file.ts`'s `resolveRelativeDialFilePath`.

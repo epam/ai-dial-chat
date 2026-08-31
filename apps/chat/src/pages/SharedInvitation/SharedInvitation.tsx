@@ -1,3 +1,4 @@
+import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import { FC, memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
@@ -6,7 +7,6 @@ import { ShareI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSkills } from '../../context/SkillsContext';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { acceptInvitation } from '../../server-api/share.api';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';

@@ -1,5 +1,13 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
-import { useAttachmentAction } from '@epam/ai-dial-chat-hooks';
+import {
+  annotationToDisplayAttachment,
+  annotationToPdfCanvasContent,
+  attachmentDtosToDisplayAttachments,
+  messageHasStages,
+  openAnnotationAttachment,
+  referenceAttachmentToPdfCanvasContent,
+  useAttachmentAction,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   CodeBlockTheme,
@@ -32,7 +40,11 @@ import {
   useCitationMarkdownComponents,
   type AnnotationGroup,
 } from '@epam/ai-dial-quotations';
-import { ErrorMessageNotification, PrimaryButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_KIT_ICON_STROKE,
+  ErrorMessageNotification,
+  PrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,22 +60,16 @@ import type { McpAppToolCallSeed } from '../../hooks/attachment/useOpenMcpAppCan
 import type { McpAppToolRef } from '../../hooks/conversation/useMcpAppTools';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
-import { openAnnotationAttachment } from '../../utils/annotation';
 import {
-  annotationToPdfCanvasContent,
-  referenceAttachmentToPdfCanvasContent,
-} from '../../utils/attachment-canvas';
-import {
-  annotationToDisplayAttachment,
-  attachmentDtosToDisplayAttachments,
-} from '../../utils/attachment-dto-to-display';
+  attachmentCanvasUrlResolvers,
+  attachmentDisplayResolvers,
+} from '../../utils/attachment-display-resolvers';
 import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
 import {
   findMcpAppForMessage,
   mcpAppCanvasKey,
   resolveMcpAppToolCallSeed,
 } from '../../utils/mcp-app';
-import { messageHasStages } from '../../utils/message-utils';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
@@ -288,6 +294,7 @@ const ConversationMessageItem: FC<Props> = ({
       const pdfContent = annotationToPdfCanvasContent(
         annotation,
         citationGroups,
+        attachmentCanvasUrlResolvers,
       );
       if (pdfContent != null) {
         const attachment = annotation.body?.source?.attachment;
@@ -303,7 +310,8 @@ const ConversationMessageItem: FC<Props> = ({
   );
   const handleCitationOpenInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
-    if (attachment) openAnnotationAttachment(attachment);
+    if (attachment)
+      openAnnotationAttachment(attachment, resolveDialFileDownloadUrl);
   }, []);
   const buildCitationLabels = useCallback(
     (group: AnnotationGroup) => {
@@ -353,7 +361,11 @@ const ConversationMessageItem: FC<Props> = ({
     [msg.custom_content?.attachments],
   );
   const allDisplayAttachments = useMemo(
-    () => attachmentDtosToDisplayAttachments(msg.custom_content?.attachments),
+    () =>
+      attachmentDtosToDisplayAttachments(
+        msg.custom_content?.attachments,
+        attachmentDisplayResolvers,
+      ),
     [msg.custom_content?.attachments],
   );
   const nonReferenceDisplayAttachments = useMemo(
@@ -362,12 +374,14 @@ const ConversationMessageItem: FC<Props> = ({
         msg.custom_content?.attachments?.filter(
           (a) => !isReferenceOnlyAttachment(a),
         ),
+        attachmentDisplayResolvers,
       ),
     [msg.custom_content?.attachments],
   );
   const handleOpenReferenceInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
-    if (attachment) openAnnotationAttachment(attachment);
+    if (attachment)
+      openAnnotationAttachment(attachment, resolveDialFileDownloadUrl);
   }, []);
 
   const selectedAttachmentKeyPrefix = `${index}:`;
@@ -538,6 +552,7 @@ const ConversationMessageItem: FC<Props> = ({
                         null &&
                       referenceAttachmentToPdfCanvasContent(
                         group.primaryAnnotation.body.source.attachment,
+                        attachmentCanvasUrlResolvers,
                       ) != null;
                     return (
                       <CitationDropdown
@@ -547,7 +562,13 @@ const ConversationMessageItem: FC<Props> = ({
                           isPdfPagePreviewable ? onPreviewReference : undefined
                         }
                         onOpenInBrowser={handleOpenReferenceInBrowser}
-                        icon={<IconLink size={14} aria-hidden />}
+                        icon={
+                          <IconLink
+                            size={14}
+                            aria-hidden
+                            stroke={DIAL_KIT_ICON_STROKE}
+                          />
+                        }
                         cardLabels={{
                           ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
                             source: group.sourceName,

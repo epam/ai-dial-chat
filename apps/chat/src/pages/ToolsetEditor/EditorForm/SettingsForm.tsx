@@ -1,6 +1,8 @@
+import { buildToolsetMcpUrl } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
   Input,
@@ -25,7 +27,6 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../../models/toolsets';
-import { buildToolsetMcpUrl } from '../../../utils/mcp-endpoint-url';
 import AuthSection from './AuthSection';
 
 interface Props {
@@ -115,12 +116,14 @@ const SettingsForm: FC<Props> = ({
                 size={DIAL_ICON_SIZE.SM}
                 className="text-success"
                 aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
               />
             ) : (
               <IconCopy
                 size={DIAL_ICON_SIZE.SM}
                 className="text-secondary"
                 aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
               />
             )
           }

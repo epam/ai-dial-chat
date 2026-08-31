@@ -1,4 +1,4 @@
-import { getAttachmentIcon } from '@epam/ai-dial-conversation-input';
+import { getAttachmentIcon } from '@epam/ai-dial-attachment-input';
 import { createElement, FC, memo } from 'react';
 
 interface Props {

@@ -1,8 +1,9 @@
 import { copyToClipboard, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  GhostIconButton,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 import {
@@ -68,11 +69,13 @@ export const StageCodeBlock: FC<Props> = ({
             <IconCheck
               size={DIAL_ICON_SIZE.SM}
               className={styles.iconSecondary}
+              stroke={DIAL_KIT_ICON_STROKE}
             />
           ) : (
             <IconCopy
               size={DIAL_ICON_SIZE.SM}
               className={styles.iconSecondary}
+              stroke={DIAL_KIT_ICON_STROKE}
             />
           )
         }

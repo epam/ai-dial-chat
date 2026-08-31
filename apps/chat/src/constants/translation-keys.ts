@@ -190,18 +190,14 @@ export enum CatalogI18nKeys {
   DetailsModelParameters = 'catalog.details.modelSpecification.parameters',
   DetailsModelInputModalities = 'catalog.details.modelSpecification.inputModalities',
   DetailsTabLimits = 'catalog.details.tabLimits',
-  DetailsLimitsRequestsPerHour = 'catalog.details.limits.requestsPerHour',
-  DetailsLimitsRequestsPerDay = 'catalog.details.limits.requestsPerDay',
-  DetailsLimitsTokensPerMinute = 'catalog.details.limits.tokensPerMinute',
+  DetailsLimitsTokenGroupLabel = 'catalog.details.limits.tokenGroup',
   DetailsLimitsTokensPerDay = 'catalog.details.limits.tokensPerDay',
   DetailsLimitsTokensPerWeek = 'catalog.details.limits.tokensPerWeek',
   DetailsLimitsTokensPerMonth = 'catalog.details.limits.tokensPerMonth',
-  DetailsLimitsCostPerMinute = 'catalog.details.limits.costPerMinute',
-  DetailsLimitsCostPerDay = 'catalog.details.limits.costPerDay',
-  DetailsLimitsCostPerWeek = 'catalog.details.limits.costPerWeek',
-  DetailsLimitsCostPerMonth = 'catalog.details.limits.costPerMonth',
+  DetailsLimitsSpentLabel = 'catalog.details.limits.spentLabel',
   DetailsLimitsValue = 'catalog.details.limits.value',
-  DetailsLimitsUnlimitedValue = 'catalog.details.limits.unlimitedValue',
+  DetailsLimitsFollowsCostLimitLabel = 'catalog.details.limits.followsCostLimit',
+  DetailsLimitsFollowsCostLimitAriaLabel = 'catalog.details.limits.followsCostLimitAriaLabel',
   DetailsLimitsProgressAriaLabel = 'catalog.details.limits.progressAriaLabel',
   CreateQuickApp = 'catalog.create.quickApp',
   CreateToolset = 'catalog.create.toolset',
@@ -1107,8 +1103,6 @@ export enum VoiceRecordingI18nKeys {
 
 export enum ToolsI18nKeys {
   MenuTitle = 'tools.menuTitle',
-  DeepResearchFallback = 'tools.deepResearchFallback',
-  SelectedCount = 'tools.selectedCount',
   RemoveTool = 'tools.removeTool',
 }
 

@@ -1,5 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, GhostButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  GhostButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconLink, IconQrcode } from '@tabler/icons-react';
 import { FC } from 'react';
 import { SharePopoverView } from '../../types/share';
@@ -22,7 +26,7 @@ interface SharePopoverHeaderProps {
   linkLabel: string;
   /** Called with the view the user switched to. */
   onViewChange: (view: SharePopoverView) => void;
-  /** CSS class applied to the title text. Defaults to `'dial-small-semi-text'`. */
+  /** CSS class applied to the title text. Defaults to `'dial-h3-text'`. */
   titleClassName?: string;
 }
 
@@ -33,15 +37,21 @@ export const SharePopoverHeader: FC<SharePopoverHeaderProps> = ({
   qrButtonLabel,
   linkLabel,
   onViewChange,
-  titleClassName = 'dial-small-semi-text',
+  titleClassName = 'dial-h3-text',
 }) => (
-  <div className="flex items-center gap-2 px-4 py-3">
+  <div className="flex items-center gap-2">
     <span className={mergeClasses(titleClassName, styles.title)}>{title}</span>
     {view === SharePopoverView.Link ? (
       <GhostButton
         id={QR_BUTTON_ID}
         label={qrButtonLabel}
-        iconBefore={<IconQrcode size={DIAL_ICON_SIZE.SM} aria-hidden />}
+        iconBefore={
+          <IconQrcode
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        }
         className="ms-auto"
         onClick={() => onViewChange(SharePopoverView.Qr)}
       />
@@ -49,7 +59,13 @@ export const SharePopoverHeader: FC<SharePopoverHeaderProps> = ({
       <GhostButton
         id={LINK_BUTTON_ID}
         label={linkLabel}
-        iconBefore={<IconLink size={DIAL_ICON_SIZE.SM} aria-hidden />}
+        iconBefore={
+          <IconLink
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        }
         className="ms-auto"
         onClick={() => onViewChange(SharePopoverView.Link)}
       />

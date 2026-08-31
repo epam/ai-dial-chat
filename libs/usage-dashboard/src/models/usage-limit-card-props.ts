@@ -62,7 +62,7 @@ export interface UsageLimitCardGroupColors {
    * differ: the bar's brighter/lighter token reads fine as a decorative fill but would fail text
    * contrast, so the amount figure uses the darker token of the pair instead.
    */
-  /** Prominent amount text color in the default status. Fallback: `--text-info` (`#1D4ED8`). */
+  /** Prominent amount text color in the default status. Fallback: `--text-accent` (`#1D4ED8`). */
   defaultAccentColor?: string;
   /** Progress-fill color in the default status. Fallback: `--text-control-accent-hover` (`#5976E9`). */
   defaultProgressColor?: string;

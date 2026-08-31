@@ -6,6 +6,7 @@ import {
 } from '@epam/ai-dial-react-pdf-highlighter';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Dropdown,
   ElementSize,
   FabButton,
@@ -423,11 +424,15 @@ export const PdfContent: FC<PdfContentProps> = ({
             <FabButton
               icon={
                 isThumbnailsOpen ? (
-                  <IconX size={DIAL_ICON_SIZE.LG} stroke={1.5} aria-hidden />
+                  <IconX
+                    size={DIAL_ICON_SIZE.LG}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
+                  />
                 ) : (
                   <IconMenu2
                     size={DIAL_ICON_SIZE.LG}
-                    stroke={1.5}
+                    stroke={DIAL_KIT_ICON_STROKE}
                     aria-hidden
                   />
                 )

@@ -1,12 +1,16 @@
-import { useCallback } from 'react';
 import {
+  buildExternalServiceScopeId,
+  navigateToolsetOAuthPopup,
   OAuthResourceKind,
+  openToolsetOAuthPopup,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
+  waitForToolsetOAuthResult,
   WithLogin,
-} from '../../constants/toolsets';
+} from '@epam/ai-dial-chat-hooks';
+import { useCallback } from 'react';
 import {
   ExternalServiceAuthType,
   ExternalServiceCredentialsLevel,
@@ -14,12 +18,7 @@ import {
   signInExternalService,
   signOutExternalService,
 } from '../../server-api/external-services';
-import { buildExternalServiceScopeId } from '../../utils/external-services';
-import {
-  navigateToolsetOAuthPopup,
-  openToolsetOAuthPopup,
-  waitForToolsetOAuthResult,
-} from '../../utils/toolsets';
+import { ROUTES } from '../../types/routes';
 
 /** OAuth client settings needed to build the authorize URL — a subset of an external service's `auth_settings`. */
 export interface ExternalServiceOAuthSettings {
@@ -152,6 +151,7 @@ export const useExternalServiceLogin = (): {
         popup,
         authFormData,
         correlationId,
+        ROUTES.ToolsetSignIn,
         toolsetLevel,
         OAuthResourceKind.ExternalService,
       );
@@ -163,7 +163,11 @@ export const useExternalServiceLogin = (): {
       const result = await waitForToolsetOAuthResult(
         initiation.popup,
         initiation.flowId,
-        { toolsetId: correlationId, credentialsLevel: toolsetLevel },
+        {
+          toolsetId: correlationId,
+          credentialsLevel: toolsetLevel,
+          callbackPath: ROUTES.ToolsetSignIn,
+        },
       );
 
       if (result.type === ToolsetOAuthResultType.Success) {

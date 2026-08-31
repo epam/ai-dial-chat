@@ -13,11 +13,11 @@ The details panel SHALL NOT use `ConfirmationPopup` (or any other modal overlay)
 
 The interactive slot exists because a confirmation may need an input before it can be confirmed — today, choosing which published folder to unpublish from. `ConfirmationView` SHALL accept it as optional `children`, and the panel SHALL own whatever state it holds; `ConfirmationView` stays presentational. A kind that needs no input passes nothing and renders exactly as before.
 
-When a kind's input is required but unsatisfied, the panel SHALL disable the confirm button through a per-kind `isConfirmDisabled` derivation, distinct from the in-flight `isConfirming` flag — a confirmation that cannot yet run and one that is already running are different states and SHALL NOT share one flag.
+When a kind's input is required but unsatisfied, the panel SHALL disable the confirm button through an `isConfirmDisabled` derivation, distinct from the in-flight `isConfirming` flag — a confirmation that cannot yet run and one that is already running are different states and SHALL NOT share one flag. `ConfirmationFooter` disables its confirm button on either. Today the derivation has exactly one term: `Unpublish` with no resolvable target folder; every other kind resolves to `false`.
 
 The panel SHALL reset the active confirmation and any input state it holds when the confirmation is cancelled and when `item.id` changes.
 
-The publish sub-view and a confirmation sub-view SHALL be mutually exclusive; a confirmation takes precedence when both would render.
+The panel hosts three sub-views — confirmation, publish, and credentials management — and they SHALL be mutually exclusive. Precedence, resolved in one place when the panel derives its sub-view header, is: confirmation, then publish, then credentials management. The header that sub-view contributes carries its own title, its own back handler, and whether backing out is currently disabled, so every sub-view gets the same chrome without the panel re-deriving it per branch.
 
 Only one confirmation can be active at a time, so the panel keeps exactly one `isConfirming` flag rather than per-action loading state.
 
@@ -30,6 +30,11 @@ Only one confirmation can be active at a time, so the panel keeps exactly one `i
 
 - **WHEN** a confirmation is active
 - **THEN** the publish sub-view and its footer are not rendered
+
+#### Scenario: Credentials management yields to both other sub-views
+
+- **WHEN** credentials management is open and a confirmation is then requested
+- **THEN** the confirmation sub-view is what renders, and the panel header shows its title and back handler
 
 #### Scenario: A confirmation needing input blocks confirm until it is given
 
@@ -128,10 +133,10 @@ Message defaults emphasize the item name with `<strong>`. Hosts supplying `delet
 
 Confirming SHALL await the matching host callback (`onDelete`, `onUnshare`, `onRevokeShare`, or `onLogout` with the item's signed-in credentials level) with the confirm and cancel buttons disabled and `loadingStatusLabel` announced through a `role="status" aria-live="polite"` region.
 
-On success, whether the panel closes SHALL be decided by one question — does the confirmed action remove the item from the caller's own view?
+On success, whether the panel closes SHALL be decided by one question — does the confirmed action remove the item from the caller's own view? That answer SHALL be expressed as a single set of kinds rather than re-decided per branch, so adding a kind is a one-line decision at that set.
 
-- `Delete` and `Unshare` remove the item from the caller's catalog, so on success the panel calls `onClose()`.
-- `Logout` and `RevokeAccess` leave the item in the caller's catalog, so on success the panel returns to its details content and stays open. Revoking removes *other people's* access; the owner's own view is unchanged.
+- `Delete` and `Unshare` are the members of that set: they remove the item from the caller's catalog, so on success the panel calls `onClose()`.
+- Every other kind — `Logout`, `RevokeAccess`, `Unpublish`, `DeleteApiKey` — leaves the item in the caller's catalog, so on success the panel returns to its details content and stays open. Revoking removes *other people's* access and unpublishing removes the published copy; the owner's own view is unchanged in both cases.
 - On rejection the panel returns to its details content and stays open; surfacing the failure is the host's responsibility.
 - Cancel, the back button, and `Escape` all clear the active confirmation, and all three SHALL no-op while the action is in flight.
 - `Escape` SHALL cancel an open confirmation instead of closing the whole panel.
@@ -160,7 +165,7 @@ On success, whether the panel closes SHALL be decided by one question — does t
 
 ### Requirement: Accessible naming of the open sub-view
 
-While a sub-view is open, the panel's `role="dialog"` SHALL be named after that sub-view — the confirmation title when a confirmation is active, the publish title while publishing — instead of the generic details label from `texts.ariaLabel`.
+While a sub-view is open, the panel's `role="dialog"` SHALL be named after that sub-view — the confirmation title, the publish title, or the credentials-management title, per the precedence above — instead of the generic details label from `texts.ariaLabel`. The name is read from the same resolved sub-view header the chrome uses, so the heading a sighted user reads and the accessible name can never disagree.
 
 #### Scenario: Dialog takes the confirmation's name
 

@@ -1,5 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { CardShell, DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
+import {
+  CardShell,
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import { AppIdentityColors } from '../../models/app-identity-styles';
@@ -18,6 +23,8 @@ export interface FavoriteCardProps {
   initialIsStarred?: boolean;
   /** Called when the star button is toggled. */
   onToggle?: (id: string, isStarred: boolean) => void;
+  /** Rule for whether the favorite star is shown; `false` hides the star and makes the item non-favoritable. Defaults to visible when omitted. */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
   /** Called when the card body is clicked. */
   onClick?: (item: CatalogItem) => void;
   /** Typography CSS class for the entity name. Default: 'dial-body-semi-text'. */
@@ -45,6 +52,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   item,
   initialIsStarred = true,
   onToggle,
+  isFavoriteVisible,
   onClick,
   nameClassName,
   colors,
@@ -112,6 +120,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
             styles.selectedCheck,
           )}
           aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
         />
       )}
 
@@ -141,15 +150,17 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
           }
         />
       </div>
-      <StarToggleButton
-        isStarred={isStarred}
-        size={ElementSize.Small}
-        onClick={handleToggle}
-        ariaLabel={
-          isStarred ? removeFromFavoritesAriaLabel : addToFavoritesAriaLabel
-        }
-        className="self-end"
-      />
+      {isFavoriteVisible?.(item) !== false && (
+        <StarToggleButton
+          isStarred={isStarred}
+          size={ElementSize.Small}
+          onClick={handleToggle}
+          ariaLabel={
+            isStarred ? removeFromFavoritesAriaLabel : addToFavoritesAriaLabel
+          }
+          className="self-end"
+        />
+      )}
     </CardShell>
   );
 };

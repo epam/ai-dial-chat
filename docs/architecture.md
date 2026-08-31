@@ -88,7 +88,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | Package                                  | Path                       | Purpose                                                                      |
 | ---------------------------------------- | -------------------------- | ---------------------------------------------------------------------------- |
 | `@epam/ai-dial-chat-shared`              | `chat-shared`              | Shared domain models, utilities, and UI primitives consumed by every lib     |
-| `@epam/ai-dial-chat-hooks`               | `chat-hooks`               | Headless React hooks for reusable chat-interface behavior                     |
+| `@epam/ai-dial-chat-hooks`               | `chat-hooks`               | Headless React hooks for reusable chat-interface behavior, plus the shared OAuth authorization-code popup flow (`src/oauth/`) |
 | `@epam/ai-dial-chat-api-client`          | `chat-api-client`          | Generated OpenAPI client for the chat API (see the exception below)          |
 | `@epam/ai-dial-chat-overlay`             | `chat-overlay`             | Embeddable `ChatOverlay` / `ChatOverlayManager` and the postMessage protocol |
 | `@epam/ai-dial-catalog`                  | `catalog`                  | Catalog for browsing models, applications, tools, prompts, and skills        |
@@ -111,6 +111,8 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-deployment-creation-form` | `deployment-creation-form` | Form for creating and editing a deployment                                   |
 | `@epam/ai-dial-scheduled-tasks`          | `scheduled-tasks`          | Scheduled Tasks page shell — header, toolbar, empty state                    |
 | `@epam/ai-dial-usage-dashboard`          | `usage-dashboard`          | Aggregate daily/monthly cost-limit cards for the Settings Usage tab          |
+
+Conversation-history reuse is split across three acyclic layers. `chat-shared` owns the canonical `FilterTab`, transfer-job contracts, and conversation-name utilities. `chat-hooks` owns headless resource-state and conversation-panel controller hooks, with host-specific routing, labels, feature policy, and configured clients injected by `apps/chat`. `conversation-panel` owns the virtualized panel plus the labels-driven `ImportExportQueue` and `RenameConversationPopup` presentation components, and consumes `FilterTab` from `chat-shared` directly rather than re-exporting it.
 
 `libs/ai-dial-kit/` is a leftover build-output directory from a removed library — no `package.json`, no sources, no importers. Do not add to it.
 
@@ -526,13 +528,13 @@ Import direction is a convention today, not a lint constraint: `@nx/enforce-modu
 
 The intended direction, enforced in review:
 
-| Consumer      | May import from                       |
-| ------------- | ------------------------------------- |
-| `apps/*`      | any `libs/*`                          |
-| Feature libs  | `chat-shared` only                    |
-| `chat-shared` | nothing in the workspace              |
+| Consumer      | May import from                                                    |
+| ------------- | ------------------------------------------------------------------ |
+| `apps/*`      | any `libs/*`                                                       |
+| Feature libs  | `chat-shared` only                                                 |
+| `chat-shared` | nothing in the workspace                                           |
 | Any lib       | not `chat-api-client`; `chat-hooks` has the narrow exception above |
-| `apps/*`      | not another `apps/*`                  |
+| `apps/*`      | not another `apps/*`                                               |
 
 ---
 

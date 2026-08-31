@@ -20,12 +20,14 @@ export const CardRowRenderer: FC<CardRowRendererProps> = ({
   columnCount,
   query,
   onToggleFavorite,
+  isFavoriteVisible,
   onItemClick,
   featuredLabel,
   addToFavoritesAriaLabel,
   removeFromFavoritesAriaLabel,
   selectedItemId,
   credentialsBadgeLoggedOutLabel,
+  isReadonly,
 }) => {
   const start = rowIndex * columnCount;
   const rowItems = items.slice(start, start + columnCount);
@@ -50,6 +52,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = ({
                 query={query}
                 initialIsStarred={item.isStarred}
                 onToggle={onToggleFavorite}
+                isFavoriteVisible={isFavoriteVisible}
                 onClick={onItemClick}
                 featuredLabel={featuredLabel}
                 addToFavoritesAriaLabel={addToFavoritesAriaLabel}
@@ -57,6 +60,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = ({
                 isSelected={item.id === selectedItemId}
                 className="h-full"
                 credentialsBadgeLoggedOutLabel={credentialsBadgeLoggedOutLabel}
+                isReadonly={isReadonly}
               />
             )}
           </div>

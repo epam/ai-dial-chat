@@ -22,6 +22,8 @@ export interface NavigationPanelColors {
   itemText?: string;
   /** Icon color of the active item. */
   itemActiveText?: string;
+  /** Background of the active/selected item. */
+  itemSelectedBackground?: string;
   /** Item background on hover. */
   itemHoverBackground?: string;
   /** Item background while pressed. */

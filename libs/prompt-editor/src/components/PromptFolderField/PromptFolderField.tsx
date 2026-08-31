@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
   Input,
@@ -170,18 +171,36 @@ export const PromptFolderField: FC<PromptFolderFieldProps> = ({
         {actions != null && !disabled && (
           <>
             <GhostIconButton
-              icon={<IconFolderPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
+              icon={
+                <IconFolderPlus
+                  size={DIAL_ICON_SIZE.SM}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               aria-label={labels?.folderCreateLabel ?? 'Create folder'}
               onClick={openCreate}
             />
             <GhostIconButton
-              icon={<IconPencil size={DIAL_ICON_SIZE.SM} aria-hidden />}
+              icon={
+                <IconPencil
+                  size={DIAL_ICON_SIZE.SM}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               aria-label={labels?.folderRenameLabel ?? 'Rename folder'}
               disabled={isRootSelected}
               onClick={openRename}
             />
             <GhostIconButton
-              icon={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
+              icon={
+                <IconTrashX
+                  size={DIAL_ICON_SIZE.SM}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               aria-label={labels?.folderDeleteLabel ?? 'Delete folder'}
               disabled={isRootSelected}
               onClick={openDelete}

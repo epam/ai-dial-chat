@@ -1,12 +1,15 @@
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
-import { ToolsetCredentialsLevel } from '../constants/toolsets';
+import {
+  getExternalServiceFallbackName,
+  isPublicToolsetId,
+  ToolsetCredentialsLevel,
+} from '@epam/ai-dial-chat-hooks';
 import type { ResolvedRowInfo } from '../models/signin-interrupt';
 import type { GetExternalServiceResponseDto } from '../server-api/external-services';
 import { ExternalServiceCredentialsLevel } from '../server-api/external-services';
 import type { RowAuthType } from '../types/signin-interrupt';
-import { getExternalServiceFallbackName } from './external-services';
 import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
-import { getToolsetFallbackName, isPublicToolsetId } from './toolsets';
+import { getToolsetFallbackName } from './toolsets';
 
 export const resolveToolsetInfo = (
   toolsetId: string,

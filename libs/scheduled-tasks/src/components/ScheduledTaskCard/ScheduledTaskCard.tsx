@@ -2,6 +2,7 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   CardShell,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   FolderPath,
   Highlight,
 } from '@epam/ai-dial-ui-kit';
@@ -132,7 +133,11 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
                 styles.pausedLabel,
               )}
             >
-              <IconPlayerPause size={DIAL_ICON_SIZE.SM} aria-hidden />
+              <IconPlayerPause
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
               {pausedBadgeLabel}
             </span>
           ) : (

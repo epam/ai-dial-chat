@@ -265,7 +265,7 @@ vi.mock('../TabsContent/Overview', () => ({
 vi.mock('../TabsContent/Pricing', () => ({
   Pricing: () => <div>Pricing</div>,
 }));
-vi.mock('../TabsContent/Limits', () => ({
+vi.mock('../TabsContent/Limits/Limits', () => ({
   LimitsTab: () => <div>Limits content</div>,
 }));
 vi.mock('../TabsContent/Tools/Tools', () => ({
@@ -379,6 +379,23 @@ const renderPanel = (props?: Partial<ComponentProps<typeof DetailsPanel>>) =>
       {...props}
     />,
   );
+
+describe('DetailsPanel — header favorite star', () => {
+  it('renders the star toggle in the header by default', () => {
+    renderPanel();
+    expect(screen.getByText('Star')).toBeTruthy();
+  });
+
+  it('hides the star toggle when isFavoriteVisible returns false for the item', () => {
+    renderPanel({ isFavoriteVisible: () => false });
+    expect(screen.queryByText('Star')).toBeNull();
+  });
+
+  it('renders the star toggle when isFavoriteVisible returns true', () => {
+    renderPanel({ isFavoriteVisible: () => true });
+    expect(screen.getByText('Star')).toBeTruthy();
+  });
+});
 
 describe('DetailsPanel — Content tab', () => {
   const promptOverview = {
@@ -1118,7 +1135,12 @@ describe('DetailsPanel', () => {
       item: makeItem({
         details: {
           limits: {
-            rows: [{ label: 'Tokens per day', used: 12, total: 20 }],
+            groups: [
+              {
+                label: 'Token limits',
+                rows: [{ label: 'Tokens per day', used: 12, total: 20 }],
+              },
+            ],
           },
         },
       }),
@@ -1508,7 +1530,7 @@ describe('DetailsPanel', () => {
           details: {
             overview: { sections: [] },
             pricing: {},
-            limits: { rows: [] },
+            limits: { groups: [] },
             api: { resource: { endpointUrl: 'https://dial.example.com/mcp' } },
           },
         })}

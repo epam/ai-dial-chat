@@ -1,4 +1,10 @@
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
+import {
+  buildExternalServiceScopeId,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetLoginOutcomeType,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DIAL_ICON_SIZE,
@@ -22,10 +28,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-} from '../../constants/toolsets';
-import {
   ButtonsI18nKeys,
   ToolsetSigninI18nKeys,
 } from '../../constants/translation-keys';
@@ -37,10 +39,7 @@ import {
   useExternalServiceLogin,
 } from '../../hooks/externalServices/useExternalServiceLogin';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import {
-  ToolsetLoginOutcomeType,
-  useToolsetLogin,
-} from '../../hooks/toolsets/useToolsetLogin';
+import { useToolsetLogin } from '../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import type { ResolvedRowInfo } from '../../models/signin-interrupt';
 import { ClientChannelReportResult } from '../../server-api/client-channel';
@@ -56,7 +55,6 @@ import {
   type PendingSigninEvent,
 } from '../../types/client-channel';
 import { RowAuthType } from '../../types/signin-interrupt';
-import { buildExternalServiceScopeId } from '../../utils/external-services';
 import {
   resolveExternalServiceInfo,
   resolveToolsetInfo,

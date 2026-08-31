@@ -2,10 +2,12 @@ import {
   AttachmentCanvasContainer,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks';
+import {
+  clearAttachmentCache,
+  usePanelMaxWidth,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
-import { FilterTab } from '@epam/ai-dial-conversation-panel';
+import { CodeBlockTheme, FilterTab } from '@epam/ai-dial-chat-shared';
 import {
   lazy,
   memo,
@@ -58,7 +60,6 @@ import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
-import { clearAttachmentCache } from '../utils/attachment-canvas';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(

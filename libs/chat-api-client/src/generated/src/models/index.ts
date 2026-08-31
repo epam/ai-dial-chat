@@ -575,13 +575,13 @@ export interface ClientConfigDto {
    */
   mcpAppSandboxUrl?: string | null;
   /**
-   * Admin-controlled color theme override for MCP App Views. Null when MCP_APP_THEME is not configured.
+   * Admin-controlled color theme override for MCP App Views. Null when MCP_APP_THEME is not configured — each client uses its own active theme.
    * @type {string}
    * @memberof ClientConfigDto
    */
-  mcpAppTheme?: 'light' | 'dark' | null;
+  mcpAppTheme?: ClientConfigDtoMcpAppThemeEnum | null;
   /**
-   * Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured.
+   * Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured — defaults to "ai-dial-chat" on the client.
    * @type {string}
    * @memberof ClientConfigDto
    */
@@ -635,12 +635,6 @@ export interface ClientConfigDto {
    */
   announcements: Array<AnnouncementItemDto>;
   /**
-   * Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.
-   * @type {string}
-   * @memberof ClientConfigDto
-   */
-  deepResearchToolId?: string | null;
-  /**
    * Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.
    * @type {string}
    * @memberof ClientConfigDto
@@ -659,6 +653,17 @@ export interface ClientConfigDto {
    */
   publicationFilterSources: Array<string>;
 }
+
+/**
+ * @export
+ */
+export const ClientConfigDtoMcpAppThemeEnum = {
+  Light: 'light',
+  Dark: 'dark',
+} as const;
+export type ClientConfigDtoMcpAppThemeEnum =
+  (typeof ClientConfigDtoMcpAppThemeEnum)[keyof typeof ClientConfigDtoMcpAppThemeEnum];
+
 /**
  *
  * @export
@@ -4127,6 +4132,7 @@ export const McpAppToolCallRequestDtoKindEnum = {
 } as const;
 export type McpAppToolCallRequestDtoKindEnum =
   (typeof McpAppToolCallRequestDtoKindEnum)[keyof typeof McpAppToolCallRequestDtoKindEnum];
+
 /**
  *
  * @export

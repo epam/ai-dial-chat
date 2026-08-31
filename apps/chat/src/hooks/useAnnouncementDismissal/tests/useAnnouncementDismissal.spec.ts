@@ -1,7 +1,7 @@
+import type { AnnouncementContent } from '@epam/ai-dial-chat-hooks';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StorageKey } from '../../../types/storage-key';
-import type { AnnouncementContent } from '../../../utils/announcement-message';
 import { useAnnouncementDismissal } from '../useAnnouncementDismissal';
 
 const LEGACY_MESSAGE = 'Welcome to <b>DIAL</b>!';

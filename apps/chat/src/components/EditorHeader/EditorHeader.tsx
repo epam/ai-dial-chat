@@ -1,16 +1,17 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Dropdown,
-  type DropdownItem,
   ElementSize,
   GhostButton,
   GhostIconButton,
   NeutralButton,
   PrimaryButton,
   ProgressBar,
-  type Step,
   StepStatus,
+  type DropdownItem,
+  type Step,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconCheck,
@@ -136,7 +137,11 @@ const EditorHeader: FC<Props> = ({
         label: step.name,
         icon:
           step.id === currentStep ? (
-            <IconCheck size={DIAL_ICON_SIZE.SM} className="text-accent" />
+            <IconCheck
+              size={DIAL_ICON_SIZE.SM}
+              className="text-accent"
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
           ) : undefined,
         onClick: () => onChangeStep(step.id),
       })),
@@ -171,6 +176,7 @@ const EditorHeader: FC<Props> = ({
                 <IconChevronDown
                   size={DIAL_ICON_SIZE.SM}
                   className="shrink-0 text-secondary"
+                  stroke={DIAL_KIT_ICON_STROKE}
                 />
               </span>
             </button>
@@ -179,7 +185,12 @@ const EditorHeader: FC<Props> = ({
             {isPreviewing ? (
               <GhostButton
                 label={exitPreviewButtonLabel}
-                iconBefore={<IconEyeOff size={DIAL_ICON_SIZE.SM} />}
+                iconBefore={
+                  <IconEyeOff
+                    size={DIAL_ICON_SIZE.SM}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                }
                 onClick={onPreview}
               />
             ) : (
@@ -187,7 +198,12 @@ const EditorHeader: FC<Props> = ({
                 <Dropdown items={mobileMenuItems} placement="bottom-end">
                   <GhostIconButton
                     aria-label={t(EditorI18nKeys.MoreActionsLabel)}
-                    icon={<IconDotsVertical size={DIAL_ICON_SIZE.SM} />}
+                    icon={
+                      <IconDotsVertical
+                        size={DIAL_ICON_SIZE.SM}
+                        stroke={DIAL_KIT_ICON_STROKE}
+                      />
+                    }
                   />
                 </Dropdown>
                 <PrimaryButton
@@ -263,9 +279,15 @@ const EditorHeader: FC<Props> = ({
             label={isPreviewing ? exitPreviewButtonLabel : previewButtonLabel}
             iconBefore={
               isPreviewing ? (
-                <IconEyeOff size={DIAL_ICON_SIZE.SM} />
+                <IconEyeOff
+                  size={DIAL_ICON_SIZE.SM}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
               ) : (
-                <IconEye size={DIAL_ICON_SIZE.SM} />
+                <IconEye
+                  size={DIAL_ICON_SIZE.SM}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
               )
             }
             onClick={onPreview}

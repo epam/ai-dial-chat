@@ -160,7 +160,7 @@ describe('AttachmentCanvasBody', () => {
     );
 
     /* Set on the body root and inherited by OoxmlContent through the cascade. */
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- reading an inline CSS custom property, which has no accessible representation to query
+    // eslint-disable-next-line testing-library/no-node-access -- reading an inline CSS custom property, which has no accessible representation to query
     const root = container.firstElementChild as HTMLElement;
     expect(root.style.getPropertyValue('--ac-ooxml-bg')).toBe('rebeccapurple');
   });

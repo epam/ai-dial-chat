@@ -1,5 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { BASE_ICON_SIZE, EllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import {
+  BASE_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  EllipsisTooltip,
+} from '@epam/ai-dial-ui-kit';
 import { IconChevronRight, IconLogout } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { useSheetNavigation } from '../../hooks/useSheetNavigation';
@@ -73,7 +77,7 @@ export const ProfilePage: FC<ProfilePageProps> = memo(
                   trailing={
                     <IconChevronRight
                       size={BASE_ICON_SIZE}
-                      stroke={1.5}
+                      stroke={DIAL_KIT_ICON_STROKE}
                       aria-hidden
                       className={mergeClasses(
                         styles.rowIcon,
@@ -104,7 +108,13 @@ export const ProfilePage: FC<ProfilePageProps> = memo(
           <SheetRow
             label={logOutLabel}
             textClassName={textClassName}
-            icon={<IconLogout size={BASE_ICON_SIZE} stroke={1.5} aria-hidden />}
+            icon={
+              <IconLogout
+                size={BASE_ICON_SIZE}
+                stroke={DIAL_KIT_ICON_STROKE}
+                aria-hidden
+              />
+            }
             onClick={handleLogout}
           />
         </ul>

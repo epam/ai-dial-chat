@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Spinner } from '@epam/ai-dial-ui-kit';
+import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { AppRenderer } from '@mcp-ui/client';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useState } from 'react';
@@ -33,8 +33,15 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   errorLabel = 'Failed to load app',
 }) => {
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
-  const { html, sandboxUrl, toolName, toolInput, toolResult, hostContext, onToolCall } =
-    content;
+  const {
+    html,
+    sandboxUrl,
+    toolName,
+    toolInput,
+    toolResult,
+    hostContext,
+    onToolCall,
+  } = content;
 
   return (
     <div className="relative h-full w-full">
@@ -70,7 +77,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <IconAlertTriangle
             size={60}
-            stroke={1.5}
+            stroke={DIAL_KIT_ICON_STROKE}
             aria-hidden
             className={styles.errorIcon}
           />

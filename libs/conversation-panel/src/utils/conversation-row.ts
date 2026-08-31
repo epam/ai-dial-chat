@@ -3,7 +3,8 @@ import {
   GROUP_HEADER_ROW_HEIGHT,
   ITEM_ROW_HEIGHT,
 } from '../constants/virtual-list';
-import { type RowRendererData, VirtualRowKind } from '../models/virtual-row';
+import type { RowRendererData } from '../models/virtual-row';
+import { VirtualRowKind } from '../types/virtual-row';
 
 /** Number of skeleton placeholder rows shown while conversations are loading. */
 export const SKELETON_ROW_COUNT = 15;

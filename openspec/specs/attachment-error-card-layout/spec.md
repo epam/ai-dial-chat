@@ -2,48 +2,64 @@
 
 ## Purpose
 
-Specifies the inverted card layout used by `AttachmentCard` when a non-image attachment is in the error state.
+Specifies what the file-attachment tile changes when a non-image attachment is in the error state.
 
 ## Requirements
 
-### Requirement: Error state uses inverted card layout for non-image attachments
+### Requirement: The error state re-styles the file tile without reordering it
 
-When `AttachmentCard` renders a non-image attachment in the error state (`status === RequestStatus.Error`), the vertical layout SHALL be inverted compared to the normal state:
+When `AttachmentCard` renders a non-image attachment in the error state (`status === RequestStatus.Error`), the tile SHALL keep its normal vertical order — the file name on top, the file-type row below — and SHALL express the error through styling, corner-action spacing, and an announced status instead:
 
-- **Top row** — file-type icon (`BottomIcon`) and file-type label, displayed side-by-side with `DialEllipsisTooltip` on the label text. The row does NOT stretch; it is as tall as the icon.
-- **Bottom area** — the file name, occupying all remaining vertical space (`flex-1`). The name SHALL use `DialTooltip` wrapping a `line-clamp-3 break-words` span so long names wrap across lines and the full name is shown on hover.
+- **Error surface.** The tile root SHALL carry the error style token, and SHALL NOT carry the hover style token, so a tile the user cannot act on does not respond as if it were actionable.
+- **Corner-action spacing.** The tile's action buttons are absolutely positioned in the trailing top corner, so exactly one of the two text blocks must reserve room for them. In the normal state that is the **name**; in the error state it is the **file-type row**, because the error state swaps the download action for a retry action that sits alongside remove, and the type row is the one that would otherwise collide with the pair.
+- **Announced status.** An `sr-only` `role="status"` `aria-live="polite"` element SHALL carry the error text, and each corner action SHALL reference it by id, so the failure reaches assistive technology even though it is conveyed visually by color alone.
+- **Disabled affordances.** Download SHALL be suppressed in the error state; retry SHALL be offered instead, except when the failure reason is an unsupported file type, which retrying cannot fix.
 
-The normal (non-error) non-image layout is unchanged:
-- Top area — filename, `line-clamp-3`.
-- Bottom row — icon + label.
+**Text truncation.** Both text blocks truncate with CSS, not JavaScript, and expose the full value through the native `title` attribute rather than a tooltip component:
 
-No new SCSS tokens are introduced. The existing `styles.meta` token continues to style the icon and label; `styles.name` continues to style the filename text.
+- The name is `line-clamp-2 break-all` — an attachment name is often a single unbroken token, so it must be allowed to break mid-word.
+- The file-type row is a single `truncate` line reading `typeLabel` alone, or `typeLabel · sizeLabel` when a size is known.
 
-**RTL**: Both rows use logical Tailwind utilities (`gap-*`, `items-*`, `overflow-hidden`). No physical directional classes required.
+When a `searchQuery` is supplied, the name SHALL render through the shared `Highlight` component (capped at the same two lines) rather than as plain text.
 
-**Accessibility**: No change to keyboard interaction or ARIA. The card root element's accessible label is derived from the attachment name (unchanged).
+**Tile size.** The tile is a fixed `84px` square from the shared tile base class in both states; the error state changes no dimension.
 
-**Memoisation**: `getAttachmentCardState` is already wrapped in `useMemo` in `AttachmentCard`; no additional memoisation needed for this change.
+No new SCSS tokens are introduced. `styles.nameText` continues to style the file name and `styles.typeText` the icon and type label; the error state adds only `styles.tileError`.
 
-#### Scenario: Error card shows type on top, filename below
+**RTL**: the tile uses logical Tailwind utilities (`gap-*`, `items-*`, `overflow-hidden`). No physical directional classes are required.
+
+**Accessibility**: the tile root's accessible name comes from its click label; the error text is carried by the status element described above.
+
+#### Scenario: Error card keeps the filename on top
 
 - **WHEN** `AttachmentCard` renders a non-image attachment with `status: RequestStatus.Error`
-- **THEN** the file-type icon and label appear in the top section of the card
-- **AND** the filename occupies the area below
+- **THEN** the filename still appears above the file-type row, as it does in the normal state
+- **AND** the tile carries the error style token and not the hover one
 
-#### Scenario: Normal card retains filename-on-top layout
+#### Scenario: Corner-action spacing moves to the type row on error
 
-- **WHEN** `AttachmentCard` renders a non-image attachment with `status: RequestStatus.Idle`
-- **THEN** the filename appears in the top section
-- **AND** the file-type icon and label appear at the bottom
+- **WHEN** a non-image attachment enters the error state
+- **THEN** the reserved space for the corner action buttons moves from the filename block to the file-type row
 
-#### Scenario: Long filename wraps with tooltip in error state
+#### Scenario: The error is announced, not only colored
 
-- **WHEN** an error card has a filename longer than the card width
-- **THEN** the filename wraps across lines and a tooltip shows the full name on hover/focus
-- **AND** the card height remains fixed at 100 px (content clips if needed)
+- **WHEN** a non-image attachment is in the error state
+- **THEN** an `sr-only` `role="status"` element carries the error text
+- **AND** each corner action button references that element by id
 
-#### Scenario: Long file-type label is ellipsed with tooltip in error state
+#### Scenario: Retry replaces download, except for an unsupported type
 
-- **WHEN** an error card's file-type label is too long for the top row
-- **THEN** the label is truncated with an ellipsis and a tooltip shows the full text on hover/focus
+- **WHEN** a non-image attachment is in the error state with a retryable reason
+- **THEN** the retry action is rendered and the download action is not
+- **AND** when the reason is an unsupported file type, no retry action is offered
+
+#### Scenario: Long filename wraps and exposes the full value
+
+- **WHEN** a card has a filename longer than the tile width
+- **THEN** the filename wraps to at most two lines, breaking mid-word if needed, and the full name is available through the element's `title`
+- **AND** the tile keeps its fixed 84 px square footprint
+
+#### Scenario: Long file-type label is ellipsed
+
+- **WHEN** a card's file-type row is too long for the tile width
+- **THEN** it is truncated with an ellipsis on a single line

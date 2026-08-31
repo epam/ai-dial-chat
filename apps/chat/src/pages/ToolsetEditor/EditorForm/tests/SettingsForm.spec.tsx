@@ -1,12 +1,9 @@
+import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  ToolsetAuthTypes,
-  ToolsetTransportType,
-  WithLogin,
-} from '../../../../constants/toolsets';
+import { ToolsetTransportType } from '../../../../constants/toolsets';
 import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
@@ -45,13 +42,19 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ),
 }));
 
-vi.mock('../../../../utils/mcp-endpoint-url', () => ({
-  buildToolsetMcpUrl: vi.fn(
-    (base: string, id: string) => `${base}/v1/toolset/${id}/mcp`,
-  ),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    buildToolsetMcpUrl: vi.fn(
+      (base: string, id: string) => `${base}/v1/toolset/${id}/mcp`,
+    ),
+  };
+});
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   PrimaryButton: ({
     label,
     onClick,
@@ -276,8 +279,7 @@ describe('SettingsForm — Connect toolset section', () => {
   });
 
   it('hides the connect section when toolsetId is empty', async () => {
-    const { buildToolsetMcpUrl } =
-      await import('../../../../utils/mcp-endpoint-url');
+    const { buildToolsetMcpUrl } = await import('@epam/ai-dial-chat-hooks');
     render(
       <SettingsForm
         form={makeForm()}
@@ -297,8 +299,7 @@ describe('SettingsForm — Connect toolset section', () => {
   it('hides the connect section when dialCoreExternalUrl is absent', async () => {
     const { useAppConfig } =
       await import('../../../../context/AppConfigContext');
-    const { buildToolsetMcpUrl } =
-      await import('../../../../utils/mcp-endpoint-url');
+    const { buildToolsetMcpUrl } = await import('@epam/ai-dial-chat-hooks');
     vi.mocked(useAppConfig).mockReturnValueOnce({
       config: { dialCoreExternalUrl: null },
     } as ReturnType<typeof useAppConfig>);
@@ -322,8 +323,7 @@ describe('SettingsForm — Connect toolset section', () => {
     const user = userEvent.setup({ delay: null });
     const mockCopy = vi.fn();
     const { useCodeCopy } = await import('@epam/ai-dial-chat-shared');
-    const { buildToolsetMcpUrl } =
-      await import('../../../../utils/mcp-endpoint-url');
+    const { buildToolsetMcpUrl } = await import('@epam/ai-dial-chat-hooks');
     vi.mocked(useCodeCopy).mockReturnValueOnce({
       isCopied: false,
       copy: mockCopy,

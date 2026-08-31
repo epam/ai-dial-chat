@@ -2,17 +2,13 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { type UseToolsMenuParams, useToolsMenu } from '../useToolsMenu';
 
-const LABELS = { deepResearchFallback: 'tools.deepResearchFallback' };
-
 const makeParams = (
   overrides: Partial<UseToolsMenuParams>,
 ): UseToolsMenuParams => ({
-  deepResearchToolId: 'deep_research',
   selectedItemId: 'deploy-1',
   selectedDeploymentConfiguration: {
     properties: { deep_research: { type: 'boolean', default: false } },
   },
-  labels: LABELS,
   toolIcon: null,
   ...overrides,
 });
@@ -20,15 +16,6 @@ const makeParams = (
 const boolProp = { type: 'boolean', default: false };
 
 describe('useToolsMenu', () => {
-  it('returns empty toolsMenuItems when deepResearchToolId is null', () => {
-    const { result } = renderHook(() =>
-      useToolsMenu(makeParams({ deepResearchToolId: null })),
-    );
-
-    expect(result.current.toolsMenuItems).toHaveLength(0);
-    expect(result.current.toolConfigurationValue).toEqual({});
-  });
-
   it('returns empty toolsMenuItems when selectedDeploymentConfiguration is null', () => {
     const { result } = renderHook(() =>
       useToolsMenu(makeParams({ selectedDeploymentConfiguration: null })),
@@ -38,14 +25,10 @@ describe('useToolsMenu', () => {
     expect(result.current.toolConfigurationValue).toEqual({});
   });
 
-  it('returns empty toolsMenuItems when schema lacks the configured tool property', () => {
+  it('returns empty toolsMenuItems when the schema has no properties', () => {
     const { result } = renderHook(() =>
       useToolsMenu(
-        makeParams({
-          selectedDeploymentConfiguration: {
-            properties: { other_tool: { type: 'boolean', default: false } },
-          },
-        }),
+        makeParams({ selectedDeploymentConfiguration: { type: 'object' } }),
       ),
     );
 
@@ -53,13 +36,14 @@ describe('useToolsMenu', () => {
     expect(result.current.toolConfigurationValue).toEqual({});
   });
 
-  it('returns empty toolsMenuItems when the matching property is not boolean-typed', () => {
+  it('skips properties that are not boolean-typed', () => {
     const { result } = renderHook(() =>
       useToolsMenu(
         makeParams({
           selectedDeploymentConfiguration: {
             properties: {
               deep_research: { type: 'string', default: 'off' },
+              temperature: { type: 'number', default: 1 },
             },
           },
         }),
@@ -69,12 +53,29 @@ describe('useToolsMenu', () => {
     expect(result.current.toolsMenuItems).toHaveLength(0);
   });
 
-  it('returns a single item when tool id matches a boolean property with explicit type', () => {
-    const { result } = renderHook(() => useToolsMenu(makeParams({})));
+  it('returns one item per boolean property, in schema order', () => {
+    const { result } = renderHook(() =>
+      useToolsMenu(
+        makeParams({
+          selectedDeploymentConfiguration: {
+            properties: {
+              deep_research: { type: 'boolean', default: false },
+              system_prompt: { type: 'string' },
+              web_search: { type: 'boolean', default: false },
+            },
+          },
+        }),
+      ),
+    );
 
-    expect(result.current.toolsMenuItems).toHaveLength(1);
-    expect(result.current.toolsMenuItems[0].id).toBe('deep_research');
-    expect(result.current.toolsMenuItems[0].isSelected).toBe(false);
+    expect(result.current.toolsMenuItems.map((item) => item.id)).toEqual([
+      'deep_research',
+      'web_search',
+    ]);
+    expect(result.current.toolConfigurationValue).toEqual({
+      deep_research: false,
+      web_search: false,
+    });
   });
 
   it('infers boolean type when type is absent but default is boolean', () => {
@@ -111,23 +112,24 @@ describe('useToolsMenu', () => {
     expect(result.current.toolsMenuItems[0].label).toBe('Deep Research');
   });
 
-  it('falls back to the supplied fallback label when schema has no title', () => {
-    const { result } = renderHook(() => useToolsMenu(makeParams({})));
-
-    expect(result.current.toolsMenuItems[0].label).toBe(
-      'tools.deepResearchFallback',
-    );
-  });
-
-  it('falls back to the English default when no labels are supplied', () => {
+  it('humanizes the property key when the schema has no title', () => {
     const { result } = renderHook(() =>
-      useToolsMenu(makeParams({ labels: undefined })),
+      useToolsMenu(
+        makeParams({
+          selectedDeploymentConfiguration: {
+            properties: { deep_research: boolProp, 'web-search': boolProp },
+          },
+        }),
+      ),
     );
 
-    expect(result.current.toolsMenuItems[0].label).toBe('Deep research');
+    expect(result.current.toolsMenuItems.map((item) => item.label)).toEqual([
+      'Deep research',
+      'Web search',
+    ]);
   });
 
-  it('initialises isSelected from schema default when default is true', () => {
+  it('initialises isSelected from the schema default when default is true', () => {
     const { result } = renderHook(() =>
       useToolsMenu(
         makeParams({
@@ -144,18 +146,24 @@ describe('useToolsMenu', () => {
     });
   });
 
-  it('onToolToggle flips isSelected when called with the matching id', () => {
-    const { result } = renderHook(() => useToolsMenu(makeParams({})));
-
-    expect(result.current.toolsMenuItems[0].isSelected).toBe(false);
+  it('onToolToggle flips only the tool it is called with', () => {
+    const { result } = renderHook(() =>
+      useToolsMenu(
+        makeParams({
+          selectedDeploymentConfiguration: {
+            properties: { deep_research: boolProp, web_search: boolProp },
+          },
+        }),
+      ),
+    );
 
     act(() => {
       result.current.onToolToggle('deep_research');
     });
 
-    expect(result.current.toolsMenuItems[0].isSelected).toBe(true);
     expect(result.current.toolConfigurationValue).toEqual({
       deep_research: true,
+      web_search: false,
     });
   });
 
@@ -167,6 +175,9 @@ describe('useToolsMenu', () => {
     });
 
     expect(result.current.toolsMenuItems[0].isSelected).toBe(false);
+    expect(result.current.toolConfigurationValue).toEqual({
+      deep_research: false,
+    });
   });
 
   it('resets toggle state when selectedItemId changes', () => {
@@ -229,29 +240,23 @@ describe('useToolsMenu', () => {
     });
   });
 
-  it('restoreToolConfiguration ignores a non-boolean or missing value', () => {
+  it('restoreToolConfiguration ignores unknown ids, non-boolean and missing values', () => {
     const { result } = renderHook(() => useToolsMenu(makeParams({})));
 
     act(() => {
-      result.current.restoreToolConfiguration({ other_tool: true });
+      result.current.restoreToolConfiguration({
+        other_tool: true,
+        deep_research: 'yes',
+      });
     });
     expect(result.current.toolsMenuItems[0].isSelected).toBe(false);
+    expect(result.current.toolConfigurationValue).toEqual({
+      deep_research: false,
+    });
 
     act(() => {
       result.current.restoreToolConfiguration(undefined);
     });
     expect(result.current.toolsMenuItems[0].isSelected).toBe(false);
-  });
-
-  it('restoreToolConfiguration is a no-op when deepResearchToolId is null', () => {
-    const { result } = renderHook(() =>
-      useToolsMenu(makeParams({ deepResearchToolId: null })),
-    );
-
-    act(() => {
-      result.current.restoreToolConfiguration({ deep_research: true });
-    });
-
-    expect(result.current.toolConfigurationValue).toEqual({});
   });
 });

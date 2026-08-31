@@ -1,11 +1,12 @@
 import { DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  Dropdown,
+  DIAL_KIT_ICON_STROKE,
   DialDropdownIcon,
-  Tooltip,
+  Dropdown,
   ElementSize,
   GhostIconButton,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
 import { type CSSProperties, type FC, ReactNode, useState } from 'react';
@@ -84,6 +85,7 @@ export const ModelSelectorControl: FC<Props> = ({
       size={DIAL_ICON_SIZE.SM}
       className={styles.modelSelectorCaret}
       aria-hidden
+      stroke={DIAL_KIT_ICON_STROKE}
     />
   );
 

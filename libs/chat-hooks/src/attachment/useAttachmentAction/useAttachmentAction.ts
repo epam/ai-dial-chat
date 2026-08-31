@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import {
   base64ToBlob,
+  ensureDownloadFilename,
   triggerAnchorDownload,
   triggerBlobDownload,
   MIMEType,
@@ -13,6 +14,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { parsePdfPageReference } from '@epam/ai-dial-quotations';
 import { useCallback } from 'react';
+import { isDialFileId } from '../../files/dial-file';
 
 /** Resolves a DIAL Core file id to a downloadable URL. Host-owned — encodes the app's own file-download endpoint. */
 export type ResolveDownloadUrl = (fileId: string) => string | undefined;
@@ -28,9 +30,6 @@ export interface UseAttachmentActionResult {
   /** Default click handler for an attachment tile: download, canvas-preview, or open-in-browser. */
   handleAttachmentClick: (attachment: DisplayAttachment) => void;
 }
-
-/** Returns true when a value looks like a DIAL Core file id (`files/{bucket}/{path}`). */
-export const isDialFileId = (url: string): boolean => url.startsWith('files/');
 
 /** Returns true when `downloadAttachment` can trigger a download for `attachment`. */
 export const isDownloadableAttachment = (
@@ -56,7 +55,10 @@ export const downloadAttachment = (
     const downloadUrl = resolveDownloadUrl(url);
     if (downloadUrl == null) return false;
 
-    triggerAnchorDownload(downloadUrl, name);
+    triggerAnchorDownload(
+      downloadUrl,
+      ensureDownloadFilename(name, url, contentType),
+    );
     return true;
   }
 
@@ -66,7 +68,7 @@ export const downloadAttachment = (
   if (data != null) {
     triggerBlobDownload(
       base64ToBlob(data, contentType || MIMEType.Plain),
-      name,
+      ensureDownloadFilename(name, url, contentType),
     );
     return true;
   }
@@ -85,9 +87,10 @@ const openAnnotationAttachment = (
   if (isDialFileId(fileId)) {
     const downloadUrl = resolveDownloadUrl(fileId);
     if (downloadUrl == null) return;
+    const displayName = attachment.title ?? fileId.split('/').pop() ?? '';
     triggerAnchorDownload(
       downloadUrl,
-      attachment.title ?? fileId.split('/').pop() ?? '',
+      ensureDownloadFilename(displayName, fileId, attachment.type),
     );
   } else {
     window.open(url, '_blank', 'noopener,noreferrer');

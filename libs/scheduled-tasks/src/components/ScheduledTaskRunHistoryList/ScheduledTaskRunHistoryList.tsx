@@ -1,6 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   GhostButton,
   Skeleton,
   SkeletonVariant,
@@ -26,6 +27,7 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
           size={DIAL_ICON_SIZE.SM}
           className={styles.successIcon}
           aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
         />
       );
     case ScheduledTaskRunStatus.Error:
@@ -34,6 +36,7 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
           size={DIAL_ICON_SIZE.SM}
           className={styles.errorIcon}
           aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
         />
       );
     case ScheduledTaskRunStatus.InProgress:
@@ -48,6 +51,7 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
           size={DIAL_ICON_SIZE.SM}
           className={styles.missedIcon}
           aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
         />
       );
     default:
@@ -187,7 +191,7 @@ export const ScheduledTaskRunHistoryList: FC<
       >
         <IconClipboardX
           size={44}
-          stroke={1.5}
+          stroke={DIAL_KIT_ICON_STROKE}
           className={styles.subtitleText}
           aria-hidden
         />

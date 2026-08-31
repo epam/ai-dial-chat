@@ -6,9 +6,9 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
-import { generateUUID } from '../../common/utils/generate-uuid';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import { generateUUID } from '../../common/utils/generate-uuid';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';

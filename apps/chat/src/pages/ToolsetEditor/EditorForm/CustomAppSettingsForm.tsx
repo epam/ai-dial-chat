@@ -1,3 +1,7 @@
+import {
+  isValidAbsoluteUrl,
+  isValidFeaturesData,
+} from '@epam/ai-dial-chat-hooks';
 import { Input, Textarea, TagInput } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useState } from 'react';
@@ -8,10 +12,6 @@ import type {
   CustomAppFormData,
   CustomAppFormErrors,
 } from '../../../models/custom-apps';
-import {
-  isValidAbsoluteUrl,
-  isValidFeaturesData,
-} from '../../../utils/custom-apps';
 
 interface Props {
   form: CustomAppFormData;

@@ -1,7 +1,11 @@
 import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
+  getApiErrorDetails,
   getConversationPath,
+  getLastDeploymentId,
+  getLastUserMessageToolConfiguration,
   isAwaitingGenerationResume,
+  shouldWatchForDisplayNameUpdate,
   useConversationHandlers,
   useConversationStream,
   useToolsMenu,
@@ -14,9 +18,10 @@ import {
   type Message,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ConfirmationPopupVariant,
   ConfirmationPopup,
+  ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconTelescope } from '@tabler/icons-react';
@@ -35,7 +40,6 @@ import {
   ToolsI18nKeys,
 } from '../../constants/translation-keys';
 import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
-import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useClientChannel } from '../../context/ClientChannelContext';
 import { useConversations } from '../../context/ConversationsContext';
@@ -55,7 +59,6 @@ import {
   filesApi as configuredFilesApi,
   rateApi as configuredRateApi,
 } from '../../server-api/api-client';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   getConversation as apiGetConversation,
@@ -65,11 +68,6 @@ import { ActiveScheduledTaskStatus } from '../../types/active-scheduled-task';
 import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
-import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
-import {
-  getLastDeploymentId,
-  getLastUserMessageToolConfiguration,
-} from '../../utils/message-utils';
 
 interface Props {
   onDuplicateReadonly?: () => void;
@@ -93,7 +91,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const restoredToolConfigIdRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { config } = useAppConfig();
   const {
     restoreSelectedItemId,
     selectedItemId: currentSelectedItemId,
@@ -106,13 +103,15 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     toolConfigurationValue,
     restoreToolConfiguration,
   } = useToolsMenu({
-    deepResearchToolId: config.deepResearchToolId,
     selectedItemId: currentSelectedItemId,
     selectedDeploymentConfiguration,
-    labels: {
-      deepResearchFallback: t(ToolsI18nKeys.DeepResearchFallback),
-    },
-    toolIcon: <IconTelescope size={DIAL_ICON_SIZE.SM} aria-hidden />,
+    toolIcon: (
+      <IconTelescope
+        size={DIAL_ICON_SIZE.SM}
+        aria-hidden
+        stroke={DIAL_KIT_ICON_STROKE}
+      />
+    ),
   });
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
@@ -637,7 +636,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           onToolToggle={onToolToggle}
           toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
           toolsChipLabels={{
-            countLabel: (count) => t(ToolsI18nKeys.SelectedCount, { count }),
             removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
           }}
           topContent={

@@ -316,7 +316,7 @@ const buildMarkdownComponents = (
     <th
       scope="col"
       className={mergeClasses(
-        'sticky top-0 z-[2] max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start',
+        'sticky top-0 z-[2] max-w-96 whitespace-normal break-words px-3 py-2.5 text-start',
         tableStyles.rowDivider,
         tableStyles.tableHeaderCell,
         cn.tableHeaderFont ?? 'dial-tiny-lead-semi-text',
@@ -330,7 +330,7 @@ const buildMarkdownComponents = (
   td: ({ children }) => (
     <td
       className={mergeClasses(
-        'max-w-96 whitespace-normal border-b px-3 py-2.5 align-top [overflow-wrap:anywhere]',
+        'max-w-96 whitespace-normal px-3 py-2.5 align-top [overflow-wrap:anywhere]',
         tableStyles.rowDivider,
         cn.tableBodyCell,
         cn.tableCell,

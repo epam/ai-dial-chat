@@ -1,11 +1,13 @@
-import type { Conversation } from '@epam/ai-dial-chat-shared';
+import {
+  type Conversation,
+  ConversationTransferJobStatus,
+  ConversationTransferSubjectKind,
+} from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ConversationExportMode,
   ConversationTransferErrorCode,
-  ConversationTransferJobStatus,
-  ConversationTransferSubjectKind,
   ConversationTransferWarningCode,
 } from '../../conversation-transfer/types';
 import {

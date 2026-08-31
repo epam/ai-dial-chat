@@ -17,10 +17,10 @@ attribute. It must **not** be served from the same origin as `apps/chat`
 
 ## Environment variables
 
-| Variable                                 | Default | Description                                                                                                                                                                          |
-| ----------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                                    | `3100`  | Port the app listens on.                                                                                                                                                             |
-| `MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS`    | —       | Comma-separated list of origins allowed to embed this page (e.g. `https://chat.example.com`). **Required** for the app to serve anything — every request is rejected with `403` until this is set, there is no insecure "allow all" default. |
+| Variable                               | Default | Description                                                                                                                                                                                                                                  |
+| -------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                                 | `3100`  | Port the app listens on.                                                                                                                                                                                                                     |
+| `MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS` | —       | Comma-separated list of origins allowed to embed this page (e.g. `https://chat.example.com`). **Required** for the app to serve anything — every request is rejected with `403` until this is set, there is no insecure "allow all" default. |
 
 Then point `apps/chat-api`'s `MCP_APP_SANDBOX_URL` env var at this
 deployment's base URL, so `apps/chat` can resolve it via the existing

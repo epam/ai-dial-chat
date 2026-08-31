@@ -103,7 +103,7 @@ roles handling with `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES` and
 These have no legacy counterpart but change user-visible behaviour:
 `AUTH_COOKIE_SECURE`, `OVERLAY_SANDBOX_ENABLED`, `RESPONSES_API_ENABLED`,
 `SCHEDULED_TASKS_ENABLED` / `_ROLES`, `LIVE_CHAT_INTERACTION_ENABLED` / `_ROLES`,
-`FILE_MANAGER_AVAILABLE_TABS`, `DEEP_RESEARCH_TOOL_ID`, `UTILITY_MODEL` with
+`FILE_MANAGER_AVAILABLE_TABS`, `UTILITY_MODEL` with
 `LLM_CONVERSATION_NAMING_ENABLED`, `ASR_ENABLED_ROLES`, `ANNOUNCEMENTS`,
 `CHAT_VERSION`, and the `ARCHIVE_*` / `SKILL_*` transfer limits.
 
@@ -160,6 +160,7 @@ redirect_uri`.
   See the
   [Chat API deployment setup](../apps/chat-api/README.md#dial-core-oauth-redirect-allowlist)
   for the Core configuration example.
+
 - Existing sessions do not carry over. Users log in once after the switch.
 - Provider configuration keeps the legacy shape: one set of discrete
   `AUTH_{PROVIDER}_*` variables per provider, registered when its `CLIENT_ID` is

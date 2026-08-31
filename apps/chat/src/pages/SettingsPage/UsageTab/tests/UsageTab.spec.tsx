@@ -1,4 +1,5 @@
 import { DeploymentItemDtoTypeEnum } from '@epam/ai-dial-chat-api-client';
+import { useUsageData } from '@epam/ai-dial-chat-hooks';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type {
   ModelLimitPeriodStatuses,
@@ -13,7 +14,6 @@ import { useDeployments } from '../../../../context/DeploymentsContext';
 import { useNotification } from '../../../../context/NotificationContext';
 import { createDeploymentsContextValue } from '../../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
-import { useUsageData } from '../../../../hooks/useUsageData';
 import UsageTab from '../UsageTab';
 
 const { modelLimitsSectionSpy } = vi.hoisted(() => ({
@@ -32,9 +32,14 @@ vi.mock('../../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
 
-vi.mock('../../../../hooks/useUsageData', () => ({
-  useUsageData: vi.fn(),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    useUsageData: vi.fn(),
+  };
+});
 
 vi.mock('@epam/ai-dial-usage-dashboard', async (importOriginal) => {
   const actual =

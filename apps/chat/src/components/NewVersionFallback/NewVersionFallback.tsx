@@ -1,3 +1,4 @@
+import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconRefresh } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +22,7 @@ const NewVersionFallback: FC = () => {
         <IconRefresh
           aria-hidden="true"
           size={48}
-          stroke={1.5}
+          stroke={DIAL_KIT_ICON_STROKE}
           className="text-accent"
         />
       }

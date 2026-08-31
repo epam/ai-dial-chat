@@ -57,6 +57,10 @@ export interface ItemDetailsTexts {
   contentFileUnsupportedLabel?: string;
   /** Label on the "Featured" tag chip shown when the entity is featured. Default: `'Featured'`. */
   featuredLabel?: string;
+  /** Label on the header badge shown when `item.details?.limits?.status` is `CatalogLimitStatus.RunningLow`. Default: `'Running low'`. */
+  limitRunningLowLabel?: string;
+  /** Label on the header badge shown when `item.details?.limits?.status` is `CatalogLimitStatus.LimitReached`. Default: `'Limit reached'`. */
+  limitReachedLabel?: string;
   /** Primary action button label. Default: `'Use in chat'`. */
   primaryActionLabel?: string;
   /** "Publish" action button label. Default: `'Publish'`. */
@@ -93,10 +97,6 @@ export interface ItemDetailsTexts {
   pricingPricesSectionLabel?: string;
   /** "Usage limits" section heading in the Pricing tab. Default: `'Usage limits'`. */
   pricingLimitsSectionLabel?: string;
-  /** "Cost caps" section heading in the Limits tab. Default: `'Cost caps'`. */
-  limitsCostCapsSectionLabel?: string;
-  /** "Unlimited" section heading in the Limits tab. Default: `'Unlimited'`. */
-  limitsUnlimitedSectionLabel?: string;
   /** Accessible label for the loading placeholder shown next to the tab row while structured details are being fetched. Default: `'Loading details'`. */
   detailsLoadingAriaLabel?: string;
   /** "Log in" action button label, shown when the item's credentials are not signed in. Default: `'Log in'`. */
@@ -459,8 +459,23 @@ export interface DetailsPanelProps {
   isDetailsLoading?: boolean;
   /** Called when the panel should close (close button or backdrop click). */
   onClose: () => void;
+  /**
+   * Renders the panel read-only: the favorite star and every action that
+   * mutates the item or the caller's relationship to it — Share,
+   * Publish/Unpublish, Edit, Delete, "Remove from My List", "Revoke access",
+   * and the credentials Log in / Log out / manage button — are withheld. The
+   * non-mutating actions (the primary "Use in chat" and Download) still
+   * render. Default: false.
+   */
+  isReadonly?: boolean;
   /** Called when the star/favorite button is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /**
+   * Additional caller-supplied rule for whether the favorite star is shown in
+   * the panel header. Returning `false` hides the star and makes the item
+   * non-favoritable from the panel. Defaults to **visible** when omitted.
+   */
+  isFavoriteVisible?: (item: CatalogItem) => boolean;
   /**
    * Additional caller-supplied rule for whether the "Remove from My List"
    * action is shown, combined (AND) with the built-in
@@ -475,6 +490,12 @@ export interface DetailsPanelProps {
   onShare?: (item: CatalogItem) => void;
   /** Controls whether the "Publish" action is shown for the item. */
   isPublishVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether whichever of "Publish"/"Unpublish" applies renders as its
+   * own button in the details header rather than an entry in its "Manage"
+   * menu. Defaults to `false` — the menu entry.
+   */
+  isPublishPrimary?: (item: CatalogItem) => boolean;
   /** Resolves previously published versions for an item, most recent first. */
   getPublishHistory?: (item: CatalogItem) => Promise<PublishHistoryEntry[]>;
   /** Root-level destination folder nodes offered by the publish flow. */
@@ -518,8 +539,10 @@ export interface DetailsPanelProps {
    */
   onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
   /**
-   * Renders the Share popover content anchored to the Share button. When
-   * provided, clicking Share opens this popover instead of calling `onShare`.
+   * Renders the Share popover content, anchored to whichever surface carries
+   * Share — the header button, or the Manage trigger when `isSharePrimary`
+   * has moved the entry into that menu. When provided, choosing Share opens
+   * this popover instead of calling `onShare`.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   /**
@@ -528,6 +551,12 @@ export interface DetailsPanelProps {
    * Absent means the built-in rule alone decides.
    */
   isShareVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether "Share" renders as its own button in the details header
+   * rather than an entry in its "Manage" menu. Defaults to `true` — the
+   * button. Returning `false` moves it into the menu, beside "Delete".
+   */
+  isSharePrimary?: (item: CatalogItem) => boolean;
   /** Called when the "Edit" button is clicked. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**
@@ -656,4 +685,9 @@ export interface DetailsPanelProps {
   texts?: ItemDetailsTexts;
   /** Grouped style overrides. */
   styles?: ItemDetailsStyles;
+  /**
+   * Footer note rendered below the Limits tab's rows, e.g. a link to a
+   * full usage-limits page. Omitted (the default) hides the footer entirely.
+   */
+  limitsFooterNote?: ReactNode;
 }

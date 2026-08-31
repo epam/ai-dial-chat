@@ -1,5 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, Dropdown } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  Dropdown,
+} from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconChevronDown, IconWorld } from '@tabler/icons-react';
 import { FC, type KeyboardEvent, type RefObject } from 'react';
 import { ShareLinkAccess } from '../../types/share';
@@ -35,7 +39,7 @@ interface AccessControlProps {
   menuRef: RefObject<HTMLDivElement | null>;
   /** CSS class applied to the primary row text. Defaults to `'dial-small-semi-text'`. */
   titleClassName?: string;
-  /** CSS class applied to the secondary row text. Defaults to `'dial-tiny-text'`. */
+  /** CSS class applied to the secondary row text. Defaults to `'dial-small-text'`. */
   subtitleClassName?: string;
   /** CSS class applied to the access trigger label. Defaults to `'dial-small-semi-text'`. */
   accessTriggerLabelClassName?: string;
@@ -59,7 +63,7 @@ export const AccessControl: FC<AccessControlProps> = ({
   triggerRef,
   menuRef,
   titleClassName = 'dial-small-semi-text',
-  subtitleClassName = 'dial-tiny-text',
+  subtitleClassName = 'dial-small-text',
   accessTriggerLabelClassName = 'dial-small-semi-text',
   accessMenuItemLabelClassName = 'dial-small-text',
 }) => {
@@ -79,7 +83,11 @@ export const AccessControl: FC<AccessControlProps> = ({
           styles.linkIconBadge,
         )}
       >
-        <IconWorld size={DIAL_ICON_SIZE.MD} aria-hidden />
+        <IconWorld
+          size={DIAL_ICON_SIZE.MD}
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
       </span>
       <div className="min-w-0 flex-1">
         <p
@@ -148,7 +156,7 @@ export const AccessControl: FC<AccessControlProps> = ({
                     {isChecked && (
                       <IconCheck
                         size={DIAL_ICON_SIZE.SM}
-                        stroke={2}
+                        stroke={DIAL_KIT_ICON_STROKE}
                         className={styles.accessMenuItemCheck}
                         aria-hidden
                       />
@@ -165,7 +173,7 @@ export const AccessControl: FC<AccessControlProps> = ({
             aria-haspopup="menu"
             aria-expanded={isOpen}
             className={mergeClasses(
-              'flex h-9 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2.5 outline-none',
+              'flex h-10 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 outline-none',
               styles.accessTriggerBtn,
               isOpen && styles.accessTriggerBtnOpen,
             )}
@@ -182,8 +190,8 @@ export const AccessControl: FC<AccessControlProps> = ({
               }
             </span>
             <IconChevronDown
-              size={14}
-              strokeWidth={2.2}
+              size={DIAL_ICON_SIZE.MD}
+              stroke={DIAL_KIT_ICON_STROKE}
               className={mergeClasses(
                 'shrink-0 transition-transform duration-150 rtl:scale-x-[-1]',
                 styles.accessTriggerChevron,
@@ -197,7 +205,7 @@ export const AccessControl: FC<AccessControlProps> = ({
         <span
           aria-label={accessAriaLabel}
           className={mergeClasses(
-            'flex h-9 shrink-0 items-center whitespace-nowrap rounded-lg px-2.5',
+            'flex h-10 shrink-0 items-center whitespace-nowrap rounded-full px-3',
             styles.accessTriggerBtn,
           )}
         >

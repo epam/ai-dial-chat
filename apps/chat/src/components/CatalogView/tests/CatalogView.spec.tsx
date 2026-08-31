@@ -7,6 +7,13 @@ import {
   getCredentialsUiState,
 } from '@epam/ai-dial-catalog';
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
+import {
+  FavoriteEntityType,
+  getToolsetOAuthChannelName,
+  SKILL_MANIFEST_MAX_BYTES,
+  ToolsetOAuthCallbackQuery,
+  ToolsetOAuthResultType,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   CatalogEntityType,
@@ -24,19 +31,12 @@ import {
   type ReactNode,
 } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  ToolsetOAuthCallbackQuery,
-  ToolsetOAuthResultType,
-} from '../../../constants/toolsets';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
 import { DEFAULT_ENABLED_UI_FEATURES } from '../../../constants/ui-features';
 import { useAppConfig } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
-import {
-  FavoriteEntityType,
-  useFavoriteApplications,
-} from '../../../context/FavoriteApplicationsContext';
+import { useFavoriteApplications } from '../../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
 import { useSkills } from '../../../context/SkillsContext';
@@ -79,9 +79,7 @@ import {
 } from '../../../server-api/toolsets';
 import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
-import { SKILL_MANIFEST_MAX_BYTES } from '../../../types/skill';
 import { UserConfigStatus } from '../../../types/user-config-status';
-import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
 import { SkillDetailsFilePreview } from '../SkillDetailsFilePreview';
 
@@ -615,12 +613,6 @@ vi.mock('../../../context/NotificationContext', () => ({
 }));
 
 vi.mock('../../../context/FavoriteApplicationsContext', () => ({
-  FavoriteEntityType: {
-    Deployment: 'deployment',
-    Toolset: 'toolset',
-    Prompt: 'prompt',
-    Skill: 'skill',
-  },
   useFavoriteApplications: vi.fn(),
 }));
 vi.mock('../../../hooks/useUiFeature', async () => {
@@ -784,7 +776,6 @@ describe('CatalogView', () => {
         announcementDescription: null,
         announcements: [],
         footerHtmlMessage: '',
-        deepResearchToolId: null,
         customVisualizers: [],
         publicationFilterSources: ['title', 'role', 'dial_roles'],
       },

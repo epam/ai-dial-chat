@@ -1,8 +1,8 @@
+import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PublishI18nKeys } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { EntityOperation } from '../../types/entity-notification';
 
 /** Copy for the operation whose request failed. */

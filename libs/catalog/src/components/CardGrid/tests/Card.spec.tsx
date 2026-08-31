@@ -1,7 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import {
   CredentialStatus,
@@ -64,6 +64,31 @@ describe('Card — long version', () => {
 describe('Card — favorite visibility', () => {
   it('renders the star button for every entity type, prompts included', () => {
     render(<Card item={makeItem({ type: CatalogEntityType.Prompt })} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Add to favorites' }),
+    ).toBeTruthy();
+  });
+
+  it('hides the star button and keeps the item non-favoritable when isFavoriteVisible returns false', () => {
+    render(
+      <Card
+        item={makeItem()}
+        isFavoriteVisible={() => false}
+        onToggle={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Add to favorites' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Remove from favorites' }),
+    ).toBeNull();
+  });
+
+  it('renders the star button when isFavoriteVisible returns true', () => {
+    render(<Card item={makeItem()} isFavoriteVisible={() => true} />);
 
     expect(
       screen.getByRole('button', { name: 'Add to favorites' }),
@@ -146,5 +171,41 @@ describe('Card — credentials badge', () => {
     expect(
       screen.queryByRole('img', { name: 'Authorize to use this toolset.' }),
     ).toBeNull();
+  });
+});
+
+describe('Card — read-only state', () => {
+  const featuredItem = makeItem({ isFeatured: true, folder: ['Root', 'Team'] });
+
+  it('shows the Featured tag, the star, and the footer divider by default', () => {
+    render(<Card item={featuredItem} />);
+
+    const card = screen.getByRole('article', { hidden: true });
+    expect(screen.getByText('Featured')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Add to favorites' }),
+    ).toBeTruthy();
+    expect(screen.getByText('Team')).toBeTruthy();
+    expect(card.innerHTML).toContain('border-t');
+  });
+
+  it('withholds the Featured tag, the star, and the footer divider when isReadonly is set', () => {
+    render(<Card item={featuredItem} isReadonly onToggle={vi.fn()} />);
+
+    const card = screen.getByRole('article', { hidden: true });
+    expect(screen.queryByText('Featured')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Add to favorites' }),
+    ).toBeNull();
+    expect(card.innerHTML).not.toContain('border-t');
+    // The folder path is the one footer element a read-only card keeps.
+    expect(screen.getByText('Team')).toBeTruthy();
+  });
+
+  it('drops the footer row entirely when a read-only item has no folder path', () => {
+    render(<Card item={makeItem({ isFeatured: true })} isReadonly />);
+
+    const card = screen.getByRole('article', { hidden: true });
+    expect(card.innerHTML).not.toContain('pt-3');
   });
 });

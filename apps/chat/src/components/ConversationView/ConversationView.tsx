@@ -2,9 +2,16 @@ import {
   useAttachmentCanvas,
   useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import { FileDndOverlay } from '@epam/ai-dial-attachment-input';
 import {
   AttachmentValidationErrorReason,
+  dialFilesToAttachments,
+  dialFolderPathToAttachment,
+  findDeploymentByIdOrReference,
+  getQuickAppConversationStarters,
   isMessageChanged,
+  isQuickAppSchema,
+  referenceAttachmentToPdfCanvasContent,
   useAttachmentValidation,
   useChatSettingsFormConfig,
   useConversationScroll,
@@ -24,16 +31,14 @@ import {
   type StarterOption,
   type ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
-import {
-  FileDndOverlay,
-  type ToolsChipLabels,
-} from '@epam/ai-dial-conversation-input';
+import type { ToolsChipLabels } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
@@ -68,9 +73,9 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useAutoOpenMcpAppCanvas } from '../../hooks/attachment/useAutoOpenMcpAppCanvas';
 import { useOpenMcpAppCanvas } from '../../hooks/attachment/useOpenMcpAppCanvas';
-import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
 import { useMcpAppTools } from '../../hooks/conversation/useMcpAppTools';
@@ -78,16 +83,9 @@ import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelecto
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import { isQuickAppSchema } from '../../utils/application-schema';
-import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
-import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
-import {
-  dialFilesToAttachments,
-  dialFolderPathToAttachment,
-} from '../../utils/dial-file-to-attachment';
+import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
-import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import FooterMessage from '../FooterMessage/FooterMessage';
@@ -250,7 +248,10 @@ const ConversationView: FC<Props> = ({
     (annotation: Annotation) => {
       const attachment = annotation.body?.source?.attachment;
       if (!attachment) return;
-      const canvasContent = referenceAttachmentToPdfCanvasContent(attachment);
+      const canvasContent = referenceAttachmentToPdfCanvasContent(
+        attachment,
+        attachmentCanvasUrlResolvers,
+      );
       if (canvasContent) openCanvas(canvasContent, attachment.title);
     },
     [openCanvas],
@@ -575,7 +576,9 @@ const ConversationView: FC<Props> = ({
 
   const handleAttachDialFiles = useCallback(
     (result: AttachResult) => {
-      const fileAttachments = dialFilesToAttachments(result.files, bucket);
+      const fileAttachments = dialFilesToAttachments(result.files, bucket, {
+        resolvePreviewUrl: resolveCatalogIconUrl,
+      });
       const folderAttachments = result.folderPaths.map(
         dialFolderPathToAttachment,
       );
@@ -810,7 +813,12 @@ const ConversationView: FC<Props> = ({
             )}
             <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
-              iconBefore={<IconCopy size={DIAL_ICON_SIZE.MD} />}
+              iconBefore={
+                <IconCopy
+                  size={DIAL_ICON_SIZE.MD}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               onClick={onDuplicateConversation}
             />
           </div>

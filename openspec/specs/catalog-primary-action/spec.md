@@ -81,17 +81,65 @@ An item whose Download is **not** primary (every entity type other than Skill, u
 
 ---
 
+### Requirement: Share and Publish each render on one host-selected surface
+
+`Header.tsx` SHALL accept two predicates, threaded from `CatalogProps` through `DetailsPanel` alongside the existing `isDownloadPrimary`:
+
+| Prop | Default | `true` | `false` |
+|---|---|---|---|
+| `isSharePrimary?: (item) => boolean` | `true` | Share renders as its own button in the action row | Share renders as a Manage-menu entry, first, above Edit |
+| `isPublishPrimary?: (item) => boolean` | `false` | Whichever of Publish/Unpublish applies renders as a `NeutralButton` in the action row, after the primary action | It renders as a Manage-menu entry, in its existing position |
+
+The defaults reproduce the arrangement that predates these props, so a host that passes neither SHALL see no change: Share in the action row, Publish in the Manage menu.
+
+Neither predicate widens or narrows *whether* an action is offered — the visibility rules (`isShareVisible` AND the built-in `isMyApp` ownership rule; `isPublishVisible`, `isUnpublishVisible`, `hasPublishedFolders`, and the Publish/Unpublish mutual exclusion) SHALL apply identically on either surface. Each action SHALL render on exactly one surface, never both.
+
+The Share popover (`shareOverlay`) SHALL anchor to whichever surface carries Share. In the action row that is `ShareButton`'s own node; in the Manage menu the entry is unmounted by the time the popover opens, so the popover SHALL anchor to the Manage trigger instead.
+
+The publish-history lookup (`onRequestPublishHistory`) SHALL stay wired to the Manage trigger's hover/focus and open in both arrangements, in addition to the promoted button's own hover/focus. An item whose Publish button is hidden by `isPublishVisible` has no button to hover, and its Unpublish state could otherwise never resolve.
+
+#### Scenario: A host passing neither predicate is unaffected
+
+- **WHEN** a details header renders with neither `isSharePrimary` nor `isPublishPrimary` supplied
+- **THEN** Share renders as an action-row button and Publish renders as a Manage-menu entry, exactly as before these props existed
+
+#### Scenario: Both predicates flipped
+
+- **GIVEN** `isSharePrimary` returns `false` and `isPublishPrimary` returns `true` for an owned Agent
+- **WHEN** its details header renders
+- **THEN** the action row carries "Use in chat" and "Publish", and the Manage menu carries "Share" and "Delete"
+
+#### Scenario: Neither action is rendered twice
+
+- **WHEN** any item is inspected under any combination of the two predicates
+- **THEN** at most one Share affordance and at most one Publish/Unpublish affordance is rendered for it
+
+#### Scenario: Visibility rules are unchanged by the surface
+
+- **GIVEN** `isShareVisible` returns `false`, or the item is not owned by the current user
+- **WHEN** `isSharePrimary` returns `false`
+- **THEN** no Share entry appears in the Manage menu, matching what the action-row button would have done
+
+#### Scenario: The Manage trigger keeps the publish-history lookup
+
+- **GIVEN** `isPublishPrimary` returns `true` and `isPublishVisible` returns `false`, so no publish button renders
+- **WHEN** the Manage trigger is hovered or focused
+- **THEN** `onRequestPublishHistory` is still called
+
+---
+
 ### Requirement: The promoted Download button reflects a pending request; the Manage-menu entry's contract is unchanged
 
 `onDownload?: (item: CatalogItem) => Promise<void> | void` SHALL keep its existing signature. When invoked from the Manage-menu entry, it SHALL continue to be fire-and-forget, exactly as documented before this capability existed.
 
 When invoked from the primary-action Download button, `Header` SHALL await the call and track a local pending state (`isDownloading`) for the duration:
 
-- While pending, the button SHALL be `disabled` and SHALL carry `aria-busy="true"`.
+- While pending, the button SHALL be `disabled` and SHALL carry `aria-busy="true"`, and its leading `IconDownload` SHALL be swapped for a `Spinner` — that swap is the sighted user's feedback, which is why the status region below can be `sr-only`. Both the icon and the spinner SHALL be `aria-hidden`, since the button already carries a label.
 - A click while already pending SHALL NOT invoke `onDownload` again — at most one call SHALL be in flight per item at a time from the primary button.
-- A `role="status"` region SHALL announce `texts?.downloadingStatusLabel ?? 'Downloading'` while pending, and SHALL be absent (not merely empty) once the call settles, mirroring the present/absent-region convention this lib already uses for other loading states.
+- An `sr-only` `role="status" aria-live="polite"` region SHALL announce `texts?.downloadingStatusLabel ?? 'Downloading'` while pending, and SHALL be absent (not merely empty) once the call settles, mirroring the present/absent-region convention this lib already uses for other loading states.
 - `isDownloading` SHALL reset to `false` whenever `item.id` changes, regardless of whether a prior call for the previous item is still pending; a prior call's eventual settlement SHALL NOT re-set `isDownloading` to `true` for a different item.
 - The pending state SHALL be cleared whether `onDownload` resolves or rejects (a `finally`-equivalent guarantee) — a rejection SHALL leave the button enabled again, not stuck disabled.
+- A rejection SHALL be swallowed by the header, not re-thrown or surfaced. Failure feedback belongs to the host, which already owns the notification surface; the button only needs to know the call settled. A host that wants the user told about a failed download must therefore report it from inside its own `onDownload`.
 
 #### Scenario: The button disables itself while a download is in flight
 
@@ -112,6 +160,12 @@ When invoked from the primary-action Download button, `Header` SHALL await the c
 
 - **WHEN** `onDownload`'s promise rejects
 - **THEN** the button is no longer `disabled` or `aria-busy` — the pending state does not survive a failure
+- **AND** the rejection does not escape the header; no error is thrown out of the click handler
+
+#### Scenario: The pending state is visible as well as announced
+
+- **WHEN** a primary-action download is in flight
+- **THEN** the button's leading icon is a spinner rather than the download glyph, and the announced status text is `sr-only`
 
 #### Scenario: Switching items during a pending download leaves no stale indicator
 
@@ -127,7 +181,7 @@ When invoked from the primary-action Download button, `Header` SHALL await the c
 
 ### Requirement: i18n, accessibility, RTL, and responsive contract for the promoted Download action
 
-- **i18n**: the promoted button's label SHALL be `texts?.downloadActionLabel ?? 'Download'` — the same prop the Manage-menu entry already reads, not a new one. A new `texts.downloadingStatusLabel` SHALL default to `'Downloading'`, following the naming convention already established by `deletingStatusLabel`/`unsharingStatusLabel`/`revokingShareStatusLabel`/`loggingOutStatusLabel`. `libs/catalog` SHALL NOT call `useTranslation`.
+- **i18n**: the promoted button's label SHALL be `texts?.downloadActionLabel ?? 'Download'` — the same prop the Manage-menu entry already reads, not a new one, so the two surfaces cannot drift apart. A new `texts.downloadingStatusLabel` SHALL default to `'Downloading'`, following the naming convention already established by `deletingStatusLabel`/`unsharingStatusLabel`/`revokingShareStatusLabel`/`loggingOutStatusLabel`. `libs/catalog` SHALL NOT call `useTranslation`.
 - **Accessibility**: the button's accessible name SHALL come from its `label`. Keyboard activation SHALL work identically to every other button in the header (native `<button>`, Tab-reachable, Enter/Space-activatable). Focus SHALL NOT move or become trapped as a result of activating the button, succeeding, or failing.
 - **Touch target**: the button SHALL use the header's existing button sizing, which already satisfies a 44×44 CSS pixel minimum touch target; no new size variant is introduced.
 - **RTL**: the button's icon (`IconDownload`) SHALL NOT be mirrored — it is a symmetric, concept-representing glyph, not a directional one. The button SHALL use the header's existing logical spacing.

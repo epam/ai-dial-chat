@@ -1,7 +1,11 @@
 import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   attachmentsToDtos,
+  findDeploymentByIdOrReference,
+  getApiErrorDetails,
   getConversationPath,
+  getQuickAppConversationStarters,
+  getStarterPopulateText,
   useConversationHandlers,
   useConversationStream,
 } from '@epam/ai-dial-chat-hooks';
@@ -50,7 +54,6 @@ import {
   filesApi as configuredFilesApi,
   rateApi as configuredRateApi,
 } from '../../server-api/api-client';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   createConversation as apiCreateConversation,
@@ -59,10 +62,7 @@ import {
 } from '../../server-api/conversations.api';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
-import { findDeploymentByIdOrReference } from '../../utils/deployment-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
-import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
-import { getStarterPopulateText } from '../../utils/starter-option';
 
 interface Props {
   appId: string;
