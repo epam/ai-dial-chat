@@ -6,8 +6,9 @@ Specifies how `@epam/ai-dial-chat-hooks`'s `useDialFileManager` composes the
 five file-manager sub-hooks (`useDialFileListing`, `useDialFileMetadata`,
 `useDialFileMutations`, `useDialFileSharing`, `useDialFileUploadBatch`) into
 the flat `UseDialFileManagerResult` shape behind injected ports and
-configuration, including action-label gating, the `isAnyOperationInProgress`
-aggregate, and the standalone `useGridEditingScroll` grid-scrolling hook.
+configuration, including action-label gating and the
+`isAnyOperationInProgress` aggregate. The standalone `useGridEditingScroll`
+grid-scrolling hook is owned by `@epam/ai-dial-chat-shared`.
 
 ## Requirements
 
@@ -81,7 +82,7 @@ text itself via `react-i18next`.
 
 ### Requirement: `useGridEditingScroll` scrolls to an inline-edited or newly-inserted row
 
-`@epam/ai-dial-chat-hooks` SHALL export `useGridEditingScroll`, returning
+`@epam/ai-dial-chat-shared` SHALL export `useGridEditingScroll`, returning
 `{ handleGridApiChange, reset }`, whose public contract never exposes an
 `ag-grid-community` type. Internally it SHALL bind to the raw `GridApi`'s
 `cellEditingStarted` and `rowDataUpdated` events (not forwarded by
@@ -160,8 +161,8 @@ callbacks SHALL NOT be added to the result merely to satisfy the view contract.
 `useGridEditingScroll`, returning `{ handleGridApiChange, reset }` and binding
 to the peer file-manager's leaked raw `GridApi` events. Its current public
 signature, including the raw `GridApi<FileManagerGridRow>` callback type, SHALL
-be preserved. `@epam/ai-dial-chat-hooks` SHALL compatibility-re-export the hook
-and its public types so existing imports continue to resolve.
+be preserved. `@epam/ai-dial-chat-hooks` SHALL not re-export the hook or its
+public types; consumers SHALL import them directly from `chat-shared`.
 
 The implementation SHALL preserve inline-edit scrolling, new-id detection,
 temporary-row preference, first-update/reset seeding, clean re-subscription,
@@ -191,9 +192,8 @@ documented library-isolation exception.
 - **WHEN** `reset` is followed by `rowDataUpdated`
 - **THEN** that first update seeds ids without scrolling
 
-#### Scenario: Existing chat-hooks import remains valid
+#### Scenario: The grid hook has one public owner
 
-- **WHEN** a consumer imports `useGridEditingScroll` from
-  `@epam/ai-dial-chat-hooks`
-- **THEN** it resolves to the canonical shared implementation with unchanged
-  types and behavior
+- **WHEN** a consumer imports `useGridEditingScroll`
+- **THEN** it resolves directly from `@epam/ai-dial-chat-shared`, and
+  `@epam/ai-dial-chat-hooks` exposes no compatibility proxy

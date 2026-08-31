@@ -15,7 +15,7 @@ import type {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
 } from './file-manager-variant';
-import type { FileUploadBatchState } from './upload-batch.types';
+import type { FileUploadBatchState } from '@epam/ai-dial-chat-shared';
 
 export type { FileUploadValidationResult } from '@epam/ai-dial-chat-shared';
 

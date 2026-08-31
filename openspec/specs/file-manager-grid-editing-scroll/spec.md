@@ -8,7 +8,7 @@
 
 ### Requirement: useGridEditingScroll hook contract
 
-`libs/chat-hooks/src/files/useGridEditingScroll/useGridEditingScroll.ts (@epam/ai-dial-chat-hooks)` SHALL export a `useGridEditingScroll(options?: UseGridEditingScrollOptions)` hook returning `{ handleGridApiChange: (api: GridApi<FileManagerGridRow>) => void; reset: () => void }`. `UseGridEditingScrollOptions` SHALL accept an optional `resolveTargetNode?: (newNodes: IRowNode<FileManagerGridRow>[]) => IRowNode<FileManagerGridRow> | null`, defaulting to preferring the first node whose `data?.isTemporary` is `true`, falling back to the first entry of `newNodes`, matching the legacy `defaultResolveTargetNode` heuristic (`development:apps/chat/src/components/FileManager/hooks/useGridEditingScroll.ts`).
+`libs/chat-shared/src/file-manager/useGridEditingScroll/useGridEditingScroll.ts (@epam/ai-dial-chat-shared)` SHALL export a `useGridEditingScroll(options?: UseGridEditingScrollOptions)` hook returning `{ handleGridApiChange: (api: GridApi<FileManagerGridRow>) => void; reset: () => void }`. `UseGridEditingScrollOptions` SHALL accept an optional `resolveTargetNode?: (newNodes: IRowNode<FileManagerGridRow>[]) => IRowNode<FileManagerGridRow> | null`, defaulting to preferring the first node whose `data?.isTemporary` is `true`, falling back to the first entry of `newNodes`, matching the legacy `defaultResolveTargetNode` heuristic (`development:apps/chat/src/components/FileManager/hooks/useGridEditingScroll.ts`).
 
 **State ownership**: the hook owns its internal `knownRowIdsRef`/`knownRowIdsInitializedRef`/currently-subscribed-`GridApi` refs; no new context is introduced. `reset()` clears the known-row-id tracking (for use when the shell's `activeTab` changes and the grid's row set is expected to fully replace, avoiding a false "new row" scroll on tab switch).
 
@@ -111,7 +111,8 @@ export `useGridEditingScroll(options?)`, returning
 `{ handleGridApiChange: (api: GridApi<FileManagerGridRow>) => void; reset(): void }`.
 Options SHALL retain the current optional `resolveTargetNode` callback and its
 temporary-node-first fallback. Internal known-row and subscribed-API refs remain
-hook-owned. `chat-hooks` SHALL compatibility-re-export the same contract.
+hook-owned. `chat-hooks` SHALL not re-export the contract; consumers SHALL
+import it directly from `chat-shared`.
 
 #### Scenario: Callback is stable
 

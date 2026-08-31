@@ -5,7 +5,6 @@ import {
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
-  isHiddenPath,
   mimeTypesToAttachmentExtensionLabels,
   mimeTypesToDialFileAcceptTypes,
   useDialFileManager,
@@ -14,6 +13,7 @@ import {
 import {
   FileManagerAttachModal,
   formatFileSize,
+  isHiddenPath,
   type AttachResult,
   type FileManagerAttachModalLabels,
 } from '@epam/ai-dial-chat-shared';
