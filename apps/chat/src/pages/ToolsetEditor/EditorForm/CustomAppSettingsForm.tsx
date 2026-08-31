@@ -2,6 +2,7 @@ import {
   isValidAbsoluteUrl,
   isValidFeaturesData,
 } from '@epam/ai-dial-chat-hooks';
+import { TAG_INPUT_TAG_CLASS_NAME } from '@epam/ai-dial-chat-shared';
 import { Input, Textarea, TagInput } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useState } from 'react';
@@ -100,6 +101,7 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
         onChange={handleAttachmentTypesChange}
         invalid={!!mimeError || !!errors.inputAttachmentTypes}
         error={mimeError ?? errors.inputAttachmentTypes}
+        tagClassName={TAG_INPUT_TAG_CLASS_NAME}
       />
 
       <Input
