@@ -187,7 +187,7 @@ describe('AppPreviewChat', () => {
     );
   });
 
-  it('creates the conversation with the raw, unencoded app id', async () => {
+  it('creates the conversation with the URL-encoded app id', async () => {
     mockUseDeployments.mockReturnValue({
       items: [
         {
@@ -213,7 +213,7 @@ describe('AppPreviewChat', () => {
     await waitFor(() => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
         'Write a draft',
-        'applications/bucket/My App',
+        'applications/bucket/My%20App',
         undefined,
       );
     });
