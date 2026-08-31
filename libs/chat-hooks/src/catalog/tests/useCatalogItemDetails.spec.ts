@@ -73,8 +73,7 @@ const SKILL_PATH = 'my-skill';
 const EMPTY_SKILLS: SkillMetadataItemDto[] = [];
 
 const PROMPT_DTO: PromptResponseDto = {
-  id: 'my-prompt',
-  bucket: 'user-bucket',
+  id: 'prompts/user-bucket/my-prompt',
   name: 'My Prompt',
   content: 'Hello {{name}}',
   folderId: '',
