@@ -72,10 +72,9 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
-  const { DialFileManagerTabs: Tabs, DialFileManagerActions: Actions } = actual;
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  const { DialFileManagerTabs: Tabs } = actual;
   return {
     ...actual,
     useDialFileManagerTabs: vi.fn().mockImplementation(() => ({
@@ -87,6 +86,15 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         { id: Tabs.Organization, label: 'Organization' },
       ],
     })),
+  };
+});
+
+vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
+  const { DialFileManagerActions: Actions } = actual;
+  return {
+    ...actual,
     DialFileManager: ({
       className,
       gridClassName,

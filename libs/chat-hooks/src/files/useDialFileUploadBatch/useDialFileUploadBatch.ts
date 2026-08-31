@@ -27,8 +27,8 @@ import { virtualPathToApiPath } from '../resolve-dial-file-api-path';
 import type {
   FileUploadBatchState,
   FileUploadEntry,
-} from '../upload-batch.types';
-import { FileUploadStatus } from '../upload-batch.types';
+} from '@epam/ai-dial-chat-shared';
+import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
 
 const ARCHIVE_FAILED_FILE_LIST_LIMIT = 5;
 

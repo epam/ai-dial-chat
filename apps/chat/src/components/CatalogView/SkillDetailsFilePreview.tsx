@@ -3,7 +3,11 @@ import {
   createLoadErrorCanvasContent,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import type { SkillFileContent } from '@epam/ai-dial-chat-hooks';
+import {
+  type SkillFileContent,
+  SkillPreviewErrorKind,
+  useSkillFilePreview,
+} from '@epam/ai-dial-chat-hooks';
 import {
   SkillFileNodeKind,
   type SkillFileTreeNode,
@@ -37,38 +41,33 @@ export const SkillDetailsFilePreview: FC<Props> = ({
   const filesContentRef = useRef<Map<string, SkillFileContent>>(new Map());
   const [files, setFiles] = useState<SkillFileTreeNode[]>([node]);
   const { openCanvas } = useAttachmentCanvas();
+  const { content, error } = useSkillFilePreview({ fileId, onLoadFile });
 
+  /* Clear the content cache and reset the file list whenever the selection changes. */
   useEffect(() => {
-    let cancelled = false;
     filesContentRef.current = new Map();
     setFiles([node]);
+  }, [node]);
 
-    const load = async () => {
-      try {
-        const content = await onLoadFile(fileId);
-        if (cancelled) return;
+  /* Bridge resolved content into the attachment-canvas sync protocol. */
+  useEffect(() => {
+    if (content == null) return;
+    filesContentRef.current.set(fileId, content);
+    /* A new array wakes the shared sync hook after the ref is populated. */
+    setFiles([node]);
+  }, [content, fileId, node]);
 
-        filesContentRef.current.set(fileId, content);
-        /* A new array wakes the shared sync hook after the ref is populated. */
-        setFiles([node]);
-      } catch (error) {
-        if (cancelled) return;
-        const status = (error as { status?: number }).status;
-        openCanvas(
-          status === 403
-            ? createForbiddenCanvasContent()
-            : createLoadErrorCanvasContent(),
-          fileName,
-          fileId,
-        );
-      }
-    };
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [fileId, fileName, node, onLoadFile, openCanvas]);
+  /* Map classified errors to the canvas overlay. */
+  useEffect(() => {
+    if (error == null) return;
+    openCanvas(
+      error === SkillPreviewErrorKind.Forbidden
+        ? createForbiddenCanvasContent()
+        : createLoadErrorCanvasContent(),
+      fileName,
+      fileId,
+    );
+  }, [error, fileName, fileId, openCanvas]);
 
   useSkillFilePreviewSync({
     selectedPath: fileId,
