@@ -1,10 +1,11 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  EllipsisTooltip,
-  Tooltip,
+  DIAL_KIT_ICON_STROKE,
   Dropdown,
   DropdownItemType,
+  EllipsisTooltip,
+  Tooltip,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconLogout, IconSettings } from '@tabler/icons-react';
@@ -93,7 +94,13 @@ export const UserMenu: FC<UserMenuProps> = memo(
                 label: (
                   <span className={labelClassName}>{labels.settings}</span>
                 ),
-                icon: <IconSettings size={DIAL_ICON_SIZE.SM} aria-hidden />,
+                icon: (
+                  <IconSettings
+                    size={DIAL_ICON_SIZE.SM}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                ),
                 onClick: onSettings,
               },
             ]
@@ -101,7 +108,13 @@ export const UserMenu: FC<UserMenuProps> = memo(
         {
           key: 'logout',
           label: <span className={labelClassName}>{labels.logOut}</span>,
-          icon: <IconLogout size={DIAL_ICON_SIZE.SM} aria-hidden />,
+          icon: (
+            <IconLogout
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          ),
           onClick: onLogout,
         },
       ];

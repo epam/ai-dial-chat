@@ -4,7 +4,7 @@ import {
   MarkdownRenderer,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { Spinner } from '@epam/ai-dial-ui-kit';
+import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle, IconLock } from '@tabler/icons-react';
 import { type FC, memo, useEffect, useMemo, useState } from 'react';
 import { defaultStyles, JsonView } from 'react-json-view-lite';
@@ -45,7 +45,7 @@ const ImageContent: FC<ImageContentProps> = ({
       <div className="flex flex-col items-center gap-2">
         <IconAlertTriangle
           size={60}
-          stroke={1.5}
+          stroke={DIAL_KIT_ICON_STROKE}
           className={styles.errorIcon}
         />
         <p className={mergeClasses('text-center', styles.statusLabel)}>
@@ -326,11 +326,15 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         return (
           <div className="flex flex-col items-center gap-2">
             {isForbidden ? (
-              <IconLock size={60} stroke={1.5} className={styles.errorIcon} />
+              <IconLock
+                size={60}
+                stroke={DIAL_KIT_ICON_STROKE}
+                className={styles.errorIcon}
+              />
             ) : (
               <IconAlertTriangle
                 size={60}
-                stroke={1.5}
+                stroke={DIAL_KIT_ICON_STROKE}
                 className={styles.errorIcon}
               />
             )}

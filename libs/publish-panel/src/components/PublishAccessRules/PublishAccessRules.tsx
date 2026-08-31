@@ -2,6 +2,7 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonVariant,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   GhostButton,
   GhostIconButton,
   Notification,
@@ -306,7 +307,13 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
                   {functionLabel(rule.function, functionLabels)}: {targetsText}
                 </span>
                 <GhostIconButton
-                  icon={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
+                  icon={
+                    <IconTrashX
+                      size={DIAL_ICON_SIZE.SM}
+                      aria-hidden
+                      stroke={DIAL_KIT_ICON_STROKE}
+                    />
+                  }
                   aria-label={removeAriaLabel}
                   onClick={() => handleRemoveRule(index)}
                   disabled={disabled}
@@ -339,7 +346,13 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
          */}
         <GhostButton
           label={addRuleLabel}
-          iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
+          iconBefore={
+            <IconPlus
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          }
           onClick={handleOpenEditor}
           disabled={isAddDisabled}
         />

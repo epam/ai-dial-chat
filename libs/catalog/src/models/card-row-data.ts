@@ -24,4 +24,6 @@ export interface CardRowData {
   selectedItemId?: string;
   /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. */
   credentialsBadgeLoggedOutLabel: string;
+  /** Renders every card read-only: no favorite star, no footer divider, and no "Featured" tag. */
+  isReadonly?: boolean;
 }

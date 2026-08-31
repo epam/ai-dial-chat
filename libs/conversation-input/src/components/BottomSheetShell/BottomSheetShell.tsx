@@ -1,9 +1,10 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  DIAL_ICON_SIZE,
   CloseButton,
-  GhostIconButton,
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { CSSProperties, FC, ReactNode } from 'react';
@@ -109,7 +110,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
                     icon={
                       <IconArrowLeft
                         size={DIAL_ICON_SIZE.LG}
-                        stroke={1.5}
+                        stroke={DIAL_KIT_ICON_STROKE}
                         className="rtl:scale-x-[-1]"
                       />
                     }

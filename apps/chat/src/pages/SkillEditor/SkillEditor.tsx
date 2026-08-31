@@ -21,6 +21,7 @@ import {
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
+  DIAL_KIT_ICON_STROKE,
   EditorThemes,
   ErrorText,
   GhostIconButton,
@@ -321,7 +322,12 @@ const SkillEditorPage: FC = () => {
     <>
       <GhostIconButton
         icon={
-          <IconArrowLeft size={20} className="rtl:scale-x-[-1]" aria-hidden />
+          <IconArrowLeft
+            size={20}
+            className="rtl:scale-x-[-1]"
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
         }
         aria-label={t(SkillEditorI18nKeys.BackAriaLabel)}
         onClick={handleCancel}

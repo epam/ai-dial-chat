@@ -1,5 +1,9 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
-import { DIAL_ICON_SIZE, GhostIconButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  GhostIconButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconFileDescription } from '@tabler/icons-react';
 import { memo, useCallback, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +29,12 @@ const SourcesSidebarToggle: FC = () => {
 
   return (
     <GhostIconButton
-      icon={<IconFileDescription size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+      icon={
+        <IconFileDescription
+          size={DIAL_ICON_SIZE.LG}
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      }
       aria-label={t(SidebarI18nKeys.ToggleOpen)}
       aria-pressed={isOpen}
       tooltipProps={{ tooltip: t(SidebarI18nKeys.ToggleOpen) }}

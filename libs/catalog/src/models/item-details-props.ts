@@ -459,6 +459,15 @@ export interface DetailsPanelProps {
   isDetailsLoading?: boolean;
   /** Called when the panel should close (close button or backdrop click). */
   onClose: () => void;
+  /**
+   * Renders the panel read-only: the favorite star and every action that
+   * mutates the item or the caller's relationship to it — Share,
+   * Publish/Unpublish, Edit, Delete, "Remove from My List", "Revoke access",
+   * and the credentials Log in / Log out / manage button — are withheld. The
+   * non-mutating actions (the primary "Use in chat" and Download) still
+   * render. Default: false.
+   */
+  isReadonly?: boolean;
   /** Called when the star/favorite button is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /**

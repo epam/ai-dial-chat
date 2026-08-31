@@ -1,6 +1,10 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, GhostIconButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  GhostIconButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconLayoutSidebarRight, IconPlus } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
@@ -42,7 +46,7 @@ const ChatLayout: FC<Props> = ({ isPanelOpen, onTogglePanel, onNewChat }) => {
             icon={
               <IconLayoutSidebarRight
                 size={DIAL_ICON_SIZE.LG}
-                stroke={1.5}
+                stroke={DIAL_KIT_ICON_STROKE}
                 className="rtl:scale-x-[-1]"
               />
             }
@@ -55,7 +59,12 @@ const ChatLayout: FC<Props> = ({ isPanelOpen, onTogglePanel, onNewChat }) => {
         )}
         {!isPanelOpen && !isNewConversationHidden && (
           <GhostIconButton
-            icon={<IconPlus size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+            icon={
+              <IconPlus
+                size={DIAL_ICON_SIZE.LG}
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             aria-label={t(ButtonsI18nKeys.NewChat)}
             tooltipProps={{ tooltip: t(ButtonsI18nKeys.NewChat) }}
             onClick={onNewChat}

@@ -1,8 +1,9 @@
 import { useAsyncConfirmDialog } from '@epam/ai-dial-chat-hooks';
 import {
+  ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  ConfirmationPopup,
+  DIAL_KIT_ICON_STROKE,
   Dropdown,
   ElementSize,
   GhostIconButton,
@@ -44,6 +45,7 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
           <IconDotsVertical
             size={DIAL_ICON_SIZE.SM}
             className={isOpen ? 'text-accent' : 'text-secondary'}
+            stroke={DIAL_KIT_ICON_STROKE}
           />
         }
         className={isOpen ? 'bg-control-accent-alpha-hover' : undefined}
@@ -85,6 +87,7 @@ const ConversationPanelMenu: FC<Props> = ({
           <IconFileArrowRight
             size={DIAL_ICON_SIZE.SM}
             className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
           />
         ),
         onClick: onExportAll,
@@ -96,6 +99,7 @@ const ConversationPanelMenu: FC<Props> = ({
           <IconFileArrowLeft
             size={DIAL_ICON_SIZE.SM}
             className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
           />
         ),
         onClick: onImport,
@@ -103,7 +107,13 @@ const ConversationPanelMenu: FC<Props> = ({
       {
         key: 'delete-all',
         label: t(ConversationPanelI18nKeys.DeleteAllChatsLabel),
-        icon: <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-error" />,
+        icon: (
+          <IconTrashX
+            size={DIAL_ICON_SIZE.SM}
+            className="text-error"
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        ),
         onClick: () => openDeleteDialog(true),
         className: 'text-error',
       },

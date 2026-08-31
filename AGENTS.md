@@ -157,6 +157,14 @@ Use these two tools for all UI kit discovery and documentation needs: `searchEnt
 
 The kit ships two generations: **2.0** (current design system, exported without the `Dial` prefix — `Button`, `Input`, `Select`, `Popup`, `Tabs`) and **1.0** (legacy `Dial*`). Always use the 2.0 component; fall back to a `Dial*` one only when the MCP lookup shows no 2.0 replacement exists. `searchEntity` ranks 2.0 first and flags superseded 1.0 entries with "Use instead". See `.claude/rules/all-tsx.md` for details.
 
+### Icon stroke — always pass the token
+
+Tabler renders every outline icon at `stroke={2}`; the design scale puts icons
+at 1.5. Pass `stroke={DIAL_KIT_ICON_STROKE}` (exported from
+`@epam/ai-dial-ui-kit`) on every Tabler icon you write — never the literal 1.5,
+and never nothing. Filled glyphs (`Icon*Filled`) ignore the prop, and
+empty-state illustrations stay at `stroke={1}`. See `.claude/rules/all-tsx.md`.
+
 ### UI Kit Breaking Changes & Migration
 
 When you encounter errors after a ui kit package upgrade, or when a prop no longer exists on a component:

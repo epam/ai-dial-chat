@@ -1,5 +1,6 @@
 import type { ToolMenuItem } from '@epam/ai-dial-chat-shared';
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
 import type { FC } from 'react';
 import styles from './ToolsChips.module.scss';
@@ -125,7 +126,7 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
               'flex shrink-0 items-center rounded p-0.5 transition-colors',
             )}
           >
-            <IconX size={12} aria-hidden />
+            <IconX size={12} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
           </button>
         </div>
       ))}

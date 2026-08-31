@@ -6,6 +6,7 @@ import { ConversationItem } from '../../../models/panel-props';
 import { ConversationPanel } from '../ConversationPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   mergeClasses: (...args: (string | undefined | false | null)[]) =>
     args.filter(Boolean).join(' '),
   DIAL_ICON_SIZE: { SM: 16, LG: 24 },

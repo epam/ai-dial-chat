@@ -1,4 +1,8 @@
-import { DIAL_ICON_SIZE, PrimaryIconButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  PrimaryIconButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconArrowNarrowRight } from '@tabler/icons-react';
 import { type FC } from 'react';
 
@@ -29,6 +33,7 @@ export const SendButton: FC<SendButtonProps> = ({
         <IconArrowNarrowRight
           size={DIAL_ICON_SIZE.LG}
           className="rtl:scale-x-[-1]"
+          stroke={DIAL_KIT_ICON_STROKE}
         />
       }
     />

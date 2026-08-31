@@ -7,6 +7,7 @@ import type { CatalogItem } from '../../../../../models/catalog-item';
 import { ShareButton } from '../ShareButton';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   NeutralButton: ({
     label,
     onClick,

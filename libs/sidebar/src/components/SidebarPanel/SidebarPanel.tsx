@@ -1,6 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   DialConditionalResizableContainer,
   GhostIconButton,
   ResizableContainerSide,
@@ -135,7 +136,13 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
       : ResizableContainerSide.Right;
   const closeButton = onClose ? (
     <GhostIconButton
-      icon={<IconX size={DIAL_ICON_SIZE.LG} stroke={1.5} aria-hidden />}
+      icon={
+        <IconX
+          size={DIAL_ICON_SIZE.LG}
+          stroke={DIAL_KIT_ICON_STROKE}
+          aria-hidden
+        />
+      }
       aria-label={labels.closeLabel}
       tooltipProps={{ tooltip: labels.closeLabel }}
       onClick={onClose}
@@ -152,7 +159,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
             }
       }
       className={mergeClasses(
-        'h-full flex-shrink-0 gap-3 overflow-hidden shadow-md',
+        'h-full flex-shrink-0 gap-3 overflow-hidden shadow-sm',
         orientation === SidebarOrientation.Left &&
           '[clip-path:inset(-24px_-24px_-24px_0)] rtl:[clip-path:inset(-24px_0_-24px_-24px)]',
         !isResizing && 'transition-[width] duration-200 ease-in-out',

@@ -1,6 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   GhostIconButton,
   NeutralButton,
   PrimaryButton,
@@ -45,6 +46,7 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
               size={DIAL_ICON_SIZE.LG}
               className="rtl:scale-x-[-1]"
               aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
             />
           }
           aria-label={labels.backButtonLabel}

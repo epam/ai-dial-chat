@@ -1,5 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, GhostButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  GhostButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconLink, IconQrcode } from '@tabler/icons-react';
 import { FC } from 'react';
 import { SharePopoverView } from '../../types/share';
@@ -41,7 +45,13 @@ export const SharePopoverHeader: FC<SharePopoverHeaderProps> = ({
       <GhostButton
         id={QR_BUTTON_ID}
         label={qrButtonLabel}
-        iconBefore={<IconQrcode size={DIAL_ICON_SIZE.SM} aria-hidden />}
+        iconBefore={
+          <IconQrcode
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        }
         className="ms-auto"
         onClick={() => onViewChange(SharePopoverView.Qr)}
       />
@@ -49,7 +59,13 @@ export const SharePopoverHeader: FC<SharePopoverHeaderProps> = ({
       <GhostButton
         id={LINK_BUTTON_ID}
         label={linkLabel}
-        iconBefore={<IconLink size={DIAL_ICON_SIZE.SM} aria-hidden />}
+        iconBefore={
+          <IconLink
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        }
         className="ms-auto"
         onClick={() => onViewChange(SharePopoverView.Link)}
       />

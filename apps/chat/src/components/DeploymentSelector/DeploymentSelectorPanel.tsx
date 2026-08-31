@@ -6,8 +6,9 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  GhostButton,
+  DIAL_KIT_ICON_STROKE,
   EllipsisTooltip,
+  GhostButton,
   Highlight,
   Search,
   ToggleIconButton,
@@ -286,10 +287,17 @@ const DeploymentSelectorPanel: FC<Props> = ({
               size={DIAL_ICON_SIZE.SM}
               className="shrink-0 text-accent"
               aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
             />
           )}
           <ToggleIconButton
-            icon={<IconStar size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            icon={
+              <IconStar
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             selectedIcon={
               <IconStarFilled
                 size={DIAL_ICON_SIZE.SM}

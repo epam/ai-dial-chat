@@ -11,6 +11,7 @@ import {
 import { SkillFileUploadDialog } from '../SkillFileUploadDialog';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   PopupSize: { Sm: 'sm', Md: 'md', Lg: 'lg' },
   Popup: ({

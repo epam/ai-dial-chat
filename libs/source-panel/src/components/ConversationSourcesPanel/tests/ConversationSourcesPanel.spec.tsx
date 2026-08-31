@@ -39,6 +39,7 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, SM: 16 },
   ElementSize: { Small: 'small' },
   mergeClasses: (...classes: (string | undefined)[]) =>
