@@ -230,7 +230,7 @@ In `ConversationView` and `ConversationRoute`, add the delete props using `useTr
         {names.length === 1 ? (
           <>
             {t('dialFileManager.deleteConfirmBodySingle')}{' '}
-            <span className="break-all text-primary">
+            <span className="break-words text-primary">
               &quot;{names[0].split('/').pop()}&quot;?
             </span>
           </>
