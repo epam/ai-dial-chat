@@ -345,7 +345,9 @@ describe('AnnouncementBanner — legacy layout', () => {
       '<a href="https://dialx.ai" style="text-decoration: underline;">ChangeLog</a>';
     render(<AnnouncementBanner />);
 
-    expect(screen.getByText('ChangeLog').getAttribute('style')).toBeNull();
+    const link = screen.getByText('ChangeLog');
+
+    expect(link.getAttribute('style')).toBeNull();
   });
 
   it('keeps a legacy link opening in a new tab with the opener severed', () => {

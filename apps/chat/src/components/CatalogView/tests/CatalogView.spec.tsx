@@ -3172,7 +3172,11 @@ describe('CatalogView', () => {
         ...personalPrompt,
         id: 'prompts/owner-bucket/Work/AI/summarize',
       };
-      mockPrompts({ prompts: [], sharedWithMe: [sharedPrompt], refetchPrompts });
+      mockPrompts({
+        prompts: [],
+        sharedWithMe: [sharedPrompt],
+        refetchPrompts,
+      });
       vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
 
       render(<CatalogView />);
