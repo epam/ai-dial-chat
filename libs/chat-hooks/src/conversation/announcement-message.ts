@@ -4,9 +4,28 @@ import DOMPurify, { type Config } from 'dompurify';
  * Kept in lockstep with ANNOUNCEMENT_ALLOWED_TAGS in
  * apps/chat-api/src/app-config/html-sanitizer.ts. Widening one side without
  * the other means the server returns markup this pass silently strips.
+ *
+ * Inline-only by design: the structured banner renders the description as a
+ * single truncating line, so block-level markup has nowhere to go.
  */
 const ANNOUNCEMENT_HTML_SANITIZE_OPTIONS: Config = {
   ALLOWED_TAGS: ['a', 'b', 'strong', 'em', 'br', 'span'],
+  ALLOWED_ATTR: ['href', 'target', 'rel'],
+};
+
+/*
+ * The legacy ANNOUNCEMENT_HTML_MESSAGE banner is a free-standing block rather
+ * than a truncated line, so it additionally accepts `p` — operators routinely
+ * author multi-paragraph announcements — and `u`. `style` stays out on
+ * purpose: the banner underlines its own links, and letting operator CSS
+ * through would put arbitrary positioning inside app chrome.
+ *
+ * This field is sanitized on the client only. The backend passes it through
+ * verbatim so that `buildAnnouncementSignature` keeps producing the byte-for-byte
+ * value older builds stored for dismissal.
+ */
+const ANNOUNCEMENT_MESSAGE_SANITIZE_OPTIONS: Config = {
+  ALLOWED_TAGS: ['a', 'b', 'strong', 'em', 'u', 'br', 'span', 'p'],
   ALLOWED_ATTR: ['href', 'target', 'rel'],
 };
 
@@ -23,9 +42,17 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
   }
 });
 
-/** Sanitizes announcement HTML to the allowed tag/attribute set. */
+/** Sanitizes announcement HTML to the allowed inline tag/attribute set. */
 export const sanitizeAnnouncementHtml = (html: string): string =>
   DOMPurify.sanitize(html, ANNOUNCEMENT_HTML_SANITIZE_OPTIONS) as string;
+
+/**
+ * Sanitizes the legacy `ANNOUNCEMENT_HTML_MESSAGE` banner, which permits the
+ * block-level markup the inline pass strips. See
+ * `ANNOUNCEMENT_MESSAGE_SANITIZE_OPTIONS` for why the two lists differ.
+ */
+export const sanitizeAnnouncementMessageHtml = (html: string): string =>
+  DOMPurify.sanitize(html, ANNOUNCEMENT_MESSAGE_SANITIZE_OPTIONS) as string;
 
 const isNonEmpty = (value: string | null): value is string =>
   typeof value === 'string' && value.length > 0;
