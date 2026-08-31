@@ -9,6 +9,7 @@ export {
   formatDateYMD,
 } from './conversation/conversation-transfer/date';
 export { formatQuotedNameList } from './conversation/conversation-transfer/import-conversation';
+export * from './catalog/create-publish-api';
 export * from './catalog/deployment-endpoint-url';
 export * from './catalog/deployment-id';
 export * from './catalog/entity-details';
@@ -24,6 +25,7 @@ export * from './catalog/catalog-derivations';
 export * from './catalog/catalog-primary-action';
 export * from './catalog/useCatalogItemDetails';
 export * from './catalog/useFavoriteEntitiesState/useFavoriteEntitiesState';
+export * from './catalog/usePublishFolders/usePublishFolders';
 export * from './conversation/announcement-message';
 export * from './conversation/conversation-transfer/types';
 export * from './conversation/create-chat-stream-api';
