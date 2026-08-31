@@ -1480,20 +1480,14 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/prompts?path={{path}}",
+              "raw": "{{baseUrl}}/api/v1/prompts?id={{id}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "prompts"],
               "query": [
                 {
-                  "key": "path",
-                  "value": "{{path}}",
-                  "description": "Prompt path to update"
-                },
-                {
-                  "key": "bucket",
-                  "value": "{{bucket}}",
-                  "disabled": true,
-                  "description": "DIAL Core bucket to read from. Defaults to the caller's own bucket; pass the owner bucket reported as `bucket` on a shared prompt to read that one. DIAL Core still enforces access, so a bucket the caller has no grant for resolves to 404."
+                  "key": "id",
+                  "value": "{{id}}",
+                  "description": "Full prompt resource path to update (`prompts/{bucket}/{path}`). Use the caller's own bucket for a personal prompt, or the owner bucket reported on a shared prompt's `id`. DIAL Core still enforces access, so an id the caller has no grant for resolves to 404."
                 }
               ]
             },
@@ -1501,7 +1495,7 @@
           }
         },
         {
-          "name": "Delete a personal prompt",
+          "name": "Delete a personal or writable shared prompt",
           "request": {
             "method": "DELETE",
             "header": [
@@ -1510,14 +1504,14 @@
               { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/prompts?path={{path}}",
+              "raw": "{{baseUrl}}/api/v1/prompts?id={{id}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "prompts"],
               "query": [
                 {
-                  "key": "path",
-                  "value": "{{path}}",
-                  "description": "Prompt path to delete"
+                  "key": "id",
+                  "value": "{{id}}",
+                  "description": "Full prompt resource path to delete (`prompts/{bucket}/{path}`)"
                 }
               ]
             },
@@ -1530,24 +1524,18 @@
             "method": "GET",
             "header": [{ "key": "Accept", "value": "application/json" }],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/prompts/item?path={{path}}",
+              "raw": "{{baseUrl}}/api/v1/prompts/item?id={{id}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "prompts", "item"],
               "query": [
                 {
-                  "key": "path",
-                  "value": "{{path}}",
-                  "description": "Prompt path within the prompts namespace"
-                },
-                {
-                  "key": "bucket",
-                  "value": "{{bucket}}",
-                  "disabled": true,
-                  "description": "DIAL Core bucket to read from. Defaults to the caller's own bucket; pass the owner bucket reported as `bucket` on a shared prompt to read that one. DIAL Core still enforces access, so a bucket the caller has no grant for resolves to 404."
+                  "key": "id",
+                  "value": "{{id}}",
+                  "description": "Full prompt resource path (`prompts/{bucket}/{path}`). Use the caller's own bucket for a personal prompt, or the owner bucket reported on a shared prompt's `id`. DIAL Core still enforces access, so an id the caller has no grant for resolves to 404."
                 }
               ]
             },
-            "description": "Reads a prompt from the caller's own bucket, or from the `bucket` given in the query — the owner bucket a shared prompt reports. DIAL Core authorises the read either way."
+            "description": "Reads the exact DIAL resource `id` given, whether that is the caller's own bucket or another user's bucket for a prompt shared with the caller. DIAL Core authorises the read either way."
           }
         },
         {
@@ -1671,20 +1659,14 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/prompts/move?path={{path}}",
+              "raw": "{{baseUrl}}/api/v1/prompts/move?id={{id}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "prompts", "move"],
               "query": [
                 {
-                  "key": "path",
-                  "value": "{{path}}",
-                  "description": "Prompt path to move"
-                },
-                {
-                  "key": "bucket",
-                  "value": "{{bucket}}",
-                  "disabled": true,
-                  "description": "DIAL Core bucket to read from. Defaults to the caller's own bucket; pass the owner bucket reported as `bucket` on a shared prompt to read that one. DIAL Core still enforces access, so a bucket the caller has no grant for resolves to 404."
+                  "key": "id",
+                  "value": "{{id}}",
+                  "description": "Full prompt resource path to move (`prompts/{bucket}/{path}`)"
                 }
               ]
             },
@@ -2005,7 +1987,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"itemId\": \"gpt-4o\",\n  \"resourceKind\": \"prompt\",\n  \"access\": [\n    \"view\"\n  ]\n}\n",
+              "raw": "{\n  \"itemId\": \"gpt-4o\",\n  \"access\": [\n    \"view\"\n  ]\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -2030,7 +2012,7 @@
           }
         },
         {
-          "name": "Discard a shared catalog resource or conversation",
+          "name": "Discard a shared catalog resource, conversation, or prompt",
           "request": {
             "method": "POST",
             "header": [
@@ -2048,7 +2030,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "share", "discard"]
             },
-            "description": "Discards the authenticated user's own access to a shared catalog entity (application or toolset), a skill, or a conversation, via DIAL Core's discardSharedResources operation. Only affects the caller's own access — removing access for everyone else is a separate operation.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+            "description": "Discards the authenticated user's own access to a shared catalog entity (application or toolset), a skill, a conversation, or a prompt, via DIAL Core's discardSharedResources operation. Only affects the caller's own access — removing access for everyone else is a separate operation.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         },
         {
@@ -2068,7 +2050,7 @@
                 }
               ]
             },
-            "description": "Returns how many users currently hold shared access to a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core's getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted."
+            "description": "Returns how many users currently hold shared access to a catalog entity (application or toolset), a skill, a conversation, or a prompt the caller owns, via DIAL Core's getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted."
           }
         },
         {
@@ -2090,7 +2072,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "share", "revoke"]
             },
-            "description": "Revokes every outstanding share grant on a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core's revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller's own access to a resource shared with them is a separate operation.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+            "description": "Revokes every outstanding share grant on a catalog entity (application or toolset), a skill, a conversation, or a prompt the caller owns, via DIAL Core's revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller's own access to a resource shared with them is a separate operation.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         }
       ]
@@ -2827,7 +2809,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"Work/AI/summarize\",\n  \"isInstalled\": true\n}\n",
+              "raw": "{\n  \"id\": \"prompts/owner-bucket/Work/AI/summarize\",\n  \"isInstalled\": true\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {

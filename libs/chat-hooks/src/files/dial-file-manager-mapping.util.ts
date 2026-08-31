@@ -21,7 +21,7 @@ import type {
   FileUploadBatchState,
   FileUploadEntry,
   FileUploadStatus,
-} from './upload-batch.types';
+} from '@epam/ai-dial-chat-shared';
 
 export const mapCorePermissions = (
   permissions?: string[],

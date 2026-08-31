@@ -2,6 +2,7 @@ import {
   hasAnnouncementContent,
   hasStructuredAnnouncement,
   sanitizeAnnouncementHtml,
+  sanitizeAnnouncementMessageHtml,
   type AnnouncementContent,
 } from '@epam/ai-dial-chat-hooks';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
@@ -66,7 +67,7 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
   const sanitizedHtml = useMemo(
     () =>
       shouldRender && !isStructured && announcementHtml
-        ? sanitizeAnnouncementHtml(announcementHtml)
+        ? sanitizeAnnouncementMessageHtml(announcementHtml)
         : '',
     [shouldRender, isStructured, announcementHtml],
   );
@@ -146,8 +147,12 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
       )}
     >
       <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
-        <span
-          className="dial-small-paragraph-semi-text text-center"
+        {/* A div, not a span: the legacy message may contain <p> blocks, which
+            are invalid inside a span and get reparented by the browser. Links
+            are underlined here rather than via operator-authored style
+            attributes, which the sanitizer strips. */}
+        <div
+          className="dial-small-paragraph-semi-text text-center [&>p+p]:mt-1 [&_a]:underline"
           // eslint-disable-next-line react/no-danger -- HTML is sanitized by DOMPurify before use
           dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />

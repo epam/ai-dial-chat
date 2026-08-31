@@ -40,7 +40,6 @@
     "@epam/ai-dial-skill-editor": "*",
     "@epam/ai-dial-source-panel": "*",
     "@epam/ai-dial-ui-kit": "*",
-    "ag-grid-community": "^35.3.0",
     "fflate": "^0.8.3"
   },
   "nx": {

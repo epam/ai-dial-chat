@@ -296,7 +296,11 @@ Maps the top-level Cost budget fields from `UserLimitStatsResponseDto` (the same
 ```tsx
 import { mapOverallCostLimitsToPeriodStatuses } from '@epam/ai-dial-usage-dashboard';
 
-const periodStatuses = mapOverallCostLimitsToPeriodStatuses(usage, activeLocale, t);
+const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
+  usage,
+  activeLocale,
+  t,
+);
 // <ModelLimitsSection periodStatuses={periodStatuses} ... />
 ```
 

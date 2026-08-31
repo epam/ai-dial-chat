@@ -17,7 +17,7 @@ When `AttachmentCard` renders a non-image attachment in the error state (`status
 
 **Text truncation.** Both text blocks truncate with CSS, not JavaScript, and expose the full value through the native `title` attribute rather than a tooltip component:
 
-- The name is `line-clamp-2 break-all` — an attachment name is often a single unbroken token, so it must be allowed to break mid-word.
+- The name is `line-clamp-2 break-words` — a name that contains separators breaks at those boundaries, and a single unbroken token still breaks mid-word when it is wider than the tile.
 - The file-type row is a single `truncate` line reading `typeLabel` alone, or `typeLabel · sizeLabel` when a size is known.
 
 When a `searchQuery` is supplied, the name SHALL render through the shared `Highlight` component (capped at the same two lines) rather than as plain text.

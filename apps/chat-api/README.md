@@ -210,7 +210,7 @@ Banner dismissal is content-keyed and persists in the browser's `localStorage`: 
 
 | Variable                    | Default | Description                                                                                                                                                                                                                                                      |
 | --------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ANNOUNCEMENT_HTML_MESSAGE` | —       | Deprecated. Renders the legacy single-line, centered banner, with the same sanitization and content-keyed dismissal as the structured form. Ignored when `ANNOUNCEMENT_TITLE` or `ANNOUNCEMENT_DESCRIPTION` is set. Use the structured pair for new deployments. |
+| `ANNOUNCEMENT_HTML_MESSAGE` | —       | Deprecated. Renders the legacy centered banner with the same content-keyed dismissal as the structured form. Unlike the description, it is not truncated and accepts `<p>` and `<u>` on top of the inline set (`<a>`, `<b>`, `<strong>`, `<em>`, `<br>`, `<span>`), so a multi-paragraph message renders as stacked centered lines. `style` attributes are stripped — links are underlined by the app — and `target`/`rel` are not added for you, so author them yourself. Ignored when `ANNOUNCEMENT_TITLE` or `ANNOUNCEMENT_DESCRIPTION` is set. Use the structured pair for new deployments. |
 
 #### Header bearer-token authentication
 

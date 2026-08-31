@@ -8,7 +8,7 @@ import type { DialClientService } from '../../dial/dial-client.service';
 import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { PublishService } from '../publish.service';
 
-/* The caller's own bucket, which `toSourceUrl` uses to qualify a prompt's bucket-relative id. */
+/* The caller's session bucket, passed through to every publish call. */
 const TEST_BUCKET = 'bucket-123';
 const TOOLSET_ID = 'toolsets/bucket-123/tool-abc123__1.2.0';
 
@@ -193,7 +193,7 @@ describe('PublishService.unpublish', () => {
     expect(createPublicationBody(dialClient).name).toBe('tool-abc123 1.2.0');
   });
 
-  it('builds a versionless prompt title with no trailing space and qualifies the bucket-relative id', async () => {
+  it('builds a versionless prompt title with no trailing space and uses the full entityId unmodified', async () => {
     const { service, dialClient } = makeService();
     vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
       okResponse({ createdAt: 1_700_000_000_000 }),
@@ -203,7 +203,7 @@ describe('PublishService.unpublish', () => {
       'token-abc',
       TEST_BUCKET,
       CatalogEntityType.Prompt,
-      'Work/AI/summarize',
+      'prompts/bucket-123/Work/AI/summarize',
       'Organization/Prompts',
       undefined,
       'Test User',

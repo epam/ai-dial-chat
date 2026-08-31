@@ -2,17 +2,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PromptResponseDto {
   @ApiProperty({
-    description: 'Prompt path within the prompts namespace (used as stable ID)',
-    example: 'Work/AI/my-prompt',
+    description:
+      'Full DIAL Core resource path identifying the prompt (`prompts/{bucket}/{path}`), the same shape every other resource type exposes. For a prompt shared with the caller, `bucket` is the owner bucket, not the caller bucket.',
+    example: 'prompts/my-bucket/Work/AI/my-prompt',
   })
   id!: string;
-
-  @ApiProperty({
-    description:
-      'DIAL Core bucket the prompt lives in. For a prompt shared with the caller this is the owner bucket, not the caller bucket, so `id` can be qualified back into a `prompts/{bucket}/{id}` resource url',
-    example: 'my-bucket',
-  })
-  bucket!: string;
 
   @ApiProperty({ description: 'Display name', example: 'My Prompt' })
   name!: string;

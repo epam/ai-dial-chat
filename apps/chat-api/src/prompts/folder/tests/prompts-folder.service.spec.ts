@@ -244,7 +244,10 @@ describe('PromptsFolderService', () => {
         targetFolderId: 'work',
       });
 
-      expect(result).toMatchObject({ id: 'work/my-prompt', folderId: 'work' });
+      expect(result).toMatchObject({
+        id: 'prompts/test-bucket/work/my-prompt',
+        folderId: 'work',
+      });
       expect(deleteSpy).toHaveBeenCalledOnce();
       expect(service['dialClient'].client.savePrompt).toHaveBeenCalledWith(
         BUCKET,
