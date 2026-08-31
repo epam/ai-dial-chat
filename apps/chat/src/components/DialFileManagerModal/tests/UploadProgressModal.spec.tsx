@@ -1,4 +1,4 @@
-import { FileUploadStatus } from '@epam/ai-dial-chat-hooks';
+import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';

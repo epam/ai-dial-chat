@@ -5,10 +5,7 @@ import {
 } from '@epam/ai-dial-catalog';
 import type { PromptResponseDto } from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType, formatLastUsed } from '@epam/ai-dial-chat-shared';
-import {
-  buildPromptResourceUrl,
-  PromptSource,
-} from '../prompt/prompt-resource';
+import { PromptSource } from '../prompt/prompt-resource';
 import { formatCalendarDate } from '../shared/formatting';
 import { safeDecodeURIComponent } from '../shared/string-utils';
 import type { DeploymentFolderLabels } from './map-deployment-to-catalog-item';
@@ -82,12 +79,10 @@ export interface MapPromptToCatalogItemOptions {
 /**
  * Maps a prompt DTO into a catalog item.
  *
- * A personal or organisation prompt uses its DIAL path verbatim as
- * `CatalogItem.id` — its bucket is implied by the endpoint that serves it. A
- * shared-with-me prompt cannot: its path is relative to the *owner's* bucket,
- * so a bare path both collides with a same-named personal prompt and resolves
- * against the caller's own bucket when read back. Those items carry the
- * qualified `prompts/{ownerBucket}/{path}` url instead.
+ * `prompt.id` is already the full `prompts/{bucket}/{path}` resource path —
+ * the owner bucket for a shared-with-me prompt, the caller's own bucket
+ * otherwise — the same shape every other resource type's `CatalogItem.id`
+ * carries, so no per-source qualification is needed here.
  */
 export const mapPromptToCatalogItem = (
   prompt: PromptResponseDto,
@@ -99,10 +94,7 @@ export const mapPromptToCatalogItem = (
   }: MapPromptToCatalogItemOptions,
 ): CatalogItem => {
   const isPersonal = source === PromptSource.Personal;
-  const id =
-    source === PromptSource.SharedWithMe
-      ? buildPromptResourceUrl({ bucket: prompt.bucket, path: prompt.id })
-      : prompt.id;
+  const id = prompt.id;
   const isFavorite = favoriteIds.has(id);
 
   return {

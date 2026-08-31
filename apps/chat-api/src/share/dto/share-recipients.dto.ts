@@ -1,29 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
-
-/*
- * Same allowlist as `RevokeSharedAccessDto`: the count exists only to decide
- * whether revoking is worth offering, so anything revoke cannot act on has no
- * count worth answering either.
- */
-const CATALOG_RESOURCE_PATH_PATTERN =
-  /^(?:applications|toolsets|conversations|skills)\/[^/\s]+\/[^/\r\n][^\r\n]*(?![\s\S])/;
+import { IsCatalogResourcePath } from './catalog-resource-path.validator';
 
 /** Query parameters for `GET /api/v1/share/recipients`. */
 export class GetShareRecipientsDto {
   @ApiProperty({
     description:
-      'Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to count current recipients for.',
+      'Identifier of the owned catalog item, skill, conversation, or prompt to count current recipients for — a full DIAL Core resource path.',
     example: 'applications/owner-bucket/my-app',
   })
   @IsString()
   @IsNotEmpty()
   @IsValidFilePath()
-  @Matches(CATALOG_RESOURCE_PATH_PATTERN, {
-    message:
-      'itemId must identify an application, toolset, skill, or conversation resource with a bucket and item path',
-  })
+  @IsCatalogResourcePath()
   @MaxLength(2048)
   itemId!: string;
 }

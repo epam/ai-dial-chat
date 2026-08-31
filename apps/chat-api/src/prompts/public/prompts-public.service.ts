@@ -71,7 +71,7 @@ export class PromptsPublicService {
       }
 
       const folders = deriveFolders([
-        ...prompts.map((p) => p.id),
+        ...promptItems.map(({ path }) => path),
         ...sentinelFolderIds.map((folderId) => `${folderId}/placeholder`),
       ]);
 

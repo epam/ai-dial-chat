@@ -14,7 +14,6 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
-import { toPromptResourceUrl } from '../prompts/utils/prompt-mapper.util';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
@@ -40,21 +39,6 @@ import {
  */
 const historyCacheKey = (entityType: CatalogEntityType, entityId: string) =>
   `publish-history:${entityType}:${entityId}`;
-
-/*
- * Every other entity kind is addressed by a full DIAL Core resource path, so
- * `entityId` is already the Publication API's `sourceUrl`. A prompt's id is
- * bucket-relative (`Work/AI/summarize`), the form the prompts endpoints
- * return, and is qualified here with the caller's own bucket.
- */
-const toSourceUrl = (
-  entityType: CatalogEntityType,
-  entityId: string,
-  bucket: string,
-): string =>
-  entityType === CatalogEntityType.Prompt
-    ? toPromptResourceUrl(entityId, bucket)
-    : entityId;
 
 /**
  * Catalog entity names are always `{name}__{version}` (see
@@ -120,7 +104,7 @@ export class PublishService {
     author: string,
     rules?: PublishRuleDto[],
   ): Promise<PublishResultDto> {
-    const sourceUrl = toSourceUrl(entityType, entityId, bucket);
+    const sourceUrl = entityId;
     const publicTargetFolder = getPublicTargetFolder(folderPath);
     const targetUrl = getPublishedTargetUrl(
       getResourceTypePrefix(sourceUrl),
@@ -207,7 +191,7 @@ export class PublishService {
     version: string | undefined,
     author: string,
   ): Promise<UnpublishResultDto> {
-    const sourceUrl = toSourceUrl(entityType, entityId, bucket);
+    const sourceUrl = entityId;
     const publicTargetFolder = getPublicTargetFolder(folderPath);
     const targetUrl = getPublishedTargetUrl(
       getResourceTypePrefix(sourceUrl),
@@ -285,7 +269,7 @@ export class PublishService {
     entityType: CatalogEntityType,
     entityId: string,
   ): Promise<PublishHistoryEntryDto[]> {
-    const sourceUrl = toSourceUrl(entityType, entityId, bucket);
+    const sourceUrl = entityId;
     return withCachedDialRequest({
       cacheManager: this.cacheManager,
       cacheKey: historyCacheKey(entityType, entityId),

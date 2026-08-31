@@ -2876,8 +2876,7 @@ describe('CatalogView', () => {
 
   describe('prompt wiring', () => {
     const personalPrompt = {
-      id: 'Work/AI/summarize',
-      bucket: 'my-bucket',
+      id: 'prompts/my-bucket/Work/AI/summarize',
       name: 'summarize',
       description: 'Summarize a document',
       content: 'Summarize the following text:',
@@ -2888,7 +2887,7 @@ describe('CatalogView', () => {
 
     const organisationPrompt = {
       ...personalPrompt,
-      id: 'Public/translate',
+      id: 'prompts/public/Public/translate',
       name: 'translate',
       folderId: 'Public',
     };
@@ -2937,8 +2936,8 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
-      expect(ids).toContain('Work/AI/summarize:PROMPT');
-      expect(ids).toContain('Public/translate:PROMPT');
+      expect(ids).toContain('prompts/my-bucket/Work/AI/summarize:PROMPT');
+      expect(ids).toContain('prompts/public/Public/translate:PROMPT');
     });
 
     it('adds no prompt items when the feature is disabled', () => {
@@ -2985,8 +2984,8 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
-      expect(ids).not.toContain('Work/AI/summarize');
-      expect(ids).toContain('Public/translate:PROMPT');
+      expect(ids).not.toContain('prompts/my-bucket/Work/AI/summarize');
+      expect(ids).toContain('prompts/public/Public/translate:PROMPT');
     });
 
     it('fetches a personal prompt through getPrompt and never the deployment endpoints', async () => {
@@ -2996,10 +2995,14 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'fetch details Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'fetch details prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
-      expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      expect(getPrompt).toHaveBeenCalledWith(
+        'prompts/my-bucket/Work/AI/summarize',
+      );
       expect(getPublicPrompt).not.toHaveBeenCalled();
       expect(getDeploymentDetails).not.toHaveBeenCalled();
       expect(getDeploymentLimits).not.toHaveBeenCalled();
@@ -3017,16 +3020,21 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'fetch details Public/translate' }),
+        screen.getByRole('button', {
+          name: 'fetch details prompts/public/Public/translate',
+        }),
       );
 
       expect(getPublicPrompt).toHaveBeenCalledWith('Public/translate');
       expect(getPrompt).not.toHaveBeenCalled();
     });
 
-    it('fetches a shared prompt from the owner bucket, not the caller bucket', async () => {
+    it('fetches a shared prompt using its full owner-bucket-qualified id', async () => {
       enablePrompts();
-      const sharedPrompt = { ...personalPrompt, bucket: 'owner-bucket' };
+      const sharedPrompt = {
+        ...personalPrompt,
+        id: 'prompts/owner-bucket/Work/AI/summarize',
+      };
       mockPrompts({ prompts: [], sharedWithMe: [sharedPrompt] });
       vi.mocked(getPrompt).mockResolvedValue(sharedPrompt);
 
@@ -3038,21 +3046,22 @@ describe('CatalogView', () => {
       );
 
       expect(getPrompt).toHaveBeenCalledWith(
-        'Work/AI/summarize',
-        'owner-bucket',
+        'prompts/owner-bucket/Work/AI/summarize',
       );
     });
 
     it('keeps a shared prompt distinct from a personal prompt at the same path', () => {
       enablePrompts();
       mockPrompts({
-        sharedWithMe: [{ ...personalPrompt, bucket: 'owner-bucket' }],
+        sharedWithMe: [
+          { ...personalPrompt, id: 'prompts/owner-bucket/Work/AI/summarize' },
+        ],
       });
 
       render(<CatalogView />);
 
       const ids = screen.getByLabelText('Catalog item ids').textContent ?? '';
-      expect(ids).toContain('Work/AI/summarize:PROMPT');
+      expect(ids).toContain('prompts/my-bucket/Work/AI/summarize:PROMPT');
       expect(ids).toContain('prompts/owner-bucket/Work/AI/summarize:PROMPT');
     });
 
@@ -3063,7 +3072,9 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'fetch details Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'fetch details prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
       await waitFor(() =>
@@ -3081,10 +3092,14 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'delete Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'delete prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
-      expect(deletePrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      expect(deletePrompt).toHaveBeenCalledWith(
+        'prompts/my-bucket/Work/AI/summarize',
+      );
       expect(refetchPrompts).toHaveBeenCalledOnce();
       expect(deleteApplication).not.toHaveBeenCalled();
     });
@@ -3100,7 +3115,9 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'delete Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'delete prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
       expect(showNotification).toHaveBeenCalledWith(
@@ -3108,7 +3125,7 @@ describe('CatalogView', () => {
       );
     });
 
-    it('offers a favourite control but no unshare control for a prompt', () => {
+    it('offers both a favourite and an unshare control for a prompt', () => {
       enablePrompts();
       mockPrompts();
       vi.mocked(useDeployments).mockReturnValue({
@@ -3127,17 +3144,75 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       expect(
-        screen.getByRole('button', { name: 'favorite Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'favorite prompts/my-bucket/Work/AI/summarize',
+        }),
       ).toBeTruthy();
       expect(
-        screen.queryByRole('button', { name: 'unshare Work/AI/summarize' }),
-      ).toBeNull();
+        screen.getByRole('button', {
+          name: 'unshare prompts/my-bucket/Work/AI/summarize',
+        }),
+      ).toBeTruthy();
       expect(
         screen.getByRole('button', { name: 'favorite shared-model' }),
       ).toBeTruthy();
       expect(
         screen.getByRole('button', { name: 'unshare shared-model' }),
       ).toBeTruthy();
+    });
+
+    it('removes a shared prompt via Remove from My List, refetches prompts, and shows a success notification', async () => {
+      enablePrompts();
+      const refetchPrompts = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      const sharedPrompt = {
+        ...personalPrompt,
+        id: 'prompts/owner-bucket/Work/AI/summarize',
+      };
+      mockPrompts({ prompts: [], sharedWithMe: [sharedPrompt], refetchPrompts });
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `unshare ${sharedPrompt.id}` }),
+      );
+
+      expect(discardSharedCatalogItem).toHaveBeenCalledWith(sharedPrompt.id);
+      expect(refetchPrompts).toHaveBeenCalledOnce();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('revokes access to an owned prompt and shows a success notification without refetching', async () => {
+      enablePrompts();
+      const refetchPrompts = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockPrompts({ refetchPrompts });
+      vi.mocked(getShareRecipientsCount).mockResolvedValue({
+        itemId: personalPrompt.id,
+        recipientsCount: 2,
+      });
+      vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', { name: `revoke ${personalPrompt.id}` }),
+      );
+
+      expect(revokeSharedAccess).toHaveBeenCalledWith(personalPrompt.id);
+      expect(refetchPrompts).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
     });
 
     it('toggles a prompt favourite through the prompts user-config section', async () => {
@@ -3153,21 +3228,23 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       await user.click(
-        screen.getByRole('button', { name: 'favorite Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'favorite prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
       expect(toggleFavorite).toHaveBeenCalledWith(
-        'Work/AI/summarize',
+        'prompts/my-bucket/Work/AI/summarize',
         true,
         FavoriteEntityType.Prompt,
       );
     });
 
-    it('marks a prompt whose path is in favoriteIds as starred', () => {
+    it('marks a prompt whose id is in favoriteIds as starred', () => {
       enablePrompts();
       mockPrompts();
       vi.mocked(useFavoriteApplications).mockReturnValue({
-        favoriteIds: new Set(['Work/AI/summarize']),
+        favoriteIds: new Set(['prompts/my-bucket/Work/AI/summarize']),
         isLoading: false,
         toggleFavorite: vi.fn(),
       });
@@ -3175,7 +3252,7 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       expect(screen.getByLabelText('Favorite item ids').textContent).toContain(
-        'Work/AI/summarize',
+        'prompts/my-bucket/Work/AI/summarize',
       );
     });
 
@@ -3186,15 +3263,16 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       expect(
-        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'use in chat prompts/my-bucket/Work/AI/summarize',
+        }),
       ).toBeTruthy();
     });
   });
 
   describe('prompt use in chat', () => {
     const personalPrompt = {
-      id: 'Work/AI/summarize',
-      bucket: 'my-bucket',
+      id: 'prompts/my-bucket/Work/AI/summarize',
       name: 'summarize',
       description: '',
       content: 'Summarize the following text:',
@@ -3248,7 +3326,9 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'use in chat prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
       expect(mockNavigate).toHaveBeenCalledWith('/', {
@@ -3264,10 +3344,14 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'use in chat prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
-      expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      expect(getPrompt).toHaveBeenCalledWith(
+        'prompts/my-bucket/Work/AI/summarize',
+      );
       expect(mockNavigate).toHaveBeenCalledWith('/', {
         state: { promptContent: 'Summarize the following text:' },
       });
@@ -3285,13 +3369,15 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'use in chat prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
       expect(mockNavigate).toHaveBeenCalledWith('/', {
         state: {
           pendingPrompt: {
-            id: 'Work/AI/summarize',
+            id: 'prompts/my-bucket/Work/AI/summarize',
             name: 'summarize',
             content: 'Summarize {{text}} in {{tone}} tone',
             description: 'A summarizer prompt',
@@ -3311,7 +3397,9 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'use in chat Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'use in chat prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
       expect(showNotification).toHaveBeenCalledWith(
@@ -3326,11 +3414,13 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'edit Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'edit prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
       expect(mockNavigate).toHaveBeenCalledWith(
-        '/prompt-editor?id=Work%2FAI%2Fsummarize&returnUrl=%2Fcatalog',
+        '/prompt-editor?id=prompts%2Fmy-bucket%2FWork%2FAI%2Fsummarize&returnUrl=%2Fcatalog',
       );
     });
 
@@ -3344,7 +3434,7 @@ describe('CatalogView', () => {
         sharedWithMe: [
           {
             ...personalPrompt,
-            bucket: 'owner-bucket',
+            id: 'prompts/owner-bucket/Work/AI/summarize',
             isMy: false,
             canEdit: true,
             sharedWithMe: true,
@@ -3377,7 +3467,7 @@ describe('CatalogView', () => {
         publicPrompts: [
           {
             ...personalPrompt,
-            id: 'Public/translate',
+            id: 'prompts/public/Public/translate',
             name: 'translate',
             folderId: 'Public',
             canEdit: true,
@@ -3393,7 +3483,9 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       expect(
-        screen.queryByRole('button', { name: 'edit Public/translate' }),
+        screen.queryByRole('button', {
+          name: 'edit prompts/public/Public/translate',
+        }),
       ).toBeNull();
     });
 
@@ -3622,8 +3714,7 @@ describe('CatalogView', () => {
 
   describe('prompt download', () => {
     const personalPrompt = {
-      id: 'Work/AI/summarize',
-      bucket: 'my-bucket',
+      id: 'prompts/my-bucket/Work/AI/summarize',
       name: 'summarize',
       description: 'Summarize a document',
       content: 'Summarize:\n\n{{document}}',
@@ -3634,7 +3725,7 @@ describe('CatalogView', () => {
 
     const organisationPrompt = {
       ...personalPrompt,
-      id: 'Public/translate',
+      id: 'prompts/public/Public/translate',
       name: 'translate',
       folderId: 'Public',
     };
@@ -3687,10 +3778,14 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'download prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
-      expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize');
+      expect(getPrompt).toHaveBeenCalledWith(
+        'prompts/my-bucket/Work/AI/summarize',
+      );
       await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
 
       const { fileName, envelope } = await readDownloadedFile();
@@ -3699,7 +3794,7 @@ describe('CatalogView', () => {
       );
       expect(envelope.version).toBe(5);
       expect(envelope.prompts[0]).toMatchObject({
-        id: 'Work/AI/summarize',
+        id: 'prompts/my-bucket/Work/AI/summarize',
         content: 'Summarize:\n\n{{document}}',
         folderId: 'Work/AI',
       });
@@ -3716,7 +3811,9 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'download Public/translate' }),
+        screen.getByRole('button', {
+          name: 'download prompts/public/Public/translate',
+        }),
       );
 
       expect(getPublicPrompt).toHaveBeenCalledWith('Public/translate');
@@ -3734,7 +3831,9 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'download prompts/my-bucket/Work/AI/summarize',
+        }),
       );
       await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
 
@@ -3743,11 +3842,13 @@ describe('CatalogView', () => {
     });
 
     /*
-     * Lives here rather than in the revoke describe because it needs the prompt
-     * fixtures: `RevokeSharedAccessDto` rejects prompt paths, so the action must
-     * not reach the user even though the item is one they own.
+     * Lives here rather than in the revoke describe because it needs the
+     * prompt fixtures: `RevokeSharedAccessDto` now accepts a full
+     * `prompts/{bucket}/{path}` id like any other entity type, so revoke
+     * access is offered for an owned prompt exactly like an owned
+     * application.
      */
-    it('offers no revoke access on a personal prompt', () => {
+    it('offers revoke access on a personal prompt', () => {
       enablePrompts();
       mockPrompts();
       vi.mocked(useDeployments).mockReturnValue({
@@ -3758,8 +3859,10 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       expect(
-        screen.queryByRole('button', { name: 'revoke Work/AI/summarize' }),
-      ).toBeNull();
+        screen.getByRole('button', {
+          name: 'revoke prompts/my-bucket/Work/AI/summarize',
+        }),
+      ).toBeTruthy();
       expect(
         screen.getByRole('button', { name: 'revoke gpt-4o' }),
       ).toBeTruthy();
@@ -3776,7 +3879,9 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'download prompts/my-bucket/Work/AI/summarize',
+        }),
       );
       await waitFor(() => expect(triggerBlobDownload).toHaveBeenCalledOnce());
 
@@ -3798,7 +3903,9 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'download prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
       await waitFor(() =>
@@ -3823,7 +3930,9 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       expect(
-        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'download prompts/my-bucket/Work/AI/summarize',
+        }),
       ).toBeTruthy();
       expect(
         screen.queryByRole('button', { name: 'download gpt-4o' }),
@@ -3841,7 +3950,9 @@ describe('CatalogView', () => {
 
       render(<CatalogView />);
       await user.click(
-        screen.getByRole('button', { name: 'download Work/AI/summarize' }),
+        screen.getByRole('button', {
+          name: 'download prompts/my-bucket/Work/AI/summarize',
+        }),
       );
 
       await waitFor(() =>

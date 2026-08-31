@@ -70,20 +70,94 @@ and `dial-file-manager.types.ts` (`UPLOAD_CONCURRENCY`,
 `findFirstSuccessfulCopyMoveItem`, `buildFromCache`,
 `mergeCreatedFolderIntoCache`, `updateEntry`, `mapSearchItem`,
 `mapFileMetadataToDialFile`, `prepareCopyItems`, `prepareMoveRenameItems`,
-`virtualPathToApiPath`, `getParentFolderPath`, `resolveDialFileApiPath`, and
+`virtualPathToApiPath`, `resolveDialFileApiPath`, and
 `sanitizeFileName`, each preserving its exact current algorithm (case-
 insensitive sibling-name comparisons, path-separator normalization, owner-
 bucket resolution for Shared-tab items, rename-vs-move disambiguation from
 `DialCopiedItem` selection payloads) with no behavior change from its
 current `apps/chat` implementation.
 
-`virtualPathToApiPath`, `getParentFolderPath`, and `resolveDialFileApiPath`
-SHALL be re-exported directly from `@epam/ai-dial-chat-hooks`'s top-level
-`src/index.ts` barrel (`export * from './files/resolve-dial-file-api-path'`),
-not merely reachable transitively through another module's internal import
-of `./files/resolve-dial-file-api-path`. `apps/chat/src/components/DialFileManagerShell/DialFileManagerShell.tsx`
-SHALL import `getParentFolderPath` from `@epam/ai-dial-chat-hooks` instead of
-from `apps/chat/src/utils/resolve-dial-file-api-path.ts`, and that app file
+`virtualPathToApiPath` and `resolveDialFileApiPath` SHALL be exported directly
+from `@epam/ai-dial-chat-hooks`'s top-level `src/index.ts` barrel.
+`getParentFolderPath` SHALL be exported only by `@epam/ai-dial-chat-shared`;
+all consumers SHALL import it from that canonical package instead of through
+a `chat-hooks` compatibility proxy.
+
+#### Scenario: Rename-vs-move disambiguation preserves current selection semantics
+
+- **WHEN** `prepareMoveRenameItems` receives a `DialCopiedItem[]` batch where
+  some items' `sourceUrl` parent equals their `destinationUrl` parent and
+  others differ
+- **THEN** same-parent items are classified for `renameFiles` and
+  different-parent items for `moveFiles`, matching the current
+  `apps/chat` behavior exactly
+
+#### Scenario: Owner-bucket resolution for Shared-tab items is preserved
+
+- **WHEN** `resolveOwnerCoords` is called for an item on the Shared tab whose
+  virtual path resolves through `sharedRootMetaRef`
+- **THEN** it returns the resolved owner bucket and path, not the current
+  user's own bucket
+
+#### Scenario: `getParentFolderPath` is imported from its canonical package
+
+- **WHEN** external code imports `getParentFolderPath`
+- **THEN** it imports it directly from `@epam/ai-dial-chat-shared`, and
+  `@epam/ai-dial-chat-hooks` exposes no compatibility re-export
+
+#### Scenario: `apps/chat`'s file-manager shell consumes the published export
+
+- **WHEN** `DialFileManagerShell.tsx` is inspected after this change
+- **THEN** its `getParentFolderPath` call resolves from `@epam/ai-dial-chat-shared`,
+  and `apps/chat/src/utils/resolve-dial-file-api-path.ts` no longer exists
+
+### Requirement: `dial-file-manager-mapping.util`'s tab-dispatch functions use the injected port
+
+`fetchByTab` and `fetchForSearch` SHALL dispatch to `DialFilesApi.listFiles`,
+`listPublicFiles`, `listSharedFiles`, or the owner-bucket-resolved
+`listFiles` call (for nested Shared-tab folders) based on the active tab,
+using the injected `DialFilesApi` instance rather than importing
+`server-api/files.api` directly.
+
+#### Scenario: Organization tab dispatches to listPublicFiles via the port
+
+- **WHEN** `fetchByTab` is called with `activeTab = Organization`
+- **THEN** it calls the injected `DialFilesApi.listPublicFiles`, not any
+  directly imported `server-api` function
+
+---
+
+### Requirement: Path, mapping, and copy/move utilities preserve their exact algorithms
+
+`@epam/ai-dial-chat-hooks` SHALL export
+`hasForbiddenNameSymbols`, `normalizeVirtualPath`, `getVirtualPathName`,
+`formatOperationFolderName`, `findFolderByVirtualPath`,
+`hasDialFileWritePermission`, `findDialFileByPath`,
+`isCopyMoveDuplicateAllowed`, `isShareActionsAllowed`,
+`parseNewFolderVirtualPath`, `dialCorePathToRelative`,
+`buildSharedItemVirtualPath`, `resolveOwnerCoords`, `mapCorePermissions`,
+`findFirstSuccessfulCopyMoveItem`, `buildFromCache`,
+`mergeCreatedFolderIntoCache`, `updateEntry`, `mapSearchItem`,
+`mapFileMetadataToDialFile`, `prepareCopyItems`, `prepareMoveRenameItems`,
+`virtualPathToApiPath`, `resolveDialFileApiPath`, and
+`sanitizeFileName`, each preserving its exact current algorithm (case-
+insensitive sibling-name comparisons, path-separator normalization, owner-
+bucket resolution for Shared-tab items, rename-vs-move disambiguation from
+`DialCopiedItem` selection payloads) with no behavior change from its
+current `apps/chat` implementation.
+
+`getParentFolderPath` SHALL be exported from `@epam/ai-dial-chat-shared` as
+the canonical source. `@epam/ai-dial-chat-hooks` SHALL not re-export it;
+consumers SHALL import it directly from `@epam/ai-dial-chat-shared`.
+
+`virtualPathToApiPath` and `resolveDialFileApiPath` SHALL continue to be
+re-exported directly from `@epam/ai-dial-chat-hooks`'s top-level
+`src/index.ts` barrel, not merely reachable transitively.
+
+The `DialFileManagerShell` component (now residing in
+`@epam/ai-dial-chat-shared`) SHALL import `getParentFolderPath` from its
+own package (`@epam/ai-dial-chat-shared`), not from
+`@epam/ai-dial-chat-hooks`. `apps/chat/src/utils/resolve-dial-file-api-path.ts`
 (along with its test) SHALL be removed once the migration is verified.
 
 #### Scenario: Rename-vs-move disambiguation preserves current selection semantics
@@ -102,28 +176,52 @@ from `apps/chat/src/utils/resolve-dial-file-api-path.ts`, and that app file
 - **THEN** it returns the resolved owner bucket and path, not the current
   user's own bucket
 
-#### Scenario: `getParentFolderPath` is importable directly from the package root
+#### Scenario: `getParentFolderPath` has one public owner
 
-- **WHEN** external code runs `import { getParentFolderPath } from '@epam/ai-dial-chat-hooks'`
-- **THEN** the import resolves successfully without depending on any other
-  file-manager hook or utility being imported first
+- **WHEN** external code imports `getParentFolderPath`
+- **THEN** it resolves from `@epam/ai-dial-chat-shared` and is not exposed by
+  `@epam/ai-dial-chat-hooks`
 
-#### Scenario: `apps/chat`'s file-manager shell consumes the published export
+#### Scenario: `DialFileManagerShell` imports `getParentFolderPath` from `chat-shared`
 
-- **WHEN** `DialFileManagerShell.tsx` is inspected after this change
-- **THEN** its `getParentFolderPath` call resolves from `@epam/ai-dial-chat-hooks`,
+- **WHEN** `DialFileManagerShell.tsx` (in `libs/chat-shared`) is inspected after this change
+- **THEN** its `getParentFolderPath` call resolves from `@epam/ai-dial-chat-shared`,
   and `apps/chat/src/utils/resolve-dial-file-api-path.ts` no longer exists
 
-### Requirement: `dial-file-manager-mapping.util`'s tab-dispatch functions use the injected port
+---
 
-`fetchByTab` and `fetchForSearch` SHALL dispatch to `DialFilesApi.listFiles`,
-`listPublicFiles`, `listSharedFiles`, or the owner-bucket-resolved
-`listFiles` call (for nested Shared-tab folders) based on the active tab,
-using the injected `DialFilesApi` instance rather than importing
-`server-api/files.api` directly.
+### Requirement: File-manager domain models and constants are host-agnostic
 
-#### Scenario: Organization tab dispatches to listPublicFiles via the port
+`@epam/ai-dial-chat-hooks` SHALL export the file-manager domain model
+constants and types (`UPLOAD_CONCURRENCY`, `RESERVED_MARKER_NAME`,
+`DATE_OPTIONS`, `COLUMNS_WITH_AUTHOR`/`COLUMNS_WITHOUT_AUTHOR`,
+`CORE_PERMISSION_MAP`, `SharedRootMeta`, `PreparedCopyMoveItem`,
+`CopyMoveResult`, `UseDialFileManagerOptions`, `UseDialFileManagerResult`,
+`FileManagerNotification`) unchanged in
+shape, depending only on `@epam/ai-dial-chat-shared` and
+`@epam/ai-dial-react-file-manager` types.
 
-- **WHEN** `fetchByTab` is called with `activeTab = Organization`
-- **THEN** it calls the injected `DialFilesApi.listPublicFiles`, not any
-  directly imported `server-api` function
+The following types and enums SHALL have `@epam/ai-dial-chat-shared` as
+their canonical source: `FileUploadStatus`, `FileUploadEntry`,
+`FileUploadBatchState`, `FileUploadValidationResult`,
+`DialFileManagerActionProfile`, and `DialFileManagerVariant`.
+`@epam/ai-dial-chat-hooks` SHALL consume these contracts directly and SHALL
+not re-export them. Consumers SHALL import them from their canonical package.
+
+`UseDialFileManagerResult` and `UseDialFileManagerOptions` SHALL remain
+defined in `@epam/ai-dial-chat-hooks` as before; they are not moved to
+`@epam/ai-dial-chat-shared`.
+
+#### Scenario: Constants and types are importable without any app dependency
+
+- **WHEN** a consumer imports `UPLOAD_CONCURRENCY`, `CORE_PERMISSION_MAP`, or
+  `UseDialFileManagerResult` from `@epam/ai-dial-chat-hooks`
+- **THEN** no transitive import chain reaches `apps/chat`
+
+#### Scenario: View-layer types have one public owner
+
+- **WHEN** a consumer needs `FileUploadStatus`, `FileUploadEntry`,
+  `FileUploadBatchState`, `FileUploadValidationResult`,
+  `DialFileManagerActionProfile`, or `DialFileManagerVariant`
+- **THEN** it imports the contract from `@epam/ai-dial-chat-shared`, and
+  `@epam/ai-dial-chat-hooks` exposes no duplicate proxy export

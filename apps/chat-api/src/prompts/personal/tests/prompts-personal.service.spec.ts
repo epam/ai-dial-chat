@@ -96,7 +96,7 @@ describe('PromptsPersonalService', () => {
 
       expect(result.prompts).toHaveLength(1);
       expect(result.prompts[0]).toMatchObject({
-        id: 'work/meeting',
+        id: 'prompts/test-bucket/work/meeting',
         name: 'meeting',
       });
       expect(result.folders).toEqual([{ id: 'work', name: 'work' }]);
@@ -145,7 +145,10 @@ describe('PromptsPersonalService', () => {
 
       const result = await service.listPrompts(TOKEN, BUCKET);
 
-      expect(result.prompts.map(({ id }) => id)).toEqual(['first', 'second']);
+      expect(result.prompts.map(({ id }) => id)).toEqual([
+        'prompts/test-bucket/first',
+        'prompts/test-bucket/second',
+      ]);
       expect(metadataSpy).toHaveBeenCalledTimes(2);
       expect(metadataSpy.mock.calls[1][2]).toMatchObject({
         params: { query: { token: 'next-page' } },
@@ -179,7 +182,7 @@ describe('PromptsPersonalService', () => {
       const result = await service.getSharedPrompts(TOKEN, BUCKET);
 
       expect(result[0]).toMatchObject({
-        id: 'Shared/greeting',
+        id: 'prompts/owner-bucket/Shared/greeting',
         createdAt: 1000,
         updatedAt: 2000,
         canEdit: true,
@@ -194,11 +197,11 @@ describe('PromptsPersonalService', () => {
     });
 
     /*
-     * `id` is owner-bucket-relative, so without the owner bucket alongside it
-     * a shared prompt is indistinguishable from a personal one at the same
-     * path — and reading it back resolves against the caller's own bucket.
+     * `id` embeds the owner bucket, not the caller's — a shared prompt is
+     * indistinguishable from a personal one at the same path otherwise, and
+     * reading it back would resolve against the caller's own bucket.
      */
-    it('reports the owner bucket rather than the caller bucket', async () => {
+    it('embeds the owner bucket in id rather than the caller bucket', async () => {
       const { service } = makeService();
       vi.spyOn(
         service['dialClient'].client,
@@ -220,8 +223,8 @@ describe('PromptsPersonalService', () => {
 
       const result = await service.getSharedPrompts(TOKEN, BUCKET);
 
-      expect(result[0].bucket).toBe('owner-bucket');
-      expect(result[0].bucket).not.toBe(BUCKET);
+      expect(result[0].id).toBe('prompts/owner-bucket/Shared/greeting');
+      expect(result[0].id).not.toContain(`prompts/${BUCKET}/`);
     });
   });
 
@@ -243,7 +246,7 @@ describe('PromptsPersonalService', () => {
       const result = await service.getPrompt(TOKEN, BUCKET, 'my-prompt');
 
       expect(result).toMatchObject({
-        id: 'my-prompt',
+        id: 'prompts/test-bucket/my-prompt',
         name: 'My Prompt',
         content: 'Hello {{name}}',
         folderId: '',
@@ -290,7 +293,7 @@ describe('PromptsPersonalService', () => {
       });
 
       expect(result).toMatchObject({
-        id: 'My Prompt',
+        id: 'prompts/test-bucket/My Prompt',
         name: 'My Prompt',
         content: 'Hello {{name}}',
       });
@@ -322,7 +325,7 @@ describe('PromptsPersonalService', () => {
       });
 
       expect(result).toMatchObject({
-        id: 'Work/AI/greeting',
+        id: 'prompts/test-bucket/Work/AI/greeting',
         folderId: 'Work/AI',
       });
     });
@@ -375,7 +378,10 @@ describe('PromptsPersonalService', () => {
         content: 'Updated',
       });
 
-      expect(result).toMatchObject({ id: 'my-prompt', content: 'Updated' });
+      expect(result).toMatchObject({
+        id: 'prompts/test-bucket/my-prompt',
+        content: 'Updated',
+      });
     });
 
     it('renames by writing to the new path and deleting the old one', async () => {
@@ -398,7 +404,7 @@ describe('PromptsPersonalService', () => {
         name: 'renamed-prompt',
       });
 
-      expect(result.id).toBe('renamed-prompt');
+      expect(result.id).toBe('prompts/test-bucket/renamed-prompt');
       expect(deleteSpy).toHaveBeenCalledOnce();
     });
 

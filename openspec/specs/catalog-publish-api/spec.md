@@ -8,7 +8,7 @@ Lets a user with write access to a target folder publish a catalog entity (model
 
 The backend SHALL expose authenticated `POST /api/v1/catalog/{entityType}/{entityId}/publish` through the existing `apps/chat-api/src/publish/` domain. The controller remains thin and delegates to `PublishService`, which calls `DialClientService.client.createPublication` and stores no publish records locally. DIAL Core remains the authorization and persistence authority.
 
-`entityType` SHALL accept `model | toolset | application | prompt | skill`. `entityId` SHALL be the entity's DIAL Core resource path; Prompt remains the existing bucket-relative exception that `PublishService` qualifies against the caller's bucket. A Skill SHALL use its whole `skills/{bucket}/{path}` resource URL, never an individual file URL.
+`entityType` SHALL accept `model | toolset | application | prompt | skill`. `entityId` SHALL be the entity's full DIAL Core resource path. A Prompt SHALL use its whole `prompts/{bucket}/{path}` resource URL, exactly like a Skill uses its whole `skills/{bucket}/{path}` resource URL — neither requires bucket qualification by `PublishService`, since `PromptResponseDto.id` (see `prompts-api`) is already the full path. Neither Skill nor Prompt SHALL ever use an individual file URL.
 
 `PublishCatalogEntityDto` SHALL contain:
 
@@ -53,6 +53,11 @@ OpenAPI operation `publishCatalogEntity` SHALL expose `PublishCatalogEntityDto.v
 
 - **WHEN** an authenticated user with target-folder write access publishes `skills/{bucket}/{path}` without `version`
 - **THEN** the BFF calls Core for the whole skill resource, returns 201, and reports `version: ""`
+
+#### Scenario: Owned prompt is published using its own full resource id
+
+- **WHEN** an authenticated user with target-folder write access publishes their own prompt using its `entityId: 'prompts/{bucket}/{path}'`
+- **THEN** the BFF calls Core with that `sourceUrl` unmodified — no bucket qualification step runs — returns 201, and reports `version: ""`
 
 #### Scenario: Versioned entity remains backward compatible
 
@@ -155,7 +160,7 @@ A publication that already carries `resources` SHALL be matched without a round 
 
 The `getPublications` response SHALL be accepted both as the bare array the SDK types (`ListPublication = Publication[]`) and as the `{ publications: [...] }` envelope a live Core returns. Calling `.filter` straight on the envelope threw `TypeError: (result.data ?? []).filter is not a function`, which `handleDialFetchError` reported as "DIAL Core is currently unavailable" (503) — this, not a Core outage, is what [GH #7897](https://github.com/epam/ai-dial-chat/issues/7897) actually was, and what led to both frontend publish-history fetches being stubbed out. An unrecognised shape SHALL degrade to an empty list with a warning, never a throw.
 
-Resource-url comparison SHALL tolerate a percent-encoding difference between the url Core echoes and the url the service built, so an encoded `sourceUrl` cannot silently produce an empty history for a working publication. `entityId` SHALL be resolved to that resource url through the same `toSourceUrl` helper the publish path uses, so a prompt's bucket-relative id (`Work/AI/summarize`) is qualified with the caller's bucket before it is compared. Each entry's `folderPath` SHALL have Core's `public/` prefix and trailing slash stripped back off before being returned, so it matches the plain folder-path form the frontend sends when publishing and uses for `selectedFolderPath` comparisons. Each entry's `version` SHALL be recovered from `entityId`'s own `{name}__{version}` suffix (the same value for every entry in a single call, since `entityId` — and therefore its version — is fixed for the whole request), never from `Publication.name`; an unversioned Prompt or Skill yields an empty version.
+Resource-url comparison SHALL tolerate a percent-encoding difference between the url Core echoes and the url the service built, so an encoded `sourceUrl` cannot silently produce an empty history for a working publication. `entityId` SHALL be used as that resource url directly — for a Prompt just as for a Skill, since both are already full resource paths and neither goes through a bucket-qualification helper. Each entry's `folderPath` SHALL have Core's `public/` prefix and trailing slash stripped back off before being returned, so it matches the plain folder-path form the frontend sends when publishing and uses for `selectedFolderPath` comparisons. Each entry's `version` SHALL be recovered from `entityId`'s own `{name}__{version}` suffix (the same value for every entry in a single call, since `entityId` — and therefore its version — is fixed for the whole request), never from `Publication.name`; an unversioned Prompt or Skill yields an empty version.
 
 A publication whose matching resource carries `action: 'DELETE'` SHALL never itself appear in the result. Such a publication is a removal request submitted by the unpublish endpoint (see `catalog-unpublish-api`), not a publication of the entity. Including it would list the same folder twice — once for the original `ADD`, once for the `DELETE` — and would read as a second publish to that folder.
 
@@ -201,6 +206,10 @@ Rate limiting: default global throttle applies (read endpoint, no stricter overr
 #### Scenario: History returned for entity with no prior publishes
 - **WHEN** a caller requests history for an entity that has never been published
 - **THEN** the endpoint returns 200 with an empty array
+
+#### Scenario: History for a prompt uses its own full id with no qualification step
+- **WHEN** history is requested for `entityId: 'prompts/{bucket}/{path}'`
+- **THEN** the service compares Core's echoed `sourceUrl` against that `entityId` directly, with no bucket-qualification helper involved
 
 #### Scenario: History folderPath strips the public-bucket prefix and trailing slash
 - **WHEN** Core returns a publication with `targetFolder: "public/Organization/Data Science/"`
