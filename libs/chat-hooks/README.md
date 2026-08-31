@@ -2093,6 +2093,115 @@ if (result.ok) {
 }
 ```
 
+## Catalog Hooks
+
+### useCatalogItemDetails
+
+Headless hook for fetching and normalizing full detail data for any catalog item (model, agent, toolset, skill, or prompt). Accepts an injected `CatalogDetailsApi` adapter — the hook never constructs or imports a client itself. Returns three stable callbacks.
+
+```ts
+import { useCatalogItemDetails } from '@epam/ai-dial-chat-hooks';
+
+const { onFetchDetails, onLoadContentFile, onLoadSkillDetailsFile } =
+  useCatalogItemDetails({
+    api, // CatalogDetailsApi — host-configured adapter
+    skills, // SkillMetadataItemDto[] — all skills visible to the user
+    isAdmin, // boolean
+    dialCoreExternalUrl, // string | null | undefined
+    skillOverviewLabels, // SkillOverviewLabels
+    promptOverviewLabels, // PromptOverviewLabels
+    deploymentLimitsLabels, // DeploymentLimitsLabels
+  });
+
+// Fetch full details for a catalog item (returns undefined on failure)
+const details = await onFetchDetails(catalogItem);
+
+// Load the text content of a file within the open skill package
+const text = await onLoadContentFile(fileId);
+
+// Download preview bytes for a skill file (throws on HTTP error)
+const { bytes, mimeType } = await onLoadSkillDetailsFile(fileId);
+```
+
+#### API
+
+`CatalogDetailsApi` is the injected adapter interface. Its methods mirror the server-api wrapper signatures used by the DIAL Chat app but carry no base URL, auth, CSRF, or context — the host constructs and configures the adapter.
+
+**Options** (`UseCatalogItemDetailsOptions`):
+
+| Name                     | Type                          | Description                                                  |
+| ------------------------ | ----------------------------- | ------------------------------------------------------------ |
+| `api`                    | `CatalogDetailsApi`           | Host-configured API adapter.                                 |
+| `skills`                 | `SkillMetadataItemDto[]`      | All skills visible to the user (personal + shared + public). |
+| `isAdmin`                | `boolean`                     | Whether the user has admin privileges.                       |
+| `dialCoreExternalUrl`    | `string \| null \| undefined` | DIAL Core external base URL for the Connect tab.             |
+| `skillOverviewLabels`    | `SkillOverviewLabels`         | Labels for skill overview sections.                          |
+| `promptOverviewLabels`   | `PromptOverviewLabels`        | Labels for prompt overview sections.                         |
+| `deploymentLimitsLabels` | `DeploymentLimitsLabels`      | Labels for the deployment limits table.                      |
+
+**Returns** (`UseCatalogItemDetailsResult`):
+
+| Name                     | Type                                                                         | Description                                                  |
+| ------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `onFetchDetails`         | `(item: CatalogItem) => Promise<CatalogItemDetailsFetchResult \| undefined>` | Fetches full detail data; returns `undefined` on failure.    |
+| `onLoadContentFile`      | `(fileId: string) => Promise<string \| undefined>`                           | Loads text content for a file within the open skill package. |
+| `onLoadSkillDetailsFile` | `(fileId: string) => Promise<SkillFileContent>`                              | Downloads preview bytes; throws on HTTP error.               |
+
+### resolveCatalogPrimaryAction
+
+Pure async resolver for the catalog's "Use" primary action. Returns a discriminated `CatalogPrimaryActionResult` — either a deployment selection or a resolved prompt with optional parameter placeholders. Does not navigate, select, or show notifications — those remain the caller's responsibility.
+
+```ts
+import {
+  resolveCatalogPrimaryAction,
+  CatalogPrimaryActionType,
+  type CatalogPrimaryActionResult,
+} from '@epam/ai-dial-chat-hooks';
+
+const action: CatalogPrimaryActionResult = await resolveCatalogPrimaryAction(
+  catalogItem,
+  fetchPrompt,
+);
+
+if (action.kind === CatalogPrimaryActionType.Prompt) {
+  // action.id, action.name, action.description, action.content, action.hasParameters
+} else {
+  // CatalogPrimaryActionType.Deployment — action.id
+}
+```
+
+### Catalog derivation helpers
+
+Pure immutable helpers for deriving UI state from catalog item lists. All accept readonly arrays and return new arrays or sets without mutating their inputs.
+
+```ts
+import {
+  filterCatalogItemsBySelector,
+  filterHiddenOwnedItems,
+  deriveFavoriteItems,
+  deriveAvailableTabIds,
+  reconcileFilterTopics,
+} from '@epam/ai-dial-chat-hooks';
+
+// Keep only items whose type is in visibleTypes (for selector mode)
+const selected = filterCatalogItemsBySelector(
+  items,
+  new Set([CatalogEntityType.Model]),
+);
+
+// Remove items owned by the current user when hideOwned is true
+const visible = filterHiddenOwnedItems(items, hideOwned);
+
+// Extract user-favorited items in original order
+const favorites = deriveFavoriteItems(items);
+
+// Derive available tab ids (in tabOrder sequence) from present entity types
+const tabs = deriveAvailableTabIds(items, tabOrder);
+
+// Intersect persisted filter topics with those that still exist in items
+const topics = reconcileFilterTopics(persistedTopics, items);
+```
+
 ## Skill Utilities
 
 ### isValidSkillRelativePath / normalizeSkillName / buildSkillManifest / buildSkillManifestFromFrontmatter / parseSkillManifest / unpackSkillArchive
@@ -2289,6 +2398,49 @@ const { fileActions, pendingManifestImport, resolveManifestImport } =
     },
   });
 ```
+
+### useSkillFilePreview
+
+Headless hook that manages the lifecycle of a lazy skill-file preview load. Starts a new load on mount and whenever `fileId` changes, classifies HTTP 403 rejections as `Forbidden` and all other failures as `Generic`, and discards settlements from superseded or unmounted loads. The hook does not open the attachment canvas — the host component is responsible for bridging the result into the canvas protocol and calling `openCanvas`.
+
+```ts
+import {
+  useSkillFilePreview,
+  SkillPreviewErrorKind,
+} from '@epam/ai-dial-chat-hooks';
+
+const { isLoading, content, error } = useSkillFilePreview({
+  fileId,
+  onLoadFile, // (fileId: string) => Promise<SkillFileContent> — host-owned
+});
+
+if (error === SkillPreviewErrorKind.Forbidden) {
+  // open a "403 forbidden" canvas overlay
+} else if (error === SkillPreviewErrorKind.Generic) {
+  // open a generic load-error canvas overlay
+} else if (content != null) {
+  // bridge content.bytes / content.mimeType into the canvas sync protocol
+}
+```
+
+#### API
+
+**Options** (`UseSkillFilePreviewOptions`):
+
+| Name         | Type                                            | Description                                                                                                                     |
+| ------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `fileId`     | `string`                                        | Opaque id of the selected skill file. Changing this resets all state and starts a new load; stale resolutions are discarded.    |
+| `onLoadFile` | `(fileId: string) => Promise<SkillFileContent>` | Host-owned loader; resolves with raw bytes when the request succeeds. The hook never constructs a URL or imports a REST client. |
+
+**Returns** (`UseSkillFilePreviewResult`):
+
+| Name        | Type                            | Description                                                       |
+| ----------- | ------------------------------- | ----------------------------------------------------------------- |
+| `isLoading` | `boolean`                       | `true` while the async load is in flight.                         |
+| `content`   | `SkillFileContent \| null`      | Resolved file content, or `null` while loading or after an error. |
+| `error`     | `SkillPreviewErrorKind \| null` | Classified load error, or `null` while loading or after success.  |
+
+`SkillPreviewErrorKind` values: `Forbidden` (HTTP 403), `Generic` (any other failure).
 
 ### validateSkillFileBatch
 

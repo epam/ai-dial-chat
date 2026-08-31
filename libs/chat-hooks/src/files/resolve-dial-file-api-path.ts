@@ -76,15 +76,7 @@ export const virtualPathToApiPath = (
   return collapsed && !collapsed.endsWith('/') ? `${collapsed}/` : collapsed;
 };
 
-/**
- * Returns the parent folder of a path (virtual or API), always trailing-slashed.
- * e.g. "reports/file.txt" -> "reports/", "/My files/reports/" -> "/My files/"
- */
-export const getParentFolderPath = (path: string): string => {
-  const normalized = path.replace(/\/$/, '');
-  const lastSlash = normalized.lastIndexOf('/');
-  return lastSlash > 0 ? normalized.slice(0, lastSlash + 1) : '';
-};
+export { getParentFolderPath } from '@epam/ai-dial-chat-shared';
 
 const looksLikeVirtualDialPath = (path: string, rootLabel: string): boolean =>
   path.startsWith('/') ||

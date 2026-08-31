@@ -1,3 +1,4 @@
+import './styles.css';
 export * from './models/annotation';
 export * from './models/conversation-transfer';
 export * from './models/conversation-classification';
@@ -56,3 +57,5 @@ export * from './components/MarkdownWithPlaceholders/MarkdownWithPlaceholders';
 export * from './hooks/useIsMobile';
 export * from './hooks/useCodeCopy';
 export * from './hooks/useCollapsedText';
+
+export * from './file-manager';
