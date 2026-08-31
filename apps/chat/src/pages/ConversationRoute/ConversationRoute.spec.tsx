@@ -9,7 +9,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode, useEffect, useState, type Context } from 'react';
-import { MemoryRouter, useNavigate } from 'react-router';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
@@ -234,6 +234,14 @@ const RouteStateDriver = ({ deploymentId }: { deploymentId: string }) => {
   return null;
 };
 
+/* `<output>` carries an implicit role="status", so the probe needs no test id. */
+const LocationStateProbe = () => {
+  const { state } = useLocation();
+  return (
+    <output aria-label="Location state">{JSON.stringify(state ?? null)}</output>
+  );
+};
+
 const renderRouteWithDeploymentState = (deploymentId: string) =>
   render(
     <MemoryRouter>
@@ -364,6 +372,35 @@ describe('ConversationRoute', () => {
     await waitFor(() => {
       expect(mockRestoreSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
     });
+    expect(mockRestoreDefaultSelection).not.toHaveBeenCalled();
+  });
+
+  /*
+   * `history.state` survives a reload, so a route-state deployment that is not
+   * consumed would keep overriding the configured default on every refresh.
+   */
+  it('clears the router-state deploymentId once consumed, so a reload resolves the default instead', async () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          { pathname: '/', state: { deploymentId: 'gpt-4o-mini' } },
+        ]}
+      >
+        <LocationStateProbe />
+        <ConversationRoute />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(mockRestoreSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('status', { name: 'Location state' }).textContent,
+      ).toBe('null');
+    });
+    /* The clearing navigation must not undo the selection it just applied. */
     expect(mockRestoreDefaultSelection).not.toHaveBeenCalled();
   });
 

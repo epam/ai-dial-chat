@@ -383,6 +383,44 @@ describe('DeploymentsContext', () => {
     expect(result.current.selectedItemId).toBe(mockItem2.id);
   });
 
+  /*
+   * The new-chat route calls restoreDefaultSelection from an effect keyed on
+   * the callback's identity. A refetch rebuilds `items`, so an identity change
+   * here re-fires that effect and resets the selection to the operator default
+   * behind the user's back.
+   */
+  it('does not recreate restoreDefaultSelection when a deployments refetch rebuilds items', async () => {
+    contextMocks.isDefaultDeploymentPinned = true;
+    contextMocks.defaultDeploymentId = mockItem1.id;
+    contextMocks.setSelectedDeployment.mockImplementation(
+      async (id: string | null) => {
+        contextMocks.selectedDeploymentId = id;
+      },
+    );
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      result.current.setSelectedItemId(mockItem2.id);
+    });
+    expect(result.current.selectedItemId).toBe(mockItem2.id);
+
+    const restoreDefaultSelection = result.current.restoreDefaultSelection;
+
+    await act(async () => {
+      await result.current.refetchDeployments();
+    });
+
+    expect(result.current.restoreDefaultSelection).toBe(
+      restoreDefaultSelection,
+    );
+    expect(result.current.selectedItemId).toBe(mockItem2.id);
+  });
+
   it('restoreSelectedItemId updates selectedItemId without persisting user config', async () => {
     const { result } = renderHook(() => useDeployments(), {
       wrapper: DeploymentsProvider,
