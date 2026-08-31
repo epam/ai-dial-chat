@@ -1,0 +1,159 @@
+import type {
+  DialCopiedItem,
+  DialDeletedItem,
+  DialFile,
+  DialFileManagerActions,
+  DialUploadFileItem,
+  FileManagerColumnKey,
+} from '@epam/ai-dial-react-file-manager';
+import type { FileUploadValidationResult } from './file-upload-validation';
+import type { FileUploadBatchState } from './upload-batch';
+
+/**
+ * Structural view contract consumed by `DialFileManagerShell`. Contains exactly
+ * the fields of `UseDialFileManagerResult` that the shell reads, with the same
+ * names and types. Tabs, active tab, selection, destination-picker options, and
+ * host integration callbacks are explicit component props outside this contract.
+ *
+ * A `UseDialFileManagerResult` value is structurally assignable to this
+ * interface without a cast or adapter object.
+ */
+export interface FileManagerController {
+  /** Hierarchical items for DialFileManager's `items` prop. */
+  items: DialFile[];
+  /** True while the current folder is loading. */
+  isLoading: boolean;
+  /** Non-null when the last fetch failed. */
+  error: string | null;
+  /** Current path in DialFileManager format (e.g. `"/My files"`, `"/My files/reports/"`). */
+  path: string;
+  /** Pass directly to DialFileManager's `onPathChange`. */
+  onPathChange: (nextPath?: string) => void;
+  /** Re-runs the fetch for the current `folderPath`. */
+  retry: () => void;
+
+  /** Search: called by DialFileManager when the user types in the search box. */
+  onSearchFiles: (folder: string, query: string) => void;
+  /** Search: true while a search request is in flight. */
+  isSearching: boolean;
+  /** Search: flat list of matching files, or null when search is not active. */
+  searchResults: DialFile[] | null;
+  /** Search: clears results and exits search mode. */
+  clearSearchResults: () => void;
+
+  /** Tree: controlled set of expanded folder virtual paths. */
+  expandedPaths: Set<string>;
+  /** Tree: virtual paths whose children are already in the cache (derived). */
+  loadedPaths: Set<string>;
+  /** Tree: called by DialFileManager when a folder is expanded/collapsed. */
+  onExpandedPathsChange: (paths: Set<string>) => void;
+  /** Destination folder popup: preloads the browsed folder without changing the outer grid path. */
+  onFolderPopupPathChange: (nextPath?: string) => void;
+  /** Destination folder popup: normalized virtual paths currently being preloaded. */
+  folderPopupLoadingPaths: Set<string>;
+
+  /** Upload: start a new batch. */
+  onUploadFiles: (
+    files: DialUploadFileItem[],
+    destinationFolder: string,
+  ) => void;
+  /** Upload: extracts and uploads a ZIP archive's entries to the destination folder. */
+  onUploadArchive: (
+    file: File,
+    name: string,
+    destinationFolder: string,
+  ) => void;
+  /** Upload: validate file names before upload (called by DialFileManager). */
+  onValidateUpload: (
+    files: DialUploadFileItem[],
+    existingFiles: DialFile[],
+    destinationFolder: string,
+  ) => Promise<FileUploadValidationResult>;
+  /** Upload: current batch state (null when idle). */
+  uploadBatchState: FileUploadBatchState | null;
+  /** Upload: abort all in-flight and queued uploads. */
+  cancelUpload: () => void;
+  /** Upload: dismiss the progress modal after the batch has settled. */
+  clearUploadBatch: () => void;
+
+  /** Folder creation: called when user confirms a new folder name. */
+  onCreateFolder: (
+    file: DialUploadFileItem,
+    folderPath: string,
+    fileId: string,
+  ) => Promise<void>;
+  /** Folder creation: inline synchronous validation (returns error message or null). */
+  onCreateFolderValidate: (
+    name: string,
+    parentFolder: DialFile,
+  ) => string | null;
+
+  /** Download: called when user triggers download on one or more items. */
+  onDownloadFiles: (dialFiles: DialFile[]) => void;
+  /** True while a download is in progress. */
+  isDownloading: boolean;
+
+  /** Delete: called when user confirms deletion of one or more items. */
+  onDeleteFiles: (items: DialDeletedItem[], sourceFolder: string) => void;
+  /** True while a delete request is in flight. */
+  isDeleting: boolean;
+
+  /** Rename: inline validation — returns error string or null. */
+  onRenameValidate: (value: string, item: DialFile) => string | null;
+  /** Rename: called when user confirms an inline rename. Also dispatches cross-folder move (see D3). */
+  onMoveToFiles: (
+    items: DialCopiedItem[],
+    sourceFolder: string,
+    destinationFolder: string,
+  ) => void;
+  /** True while a rename request is in flight. */
+  isRenaming: boolean;
+
+  /** Copy: called when user confirms a copy-paste. */
+  onCopyFiles: (items: DialCopiedItem[], destinationFolder: string) => void;
+  /** True while a copy request is in flight. */
+  isCopying: boolean;
+  /** True while the cross-folder-move branch of onMoveToFiles is in flight. */
+  isMoving: boolean;
+  /** Aborts whichever of copy/move is currently in flight. */
+  cancelCopyMove: () => void;
+
+  /** True when the current folder grants WRITE (upload + new folder). */
+  uploadEnabled: boolean;
+  /** True when Upload/New must be disabled. */
+  isNewButtonDisabled: boolean;
+  /** Tooltip for disabled New/Upload when `isNewButtonDisabled` is true. */
+  disabledNewButtonTooltip: string;
+
+  /** Columns to show in the grid — tab-dependent. */
+  visibleColumns: FileManagerColumnKey[];
+  /** BCP-47 locale string for date formatting, sourced from i18n.language. */
+  dateLocale: string;
+  /** Fixed date format options for the UpdatedAt column. */
+  dateOptions: Intl.DateTimeFormatOptions;
+  /** Action labels for grid/tree/bulk — Delete present only on my_files tab. */
+  actionLabels: Partial<Record<DialFileManagerActions, string>>;
+  /** Root-level shared item paths, populated only on the Shared tab. */
+  sharedWithMeIds: string[] | undefined;
+
+  /** Share: paths the user has shared with others, populated only on my_files tab. */
+  sharedByMePaths: Set<string>;
+
+  /** Unshare: called when user removes a shared-with-me item (Shared tab only). */
+  onUnshareFiles: (files: DialFile[]) => void;
+  /** True while an unshare request is in flight. */
+  isUnsharing: boolean;
+  /** Remove access: called when user revokes access to an owned shared item (my_files tab only). */
+  onRemoveFilesAccess: (files: DialFile[]) => void;
+  /** True while a remove-access request is in flight. */
+  isRemovingAccess: boolean;
+
+  /** Metadata: populated once onGetInfo resolves; passed to fileMetadataPopupOptions.fileMetadata. */
+  fileMetadata: DialFile | undefined;
+  /** True while a metadata request is in flight. */
+  isFileMetadataLoading: boolean;
+  /** Metadata: called by DialFileManager.onGetInfo to fetch and display a file's details. */
+  onGetInfo: (file: DialFile) => void;
+  /** Metadata: resets fileMetadata/isFileMetadataLoading; passed to fileMetadataPopupOptions.clearMetadata. */
+  clearMetadata: () => void;
+}

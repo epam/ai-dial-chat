@@ -3,9 +3,10 @@ import { join } from 'path';
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
-  FileUploadStatus,
   type UseDialFileManagerResult,
 } from '@epam/ai-dial-chat-hooks';
+import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
+import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerActions,
   DialFileManagerTabs,
@@ -13,7 +14,6 @@ import {
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import DialFileManagerShell from '../DialFileManagerShell';
-import type { DialFileManagerShellLabels } from '../types/labels';
 
 interface CapturedActionLabels {
   actionLabels?: Partial<Record<DialFileManagerActions, string>>;

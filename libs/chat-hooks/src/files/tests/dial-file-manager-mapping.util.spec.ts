@@ -24,8 +24,8 @@ import type {
   SharedRootMeta,
 } from '../dial-file-manager.model';
 import type { DialFilesApi } from '../dial-files-api';
-import { FileUploadStatus } from '../upload-batch.types';
-import type { FileUploadBatchState } from '../upload-batch.types';
+import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
+import type { FileUploadBatchState } from '@epam/ai-dial-chat-shared';
 
 const makeFilesApi = (overrides: Partial<DialFilesApi> = {}): DialFilesApi =>
   ({

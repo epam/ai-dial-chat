@@ -4,6 +4,7 @@ import {
   useDialFileManager,
   useDialFileManagerTabConfig,
 } from '@epam/ai-dial-chat-hooks';
+import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
   NOT_ALLOWED_SYMBOLS,
@@ -13,7 +14,6 @@ import {
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialFileManagerShell from '../../components/DialFileManagerShell/DialFileManagerShell';
-import type { DialFileManagerShellLabels } from '../../components/DialFileManagerShell/types/labels';
 import { useDialFileManagerHostOptions } from '../../components/DialFileManagerShell/useDialFileManagerHostOptions';
 import {
   BasicI18nKeys,
