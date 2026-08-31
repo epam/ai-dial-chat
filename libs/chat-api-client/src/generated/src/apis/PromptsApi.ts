@@ -34,7 +34,7 @@ export interface CreatePromptFolderRequest {
 }
 
 export interface DeletePromptRequest {
-  path: string;
+  id: string;
 }
 
 export interface DeletePromptFolderRequest {
@@ -42,8 +42,7 @@ export interface DeletePromptFolderRequest {
 }
 
 export interface GetPromptRequest {
-  path: string;
-  bucket?: string;
+  id: string;
 }
 
 export interface GetPublicPromptRequest {
@@ -51,9 +50,8 @@ export interface GetPublicPromptRequest {
 }
 
 export interface MovePromptRequest {
-  path: string;
+  id: string;
   movePromptDto: MovePromptDto;
-  bucket?: string;
 }
 
 export interface RenamePromptFolderRequest {
@@ -62,9 +60,8 @@ export interface RenamePromptFolderRequest {
 }
 
 export interface UpdatePromptRequest {
-  path: string;
+  id: string;
   updatePromptDto: UpdatePromptDto;
-  bucket?: string;
 }
 
 /**
@@ -172,23 +169,23 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Delete a personal prompt
+   * Delete a personal or writable shared prompt
    */
   async deletePromptRaw(
     requestParameters: DeletePromptRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters['path'] == null) {
+    if (requestParameters['id'] == null) {
       throw new runtime.RequiredError(
-        'path',
-        'Required parameter "path" was null or undefined when calling deletePrompt().',
+        'id',
+        'Required parameter "id" was null or undefined when calling deletePrompt().',
       );
     }
 
     const queryParameters: runtime.HTTPQuery = {};
 
-    if (requestParameters['path'] != null) {
-      queryParameters['path'] = requestParameters['path'];
+    if (requestParameters['id'] != null) {
+      queryParameters['id'] = requestParameters['id'];
     }
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -209,7 +206,7 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Delete a personal prompt
+   * Delete a personal or writable shared prompt
    */
   async deletePrompt(
     requestParameters: DeletePromptRequest,
@@ -266,28 +263,24 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Reads a prompt from the caller\'s own bucket, or from the `bucket` given in the query — the owner bucket a shared prompt reports. DIAL Core authorises the read either way.
+   * Reads the exact DIAL resource `id` names, whether that is the caller\'s own bucket or another user\'s bucket for a prompt shared with the caller. DIAL Core authorises the read either way.
    * Get a personal or shared prompt
    */
   async getPromptRaw(
     requestParameters: GetPromptRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<PromptResponseDto>> {
-    if (requestParameters['path'] == null) {
+    if (requestParameters['id'] == null) {
       throw new runtime.RequiredError(
-        'path',
-        'Required parameter "path" was null or undefined when calling getPrompt().',
+        'id',
+        'Required parameter "id" was null or undefined when calling getPrompt().',
       );
     }
 
     const queryParameters: runtime.HTTPQuery = {};
 
-    if (requestParameters['path'] != null) {
-      queryParameters['path'] = requestParameters['path'];
-    }
-
-    if (requestParameters['bucket'] != null) {
-      queryParameters['bucket'] = requestParameters['bucket'];
+    if (requestParameters['id'] != null) {
+      queryParameters['id'] = requestParameters['id'];
     }
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -308,7 +301,7 @@ export class PromptsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Reads a prompt from the caller\'s own bucket, or from the `bucket` given in the query — the owner bucket a shared prompt reports. DIAL Core authorises the read either way.
+   * Reads the exact DIAL resource `id` names, whether that is the caller\'s own bucket or another user\'s bucket for a prompt shared with the caller. DIAL Core authorises the read either way.
    * Get a personal or shared prompt
    */
   async getPrompt(
@@ -449,10 +442,10 @@ export class PromptsApi extends runtime.BaseAPI {
     requestParameters: MovePromptRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<PromptResponseDto>> {
-    if (requestParameters['path'] == null) {
+    if (requestParameters['id'] == null) {
       throw new runtime.RequiredError(
-        'path',
-        'Required parameter "path" was null or undefined when calling movePrompt().',
+        'id',
+        'Required parameter "id" was null or undefined when calling movePrompt().',
       );
     }
 
@@ -465,12 +458,8 @@ export class PromptsApi extends runtime.BaseAPI {
 
     const queryParameters: runtime.HTTPQuery = {};
 
-    if (requestParameters['path'] != null) {
-      queryParameters['path'] = requestParameters['path'];
-    }
-
-    if (requestParameters['bucket'] != null) {
-      queryParameters['bucket'] = requestParameters['bucket'];
+    if (requestParameters['id'] != null) {
+      queryParameters['id'] = requestParameters['id'];
     }
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -572,10 +561,10 @@ export class PromptsApi extends runtime.BaseAPI {
     requestParameters: UpdatePromptRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<PromptResponseDto>> {
-    if (requestParameters['path'] == null) {
+    if (requestParameters['id'] == null) {
       throw new runtime.RequiredError(
-        'path',
-        'Required parameter "path" was null or undefined when calling updatePrompt().',
+        'id',
+        'Required parameter "id" was null or undefined when calling updatePrompt().',
       );
     }
 
@@ -588,12 +577,8 @@ export class PromptsApi extends runtime.BaseAPI {
 
     const queryParameters: runtime.HTTPQuery = {};
 
-    if (requestParameters['path'] != null) {
-      queryParameters['path'] = requestParameters['path'];
-    }
-
-    if (requestParameters['bucket'] != null) {
-      queryParameters['bucket'] = requestParameters['bucket'];
+    if (requestParameters['id'] != null) {
+      queryParameters['id'] = requestParameters['id'];
     }
 
     const headerParameters: runtime.HTTPHeaders = {};

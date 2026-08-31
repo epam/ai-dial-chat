@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  TAG_INPUT_TAG_CLASS_NAME,
+} from '@epam/ai-dial-chat-shared';
 import {
   GhostButton,
   Input,
@@ -308,6 +312,7 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
           value={targets}
           onChange={handleTargetsChange}
           disabled={disabled}
+          tagClassName={TAG_INPUT_TAG_CLASS_NAME}
         />
       )}
 

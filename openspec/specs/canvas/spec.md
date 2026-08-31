@@ -682,3 +682,53 @@ When the registry is empty or no entry matches, `openFileCanvas` behaves exactly
 
 - **WHEN** the registry contains only `contentType: 'application/x-my-viz'` and the attachment's `contentType` is `'application/pdf'`
 - **THEN** the visualizer branch does not fire; the existing `MIMEType.PDF` case handles the attachment
+
+### Requirement: `downloadAttachmentContent` guarantees a file extension on every download
+
+`downloadAttachmentContent(content, fileName?)` in `libs/attachment-canvas/src/utils/download.ts` SHALL call `ensureDownloadFilename(fileName ?? 'attachment', contentUrl, contentMimeType)` before passing the name to any download trigger (`triggerBlobDownload` or `triggerAnchorDownload`). `contentUrl` and `contentMimeType` are extracted from `content` by the private `getContentUrlAndMimeType` helper according to the following dispatch:
+
+| Content type | URL supplied to `ensureDownloadFilename` | MIME type supplied |
+|---|---|---|
+| `Image` | `content.url` | — |
+| `Audio` | `content.url` | `content.mimeType` |
+| `Pdf` | `content.url` | `MIMEType.PDF` (`'application/pdf'`) |
+| `Ooxml` | `content.url` | — |
+| `Html` | `content.url` | `MIMEType.HTML` (`'text/html'`) |
+| `Unsupported`, `Error` | `content.url` | — |
+| `PlainText`, `Code` | — | `MIMEType.Plain` (`'text/plain'`) |
+| `Markdown` | — | `MIMEType.Markdown` (`'text/markdown'`) |
+| `Json` | — | `MIMEType.JSON` (`'application/json'`) |
+| `Visualizer`, `McpApp` | — | — (these are not downloadable) |
+
+`ensureDownloadFilename` derives the extension with three-priority logic: (1) when the supplied name already contains a `.`, it is returned unchanged; (2) when a URL is available, its last path segment's extension is appended to the name; (3) when a MIME type is available and present in `MIME_TYPE_EXT_MAP` (from `libs/chat-shared/src/constants/mime-types.ts`), that extension is appended; (4) when none of the above applies, the name is returned unchanged and the download proceeds without an extension.
+
+#### Scenario: Name already has an extension
+
+- **GIVEN** `fileName` is `'report.docx'`
+- **WHEN** `downloadAttachmentContent` is called for an `OoxmlCanvasContent`
+- **THEN** the downloaded file is named `'report.docx'` — unchanged, because the name already carries an extension
+
+#### Scenario: URL path segment provides the extension
+
+- **GIVEN** `fileName` is `'Q3 Financial Summary'` (a citation title with no extension) and `content.url` is `'files/bucket/uploads/report.pdf'`
+- **WHEN** `downloadAttachmentContent` is called for a `PdfCanvasContent`
+- **THEN** the downloaded file is named `'Q3 Financial Summary.pdf'` — the extension is taken from the URL's last path segment
+
+#### Scenario: MIME type fallback provides the extension for a blob download
+
+- **GIVEN** `fileName` is `'notes'` and the content type is `PlainText`
+- **WHEN** `downloadAttachmentContent` is called
+- **THEN** the downloaded file is named `'notes.txt'` — the extension comes from `MIME_TYPE_EXT_MAP['text/plain']`
+
+#### Scenario: MIME type fallback provides the extension for JSON, Markdown, and HTML
+
+- **GIVEN** `fileName` is `'data'` and the content type is `Json`
+- **WHEN** `downloadAttachmentContent` is called
+- **THEN** the downloaded file is named `'data.json'`
+- **AND** the same logic applies for `Markdown` → `'.md'` and `Html` (anchor download) → `'.html'`
+
+#### Scenario: No extension can be derived
+
+- **GIVEN** `fileName` is `'attachment'`, the content has no URL, and the MIME type is absent or not present in `MIME_TYPE_EXT_MAP`
+- **WHEN** `downloadAttachmentContent` is called
+- **THEN** the downloaded file is named `'attachment'` — no extension is appended and the download still completes

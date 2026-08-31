@@ -1,4 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  TAG_INPUT_TAG_CLASS_NAME,
+} from '@epam/ai-dial-chat-shared';
 import { Input, TagInput, Textarea } from '@epam/ai-dial-ui-kit';
 import { useEffect, useRef, type FC } from 'react';
 import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
@@ -101,6 +104,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
           placeholder={labels.topics.placeholder}
           value={values.topics}
           onChange={(topics) => onChange({ topics })}
+          tagClassName={TAG_INPUT_TAG_CLASS_NAME}
         />
       </div>
     </div>

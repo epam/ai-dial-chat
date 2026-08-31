@@ -77,7 +77,7 @@ export class PromptsPersonalService {
       }
 
       const folders = deriveFolders([
-        ...prompts.map((p) => p.id),
+        ...promptItems.map(({ path }) => path),
         ...sentinelFolderIds.map((folderId) => `${folderId}/placeholder`),
       ]);
       const sharedWithMe = await this.getSharedPrompts(token, bucket);

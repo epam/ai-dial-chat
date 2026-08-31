@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEPRECATED_OVERLAY_FEATURE_ALIASES,
   OverlayAuthUiMode,
   OverlayEventType,
   OverlayFeature,
@@ -8,6 +9,7 @@ import {
   isOverlayMessageEvent,
   isOverlayMessageRequest,
   isOverlayMessageResponse,
+  resolveOverlayFeature,
 } from '../overlay-protocol';
 
 describe('OverlayAuthUiMode', () => {
@@ -114,7 +116,7 @@ describe('isOverlayMessageResponse', () => {
 });
 
 describe('OverlayFeature', () => {
-  it('has exactly 39 unique members', () => {
+  it('has exactly 41 unique members', () => {
     const values = Object.values(OverlayFeature);
     expect(values).toHaveLength(41);
     expect(new Set(values).size).toBe(41);
@@ -144,6 +146,12 @@ describe('OverlayFeature', () => {
 
   it('includes the file-manager feature key', () => {
     expect(Object.values(OverlayFeature)).toContain('file-manager');
+  });
+
+  it('includes the schema-apps feature key, not its renamed predecessor', () => {
+    const values = Object.values(OverlayFeature) as string[];
+    expect(values).toContain('schema-apps');
+    expect(values).not.toContain('custom-applications');
   });
 
   it('does not include the renamed marketplace keys', () => {
@@ -223,6 +231,36 @@ describe('isOverlayMessageEvent', () => {
   it('rejects an unknown type', () => {
     expect(isOverlayMessageEvent({ type: '@DIAL_OVERLAY/NOT_AN_EVENT' })).toBe(
       false,
+    );
+  });
+});
+
+describe('resolveOverlayFeature', () => {
+  it('resolves every current wire value to itself', () => {
+    Object.values(OverlayFeature).forEach((feature) => {
+      expect(resolveOverlayFeature(feature)).toBe(feature);
+    });
+  });
+
+  it('resolves a deprecated alias to its replacement', () => {
+    expect(resolveOverlayFeature('custom-applications')).toBe(
+      OverlayFeature.SchemaApps,
+    );
+  });
+
+  it('returns undefined for an unrecognized value', () => {
+    expect(resolveOverlayFeature('not-a-real-feature')).toBeUndefined();
+  });
+});
+
+describe('DEPRECATED_OVERLAY_FEATURE_ALIASES', () => {
+  it('maps every deprecated value onto a current OverlayFeature member', () => {
+    const values = Object.values(OverlayFeature) as string[];
+    Object.entries(DEPRECATED_OVERLAY_FEATURE_ALIASES).forEach(
+      ([deprecated, replacement]) => {
+        expect(values).not.toContain(deprecated);
+        expect(values).toContain(replacement);
+      },
     );
   });
 });

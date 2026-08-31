@@ -10,9 +10,8 @@ import { PromptsProvider, usePrompts } from '../PromptsContext';
 
 vi.mock('../../server-api/prompts.api', () => ({ listPrompts: vi.fn() }));
 
-const makePrompt = (id: string, bucket = 'my-bucket'): PromptResponseDto => ({
+const makePrompt = (id: string): PromptResponseDto => ({
   id,
-  bucket,
   name: id.split('/').pop() ?? id,
   content: 'Summarize:',
   folderId: id.split('/').slice(0, -1).join('/'),
@@ -26,8 +25,8 @@ const aggregateResponse: PromptListResponseDto = {
     { id: 'Work', name: 'Work' },
     { id: 'Work/AI', name: 'AI' },
   ],
-  sharedWithMe: [makePrompt('shared-prompt', 'owner-bucket')],
-  publicPrompts: [makePrompt('Public/translate', 'public')],
+  sharedWithMe: [makePrompt('shared-prompt')],
+  publicPrompts: [makePrompt('Public/translate')],
   publicFolders: [{ id: 'Public', name: 'Public' }],
 };
 

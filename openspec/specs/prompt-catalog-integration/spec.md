@@ -132,7 +132,7 @@ Selector mode (`isSelectorMode`) SHALL NOT show prompts: `PICKER_VISIBLE_TYPES` 
 
 ### Requirement: Prompt details resolve through the prompts endpoints
 
-`handleFetchDetails` in `CatalogView` SHALL branch before its deployment path: for `CatalogEntityType.Prompt` it calls `getPublicPrompt(item.id)` when the item came from the organisation source, `getPrompt(item.id)` for a personal prompt, and parses a shared prompt's qualified id before calling `getPrompt(path, ownerBucket)`. It resolves `{ promptContent: { content } }` and SHALL NOT call `getDeploymentDetails` or `getDeploymentLimits` for a prompt.
+`handleFetchDetails` in `CatalogView` SHALL branch before its deployment path: for `CatalogEntityType.Prompt` it calls `getPublicPrompt` with the parsed bucket-relative sub-path when the item came from the organisation source, and `getPrompt(item.id)` for a personal or shared prompt (the full `prompts/{bucket}/{path}` id passed unmodified, whether the prompt is the caller's own or shared with them). It resolves `{ promptContent: { content } }` and SHALL NOT call `getDeploymentDetails` or `getDeploymentLimits` for a prompt.
 
 Failures SHALL resolve `undefined` exactly as the existing deployment path does, so the panel falls back to the `promptContent` the mapper already seeded and never throws out of the callback.
 
@@ -144,12 +144,12 @@ Failures SHALL resolve `undefined` exactly as the existing deployment path does,
 #### Scenario: Opening an organisation prompt's details uses the public endpoint
 
 - **WHEN** the user opens the details panel for a prompt whose source is Public
-- **THEN** `getPublicPrompt(item.id)` is called and no personal-prompt request is issued
+- **THEN** `getPublicPrompt` is called with the prompt's bucket-relative sub-path and no personal-prompt request is issued
 
 #### Scenario: Opening a shared prompt's details uses the owner bucket
 
 - **WHEN** the user opens `prompts/owner-bucket/Work/AI/summarize`
-- **THEN** `getPrompt('Work/AI/summarize', 'owner-bucket')` is called
+- **THEN** `getPrompt('prompts/owner-bucket/Work/AI/summarize')` is called
 
 #### Scenario: Prompt details never call the deployment endpoints
 
@@ -168,15 +168,13 @@ Failures SHALL resolve `undefined` exactly as the existing deployment path does,
 `CatalogView` SHALL wire each action for prompts as follows:
 
 - **Delete** — `handleDelete` gains a Prompt branch calling `deletePrompt(item.id)` then `refetchPrompts()`. Success and failure notifications reuse the existing `CatalogI18nKeys.DetailsDeleteSuccess*` / `DetailsDeleteError` keys.
-- **Share** — enabled. `isShareVisible` returns `true` for a personal prompt (`item.isMyApp`) and `false` for shared or organisation prompts. `SharePopoverContainer` SHALL pass `CreateShareLinkDtoResourceKindEnum.Prompt` to `useShareLink` for a Prompt item, so the backend qualifies the bucket-relative path; `canEditAccess` is `true`.
-- **Favourite** — enabled. `onToggleFavorite` resolves the user-config section through `resolveFavoriteEntityType(item.type)`, which maps Prompt to `FavoriteEntityType.Prompt`, Toolset to `FavoriteEntityType.Toolset`, and everything else to `FavoriteEntityType.Deployment`. Prompts appear in the Favorites strip like any other favourited item.
+- **Share** — enabled. `isShareVisible` returns `true` for a personal prompt (`item.isMyApp`) and `false` for shared or organisation prompts. `SharePopoverContainer` calls `useShareLink` with `item.id` for a Prompt item exactly as it does for every other entity type — `item.id` is already the prompt's full `prompts/{bucket}/{path}` resource path, so no resource-kind tag or backend qualification step is involved; `canEditAccess` is `true`.
+- **Favourite** — enabled. `onToggleFavorite` resolves the user-config section through `resolveFavoriteEntityType(item.type)`, which maps Prompt to `FavoriteEntityType.Prompt`, Toolset to `FavoriteEntityType.Toolset`, and everything else to `FavoriteEntityType.Deployment`. Prompts appear in the Favorites strip like any other favourited item, keyed by the prompt's full resource-path `id`.
 - **Download** — enabled for every prompt source. See `prompt-download` for the file format and the wiring.
 - **Edit** — enabled for personal prompts and shared prompts whose listing metadata yields `canEdit: true`; always hidden for organisation prompts even if upstream metadata unexpectedly carries `WRITE`.
-- **Unshare (Remove from My List)** — unsupported. `isUnshareVisible` returns `false` for Prompt because `DiscardSharedCatalogItemDto` (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts:6`) restricts `itemId` to `applications|toolsets|conversations` paths and rejects a prompt resource URL with 400.
-- **Publish** — supported. `PUBLISHABLE_ENTITY_TYPES` (`apps/chat/src/utils/publish.ts`) maps Prompt to `CatalogPublishEntityType.Prompt`, so the existing `Boolean(item.isMyApp) && toPublishEntityType(item.type) != null` rule offers it on personal prompts only. Server-side, `publish.service.ts` qualifies a prompt's bucket-relative id with the caller's own bucket via `toPromptResourceUrl`, since the caller is by definition the owner; a prompt carries no version, so the publication title is trimmed. `libs/catalog`'s built-in publish default still excludes Prompt, which is inert here because `CatalogView` always supplies `isPublishVisible`.
-- **Revoke access** — unsupported, and suppressed. `RevokeSharedAccessDto` carries the same `applications|toolsets|conversations` regex as the discard DTO, so a prompt path is rejected with 400. `Header`'s built-in rule (`!!onRevokeShare && item.isMyApp === true && (recipientsCount == null || recipientsCount > 0)`) would otherwise leave it visible, because `mapPromptToCatalogItem` never sets `recipientsCount` and `undefined == null` reads as "count unknown". `CatalogView` therefore passes `isRevokeShareVisible` returning `false` for Prompt, mirroring `isUnshareVisible`.
-
-Each unsupported action's absence is a documented backend-capability limitation, not a defect.
+- **Unshare (Remove from My List)** — supported, mirroring the skill wiring. `isUnshareVisible` returns `true` for Prompt (subject to `Header`'s built-in `isMyApp`/`sharedWithMe` gate) because `DiscardSharedCatalogItemDto` (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts`) accepts `prompts/{bucket}/{path}` directly, the same allowlist entry `skills/{bucket}/{path}` already has.
+- **Publish** — supported. `PUBLISHABLE_ENTITY_TYPES` (`apps/chat/src/utils/publish.ts`) maps Prompt to `CatalogPublishEntityType.Prompt`, so the existing `Boolean(item.isMyApp) && toPublishEntityType(item.type) != null` rule offers it on personal prompts only. Server-side, `publish.service.ts` sends a prompt's `entityId` (already the full `prompts/{bucket}/{path}` resource path) unmodified — the same as a skill's `entityId` — with no bucket-qualification helper involved; a prompt carries no version, so the publication title is trimmed. `libs/catalog`'s built-in publish default still excludes Prompt, which is inert here because `CatalogView` always supplies `isPublishVisible`.
+- **Revoke access** — supported, mirroring the skill wiring. `RevokeSharedAccessDto` accepts `prompts/{bucket}/{path}` directly, the same allowlist entry `skills/{bucket}/{path}` already has. `Header`'s built-in rule (`!!onRevokeShare && item.isMyApp === true && (recipientsCount == null || recipientsCount > 0)`) now governs visibility the same way it does for every other owned entity type; `CatalogView` passes `isRevokeShareVisible` returning `true` for Prompt (subject to that built-in rule), mirroring `isUnshareVisible`.
 
 #### Scenario: Deleting a prompt removes it from the catalog
 
@@ -192,7 +190,7 @@ Each unsupported action's absence is a documented backend-capability limitation,
 
 - **WHEN** the details panel opens for a personal prompt
 - **THEN** the Share control is rendered and opens `SharePopoverContainer`
-- **AND** the share request carries `resourceKind: 'prompt'`
+- **AND** the share request carries `itemId: item.id` and no resource-kind field
 
 #### Scenario: Organisation prompt cannot be shared
 
@@ -202,7 +200,7 @@ Each unsupported action's absence is a documented backend-capability limitation,
 #### Scenario: Writable shared prompt exposes Edit
 
 - **WHEN** a shared prompt carries `canEdit: true`
-- **THEN** its details panel renders Edit and navigating through it preserves the qualified owner-bucket id
+- **THEN** its details panel renders Edit and navigating through it preserves the prompt's full resource-path id
 
 #### Scenario: Organisation prompt remains read-only despite metadata
 
@@ -217,26 +215,25 @@ Each unsupported action's absence is a documented backend-capability limitation,
 
 #### Scenario: A favourited prompt appears in the Favorites strip
 
-- **WHEN** the catalog renders with a prompt whose path is in `favoriteIds`
+- **WHEN** the catalog renders with a prompt whose full resource-path id is in `favoriteIds`
 - **THEN** that prompt is present in the `favorites` array passed to `Catalog`
 
-#### Scenario: No unshare control on a shared prompt
+#### Scenario: Unshare control is available on a shared prompt
 
 - **WHEN** the details panel opens for a prompt shared with the current user
-- **THEN** no "Remove from My List" action is rendered
-- **AND** the Content tab and primary action are still available
+- **THEN** a "Remove from My List" action is rendered
+- **AND** confirming it calls `discardSharedCatalogItem(item.id)` and, on success, `refetchPrompts()`
 
-#### Scenario: No revoke-access control on a personal prompt
+#### Scenario: Revoke-access control is available on a personal prompt with recipients
 
-- **WHEN** the details panel opens for a prompt the user owns
-- **THEN** no "Revoke access" action is rendered
-- **AND** the same action is still rendered for an owned Model, Agent, or Toolset
+- **WHEN** the details panel opens for a prompt the user owns that has at least one recipient
+- **THEN** a "Revoke access" action is rendered, the same as for an owned Model, Agent, or Toolset
 
-#### Scenario: Publishing a personal prompt qualifies the caller's bucket
+#### Scenario: Publishing a personal prompt sends its own full resource id
 
-- **WHEN** the user publishes their own prompt `Work/AI/summarize` to an Organization folder
-- **THEN** the publish request carries `entityType: 'prompt'`
-- **AND** the backend's publication `sourceUrl` is `prompts/{callerBucket}/Work/AI/summarize`
+- **WHEN** the user publishes their own prompt `prompts/{callerBucket}/Work/AI/summarize` to an Organization folder
+- **THEN** the publish request carries `entityType: 'prompt'` and `entityId: 'prompts/{callerBucket}/Work/AI/summarize'`
+- **AND** the backend's publication `sourceUrl` is that same value, unmodified
 - **AND** the publication title carries no trailing space, because a prompt has no version
 
 #### Scenario: Publish is not offered on a prompt the user does not own
@@ -247,7 +244,7 @@ Each unsupported action's absence is a documented backend-capability limitation,
 #### Scenario: Deployment actions are unchanged
 
 - **WHEN** the details panel opens for a Model, Agent, or Toolset item
-- **THEN** its favourite, publish, share, and unshare controls render exactly as before this change
+- **THEN** its favourite, publish, share, unshare, and revoke controls render exactly as before this change
 
 ---
 
@@ -270,3 +267,50 @@ Each unsupported action's absence is a documented backend-capability limitation,
 
 - **WHEN** the prompt-related code calls `t()`
 - **THEN** every key comes from a `translation-keys.ts` enum member, never a string literal
+
+---
+
+### Requirement: Prompt details resolve through the prompts endpoints
+
+The stable `onFetchDetails` callback SHALL be returned by
+`@epam/ai-dial-chat-hooks`'s `useCatalogItemDetails` and branch before its
+deployment path: for `CatalogEntityType.Prompt` it calls the injected public
+prompt operation with the parsed bucket-relative sub-path when the item came
+from the organisation source, and the injected personal prompt operation with
+the prompt's full `prompts/{bucket}/{path}` id for a personal or shared prompt.
+
+It SHALL resolve prompt content plus the rebuilt overview required because
+fetched details replace static details wholesale. It SHALL NOT call deployment
+details or limits for a prompt. Failures SHALL resolve `undefined`, so the panel
+falls back to content seeded by the mapper and never throws out of the callback.
+The app adapter SHALL supply the existing server-api wrappers; the hook SHALL
+not import them or configure a client.
+
+#### Scenario: Opening a personal prompt fetches its content
+
+- **WHEN** the user opens a personal prompt's details
+- **THEN** the injected personal-prompt operation receives `item.id` and the
+  Content and rebuilt Overview tabs render
+
+#### Scenario: Opening an organisation prompt uses the public operation
+
+- **WHEN** the prompt source is Public
+- **THEN** the injected public-prompt operation receives `item.id` and no
+  personal request is issued
+
+#### Scenario: Opening a shared prompt preserves the owner bucket
+
+- **WHEN** the user opens `prompts/owner-bucket/Work/AI/summarize`
+- **THEN** the personal/shared operation receives
+  `('Work/AI/summarize', 'owner-bucket')`
+
+#### Scenario: Prompt details never call deployment operations
+
+- **WHEN** details open for a Prompt item
+- **THEN** neither deployment-details nor deployment-limits is called
+
+#### Scenario: Details failure falls back to seeded content
+
+- **WHEN** the prompt request rejects and the mapper seeded prompt content
+- **THEN** `onFetchDetails` resolves `undefined`, seeded content remains, and
+  nothing throws

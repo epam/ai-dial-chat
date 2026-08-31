@@ -20,6 +20,8 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 - `react` ^19.2.6
 - `@epam/ai-dial-ui-kit`
+- `@epam/ai-dial-react-file-manager` \*
+- `ag-grid-community` ^35.3.0
 - `@tabler/icons-react`
 - `react-markdown`
 - `remark-gfm`
@@ -330,7 +332,11 @@ const initials = extractInitials(user.displayName);
 const { background, foreground } = pickAvatarColor(user.displayName);
 
 // Ensure a download filename carries a file extension; derives one from the url path or MIME type when absent
-ensureDownloadFilename('Q3 Summary', 'files/bucket/Q3_2026.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); // 'Q3 Summary.xlsx'
+ensureDownloadFilename(
+  'Q3 Summary',
+  'files/bucket/Q3_2026.xlsx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+); // 'Q3 Summary.xlsx'
 ensureDownloadFilename('report.pdf', undefined, undefined); // 'report.pdf' — unchanged
 
 // Strip characters DIAL Core rejects in a conversation name (tab, ": ; / \ , = { } % &)
@@ -355,6 +361,7 @@ import {
   BASE_LG_ICON_PROPS,
   ENTITY_TYPE_COLOR,
   ENTITY_TYPE_BG_COLOR,
+  TAG_INPUT_TAG_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
 ```
 
@@ -366,6 +373,177 @@ import {
 | `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders     |
 | `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step |
 | `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens               |
+| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field |
+
+## Stylesheet
+
+The package ships Tailwind-generated CSS for its components (`DialFileManagerShell`, `OperationLoaderModal`, `UploadProgressModal`, etc.). Import it once in the host application's entry point:
+
+```ts
+import '@epam/ai-dial-chat-shared/styles.css';
+```
+
+## File Manager
+
+Shared file-manager surface: the `DialFileManagerShell` component, its supporting modals, a headless scroll hook, and the contracts consumed by `@epam/ai-dial-chat-hooks`'s `useDialFileManager`. All i18n strings are resolved by the host and passed as props — the components never call `useTranslation`.
+
+### DialFileManagerShell
+
+Full-featured file-manager grid (backed by `@epam/ai-dial-react-file-manager`) that binds a `FileManagerController` to the complete set of file-management actions. The shell owns the grid rendering, search, upload progress modal, operation loader modal, and bulk-action toolbar. Tabs, active tab, selection, destination picker, and browser-download callback are explicit host props.
+
+```tsx
+import {
+  DialFileManagerShell,
+  type FileManagerController,
+  type DialFileManagerShellLabels,
+  DialFileManagerVariant,
+  DialFileManagerActionProfile,
+} from '@epam/ai-dial-chat-shared';
+
+<DialFileManagerShell
+  controller={controller} // FileManagerController
+  variant={DialFileManagerVariant.Standalone}
+  actionProfile={DialFileManagerActionProfile.Browse}
+  activeTab={activeTab}
+  tabs={tabs}
+  onTabChange={setActiveTab}
+  selectedPaths={selectedPaths}
+  onSelectedPathsChange={setSelectedPaths}
+  labels={labels} // DialFileManagerShellLabels
+/>;
+```
+
+### FileManagerController
+
+Structural interface consumed by `DialFileManagerShell`. Contains exactly the fields of `UseDialFileManagerResult` that the shell reads. A `UseDialFileManagerResult` value is structurally assignable to this interface without a cast. Tabs, active tab, selection, destination picker, and host callbacks are outside this contract.
+
+```ts
+import type { FileManagerController } from '@epam/ai-dial-chat-shared';
+```
+
+### DialFileManagerShellLabels
+
+Pre-translated strings the shell renders as-is. The shell never calls `useTranslation` — every host passes these via its own i18n.
+
+```ts
+import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
+```
+
+### AttachResult
+
+Result returned by the file-manager attach modal when the user confirms a selection.
+
+```ts
+import type { AttachResult } from '@epam/ai-dial-chat-shared';
+
+// { files: DialFile[]; folderPaths: string[] }
+```
+
+### FileManagerAttachModal
+
+Controlled attach modal that composes `DialFileManagerShell` with selection state, deduplication, and MIME/size/count validation. The host drives open/close, tab and selection state, resolves folder paths through `resolveFolderPath`, and receives the confirmed `AttachResult` via `onAttach`.
+
+```tsx
+import {
+  FileManagerAttachModal,
+  type FileManagerAttachModalProps,
+  type FileManagerAttachModalLabels,
+  type AttachResult,
+} from '@epam/ai-dial-chat-shared';
+
+<FileManagerAttachModal
+  isOpen={isOpen}
+  onClose={handleClose}
+  onAttach={(result: AttachResult) => {
+    /* result.files, result.folderPaths */
+  }}
+  controller={controller} // FileManagerController
+  isAnyOperationInProgress={isUploading}
+  activeTab={activeTab}
+  tabs={tabs}
+  onTabChange={setActiveTab}
+  variant={DialFileManagerVariant.Attach}
+  actionProfile={DialFileManagerActionProfile.Attach}
+  selectedPaths={selectedPaths}
+  onSelectedPathsChange={setSelectedPaths}
+  resolveFolderPath={resolveFolderPath}
+  labels={labels} // FileManagerAttachModalLabels
+/>;
+```
+
+`FileManagerAttachModalLabels` extends `DialFileManagerShellLabels` with three additional fields:
+
+```ts
+import type { FileManagerAttachModalLabels } from '@epam/ai-dial-chat-shared';
+
+// { title: string; attachLabel: string; headerDescription?: string | null }
+// … plus every DialFileManagerShellLabels field
+```
+
+### DialFileManagerVariant / DialFileManagerActionProfile
+
+Enums that identify the hosting context and the set of grid actions to expose.
+
+```ts
+import {
+  DialFileManagerVariant,
+  DialFileManagerActionProfile,
+} from '@epam/ai-dial-chat-shared';
+
+DialFileManagerVariant.Attach; // file-picker attach modal
+DialFileManagerVariant.Standalone; // standalone management page
+
+DialFileManagerActionProfile.Attach; // excludes Copy/Move/Duplicate
+DialFileManagerActionProfile.Browse; // full action set
+```
+
+### Upload batch types
+
+```ts
+import {
+  FileUploadStatus,
+  type FileUploadEntry,
+  type FileUploadBatchState,
+  type FileUploadValidationResult,
+} from '@epam/ai-dial-chat-shared';
+
+// FileUploadStatus values: Queued | Uploading | Completed | Failed | Cancelled
+```
+
+### getParentFolderPath
+
+Returns the parent folder of a path (virtual or API), always trailing-slashed.
+
+```ts
+import { getParentFolderPath } from '@epam/ai-dial-chat-shared';
+
+getParentFolderPath('reports/file.txt'); // 'reports/'
+getParentFolderPath('/My files/reports/'); // '/My files/'
+getParentFolderPath('report.pdf'); // ''
+```
+
+### useGridEditingScroll
+
+Hook that keeps a cell's inline editor visible when the cell becomes partially obscured during an inline rename. Intended for hosts that embed `DialFileManagerShell` and need editing-scroll behaviour. Also re-exported from `@epam/ai-dial-chat-hooks` for backward compatibility.
+
+```ts
+import { useGridEditingScroll } from '@epam/ai-dial-chat-shared';
+
+const { handleGridApiChange, reset } = useGridEditingScroll();
+// Pass handleGridApiChange to DialFileManager's onGridApiChange prop.
+// Call reset() when the data source changes (e.g. on a tab switch).
+```
+
+### OperationLoaderModal / UploadProgressModal
+
+Internal modals already rendered by `DialFileManagerShell`. Exported for hosts that need to compose them independently outside the shell.
+
+```tsx
+import {
+  OperationLoaderModal,
+  UploadProgressModal,
+} from '@epam/ai-dial-chat-shared';
+```
 
 ## Building
 

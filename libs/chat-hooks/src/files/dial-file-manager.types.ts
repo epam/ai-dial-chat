@@ -1,4 +1,8 @@
 import type {
+  FileUploadValidationResult,
+  FileUploadBatchState,
+} from '@epam/ai-dial-chat-shared';
+import type {
   DialCopiedItem,
   DialDeletedItem,
   DialFile,
@@ -14,12 +18,8 @@ import type {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
 } from './file-manager-variant';
-import type { FileUploadBatchState } from './upload-batch.types';
 
-export interface FileUploadValidationResult {
-  valid: boolean;
-  message?: string;
-}
+export type { FileUploadValidationResult } from '@epam/ai-dial-chat-shared';
 
 /**
  * Library-owned identifier for why a file-manager hook is surfacing an

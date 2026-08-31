@@ -1,0 +1,111 @@
+## MODIFIED Requirements
+
+### Requirement: `prompts.api.ts` wraps every generated prompt operation
+
+`apps/chat/src/server-api/prompts.api.ts` SHALL export one thin arrow-function wrapper per generated `PromptsApi` method, in the shape of `apps/chat/src/server-api/toolsets.ts`. Each wrapper uses the normal (non-`Raw`) generated method and adds no logic beyond argument shaping.
+
+| Wrapper | Generated method | Request | Response |
+| --- | --- | --- | --- |
+| `listPrompts()` | `listPrompts` | — | `PromptListResponseDto` |
+| `getPrompt(id)` | `getPrompt` | `{ id }` | `PromptResponseDto` |
+| `createPrompt(body)` | `createPrompt` | `{ createPromptDto }` | `PromptResponseDto` |
+| `updatePrompt(id, body)` | `updatePrompt` | `{ id, updatePromptDto }` | `PromptResponseDto` |
+| `deletePrompt(id)` | `deletePrompt` | `{ id }` | `void` |
+| `listPublicPrompts()` | `listPublicPrompts` | — | `PublicPromptListResponseDto` |
+| `getPublicPrompt(path)` | `getPublicPrompt` | `{ path }` | `PromptResponseDto` |
+| `createPromptFolder(body)` | `createPromptFolder` | `{ createPromptFolderDto }` | `PromptFolderResponseDto` |
+| `renamePromptFolder(path, body)` | `renamePromptFolder` | `{ path, renamePromptFolderDto }` | `PromptFolderResponseDto` |
+| `deletePromptFolder(path)` | `deletePromptFolder` | `{ path }` | `void` |
+| `movePrompt(id, body)` | `movePrompt` | `{ id, movePromptDto }` | `PromptResponseDto` |
+
+None of `getPrompt`, `updatePrompt`, `deletePrompt`, or `movePrompt` SHALL accept a separate `bucket` argument — each takes the single full-resource-path `id` that `PromptResponseDto.id` already returns, whether the prompt is the caller's own or shared with them. The public (organisation) endpoints keep their bucket-relative `path` argument unchanged, since they operate on the fixed `public` namespace only.
+
+All DTO types SHALL be imported as `import type { … } from '@epam/ai-dial-chat-api-client'`. No prompt DTO SHALL be re-declared in `apps/chat`.
+
+Every wrapper used by the catalog or editor MUST have a production caller. `listPublicPrompts()` remains only as a backward-compatible wrapper over the still-supported organisation-only endpoint; `PromptsContext` MUST NOT call it because `listPrompts()` now carries every namespace.
+
+#### Scenario: Listing every prompt namespace
+
+- **WHEN** `listPrompts()` is called
+- **THEN** it resolves `GET /api/v1/prompts`'s `PromptListResponseDto` with `prompts`, `folders`, `sharedWithMe`, `publicPrompts`, and `publicFolders` arrays
+
+Example response:
+
+```json
+{
+  "prompts": [
+    {
+      "id": "prompts/my-bucket/Work/AI/summarize",
+      "name": "summarize",
+      "description": "Summarize a document",
+      "content": "Summarize the following text:",
+      "folderId": "Work/AI",
+      "createdAt": 1700000000000,
+      "updatedAt": 1700000001000
+    }
+  ],
+  "folders": [
+    { "id": "Work", "name": "Work" },
+    { "id": "Work/AI", "name": "AI" }
+  ],
+  "sharedWithMe": [],
+  "publicPrompts": [],
+  "publicFolders": []
+}
+```
+
+#### Scenario: Loading a shared prompt by its full id
+
+- **WHEN** `getPrompt('prompts/owner-bucket/Work/AI/summarize')` is called
+- **THEN** it dispatches `GET /api/v1/prompts/item?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize`
+
+#### Scenario: Updating a writable shared prompt by its full id
+
+- **WHEN** `updatePrompt('prompts/owner-bucket/Work/AI/summarize', body)` is called
+- **THEN** it dispatches `PUT /api/v1/prompts?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize`
+
+#### Scenario: Creating a prompt in a subfolder
+
+- **WHEN** `createPrompt({ name: 'summarize', description: 'Summarize a document', content: 'Summarize the following text:', folderId: 'Work/AI' })` is called
+- **THEN** it dispatches `POST /api/v1/prompts` and resolves the created `PromptResponseDto` with `id: 'prompts/{sessionBucket}/Work/AI/summarize'` and HTTP 201
+
+#### Scenario: Updating only a prompt's content
+
+- **WHEN** `updatePrompt('prompts/my-bucket/Work/AI/summarize', { content: 'Summarize in three bullets:' })` is called
+- **THEN** it dispatches `PUT /api/v1/prompts?id=prompts%2Fmy-bucket%2FWork%2FAI%2Fsummarize` and resolves the updated DTO with `name` and `folderId` preserved
+
+#### Scenario: Deleting a prompt resolves void
+
+- **WHEN** `deletePrompt('prompts/my-bucket/Work/AI/summarize')` is called and the backend returns 204
+- **THEN** the promise resolves with no value and does not throw
+
+#### Scenario: Moving a prompt to root
+
+- **WHEN** `movePrompt('prompts/my-bucket/Work/AI/summarize', { targetFolderId: '' })` is called
+- **THEN** it dispatches `POST /api/v1/prompts/move?id=prompts%2Fmy-bucket%2FWork%2FAI%2Fsummarize` with body `{ "targetFolderId": "" }` and resolves the moved DTO with `id: 'prompts/my-bucket/summarize'` and `folderId: ''`
+
+#### Scenario: Renaming a folder
+
+- **WHEN** `renamePromptFolder('Work/AI', { name: 'Machine Learning' })` is called
+- **THEN** it dispatches `PUT /api/v1/prompts/folders?path=Work%2FAI` and resolves `{ "id": "Work/Machine Learning", "name": "Machine Learning" }`
+
+#### Scenario: Listing organisation prompts
+
+- **WHEN** `listPublicPrompts()` is called
+- **THEN** it resolves `PublicPromptListResponseDto` with `prompts` and `folders` and no `sharedWithMe` field
+
+---
+
+### Requirement: Aggregate and unified-id contracts are generated from OpenAPI
+
+The prompt DTO and endpoint changes SHALL be declared in NestJS Swagger and regenerated into `libs/chat-api-client/openapi.json` and `@epam/chat-api-client`. `PromptListResponseDto` SHALL expose the organisation arrays; `PromptResponseDto` SHALL expose one full-resource-path `id` field (no separate `bucket` field) plus ownership, editability, sharing, and permissions metadata; and the generated `getPrompt`, `updatePrompt`, `deletePrompt`, and `movePrompt` request types SHALL each accept a single `id` parameter and no `bucket` parameter.
+
+#### Scenario: OpenAPI check stays green
+
+- **WHEN** `npm run openapi:check` runs after this capability is implemented
+- **THEN** it reports no drift, proving the generated client matches the changed endpoint contract
+
+#### Scenario: Generated client exposes the unified id field and no bucket field
+
+- **WHEN** the generated `PromptsApi` and models are inspected
+- **THEN** `PromptResponseDto` has one `id` field and no `bucket` field, and `getPrompt`/`updatePrompt`/`deletePrompt`/`movePrompt`'s request types have an `id` field and no `bucket` field, all without hand-written edits under `libs/chat-api-client/src/generated/`

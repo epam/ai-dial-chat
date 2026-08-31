@@ -1,4 +1,4 @@
-import type { FileUploadBatchState } from '@epam/ai-dial-chat-hooks';
+import type { FileUploadBatchState } from '@epam/ai-dial-chat-shared';
 import { DialFileName, Popup, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, type FC, type ReactNode } from 'react';
 

@@ -20,22 +20,16 @@ export interface ParsedPromptResourceUrl {
 }
 
 /**
- * Qualifies a bucket-relative prompt path into a `prompts/{bucket}/{path}`
- * resource URL. A path alone is ambiguous once prompts from more than one
- * bucket share a list: the prompts endpoints resolve a bare path against the
- * caller's own bucket, so a prompt shared out of someone else's bucket needs
- * the bucket carried alongside it.
- */
-export const buildPromptResourceUrl = ({
-  bucket,
-  path,
-}: ParsedPromptResourceUrl): string =>
-  `${PROMPT_RESOURCE_PREFIX}${bucket}/${path}`;
-
-/**
  * Splits a `prompts/{bucket}/{path}` resource URL into its parts, mirroring the
  * backend's parser. Returns `null` for a different prefix, an empty bucket, or
- * an empty path, so callers can treat "a bare bucket-relative path" as one case.
+ * an empty path, so callers can treat "not a prompt resource id" as one case.
+ *
+ * `CatalogItem.id` for a prompt is always this full resource path — the read,
+ * update, delete, and move endpoints all take it unmodified. The one caller
+ * that still needs the bucket-relative sub-path on its own is the
+ * organisation (public) prompt read, whose endpoint kept its bucket-relative
+ * `path` argument because it only ever operates on the fixed `public`
+ * namespace.
  */
 export const parsePromptResourceUrl = (
   url: string,
