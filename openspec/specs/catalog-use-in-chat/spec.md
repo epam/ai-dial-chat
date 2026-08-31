@@ -8,9 +8,16 @@ The "Use in chat" action that selects a deployment and starts a new conversation
 
 ### Requirement: Use in chat selects a deployment and starts a new conversation
 
-When the user clicks "Use in chat" in the catalog details panel header for a catalog item of type Model or Application, the system SHALL set that item's `id` as the selected deployment via `DeploymentsContext.setSelectedItemId` and navigate to `ROUTES.Root` (`/`).
+When the user clicks "Use in chat" in the catalog details panel header for a catalog item of type Model or Application, the system SHALL set that item's `id` as the selected deployment via `DeploymentsContext.setSelectedItemId` and navigate to `ROUTES.Root` (`/`). The navigation SHALL also carry the chosen id as router state (`{ deploymentId: string }`), so `ConversationRoute` treats the arrival as an explicit selection via `restoreSelectedItemId` instead of calling `restoreDefaultSelection`. Without it the new-chat route resets the selection to the operator default on mount (and the persisted preference has not yet propagated), discarding the pick.
+
+The `deploymentId` state SHALL be one-shot: `ConversationRoute` consumes it on mount and clears it with `navigate(pathname, { replace: true, state: null })`, remembering for the lifetime of that mount that it was consumed so the clearing navigation does not re-trigger default restoration. `history.state` survives a page reload, so state left in place would make every refresh re-apply a stale pick instead of resolving the configured default.
 
 The selection SHALL be persisted to user config as part of `setSelectedItemId`'s existing behavior (no additional persistence call is required by the handler).
+
+#### Scenario: Reload after Use in chat resolves the configured default
+
+- **WHEN** the user uses a Model in chat and then reloads `/`
+- **THEN** the router state has already been consumed and cleared, so the selection resolves through the normal precedence chain — the pinned operator default when `defaultDeploymentPinned` is enabled
 
 When the item's type is `CatalogEntityType.Prompt`, "Use in chat" SHALL NOT change the selected deployment. Instead it SHALL navigate to `ROUTES.Root` passing the prompt's resolved body as router state (`{ promptContent: string }`), which `ConversationRoute` consumes to seed the composer's existing `message` prop through its `inputMessage` state. The currently selected deployment is left exactly as the user last set it, so a prompt can be used with whatever model is already chosen.
 
@@ -129,7 +136,19 @@ The catalog details panel SHALL NOT render the "Use in chat" primary action butt
 The system SHALL, when the user clicks "Use in chat" in the catalog details
 panel header for a catalog item of type Model or Application, set that item's
 `id` as the selected deployment via `DeploymentsContext.setSelectedItemId`
-and navigate to `ROUTES.Root` (`/`).
+and navigate to `ROUTES.Root` (`/`). The navigation SHALL also carry the
+chosen id as router state (`{ deploymentId: string }`), so
+`ConversationRoute` treats the arrival as an explicit selection via
+`restoreSelectedItemId` instead of calling `restoreDefaultSelection`. Without
+it the new-chat route resets the selection to the operator default on mount
+(and the persisted preference has not yet propagated), discarding the pick.
+
+The `deploymentId` state SHALL be one-shot: `ConversationRoute` consumes it on
+mount and clears it with `navigate(pathname, { replace: true, state: null })`,
+remembering for the lifetime of that mount that it was consumed so the
+clearing navigation does not re-trigger default restoration. `history.state`
+survives a page reload, so state left in place would make every refresh
+re-apply a stale pick instead of resolving the configured default.
 
 The selection SHALL be persisted to user config as part of
 `setSelectedItemId`'s existing behavior (no additional persistence call is

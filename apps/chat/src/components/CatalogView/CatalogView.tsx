@@ -784,8 +784,14 @@ const CatalogView: FC<Props> = ({
         return;
       }
 
+      /*
+       * The pick is persisted as the user's own preference *and* carried in
+       * router state: the new-chat route resets an unstated selection back to
+       * the configured default on mount, which would otherwise discard this
+       * one before the persisted value has propagated.
+       */
       setSelectedItemId(action.id);
-      navigate(ROUTES.Root);
+      navigate(ROUTES.Root, { state: { deploymentId: action.id } });
     },
     [setSelectedItemId, navigate, showErrorNotification, t, fetchPromptDto],
   );

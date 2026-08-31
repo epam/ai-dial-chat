@@ -1,5 +1,6 @@
 ---
 name: create-ticket
+disable-model-invocation: true
 model: haiku
 description: Interactively create OR update GitHub issues (Bug, Feature, Task) for the current repository. Create from a discussion, from an openspec change (current branch or a specific change path), or update an existing issue with new details. Use for "create ticket/issue", "generate issue from spec", "document this feature as a ticket", or "update ticket/issue". Infrastructure changes are Tasks auto-labeled `infra-task`. Asks targeted questions, assigns labels, and runs the gh CLI.
 alwaysApply: false

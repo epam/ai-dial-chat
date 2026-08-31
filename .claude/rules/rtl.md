@@ -1,4 +1,7 @@
 ---
+paths:
+  - 'apps/**/*.{ts,tsx,css,scss}'
+  - 'libs/**/*.{ts,tsx,css,scss}'
 alwaysApply: true
 applyTo: '**'
 ---

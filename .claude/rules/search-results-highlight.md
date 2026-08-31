@@ -1,3 +1,9 @@
+---
+paths:
+  - 'apps/**/*.tsx'
+  - 'libs/**/*.tsx'
+---
+
 # Search result highlighting
 
 Whenever implementing or modifying a search feature (search bars, filterable dropdowns, model/deployment pickers, conversation search, file/attachment search, sources panels, catalog/app search, etc.), render the matched text of each result using the shared `Highlight` component exported from `@epam/ai-dial-ui-kit` — never a bespoke `<mark>`/regex-based highlighter or plain unhighlighted text.

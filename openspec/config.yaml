@@ -44,11 +44,10 @@ context: |
   - Frontend dev: `npm start` (localhost:4207, proxies /api → localhost:5000)
   - Backend dev:  `npm run start:api` (localhost:5000)
   - Both:         `npm run start:all`
-  - Affected build / lint / typecheck / test: `npm exec nx affected --target=<t> --base=origin/development`
-  - Single-project (preferred for slice verification, see CLAUDE.md per project):
-    - `npm exec nx test chat-api`
-    - `npm exec nx lint chat-api`
-    - `npm exec nx build chat-api`
+  - Exact test file (preferred red/green loop): `npm run test:file -- <workspace-relative-path>`
+  - Changed-slice verification: `npm run verify:changed`
+  - Full non-mutating verification (once before completion): `npm run verify:full`
+  - Quiet affected build when bundling may be affected: `npm run build:quiet`
   - All tests:    `npm test`
   - Dep graph:    `npm run graph`
 
@@ -250,6 +249,8 @@ rules:
         - add or update the generated API singleton in `apps/chat/src/server-api/api-client.ts`
         - implement frontend server-api wrappers using `@epam/chat-api-client`, not direct
           `base.ts` helpers, unless the task documents a generator gap
-    - Verify per slice — run lint + typecheck + tests after each slice using
-      `npm exec nx <target> chat-api` for single-project checks, then close with one final
-      `npm exec nx affected --target=<t> --base=origin/development` run over the affected set
+    - Give every implementation task an explicit Verification subsection naming the exact Vitest
+      file(s) to run with `npm run test:file -- <workspace-relative-path>`. Run
+      `npm run verify:changed` once after a completed vertical slice, not after each micro-edit,
+      and close the change with exactly one `npm run verify:full`. Add `npm run build:quiet`
+      only when bundling can be affected.
