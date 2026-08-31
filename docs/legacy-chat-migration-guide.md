@@ -191,11 +191,13 @@ Design detail — cookie format, refresh, federated logout, `SessionGuard` — i
 `ENABLED_FEATURES` becomes `ENABLED_UI_FEATURES`, and the set of recognized
 values changed: some flags were renamed (`marketplace` → `catalog`), some became
 unconditional behaviour and are no longer accepted, and some have no successor
-yet. Unrecognized entries are logged and dropped, so a legacy value silently
-does nothing.
+yet. Unrecognized entries are logged and dropped, so a legacy value does nothing
+beyond producing a warning. The one exception is `custom-applications`, kept
+accepted transitionally: it resolves to its replacement `schema-apps` and logs a
+deprecation warning.
 
 The authoritative tables — renamed, became unconditional, no successor, plus the
-complete list of the 39 supported flags and which are on by default — are in the
+complete list of the 41 supported flags and which are on by default — are in the
 [Chat Overlay Migration Guide § Migrate UI feature flags](chat-overlay-migration-guide.md#6-migrate-ui-feature-flags).
 They apply to a plain deployment too, not only to embedded ones.
 

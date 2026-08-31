@@ -2572,7 +2572,7 @@ describe('CatalogView', () => {
       ).toBeTruthy();
     });
 
-    it('hides Create Quick App when custom-applications is disabled', () => {
+    it('hides Create Quick App when schema-apps is disabled', () => {
       vi.mocked(useDeployments).mockReturnValue({
         items: [],
         selectedItemId: null,
@@ -2593,7 +2593,7 @@ describe('CatalogView', () => {
       vi.mocked(useUiFeature).mockImplementation(
         (feature) =>
           DEFAULT_ENABLED_UI_FEATURES.has(feature) &&
-          feature !== OverlayFeature.CustomApplications,
+          feature !== OverlayFeature.SchemaApps,
       );
 
       render(<CatalogView />);
