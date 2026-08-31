@@ -257,9 +257,9 @@ describe('Catalog', () => {
     expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
   });
 
-  it('defaults to the grid view', () => {
+  it('defaults to the list view', () => {
     render(<Catalog items={[]} favorites={[]} />);
-    expect(screen.queryByLabelText('catalog list')).toBeNull();
+    expect(screen.getByLabelText('catalog list')).toBeTruthy();
   });
 
   it('starts in the list view when initialViewMode is List', () => {
@@ -271,6 +271,17 @@ describe('Catalog', () => {
       />,
     );
     expect(screen.getByLabelText('catalog list')).toBeTruthy();
+  });
+
+  it('starts in the grid view when initialViewMode is Grid', () => {
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        initialViewMode={CatalogViewMode.Grid}
+      />,
+    );
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
   });
 
   it('calls onCreateClick when Create is clicked', async () => {

@@ -7,9 +7,13 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
  * ("modifier" keys) defaults off so a deployment that configures nothing
  * observes zero behavior change.
  *
- * `CatalogTableView` is the exception to that rule: it is an initial-state
- * modifier that ships on, so Browse opens in list view. The grid default the
- * classification table recorded is not the view users expect to land on.
+ * `CatalogTableView` is listed but no longer gates anything: Browse opens in
+ * list view unconditionally, because `Catalog`'s own `initialViewMode` default
+ * is `CatalogViewMode.List`. Gating it here made the landing view depend on
+ * `ENABLED_UI_FEATURES`, whose replace semantics silently dropped the list
+ * default for any deployment that configured the variable at all. The key is
+ * kept so an overlay host still sending it is not warned about an unknown
+ * feature.
  */
 export const DEFAULT_ENABLED_UI_FEATURES: ReadonlySet<OverlayFeature> = new Set(
   [
