@@ -1329,7 +1329,9 @@ describe('CatalogView', () => {
     );
 
     expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
-    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root, {
+      state: { deploymentId: 'gpt-4o' },
+    });
   });
 
   it('selects the application as the deployment and navigates to the root route when Use in chat is clicked', async () => {
@@ -1365,7 +1367,9 @@ describe('CatalogView', () => {
     );
 
     expect(setSelectedItemId).toHaveBeenCalledWith('my-app');
-    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root, {
+      state: { deploymentId: 'my-app' },
+    });
   });
 
   it('does not render Use in chat for a Toolset item', () => {
@@ -3538,7 +3542,9 @@ describe('CatalogView', () => {
       );
 
       expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
-      expect(mockNavigate).toHaveBeenCalledWith('/');
+      expect(mockNavigate).toHaveBeenCalledWith('/', {
+        state: { deploymentId: 'gpt-4o' },
+      });
     });
 
     it('offers the Skill create option regardless of the prompts feature flag', async () => {

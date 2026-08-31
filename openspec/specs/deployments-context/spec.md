@@ -402,7 +402,12 @@ Calling `restoreDefaultSelection()` SHALL re-evaluate the same precedence chain 
 
 `restoreDefaultSelection` SHALL NOT call `setSelectedDeployment` (it does not persist anything — the resolved value is, by construction, already either the persisted preference, the operator default, or a fallback) and SHALL NOT trigger a deployments/schemas/toolsets refetch.
 
-**Memoisation:** `restoreDefaultSelection` SHALL be wrapped in `useCallback` and SHALL NOT change identity merely because `useUserConfig().selectedDeploymentId` changes after a manual deployment selection. It SHALL read the latest preference and effective operator default from refs. This prevents the new-conversation route effect from interpreting persistence of a manual choice as a request to restore the operator default.
+**Memoisation:** `restoreDefaultSelection` SHALL be wrapped in `useCallback` with an empty dependency array, so its identity never changes for the lifetime of the provider. It SHALL read `items`, the latest persisted preference, and the effective operator default from refs. Neither `useUserConfig().selectedDeploymentId` changing after a manual deployment selection nor `items` being rebuilt by a deployments refetch may change its identity: the new-conversation route calls it from an effect keyed on that identity, so any change re-fires default restoration and discards the user's current selection.
+
+#### Scenario: Deployments refetch does not reset the current selection
+
+- **WHEN** pinning is enabled, the user has explicitly selected a non-default deployment, and `refetchDeployments()` rebuilds `items`
+- **THEN** `restoreDefaultSelection` retains its callback identity and `selectedItemId` still holds the explicitly selected deployment
 
 #### Scenario: restoreDefaultSelection re-applies the operator default over a stale in-memory value when operator default is configured
 
