@@ -22,14 +22,14 @@ The provider SHALL:
 - Fetch deployments on mount using `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp])` from `server-api/deployments.api.ts`, so `items` includes both chat-capable and MCP-capable models/applications.
 - Use a `cancelled` flag inside `useEffect` to guard against setState-on-unmount.
 - Use `useMemo` to memoize the context value.
-- Determine the initial `selectedItemId` using the following precedence (evaluated in order after both deployments and user config are available):
+- Determine the initial `selectedItemId` using the following precedence (evaluated in order after deployments, user config, and app config are available). Step 2 is active only when `useFeatureFlag('defaultDeploymentPinned')` is `true`; while the flag is `false`, the provider skips step 2 and preserves the previous user-preference-first behavior:
   1. Current in-memory `selectedItemId` if it is still present in the new `items` list (handles deployment list reload).
-  2. `useUserConfig().selectedDeploymentId` if non-null and present in `items`.
-  3. `useAppConfig().defaultDeploymentId` if non-null and present in `items`.
+  2. `useAppConfig().defaultDeploymentId` if non-null and present in `items`.
+  3. `useUserConfig().selectedDeploymentId` if non-null and present in `items`.
   4. `items[0]?.id` (first sorted deployment).
   5. `null` if `items` is empty.
 - When the deployments reload and the previously selected `id` is no longer in `items`, re-apply the full precedence chain from step 2 onward.
-- **NOT re-trigger the full deployments/schemas/toolsets fetch merely because `setSelectedItemId` is called.** `setSelectedItemId` optimistically updates `useUserConfig().selectedDeploymentId` before its persistence call resolves; the initial-load fetch (and the `isLoading` flag it drives) SHALL NOT react to that value changing after the initial load has already completed. The initial-selection precedence chain MAY still be re-evaluated without a network call if `userConfigSelectedId`/`defaultDeploymentId` become known only after the deployments list already loaded with `selectedItemId` still `null` (e.g. an initially empty list later repopulated via `refetchDeployments`).
+- **NOT re-trigger the full deployments/schemas/toolsets fetch merely because `setSelectedItemId` is called.** `setSelectedItemId` optimistically updates `useUserConfig().selectedDeploymentId` before its persistence call resolves; the initial-load fetch (and the `isLoading` flag it drives) SHALL NOT react to that value changing after the initial load has already completed. If user/app config becomes known after deployments load, the provider SHALL re-sort and MAY re-evaluate an automatically resolved provisional selection without a network call. It SHALL NOT override a selection explicitly established by `setSelectedItemId` or `restoreSelectedItemId`.
 - Export a `useDeployments()` hook that throws a clear error when called outside the provider.
 - NOT read from or write to `localStorage` under any circumstance.
 - Whenever `resolvedSelectedDeploymentId` changes (the same trigger already used for `selectedDeploymentConfiguration`), fetch `selectedDeploymentConfiguration` and `selectedDeploymentDetails` **concurrently** in a single effect via `Promise.allSettled`, so neither fetch blocks or is blocked by the other, and a failure in one does not clear a successful result from the other:
@@ -54,14 +54,24 @@ The state management pattern SHALL follow `ThemeContext.tsx` as the reference im
 - **WHEN** `DeploymentsProvider` mounts
 - **THEN** it calls `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp])`, sets `isLoading: true` during fetch, sets `items` on success, sets `error` on failure, and sets `isLoading: false` when done
 
-#### Scenario: Initial selectedItemId follows user config preference
+#### Scenario: Initial selectedItemId follows operator default preference
 
-- **WHEN** deployments load with items `["dep-a", "dep-b"]` and `useUserConfig().selectedDeploymentId === "dep-b"`
+- **WHEN** deployments load with items `["dep-a", "dep-b"]`, `useFeatureFlag('defaultDeploymentPinned') === true`, and `useAppConfig().defaultDeploymentId === "dep-b"`
 - **THEN** `selectedItemId` is `"dep-b"`
 
-#### Scenario: User config preference absent — falls back to operator default
+#### Scenario: Operator default wins when both operator default and user preference are set
 
-- **WHEN** deployments load with items `["dep-a", "dep-b"]` and `useUserConfig().selectedDeploymentId === null` and `useAppConfig().defaultDeploymentId === "dep-b"`
+- **WHEN** deployments load with items `["dep-a", "dep-b"]`, `useFeatureFlag('defaultDeploymentPinned') === true`, `useAppConfig().defaultDeploymentId === "dep-b"`, and `useUserConfig().selectedDeploymentId === "dep-a"`
+- **THEN** `selectedItemId` is `"dep-b"`
+
+#### Scenario: Disabled flag preserves user preference over operator default
+
+- **WHEN** deployments load with items `["dep-a", "dep-b"]`, `useFeatureFlag('defaultDeploymentPinned') === false`, `useAppConfig().defaultDeploymentId === "dep-b"`, and `useUserConfig().selectedDeploymentId === "dep-a"`
+- **THEN** `selectedItemId` is `"dep-a"` and the list remains alphabetical
+
+#### Scenario: Operator default absent — falls back to user-persisted preference
+
+- **WHEN** deployments load with items `["dep-a", "dep-b"]` and `useAppConfig().defaultDeploymentId === null` and `useUserConfig().selectedDeploymentId === "dep-b"`
 - **THEN** `selectedItemId` is `"dep-b"`
 
 #### Scenario: User config and operator default absent — falls back to first sorted deployment
@@ -69,9 +79,9 @@ The state management pattern SHALL follow `ThemeContext.tsx` as the reference im
 - **WHEN** deployments load and both `selectedDeploymentId` and `defaultDeploymentId` are `null`
 - **THEN** `selectedItemId` is `items[0].id`
 
-#### Scenario: User config preference points to unavailable deployment — falls through to operator default
+#### Scenario: Operator default not in catalog — falls through to user-persisted preference
 
-- **WHEN** `useUserConfig().selectedDeploymentId === "removed-dep"` and `"removed-dep"` is not in `items`, and `useAppConfig().defaultDeploymentId === "dep-a"` which is in `items`
+- **WHEN** `useAppConfig().defaultDeploymentId === "removed-dep"` and `"removed-dep"` is not in `items`, and `useUserConfig().selectedDeploymentId === "dep-a"` which is in `items`
 - **THEN** `selectedItemId` is `"dep-a"`
 
 #### Scenario: No deployments exist — selectedItemId is null
@@ -233,8 +243,8 @@ All imports of `CatalogContext`, `useCatalog`, `CatalogProvider`, `getCatalogIte
 
 1. Provider loads items on mount and sets `isLoading: false` on completion.
 2. `selectedItemId` defaults to `items[0].id` after successful load when no user-config or operator default applies.
-3. `selectedItemId` follows user-config `selectedDeploymentId` when present in `items`.
-4. `selectedItemId` falls back to operator `defaultDeploymentId` when user-config selection is absent.
+3. `selectedItemId` follows operator `defaultDeploymentId` when present in `items`, overriding user-config preference.
+4. `selectedItemId` falls back to user-config `selectedDeploymentId` when operator default is absent or not in catalog.
 5. `selectedItemId` falls back to first sorted deployment when configured ids are stale.
 6. `setSelectedItemId` updates `selectedItemId` and calls `setSelectedDeployment`.
 7. `restoreSelectedItemId` updates `selectedItemId` without calling `setSelectedDeployment`.
@@ -385,26 +395,70 @@ This closes a defense-in-depth gap: even if a future code path (e.g. a different
 
 Calling `restoreDefaultSelection()` SHALL re-evaluate the same precedence chain used to determine the *initial* `selectedItemId` (see "DeploymentsContext owns deployment selection for conversation selector"), but starting from `inMemoryId = null` instead of the current in-memory `selectedItemId`:
 
-1. `useUserConfig().selectedDeploymentId` if non-null and present in `items`.
-2. `useAppConfig().defaultDeploymentId` if non-null and present in `items`.
+1. `useAppConfig().defaultDeploymentId` if `useFeatureFlag('defaultDeploymentPinned')` is `true`, the id is non-null, and it is present in `items`.
+2. `useUserConfig().selectedDeploymentId` if non-null and present in `items`.
 3. `items[0]?.id` (first sorted deployment).
 4. Leave `selectedItemId` unchanged if none of the above resolve (e.g. `items` is empty).
 
 `restoreDefaultSelection` SHALL NOT call `setSelectedDeployment` (it does not persist anything — the resolved value is, by construction, already either the persisted preference, the operator default, or a fallback) and SHALL NOT trigger a deployments/schemas/toolsets refetch.
 
-**Memoisation:** `restoreDefaultSelection` SHALL be wrapped in `useCallback`.
+**Memoisation:** `restoreDefaultSelection` SHALL be wrapped in `useCallback` and SHALL NOT change identity merely because `useUserConfig().selectedDeploymentId` changes after a manual deployment selection. It SHALL read the latest preference and effective operator default from refs. This prevents the new-conversation route effect from interpreting persistence of a manual choice as a request to restore the operator default.
 
-#### Scenario: restoreDefaultSelection re-applies the persisted user preference
+#### Scenario: restoreDefaultSelection re-applies the operator default over a stale in-memory value when operator default is configured
 
-- **WHEN** `useUserConfig().selectedDeploymentId === "opus"`, `items` contains `"opus"` and `"whisper"`, and in-memory `selectedItemId` currently holds `"whisper"` (e.g. left over from `restoreSelectedItemId` after viewing a conversation)
+- **WHEN** `useFeatureFlag('defaultDeploymentPinned') === true`, `useAppConfig().defaultDeploymentId === "opus"`, `useUserConfig().selectedDeploymentId === null`, `items` contains `"opus"` and `"whisper"`, and in-memory `selectedItemId` currently holds `"whisper"` (e.g. left over from `restoreSelectedItemId` after viewing a conversation)
 - **THEN** calling `restoreDefaultSelection()` sets `selectedItemId` to `"opus"`
 
-#### Scenario: restoreDefaultSelection falls back to the operator default when there is no persisted preference
+#### Scenario: restoreDefaultSelection uses the user-persisted preference when no operator default is configured
 
-- **WHEN** `useUserConfig().selectedDeploymentId` is `null`, `useAppConfig().defaultDeploymentId === "dep-a"`, and `items` contains `"dep-a"`
+- **WHEN** `useAppConfig().defaultDeploymentId` is `null`, `useUserConfig().selectedDeploymentId === "dep-a"`, and `items` contains `"dep-a"`
 - **THEN** calling `restoreDefaultSelection()` sets `selectedItemId` to `"dep-a"`, regardless of the current in-memory `selectedItemId`
 
 #### Scenario: restoreDefaultSelection does not persist
 
 - **WHEN** `restoreDefaultSelection()` resolves `selectedItemId` to `"dep-a"`
 - **THEN** `setSelectedDeployment` is NOT called
+
+#### Scenario: Manual deployment switch is not reset to the operator default
+
+- **WHEN** pinning is enabled, the user manually selects a non-default deployment, and persistence updates `useUserConfig().selectedDeploymentId`
+- **THEN** `restoreDefaultSelection` retains its callback identity and the route does NOT re-run default restoration, so the manually selected deployment remains selected
+
+---
+
+### Requirement: Operator default deployment is pinned to position 0 in the sorted list
+
+`sortDeployments` inside `apps/chat/src/context/DeploymentsContext.tsx` SHALL accept an optional third parameter `pinnedId?: string | null`. The provider SHALL supply the configured default as the effective pinned id only when `useFeatureFlag('defaultDeploymentPinned')` is `true`; otherwise it SHALL supply `null`. After sorting alphabetically, when `pinnedId` is non-null and an entry with `id === pinnedId` exists in the sorted array, that entry SHALL be spliced to index 0. All remaining entries preserve their alphabetical order.
+
+`defaultDeploymentIdRef.current` SHALL be passed as `pinnedId` at every `sortDeployments` call site inside `DeploymentsProvider`:
+- The language-change re-sort updater.
+- The initial deployments load inside `loadDeployments`.
+- `refetchDeployments`.
+- `mergeSharedItem` (for the deployment branch).
+
+When `pinnedId` is `null`, `undefined`, or not present in the sorted array, `sortDeployments` returns a purely alphabetical list unchanged.
+
+#### Scenario: Operator default is hoisted to position 0 in sorted list
+
+- **WHEN** deployments `["z-agent", "pg-agent", "a-agent"]` are returned, `defaultDeploymentPinned === true`, and `defaultDeploymentId === "pg-agent"`
+- **THEN** `items` is ordered `["pg-agent", "a-agent", "z-agent"]`
+
+#### Scenario: Disabled flag keeps the list alphabetical
+
+- **WHEN** deployments `["z-agent", "pg-agent", "a-agent"]` are returned, `defaultDeploymentPinned === false`, and `defaultDeploymentId === "pg-agent"`
+- **THEN** `items` is ordered `["a-agent", "pg-agent", "z-agent"]`
+
+#### Scenario: Operator default remains visible when an existing conversation uses another deployment
+
+- **WHEN** `defaultDeploymentPinned === true`, the operator default is present in the catalog but is not a user favorite, and an existing conversation restores a different deployment as the current selection
+- **THEN** the compact deployment selector shows the operator default first, followed by user favorites, without marking the operator default as a favorite or rendering it twice when it is already favorited
+
+#### Scenario: Purely alphabetical list when no operator default is configured
+
+- **WHEN** deployments `["z-agent", "a-agent"]` are returned and `defaultDeploymentId === null`
+- **THEN** `items` is ordered `["a-agent", "z-agent"]`
+
+#### Scenario: Purely alphabetical list when operator default is not in catalog
+
+- **WHEN** deployments `["z-agent", "a-agent"]` are returned and `defaultDeploymentId === "removed"`
+- **THEN** `items` is ordered `["a-agent", "z-agent"]`

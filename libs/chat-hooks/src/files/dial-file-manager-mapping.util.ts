@@ -4,6 +4,11 @@ import type {
   ListFilesItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
+import type {
+  FileUploadBatchState,
+  FileUploadEntry,
+  FileUploadStatus,
+} from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
@@ -17,11 +22,6 @@ import {
   type SharedRootMeta,
 } from './dial-file-manager.model';
 import type { DialFilesApi } from './dial-files-api';
-import type {
-  FileUploadBatchState,
-  FileUploadEntry,
-  FileUploadStatus,
-} from '@epam/ai-dial-chat-shared';
 
 export const mapCorePermissions = (
   permissions?: string[],

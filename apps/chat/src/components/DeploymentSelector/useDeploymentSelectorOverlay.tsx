@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
@@ -34,6 +35,8 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
 
   const { t } = useTranslation();
   const { items, selectedItemId, setSelectedItemId } = useDeployments();
+  const { config: appConfig } = useAppConfig();
+  const isDefaultDeploymentPinned = useFeatureFlag('defaultDeploymentPinned');
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
   const { language } = useLanguage();
 
@@ -68,11 +71,34 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
     [selectedDeployment, favoriteIds, t, language],
   );
 
+  const pinnedCatalogItem = useMemo(() => {
+    if (!isDefaultDeploymentPinned) return undefined;
+    const pinnedDeployment = findDeploymentByIdOrReference(
+      items,
+      appConfig.defaultDeploymentId,
+    );
+    return pinnedDeployment
+      ? mapDeploymentToCatalogItem(pinnedDeployment, {
+          favoriteIds,
+          t,
+          activeLocale: language,
+        })
+      : undefined;
+  }, [
+    isDefaultDeploymentPinned,
+    items,
+    appConfig.defaultDeploymentId,
+    favoriteIds,
+    t,
+    language,
+  ]);
+
   const renderOverlay = useCallback(
     (onClose: () => void): ReactNode => (
       <Suspense fallback={null}>
         <DeploymentSelectorOverlay
           favorites={favoriteCatalogItems}
+          pinnedItem={pinnedCatalogItem}
           selectedId={selectedItemId}
           selectedItem={selectedCatalogItem}
           onSelect={setSelectedItemId}
@@ -84,6 +110,7 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
     ),
     [
       favoriteCatalogItems,
+      pinnedCatalogItem,
       selectedItemId,
       selectedCatalogItem,
       setSelectedItemId,

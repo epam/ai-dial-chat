@@ -297,6 +297,20 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     allowedRolesEnvVar: 'SETTINGS_PAGE_ENABLED_ROLES',
   },
   {
+    key: 'features.defaultDeploymentPinned',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'When enabled, the operator-configured DEFAULT_DEPLOYMENT is pinned to position 0 ' +
+      'in the deployment picker and takes priority over the user-persisted model preference ' +
+      'when resolving the initial selection for a new chat.',
+    owner: 'chat-team',
+    envVar: 'DEFAULT_DEPLOYMENT_PINNED',
+  },
+  {
     key: 'uiFeatures.enabledUiFeatures',
     type: 'config',
     valueType: 'json',
