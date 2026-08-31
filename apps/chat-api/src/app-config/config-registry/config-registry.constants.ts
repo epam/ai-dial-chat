@@ -105,7 +105,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     defaultValue: null,
     critical: false,
     description:
-      'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null/empty hides the banner. Sourced from ANNOUNCEMENT_HTML_MESSAGE.',
+      'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Passed through verbatim and sanitized client-side to <a>, <b>, <strong>, <em>, <u>, <br>, <span>, <p>; style attributes are stripped. Null/empty hides the banner. Sourced from ANNOUNCEMENT_HTML_MESSAGE.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENT_HTML_MESSAGE',
   },

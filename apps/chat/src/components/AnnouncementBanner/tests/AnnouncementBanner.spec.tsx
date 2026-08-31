@@ -314,10 +314,48 @@ describe('AnnouncementBanner — legacy layout', () => {
     mockAppConfigState.announcementHtml = 'Welcome!';
     render(<AnnouncementBanner />);
 
-    expect(screen.getByText('Welcome!').className).toContain(
-      'dial-small-paragraph-semi-text',
-    );
+    const content = screen.getByText('Welcome!');
+    expect(content.className).toContain('dial-small-paragraph-semi-text');
+    /* Links are underlined here, not by operator-authored style attributes,
+       which the sanitizer strips. */
+    expect(content.className).toContain('[&_a]:underline');
     expect(screen.getByRole('region').className).toContain('justify-center');
+  });
+
+  it('keeps each <p> of a multi-paragraph message as its own line', () => {
+    mockAppConfigState.announcementHtml =
+      '<p>Upgraded to 1.47</p> <p>Prefer the old interface?</p>';
+    render(<AnnouncementBanner />);
+
+    const paragraphs = screen.getAllByRole('paragraph');
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0].textContent).toBe('Upgraded to 1.47');
+    expect(paragraphs[1].textContent).toBe('Prefer the old interface?');
+  });
+
+  it('keeps <u> in the legacy message', () => {
+    mockAppConfigState.announcementHtml = '<p><u>Read this</u></p>';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByText('Read this').tagName).toBe('U');
+  });
+
+  it('strips operator-authored style attributes from the legacy message', () => {
+    mockAppConfigState.announcementHtml =
+      '<a href="https://dialx.ai" style="text-decoration: underline;">ChangeLog</a>';
+    render(<AnnouncementBanner />);
+
+    expect(screen.getByText('ChangeLog').getAttribute('style')).toBeNull();
+  });
+
+  it('keeps a legacy link opening in a new tab with the opener severed', () => {
+    mockAppConfigState.announcementHtml =
+      '<a href="https://dialx.ai" target="_blank" rel="noreferrer">ChangeLog</a>';
+    render(<AnnouncementBanner />);
+
+    const link = screen.getByText('ChangeLog');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
   });
 });
 
@@ -443,6 +481,17 @@ describe('AnnouncementBanner — sanitization', () => {
     const link = screen.getByText('click');
     expect(link.tagName).toBe('A');
     expect(link.getAttribute('href')).toBeNull();
+  });
+
+  it('strips block-level markup from the description, which is one line', () => {
+    mockAppConfigState.announcementTitle = 'DIAL 1.47';
+    mockAppConfigState.announcementDescription = '<p>Check the changelog</p>';
+    render(<AnnouncementBanner />);
+
+    /* The structured layout truncates to a single line, so <p> stays out of
+       its allowlist even though the legacy banner accepts it. */
+    expect(screen.getAllByRole('paragraph')).toHaveLength(1);
+    expect(screen.getByText('Check the changelog').tagName).toBe('SPAN');
   });
 
   it('preserves an allowed description link with a safe href', () => {

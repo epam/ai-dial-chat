@@ -1785,13 +1785,16 @@ const { starters, propertyKey, description } = getStartersFromSchema(
 );
 ```
 
-### sanitizeAnnouncementHtml / hasStructuredAnnouncement / hasAnnouncementContent / buildAnnouncementSignature
+### sanitizeAnnouncementHtml / sanitizeAnnouncementMessageHtml / hasStructuredAnnouncement / hasAnnouncementContent / buildAnnouncementSignature
 
-Announcement-banner helpers: sanitizes operator-supplied HTML to an allowed tag/attribute set, checks whether structured (`title`/`description`) or any content is present, and builds the content-keyed signature used to track dismissal.
+Announcement-banner helpers: sanitize operator-supplied HTML, check whether structured (`title`/`description`) or any content is present, and build the content-keyed signature used to track dismissal.
+
+The two sanitizers differ in the tags they keep, because the two banner layouts differ. `sanitizeAnnouncementHtml` is for the structured `description`, which renders as one truncating line, so it keeps inline markup only — `a`, `b`, `strong`, `em`, `br`, `span`. `sanitizeAnnouncementMessageHtml` is for the legacy `html` message, a free-standing block, so it additionally keeps `u` and `p`. Both keep `href`, `target` and `rel` on links, drop everything else including `style`, and force `rel="noopener noreferrer"` on any link that already carries `target="_blank"`.
 
 ```ts
 import {
   hasAnnouncementContent,
+  sanitizeAnnouncementMessageHtml,
   type AnnouncementContent,
 } from '@epam/ai-dial-chat-hooks';
 
@@ -1802,6 +1805,9 @@ const content: AnnouncementContent = {
 };
 
 hasAnnouncementContent(content); // true
+
+sanitizeAnnouncementMessageHtml('<p>Upgraded to <strong>1.47</strong></p>');
+// '<p>Upgraded to <strong>1.47</strong></p>'
 ```
 
 ### sanitizeFooterHtml / formatAppVersion
