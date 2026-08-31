@@ -10,7 +10,7 @@
  */
 export const KNOWN_UI_FEATURES: ReadonlySet<string> = new Set([
   'code-apps',
-  'custom-applications',
+  'schema-apps',
   'hide-custom-app-creation',
   'disabled-send',
   'skip-focus-chat-input-onload',
@@ -51,3 +51,16 @@ export const KNOWN_UI_FEATURES: ReadonlySet<string> = new Set([
   'hide-keyboard-shortcuts',
   'voice-input',
 ]);
+
+/**
+ * Renamed wire values still accepted from `ENABLED_UI_FEATURES`, mapped to their
+ * replacement in `KNOWN_UI_FEATURES`. Mirrors
+ * `DEPRECATED_OVERLAY_FEATURE_ALIASES` in `@epam/ai-dial-chat-overlay`, duplicated for
+ * the same reason the allowlist above is. An operator using a deprecated value
+ * gets the replacement plus a warning instead of a silent drop; remove an entry
+ * once deployments have migrated.
+ */
+export const DEPRECATED_UI_FEATURE_ALIASES: Readonly<Record<string, string>> = {
+  /* Renamed because it gates Quick Apps, not schema-less custom applications. */
+  'custom-applications': 'schema-apps',
+};

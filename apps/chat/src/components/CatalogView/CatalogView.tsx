@@ -251,8 +251,8 @@ const CatalogView: FC<Props> = ({
   );
   const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
   const isCustomAppsEnabled = useUiFeature(OverlayFeature.CustomApps);
-  const isCustomApplicationsEnabled = useUiFeature(
-    OverlayFeature.CustomApplications,
+  const isSchemaAppsEnabled = useUiFeature(
+    OverlayFeature.SchemaApps,
   );
   const isHideCustomAppCreationEnabled = useUiFeature(
     OverlayFeature.HideCustomAppCreation,
@@ -1287,7 +1287,7 @@ const CatalogView: FC<Props> = ({
 
     if (
       quickAppSchemaId &&
-      isCustomApplicationsEnabled &&
+      isSchemaAppsEnabled &&
       !isHideCustomAppCreationEnabled
     ) {
       options.push({
@@ -1372,7 +1372,7 @@ const CatalogView: FC<Props> = ({
     isPromptsEnabled,
     t,
     buildEditorUrl,
-    isCustomApplicationsEnabled,
+    isSchemaAppsEnabled,
     isHideCustomAppCreationEnabled,
     isToolsetsEnabled,
     isCustomAppsEnabled,
