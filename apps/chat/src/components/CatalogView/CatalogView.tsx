@@ -42,6 +42,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetLoginOutcomeType,
   toPublishEntityType,
+  toPublishRuleDto,
   useCatalogItemDetails,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
@@ -93,10 +94,7 @@ import {
   getPrompt,
   getPublicPrompt,
 } from '../../server-api/prompts.api';
-import {
-  getPublishRules,
-  toPublishRuleDto,
-} from '../../server-api/publish-rules.api';
+import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
   getCatalogPublishHistory,
   publishCatalogEntity,
@@ -253,8 +251,8 @@ const CatalogView: FC<Props> = ({
   );
   const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
   const isCustomAppsEnabled = useUiFeature(OverlayFeature.CustomApps);
-  const isCustomApplicationsEnabled = useUiFeature(
-    OverlayFeature.CustomApplications,
+  const isSchemaAppsEnabled = useUiFeature(
+    OverlayFeature.SchemaApps,
   );
   const isHideCustomAppCreationEnabled = useUiFeature(
     OverlayFeature.HideCustomAppCreation,
@@ -511,18 +509,19 @@ const CatalogView: FC<Props> = ({
   );
 
   /*
-   * Reads a prompt item back through whichever endpoint owns it. A shared
-   * prompt carries a qualified `prompts/{ownerBucket}/{path}` id: the bucket
-   * has to travel with the request, because the personal endpoint resolves a
-   * bare path against the *caller's* bucket and would 404 — or, on a path
-   * collision, silently return the caller's own prompt of the same name.
+   * Reads a prompt item back through whichever endpoint owns it. `item.id` is
+   * always the full `prompts/{bucket}/{path}` resource path — the owner
+   * bucket for a shared prompt, the caller's own bucket otherwise — so the
+   * personal endpoint takes it unconditionally. The organisation source still
+   * routes through the separate public endpoint, which kept its
+   * bucket-relative `path` argument, so its qualified id is parsed back down
+   * to that sub-path first.
    */
   const fetchPromptDto = useCallback(
     (item: CatalogItem): Promise<PromptResponseDto> => {
-      if (isOrganisationPromptItem(item)) return getPublicPrompt(item.id);
-      const ref = parsePromptResourceUrl(item.id);
-      if (ref == null) return getPrompt(item.id);
-      return getPrompt(ref.path, ref.bucket);
+      if (!isOrganisationPromptItem(item)) return getPrompt(item.id);
+      const parsed = parsePromptResourceUrl(item.id);
+      return getPublicPrompt(parsed?.path ?? item.id);
     },
     [],
   );
@@ -904,26 +903,18 @@ const CatalogView: FC<Props> = ({
   }, []);
 
   /*
-   * `DiscardSharedCatalogItemDto` restricts `itemId` to
-   * `applications|toolsets|conversations|skills` paths, so a prompt path is
-   * rejected with 400 before reaching the service. Hide the action until the
-   * backend accepts prompts.
+   * Every catalog item type — prompts included — is visible for unsharing:
+   * `DiscardSharedCatalogItemDto.itemId` now accepts a full `prompts/{bucket}/{path}`
+   * resource path like any other entity type.
    */
-  const isUnshareVisible = useCallback(
-    (item: CatalogItem) => item.type !== CatalogEntityType.Prompt,
-    [],
-  );
+  const isUnshareVisible = useCallback(() => true, []);
 
   /*
-   * `RevokeSharedAccessDto` carries the same
-   * `applications|toolsets|conversations|skills` restriction as the discard
-   * DTO, so a prompt path is rejected with 400 — both by the revoke call and
-   * by the recipient-count lookup that gates it.
+   * Every catalog item type — prompts included — is visible for revoking
+   * share access: `RevokeSharedAccessDto.itemId` now accepts a full
+   * `prompts/{bucket}/{path}` resource path like any other entity type.
    */
-  const isRevokeShareVisible = useCallback(
-    (item: CatalogItem) => item.type !== CatalogEntityType.Prompt,
-    [],
-  );
+  const isRevokeShareVisible = useCallback(() => true, []);
 
   const isPublishVisible = useCallback(
     (item: CatalogItem) =>
@@ -1212,6 +1203,8 @@ const CatalogView: FC<Props> = ({
           await refetchToolsets();
         } else if (item.type === CatalogEntityType.Skill) {
           await refetchSkills();
+        } else if (item.type === CatalogEntityType.Prompt) {
+          await refetchPrompts();
         } else {
           await refetchDeployments();
         }
@@ -1236,6 +1229,7 @@ const CatalogView: FC<Props> = ({
       refetchToolsets,
       refetchDeployments,
       refetchSkills,
+      refetchPrompts,
       selectedItemId,
       setSelectedItemId,
       showSuccessNotification,
@@ -1293,7 +1287,7 @@ const CatalogView: FC<Props> = ({
 
     if (
       quickAppSchemaId &&
-      isCustomApplicationsEnabled &&
+      isSchemaAppsEnabled &&
       !isHideCustomAppCreationEnabled
     ) {
       options.push({
@@ -1378,7 +1372,7 @@ const CatalogView: FC<Props> = ({
     isPromptsEnabled,
     t,
     buildEditorUrl,
-    isCustomApplicationsEnabled,
+    isSchemaAppsEnabled,
     isHideCustomAppCreationEnabled,
     isToolsetsEnabled,
     isCustomAppsEnabled,

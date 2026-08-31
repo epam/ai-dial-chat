@@ -24,7 +24,7 @@ export const DEFAULT_ENABLED_UI_FEATURES: ReadonlySet<OverlayFeature> = new Set(
     OverlayFeature.ApplicationsSharing,
     OverlayFeature.ToolsetsSharing,
     OverlayFeature.ConversationsPublishing,
-    OverlayFeature.CustomApplications,
+    OverlayFeature.SchemaApps,
     OverlayFeature.CodeApps,
     OverlayFeature.Catalog,
     OverlayFeature.FileManager,

@@ -138,6 +138,46 @@ describe('UiFeaturesContext', () => {
     });
   });
 
+  describe('deprecated aliases', () => {
+    it('resolves a deprecated value from the server baseline to its replacement', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(
+        () => undefined,
+      );
+      mockAppConfig(['header', 'custom-applications']);
+      const { result } = renderHook(() => useUiFeatures(), { wrapper });
+
+      expect(result.current.isEnabled(OverlayFeature.SchemaApps)).toBe(true);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('custom-applications'),
+      );
+      warnSpy.mockRestore();
+    });
+
+    it('resolves a deprecated value in an overlay override to its replacement', () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      mockAppConfig(['likes']);
+      const { result } = renderHook(() => useUiFeatures(), { wrapper });
+
+      act(() => {
+        result.current.applyOverlayOverride(['custom-applications']);
+      });
+
+      expect([...result.current.enabledFeatures]).toEqual([
+        OverlayFeature.SchemaApps,
+      ]);
+    });
+
+    it('collapses a value supplied under both its deprecated alias and its current name', () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      mockAppConfig(['schema-apps', 'custom-applications']);
+      const { result } = renderHook(() => useUiFeatures(), { wrapper });
+
+      expect([...result.current.enabledFeatures]).toEqual([
+        OverlayFeature.SchemaApps,
+      ]);
+    });
+  });
+
   describe('useUiFeatures outside the provider', () => {
     it('throws a descriptive error', () => {
       expect(() => renderHook(() => useUiFeatures())).toThrow(

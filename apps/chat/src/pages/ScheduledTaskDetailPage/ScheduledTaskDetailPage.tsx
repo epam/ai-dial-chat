@@ -395,6 +395,7 @@ const ScheduledTaskDetailPage: FC = () => {
         description={t(ScheduledTasksI18nKeys.DetailDeleteConfirmDescription, {
           taskName: task?.displayName ?? '',
         })}
+        descriptionClassName="break-words"
         variant={ConfirmationPopupVariant.Danger}
         confirmLabel={
           isDeleting

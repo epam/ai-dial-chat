@@ -76,8 +76,7 @@ vi.mock('../../../server-api/prompts.api', () => ({
 }));
 
 const promptDto = {
-  id: 'Work/AI/summarize',
-  bucket: 'my-bucket',
+  id: 'prompts/my-bucket/Work/AI/summarize',
   name: 'summarize',
   description: 'Summarize a document',
   content: 'Summarize the following text:',
@@ -148,19 +147,25 @@ describe('PromptEditor', () => {
   });
 
   it('loads the prompt into the form in edit mode', async () => {
-    mockSearchParams = new URLSearchParams({ id: 'Work/AI/summarize' });
+    mockSearchParams = new URLSearchParams({
+      id: 'prompts/my-bucket/Work/AI/summarize',
+    });
 
     render(<PromptEditor />);
 
     await waitFor(() =>
-      expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize'),
+      expect(getPrompt).toHaveBeenCalledWith(
+        'prompts/my-bucket/Work/AI/summarize',
+      ),
     );
     expect(screen.getByText('promptEditor.editTitle')).toBeTruthy();
     expect(await screen.findByDisplayValue('summarize')).toBeTruthy();
   });
 
   it('shows an error state with retry when the prompt cannot be loaded', async () => {
-    mockSearchParams = new URLSearchParams({ id: 'Work/AI/summarize' });
+    mockSearchParams = new URLSearchParams({
+      id: 'prompts/my-bucket/Work/AI/summarize',
+    });
     vi.mocked(getPrompt).mockRejectedValue(new Error('404'));
 
     render(<PromptEditor />);
@@ -273,7 +278,9 @@ describe('PromptEditor', () => {
   });
 
   it('updates the prompt in place', async () => {
-    mockSearchParams = new URLSearchParams({ id: 'Work/AI/summarize' });
+    mockSearchParams = new URLSearchParams({
+      id: 'prompts/my-bucket/Work/AI/summarize',
+    });
 
     render(<PromptEditor />);
     expect(await screen.findByDisplayValue('summarize')).toBeTruthy();
@@ -286,11 +293,14 @@ describe('PromptEditor', () => {
     await user.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     await waitFor(() =>
-      expect(updatePrompt).toHaveBeenCalledWith('Work/AI/summarize', {
-        name: 'summarize',
-        description: 'Summarize a document',
-        content: 'Summarize in three bullets:',
-      }),
+      expect(updatePrompt).toHaveBeenCalledWith(
+        'prompts/my-bucket/Work/AI/summarize',
+        {
+          name: 'summarize',
+          description: 'Summarize a document',
+          content: 'Summarize in three bullets:',
+        },
+      ),
     );
     expect(showNotification).toHaveBeenCalledWith({
       variant: 'success',
@@ -299,13 +309,13 @@ describe('PromptEditor', () => {
     });
   });
 
-  it('updates a writable shared prompt in the owner bucket', async () => {
+  it('updates a writable shared prompt using the owner-bucket-qualified id', async () => {
     mockSearchParams = new URLSearchParams({
       id: 'prompts/owner-bucket/Work/AI/summarize',
     });
     vi.mocked(getPrompt).mockResolvedValue({
       ...promptDto,
-      bucket: 'owner-bucket',
+      id: 'prompts/owner-bucket/Work/AI/summarize',
       isMy: false,
       canEdit: true,
       sharedWithMe: true,
@@ -314,19 +324,20 @@ describe('PromptEditor', () => {
     render(<PromptEditor />);
 
     expect(await screen.findByDisplayValue('summarize')).toBeTruthy();
-    expect(getPrompt).toHaveBeenCalledWith('Work/AI/summarize', 'owner-bucket');
+    expect(getPrompt).toHaveBeenCalledWith(
+      'prompts/owner-bucket/Work/AI/summarize',
+    );
 
     await user.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     await waitFor(() =>
       expect(updatePrompt).toHaveBeenCalledWith(
-        'Work/AI/summarize',
+        'prompts/owner-bucket/Work/AI/summarize',
         {
           name: 'summarize',
           description: 'Summarize a document',
           content: 'Summarize the following text:',
         },
-        'owner-bucket',
       ),
     );
   });

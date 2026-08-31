@@ -8,24 +8,24 @@ An owner takes back every recipient's access to a resource they own — a catalo
 
 ### Requirement: BFF revoke-shared-access endpoint
 
-The system SHALL expose `POST /api/v1/share/revoke` on the existing `ShareController` (`apps/chat-api/src/share/share.controller.ts`), allowing an authenticated session user who owns a catalog resource (application, toolset, or skill) or a conversation to revoke **all** outstanding shared access to it via DIAL Core `revokeSharedResources`.
+The system SHALL expose `POST /api/v1/share/revoke` on the existing `ShareController` (`apps/chat-api/src/share/share.controller.ts`), allowing an authenticated session user who owns a catalog resource (application, toolset, or skill), a prompt, or a conversation to revoke **all** outstanding shared access to it via DIAL Core `revokeSharedResources`.
 
 The endpoint SHALL:
 
 - Require a valid session; respond `401 Unauthorized` when no session is present.
-- Accept `RevokeSharedAccessDto { itemId: string }` validated via the global NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted, transform). `itemId` SHALL be a non-empty string, max length 2048, validated with the existing `IsValidFilePath` validator and an `@Matches` allowlist restricted to `applications/{bucket}/{path}`, `toolsets/{bucket}/{path}`, `conversations/{bucket}/{path}`, **or `skills/{bucket}/{path}`** — the same pattern `DiscardSharedCatalogItemDto` uses (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts`). Other DIAL resource types and incomplete paths SHALL be rejected before any DIAL Core call.
+- Accept `RevokeSharedAccessDto { itemId: string }` validated via the global NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted, transform). `itemId` SHALL be a non-empty string, max length 2048, validated with the existing `IsValidFilePath` validator and an `@Matches` allowlist restricted to `applications/{bucket}/{path}`, `toolsets/{bucket}/{path}`, `conversations/{bucket}/{path}`, `skills/{bucket}/{path}`, **or `prompts/{bucket}/{path}`** — the same pattern `DiscardSharedCatalogItemDto` uses (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts`). Other DIAL resource types and incomplete paths SHALL be rejected before any DIAL Core call. `RevokeSharedAccessDto` carries no `resourceKind` field — every `itemId`, prompts included, is a self-sufficient full resource path.
 - Use the session `accessToken` as the Bearer credential, via `getBearerAuthHeaders`.
 - Call SDK `revokeSharedResources({ headers, body: { resources: [{ url: itemId }] } })`, passing `itemId` through unmodified with no bucket/path reconstruction.
 - NOT perform any pre-flight `getSharedResources` check. Unlike `discardShared`, a resource with no current recipients is a legitimate no-op success for the owner, not a condition to surface as an error.
 - Rely on DIAL Core to enforce ownership; a caller who does not own the resource SHALL surface as `403 Forbidden` via `mapDialHttpStatus`.
-- On success, invalidate both `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` before responding, unconditionally regardless of `itemId` type, mirroring `ShareService.discardShared`. Conversations and skills have no equivalent server-side list cache, so for a conversation or skill `itemId` this is a harmless no-op.
+- On success, invalidate both `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` before responding, unconditionally regardless of `itemId` type, mirroring `ShareService.discardShared`. Conversations, skills, and prompts have no equivalent server-side list cache, so for those `itemId` types this is a harmless no-op.
 - Respond `200 OK` with `RevokeSharedAccessResponseDto { success: true }`. DIAL Core returns an empty 200 body for this operation, so the response is synthesized by the BFF.
 - Apply `@Throttle({ default: { limit: 10, ttl: 60000 } })`, matching the discard endpoint's posture.
 - Map upstream failures via the fetch-shaped `mapDialHttpStatus` / `handleDialFetchError` pair: DIAL Core 400 → 404 (`'Resource does not exist'`, since the DTO already rejects malformed itemIds so a Core 400 can only mean an unresolvable resource — same reasoning as `discardShared`), 401 → 401, 403 → 403, 404 → 404, 429 → 429, 5xx → 502, network/timeout → 503.
 - Not cache the mutation response.
 - Log structured start/completion messages (e.g. `Revoke shared access started`, `Revoke shared access completed: success=true`) without the access token, invitation links, full resource path, or any other user data.
 
-Resolve the DIAL Core `resourceTypes` filter for `revokeShared` via the existing `RESOURCE_KIND_BY_PREFIX` map (`share.service.ts`), which already includes a `['skills/', 'SKILL']` entry alongside `applications/` → `APPLICATION`, `toolsets/` → `TOOL_SET`, and `conversations/` → `CONVERSATION` — no change to this map is required by this capability, only to the DTO allowlist that gates whether a `skills/` `itemId` reaches it.
+Resolve the DIAL Core `resourceTypes` filter for `revokeShared` via the existing `RESOURCE_KIND_BY_PREFIX` map (`share.service.ts`), which already includes a `['skills/', 'SKILL']` entry and a `['prompts/', 'PROMPT']` entry alongside `applications/` → `APPLICATION`, `toolsets/` → `TOOL_SET`, and `conversations/` → `CONVERSATION` — no change to this map is required by this capability, only to the DTO allowlist that gates whether a `prompts/` `itemId` reaches it.
 
 Controller handler name / OpenAPI operationId: **`revokeSharedAccess`** → generated client method `revokeSharedAccess()`.
 
@@ -93,10 +93,15 @@ Observability: no new metrics. The endpoint is covered by the existing global `M
 - **WHEN** the call to DIAL Core times out or the connection fails
 - **THEN** the endpoint responds `503 Service Unavailable`
 
-#### Scenario: Skill itemId is now accepted by the revoke endpoint
+#### Scenario: Skill itemId is accepted by the revoke endpoint
 
 - **WHEN** an authenticated owner calls `POST /api/v1/share/revoke` with `{ itemId: "skills/owner-bucket/team-a/docs-helper" }` for a skill they own
-- **THEN** the endpoint accepts the request (no longer rejecting the `skills/` prefix as invalid), resolves the `SKILL` resource kind via `RESOURCE_KIND_BY_PREFIX`, calls DIAL Core `revokeSharedResources` with that itemId, and responds `200 { success: true }`
+- **THEN** the endpoint accepts the request, resolves the `SKILL` resource kind via `RESOURCE_KIND_BY_PREFIX`, calls DIAL Core `revokeSharedResources` with that itemId, and responds `200 { success: true }`
+
+#### Scenario: Prompt itemId is now accepted by the revoke endpoint, with no resourceKind field
+
+- **WHEN** an authenticated owner calls `POST /api/v1/share/revoke` with `{ itemId: "prompts/owner-bucket/Work/AI/summarize" }` for a prompt they own
+- **THEN** the endpoint accepts the request (no `resourceKind` field is present or needed), resolves the `PROMPT` resource kind via `RESOURCE_KIND_BY_PREFIX`, calls DIAL Core `revokeSharedResources` with that itemId unmodified, and responds `200 { success: true }`
 
 #### Scenario: Malformed skill itemId is still rejected
 
@@ -107,15 +112,15 @@ Observability: no new metrics. The endpoint is covered by the existing global `M
 
 `ShareController` SHALL expose `GET /api/v1/share/recipients?itemId=...`, throttled at 60 requests per minute (it fires whenever an owner opens a menu offering revoke), answering `ShareRecipientsResponseDto { itemId, recipientsCount }`.
 
-`GetShareRecipientsDto` SHALL validate `itemId` with the same allowlist as `RevokeSharedAccessDto` (`applications|toolsets|conversations|skills` prefix, `IsValidFilePath`, `@MaxLength(2048)`): a resource revoke cannot act on has no count worth answering.
+`GetShareRecipientsDto` SHALL validate `itemId` with the same allowlist as `RevokeSharedAccessDto` (`applications|toolsets|conversations|skills|prompts` prefix, `IsValidFilePath`, `@MaxLength(2048)`) and carries no `resourceKind` field: a resource revoke cannot act on has no count worth answering, and every accepted resource type — prompts included — is now identified by one self-sufficient `itemId`.
 
-`ShareService.getRecipientsCount` SHALL call `getSharedResources({ resourceTypes: [kind(itemId)], with: 'others', includeUserInfo: true })` and pick the one resource out of that set with `countRecipientsByUrl` + `resolveRecipientsCount(counts, itemId, decode(itemId))` — both encodings are tried because list ids and DIAL Core share urls differ in percent-encoding for some resource types. DIAL Core has no single-resource variant of this query. `kind(itemId)` SHALL resolve `skills/`-prefixed ids to `SKILL` via the existing `RESOURCE_KIND_BY_PREFIX` map, unchanged by this capability.
+`ShareService.getRecipientsCount` SHALL call `getSharedResources({ resourceTypes: [kind(itemId)], with: 'others', includeUserInfo: true })` and pick the one resource out of that set with `countRecipientsByUrl` + `resolveRecipientsCount(counts, itemId, decode(itemId))` — both encodings are tried because list ids and DIAL Core share urls differ in percent-encoding for some resource types. DIAL Core has no single-resource variant of this query. `kind(itemId)` SHALL resolve `skills/`-prefixed ids to `SKILL` and `prompts/`-prefixed ids to `PROMPT` via the existing `RESOURCE_KIND_BY_PREFIX` map, unchanged by this capability.
 
 DIAL Core omits resources nobody currently holds from a **successful** response, so a resource missing from a successful result SHALL answer `0`. An upstream failure SHALL surface as `502`/`503` rather than as a count, leaving the caller to decide how to degrade — a fabricated `0` would silently remove the owner's only way to revoke.
 
 `ShareMetadata` entries are only produced for users who **accepted** an invitation, so `recipientsCount` counts accepted grants. An issued-but-unopened share link contributes nothing and reads as `0`.
 
-**No count is carried on list items.** `DeploymentItemDto`, `DialToolsetDto`, `ConversationListItemDto`, and `SkillMetadataItemDto` SHALL NOT expose a `recipientsCount` field, and `DeploymentsListingService`, `ToolsetsListingService`, `ConversationListingService`, and `SkillsListingService` SHALL each issue exactly one `getSharedResources` call (`with: 'me'`, for ownership flags) per listing request. A count taken at list-fetch time and cached for 30 seconds outlives the fact it describes — after a successful revoke the list still reported the pre-revoke recipients, so the Manage menu went on offering "Revoke access (3)" until a full page reload.
+**No count is carried on list items.** `DeploymentItemDto`, `DialToolsetDto`, `ConversationListItemDto`, `SkillMetadataItemDto`, and `PromptResponseDto` SHALL NOT expose a `recipientsCount` field, and `DeploymentsListingService`, `ToolsetsListingService`, `ConversationListingService`, `SkillsListingService`, and the prompts listing services SHALL each issue exactly one `getSharedResources` call (`with: 'me'`, for ownership flags) per listing request. A count taken at list-fetch time and cached for 30 seconds outlives the fact it describes — after a successful revoke the list still reported the pre-revoke recipients, so the Manage menu went on offering "Revoke access (3)" until a full page reload.
 
 Shared helpers: `countRecipientsByUrl` and `resolveRecipientsCount` in `apps/chat-api/src/common/utils/resource-ownership.ts`.
 
@@ -136,7 +141,7 @@ Shared helpers: `countRecipientsByUrl` and `resolveRecipientsCount` in `apps/cha
 
 #### Scenario: Non-revocable resource is rejected
 
-- **WHEN** `itemId` names a prompt, a file, or a traversal path
+- **WHEN** `itemId` names a file or a traversal path
 - **THEN** the endpoint responds `400` and DIAL Core is never called
 
 #### Scenario: List endpoints no longer pay for the count
@@ -148,6 +153,11 @@ Shared helpers: `countRecipientsByUrl` and `resolveRecipientsCount` in `apps/cha
 
 - **WHEN** the shared-with-others set contains `{ url: 'skills/owner-bucket/team-a/docs-helper', sharedWith: [a] }`
 - **THEN** `GET /api/v1/share/recipients?itemId=skills/owner-bucket/team-a/docs-helper` resolves `kind(itemId) = 'SKILL'` and answers `{ itemId, recipientsCount: 1 }`
+
+#### Scenario: Recipient count for a shared prompt, with no resourceKind field
+
+- **WHEN** the shared-with-others set contains `{ url: 'prompts/owner-bucket/Work/AI/summarize', sharedWith: [a, b] }`
+- **THEN** `GET /api/v1/share/recipients?itemId=prompts/owner-bucket/Work/AI/summarize` (no `resourceKind` query param present or needed) resolves `kind(itemId) = 'PROMPT'` and answers `{ itemId, recipientsCount: 2 }`
 
 ### Requirement: Owner-side "Revoke access" action in the catalog details panel
 

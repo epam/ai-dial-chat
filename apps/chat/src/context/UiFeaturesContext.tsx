@@ -1,4 +1,8 @@
-import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import {
+  DEPRECATED_OVERLAY_FEATURE_ALIASES,
+  OverlayFeature,
+  resolveOverlayFeature,
+} from '@epam/ai-dial-chat-overlay';
 import {
   createContext,
   FC,
@@ -11,14 +15,23 @@ import {
 import { DEFAULT_ENABLED_UI_FEATURES } from '../constants/ui-features';
 import { useAppConfig } from './AppConfigContext';
 
-const KNOWN_OVERLAY_FEATURES = new Set<string>(Object.values(OverlayFeature));
-
+/**
+ * Maps raw wire values onto canonical `OverlayFeature` members, dropping the
+ * unrecognized ones. A deprecated alias resolves to its replacement and warns
+ * once per normalization pass, so a host still sending the old key keeps the
+ * behavior it expects while it migrates.
+ */
 const normalizeOverlayFeatures = (features: string[]): Set<OverlayFeature> => {
   const normalized = new Set<OverlayFeature>();
   features.forEach((feature) => {
-    if (KNOWN_OVERLAY_FEATURES.has(feature)) {
-      normalized.add(feature as OverlayFeature);
+    const resolved = resolveOverlayFeature(feature);
+    if (resolved == null) return;
+    if (feature in DEPRECATED_OVERLAY_FEATURE_ALIASES) {
+      console.warn(
+        `UI feature "${feature}" is deprecated; use "${resolved}" instead.`,
+      );
     }
+    normalized.add(resolved);
   });
   return normalized;
 };

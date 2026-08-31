@@ -19,14 +19,12 @@ export const listPrompts = (): Promise<PromptListResponseDto> =>
   promptsApi.listPrompts();
 
 /**
- * Reads a prompt from `bucket`, defaulting to the caller's own bucket. Pass the
- * owner bucket to read a prompt shared with the caller — a bare path would
- * resolve against the caller's bucket instead.
+ * `id` is the full `prompts/{bucket}/{path}` resource path — the caller's own
+ * bucket for a personal prompt, or the owner bucket for a prompt shared with
+ * the caller. DIAL Core authorises the read either way.
  */
-export const getPrompt = (
-  path: string,
-  bucket?: string,
-): Promise<PromptResponseDto> => promptsApi.getPrompt({ path, bucket });
+export const getPrompt = (id: string): Promise<PromptResponseDto> =>
+  promptsApi.getPrompt({ id });
 
 export const createPrompt = (
   body: CreatePromptDto,
@@ -34,21 +32,19 @@ export const createPrompt = (
   promptsApi.createPrompt({ createPromptDto: body });
 
 export const updatePrompt = (
-  path: string,
+  id: string,
   body: UpdatePromptDto,
-  bucket?: string,
 ): Promise<PromptResponseDto> =>
-  promptsApi.updatePrompt({ path, updatePromptDto: body, bucket });
+  promptsApi.updatePrompt({ id, updatePromptDto: body });
 
-export const deletePrompt = (path: string): Promise<void> =>
-  promptsApi.deletePrompt({ path });
+export const deletePrompt = (id: string): Promise<void> =>
+  promptsApi.deletePrompt({ id });
 
 export const movePrompt = (
-  path: string,
+  id: string,
   body: MovePromptDto,
-  bucket?: string,
 ): Promise<PromptResponseDto> =>
-  promptsApi.movePrompt({ path, movePromptDto: body, bucket });
+  promptsApi.movePrompt({ id, movePromptDto: body });
 
 /* ------------------------------------------------------------------ */
 /* Organisation (public) prompts                                        */

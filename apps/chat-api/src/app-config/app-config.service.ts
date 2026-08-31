@@ -18,7 +18,10 @@ import type { ClientConfigResponseDto } from './dto/client-config-response.dto';
 import type { CustomVisualizerDto } from './dto/custom-visualizer.dto';
 import { FeatureKey } from './feature-flags/feature-key.enum';
 import { sanitizeAnnouncementHtml, sanitizeFooterHtml } from './html-sanitizer';
-import { KNOWN_UI_FEATURES } from './known-ui-features.constants';
+import {
+  DEPRECATED_UI_FEATURE_ALIASES,
+  KNOWN_UI_FEATURES,
+} from './known-ui-features.constants';
 
 const CACHE_TTL_SECONDS = 60;
 const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
@@ -249,17 +252,29 @@ export class AppConfigService {
       } else if (def.key === 'uiFeatures.enabledUiFeatures') {
         const rawValue = Array.isArray(resolved) ? resolved : [];
         if (rawValue.length > 0) {
-          const filtered = rawValue.filter((entry) => {
-            const isKnown = KNOWN_UI_FEATURES.has(entry);
-            if (!isKnown) {
+          const filtered = rawValue.reduce<string[]>((acc, entry) => {
+            const raw = String(entry);
+            const alias = DEPRECATED_UI_FEATURE_ALIASES[raw];
+            if (alias != null) {
               this.logger.warn(
-                `Ignoring unrecognized ENABLED_UI_FEATURES entry: "${String(entry)}"`,
+                `ENABLED_UI_FEATURES entry "${raw}" is deprecated; using "${alias}" instead`,
               );
+              acc.push(alias);
+              return acc;
             }
-            return isKnown;
-          });
+            if (KNOWN_UI_FEATURES.has(raw)) {
+              acc.push(raw);
+              return acc;
+            }
+            this.logger.warn(
+              `Ignoring unrecognized ENABLED_UI_FEATURES entry: "${raw}"`,
+            );
+            return acc;
+          }, []);
           if (filtered.length > 0) {
-            enabledUiFeatures = filtered;
+            /* A deprecated alias can resolve onto a value the list already
+             * carries, so dedupe before the response goes out. */
+            enabledUiFeatures = [...new Set(filtered)];
           } else {
             this.logger.warn(
               'ENABLED_UI_FEATURES contained only unrecognized entries; falling back to compiled-in defaults',

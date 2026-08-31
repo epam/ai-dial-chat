@@ -5,7 +5,7 @@ import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { PublishRuleFunction } from '../dto/publish-rule.dto';
 import { PublishService } from '../publish.service';
 
-/* The caller's own bucket, which `toSourceUrl` uses to qualify a prompt's bucket-relative id. */
+/* The caller's session bucket, passed through to every publish call. */
 const TEST_BUCKET = 'bucket-123';
 
 const okResponse = (data: unknown) =>

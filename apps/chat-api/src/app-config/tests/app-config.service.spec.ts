@@ -164,6 +164,39 @@ describe('AppConfigService', () => {
       );
     });
 
+    it('resolves a deprecated enabledUiFeatures alias to its replacement and logs a warning', async () => {
+      const { service } = makeService(async (key: string) => {
+        if (key === 'uiFeatures.enabledUiFeatures')
+          return ['likes', 'custom-applications'];
+        return undefined;
+      });
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toEqual(['likes', 'schema-apps']);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('custom-applications'),
+      );
+    });
+
+    it('does not duplicate a feature supplied both under its deprecated alias and its current name', async () => {
+      const { service } = makeService(async (key: string) => {
+        if (key === 'uiFeatures.enabledUiFeatures')
+          return ['schema-apps', 'custom-applications'];
+        return undefined;
+      });
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toEqual(['schema-apps']);
+    });
+
     it('falls back to null (use defaults) when every enabledUiFeatures entry is unrecognized', async () => {
       const { service } = makeService(async (key: string) => {
         if (key === 'uiFeatures.enabledUiFeatures') return ['totally-invalid'];

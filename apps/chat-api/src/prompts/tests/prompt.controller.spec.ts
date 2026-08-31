@@ -25,7 +25,7 @@ const TEST_USER = {
 };
 
 const promptDto = {
-  id: 'my-prompt',
+  id: 'prompts/test-bucket/my-prompt',
   name: 'My Prompt',
   description: 'A description',
   content: 'Hello {{name}}',
@@ -134,23 +134,25 @@ describe('PromptController (integration)', () => {
       expect(service.getPrompt).not.toHaveBeenCalled();
     });
 
-    it('returns a single prompt when path query is given', async () => {
+    it('returns a single prompt when id query is given', async () => {
       const res = await request(app.getHttpServer())
-        .get('/api/v1/prompts/item?path=my-prompt')
+        .get('/api/v1/prompts/item')
+        .query({ id: 'prompts/test-bucket/my-prompt' })
         .expect(200);
 
       expect(res.body).toEqual(promptDto);
       expect(service.getPrompt).toHaveBeenCalledWith(
         TEST_USER.at,
-        TEST_USER.bucket,
+        'test-bucket',
         'my-prompt',
       );
       expect(service.listPrompts).not.toHaveBeenCalled();
     });
 
-    it('reads from the bucket query when one is given, not the caller bucket', async () => {
+    it('reads from the bucket embedded in id, not the caller bucket', async () => {
       await request(app.getHttpServer())
-        .get('/api/v1/prompts/item?path=Shared/greeting&bucket=owner-bucket')
+        .get('/api/v1/prompts/item')
+        .query({ id: 'prompts/owner-bucket/Shared/greeting' })
         .expect(200);
 
       expect(service.getPrompt).toHaveBeenCalledWith(
@@ -160,9 +162,10 @@ describe('PromptController (integration)', () => {
       );
     });
 
-    it('returns 400 for an unsafe bucket query', async () => {
+    it('returns 400 for a malformed id', async () => {
       await request(app.getHttpServer())
-        .get('/api/v1/prompts/item?path=my-prompt&bucket=../other')
+        .get('/api/v1/prompts/item')
+        .query({ id: 'not-a-prompt-id' })
         .expect(400);
 
       expect(service.getPrompt).not.toHaveBeenCalled();
@@ -171,7 +174,8 @@ describe('PromptController (integration)', () => {
     it('returns 404 when getPrompt throws NotFoundException', async () => {
       service.getPrompt.mockRejectedValue(new NotFoundException());
       await request(app.getHttpServer())
-        .get('/api/v1/prompts/item?path=missing')
+        .get('/api/v1/prompts/item')
+        .query({ id: 'prompts/test-bucket/missing' })
         .expect(404);
     });
 
@@ -263,14 +267,28 @@ describe('PromptController (integration)', () => {
   describe('PUT /api/v1/prompts', () => {
     it('updates a prompt and returns 200', async () => {
       const res = await request(app.getHttpServer())
-        .put('/api/v1/prompts?path=my-prompt')
+        .put('/api/v1/prompts?id=prompts%2Ftest-bucket%2Fmy-prompt')
         .send({ content: 'Updated content' })
         .expect(200);
 
       expect(res.body).toEqual(promptDto);
       expect(service.updatePrompt).toHaveBeenCalledWith(
         TEST_USER.at,
-        TEST_USER.bucket,
+        'test-bucket',
+        'my-prompt',
+        { content: 'Updated content' },
+      );
+    });
+
+    it('updates a writable shared prompt in its owner bucket', async () => {
+      await request(app.getHttpServer())
+        .put('/api/v1/prompts?id=prompts%2Fowner-bucket%2Fmy-prompt')
+        .send({ content: 'Updated content' })
+        .expect(200);
+
+      expect(service.updatePrompt).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'owner-bucket',
         'my-prompt',
         { content: 'Updated content' },
       );
@@ -279,7 +297,7 @@ describe('PromptController (integration)', () => {
     it('returns 404 when the service throws NotFoundException', async () => {
       service.updatePrompt.mockRejectedValue(new NotFoundException());
       await request(app.getHttpServer())
-        .put('/api/v1/prompts?path=missing')
+        .put('/api/v1/prompts?id=prompts%2Ftest-bucket%2Fmissing')
         .send({ content: 'Hi' })
         .expect(404);
     });
@@ -287,7 +305,7 @@ describe('PromptController (integration)', () => {
     it('returns 409 when the rename target already exists', async () => {
       service.updatePrompt.mockRejectedValue(new ConflictException());
       await request(app.getHttpServer())
-        .put('/api/v1/prompts?path=my-prompt')
+        .put('/api/v1/prompts?id=prompts%2Ftest-bucket%2Fmy-prompt')
         .send({ name: 'other' })
         .expect(409);
     });
@@ -295,7 +313,7 @@ describe('PromptController (integration)', () => {
     it('returns 502 when the service throws BadGatewayException', async () => {
       service.updatePrompt.mockRejectedValue(new BadGatewayException());
       await request(app.getHttpServer())
-        .put('/api/v1/prompts?path=my-prompt')
+        .put('/api/v1/prompts?id=prompts%2Ftest-bucket%2Fmy-prompt')
         .send({ content: 'Hi' })
         .expect(502);
     });
@@ -308,12 +326,12 @@ describe('PromptController (integration)', () => {
   describe('DELETE /api/v1/prompts', () => {
     it('deletes a prompt and returns 204', async () => {
       await request(app.getHttpServer())
-        .delete('/api/v1/prompts?path=my-prompt')
+        .delete('/api/v1/prompts?id=prompts%2Ftest-bucket%2Fmy-prompt')
         .expect(204);
 
       expect(service.deletePrompt).toHaveBeenCalledWith(
         TEST_USER.at,
-        TEST_USER.bucket,
+        'test-bucket',
         'my-prompt',
       );
     });
@@ -321,14 +339,14 @@ describe('PromptController (integration)', () => {
     it('returns 404 when the service throws NotFoundException', async () => {
       service.deletePrompt.mockRejectedValue(new NotFoundException());
       await request(app.getHttpServer())
-        .delete('/api/v1/prompts?path=missing')
+        .delete('/api/v1/prompts?id=prompts%2Ftest-bucket%2Fmissing')
         .expect(404);
     });
 
     it('returns 502 when the service throws BadGatewayException', async () => {
       service.deletePrompt.mockRejectedValue(new BadGatewayException());
       await request(app.getHttpServer())
-        .delete('/api/v1/prompts?path=my-prompt')
+        .delete('/api/v1/prompts?id=prompts%2Ftest-bucket%2Fmy-prompt')
         .expect(502);
     });
   });
@@ -520,14 +538,14 @@ describe('PromptController (integration)', () => {
 
     it('moves a prompt and returns 200', async () => {
       const res = await request(app.getHttpServer())
-        .post('/api/v1/prompts/move?path=my-prompt')
+        .post('/api/v1/prompts/move?id=prompts%2Ftest-bucket%2Fmy-prompt')
         .send(validBody)
         .expect(200);
 
       expect(res.body).toEqual(promptDto);
       expect(service.movePrompt).toHaveBeenCalledWith(
         TEST_USER.at,
-        TEST_USER.bucket,
+        'test-bucket',
         'my-prompt',
         validBody,
       );
@@ -535,13 +553,15 @@ describe('PromptController (integration)', () => {
 
     it('accepts an empty string targetFolderId (move to root)', async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/prompts/move?path=work/my-prompt')
+        .post(
+          '/api/v1/prompts/move?id=prompts%2Ftest-bucket%2Fwork%2Fmy-prompt',
+        )
         .send({ targetFolderId: '' })
         .expect(200);
 
       expect(service.movePrompt).toHaveBeenCalledWith(
         TEST_USER.at,
-        TEST_USER.bucket,
+        'test-bucket',
         'work/my-prompt',
         { targetFolderId: '' },
       );
@@ -549,7 +569,7 @@ describe('PromptController (integration)', () => {
 
     it('returns 400 when targetFolderId is missing from the body', async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/prompts/move?path=my-prompt')
+        .post('/api/v1/prompts/move?id=prompts%2Ftest-bucket%2Fmy-prompt')
         .send({})
         .expect(400);
 
@@ -559,7 +579,7 @@ describe('PromptController (integration)', () => {
     it('returns 404 when the service throws NotFoundException', async () => {
       service.movePrompt.mockRejectedValue(new NotFoundException());
       await request(app.getHttpServer())
-        .post('/api/v1/prompts/move?path=missing')
+        .post('/api/v1/prompts/move?id=prompts%2Ftest-bucket%2Fmissing')
         .send(validBody)
         .expect(404);
     });
@@ -567,7 +587,7 @@ describe('PromptController (integration)', () => {
     it('returns 409 when the service throws ConflictException', async () => {
       service.movePrompt.mockRejectedValue(new ConflictException());
       await request(app.getHttpServer())
-        .post('/api/v1/prompts/move?path=my-prompt')
+        .post('/api/v1/prompts/move?id=prompts%2Ftest-bucket%2Fmy-prompt')
         .send(validBody)
         .expect(409);
     });
@@ -575,7 +595,7 @@ describe('PromptController (integration)', () => {
     it('returns 502 when the service throws BadGatewayException', async () => {
       service.movePrompt.mockRejectedValue(new BadGatewayException());
       await request(app.getHttpServer())
-        .post('/api/v1/prompts/move?path=my-prompt')
+        .post('/api/v1/prompts/move?id=prompts%2Ftest-bucket%2Fmy-prompt')
         .send(validBody)
         .expect(502);
     });
@@ -583,14 +603,22 @@ describe('PromptController (integration)', () => {
 
   describe('prompt path validation', () => {
     it.each([
-      ['GET', '/api/v1/prompts/item'],
-      ['PUT', '/api/v1/prompts'],
-      ['DELETE', '/api/v1/prompts'],
       ['GET', '/api/v1/prompts/public/item'],
       ['PUT', '/api/v1/prompts/folders'],
       ['DELETE', '/api/v1/prompts/folders'],
-      ['POST', '/api/v1/prompts/move'],
     ])('returns 400 for %s %s without path', async (method, url) => {
+      await request(app.getHttpServer())
+        [method.toLowerCase() as 'get'](url)
+        .send({})
+        .expect(400);
+    });
+
+    it.each([
+      ['GET', '/api/v1/prompts/item'],
+      ['PUT', '/api/v1/prompts'],
+      ['DELETE', '/api/v1/prompts'],
+      ['POST', '/api/v1/prompts/move'],
+    ])('returns 400 for %s %s without id', async (method, url) => {
       await request(app.getHttpServer())
         [method.toLowerCase() as 'get'](url)
         .send(method === 'POST' ? { targetFolderId: '' } : {})
@@ -605,8 +633,26 @@ describe('PromptController (integration)', () => {
       'Work\\prompt',
     ])('returns 400 for unsafe prompt path %s', async (path) => {
       await request(app.getHttpServer())
-        .get('/api/v1/prompts/item')
+        .get('/api/v1/prompts/public/item')
         .query({ path })
+        .expect(400);
+
+      expect(service.getPublicPrompt).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      'not-a-prompt-id',
+      'applications/bucket-1/name',
+      'prompts/bucket-1',
+      'prompts//name',
+      'prompts/bucket-1/../outside',
+      'prompts/bucket-1/Work//prompt',
+      'prompts/../outside',
+      'prompts/./Work/summarize',
+    ])('returns 400 for malformed prompt id %s', async (id) => {
+      await request(app.getHttpServer())
+        .get('/api/v1/prompts/item')
+        .query({ id })
         .expect(400);
 
       expect(service.getPrompt).not.toHaveBeenCalled();

@@ -1785,13 +1785,16 @@ const { starters, propertyKey, description } = getStartersFromSchema(
 );
 ```
 
-### sanitizeAnnouncementHtml / hasStructuredAnnouncement / hasAnnouncementContent / buildAnnouncementSignature
+### sanitizeAnnouncementHtml / sanitizeAnnouncementMessageHtml / hasStructuredAnnouncement / hasAnnouncementContent / buildAnnouncementSignature
 
-Announcement-banner helpers: sanitizes operator-supplied HTML to an allowed tag/attribute set, checks whether structured (`title`/`description`) or any content is present, and builds the content-keyed signature used to track dismissal.
+Announcement-banner helpers: sanitize operator-supplied HTML, check whether structured (`title`/`description`) or any content is present, and build the content-keyed signature used to track dismissal.
+
+The two sanitizers differ in the tags they keep, because the two banner layouts differ. `sanitizeAnnouncementHtml` is for the structured `description`, which renders as one truncating line, so it keeps inline markup only — `a`, `b`, `strong`, `em`, `br`, `span`. `sanitizeAnnouncementMessageHtml` is for the legacy `html` message, a free-standing block, so it additionally keeps `u` and `p`. Both keep `href`, `target` and `rel` on links, drop everything else including `style`, and force `rel="noopener noreferrer"` on any link that already carries `target="_blank"`.
 
 ```ts
 import {
   hasAnnouncementContent,
+  sanitizeAnnouncementMessageHtml,
   type AnnouncementContent,
 } from '@epam/ai-dial-chat-hooks';
 
@@ -1802,6 +1805,9 @@ const content: AnnouncementContent = {
 };
 
 hasAnnouncementContent(content); // true
+
+sanitizeAnnouncementMessageHtml('<p>Upgraded to <strong>1.47</strong></p>');
+// '<p>Upgraded to <strong>1.47</strong></p>'
 ```
 
 ### sanitizeFooterHtml / formatAppVersion
@@ -2047,15 +2053,16 @@ const error = validatePromptName('My Prompt'); // PromptFieldError | null
 const remaining = getRemainingCharacters('My Prompt', PROMPT_NAME_MAX_LENGTH);
 ```
 
-### PromptSource / buildPromptResourceUrl / parsePromptResourceUrl
+### PromptSource / parsePromptResourceUrl
 
-Builds/parses the `prompts/{bucket}/{path}` resource URL used to address a prompt outside the caller's own bucket (e.g. a shared-with-me prompt).
+`PromptSource` identifies which prompt namespace a catalog prompt item came from. `CatalogItem.id` for a prompt is always the full `prompts/{bucket}/{path}` resource path, regardless of source; `parsePromptResourceUrl` splits it back into `{ bucket, path }` for the one caller that still needs the bucket-relative sub-path on its own — the organisation (public) prompt read, whose endpoint kept a bucket-relative `path` argument.
 
 ```ts
-import { buildPromptResourceUrl, PromptSource } from '@epam/ai-dial-chat-hooks';
+import { parsePromptResourceUrl, PromptSource } from '@epam/ai-dial-chat-hooks';
 
-buildPromptResourceUrl({ bucket: 'other-user-bucket', path: 'My Prompt' });
-// 'prompts/other-user-bucket/My Prompt'
+PromptSource.SharedWithMe; // 'sharedWithMe'
+parsePromptResourceUrl('prompts/public/Work/AI/summarize');
+// { bucket: 'public', path: 'Work/AI/summarize' }
 ```
 
 ### buildPromptExportEnvelope / serializePromptExport / buildPromptExportFileName

@@ -26,8 +26,7 @@ const NO_FAVORITES: ReadonlySet<string> = new Set();
 const makePrompt = (
   overrides: Partial<PromptResponseDto> = {},
 ): PromptResponseDto => ({
-  id: 'Work/AI/summarize',
-  bucket: 'my-bucket',
+  id: 'prompts/my-bucket/Work/AI/summarize',
   name: 'summarize',
   description: 'Summarize a document',
   content: 'Summarize the following text:',
@@ -46,7 +45,7 @@ describe('mapPromptToCatalogItem', () => {
       favoriteIds: NO_FAVORITES,
     });
 
-    expect(item.id).toBe('Work/AI/summarize');
+    expect(item.id).toBe('prompts/my-bucket/Work/AI/summarize');
     expect(item.type).toBe(CatalogEntityType.Prompt);
     expect(item.name).toBe('summarize');
     expect(item.description).toBe('Summarize a document');
@@ -61,7 +60,7 @@ describe('mapPromptToCatalogItem', () => {
 
   it('maps a root-level prompt to just the source folder label', () => {
     const item = mapPromptToCatalogItem(
-      makePrompt({ id: 'summarize', folderId: '' }),
+      makePrompt({ id: 'prompts/my-bucket/summarize', folderId: '' }),
       {
         folderLabels,
         overviewLabels,
@@ -98,9 +97,9 @@ describe('mapPromptToCatalogItem', () => {
     expect(item.isEditable).toBe(true);
   });
 
-  it('qualifies a shared prompt id with the owner bucket', () => {
+  it('uses the full resource id from the DTO unmodified for a shared prompt', () => {
     const item = mapPromptToCatalogItem(
-      makePrompt({ bucket: 'owner-bucket' }),
+      makePrompt({ id: 'prompts/owner-bucket/Work/AI/summarize' }),
       {
         folderLabels,
         overviewLabels,
@@ -112,14 +111,14 @@ describe('mapPromptToCatalogItem', () => {
     expect(item.id).toBe('prompts/owner-bucket/Work/AI/summarize');
   });
 
-  it('keeps a shared prompt distinct from a personal prompt at the same path', () => {
+  it('keeps a shared prompt distinct from a personal prompt with a different owner bucket', () => {
     const options = { folderLabels, overviewLabels, favoriteIds: NO_FAVORITES };
     const personal = mapPromptToCatalogItem(makePrompt(), {
       ...options,
       source: PromptSource.Personal,
     });
     const shared = mapPromptToCatalogItem(
-      makePrompt({ bucket: 'owner-bucket' }),
+      makePrompt({ id: 'prompts/owner-bucket/Work/AI/summarize' }),
       {
         ...options,
         source: PromptSource.SharedWithMe,
@@ -157,19 +156,13 @@ describe('mapPromptToCatalogItem', () => {
   });
 
   it('marks a prompt as favourited when its catalog id is in favoriteIds', () => {
-    /* Favourites are keyed by the catalog id, which a shared prompt qualifies. */
-    const favoriteIdBySource: Record<PromptSource, string> = {
-      [PromptSource.Personal]: 'Work/AI/summarize',
-      [PromptSource.SharedWithMe]: 'prompts/my-bucket/Work/AI/summarize',
-      [PromptSource.Public]: 'Work/AI/summarize',
-    };
-
+    /* Favourites are keyed by the catalog id, which is always the DTO's full resource id. */
     for (const source of Object.values(PromptSource)) {
       const item = mapPromptToCatalogItem(makePrompt(), {
         folderLabels,
         overviewLabels,
         source,
-        favoriteIds: new Set([favoriteIdBySource[source]]),
+        favoriteIds: new Set(['prompts/my-bucket/Work/AI/summarize']),
       });
       expect(item.isUserFavorite).toBe(true);
       expect(item.isStarred).toBe(true);

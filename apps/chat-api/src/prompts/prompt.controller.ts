@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -25,6 +26,21 @@ import { RenamePromptFolderDto } from './dto/rename-prompt-folder.dto';
 import { RequiredPromptPathDto } from './dto/required-prompt-path.dto';
 import { UpdatePromptDto } from './dto/update-prompt.dto';
 import { PromptService } from './prompt.service';
+import { parsePromptId } from './utils/prompt-mapper.util';
+
+/*
+ * `GetPromptQueryDto.id` already passed `PROMPT_ID_PATTERN` validation, so
+ * `parsePromptId` only fails here in the case of a bug in either regex; this
+ * throws rather than silently falling back to avoid ever routing a request
+ * at the wrong bucket.
+ */
+const resolvePromptId = (id: string): { bucket: string; path: string } => {
+  const resolved = parsePromptId(id);
+  if (resolved == null) {
+    throw new BadRequestException('id must be a full prompt resource path');
+  }
+  return resolved;
+};
 
 @ApiTags('prompts')
 @Controller({ path: 'prompts', version: '1' })
@@ -59,7 +75,7 @@ export class PromptController {
     operationId: 'getPrompt',
     summary: 'Get a personal or shared prompt',
     description:
-      "Reads a prompt from the caller's own bucket, or from the `bucket` given in the query — the owner bucket a shared prompt reports. DIAL Core authorises the read either way.",
+      "Reads the exact DIAL resource `id` names, whether that is the caller's own bucket or another user's bucket for a prompt shared with the caller. DIAL Core authorises the read either way.",
   })
   @ApiResponse({
     status: 200,
@@ -71,8 +87,9 @@ export class PromptController {
   @ApiResponse({ status: 404, description: 'Prompt not found' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   getPrompt(@Req() req: Request, @Query() query: GetPromptQueryDto) {
-    const { at, bucket } = req.user as SessionUser;
-    return this.promptService.getPrompt(at, query.bucket ?? bucket, query.path);
+    const { at } = req.user as SessionUser;
+    const { bucket, path } = resolvePromptId(query.id);
+    return this.promptService.getPrompt(at, bucket, path);
   }
 
   @Post()
@@ -105,9 +122,9 @@ export class PromptController {
     summary: 'Update a personal or writable shared prompt',
   })
   @ApiQuery({
-    name: 'path',
+    name: 'id',
     required: true,
-    description: 'Prompt path to update',
+    description: 'Full prompt resource path to update',
   })
   @ApiResponse({
     status: 200,
@@ -124,34 +141,31 @@ export class PromptController {
     @Query() query: GetPromptQueryDto,
     @Body() dto: UpdatePromptDto,
   ) {
-    const { at, bucket } = req.user as SessionUser;
-    return this.promptService.updatePrompt(
-      at,
-      query.bucket ?? bucket,
-      query.path,
-      dto,
-    );
+    const { at } = req.user as SessionUser;
+    const { bucket, path } = resolvePromptId(query.id);
+    return this.promptService.updatePrompt(at, bucket, path, dto);
   }
 
   @Delete()
   @HttpCode(204)
   @ApiOperation({
     operationId: 'deletePrompt',
-    summary: 'Delete a personal prompt',
+    summary: 'Delete a personal or writable shared prompt',
   })
   @ApiQuery({
-    name: 'path',
+    name: 'id',
     required: true,
-    description: 'Prompt path to delete',
+    description: 'Full prompt resource path to delete',
   })
   @ApiResponse({ status: 204, description: 'Prompt deleted' })
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Prompt not found' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
-  deletePrompt(@Req() req: Request, @Query() query: RequiredPromptPathDto) {
-    const { at, bucket } = req.user as SessionUser;
-    return this.promptService.deletePrompt(at, bucket, query.path);
+  deletePrompt(@Req() req: Request, @Query() query: GetPromptQueryDto) {
+    const { at } = req.user as SessionUser;
+    const { bucket, path } = resolvePromptId(query.id);
+    return this.promptService.deletePrompt(at, bucket, path);
   }
 
   /* ------------------------------------------------------------------ */
@@ -275,9 +289,9 @@ export class PromptController {
     summary: 'Move a personal or writable shared prompt to another folder',
   })
   @ApiQuery({
-    name: 'path',
+    name: 'id',
     required: true,
-    description: 'Prompt path to move',
+    description: 'Full prompt resource path to move',
   })
   @ApiResponse({
     status: 200,
@@ -294,12 +308,8 @@ export class PromptController {
     @Query() query: GetPromptQueryDto,
     @Body() dto: MovePromptDto,
   ) {
-    const { at, bucket } = req.user as SessionUser;
-    return this.promptService.movePrompt(
-      at,
-      query.bucket ?? bucket,
-      query.path,
-      dto,
-    );
+    const { at } = req.user as SessionUser;
+    const { bucket, path } = resolvePromptId(query.id);
+    return this.promptService.movePrompt(at, bucket, path, dto);
   }
 }

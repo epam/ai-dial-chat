@@ -55,9 +55,16 @@ export enum OverlayEventType {
 export enum OverlayFeature {
   /** Enables the "Add app" menu's Code Apps entry. */
   CodeApps = 'code-apps',
-  /** Enables the "Add app" menu's custom-application creation entry point. */
-  CustomApplications = 'custom-applications',
-  /** Hides the "Custom app" creation entry in the "Add app" menu. */
+  /**
+   * Enables the catalog's Quick App creation entry, i.e. applications built
+   * on an `applicationTypeSchemaId`. Schema-less applications are gated by
+   * `CustomApps` instead.
+   */
+  SchemaApps = 'schema-apps',
+  /**
+   * Hides both of the catalog's app-creation entries, "Create Quick App" and
+   * "Create Custom app", regardless of `SchemaApps` / `CustomApps`.
+   */
   HideCustomAppCreation = 'hide-custom-app-creation',
   /** Disables the send action on the chat input without removing the button. */
   DisabledSend = 'disabled-send',
@@ -138,7 +145,11 @@ export enum OverlayFeature {
   Prompts = 'prompts',
   /** Enables skills: the catalog's Skills tab and the skill details panel. */
   Skills = 'skills',
-  /** Enables the custom-app creation entry in the catalog. */
+  /**
+   * Enables the catalog's custom-app creation entry, the editability of
+   * schema-less applications, and the custom-app editor route. Applications
+   * built on a schema are gated by `SchemaApps` instead.
+   */
   CustomApps = 'custom-apps',
   /** Hides the user avatar/menu button in the header. */
   HideUserMenu = 'hide-user-menu',
@@ -149,6 +160,36 @@ export enum OverlayFeature {
   /** Enables the `microphone` permission on the iframe's `allow` attribute for voice input. */
   VoiceInput = 'voice-input',
 }
+
+/**
+ * Wire values a host may still be sending that were renamed, mapped to the
+ * canonical `OverlayFeature` member. Accepted for backward compatibility on a
+ * transitional basis: a deprecated value resolves to its replacement instead of
+ * being dropped. Remove an entry once hosts have migrated, and record the
+ * rename in the migration guide's "Renamed flags" table.
+ */
+export const DEPRECATED_OVERLAY_FEATURE_ALIASES: Readonly<
+  Record<string, OverlayFeature>
+> = {
+  /* Renamed because it gates Quick Apps, not schema-less custom applications. */
+  'custom-applications': OverlayFeature.SchemaApps,
+};
+
+const OVERLAY_FEATURE_WIRE_VALUES = new Set<string>(
+  Object.values(OverlayFeature),
+);
+
+/**
+ * Resolves a raw wire value to an `OverlayFeature`, accepting the deprecated
+ * aliases in `DEPRECATED_OVERLAY_FEATURE_ALIASES`. Returns `undefined` for an
+ * unrecognized value so the caller can drop it and warn.
+ */
+export const resolveOverlayFeature = (
+  value: string,
+): OverlayFeature | undefined =>
+  OVERLAY_FEATURE_WIRE_VALUES.has(value)
+    ? (value as OverlayFeature)
+    : DEPRECATED_OVERLAY_FEATURE_ALIASES[value];
 
 /** Controls how an overlay starts authentication for a configured provider. */
 export enum OverlayAuthUiMode {

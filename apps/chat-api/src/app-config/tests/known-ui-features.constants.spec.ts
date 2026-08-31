@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { KNOWN_UI_FEATURES } from '../known-ui-features.constants';
+import {
+  DEPRECATED_UI_FEATURE_ALIASES,
+  KNOWN_UI_FEATURES,
+} from '../known-ui-features.constants';
 
 /*
  * `KNOWN_UI_FEATURES` is hand-maintained so this Node-only service does not
@@ -31,6 +34,7 @@ describe('KNOWN_UI_FEATURES', () => {
     expect(KNOWN_UI_FEATURES.has('prompts')).toBe(true);
     expect(KNOWN_UI_FEATURES.has('skills')).toBe(true);
     expect(KNOWN_UI_FEATURES.has('custom-apps')).toBe(true);
+    expect(KNOWN_UI_FEATURES.has('schema-apps')).toBe(true);
   });
 
   it('includes both agent-selector keys', () => {
@@ -42,6 +46,7 @@ describe('KNOWN_UI_FEATURES', () => {
     expect(KNOWN_UI_FEATURES.has('marketplace')).toBe(false);
     expect(KNOWN_UI_FEATURES.has('marketplace-hide-my-apps')).toBe(false);
     expect(KNOWN_UI_FEATURES.has('marketplace-table-view')).toBe(false);
+    expect(KNOWN_UI_FEATURES.has('custom-applications')).toBe(false);
   });
 
   it('rejects the legacy wire values whose behavior is now unconditional', () => {
@@ -55,5 +60,22 @@ describe('KNOWN_UI_FEATURES', () => {
 
   it('does not include unrecognized values', () => {
     expect(KNOWN_UI_FEATURES.has('not-a-real-feature')).toBe(false);
+  });
+});
+
+describe('DEPRECATED_UI_FEATURE_ALIASES', () => {
+  it('maps every deprecated value onto a currently known one', () => {
+    Object.entries(DEPRECATED_UI_FEATURE_ALIASES).forEach(
+      ([deprecated, replacement]) => {
+        expect(KNOWN_UI_FEATURES.has(deprecated)).toBe(false);
+        expect(KNOWN_UI_FEATURES.has(replacement)).toBe(true);
+      },
+    );
+  });
+
+  it('maps custom-applications to schema-apps', () => {
+    expect(DEPRECATED_UI_FEATURE_ALIASES['custom-applications']).toBe(
+      'schema-apps',
+    );
   });
 });
