@@ -76,9 +76,13 @@ export const Card: FC<CardProps> = ({
 
   const isFeaturedVisible = !isReadonly && item.isFeatured === true;
   const isStarVisible = !isReadonly && isFavoriteVisible?.(item) !== false;
-  /* Read-only cards drop the whole footer row once the folder path — the only
-   * thing left in it without the star — has nothing to render. */
-  const isFooterVisible = !isReadonly || item.folder.length > 0;
+  /* The footer holds exactly two things: the folder path and the star. It is
+   * drawn only when one of them has something to render — otherwise a card
+   * with no folder whose star is hidden gets an empty row and a divider under
+   * its topics. A read-only card is just the case where the star is always
+   * hidden; a host that narrows `isFavoriteVisible` reaches the same state
+   * without `isReadonly`. */
+  const isFooterVisible = item.folder.length > 0 || isStarVisible;
 
   const handleClick = onClick ? () => onClick(item) : undefined;
 

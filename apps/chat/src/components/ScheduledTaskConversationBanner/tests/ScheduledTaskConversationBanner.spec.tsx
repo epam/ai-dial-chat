@@ -13,18 +13,12 @@ const renderBanner = () =>
 
 const contextMocks = vi.hoisted(() => ({
   status: 'task-conversation' as
-    | 'resolving'
-    | 'not-a-task-conversation'
-    | 'task-conversation',
+    'resolving' | 'not-a-task-conversation' | 'task-conversation',
   scheduleId: 'schedule-1' as string | undefined,
   runId: 'run-1' as string | undefined,
   conversationUpdatedAt: undefined as number | undefined,
   taskState: 'success' as
-    | 'idle'
-    | 'loading'
-    | 'error'
-    | 'unavailable'
-    | 'success',
+    'idle' | 'loading' | 'error' | 'unavailable' | 'success',
   task: { id: 'schedule-1', displayName: 'Weekly digest' } as {
     displayName: string;
   } | null,

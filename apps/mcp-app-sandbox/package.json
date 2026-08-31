@@ -13,14 +13,14 @@
         "options": {
           "command": "webpack-cli build",
           "args": [
-            "--node-env=production"
+            "--config-node-env=production"
           ],
           "cwd": "apps/mcp-app-sandbox"
         },
         "configurations": {
           "development": {
             "args": [
-              "--node-env=development"
+              "--config-node-env=development"
             ]
           }
         }
