@@ -1,11 +1,15 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 
 /**
- * The 24 `OverlayFeature` keys enabled by default, reflecting today's
+ * The 25 `OverlayFeature` keys enabled by default, reflecting today's
  * unconditional app behavior (see `design.md`'s classification table in the
  * `add-chat-overlay-enabled-features` change). Every other transferable key
  * ("modifier" keys) defaults off so a deployment that configures nothing
  * observes zero behavior change.
+ *
+ * `CatalogTableView` is the exception to that rule: it is an initial-state
+ * modifier that ships on, so Browse opens in list view. The grid default the
+ * classification table recorded is not the view users expect to land on.
  */
 export const DEFAULT_ENABLED_UI_FEATURES: ReadonlySet<OverlayFeature> = new Set(
   [
@@ -27,6 +31,7 @@ export const DEFAULT_ENABLED_UI_FEATURES: ReadonlySet<OverlayFeature> = new Set(
     OverlayFeature.SchemaApps,
     OverlayFeature.CodeApps,
     OverlayFeature.Catalog,
+    OverlayFeature.CatalogTableView,
     OverlayFeature.FileManager,
     OverlayFeature.Toolsets,
     OverlayFeature.CustomApps,
