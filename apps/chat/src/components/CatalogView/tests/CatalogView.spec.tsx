@@ -158,15 +158,6 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
 
 vi.mock('../../../server-api/publish-rules.api', () => ({
   getPublishRules: vi.fn().mockResolvedValue([]),
-  toPublishRuleDto: (rule: {
-    source: string;
-    function: string;
-    targets: string[];
-  }) => ({
-    source: rule.source,
-    function: rule.function,
-    targets: rule.targets,
-  }),
 }));
 
 vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({

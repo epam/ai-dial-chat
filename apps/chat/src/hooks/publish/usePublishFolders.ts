@@ -6,8 +6,6 @@ import { listPublicFiles } from '../../server-api/files.api';
 import { StorageKey } from '../../types/storage-key';
 import useLocalStorage from '../useLocalStorage';
 
-export type { UsePublishFoldersResult };
-
 /**
  * App-edge wrapper around the lib's `usePublishFolders`: supplies the public
  * files listing and persists the destinations the user has published to.

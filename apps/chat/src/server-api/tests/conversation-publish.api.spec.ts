@@ -7,19 +7,11 @@ import {
   unpublishConversation,
 } from '../conversation-publish.api';
 
-/*
- * `publishApi` is unused here, but the module under test pulls in
- * `publish-rules.api`, which builds its client at module load — so the mock
- * has to carry it or the import fails before any test runs.
- */
 vi.mock('../api-client', () => ({
   conversationsApi: {
     publishConversation: vi.fn(),
     unpublishConversation: vi.fn(),
     getConversationPublishHistory: vi.fn(),
-  },
-  publishApi: {
-    getPublishRules: vi.fn(),
   },
 }));
 
