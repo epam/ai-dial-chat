@@ -108,7 +108,7 @@ export interface PromptExportFormat {
 
 `CatalogView` SHALL pass `onDownload={handleDownload}` and `isDownloadVisible={(item) => item.type === CatalogEntityType.Prompt}` to `Catalog`. Every other entity type is backed by configuration the catalog does not export, so offering the action there would promise a file that cannot be produced.
 
-`handleDownload` SHALL re-fetch the body rather than reading `item.details.promptContent`: the listing seeds that field, so a prompt edited in another tab would otherwise be written to disk stale. It resolves through `getPublicPrompt(item.id)` when `isOrganisationPromptItem(item)`, `getPrompt(item.id)` for a personal prompt, and parses a shared prompt's qualified id before calling `getPrompt(path, ownerBucket)` — the same dispatch the details fetch and use-in-chat paths use.
+`handleDownload` SHALL re-fetch the body rather than reading `item.details.promptContent`: the listing seeds that field, so a prompt edited in another tab would otherwise be written to disk stale. It resolves through `getPublicPrompt` with the parsed bucket-relative sub-path when `isOrganisationPromptItem(item)`, and `getPrompt(item.id)` for a personal or shared prompt (the full `prompts/{bucket}/{path}` id is passed unmodified, whether the prompt is the caller's own or shared with them) — the same dispatch the details fetch and use-in-chat paths use.
 
 `isOrganisationPromptItem` SHALL be extracted to `apps/chat/src/utils/map-prompt-to-catalog-item.ts` and shared by all three call sites, replacing the inline `!item.isMyApp && !item.sharedWithMe` expression each had duplicated.
 
@@ -125,12 +125,12 @@ Sharing an owner's prompt is not a precondition: download is a read, so it is of
 #### Scenario: An organisation prompt downloads through the public endpoint
 
 - **WHEN** the user activates Download on an organisation prompt
-- **THEN** `getPublicPrompt(item.id)` is called and `getPrompt` is not
+- **THEN** `getPublicPrompt` is called with the prompt's bucket-relative sub-path and `getPrompt` is not
 
 #### Scenario: A shared prompt downloads from its owner bucket
 
 - **WHEN** the user activates Download on `prompts/owner-bucket/Work/summarize`
-- **THEN** `getPrompt('Work/summarize', 'owner-bucket')` is called
+- **THEN** `getPrompt('prompts/owner-bucket/Work/summarize')` is called
 
 #### Scenario: The written body is the freshly fetched one
 

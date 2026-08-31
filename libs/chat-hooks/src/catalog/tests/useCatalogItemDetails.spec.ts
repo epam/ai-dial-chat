@@ -201,16 +201,14 @@ describe('useCatalogItemDetails', () => {
 
       const details = await result.current.onFetchDetails(item);
 
-      expect(api.getPublicPrompt).toHaveBeenCalledWith(
-        'prompts/public/my-prompt',
-      );
+      expect(api.getPublicPrompt).toHaveBeenCalledWith('my-prompt');
       expect(api.getPrompt).not.toHaveBeenCalled();
       expect(details).toMatchObject({
         promptContent: { content: PROMPT_DTO.content },
       });
     });
 
-    it('calls getPrompt(path, bucket) for a shared prompt with a resource URL', async () => {
+    it('calls getPrompt(item.id) for a shared prompt with its full resource URL', async () => {
       const api = makeApi();
       const { result } = renderHook(() =>
         useCatalogItemDetails(makeOptions(api)),
@@ -224,8 +222,7 @@ describe('useCatalogItemDetails', () => {
       await result.current.onFetchDetails(item);
 
       expect(api.getPrompt).toHaveBeenCalledWith(
-        'Work/AI/summarize',
-        'owner-bucket',
+        'prompts/owner-bucket/Work/AI/summarize',
       );
     });
 
