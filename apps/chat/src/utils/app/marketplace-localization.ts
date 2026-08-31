@@ -25,7 +25,11 @@ export const parseLocalizedField = (
   }
 
   return (
-    field?.[locale] ?? field?.[primaryLocale] ?? field?.[DEFAULT_LOCAL] ?? ''
+    field?.[locale] ??
+    field?.[primaryLocale] ??
+    field?.[DEFAULT_LOCAL] ??
+    Object.values(field ?? {})[0] ??
+    ''
   );
 };
 
@@ -50,7 +54,11 @@ export const getLocalizedEntityIdName = (
 ): string => {
   if (typeof name === 'string') return name;
 
-  return name?.[LocalesService.getPrimaryLocale()] ?? '';
+  return (
+    name?.[LocalesService.getPrimaryLocale()] ??
+    Object.values(name ?? {})[0] ??
+    ''
+  );
 };
 
 export const updateLocalizedEntityIdName = (
