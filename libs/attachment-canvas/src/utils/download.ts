@@ -1,5 +1,6 @@
 import {
   MIMEType,
+  ensureDownloadFilename,
   triggerAnchorDownload,
   triggerBlobDownload,
 } from '@epam/ai-dial-chat-shared';
@@ -43,12 +44,51 @@ export const fetchBlobFromUrl = async (url: string): Promise<Blob> => {
   return r.blob();
 };
 
+/*
+ * Returns the URL and MIME type hint that best describe `content` for the
+ * purposes of deriving a file extension when the display name lacks one.
+ */
+const getContentUrlAndMimeType = (
+  content: AttachmentCanvasContent,
+): { url: string | undefined; mimeType: string | undefined } => {
+  switch (content.type) {
+    case AttachmentContentType.Image:
+      return { url: content.url, mimeType: undefined };
+    case AttachmentContentType.Audio:
+      return { url: content.url, mimeType: content.mimeType };
+    case AttachmentContentType.Pdf:
+      return { url: content.url, mimeType: MIMEType.PDF };
+    case AttachmentContentType.Ooxml:
+      return { url: content.url, mimeType: undefined };
+    case AttachmentContentType.Html:
+      return { url: content.url, mimeType: MIMEType.HTML };
+    case AttachmentContentType.Unsupported:
+    case AttachmentContentType.Error:
+      return { url: content.url, mimeType: undefined };
+    case AttachmentContentType.PlainText:
+    case AttachmentContentType.Code:
+      return { url: undefined, mimeType: MIMEType.Plain };
+    case AttachmentContentType.Markdown:
+      return { url: undefined, mimeType: MIMEType.Markdown };
+    case AttachmentContentType.Json:
+      return { url: undefined, mimeType: MIMEType.JSON };
+    default:
+      return { url: undefined, mimeType: undefined };
+  }
+};
+
 /** Triggers a browser download for the given canvas content. */
 export const downloadAttachmentContent = (
   content: AttachmentCanvasContent,
   fileName?: string,
 ): void => {
-  const name = fileName ?? 'attachment';
+  const { url: contentUrl, mimeType: contentMimeType } =
+    getContentUrlAndMimeType(content);
+  const name = ensureDownloadFilename(
+    fileName ?? 'attachment',
+    contentUrl,
+    contentMimeType,
+  );
   switch (content.type) {
     case AttachmentContentType.PlainText:
       if (content.text === '') return;

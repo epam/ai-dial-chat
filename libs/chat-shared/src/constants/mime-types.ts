@@ -3,6 +3,7 @@ export const MIME_TYPE_EXT_MAP: Record<string, string> = {
   // Text
   'text/markdown': 'md',
   'text/plain': 'txt',
+  'text/html': 'html',
   'text/javascript': 'js',
   'text/typescript': 'ts',
   'text/jsx': 'jsx',
@@ -13,6 +14,8 @@ export const MIME_TYPE_EXT_MAP: Record<string, string> = {
   'text/x-vue': 'vue',
 
   // Application
+  'application/json': 'json',
+  'application/pdf': 'pdf',
   'application/javascript': 'js',
   'application/typescript': 'ts',
   'application/xhtml+xml': 'xhtml',
