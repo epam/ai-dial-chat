@@ -6,4 +6,5 @@ export enum FeatureKey {
   Footer = 'features.footer',
   ResponsesApiEnabled = 'features.responsesApiEnabled',
   SettingsPageEnabled = 'features.settingsPageEnabled',
+  DefaultDeploymentPinned = 'features.defaultDeploymentPinned',
 }
