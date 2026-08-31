@@ -199,6 +199,52 @@ describe('DeploymentSelectorPanel', () => {
     expect(screen.getByText('Favorites')).toBeTruthy();
   });
 
+  describe('operator-default pinning', () => {
+    it('shows the pinned default before favorites when another deployment is selected', () => {
+      const pinnedItem = makeItem('default-model', CatalogEntityType.Model);
+
+      renderPanel([makeItem('favorite-model', CatalogEntityType.Model)], {
+        pinnedItem,
+        selectedId: 'conversation-model',
+        selectedItem: makeItem('conversation-model', CatalogEntityType.Model),
+      });
+
+      const rows = screen.getAllByRole('button', {
+        name: /default-model|favorite-model/,
+      });
+      expect(rows[0].textContent).toContain('default-model');
+      expect(rows[1].textContent).toContain('favorite-model');
+    });
+
+    it('does not render the pinned default twice when it is already a favorite', () => {
+      const pinnedItem = makeItem('default-model', CatalogEntityType.Model);
+
+      renderPanel([pinnedItem], { pinnedItem });
+
+      expect(
+        screen.getAllByRole('button', { name: /default-model/ }),
+      ).toHaveLength(1);
+    });
+
+    it('allows adding a non-favorite pinned default to favorites', async () => {
+      const user = userEvent.setup();
+      const onToggleFavorite = vi.fn();
+
+      renderPanel([], {
+        pinnedItem: makeItem('default-model', CatalogEntityType.Model),
+        onToggleFavorite,
+      });
+
+      await user.click(
+        screen.getByRole('button', { name: 'Add to favorites' }),
+      );
+
+      await waitFor(() =>
+        expect(onToggleFavorite).toHaveBeenCalledWith('default-model', true),
+      );
+    });
+  });
+
   describe('removing a favorite plays its exit animation before committing', () => {
     it('does not call onToggleFavorite synchronously on click', async () => {
       const user = userEvent.setup();

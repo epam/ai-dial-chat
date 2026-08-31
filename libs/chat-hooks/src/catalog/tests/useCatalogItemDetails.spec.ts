@@ -73,7 +73,7 @@ const SKILL_PATH = 'my-skill';
 const EMPTY_SKILLS: SkillMetadataItemDto[] = [];
 
 const PROMPT_DTO: PromptResponseDto = {
-  id: 'prompts/user-bucket/my-prompt',
+  id: 'my-prompt',
   name: 'My Prompt',
   content: 'Hello {{name}}',
   folderId: '',
@@ -208,7 +208,7 @@ describe('useCatalogItemDetails', () => {
       });
     });
 
-    it('calls getPrompt with the full owner-bucket-qualified id for a shared prompt', async () => {
+    it('calls getPrompt(item.id) for a shared prompt with its full resource URL', async () => {
       const api = makeApi();
       const { result } = renderHook(() =>
         useCatalogItemDetails(makeOptions(api)),

@@ -50,4 +50,20 @@ describe('CONFIG_DEFINITIONS', () => {
     });
     expect(entry).not.toHaveProperty('allowedRolesEnvVar');
   });
+
+  it('contains the client-visible features.defaultDeploymentPinned entry', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'features.defaultDeploymentPinned',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'features.defaultDeploymentPinned',
+      type: 'feature',
+      valueType: 'boolean',
+      visibility: 'client',
+      defaultValue: false,
+      critical: false,
+      envVar: 'DEFAULT_DEPLOYMENT_PINNED',
+    });
+  });
 });

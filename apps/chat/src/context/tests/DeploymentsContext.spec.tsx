@@ -13,6 +13,7 @@ import { createNotificationContextValue } from './notification-context-mock';
 const contextMocks = vi.hoisted(() => ({
   defaultDeploymentId: null as string | null,
   selectedDeploymentId: null as string | null,
+  isDefaultDeploymentPinned: false,
   setSelectedDeployment: vi.fn(),
   showNotification: vi.fn(),
   userSub: 'user-1' as string | undefined,
@@ -33,6 +34,12 @@ vi.mock('../AppConfigContext', () => ({
       defaultDeploymentId: contextMocks.defaultDeploymentId,
     },
   }),
+  useFeatureFlag: (key: string) => {
+    if (key === 'defaultDeploymentPinned') {
+      return contextMocks.isDefaultDeploymentPinned;
+    }
+    return false;
+  },
 }));
 vi.mock('../UserConfigContext', () => ({
   useUserConfig: () => ({
@@ -79,6 +86,7 @@ describe('DeploymentsContext', () => {
     vi.clearAllMocks();
     contextMocks.defaultDeploymentId = null;
     contextMocks.selectedDeploymentId = null;
+    contextMocks.isDefaultDeploymentPinned = false;
     contextMocks.setSelectedDeployment.mockResolvedValue(undefined);
     contextMocks.userSub = 'user-1';
     mockGetDeployments.mockResolvedValue(mockResponse);
@@ -212,6 +220,96 @@ describe('DeploymentsContext', () => {
     });
   });
 
+  describe('sort pinning', () => {
+    it('hoists the operator-default deployment to position 0 when it sorts after other items alphabetically', async () => {
+      contextMocks.isDefaultDeploymentPinned = true;
+      const zAgent = {
+        id: 'z-agent',
+        displayName: 'Z Agent',
+        type: 'model' as const,
+      };
+      const pgAgent = {
+        id: 'pg-agent',
+        displayName: 'PG Agent',
+        type: 'model' as const,
+      };
+      const aAgent = {
+        id: 'a-agent',
+        displayName: 'A Agent',
+        type: 'model' as const,
+      };
+      mockGetDeployments.mockResolvedValueOnce({
+        deployments: [zAgent, pgAgent, aAgent],
+      });
+      contextMocks.defaultDeploymentId = 'pg-agent';
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() =>
+        expect(result.current.items.map((item) => item.id)).toEqual([
+          'pg-agent',
+          'a-agent',
+          'z-agent',
+        ]),
+      );
+    });
+
+    it('returns a purely alphabetical list when defaultDeploymentId is null', async () => {
+      contextMocks.isDefaultDeploymentPinned = true;
+      const zebra = {
+        id: 'z-agent',
+        displayName: 'Z Agent',
+        type: 'model' as const,
+      };
+      const alpha = {
+        id: 'a-agent',
+        displayName: 'A Agent',
+        type: 'model' as const,
+      };
+      mockGetDeployments.mockResolvedValueOnce({ deployments: [zebra, alpha] });
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() =>
+        expect(result.current.items.map((item) => item.id)).toEqual([
+          'a-agent',
+          'z-agent',
+        ]),
+      );
+    });
+
+    it('returns a purely alphabetical list when defaultDeploymentId is not in the catalog', async () => {
+      contextMocks.isDefaultDeploymentPinned = true;
+      const zebra = {
+        id: 'z-agent',
+        displayName: 'Z Agent',
+        type: 'model' as const,
+      };
+      const alpha = {
+        id: 'a-agent',
+        displayName: 'A Agent',
+        type: 'model' as const,
+      };
+      mockGetDeployments.mockResolvedValueOnce({ deployments: [zebra, alpha] });
+      contextMocks.defaultDeploymentId = 'removed-agent';
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() =>
+        expect(result.current.items.map((item) => item.id)).toEqual([
+          'a-agent',
+          'z-agent',
+        ]),
+      );
+    });
+  });
+
   it('allows updating selectedItemId via setSelectedItemId', async () => {
     const { result } = renderHook(() => useDeployments(), {
       wrapper: DeploymentsProvider,
@@ -258,6 +356,33 @@ describe('DeploymentsContext', () => {
     expect(mockGetApplicationSchemas).toHaveBeenCalledOnce();
   });
 
+  it('does not recreate restoreDefaultSelection when a manual selection updates user config', async () => {
+    contextMocks.isDefaultDeploymentPinned = true;
+    contextMocks.defaultDeploymentId = mockItem1.id;
+    contextMocks.setSelectedDeployment.mockImplementation(
+      async (id: string | null) => {
+        contextMocks.selectedDeploymentId = id;
+      },
+    );
+
+    const { result, rerender } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const restoreDefaultSelection = result.current.restoreDefaultSelection;
+
+    await act(async () => {
+      result.current.setSelectedItemId(mockItem2.id);
+    });
+    rerender();
+
+    expect(result.current.restoreDefaultSelection).toBe(
+      restoreDefaultSelection,
+    );
+    expect(result.current.selectedItemId).toBe(mockItem2.id);
+  });
+
   it('restoreSelectedItemId updates selectedItemId without persisting user config', async () => {
     const { result } = renderHook(() => useDeployments(), {
       wrapper: DeploymentsProvider,
@@ -273,7 +398,32 @@ describe('DeploymentsContext', () => {
     expect(contextMocks.setSelectedDeployment).not.toHaveBeenCalled();
   });
 
-  it('restoreDefaultSelection re-applies the persisted user preference over a stale in-memory value', async () => {
+  it('restoreDefaultSelection re-applies the operator default over a stale in-memory value when operator default is configured', async () => {
+    contextMocks.isDefaultDeploymentPinned = true;
+    contextMocks.defaultDeploymentId = mockItem1.id;
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() =>
+      expect(result.current.selectedItemId).toBe(mockItem1.id),
+    );
+
+    act(() => {
+      result.current.restoreSelectedItemId(mockItem2.id);
+    });
+    expect(result.current.selectedItemId).toBe(mockItem2.id);
+
+    act(() => {
+      result.current.restoreDefaultSelection();
+    });
+
+    expect(result.current.selectedItemId).toBe(mockItem1.id);
+    expect(contextMocks.setSelectedDeployment).not.toHaveBeenCalled();
+  });
+
+  it('restoreDefaultSelection uses the user-persisted preference when no operator default is configured', async () => {
     contextMocks.selectedDeploymentId = mockItem1.id;
 
     const { result } = renderHook(() => useDeployments(), {
@@ -297,7 +447,32 @@ describe('DeploymentsContext', () => {
     expect(contextMocks.setSelectedDeployment).not.toHaveBeenCalled();
   });
 
+  it('keeps alphabetical order and user preference when default pinning is disabled', async () => {
+    contextMocks.defaultDeploymentId = mockItem2.id;
+    contextMocks.selectedDeploymentId = mockItem1.id;
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        mockItem1.id,
+        mockItem2.id,
+      ]);
+      expect(result.current.selectedItemId).toBe(mockItem1.id);
+    });
+
+    act(() => {
+      result.current.restoreSelectedItemId(mockItem2.id);
+      result.current.restoreDefaultSelection();
+    });
+
+    expect(result.current.selectedItemId).toBe(mockItem1.id);
+  });
+
   it('restoreDefaultSelection falls back to the operator default when there is no persisted preference', async () => {
+    contextMocks.isDefaultDeploymentPinned = true;
     contextMocks.defaultDeploymentId = mockItem2.id;
 
     const { result } = renderHook(() => useDeployments(), {
@@ -332,7 +507,84 @@ describe('DeploymentsContext', () => {
     });
   });
 
+  it('prefers the operator default over the user-persisted preference when both are set', async () => {
+    contextMocks.isDefaultDeploymentPinned = true;
+    contextMocks.defaultDeploymentId = mockItem2.id;
+    contextMocks.selectedDeploymentId = mockItem1.id;
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+  });
+
+  it('applies pinning when app config arrives after deployments', async () => {
+    contextMocks.selectedDeploymentId = mockItem1.id;
+
+    const { result, rerender } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedItemId).toBe(mockItem1.id);
+    });
+
+    contextMocks.defaultDeploymentId = mockItem2.id;
+    contextMocks.isDefaultDeploymentPinned = true;
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        mockItem2.id,
+        mockItem1.id,
+      ]);
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+  });
+
+  it.each([
+    [
+      'user selection',
+      (setSelection: (id: string) => void) => setSelection(mockItem2.id),
+    ],
+    [
+      'conversation restoration',
+      (
+        _setSelection: (id: string) => void,
+        restoreSelection: (id: string) => void,
+      ) => restoreSelection(mockItem2.id),
+    ],
+  ])(
+    'does not override an explicit %s when app config arrives late',
+    async (_name, select) => {
+      const { result, rerender } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => {
+        select(
+          result.current.setSelectedItemId,
+          result.current.restoreSelectedItemId,
+        );
+      });
+
+      contextMocks.defaultDeploymentId = mockItem1.id;
+      contextMocks.isDefaultDeploymentPinned = true;
+      rerender();
+
+      await waitFor(() => {
+        expect(result.current.selectedItemId).toBe(mockItem2.id);
+      });
+    },
+  );
+
   it('uses operator default when user config selected deployment is absent', async () => {
+    contextMocks.isDefaultDeploymentPinned = true;
     contextMocks.defaultDeploymentId = mockItem2.id;
 
     const { result } = renderHook(() => useDeployments(), {
