@@ -26,7 +26,7 @@ describe('useShareLink', () => {
     });
 
     const { result } = renderHook(() =>
-      useShareLink(fakeShareApi, 'gpt-4o', undefined, ORIGIN),
+      useShareLink(fakeShareApi, 'gpt-4o', ORIGIN),
     );
 
     expect(result.current.isLoading).toBe(true);
@@ -46,7 +46,7 @@ describe('useShareLink', () => {
     createShareLink.mockRejectedValue(new Error('network down'));
 
     const { result } = renderHook(() =>
-      useShareLink(fakeShareApi, 'gpt-4o', undefined, ORIGIN),
+      useShareLink(fakeShareApi, 'gpt-4o', ORIGIN),
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -63,7 +63,7 @@ describe('useShareLink', () => {
     });
 
     const { result } = renderHook(() =>
-      useShareLink(fakeShareApi, 'gpt-4o', undefined, ORIGIN),
+      useShareLink(fakeShareApi, 'gpt-4o', ORIGIN),
     );
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -84,7 +84,6 @@ describe('useShareLink', () => {
     expect(createShareLink).toHaveBeenCalledWith({
       createShareLinkDto: {
         itemId: 'gpt-4o',
-        resourceKind: undefined,
         access: [ShareLinkAccess.View, ShareLinkAccess.Edit],
       },
     });
@@ -108,7 +107,7 @@ describe('useShareLink', () => {
     });
 
     const { result, rerender } = renderHook(
-      ({ itemId }) => useShareLink(fakeShareApi, itemId, undefined, ORIGIN),
+      ({ itemId }) => useShareLink(fakeShareApi, itemId, ORIGIN),
       { initialProps: { itemId: 'gpt-4o' } },
     );
     await waitFor(() => expect(result.current.isLoading).toBe(false));

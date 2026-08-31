@@ -16,7 +16,6 @@ import { PublishService } from '../publish.service';
 const TEST_USER = {
   sub: 'user-123',
   at: 'test-access-token',
-  /* The service qualifies a prompt's bucket-relative id against the caller's own bucket. */
   bucket: 'bucket-123',
   claims: { name: 'Test User' },
 };

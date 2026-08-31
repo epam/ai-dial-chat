@@ -79,7 +79,7 @@ describe('PromptsPublicService', () => {
       const result = await service.listPublicPrompts(TOKEN);
 
       expect(result.prompts).toHaveLength(1);
-      expect(result.prompts[0].id).toBe('org-prompt');
+      expect(result.prompts[0].id).toBe('prompts/public/org-prompt');
       expect(result.prompts[0]).toMatchObject({
         isMy: false,
         canEdit: false,
@@ -102,7 +102,10 @@ describe('PromptsPublicService', () => {
 
       const result = await service.getPublicPrompt(TOKEN, 'org-prompt');
 
-      expect(result).toMatchObject({ id: 'org-prompt', name: 'My Prompt' });
+      expect(result).toMatchObject({
+        id: 'prompts/public/org-prompt',
+        name: 'My Prompt',
+      });
     });
 
     it('throws NotFoundException when the public prompt does not exist', async () => {

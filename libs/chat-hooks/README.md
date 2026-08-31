@@ -2053,15 +2053,16 @@ const error = validatePromptName('My Prompt'); // PromptFieldError | null
 const remaining = getRemainingCharacters('My Prompt', PROMPT_NAME_MAX_LENGTH);
 ```
 
-### PromptSource / buildPromptResourceUrl / parsePromptResourceUrl
+### PromptSource / parsePromptResourceUrl
 
-Builds/parses the `prompts/{bucket}/{path}` resource URL used to address a prompt outside the caller's own bucket (e.g. a shared-with-me prompt).
+`PromptSource` identifies which prompt namespace a catalog prompt item came from. `CatalogItem.id` for a prompt is always the full `prompts/{bucket}/{path}` resource path, regardless of source; `parsePromptResourceUrl` splits it back into `{ bucket, path }` for the one caller that still needs the bucket-relative sub-path on its own — the organisation (public) prompt read, whose endpoint kept a bucket-relative `path` argument.
 
 ```ts
-import { buildPromptResourceUrl, PromptSource } from '@epam/ai-dial-chat-hooks';
+import { parsePromptResourceUrl, PromptSource } from '@epam/ai-dial-chat-hooks';
 
-buildPromptResourceUrl({ bucket: 'other-user-bucket', path: 'My Prompt' });
-// 'prompts/other-user-bucket/My Prompt'
+PromptSource.SharedWithMe; // 'sharedWithMe'
+parsePromptResourceUrl('prompts/public/Work/AI/summarize');
+// { bucket: 'public', path: 'Work/AI/summarize' }
 ```
 
 ### buildPromptExportEnvelope / serializePromptExport / buildPromptExportFileName

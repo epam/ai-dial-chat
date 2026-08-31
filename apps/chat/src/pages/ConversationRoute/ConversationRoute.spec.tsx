@@ -1145,7 +1145,7 @@ describe('ConversationRoute', () => {
   describe('pending parameterized prompt from router state', () => {
     it('opens the parameters popup for a pendingPrompt passed as router state', async () => {
       const pendingPrompt = {
-        id: 'Work/AI/summarize',
+        id: 'prompts/my-bucket/Work/AI/summarize',
         name: 'summarize',
         content: 'Summarize {{text}}',
         description: 'A summarizer prompt',

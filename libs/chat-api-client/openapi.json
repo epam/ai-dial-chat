@@ -2904,23 +2904,13 @@
         "operationId": "updatePrompt",
         "parameters": [
           {
-            "name": "path",
+            "name": "id",
             "required": true,
             "in": "query",
-            "description": "Prompt path to update",
+            "description": "Full prompt resource path to update",
             "schema": {
               "maxLength": 2048,
-              "example": "Work/AI/my-prompt",
-              "type": "string"
-            }
-          },
-          {
-            "name": "bucket",
-            "required": false,
-            "in": "query",
-            "description": "DIAL Core bucket to read from. Defaults to the caller's own bucket; pass the owner bucket reported as `bucket` on a shared prompt to read that one. DIAL Core still enforces access, so a bucket the caller has no grant for resolves to 404.",
-            "schema": {
-              "example": "owner-bucket",
+              "example": "prompts/owner-bucket/Work/AI/summarize",
               "type": "string"
             }
           }
@@ -2969,13 +2959,13 @@
         "operationId": "deletePrompt",
         "parameters": [
           {
-            "name": "path",
+            "name": "id",
             "required": true,
             "in": "query",
-            "description": "Prompt path to delete",
+            "description": "Full prompt resource path to delete",
             "schema": {
               "maxLength": 2048,
-              "example": "Work/AI/my-prompt",
+              "example": "prompts/owner-bucket/Work/AI/summarize",
               "type": "string"
             }
           }
@@ -2997,33 +2987,23 @@
             "description": "DIAL Core error"
           }
         },
-        "summary": "Delete a personal prompt",
+        "summary": "Delete a personal or writable shared prompt",
         "tags": ["prompts"]
       }
     },
     "/api/v1/prompts/item": {
       "get": {
-        "description": "Reads a prompt from the caller's own bucket, or from the `bucket` given in the query — the owner bucket a shared prompt reports. DIAL Core authorises the read either way.",
+        "description": "Reads the exact DIAL resource `id` names, whether that is the caller's own bucket or another user's bucket for a prompt shared with the caller. DIAL Core authorises the read either way.",
         "operationId": "getPrompt",
         "parameters": [
           {
-            "name": "path",
+            "name": "id",
             "required": true,
             "in": "query",
-            "description": "Prompt path within the prompts namespace",
+            "description": "Full prompt resource path (`prompts/{bucket}/{path}`). Use the caller's own bucket for a personal prompt, or the owner bucket reported on a shared prompt's `id`. DIAL Core still enforces access, so an id the caller has no grant for resolves to 404.",
             "schema": {
               "maxLength": 2048,
-              "example": "Work/AI/my-prompt",
-              "type": "string"
-            }
-          },
-          {
-            "name": "bucket",
-            "required": false,
-            "in": "query",
-            "description": "DIAL Core bucket to read from. Defaults to the caller's own bucket; pass the owner bucket reported as `bucket` on a shared prompt to read that one. DIAL Core still enforces access, so a bucket the caller has no grant for resolves to 404.",
-            "schema": {
-              "example": "owner-bucket",
+              "example": "prompts/owner-bucket/Work/AI/summarize",
               "type": "string"
             }
           }
@@ -3263,23 +3243,13 @@
         "operationId": "movePrompt",
         "parameters": [
           {
-            "name": "path",
+            "name": "id",
             "required": true,
             "in": "query",
-            "description": "Prompt path to move",
+            "description": "Full prompt resource path to move",
             "schema": {
               "maxLength": 2048,
-              "example": "Work/AI/my-prompt",
-              "type": "string"
-            }
-          },
-          {
-            "name": "bucket",
-            "required": false,
-            "in": "query",
-            "description": "DIAL Core bucket to read from. Defaults to the caller's own bucket; pass the owner bucket reported as `bucket` on a shared prompt to read that one. DIAL Core still enforces access, so a bucket the caller has no grant for resolves to 404.",
-            "schema": {
-              "example": "owner-bucket",
+              "example": "prompts/owner-bucket/Work/AI/summarize",
               "type": "string"
             }
           }
@@ -4541,7 +4511,7 @@
     },
     "/api/v1/share/discard": {
       "post": {
-        "description": "Discards the authenticated user's own access to a shared catalog entity (application or toolset), a skill, or a conversation, via DIAL Core's discardSharedResources operation. Only affects the caller's own access — removing access for everyone else is a separate operation.",
+        "description": "Discards the authenticated user's own access to a shared catalog entity (application or toolset), a skill, a conversation, or a prompt, via DIAL Core's discardSharedResources operation. Only affects the caller's own access — removing access for everyone else is a separate operation.",
         "operationId": "discardSharedCatalogItem",
         "parameters": [],
         "requestBody": {
@@ -4587,20 +4557,20 @@
             "description": "DIAL Core is unavailable or timed out"
           }
         },
-        "summary": "Discard a shared catalog resource or conversation",
+        "summary": "Discard a shared catalog resource, conversation, or prompt",
         "tags": ["share"]
       }
     },
     "/api/v1/share/recipients": {
       "get": {
-        "description": "Returns how many users currently hold shared access to a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core's getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.",
+        "description": "Returns how many users currently hold shared access to a catalog entity (application or toolset), a skill, a conversation, or a prompt the caller owns, via DIAL Core's getSharedResources operation. Intended to be called when an owner opens the menu offering \"Revoke access\", so the count is never stale. Counts accepted invitations only — an issued but unopened share link is not counted.",
         "operationId": "getShareRecipientsCount",
         "parameters": [
           {
             "name": "itemId",
             "required": true,
             "in": "query",
-            "description": "Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to count current recipients for.",
+            "description": "Identifier of the owned catalog item, skill, conversation, or prompt to count current recipients for — a full DIAL Core resource path.",
             "schema": {
               "example": "applications/owner-bucket/my-app",
               "type": "string"
@@ -4640,7 +4610,7 @@
     },
     "/api/v1/share/revoke": {
       "post": {
-        "description": "Revokes every outstanding share grant on a catalog entity (application or toolset), a skill, or a conversation the caller owns, via DIAL Core's revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller's own access to a resource shared with them is a separate operation.",
+        "description": "Revokes every outstanding share grant on a catalog entity (application or toolset), a skill, a conversation, or a prompt the caller owns, via DIAL Core's revokeSharedResources operation. Affects all recipients at once — DIAL Core cannot target a single recipient. Discarding only the caller's own access to a resource shared with them is a separate operation.",
         "operationId": "revokeSharedAccess",
         "parameters": [],
         "requestBody": {
@@ -7996,8 +7966,8 @@
         "type": "object",
         "properties": {
           "installed": {
-            "description": "Favorited prompt paths.",
-            "example": ["Work/AI/summarize"],
+            "description": "Favorited prompt resource ids (`prompts/{bucket}/{path}`).",
+            "example": ["prompts/my-bucket/Work/AI/summarize"],
             "type": "array",
             "items": {
               "type": "string"
@@ -8090,8 +8060,8 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Prompt path within the prompts namespace.",
-            "example": "Work/AI/summarize",
+            "description": "Full prompt resource path (`prompts/{bucket}/{path}`).",
+            "example": "prompts/my-bucket/Work/AI/summarize",
             "maxLength": 2048
           },
           "isInstalled": {
@@ -10040,13 +10010,8 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Prompt path within the prompts namespace (used as stable ID)",
-            "example": "Work/AI/my-prompt"
-          },
-          "bucket": {
-            "type": "string",
-            "description": "DIAL Core bucket the prompt lives in. For a prompt shared with the caller this is the owner bucket, not the caller bucket, so `id` can be qualified back into a `prompts/{bucket}/{id}` resource url",
-            "example": "my-bucket"
+            "description": "Full DIAL Core resource path identifying the prompt (`prompts/{bucket}/{path}`), the same shape every other resource type exposes. For a prompt shared with the caller, `bucket` is the owner bucket, not the caller bucket.",
+            "example": "prompts/my-bucket/Work/AI/my-prompt"
           },
           "name": {
             "type": "string",
@@ -10105,7 +10070,6 @@
         },
         "required": [
           "id",
-          "bucket",
           "name",
           "content",
           "folderId",
@@ -11065,12 +11029,6 @@
             "description": "Identifier (DIAL Core resource path) of the entity to share.",
             "example": "gpt-4o"
           },
-          "resourceKind": {
-            "type": "string",
-            "description": "Set to `prompt` when `itemId` is a bucket-relative prompt path (as returned by the prompts endpoints) rather than a full DIAL Core resource path. The caller's own bucket is then used to qualify it.",
-            "enum": ["prompt"],
-            "example": "prompt"
-          },
           "access": {
             "type": "array",
             "description": "Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.",
@@ -11213,7 +11171,7 @@
         "properties": {
           "itemId": {
             "type": "string",
-            "description": "Identifier (DIAL Core resource path) of the catalog item, skill, or conversation to discard access to.",
+            "description": "Identifier of the catalog item, skill, conversation, or prompt to discard access to — a full DIAL Core resource path.",
             "example": "applications/owner-bucket/my-app"
           }
         },
@@ -11250,7 +11208,7 @@
         "properties": {
           "itemId": {
             "type": "string",
-            "description": "Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to revoke all shared access to.",
+            "description": "Identifier of the owned catalog item, skill, conversation, or prompt to revoke all shared access to — a full DIAL Core resource path.",
             "example": "applications/owner-bucket/my-app"
           }
         },
