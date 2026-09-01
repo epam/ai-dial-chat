@@ -159,4 +159,42 @@ describe('useAttachmentValidation', () => {
     rerender();
     expect(result.current.validateAttachment).toBe(first);
   });
+
+  it('keeps validateAttachment stable when allowedMimeTypes is a new array with the same contents', () => {
+    const onValidationError = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) =>
+        useAttachmentValidation({ allowedMimeTypes, onValidationError }),
+      { initialProps: { allowedMimeTypes: ['image/png'] } },
+    );
+
+    const first = result.current.validateAttachment;
+    rerender({ allowedMimeTypes: ['image/png'] });
+    expect(result.current.validateAttachment).toBe(first);
+  });
+
+  it('updates validateAttachment and re-notifies when allowedMimeTypes content actually changes', () => {
+    const onValidationError = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) =>
+        useAttachmentValidation({ allowedMimeTypes, onValidationError }),
+      { initialProps: { allowedMimeTypes: ['image/png'] } },
+    );
+
+    const first = result.current.validateAttachment;
+    rerender({ allowedMimeTypes: ['audio/mpeg'] });
+    expect(result.current.validateAttachment).not.toBe(first);
+
+    result.current.validateAttachment(makeAttachment('image/png'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(onValidationError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reason: AttachmentValidationErrorReason.UnsupportedType,
+        allowedMimeTypes: ['audio/mpeg'],
+      }),
+    );
+  });
 });
