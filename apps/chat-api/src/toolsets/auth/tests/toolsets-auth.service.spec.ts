@@ -99,6 +99,54 @@ describe('ToolsetsAuthService', () => {
       expect(sentBody.code).toBeUndefined();
     });
 
+    /*
+     * Core gates every on-behalf-of mint on this flag, so a toolset signed in
+     * without it works interactively and still fails with `consent-required`
+     * the moment an application reaches for it in the background.
+     */
+    it('forwards offline usage consent, including an explicit decline', async () => {
+      for (const consent of [true, false] as const) {
+        const { service } = makeWriteService();
+        const signinSpy = vi
+          .spyOn(service['dialClient'].client, 'toolsetSignin')
+          .mockResolvedValue(mutationSdkOk);
+
+        await service.loginToolset('user1', 'token', id, {
+          url: id,
+          credentialsLevel: ToolsetCredentialsLevel.User,
+          authenticationType: ToolsetAuthType.ApiKey,
+          apiKey: 'secret-key',
+          offlineUsageConsent: consent,
+        });
+
+        const sentBody = signinSpy.mock.calls[0][0].body as Record<
+          string,
+          unknown
+        >;
+        expect(sentBody.offlineUsageConsent).toBe(consent);
+      }
+    });
+
+    it('leaves offline usage consent unset when the caller did not ask', async () => {
+      const { service } = makeWriteService();
+      const signinSpy = vi
+        .spyOn(service['dialClient'].client, 'toolsetSignin')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.loginToolset('user1', 'token', id, {
+        url: id,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: ToolsetAuthType.ApiKey,
+        apiKey: 'secret-key',
+      });
+
+      const sentBody = signinSpy.mock.calls[0][0].body as Record<
+        string,
+        unknown
+      >;
+      expect(sentBody.offlineUsageConsent).toBeUndefined();
+    });
+
     it('posts OAuth code + redirectUri to the signin endpoint', async () => {
       const { service } = makeWriteService();
       const signinSpy = vi

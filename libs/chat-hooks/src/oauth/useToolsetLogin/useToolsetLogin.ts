@@ -13,6 +13,7 @@ import {
   openToolsetOAuthPopup,
 } from '../popup';
 import {
+  OAuthResourceKind,
   ToolsetAuthStatus,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
@@ -60,6 +61,13 @@ export interface ToolsetLoginParams {
    * status may be stale even when it still reads `SIGNED_IN`.
    */
   forceStale?: boolean;
+  /**
+   * Whether the user agreed an application may use this credential while they
+   * are away. DIAL Core gates every on-behalf-of mint on it, so a toolset
+   * signed in without it works interactively and still fails with
+   * `consent-required` in the background. Absent means not granted.
+   */
+  offlineUsageConsent?: boolean;
 }
 
 /** Parameters for {@link useToolsetLogin}. */
@@ -127,7 +135,13 @@ export const useToolsetLogin = ({
 
   const loginWithOAuth = useCallback(
     async (params: ToolsetLoginParams): Promise<ToolsetLoginOutcome> => {
-      const { toolsetId, credentialsLevel, oauthSettings, forceStale } = params;
+      const {
+        toolsetId,
+        credentialsLevel,
+        oauthSettings,
+        forceStale,
+        offlineUsageConsent,
+      } = params;
       const authSettings: ToolsetOAuthSettings = {
         clientId: oauthSettings?.clientId,
         authorizationEndpoint: oauthSettings?.authorizationEndpoint,
@@ -164,6 +178,8 @@ export const useToolsetLogin = ({
               toolsetId,
               callbackPath,
               credentialsLevel,
+              OAuthResourceKind.Toolset,
+              offlineUsageConsent,
             );
           })()
         : initiateOAuthLogin(
@@ -171,6 +187,7 @@ export const useToolsetLogin = ({
             toolsetId,
             callbackPath,
             credentialsLevel,
+            offlineUsageConsent,
           );
 
       if (initiation.type === ToolsetOAuthInitiationResultType.Blocked) {
@@ -237,6 +254,7 @@ export const useToolsetLogin = ({
         apiKey,
         isCurrentlyFailed,
         forceStale,
+        offlineUsageConsent,
       } = params;
 
       try {
@@ -250,6 +268,7 @@ export const useToolsetLogin = ({
           authenticationType:
             authenticationType as ToolsetLoginBodyDto['authenticationType'],
           apiKey: apiKey?.trim(),
+          offlineUsageConsent,
         };
         await loginToolset(toolsetId, body);
         emitToolsetLoginSuccess<ToolsetCredentialsLevel>({

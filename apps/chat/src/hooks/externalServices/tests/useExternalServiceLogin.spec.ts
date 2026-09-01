@@ -157,6 +157,8 @@ describe('useExternalServiceLogin', () => {
         ROUTES.ToolsetSignIn,
         'USER',
         'external-service',
+        // Offline usage consent — undefined here because the caller did not ask for it.
+        undefined,
       );
       expect(outcome).toEqual({
         type: ExternalServiceLoginOutcomeType.Success,
