@@ -239,6 +239,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <div
         role="dialog"
         aria-label={header}
+        tabIndex={-1}
         onKeyDown={(e) => {
           if (e.key === 'Escape') onClose?.();
         }}

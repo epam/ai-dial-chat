@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -111,9 +112,11 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   const [channelId, setChannelId] = useState<string | null>(null);
   const [pendingEvents, setPendingEvents] = useState<PendingSigninEvent[]>([]);
 
-  // Mutated during render, not in a `useEffect` — see client-channel-protocol spec.
   const isActiveRef = useRef(isActive);
-  isActiveRef.current = isActive;
+  // Sync before effects fire so callbacks always see the latest value — see client-channel-protocol spec.
+  useLayoutEffect(() => {
+    isActiveRef.current = isActive;
+  });
 
   const channelIdRef = useRef<string | null>(null);
   const eventsMapRef = useRef(new Map<string, PendingSigninEvent>());
@@ -296,14 +299,13 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
 
       return new Promise<string | null>((resolve) => {
         const waiters = channelWaitersRef.current;
-        let timeoutId: ReturnType<typeof setTimeout>;
         const settle = (id: string | null) => {
           waiters.delete(settle);
           clearTimeout(timeoutId);
           resolve(id);
         };
         waiters.add(settle);
-        timeoutId = setTimeout(() => settle(channelIdRef.current), timeoutMs);
+        const timeoutId = setTimeout(() => settle(channelIdRef.current), timeoutMs);
       });
     },
     [ensureConnected],

@@ -78,12 +78,12 @@ describe('useConversationStream', () => {
     };
   });
 
-  it('delegates start to the injected transport', () => {
+  it('delegates start to the injected transport', async () => {
     const { result } = renderHook(() =>
       useHookHarness({ transport, conversationId: 'bucket/conv' }),
     );
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream('bucket/conv', 'hi', 1, 'gpt-4o');
     });
 
@@ -95,7 +95,7 @@ describe('useConversationStream', () => {
       useHookHarness({ transport, conversationId: 'bucket/conv' }),
     );
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream('bucket/conv', 'hi', 1, 'gpt-4o');
     });
 
@@ -131,14 +131,14 @@ describe('useConversationStream', () => {
     expect(result.current.conversation?.messages).toHaveLength(0);
   });
 
-  it('drops a chunk whose generation id no longer matches the active generation', () => {
+  it('drops a chunk whose generation id no longer matches the active generation', async () => {
     const { result, rerender } = renderHook(
       (props: { conversationId: string }) =>
         useHookHarness({ transport, conversationId: props.conversationId }),
       { initialProps: { conversationId: 'bucket/conv' } },
     );
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream(
         'bucket/conv',
         'hi',
@@ -150,7 +150,7 @@ describe('useConversationStream', () => {
     });
     const staleOptions = capturedOptions;
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream(
         'bucket/conv',
         'hi again',
@@ -208,12 +208,12 @@ describe('useConversationStream', () => {
     expect(transport.getConversation).not.toHaveBeenCalled();
   });
 
-  it('passes generationId and mode, translating regenerate index for the backend', () => {
+  it('passes generationId and mode, translating regenerate index for the backend', async () => {
     const { result } = renderHook(() =>
       useHookHarness({ transport, conversationId: 'bucket/conv' }),
     );
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream(
         'bucket/conv',
         'hi',
@@ -238,12 +238,12 @@ describe('useConversationStream', () => {
     );
   });
 
-  it('translates the edit placeholder index to the user message index', () => {
+  it('translates the edit placeholder index to the user message index', async () => {
     const { result } = renderHook(() =>
       useHookHarness({ transport, conversationId: 'bucket/conv' }),
     );
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream(
         'bucket/conv',
         'hi',
@@ -585,7 +585,7 @@ describe('useConversationStream', () => {
         useHookHarness({ transport, conversationId: 'bucket/conv', overlay }),
       );
 
-      act(() => {
+      await act(async () => {
         result.current.stream.startStream('bucket/conv', 'hi', 0, 'gpt-4o');
       });
       expect(overlay.notifyGenerationStart).toHaveBeenCalledOnce();
