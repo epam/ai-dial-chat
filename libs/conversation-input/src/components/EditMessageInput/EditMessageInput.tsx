@@ -140,7 +140,6 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
       <Input
         message={message}
         ariaLabel={ariaLabel}
-        isStacked
         hideActionBar
         pendingDropFiles={pendingDropFiles}
         onDropFilesConsumed={handleDropFilesConsumed}
