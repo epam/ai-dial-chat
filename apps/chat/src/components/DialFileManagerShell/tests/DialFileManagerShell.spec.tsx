@@ -19,6 +19,11 @@ interface CapturedActionLabels {
   actionLabels?: Partial<Record<DialFileManagerActions, string>>;
 }
 
+interface CapturedTreeOptions extends CapturedActionLabels {
+  loadedPaths?: Set<string>;
+  loadingPaths?: Set<string>;
+}
+
 const capturedDialFileManagerProps: {
   current: {
     onCreateFolder?: unknown;
@@ -26,7 +31,7 @@ const capturedDialFileManagerProps: {
     autoSelectUploadedItems?: boolean;
     onGetInfo?: unknown;
     gridOptions?: CapturedActionLabels;
-    treeOptions?: CapturedActionLabels;
+    treeOptions?: CapturedTreeOptions;
     bulkActionsToolbarOptions?: CapturedActionLabels;
     toolbarOptions?: {
       newActions?: { uploadArchive?: { label?: string } };
@@ -77,7 +82,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       onGetInfo?: unknown;
       autoSelectUploadedItems?: boolean;
       gridOptions?: CapturedActionLabels;
-      treeOptions?: CapturedActionLabels;
+      treeOptions?: CapturedTreeOptions;
       bulkActionsToolbarOptions?: CapturedActionLabels;
       toolbarOptions?: {
         newActions?: { uploadArchive?: { label?: string } };
@@ -343,7 +348,7 @@ describe('DialFileManagerShell', () => {
 
   it('disables destination-folder confirmation while the selected popup folder is loading', () => {
     renderShell({
-      folderPopupLoadingPaths: new Set(['/My files/reports']),
+      folderPopupLoadingPaths: new Set(['/My files/reports/']),
     });
 
     act(() => {
@@ -376,6 +381,20 @@ describe('DialFileManagerShell', () => {
     expect(capturedDialFileManagerProps.current?.onFolderPopupPathChange).toBe(
       onFolderPopupPathChange,
     );
+  });
+
+  it('passes loaded and popup-loading paths through the tree options', () => {
+    const loadedPaths = new Set(['/My files/Loaded folder/']);
+    const folderPopupLoadingPaths = new Set(['/My files/Loading folder/']);
+
+    renderShell({ loadedPaths, folderPopupLoadingPaths });
+
+    expect(capturedDialFileManagerProps.current?.treeOptions?.loadedPaths).toBe(
+      loadedPaths,
+    );
+    expect(
+      capturedDialFileManagerProps.current?.treeOptions?.loadingPaths,
+    ).toBe(folderPopupLoadingPaths);
   });
 
   it('does not set onGridApiChange on destinationFolderPopupOptions', () => {
