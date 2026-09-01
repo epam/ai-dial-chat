@@ -1,7 +1,7 @@
 ## Context
 
-`ImportExportQueue` (at the time of writing in `libs/conversation-panel`, moved to
-`libs/chat-shared` by Decision 4) is a controlled, labels-driven panel fed by two
+`ImportExportQueue` (in `libs/conversation-panel`, where Decision 4 keeps it) is a controlled,
+labels-driven panel fed by two
 hooks in `libs/chat-hooks` — `useConversationExport` and `useConversationImport` — that share the
 `useConversationTransferQueue` primitive. Today a job is `{ id, subject, status }` where `subject`
 is a conversation (`{ kind: Single, title, sourceBreadcrumb? }` or `{ kind: All }`). The panel
@@ -9,18 +9,18 @@ renders one row per job labelled by that title, plus a single aggregate `Progres
 is `settledJobs / totalJobs` — for the overwhelmingly common single-job case that is 0% or 100%
 and nothing in between.
 
-The new design reframes the row around the **file** rather than the conversation, and demands a
-determinate per-row ring. Both hooks already loop over attachments through `runWithConcurrency`
-with a known ref list, so real completion counts are available; they are simply never reported.
+The new design reframes the row around the **file** rather than the conversation and replaces that
+aggregate bar with a per-row activity indicator. Both hooks already loop over attachments through
+`runWithConcurrency` with a known ref list, so real completion counts are available and are reported
+on the job contract, even though the row itself renders an indeterminate spinner (Decision 4).
 
 Constraints that shape the solution:
 
-- `libs/chat-shared` sits at the base of the lib graph — it may take the UI kit and Tabler as
-  peers (it already does, for `CopyButton`, `DeploymentIcon` and friends) but may not import another
-  workspace lib. Neither it nor `conversation-panel` may reach i18n; every user-visible string
-  arrives through `labels`.
-- `@epam/ai-dial-ui-kit` ships `ProgressBar` (linear) only — there is no circular indicator
-  (confirmed via the kit's MCP catalogue).
+- `libs/chat-shared` sits at the base of the lib graph and owns the transfer-job contracts;
+  `conversation-panel` depends on it, on the UI kit, and on Tabler. Neither lib may reach i18n;
+  every user-visible string arrives through `labels`.
+- `@epam/ai-dial-ui-kit` ships `ProgressBar` (linear) and `Spinner` (indeterminate ring); it has no
+  determinate circular indicator (confirmed via the kit's MCP catalogue).
 - The in-flight `remove-cross-package-reexports` change forbids compatibility re-export shims, so
   any symbol that moves packages must have its importers updated directly.
 - WCAG 2.1 AAA: a control that only exists on hover is unreachable by keyboard.
@@ -30,7 +30,8 @@ Constraints that shape the solution:
 **Goals:**
 
 - One row per transferred file, identified by the file's own name, with a truncation tooltip.
-- A determinate ring that starts moving on the first unit of work and never runs backwards.
+- A per-row activity indicator on every in-flight row, in place of one aggregate bar for the queue.
+- A monotonic progress contract on the job, computed once and shared by both transfer directions.
 - Cancellation that leaves visible evidence (`Canceled`) instead of erasing the row.
 - A failure that tells the user *why*, in their language, without the lib knowing any language.
 - Identical semantics for import and export, on one shared contract.
@@ -41,7 +42,7 @@ Constraints that shape the solution:
   `uploadFile` on the generated client expose no stream or `Content-Length` hook.
 - Changing the export file-name template (`conversation-export` spec, "Exported files use a
   deterministic name built from a fixed template"). See Open Questions.
-- Promoting `CircularProgress` into `@epam/ai-dial-ui-kit` (separate repository/release train).
+- Adding a determinate progress indicator to `@epam/ai-dial-ui-kit` (separate repository/release train).
 - Redesigning the separate success/failure notification toasts, which stay as they are.
 - Any backend change, new endpoint, or feature flag.
 
@@ -59,7 +60,7 @@ export enum ConversationTransferUnitKind {
 export interface ConversationTransferProgress {
   /** 0–100. Monotonically non-decreasing for the life of a job. */
   percent: number;
-  /** Optional readout for `aria-valuetext`; absent while the count is unknown. */
+  /** Optional unit readout; absent while the count is unknown. */
   units?: {
     completed: number;
     total: number;
@@ -70,7 +71,7 @@ export interface ConversationTransferProgress {
 
 **Why not `{ completed, total }` in raw work units.** The attachment count is unknown until the
 conversation has been fetched. A job that starts at `1/1` and then learns it has ten attachments
-would jump from 100% back to 9% — the one thing a determinate ring must never do. Fixed phase
+would jump from 100% back to 9% — the one thing a progress readout must never do. Fixed phase
 weights avoid the problem entirely: the phase boundaries are known at enqueue time, and only the
 *subdivision* of the transfer phase is discovered later.
 
@@ -86,14 +87,14 @@ Phase weights (constants in `libs/chat-hooks/src/conversation/conversation-trans
 A phase with zero discovered units is skipped: its whole weight is credited at once, so an
 attachment-free `.dial` export still runs 15 → 85 → 100 rather than stalling.
 
-**Why not indeterminate until the count is known.** The Figma frame carries an explicit
-"PAY ATTENTION" note that the loader must be determinate. An indeterminate opening frame would
-violate it for exactly the case the design illustrates.
+**Why the contract stays determinate even though the row is not.** The Figma frame carries an
+explicit "PAY ATTENTION" note that the loader must be determinate, and the queue no longer honours
+it (Decision 4). The contract is kept regardless: it is the only place the real completion counts
+exist, hosts can read it, and restoring a determinate indicator later needs no hook change.
 
 `percent` is clamped and `Math.max`-ed against the previous value inside `setJobProgress`, so a
 concurrency race between two attachment callbacks cannot produce a backwards step. On reaching
-`Success` the queue writes `percent: 100`; `Failed` and `Canceled` freeze the last value (the ring
-is not rendered in those states anyway).
+`Success` the queue writes `percent: 100`; `Failed` and `Canceled` freeze the last value.
 
 ### 2. `Canceled` is a terminal status, distinct from dismissal
 
@@ -160,41 +161,42 @@ conservative default. Moving to `zipAsync` in a worker (or a streaming ZIP write
 and is out of scope here; the cap is a guardrail against tab death, not a product policy about how
 much a user may export.
 
-### 4. `CircularProgress` and the queue are built in `libs/chat-shared`
+### 4. The in-progress indicator is the kit's `Spinner`, not a bespoke ring
 
-Two concentric SVG `<circle>`s, the foreground driven by `stroke-dasharray` / `stroke-dashoffset`,
-rotated `-90deg` so the sweep starts at twelve o'clock. It carries `role="progressbar"` with
-`aria-valuenow` / `aria-valuemin` / `aria-valuemax`, an `aria-label` supplied by the caller, and
-`aria-valuetext` when the caller passes one.
+`@epam/ai-dial-ui-kit` already ships `Spinner` — a rotating ring sized by `size` and named by
+`ariaLabel`. The queue renders it at `DIAL_ICON_SIZE.SM` inside the row's status slot. No ring lives
+in `libs/conversation-panel`.
 
-**Direction.** The ring is *not* mirrored in RTL. It is a symmetric indicator, which `AGENTS.md`
-§RTL explicitly exempts, and a counter-clockwise progress ring reads as *undoing* work in every
-locale.
+**Indeterminate, by consequence.** `Spinner` shows activity, not completion, so `job.progress` is
+not rendered. The progress contract stays in `libs/chat-shared` (the hooks still compute it and
+hosts may read it), but the queue row does not surface a percentage or a unit readout, and the queue
+exposes no progress-ring color overrides.
 
-**Why not the kit's `ProgressBar`.** It is linear; the design's row has a 20px square status slot
-with no horizontal room, and swapping in a bar would change the row's whole geometry.
+**Direction.** `Spinner` is a symmetric indicator, which `AGENTS.md` §RTL explicitly exempts from
+mirroring.
 
-**Why `chat-shared` rather than `conversation-panel`.** `conversation-panel` depends on
-`react-window` and peers on `@epam/ai-dial-sidebar`; a host that wants the transfer toast and
-nothing else would take both on. `chat-shared` already owns the `ConversationTransferJob` contract
-the queue renders, already ships presentational components (`CopyButton`, `DeploymentIcon`,
-`PanelEmptyState`, …), and already peers on the UI kit — so the queue and its ring sit beside the
-model they present, with no new dependency edge. (The `AGENTS.md` line describing `chat-shared` as
-"interfaces and types only" is stale relative to the code and is not a constraint this change can
-honour or violate.) The CSS custom properties are renamed accordingly: `--cp-transfer-queue-*` →
-`--ieq-*` and the ring's own `--cprog-*`, matching the short-prefix convention the other
-`chat-shared` stylesheets use (`--pes-*`, `--rs-*`).
+**Nested live region.** `Spinner`'s root carries `role="status"` inside the queue's own
+`role="status" aria-live="polite"` panel. That redundancy belongs to the installed kit component and
+is left alone per `.claude/rules/a11y.md` §Scope boundary; tests distinguish the queue panel by its
+`aria-live` attribute.
 
-**Why local rather than a UI-kit contribution.** `@epam/ai-dial-ui-kit` lives in a separate
-repository on its own release cadence; blocking this change on a kit release is not warranted.
-Recorded as a follow-up in Open Questions.
+**Why `conversation-panel` rather than `chat-shared`.** The queue stays where it already was: it
+is the conversation panel's own transfer surface, reached only from the panel's export/import
+menus, and `chat-shared` keeps what it is good at — the `ConversationTransferJob` contract and the
+error taxonomy that both the hooks and the panel import. Moving the queue down to `chat-shared`
+would buy portability for a host that wants the toast without the panel's `react-window` and
+`@epam/ai-dial-sidebar` dependencies, at the cost of splitting the transfer UI across two libs;
+until such a host exists in this workspace, the split is not worth paying for, and the move stays
+available as a later, mechanical one. The queue keeps its `--cp-transfer-queue-*` custom
+properties — one namespace for everything `conversation-panel` themes, and no rename for hosts that
+already override the queue.
 
 ### 5. Hover-to-cancel is implemented as opacity, not conditional mounting
 
-The ring and the cancel button occupy the same CSS grid cell of the status slot, so switching
+The spinner and the cancel button occupy the same CSS grid cell of the status slot, so switching
 between them shifts nothing. The button is **always mounted and focusable**; visibility is driven
 by `opacity-0 group-hover:opacity-100 group-focus-within:opacity-100` on the row's `group`, with
-the ring taking the inverse. Conditionally mounting the button on `onMouseEnter` would make cancel
+the spinner taking the inverse. Conditionally mounting the button on `onMouseEnter` would make cancel
 unreachable by keyboard, which fails the AAA target the repo sets.
 
 ### 6. The file name is resolved at enqueue, not at completion
@@ -211,7 +213,7 @@ simply `file.name`.
 
 ### 7. The file-type icon is derived from the extension
 
-A pure `getTransferFileIcon(fileName)` in `libs/chat-shared` maps `.dial`/`.zip` to
+A pure `getTransferFileIcon(fileName)` in `libs/conversation-panel` maps `.dial`/`.zip` to
 `IconFileZip` and `.json` to `IconJson`, with `IconFile` as the fallback. Tabler only, per the
 project's "no inline SVGs" rule; the DIAL-branded document glyph in the Figma frame has no Tabler
 equivalent and is deferred as a design-asset task.
@@ -219,10 +221,11 @@ equivalent and is deferred as a design-asset task.
 ## Risks / Trade-offs
 
 - **Weighted percentage is an approximation.** One 400 MB attachment and one 4 KB attachment each
-  advance the ring by the same slice, so the ring can sit still for a long time inside the
-  transfer phase. → Mitigated by the `units` readout ("3 of 10 attachments") surfaced through
-  `aria-valuetext` and available to the host for a visible caption later. Byte-level progress was
-  considered and ruled out: the generated client returns a whole `Response`, not a stream.
+  advance `percent` by the same slice, so it can sit still for a long time inside the transfer
+  phase. → Not user-visible today, since the row renders an indeterminate `Spinner` (Decision 4);
+  the `units` readout ("3 of 10 attachments") remains on the contract for a host that surfaces it.
+  Byte-level progress was considered and ruled out: the generated client returns a whole
+  `Response`, not a stream.
 - **Moving `ConversationTransferErrorCode` across packages touches every importer** in
   `chat-hooks` and `apps/chat`. → It is a mechanical import-path rewrite caught by `tsc`; the
   no-shim rule from `remove-cross-package-reexports` makes doing it directly the correct move
@@ -246,11 +249,11 @@ equivalent and is deferred as a design-asset task.
 No data migration and no persisted state — the queue lives entirely in React state for the
 lifetime of the page. The change ships as one release across `chat-shared` → `chat-hooks` →
 `conversation-panel` → `apps/chat`, in that dependency order, each slice verified with
-`npm run verify:changed`. Consumers outside this workspace — `pg-chat` is the known one — must move
-their `ImportExportQueue` import from `@epam/ai-dial-conversation-panel` to
-`@epam/ai-dial-chat-shared` and rename any `--cp-transfer-queue-*` CSS override to `--ieq-*` when
-they pick up the new package versions. Rollback is a straight revert; nothing outside the workspace consumes
-these packages at the changed versions.
+`npm run verify:changed`. `ImportExportQueue` keeps its `@epam/ai-dial-conversation-panel` import
+path, so consumers outside this workspace only have to adopt the reshaped props and labels (
+`onCancel` in place of `onDismiss`/`onRetry`, the new label callbacks, `fileName` and `progress` on
+every job). Existing `--cp-transfer-queue-*` CSS overrides keep working unchanged. Rollback is a straight revert; nothing outside the workspace consumes these
+packages at the changed versions.
 
 ## Resolved Questions
 
@@ -276,5 +279,6 @@ these packages at the changed versions.
 
 ## Open Questions
 
-1. **`CircularProgress` in the UI kit.** Worth proposing upstream once the shape settles here, so
-   the next consumer does not build a third ring.
+1. **Determinate progress in the row.** The hooks compute `job.progress` but the row shows an
+   indeterminate `Spinner` (Decision 4), so nothing renders it. Surfacing it again needs a
+   determinate indicator in `@epam/ai-dial-ui-kit` rather than a local ring.

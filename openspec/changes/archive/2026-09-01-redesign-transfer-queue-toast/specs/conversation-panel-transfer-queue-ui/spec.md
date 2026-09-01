@@ -1,10 +1,4 @@
-# conversation-panel-transfer-queue-ui Specification
-
-## Purpose
-
-Component-level contract for `ImportExportQueue`, a controlled, labels-driven queue panel exported by `@epam/ai-dial-conversation-panel` with no i18n, context, or hook dependency — all jobs, callbacks, and user-visible strings are supplied by the app.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: ImportExportQueue is a controlled, labels-driven component owned by `libs/conversation-panel`
 
@@ -46,6 +40,84 @@ progress-indicator entries.
 #### Scenario: Consumer overrides queue styling
 - **WHEN** the host passes `styles.colors`, `styles.typography`, class hooks, or `styles.cssVars`
 - **THEN** the overrides are applied without importing host theme code into the library
+
+### Requirement: Close confirmation for unfinished or failed work
+
+Activating `onClose`'s trigger SHALL call `onClose` immediately, without confirmation, when every
+job has status `Success` or `Canceled` — a cancelled job represents work the user already chose to
+stop, so nothing further is lost. If at least one job is `InProgress` or `Failed`, the component
+SHALL first show its own confirmation dialog (`role="dialog"`) with a description selected by
+`labels.closeQueueConfirmDescriptionInProgress` / `...Failed` / `...Mixed`, and SHALL call `onClose`
+only if the user confirms.
+
+#### Scenario: All-succeeded close needs no confirmation
+- **GIVEN** every job has status `Success`
+- **WHEN** the close trigger is activated
+- **THEN** `onClose` is called immediately with no confirmation dialog shown
+
+#### Scenario: A cancelled job needs no confirmation either
+- **GIVEN** every job has status `Success` or `Canceled`, with at least one `Canceled`
+- **WHEN** the close trigger is activated
+- **THEN** `onClose` is called immediately with no confirmation dialog shown
+
+#### Scenario: In-progress or failed work requires confirmation
+- **GIVEN** at least one job is `InProgress` or `Failed`
+- **WHEN** the close trigger is activated
+- **THEN** a confirmation dialog appears and `onClose` is not yet called
+
+#### Scenario: Cancelling the confirmation leaves the queue open
+- **GIVEN** the confirmation dialog is open
+- **WHEN** the user cancels it
+- **THEN** the dialog closes and `onClose` is not called
+
+### Requirement: Success-only auto-close after 8 seconds
+
+The component SHALL call `onClose` automatically 8 seconds after the last job settles, but only while
+every job in `jobs` has status `Success`. If any job is or becomes `InProgress`, `Failed`, or
+`Canceled` at any point during that window, the scheduled auto-close SHALL be cancelled; a
+subsequent render where every job is again `Success` SHALL restart the 8-second window. A
+`Canceled` job suppresses auto-close so the user is guaranteed to see the outcome of their own
+cancellation.
+
+#### Scenario: All-success queue auto-closes
+- **GIVEN** every job has status `Success`
+- **WHEN** 8 seconds pass with no user interaction
+- **THEN** `onClose` is called automatically
+
+#### Scenario: A failed or in-progress job suppresses auto-close
+- **GIVEN** at least one job is `Failed` or `InProgress`
+- **WHEN** 8 seconds pass
+- **THEN** `onClose` is not called
+
+#### Scenario: A cancelled job suppresses auto-close
+- **GIVEN** at least one job is `Canceled`
+- **WHEN** 8 seconds pass
+- **THEN** `onClose` is not called and the cancelled row stays on screen
+
+#### Scenario: A new job starting during the countdown cancels it
+- **GIVEN** every job is `Success` and the 8-second countdown is running
+- **WHEN** a new `InProgress` job is added to `jobs`
+- **THEN** the countdown is cancelled
+
+### Requirement: Component tests move to `libs/conversation-panel`
+
+`libs/conversation-panel` SHALL own the component-level Vitest/@testing-library/react test suites for
+`ImportExportQueue`, plus a unit suite for the pure `getTransferFileIcon`
+extension mapping, covering every scenario above. `apps/chat` SHALL keep only a thin wiring test that
+renders the real component connected to `useConversationExport`/`useConversationImport` and a real
+`useTranslation`-backed labels object, asserting at least one translated string renders correctly.
+
+#### Scenario: The extension mapping is unit-tested, not asserted through the DOM
+- **WHEN** the file-icon mapping is verified
+- **THEN** it is asserted against `getTransferFileIcon`'s return value, not by querying a vendor
+  icon class name in the rendered row
+
+#### Scenario: App wiring test catches a broken label wire-up
+- **WHEN** the app-level wiring test renders `ImportExportQueue` through the app's real label-building
+  code
+- **THEN** it asserts a specific translated string (not a translation key) is present in the DOM
+
+## ADDED Requirements
 
 ### Requirement: A job row is identified by its file, not its conversation
 
@@ -169,78 +241,23 @@ The spinner SHALL NOT be mirrored under `dir="rtl"`: it is a symmetric indicator
 - **THEN** neither value appears in the DOM, and no element carries `aria-valuenow` or
   `aria-valuetext`
 
-### Requirement: Close confirmation for unfinished or failed work
+## REMOVED Requirements
 
-Activating `onClose`'s trigger SHALL call `onClose` immediately, without confirmation, when every
-job has status `Success` or `Canceled` — a cancelled job represents work the user already chose to
-stop, so nothing further is lost. If at least one job is `InProgress` or `Failed`, the component
-SHALL first show its own confirmation dialog (`role="dialog"`) with a description selected by
-`labels.closeQueueConfirmDescriptionInProgress` / `...Failed` / `...Mixed`, and SHALL call `onClose`
-only if the user confirms.
+### Requirement: Job label, breadcrumb, and status-slot rendering are preserved
 
-#### Scenario: All-succeeded close needs no confirmation
-- **GIVEN** every job has status `Success`
-- **WHEN** the close trigger is activated
-- **THEN** `onClose` is called immediately with no confirmation dialog shown
+**Reason**: The row is now identified by the transferred file rather than the conversation, and the
+status slot gained a per-row spinner and a `Canceled` state while losing the retry control.
 
-#### Scenario: A cancelled job needs no confirmation either
-- **GIVEN** every job has status `Success` or `Canceled`, with at least one `Canceled`
-- **WHEN** the close trigger is activated
-- **THEN** `onClose` is called immediately with no confirmation dialog shown
+**Migration**: Covered by "A job row is identified by its file, not its conversation" above. Hosts
+drop `labels.allConversationsJobLabel`, `labels.closeJobAriaLabel`, and `labels.retryJobAriaLabel`,
+and supply `labels.cancelJobAriaLabel`, `labels.canceledLabel`, `labels.jobErrorMessage`,
+and `labels.jobProgressAriaLabel` instead.
 
-#### Scenario: In-progress or failed work requires confirmation
-- **GIVEN** at least one job is `InProgress` or `Failed`
-- **WHEN** the close trigger is activated
-- **THEN** a confirmation dialog appears and `onClose` is not yet called
+### Requirement: Aggregate progress, collapse/expand, and failed-count badge
 
-#### Scenario: Cancelling the confirmation leaves the queue open
-- **GIVEN** the confirmation dialog is open
-- **WHEN** the user cancels it
-- **THEN** the dialog closes and `onClose` is not called
+**Reason**: The aggregate progress bar is gone; each in-flight row carries its own spinner. The
+collapse/expand toggle and the failed-count badge survive, restated under the per-row requirement.
 
-### Requirement: Success-only auto-close after 8 seconds
-
-The component SHALL call `onClose` automatically 8 seconds after the last job settles, but only while
-every job in `jobs` has status `Success`. If any job is or becomes `InProgress`, `Failed`, or
-`Canceled` at any point during that window, the scheduled auto-close SHALL be cancelled; a
-subsequent render where every job is again `Success` SHALL restart the 8-second window. A
-`Canceled` job suppresses auto-close so the user is guaranteed to see the outcome of their own
-cancellation.
-
-#### Scenario: All-success queue auto-closes
-- **GIVEN** every job has status `Success`
-- **WHEN** 8 seconds pass with no user interaction
-- **THEN** `onClose` is called automatically
-
-#### Scenario: A failed or in-progress job suppresses auto-close
-- **GIVEN** at least one job is `Failed` or `InProgress`
-- **WHEN** 8 seconds pass
-- **THEN** `onClose` is not called
-
-#### Scenario: A cancelled job suppresses auto-close
-- **GIVEN** at least one job is `Canceled`
-- **WHEN** 8 seconds pass
-- **THEN** `onClose` is not called and the cancelled row stays on screen
-
-#### Scenario: A new job starting during the countdown cancels it
-- **GIVEN** every job is `Success` and the 8-second countdown is running
-- **WHEN** a new `InProgress` job is added to `jobs`
-- **THEN** the countdown is cancelled
-
-### Requirement: Component tests move to `libs/conversation-panel`
-
-`libs/conversation-panel` SHALL own the component-level Vitest/@testing-library/react test suites for
-`ImportExportQueue`, plus a unit suite for the pure `getTransferFileIcon`
-extension mapping, covering every scenario above. `apps/chat` SHALL keep only a thin wiring test that
-renders the real component connected to `useConversationExport`/`useConversationImport` and a real
-`useTranslation`-backed labels object, asserting at least one translated string renders correctly.
-
-#### Scenario: The extension mapping is unit-tested, not asserted through the DOM
-- **WHEN** the file-icon mapping is verified
-- **THEN** it is asserted against `getTransferFileIcon`'s return value, not by querying a vendor
-  icon class name in the rendered row
-
-#### Scenario: App wiring test catches a broken label wire-up
-- **WHEN** the app-level wiring test renders `ImportExportQueue` through the app's real label-building
-  code
-- **THEN** it asserts a specific translated string (not a translation key) is present in the DOM
+**Migration**: Covered by "A per-row spinner replaces the aggregate bar" above. The row indicator is
+the UI kit `Spinner`, themed by the kit's own tokens, so hosts that themed the bar have no
+replacement override; the existing `--cp-transfer-queue-*` custom properties keep their names.

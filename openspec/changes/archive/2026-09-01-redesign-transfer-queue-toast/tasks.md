@@ -53,20 +53,23 @@ implementer does not re-open them.
 - [x] 5.5 Update `libs/chat-hooks/README.md` for the new return values, params, and the moved `ConversationTransferErrorCode` import path; run `npm run validate:docs`.
 - [x] 5.6 `npm run verify:changed` run. chat-shared/chat-hooks typecheck, lint, and tests are green; the only failure is `@epam/ai-dial-conversation-panel:typecheck` on `ImportExportQueue.spec.tsx` job fixtures now missing `fileName`/`progress` — expected, and fixed by slice 7 which rewrites that suite. Re-checked at 7.10.
 
-## 6. `CircularProgress` (`libs/conversation-panel`)
+## 6. In-progress indicator
 
-- [x] 6.1 Create `libs/conversation-panel/src/components/CircularProgress/CircularProgress.tsx` — two SVG circles, `stroke-dasharray`/`stroke-dashoffset`, `-90deg` rotation, `role="progressbar"` with `aria-valuenow`/`min`/`max`, required `aria-label`, optional `aria-valuetext`.
-- [x] 6.2 Add `CircularProgress.module.scss` with `--cp-circular-progress-track` / `--cp-circular-progress-indicator` CSS vars and app-theme + hex fallbacks, matching the existing `ImportExportQueue.module.scss` pattern.
-- [x] 6.3 Confirm no `rtl:` mirroring is applied, and add the RTL non-flip assertion to the tests.
-- [x] 6.4 Write `tests/CircularProgress.spec.tsx`: arc length for 0/25/100, `aria-valuenow` wiring, `aria-valuetext` present only when supplied, accessible name required.
-- [x] 6.5 Export it from `libs/conversation-panel/src/index.ts` and document it in that lib's `README.md`.
+Superseded by slice 11: the bespoke `CircularProgress` built here was removed in favour of the UI
+kit's `Spinner`. Kept for history; nothing in slice 6 survives in the tree.
+
+- [x] 6.1 ~~Create `CircularProgress.tsx`~~ — reverted in 11.1.
+- [x] 6.2 ~~Add `CircularProgress.module.scss` with `--cp-circular-progress-*` vars~~ — reverted in 11.1.
+- [x] 6.3 Confirm no `rtl:` mirroring is applied — still holds; `Spinner` is symmetric.
+- [x] 6.4 ~~Write `tests/CircularProgress.spec.tsx`~~ — reverted in 11.1.
+- [x] 6.5 ~~Export it from `index.ts` and document it in the README~~ — reverted in 11.1.
 
 ## 7. `ImportExportQueue` rewrite (`libs/conversation-panel`)
 
-- [x] 7.1 Reshape `models/import-export-queue.ts`: drop `onRetry`, `allConversationsJobLabel`, `retryJobAriaLabel`, and the `jobDescriptionClassName` typography hook; add `onCancel`, `cancelJobAriaLabel(fileName)`, `canceledLabel`, `jobErrorMessage(code)`, `jobProgressAriaLabel(fileName)`, `jobProgressValueText(units)`, plus the new canceled/progress color and typography overrides.
+- [x] 7.1 Reshape `models/import-export-queue.ts`: drop `onRetry`, `allConversationsJobLabel`, `retryJobAriaLabel`, and the `jobDescriptionClassName` typography hook; add `onCancel`, `cancelJobAriaLabel(fileName)`, `canceledLabel`, `jobErrorMessage(code)`, `jobProgressAriaLabel(fileName)`, plus the new canceled color and typography overrides. (`jobProgressValueText` and the progress colors were added here and removed again in 11.2.)
 - [x] 7.2 Add a pure `getTransferFileIcon(fileName)` mapping `.dial`/`.zip` → `IconFileZip`, `.json` → `IconJson`, else `IconFile`, each rendered with `stroke={DIAL_KIT_ICON_STROKE}` and `aria-hidden`.
-- [x] 7.3 Rewrite `JobRow`: leading file icon, `EllipsisTooltip` on `job.fileName`, and the four-state trailing slot (ring, check, alert-with-`Tooltip`, `Canceled` text). Dim the file name in the canceled state via a scss-module class, not a hardcoded Tailwind color.
-- [x] 7.4 Implement the hover-reveal cancel: `group` on the row, ring and button in one grid cell, `opacity-0 group-hover:opacity-100 group-focus-within:opacity-100` — the button stays mounted and focusable in all cases.
+- [x] 7.3 Rewrite `JobRow`: leading file icon, `EllipsisTooltip` on `job.fileName`, and the four-state trailing slot (spinner, check, alert-with-`Tooltip`, `Canceled` text). Dim the file name in the canceled state via a scss-module class, not a hardcoded Tailwind color.
+- [x] 7.4 Implement the hover-reveal cancel: `group` on the row, spinner and button in one grid cell, `opacity-0 group-hover:opacity-100 group-focus-within:opacity-100` — the button stays mounted and focusable in all cases.
 - [x] 7.5 Remove the aggregate `ProgressBar` from the header and render `title` verbatim.
 - [x] 7.6 Update the close-confirmation predicate to `InProgress || Failed` (canceled no longer requires confirmation) and the auto-close predicate to "every job `Success`" (canceled now suppresses it).
 - [x] 7.7 Audit every directional utility in the rewritten markup for `ms-*`/`me-*`/`ps-*`/`pe-*`/`start-*`/`end-*`, and confirm no icon in the row is flipped.
@@ -84,23 +87,39 @@ implementer does not re-open them.
 - [x] 8.6 Update the app-level wiring test to assert a translated string from the new label set renders.
 - [x] 8.7 `npm run verify:changed` green: typecheck 15s, lint 107s, tests 402s, all passing.
 
-## 10. Move the queue into `libs/chat-shared`
+## 10. Keep the queue in `libs/conversation-panel` (move reverted)
 
-Driven by `pg-chat`, which wants the transfer toast without `conversation-panel`'s `react-window`
-and `@epam/ai-dial-sidebar` dependencies.
+The queue was briefly moved to `libs/chat-shared` for a host that wants the toast without
+`conversation-panel`'s `react-window` and `@epam/ai-dial-sidebar` dependencies. That move is
+reverted: no such host exists in this workspace yet, and splitting the transfer UI away from the
+panel it belongs to is not worth paying for in advance (Decision 4). `chat-shared` keeps only the
+transfer contracts, and the `--cp-transfer-queue-*` custom properties keep the panel's prefix, so
+hosts that already theme the queue need no rename.
 
-- [x] 10.1 Move `CircularProgress/`, `ImportExportQueue/`, `models/import-export-queue.ts`, and `utils/transfer-file.ts` (with both test suites) from `libs/conversation-panel` to `libs/chat-shared`.
-- [x] 10.2 Rewrite the moved files' imports: package specifiers (`@epam/ai-dial-chat-shared`) become relative paths (`../../models/conversation-transfer`, `../../utils/build-css-vars`, `../../utils/merge-class`), and the queue's spec stops mocking the package it now lives in.
-- [x] 10.3 Rename the CSS custom properties: `--cp-transfer-queue-*` → `--ieq-*`, `--cp-circular-progress-*` → `--cprog-*`, matching the short-prefix convention of the other `chat-shared` stylesheets.
-- [x] 10.4 Drop the queue exports from `libs/conversation-panel/src/index.ts` and add them to `libs/chat-shared/src/index.ts`. No compatibility re-export, per `remove-cross-package-reexports`.
-- [x] 10.5 Point `apps/chat` at the new source: `ImportExportQueue` and `ImportExportQueueLabels` now come from `@epam/ai-dial-chat-shared`.
-- [x] 10.6 Move the README sections from `libs/conversation-panel/README.md` into `libs/chat-shared/README.md` under Components, retargeting the import package and the CSS-var names; update `docs/architecture.md`'s three-layer paragraph.
-- [x] 10.7 Restructure the spec deltas: `conversation-panel-transfer-queue-ui` becomes an all-`REMOVED` delta with per-requirement Reason/Migration, and the contract is restated under a new `transfer-queue-ui` capability owned by `chat-shared`.
-- [x] 10.8 Verify: `npm run verify:changed` and `npm run validate:docs`.
+- [x] 10.1 Move `CircularProgress/`, `ImportExportQueue/`, `models/import-export-queue.ts`, and `utils/transfer-file.ts` (with all three test suites) back from `libs/chat-shared` to `libs/conversation-panel`. (`CircularProgress/` was deleted outright in 11.1.)
+- [x] 10.2 Rewrite the moved files' imports: the relative paths into `chat-shared`'s internals (`../../models/conversation-transfer`, `../../utils/build-css-vars`, `../../utils/merge-class`) become `@epam/ai-dial-chat-shared` package specifiers again.
+- [x] 10.3 Drop the queue exports from `libs/chat-shared/src/index.ts` and restore them in `libs/conversation-panel/src/index.ts`, together with `getTransferFileIcon`. No compatibility re-export, per `remove-cross-package-reexports`.
+- [x] 10.4 Point `apps/chat` back at `@epam/ai-dial-conversation-panel` for `ImportExportQueue` and `ImportExportQueueLabels`.
+- [x] 10.5 Move the README sections from `libs/chat-shared/README.md` back into `libs/conversation-panel/README.md` (adding `getTransferFileIcon` under a Utilities section), and restore `docs/architecture.md`'s three-layer paragraph.
+- [x] 10.6 Collapse the spec deltas back to one capability: `conversation-panel-transfer-queue-ui` carries the reshaped contract as `MODIFIED`/`ADDED`/`REMOVED` requirements, and the `transfer-queue-ui` capability is deleted.
+- [x] 10.7 Verify: `npm run verify:changed` and `npm run validate:docs`.
+
+## 11. Replace the bespoke ring with the UI kit's `Spinner`
+
+The row indicator is indeterminate from here on: the kit ships no determinate ring, and owning one
+in `libs/conversation-panel` was not worth the duplication (Decision 4). The `progress` contract in
+`chat-shared`/`chat-hooks` is untouched — it is simply no longer rendered.
+
+- [x] 11.1 Delete `libs/conversation-panel/src/components/CircularProgress/` (component, scss module, test suite) and its `libs/conversation-panel/src/index.ts` exports.
+- [x] 11.2 Render `Spinner` from `@epam/ai-dial-ui-kit` at `DIAL_ICON_SIZE.SM` in the `InProgress` status slot, keeping the shared grid cell with the cancel button. Drop `jobProgressValueText` from `ImportExportQueueLabels`, `progressTrack`/`progressIndicator` from `ImportExportQueueColors`, their `buildCssVars` entries, and the `.progressRing` scss class.
+- [x] 11.3 Update `tests/ImportExportQueue.spec.tsx`: mock `Spinner`, assert the row indicator by its accessible name instead of `role="progressbar"`, and drop the `aria-valuenow`/`aria-valuetext` assertions.
+- [x] 11.4 `apps/chat`: drop `jobProgressValueText` from both label objects, remove the `JobProgressAttachments`/`JobProgressConversations` translation keys and their `en.json` strings, and tell the queue panels apart from the spinners' own `role="status"` by `aria-live` in `ConversationPanelView.spec.tsx`.
+- [x] 11.5 Update `libs/conversation-panel/README.md`, `docs/architecture.md`, and the `design.md`/`proposal.md`/spec deltas of this change.
+- [x] 11.6 Verify: `@epam/ai-dial-conversation-panel` typecheck/lint/test and `@epam/chat` typecheck/lint plus the `ConversationPanelView` suite are green.
 
 ## 9. Documentation and final verification
 
-- [x] 9.1 `docs/architecture.md` three-layer paragraph updated: `chat-shared` now also owns the determinate-progress contract and the `ConversationTransferErrorCode` taxonomy, and `conversation-panel` owns `CircularProgress` alongside `ImportExportQueue`.
+- [x] 9.1 `docs/architecture.md` three-layer paragraph updated: `chat-shared` now also owns the progress contract and the `ConversationTransferErrorCode` taxonomy, and `conversation-panel` owns `ImportExportQueue` with its per-row kit `Spinner`.
 - [ ] 9.2 **Not done — needs a human or an E2E run.** Reaching the queue in a real browser needs a running DIAL Core plus an authenticated session, which this environment has no access to. Check the four row states, hover-to-cancel, `mobile`/`desktop`, and `dir="rtl"` before merge.
 - [ ] 9.3 **Partially covered by tests, still needs a real-browser pass.** `ImportExportQueue.spec.tsx` reaches the cancel control by three `userEvent.tab()` presses and activates it with Enter, so keyboard reachability is asserted in jsdom; confirm focus order and the absence of a trap in a real browser as part of 9.2.
 - [x] 9.4 `npm run verify:changed` is fully green (typecheck, lint, tests across every affected project). `npm run verify:full` additionally fails on `@epam/chat-api` and `mcp-app-sandbox` — 796 typecheck errors that reproduce identically on a stashed clean tree, so they pre-date this change and are untouched by it. `npm run validate:docs` reports only the pre-existing `useGridEditingScroll` drift in `libs/chat-hooks/README.md`, also present on a clean tree.

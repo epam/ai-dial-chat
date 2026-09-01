@@ -1,4 +1,10 @@
-## ADDED Requirements
+# conversation-transfer-progress Specification
+
+## Purpose
+
+Determinate-progress contract for conversation export and import jobs: every job carries a monotonic `percent` plus optional phase-scoped `units`, computed from fixed, kind-specific phase weights and settled on terminal status. Progress is data on the job for hosts to read, not something the transfer queue renders.
+
+## Requirements
 
 ### Requirement: Every transfer job carries determinate, monotonic progress
 
@@ -101,23 +107,21 @@ it reached, and SHALL NOT be advanced further.
 - **WHEN** one of those aborted requests would otherwise report a completed unit
 - **THEN** the job's `progress.percent` is unchanged
 
-### Requirement: Progress units are exposed to assistive technology, not rendered as text
+### Requirement: Progress is a contract on the job, not rendered by the queue
 
-The library SHALL surface `progress.units` only through the host: the panel SHALL pass a host-built
-string to the progress indicator's `aria-valuetext`, resolved from a
-`labels.jobProgressValueText(units)` callback. Neither `libs/chat-shared` nor
-`libs/conversation-panel` SHALL render or construct a translated unit string, and the unit readout
-SHALL NOT be rendered as visible row text in this change.
+`progress.percent` and `progress.units` SHALL be computed and carried on the job for hosts to read,
+but the transfer queue SHALL NOT render either value: an `InProgress` row shows the indeterminate
+UI kit `Spinner` (see `conversation-panel-transfer-queue-ui`). Neither `libs/chat-shared` nor
+`libs/conversation-panel` SHALL render or construct a translated unit string.
 
-#### Scenario: Screen reader hears the unit readout
+#### Scenario: The row surfaces activity, not completion
 
-- **GIVEN** a job whose `progress.units` is `{ completed: 3, total: 10, kind: Attachment }`
-- **WHEN** the row's progress indicator renders
-- **THEN** its `aria-valuetext` is the string returned by `labels.jobProgressValueText`, and its
-  `aria-valuenow` is `progress.percent`
+- **GIVEN** a job whose `progress` is `{ percent: 36, units: { completed: 3, total: 10, kind: Attachment } }`
+- **WHEN** the row renders
+- **THEN** neither the percentage nor the unit counts appear in the DOM or in any ARIA attribute
 
-#### Scenario: No unit readout without units
+#### Scenario: The contract is still available to the host
 
-- **GIVEN** a job whose `progress.units` is `undefined`
-- **WHEN** the row's progress indicator renders
-- **THEN** no `aria-valuetext` attribute is set and `labels.jobProgressValueText` is not called
+- **GIVEN** a host reading `jobs` from `useConversationExport` or `useConversationImport`
+- **WHEN** attachment units complete
+- **THEN** `progress.percent` advances monotonically and `progress.units` reports the counts
