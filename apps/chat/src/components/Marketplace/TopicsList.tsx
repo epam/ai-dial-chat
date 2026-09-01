@@ -11,7 +11,13 @@ interface TopicsListProps {
 }
 
 const COUNTER_WIDTH = 34;
+const TOPIC_MAX_WIDTH = 180;
+
 const getKey = (item: { topic: string }) => item.topic;
+
+const renderTopic = ({ topic }: { topic: string }) => (
+  <MarketplaceEntityTopic topic={topic} maxWidth={TOPIC_MAX_WIDTH} />
+);
 
 export const TopicsList = ({
   topics,
@@ -28,6 +34,7 @@ export const TopicsList = ({
             key={item.topic}
             topic={item.topic}
             className="max-w-full truncate"
+            hideTooltip
           />
         ))}
         placement="top"
@@ -44,7 +51,7 @@ export const TopicsList = ({
       getKey={getKey}
       overflowIndicatorWidth={COUNTER_WIDTH}
       trailingReservedWidth={trailingReservedWidth}
-      renderItem={MarketplaceEntityTopic}
+      renderItem={renderTopic}
       renderOverflow={renderOverflow}
       className="flex w-full gap-2"
       dataQA="entity-topics"
