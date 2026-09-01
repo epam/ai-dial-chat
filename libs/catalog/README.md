@@ -89,6 +89,27 @@ render, as do search, sort, filters, tabs, and the details tabs.
 `Card`, `CardGrid`, `ListView`, and `DetailsPanel` each accept `isReadonly`
 directly too, for hosts composing their own layout instead of using `Catalog`.
 
+#### Controlling tabs and Topics options independently of `items`
+
+By default the entity-type tabs and the Topics filter's option list are both
+derived from `items` — the same list the grid renders. A host that narrows
+`items` for the grid (e.g. filtering by a selected category-tree node) would
+otherwise lose a tab, or a Topics option, for any entity type with zero
+matches in that narrowed set. Pass `tabs` and/or `topicOptions`, computed from
+a wider item set via the exported `buildCatalogTabs`/`getTopicOptions`
+helpers, to keep them stable while `items` stays narrowed:
+
+```tsx
+import { buildCatalogTabs, Catalog, getTopicOptions } from '@epam/ai-dial-catalog';
+
+<Catalog
+  items={itemsNarrowedByCategory}
+  tabs={buildCatalogTabs(allCatalogItems)}
+  topicOptions={getTopicOptions(allCatalogItems)}
+  favorites={favoriteItems}
+/>;
+```
+
 ### CardGrid
 
 Virtualized grid view of catalog cards.
@@ -540,7 +561,12 @@ import type {
 ## Utilities
 
 ```tsx
-import { filterCatalogItems, sortCatalogItems } from '@epam/ai-dial-catalog';
+import {
+  buildCatalogTabs,
+  filterCatalogItems,
+  getTopicOptions,
+  sortCatalogItems,
+} from '@epam/ai-dial-catalog';
 
 /*
  * Matches an item's `name`, `description`, or `type` — case-insensitive.
@@ -549,4 +575,13 @@ import { filterCatalogItems, sortCatalogItems } from '@epam/ai-dial-catalog';
  */
 const filtered = filterCatalogItems(items, 'gpt');
 const sorted = sortCatalogItems(filtered, CatalogSortKey.NameAZ);
+
+/*
+ * Derives the entity-type tabs / Topics filter options that `Catalog` would
+ * compute internally from `items`. Use these to feed `Catalog`'s `tabs` /
+ * `topicOptions` props from a wider item set — see "Controlling tabs and
+ * Topics options independently of `items`" above.
+ */
+const tabs = buildCatalogTabs(items);
+const topicOptions = getTopicOptions(items);
 ```
