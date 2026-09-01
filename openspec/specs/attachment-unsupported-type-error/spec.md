@@ -34,7 +34,7 @@ The `formats` list is produced by the pure `mimeTypesToExtensionLabels(types: st
 
 **Accessibility**: `Notification` carries `role="alert"`; no additional ARIA required.
 
-**Memoisation**: the `validateAttachment` callback returned by `useAttachmentValidation` SHALL be memoised on the allowed-MIME-type list. Because it is keyed on `inputAttachmentTypes`, its identity changes whenever the user switches the selected model/deployment; `useAttachments` uses that identity change as the trigger to re-validate attachments already in the tray (see `conversation-input-attachments` — "Attachments already in the tray are re-validated when validateAttachment changes").
+**Memoisation**: the `validateAttachment` callback returned by `useAttachmentValidation` SHALL be memoised on the allowed-MIME-type list, and that list is compared by content rather than by reference (see `chat-hooks-attachment-validation` — "Content-stable `allowedMimeTypes` and `validateAttachment`"). Its identity changes only when the user actually switches the selected model/deployment to one with a different set of accepted types; `useAttachments` uses that identity change as the trigger to re-validate attachments already in the tray (see `conversation-input-attachments` — "Attachments already in the tray are re-validated when validateAttachment changes").
 
 #### Scenario: File with unsupported MIME type is added
 
