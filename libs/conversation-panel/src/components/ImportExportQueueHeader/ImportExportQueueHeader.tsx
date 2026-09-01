@@ -51,7 +51,7 @@ export const ImportExportQueueHeader: FC<ImportExportQueueHeaderProps> = ({
     <div
       className={mergeClasses(
         classes.divider,
-        'flex items-center justify-between px-4 py-3',
+        'mx-4 flex items-center justify-between py-3',
       )}
     >
       <div className="flex min-w-0 items-center gap-2">
@@ -59,7 +59,7 @@ export const ImportExportQueueHeader: FC<ImportExportQueueHeaderProps> = ({
           className={mergeClasses(
             classes.text,
             'truncate',
-            typography?.titleClassName || 'dial-small-semi-text',
+            typography?.titleClassName || 'dial-small-paragraph-semi-text',
           )}
         >
           {title}
@@ -69,7 +69,8 @@ export const ImportExportQueueHeader: FC<ImportExportQueueHeaderProps> = ({
             className={mergeClasses(
               classes.failureCount,
               'inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1',
-              typography?.failureCountClassName || 'dial-small-semi-text',
+              typography?.failureCountClassName ||
+                'dial-small-paragraph-semi-text',
             )}
           >
             {failedCount}
