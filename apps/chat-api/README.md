@@ -229,6 +229,13 @@ Alongside the encrypted session cookie, the BFF can optionally authenticate requ
 
 Each identity provider is configured through its own set of discrete environment variables, following the `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` convention. A provider is registered only when its `CLIENT_ID` variable is set; an unconfigured provider is silently skipped. If `CLIENT_ID` is set but another field that provider requires is missing, the application fails to boot with an error naming the missing variable. The provider's `id` (used in `/api/v1/auth/login/<id>` and in the `/api/v1/auth/providers` response) is fixed in code and cannot be overridden. Only one instance of each provider type is supported.
 
+Every `AUTH_{PROVIDER_TYPE}_HOST` variable (`AUTH_AUTH0_HOST`, `AUTH_GITLAB_HOST`, `AUTH_KEYCLOAK_HOST`, `AUTH_PING_ID_HOST`, `AUTH_COGNITO_HOST`) accepts either form:
+
+- a bare host, optionally with a path — `keycloak.example.com/realms/dial` — in which case HTTPS is assumed and `https://` is prepended;
+- a full URL whose scheme is used as given — `http://keycloak.internal:8080/realms/dial` — which is how a provider reachable only over plain HTTP (an in-cluster Keycloak, a local test instance) is configured.
+
+A trailing slash is normalised away. A scheme other than `http` or `https` fails boot with an error naming the variable.
+
 **Auth0** (`id: auth0`)
 
 | Variable                      | Required | Default                               |
