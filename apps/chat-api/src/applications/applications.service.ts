@@ -191,7 +191,7 @@ export class ApplicationsService {
       this.logger.debug(
         `Created application ${appPath}, invalidated cache for sub: ${userSub}`,
       );
-      return { id: `applications/${bucket}/${appPath}` };
+      return { id: `applications/${bucket}/${encodedPath}` };
     } catch (err) {
       return handleDialFetchError(err, 'create application', this.logger, 0);
     }

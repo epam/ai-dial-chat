@@ -2,6 +2,8 @@ import {
   ListFilesItemDtoNodeTypeEnum,
   type ListFilesItemDto,
 } from '@epam/ai-dial-chat-api-client';
+import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
+import type { FileUploadBatchState } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
   DialFileNodeType,
@@ -24,8 +26,6 @@ import type {
   SharedRootMeta,
 } from '../dial-file-manager.model';
 import type { DialFilesApi } from '../dial-files-api';
-import { FileUploadStatus } from '../upload-batch.types';
-import type { FileUploadBatchState } from '../upload-batch.types';
 
 const makeFilesApi = (overrides: Partial<DialFilesApi> = {}): DialFilesApi =>
   ({

@@ -1,5 +1,8 @@
 import { buildToolsetMcpUrl } from '@epam/ai-dial-chat-hooks';
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  TAG_INPUT_TAG_CLASS_NAME,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -149,6 +152,7 @@ const SettingsForm: FC<Props> = ({
         placeholder={t(ToolsetEditorI18nKeys.AllowedToolsPlaceholder)}
         value={form.allowedTools}
         onChange={(allowedTools) => onChange({ allowedTools })}
+        tagClassName={TAG_INPUT_TAG_CLASS_NAME}
       />
 
       <AuthSection

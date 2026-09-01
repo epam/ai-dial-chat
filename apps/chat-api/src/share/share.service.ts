@@ -23,18 +23,11 @@ import { EnvironmentVariables } from '../config/environment.config';
 import { resolveConversationLocation } from '../conversations/utils/conversation.utils';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
-import {
-  isPromptResourceUrl,
-  toPromptResourceUrl,
-} from '../prompts/utils/prompt-mapper.util';
+import { isPromptResourceUrl } from '../prompts/utils/prompt-mapper.util';
 import { SkillsLookupService } from '../skills/lookup/skills-lookup.service';
 import { ToolsetsService } from '../toolsets/toolsets.service';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
-import {
-  CreateShareLinkDto,
-  ShareAccess,
-  ShareResourceKind,
-} from './dto/create-share-link.dto';
+import { CreateShareLinkDto, ShareAccess } from './dto/create-share-link.dto';
 import { DiscardSharedCatalogItemResponseDto } from './dto/discard-shared-catalog-item.dto';
 import { RevokeSharedAccessResponseDto } from './dto/revoke-shared-access.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
@@ -44,16 +37,19 @@ type ResourceAccessType = components['schemas']['ResourceAccessType'];
 type ResourceKind = components['schemas']['ResourceTypes'];
 
 /*
- * `DiscardSharedCatalogItemDto` only accepts an `itemId` starting with one of
- * these three prefixes, so `resolveResourceKind` below always finds a match —
- * this table exists purely to translate that prefix into the `resourceTypes`
- * filter `getSharedResources` expects.
+ * `discardShared`/`revokeShared`/`getRecipientsCount` always receive an
+ * `itemId` that is already a full DIAL Core resource url — the DTO's regex
+ * validation enforces one of these prefixes before this ever runs — so
+ * `resolveResourceKind` below always finds a match. This table exists purely
+ * to translate that prefix into the `resourceTypes` filter
+ * `getSharedResources` expects.
  */
 const RESOURCE_KIND_BY_PREFIX: [prefix: string, kind: ResourceKind][] = [
   ['applications/', 'APPLICATION'],
   ['toolsets/', 'TOOL_SET'],
   ['conversations/', 'CONVERSATION'],
   ['skills/', 'SKILL'],
+  ['prompts/', 'PROMPT'],
 ];
 
 const resolveResourceKind = (itemId: string): ResourceKind => {
@@ -64,6 +60,27 @@ const resolveResourceKind = (itemId: string): ResourceKind => {
     throw new Error(`Unrecognized resource kind for itemId: ${itemId}`);
   return match[1];
 };
+
+/*
+ * Prompts are the one resource kind whose public `itemId` is deliberately
+ * decoded back to a raw, human-readable DIAL Core resource path
+ * (`buildPromptId` rebuilds it from a `safeDecodeURIComponent`d metadata
+ * url — see `urlToPromptPath` — so folder/prompt names with spaces stay
+ * literal wherever the id is displayed). Every other kind's listing passes
+ * DIAL Core's own metadata url straight through unchanged (conversations:
+ * `conversation-listing.service.ts`; applications/toolsets: `raw.id` in
+ * their mapper utils), so their `itemId` already matches whatever encoded
+ * or unencoded form DIAL Core itself uses — re-encoding it here would risk
+ * disagreeing with that native form. Only prompts need re-encoding back to
+ * DIAL Core's canonical form before this direct SDK call boundary.
+ *
+ * TODO: once prompts stop decoding at listing time (aligning them with the
+ * conversations pattern — using metadata's native `name`/`parentPath`
+ * fields instead of deriving from a decoded path), this conditional goes
+ * away entirely and `itemId` can be used as-is for every kind.
+ */
+const toShareResourceUrl = (itemId: string): string =>
+  isPromptResourceUrl(itemId) ? encodeDialResourcePath(itemId) : itemId;
 
 /*
  * DIAL Core's `shareResource` endpoint does not return an expiry; the link
@@ -282,12 +299,9 @@ export class ShareService {
   async createShareLink(
     accessToken: string,
     bucket: string,
-    { itemId, access, resourceKind }: CreateShareLinkDto,
+    { itemId, access }: CreateShareLinkDto,
   ): Promise<ShareLinkResponseDto> {
-    const resourceUrl =
-      resourceKind === ShareResourceKind.Prompt
-        ? toPromptResourceUrl(itemId, bucket)
-        : itemId;
+    const resourceUrl = toShareResourceUrl(itemId);
     const permissions = Array.from(
       new Set(access.flatMap((level) => ACCESS_PERMISSIONS[level])),
     );
@@ -547,14 +561,17 @@ export class ShareService {
    * to tell a genuine discard apart from that silent no-op.
    */
   private async isSharedWithCaller(
-    itemId: string,
+    resourceUrl: string,
     accessToken: string,
   ): Promise<boolean> {
     let result;
     try {
       result = await this.dialClient.client.getSharedResources({
         headers: getBearerAuthHeaders(accessToken),
-        body: { resourceTypes: [resolveResourceKind(itemId)], with: 'me' },
+        body: {
+          resourceTypes: [resolveResourceKind(resourceUrl)],
+          with: 'me',
+        },
       });
     } catch (err) {
       return handleDialFetchError(
@@ -574,8 +591,17 @@ export class ShareService {
       );
     }
 
+    /*
+     * Both encodings are tried, same as `getRecipientsCount`: list ids and
+     * DIAL Core share urls differ in percent-encoding for some resource
+     * types (conversations in particular), so an exact match against only
+     * one form would wrongly report "not shared" for a genuinely-shared
+     * resource whose name needs percent-encoding (a space, for instance).
+     */
+    const decodedResourceUrl = safeDecodeURIComponent(resourceUrl);
     return (result.data?.resources ?? []).some(
-      (resource) => resource.url === itemId,
+      (resource) =>
+        resource.url === resourceUrl || resource.url === decodedResourceUrl,
     );
   }
 
@@ -584,6 +610,10 @@ export class ShareService {
    * them, via DIAL Core `discardSharedResources`. This only affects the
    * caller — removing access for everyone else is the owner-side
    * {@link ShareService.revokeShared} operation.
+   *
+   * `itemId` is always a full DIAL Core resource path, including for a
+   * shared-with-the-caller prompt — it already embeds its owner's bucket,
+   * not the caller's own.
    *
    * @throws {ForbiddenException} When the resource is not shared with the caller
    * @throws {NotFoundException} When the resource does not exist
@@ -597,6 +627,8 @@ export class ShareService {
   ): Promise<DiscardSharedCatalogItemResponseDto> {
     this.logger.log('Discard shared resource started');
 
+    const resourceUrl = toShareResourceUrl(itemId);
+
     /*
      * Read before calling discard, not after: once discard runs, a resource
      * that really was shared is no longer shared either, so checking
@@ -604,7 +636,7 @@ export class ShareService {
      * is meant to catch.
      */
     const wasSharedWithCaller = await this.isSharedWithCaller(
-      itemId,
+      resourceUrl,
       accessToken,
     );
 
@@ -612,7 +644,7 @@ export class ShareService {
     try {
       result = await this.dialClient.client.discardSharedResources({
         headers: getBearerAuthHeaders(accessToken),
-        body: { resources: [{ url: itemId }] },
+        body: { resources: [{ url: resourceUrl }] },
       });
     } catch (err) {
       return handleDialFetchError(err, 'share.discardShared', this.logger, 0);
@@ -669,6 +701,9 @@ export class ShareService {
    * "nobody holds access", not "never shared" — an issued but unopened share
    * link contributes nothing.
    *
+   * `itemId` is always a full DIAL Core resource path, and only its owner
+   * ever sees its recipient count.
+   *
    * @throws {BadGatewayException} When DIAL Core returns an error response
    * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
    */
@@ -676,12 +711,14 @@ export class ShareService {
     itemId: string,
     accessToken: string,
   ): Promise<ShareRecipientsResponseDto> {
+    const resourceUrl = toShareResourceUrl(itemId);
+
     let result;
     try {
       result = await this.dialClient.client.getSharedResources({
         headers: getBearerAuthHeaders(accessToken),
         body: {
-          resourceTypes: [resolveResourceKind(itemId)],
+          resourceTypes: [resolveResourceKind(resourceUrl)],
           with: 'others',
           includeUserInfo: true,
         },
@@ -715,8 +752,11 @@ export class ShareService {
      * percent-encoding for some resource types (conversations in particular).
      */
     const recipientsCount =
-      resolveRecipientsCount(counts, itemId, safeDecodeURIComponent(itemId)) ??
-      0;
+      resolveRecipientsCount(
+        counts,
+        resourceUrl,
+        safeDecodeURIComponent(resourceUrl),
+      ) ?? 0;
 
     return { itemId, recipientsCount };
   }
@@ -734,6 +774,9 @@ export class ShareService {
    * rather than something to surface as an error. Ownership itself is
    * enforced by DIAL Core, which answers `403` for a non-owner.
    *
+   * `itemId` is always a full DIAL Core resource path, and only its owner
+   * can revoke its shared access.
+   *
    * @throws {NotFoundException} When the resource does not exist
    * @throws {BadGatewayException} When DIAL Core returns an error response
    * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
@@ -745,11 +788,13 @@ export class ShareService {
   ): Promise<RevokeSharedAccessResponseDto> {
     this.logger.log('Revoke shared access started');
 
+    const resourceUrl = toShareResourceUrl(itemId);
+
     let result;
     try {
       result = await this.dialClient.client.revokeSharedResources({
         headers: getBearerAuthHeaders(accessToken),
-        body: { resources: [{ url: itemId }] },
+        body: { resources: [{ url: resourceUrl }] },
       });
     } catch (err) {
       return handleDialFetchError(err, 'share.revokeShared', this.logger, 0);

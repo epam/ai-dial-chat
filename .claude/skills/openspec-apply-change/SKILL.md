@@ -74,6 +74,8 @@ Implement tasks from an OpenSpec change.
    For each pending task:
    - Show which task is being worked on
    - Make the code changes required
+   - During the red/green loop, run only the exact test files named by the task via `npm run test:file -- <workspace-relative-path>`
+   - Run `npm run verify:changed` once after completing a vertical slice; run `npm run verify:full` once before declaring the whole change complete
    - Keep changes minimal and focused
    - Mark task complete in the tasks file: `- [ ]` → `- [x]`
    - Continue to next task

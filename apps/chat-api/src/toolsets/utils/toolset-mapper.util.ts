@@ -261,6 +261,8 @@ export const toDialToolsetSigninBody = (
   const base = {
     url: resolveToolsetLoginUrl(toolsetName),
     credentialsLevel: toDialCredentialsLevel(body.credentialsLevel),
+    // Forwarded exactly as sent, including an explicit `false`; never defaulted here.
+    offlineUsageConsent: body.offlineUsageConsent,
   };
 
   if (body.authenticationType === ToolsetAuthType.ApiKey) {

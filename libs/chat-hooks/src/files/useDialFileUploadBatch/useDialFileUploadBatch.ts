@@ -3,6 +3,11 @@ import type {
   UploadArchiveEntryResultDto,
 } from '@epam/ai-dial-chat-api-client';
 import type {
+  FileUploadBatchState,
+  FileUploadEntry,
+} from '@epam/ai-dial-chat-shared';
+import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
+import type {
   DialFile,
   DialUploadFileItem,
 } from '@epam/ai-dial-react-file-manager';
@@ -24,11 +29,6 @@ import { DialFilesApiUploadMode } from '../dial-files-api';
 import type { DialFilesApi } from '../dial-files-api';
 import { sanitizeFileName } from '../file-name';
 import { virtualPathToApiPath } from '../resolve-dial-file-api-path';
-import type {
-  FileUploadBatchState,
-  FileUploadEntry,
-} from '../upload-batch.types';
-import { FileUploadStatus } from '../upload-batch.types';
 
 const ARCHIVE_FAILED_FILE_LIST_LIMIT = 5;
 

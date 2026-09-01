@@ -64,6 +64,25 @@ import { buildNetworkUploadErrorNotification } from '../../utils/attachment-netw
 import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 
+/*
+ * Normalizes a deployment ID that may contain raw spaces (from app creation
+ * responses that pre-date the encoding fix) to its percent-encoded form,
+ * idempotently. Each path segment is decoded then re-encoded so that both
+ * raw ("No Temp 3__1.0") and already-encoded ("No%20Temp%203__1.0") inputs
+ * produce the same valid output.
+ */
+const normalizeDeploymentId = (id: string): string =>
+  id
+    .split('/')
+    .map(segment => {
+      try {
+        return encodeURIComponent(decodeURIComponent(segment));
+      } catch {
+        return encodeURIComponent(segment);
+      }
+    })
+    .join('/');
+
 interface Props {
   appId: string;
   appDisplayName?: string;
@@ -78,13 +97,12 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   const { items } = useDeployments();
 
   /*
-   * `appId` is the raw, human-readable application id (e.g.
-   * "applications/<bucket>/My App__1.0") and matches `items[].id`. It is used
-   * as-is everywhere here — deploymentId/model/deployment are always sent as
-   * JSON body fields (createConversation, streamCompletion, transcribeAudio),
-   * never a raw URL path segment, so percent-encoding it would only embed
-   * literal `%` characters that get double-encoded once the conversation's
-   * stored path is built from it.
+   * `appId` is the application id (e.g. "applications/<bucket>/My App__1.0")
+   * and matches `items[].id`. It is used as-is for UI (fixedModel, deployment
+   * lookup, stream model id). When sent as `deploymentId` to
+   * createConversation it must be normalized first — see normalizeDeploymentId
+   * above — because older app creation responses returned raw spaces that the
+   * backend validator now rejects.
    */
   const fixedModel = useMemo(
     () => ({
@@ -166,7 +184,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       const attachmentDtos = attachmentsToDtos(attachments || []);
       const created = await apiCreateConversation(
         message,
-        appId,
+        normalizeDeploymentId(appId),
         attachmentDtos,
       );
       const savedConversation = {

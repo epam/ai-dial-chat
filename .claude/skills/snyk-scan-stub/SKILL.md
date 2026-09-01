@@ -1,5 +1,6 @@
 ---
 name: snyk-scan-stub
+disable-model-invocation: true
 description: Synthetic Snyk Code SARIF 2.1.0 producer for SDLC chain validation. Emits a fixed, realistically-shaped Snyk Code SARIF report under payload.sarif so a downstream triage agent has deterministic, real-format input. NOT a real scanner — replace with stage-snyk.yml when the real Snyk pipeline lands.
 ---
 

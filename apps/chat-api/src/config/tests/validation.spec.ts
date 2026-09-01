@@ -112,6 +112,24 @@ describe('validate', () => {
     expect(config.RESPONSES_API_ENABLED).toBe(expected);
   });
 
+  it('defaults DEFAULT_DEPLOYMENT_PINNED to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.DEFAULT_DEPLOYMENT_PINNED).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+    ['0', false],
+    ['no', false],
+  ])('parses DEFAULT_DEPLOYMENT_PINNED=%s as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      DEFAULT_DEPLOYMENT_PINNED: rawValue,
+    });
+    expect(config.DEFAULT_DEPLOYMENT_PINNED).toBe(expected);
+  });
+
   it('defaults OVERLAY_SANDBOX_ENABLED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.OVERLAY_SANDBOX_ENABLED).toBe(false);

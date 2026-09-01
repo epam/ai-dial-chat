@@ -1,5 +1,8 @@
 ---
 description: React event callback and handler naming convention
+paths:
+  - 'apps/**/*.tsx'
+  - 'libs/**/*.tsx'
 globs: '**/*.tsx'
 alwaysApply: false
 ---

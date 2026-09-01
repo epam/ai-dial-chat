@@ -542,7 +542,8 @@ It uses **replace**, not merge, semantics:
 - A later `setOverlayOptions({ enabledFeatures })` call completely replaces
   the previous set.
 - Unknown strings are dropped with a warning, but the entire request is not
-  rejected.
+  rejected. A deprecated-but-recognized string (see [Renamed flags](#renamed-flags))
+  resolves to its replacement instead of being dropped.
 - If every supplied string is unknown, the resulting set is empty.
 - `null` is not supported as a reset-to-baseline sentinel.
 
@@ -555,6 +556,21 @@ Do not send a partial diff. Always send the complete desired set.
 | `marketplace`              | `catalog` (`OverlayFeature.Catalog`)                        |
 | `marketplace-hide-my-apps` | `catalog-hide-my-apps` (`OverlayFeature.CatalogHideMyApps`) |
 | `marketplace-table-view`   | `catalog-table-view` (`OverlayFeature.CatalogTableView`)    |
+| `custom-applications`      | `schema-apps` (`OverlayFeature.SchemaApps`)                 |
+
+The `marketplace*` renames are hard renames: the legacy strings are no longer
+recognized. `custom-applications` is accepted transitionally — it resolves to
+`schema-apps` and logs a deprecation warning (in the browser console for an
+overlay-supplied set, in the server log for `ENABLED_UI_FEATURES`) rather than
+being dropped. Migrate to `schema-apps`; the alias will be removed in a later
+release.
+
+It was renamed because the name described the wrong thing: it gates the
+catalog's **Create Quick App** entry, i.e. applications built on an
+`applicationTypeSchemaId`. Schema-less custom applications are gated by
+`custom-apps`, which also controls their editability and the custom-app editor
+route. `hide-custom-app-creation` hides both create entries regardless of
+either flag.
 
 ### Flags replaced by unconditional behavior
 
@@ -623,7 +639,7 @@ conversations-sharing
 applications-sharing
 toolsets-sharing
 conversations-publishing
-custom-applications
+schema-apps
 code-apps
 catalog
 file-manager

@@ -15,6 +15,7 @@ import {
   waitForToolsetOAuthResult,
   WithLogin,
 } from '@epam/ai-dial-chat-hooks';
+import { TAG_INPUT_TAG_CLASS_NAME } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
@@ -439,6 +440,7 @@ const AuthSection: FC<Props> = ({
             value={auth.scopes ?? []}
             onChange={(scopes) => onAuthChange({ scopes })}
             disabled={isControlsDisabled}
+            tagClassName={TAG_INPUT_TAG_CLASS_NAME}
           />
         </div>
       )}

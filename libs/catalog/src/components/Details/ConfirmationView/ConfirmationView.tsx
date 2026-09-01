@@ -40,7 +40,11 @@ export const ConfirmationView: FC<ConfirmationViewProps> = ({
   <div className="flex flex-col gap-4 px-6 py-4">
     <InfoCard item={item} variant={variant} />
 
-    <p className={mergeClasses(messageClassName, styles.message)}>{message}</p>
+    <p
+      className={mergeClasses(messageClassName, 'break-words', styles.message)}
+    >
+      {message}
+    </p>
 
     {consequences != null && consequences.length > 0 && (
       <ul

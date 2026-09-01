@@ -1629,27 +1629,12 @@ export interface CreateShareLinkDto {
    */
   itemId: string;
   /**
-   * Set to `prompt` when `itemId` is a bucket-relative prompt path (as returned by the prompts endpoints) rather than a full DIAL Core resource path. The caller's own bucket is then used to qualify it.
-   * @type {string}
-   * @memberof CreateShareLinkDto
-   */
-  resourceKind?: CreateShareLinkDtoResourceKindEnum;
-  /**
    * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
    * @type {Array<string>}
    * @memberof CreateShareLinkDto
    */
   access: Array<CreateShareLinkDtoAccessEnum>;
 }
-
-/**
- * @export
- */
-export const CreateShareLinkDtoResourceKindEnum = {
-  Prompt: 'prompt',
-} as const;
-export type CreateShareLinkDtoResourceKindEnum =
-  (typeof CreateShareLinkDtoResourceKindEnum)[keyof typeof CreateShareLinkDtoResourceKindEnum];
 
 /**
  * @export
@@ -3401,7 +3386,7 @@ export interface DialToolsetListResponseDto {
  */
 export interface DiscardSharedCatalogItemDto {
   /**
-   * Identifier (DIAL Core resource path) of the catalog item, skill, or conversation to discard access to.
+   * Identifier of the catalog item, skill, conversation, or prompt to discard access to — a full DIAL Core resource path.
    * @type {string}
    * @memberof DiscardSharedCatalogItemDto
    */
@@ -4704,17 +4689,11 @@ export interface PromptListResponseDto {
  */
 export interface PromptResponseDto {
   /**
-   * Prompt path within the prompts namespace (used as stable ID)
+   * Full DIAL Core resource path identifying the prompt (`prompts/{bucket}/{path}`), the same shape every other resource type exposes. For a prompt shared with the caller, `bucket` is the owner bucket, not the caller bucket.
    * @type {string}
    * @memberof PromptResponseDto
    */
   id: string;
-  /**
-   * DIAL Core bucket the prompt lives in. For a prompt shared with the caller this is the owner bucket, not the caller bucket, so `id` can be qualified back into a `prompts/{bucket}/{id}` resource url
-   * @type {string}
-   * @memberof PromptResponseDto
-   */
-  bucket: string;
   /**
    * Display name
    * @type {string}
@@ -4789,7 +4768,7 @@ export interface PromptResponseDto {
  */
 export interface PromptsConfigDto {
   /**
-   * Favorited prompt paths.
+   * Favorited prompt resource ids (`prompts/{bucket}/{path}`).
    * @type {Array<string>}
    * @memberof PromptsConfigDto
    */
@@ -5346,7 +5325,7 @@ export interface RevokeAccessResponseDto {
  */
 export interface RevokeSharedAccessDto {
   /**
-   * Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to revoke all shared access to.
+   * Identifier of the owned catalog item, skill, conversation, or prompt to revoke all shared access to — a full DIAL Core resource path.
    * @type {string}
    * @memberof RevokeSharedAccessDto
    */
@@ -6569,6 +6548,12 @@ export interface ToolsetLoginBodyDto {
    * @memberof ToolsetLoginBodyDto
    */
   redirectUri?: string;
+  /**
+   * Whether the user consents to an application using this credential while they are offline. Required for on-behalf-of use (e.g. scheduled runs).
+   * @type {boolean}
+   * @memberof ToolsetLoginBodyDto
+   */
+  offlineUsageConsent?: boolean;
 }
 
 /**
@@ -6905,7 +6890,7 @@ export interface UpdateInstalledDto {
  */
 export interface UpdateInstalledPromptDto {
   /**
-   * Prompt path within the prompts namespace.
+   * Full prompt resource path (`prompts/{bucket}/{path}`).
    * @type {string}
    * @memberof UpdateInstalledPromptDto
    */

@@ -20,8 +20,7 @@ import {
 } from '../prompts.api';
 
 const mockPrompt: PromptResponseDto = {
-  id: 'Work/AI/summarize',
-  bucket: 'my-bucket',
+  id: 'prompts/my-bucket/Work/AI/summarize',
   name: 'summarize',
   description: 'Summarize a document',
   content: 'Summarize the following text:',
@@ -49,11 +48,15 @@ describe('prompts.api', () => {
     expect(spy).toHaveBeenCalledOnce();
   });
 
-  it('getPrompt passes the path through as a query param object', async () => {
+  it('getPrompt passes the full resource id through as a query param object', async () => {
     const spy = vi.spyOn(promptsApi, 'getPrompt').mockResolvedValue(mockPrompt);
 
-    await expect(getPrompt('Work/AI/summarize')).resolves.toEqual(mockPrompt);
-    expect(spy).toHaveBeenCalledWith({ path: 'Work/AI/summarize' });
+    await expect(
+      getPrompt('prompts/my-bucket/Work/AI/summarize'),
+    ).resolves.toEqual(mockPrompt);
+    expect(spy).toHaveBeenCalledWith({
+      id: 'prompts/my-bucket/Work/AI/summarize',
+    });
   });
 
   it('createPrompt wraps the body in createPromptDto', async () => {
@@ -71,17 +74,17 @@ describe('prompts.api', () => {
     expect(spy).toHaveBeenCalledWith({ createPromptDto: body });
   });
 
-  it('updatePrompt sends only the supplied fields alongside the path', async () => {
+  it('updatePrompt sends only the supplied fields alongside the id', async () => {
     const spy = vi
       .spyOn(promptsApi, 'updatePrompt')
       .mockResolvedValue(mockPrompt);
 
-    await updatePrompt('Work/AI/summarize', {
+    await updatePrompt('prompts/my-bucket/Work/AI/summarize', {
       content: 'Summarize in three bullets:',
     });
 
     expect(spy).toHaveBeenCalledWith({
-      path: 'Work/AI/summarize',
+      id: 'prompts/my-bucket/Work/AI/summarize',
       updatePromptDto: { content: 'Summarize in three bullets:' },
     });
   });
@@ -91,21 +94,27 @@ describe('prompts.api', () => {
       .spyOn(promptsApi, 'deletePrompt')
       .mockResolvedValue(undefined);
 
-    await expect(deletePrompt('Work/AI/summarize')).resolves.toBeUndefined();
-    expect(spy).toHaveBeenCalledWith({ path: 'Work/AI/summarize' });
+    await expect(
+      deletePrompt('prompts/my-bucket/Work/AI/summarize'),
+    ).resolves.toBeUndefined();
+    expect(spy).toHaveBeenCalledWith({
+      id: 'prompts/my-bucket/Work/AI/summarize',
+    });
   });
 
   it('movePrompt sends an empty target folder when moving to root', async () => {
     const spy = vi.spyOn(promptsApi, 'movePrompt').mockResolvedValue({
       ...mockPrompt,
-      id: 'summarize',
+      id: 'prompts/my-bucket/summarize',
       folderId: '',
     });
 
-    await movePrompt('Work/AI/summarize', { targetFolderId: '' });
+    await movePrompt('prompts/my-bucket/Work/AI/summarize', {
+      targetFolderId: '',
+    });
 
     expect(spy).toHaveBeenCalledWith({
-      path: 'Work/AI/summarize',
+      id: 'prompts/my-bucket/Work/AI/summarize',
       movePromptDto: { targetFolderId: '' },
     });
   });

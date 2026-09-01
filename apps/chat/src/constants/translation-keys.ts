@@ -1067,6 +1067,8 @@ export enum ToolsetSigninI18nKeys {
   StatusLoginSuccess = 'toolsetSignin.statusLoginSuccess',
   StatusDeclineSuccess = 'toolsetSignin.statusDeclineSuccess',
   NoCredentialsRequired = 'toolsetSignin.noCredentialsRequired',
+  OfflineUsageConsent = 'toolsetSignin.offlineUsageConsent',
+  OfflineUsageConsentHint = 'toolsetSignin.offlineUsageConsentHint',
 }
 
 export enum ErrorBoundaryI18nKeys {

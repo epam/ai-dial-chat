@@ -71,7 +71,7 @@ export class UserConfigService {
       if (!response.ok) return null;
 
       const text = await response.text();
-      return migrateConfig(JSON.parse(text) as unknown);
+      return migrateConfig(JSON.parse(text) as unknown, bucket);
     } catch {
       return null;
     }

@@ -202,6 +202,11 @@ The old `GET /api/v1/config` endpoint SHALL be removed in the same PR that intro
 - **WHEN** `ENABLED_UI_FEATURES` includes a value that is not a member of `OverlayFeature`
 - **THEN** the response's `config.enabledUiFeatures` array omits that value (filtered per `config-registry-and-env-provider`)
 
+#### Scenario: A deprecated entry is returned under its current name
+
+- **WHEN** `ENABLED_UI_FEATURES` includes a deprecated value listed in `DEPRECATED_UI_FEATURE_ALIASES` (e.g. `custom-applications`)
+- **THEN** the response's `config.enabledUiFeatures` carries its replacement (`schema-apps`) exactly once, a deprecation warning is logged, and the value is not duplicated when the replacement is also supplied
+
 #### Scenario: All-unrecognized input returns null, not empty array
 
 - **WHEN** `ENABLED_UI_FEATURES` contains only values not in `OverlayFeature`
