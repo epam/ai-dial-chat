@@ -129,6 +129,7 @@ describe('SigninInterruptDialog', () => {
       pendingEvents: [],
       reportEvent: vi.fn(),
       ensureConnected: vi.fn(),
+      waitForChannel: vi.fn().mockResolvedValue('channel-1'),
     });
     mockUseDeployments.mockReturnValue(makeDeploymentsValue() as never);
     mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
@@ -143,6 +144,7 @@ describe('SigninInterruptDialog', () => {
       pendingEvents: [toolsetEvent('evt-1', apiKeyToolset.id)],
       reportEvent: vi.fn(),
       ensureConnected: vi.fn(),
+      waitForChannel: vi.fn().mockResolvedValue('channel-1'),
     });
     mockUseDeployments.mockReturnValue(
       makeDeploymentsValue([apiKeyToolset]) as never,
@@ -165,6 +167,7 @@ describe('SigninInterruptDialog', () => {
       pendingEvents: [toolsetEvent('evt-1', apiKeyToolset.id)],
       reportEvent,
       ensureConnected: vi.fn(),
+      waitForChannel: vi.fn().mockResolvedValue('channel-1'),
     });
     mockUseDeployments.mockReturnValue(
       makeDeploymentsValue([apiKeyToolset]) as never,
@@ -217,6 +220,7 @@ describe('SigninInterruptDialog', () => {
       pendingEvents: [toolsetEvent('evt-1', apiKeyToolset.id)],
       reportEvent,
       ensureConnected: vi.fn(),
+      waitForChannel: vi.fn().mockResolvedValue('channel-1'),
     });
     mockUseDeployments.mockReturnValue(
       makeDeploymentsValue([apiKeyToolset]) as never,
@@ -248,6 +252,7 @@ describe('SigninInterruptDialog', () => {
         pendingEvents: [externalServiceEvent('evt-1', APP_ID, SERVICE_NAME)],
         reportEvent: vi.fn(),
         ensureConnected: vi.fn(),
+        waitForChannel: vi.fn().mockResolvedValue('channel-1'),
       });
       mockUseDeployments.mockReturnValue(makeDeploymentsValue([]) as never);
       mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
@@ -265,6 +270,7 @@ describe('SigninInterruptDialog', () => {
         pendingEvents: [externalServiceEvent('evt-1', APP_ID, SERVICE_NAME)],
         reportEvent: vi.fn(),
         ensureConnected: vi.fn(),
+        waitForChannel: vi.fn().mockResolvedValue('channel-1'),
       });
       mockUseDeployments.mockReturnValue(makeDeploymentsValue([]) as never);
       mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
@@ -287,6 +293,7 @@ describe('SigninInterruptDialog', () => {
         pendingEvents: [externalServiceEvent('evt-1', APP_ID, SERVICE_NAME)],
         reportEvent,
         ensureConnected: vi.fn(),
+        waitForChannel: vi.fn().mockResolvedValue('channel-1'),
       });
       mockUseDeployments.mockReturnValue(makeDeploymentsValue([]) as never);
       mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
@@ -332,6 +339,7 @@ describe('SigninInterruptDialog', () => {
         pendingEvents: [externalServiceEvent('evt-1', APP_ID, SERVICE_NAME)],
         reportEvent,
         ensureConnected: vi.fn(),
+        waitForChannel: vi.fn().mockResolvedValue('channel-1'),
       });
       mockUseDeployments.mockReturnValue(makeDeploymentsValue([]) as never);
       mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
@@ -355,6 +363,7 @@ describe('SigninInterruptDialog', () => {
         ],
         reportEvent,
         ensureConnected: vi.fn(),
+        waitForChannel: vi.fn().mockResolvedValue('channel-1'),
       });
       mockUseDeployments.mockReturnValue(
         makeDeploymentsValue([apiKeyToolset]) as never,

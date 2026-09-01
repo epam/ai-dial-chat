@@ -500,7 +500,7 @@ const ChatPage = ({
 | `state`          | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.      |
 | `transport`      | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                       |
 | `generation`     | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership. |
-| `channel`        | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected }` for tool-signin delivery.                          |
+| `channel`        | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.          |
 | `overlay`        | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.          |
 | `onStopError`    | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                         |
 

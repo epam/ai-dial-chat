@@ -80,10 +80,14 @@ export class ClientChannelController {
       assertValidOptionalChannelId(reconnectChannelId);
     const abortController = new AbortController();
 
+    this.logger.debug('[timing] subscribe request received by BFF');
     const { stream, channelId } = await this.clientChannelService.subscribe(
       at,
       validReconnectChannelId,
       abortController.signal,
+    );
+    this.logger.debug(
+      `[timing] subscribe request headers about to flush — channelId: ${channelId}`,
     );
 
     res.setHeader(CHANNEL_ID_HEADER, channelId);
