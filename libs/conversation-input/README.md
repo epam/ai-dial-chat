@@ -71,7 +71,7 @@ import { EditMessageInput } from '@epam/ai-dial-conversation-input';
 
 ### Input
 
-Base text input with auto-resize and keyboard shortcut handling. Use directly when a stripped-down input is needed — `ConversationInput` wraps it with the tray, model selector, and action row.
+Base text input with auto-resize and keyboard shortcut handling. Use directly when a stripped-down input is needed — `ConversationInput` wraps it with the app-facing props it needs. The layout is always two rows: the textarea on its own full-width row, and the action bar (`+` button, tools chips, model selector, send/stop, mic) below it. Pass `hideActionBar` to render only the textarea and the attachment tray.
 
 ```tsx
 import { Input } from '@epam/ai-dial-conversation-input';

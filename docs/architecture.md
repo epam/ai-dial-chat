@@ -402,7 +402,7 @@ The whole application can run inside a host page's iframe, controlled over a `po
 | `UiFeaturesContext`          | `apps/chat/src/context/UiFeaturesContext` | Applies the host's `enabledFeatures` over the server baseline                |
 | `apps/chat-overlay-sandbox`  | `apps/chat-overlay-sandbox`               | Static host page with one case per integration scenario                      |
 
-Overlay mode is enabled per deployment with `OVERLAY_ENABLED` plus an exact-origin `ALLOWED_IFRAME_ORIGINS` allowlist; the same allowlist gates incoming messages, and after the handshake only the origin that established the session may issue requests. Protocol details, the handshake sequence, error codes, and the `OverlayFeature` flag set are documented in the [Chat Overlay Migration Guide](chat-overlay-migration-guide.md).
+Overlay mode is enabled per deployment with `OVERLAY_ENABLED` plus an `ALLOWED_IFRAME_ORIGINS` allowlist of exact origins and/or single-leading-wildcard-label origin patterns (`https://*.example.com`); the same allowlist gates incoming messages, and after the handshake only the origin that established the session may issue requests. Protocol details, the handshake sequence, error codes, and the `OverlayFeature` flag set are documented in the [Chat Overlay Migration Guide](chat-overlay-migration-guide.md).
 
 Libraries know nothing about the overlay. The protocol lives in `libs/chat-overlay` as pure types plus a DOM host client; everything that touches app state is wired through `OverlayContext` bridges registered by the page components.
 

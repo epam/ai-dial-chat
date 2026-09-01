@@ -63,11 +63,23 @@ export const useAttachmentValidation = ({
   onValidationError,
   debounceMs = DEFAULT_UNSUPPORTED_TYPE_DEBOUNCE_MS,
 }: UseAttachmentValidationParams): UseAttachmentValidationResult => {
-  const isAttachmentsAllowed = allowedMimeTypes.length > 0;
+  // Content-stable per chat-hooks-attachment-validation spec.
+  const stableMimeTypesRef = useRef<string[]>(allowedMimeTypes);
+  if (
+    stableMimeTypesRef.current.length !== allowedMimeTypes.length ||
+    stableMimeTypesRef.current.some(
+      (mimeType, index) => mimeType !== allowedMimeTypes[index],
+    )
+  ) {
+    stableMimeTypesRef.current = allowedMimeTypes;
+  }
+  const stableAllowedMimeTypes = stableMimeTypesRef.current;
+
+  const isAttachmentsAllowed = stableAllowedMimeTypes.length > 0;
 
   const fileAccept = useMemo(
-    () => mimeTypesToFileAccept(allowedMimeTypes),
-    [allowedMimeTypes],
+    () => mimeTypesToFileAccept(stableAllowedMimeTypes),
+    [stableAllowedMimeTypes],
   );
 
   const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -85,20 +97,22 @@ export const useAttachmentValidation = ({
 
   const validateAttachment = useCallback(
     (attachment: Attachment): AttachmentErrorReason | undefined => {
-      if (!isMimeTypeAllowed(attachment.contentType, allowedMimeTypes)) {
+      if (!isMimeTypeAllowed(attachment.contentType, stableAllowedMimeTypes)) {
         if (unsupportedTypeTimerRef.current != null) {
           clearTimeout(unsupportedTypeTimerRef.current);
         }
         unsupportedTypeTimerRef.current = setTimeout(() => {
-          const noTypesAllowed = allowedMimeTypes.length === 0;
+          const noTypesAllowed = stableAllowedMimeTypes.length === 0;
           onValidationError?.({
             reason: noTypesAllowed
               ? AttachmentValidationErrorReason.NoTypesAllowed
               : AttachmentValidationErrorReason.UnsupportedType,
-            allowedMimeTypes,
+            allowedMimeTypes: stableAllowedMimeTypes,
             ...(noTypesAllowed
               ? {}
-              : { formats: mimeTypesToExtensionLabels(allowedMimeTypes) }),
+              : {
+                  formats: mimeTypesToExtensionLabels(stableAllowedMimeTypes),
+                }),
           });
           unsupportedTypeTimerRef.current = null;
         }, debounceMs);
@@ -106,11 +120,11 @@ export const useAttachmentValidation = ({
       }
       return undefined;
     },
-    [allowedMimeTypes, debounceMs, onValidationError],
+    [stableAllowedMimeTypes, debounceMs, onValidationError],
   );
 
   return {
-    inputAttachmentTypes: allowedMimeTypes,
+    inputAttachmentTypes: stableAllowedMimeTypes,
     isAttachmentsAllowed,
     validateAttachment,
     fileAccept,

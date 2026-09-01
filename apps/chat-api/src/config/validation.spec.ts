@@ -70,4 +70,52 @@ describe('validate - ALLOWED_IFRAME_ORIGINS', () => {
       }),
     ).toThrow(/Environment validation failed/);
   });
+
+  it('accepts a leading-wildcard-label origin pattern', () => {
+    const config = validate({
+      ...validBaseConfig,
+      ALLOWED_IFRAME_ORIGINS: 'https://*.example.com',
+    });
+
+    expect(config.ALLOWED_IFRAME_ORIGINS).toEqual(['https://*.example.com']);
+  });
+
+  it('accepts a mixed list of exact and wildcard origins', () => {
+    const config = validate({
+      ...validBaseConfig,
+      ALLOWED_IFRAME_ORIGINS: 'https://quickapps.test,https://*.example.com',
+    });
+
+    expect(config.ALLOWED_IFRAME_ORIGINS).toEqual([
+      'https://quickapps.test',
+      'https://*.example.com',
+    ]);
+  });
+
+  it('rejects a bare wildcard host', () => {
+    expect(() =>
+      validate({
+        ...validBaseConfig,
+        ALLOWED_IFRAME_ORIGINS: 'https://*',
+      }),
+    ).toThrow(/Environment validation failed/);
+  });
+
+  it('rejects a wildcard outside the leftmost label', () => {
+    expect(() =>
+      validate({
+        ...validBaseConfig,
+        ALLOWED_IFRAME_ORIGINS: 'https://foo.*.example.com',
+      }),
+    ).toThrow(/Environment validation failed/);
+  });
+
+  it('rejects a wildcard entry with a path', () => {
+    expect(() =>
+      validate({
+        ...validBaseConfig,
+        ALLOWED_IFRAME_ORIGINS: 'https://*.example.com/embed',
+      }),
+    ).toThrow(/Environment validation failed/);
+  });
 });
