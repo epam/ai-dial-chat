@@ -19,6 +19,7 @@ import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { HeaderIconSizes } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { MODAL_CLOSE_BUTTON_WIDTH } from '@/src/components/Common/Modal';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 
@@ -108,7 +109,11 @@ export function EntityHeader<T extends MarketplaceEntity>({
               {entity.topics && (
                 <TopicsList
                   topics={entity.topics}
-                  counterMarginRight={screenState === ScreenState.SM ? 18 : 0}
+                  trailingReservedWidth={
+                    screenState === ScreenState.SM
+                      ? MODAL_CLOSE_BUTTON_WIDTH
+                      : 0
+                  }
                 />
               )}
               <div className="flex max-w-full items-center gap-[2px] whitespace-nowrap">

@@ -9,6 +9,7 @@ import React, {
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 
 const GAP_WIDTH = 8;
+const EDGE_SAFETY_MARGIN = 4;
 
 interface OverflowContainerProps<T> {
   items: T[];
@@ -16,6 +17,7 @@ interface OverflowContainerProps<T> {
   renderOverflow: (hiddenItems: T[]) => ReactNode;
   getKey: (item: T) => string | number;
   overflowIndicatorWidth?: number;
+  trailingReservedWidth?: number;
   className?: string;
   dataQA?: string;
 }
@@ -26,6 +28,7 @@ export function OverflowContainer<T>({
   renderOverflow,
   getKey,
   overflowIndicatorWidth = 50,
+  trailingReservedWidth = 0,
   className = 'flex w-full flex-nowrap items-center gap-1',
   dataQA,
 }: OverflowContainerProps<T>) {
@@ -39,7 +42,10 @@ export function OverflowContainer<T>({
     const container = containerRef.current;
     if (!container) return;
 
-    const containerWidth = container.offsetWidth;
+    const containerWidth = Math.max(
+      container.offsetWidth - trailingReservedWidth - EDGE_SAFETY_MARGIN,
+      0,
+    );
 
     let totalWidth = 0;
     for (let i = 0; i < items.length; i++) {
@@ -55,7 +61,7 @@ export function OverflowContainer<T>({
       return;
     }
 
-    const availableWidth = containerWidth - overflowIndicatorWidth;
+    const availableWidth = containerWidth - overflowIndicatorWidth - GAP_WIDTH;
     let occupiedWidth = 0;
     const newVisibleItems: T[] = [];
     const newHiddenItems: T[] = [];
@@ -81,7 +87,7 @@ export function OverflowContainer<T>({
 
     setVisibleItems(newVisibleItems);
     setHiddenItems(newHiddenItems);
-  }, [items, overflowIndicatorWidth]);
+  }, [items, overflowIndicatorWidth, trailingReservedWidth]);
 
   useResizeObserver(containerRef.current, recalculateItems);
   useLayoutEffect(() => {

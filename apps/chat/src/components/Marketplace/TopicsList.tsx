@@ -7,15 +7,15 @@ import { MarketplaceEntityTopic } from './MarketplaceEntityTopic';
 
 interface TopicsListProps {
   topics: string[];
-  counterMarginRight?: number;
+  trailingReservedWidth?: number;
 }
 
-const COUNTER_WIDTH = 30;
+const COUNTER_WIDTH = 34;
 const getKey = (item: { topic: string }) => item.topic;
 
 export const TopicsList = ({
   topics,
-  counterMarginRight = 0,
+  trailingReservedWidth = 0,
 }: TopicsListProps) => {
   const items = topics.map((topic) => ({ topic }));
 
@@ -42,7 +42,8 @@ export const TopicsList = ({
     <OverflowContainer
       items={items}
       getKey={getKey}
-      overflowIndicatorWidth={COUNTER_WIDTH + counterMarginRight}
+      overflowIndicatorWidth={COUNTER_WIDTH}
+      trailingReservedWidth={trailingReservedWidth}
       renderItem={MarketplaceEntityTopic}
       renderOverflow={renderOverflow}
       className="flex w-full gap-2"
