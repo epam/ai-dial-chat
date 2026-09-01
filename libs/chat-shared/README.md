@@ -74,7 +74,11 @@ const job: ConversationTransferJob = {
   fileName: '2026-09-01_ai_dial_chat_with_attachments.dial',
   progress: {
     percent: 43,
-    units: { completed: 4, total: 10, kind: ConversationTransferUnitKind.Attachment },
+    units: {
+      completed: 4,
+      total: 10,
+      kind: ConversationTransferUnitKind.Attachment,
+    },
   },
 };
 ```
@@ -377,14 +381,14 @@ import {
 } from '@epam/ai-dial-chat-shared';
 ```
 
-| Constant                                     | Purpose                                                           |
-| -------------------------------------------- | ----------------------------------------------------------------- |
-| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names    |
-| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists  |
-| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types   |
-| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders     |
-| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step |
-| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens               |
+| Constant                                     | Purpose                                                              |
+| -------------------------------------------- | -------------------------------------------------------------------- |
+| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names       |
+| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists     |
+| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types      |
+| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders        |
+| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step    |
+| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                  |
 | `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field |
 
 ## Stylesheet

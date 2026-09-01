@@ -1,8 +1,4 @@
 export { ConversationPanel } from './components/ConversationPanel/ConversationPanel';
-export {
-  CircularProgress,
-  type CircularProgressProps,
-} from './components/CircularProgress/CircularProgress';
 export { ImportExportQueue } from './components/ImportExportQueue/ImportExportQueue';
 export { RenameConversationPopup } from './components/RenameConversationPopup/RenameConversationPopup';
 export type {

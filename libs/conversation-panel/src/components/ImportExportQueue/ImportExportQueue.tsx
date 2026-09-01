@@ -12,6 +12,7 @@ import {
   ElementSize,
   EllipsisTooltip,
   GhostIconButton,
+  Spinner,
   Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -28,7 +29,6 @@ import type {
   ImportExportQueueStyles,
 } from '../../models/import-export-queue';
 import { getTransferFileIcon } from '../../utils/transfer-file';
-import { CircularProgress } from '../CircularProgress/CircularProgress';
 import classes from './ImportExportQueue.module.scss';
 
 export type {
@@ -67,7 +67,6 @@ const JobRow: FC<JobRowProps> = ({ job, labels, onCancel, styles }) => {
   const typography = styles?.typography;
   const FileIcon = getTransferFileIcon(job.fileName);
   const isCanceled = job.status === ConversationTransferJobStatus.Canceled;
-  const { units } = job.progress;
 
   return (
     <div className="group flex items-center gap-2 px-4 py-2">
@@ -86,23 +85,12 @@ const JobRow: FC<JobRowProps> = ({ job, labels, onCancel, styles }) => {
         contentClassName="!z-[80]"
       />
       {job.status === ConversationTransferJobStatus.InProgress && (
-        /*
-         * The ring and the cancel control share one grid cell so revealing one
-         * and hiding the other shifts nothing. The button stays mounted and
-         * focusable at all times — hiding it until hover would put cancel out
-         * of reach of a keyboard.
-         */
         <div className={mergeClasses(STATUS_SLOT_CLASS, 'grid')}>
-          <span className="col-start-1 row-start-1 flex items-center justify-center opacity-100 transition-opacity group-focus-within:opacity-0 group-hover:opacity-0">
-            <CircularProgress
-              value={job.progress.percent}
-              ariaLabel={labels.jobProgressAriaLabel(job.fileName)}
-              ariaValueText={
-                units ? labels.jobProgressValueText(units) : undefined
-              }
-              className={classes.progressRing}
-            />
-          </span>
+          <Spinner
+            size={DIAL_ICON_SIZE.SM}
+            ariaLabel={labels.jobProgressAriaLabel(job.fileName)}
+            className="col-start-1 row-start-1 opacity-100 transition-opacity group-focus-within:opacity-0 group-hover:opacity-0"
+          />
           <GhostIconButton
             aria-label={labels.cancelJobAriaLabel(job.fileName)}
             size={ElementSize.Small}
@@ -135,11 +123,6 @@ const JobRow: FC<JobRowProps> = ({ job, labels, onCancel, styles }) => {
           contentClassName="!z-[80]"
           asChild
         >
-          {/*
-           * The reason is the icon's accessible name, not only its tooltip:
-           * a tooltip renders nothing on a mobile screen, so relying on it
-           * alone would leave the failure unexplained there.
-           */}
           <span
             className={STATUS_SLOT_CLASS}
             role="img"
@@ -179,16 +162,14 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
     const typography = styles?.typography;
     const cssVars = {
       ...buildCssVars({
-        '--ieq-bg': colors?.background,
-        '--ieq-text': colors?.text,
-        '--ieq-text-secondary': colors?.textSecondary,
-        '--ieq-success-icon': colors?.successIcon,
-        '--ieq-error-icon': colors?.errorIcon,
-        '--ieq-progress-track': colors?.progressTrack,
-        '--ieq-progress-indicator': colors?.progressIndicator,
-        '--ieq-divider': colors?.divider,
-        '--ieq-failure-count-bg': colors?.failureCountBackground,
-        '--ieq-failure-count-text': colors?.failureCountText,
+        '--cp-transfer-queue-bg': colors?.background,
+        '--cp-transfer-queue-text': colors?.text,
+        '--cp-transfer-queue-text-secondary': colors?.textSecondary,
+        '--cp-transfer-queue-success-icon': colors?.successIcon,
+        '--cp-transfer-queue-error-icon': colors?.errorIcon,
+        '--cp-transfer-queue-divider': colors?.divider,
+        '--cp-transfer-queue-failure-count-bg': colors?.failureCountBackground,
+        '--cp-transfer-queue-failure-count-text': colors?.failureCountText,
       }),
       ...styles?.cssVars,
     };
@@ -236,7 +217,7 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
         style={cssVars}
         className={mergeClasses(
           classes.root,
-          'w-[370px] rounded-lg shadow-lg',
+          'w-[370px] max-w-[calc(100vw-2rem)] rounded-lg shadow-lg',
           styles?.rootClassName,
         )}
       >

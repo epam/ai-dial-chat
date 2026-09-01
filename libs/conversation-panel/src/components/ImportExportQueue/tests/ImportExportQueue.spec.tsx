@@ -553,8 +553,12 @@ describe('ImportExportQueue', () => {
 
       const root = screen.getByRole('status');
       const style = root.style as CSSStyleDeclaration & CSSProperties;
-      expect(style.getPropertyValue('--ieq-bg')).toBe('rebeccapurple');
-      expect(style.getPropertyValue('--ieq-progress-indicator')).toBe('tomato');
+      expect(style.getPropertyValue('--cp-transfer-queue-bg')).toBe(
+        'rebeccapurple',
+      );
+      expect(
+        style.getPropertyValue('--cp-transfer-queue-progress-indicator'),
+      ).toBe('tomato');
       expect(root.className).toContain('custom-root');
     });
   });

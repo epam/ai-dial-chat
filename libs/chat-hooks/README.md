@@ -430,17 +430,17 @@ const ExportButton = ({
 
 **Parameters** (`UseConversationExportParams`):
 
-| Name                        | Type                                                                     | Description                                                                        |
-| --------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| `conversationsApi`          | `Pick<ConversationsApi, 'getConversation' \| 'listConversations'>`       | Already-configured generated-client instance.                                      |
-| `filesApi`                  | `Pick<FilesApi, 'downloadFileRaw'>`                                      | Already-configured generated-client instance.                                      |
-| `normalizeConversationPath` | `(conversationId: string) => string`                                     | Resolves a conversation id to the bucket-qualified path `getConversation` expects. |
-| `classifyTransferError`     | `(error: unknown) => { isUnauthorized?: boolean; isNotFound?: boolean }` | Host-owned error classification. Defaults to `{}` (never unauthorized/not-found).  |
-| `resolveErrorTraceId`       | `(error: unknown) => Promise<string \| undefined>`                       | Resolves a trace id for a failing request. Defaults to resolving `undefined`.      |
+| Name                        | Type                                                                     | Description                                                                                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `conversationsApi`          | `Pick<ConversationsApi, 'getConversation' \| 'listConversations'>`       | Already-configured generated-client instance.                                                                                                                                       |
+| `filesApi`                  | `Pick<FilesApi, 'downloadFileRaw'>`                                      | Already-configured generated-client instance.                                                                                                                                       |
+| `normalizeConversationPath` | `(conversationId: string) => string`                                     | Resolves a conversation id to the bucket-qualified path `getConversation` expects.                                                                                                  |
+| `classifyTransferError`     | `(error: unknown) => { isUnauthorized?: boolean; isNotFound?: boolean }` | Host-owned error classification. Defaults to `{}` (never unauthorized/not-found).                                                                                                   |
+| `resolveErrorTraceId`       | `(error: unknown) => Promise<string \| undefined>`                       | Resolves a trace id for a failing request. Defaults to resolving `undefined`.                                                                                                       |
 | `maxArchiveBytes`           | `number`                                                                 | Ceiling on the summed byte length of an export's attachments; a larger export fails with `FileTooLarge` instead of being zipped. Defaults to `DEFAULT_MAX_ARCHIVE_BYTES` (512 MiB). |
-| `onSuccess`                 | `(event: ConversationTransferSuccessEvent) => void`                      | Called when a job completes successfully.                                          |
-| `onWarning`                 | `(event: ConversationTransferWarningEvent) => void`                      | Called when a job succeeds but had to skip something (e.g. an attachment).         |
-| `onError`                   | `(event: ConversationTransferErrorEvent) => void`                        | Called when a job fails.                                                           |
+| `onSuccess`                 | `(event: ConversationTransferSuccessEvent) => void`                      | Called when a job completes successfully.                                                                                                                                           |
+| `onWarning`                 | `(event: ConversationTransferWarningEvent) => void`                      | Called when a job succeeds but had to skip something (e.g. an attachment).                                                                                                          |
+| `onError`                   | `(event: ConversationTransferErrorEvent) => void`                        | Called when a job fails.                                                                                                                                                            |
 
 **Returns** (`UseConversationExportResult`): `{ jobs, exportSingle(conversationId, title, mode), exportAll(), cancelJob(jobId), dismissJob(jobId), retryJob(jobId), dismissAll() }`.
 
