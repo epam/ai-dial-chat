@@ -1,4 +1,10 @@
 import {
+  buildCssVars,
+  ConversationTransferJobStatus,
+  mergeClasses,
+  type ConversationTransferJob,
+} from '@epam/ai-dial-chat-shared';
+import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
@@ -16,17 +22,11 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { memo, useCallback, useEffect, useId, useState, type FC } from 'react';
-import {
-  ConversationTransferJobStatus,
-  type ConversationTransferJob,
-} from '../../models/conversation-transfer';
 import type {
   ImportExportQueueLabels,
   ImportExportQueueProps,
   ImportExportQueueStyles,
 } from '../../models/import-export-queue';
-import { buildCssVars } from '../../utils/build-css-vars';
-import { mergeClasses } from '../../utils/merge-class';
 import { getTransferFileIcon } from '../../utils/transfer-file';
 import { CircularProgress } from '../CircularProgress/CircularProgress';
 import classes from './ImportExportQueue.module.scss';

@@ -1,9 +1,9 @@
-import type { CSSProperties } from 'react';
 import type {
   ConversationTransferErrorCode,
   ConversationTransferJob,
   ConversationTransferProgressUnits,
-} from './conversation-transfer';
+} from '@epam/ai-dial-chat-shared';
+import type { CSSProperties } from 'react';
 
 /** Labels for every user-visible string in `ImportExportQueue`. */
 export interface ImportExportQueueLabels {

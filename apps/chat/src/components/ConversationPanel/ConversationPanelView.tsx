@@ -29,16 +29,16 @@ import {
   type ConversationTransferProgressUnits,
   ConversationTransferUnitKind,
   FilterTab,
-  ImportExportQueue,
   mergeClasses,
-  type ImportExportQueueLabels,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
+  ImportExportQueue,
   RenameConversationPopup,
   type ConversationItem,
   type ConversationMove,
   type ConversationPanelStyles,
+  type ImportExportQueueLabels,
   type RenameConversationPopupLabels,
 } from '@epam/ai-dial-conversation-panel';
 import {

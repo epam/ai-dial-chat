@@ -1,5 +1,5 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { memo, type FC } from 'react';
-import { mergeClasses } from '../../utils/merge-class';
 import classes from './CircularProgress.module.scss';
 
 /** Props accepted by `CircularProgress`. */

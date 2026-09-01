@@ -1,7 +1,3 @@
-import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
 import {
   ConversationTransferErrorCode,
   ConversationTransferJobStatus,
@@ -9,7 +5,11 @@ import {
   ConversationTransferUnitKind,
   type ConversationTransferJob,
   type ConversationTransferProgress,
-} from '../../../models/conversation-transfer';
+} from '@epam/ai-dial-chat-shared';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react';
+import { describe, expect, it, vi } from 'vitest';
 import {
   ImportExportQueue,
   type ImportExportQueueLabels,
