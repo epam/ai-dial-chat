@@ -74,7 +74,7 @@ import { resolveCatalogIconUrl } from '../../utils/icon-path';
 const normalizeDeploymentId = (id: string): string =>
   id
     .split('/')
-    .map(segment => {
+    .map((segment) => {
       try {
         return encodeURIComponent(decodeURIComponent(segment));
       } catch {

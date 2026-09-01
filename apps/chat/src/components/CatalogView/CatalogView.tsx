@@ -247,9 +247,7 @@ const CatalogView: FC<Props> = ({
   );
   const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
   const isCustomAppsEnabled = useUiFeature(OverlayFeature.CustomApps);
-  const isSchemaAppsEnabled = useUiFeature(
-    OverlayFeature.SchemaApps,
-  );
+  const isSchemaAppsEnabled = useUiFeature(OverlayFeature.SchemaApps);
   const isHideCustomAppCreationEnabled = useUiFeature(
     OverlayFeature.HideCustomAppCreation,
   );

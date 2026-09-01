@@ -115,8 +115,11 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
             </span>
           )}
           {sanitizedDescription && (
+            /* Links must read as links: both sanitizers strip `style` and
+               `class`, so nothing an operator writes in ANNOUNCEMENT_DESCRIPTION
+               can colour them — the wrapper has to. */
             <span
-              className="min-w-0 truncate"
+              className="min-w-0 truncate [&_a:hover]:opacity-75 [&_a]:text-accent [&_a]:underline"
               // eslint-disable-next-line react/no-danger
               dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
             />
@@ -149,10 +152,10 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
       <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
         {/* A div, not a span: the legacy message may contain <p> blocks, which
             are invalid inside a span and get reparented by the browser. Links
-            are underlined here rather than via operator-authored style
-            attributes, which the sanitizer strips. */}
+            are coloured and underlined here rather than via operator-authored
+            style attributes, which the sanitizer strips. */}
         <div
-          className="dial-small-paragraph-semi-text text-center [&>p+p]:mt-1 [&_a]:underline"
+          className="dial-small-paragraph-semi-text text-center [&>p+p]:mt-1 [&_a:hover]:opacity-75 [&_a]:text-accent [&_a]:underline"
           // eslint-disable-next-line react/no-danger -- HTML is sanitized by DOMPurify before use
           dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />

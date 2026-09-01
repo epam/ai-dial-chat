@@ -220,6 +220,24 @@ describe('AnnouncementBanner — structured layout', () => {
     expect(title.className).toContain('min-w-0');
   });
 
+  it('renders description links in the accent colour with an underline', () => {
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    mockAppConfigState.announcementDescription =
+      'A cleaner UI. <a href="https://example.com">Learn more</a>';
+    render(<AnnouncementBanner />);
+
+    /* Both sanitizers strip `style` and `class`, so nothing in the operator's
+       HTML can make a link look like one — the wrapper has to. The styling
+       lives on the wrapper around the injected markup, which is CSS-level
+       behavior with no semantic query equivalent. */
+    const link = screen.getByRole('link', { name: 'Learn more' });
+    // eslint-disable-next-line testing-library/no-node-access
+    const description = link.parentElement;
+
+    expect(description?.className).toContain('[&_a]:text-accent');
+    expect(description?.className).toContain('[&_a]:underline');
+  });
+
   it('keeps the close control outside the truncating container', () => {
     mockAppConfigState.announcementTitle = 'Welcome to DIAL';
     render(<AnnouncementBanner />);
