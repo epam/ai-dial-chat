@@ -11,6 +11,7 @@ import {
   ThemeId,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
+import { ExpectedApiResponse } from '@/src/ui/pages';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
@@ -512,7 +513,27 @@ dialTest(
       'Click on "Delete selected conversations", confirmation and verify all entities are removed',
       async () => {
         await chatBar.deleteAllEntities();
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        const expectedApiResponse: ExpectedApiResponse[] = [];
+        for (const nestedConversation of nestedConversations.concat(
+          rootFolder.conversations,
+        )) {
+          expectedApiResponse.push({
+            apiMethod: 'DELETE',
+            urlPattern: nestedConversation.name,
+          });
+        }
+        expectedApiResponse.push({
+          apiMethod: 'DELETE',
+          urlPattern: historyConversation.name,
+        });
+        expectedApiResponse.push({
+          apiMethod: 'DELETE',
+          urlPattern: emptyConversation.name,
+        });
+        await dialHomePage.waitForExpectedResponses(
+          () => confirmationDialog.confirm(),
+          expectedApiResponse,
+        );
         for (let i = 0; i < nestedFolders.length; i++) {
           await chatBarFolderAssertion.assertFolderState(
             {

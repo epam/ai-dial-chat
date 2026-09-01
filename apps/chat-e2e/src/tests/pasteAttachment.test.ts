@@ -162,7 +162,7 @@ dialTest(
           expectedRestrictedCharsFilename,
         );
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
-          expectedRestrictedCharsFilename,
+          responses[0].name,
           'visible',
         );
         await toast.closeToast();
