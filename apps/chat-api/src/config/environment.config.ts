@@ -21,6 +21,16 @@ export enum ApplicationLogLevel {
   Error = 'error',
 }
 
+/*
+ * Matches an exact origin (scheme://host[:port]) or a single
+ * leading-wildcard-label origin pattern (scheme://*.host[:port]), with no
+ * path, query string, or fragment. Mirrors CSP's own host-source wildcard
+ * grammar so a wildcard entry can be forwarded verbatim into
+ * `frame-src`/`frame-ancestors`.
+ */
+export const IFRAME_ORIGIN_PATTERN =
+  /^(https?):\/\/(?:\*\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*(?::\d+)?$/;
+
 export class EnvironmentVariables {
   @IsOptional()
   @IsEnum(ApplicationLogLevel)
@@ -672,18 +682,10 @@ export class EnvironmentVariables {
       .map((s: string) => s.trim())
       .filter((s: string) => s.length > 0);
   })
-  @IsUrl(
-    {
-      require_tld: false,
-      require_protocol: true,
-      protocols: ['https', 'http'],
-    },
-    { each: true },
-  )
-  @Matches(/^https?:\/\/[^/\s?#]+$/, {
+  @Matches(IFRAME_ORIGIN_PATTERN, {
     each: true,
     message:
-      'Each allowed iframe origin must be an origin URL with no path or query string',
+      'Each allowed iframe origin must be an origin URL (scheme://host[:port], no path or query string) or a single leading-wildcard-label pattern (scheme://*.host[:port])',
   })
   ALLOWED_IFRAME_ORIGINS?: string[] = [];
 
