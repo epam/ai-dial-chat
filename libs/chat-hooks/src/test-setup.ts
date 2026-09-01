@@ -10,3 +10,28 @@ import { vi } from 'vitest';
 vi.mock('@epam/pdf-highlighter-kit', () => ({
   PDFHighlightViewer: () => null,
 }));
+
+/*
+ * jsdom does not implement Blob.prototype.arrayBuffer() or text().
+ * Polyfill arrayBuffer() via FileReader.readAsArrayBuffer (raw bytes, no
+ * encoding transformation), then derive text() from it using TextDecoder so
+ * invalid UTF-8 bytes reliably become U+FFFD replacement characters.
+ */
+if (typeof Blob !== 'undefined' && !Blob.prototype.arrayBuffer) {
+  Blob.prototype.arrayBuffer = function (): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(this);
+    });
+  };
+}
+
+if (typeof Blob !== 'undefined' && !Blob.prototype.text) {
+  Blob.prototype.text = function (): Promise<string> {
+    return this.arrayBuffer().then((buf) =>
+      new TextDecoder('utf-8', { fatal: false }).decode(buf),
+    );
+  };
+}

@@ -5,6 +5,7 @@ import { useSheetNavigation } from '../../../hooks/useSheetNavigation';
 import { NavigableBottomSheet } from '../NavigableBottomSheet';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ElementSize: { Standard: 'standard' },
   GhostIconButton: ({

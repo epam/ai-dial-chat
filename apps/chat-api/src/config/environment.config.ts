@@ -567,10 +567,6 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
-  DEEP_RESEARCH_TOOL_ID?: string;
-
-  @IsOptional()
-  @IsString()
   ANNOUNCEMENT_HTML_MESSAGE?: string;
 
   @IsOptional()
@@ -811,6 +807,16 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   SETTINGS_PAGE_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  DEFAULT_DEPLOYMENT_PINNED?: boolean = false;
 
   @IsOptional()
   @IsString()

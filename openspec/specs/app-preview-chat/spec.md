@@ -1,10 +1,13 @@
 # app-preview-chat Specification
 
 ## Purpose
-TBD - created by archiving change add-app-editor-preview. Update Purpose after archive.
+
+The Apps editor's in-place preview: a header toggle that saves the embedded editor first, then swaps the settings iframe for a real, session-scoped chat against the application being edited.
 ## Requirements
 ### Requirement: EditorHeader preview button
-`EditorHeader` SHALL accept an optional `onPreview?: () => void` prop and an optional `isPreviewing?: boolean` prop. When `onPreview` is provided, a button with a leading icon SHALL render in the right-hand action group, alongside Cancel and Save (not on the left with the title/steps nav). When `onPreview` is not provided, no preview button SHALL render. This requirement applies to `EditorHeader` generically; `ToolsetEditor` is unaffected because it does not render `EditorHeader`.
+`EditorHeader` SHALL accept an optional `onPreview?: () => void` prop, an optional `isPreviewing?: boolean` prop, an optional `isPreviewDisabled?: boolean` prop, and the two label props the toggle renders — `previewButtonLabel` and `exitPreviewButtonLabel`. When `onPreview` is provided, a button with a leading icon SHALL render in the right-hand action group, alongside Cancel and Save (not on the left with the title/steps nav), disabled when `isPreviewDisabled` is true. When `onPreview` is not provided, no preview button SHALL render. This requirement applies to `EditorHeader` generically; `ToolsetEditor` is unaffected because it does not render `EditorHeader`.
+
+On mobile the same actions collapse: while not previewing, Preview joins Cancel in the kebab "More actions" menu and only the primary Save button stays inline; while previewing, only the exit-preview button is shown.
 
 While `isPreviewing` is `true`, the Cancel and Save buttons SHALL NOT render at all (not merely disabled) — in preview mode they serve no purpose, since exiting preview is the only relevant action, and previously left the header showing two non-functional disabled buttons. Only the "Exit preview" button SHALL be shown in the right-hand action group.
 
@@ -14,12 +17,12 @@ While `isPreviewing` is `true`, the Cancel and Save buttons SHALL NOT render at 
 
 #### Scenario: Preview button shown when callback supplied
 - **WHEN** `EditorHeader` is rendered with `onPreview` set and `isPreviewing` is `false` or omitted
-- **THEN** a button labelled with the `AppsEditorI18nKeys.PreviewButton` translation and an `IconEye` leading icon renders in the right-hand action group, next to Cancel/Save
+- **THEN** a button labelled with the supplied `previewButtonLabel` (the shared `basic.preview` translation) and an `IconEye` leading icon renders in the right-hand action group, next to Cancel/Save
 - **AND** clicking it invokes `onPreview`
 
 #### Scenario: Button toggles to Exit preview
 - **WHEN** `EditorHeader` is rendered with `onPreview` set and `isPreviewing` is `true`
-- **THEN** the same button instead shows the `AppsEditorI18nKeys.ExitPreviewButton` translation and an `IconEyeOff` leading icon
+- **THEN** the same button instead shows the supplied `exitPreviewButtonLabel` (`appsEditor.exitPreviewButton`) and an `IconEyeOff` leading icon
 - **AND** clicking it invokes `onPreview` (the same callback toggles the mode; `AppsEditor` owns the on/off state)
 
 #### Scenario: Cancel and Save are hidden while previewing
@@ -28,15 +31,21 @@ While `isPreviewing` is `true`, the Cancel and Save buttons SHALL NOT render at 
 - **AND** only the "Exit preview" button is shown in the right-hand action group
 
 ### Requirement: Preview availability scoped to the Apps editor Settings step
-`AppsEditor` SHALL pass `onPreview` to `EditorHeader` only when the current step is `AppsEditorStep.Settings` and both `schema?.editorUrl` and a saved app id (`appIdForSettings`) are present. On the General step, or before an app id exists, `AppsEditor` SHALL omit `onPreview` so the button does not render.
+`AppsEditor` SHALL pass `onPreview` to `EditorHeader` only while the current step is `AppsEditorStep.Settings`, omitting it on the General step so the button does not render there at all.
+
+On the Settings step the button SHALL render but SHALL be disabled (`isPreviewDisabled`) until a saved app id (`appIdForSettings`), a `schema.editorUrl`, and the embedded editor's readiness signal are all present — the same readiness gate that governs Save (see `quick-app-authoring`). A visible-but-disabled control tells the user preview exists and is not yet available, where an absent one reads as unsupported.
 
 #### Scenario: No preview on General step
 - **WHEN** the Apps editor is on `AppsEditorStep.General`
 - **THEN** `EditorHeader` receives no `onPreview` prop and shows no preview button
 
 #### Scenario: Preview available on Settings step with a saved app
-- **WHEN** the Apps editor is on `AppsEditorStep.Settings` with a non-empty `appIdForSettings` and a schema that has `editorUrl`
-- **THEN** `EditorHeader` receives an `onPreview` handler and shows the preview button
+- **WHEN** the Apps editor is on `AppsEditorStep.Settings` with a non-empty `appIdForSettings`, a schema that has `editorUrl`, and the embedded editor has reported readiness
+- **THEN** `EditorHeader` receives an `onPreview` handler and shows an enabled preview button
+
+#### Scenario: Preview button is disabled before the embedded editor is ready
+- **WHEN** the Apps editor is on `AppsEditorStep.Settings` but the embedded editor has not yet reported readiness
+- **THEN** the preview button is rendered in a disabled state rather than omitted
 
 ### Requirement: Save-then-preview orchestration
 Clicking the preview button SHALL trigger the same save flow as the existing Save button (`SettingsStep.triggerSave()` → `AppEditorIframe` posts `AppsEditorEvent.TriggerSave` to the iframe) while recording that the save was requested for preview, not for exit-and-navigate. `AppsEditor` SHALL wait for the resulting `SaveSuccess`/`SaveError` postMessage event before changing the visible pane.
@@ -62,13 +71,13 @@ Clicking the preview button SHALL trigger the same save flow as the existing Sav
 - **THEN** `AppsEditor` ignores it (no navigation, no error notification, no state change) because no save was requested while previewing
 
 ### Requirement: Saving overlay while a save (or preview-save) is in flight
-`AppsEditor` SHALL render a blocking overlay over its main content area (General form / Settings step, whichever is visible) whenever `isSaving` is `true` — covering both the normal Save action and the Preview action's underlying save sequence, since both leave the UI otherwise unchanged until the embedded editor's `SaveSuccess`/`SaveError` postMessage arrives. `isSaving` SHALL clear as soon as that postMessage arrives; it SHALL NOT remain `true` waiting on the follow-up `refetchDeployments()` call (see "Preview chat renders Quick Apps conversation starters" below for why that call is not awaited). The content wrapper `AppsEditor` renders the General form / Settings step inside MUST carry an explicit fill class (`size-full`), since `SettingsStep`'s root uses `size-full` and needs an ancestor chain of defined heights — an unstyled wrapper collapses the iframe to its browser-default height instead of filling the available space.
+`AppsEditor` SHALL render a blocking overlay over its main content area (General form / Settings step, whichever is visible) whenever `isSaving` is `true` — covering both the normal Save action and the Preview action's underlying save sequence, since both leave the UI otherwise unchanged until the embedded editor's `SaveSuccess`/`SaveError` postMessage arrives. For a **preview** save, `isSaving` SHALL clear as soon as that postMessage arrives and SHALL NOT wait on the follow-up `refetchDeployments()` call, which is fire-and-forget. For a **Save & Exit**, the overlay SHALL stay up until the awaited `refetchDeployments()` settles, so the user is not dropped onto the catalog before it reflects the app they just saved; a refetch that rejects is logged and still clears the overlay and navigates. The content wrapper `AppsEditor` renders the General form / Settings step inside MUST carry an explicit fill class (`size-full`), since `SettingsStep`'s root uses `size-full` and needs an ancestor chain of defined heights — an unstyled wrapper collapses the iframe to its browser-default height instead of filling the available space.
 
-The overlay backdrop SHALL use the semi-transparent `bg-blackout` background (not an opaque `bg-layer-*` color) so the iframe/form content stays dimly visible underneath, matching the processing-overlay pattern already used in `DialFileManagerShell`. The spinner and label SHALL be rendered inside a small opaque card (`bg-layer-sunken`, rounded, `shadow-lg`) centered within the backdrop, so the "Saving in progress…" text keeps sufficient contrast regardless of what layer/theme is showing through the translucent backdrop. The overlay SHALL show a `Spinner` and the i18n label `AppsEditorI18nKeys.SavingOverlayLabel` (`appsEditor.savingOverlay`, "Saving in progress…"), announced via `aria-label` + `aria-live="polite"` on the outer backdrop container. The content underneath SHALL be made `inert` while the overlay is shown, so it is excluded from the tab order and the accessibility tree instead of merely being visually covered.
+The overlay backdrop SHALL use the semi-transparent `bg-backdrop` background (not an opaque `bg-layer-*` color) so the iframe/form content stays dimly visible underneath, matching the processing-overlay pattern already used in `DialFileManagerShell`. The spinner and label SHALL be rendered inside a small opaque card (`bg-layer-sunken`, rounded, `shadow-lg`) centered within the backdrop, so the "Saving in progress…" text keeps sufficient contrast regardless of what layer/theme is showing through the translucent backdrop. The overlay SHALL show a `Spinner` and the i18n label `AppsEditorI18nKeys.SavingOverlayLabel` (`appsEditor.savingOverlay`, "Saving in progress…"), announced via `aria-label` + `aria-live="polite"` on the outer backdrop container. The content underneath SHALL be made `inert` while the overlay is shown, so it is excluded from the tab order and the accessibility tree instead of merely being visually covered.
 
 #### Scenario: Overlay shown while the preview save is in flight
 - **WHEN** the user clicks Preview and the settings iframe's `SaveSuccess`/`SaveError` postMessage has not yet arrived
-- **THEN** a translucent `bg-blackout` backdrop covers the Settings step content, with an opaque `Spinner` + "Saving in progress…" card centered on top
+- **THEN** a translucent `bg-backdrop` backdrop covers the Settings step content, with an opaque `Spinner` + "Saving in progress…" card centered on top
 - **AND** the underlying General form / Settings step content is `inert` (not focusable, not in the accessibility tree)
 - **AND** the settings iframe continues to fill its full height underneath the backdrop (no layout collapse)
 
@@ -80,6 +89,7 @@ The overlay backdrop SHALL use the semi-transparent `bg-blackout` background (no
 #### Scenario: Overlay also shown for the normal Save action
 - **WHEN** the user clicks the normal Save button (General or Settings step) and the resulting save has not yet completed
 - **THEN** the same overlay is shown, since `isSaving` is `true` for that action too
+- **AND** for a Settings-step Save & Exit it stays up across the awaited deployments refetch, until the editor navigates away
 
 ### Requirement: Exit preview returns to the settings iframe without reload
 Clicking "Exit preview" SHALL switch the visible pane back to `AppEditorIframe` without re-saving and without remounting/reloading the iframe (its `src`, load state, and internal state are preserved from before Preview was entered). It SHALL NOT delete or otherwise affect the preview conversation, since it may be re-entered later in the same session.
@@ -116,9 +126,11 @@ The preview pane SHALL use the same conversation-creation, streaming, and intera
 - **THEN** the feature behaves exactly as it does in a normal chat, since the same underlying hooks and endpoints are used
 
 ### Requirement: Preview chat renders Quick Apps conversation starters
-When a Settings-step save succeeds (for a preview request or a normal Save), `AppsEditor` SHALL trigger `refetchDeployments()` as a fire-and-forget background call and SHALL NOT await it — switching to preview mode (or navigating to `returnUrl` for a normal Save) happens immediately once `SaveSuccess` arrives, using whatever deployment list is already in context. `refetchDeployments()` owns bypassing the deployments cache; a failed refetch SHALL be swallowed (logged at most) and SHALL NOT surface an error or block/retry preview entry or navigation. Because `DeploymentsContext` is a shared, reactive data source, once the background refetch resolves, any component reading it (including `AppPreviewChat`, described below) re-renders with the updated list on its own — `AppsEditor` does not need to re-trigger or coordinate that update.
+When a **preview** save succeeds, `AppsEditor` SHALL trigger `refetchDeployments()` as a fire-and-forget background call and SHALL NOT await it — switching to preview mode happens immediately once `SaveSuccess` arrives, using whatever deployment list is already in context. When a **Save & Exit** succeeds, `AppsEditor` SHALL await the same call before navigating to `returnUrl`, so the catalog the user lands on already reflects the save. `refetchDeployments()` owns bypassing the deployments cache; a failed refetch SHALL be swallowed (logged at most) and SHALL NOT surface an error or block/retry preview entry or navigation.
 
-`AppPreviewChat` SHALL resolve the application deployment by matching `useDeployments().items[].id` against the raw `appId` prop (the same raw, human-readable id used by the settings iframe's postMessage protocol), since `items[].id` is always the raw id. It SHALL render Quick Apps `conversationStarters` through the same `getQuickAppConversationStarters` utility used by the main new-conversation screen.
+An intermediate `UpdatedSuccess` message from the embedded editor SHALL also refresh the deployment list, but with the cache-bypass disabled — a definitive save always follows and corrects anything briefly stale. Because `DeploymentsContext` is a shared, reactive data source, once the background refetch resolves, any component reading it (including `AppPreviewChat`, described below) re-renders with the updated list on its own — `AppsEditor` does not need to re-trigger or coordinate that update.
+
+`AppPreviewChat` SHALL resolve the application deployment from `useDeployments().items` against the raw `appId` prop (the same raw, human-readable id used by the settings iframe's postMessage protocol) through the shared `findDeploymentByIdOrReference` helper, since `items[].id` is always the raw id. It SHALL render Quick Apps `conversationStarters` through the same `getQuickAppConversationStarters` utility used by the main new-conversation screen.
 
 `AppPreviewChat` SHALL use the raw `appId` as-is for every deployment-identifying value it produces or forwards — `fixedModel.id`, `apiCreateConversation`'s `deploymentId` argument, `startStream`'s `model` argument, `useAudioTranscription`'s `selectedDeploymentId`, and `useConversationHandlers`' `fixedModelId`. It SHALL NOT percent-encode `appId` (e.g. via `encodeDeploymentId`) for any of these, because each of them is consumed as a JSON body field (`createConversation`, `streamCompletion`, `transcribeAudio`), never as a raw URL path segment. Percent-encoding it would embed literal `%` characters into the value; since the backend builds the created conversation's stored resource path directly from this value and the frontend's own URL-building code later percent-encodes that whole stored path once when fetching/saving/watching the conversation, a pre-encoded input becomes double-encoded on the wire and DIAL Core rejects the request with 400.
 
@@ -185,7 +197,12 @@ conversation already created SHALL be deleted (the same best-effort, non-blockin
 used when leaving the editor), and the in-memory preview state (conversation, messages, and
 any populated-but-unsent composer input) SHALL be reset so the preview pane renders its
 initial composer-only welcome state, reflecting the just-saved configuration, the next time
-it becomes visible. This reset happens at save time regardless of whether the preview pane is
+it becomes visible.
+
+The reset SHALL be driven by remounting the preview pane — `AppsEditor` bumps a reset counter
+that `SettingsStep` passes as `AppPreviewChat`'s `key` — so the pane's own unmount cleanup
+performs the deletion and every piece of its local state is discarded together, with no
+separate teardown path to keep in sync. This reset happens at save time regardless of whether the preview pane is
 currently visible, since a Settings-step edit can only be made while the iframe (not the
 preview pane) is showing.
 
@@ -233,21 +250,17 @@ The preview conversation, if one was created during the session, SHALL be delete
 - **WHEN** the delete-conversation call fails while the editor is being left
 - **THEN** navigation proceeds normally and the failure is only logged, not surfaced to the user
 
-### Requirement: Cancel/Save disabled while previewing
-While the preview pane is shown, the `EditorHeader` Cancel and Save buttons SHALL be disabled, since the settings form they act on is not visible.
+### Requirement: Cancel/Save return after exiting preview
+While the preview pane is shown, the `EditorHeader` Cancel and Save buttons are not rendered at all (see "EditorHeader preview button"). Exiting preview SHALL bring both back in their normal state, with Save still subject to the Settings-step readiness gate.
 
-#### Scenario: Buttons disabled during preview
-- **WHEN** the Apps editor is in preview mode
-- **THEN** both the Cancel and Save buttons render in a disabled state
-
-#### Scenario: Buttons re-enabled after exiting preview
+#### Scenario: Buttons restored after exiting preview
 - **WHEN** the user exits preview
-- **THEN** Cancel and Save return to their normal enabled state
+- **THEN** the Cancel and Save buttons are rendered again, Save enabled only if the embedded editor is ready to save
 
 ### Requirement: Accessibility and i18n for the preview surface
 The preview button SHALL expose an accessible name via i18n (not a bare icon with no label) and the preview chat region SHALL use the same ARIA conventions as the main conversation view (`role="log"` + `aria-live="polite"` for the message list). All new user-visible strings SHALL be added to `translation-keys.ts` under `AppsEditorI18nKeys` and to every locale file in `apps/chat/src/i18n/locales/`, including `ar.json`.
 
-New keys: `AppsEditorI18nKeys.PreviewButton` (`appsEditor.previewButton`), `AppsEditorI18nKeys.ExitPreviewButton` (`appsEditor.exitPreviewButton`), `AppsEditorI18nKeys.PreviewChatPlaceholder` (`appsEditor.previewChat.placeholder`), `AppsEditorI18nKeys.PreviewChatAriaLabel` (`appsEditor.previewChat.ariaLabel`), `AppsEditorI18nKeys.SavingOverlayLabel` (`appsEditor.savingOverlay`).
+Keys: `AppsEditorI18nKeys.ExitPreviewButton` (`appsEditor.exitPreviewButton`), `AppsEditorI18nKeys.PreviewChatPlaceholder` (`appsEditor.previewChat.placeholder`), `AppsEditorI18nKeys.PreviewChatAriaLabel` (`appsEditor.previewChat.ariaLabel`), `AppsEditorI18nKeys.SavingOverlayLabel` (`appsEditor.savingOverlay`). The "Preview" label itself reuses the shared `BasicI18nKeys.Preview` (`basic.preview`) rather than an editor-specific key.
 
 #### Scenario: Preview button has an accessible name
 - **WHEN** a screen reader focuses the preview/exit-preview button

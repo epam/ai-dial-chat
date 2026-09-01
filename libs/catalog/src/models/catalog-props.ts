@@ -96,6 +96,12 @@ export interface CatalogProps {
   onShare?: (item: CatalogItem) => void;
   /** Controls whether the "Publish" action is shown for an item. */
   isPublishVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Resolves whether whichever of "Publish"/"Unpublish" applies renders as its
+   * own button in the details header rather than an entry in its "Manage"
+   * menu. Defaults to `false` — the menu entry.
+   */
+  isPublishPrimary?: (item: CatalogItem) => boolean;
   /** Resolves previously published versions for an item, most recent first. */
   getPublishHistory?: (item: CatalogItem) => Promise<PublishHistoryEntry[]>;
   /** Root-level destination folder nodes offered by the publish flow. */
@@ -253,6 +259,12 @@ export interface CatalogProps {
    */
   isShareVisible?: (item: CatalogItem) => boolean;
   /**
+   * Resolves whether "Share" renders as its own button in the details header
+   * rather than an entry in its "Manage" menu. Defaults to `true` — the
+   * button. Returning `false` moves it into the menu, beside "Delete".
+   */
+  isSharePrimary?: (item: CatalogItem) => boolean;
+  /**
    * Called when the credentials login form is submitted in the details
    * panel, for the given credentials `level` (`USER` or `GLOBAL`). May
    * return a promise; awaited before refreshing via `onFetchDetails`.
@@ -289,9 +301,20 @@ export interface CatalogProps {
   onCreateClick?: () => void;
   /** Hides the "Create" button entirely, e.g. when rendering as a read-only picker. Default: false. */
   hideCreateButton?: boolean;
+  /**
+   * Renders the whole catalog as a read-only browsing surface. Browse cards
+   * lose their favorite star, footer divider, and "Featured" tag; the list
+   * view loses its "Favorite" column; the "Create" button and the favorites
+   * strip are not rendered; and the details panel withholds its favorite star
+   * and every mutating action (Share, Publish/Unpublish, Edit, Delete,
+   * "Remove from My List", "Revoke access", and the credentials Log in / Log
+   * out / manage button). The non-mutating actions — the primary "Use in
+   * chat" and Download — still render. Default: false.
+   */
+  isReadonly?: boolean;
   /** Hides the page heading (title row), e.g. when the host renders its own title outside the catalog. Default: false. */
   hidePageTitle?: boolean;
-  /** Initial Browse view mode (grid or list). Default: `CatalogViewMode.Grid`. */
+  /** Initial Browse view mode (grid or list). Default: `CatalogViewMode.List`. */
   initialViewMode?: CatalogViewMode;
   /** ID of an item to visually mark as selected (border, tint, and checkmark) in the Browse grid. */
   selectedItemId?: string;
@@ -310,6 +333,11 @@ export interface CatalogProps {
   styles?: CatalogStyles;
   /** Text overrides forwarded to the item details panel. */
   detailsTexts?: ItemDetailsTexts;
+  /**
+   * Footer note forwarded to the item details panel's Limits tab, e.g. a
+   * link to a full usage-limits page. Omitted (the default) hides the footer.
+   */
+  detailsLimitsFooterNote?: ReactNode;
   /**
    * Externally-controlled active sort key. When omitted, `Catalog` manages
    * its own sort state internally, defaulting to `CatalogSortKey.RecentlyUpdated`.

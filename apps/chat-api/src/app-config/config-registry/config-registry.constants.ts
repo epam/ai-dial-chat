@@ -38,18 +38,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DEFAULT_DEPLOYMENT',
   },
   {
-    key: 'deployments.deepResearchToolId',
-    type: 'config',
-    valueType: 'string',
-    visibility: 'client',
-    defaultValue: null,
-    critical: false,
-    description:
-      'Tool ID for the Deep Research deployment-configuration property. When set, the frontend renders a Tools submenu with that tool toggle. Null when DEEP_RESEARCH_TOOL_ID is not set.',
-    owner: 'chat-team',
-    envVar: 'DEEP_RESEARCH_TOOL_ID',
-  },
-  {
     key: 'dialCore.externalUrl',
     type: 'config',
     valueType: 'string',
@@ -117,7 +105,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     defaultValue: null,
     critical: false,
     description:
-      'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null/empty hides the banner. Sourced from ANNOUNCEMENT_HTML_MESSAGE.',
+      'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Passed through verbatim and sanitized client-side to <a>, <b>, <strong>, <em>, <u>, <br>, <span>, <p>; style attributes are stripped. Null/empty hides the banner. Sourced from ANNOUNCEMENT_HTML_MESSAGE.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENT_HTML_MESSAGE',
   },
@@ -307,6 +295,20 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'SETTINGS_PAGE_ENABLED',
     allowedRolesEnvVar: 'SETTINGS_PAGE_ENABLED_ROLES',
+  },
+  {
+    key: 'features.defaultDeploymentPinned',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'When enabled, the operator-configured DEFAULT_DEPLOYMENT is pinned to position 0 ' +
+      'in the deployment picker and takes priority over the user-persisted model preference ' +
+      'when resolving the initial selection for a new chat.',
+    owner: 'chat-team',
+    envVar: 'DEFAULT_DEPLOYMENT_PINNED',
   },
   {
     key: 'uiFeatures.enabledUiFeatures',

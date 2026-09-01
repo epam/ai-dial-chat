@@ -1,6 +1,6 @@
+import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { FavoriteEntityType } from '../../context/FavoriteApplicationsContext';
 import { resolveFavoriteEntityType } from '../favorites';
 
 describe('resolveFavoriteEntityType', () => {

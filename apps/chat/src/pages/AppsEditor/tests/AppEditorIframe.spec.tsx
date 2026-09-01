@@ -1,20 +1,20 @@
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
-import { emitToolsetLoginSuccess } from '@epam/ai-dial-chat-hooks';
+import {
+  emitToolsetLoginSuccess,
+  getToolsetOAuthChannelName,
+  TOOLSET_REDIRECT_STATE_KEY,
+  ToolsetCredentialsLevel,
+} from '@epam/ai-dial-chat-hooks';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps, Ref } from 'react';
 import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  TOOLSET_REDIRECT_STATE_KEY,
-  ToolsetCredentialsLevel,
-} from '../../../constants/toolsets';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../context/ThemeContext';
 import * as deploymentsApi from '../../../server-api/deployments';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { AppsEditorEvent } from '../../../types/apps-editor';
 import { AuthStatus } from '../../../types/auth-status';
-import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import type { AppEditorIframeHandle } from '../AppEditorIframe';
 import AppEditorIframe from '../AppEditorIframe';
 
@@ -29,6 +29,7 @@ vi.mock('../../../server-api/deployments', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
     <div role="status" aria-label={ariaLabel ?? 'Loading'} />

@@ -9,6 +9,7 @@ import { CatalogViewMode } from '../../../types/view-mode';
 import { Catalog } from '../Catalog';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Spinner: () => <div role="status" aria-label="Loading" />,
   EllipsisTooltip: ({
@@ -256,9 +257,9 @@ describe('Catalog', () => {
     expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
   });
 
-  it('defaults to the grid view', () => {
+  it('defaults to the list view', () => {
     render(<Catalog items={[]} favorites={[]} />);
-    expect(screen.queryByLabelText('catalog list')).toBeNull();
+    expect(screen.getByLabelText('catalog list')).toBeTruthy();
   });
 
   it('starts in the list view when initialViewMode is List', () => {
@@ -270,6 +271,17 @@ describe('Catalog', () => {
       />,
     );
     expect(screen.getByLabelText('catalog list')).toBeTruthy();
+  });
+
+  it('starts in the grid view when initialViewMode is Grid', () => {
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        initialViewMode={CatalogViewMode.Grid}
+      />,
+    );
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
   });
 
   it('calls onCreateClick when Create is clicked', async () => {
@@ -736,5 +748,31 @@ describe('Catalog', () => {
     await userEvent.click(screen.getByRole('tab', { name: /Prompts/i }));
 
     expect(onActiveTabChange).toHaveBeenCalledWith(CatalogEntityType.Prompt);
+  });
+});
+
+describe('Catalog — read-only', () => {
+  const favorite: CatalogItem = {
+    id: 'f1',
+    type: CatalogEntityType.Model,
+    name: 'Claude',
+    version: '1',
+    lastUsed: 'now',
+    description: '',
+    folder: [],
+    topics: [],
+  };
+
+  it('withholds the Create button and the favorites strip when isReadonly is set', () => {
+    render(<Catalog items={[]} favorites={[favorite]} isReadonly />);
+
+    expect(screen.queryByRole('button', { name: 'Create' })).toBeNull();
+    expect(screen.queryByText('Your favorites')).toBeNull();
+  });
+
+  it('still renders the page title when the Create button is withheld', () => {
+    render(<Catalog items={[]} favorites={[]} isReadonly />);
+
+    expect(screen.getByRole('heading', { name: 'Catalog' })).toBeTruthy();
   });
 });

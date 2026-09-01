@@ -2,6 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DangerButton,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   GhostButton,
   NeutralButton,
   Spinner,
@@ -54,7 +55,13 @@ export const ConfirmationFooter: FC<ConfirmationFooterProps> = ({
       return <Spinner size={DIAL_ICON_SIZE.SM} />;
     }
     if (isDanger) {
-      return <IconTrashX size={DIAL_ICON_SIZE.MD} aria-hidden />;
+      return (
+        <IconTrashX
+          size={DIAL_ICON_SIZE.MD}
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      );
     }
     return undefined;
   })();

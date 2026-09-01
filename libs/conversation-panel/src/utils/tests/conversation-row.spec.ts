@@ -1,11 +1,12 @@
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
   FIRST_GROUP_HEADER_ROW_HEIGHT,
   GROUP_HEADER_ROW_HEIGHT,
   ITEM_ROW_HEIGHT,
 } from '../../constants/virtual-list';
-import { type RowRendererData, VirtualRowKind } from '../../models/virtual-row';
-import { FilterTab } from '../../types/conversation-classification';
+import type { RowRendererData } from '../../models/virtual-row';
+import { VirtualRowKind } from '../../types/virtual-row';
 import {
   getButtonPaddingEnd,
   getRowHeight,

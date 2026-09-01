@@ -33,7 +33,9 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 24 default-on keys and exclude the 17 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `catalog-table-view`, `hide-change-agent`, `skills`... are default-off — the full 41-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 41 keys, matching each surface's current unconditional behavior.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 25 default-on keys and exclude the 16 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `skills`... are default-off — the full 41-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 41 keys.
+
+`catalog-table-view` is the one initial-state modifier that defaults on rather than matching the surface's original unconditional behavior: Browse opens in list view, not the grid the original classification recorded. Every other modifier still defaults off, so a deployment that configures nothing observes no other behavior change.
 
 **RTL impact:** None for this requirement itself — individual owning-surface gates state their own RTL impact where relevant (see per-surface requirements below).
 
@@ -45,7 +47,12 @@
 #### Scenario: Modifier features default off
 
 - **WHEN** no `enabledUiFeatures` and no overlay override are present
-- **THEN** `isEnabled('hide-new-conversation')`, `isEnabled('disabled-send')`, `isEnabled('hide-user-menu')`, and `isEnabled('catalog-table-view')` all return `false`
+- **THEN** `isEnabled('hide-new-conversation')`, `isEnabled('disabled-send')`, and `isEnabled('hide-user-menu')` all return `false`
+
+#### Scenario: Browse opens in list view
+
+- **WHEN** no `enabledUiFeatures` and no overlay override are present
+- **THEN** `isEnabled('catalog-table-view')` returns `true`, and `CatalogView` passes `CatalogViewMode.List` as `Catalog`'s `initialViewMode`
 
 #### Scenario: Non-overlay app is unaffected by this change when nothing is configured
 
@@ -54,7 +61,7 @@
 
 ### Requirement: Server baseline override replaces defaults when set
 
-When `AppConfigContext.config.enabledUiFeatures` is non-null, the effective set (outside an overlay override) SHALL be exactly the normalized intersection of `enabledUiFeatures` with `KNOWN_UI_FEATURES`. When null, `DEFAULT_ENABLED_UI_FEATURES` is used unchanged. The server override supports all `OverlayFeature` values, including `Hide*` modifier flags.
+When `AppConfigContext.config.enabledUiFeatures` is non-null, the effective set (outside an overlay override) SHALL be exactly the normalized intersection of `enabledUiFeatures` with `KNOWN_UI_FEATURES`, where normalization resolves a deprecated alias (see `chat-overlay-protocol`) to its replacement instead of dropping it. When null, `DEFAULT_ENABLED_UI_FEATURES` is used unchanged. The server override supports all `OverlayFeature` values, including `Hide*` modifier flags.
 
 #### Scenario: Server override replaces the compiled-in defaults
 
@@ -97,12 +104,17 @@ When `AppConfigContext.config.enabledUiFeatures` is non-null, the effective set 
 
 ### Requirement: Unknown values in an overlay override are filtered, not rejected
 
-When `applyOverlayOverride` receives an array containing one or more strings that are not recognized `OverlayFeature` values (including any of the 19 `status: "missing"` keys from the prior implementation, which are intentionally not part of the `OverlayFeature` enum — see `chat-overlay-protocol`), those entries SHALL be dropped from the effective set and each SHALL be logged once via the existing `logOverlayWarning` helper; the recognized entries SHALL still be applied, and the request's `SET_OVERLAY_OPTIONS/RESPONSE` SHALL still carry `applied: true` provided any other supplied fields (`theme`/`modelId`/`overlayConversationId`) were themselves valid.
+When `applyOverlayOverride` receives an array containing one or more strings that are not recognized `OverlayFeature` values (including any of the 19 `status: "missing"` keys from the prior implementation, which are intentionally not part of the `OverlayFeature` enum — see `chat-overlay-protocol`), those entries SHALL be dropped from the effective set and each SHALL be logged once via the existing `logOverlayWarning` helper; a deprecated-but-recognized alias (see `chat-overlay-protocol`) SHALL instead resolve to its replacement and be logged as deprecated; the recognized entries SHALL still be applied, and the request's `SET_OVERLAY_OPTIONS/RESPONSE` SHALL still carry `applied: true` provided any other supplied fields (`theme`/`modelId`/`overlayConversationId`) were themselves valid.
 
 #### Scenario: Unknown value is dropped, valid values still apply
 
 - **WHEN** `setOverlayOptions({ enabledFeatures: ['header', 'not-a-real-feature'] })` is called
 - **THEN** the effective set is exactly `{header}`, a warning is logged naming `'not-a-real-feature'`, and the response is `{ applied: true }`
+
+#### Scenario: A deprecated alias is resolved, not dropped
+
+- **WHEN** `setOverlayOptions({ enabledFeatures: ['custom-applications'] })` is called
+- **THEN** the effective set is exactly `{schema-apps}`, a deprecation warning naming `'custom-applications'` is logged, and the response is `{ applied: true }`
 
 #### Scenario: A missing-status legacy key is treated as unknown, not as a working toggle
 

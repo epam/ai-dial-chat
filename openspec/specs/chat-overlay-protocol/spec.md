@@ -278,9 +278,16 @@ The library SHALL remove its `window` `message` listener and reject/clear all pe
 
 ### Requirement: OverlayFeature enum covers the 41 transferable UI-section toggle keys
 
-`libs/chat-overlay/src/protocol/overlay-protocol.ts`'s `OverlayFeature` enum SHALL have exactly 41 members, covering the groups: applications (`code-apps`, `custom-applications`, `hide-custom-app-creation`, `custom-apps`), chat input (`disabled-send`, `skip-focus-chat-input-onload`, `chat-settings`), conversation functions (`dislike-comment`, `input-files`, `likes`, `live-chat-interaction`), conversation header (`disallow-change-agent`, `hide-change-agent`, `hide-new-conversation`), empty chat (`empty-chat-settings`, `hide-empty-chat-change-agent`), layout (`attachments-manager`, `conversations-panel-toggle`, `conversations-section`, `header`, `hide-navigation-menu`, `showConversationsSectionByDefault`, `hide-conversations-filter`), catalog (`catalog`, `catalog-hide-my-apps`, `catalog-table-view`), file manager (`file-manager`), message editing (`hide-delete-user-message`, `hide-edit-user-message`, `hide-regenerate-assistant-message`), publishing (`conversations-publishing`), sharing (`applications-sharing`, `conversations-sharing`, `toolsets-sharing`), toolsets (`toolsets`), prompts (`prompts`), skills (`skills`), user settings (`hide-user-menu`, `hide-user-settings`, `hide-keyboard-shortcuts`), and voice input (`voice-input`). This module SHALL remain import-free (no imports from `apps/*` or app-owned code), consistent with its existing "pure types only" requirement.
+`libs/chat-overlay/src/protocol/overlay-protocol.ts`'s `OverlayFeature` enum SHALL have exactly 41 members, covering the groups: applications (`code-apps`, `schema-apps`, `hide-custom-app-creation`, `custom-apps`), chat input (`disabled-send`, `skip-focus-chat-input-onload`, `chat-settings`), conversation functions (`dislike-comment`, `input-files`, `likes`, `live-chat-interaction`), conversation header (`disallow-change-agent`, `hide-change-agent`, `hide-new-conversation`), empty chat (`empty-chat-settings`, `hide-empty-chat-change-agent`), layout (`attachments-manager`, `conversations-panel-toggle`, `conversations-section`, `header`, `hide-navigation-menu`, `showConversationsSectionByDefault`, `hide-conversations-filter`), catalog (`catalog`, `catalog-hide-my-apps`, `catalog-table-view`), file manager (`file-manager`), message editing (`hide-delete-user-message`, `hide-edit-user-message`, `hide-regenerate-assistant-message`), publishing (`conversations-publishing`), sharing (`applications-sharing`, `conversations-sharing`, `toolsets-sharing`), toolsets (`toolsets`), prompts (`prompts`), skills (`skills`), user settings (`hide-user-menu`, `hide-user-settings`, `hide-keyboard-shortcuts`), and voice input (`voice-input`). This module SHALL remain import-free (no imports from `apps/*` or app-owned code), consistent with its existing "pure types only" requirement.
 
 `apps/chat-api`'s `KNOWN_UI_FEATURES` SHALL mirror this membership one-to-one. It is duplicated rather than imported so the Node-only service stays independent of the browser-facing overlay package, and it SHALL be updated in the same change as any addition, removal, or rename here — a key present in only one of the two is silently unusable through `ENABLED_UI_FEATURES`.
+
+Renamed wire values MAY be kept accepted transitionally through
+`DEPRECATED_OVERLAY_FEATURE_ALIASES` and `resolveOverlayFeature` in the same module,
+each mapping one retired string onto a current `OverlayFeature` member. A deprecated
+value SHALL resolve to its replacement rather than being dropped, and SHALL NOT be a
+member of the enum itself. `apps/chat-api`'s `DEPRECATED_UI_FEATURE_ALIASES` SHALL
+mirror that map for the same reason `KNOWN_UI_FEATURES` mirrors the enum.
 
 **Feature flag:** N/A — this is the enum definition itself, not a gated feature. This repo has no `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES` mechanism to gate it behind.
 
@@ -293,6 +300,17 @@ The library SHALL remove its `window` `message` listener and reject/clear all pe
 
 - **WHEN** `OverlayFeature` is inspected
 - **THEN** it has no member for `marketplace`, `marketplace-hide-my-apps`, or `marketplace-table-view` — those were renamed to `catalog`, `catalog-hide-my-apps`, and `catalog-table-view`
+
+#### Scenario: The renamed custom-applications key is not in the enum but still resolves
+
+- **WHEN** `OverlayFeature` is inspected
+- **THEN** it has no member for `custom-applications` — it was renamed to `schema-apps`, because it gates the Quick App create entry rather than schema-less custom applications
+- **AND** `resolveOverlayFeature('custom-applications')` returns `OverlayFeature.SchemaApps`, so a host still sending the old string keeps the behavior it expects
+
+#### Scenario: An unrecognized value resolves to undefined
+
+- **WHEN** `resolveOverlayFeature('not-a-real-feature')` is called
+- **THEN** it returns `undefined`, leaving the caller to drop the value and warn
 
 #### Scenario: Keys whose behavior became unconditional are not in the enum
 

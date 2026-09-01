@@ -1,5 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { CardShell, DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
+import {
+  CardShell,
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import { AppIdentityColors } from '../../models/app-identity-styles';
@@ -115,6 +120,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
             styles.selectedCheck,
           )}
           aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
         />
       )}
 

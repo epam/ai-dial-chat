@@ -1,5 +1,6 @@
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -137,7 +138,12 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
             <div className="flex items-center gap-1">
               {!hideDownload && (
                 <GhostIconButton
-                  icon={<IconDownload size={DIAL_ICON_SIZE.SM} />}
+                  icon={
+                    <IconDownload
+                      size={DIAL_ICON_SIZE.SM}
+                      stroke={DIAL_KIT_ICON_STROKE}
+                    />
+                  }
                   aria-label={downloadLabel}
                   size={ElementSize.Small}
                   onClick={handleDownload}
@@ -150,9 +156,14 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
                       size={DIAL_ICON_SIZE.SM}
                       className={styles.copiedIcon}
                       aria-hidden
+                      stroke={DIAL_KIT_ICON_STROKE}
                     />
                   ) : (
-                    <IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />
+                    <IconCopy
+                      size={DIAL_ICON_SIZE.SM}
+                      aria-hidden
+                      stroke={DIAL_KIT_ICON_STROKE}
+                    />
                   )
                 }
                 aria-label={copyLabel}

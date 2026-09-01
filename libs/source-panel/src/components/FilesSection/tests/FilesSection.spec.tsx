@@ -5,12 +5,13 @@ import { describe, expect, it, vi } from 'vitest';
 import FilesSection from '../FilesSection';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   mergeClasses: (...classes: (string | undefined)[]) =>
     classes.filter(Boolean).join(' '),
 }));
 
-vi.mock('@epam/ai-dial-conversation-input', () => ({
+vi.mock('@epam/ai-dial-attachment-input', () => ({
   AttachmentCard: ({
     attachment,
     onClick,

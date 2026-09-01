@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { CollapsedGroup } from '../CollapsedGroup';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 14, MD: 16 },
   Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
     <span role="status" aria-label={ariaLabel} />

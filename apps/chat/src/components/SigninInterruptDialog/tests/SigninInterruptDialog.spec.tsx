@@ -1,7 +1,10 @@
+import {
+  ToolsetAuthTypes,
+  ToolsetLoginOutcomeType,
+} from '@epam/ai-dial-chat-hooks';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ToolsetAuthTypes } from '../../../constants/toolsets';
 import {
   ButtonsI18nKeys,
   ToolsetSigninI18nKeys,
@@ -13,10 +16,7 @@ import {
   ExternalServiceLoginOutcomeType,
   useExternalServiceLogin,
 } from '../../../hooks/externalServices/useExternalServiceLogin';
-import {
-  ToolsetLoginOutcomeType,
-  useToolsetLogin,
-} from '../../../hooks/toolsets/useToolsetLogin';
+import { useToolsetLogin } from '../../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { getExternalService } from '../../../server-api/external-services';
 import { getToolset } from '../../../server-api/toolsets';

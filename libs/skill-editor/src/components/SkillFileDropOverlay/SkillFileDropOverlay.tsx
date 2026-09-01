@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconUpload } from '@tabler/icons-react';
 import type { FC } from 'react';
 import type { SkillEditorLabels } from '../../models/skill-editor-props';
@@ -32,7 +33,12 @@ export const SkillFileDropOverlay: FC<SkillFileDropOverlayProps> = ({
       )}
     >
       <div className="flex flex-col items-center text-center">
-        <IconUpload size={100} className="text-accent-primary" aria-hidden />
+        <IconUpload
+          size={100}
+          className="text-accent-primary"
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
         <span className="dial-h3-text mt-5">
           {t.dropOverlayTitle ?? 'Upload files'}
         </span>

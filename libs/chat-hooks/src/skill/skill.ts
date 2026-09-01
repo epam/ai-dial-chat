@@ -1,5 +1,10 @@
+import {
+  SkillFileNodeKind,
+  type SkillFileTreeNode,
+} from '@epam/ai-dial-skill-editor';
 import { unzipSync } from 'fflate';
 import { parse, stringify } from 'yaml';
+import type { SkillFileContent } from './skill-file-preview';
 
 /** Root manifest filename required at the top of every skill archive (mirrors `SKILL_MANIFEST_FILE` in `apps/chat-api/src/skills/utils/skill-path.util.ts`). */
 export const SKILL_MANIFEST_FILE = 'SKILL.md';
@@ -180,5 +185,66 @@ export const unpackSkillArchive = (bytes: Uint8Array): UnpackedSkillArchive => {
   return {
     manifestText: new TextDecoder().decode(manifestBytes),
     files,
+  };
+};
+
+/** Returns a skill relative path's final segment (its display name in the file tree). */
+export const nameFromPath = (path: string): string => {
+  const lastSlash = path.lastIndexOf('/');
+  return lastSlash === -1 ? path : path.slice(lastSlash + 1);
+};
+
+/** Wraps raw bytes in a `Blob`, copying them so the source buffer can be reused. */
+export const skillFileBytesToBlob = (bytes: Uint8Array): Blob =>
+  new Blob([new Uint8Array(bytes)]);
+
+/**
+ * Builds `SKILL.md`'s content for a create or edit submission: reassigns
+ * onto the loaded/imported frontmatter when one exists (so unrecognized
+ * fields survive), otherwise builds a fresh manifest from just `name`/
+ * `description`/`instructions`.
+ */
+export const buildSkillManifestForSubmit = (
+  frontmatter: Record<string, unknown>,
+  name: string,
+  description: string,
+  instructions: string,
+): string =>
+  Object.keys(frontmatter).length > 0
+    ? buildSkillManifestFromFrontmatter(
+        frontmatter,
+        name,
+        description,
+        instructions,
+      )
+    : buildSkillManifest({ name, description, instructions });
+
+/** The ordered supporting-file paths and `Blob` payload `createSkill`/`updateSkill` expect. */
+export interface SkillFilesPayload {
+  /** Relative paths, positionally paired with `files`. */
+  filePaths: string[];
+  /** File contents, positionally paired with `filePaths`. */
+  files: Blob[];
+}
+
+/**
+ * Builds the ordered supporting-file paths and `Blob` payload
+ * `createSkill`/`updateSkill` expect from the editor's file tree and
+ * in-memory content map.
+ */
+export const buildSkillFilesPayload = (
+  files: SkillFileTreeNode[],
+  filesContent: Map<string, SkillFileContent>,
+): SkillFilesPayload => {
+  const fileNodes = files.filter(
+    (node) => node.kind === SkillFileNodeKind.File,
+  );
+  return {
+    filePaths: fileNodes.map((node) => node.path),
+    files: fileNodes.map((node) =>
+      skillFileBytesToBlob(
+        filesContent.get(node.path)?.bytes ?? new Uint8Array(0),
+      ),
+    ),
   };
 };

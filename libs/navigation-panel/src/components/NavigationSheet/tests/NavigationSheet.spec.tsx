@@ -7,6 +7,7 @@ import type { NavigationUserProfile } from '../../../models/user-profile';
 import { NavigationSheet } from '../NavigationSheet';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   BASE_ICON_SIZE: 20,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ElementSize: { Standard: 'standard' },

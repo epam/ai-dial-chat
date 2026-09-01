@@ -6,8 +6,9 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  GhostButton,
+  DIAL_KIT_ICON_STROKE,
   EllipsisTooltip,
+  GhostButton,
   Highlight,
   Search,
   ToggleIconButton,
@@ -50,6 +51,8 @@ export interface DeploymentSelectorLabels {
 interface Props {
   /** Starred catalog items to display in the Favorites list. */
   favorites: CatalogItem[];
+  /** Operator-default item pinned ahead of favorites, whether starred or not. */
+  pinnedItem?: CatalogItem;
   /** ID of the currently selected deployment. */
   selectedId?: string | null;
   /**
@@ -90,6 +93,7 @@ const matchesQuery = (item: CatalogItem, query: string): boolean => {
 
 const DeploymentSelectorPanel: FC<Props> = ({
   favorites,
+  pinnedItem,
   selectedId,
   selectedItem,
   onSelect,
@@ -126,13 +130,23 @@ const DeploymentSelectorPanel: FC<Props> = ({
     };
   }, []);
 
-  const talkableItems = useMemo(
-    () =>
-      favorites.filter(
-        (f) =>
-          f.type === CatalogEntityType.Model ||
-          f.type === CatalogEntityType.Agent,
-      ),
+  const talkableItems = useMemo(() => {
+    const quickItems =
+      pinnedItem == null
+        ? favorites
+        : [
+            pinnedItem,
+            ...favorites.filter((item) => item.id !== pinnedItem.id),
+          ];
+    return quickItems.filter(
+      (f) =>
+        f.type === CatalogEntityType.Model ||
+        f.type === CatalogEntityType.Agent,
+    );
+  }, [favorites, pinnedItem]);
+
+  const favoriteIds = useMemo(
+    () => new Set(favorites.map((item) => item.id)),
     [favorites],
   );
 
@@ -286,10 +300,17 @@ const DeploymentSelectorPanel: FC<Props> = ({
               size={DIAL_ICON_SIZE.SM}
               className="shrink-0 text-accent"
               aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
             />
           )}
           <ToggleIconButton
-            icon={<IconStar size={DIAL_ICON_SIZE.SM} aria-hidden />}
+            icon={
+              <IconStar
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             selectedIcon={
               <IconStarFilled
                 size={DIAL_ICON_SIZE.SM}
@@ -373,7 +394,9 @@ const DeploymentSelectorPanel: FC<Props> = ({
 
           {filteredFavorites.length > 0 ? (
             <ul className="flex flex-col gap-1 px-1 pb-1">
-              {filteredFavorites.map((item) => renderRow(item, true))}
+              {filteredFavorites.map((item) =>
+                renderRow(item, favoriteIds.has(item.id)),
+              )}
             </ul>
           ) : (
             <p className="dial-small-text px-4 py-4 text-center text-secondary">

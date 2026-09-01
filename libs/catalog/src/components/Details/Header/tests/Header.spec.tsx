@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
+import { CatalogLimitStatus } from '../../../../models/item-details-data';
 import {
   CredentialsLevel,
   CredentialStatus,
@@ -17,6 +18,7 @@ import {
 import { Header } from '../Header';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Spinner: () => <svg />,
   FolderPath: () => <div />,
@@ -46,13 +48,23 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   NeutralButton: ({
     label,
     onClick,
+    onMouseEnter,
+    onFocus,
     className,
   }: {
     label: string;
     onClick: () => void;
+    onMouseEnter?: () => void;
+    onFocus?: () => void;
     className?: string;
   }) => (
-    <button data-variant="neutral" className={className} onClick={onClick}>
+    <button
+      data-variant="neutral"
+      className={className}
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onFocus={onFocus}
+    >
       {label}
     </button>
   ),
@@ -131,6 +143,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconLogout: () => <svg />,
   IconPencil: () => <svg />,
   IconPlayerPlayFilled: () => <svg />,
+  IconShare: () => <svg />,
   IconTrash: () => <svg />,
   IconUserOff: () => <svg />,
   IconWorldOff: () => <svg />,
@@ -138,7 +151,18 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
-  EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
+  EntityHeader: ({
+    item,
+    statusBadge,
+  }: {
+    item: CatalogItem;
+    statusBadge?: ReactNode;
+  }) => (
+    <div>
+      {item.name}
+      {statusBadge}
+    </div>
+  ),
 }));
 vi.mock('../ShareButton/ShareButton', () => ({
   ShareButton: ({ label }: { label?: string }) => (
@@ -1512,5 +1536,306 @@ describe('Header', () => {
       expect(onOpenCredentialsManagement).toHaveBeenCalledOnce();
       expect(screen.queryByText('Add popover content')).toBeNull();
     });
+  });
+
+  describe('limit status', () => {
+    it('renders no badge and keeps Use in chat enabled without limits data', () => {
+      render(<Header item={makeItem(CatalogEntityType.Model)} />);
+      expect(screen.queryByText('Running low')).toBeNull();
+      expect(screen.queryByText('Limit reached')).toBeNull();
+      const button = screen.getByRole('button', { name: 'Use in chat' });
+      expect(button.hasAttribute('disabled')).toBe(false);
+    });
+
+    it('shows a "Running low" badge but keeps Use in chat enabled', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Model),
+            details: {
+              limits: { groups: [], status: CatalogLimitStatus.RunningLow },
+            },
+          }}
+        />,
+      );
+      expect(screen.getByText('Running low')).toBeTruthy();
+      const button = screen.getByRole('button', { name: 'Use in chat' });
+      expect(button.hasAttribute('disabled')).toBe(false);
+    });
+
+    it('shows a "Limit reached" badge and disables Use in chat', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Model),
+            details: {
+              limits: { groups: [], status: CatalogLimitStatus.LimitReached },
+            },
+          }}
+        />,
+      );
+      expect(screen.getByText('Limit reached')).toBeTruthy();
+      expect(
+        screen
+          .getByRole('button', { name: 'Use in chat' })
+          .hasAttribute('disabled'),
+      ).toBe(true);
+    });
+
+    it('uses custom limit status labels from texts', () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Model),
+            details: {
+              limits: { groups: [], status: CatalogLimitStatus.LimitReached },
+            },
+          }}
+          texts={{ limitReachedLabel: 'No more requests' }}
+        />,
+      );
+      expect(screen.getByText('No more requests')).toBeTruthy();
+    });
+  });
+});
+
+/*
+ * Which of Share and Publish sits in the action row and which sits in the
+ * Manage menu is host-configurable. The defaults are the historical
+ * arrangement (covered above); these cover the opt-in swap.
+ */
+describe('Header action-surface arrangement', () => {
+  it('keeps Share in the action row and Publish in the Manage menu by default', async () => {
+    render(<Header item={makeItem(CatalogEntityType.Model)} />);
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+  });
+
+  it('moves Share into the Manage menu when isSharePrimary returns false', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isSharePrimary={() => false}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+  });
+
+  it('calls onShare with the item when the Manage-menu Share entry is clicked', async () => {
+    const onShare = vi.fn();
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isSharePrimary={() => false}
+        onShare={onShare}
+      />,
+    );
+    await openManage();
+    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
+    expect(onShare).toHaveBeenCalledWith(makeItem(CatalogEntityType.Model));
+  });
+
+  it('opens the share overlay from the Manage trigger instead of calling onShare', async () => {
+    const onShare = vi.fn();
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isSharePrimary={() => false}
+        onShare={onShare}
+        shareOverlay={() => <div>share overlay content</div>}
+      />,
+    );
+    await openManage();
+    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
+    expect(screen.getByText('share overlay content')).toBeTruthy();
+    expect(onShare).not.toHaveBeenCalled();
+  });
+
+  it('does not offer Share in the Manage menu for an item the user does not own', async () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Agent),
+          isMyApp: false,
+          isEditable: true,
+        }}
+        isSharePrimary={() => false}
+        onEdit={vi.fn()}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+  });
+
+  it('honours isShareVisible for the Manage-menu Share entry', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isSharePrimary={() => false}
+        isShareVisible={() => false}
+      />,
+    );
+    await openManage();
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+  });
+
+  it('promotes Publish to the action row when isPublishPrimary returns true', async () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Model), isEditable: true }}
+        isPublishPrimary={() => true}
+        onEdit={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+    await openManage();
+    /* Promoted to the row means gone from the menu — one surface, never both. */
+    expect(screen.getAllByRole('button', { name: 'Publish' })).toHaveLength(1);
+  });
+
+  it('promotes Unpublish to the action row once the item has a published folder', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isPublishPrimary={() => true}
+        onOpenUnpublish={vi.fn()}
+        hasPublishedFolders
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Unpublish' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+  });
+
+  it('calls onOpenPublish when the promoted Publish button is clicked', async () => {
+    const onOpenPublish = vi.fn();
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isPublishPrimary={() => true}
+        onOpenPublish={onOpenPublish}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(onOpenPublish).toHaveBeenCalledOnce();
+  });
+
+  it('starts the publish-history lookup on hover of the promoted Publish button', async () => {
+    const onRequestPublishHistory = vi.fn();
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        isPublishPrimary={() => true}
+        onRequestPublishHistory={onRequestPublishHistory}
+      />,
+    );
+    await userEvent.hover(screen.getByRole('button', { name: 'Publish' }));
+    expect(onRequestPublishHistory).toHaveBeenCalled();
+  });
+
+  it('keeps the publish-history lookup on the Manage trigger when Publish is promoted', async () => {
+    const onRequestPublishHistory = vi.fn();
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Model), isEditable: true }}
+        isPublishPrimary={() => true}
+        isPublishVisible={() => false}
+        onEdit={vi.fn()}
+        onRequestPublishHistory={onRequestPublishHistory}
+      />,
+    );
+    /* No Publish button to hover, so the Manage trigger has to keep the
+     * lookup alive or "Unpublish" could never resolve. */
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    await userEvent.hover(screen.getByRole('button', { name: 'Manage' }));
+    expect(onRequestPublishHistory).toHaveBeenCalled();
+  });
+
+  it('renders Use in chat and Publish in the row with Share and Delete in the menu when both predicates are flipped', async () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Agent)}
+        onDelete={vi.fn()}
+        isSharePrimary={() => false}
+        isPublishPrimary={() => true}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
+  });
+});
+
+describe('Header — read-only', () => {
+  it('withholds Share, Publish, Edit, and Delete — leaving no Manage menu at all', () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Model), isEditable: true }}
+        onShare={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        isPublishPrimary={() => true}
+        isReadonly
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
+  });
+
+  it('withholds Unpublish and "Revoke access" even once their lookups have resolved', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        onOpenUnpublish={vi.fn()}
+        hasPublishedFolders
+        isPublishPrimary={() => true}
+        onRevokeShare={vi.fn()}
+        isReadonly
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Unpublish' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
+  });
+
+  it('withholds the credentials Log in button for a signed-out toolset', () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            userStatus: CredentialStatus.SignedOut,
+          },
+        }}
+        onLogin={vi.fn()}
+        isReadonly
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Log in' })).toBeNull();
+  });
+
+  it('keeps the non-mutating actions — "Use in chat" and Download', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        onUseInChat={vi.fn()}
+        onDownload={vi.fn()}
+        isDownloadPrimary={() => true}
+        isReadonly
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
   });
 });

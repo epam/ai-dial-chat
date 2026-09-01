@@ -1,7 +1,7 @@
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { ConversationItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
-import { FilterTab } from '../../types/conversation-classification';
 import { VirtualRowKind } from '../../types/virtual-row';
 import {
   computeAllowedDropGroups,

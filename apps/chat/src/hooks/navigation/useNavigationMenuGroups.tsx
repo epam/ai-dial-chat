@@ -1,7 +1,7 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import type { NavigationMenuGroup } from '@epam/ai-dial-navigation-panel';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconKeyboard, IconLanguage } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { SettingsI18nKeys } from '../../constants/translation-keys';
@@ -48,7 +48,13 @@ export const useNavigationMenuGroups = (): NavigationMenuGroups => {
       ? {
           id: 'language',
           label: t(SettingsI18nKeys.Language),
-          icon: <IconLanguage size={DIAL_ICON_SIZE.SM} aria-hidden />,
+          icon: (
+            <IconLanguage
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          ),
           options: SUPPORTED_LANGUAGES.map(({ code, nativeName }) => ({
             id: `language-${code}`,
             label: nativeName,
@@ -61,7 +67,13 @@ export const useNavigationMenuGroups = (): NavigationMenuGroups => {
       ? {
           id: 'keyboard-shortcuts',
           label: t(SettingsI18nKeys.KeyboardShortcuts),
-          icon: <IconKeyboard size={DIAL_ICON_SIZE.SM} aria-hidden />,
+          icon: (
+            <IconKeyboard
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          ),
           options: [
             {
               id: 'shortcut-enter',

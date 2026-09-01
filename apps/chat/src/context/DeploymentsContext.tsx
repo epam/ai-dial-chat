@@ -5,7 +5,10 @@ import {
   type DeploymentItemDto,
   type DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
-import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
+import {
+  findDeploymentByIdOrReference,
+  getApiErrorDetails,
+} from '@epam/ai-dial-chat-hooks';
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import {
   createContext,
@@ -20,7 +23,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { DeploymentSelectorI18nKeys } from '../constants/translation-keys';
 import { useLanguage } from '../hooks/language/useLanguage';
-import { getApiErrorDetails } from '../server-api/api-error';
 import { getApplicationSchemas } from '../server-api/application-schemas';
 import {
   getDeploymentConfiguration,
@@ -29,7 +31,7 @@ import {
 import { getDeployments } from '../server-api/deployments.api';
 import { listToolsets } from '../server-api/toolsets';
 import { resolveLocalizedText } from '../utils/locale';
-import { useAppConfig } from './AppConfigContext';
+import { useAppConfig, useFeatureFlag } from './AppConfigContext';
 import { useUser } from './auth/UserContext';
 import { useNotification } from './NotificationContext';
 import { useUserConfig } from './UserConfigContext';
@@ -103,8 +105,9 @@ export const DeploymentsContext = createContext<
 const sortDeployments = (
   deployments: DeploymentItemDto[],
   activeLocale: string,
+  pinnedId?: string | null,
 ): DeploymentItemDto[] => {
-  return [...deployments].sort((a, b) => {
+  const sorted = [...deployments].sort((a, b) => {
     const nameCompare = (
       resolveLocalizedText(a.displayName, activeLocale) || a.id
     ).localeCompare(
@@ -117,6 +120,13 @@ const sortDeployments = (
     }
     return a.id.localeCompare(b.id, undefined, { sensitivity: 'accent' });
   });
+  if (pinnedId != null) {
+    const idx = sorted.findIndex((d) => d.id === pinnedId);
+    if (idx > 0) {
+      sorted.unshift(sorted.splice(idx, 1)[0]);
+    }
+  }
+  return sorted;
 };
 
 const sortToolsets = (
@@ -147,14 +157,14 @@ const resolveInitialSelection = (
   if (inMemoryId != null && deployments.some((d) => d.id === inMemoryId)) {
     return inMemoryId;
   }
-  if (userConfigId != null && deployments.some((d) => d.id === userConfigId)) {
-    return userConfigId;
-  }
   if (
     operatorDefaultId != null &&
     deployments.some((d) => d.id === operatorDefaultId)
   ) {
     return operatorDefaultId;
+  }
+  if (userConfigId != null && deployments.some((d) => d.id === userConfigId)) {
+    return userConfigId;
   }
   return deployments[0]?.id ?? null;
 };
@@ -213,10 +223,21 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
    * re-fetch — read through a ref for the same reason as the refs above.
    */
   const languageRef = useRef(language);
+  const isDefaultDeploymentPinned = useFeatureFlag('defaultDeploymentPinned');
+  const isDefaultDeploymentPinnedRef = useRef(isDefaultDeploymentPinned);
+  const selectionExplicitlySetRef = useRef(false);
 
   useEffect(() => {
     languageRef.current = language;
-    setRawDeployments((prev) => sortDeployments(prev, language));
+    setRawDeployments((prev) =>
+      sortDeployments(
+        prev,
+        language,
+        isDefaultDeploymentPinnedRef.current
+          ? defaultDeploymentIdRef.current
+          : null,
+      ),
+    );
     setToolsets((prev) => sortToolsets(prev, language));
   }, [language]);
 
@@ -225,8 +246,16 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   }, [userConfigSelectedId]);
 
   useEffect(() => {
+    isDefaultDeploymentPinnedRef.current = isDefaultDeploymentPinned;
     defaultDeploymentIdRef.current = appConfig.defaultDeploymentId;
-  }, [appConfig.defaultDeploymentId]);
+    setRawDeployments((prev) =>
+      sortDeployments(
+        prev,
+        languageRef.current,
+        isDefaultDeploymentPinned ? appConfig.defaultDeploymentId : null,
+      ),
+    );
+  }, [appConfig.defaultDeploymentId, isDefaultDeploymentPinned]);
 
   const loadDeployments = useCallback(
     async (signal: { isCancelled: boolean }) => {
@@ -276,9 +305,13 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (deploymentsRequestIdRef.current === deploymentsRequestId) {
+        const effectivePinnedId = isDefaultDeploymentPinnedRef.current
+          ? defaultDeploymentIdRef.current
+          : null;
         const deployments = sortDeployments(
           deploymentsResult.value.deployments ?? [],
           languageRef.current,
+          effectivePinnedId,
         );
         setRawDeployments(deployments);
         setSelectedItemIdState((prev) =>
@@ -286,7 +319,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
             deployments,
             prev,
             userConfigSelectedIdRef.current,
-            defaultDeploymentIdRef.current,
+            effectivePinnedId,
           ),
         );
       }
@@ -310,25 +343,26 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   }, [loadDeployments, userSub]);
 
   /*
-   * Handles the case where userConfigSelectedId/defaultDeploymentId only
-   * become known *after* the initial load already resolved with no
-   * selection (e.g. user config loads slower than deployments) — recomputes
-   * the selection against the already-loaded list without refetching.
+   * Re-resolves an automatically chosen selection when user/app config becomes
+   * available after the catalog. Explicit user and conversation selections are
+   * preserved, while a provisional fallback can still be replaced by the
+   * configured priority.
    */
   useEffect(() => {
-    if (selectedItemId != null || rawDeployments.length === 0) return;
+    if (selectionExplicitlySetRef.current || rawDeployments.length === 0)
+      return;
     const resolved = resolveInitialSelection(
       rawDeployments,
       null,
       userConfigSelectedId,
-      appConfig.defaultDeploymentId,
+      isDefaultDeploymentPinned ? appConfig.defaultDeploymentId : null,
     );
     if (resolved != null) setSelectedItemIdState(resolved);
   }, [
     userConfigSelectedId,
     appConfig.defaultDeploymentId,
+    isDefaultDeploymentPinned,
     rawDeployments,
-    selectedItemId,
   ]);
 
   const refetchToolsets = useCallback(async () => {
@@ -360,7 +394,13 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         );
         if (deploymentsRequestIdRef.current !== requestId) return;
         setRawDeployments(
-          sortDeployments(deployments ?? [], languageRef.current),
+          sortDeployments(
+            deployments ?? [],
+            languageRef.current,
+            isDefaultDeploymentPinnedRef.current
+              ? defaultDeploymentIdRef.current
+              : null,
+          ),
         );
       } catch (error) {
         if (deploymentsRequestIdRef.current !== requestId) return;
@@ -389,6 +429,9 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         sortDeployments(
           [...prev.filter((d) => d.id !== item.id), item],
           languageRef.current,
+          isDefaultDeploymentPinnedRef.current
+            ? defaultDeploymentIdRef.current
+            : null,
         ),
       );
     },
@@ -412,6 +455,18 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       return item;
     });
   }, [rawDeployments, schemas]);
+
+  /*
+   * `restoreDefaultSelection` is a one-shot action fired when the new-chat
+   * route mounts, not a reaction to the catalog changing. Reading `items`
+   * through a ref keeps that callback's identity stable, so a deployments
+   * refetch — which rebuilds `items` — cannot re-fire the caller's effect and
+   * silently discard the selection the user just made.
+   */
+  const itemsRef = useRef(items);
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
 
   const resolvedSelectedDeploymentId = useMemo(
     () =>
@@ -461,6 +516,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
 
   const setSelectedItemId = useCallback(
     (id: string | null) => {
+      selectionExplicitlySetRef.current = true;
       setSelectedItemIdState(id);
       void setSelectedDeployment(id).catch((err) => {
         console.warn(
@@ -473,18 +529,23 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const restoreSelectedItemId = useCallback((id: string) => {
+    selectionExplicitlySetRef.current = true;
     setSelectedItemIdState(id);
   }, []);
 
   const restoreDefaultSelection = useCallback(() => {
+    selectionExplicitlySetRef.current = false;
+    const effectiveDefaultDeploymentId = isDefaultDeploymentPinnedRef.current
+      ? defaultDeploymentIdRef.current
+      : null;
     const resolved = resolveInitialSelection(
-      items,
+      itemsRef.current,
       null,
-      userConfigSelectedId,
-      appConfig.defaultDeploymentId,
+      userConfigSelectedIdRef.current,
+      effectiveDefaultDeploymentId,
     );
     if (resolved != null) setSelectedItemIdState(resolved);
-  }, [items, userConfigSelectedId, appConfig.defaultDeploymentId]);
+  }, []);
 
   const contextValue = useMemo(
     () => ({

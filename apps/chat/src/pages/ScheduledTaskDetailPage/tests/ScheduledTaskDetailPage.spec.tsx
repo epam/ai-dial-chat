@@ -52,10 +52,15 @@ vi.mock('../../../hooks/scheduled-tasks/useScheduledTaskRuns', () => ({
 }));
 
 const getApiErrorStatusMock = vi.fn();
-vi.mock('../../../server-api/api-error', () => ({
-  getApiErrorStatus: (error: unknown) => getApiErrorStatusMock(error),
-  getApiErrorDetails: (error: unknown) => getApiErrorDetailsMock(error),
-}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    getApiErrorStatus: (error: unknown) => getApiErrorStatusMock(error),
+    getApiErrorDetails: (error: unknown) => getApiErrorDetailsMock(error),
+  };
+});
 
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
   ScheduledTaskRunStatus: {
@@ -169,6 +174,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   NotificationVariant: { Success: 'success', Error: 'error' },
   PrimaryButton: ({

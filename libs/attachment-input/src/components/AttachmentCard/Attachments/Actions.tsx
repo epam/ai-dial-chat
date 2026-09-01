@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   StaticIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -63,7 +64,13 @@ const ActionButton: FC<ActionProps> = ({
 export const ReloadAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
   return (
     <ActionButton
-      icon={<IconReload size={DIAL_ICON_SIZE.SM} aria-hidden />}
+      icon={
+        <IconReload
+          size={DIAL_ICON_SIZE.SM}
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      }
       className={styles.retryIcon}
       {...props}
     />
@@ -74,7 +81,13 @@ export const ReloadAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
 export const DownloadAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
   return (
     <ActionButton
-      icon={<IconDownload size={DIAL_ICON_SIZE.SM} aria-hidden />}
+      icon={
+        <IconDownload
+          size={DIAL_ICON_SIZE.SM}
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      }
       {...props}
     />
   );
@@ -84,7 +97,13 @@ export const DownloadAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
 export const OpenLinkAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
   return (
     <ActionButton
-      icon={<IconExternalLink size={DIAL_ICON_SIZE.SM} aria-hidden />}
+      icon={
+        <IconExternalLink
+          size={DIAL_ICON_SIZE.SM}
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      }
       {...props}
     />
   );
@@ -94,7 +113,13 @@ export const OpenLinkAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
 export const RemoveAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
   return (
     <ActionButton
-      icon={<IconX size={DIAL_ICON_SIZE.SM} aria-hidden />}
+      icon={
+        <IconX
+          size={DIAL_ICON_SIZE.SM}
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      }
       {...props}
     />
   );

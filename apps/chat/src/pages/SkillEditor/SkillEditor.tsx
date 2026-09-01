@@ -3,7 +3,15 @@ import {
   isValidSkillRelativePath,
   parseSkillResourceUrl,
   PUBLIC_SKILL_BUCKET,
+  SkillEditorLoadState,
   SKILL_MANIFEST_FILE,
+  useSkillEditorLoad,
+  useSkillEditorSubmit,
+  useSkillFileActions,
+  type SkillEditorLoadClient,
+  type SkillEditorSubmitClient,
+  type SkillEditorSubmitMessages,
+  type SkillFileActionsMessages,
 } from '@epam/ai-dial-chat-hooks';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
@@ -13,6 +21,7 @@ import {
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
+  DIAL_KIT_ICON_STROKE,
   EditorThemes,
   ErrorText,
   GhostIconButton,
@@ -30,16 +39,31 @@ import {
   SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSkillFilePreviewSync } from '../../hooks/attachment/useSkillFilePreviewSync';
+import {
+  createSkill,
+  downloadSkill,
+  downloadSkillFile,
+  listSkillFiles,
+  updateSkill,
+} from '../../server-api/skills.api';
 import { EditorQuery } from '../../types/editor-query';
 import { ROUTES } from '../../types/routes';
-import { SkillEditorLoadState } from '../../types/skill-editor-load-state';
 import { ThemeId } from '../../types/theme-id';
-import { useSkillEditorLoad } from './hooks/useSkillEditorLoad';
-import { useSkillEditorSubmit } from './hooks/useSkillEditorSubmit';
-import { useSkillFileActions } from './hooks/useSkillFileActions';
+
+const skillEditorLoadClient: SkillEditorLoadClient = {
+  downloadSkill,
+  downloadSkillFile,
+  listSkillFiles,
+};
+
+const skillEditorSubmitClient: SkillEditorSubmitClient = {
+  createSkill,
+  updateSkill,
+};
 
 const SkillEditorPage: FC = () => {
   const { t } = useTranslation();
@@ -49,6 +73,7 @@ const SkillEditorPage: FC = () => {
   const { refetchSkills } = useSkills();
   const { currentTheme } = useTheme();
   const { closeCanvas } = useAttachmentCanvas();
+  const { showNotification } = useNotification();
 
   const rawReturnUrl = searchParams.get(EditorQuery.ReturnUrl);
   const returnUrl =
@@ -93,7 +118,12 @@ const SkillEditorPage: FC = () => {
     etagRef,
     loadedPathRef,
     retryLoad,
-  } = useSkillEditorLoad({ isEditMode, bucket, skillPath });
+  } = useSkillEditorLoad({
+    isEditMode,
+    bucket,
+    skillPath,
+    client: skillEditorLoadClient,
+  });
 
   const [selectedPath, setSelectedPath] = useState(SKILL_MANIFEST_FILE);
   const [isDirty, setIsDirty] = useState(false);
@@ -101,6 +131,31 @@ const SkillEditorPage: FC = () => {
   const [pendingReload, setPendingReload] = useState(false);
 
   useSkillFilePreviewSync({ selectedPath, files, filesContentRef });
+
+  const fileActionsMessages = useMemo<SkillFileActionsMessages>(
+    () => ({
+      required: t(SkillEditorI18nKeys.ErrorRequired),
+      pathReserved: t(SkillEditorI18nKeys.ErrorPathReserved),
+      pathInvalid: t(SkillEditorI18nKeys.ErrorPathInvalid),
+      pathDuplicate: t(SkillEditorI18nKeys.ErrorPathDuplicate),
+      fileTooLarge: (maxSize) =>
+        t(SkillEditorI18nKeys.ErrorFileTooLarge, { maxSize }),
+      manifestCasingInvalid: t(SkillEditorI18nKeys.ErrorManifestCasingInvalid),
+      manifestDuplicate: t(SkillEditorI18nKeys.ErrorManifestDuplicate),
+      manifestInvalidUtf8: t(SkillEditorI18nKeys.ErrorManifestInvalidUtf8),
+      manifestInvalidFrontmatter: t(
+        SkillEditorI18nKeys.ErrorManifestInvalidFrontmatter,
+      ),
+      totalSizeExceeded: t(SkillEditorI18nKeys.ErrorTotalSizeExceeded),
+      totalCountExceeded: t(SkillEditorI18nKeys.ErrorTotalCountExceeded),
+      manifestNameMismatch: t(SkillEditorI18nKeys.ErrorManifestNameMismatch),
+      manifestImportDeclined: t(
+        SkillEditorI18nKeys.ErrorManifestImportDeclined,
+      ),
+      saveError: t(SkillEditorI18nKeys.ErrorSave),
+    }),
+    [t],
+  );
 
   const { fileActions, pendingManifestImport, resolveManifestImport } =
     useSkillFileActions({
@@ -113,7 +168,26 @@ const SkillEditorPage: FC = () => {
       isEditMode,
       isDirty,
       setSelectedPath,
+      messages: fileActionsMessages,
     });
+
+  const submitMessages = useMemo<SkillEditorSubmitMessages>(
+    () => ({
+      required: t(SkillEditorI18nKeys.ErrorRequired),
+      nameInvalid: t(SkillEditorI18nKeys.ErrorNameInvalid),
+      nameConflict: t(SkillEditorI18nKeys.ErrorNameConflict),
+      archiveTooLarge: t(SkillEditorI18nKeys.ErrorArchiveTooLarge),
+      serviceUnavailable: t(SkillEditorI18nKeys.ErrorServiceUnavailable),
+      pathInvalid: t(SkillEditorI18nKeys.ErrorPathInvalid),
+      saveError: t(SkillEditorI18nKeys.ErrorSave),
+      saveSuccessTitle: t(SkillEditorI18nKeys.SaveSuccessTitle),
+      createSuccess: (name) => t(SkillEditorI18nKeys.CreateSuccess, { name }),
+      updateSuccessTitle: t(SkillEditorI18nKeys.UpdateSuccessTitle),
+      updateSuccess: (name) => t(SkillEditorI18nKeys.UpdateSuccess, { name }),
+      conflictMessage: t(SkillEditorI18nKeys.ConflictMessage),
+    }),
+    [t],
+  );
 
   const { phase, errors, submitError, conflict, clearConflict, handleSubmit } =
     useSkillEditorSubmit({
@@ -126,6 +200,10 @@ const SkillEditorPage: FC = () => {
       etagRef,
       returnUrl,
       refetchSkills,
+      client: skillEditorSubmitClient,
+      messages: submitMessages,
+      onNavigate: navigate,
+      onNotify: showNotification,
     });
 
   // Warn on a full page unload while there are unsaved changes — the
@@ -244,7 +322,12 @@ const SkillEditorPage: FC = () => {
     <>
       <GhostIconButton
         icon={
-          <IconArrowLeft size={20} className="rtl:scale-x-[-1]" aria-hidden />
+          <IconArrowLeft
+            size={20}
+            className="rtl:scale-x-[-1]"
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
         }
         aria-label={t(SkillEditorI18nKeys.BackAriaLabel)}
         onClick={handleCancel}

@@ -2,7 +2,7 @@ import swc from 'unplugin-swc';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig(() => ({
-  root: __dirname,
+  root: import.meta.dirname,
   oxc: false as const,
   cacheDir: '../../node_modules/.vite/apps/chat-api',
   plugins: [

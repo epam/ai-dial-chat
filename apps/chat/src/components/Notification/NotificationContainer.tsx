@@ -1,5 +1,6 @@
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   GhostIconButton,
   Notification,
 } from '@epam/ai-dial-ui-kit';
@@ -67,7 +68,13 @@ const RequestIdRow: FC<RequestIdRowProps> = ({ requestId }) => {
         {requestId}
       </span>
       <GhostIconButton
-        icon={<IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />}
+        icon={
+          <IconCopy
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        }
         aria-label={t(NotificationI18nKeys.RequestIdCopyAriaLabel)}
         onClick={() => void handleCopy()}
       />

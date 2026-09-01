@@ -1,8 +1,6 @@
 import {
   Catalog,
   CatalogItem,
-  CatalogItemDetailsFetchResult,
-  CatalogViewMode,
   CredentialsLevel,
   CredentialStatus,
   ToolsetAuthenticationType,
@@ -12,60 +10,53 @@ import type {
   ToolsetLogoutBodyDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
-  buildConnectApi,
-  buildDeploymentConnectApi,
   buildPromptExportEnvelope,
   buildPromptExportFileName,
-  buildPromptOverview,
-  buildSkillContentTree,
-  buildSkillOverview,
+  type CatalogDetailsApi,
+  CatalogPrimaryActionType,
+  deriveAvailableTabIds,
+  deriveFavoriteItems,
+  type DeploymentLimitsLabels,
   EXPORT_APP_NAME,
+  filterCatalogItemsBySelector,
+  filterHiddenOwnedItems,
   findDeploymentByIdOrReference,
+  getApiErrorDetails,
   isOrganisationPromptItem,
   isQuickAppSchema,
-  mapDeploymentDetailsDtoToEntityDetails,
-  mapEntityDetailsToCatalogDetails,
   mapPromptToCatalogItem,
+  mapPublishHistoryEntryDto,
   mapSkillToCatalogItem,
-  mapToolsetCredentials,
   parsePromptResourceUrl,
   parseSkillResourceUrl,
-  parseSkillManifestDocument,
+  type PromptOverviewLabels,
   PromptSource,
-  readSkillFileBytes,
-  readSkillManifest,
-  resolveMcpResourceKind,
-  resolveSkillFileDownloadPath,
-  resolveSkillManifestFileId,
+  reconcileFilterTopics,
+  resolveCatalogPrimaryAction,
   sanitizeFileName,
   serializePromptExport,
-  SKILL_MANIFEST_FILE,
-  SkillSource,
-  mapPublishHistoryEntryDto,
-  toPublishEntityType,
-  type ParsedSkillResourceUrl,
-  type PromptOverviewLabels,
-  type SkillFileContent,
   type SkillOverviewLabels,
+  SkillSource,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetLoginOutcomeType,
+  toPublishEntityType,
+  toPublishRuleDto,
+  useCatalogItemDetails,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   CatalogEntityType,
-  extractPromptParams,
   triggerBlobDownload,
 } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetEditorQuery,
-} from '../../constants/toolsets';
+import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
@@ -89,15 +80,11 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useSkillArchiveImport } from '../../hooks/skills/useSkillArchiveImport';
-import {
-  ToolsetLoginOutcomeType,
-  useToolsetLogin,
-} from '../../hooks/toolsets/useToolsetLogin';
+import { useToolsetLogin } from '../../hooks/toolsets/useToolsetLogin';
 import { useCatalogActiveTabPreference } from '../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
@@ -106,10 +93,7 @@ import {
   getPrompt,
   getPublicPrompt,
 } from '../../server-api/prompts.api';
-import {
-  getPublishRules,
-  toPublishRuleDto,
-} from '../../server-api/publish-rules.api';
+import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
   getCatalogPublishHistory,
   publishCatalogEntity,
@@ -138,7 +122,6 @@ import { ROUTES } from '../../types/routes';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { resolveFavoriteEntityType } from '../../utils/favorites';
 import { triggerBrowserDownload } from '../../utils/file-download';
-import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
   buildDeploymentFolderLabels,
   mapDeploymentToCatalogItem,
@@ -213,8 +196,6 @@ const CatalogView: FC<Props> = ({
 
   const { showSuccessNotification, showErrorNotification } = useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
-  /* Skill whose details panel is open, for resolving picked file contents. */
-  const openSkillRef = useRef<ParsedSkillResourceUrl | null>(null);
   const { user } = useUser();
   const isAdmin = user?.isAdmin ?? false;
   const { config } = useAppConfig();
@@ -261,16 +242,13 @@ const CatalogView: FC<Props> = ({
   );
 
   const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
-  const isCatalogTableViewEnabled = useUiFeature(
-    OverlayFeature.CatalogTableView,
-  );
   const isCatalogHideMyAppsEnabled = useUiFeature(
     OverlayFeature.CatalogHideMyApps,
   );
   const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
   const isCustomAppsEnabled = useUiFeature(OverlayFeature.CustomApps);
-  const isCustomApplicationsEnabled = useUiFeature(
-    OverlayFeature.CustomApplications,
+  const isSchemaAppsEnabled = useUiFeature(
+    OverlayFeature.SchemaApps,
   );
   const isHideCustomAppCreationEnabled = useUiFeature(
     OverlayFeature.HideCustomAppCreation,
@@ -337,6 +315,60 @@ const CatalogView: FC<Props> = ({
     }),
     [t],
   );
+
+  const deploymentLimitsLabels: DeploymentLimitsLabels = useMemo(
+    () => ({
+      tokenGroup: t(CatalogI18nKeys.DetailsLimitsTokenGroupLabel),
+      tokensPerDay: t(CatalogI18nKeys.DetailsLimitsTokensPerDay),
+      tokensPerWeek: t(CatalogI18nKeys.DetailsLimitsTokensPerWeek),
+      tokensPerMonth: t(CatalogI18nKeys.DetailsLimitsTokensPerMonth),
+      followsCostLimit: t(CatalogI18nKeys.DetailsLimitsFollowsCostLimitLabel),
+      formatSpentCaption: (amount) =>
+        t(CatalogI18nKeys.DetailsLimitsSpentLabel, { amount }),
+      formatValueLabel: (used, total) =>
+        t(CatalogI18nKeys.DetailsLimitsValue, { used, total }),
+      formatProgressAriaLabel: ({ label, used, total }) =>
+        t(CatalogI18nKeys.DetailsLimitsProgressAriaLabel, {
+          label,
+          used,
+          total,
+        }),
+      formatFollowsCostLimitAriaLabel: ({ label, used }) =>
+        t(CatalogI18nKeys.DetailsLimitsFollowsCostLimitAriaLabel, {
+          label,
+          used,
+        }),
+    }),
+    [t],
+  );
+
+  const catalogDetailsApi: CatalogDetailsApi = useMemo(
+    () => ({
+      getDeploymentDetails,
+      getDeploymentLimits,
+      getPrompt,
+      getPublicPrompt,
+      downloadSkillFile,
+      listSkillFiles,
+    }),
+    [],
+  );
+
+  const combinedSkills = useMemo(
+    () => [...skills, ...sharedSkills, ...publicSkills],
+    [skills, sharedSkills, publicSkills],
+  );
+
+  const { onFetchDetails, onLoadContentFile, onLoadSkillDetailsFile } =
+    useCatalogItemDetails({
+      api: catalogDetailsApi,
+      skills: combinedSkills,
+      isAdmin,
+      dialCoreExternalUrl,
+      skillOverviewLabels,
+      promptOverviewLabels,
+      deploymentLimitsLabels,
+    });
 
   const catalogItems = useMemo(() => {
     const folderLabels = buildDeploymentFolderLabels(t);
@@ -436,30 +468,21 @@ const CatalogView: FC<Props> = ({
   ]);
 
   const visibleCatalogItems = useMemo(() => {
-    let result = isSelectorMode
-      ? catalogItems.filter((item) => visibleTypes.has(item.type))
+    const selectorFiltered = isSelectorMode
+      ? filterCatalogItemsBySelector(catalogItems, visibleTypes)
       : catalogItems;
-    if (isCatalogHideMyAppsEnabled) {
-      result = result.filter((item) => !item.isMyApp);
-    }
-    return result;
+    return filterHiddenOwnedItems(selectorFiltered, isCatalogHideMyAppsEnabled);
   }, [catalogItems, isSelectorMode, isCatalogHideMyAppsEnabled, visibleTypes]);
 
-  const reconciledFilterTopics = useMemo(() => {
-    const availableTopics = new Set(
-      visibleCatalogItems.flatMap((item) => item.topics),
-    );
-    return new Set(
-      Array.from(persistedFilterTopics).filter((topic) =>
-        availableTopics.has(topic),
-      ),
-    );
-  }, [visibleCatalogItems, persistedFilterTopics]);
+  const reconciledFilterTopics = useMemo(
+    () => reconcileFilterTopics(persistedFilterTopics, visibleCatalogItems),
+    [visibleCatalogItems, persistedFilterTopics],
+  );
 
-  const availableTabIds = useMemo(() => {
-    const presentTypes = new Set(visibleCatalogItems.map((item) => item.type));
-    return CATALOG_TAB_ORDER.filter((type) => presentTypes.has(type));
-  }, [visibleCatalogItems]);
+  const availableTabIds = useMemo(
+    () => deriveAvailableTabIds(visibleCatalogItems, CATALOG_TAB_ORDER),
+    [visibleCatalogItems],
+  );
 
   const { activeTab, setActiveTab } =
     useCatalogActiveTabPreference(availableTabIds);
@@ -477,186 +500,26 @@ const CatalogView: FC<Props> = ({
   const showPublishError = usePublishErrorNotification();
 
   const favorites = useMemo(
-    () => visibleCatalogItems.filter((item) => item.isUserFavorite),
+    () => deriveFavoriteItems(visibleCatalogItems),
     [visibleCatalogItems],
   );
 
   /*
-   * Reads a prompt item back through whichever endpoint owns it. A shared
-   * prompt carries a qualified `prompts/{ownerBucket}/{path}` id: the bucket
-   * has to travel with the request, because the personal endpoint resolves a
-   * bare path against the *caller's* bucket and would 404 — or, on a path
-   * collision, silently return the caller's own prompt of the same name.
+   * Reads a prompt item back through whichever endpoint owns it. `item.id` is
+   * always the full `prompts/{bucket}/{path}` resource path — the owner
+   * bucket for a shared prompt, the caller's own bucket otherwise — so the
+   * personal endpoint takes it unconditionally. The organisation source still
+   * routes through the separate public endpoint, which kept its
+   * bucket-relative `path` argument, so its qualified id is parsed back down
+   * to that sub-path first.
    */
   const fetchPromptDto = useCallback(
     (item: CatalogItem): Promise<PromptResponseDto> => {
-      if (isOrganisationPromptItem(item)) return getPublicPrompt(item.id);
-      const ref = parsePromptResourceUrl(item.id);
-      if (ref == null) return getPrompt(item.id);
-      return getPrompt(ref.path, ref.bucket);
+      if (!isOrganisationPromptItem(item)) return getPrompt(item.id);
+      const parsed = parsePromptResourceUrl(item.id);
+      return getPublicPrompt(parsed?.path ?? item.id);
     },
     [],
-  );
-
-  const handleFetchDetails = useCallback(
-    async (
-      item: CatalogItem,
-    ): Promise<CatalogItemDetailsFetchResult | undefined> => {
-      /*
-       * Prompts resolve through the prompts endpoints; neither deployment
-       * endpoint accepts a prompt path. A failure here resolves `undefined`,
-       * so the panel keeps the body the list mapper already seeded.
-       */
-      if (item.type === CatalogEntityType.Prompt) {
-        try {
-          const dto = await fetchPromptDto(item);
-          /*
-           * The fetch result replaces `item.details` wholesale, so the
-           * Overview tab has to be rebuilt here too or it would disappear.
-           */
-          return {
-            promptContent: { content: dto.content },
-            overview: buildPromptOverview(dto, promptOverviewLabels),
-          };
-        } catch {
-          return undefined;
-        }
-      }
-
-      /*
-       * A skill resolves through the skills endpoints: its manifest text and
-       * its file inventory, read in parallel. Each half is optional — a skill
-       * with no readable `SKILL.md` still gets its Overview, and a failed file
-       * listing still gets its Content.
-       */
-      if (item.type === CatalogEntityType.Skill) {
-        const parsed = parseSkillResourceUrl(item.id);
-        if (parsed == null) return undefined;
-
-        const { bucket, path } = parsed;
-        /*
-         * The Content tab's file picker reports back only a file's own path,
-         * so the skill it belongs to is remembered here — the panel shows one
-         * item at a time, and this runs each time it opens.
-         */
-        openSkillRef.current = parsed;
-        const [manifest, files] = await Promise.allSettled([
-          downloadSkillFile(bucket, path, SKILL_MANIFEST_FILE).then(
-            readSkillManifest,
-          ),
-          listSkillFiles({ bucket, path, filePath: '', recursive: true }),
-        ]);
-
-        /*
-         * A manifest that downloads but fails to parse is not a failure: the
-         * parser hands back the raw text as the body, so the Content tab
-         * still renders — it simply carries no summary and no Specification.
-         */
-        const parsedManifest =
-          manifest.status === 'fulfilled' && manifest.value != null
-            ? parseSkillManifestDocument(manifest.value)
-            : undefined;
-        const skill = [...skills, ...sharedSkills, ...publicSkills].find(
-          (candidate) => candidate.url === item.id,
-        );
-        const overview =
-          files.status === 'fulfilled'
-            ? buildSkillOverview(
-                skill,
-                files.value.items,
-                parsedManifest?.about,
-                skillOverviewLabels,
-              )
-            : undefined;
-
-        const contentFiles =
-          files.status === 'fulfilled'
-            ? buildSkillContentTree(files.value.items, path)
-            : [];
-        const selectedFileId =
-          files.status === 'fulfilled'
-            ? resolveSkillManifestFileId(files.value.items, path)
-            : SKILL_MANIFEST_FILE;
-
-        if (parsedManifest == null && overview == null) return undefined;
-        return {
-          ...(parsedManifest != null
-            ? {
-                promptContent: {
-                  content: parsedManifest.body,
-                  ...(parsedManifest.description != null
-                    ? { description: parsedManifest.description }
-                    : {}),
-                  files: contentFiles,
-                  selectedFileId,
-                },
-              }
-            : {}),
-          ...(overview != null ? { overview } : {}),
-        };
-      }
-
-      try {
-        const limitsPromise =
-          item.type === CatalogEntityType.Model
-            ? getDeploymentLimits(item.id).catch(() => undefined)
-            : Promise.resolve(undefined);
-        const [dto, limitsDto] = await Promise.all([
-          getDeploymentDetails(item.id),
-          limitsPromise,
-        ]);
-        const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
-        const catalogDetails = mapEntityDetailsToCatalogDetails(entityDetails);
-        const mcpResourceKind = resolveMcpResourceKind(
-          item.type,
-          item.supportsMcp,
-        );
-        /*
-         * DIAL Core routes generation through the same deployment-keyed
-         * endpoints for models and custom applications, so both entity
-         * types get a Connect entry built from their generation-API support
-         * flags.
-         */
-        const deploymentConnectApi =
-          entityDetails.type === 'MODEL' || entityDetails.type === 'AGENT'
-            ? buildDeploymentConnectApi(dialCoreExternalUrl ?? '', item.id, {
-                hasChatCompletion:
-                  entityDetails.data.capabilities?.hasChatCompletion,
-                hasResponsesApi:
-                  entityDetails.data.capabilities?.hasResponsesApi,
-              })
-            : undefined;
-        return {
-          ...catalogDetails,
-          api:
-            mcpResourceKind != null
-              ? buildConnectApi(
-                  dialCoreExternalUrl ?? '',
-                  item.id,
-                  mcpResourceKind,
-                )
-              : (deploymentConnectApi ?? catalogDetails.api),
-          limits: mapDeploymentLimitsDtoToCatalogLimits(limitsDto, t),
-          credentials:
-            entityDetails.type === 'TOOLSET'
-              ? mapToolsetCredentials(item.id, entityDetails.data, isAdmin)
-              : undefined,
-        };
-      } catch {
-        return undefined;
-      }
-    },
-    [
-      isAdmin,
-      t,
-      dialCoreExternalUrl,
-      skills,
-      sharedSkills,
-      publicSkills,
-      fetchPromptDto,
-      promptOverviewLabels,
-      skillOverviewLabels,
-    ],
   );
 
   const getLevelStatus = useCallback(
@@ -887,42 +750,44 @@ const CatalogView: FC<Props> = ({
        * characters, which would blow the URL length limit and leak content
        * into browser history.
        */
-      if (item.type === CatalogEntityType.Prompt) {
-        let promptContent = item.details?.promptContent?.content;
-        if (promptContent == null) {
-          try {
-            const dto = await fetchPromptDto(item);
-            promptContent = dto.content;
-          } catch (err) {
-            const { traceId } = await getApiErrorDetails(err);
-            showErrorNotification({
-              message: t(CatalogI18nKeys.DetailsPromptLoadError),
-              requestId: traceId,
-            });
-            return;
-          }
-        }
+      let action;
+      try {
+        action = await resolveCatalogPrimaryAction(item, fetchPromptDto);
+      } catch (err) {
+        const { traceId } = await getApiErrorDetails(err);
+        showErrorNotification({
+          message: t(CatalogI18nKeys.DetailsPromptLoadError),
+          requestId: traceId,
+        });
+        return;
+      }
 
-        if (extractPromptParams(promptContent).length > 0) {
+      if (action.kind === CatalogPrimaryActionType.Prompt) {
+        if (action.hasParameters) {
           navigate(ROUTES.Root, {
             state: {
               pendingPrompt: {
-                id: item.id,
-                name: item.name,
-                content: promptContent,
-                description: item.description,
+                id: action.id,
+                name: action.name,
+                content: action.content,
+                description: action.description,
               },
             },
           });
           return;
         }
-
-        navigate(ROUTES.Root, { state: { promptContent } });
+        navigate(ROUTES.Root, { state: { promptContent: action.content } });
         return;
       }
 
-      setSelectedItemId(item.id);
-      navigate(ROUTES.Root);
+      /*
+       * The pick is persisted as the user's own preference *and* carried in
+       * router state: the new-chat route resets an unstated selection back to
+       * the configured default on mount, which would otherwise discard this
+       * one before the persisted value has propagated.
+       */
+      setSelectedItemId(action.id);
+      navigate(ROUTES.Root, { state: { deploymentId: action.id } });
     },
     [setSelectedItemId, navigate, showErrorNotification, t, fetchPromptDto],
   );
@@ -974,7 +839,7 @@ const CatalogView: FC<Props> = ({
       }
 
       if (item.type === CatalogEntityType.Skill) {
-        const openSkill = openSkillRef.current;
+        const openSkill = parseSkillResourceUrl(item.id);
         if (openSkill == null) return;
         try {
           const response = await downloadSkill(
@@ -1014,79 +879,15 @@ const CatalogView: FC<Props> = ({
     [],
   );
 
-  /*
-   * A picked file carries its opaque listing id. Core may prefix that id with
-   * the skill path and its internal `files` directory, so the app adapter
-   * converts it to the file-relative path expected by the download endpoint.
-   * The manifest is stripped of its frontmatter exactly as it is on first
-   * load; every other file is shown as written.
-   */
-  const handleLoadContentFile = useCallback(async (fileId: string) => {
-    const openSkill = openSkillRef.current;
-    if (openSkill == null) return undefined;
-
-    const filePath = resolveSkillFileDownloadPath(fileId, openSkill.path);
-    if (filePath == null) return undefined;
-
-    const response = await downloadSkillFile(
-      openSkill.bucket,
-      openSkill.path,
-      filePath,
-    );
-    const text = await readSkillManifest(response);
-    if (text == null) return undefined;
-
-    return filePath === SKILL_MANIFEST_FILE
-      ? parseSkillManifestDocument(text).body
-      : text;
-  }, []);
-
-  const handleLoadSkillDetailsFile = useCallback(
-    async (fileId: string): Promise<SkillFileContent> => {
-      const openSkill = openSkillRef.current;
-      if (openSkill == null) throw new Error('No skill details are open');
-
-      const filePath = resolveSkillFileDownloadPath(fileId, openSkill.path);
-      if (filePath == null) throw new Error('A folder cannot be previewed');
-
-      const response = await downloadSkillFile(
-        openSkill.bucket,
-        openSkill.path,
-        filePath,
-      );
-      if (!response.ok) {
-        throw Object.assign(
-          new Error(`File preview failed with status ${response.status}`),
-          { status: response.status },
-        );
-      }
-
-      const bytes = await readSkillFileBytes(response);
-      if (bytes == null) throw new Error('File exceeds the preview size limit');
-
-      const responseMimeType =
-        response.headers.get('content-type')?.split(';')[0].trim() || undefined;
-      return {
-        bytes,
-        /* Core commonly sends this generic value; omitting it lets the same extension inference as Skill Builder run. */
-        mimeType:
-          responseMimeType === 'application/octet-stream'
-            ? undefined
-            : responseMimeType,
-      };
-    },
-    [],
-  );
-
   const renderContentFilePreview = useCallback(
     (fileId: string, fileName: string) => (
       <SkillDetailsFilePreview
         fileId={fileId}
         fileName={fileName}
-        onLoadFile={handleLoadSkillDetailsFile}
+        onLoadFile={onLoadSkillDetailsFile}
       />
     ),
-    [handleLoadSkillDetailsFile],
+    [onLoadSkillDetailsFile],
   );
 
   const isPrimaryActionVisible = useCallback((item: CatalogItem) => {
@@ -1104,26 +905,18 @@ const CatalogView: FC<Props> = ({
   }, []);
 
   /*
-   * `DiscardSharedCatalogItemDto` restricts `itemId` to
-   * `applications|toolsets|conversations|skills` paths, so a prompt path is
-   * rejected with 400 before reaching the service. Hide the action until the
-   * backend accepts prompts.
+   * Every catalog item type — prompts included — is visible for unsharing:
+   * `DiscardSharedCatalogItemDto.itemId` now accepts a full `prompts/{bucket}/{path}`
+   * resource path like any other entity type.
    */
-  const isUnshareVisible = useCallback(
-    (item: CatalogItem) => item.type !== CatalogEntityType.Prompt,
-    [],
-  );
+  const isUnshareVisible = useCallback(() => true, []);
 
   /*
-   * `RevokeSharedAccessDto` carries the same
-   * `applications|toolsets|conversations|skills` restriction as the discard
-   * DTO, so a prompt path is rejected with 400 — both by the revoke call and
-   * by the recipient-count lookup that gates it.
+   * Every catalog item type — prompts included — is visible for revoking
+   * share access: `RevokeSharedAccessDto.itemId` now accepts a full
+   * `prompts/{bucket}/{path}` resource path like any other entity type.
    */
-  const isRevokeShareVisible = useCallback(
-    (item: CatalogItem) => item.type !== CatalogEntityType.Prompt,
-    [],
-  );
+  const isRevokeShareVisible = useCallback(() => true, []);
 
   const isPublishVisible = useCallback(
     (item: CatalogItem) =>
@@ -1412,6 +1205,8 @@ const CatalogView: FC<Props> = ({
           await refetchToolsets();
         } else if (item.type === CatalogEntityType.Skill) {
           await refetchSkills();
+        } else if (item.type === CatalogEntityType.Prompt) {
+          await refetchPrompts();
         } else {
           await refetchDeployments();
         }
@@ -1436,6 +1231,7 @@ const CatalogView: FC<Props> = ({
       refetchToolsets,
       refetchDeployments,
       refetchSkills,
+      refetchPrompts,
       selectedItemId,
       setSelectedItemId,
       showSuccessNotification,
@@ -1493,7 +1289,7 @@ const CatalogView: FC<Props> = ({
 
     if (
       quickAppSchemaId &&
-      isCustomApplicationsEnabled &&
+      isSchemaAppsEnabled &&
       !isHideCustomAppCreationEnabled
     ) {
       options.push({
@@ -1578,7 +1374,7 @@ const CatalogView: FC<Props> = ({
     isPromptsEnabled,
     t,
     buildEditorUrl,
-    isCustomApplicationsEnabled,
+    isSchemaAppsEnabled,
     isHideCustomAppCreationEnabled,
     isToolsetsEnabled,
     isCustomAppsEnabled,
@@ -1610,9 +1406,6 @@ const CatalogView: FC<Props> = ({
         createOptions={createOptions}
         hideCreateButton={isSelectorMode}
         hidePageTitle={isSelectorMode}
-        initialViewMode={
-          isCatalogTableViewEnabled ? CatalogViewMode.List : undefined
-        }
         selectedItemId={
           isSelectorMode ? (selectedItemId ?? undefined) : undefined
         }
@@ -1626,7 +1419,7 @@ const CatalogView: FC<Props> = ({
         onMyAppsActiveChange={isSelectorMode ? undefined : setIsMyAppsActive}
         activeTab={isSelectorMode ? undefined : activeTab}
         onActiveTabChange={isSelectorMode ? undefined : setActiveTab}
-        onFetchDetails={handleFetchDetails}
+        onFetchDetails={onFetchDetails}
         onToggleFavorite={onToggleFavorite}
         onUseInChat={handleUseInChat}
         onLogin={handleLogin}
@@ -1634,7 +1427,7 @@ const CatalogView: FC<Props> = ({
         onEdit={handleEdit}
         onDownload={handleDownload}
         isDownloadVisible={isDownloadVisible}
-        onLoadContentFile={handleLoadContentFile}
+        onLoadContentFile={onLoadContentFile}
         renderContentFilePreview={renderContentFilePreview}
         onDelete={handleDelete}
         onUnshare={handleUnshare}

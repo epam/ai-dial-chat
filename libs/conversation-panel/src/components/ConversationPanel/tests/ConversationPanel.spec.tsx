@@ -1,11 +1,12 @@
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ConversationItem } from '../../../models/panel-props';
-import { FilterTab } from '../../../types/conversation-classification';
 import { ConversationPanel } from '../ConversationPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   mergeClasses: (...args: (string | undefined | false | null)[]) =>
     args.filter(Boolean).join(' '),
   DIAL_ICON_SIZE: { SM: 16, LG: 24 },
@@ -94,6 +95,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', () => ({
+  FilterTab: {
+    All: 'all',
+    Pinned: 'pinned',
+    MyChats: 'my-chats',
+    Shared: 'shared',
+    Organization: 'organization',
+  },
   DeploymentIcon: () => null,
   mergeClasses: (...args: (string | undefined | false | null)[]) =>
     args.filter(Boolean).join(' '),

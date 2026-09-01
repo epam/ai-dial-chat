@@ -1,6 +1,10 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import { Card } from '@epam/ai-dial-catalog';
-import { isQuickAppSchema } from '@epam/ai-dial-chat-hooks';
+import {
+  appendLocaleCode,
+  composeLocalePayload,
+  isQuickAppSchema,
+} from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   DeploymentCreationFieldErrorCode,
@@ -30,10 +34,8 @@ import {
 import { createApplication } from '../../server-api/applications';
 import type { TriggerSaveGeneralPayload } from '../../types/apps-editor';
 import {
-  appendLocaleCode,
   buildAdditionalLocaleOptions,
   buildLocaleFieldLabels,
-  composeLocalePayload,
   PRIMARY_LOCALE,
 } from '../../utils/locale';
 

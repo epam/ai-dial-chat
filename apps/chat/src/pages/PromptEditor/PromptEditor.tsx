@@ -1,8 +1,8 @@
 import {
+  getApiErrorDetails,
   PROMPT_CONTENT_MAX_LENGTH,
   PROMPT_DESCRIPTION_MAX_LENGTH,
   PromptFieldError,
-  parsePromptResourceUrl,
   validatePromptContent,
   validatePromptDescription,
   validatePromptName,
@@ -28,7 +28,6 @@ import { usePrompts } from '../../context/PromptsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createPrompt,
   getPrompt,
@@ -61,12 +60,6 @@ const PromptEditorPage: FC = () => {
   const promptId = searchParams.get(EditorQuery.Id) ?? undefined;
   const returnUrl = searchParams.get(EditorQuery.ReturnUrl) ?? ROUTES.Catalog;
   const isEditMode = promptId != null;
-  const promptResource = useMemo(
-    () => (promptId == null ? null : parsePromptResourceUrl(promptId)),
-    [promptId],
-  );
-  const promptPath = promptResource?.path ?? promptId;
-  const ownerBucket = promptResource?.bucket;
 
   const [loadedValues, setLoadedValues] = useState<PromptEditorValues>();
   const [errors, setErrors] = useState<FormErrors>({});
@@ -87,17 +80,14 @@ const PromptEditorPage: FC = () => {
    * the user to author a duplicate.
    */
   useEffect(() => {
-    if (!isPromptsEnabled || promptPath == null) return;
+    if (!isPromptsEnabled || promptId == null) return;
     const cancelled = { value: false };
 
     const load = async () => {
       setIsLoading(true);
       setLoadError(null);
       try {
-        const dto =
-          ownerBucket == null
-            ? await getPrompt(promptPath)
-            : await getPrompt(promptPath, ownerBucket);
+        const dto = await getPrompt(promptId);
         if (cancelled.value) return;
         setLoadedValues({
           name: dto.name,
@@ -116,7 +106,7 @@ const PromptEditorPage: FC = () => {
     return () => {
       cancelled.value = true;
     };
-  }, [promptPath, ownerBucket, isPromptsEnabled, loadAttempt]);
+  }, [promptId, isPromptsEnabled, loadAttempt]);
 
   const resolveNameError = useCallback(
     (error?: PromptFieldError) => {
@@ -204,11 +194,7 @@ const PromptEditorPage: FC = () => {
             description,
             content,
           };
-          if (ownerBucket == null) {
-            await updatePrompt(promptPath as string, updateBody);
-          } else {
-            await updatePrompt(promptPath as string, updateBody, ownerBucket);
-          }
+          await updatePrompt(promptId as string, updateBody);
         }
 
         await refetchPrompts();
@@ -235,8 +221,7 @@ const PromptEditorPage: FC = () => {
     [
       isSaving,
       isEditMode,
-      promptPath,
-      ownerBucket,
+      promptId,
       refetchPrompts,
       notifyOperationSuccess,
       showErrorNotification,

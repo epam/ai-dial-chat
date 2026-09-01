@@ -6,6 +6,7 @@ import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
 import { ScheduledTaskCard } from '../ScheduledTaskCard';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   CardShell: ({
     children,
     ...rest

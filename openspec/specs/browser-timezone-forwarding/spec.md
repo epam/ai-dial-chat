@@ -6,7 +6,7 @@ Define how the Chat frontend attaches the current browser timezone to completion
 ## Requirements
 ### Requirement: Browser timezone is attached to conversation completion requests
 
-Immediately before starting a normal conversation completion, the Chat frontend SHALL resolve the current browser timezone through `Intl.DateTimeFormat().resolvedOptions().timeZone`. When resolution returns a non-empty string, the app-owned transport SHALL send that value in the `X-Timezone` request header to `POST /api/v1/conversations/completions`. The timezone SHALL be resolved per request and SHALL NOT be stored in a React context, hook, hand-authored library, browser storage, or user configuration.
+Immediately before starting a normal conversation completion, the Chat frontend SHALL resolve the current browser timezone through `Intl.DateTimeFormat().resolvedOptions().timeZone`. When resolution returns a non-empty string, the app-owned transport SHALL send that value in the `X-Timezone` request header to `POST /api/v1/conversations/completions`. The timezone SHALL be resolved per request and SHALL NOT be persisted anywhere — no React context, module-level cache, browser storage, or user configuration holds it. The resolver itself is the shared `getBrowserTimezone` helper in `libs/chat-hooks`, which returns `undefined` on any failure; the app injects it into the stream transport as its `getTimezone` option rather than the transport importing a browser API directly.
 
 #### Scenario: Browser supplies a timezone
 

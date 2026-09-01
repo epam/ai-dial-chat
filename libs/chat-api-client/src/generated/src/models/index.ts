@@ -575,13 +575,13 @@ export interface ClientConfigDto {
    */
   mcpAppSandboxUrl?: string | null;
   /**
-   * Admin-controlled color theme override for MCP App Views. Null when MCP_APP_THEME is not configured.
+   * Admin-controlled color theme override for MCP App Views. Null when MCP_APP_THEME is not configured — each client uses its own active theme.
    * @type {string}
    * @memberof ClientConfigDto
    */
-  mcpAppTheme?: 'light' | 'dark' | null;
+  mcpAppTheme?: ClientConfigDtoMcpAppThemeEnum | null;
   /**
-   * Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured.
+   * Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured — defaults to "ai-dial-chat" on the client.
    * @type {string}
    * @memberof ClientConfigDto
    */
@@ -635,12 +635,6 @@ export interface ClientConfigDto {
    */
   announcements: Array<AnnouncementItemDto>;
   /**
-   * Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.
-   * @type {string}
-   * @memberof ClientConfigDto
-   */
-  deepResearchToolId?: string | null;
-  /**
    * Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.
    * @type {string}
    * @memberof ClientConfigDto
@@ -659,6 +653,17 @@ export interface ClientConfigDto {
    */
   publicationFilterSources: Array<string>;
 }
+
+/**
+ * @export
+ */
+export const ClientConfigDtoMcpAppThemeEnum = {
+  Light: 'light',
+  Dark: 'dark',
+} as const;
+export type ClientConfigDtoMcpAppThemeEnum =
+  (typeof ClientConfigDtoMcpAppThemeEnum)[keyof typeof ClientConfigDtoMcpAppThemeEnum];
+
 /**
  *
  * @export
@@ -1624,27 +1629,12 @@ export interface CreateShareLinkDto {
    */
   itemId: string;
   /**
-   * Set to `prompt` when `itemId` is a bucket-relative prompt path (as returned by the prompts endpoints) rather than a full DIAL Core resource path. The caller's own bucket is then used to qualify it.
-   * @type {string}
-   * @memberof CreateShareLinkDto
-   */
-  resourceKind?: CreateShareLinkDtoResourceKindEnum;
-  /**
    * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
    * @type {Array<string>}
    * @memberof CreateShareLinkDto
    */
   access: Array<CreateShareLinkDtoAccessEnum>;
 }
-
-/**
- * @export
- */
-export const CreateShareLinkDtoResourceKindEnum = {
-  Prompt: 'prompt',
-} as const;
-export type CreateShareLinkDtoResourceKindEnum =
-  (typeof CreateShareLinkDtoResourceKindEnum)[keyof typeof CreateShareLinkDtoResourceKindEnum];
 
 /**
  * @export
@@ -3396,7 +3386,7 @@ export interface DialToolsetListResponseDto {
  */
 export interface DiscardSharedCatalogItemDto {
   /**
-   * Identifier (DIAL Core resource path) of the catalog item, skill, or conversation to discard access to.
+   * Identifier of the catalog item, skill, conversation, or prompt to discard access to — a full DIAL Core resource path.
    * @type {string}
    * @memberof DiscardSharedCatalogItemDto
    */
@@ -4127,6 +4117,7 @@ export const McpAppToolCallRequestDtoKindEnum = {
 } as const;
 export type McpAppToolCallRequestDtoKindEnum =
   (typeof McpAppToolCallRequestDtoKindEnum)[keyof typeof McpAppToolCallRequestDtoKindEnum];
+
 /**
  *
  * @export
@@ -4698,17 +4689,11 @@ export interface PromptListResponseDto {
  */
 export interface PromptResponseDto {
   /**
-   * Prompt path within the prompts namespace (used as stable ID)
+   * Full DIAL Core resource path identifying the prompt (`prompts/{bucket}/{path}`), the same shape every other resource type exposes. For a prompt shared with the caller, `bucket` is the owner bucket, not the caller bucket.
    * @type {string}
    * @memberof PromptResponseDto
    */
   id: string;
-  /**
-   * DIAL Core bucket the prompt lives in. For a prompt shared with the caller this is the owner bucket, not the caller bucket, so `id` can be qualified back into a `prompts/{bucket}/{id}` resource url
-   * @type {string}
-   * @memberof PromptResponseDto
-   */
-  bucket: string;
   /**
    * Display name
    * @type {string}
@@ -4783,7 +4768,7 @@ export interface PromptResponseDto {
  */
 export interface PromptsConfigDto {
   /**
-   * Favorited prompt paths.
+   * Favorited prompt resource ids (`prompts/{bucket}/{path}`).
    * @type {Array<string>}
    * @memberof PromptsConfigDto
    */
@@ -5340,7 +5325,7 @@ export interface RevokeAccessResponseDto {
  */
 export interface RevokeSharedAccessDto {
   /**
-   * Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to revoke all shared access to.
+   * Identifier of the owned catalog item, skill, conversation, or prompt to revoke all shared access to — a full DIAL Core resource path.
    * @type {string}
    * @memberof RevokeSharedAccessDto
    */
@@ -6899,7 +6884,7 @@ export interface UpdateInstalledDto {
  */
 export interface UpdateInstalledPromptDto {
   /**
-   * Prompt path within the prompts namespace.
+   * Full prompt resource path (`prompts/{bucket}/{path}`).
    * @type {string}
    * @memberof UpdateInstalledPromptDto
    */

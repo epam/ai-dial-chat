@@ -40,7 +40,7 @@ Exception: `libs/chat-api-client` is a generated OpenAPI client package. It may 
 
 Second, narrower exception: `libs/chat-hooks` may depend on `@epam/ai-dial-chat-api-client`'s types and operation signatures, and may contain the thin request/response logic that calling those operations requires (equivalent in shape to today's `apps/chat/src/server-api/*.api.ts` wrappers), because every DIAL-Core-backed chat application this library serves calls the same generated client against the same API. It may also depend on already-published, host-agnostic packages that describe DIAL Core's data shapes (`@epam/ai-dial-chat-shared`, `@epam/ai-dial-share`, `@epam/ai-dial-quotations`, `@epam/ai-dial-source-panel`, `@epam/ai-dial-attachment-canvas`). This exception does not extend further: `libs/chat-hooks` must still never construct or configure a client instance (base URL, auth headers, CSRF token) — every hook that calls DIAL Core accepts an already-configured client instance as a parameter — and must still never import app contexts, routing, auth/session/cookies, environment variables, feature flags, i18n, or UI-kit component rendering.
 
-Third exception, narrower still: `libs/chat-hooks` may depend on a raw third-party UI/grid library's types (e.g. `ag-grid-community`) when, and only when, a declared peer dependency's own component (`@epam/ai-dial-react-file-manager`) leaks that library's engine through its public prop surface (e.g. `onGridApiChange` exposing a raw `GridApi`) without itself forwarding the specific callback a hook needs (`useGridEditingScroll`'s `cellEditingStarted`/`rowDataUpdated` binding is the reference case). The dependency is scoped to binding to events/APIs the peer component's own types expose — never for rendering, theming, column/row-model construction, or any UI beyond that narrow event-binding purpose — and the hook's own public contract must not expose the third-party type to its caller. This exception does not extend further: it does not license libs to adopt AG Grid (or any other UI/grid engine) as a general-purpose dependency, and does not apply to any other lib without its own equivalent narrow-leak justification recorded in that change's design doc.
+Third exception, narrower still: `libs/chat-shared` and `libs/chat-hooks` may depend on a raw third-party UI/grid library's types (e.g. `ag-grid-community`) when, and only when, a declared peer dependency's own component (`@epam/ai-dial-react-file-manager`) leaks that library's engine through its public prop surface (e.g. `onGridApiChange` exposing a raw `GridApi`) without itself forwarding the specific callback a hook needs (`useGridEditingScroll`'s `cellEditingStarted`/`rowDataUpdated` binding is the reference case). The canonical `useGridEditingScroll` hook lives in `libs/chat-shared` (co-located with the shared `DialFileManagerShell` that invokes it); `libs/chat-hooks` re-exports it for backward compatibility. The dependency is scoped to binding to events/APIs the peer component's own types expose — never for rendering, theming, column/row-model construction, or any UI beyond that narrow event-binding purpose — and the hook's own public contract must not expose the third-party type to its caller. This exception does not extend further: it does not license libs to adopt AG Grid (or any other UI/grid engine) as a general-purpose dependency, and does not apply to any other lib without its own equivalent narrow-leak justification recorded in that change's design doc.
 
 ## Skill routing
 
@@ -156,6 +156,14 @@ Use these two tools for all UI kit discovery and documentation needs: `searchEnt
 ### Component generations — always use 2.0
 
 The kit ships two generations: **2.0** (current design system, exported without the `Dial` prefix — `Button`, `Input`, `Select`, `Popup`, `Tabs`) and **1.0** (legacy `Dial*`). Always use the 2.0 component; fall back to a `Dial*` one only when the MCP lookup shows no 2.0 replacement exists. `searchEntity` ranks 2.0 first and flags superseded 1.0 entries with "Use instead". See `.claude/rules/all-tsx.md` for details.
+
+### Icon stroke — always pass the token
+
+Tabler renders every outline icon at `stroke={2}`; the design scale puts icons
+at 1.5. Pass `stroke={DIAL_KIT_ICON_STROKE}` (exported from
+`@epam/ai-dial-ui-kit`) on every Tabler icon you write — never the literal 1.5,
+and never nothing. Filled glyphs (`Icon*Filled`) ignore the prop, and
+empty-state illustrations stay at `stroke={1}`. See `.claude/rules/all-tsx.md`.
 
 ### UI Kit Breaking Changes & Migration
 

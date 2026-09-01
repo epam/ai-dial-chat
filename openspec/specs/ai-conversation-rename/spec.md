@@ -21,15 +21,15 @@ The system SHALL expose a synchronous endpoint `POST /api/v1/conversations/gener
 - **WHEN** the endpoint is called without a `path` query parameter
 - **THEN** the system rejects the request with HTTP 400 and does not call the LLM
 
-#### Scenario: Path query parameter fails validation
-
-- **WHEN** the endpoint is called with a `path` value that does not match the allowed conversation-path format (e.g. path traversal sequences or disallowed characters)
-- **THEN** the system rejects the request with HTTP 400 and does not call the LLM
-
 #### Scenario: Conversation does not exist
 
 - **WHEN** the endpoint is called with a syntactically valid `path` that refers to a conversation the user cannot access or that does not exist
 - **THEN** the system responds with HTTP 404 and does not return a name
+
+#### Scenario: Conversation has no content to name
+
+- **WHEN** the endpoint is called for a conversation whose messages contain no non-status message with non-empty content
+- **THEN** the system rejects the request with HTTP 400 and does not call the LLM
 
 ### Requirement: On-demand generation does not persist or lock naming
 
@@ -46,15 +46,25 @@ On-demand title generation SHALL compute and return a suggested name only. It SH
 - **WHEN** the endpoint returns a suggested name
 - **THEN** the conversation's stored name is unchanged until the user confirms the rename through the existing rename flow
 
-### Requirement: Generation uses the full current conversation context
+### Requirement: Generation uses the current conversation context
 
-The generated title SHALL be based on the full current conversation content (not only the first user/assistant exchange), so that the suggested title reflects the conversation as it currently stands.
+The generated title SHALL be based on the current conversation content, not only the first user/assistant exchange, so that the suggested title reflects the conversation as it currently stands. The prompt SHALL be built from the conversation's most recent messages, excluding status-role messages and messages with no textual content, and bounded by a fixed upper limit on message count so the prompt stays within the utility model's context window.
 
 #### Scenario: Title reflects later topic
 
 - **WHEN** a conversation has evolved through many messages beyond the initial exchange
 - **AND** the user requests an AI-generated title
 - **THEN** the prompt sent to the LLM includes the current conversation messages beyond only the first exchange
+
+#### Scenario: Long conversation is bounded
+
+- **WHEN** a conversation contains more messages than the configured upper limit
+- **THEN** only the most recent messages up to that limit are included in the prompt
+
+#### Scenario: Status and empty messages are excluded
+
+- **WHEN** the conversation contains status-role messages or messages whose content is empty or whitespace-only
+- **THEN** those messages are excluded from the prompt
 
 ### Requirement: Reuse existing naming prompt, sanitisation, and timeout
 
@@ -70,6 +80,11 @@ On-demand generation SHALL reuse the existing conversation-naming system prompt,
 - **WHEN** the LLM does not respond within `UTILITY_NAMING_TIMEOUT_MS`
 - **THEN** the system aborts the call and responds with an appropriate error status without returning a name
 
+#### Scenario: LLM returns an empty title
+
+- **WHEN** the LLM responds successfully but the candidate name is empty after sanitisation
+- **THEN** the system responds with HTTP 502 rather than returning an empty `name`
+
 ### Requirement: On-demand generation authenticates as the calling user
 
 Unlike automatic naming (which authenticates with the operator-configured `DIAL_API_KEY`), on-demand title generation SHALL authenticate the completion request with the calling user's own bearer token, the same way a regular chat completion is authenticated. The endpoint SHALL NOT require `DIAL_API_KEY` to be configured; it SHALL only require `UTILITY_MODEL` to be configured and the calling user to have access to that deployment.
@@ -84,6 +99,11 @@ Unlike automatic naming (which authenticates with the operator-configured `DIAL_
 
 - **WHEN** the calling user's own token does not have permission to invoke the `UTILITY_MODEL` deployment
 - **THEN** DIAL Core rejects the request and the endpoint surfaces a typed upstream error rather than falling back to a service-level credential
+
+#### Scenario: Utility model is not configured
+
+- **WHEN** `UTILITY_MODEL` is not configured
+- **THEN** the system responds with HTTP 503 and does not call the LLM
 
 ### Requirement: Endpoint failure handling and rate limiting
 
@@ -131,7 +151,7 @@ While generation is in flight the modal SHALL show a spinner on the AI rename co
 #### Scenario: Populate input on success
 
 - **WHEN** the generate-title request returns a name
-- **THEN** the modal replaces the title input value with the returned name
+- **THEN** the modal replaces the title input value with the returned name, passed through the same conversation-name sanitisation the modal applies to manually typed input
 - **AND** the input remains editable and the user can confirm or further edit before saving
 
 #### Scenario: Confirm saves via existing rename flow

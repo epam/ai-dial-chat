@@ -10,7 +10,8 @@ import {
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
-  StaticIconButton,
+  DIAL_KIT_ICON_STROKE,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
 import {
@@ -19,6 +20,7 @@ import {
   type FC,
   KeyboardEvent,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -31,7 +33,7 @@ import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
-import { SelectedToolsChips } from '../SelectedToolsChips/SelectedToolsChips';
+import { ToolsChips } from '../ToolsChips/ToolsChips';
 import { VoiceBar } from '../VoiceBar/VoiceBar';
 import { SendButton } from './Buttons/SendButton';
 import { StopButton } from './Buttons/StopButton';
@@ -142,7 +144,13 @@ export const Input: FC<InputProps> = ({
             {
               key: 'dial-fs',
               label: dialFileSystemLabel ?? 'DIAL file system',
-              icon: <IconFile size={BASE_ICON_SIZE} aria-hidden />,
+              icon: (
+                <IconFile
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
               onClick: onDialFileSystemClick,
             },
           ]
@@ -246,17 +254,49 @@ export const Input: FC<InputProps> = ({
     !isStreaming && hasSendableContent,
     SEND_BUTTON_EXIT_MS,
   );
-  const hasSelectedTools =
-    (toolsMenuItems?.some((t) => t.isSelected) ?? false) &&
-    onToolToggle != null;
+  /*
+   * Chips the user dismissed with the chip's ×. Dismissal is view state of this
+   * input only: a dismissed tool comes back the moment it is switched on again
+   * from the `+` menu, and the whole set is forgotten when the deployment
+   * offers a different list of tools.
+   */
+  const [dismissedToolIds, setDismissedToolIds] = useState<string[]>([]);
+  const toolIdsSignature = (toolsMenuItems ?? [])
+    .map((tool) => tool.id)
+    .join('|');
+
+  useEffect(() => {
+    setDismissedToolIds([]);
+  }, [toolIdsSignature]);
+
+  const visibleTools = useMemo(
+    () =>
+      (toolsMenuItems ?? []).filter(
+        (tool) => tool.isSelected || !dismissedToolIds.includes(tool.id),
+      ),
+    [toolsMenuItems, dismissedToolIds],
+  );
+
+  const handleToolDismiss = useCallback(
+    (toolId: string) => {
+      setDismissedToolIds((prev) =>
+        prev.includes(toolId) ? prev : [...prev, toolId],
+      );
+      const tool = toolsMenuItems?.find((item) => item.id === toolId);
+      if (tool?.isSelected) onToolToggle?.(toolId);
+    },
+    [toolsMenuItems, onToolToggle],
+  );
+
+  const hasTools = visibleTools.length > 0 && onToolToggle != null;
   /*
    * Stacked layout: textarea on its own row above the action bar. Used when the
    * caller opts in (edit mode), whenever the
-   * message spans multiple visual lines, or when one or more tools are selected
+   * message spans multiple visual lines, or when the deployment exposes tools
    * (chips need the row between textarea and buttons).
    */
   const isStackedLayout =
-    isStacked || message.includes('\n') || isMultiLine || hasSelectedTools;
+    isStacked || message.includes('\n') || isMultiLine || hasTools;
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
   const shouldShowMicButton = useMemo(
@@ -459,17 +499,18 @@ export const Input: FC<InputProps> = ({
               />
             </div>
           )}
-          {isStackedLayout && hasSelectedTools && (
-            <div className="order-3 min-w-0 flex-1">
-              <SelectedToolsChips
-                items={toolsMenuItems ?? []}
-                onToolToggle={onToolToggle!}
-                isMobile={isMobile}
-                countLabel={toolsChipLabels?.countLabel}
-                removeLabel={toolsChipLabels?.removeLabel}
-              />
-            </div>
-          )}
+          {isStackedLayout &&
+            visibleTools.length > 0 &&
+            onToolToggle != null && (
+              <div className="order-3 min-w-0 flex-1">
+                <ToolsChips
+                  items={visibleTools}
+                  onToolToggle={onToolToggle}
+                  onToolDismiss={handleToolDismiss}
+                  removeLabel={toolsChipLabels?.removeLabel}
+                />
+              </div>
+            )}
           <div
             className={mergeClasses(
               'order-1 flex w-full min-w-0 items-center self-stretch',
@@ -482,7 +523,7 @@ export const Input: FC<InputProps> = ({
           <div
             className={mergeClasses(
               'flex flex-shrink-0 items-center gap-2',
-              isStackedLayout && hasSelectedTools ? 'order-4' : 'order-3',
+              isStackedLayout && hasTools ? 'order-4' : 'order-3',
               'ms-auto',
               !isStackedLayout && 'desktop:ms-0',
             )}
@@ -528,10 +569,16 @@ export const Input: FC<InputProps> = ({
             )}
 
             {shouldShowMicButton && (
-              <StaticIconButton
-                icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
+              <GhostIconButton
+                icon={
+                  <IconMicrophone
+                    size={DIAL_ICON_SIZE.LG}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
+                  />
+                }
                 aria-label={micLabel}
-                className="size-8 flex-shrink-0"
+                className="size-[40px] flex-shrink-0"
                 onClick={startRecording}
                 disabled={isInputDisabled || isStreaming}
               />

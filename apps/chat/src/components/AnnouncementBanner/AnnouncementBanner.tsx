@@ -2,10 +2,15 @@ import {
   hasAnnouncementContent,
   hasStructuredAnnouncement,
   sanitizeAnnouncementHtml,
+  sanitizeAnnouncementMessageHtml,
   type AnnouncementContent,
 } from '@epam/ai-dial-chat-hooks';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, StaticIconButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  StaticIconButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
@@ -62,14 +67,20 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
   const sanitizedHtml = useMemo(
     () =>
       shouldRender && !isStructured && announcementHtml
-        ? sanitizeAnnouncementHtml(announcementHtml)
+        ? sanitizeAnnouncementMessageHtml(announcementHtml)
         : '',
     [shouldRender, isStructured, announcementHtml],
   );
 
   const closeButton = (
     <StaticIconButton
-      icon={<IconX stroke={1.5} size={DIAL_ICON_SIZE.LG} aria-hidden />}
+      icon={
+        <IconX
+          stroke={DIAL_KIT_ICON_STROKE}
+          size={DIAL_ICON_SIZE.LG}
+          aria-hidden
+        />
+      }
       aria-label={t(AnnouncementBannerI18nKeys.CloseLabel)}
       onClick={dismiss}
     />
@@ -136,8 +147,12 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
       )}
     >
       <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
-        <span
-          className="dial-small-paragraph-semi-text text-center"
+        {/* A div, not a span: the legacy message may contain <p> blocks, which
+            are invalid inside a span and get reparented by the browser. Links
+            are underlined here rather than via operator-authored style
+            attributes, which the sanitizer strips. */}
+        <div
+          className="dial-small-paragraph-semi-text text-center [&>p+p]:mt-1 [&_a]:underline"
           // eslint-disable-next-line react/no-danger -- HTML is sanitized by DOMPurify before use
           dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />

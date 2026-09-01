@@ -173,3 +173,39 @@ describe('Card — credentials badge', () => {
     ).toBeNull();
   });
 });
+
+describe('Card — read-only state', () => {
+  const featuredItem = makeItem({ isFeatured: true, folder: ['Root', 'Team'] });
+
+  it('shows the Featured tag, the star, and the footer divider by default', () => {
+    render(<Card item={featuredItem} />);
+
+    const card = screen.getByRole('article', { hidden: true });
+    expect(screen.getByText('Featured')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Add to favorites' }),
+    ).toBeTruthy();
+    expect(screen.getByText('Team')).toBeTruthy();
+    expect(card.innerHTML).toContain('border-t');
+  });
+
+  it('withholds the Featured tag, the star, and the footer divider when isReadonly is set', () => {
+    render(<Card item={featuredItem} isReadonly onToggle={vi.fn()} />);
+
+    const card = screen.getByRole('article', { hidden: true });
+    expect(screen.queryByText('Featured')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Add to favorites' }),
+    ).toBeNull();
+    expect(card.innerHTML).not.toContain('border-t');
+    // The folder path is the one footer element a read-only card keeps.
+    expect(screen.getByText('Team')).toBeTruthy();
+  });
+
+  it('drops the footer row entirely when a read-only item has no folder path', () => {
+    render(<Card item={makeItem({ isFeatured: true })} isReadonly />);
+
+    const card = screen.getByRole('article', { hidden: true });
+    expect(card.innerHTML).not.toContain('pt-3');
+  });
+});

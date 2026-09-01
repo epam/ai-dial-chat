@@ -31,16 +31,18 @@ No new `base.ts` get/post/put/del helper SHALL be added for prompts, and no comp
 | Wrapper | Generated method | Request | Response |
 | --- | --- | --- | --- |
 | `listPrompts()` | `listPrompts` | — | `PromptListResponseDto` |
-| `getPrompt(path, bucket?)` | `getPrompt` | `{ path, bucket }` | `PromptResponseDto` |
+| `getPrompt(id)` | `getPrompt` | `{ id }` | `PromptResponseDto` |
 | `createPrompt(body)` | `createPrompt` | `{ createPromptDto }` | `PromptResponseDto` |
-| `updatePrompt(path, body, bucket?)` | `updatePrompt` | `{ path, updatePromptDto, bucket }` | `PromptResponseDto` |
-| `deletePrompt(path)` | `deletePrompt` | `{ path }` | `void` |
+| `updatePrompt(id, body)` | `updatePrompt` | `{ id, updatePromptDto }` | `PromptResponseDto` |
+| `deletePrompt(id)` | `deletePrompt` | `{ id }` | `void` |
 | `listPublicPrompts()` | `listPublicPrompts` | — | `PublicPromptListResponseDto` |
 | `getPublicPrompt(path)` | `getPublicPrompt` | `{ path }` | `PromptResponseDto` |
 | `createPromptFolder(body)` | `createPromptFolder` | `{ createPromptFolderDto }` | `PromptFolderResponseDto` |
 | `renamePromptFolder(path, body)` | `renamePromptFolder` | `{ path, renamePromptFolderDto }` | `PromptFolderResponseDto` |
 | `deletePromptFolder(path)` | `deletePromptFolder` | `{ path }` | `void` |
-| `movePrompt(path, body, bucket?)` | `movePrompt` | `{ path, movePromptDto, bucket }` | `PromptResponseDto` |
+| `movePrompt(id, body)` | `movePrompt` | `{ id, movePromptDto }` | `PromptResponseDto` |
+
+None of `getPrompt`, `updatePrompt`, `deletePrompt`, or `movePrompt` SHALL accept a separate `bucket` argument — each takes the single full-resource-path `id` that `PromptResponseDto.id` already returns, whether the prompt is the caller's own or shared with them. The public (organisation) endpoints keep their bucket-relative `path` argument unchanged, since they operate on the fixed `public` namespace only.
 
 All DTO types SHALL be imported as `import type { … } from '@epam/ai-dial-chat-api-client'`. No prompt DTO SHALL be re-declared in `apps/chat`.
 
@@ -57,7 +59,7 @@ Example response:
 {
   "prompts": [
     {
-      "id": "Work/AI/summarize",
+      "id": "prompts/my-bucket/Work/AI/summarize",
       "name": "summarize",
       "description": "Summarize a document",
       "content": "Summarize the following text:",
@@ -76,35 +78,35 @@ Example response:
 }
 ```
 
-#### Scenario: Loading a shared prompt keeps the owner bucket
+#### Scenario: Loading a shared prompt by its full id
 
-- **WHEN** `getPrompt('Work/AI/summarize', 'owner-bucket')` is called
-- **THEN** it dispatches `GET /api/v1/prompts/item?path=Work%2FAI%2Fsummarize&bucket=owner-bucket`
+- **WHEN** `getPrompt('prompts/owner-bucket/Work/AI/summarize')` is called
+- **THEN** it dispatches `GET /api/v1/prompts/item?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize`
 
-#### Scenario: Updating a writable shared prompt keeps the owner bucket
+#### Scenario: Updating a writable shared prompt by its full id
 
-- **WHEN** `updatePrompt('Work/AI/summarize', body, 'owner-bucket')` is called
-- **THEN** it dispatches `PUT /api/v1/prompts?path=Work%2FAI%2Fsummarize&bucket=owner-bucket`
+- **WHEN** `updatePrompt('prompts/owner-bucket/Work/AI/summarize', body)` is called
+- **THEN** it dispatches `PUT /api/v1/prompts?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize`
 
 #### Scenario: Creating a prompt in a subfolder
 
 - **WHEN** `createPrompt({ name: 'summarize', description: 'Summarize a document', content: 'Summarize the following text:', folderId: 'Work/AI' })` is called
-- **THEN** it dispatches `POST /api/v1/prompts` and resolves the created `PromptResponseDto` with `id: 'Work/AI/summarize'` and HTTP 201
+- **THEN** it dispatches `POST /api/v1/prompts` and resolves the created `PromptResponseDto` with `id: 'prompts/{sessionBucket}/Work/AI/summarize'` and HTTP 201
 
 #### Scenario: Updating only a prompt's content
 
-- **WHEN** `updatePrompt('Work/AI/summarize', { content: 'Summarize in three bullets:' })` is called
-- **THEN** it dispatches `PUT /api/v1/prompts?path=Work%2FAI%2Fsummarize` and resolves the updated DTO with `name` and `folderId` preserved
+- **WHEN** `updatePrompt('prompts/my-bucket/Work/AI/summarize', { content: 'Summarize in three bullets:' })` is called
+- **THEN** it dispatches `PUT /api/v1/prompts?id=prompts%2Fmy-bucket%2FWork%2FAI%2Fsummarize` and resolves the updated DTO with `name` and `folderId` preserved
 
 #### Scenario: Deleting a prompt resolves void
 
-- **WHEN** `deletePrompt('Work/AI/summarize')` is called and the backend returns 204
+- **WHEN** `deletePrompt('prompts/my-bucket/Work/AI/summarize')` is called and the backend returns 204
 - **THEN** the promise resolves with no value and does not throw
 
 #### Scenario: Moving a prompt to root
 
-- **WHEN** `movePrompt('Work/AI/summarize', { targetFolderId: '' })` is called
-- **THEN** it dispatches `POST /api/v1/prompts/move?path=Work%2FAI%2Fsummarize` with body `{ "targetFolderId": "" }` and resolves the moved DTO with `id: 'summarize'` and `folderId: ''`
+- **WHEN** `movePrompt('prompts/my-bucket/Work/AI/summarize', { targetFolderId: '' })` is called
+- **THEN** it dispatches `POST /api/v1/prompts/move?id=prompts%2Fmy-bucket%2FWork%2FAI%2Fsummarize` with body `{ "targetFolderId": "" }` and resolves the moved DTO with `id: 'prompts/my-bucket/summarize'` and `folderId: ''`
 
 #### Scenario: Renaming a folder
 
@@ -142,16 +144,16 @@ The status codes callers MUST handle for prompt operations are: `400` (validatio
 
 ---
 
-### Requirement: Aggregate and owner-bucket contracts are generated from OpenAPI
+### Requirement: Aggregate and unified-id contracts are generated from OpenAPI
 
-The prompt DTO and endpoint changes SHALL be declared in NestJS Swagger and regenerated into `libs/chat-api-client/openapi.json` and `@epam/chat-api-client`. `PromptListResponseDto` SHALL expose the organisation arrays; `PromptResponseDto` SHALL expose ownership, editability, sharing, and permissions metadata; and the generated `getPrompt`, `updatePrompt`, and `movePrompt` request types SHALL accept the optional owner `bucket`.
+The prompt DTO and endpoint changes SHALL be declared in NestJS Swagger and regenerated into `libs/chat-api-client/openapi.json` and `@epam/chat-api-client`. `PromptListResponseDto` SHALL expose the organisation arrays; `PromptResponseDto` SHALL expose one full-resource-path `id` field (no separate `bucket` field) plus ownership, editability, sharing, and permissions metadata; and the generated `getPrompt`, `updatePrompt`, `deletePrompt`, and `movePrompt` request types SHALL each accept a single `id` parameter and no `bucket` parameter.
 
 #### Scenario: OpenAPI check stays green
 
 - **WHEN** `npm run openapi:check` runs after this capability is implemented
 - **THEN** it reports no drift, proving the generated client matches the changed endpoint contract
 
-#### Scenario: Generated client exposes aggregate and owner-bucket fields
+#### Scenario: Generated client exposes the unified id field and no bucket field
 
 - **WHEN** the generated `PromptsApi` and models are inspected
-- **THEN** the aggregate response fields and optional owner-bucket request fields are present without hand-written edits under `libs/chat-api-client/src/generated/`
+- **THEN** `PromptResponseDto` has one `id` field and no `bucket` field, and `getPrompt`/`updatePrompt`/`deletePrompt`/`movePrompt`'s request types have an `id` field and no `bucket` field, all without hand-written edits under `libs/chat-api-client/src/generated/`

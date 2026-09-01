@@ -6,18 +6,23 @@ Persisting a user's catalog favorites and wiring the toggle through `CatalogView
 
 ## Requirements
 
-### Requirement: useFavoriteApplications hook loads and persists favorites
+### Requirement: Favorites are shared app state, loaded and persisted by one provider
 
-A custom hook `useFavoriteApplications` SHALL be created at `apps/chat/src/hooks/useFavoriteApplications/useFavoriteApplications.ts`.
+Favorites SHALL live in a context at `apps/chat/src/context/FavoriteApplicationsContext.tsx`, whose `FavoriteApplicationsProvider` is mounted once near the app root and whose `useFavoriteApplications` consumer throws when used outside it.
 
-The hook SHALL:
-- On mount, call `getUserConfig()` from `apps/chat/src/server-api/user-config.api.ts` and seed `favoriteIds` from `config.deployments.installed`.
-- Use a `cancelled` flag inside `useEffect` to prevent `setState` after unmount.
-- Expose `favoriteIds: ReadonlySet<string>`, `isLoading: boolean`, and `toggleFavorite(id: string, isFavorite: boolean): void`.
-- `toggleFavorite` applies an optimistic local update to `favoriteIds`, calls `updateInstalledDeployment(id, isFavorite)`, and on rejection restores the previous `favoriteIds`.
-- Be idempotent: calling `toggleFavorite` while a previous call for the same ID is in-flight does not duplicate state.
+A per-call-site hook is explicitly the wrong shape here: the catalog and the in-chat model selector both read and mutate favorites, and independent hook instances would leave one of them showing stale stars until a full page reload.
 
-The hook SHALL NOT call `useTranslation`, read route params, access `localStorage`, or import from `apps/chat-api/**`.
+The provider SHALL:
+- On mount, call `getUserConfig()` from `apps/chat/src/server-api/user-config.api.ts` and seed `favoriteIds` with the **union** of `config.deployments.installed`, `config.toolsets.installed`, `config.prompts.installed`, and `config.skills.installed` — favorites are one flat id set spanning every favouritable entity kind, not a deployments-only list.
+- Use a `cancelled` flag inside `useEffect` to prevent `setState` after unmount, clearing `isLoading` in a `finally` so a failed load still settles.
+- Expose `favoriteIds: ReadonlySet<string>`, `isLoading: boolean`, and `toggleFavorite(id, isFavorite, entityType?): Promise<void>`.
+- Dispatch the persistence call by `entityType` through a `Record<FavoriteEntityType, …>` lookup over `updateInstalledDeployment` / `updateInstalledToolset` / `updateInstalledPrompt` / `updateInstalledSkill`, defaulting to `FavoriteEntityType.Deployment` when the caller omits it.
+- Apply an optimistic local update, then persist; on rejection undo exactly that one id with a functional `setFavoriteIds` update — adding back what it removed, or removing what it added — rather than restoring a captured snapshot, so a concurrent toggle of another id is not clobbered.
+- Re-throw after rolling back, so the caller can surface the failure. `toggleFavorite` returning a promise is part of its contract.
+
+Idempotency comes from set semantics rather than an in-flight guard: repeating the same toggle converges on the same set.
+
+The provider SHALL NOT call `useTranslation`, read route params, access `localStorage`, or import from `apps/chat-api/**`.
 
 i18n keys needed: none (hook has no user-visible strings).
 
@@ -25,17 +30,17 @@ RTL impact: none.
 
 #### Scenario: Favorites load from user config on mount
 
-- **WHEN** the hook mounts and `getUserConfig()` resolves with `{ deployments: { installed: ['app-1', 'app-2'] } }`
-- **THEN** `favoriteIds` is `Set { 'app-1', 'app-2' }` and `isLoading` is `false`
+- **WHEN** the provider mounts and `getUserConfig()` resolves with installed ids across several sections
+- **THEN** `favoriteIds` is the union of every section's `installed` list and `isLoading` is `false`
 
 #### Scenario: isLoading is true during the initial fetch
 
-- **WHEN** the hook is first rendered and `getUserConfig()` has not yet resolved
+- **WHEN** the provider is first rendered and `getUserConfig()` has not yet resolved
 - **THEN** `isLoading` is `true`
 
 #### Scenario: Unmount before fetch completes — no state update
 
-- **WHEN** the hook unmounts before `getUserConfig()` resolves
+- **WHEN** the provider unmounts before `getUserConfig()` resolves
 - **THEN** `setState` is not called (cancelled flag prevents it)
 
 #### Scenario: getUserConfig failure — isLoading false, empty set
@@ -53,16 +58,31 @@ RTL impact: none.
 - **WHEN** `toggleFavorite('app-1', false)` is called while `favoriteIds` contains `'app-1'`
 - **THEN** `favoriteIds` immediately does NOT contain `'app-1'` before the API call resolves
 
-#### Scenario: API failure rolls back the optimistic update
+#### Scenario: API failure rolls back the optimistic update and re-throws
 
-- **WHEN** `toggleFavorite('app-3', true)` is called and `updateInstalledDeployment` rejects
-- **THEN** `favoriteIds` is restored to the state it was in before the toggle
+- **WHEN** `toggleFavorite('app-3', true)` is called and the persistence call rejects
+- **THEN** `'app-3'` is removed again and the returned promise rejects, so the caller can report it
+
+#### Scenario: A rollback does not clobber a concurrent toggle
+
+- **WHEN** one toggle fails while another id was toggled in the meantime
+- **THEN** only the failed id is reverted and the other id keeps its new state
+
+#### Scenario: A non-deployment entity persists through its own endpoint
+
+- **WHEN** `toggleFavorite` is called with `FavoriteEntityType.Toolset`
+- **THEN** the toolset install endpoint is called, not the deployment one
+
+#### Scenario: Using the consumer outside the provider throws
+
+- **WHEN** `useFavoriteApplications()` is called with no `FavoriteApplicationsProvider` above it
+- **THEN** it throws a descriptive error
 
 ---
 
 ### Requirement: mapDeploymentToCatalogItem accepts explicit favoriteIds
 
-`mapDeploymentToCatalogItem` in `apps/chat/src/utils/map-deployment-to-catalog-item.ts` SHALL accept a second parameter `favoriteIds: ReadonlySet<string>` (default: empty set) and set both `isUserFavorite` and `isStarred` to `favoriteIds.has(deployment.id)` instead of reading `deployment.isInstalled`.
+`mapDeploymentToCatalogItem` (`libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts`) SHALL read `favoriteIds: ReadonlySet<string>` from its options object (default: empty set) and set both `isUserFavorite` and `isStarred` to `favoriteIds.has(deployment.id)` instead of reading `deployment.isInstalled`. `mapToolsetToCatalogItem` in the same module SHALL derive both flags the same way from the same set — the set spans entity kinds, so every mapper consults it identically.
 
 - `isUserFavorite` is used by `CatalogView` to split items into the browse and favorites sections.
 - `isStarred` is used by the catalog library's `CardRowRenderer` as `Card.initialIsStarred`; without it the browse cards always initialise with an unfilled star regardless of the current favorites state.
@@ -73,17 +93,17 @@ RTL impact: none.
 
 #### Scenario: isUserFavorite and isStarred are true when id is in favoriteIds
 
-- **WHEN** `mapDeploymentToCatalogItem(deployment, new Set(['dep-1']))` is called with `deployment.id === 'dep-1'`
+- **WHEN** `mapDeploymentToCatalogItem` is called with `favoriteIds: new Set(['dep-1'])` and `deployment.id === 'dep-1'`
 - **THEN** the returned item has `isUserFavorite: true` and `isStarred: true`
 
 #### Scenario: isUserFavorite and isStarred are false when id is not in favoriteIds
 
-- **WHEN** `mapDeploymentToCatalogItem(deployment, new Set(['dep-2']))` is called with `deployment.id === 'dep-1'`
+- **WHEN** `mapDeploymentToCatalogItem` is called with `favoriteIds: new Set(['dep-2'])` and `deployment.id === 'dep-1'`
 - **THEN** the returned item has `isUserFavorite: false` and `isStarred: false`
 
 #### Scenario: isUserFavorite and isStarred are false with empty favoriteIds
 
-- **WHEN** `mapDeploymentToCatalogItem(deployment, new Set())` is called
+- **WHEN** `mapDeploymentToCatalogItem` is called with an empty `favoriteIds`
 - **THEN** the returned item has `isUserFavorite: false` and `isStarred: false` regardless of `deployment.isInstalled`
 
 ---
@@ -111,8 +131,9 @@ See also: `user-config-deployment-management/spec.md` — the DTO and endpoint a
 `CatalogView` SHALL use `useFavoriteApplications` to obtain `favoriteIds`, `isLoading`, and `toggleFavorite`.
 
 - `catalogItems` SHALL be derived via `useMemo` passing `favoriteIds` to `mapDeploymentToCatalogItem`.
-- `onToggleFavorite` SHALL call `toggleFavorite(id, isFavorite)`.
-- `onToggleFavorite` SHALL be disabled (no-op) while `isLoading` is `true`.
+- `onToggleFavorite` SHALL resolve the item's `FavoriteEntityType` from its catalog type and call `toggleFavorite(id, isFavorite, entityType)`.
+- `onToggleFavorite` SHALL be disabled (no-op) while the catalog's combined loading state is `true` — favorites are only one of its inputs.
+- `onToggleFavorite` SHALL report the outcome: a success notification on both add and remove (removing a favourite is as successful as adding one), and on rejection an error notification carrying the trace id from the failed request. It SHALL NOT re-throw — the notification is the whole response.
 - The `Catalog` component SHALL receive the updated `items` and `favorites` derived from the live `favoriteIds` set.
 
 Memoisation: `catalogItems`, `favorites`, and `filteredItems` SHALL be wrapped in `useMemo`; `onToggleFavorite` SHALL be wrapped in `useCallback`.
@@ -135,5 +156,81 @@ Accessibility: `onToggleFavorite` is invoked by `Catalog`'s own toggle control; 
 
 #### Scenario: Toggle is disabled while loading
 
-- **WHEN** `isLoading` is `true`
+- **WHEN** the catalog's combined loading state is `true`
 - **THEN** calling `onToggleFavorite` does nothing and no API call is made
+
+#### Scenario: Both toggle directions are confirmed
+
+- **WHEN** a favourite is added, and separately removed, and both persist successfully
+- **THEN** a success notification is shown in each case, worded for that direction
+
+#### Scenario: A failed toggle surfaces a trace id
+
+- **WHEN** the persistence call rejects
+- **THEN** an error notification is shown carrying the failed request's trace id, and nothing is re-thrown to the catalog
+
+---
+
+### Requirement: CatalogView wires onToggleFavorite through useFavoriteApplications
+
+`CatalogView` SHALL use `useFavoriteApplications` to obtain `favoriteIds`,
+`isLoading`, and `toggleFavorite`.
+
+- `catalogItems` SHALL be derived via `useMemo` passing `favoriteIds` to
+  `mapDeploymentToCatalogItem`.
+- `onToggleFavorite` SHALL resolve the item's `FavoriteEntityType` from its
+  catalog type and call `toggleFavorite(id, isFavorite, entityType)`.
+- `onToggleFavorite` SHALL be disabled (no-op) while the catalog's combined
+  loading state is `true` — favorites are only one of its inputs.
+- `onToggleFavorite` SHALL report the outcome: a success notification on both
+  add and remove, and on rejection an error notification carrying the trace id
+  from the failed request. It SHALL NOT re-throw.
+- The `Catalog` component SHALL receive the updated `items` and `favorites`
+  derived from the live `favoriteIds` set.
+- `favorites` SHALL be computed through the pure
+  `deriveFavoriteItems(visibleCatalogItems)` helper from
+  `@epam/ai-dial-chat-hooks`. The helper SHALL select `isUserFavorite` items in
+  input order and SHALL NOT own, load, persist, or mutate favorite state.
+
+Memoisation: `catalogItems`, `favorites`, and `filteredItems` SHALL be wrapped in
+`useMemo`; `onToggleFavorite` SHALL be wrapped in `useCallback`.
+
+Feature flag: none required.
+
+RTL impact: none (the `Catalog` component owns its own layout).
+
+Accessibility: `onToggleFavorite` is invoked by `Catalog`'s own toggle control;
+no additional ARIA attributes are needed in `CatalogView`.
+
+#### Scenario: Toggling a favorite updates the catalog display immediately
+
+- **WHEN** the user toggles the favorite star on item `'app-1'`
+- **THEN** the item moves to the `favorites` section before the API call resolves
+
+#### Scenario: API failure reverts the display
+
+- **WHEN** the user toggles `'app-1'` and persistence rejects
+- **THEN** the item returns to the non-favorites section
+
+#### Scenario: Toggle is disabled while loading
+
+- **WHEN** the catalog's combined loading state is `true`
+- **THEN** calling `onToggleFavorite` does nothing and no API call is made
+
+#### Scenario: Both toggle directions are confirmed
+
+- **WHEN** a favourite is added, and separately removed, and both persist
+- **THEN** a success notification is shown in each case
+
+#### Scenario: A failed toggle surfaces a trace id
+
+- **WHEN** the persistence call rejects
+- **THEN** an error notification carries the request trace id and nothing is
+  re-thrown to the catalog
+
+#### Scenario: Derivation reuses the live multi-entity flags
+
+- **WHEN** visible model, toolset, prompt, and skill items have
+  `isUserFavorite: true`
+- **THEN** `deriveFavoriteItems` includes all of them without replacing the
+  provider or dispatching any persistence request

@@ -8,9 +8,9 @@ The `CatalogEntityType.Prompt` member and everything `libs/catalog` renders gene
 
 ### Requirement: `CatalogEntityType` gains a `Prompt` member
 
-`libs/catalog/src/types/entity-type.ts` SHALL add `Prompt = 'PROMPT'` to the `CatalogEntityType` enum. The member SHALL be exported from `libs/catalog/src/index.ts` (it already is, via the existing `export { CatalogEntityType }`).
+`CatalogEntityType` is owned by `@epam/ai-dial-chat-shared` (`libs/chat-shared/src/types/entity-type.ts`), not by `libs/catalog` — the catalog renders the enum but several packages classify by it. It SHALL carry `Prompt = 'PROMPT'`.
 
-`libs/catalog/src/constants/entity-colors.ts` SHALL add an `ENTITY_TYPE_COLOR` entry for `Prompt`. Because `ENTITY_TYPE_COLOR` is typed `Record<CatalogEntityType, string>`, omitting it MUST be a compile error, not a runtime fallback.
+`libs/chat-shared/src/constants/entity-colors.ts` SHALL carry an `ENTITY_TYPE_COLOR` entry for `Prompt`, beside the enum it is keyed by. Because that map is typed `Record<CatalogEntityType, string>`, omitting an entry MUST be a compile error, not a runtime fallback.
 
 The lib MUST NOT branch on `Prompt` to reach any host-owned fact. It MUST NOT import i18n, read a feature flag, construct an endpoint path, or reference `@epam/ai-dial-chat-api-client`. `Prompt` is a display category only.
 
@@ -23,7 +23,7 @@ The lib MUST NOT branch on `Prompt` to reach any host-owned fact. It MUST NOT im
 #### Scenario: Prompt colour is exhaustively required
 
 - **WHEN** a developer adds `Prompt` to `CatalogEntityType` without adding an `ENTITY_TYPE_COLOR` entry
-- **THEN** `npm exec nx build catalog` fails with a TypeScript error on the `Record<CatalogEntityType, string>` map
+- **THEN** the build fails with a TypeScript error on the `Record<CatalogEntityType, string>` map
 
 #### Scenario: Existing entity types are unaffected
 
@@ -202,17 +202,21 @@ Every other entity type SHALL keep the `About` tab exactly as before.
 
 ### Requirement: The Content tab renders markdown with highlighted placeholders
 
-The body SHALL be rendered as markdown through the shared `MarkdownRenderer`, not as preformatted text — a prompt body is authored with headings and lists, and rendering it verbatim loses that structure.
+The body SHALL be rendered as markdown, not as preformatted text — a prompt body is authored with headings and lists, and rendering it verbatim loses that structure.
 
-`MarkdownRenderer` SHALL gain an optional `rehypePlugins` prop, appended after its built-in KaTeX pass, mirroring the `components` escape hatch it already exposes. Consumers that pass nothing keep today's behaviour.
+The rendering SHALL go through `MarkdownWithPlaceholders` (`@epam/ai-dial-chat-shared`), a thin wrapper that pairs `MarkdownRenderer` with the placeholder plugin and holds the plugin array at module scope so the renderer's `rehypePlugins` identity does not change on every render. Callers pass only `content` and an optional heading class; none of them assembles the plugin list itself, so every surface that shows a placeholder-bearing body highlights it the same way. The catalog Content tab and the Content-tab file preview both use it.
 
-`rehypePromptVariables` (`libs/catalog/src/utils/prompt-variables.ts`) SHALL wrap every `{{name}}` token in a span so it can be coloured apart from the surrounding prose. It MUST:
+`MarkdownRenderer` SHALL accept an optional `rehypePlugins` prop, appended after its built-in KaTeX pass, mirroring the `components` escape hatch it already exposes. Consumers that pass nothing keep today's behaviour.
+
+`rehypePromptVariables` (`libs/chat-shared/src/utils/prompt-variables.ts`) SHALL wrap every `{{name}}` token in a span so it can be coloured apart from the surrounding prose. It MUST:
 
 - build hast element nodes directly rather than injecting raw HTML, so a token containing markup cannot escape into the document
 - skip `code` and `pre` subtrees, where a placeholder is being shown as literal syntax
 - require a non-empty inner run that contains no braces, so `{{}}` and an unclosed `{{` stay plain text and one stray brace pair cannot swallow the rest of the document
 
-`Content.module.scss` SHALL colour `.cat-prompt-variable` from `var(--cat-details-variable-text, var(--text-visual-violet-2, #3730B7))`, and `ItemDetailsColors` SHALL declare a matching `variableText` field that `DetailsPanel`'s `buildCssVars` maps to `--cat-details-variable-text`. Both halves are required by the lib-styling contract: a stylesheet reading a variable nothing sets makes a host override silently inert, and a `buildCssVars` entry no stylesheet reads is dead API.
+The span's class is `cat-prompt-variable`, set by the plugin in `chat-shared`; the rule that actually colours it lives in the catalog's `Content.module.scss`, scoped under the body class and reaching the plugin-set class through `:global`. It SHALL resolve `var(--cat-details-variable-text, var(--text-visual-violet-2, #3730b7))`, and `ItemDetailsColors` SHALL declare a matching `variableText` field that `DetailsPanel`'s `buildCssVars` maps to `--cat-details-variable-text`.
+
+Splitting the two halves across packages is deliberate — the plugin is host-agnostic and must not carry a catalog colour token — but it also means neither half is meaningful alone: a span with no rule is invisible styling, and a rule with no span is dead CSS. Both halves are required by the lib-styling contract: a stylesheet reading a variable nothing sets makes a host override silently inert, and a `buildCssVars` entry no stylesheet reads is dead API.
 
 An earlier revision shipped the class name without a colour, on the reasoning that styling belonged to the host. That left placeholders indistinguishable from the surrounding prose in every host that did not know to add the rule, so the lib now carries the default and the host overrides it.
 

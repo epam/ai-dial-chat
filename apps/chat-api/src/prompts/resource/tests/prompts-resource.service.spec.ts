@@ -177,7 +177,10 @@ describe('PromptsResourceService', () => {
         metaItem('my-prompt'),
       );
 
-      expect(result).toMatchObject({ id: 'my-prompt', name: 'My Prompt' });
+      expect(result).toMatchObject({
+        id: 'prompts/test-bucket/my-prompt',
+        name: 'My Prompt',
+      });
       expect(getPromptSpy).toHaveBeenCalledOnce();
       expect(metadataSpy).not.toHaveBeenCalled();
     });
@@ -228,7 +231,10 @@ describe('PromptsResourceService', () => {
 
       const result = await service.readPromptByPath(TOKEN, BUCKET, 'my-prompt');
 
-      expect(result).toMatchObject({ id: 'my-prompt', name: 'My Prompt' });
+      expect(result).toMatchObject({
+        id: 'prompts/test-bucket/my-prompt',
+        name: 'My Prompt',
+      });
     });
   });
 

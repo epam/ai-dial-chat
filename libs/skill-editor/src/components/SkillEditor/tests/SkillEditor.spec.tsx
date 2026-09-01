@@ -33,6 +33,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
 });
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   EditorThemes: { dark: 'dark', light: 'light' },
   Accordion: ({
@@ -49,6 +50,27 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
   ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
+  FileDropzone: ({
+    label,
+    ariaLabel,
+    multiple,
+    onChange,
+  }: {
+    label: ReactNode;
+    ariaLabel?: string;
+    multiple?: boolean;
+    onChange: (files: File[]) => void;
+  }) => (
+    <div>
+      <span>{label}</span>
+      <input
+        type="file"
+        multiple={multiple}
+        aria-label={ariaLabel}
+        onChange={(event) => onChange(Array.from(event.target.files ?? []))}
+      />
+    </div>
+  ),
   GhostButton: ({
     label,
     onClick,

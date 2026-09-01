@@ -7,6 +7,7 @@ import { ScheduledTaskRunStatus } from '../../../types/scheduled-task-run-status
 import { ScheduledTaskRunHistoryList } from '../ScheduledTaskRunHistoryList';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Spinner: () => <div role="progressbar" />,
   Skeleton: (props: Record<string, unknown>) => (

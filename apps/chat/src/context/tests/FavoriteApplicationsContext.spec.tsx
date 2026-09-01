@@ -1,3 +1,4 @@
+import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -9,7 +10,6 @@ import {
 } from '../../server-api/user-config.api';
 import {
   FavoriteApplicationsProvider,
-  FavoriteEntityType,
   useFavoriteApplications,
 } from '../FavoriteApplicationsContext';
 
@@ -29,7 +29,7 @@ describe('FavoriteApplicationsContext', () => {
       conversations: { pinnedIds: [] },
       toolsets: { installed: ['toolsets/b/search__0.0.1'] },
       deployments: { installed: ['gpt-4o'], selectedId: null },
-      prompts: { installed: ['Work/AI/summarize'] },
+      prompts: { installed: ['prompts/my-bucket/Work/AI/summarize'] },
       skills: { installed: ['skills/my-bucket/revenue-skill'] },
     });
     vi.mocked(updateInstalledDeployment).mockResolvedValue(undefined);
@@ -55,7 +55,9 @@ describe('FavoriteApplicationsContext', () => {
     expect(result.current.favoriteIds.has('toolsets/b/search__0.0.1')).toBe(
       true,
     );
-    expect(result.current.favoriteIds.has('Work/AI/summarize')).toBe(true);
+    expect(
+      result.current.favoriteIds.has('prompts/my-bucket/Work/AI/summarize'),
+    ).toBe(true);
     expect(
       result.current.favoriteIds.has('skills/my-bucket/revenue-skill'),
     ).toBe(true);
@@ -119,16 +121,21 @@ describe('FavoriteApplicationsContext', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     await act(async () => {
       await result.current.toggleFavorite(
-        'Work/AI/rewrite',
+        'prompts/my-bucket/Work/AI/rewrite',
         true,
         FavoriteEntityType.Prompt,
       );
     });
 
-    expect(updateInstalledPrompt).toHaveBeenCalledWith('Work/AI/rewrite', true);
+    expect(updateInstalledPrompt).toHaveBeenCalledWith(
+      'prompts/my-bucket/Work/AI/rewrite',
+      true,
+    );
     expect(updateInstalledDeployment).not.toHaveBeenCalled();
     expect(updateInstalledToolset).not.toHaveBeenCalled();
-    expect(result.current.favoriteIds.has('Work/AI/rewrite')).toBe(true);
+    expect(
+      result.current.favoriteIds.has('prompts/my-bucket/Work/AI/rewrite'),
+    ).toBe(true);
   });
 
   it('reverts an optimistic prompt favorite when the write fails', async () => {
@@ -144,14 +151,16 @@ describe('FavoriteApplicationsContext', () => {
     await act(async () => {
       await expect(
         result.current.toggleFavorite(
-          'Work/AI/rewrite',
+          'prompts/my-bucket/Work/AI/rewrite',
           true,
           FavoriteEntityType.Prompt,
         ),
       ).rejects.toThrow('API error');
     });
 
-    expect(result.current.favoriteIds.has('Work/AI/rewrite')).toBe(false);
+    expect(
+      result.current.favoriteIds.has('prompts/my-bucket/Work/AI/rewrite'),
+    ).toBe(false);
   });
 
   it('persists toolset favorite toggles via toolset user config', async () => {

@@ -1,15 +1,16 @@
+import {
+  getToolsetOAuthChannelName,
+  TOOLSET_REDIRECT_STATE_KEY,
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthCallbackQuery,
+  ToolsetOAuthResultType,
+  WithLogin,
+} from '@epam/ai-dial-chat-hooks';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  TOOLSET_REDIRECT_STATE_KEY,
-  ToolsetOAuthCallbackQuery,
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetOAuthResultType,
-  WithLogin,
-} from '../../../../constants/toolsets';
 import {
   ApiI18nKeys,
   ButtonsI18nKeys,
@@ -23,7 +24,6 @@ import type {
 } from '../../../../models/toolsets';
 import * as toolsetsApi from '../../../../server-api/toolsets';
 import { ROUTES } from '../../../../types/routes';
-import { getToolsetOAuthChannelName } from '../../../../utils/toolsets';
 import AuthSection from '../AuthSection';
 
 /** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
@@ -58,6 +58,7 @@ vi.mock('../../../../context/NotificationContext');
 const mockShowNotification = vi.fn();
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   Input: ({
     value,
     onChange,

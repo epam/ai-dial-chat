@@ -2,6 +2,7 @@ import {
   useAttachmentCanvas,
   useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import { FileDndOverlay } from '@epam/ai-dial-attachment-input';
 import {
   AttachmentValidationErrorReason,
   dialFilesToAttachments,
@@ -30,16 +31,14 @@ import {
   type StarterOption,
   type ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
-import {
-  FileDndOverlay,
-  type ToolsChipLabels,
-} from '@epam/ai-dial-conversation-input';
+import type { ToolsChipLabels } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
@@ -814,7 +813,12 @@ const ConversationView: FC<Props> = ({
             )}
             <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
-              iconBefore={<IconCopy size={DIAL_ICON_SIZE.MD} />}
+              iconBefore={
+                <IconCopy
+                  size={DIAL_ICON_SIZE.MD}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
               onClick={onDuplicateConversation}
             />
           </div>

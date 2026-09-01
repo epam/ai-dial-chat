@@ -236,7 +236,7 @@ describe('ApplicationsService', () => {
         body,
       );
       expect(result).toEqual({
-        id: 'applications/test-bucket/My App__0.0.1',
+        id: 'applications/test-bucket/My%20App__0.0.1',
       });
       expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
     });
@@ -249,7 +249,7 @@ describe('ApplicationsService', () => {
         ...body,
         version: '2.0',
       });
-      expect(result.id).toBe('applications/test-bucket/My App__2.0');
+      expect(result.id).toBe('applications/test-bucket/My%20App__2.0');
       expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
         expect.anything(),
         expect.stringContaining('My%20App__2.0'),

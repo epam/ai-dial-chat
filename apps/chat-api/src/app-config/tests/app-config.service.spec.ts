@@ -124,7 +124,6 @@ describe('AppConfigService', () => {
           return ['https://partner.example.com'];
         if (key === 'uiFeatures.enabledUiFeatures') return ['likes'];
         if (key === 'announcement.html') return 'Welcome to <b>DIAL</b>!';
-        if (key === 'deployments.deepResearchToolId') return 'deep_research';
         return undefined;
       });
       const result = await service.getClientConfig(ctx);
@@ -142,7 +141,6 @@ describe('AppConfigService', () => {
         'https://partner.example.com',
       ]);
       expect(result.config.enabledUiFeatures).toEqual(['likes']);
-      expect(result.config.deepResearchToolId).toBe('deep_research');
     });
 
     it('filters unrecognized enabledUiFeatures entries, keeps known ones, and logs a warning', async () => {
@@ -164,6 +162,39 @@ describe('AppConfigService', () => {
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining('not-a-real-feature'),
       );
+    });
+
+    it('resolves a deprecated enabledUiFeatures alias to its replacement and logs a warning', async () => {
+      const { service } = makeService(async (key: string) => {
+        if (key === 'uiFeatures.enabledUiFeatures')
+          return ['likes', 'custom-applications'];
+        return undefined;
+      });
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toEqual(['likes', 'schema-apps']);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('custom-applications'),
+      );
+    });
+
+    it('does not duplicate a feature supplied both under its deprecated alias and its current name', async () => {
+      const { service } = makeService(async (key: string) => {
+        if (key === 'uiFeatures.enabledUiFeatures')
+          return ['schema-apps', 'custom-applications'];
+        return undefined;
+      });
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toEqual(['schema-apps']);
     });
 
     it('falls back to null (use defaults) when every enabledUiFeatures entry is unrecognized', async () => {
@@ -500,20 +531,6 @@ describe('AppConfigService', () => {
       expect(result.config.announcements).toHaveLength(10);
       expect(result.config.announcements[0].title).toBe('Announcement 0');
       expect(result.config.announcements[9].title).toBe('Announcement 9');
-    });
-
-    it('returns null deepResearchToolId when DEEP_RESEARCH_TOOL_ID is not set', async () => {
-      const { service } = makeService(async () => undefined);
-      const result = await service.getClientConfig(ctx);
-      expect(result.config.deepResearchToolId).toBeNull();
-    });
-
-    it('returns the configured deepResearchToolId when DEEP_RESEARCH_TOOL_ID is set', async () => {
-      const { service } = makeService(async (key: string) =>
-        key === 'deployments.deepResearchToolId' ? 'deep_research' : undefined,
-      );
-      const result = await service.getClientConfig(ctx);
-      expect(result.config.deepResearchToolId).toBe('deep_research');
     });
 
     it('returns empty string for footerHtmlMessage when FOOTER_HTML_MESSAGE is not set', async () => {

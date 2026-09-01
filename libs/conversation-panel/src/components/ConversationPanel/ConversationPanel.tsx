@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  FilterTab,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   PanelEmpty,
   PanelNoResults,
@@ -19,12 +23,8 @@ import {
 import { List, type ListImperativeAPI } from 'react-window';
 import { ITEM_ROW_HEIGHT } from '../../constants/virtual-list';
 import { ConversationPanelProps } from '../../models/panel-props';
-import {
-  type RowRendererData,
-  type VirtualRow,
-  VirtualRowKind,
-} from '../../models/virtual-row';
-import { FilterTab } from '../../types/conversation-classification';
+import type { RowRendererData, VirtualRow } from '../../models/virtual-row';
+import { VirtualRowKind } from '../../types/virtual-row';
 import {
   getRowHeight,
   getSkeletonWidth,

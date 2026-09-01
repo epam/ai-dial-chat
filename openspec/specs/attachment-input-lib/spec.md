@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Specifies the `@epam/ai-dial-attachment-input` library extracted from `libs/conversation-input`. The library owns all attachment UI components (`AttachmentCard`, `AttachmentTray`, `FileDndOverlay`), the drag-and-drop and clipboard hooks, attachment utilities, and the `attachment-mime` helpers previously in `apps/chat`. `libs/conversation-input` re-exports the moved symbols for backwards compatibility.
+Specifies the `@epam/ai-dial-attachment-input` library extracted from `libs/conversation-input`. The library owns the attachment display components (`AttachmentCard`, `AttachmentTray`, `AttachmentGroup`, `FileDndOverlay`), the clipboard and lazy-image hooks, and the attachment/MIME utilities that previously lived in `apps/chat`. `libs/conversation-input` keeps the composer-side controls (such as `AddAttachmentButton`) that belong to the input itself rather than to attachment display, and does not re-export the moved symbols — consumers import them from `@epam/ai-dial-attachment-input` directly.
 
 ---
 
@@ -20,11 +20,11 @@ The `@epam/ai-dial-attachment-input` package SHALL exist as a standalone library
 - **THEN** both targets complete with zero errors
 
 ### Requirement: Path alias registered
-The TypeScript path alias `@epam/ai-dial-attachment-input/*` → `libs/attachment-input/*` SHALL be registered in `tsconfig.base.json` and in the `resolve.alias` section of `apps/chat/vite.config.mts`.
+The TypeScript path alias `@epam/ai-dial-attachment-input/*` → `libs/attachment-input/*` SHALL be registered in `tsconfig.base.json`, and `apps/chat/vite.config.mts` SHALL alias the bare package specifier `@epam/ai-dial-attachment-input` to the library's `src/index.ts`.
 
 #### Scenario: Importing via alias resolves in app
-- **WHEN** `apps/chat` or `libs/conversation-input` imports from `@epam/ai-dial-attachment-input/src/index`
-- **THEN** TypeScript resolves the import without error
+- **WHEN** `apps/chat` or `libs/conversation-input` imports from `@epam/ai-dial-attachment-input`
+- **THEN** TypeScript and Vite both resolve the import without error
 
 ### Requirement: AttachmentCard exported from new lib
 The `AttachmentCard` component, its `AttachmentCardProps` interface, and supporting types (`AttachmentCardColors`, `AttachmentCardTypography`, `AttachmentCardStyles`) SHALL be exported from `libs/attachment-input/src/index.ts`. The component MUST accept all data and callbacks via props with no access to app context.
@@ -40,12 +40,18 @@ The `AttachmentTray` component and `AttachmentTrayProps` interface SHALL be expo
 - **WHEN** `AttachmentTray` is rendered with an array of attachment data props
 - **THEN** it renders one `AttachmentCard` per item without crashing
 
-### Requirement: AddAttachmentButton exported from new lib
-The `AddAttachmentButton` component SHALL be exported from `libs/attachment-input/src/index.ts`. It MUST accept an `onClick` callback prop and MUST NOT open the file manager itself.
+### Requirement: AttachmentGroup exported from new lib
+The `AttachmentGroup` component and its `AttachmentGroupProps` interface (with the styling and label types beside them) SHALL be exported from `libs/attachment-input/src/index.ts`, alongside the `ATTACHMENT_COLLAPSE_THRESHOLD` constant that governs when the group collapses.
 
-#### Scenario: AddAttachmentButton triggers callback on click
-- **WHEN** user clicks the `AddAttachmentButton`
-- **THEN** the `onClick` prop callback is invoked
+`AddAttachmentButton` SHALL NOT move into this library: it is a composer control that opens the host's file picker, not part of attachment display, and it stays in `libs/conversation-input`.
+
+#### Scenario: AttachmentGroup renders a message's attachments
+- **WHEN** `AttachmentGroup` is rendered with a list of `DisplayAttachment` values
+- **THEN** it renders one `AttachmentCard` per attachment without crashing
+
+#### Scenario: AddAttachmentButton is not part of this library
+- **WHEN** `libs/attachment-input/src/index.ts` is inspected
+- **THEN** it exports no `AddAttachmentButton`, which remains exported from `@epam/ai-dial-conversation-input`
 
 ### Requirement: FileDndOverlay exported from new lib
 The `FileDndOverlay` component and `FileDndOverlayProps` interface SHALL be exported from `libs/attachment-input/src/index.ts`.
@@ -62,12 +68,16 @@ The `useClipboardPaste` hook SHALL be exported from `libs/attachment-input/src/i
 - **THEN** the `onPaste` callback is invoked with the pasted file(s)
 
 ### Requirement: Attachment utility functions exported from new lib
-The following utility functions SHALL be exported from `libs/attachment-input/src/index.ts`:
+The following utility functions SHALL be exported from `libs/attachment-input/src/index.ts`, all from `libs/attachment-input/src/utils/attachment.ts`:
 - `generateAttachmentId`
 - `getAttachmentCardState`
 - `getAttachmentIcon`
+- `getExtFromContentType`
+- `getNameWithoutExtension`
 - `mimeTypesToExtensionLabels`
 - `isMimeTypeAllowed`
+
+The `useClipboardPaste` and `useLazyImageLoad` hooks (with `LazyImageLoadStatus`) SHALL be exported alongside them.
 
 #### Scenario: isMimeTypeAllowed returns correct result
 - **WHEN** `isMimeTypeAllowed` is called with a MIME type and an allowlist array
@@ -89,18 +99,22 @@ The upload constraint constants (e.g. `MAX_UPLOADS_PER_MINUTE`) from `libs/conve
 - **THEN** the constant values are accessible and correctly typed
 
 ### Requirement: libs/conversation-input re-exports moved symbols
-All symbols that were previously exported from `libs/conversation-input/src/index.ts` and are now owned by `libs/attachment-input` SHALL continue to be re-exported from `libs/conversation-input/src/index.ts` via `export { ... } from '@epam/ai-dial-attachment-input/src/index'`. No existing consumer of `@epam/ai-dial-conversation-input` SHALL break.
+All symbols that were previously exported from `libs/conversation-input/src/index.ts` and are now owned by `libs/attachment-input` SHALL continue to be re-exported from `libs/conversation-input/src/index.ts` via `export { ... } from '@epam/ai-dial-attachment-input'`. No existing consumer of `@epam/ai-dial-conversation-input` SHALL break.
 
 #### Scenario: Existing conversation-input imports still resolve
-- **WHEN** any file that previously imported attachment symbols from `@epam/ai-dial-conversation-input/src/index` is typechecked
+- **WHEN** any file that previously imported attachment symbols from `@epam/ai-dial-conversation-input` is typechecked
 - **THEN** TypeScript resolves the import without error
 
-### Requirement: apps/chat attachment-mime imports updated
-All `apps/chat` files that previously imported from `apps/chat/src/utils/attachment-mime` SHALL be updated to import from `@epam/ai-dial-attachment-input/src/utils/attachment-mime` (or from the lib's `index.ts`). The original `attachment-mime.ts` file SHALL be deleted from `apps/chat/src/utils/`.
+### Requirement: apps/chat attachment MIME helpers moved into the library
+All `apps/chat` files that previously imported from `apps/chat/src/utils/attachment-mime` SHALL import the same helpers from `@epam/ai-dial-attachment-input`, where they live in `libs/attachment-input/src/utils/attachment.ts` together with the rest of the attachment utilities rather than in a separate MIME module. The original `attachment-mime.ts` file SHALL NOT exist under `apps/chat/src/utils/`.
 
-#### Scenario: apps/chat typechecks after attachment-mime move
+#### Scenario: apps/chat typechecks after the move
 - **WHEN** `npm exec nx typecheck chat` is executed after the migration
-- **THEN** typecheck completes with zero errors related to attachment-mime imports
+- **THEN** typecheck completes with zero errors related to those imports
+
+#### Scenario: The app no longer owns the module
+- **WHEN** `apps/chat/src/utils/` is inspected
+- **THEN** it contains no `attachment-mime.ts`
 
 ### Requirement: AttachmentCard renders audio attachments as a standard file tile
 
@@ -116,7 +130,7 @@ All `apps/chat` files that previously imported from `apps/chat/src/utils/attachm
 
 ### Requirement: Attachment tile action buttons are hidden until the tile is hovered or focused
 
-Every attachment tile variant (`FileAttachment`, `ImageAttachment`) SHALL apply the Tailwind named group `group/attachment-tile` to its root element. The shared `ActionButton` in `libs/attachment-input/src/components/AttachmentCard/Attachments/Actions.tsx` (used by `DownloadAction`, `RemoveAction`, `ReloadAction`, `OpenLinkAction`) SHALL render with `opacity-0` by default, becoming fully opaque via `group-hover/attachment-tile:opacity-100`, `group-focus-within/attachment-tile:opacity-100`, and `focus-visible:opacity-100` — the last so a keyboard user tabbing directly to the button also reveals it, per the keyboard-parity rule for hover-only affordances.
+Both attachment tile variants — `FileAttachment` and `ImageAttachment`, the only two the library renders — SHALL apply the Tailwind named group `group/attachment-tile` to their root element. The shared `ActionButton` in `libs/attachment-input/src/components/AttachmentCard/Attachments/Actions.tsx` (used by `DownloadAction`, `RemoveAction`, `ReloadAction`, `OpenLinkAction`) SHALL render with `opacity-0` by default, becoming fully opaque via `group-hover/attachment-tile:opacity-100`, `group-focus-within/attachment-tile:opacity-100`, and `focus-visible:opacity-100` — the last so a keyboard user tabbing directly to the button also reveals it, per the keyboard-parity rule for hover-only affordances.
 
 `ImageAttachment`'s `DownloadAction`/`RemoveAction` additionally receive `styles.imageActionButton`, which renders a persistent background/icon-color chip (backed by `--ai-tile-hover-icon-bg`/`--ai-tile-hover-icon-color`) so the button stays legible against arbitrary image content once revealed, without depending on the cursor being directly over the small button itself. `FileAttachment` does not apply this chip.
 
@@ -139,7 +153,7 @@ Every attachment tile variant (`FileAttachment`, `ImageAttachment`) SHALL apply 
 
 ### Requirement: AttachmentCard, AttachmentGroup, and MessageBubble support a selected-tile visual state
 
-`AttachmentCardProps`, `FileAttachmentProps`, and the inline `ImageAttachmentProps`/`AudioAttachmentProps` interfaces in `libs/attachment-input` SHALL each accept an optional `isSelected?: boolean`. When `true`, the tile SHALL apply the standalone `.selected` CSS module class (`libs/attachment-input/src/components/AttachmentCard/Attachments/Attachment.module.scss`), which sets `background`/`border-color` via `--ai-tile-bg-selected`/`--ai-tile-border-selected` (each falling back through a themed token to a hex default). `.selected` is independent of `.tile` so it applies uniformly to `FileAttachment`/`ImageAttachment` (which also carry `.tile`) and to `AudioAttachment` (which does not).
+`AttachmentCardProps`, `FileAttachmentProps`, and the inline `ImageAttachmentProps` interface in `libs/attachment-input` SHALL each accept an optional `isSelected?: boolean`. When `true`, the tile SHALL apply the standalone `.selected` CSS module class (`libs/attachment-input/src/components/AttachmentCard/Attachments/Attachment.module.scss`), which sets `background`/`border-color` via `--ai-tile-bg-selected`/`--ai-tile-border-selected` (each falling back through a themed token to a hex default). `.selected` is kept independent of `.tile` so it composes with either tile variant rather than being coupled to the shared tile shape.
 
 `AttachmentGroupProps` SHALL accept an optional `selectedAttachmentId?: string`. `AttachmentGroup` SHALL compute `isSelected={attachment.id === selectedAttachmentId}` for each rendered `AttachmentCard`. This comparison is `DisplayAttachment.id`-based, so it is only correct when the caller guarantees `selectedAttachmentId` is scoped to the same attachment list `AttachmentGroup` is rendering (see the message-scoped key below) — `DisplayAttachment.id` is derived from content (`dto.url ?? dto.data ?? dto.title`, see `messageAttachmentToDisplayAttachment`), not a globally unique generated ID, so the same value can legitimately recur across different messages (e.g. the same file attached twice in a conversation).
 
@@ -147,7 +161,7 @@ Every attachment tile variant (`FileAttachment`, `ImageAttachment`) SHALL apply 
 
 At the app layer, `AttachmentCanvasContextValue` (`libs/attachment-canvas`) SHALL track `attachmentId: string | undefined` — an opaque caller-supplied key identifying whatever is currently displayed in the canvas — set by `openCanvas`/`openCanvasLoading`'s optional third/second `attachmentId` parameter and cleared by `closeCanvas`. The lib itself SHALL NOT assume any structure for this key; it is purely stored and returned.
 
-`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`'s `openAttachmentCanvas(attachment, canvasAttachmentId?)` SHALL accept an optional second parameter used as the tracked key instead of `attachment.id`, defaulting to `attachment.id` when omitted (non-message callers — the edit-message tray, `ConversationSourcesPanel` — rely on this default). `ConversationView.tsx`'s `handleMessageAttachmentClick(attachment, messageIndex)` SHALL call `openAttachmentCanvas` with the composite key `` `${messageIndex}:${attachment.id}` ``, so that two different messages containing content-identical attachments (same derived `id`) never collide.
+The canvas hook's `openAttachmentCanvas(attachment, canvasAttachmentId?)` (in `libs/attachment-canvas`) SHALL accept an optional second parameter used as the tracked key instead of `attachment.id`, defaulting to `attachment.id` when omitted (non-message callers — the edit-message tray, `ConversationSourcesPanel` — rely on this default). `ConversationView.tsx`'s `handleMessageAttachmentClick(attachment, messageIndex)` SHALL call `openAttachmentCanvas` with the composite key `` `${messageIndex}:${attachment.id}` ``, so that two different messages containing content-identical attachments (same derived `id`) never collide.
 
 `ConversationView.tsx` SHALL read this composite key back from `useAttachmentCanvas().attachmentId` and pass it to each `ConversationMessageItem` as `selectedAttachmentKey`. `ConversationMessageItem` SHALL derive a message-scoped `selectedAttachmentId` by checking whether `selectedAttachmentKey` starts with `` `${index}:` `` (its own message index) and, if so, stripping that prefix; otherwise it passes `undefined`. Only the matching message's `MessageBubble` receives a defined `selectedAttachmentId` — every other message's `ConversationMessageItem` computes `undefined` for the same global key, so no other message's tile can render as selected even if one of its attachments shares the same content-derived `id`.
 

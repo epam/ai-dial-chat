@@ -34,6 +34,7 @@ export const Catalog: FC<CatalogProps> = ({
   isPrimaryActionVisible,
   onShare,
   isPublishVisible,
+  isPublishPrimary,
   getPublishHistory,
   publishFolderItems,
   publishExpandedPaths,
@@ -49,6 +50,7 @@ export const Catalog: FC<CatalogProps> = ({
   onFetchExistingRules,
   shareOverlay,
   isShareVisible,
+  isSharePrimary,
   onFetchDetails,
   onEdit,
   onDownload,
@@ -71,12 +73,14 @@ export const Catalog: FC<CatalogProps> = ({
   createOptions,
   hideCreateButton = false,
   hidePageTitle = false,
-  initialViewMode = CatalogViewMode.Grid,
+  isReadonly = false,
+  initialViewMode = CatalogViewMode.List,
   selectedItemId,
   onCardClick,
   isLoading,
   styles: catalogStyles,
   detailsTexts,
+  detailsLimitsFooterNote,
   initialDetailsItemId,
   sortKey: controlledSortKey,
   onSortChange,
@@ -368,6 +372,11 @@ export const Catalog: FC<CatalogProps> = ({
     setViewMode(mode);
   }, []);
 
+  const isCreateButtonVisible = !hideCreateButton && !isReadonly;
+  /* A read-only catalog cannot favorite anything, so the strip has no way to
+   * gain or lose entries and is dropped rather than shown frozen. */
+  const isFavoritesVisible = isFavoritesRendered && !isReadonly;
+
   const emptyTitle = query ? noResultsTitle(query) : 'No items';
   const cardGridTitles = useMemo(
     () => ({
@@ -396,7 +405,7 @@ export const Catalog: FC<CatalogProps> = ({
       )}
       style={cssVars}
     >
-      {(!hidePageTitle || !hideCreateButton) && (
+      {(!hidePageTitle || isCreateButtonVisible) && (
         <div className={mergeClasses('shrink-0', styles.heading)}>
           <div className="flex h-[64px] w-full items-center justify-between px-8">
             {!hidePageTitle && (
@@ -409,7 +418,7 @@ export const Catalog: FC<CatalogProps> = ({
                 {pageTitle}
               </h1>
             )}
-            {!hideCreateButton && (
+            {isCreateButtonVisible && (
               <CreateButton
                 label={createLabel}
                 options={createOptions}
@@ -421,7 +430,7 @@ export const Catalog: FC<CatalogProps> = ({
       )}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
-        {isFavoritesRendered && (
+        {isFavoritesVisible && (
           <div className="w-full px-8">
             <Favorites
               items={favorites}
@@ -502,6 +511,7 @@ export const Catalog: FC<CatalogProps> = ({
               onItemClick={onCardClick ?? handleOpenDetails}
               titles={cardGridTitles}
               selectedItemId={selectedItemId}
+              isReadonly={isReadonly}
             />
           </div>
 
@@ -527,6 +537,7 @@ export const Catalog: FC<CatalogProps> = ({
                 credentialsBadgeLoggedOutLabel={
                   detailsTexts?.credentialsBadgeLoggedOutLabel
                 }
+                isReadonly={isReadonly}
               />
             </div>
           )}
@@ -539,6 +550,7 @@ export const Catalog: FC<CatalogProps> = ({
           isOpen={isDetailsOpen}
           isStarred={isSelectedItemStarred}
           isDetailsLoading={isDetailsLoading}
+          isReadonly={isReadonly}
           onClose={handleCloseDetails}
           onToggleFavorite={onToggleFavorite}
           isFavoriteVisible={isFavoriteVisible}
@@ -546,6 +558,7 @@ export const Catalog: FC<CatalogProps> = ({
           isPrimaryActionVisible={isPrimaryActionVisible}
           onShare={onShare}
           isPublishVisible={isPublishVisible}
+          isPublishPrimary={isPublishPrimary}
           getPublishHistory={getPublishHistory}
           publishFolderItems={publishFolderItems}
           publishExpandedPaths={publishExpandedPaths}
@@ -561,6 +574,7 @@ export const Catalog: FC<CatalogProps> = ({
           onFetchExistingRules={onFetchExistingRules}
           shareOverlay={shareOverlay}
           isShareVisible={isShareVisible}
+          isSharePrimary={isSharePrimary}
           onEdit={onEdit}
           onDownload={onDownload}
           isDownloadVisible={isDownloadVisible}
@@ -579,6 +593,7 @@ export const Catalog: FC<CatalogProps> = ({
           onLogin={handleLogin}
           onLogout={handleLogout}
           texts={detailsTexts}
+          limitsFooterNote={detailsLimitsFooterNote}
         />
       )}
     </section>

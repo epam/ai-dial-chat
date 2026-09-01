@@ -2,6 +2,7 @@ import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   attachmentsToDtos,
   findDeploymentByIdOrReference,
+  getApiErrorDetails,
   getConversationPath,
   getQuickAppConversationStarters,
   getStarterConversationText,
@@ -14,7 +15,7 @@ import type {
   DeploymentItem,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconTelescope } from '@tabler/icons-react';
 import {
   FC,
@@ -23,6 +24,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -43,12 +45,10 @@ import {
   PromptSelectorI18nKeys,
   ToolsI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import {
   createConversation as apiCreateConversation,
   saveConversation,
@@ -62,7 +62,6 @@ import { resolveLocalizedText } from '../../utils/locale';
  */
 const ConversationRoute: FC = () => {
   const { t } = useTranslation();
-  const { config } = useAppConfig();
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { pathname, state } = useLocation();
@@ -99,10 +98,16 @@ const ConversationRoute: FC = () => {
     error,
   } = useDeployments();
 
+  const hasConsumedRouteDeploymentRef = useRef(false);
+
   /*
-   * Honors a deploymentId passed as router state (e.g. by the overlay's
-   * conversation-list bridge opening the composer with a pre-selected
-   * deployment) without persisting it as the user's own preference.
+   * Honors a deploymentId passed as router state (by the catalog's "Use in
+   * chat" action, or by the overlay's conversation-list bridge opening the
+   * composer with a pre-selected deployment) without persisting it as the
+   * user's own preference. The state is one-shot, like the prompt state below:
+   * `history.state` survives a reload, so leaving it in place would make a
+   * refresh keep re-applying a stale pick instead of resolving the configured
+   * default.
    *
    * Otherwise, re-resolves selectedItemId back to the user's own preference:
    * having viewed a different conversation may have left a transient,
@@ -113,9 +118,19 @@ const ConversationRoute: FC = () => {
    */
   useEffect(() => {
     if (routeDeploymentId) {
+      hasConsumedRouteDeploymentRef.current = true;
       restoreSelectedItemId(routeDeploymentId);
+      navigate(pathname, { replace: true, state: null });
       return;
     }
+    /*
+     * The clearing navigation above re-runs this effect with no
+     * routeDeploymentId. Restoring the default here would immediately undo the
+     * selection just applied, so the consumed state is remembered for the
+     * lifetime of this mount. A reload or a fresh navigation remounts the
+     * route, resetting the flag, and the default resolves normally again.
+     */
+    if (hasConsumedRouteDeploymentRef.current) return;
     if (!overlay?.pendingModelId) {
       restoreDefaultSelection();
     }
@@ -124,6 +139,8 @@ const ConversationRoute: FC = () => {
     restoreDefaultSelection,
     routeDeploymentId,
     overlay?.pendingModelId,
+    navigate,
+    pathname,
   ]);
 
   /*
@@ -162,13 +179,15 @@ const ConversationRoute: FC = () => {
 
   const { toolsMenuItems, onToolToggle, toolConfigurationValue } = useToolsMenu(
     {
-      deepResearchToolId: config.deepResearchToolId,
       selectedItemId,
       selectedDeploymentConfiguration,
-      labels: {
-        deepResearchFallback: t(ToolsI18nKeys.DeepResearchFallback),
-      },
-      toolIcon: <IconTelescope size={DIAL_ICON_SIZE.SM} aria-hidden />,
+      toolIcon: (
+        <IconTelescope
+          size={DIAL_ICON_SIZE.SM}
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      ),
     },
   );
 
@@ -332,7 +351,6 @@ const ConversationRoute: FC = () => {
         onToolToggle={onToolToggle}
         toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
         toolsChipLabels={{
-          countLabel: (count) => t(ToolsI18nKeys.SelectedCount, { count }),
           removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
         }}
       >

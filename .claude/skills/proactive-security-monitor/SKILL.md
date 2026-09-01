@@ -1,5 +1,6 @@
 ---
 name: proactive-security-monitor
+disable-model-invocation: true
 description: Proactive supply-chain watch for this repo. Resolves the npm SBOM and batch-queries OSV.dev for freshly-modified advisories (committed fetch.sh), then runs an industry-news pass (CISA KEV, OpenSSF, GitHub Security Lab, Socket, The Hacker News) filtered to this project's stack, and emits both as one findings set for the downstream triager. Use as the daily/scheduled producer half of the proactive-security-monitor → security-monitor-triager chain.
 ---
 

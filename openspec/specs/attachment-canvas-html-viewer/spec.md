@@ -154,13 +154,14 @@ htmlViewRenderedLabel?: string;
 - The iframe SHALL carry `sandbox="allow-scripts allow-same-origin"`. `allow-same-origin` is safe here because the external URL is a different origin from the host app, so the embedded page cannot access the host's cookies or storage.
 - **CSP block detection:** attach an `onLoad` handler. Inside `onLoad`, wrap the `contentDocument` access in a `try/catch`. If accessing `contentDocument` throws (cross-origin security error) or `contentDocument` is `null`, set `isBlocked = true`. Also attach an `onError` handler that sets `isBlocked = true` for outright network/load failures.
 - When `isBlocked` is `true`, replace the iframe with the blocked-state panel (see below).
-- Show a loading spinner while the iframe is loading (`isLoading` state, set to `false` in `onLoad` or `onError`).
+- Show a loading spinner while the iframe is loading (`isLoading` state, set to `false` in `onLoad` or `onError`). The iframe SHALL stay mounted and merely `invisible` behind the spinner, so hiding it never restarts the load.
+- `isLoading` and `isBlocked` SHALL both reset whenever `content` changes, so a newly opened attachment never inherits the previous one's blocked or settled state.
 - Since source text is not available for URL-only content, the toggle button is not shown.
 
 **Blocked-state panel:**
 - Centered in the panel body, same layout as the existing `Unsupported` / `Error` panels.
 - Shows `labels.htmlFrameBlockedLabel` (default: `'This page cannot be displayed in preview'`).
-- Shows an anchor `<a href={content.url} target="_blank" rel="noopener noreferrer">` with the label `labels.htmlOpenInNewTabLabel` (default: `'Open in new tab'`). The anchor SHALL be styled as a primary button using the existing button design token.
+- Shows the ui-kit `LinkButton` with `href={content.url}` and `target="_blank"`, labelled `labels.htmlOpenInNewTabLabel` (default: `'Open in new tab'`). Passing `href` makes it render a real anchor, so the target stays middle-clickable, copyable, and openable in a background tab; the kit supplies `rel="noopener noreferrer"` for `target="_blank"`.
 - The anchor SHALL only be rendered when `content.url != null`.
 
 **Props interface (`HtmlContentProps`):**
@@ -170,6 +171,10 @@ interface HtmlContentProps {
   labels: Pick<AttachmentCanvasLabels, 'htmlFrameBlockedLabel' | 'htmlOpenInNewTabLabel'>;
   isSourceView: boolean;
   title?: string;
+  /** Forwarded to the source-view `CodeContent`; when omitted it falls back to `CodeBlockTheme.Light`. */
+  codeBlockTheme?: CodeBlockTheme;
+  /** Typography class for the "Open in new tab" link. Defaults to `'dial-body-semi-text'`. */
+  openInNewTabButtonTypographyClassName?: string;
 }
 ```
 
@@ -181,7 +186,6 @@ The component MUST NOT read from any app-level context.
 
 **Accessibility:**
 - The iframe SHALL carry `title` set to `title` prop value when provided.
-- The blocked-state "Open in new tab" anchor SHALL carry `aria-label` indicating it opens in a new tab.
 - The toggle button (in `AttachmentCanvas` header) exposes its current state via `aria-pressed`.
 
 #### Scenario: srcdoc content renders iframe by default
@@ -228,9 +232,9 @@ The component MUST NOT read from any app-level context.
 
 ### Requirement: `AttachmentCanvas` switch handles `Html` variant
 
-`libs/attachment-canvas/src/components/AttachmentCanvas/AttachmentCanvas.tsx` SHALL add a `case AttachmentContentType.Html` branch that renders `<HtmlContent content={content} labels={...} isSourceView={isHtmlSourceView} title={fileName} />`.
+The content-type switch SHALL carry a `case AttachmentContentType.Html` branch rendering `<HtmlContent content={content} labels={...} isSourceView={isHtmlSourceView} title={fileName} />`. That switch lives in `libs/attachment-canvas/src/components/AttachmentCanvasBody/AttachmentCanvasBody.tsx`, which `AttachmentCanvas` renders inside the panel chrome and to which it forwards `isHtmlSourceView` and the HTML labels; the header toggle button below stays in `AttachmentCanvas` itself.
 
-The panel chrome SHALL be identical to other content types. The scroll container class for `Html` SHALL be `overflow-hidden` (the iframe and source view manage their own scroll).
+The panel chrome SHALL be identical to other content types. The scroll container class for `Html` SHALL be `h-full overflow-hidden` (the iframe and source view manage their own scroll).
 
 **`isHtmlSourceView` state** is owned by `AttachmentCanvas`, initialized to `false`, and reset to `false` whenever `content` changes.
 
@@ -262,15 +266,16 @@ No copy-text action is shown for `Html` content (copying is available in source 
 
 ### Requirement: `resolveHtmlCanvasContent` app-layer resolver
 
-`apps/chat/src/utils/attachment-canvas.ts` SHALL export:
+`libs/chat-hooks/src/files/attachment-canvas.ts` SHALL export, from `@epam/ai-dial-chat-hooks`:
 
 ```ts
 export const resolveHtmlCanvasContent = async (
   attachment: DisplayAttachment,
+  resolvers: AttachmentCanvasUrlResolvers,
 ): Promise<HtmlCanvasContent | ErrorCanvasContent | null>
 ```
 
-The function SHALL delegate text resolution to the shared `resolveAttachmentText` helper. On success, return `{ type: AttachmentContentType.Html, srcdoc: text }`. A non-`null` `url` from `resolveDialUrl(attachment)` SHALL also be included in the payload (as `url`) so the download button is available.
+The function SHALL delegate text resolution to the shared `resolveAttachmentText` helper. On success, return `{ type: AttachmentContentType.Html, srcdoc: text }`. A non-`null` `url` from the injected `resolvers.resolveDialUrl(attachment)` SHALL also be included in the payload (as `url`) so the download button is available. The DIAL-URL resolution is injected rather than imported, so the resolver stays host-agnostic; `apps/chat/src/hooks/attachment/useAttachmentCanvasResolvers.ts` binds it and exposes it to the canvas hook as `resolveHtmlContent(attachment)`.
 
 **Size gate:** When the resolved text length exceeds 1 048 576 characters (1 MiB), the function SHALL return `null` (falling through to `UnsupportedCanvasContent`). This prevents `srcdoc` truncation in browsers that cap the attribute length.
 
@@ -295,18 +300,20 @@ Because `null` also means "this attachment carries no text at all" (an external 
 
 ### Requirement: routing update — html/htm attachments route to `Html`
 
-`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`'s internal `openFileCanvas` SHALL add a branch before the existing `isTextPreviewable` check:
+The canvas hook's internal `openFileCanvas` SHALL add a branch before the existing `isTextPreviewable` check — in `libs/attachment-canvas/src/hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas.ts`:
 
-- If the attachment is an HTML source, call `resolveHtmlCanvasContent(attachment)` and open the canvas with the result.
+- If the attachment is an HTML source, call the injected `resolvers.resolveHtmlContent(attachment)` and open the canvas with the result.
 
 An attachment counts as an HTML source when `isHtmlPreviewable(attachment.name)` is `true` **or** `isHtmlPreviewable(getUrlFileName(attachment.url))` is `true`. The URL fallback is required because a cited source's `name` is its citation title, which usually carries no file extension — matching on the name alone routes such a source to the Unsupported branch. The same combined check SHALL gate the Unsupported branch, so the two cannot disagree.
 
 When `resolveHtmlCanvasContent` returns `null`, the fallback SHALL depend on whether the attachment had text to fetch:
 
-- `hasAttachmentTextSource(attachment) === false` — an external HTML URL. Open `HtmlCanvasContent { url }` so the iframe loads it directly, or return `false` when there is no URL either.
-- `hasAttachmentTextSource(attachment) === true` — the text was fetched and rejected by the size gate. Open `UnsupportedCanvasContent`; re-opening it as a url-only iframe would render the frame-blocked panel, telling the user the page refused to be framed when it never was.
+- `resolvers.hasTextSource(attachment) === false` — an external HTML URL. Open `HtmlCanvasContent { url }` so the iframe loads it directly, or return `false` when there is no URL either.
+- `resolvers.hasTextSource(attachment) === true` — the text was fetched and rejected by the size gate. Open `UnsupportedCanvasContent`; re-opening it as a url-only iframe would render the frame-blocked panel, telling the user the page refused to be framed when it never was.
 
-`isExternalSourcePreviewable` in `apps/chat/src/utils/attachment-canvas.ts` SHALL be updated to return `true` for `html`/`htm` URL extensions (so external HTML source links open in the canvas rather than a new tab).
+That predicate is the `hasAttachmentTextSource` helper from `libs/chat-hooks/src/files/attachment-canvas.ts`, injected into the hook as `resolvers.hasTextSource` rather than imported by it.
+
+`isExternalSourcePreviewable`, in that same `libs/chat-hooks` module, SHALL return `true` for `html`/`htm` URL extensions (so external HTML source links open in the canvas rather than a new tab).
 
 For external URL sources (an `AttachmentResource` whose URL path ends in `.html` or `.htm`), the canvas SHALL be opened with `HtmlCanvasContent { url }` — no fetch, the iframe loads the URL directly.
 

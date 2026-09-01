@@ -6,6 +6,7 @@ import {
 } from '@epam/ai-dial-react-file-manager';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   DropdownItem,
   GhostButton,
 } from '@epam/ai-dial-ui-kit';
@@ -207,7 +208,13 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
       {
         key: 'add-child',
         label: addChildFolderLabel,
-        icon: <IconFolderPlus size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        icon: (
+          <IconFolderPlus
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        ),
         onClick: () => beginCreatingFolder(childPath),
       },
     ];
@@ -215,7 +222,13 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
       items.push({
         key: 'add-sibling',
         label: addSiblingFolderLabel,
-        icon: <IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        icon: (
+          <IconPlus
+            size={DIAL_ICON_SIZE.SM}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        ),
         onClick: () => beginCreatingFolder(childPath.slice(0, -1)),
       });
     }
@@ -303,7 +316,13 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
         <GhostButton
           onClick={handleStartCreatingFolder}
           label={createFolderLabel}
-          iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
+          iconBefore={
+            <IconPlus
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          }
           disabled={disabled || isCreatingFolder}
         />
         {isCreatingFolder && (

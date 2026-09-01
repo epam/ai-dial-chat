@@ -119,9 +119,10 @@ export const markdownToRichTextHtml = (content: string): string =>
 
 /**
  * Copies markdown `content` to the clipboard as rich text, so pasting into a
- * rich-text target (Word, Gmail, Slack) keeps the formatting. Only the
- * `text/html` flavour is written — a plain-text target pastes nothing from
- * here. Falls back to {@link copyToClipboard}, and therefore to the raw
+ * rich-text target (Word, Gmail, Slack) keeps the formatting. Both the
+ * `text/html` and the `text/plain` flavour are written, so a plain-text
+ * target (Notepad, a terminal, a code editor) pastes the raw markdown instead
+ * of nothing. Falls back to {@link copyToClipboard}, and therefore to the raw
  * markdown, when the multi-format Clipboard API isn't available.
  */
 export const copyMarkdownAsRichText = (content: string): Promise<boolean> => {
@@ -141,13 +142,12 @@ export const copyMarkdownAsRichText = (content: string): Promise<boolean> => {
   }
 
   /*
-   * `text/html` is the only flavour offered on purpose. A target that sees both
-   * flavours may pick `text/plain` — which is exactly what this action is not
-   * for — and then the styling never arrives. The cost is that a plain-text
-   * target pastes nothing at all from here; `onCopyMarkdown` (plain
-   * {@link copyToClipboard}) is the action for those, so the two copy buttons
-   * do one job each. Do not add `text/plain` back without checking a rich
-   * target still honours the HTML.
+   * Both flavours ride along. A rich target picks `text/html` — that is the
+   * negotiation every editor implements, and the styling arrives as before —
+   * while a plain-text target, which can read nothing but `text/plain`, would
+   * otherwise paste an empty string. `onCopyMarkdown` still exists for the
+   * deliberate markdown-only copy; this action is simply no longer unusable
+   * outside a rich editor.
    *
    * Clipboard API must be called synchronously within the user-gesture
    * handler; do NOT await before calling it.
@@ -156,6 +156,7 @@ export const copyMarkdownAsRichText = (content: string): Promise<boolean> => {
     .write([
       new ClipboardItem({
         'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([content], { type: 'text/plain' }),
       }),
     ])
     .then(() => true)

@@ -22,13 +22,13 @@ Endpoint that fetches a single DIAL Core application type schema by its `$id`, w
 | `id` | Path | `string` | Yes | The schema `$id` (URL-encoded). Must be non-empty. |
 
 Path param DTO (`GetApplicationSchemaDto`):
-- `id`: `@IsString()` + `@IsNotEmpty()` + `@Matches(/^[^\s]+$/)` (no whitespace; prevents trivially invalid ids from reaching upstream)
+- `id`: `@IsString()` + `@IsNotEmpty()` + `@Matches(/^\S+$/)` (no whitespace; prevents trivially invalid ids from reaching upstream)
 
 ## Response — 200 OK
 
 The full JSON Schema document for the application type, returned as-is from upstream.
 
-Response DTO: `ApplicationSchemaDto` (alias for `Record<string, unknown>`)
+There is no named response DTO: the service returns `Record<string, unknown>` and the endpoint documents it in Swagger as an inline free-form object (`{ type: 'object', additionalProperties: true }`), because the payload is whatever JSON Schema document DIAL Core holds for that application type.
 
 ```json
 {
@@ -51,8 +51,10 @@ The response passes through the upstream payload verbatim (all top-level keys pr
 | 403 | Caller lacks permission to access this schema |
 | 404 | Schema not found for the given `id` |
 | 429 | Rate limit exceeded (60 req/60 s per user) |
-| 502 | DIAL Core returned a non-OK, non-4xx status |
+| 502 | DIAL Core returned a 5xx, or any status the shared mapper has no more specific exception for |
 | 503 | DIAL Core is unreachable or timed out |
+
+Status translation is delegated to the shared `mapDialHttpStatus` / `handleDialFetchError` helpers, so this endpoint maps a given upstream status exactly the way every other `chat-api` domain does.
 
 ## Rate Limiting
 
@@ -63,20 +65,23 @@ The response passes through the upstream payload verbatim (all top-level keys pr
 - Cache key: `application-schemas:item:<userSub>:<schemaId>`
 - TTL: 60 seconds
 - Scope: per authenticated user, per schema id
-- On cache hit: upstream SDK is not called; cached `ApplicationSchemaDto` is returned directly.
+- Read-through and write are performed inline in the service (not via the shared `withCachedDialRequest` helper the list endpoint uses), with transport errors mapped by `handleDialFetchError` in the surrounding `try`/`catch`.
+- On cache hit: upstream SDK is not called; the cached schema object is returned directly.
 
 ## Generated Client
 
 After OpenAPI regeneration, `ApplicationsApi` (or `ApplicationSchemasApi`) exposes:
 
 ```ts
-applicationsApi.getApplicationSchema({ id: string }): Promise<ApplicationSchemaDto>
+applicationsApi.getApplicationSchema({ id: string }): Promise<object>
 ```
 
 Frontend server-api wrapper: `apps/chat/src/server-api/application-schemas.ts`
 
 ```ts
-export const getApplicationSchema = (id: string): Promise<ApplicationSchemaDto> =>
+export const getApplicationSchema = (
+  id: string,
+): Promise<Record<string, unknown>> =>
   applicationsApi.getApplicationSchema({ id });
 ```
 
@@ -86,13 +91,13 @@ export const getApplicationSchema = (id: string): Promise<ApplicationSchemaDto> 
 
 ### Requirement: Authenticated schema lookup by `$id`
 
-`GET /api/v1/application-schemas/:id` SHALL require a valid session and SHALL fetch the schema from DIAL Core via `client.getCustomApplicationSchema`, forwarding the session user's access token as a `Bearer` Authorization header. The upstream payload SHALL be returned verbatim, with every top-level key preserved and no normalisation applied.
+`GET /api/v1/application-schemas/:id` SHALL require a valid session and SHALL fetch the schema from DIAL Core via `client.getCustomApplicationSchema`, passing the decoded id as the SDK call's `id` **query** parameter and forwarding the session user's access token as a `Bearer` Authorization header. The upstream payload SHALL be returned verbatim, with every top-level key preserved and no normalisation applied.
 
 #### Scenario: Authenticated user fetches a schema by id
 
 - **GIVEN** an authenticated session user
 - **WHEN** `GET /api/v1/application-schemas/https%3A%2F%2Fexample.com%2Fschemas%2Fquick-app` is called
-- **THEN** the service calls `client.getCustomApplicationSchema` with the decoded id and responds `200` with the JSON schema object unchanged
+- **THEN** the service calls `client.getCustomApplicationSchema` with `query: { id }` carrying the decoded id, and responds `200` with the JSON schema object unchanged
 
 #### Scenario: The access token reaches upstream
 
@@ -102,7 +107,7 @@ export const getApplicationSchema = (id: string): Promise<ApplicationSchemaDto> 
 
 ### Requirement: The `id` path parameter is validated before any upstream call
 
-`GetApplicationSchemaDto.id` SHALL be validated with `@IsString()`, `@IsNotEmpty()`, and `@Matches(/^[^\s]+$/)`, so an empty or whitespace-only id is rejected by the global `ValidationPipe` rather than forwarded to DIAL Core.
+`GetApplicationSchemaDto.id` SHALL be validated with `@IsString()`, `@IsNotEmpty()`, and `@Matches(/^\S+$/)`, so an empty or whitespace-only id is rejected by the global `ValidationPipe` rather than forwarded to DIAL Core.
 
 #### Scenario: An empty id is rejected
 
@@ -119,6 +124,11 @@ The resolved schema SHALL be cached under `application-schemas:item:<userSub>:<s
 - **WHEN** the endpoint is called again
 - **THEN** `client.getCustomApplicationSchema` is not called and the cached schema is returned with `200`
 
+#### Scenario: A failed lookup is not cached
+
+- **WHEN** the upstream call fails and the endpoint surfaces a mapped error
+- **THEN** nothing is written to `application-schemas:item:<userSub>:<schemaId>`, so the next request retries upstream
+
 #### Scenario: A cache miss populates the cache
 
 - **GIVEN** no cached entry exists for the user and schema id
@@ -132,7 +142,7 @@ The resolved schema SHALL be cached under `application-schemas:item:<userSub>:<s
 
 ### Requirement: Upstream failures map to typed HTTP exceptions
 
-An upstream `401`, `403`, or `404` SHALL surface unchanged; any other non-OK status SHALL map to `502 Bad Gateway`; a network or timeout failure SHALL map to `503 Service Unavailable`. The route SHALL carry `@Throttle({ default: { limit: 60, ttl: 60000 } })`, matching `GET /api/v1/applications`.
+Upstream non-OK statuses SHALL be translated by the shared `mapDialHttpStatus` helper, so `401`, `403`, and `404` surface unchanged and a `5xx` becomes `502 Bad Gateway`; a network or timeout failure SHALL be translated by `handleDialFetchError` into `503 Service Unavailable`. The route SHALL carry `@Throttle({ default: { limit: 60, ttl: 60000 } })`, matching `GET /api/v1/applications`.
 
 #### Scenario: Client-error statuses pass through
 

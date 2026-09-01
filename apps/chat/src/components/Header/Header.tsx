@@ -1,6 +1,10 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, GhostIconButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  GhostIconButton,
+} from '@epam/ai-dial-ui-kit';
 import {
   IconLayoutSidebarRight,
   IconMenu2,
@@ -68,7 +72,7 @@ const Header: FC<Props> = ({
               icon={
                 <IconLayoutSidebarRight
                   size={DIAL_ICON_SIZE.LG}
-                  stroke={1.5}
+                  stroke={DIAL_KIT_ICON_STROKE}
                   className={
                     !isConversationPanelOpen ? 'scale-x-[-1]' : undefined
                   }
@@ -97,7 +101,7 @@ const Header: FC<Props> = ({
                 icon={
                   <IconPlus
                     size={DIAL_ICON_SIZE.LG}
-                    stroke={1.5}
+                    stroke={DIAL_KIT_ICON_STROKE}
                     className={
                       !isConversationPanelOpen
                         ? styles.newChatIconPop
@@ -113,7 +117,12 @@ const Header: FC<Props> = ({
           )}
         {!isNavigationMenuHidden && (
           <GhostIconButton
-            icon={<IconMenu2 size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+            icon={
+              <IconMenu2
+                size={DIAL_ICON_SIZE.LG}
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             aria-label={t(NavigationI18nKeys.OpenMenu)}
             onClick={onMenuToggle}
           />

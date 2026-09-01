@@ -5,10 +5,11 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  Search,
+  DIAL_KIT_ICON_STROKE,
   DropdownItem,
   ElementSize,
   Highlight,
+  Search,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { type ReactNode, useMemo, useState } from 'react';
@@ -172,7 +173,7 @@ export const useModelSelector = ({
             {isSelected && (
               <IconCheck
                 size={DIAL_ICON_SIZE.SM}
-                stroke={2}
+                stroke={DIAL_KIT_ICON_STROKE}
                 className={selectedItemCheckClassName}
                 aria-hidden
               />

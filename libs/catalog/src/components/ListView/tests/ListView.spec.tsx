@@ -6,11 +6,12 @@ import type { CatalogItem } from '../../../models/catalog-item';
 import { ListView } from '../ListView';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   mergeClasses: (...args: (string | undefined)[]) =>
     args.filter(Boolean).join(' '),
   DialNoDataContent: ({ title }: { title?: string }) => <span>{title}</span>,
-  DialGrid: ({
+  Grid: ({
     rowData,
     emptyStateTitle,
     additionalGridOptions,

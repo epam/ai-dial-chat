@@ -70,7 +70,7 @@ import { IconFolderOff } from '@tabler/icons-react';
 ### PanelNoResults
 
 No-results state shown when a search or filter produces no matches. Icon defaults
-to `IconZoomCancel` at `45` px.
+to `IconFileSad` at `32` px.
 
 ```tsx
 import { PanelNoResults } from '@epam/ai-dial-sidebar';

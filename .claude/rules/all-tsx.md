@@ -95,6 +95,45 @@ const Outer: FC<OuterProps> = ({
 
 Props with non-trivial defaults that are also needed locally must still be destructured with their defaults; pass them explicitly to the inner component before `{...innerProps}` so that caller-supplied values in the spread override the defaults correctly. Derived or locally-managed props (e.g. state, computed values) go after `{...innerProps}` so they always take precedence.
 
+## Tabler icon stroke
+
+Tabler renders every outline icon at `stroke={2}`, and the 2.0 design scale
+puts icons at 1.5, so the weight has to be passed on **every** icon — an
+omitted prop is a visibly heavier glyph sitting next to its neighbours.
+Pass the kit token, never the literal, so the scale has one owner.
+
+```tsx
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { IconPlus } from '@tabler/icons-react';
+
+// Correct
+<IconPlus size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} aria-hidden />;
+
+// Wrong — falls back to Tabler's 2px default
+<IconPlus size={DIAL_ICON_SIZE.MD} aria-hidden />;
+
+// Wrong — restates the scale at the call site
+<IconPlus size={DIAL_ICON_SIZE.MD} stroke={1.5} aria-hidden />;
+```
+
+When size, stroke and `aria-hidden` are all an icon needs, spread
+`BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS` from `@epam/ai-dial-chat-shared`
+— they already carry the token.
+
+Two exceptions, and only these two:
+
+- **Filled glyphs** (`Icon*Filled`) — Tabler drops the `stroke` prop for the
+  filled set, so passing it is dead code. Leave it off.
+- **Empty-state illustrations** — a 48px+ icon inside `PanelEmptyState` stays at
+  `stroke={1}`; 1.5 reads as a fence at that size. The kit makes the same
+  exception for its own `NoDataContent`.
+
+The border half of the same scale is plain Tailwind: `border` (1px) for
+controls, standalone dividers and table frames, `border-2` for active/selected
+highlighting, and `0.5px solid` in a stylesheet for dividers **inside** a table.
+A named `borderWidth` token cannot work — `borderColor` already owns `warning`,
+`error` and friends, so `border-warning` would set a width and a colour at once.
+
 ## aria-label values go through i18n
 
 All `aria-label` values must go through i18n: in apps use `t()` with a key from `translation-keys.ts`; in libs expose an `ariaLabel`/`ariaLabels` prop with an English default string. Never hardcode English `aria-label` text in apps, and never use `useTranslation` in libs.

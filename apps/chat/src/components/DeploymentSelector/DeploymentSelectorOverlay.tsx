@@ -12,6 +12,7 @@ const DeploymentSelectorPanel = lazy(() => import('./DeploymentSelectorPanel'));
 
 interface Props {
   favorites: CatalogItem[];
+  pinnedItem?: CatalogItem;
   selectedId?: string | null;
   selectedItem?: CatalogItem;
   onSelect: (id: string) => void;
@@ -22,6 +23,7 @@ interface Props {
 
 const DeploymentSelectorOverlay: FC<Props> = ({
   favorites,
+  pinnedItem,
   selectedId,
   selectedItem,
   onSelect,
@@ -48,6 +50,7 @@ const DeploymentSelectorOverlay: FC<Props> = ({
     <Suspense fallback={null}>
       <DeploymentSelectorPanel
         favorites={favorites}
+        pinnedItem={pinnedItem}
         selectedId={selectedId}
         selectedItem={selectedItem}
         onSelect={onSelect}

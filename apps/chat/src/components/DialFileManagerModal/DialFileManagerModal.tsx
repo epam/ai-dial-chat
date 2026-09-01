@@ -5,26 +5,28 @@ import {
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
-  isHiddenPath,
   mimeTypesToAttachmentExtensionLabels,
   mimeTypesToDialFileAcceptTypes,
   useDialFileManager,
   useDialFileManagerTabConfig,
 } from '@epam/ai-dial-chat-hooks';
-import { formatFileSize } from '@epam/ai-dial-chat-shared';
 import {
-  DialFileManagerTabs,
+  FileManagerAttachModal,
+  formatFileSize,
+  isHiddenPath,
+  type AttachResult,
+  type FileManagerAttachModalLabels,
+} from '@epam/ai-dial-chat-shared';
+import {
   DialFileNodeType,
-  useDialFileManagerTabs,
   type DialFile,
   type FileManagerGridRow,
 } from '@epam/ai-dial-react-file-manager';
 import {
-  Popup,
+  DialFileManagerTabs,
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
-  PopupSize,
-  PrimaryButton,
+  useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
@@ -42,10 +44,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
-import DialFileManagerShell from '../DialFileManagerShell/DialFileManagerShell';
-import type { DialFileManagerShellLabels } from '../DialFileManagerShell/types/labels';
 import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';
-import type { AttachResult } from './types/attach-result';
 
 interface Props {
   isOpen: boolean;
@@ -137,9 +136,23 @@ const DialFileManagerModal: FC<Props> = ({
 
   const {
     activeTab,
-    handleTabChange,
+    handleTabChange: handleTabChangeRaw,
     tabs: allTabs,
   } = useDialFileManagerTabs(tabLabels, DialFileManagerTabs.MyFiles);
+
+  const [selectedPaths, setSelectedPaths] = useState(() => new Set<string>());
+
+  const handleSelectedPathsChange = useCallback((paths: Set<string>) => {
+    setSelectedPaths(new Set([...paths].filter((p) => !isHiddenPath(p))));
+  }, []);
+
+  const handleTabChange = useCallback(
+    (tab: DialFileManagerTabs) => {
+      setSelectedPaths(new Set());
+      handleTabChangeRaw(tab);
+    },
+    [handleTabChangeRaw],
+  );
 
   const rootLabel =
     tabLabels[activeTab] || tabLabels[DialFileManagerTabs.MyFiles];
@@ -160,159 +173,82 @@ const DialFileManagerModal: FC<Props> = ({
     forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
   });
 
-  const { items, isLoading, searchResults, isAnyOperationInProgress } =
-    hookResult;
+  const { isAnyOperationInProgress } = hookResult;
 
-  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
-    () => new Set(),
-  );
-
-  const handleSelectedPathsChange = useCallback((paths: Set<string>) => {
-    setSelectedPaths(
-      new Set(Array.from(paths).filter((path) => !isHiddenPath(path))),
-    );
-  }, []);
-
-  const handleTabChangeWithReset = useCallback(
-    (tab: DialFileManagerTabs) => {
-      setSelectedPaths(new Set());
-      handleTabChange(tab);
-    },
-    [handleTabChange],
-  );
-
-  const filesByPath = useMemo(() => {
-    const result = new Map<string, DialFile>();
-    const collect = (nodes: DialFile[]) => {
-      nodes.forEach((item) => {
-        if (
-          item.nodeType === DialFileNodeType.ITEM ||
-          item.nodeType === DialFileNodeType.FOLDER
-        ) {
-          result.set(item.path, item);
-          if (item.id) result.set(item.id, item);
-        }
-        if (item.items) collect(item.items);
-      });
-    };
-    collect(items);
-    searchResults?.forEach((file) => {
-      result.set(file.path, file);
-      if (file.id) result.set(file.id, file);
+  const handleSkippedUnsupportedFiles = useCallback(() => {
+    showInfoNotification({
+      message: t(DialFileManagerI18nKeys.UnsupportedFilesDescription),
+      title: t(DialFileManagerI18nKeys.UnsupportedFilesSkipped),
     });
-    return result;
-  }, [items, searchResults]);
+  }, [showInfoNotification, t]);
 
-  const selectedFiles = useMemo(
-    () =>
-      Array.from(selectedPaths)
-        .map((selectedPath) => filesByPath.get(selectedPath))
-        .filter((file): file is DialFile => file != null),
-    [filesByPath, selectedPaths],
-  );
-
-  const handleAttach = useCallback(() => {
-    const selectedFolderPaths: string[] = [];
-    const selectedFileNodes: DialFile[] = [];
-
-    for (const file of selectedFiles) {
-      if (isHiddenPath(file.path)) continue;
-
-      if (file.nodeType === DialFileNodeType.FOLDER) {
-        selectedFolderPaths.push(file.path);
-      } else {
-        selectedFileNodes.push(file);
-      }
-    }
-
-    const dedupedFolderPaths = selectedFolderPaths.filter(
-      (fp) =>
-        !selectedFolderPaths.some(
-          (other) => other !== fp && fp.startsWith(`${other}/`),
-        ),
-    );
-
-    const validFiles = selectedFileNodes.filter((file) => {
-      if (isHiddenPath(file.path)) return false;
-      if (
-        allowedTypes != null &&
-        allowedTypes.length > 0 &&
-        file.contentType != null &&
-        !isMimeTypeAllowed(file.contentType, allowedTypes)
-      ) {
-        return false;
-      }
-      return true;
-    });
-
-    const dedupedFiles = validFiles.filter(
-      (file) =>
-        !dedupedFolderPaths.some((fp) => file.path.startsWith(`${fp}/`)),
-    );
-
-    const skippedCount = selectedFileNodes.length - validFiles.length;
-    if (skippedCount > 0) {
-      showInfoNotification({
-        message: t(DialFileManagerI18nKeys.UnsupportedFilesDescription),
-        title: t(DialFileManagerI18nKeys.UnsupportedFilesSkipped),
-      });
-    }
-
-    const dialCoreFolderPaths = dedupedFolderPaths.flatMap((virtualPath) => {
-      const file = filesByPath.get(virtualPath);
-      if (file == null) return [];
-      const source = file.url ?? file.id ?? '';
-      if (!source) return [];
-      const dialPath = source.startsWith('files/')
-        ? source
-        : `files/${file.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;
-      /*
-       * Strip any `../`/`./` segments before the path is forwarded to DIAL Core —
-       * the BFF is the trust boundary, but this guards against a compromised response.
-       */
-      const normalizedDialPath = dialPath
-        .split('/')
-        .filter((segment) => segment !== '..' && segment !== '.')
-        .join('/');
-      return [
-        normalizedDialPath.endsWith('/')
-          ? normalizedDialPath
-          : `${normalizedDialPath}/`,
-      ];
-    });
-
-    const totalCount =
-      existingAttachmentsAmount +
-      dedupedFiles.length +
-      dialCoreFolderPaths.length;
-    if (
-      maximumAttachmentsAmount != null &&
-      maximumAttachmentsAmount > 0 &&
-      totalCount > maximumAttachmentsAmount
-    ) {
+  const handleCountLimitExceeded = useCallback(
+    (totalCount: number, limit: number) => {
       showErrorNotification({
         message: t(DialFileManagerI18nKeys.TooManyFilesDescription, {
           count: totalCount,
-          limit: maximumAttachmentsAmount,
+          limit,
         }),
         title: t(DialFileManagerI18nKeys.TooManyFilesSelected),
       });
-      return;
-    }
+    },
+    [showErrorNotification, t],
+  );
 
-    onAttach({ files: dedupedFiles, folderPaths: dialCoreFolderPaths });
-  }, [
-    onAttach,
-    selectedFiles,
-    allowedTypes,
-    maximumAttachmentsAmount,
-    existingAttachmentsAmount,
-    showInfoNotification,
-    showErrorNotification,
-    t,
-    filesByPath,
-    bucket,
-  ]);
+  const isFileTypeAllowed = useCallback(
+    (contentType: string): boolean => {
+      if (allowedTypes == null || allowedTypes.length === 0) return true;
+      return isMimeTypeAllowed(contentType, allowedTypes);
+    },
+    [allowedTypes],
+  );
+
+  const getDisabledTooltip = useCallback(
+    (row: FileManagerGridRow) => {
+      if (isHiddenPath(row.path)) {
+        return t(DialFileManagerI18nKeys.AttachingHiddenFilesNotAllowed);
+      }
+      return undefined;
+    },
+    [t],
+  );
+
+  const isRowSelectable = useCallback(
+    (node: { data?: FileManagerGridRow | null }) => {
+      const row = node.data;
+      if (row == null) return false;
+
+      if (isHiddenPath(row.path)) return false;
+
+      if (row.nodeType === DialFileNodeType.FOLDER) {
+        return canAttachFolders;
+      }
+
+      if (row.nodeType === DialFileNodeType.ITEM) {
+        if (
+          allowedTypes != null &&
+          allowedTypes.length > 0 &&
+          row.contentType != null &&
+          !isMimeTypeAllowed(row.contentType, allowedTypes)
+        ) {
+          return false;
+        }
+
+        if (
+          maxSelectableFileSize != null &&
+          row.contentLength != null &&
+          row.contentLength > maxSelectableFileSize
+        ) {
+          return false;
+        }
+
+        return true;
+      }
+
+      return false;
+    },
+    [canAttachFolders, allowedTypes, maxSelectableFileSize],
+  );
 
   const headerDescription = useMemo(() => {
     const hasTypeConstraint = allowedTypes != null && allowedTypes.length > 0;
@@ -382,18 +318,14 @@ const DialFileManagerModal: FC<Props> = ({
     if (allowedTypes == null || allowedTypes.length === 0) {
       return undefined;
     }
-
     const areAllTypesAllowed = allowedTypes.some(
       (type) => type === '*' || type === '*/*',
     );
-
     if (areAllTypesAllowed) {
       return undefined;
     }
-
     const allowedExtensions =
       allowedTypesLabel ?? mimeTypesToAttachmentExtensionLabels(allowedTypes);
-
     return t(DialFileManagerI18nKeys.UnsupportedFileTypeTooltip, {
       allowedExtensions,
     });
@@ -404,51 +336,26 @@ const DialFileManagerModal: FC<Props> = ({
     [allowedTypes],
   );
 
-  const getDisabledTooltip = useCallback(
-    (row: FileManagerGridRow) => {
-      if (isHiddenPath(row.path)) {
-        return t(DialFileManagerI18nKeys.AttachingHiddenFilesNotAllowed);
-      }
-      return undefined;
+  const resolveFolderPath = useCallback(
+    (file: DialFile): string | null => {
+      const source = file.url ?? file.id ?? '';
+      if (!source) return null;
+      const dialPath = source.startsWith('files/')
+        ? source
+        : `files/${file.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;
+      /*
+       * Strip any `../`/`./` segments before the path is forwarded to DIAL Core —
+       * the BFF is the trust boundary, but this guards against a compromised response.
+       */
+      const normalizedDialPath = dialPath
+        .split('/')
+        .filter((segment) => segment !== '..' && segment !== '.')
+        .join('/');
+      return normalizedDialPath.endsWith('/')
+        ? normalizedDialPath
+        : `${normalizedDialPath}/`;
     },
-    [t],
-  );
-
-  const isRowSelectable = useCallback(
-    (node: { data?: FileManagerGridRow | null }) => {
-      const row = node.data;
-      if (row == null) return false;
-
-      if (isHiddenPath(row.path)) return false;
-
-      if (row.nodeType === DialFileNodeType.FOLDER) {
-        return canAttachFolders;
-      }
-
-      if (row.nodeType === DialFileNodeType.ITEM) {
-        if (
-          allowedTypes != null &&
-          allowedTypes.length > 0 &&
-          row.contentType != null &&
-          !isMimeTypeAllowed(row.contentType, allowedTypes)
-        ) {
-          return false;
-        }
-
-        if (
-          maxSelectableFileSize != null &&
-          row.contentLength != null &&
-          row.contentLength > maxSelectableFileSize
-        ) {
-          return false;
-        }
-
-        return true;
-      }
-
-      return false;
-    },
-    [canAttachFolders, allowedTypes, maxSelectableFileSize],
+    [bucket],
   );
 
   const getUploadProgressText = useCallback(
@@ -509,7 +416,7 @@ const DialFileManagerModal: FC<Props> = ({
     [t, emptyTitle, emptyDescription],
   );
 
-  const treeHeaderByTab: Record<DialFileManagerTabs, string> = useMemo(
+  const treeHeaderByTab = useMemo(
     () => ({
       [DialFileManagerTabs.MyFiles]: t(
         DialFileManagerI18nKeys.MyFilesTreeHeader,
@@ -521,8 +428,11 @@ const DialFileManagerModal: FC<Props> = ({
     [t],
   );
 
-  const labels: DialFileManagerShellLabels = useMemo(
+  const labels: FileManagerAttachModalLabels = useMemo(
     () => ({
+      title,
+      attachLabel,
+      headerDescription,
       errorMessage,
       retryLabel,
       hiddenFilesLabel,
@@ -604,6 +514,9 @@ const DialFileManagerModal: FC<Props> = ({
       metadataAuthorLabel: t(DialFileManagerI18nKeys.MetadataAuthorLabel),
     }),
     [
+      title,
+      attachLabel,
+      headerDescription,
       errorMessage,
       retryLabel,
       hiddenFilesLabel,
@@ -632,54 +545,33 @@ const DialFileManagerModal: FC<Props> = ({
   );
 
   return (
-    <Popup
-      open={isOpen}
-      header={
-        <div className="flex flex-col gap-1">
-          <span>{title}</span>
-          {headerDescription != null && (
-            <p className="dial-small-text text-start">{headerDescription}</p>
-          )}
-        </div>
-      }
-      ariaLabel={title}
-      size={PopupSize.Lg}
-      className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken"
+    <FileManagerAttachModal
+      isOpen={isOpen}
       onClose={onClose}
-      footer={
-        <div className="flex justify-end px-6 py-4">
-          <PrimaryButton
-            label={attachLabel}
-            disabled={
-              selectedFiles.length === 0 ||
-              isLoading ||
-              isAnyOperationInProgress
-            }
-            onClick={handleAttach}
-          />
-        </div>
-      }
-    >
-      <div className="flex min-h-0 flex-col">
-        <DialFileManagerShell
-          hookResult={hookResult}
-          labels={labels}
-          activeTab={activeTab}
-          tabs={tabs}
-          onTabChange={handleTabChangeWithReset}
-          selectedPaths={selectedPaths}
-          onSelectedPathsChange={handleSelectedPathsChange}
-          variant={DialFileManagerVariant.Attach}
-          actionProfile={DialFileManagerActionProfile.Attach}
-          autoSelectUploadedItems={autoSelectUploadedItems}
-          allowedFileTypes={allowedFileTypes}
-          maxSelectableFileSize={maxSelectableFileSize}
-          isRowSelectable={isRowSelectable}
-          getDisabledTooltip={getDisabledTooltip}
-          unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
-        />
-      </div>
-    </Popup>
+      onAttach={onAttach}
+      onSkippedUnsupportedFiles={handleSkippedUnsupportedFiles}
+      onCountLimitExceeded={handleCountLimitExceeded}
+      controller={hookResult}
+      isAnyOperationInProgress={isAnyOperationInProgress}
+      activeTab={activeTab}
+      tabs={tabs}
+      onTabChange={handleTabChange}
+      labels={labels}
+      variant={DialFileManagerVariant.Attach}
+      actionProfile={DialFileManagerActionProfile.Attach}
+      selectedPaths={selectedPaths}
+      onSelectedPathsChange={handleSelectedPathsChange}
+      resolveFolderPath={resolveFolderPath}
+      isFileTypeAllowed={isFileTypeAllowed}
+      maxSelectableFileSize={maxSelectableFileSize}
+      maximumAttachmentsAmount={maximumAttachmentsAmount}
+      existingAttachmentsAmount={existingAttachmentsAmount}
+      isRowSelectable={isRowSelectable}
+      getDisabledTooltip={getDisabledTooltip}
+      unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
+      allowedFileTypes={allowedFileTypes}
+      autoSelectUploadedItems={autoSelectUploadedItems}
+    />
   );
 };
 

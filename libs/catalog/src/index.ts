@@ -1,6 +1,7 @@
 // Types
 export { CodeLanguage } from './types/code-language';
 export { CatalogDetailsTab } from './types/detail-tab';
+export { CatalogLimitStatus } from './models/item-details-data';
 export {
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
@@ -52,6 +53,7 @@ export type {
   ToolAnnotation,
   ToolDefinition,
   ToolInputParam,
+  UsageLimitGroup,
   UsageLimitProgressRow,
   UsageLimitRow,
 } from './models/item-details-data';
@@ -122,9 +124,6 @@ export type {
 
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
-
-export { FolderPath } from '@epam/ai-dial-ui-kit';
-export type { FolderPathProps } from '@epam/ai-dial-ui-kit';
 
 export { Filter } from './components/Filter/Filter';
 export type { FilterColors, FilterProps } from './components/Filter/Filter';

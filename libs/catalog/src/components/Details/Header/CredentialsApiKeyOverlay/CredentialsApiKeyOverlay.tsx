@@ -1,5 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  DIAL_KIT_ICON_STROKE,
   Input,
   LinkButton,
   NeutralButton,
@@ -158,7 +159,9 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
       {isSignedIn && (
         <div className="animate-fadeIn px-4 py-3.5">
           <CredentialsInfoCard
-            icon={<IconKey size={20} aria-hidden />}
+            icon={
+              <IconKey size={20} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
+            }
             title={addedMessage}
             description={addedWhenLabel}
             action={

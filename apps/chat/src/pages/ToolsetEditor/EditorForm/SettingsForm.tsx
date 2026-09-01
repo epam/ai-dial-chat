@@ -1,7 +1,11 @@
 import { buildToolsetMcpUrl } from '@epam/ai-dial-chat-hooks';
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  TAG_INPUT_TAG_CLASS_NAME,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
   Input,
@@ -115,12 +119,14 @@ const SettingsForm: FC<Props> = ({
                 size={DIAL_ICON_SIZE.SM}
                 className="text-success"
                 aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
               />
             ) : (
               <IconCopy
                 size={DIAL_ICON_SIZE.SM}
                 className="text-secondary"
                 aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
               />
             )
           }
@@ -146,6 +152,7 @@ const SettingsForm: FC<Props> = ({
         placeholder={t(ToolsetEditorI18nKeys.AllowedToolsPlaceholder)}
         value={form.allowedTools}
         onChange={(allowedTools) => onChange({ allowedTools })}
+        tagClassName={TAG_INPUT_TAG_CLASS_NAME}
       />
 
       <AuthSection

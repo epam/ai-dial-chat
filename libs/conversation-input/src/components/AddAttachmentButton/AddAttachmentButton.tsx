@@ -8,6 +8,7 @@ import {
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Dropdown,
   ElementSize,
   GhostIconButton,
@@ -158,6 +159,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
                 style={cssVars}
                 className={styles.selectedToolIcon}
                 aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
               />
             )}
           </span>
@@ -182,7 +184,13 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             {
               key: 'attach',
               label: attachLabel,
-              icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
+              icon: (
+                <IconPaperclip
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
               onClick: onAttachClick,
             },
           ]
@@ -193,7 +201,13 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             {
               key: 'tools',
               label: toolsMenuTitle,
-              icon: <IconTool size={BASE_ICON_SIZE} aria-hidden />,
+              icon: (
+                <IconTool
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
               onClick: isMobile
                 ? () => {
                     setIsToolsSheetOpen(true);
@@ -205,7 +219,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
                     iconAfter: (
                       <IconChevronRight
                         size={BASE_ICON_SIZE}
-                        stroke={1.5}
+                        stroke={DIAL_KIT_ICON_STROKE}
                         style={cssVars}
                         className={mergeClasses(
                           'rtl:scale-x-[-1]',
@@ -226,7 +240,13 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             {
               key: 'prompts',
               label: promptsMenuTitle,
-              icon: <IconPrompt size={BASE_ICON_SIZE} aria-hidden />,
+              icon: (
+                <IconPrompt
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
               onClick: isMobile
                 ? () => {
                     setIsPromptsSheetOpen(true);
@@ -238,7 +258,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
                     iconAfter: (
                       <IconChevronRight
                         size={BASE_ICON_SIZE}
-                        stroke={1.5}
+                        stroke={DIAL_KIT_ICON_STROKE}
                         style={cssVars}
                         className={mergeClasses(
                           'rtl:scale-x-[-1]',
@@ -269,11 +289,17 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             {
               key: 'chat-settings',
               label: chatSettings.menuItemLabel ?? 'Chat settings',
-              icon: <IconSettings size={BASE_ICON_SIZE} aria-hidden />,
+              icon: (
+                <IconSettings
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
               iconAfter: isMobile ? (
                 <IconChevronRight
                   size={BASE_ICON_SIZE}
-                  stroke={1.5}
+                  stroke={DIAL_KIT_ICON_STROKE}
                   style={cssVars}
                   className={mergeClasses(
                     'rtl:scale-x-[-1]',
@@ -316,7 +342,13 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       }
     >
       <GhostIconButton
-        icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
+        icon={
+          <IconPlus
+            size={DIAL_ICON_SIZE.LG}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        }
         aria-label={addMenuTitle}
         tooltipProps={{ tooltip: addMenuTitle }}
         disabled={isDisabled}
@@ -329,7 +361,13 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       {isMobile ? (
         <>
           <GhostIconButton
-            icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
+            icon={
+              <IconPlus
+                size={DIAL_ICON_SIZE.LG}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             aria-label={addMenuTitle}
             size={ElementSize.Large}
             tooltipProps={{ tooltip: addMenuTitle }}

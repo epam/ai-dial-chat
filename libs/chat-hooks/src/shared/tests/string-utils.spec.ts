@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest';
 import {
   getUtf8ByteLength,
   PROHIBITED_CONVERSATION_NAME_CHARS_RE,
   sanitizeConversationName,
   stripTrailingDots,
-} from '../string-utils';
+} from '@epam/ai-dial-chat-shared';
+import { describe, expect, it } from 'vitest';
 
 describe('PROHIBITED_CONVERSATION_NAME_CHARS_RE', () => {
   const prohibited = [
@@ -83,6 +83,10 @@ describe('stripTrailingDots', () => {
 
   it('removes multiple trailing dots', () => {
     expect(stripTrailingDots('name...')).toBe('name');
+  });
+
+  it('removes a long sequence of trailing dots', () => {
+    expect(stripTrailingDots(`name${'.'.repeat(100_000)}`)).toBe('name');
   });
 
   it('preserves a dot at the start of the name', () => {

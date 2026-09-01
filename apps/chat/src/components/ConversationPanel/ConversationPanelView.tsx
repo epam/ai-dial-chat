@@ -1,34 +1,46 @@
-import { ResponseError } from '@epam/ai-dial-chat-api-client';
+import {
+  ResponseError,
+  type ConversationListItemDto,
+  type DeploymentItemDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   ConversationExportMode,
   ConversationTransferErrorCode,
-  ConversationTransferWarningCode,
-  findDeploymentByIdOrReference,
-  formatQuotedNameList,
-  getConversationPath,
-  getModelIdFromConversationId,
-  RecipientsCountStatus,
-  safeDecodeURIComponent,
-  useConversationExport,
-  useConversationImport,
-  useShareRecipientsCount,
   type ConversationTransferErrorEvent,
   type ConversationTransferSuccessEvent,
+  ConversationTransferWarningCode,
   type ConversationTransferWarningEvent,
+  deriveConversationRowActionState,
+  formatQuotedNameList,
+  getApiErrorDetails,
+  getConversationPath,
+  safeDecodeURIComponent,
+  useActiveConversationSync,
+  useAsyncConfirmDialog,
+  useConversationExport,
+  useConversationImport,
+  useConversationLookupMaps,
+  useConversationPanelItems,
+  useImportFilePicker,
+  useShareRecipientsCount,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { FilterTab, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
-  FilterTab,
+  ImportExportQueue,
+  RenameConversationPopup,
   type ConversationItem,
   type ConversationMove,
   type ConversationPanelStyles,
+  type ImportExportQueueLabels,
+  type RenameConversationPopupLabels,
 } from '@epam/ai-dial-conversation-panel';
 import {
+  ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  ConfirmationPopup,
+  DIAL_KIT_ICON_STROKE,
   Popup,
   PopupSize,
   RadioGroup,
@@ -46,16 +58,7 @@ import {
   IconWorldOff,
   IconWorldShare,
 } from '@tabler/icons-react';
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type FC,
-} from 'react';
+import { memo, useCallback, useMemo, useRef, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import {
@@ -86,7 +89,6 @@ import {
   filesApi,
   shareApi,
 } from '../../server-api/api-client';
-import { getApiErrorDetails } from '../../server-api/api-error';
 import { UnauthorizedError } from '../../server-api/base';
 import { unpublishConversation } from '../../server-api/conversation-publish.api';
 import {
@@ -105,12 +107,9 @@ import {
 } from '../../utils/conversation-id-match';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
-import ImportExportQueue from '../ImportExportQueue/ImportExportQueue';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer/PublishConversationPanelContainer';
-import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
 import ConversationPanelMenu from './ConversationPanelMenu';
-import { getConversationSource } from './get-conversation-source';
 
 const PANEL_STYLES: ConversationPanelStyles = {
   itemIconBadgeClassName: 'rounded-lg',
@@ -329,55 +328,67 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const { items: deployments, isLoading: isDeploymentsLoading } =
     useDeployments();
 
-  const panelActiveConversationId = useMemo(
-    () =>
-      activeConversationId
-        ? toPanelConversationId(activeConversationId)
-        : undefined,
-    [activeConversationId],
-  );
+  const panelActiveConversationId = useActiveConversationSync({
+    activeConversationId,
+    items,
+    refreshConversations,
+    markConversationViewed,
+    conversationIdsMatch,
+    toPanelConversationId,
+  });
 
-  useEffect(() => {
-    if (!panelActiveConversationId) return;
-    const isListed = items.some((item) =>
-      conversationIdsMatch(item.id, panelActiveConversationId),
-    );
-    if (!isListed) void refreshConversations();
-    // Intentionally not including items or refreshConversations in the dependency array to avoid re-triggering on every list update.
-  }, [panelActiveConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /*
-   * Single shared entry point for marking a scheduler-created conversation as
-   * viewed — fires whenever the active conversation changes, whether the user
-   * navigated by clicking a history panel row or via direct URL navigation.
-   * markConversationViewed itself no-ops for non-scheduler or already-read items.
-   */
-  useEffect(() => {
-    if (!panelActiveConversationId) return;
-    const activeItem = items.find((item) =>
-      conversationIdsMatch(item.id, panelActiveConversationId),
-    );
-    if (activeItem) void markConversationViewed(activeItem.id);
-  }, [panelActiveConversationId, items, markConversationViewed]);
-
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  const [pendingUnshareId, setPendingUnshareId] = useState<string | null>(null);
-  const [isUnsharing, setIsUnsharing] = useState(false);
-  const [unshareError, setUnshareError] = useState<string | null>(null);
-
-  const [pendingRevokeId, setPendingRevokeId] = useState<string | null>(null);
-  const [isRevoking, setIsRevoking] = useState(false);
-  const [revokeError, setRevokeError] = useState<string | null>(null);
-
-  const [pendingRenameItem, setPendingRenameItem] = useState<{
-    id: string;
+  const {
+    pending: pendingDeleteId,
+    isPending: isDeletePending,
+    isRunning: isDeleting,
+    error: deleteError,
+    open: openDeleteDialog,
+    close: closeDeleteDialog,
+    confirm: confirmDeleteDialog,
+  } = useAsyncConfirmDialog<string>();
+  const {
+    pending: pendingUnshareId,
+    isPending: isUnsharePending,
+    isRunning: isUnsharing,
+    error: unshareError,
+    open: openUnshareDialog,
+    close: closeUnshareDialog,
+    confirm: confirmUnshareDialog,
+  } = useAsyncConfirmDialog<string>();
+  const {
+    pending: pendingRevokeId,
+    isPending: isRevokePending,
+    isRunning: isRevoking,
+    error: revokeError,
+    open: openRevokeDialog,
+    close: closeRevokeDialog,
+    confirm: confirmRevokeDialog,
+  } = useAsyncConfirmDialog<string>();
+  const {
+    pending: pendingRename,
+    isPending: isRenamePending,
+    isRunning: isRenaming,
+    error: renameError,
+    open: openRenameDialog,
+    close: closeRenameDialog,
+    confirm: confirmRenameDialog,
+  } = useAsyncConfirmDialog<{ id: string; title: string }>();
+  const {
+    pending: pendingUnpublish,
+    isPending: isUnpublishPending,
+    isRunning: isUnpublishing,
+    open: openUnpublishDialog,
+    close: closeUnpublishDialog,
+    confirm: confirmUnpublishDialog,
+  } = useAsyncConfirmDialog<{
+    path: string;
     title: string;
-  } | null>(null);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [renameError, setRenameError] = useState<string | null>(null);
+    folders: string[];
+  }>();
+  /* Set only when the conversation is published to more than one folder. */
+  const [selectedUnpublishFolder, setSelectedUnpublishFolder] = useState<
+    string | null
+  >(null);
 
   const [pendingShareConversationPath, setPendingShareConversationPath] =
     useState<string | null>(null);
@@ -387,18 +398,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     title: string;
   } | null>(null);
   const publishReturnFocusRef = useRef<HTMLButtonElement | null>(null);
-
-  const [pendingUnpublishConversation, setPendingUnpublishConversation] =
-    useState<{
-      path: string;
-      title: string;
-      folders: string[][];
-    } | null>(null);
-  /* Set only when the conversation is published to more than one folder. */
-  const [selectedUnpublishFolder, setSelectedUnpublishFolder] = useState<
-    string | null
-  >(null);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
 
   const {
     requestRecipientsCount,
@@ -413,76 +412,115 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     void exportAll();
   }, [exportAll]);
 
-  const importFileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleImportClick = useCallback(() => {
-    importFileInputRef.current?.click();
-  }, []);
-
-  const handleImportFileChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      // Reset so selecting the same file again re-triggers onChange.
-      event.target.value = '';
-      if (file) void importConversations(file);
-    },
+  const handleFileSelected = useCallback(
+    (file: File) => void importConversations(file),
     [importConversations],
   );
+
+  const {
+    inputRef: importFileInputRef,
+    triggerImport: handleImportClick,
+    handleFileChange: handleImportFileChange,
+  } = useImportFilePicker({
+    accept: isMobile ? undefined : IMPORT_FILE_ACCEPT,
+    onFileSelected: handleFileSelected,
+  });
 
   const exportQueueTitle = t(ConversationExportI18nKeys.QueueTitle);
   const importQueueTitle = t(ConversationImportI18nKeys.QueueTitle);
 
-  /** Map panel id → context id for reverse lookup */
-  const panelToContextId = useMemo(
-    () =>
-      new Map(items.map((item) => [toPanelConversationId(item.id), item.id])),
-    [items],
+  const queueLabels = useMemo<ImportExportQueueLabels>(
+    () => ({
+      allConversationsJobLabel: t(
+        ConversationExportI18nKeys.AllConversationsJobLabel,
+      ),
+      closeJobAriaLabel: (title) =>
+        t(ConversationExportI18nKeys.CloseJobAriaLabel, { title }),
+      retryJobAriaLabel: (title) =>
+        t(ConversationExportI18nKeys.RetryJobAriaLabel, { title }),
+      collapseQueueAriaLabel: t(
+        ConversationExportI18nKeys.CollapseQueueAriaLabel,
+      ),
+      expandQueueAriaLabel: t(ConversationExportI18nKeys.ExpandQueueAriaLabel),
+      closeQueueAriaLabel: t(ConversationExportI18nKeys.CloseQueueAriaLabel),
+      closeQueueConfirmHeader: t(
+        ConversationExportI18nKeys.CloseQueueConfirmHeader,
+      ),
+      closeQueueConfirmDescriptionInProgress: t(
+        ConversationExportI18nKeys.CloseQueueConfirmDescriptionInProgress,
+      ),
+      closeQueueConfirmDescriptionFailed: t(
+        ConversationExportI18nKeys.CloseQueueConfirmDescriptionFailed,
+      ),
+      closeQueueConfirmDescriptionMixed: t(
+        ConversationExportI18nKeys.CloseQueueConfirmDescriptionMixed,
+      ),
+      closeLabel: t(ButtonsI18nKeys.Close),
+      cancelLabel: t(ButtonsI18nKeys.Cancel),
+    }),
+    [t],
   );
+
+  const renameLabels = useMemo<RenameConversationPopupLabels>(
+    () => ({
+      popupTitle: t(ConversationPanelI18nKeys.RenameTitle),
+      inputPlaceholder: t(ConversationPanelI18nKeys.RenameInputPlaceholder),
+      renameWithAiLabel: t(ConversationPanelI18nKeys.RenameWithAiLabel),
+      renameWithAiError: t(ConversationPanelI18nKeys.RenameWithAiError),
+      nameTooLongError: t(ConversationPanelI18nKeys.RenameTitleTooLong),
+      saveLabel: t(ButtonsI18nKeys.Save),
+      cancelLabel: t(ButtonsI18nKeys.Cancel),
+    }),
+    [t],
+  );
+
+  /** Map panel id → context id for reverse lookup */
+  const { toContextId, getRawItem } = useConversationLookupMaps({
+    items,
+    toPanelConversationId,
+  });
 
   const taskBadgeLabel = t(ConversationPanelI18nKeys.TaskBadgeLabel);
   const unreadIndicatorLabel = t(
     ConversationPanelI18nKeys.UnreadIndicatorLabel,
   );
 
-  const conversations: ConversationItem[] = useMemo(
-    () =>
-      items.map((item) => {
-        const id = toPanelConversationId(item.id);
-        const modelId = getModelIdFromConversationId(item.id);
-        const deployment = modelId
-          ? findDeploymentByIdOrReference(deployments, modelId)
-          : undefined;
-        /*
-         * modelId is guessed from the conversation's resource path, which
-         * cannot reliably distinguish a real conversation folder from a
-         * multi-segment deployment id when the deployment itself isn't found
-         * in `deployments` (e.g. unavailable/deleted) — so the fallback tooltip
-         * shows only the last path segment, not the full percent-encoded path.
-         */
-        const fallbackTooltip = modelId
-          ? safeDecodeURIComponent(modelId.split('/').pop() ?? modelId)
-          : undefined;
-
-        return {
-          id,
-          title: item.title,
-          isPinned: item.isPinned ?? false,
-          iconUrl: deployment?.iconUrl
-            ? resolveCatalogIconUrl(deployment.iconUrl)
-            : undefined,
-          iconTooltip: deployment
-            ? resolveLocalizedText(deployment.displayName, language)
-            : fallbackTooltip,
-          isIconLoading: isDeploymentsLoading,
-          source: getConversationSource(item),
-          href: getConversationRoute(id),
-          ...(item.isScheduledTask
-            ? { showTaskBadge: true, taskBadgeLabel, isUnread: item.isUnread }
-            : {}),
-        };
-      }),
-    [items, deployments, isDeploymentsLoading, taskBadgeLabel, language],
+  const resolveIconUrl = useCallback(
+    (deployment: DeploymentItemDto | undefined) =>
+      deployment?.iconUrl
+        ? resolveCatalogIconUrl(deployment.iconUrl)
+        : undefined,
+    [],
   );
+
+  const resolveIconTooltip = useCallback(
+    (deployment: DeploymentItemDto | undefined, fallback: string) =>
+      deployment
+        ? resolveLocalizedText(deployment.displayName, language)
+        : fallback || undefined,
+    [language],
+  );
+
+  const resolveHref = useCallback((id: string) => getConversationRoute(id), []);
+
+  const resolveTaskBadge = useCallback(
+    (item: ConversationListItemDto) =>
+      item.isScheduledTask
+        ? { label: taskBadgeLabel, isUnread: item.isUnread ?? false }
+        : undefined,
+    [taskBadgeLabel],
+  );
+
+  const conversations = useConversationPanelItems({
+    items,
+    deployments,
+    isDeploymentsLoading,
+    toPanelConversationId,
+    resolveIconUrl,
+    resolveIconTooltip,
+    resolveHref,
+    resolveTaskBadge,
+  });
 
   const filterLabels = useMemo(
     () => ({
@@ -507,7 +545,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const handleMoveConversation = useCallback(
     ({ draggedId, targetGroupKey }: ConversationMove) => {
-      const contextId = panelToContextId.get(draggedId);
+      const contextId = toContextId(draggedId);
       if (!contextId) return;
 
       const draggedItem = conversations.find((c) => c.id === draggedId);
@@ -520,7 +558,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       }
       // Same-group reorder: no API available in this iteration — no-op.
     },
-    [panelToContextId, conversations, pinConversation],
+    [toContextId, conversations, pinConversation],
   );
 
   /*
@@ -533,12 +571,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     (item: ConversationItem, trigger: HTMLButtonElement) => {
       publishReturnFocusRef.current = trigger;
 
-      const contextId = panelToContextId.get(item.id);
+      const contextId = toContextId(item.id);
       if (!contextId) return;
 
       /* Only an owned, writable row can offer revoking or unpublishing, so
        * only those need either lookup. */
-      const rawItem = items.find((c) => c.id === contextId);
+      const rawItem = getRawItem(item.id);
       if (
         rawItem?.isReadonly ||
         rawItem?.sharedWithMe ||
@@ -560,8 +598,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       }
     },
     [
-      panelToContextId,
-      items,
+      toContextId,
+      getRawItem,
       isConversationsSharingEnabled,
       isConversationsPublishingEnabled,
       requestRecipientsCount,
@@ -571,38 +609,31 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const getActions = useCallback(
     (panelItem: ConversationItem): DropdownItem[] => {
-      const contextId = panelToContextId.get(panelItem.id);
+      const contextId = toContextId(panelItem.id);
       if (!contextId) return [];
 
-      const rawItem = items.find((c) => c.id === contextId);
-      const isReadonlyItem =
-        rawItem?.isReadonly ||
-        rawItem?.sharedWithMe ||
-        rawItem?.publishedWithMe;
-
+      const rawItem = getRawItem(panelItem.id);
       const conversationPath = getConversationPath(
         normalizeConversationId(contextId),
       );
       const history = getPublishHistory(conversationPath);
-      /* Deduplicated: history lists one entry per publication, so a folder
-       * published to twice would otherwise appear twice. */
-      const publishedFolders =
-        history.status === PublishHistoryStatus.Resolved && !isReadonlyItem
-          ? [
-              ...new Map(
-                (history.entries ?? []).map((entry) => [
-                  entry.folderPath.join('/'),
-                  entry.folderPath,
-                ]),
-              ).values(),
-            ]
-          : [];
-
       const recipients = getRecipientsCount(contextId);
-      const isRevokeVisible =
-        recipients.status === RecipientsCountStatus.Unknown ||
-        (recipients.status === RecipientsCountStatus.Resolved &&
-          (recipients.count ?? 0) > 0);
+
+      const {
+        isReadonly: isReadonlyItem,
+        publishedFolders,
+        isRevokeVisible,
+      } = deriveConversationRowActionState(
+        {
+          sharedWithMe: rawItem?.sharedWithMe ?? false,
+          publishedWithMe: rawItem?.publishedWithMe ?? false,
+          isReadonly: rawItem?.isReadonly ?? false,
+        },
+        history.status === PublishHistoryStatus.Resolved
+          ? history.entries
+          : undefined,
+        recipients,
+      );
 
       const pinAction: DropdownItem = {
         key: 'pin',
@@ -615,7 +646,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             className="text-secondary"
           />
         ) : (
-          <IconPin size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+          <IconPin
+            size={DIAL_ICON_SIZE.SM}
+            className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
         ),
         onClick: () => pinConversation(contextId, !panelItem.isPinned),
       };
@@ -623,7 +658,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       const duplicateAction: DropdownItem = {
         key: 'duplicate',
         label: t(ButtonsI18nKeys.Duplicate),
-        icon: <IconCopy size={DIAL_ICON_SIZE.SM} className="text-secondary" />,
+        icon: (
+          <IconCopy
+            size={DIAL_ICON_SIZE.SM}
+            className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        ),
         onClick: async () => {
           try {
             const newPath = await duplicateConversation(contextId);
@@ -658,7 +699,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         key: 'export',
         label: t(ConversationExportI18nKeys.ExportLabel),
         icon: (
-          <IconDownload size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+          <IconDownload
+            size={DIAL_ICON_SIZE.SM}
+            className="text-secondary"
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
         ),
         children: [
           {
@@ -681,8 +726,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           readonlyActions.push({
             key: 'unshare',
             label: t(ButtonsI18nKeys.RemoveFromMyList),
-            icon: <IconTrashX size={DIAL_ICON_SIZE.SM} />,
-            onClick: () => setPendingUnshareId(contextId),
+            icon: (
+              <IconTrashX
+                size={DIAL_ICON_SIZE.SM}
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            ),
+            onClick: () => openUnshareDialog(contextId),
           });
         }
         return readonlyActions;
@@ -697,10 +747,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             <IconPencilMinus
               size={DIAL_ICON_SIZE.SM}
               className="text-secondary"
+              stroke={DIAL_KIT_ICON_STROKE}
             />
           ),
           onClick: () =>
-            setPendingRenameItem({ id: contextId, title: panelItem.title }),
+            openRenameDialog({ id: contextId, title: panelItem.title }),
         },
         duplicateAction,
         exportAction,
@@ -713,6 +764,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                   <IconShare
                     size={DIAL_ICON_SIZE.SM}
                     className="text-secondary"
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 ),
                 onClick: () => setPendingShareConversationPath(contextId),
@@ -736,6 +788,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                   <IconWorldShare
                     size={DIAL_ICON_SIZE.SM}
                     className="text-secondary"
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 ),
                 /*
@@ -772,11 +825,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                     size={DIAL_ICON_SIZE.SM}
                     aria-hidden
                     className="text-secondary"
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 ),
                 onClick: () => {
                   setSelectedUnpublishFolder(null);
-                  setPendingUnpublishConversation({
+                  openUnpublishDialog({
                     path: conversationPath,
                     title: panelItem.title,
                     folders: publishedFolders,
@@ -810,24 +864,31 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                   <IconUserOff
                     size={DIAL_ICON_SIZE.SM}
                     className="text-secondary"
+                    stroke={DIAL_KIT_ICON_STROKE}
                   />
                 ),
-                onClick: () => setPendingRevokeId(contextId),
+                onClick: () => openRevokeDialog(contextId),
               },
             ]
           : []),
         {
           key: 'delete',
           label: t(ButtonsI18nKeys.Delete),
-          icon: <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-error" />,
+          icon: (
+            <IconTrashX
+              size={DIAL_ICON_SIZE.SM}
+              className="text-error"
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          ),
           className: 'text-error',
-          onClick: () => setPendingDeleteId(contextId),
+          onClick: () => openDeleteDialog(contextId),
         },
       ];
     },
     [
-      panelToContextId,
-      items,
+      toContextId,
+      getRawItem,
       t,
       pinConversation,
       duplicateConversation,
@@ -841,6 +902,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       showErrorNotification,
       exportSingle,
       getRecipientsCount,
+      openDeleteDialog,
+      openUnshareDialog,
+      openRevokeDialog,
+      openRenameDialog,
+      openUnpublishDialog,
     ],
   );
 
@@ -856,7 +922,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     pendingPublishConversation?.path ?? '',
   );
 
-  const unpublishFolders = pendingUnpublishConversation?.folders ?? [];
+  const unpublishFolders = pendingUnpublish?.folders ?? [];
   /* One published folder is confirmed directly; several require a pick. */
   const hasUnpublishFolderChoice = unpublishFolders.length > 1;
 
@@ -870,34 +936,25 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   }, [items, pendingDeleteId]);
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!pendingDeleteId) return;
-    const idToDelete = pendingDeleteId;
-
-    setIsDeleting(true);
-    setDeleteError(null);
-    try {
-      await deleteConversation(idToDelete);
-      notifyOperationSuccess(
-        NotifiableEntity.Conversation,
-        EntityOperation.Deleted,
-        { name: pendingDeleteTitle },
-      );
-    } catch {
-      setDeleteError(t(ConversationPanelI18nKeys.DeleteError));
-      setIsDeleting(false);
-      return;
-    }
-    setIsDeleting(false);
-    setPendingDeleteId(null);
-
-    const isActiveDeletion =
-      panelActiveConversationId != null &&
-      conversationIdsMatch(idToDelete, panelActiveConversationId);
-    if (isActiveDeletion) {
-      navigate(ROUTES.Root);
-    }
+    await confirmDeleteDialog(
+      async (idToDelete) => {
+        await deleteConversation(idToDelete);
+        notifyOperationSuccess(
+          NotifiableEntity.Conversation,
+          EntityOperation.Deleted,
+          { name: pendingDeleteTitle },
+        );
+        if (
+          panelActiveConversationId != null &&
+          conversationIdsMatch(idToDelete, panelActiveConversationId)
+        ) {
+          navigate(ROUTES.Root);
+        }
+      },
+      () => t(ConversationPanelI18nKeys.DeleteError),
+    );
   }, [
-    pendingDeleteId,
+    confirmDeleteDialog,
     pendingDeleteTitle,
     notifyOperationSuccess,
     deleteConversation,
@@ -908,9 +965,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const handleCloseDeleteDialog = useCallback(() => {
     if (isDeleting) return;
-    setPendingDeleteId(null);
-    setDeleteError(null);
-  }, [isDeleting]);
+    closeDeleteDialog();
+  }, [isDeleting, closeDeleteDialog]);
 
   const pendingUnshareTitle = useMemo(() => {
     if (!pendingUnshareId) return '';
@@ -919,47 +975,37 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   }, [items, pendingUnshareId]);
 
   const handleConfirmUnshare = useCallback(async () => {
-    if (!pendingUnshareId) return;
-    const idToUnshare = pendingUnshareId;
+    await confirmUnshareDialog(
+      async (idToUnshare) => {
+        await discardSharedCatalogItem(idToUnshare);
 
-    setIsUnsharing(true);
-    setUnshareError(null);
-    try {
-      await discardSharedCatalogItem(idToUnshare);
-    } catch {
-      setUnshareError(
+        try {
+          await refreshConversations();
+        } catch {
+          /* The discard already succeeded; a refresh failure must not undo that success. */
+        }
+
+        showSuccessNotification({
+          title: t(ConversationPanelI18nKeys.UnshareSuccessTitle),
+          message: t(ConversationPanelI18nKeys.UnshareSuccess, {
+            name: pendingUnshareTitle,
+          }),
+        });
+
+        if (
+          panelActiveConversationId != null &&
+          conversationIdsMatch(idToUnshare, panelActiveConversationId)
+        ) {
+          navigate(ROUTES.Root);
+        }
+      },
+      () =>
         t(ConversationPanelI18nKeys.UnshareError, {
           name: pendingUnshareTitle,
         }),
-      );
-      setIsUnsharing(false);
-      return;
-    }
-
-    try {
-      await refreshConversations();
-    } catch {
-      /* The discard already succeeded; a refresh failure must not undo that success. */
-    }
-
-    showSuccessNotification({
-      title: t(ConversationPanelI18nKeys.UnshareSuccessTitle),
-      message: t(ConversationPanelI18nKeys.UnshareSuccess, {
-        name: pendingUnshareTitle,
-      }),
-    });
-
-    setIsUnsharing(false);
-    setPendingUnshareId(null);
-
-    const isActiveUnshare =
-      panelActiveConversationId != null &&
-      conversationIdsMatch(idToUnshare, panelActiveConversationId);
-    if (isActiveUnshare) {
-      navigate(ROUTES.Root);
-    }
+    );
   }, [
-    pendingUnshareId,
+    confirmUnshareDialog,
     pendingUnshareTitle,
     refreshConversations,
     showSuccessNotification,
@@ -970,9 +1016,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const handleCloseUnshareDialog = useCallback(() => {
     if (isUnsharing) return;
-    setPendingUnshareId(null);
-    setUnshareError(null);
-  }, [isUnsharing]);
+    closeUnshareDialog();
+  }, [isUnsharing, closeUnshareDialog]);
 
   const pendingRevokeTitle = useMemo(() => {
     if (!pendingRevokeId) return '';
@@ -987,92 +1032,79 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
    */
   const handleCloseUnpublishDialog = useCallback(() => {
     if (isUnpublishing) return;
-    setPendingUnpublishConversation(null);
+    closeUnpublishDialog();
     setSelectedUnpublishFolder(null);
-  }, [isUnpublishing]);
+  }, [isUnpublishing, closeUnpublishDialog]);
 
   const handleConfirmUnpublish = useCallback(async () => {
-    if (!pendingUnpublishConversation || isUnpublishing) return;
-    const { path, title, folders } = pendingUnpublishConversation;
-    /* One published folder needs no choice; several require a pick, which
-     * the disabled confirm button already enforces. */
-    const folderPath =
-      selectedUnpublishFolder != null
-        ? folders.find((folder) => folder.join('/') === selectedUnpublishFolder)
-        : folders[0];
-    if (!folderPath) return;
+    await confirmUnpublishDialog(
+      async ({ path, title, folders }) => {
+        /* One published folder needs no choice; several require a pick, which
+         * the disabled confirm button already enforces. */
+        const folderPath =
+          selectedUnpublishFolder != null
+            ? folders.find((folder) => folder === selectedUnpublishFolder)
+            : folders[0];
+        if (!folderPath) return;
 
-    setIsUnpublishing(true);
-    try {
-      await unpublishConversation(path, folderPath.join('/'));
-    } catch (error) {
-      showPublishError(error, EntityOperation.UnpublishRequested);
-      setIsUnpublishing(false);
-      setPendingUnpublishConversation(null);
-      setSelectedUnpublishFolder(null);
-      return;
-    }
+        try {
+          await unpublishConversation(path, folderPath);
+        } catch (error) {
+          showPublishError(error, EntityOperation.UnpublishRequested);
+          /* Swallow so confirm() calls close() instead of keeping the dialog open. */
+          return;
+        }
 
-    /*
-     * No `refreshConversations()`: nothing about the caller's own list
-     * changed, and the published copy survives until an admin approves the
-     * removal — the same reason publish success does not refresh either.
-     */
-    notifyOperationSuccess(
-      NotifiableEntity.Conversation,
-      EntityOperation.UnpublishRequested,
-      { name: title, folder: folderPath[folderPath.length - 1] },
+        /*
+         * No `refreshConversations()`: nothing about the caller's own list
+         * changed, and the published copy survives until an admin approves the
+         * removal — the same reason publish success does not refresh either.
+         */
+        notifyOperationSuccess(
+          NotifiableEntity.Conversation,
+          EntityOperation.UnpublishRequested,
+          { name: title, folder: folderPath.split('/').pop() ?? folderPath },
+        );
+      },
+      () => '',
     );
-    setIsUnpublishing(false);
-    setPendingUnpublishConversation(null);
     setSelectedUnpublishFolder(null);
   }, [
-    pendingUnpublishConversation,
-    isUnpublishing,
+    confirmUnpublishDialog,
     selectedUnpublishFolder,
     showPublishError,
     notifyOperationSuccess,
   ]);
 
   const handleConfirmRevoke = useCallback(async () => {
-    if (!pendingRevokeId) return;
-    const idToRevoke = pendingRevokeId;
+    await confirmRevokeDialog(
+      async (idToRevoke) => {
+        await revokeSharedAccess(idToRevoke);
 
-    setIsRevoking(true);
-    setRevokeError(null);
-    try {
-      await revokeSharedAccess(idToRevoke);
-    } catch {
-      setRevokeError(
+        /* Nobody holds access any more, so the cached count is spent: dropping it
+         * makes the next menu open re-ask instead of offering to revoke again. */
+        invalidateRecipientsCount(idToRevoke);
+
+        try {
+          await refreshConversations();
+        } catch {
+          /* The revoke already succeeded; a refresh failure must not undo that success. */
+        }
+
+        showSuccessNotification({
+          title: t(ConversationPanelI18nKeys.RevokeSuccessTitle),
+          message: t(ConversationPanelI18nKeys.RevokeSuccess, {
+            name: pendingRevokeTitle,
+          }),
+        });
+      },
+      () =>
         t(ConversationPanelI18nKeys.RevokeError, {
           name: pendingRevokeTitle,
         }),
-      );
-      setIsRevoking(false);
-      return;
-    }
-
-    /* Nobody holds access any more, so the cached count is spent: dropping it
-     * makes the next menu open re-ask instead of offering to revoke again. */
-    invalidateRecipientsCount(idToRevoke);
-
-    try {
-      await refreshConversations();
-    } catch {
-      /* The revoke already succeeded; a refresh failure must not undo that success. */
-    }
-
-    showSuccessNotification({
-      title: t(ConversationPanelI18nKeys.RevokeSuccessTitle),
-      message: t(ConversationPanelI18nKeys.RevokeSuccess, {
-        name: pendingRevokeTitle,
-      }),
-    });
-
-    setIsRevoking(false);
-    setPendingRevokeId(null);
+    );
   }, [
-    pendingRevokeId,
+    confirmRevokeDialog,
     pendingRevokeTitle,
     refreshConversations,
     invalidateRecipientsCount,
@@ -1082,45 +1114,35 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const handleCloseRevokeDialog = useCallback(() => {
     if (isRevoking) return;
-    setPendingRevokeId(null);
-    setRevokeError(null);
-  }, [isRevoking]);
+    closeRevokeDialog();
+  }, [isRevoking, closeRevokeDialog]);
 
   const handleConfirmRename = useCallback(
     async (newTitle: string) => {
-      if (!pendingRenameItem) return;
-      const { id } = pendingRenameItem;
-
-      setIsRenaming(true);
-      setRenameError(null);
-      try {
-        await renameConversation(id, newTitle);
-      } catch {
-        setRenameError(t(ConversationPanelI18nKeys.RenameError));
-        setIsRenaming(false);
-        return;
-      }
-      setIsRenaming(false);
-      setPendingRenameItem(null);
-      notifyOperationSuccess(
-        NotifiableEntity.Conversation,
-        EntityOperation.Renamed,
-        { name: newTitle },
+      await confirmRenameDialog(
+        async ({ id }) => {
+          await renameConversation(id, newTitle);
+          notifyOperationSuccess(
+            NotifiableEntity.Conversation,
+            EntityOperation.Renamed,
+            { name: newTitle },
+          );
+        },
+        () => t(ConversationPanelI18nKeys.RenameError),
       );
     },
-    [pendingRenameItem, renameConversation, notifyOperationSuccess, t],
+    [confirmRenameDialog, renameConversation, notifyOperationSuccess, t],
   );
 
   const handleGenerateRenameWithAi = useCallback(async () => {
-    if (!pendingRenameItem) return '';
-    return generateConversationTitle(pendingRenameItem.id);
-  }, [pendingRenameItem, generateConversationTitle]);
+    if (!pendingRename) return '';
+    return generateConversationTitle(pendingRename.id);
+  }, [pendingRename, generateConversationTitle]);
 
   const handleCloseRenameDialog = useCallback(() => {
     if (isRenaming) return;
-    setPendingRenameItem(null);
-    setRenameError(null);
-  }, [isRenaming]);
+    closeRenameDialog();
+  }, [isRenaming, closeRenameDialog]);
 
   const handleActiveFilterChange = useCallback(
     (tab: FilterTab) => {
@@ -1179,7 +1201,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       <input
         ref={importFileInputRef}
         type="file"
-        accept={isMobile ? undefined : IMPORT_FILE_ACCEPT}
         className="sr-only"
         aria-hidden
         tabIndex={-1}
@@ -1193,6 +1214,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           onClose={dismissAllImports}
           onDismiss={dismissImportJob}
           onRetry={retryImportJob}
+          labels={queueLabels}
         />
         <ImportExportQueue
           title={exportQueueTitle}
@@ -1200,11 +1222,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           onClose={dismissAllExports}
           onDismiss={dismissExportJob}
           onRetry={retryExportJob}
+          labels={queueLabels}
         />
       </div>
 
       <ConfirmationPopup
-        open={!!pendingDeleteId}
+        open={isDeletePending}
         header={t(ConversationPanelI18nKeys.DeleteConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.Delete)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
@@ -1230,7 +1253,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       />
 
       <ConfirmationPopup
-        open={!!pendingUnpublishConversation}
+        open={isUnpublishPending}
         header={t(ConversationUnpublishI18nKeys.ConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.Unpublish)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
@@ -1244,11 +1267,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             <span className="break-words">
               {hasUnpublishFolderChoice
                 ? t(ConversationUnpublishI18nKeys.SelectFolderMessage, {
-                    name: pendingUnpublishConversation?.title ?? '',
+                    name: pendingUnpublish?.title ?? '',
                   })
                 : t(ConversationUnpublishI18nKeys.ConfirmMessage, {
-                    name: pendingUnpublishConversation?.title ?? '',
-                    folder: (unpublishFolders[0] ?? []).join('/'),
+                    name: pendingUnpublish?.title ?? '',
+                    folder: unpublishFolders[0] ?? '',
                   })}
             </span>
             {hasUnpublishFolderChoice && (
@@ -1261,8 +1284,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 onChange={setSelectedUnpublishFolder}
                 disabled={isUnpublishing}
                 items={unpublishFolders.map((folder) => ({
-                  value: folder.join('/'),
-                  label: folder.join('/'),
+                  value: folder,
+                  label: folder,
                 }))}
                 radioClassName="dial-small-text text-primary"
               />
@@ -1279,7 +1302,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
        * `description` would unmount at the moment it needs to announce.
        * Mounted only while the popup is open, so the panel does not carry a
        * second permanent status region alongside the transfer queues. */}
-      {pendingUnpublishConversation != null && (
+      {pendingUnpublish != null && (
         <span role="status" aria-live="polite" className="sr-only">
           {isUnpublishing
             ? t(ConversationUnpublishI18nKeys.RequestingStatus)
@@ -1288,7 +1311,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       )}
 
       <ConfirmationPopup
-        open={!!pendingUnshareId}
+        open={isUnsharePending}
         header={t(ConversationPanelI18nKeys.UnshareConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.RemoveFromMyList)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
@@ -1314,7 +1337,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       />
 
       <ConfirmationPopup
-        open={!!pendingRevokeId}
+        open={isRevokePending}
         header={t(ConversationPanelI18nKeys.RevokeConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.RevokeAccess)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
@@ -1340,13 +1363,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       />
 
       <RenameConversationPopup
-        isOpen={pendingRenameItem !== null}
-        currentTitle={pendingRenameItem?.title ?? ''}
+        isOpen={isRenamePending}
+        currentTitle={pendingRename?.title ?? ''}
         isSaving={isRenaming}
         error={renameError}
         onSave={handleConfirmRename}
         onCancel={handleCloseRenameDialog}
         onGenerateWithAi={handleGenerateRenameWithAi}
+        labels={renameLabels}
       />
 
       {isConversationsSharingEnabled && (

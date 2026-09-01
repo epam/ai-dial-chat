@@ -2,7 +2,7 @@ import { CredentialStatus } from '@epam/ai-dial-catalog';
 import { describe, expect, it } from 'vitest';
 import {
   AuthenticationType,
-  type ToolsetAuthStatus,
+  type ToolsetAuthStatusDetails,
   type ToolsetEntityDetails,
 } from '../entity-details';
 import {
@@ -191,7 +191,9 @@ describe('mapEntityDetailsToCatalogDetails', () => {
 });
 
 describe('mapToolsetCredentials', () => {
-  const makeData = (authStatus: ToolsetAuthStatus): ToolsetEntityDetails => ({
+  const makeData = (
+    authStatus: ToolsetAuthStatusDetails,
+  ): ToolsetEntityDetails => ({
     specification: {
       authentication: AuthenticationType.ApiKey,
       authStatus,

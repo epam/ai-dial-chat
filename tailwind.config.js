@@ -13,9 +13,10 @@ const backgroundsColors = {
 };
 
 const shadowColors = {
-  'xs-sm-1': 'var(--shadow-xs-sm-1, #2764D933)', // blue-500 alpha-20
-  'xs-sm-2': 'var(--shadow-xs-sm-2, #161B2D08)', // grey-1000 alpha-3
-  md: 'var(--shadow-md, #2764D90A)', // blue-500 alpha-4
+  'xs-1': 'var(--shadow-xs-1, #2764D933)', // blue-500 alpha-20
+  'xs-2': 'var(--shadow-xs-2, #161B2D08)', // grey-1000 alpha-3
+  sm: 'var(--shadow-sm, #2764D914)', // blue-500 alpha-8
+  md: 'var(--shadow-md, #2764D90F)', // blue-500 alpha-6
   lg: 'var(--shadow-lg, #2764D914)', // blue-500 alpha-8
 };
 
@@ -183,14 +184,9 @@ module.exports = {
         ...visualBgColors,
       },
       boxShadow: {
-        // xs — Button-Pressed; sm — Button-Default, Side Panel
-        xs: `0 1px 4px 0 ${shadowColors['xs-sm-1']}, 0 1px 2px 0 ${shadowColors['xs-sm-2']}`,
-        sm: `0 2px 12px 0 ${shadowColors['xs-sm-1']}, 0 2px 6px 0 ${shadowColors['xs-sm-2']}`,
-        /*
-         * md — Button-Hover, Card-Default, Input; lg — Card-Hover. Both are a
-         * single wide blue layer: the grey layer would only muddy it at this
-         * size.
-         */
+        xs: `0 1px 4px 0 ${shadowColors['xs-1']}, 0 1px 2px 0 ${shadowColors['xs-2']}`,
+        'chat-button': `0 2px 12px 0 ${shadowColors['xs-1']}, 0 2px 6px 0 ${shadowColors['xs-2']}`,
+        sm: `0 8px 10px 0 ${shadowColors.sm}`,
         md: `0 8px 24px 0 ${shadowColors.md}`,
         lg: `0 8px 44px 0 ${shadowColors.lg}`,
       },

@@ -15,6 +15,7 @@ import {
 } from '@epam/ai-dial-publish-panel';
 import {
   CloseButton,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
   RadioGroup,
@@ -65,7 +66,7 @@ import styles from './DetailsPanel.module.scss';
 import { Header } from './Header/Header';
 import { AboutTab } from './TabsContent/About';
 import { ContentTab } from './TabsContent/Content';
-import { LimitsTab } from './TabsContent/Limits';
+import { LimitsTab } from './TabsContent/Limits/Limits';
 import { Overview } from './TabsContent/Overview';
 import { Pricing } from './TabsContent/Pricing';
 import { Tools } from './TabsContent/Tools/Tools';
@@ -191,6 +192,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   isOpen,
   isStarred: initialIsStarred = false,
   isDetailsLoading = false,
+  isReadonly = false,
   onClose,
   onToggleFavorite,
   isFavoriteVisible,
@@ -198,6 +200,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   isPrimaryActionVisible,
   onShare,
   isPublishVisible,
+  isPublishPrimary,
   getPublishHistory,
   publishFolderItems = EMPTY_PUBLISH_FOLDERS,
   publishExpandedPaths,
@@ -213,6 +216,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onFetchExistingRules,
   shareOverlay,
   isShareVisible,
+  isSharePrimary,
   onEdit,
   onDownload,
   isDownloadVisible,
@@ -232,6 +236,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onLogout,
   texts,
   styles: detailsStyles,
+  limitsFooterNote,
 }) => {
   const {
     subViewTitleClassName = 'dial-body-semi-text',
@@ -1112,7 +1117,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           {subViewHeader != null && (
             <>
               <GhostIconButton
-                icon={<IconChevronLeft className="rtl:scale-x-[-1]" />}
+                icon={
+                  <IconChevronLeft
+                    className="rtl:scale-x-[-1]"
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                }
                 aria-label={backToDetailsAriaLabel}
                 disabled={subViewHeader.isBackDisabled}
                 onClick={subViewHeader.onBack}
@@ -1131,7 +1141,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           {subViewHeader == null && (
             <>
               <div className="flex-1" />
-              {isFavoriteVisible?.(item) !== false && (
+              {!isReadonly && isFavoriteVisible?.(item) !== false && (
                 <StarToggleButton
                   isStarred={isStarred}
                   ariaLabel={starAriaLabel}
@@ -1252,7 +1262,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onShare={onShare}
                 shareOverlay={shareOverlay}
                 isShareVisible={isShareVisible}
+                isSharePrimary={isSharePrimary}
                 isPublishVisible={isPublishVisible}
+                isPublishPrimary={isPublishPrimary}
                 onOpenPublish={handleOpenPublish}
                 isUnpublishVisible={isUnpublishVisible}
                 hasPublishedFolders={hasPublishedFolders}
@@ -1278,6 +1290,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onRequestLogout={handleRequestLogout}
                 texts={texts}
                 detailsStyles={detailsStyles}
+                isReadonly={isReadonly}
               />
 
               {item.credentials != null &&
@@ -1381,8 +1394,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 {activeTab === CatalogDetailsTab.Limits && (
                   <LimitsTab
                     limits={item.details?.limits}
-                    costCapsSectionLabel={texts?.limitsCostCapsSectionLabel}
-                    unlimitedSectionLabel={texts?.limitsUnlimitedSectionLabel}
+                    footerNote={limitsFooterNote}
                   />
                 )}
                 {activeTab === CatalogDetailsTab.Api &&

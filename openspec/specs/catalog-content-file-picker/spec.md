@@ -9,7 +9,7 @@ Defines the generic, entity-agnostic hierarchical file selector rendered by `lib
 
 ### Requirement: `CatalogContentTreeNode` is an entity-agnostic, hierarchical file option model
 
-`libs/catalog/src/types/catalog-content-node-type.ts` SHALL add:
+`libs/catalog/src/types/catalog-content-type.ts` SHALL declare, beside the sibling `CatalogContentPreviewType` enum that discriminates a resolved preview:
 
 ```ts
 export enum CatalogContentNodeType {
@@ -100,6 +100,8 @@ Each node in `files` SHALL render as one row. A folder row SHALL show, in order:
 
 Rows at nesting depth 0 (direct entries of `files`) SHALL carry no indentation. Each further level of nesting SHALL add one additional, fixed indentation step relative to its parent, applied via logical inline-start spacing so it composes correctly under both `dir="ltr"` and `dir="rtl"`.
 
+The indentation step SHALL be applied once to the `role="group"` element wrapping a folder's children, rather than computed per row from a depth counter, so nesting composes naturally and no row needs to know how deep it sits.
+
 An expanded folder's `items` SHALL be visible, each rendered per this same rule recursively; a collapsed folder's `items` SHALL NOT be rendered at all (not merely hidden), so a large collapsed subtree costs nothing to keep in the DOM. An empty folder (`items: []`) SHALL still render its own row, with a disclosure chevron that toggles between states but reveals no children.
 
 Within a single folder's `items` (including the top-level `files` array), entries SHALL be ordered case-insensitively by `name`, with folder and file nodes interleaved in that one order — **except** that at the top level only, a node whose `id` equals `selectedFileId` at the time the tree was supplied SHALL be ordered first regardless of name, preserving the existing rule that the manifest (or whichever file the panel opens on) heads the list.
@@ -128,7 +130,9 @@ Within a single folder's `items` (including the top-level `files` array), entrie
 
 ### Requirement: Folder expand/collapse state and the selector's open state are controlled by the host
 
-`ContentTab` SHALL accept `expandedFolderIds: ReadonlySet<string>`, `onToggleFolder: (folderId: string) => void`, `isFileSelectorOpen: boolean`, and `onFileSelectorOpenChange: (open: boolean) => void`. The lib SHALL NOT own default-expansion or open/closed state itself — `DetailsPanel` computes and owns both, so that resetting them on an item change is centralized alongside the panel's other Content-tab state.
+`ContentTab` SHALL accept `expandedFolderIds?: ReadonlySet<string>`, `onToggleFolder?: (folderId: string) => void`, `isFileSelectorOpen?: boolean`, and `onFileSelectorOpenChange?: (open: boolean) => void`. Each is optional so the tab can be rendered standalone, defaulting to an empty set, a no-op, and `false` respectively — but the lib SHALL NOT own the *live* state: `DetailsPanel` computes and passes both, so resetting them on an item change is centralized alongside the panel's other Content-tab state.
+
+The tree itself is `ContentFileTree` (`libs/catalog/src/components/Details/TabsContent/ContentFileTree/ContentFileTree.tsx`), rendered inside the selector overlay. It owns only its roving-focus cursor; expansion, open state, and selection all come from props.
 
 A folder row's expand/collapse toggle SHALL call `onToggleFolder` with that folder's `id`; the lib SHALL NOT assume any particular default and SHALL render each folder's expanded state exactly as `expandedFolderIds` reports it.
 
@@ -150,7 +154,7 @@ Picking a file node other than the one named by `selectedFileId` SHALL trigger p
 
 The `onLoadContentFile?: (fileId: string) => Promise<string | undefined>` callback remains supported and `Catalog` SHALL continue forwarding it to `DetailsPanel`. The callback's contract does not depend on whether a file id came from a flat list or a tree leaf. **The additive `onLoadContentFilePreview` and `renderContentFilePreview` precedence, rendering, ownership, and stale-request rules are specified by `catalog-content-file-preview`** — this requirement covers only that a pick resolves exactly one preview path and that the base file is free.
 
-A rejection, or a resolved `undefined`, SHALL render `texts.contentFileErrorLabel` as the body. The panel SHALL NOT throw, and SHALL NOT surface an error of its own beyond that text — the host owns notifications.
+A rejection, or a resolved `undefined`, SHALL render `texts.contentFileErrorLabel` as the body. That failure text is resolved by `DetailsPanel`, which turns it into a text preview it hands to the tab — `ContentTab` has no error-label prop of its own and never learns that a load failed. The panel SHALL NOT throw, and SHALL NOT surface an error of its own beyond that text — the host owns notifications.
 
 A picked file, the expanded-folder set, and the selector's open state SHALL all be reset whenever the panel switches to another item or `selectedFileId` changes: the picked file overlay clears, every folder returns to expanded, and the selector closes if it was open — so a re-fetched body is never shown under a stale filename and a new item never inherits another item's expand/collapse choices.
 
@@ -230,7 +234,7 @@ Every row SHALL be at least 40px tall, satisfying the minimum recommended touch-
 
 ### Requirement: i18n, RTL, and library-isolation contract for the selector
 
-- **i18n**: every user-visible string SHALL be a prop with an English default — `texts.contentFileSelectorAriaLabel` (`'Select file'`), `texts.contentFileCountLabel` (`(count) => \`${count} files\``), `texts.contentFileLoadingLabel` (`'Loading file'`), `texts.contentFileErrorLabel` (`'Failed to load this file.'`). The count label is a **function** of the count, not a template string, so a host can apply its own plural rule. `libs/catalog` SHALL NOT call `useTranslation`.
+- **i18n**: every user-visible string SHALL be a prop with an English default. `ItemDetailsTexts` declares them under `contentFile*` names — `contentFileSelectorAriaLabel` (`'Select file'`), `contentFileCountLabel` (`(count) => \`${count} files\``), `contentFileLoadingLabel` (`'Loading file'`), `contentFileUnsupportedLabel` (`'Preview is not supported for this file'`), and `contentFileErrorLabel` (`'Failed to load this file.'`) — and `DetailsPanel` forwards the first four to `ContentTab` under its shorter `fileSelectorAriaLabel` / `fileCountLabel` / `fileLoadingLabel` / `fileUnsupportedLabel` props, keeping the fifth for the error preview it builds itself. The count label is a **function** of the count, not a template string, so a host can apply its own plural rule. `libs/catalog` SHALL NOT call `useTranslation`.
 - **RTL**: indentation SHALL use logical (`padding-inline-start`) spacing only. The folder icon SHALL NOT be mirrored. The disclosure chevron's expanded state (pointing toward the block end) needs no RTL counterpart; its collapsed state (rotated toward the inline end) SHALL carry an `rtl:` counterpart rotation so it points the other way under `dir="rtl"`. The `Dropdown` overlay's placement SHALL inherit direction from the document, as it already does for every other use of `Dropdown` in this lib.
 - **Responsive**: the overlay's sizing rules SHALL be identical below and above the 769px desktop boundary. It SHALL render at a fixed `280px` width (set via the `Dropdown`'s `listClassName`, per the Figma reference design) regardless of its content's natural width, and SHALL cap its own width against the viewport so it never overflows horizontally at a 360px viewport. Its height SHALL be capped, scrolling internally beyond that cap, so it never grows the page itself.
 - **Typography and color**: the file-count text SHALL read its class from `ItemDetailsTypography.contentFileCountClassName`, defaulting to `'dial-tiny-text'`, and its color from `--cat-details-file-count-text` with a `--text-secondary` fallback, overridable through `ItemDetailsColors.contentFileCountText`.

@@ -6,9 +6,10 @@ import {
 import {
   Button,
   DIAL_ICON_SIZE,
-  Search,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
   Highlight,
+  Search,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useEffect, useState } from 'react';
@@ -98,6 +99,7 @@ const ModelRow = ({
                 size={DIAL_ICON_SIZE.SM}
                 className={styles.checkIcon}
                 aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
               />
             )}
           </span>
