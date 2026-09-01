@@ -2,33 +2,19 @@ import {
   buildCssVars,
   ConversationTransferJobStatus,
   mergeClasses,
-  type ConversationTransferJob,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-  ElementSize,
-  EllipsisTooltip,
-  GhostIconButton,
-  Spinner,
-  Tooltip,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconAlertCircleFilled,
-  IconCheck,
-  IconChevronDown,
-  IconChevronUp,
-  IconX,
-} from '@tabler/icons-react';
 import { memo, useCallback, useEffect, useId, useState, type FC } from 'react';
+import { AUTO_CLOSE_DELAY_MS } from '../../constants/import-export-queue';
 import type {
   ImportExportQueueLabels,
   ImportExportQueueProps,
-  ImportExportQueueStyles,
 } from '../../models/import-export-queue';
-import { getTransferFileIcon } from '../../utils/transfer-file';
+import { ImportExportQueueHeader } from '../ImportExportQueueHeader/ImportExportQueueHeader';
+import { ImportExportQueueRow } from '../ImportExportQueueRow/ImportExportQueueRow';
 import classes from './ImportExportQueue.module.scss';
 
 export type {
@@ -36,11 +22,6 @@ export type {
   ImportExportQueueProps,
   ImportExportQueueStyles,
 } from '../../models/import-export-queue';
-
-const AUTO_CLOSE_DELAY_MS = 8000;
-
-/* Fixed footprint for every trailing status slot so switching between statuses never shifts layout. */
-const STATUS_SLOT_CLASS = 'flex size-7 shrink-0 items-center justify-center';
 
 const getCloseConfirmDescription = (
   hasInProgress: boolean,
@@ -56,102 +37,6 @@ const getCloseConfirmDescription = (
   return labels.closeQueueConfirmDescriptionInProgress;
 };
 
-interface JobRowProps {
-  job: ConversationTransferJob;
-  labels: ImportExportQueueLabels;
-  onCancel: (jobId: string) => void;
-  styles?: ImportExportQueueStyles;
-}
-
-const JobRow: FC<JobRowProps> = ({ job, labels, onCancel, styles }) => {
-  const typography = styles?.typography;
-  const FileIcon = getTransferFileIcon(job.fileName);
-  const isCanceled = job.status === ConversationTransferJobStatus.Canceled;
-
-  return (
-    <div className="group flex items-center gap-2 px-4 py-2">
-      <FileIcon
-        size={DIAL_ICON_SIZE.SM}
-        stroke={DIAL_KIT_ICON_STROKE}
-        className={classes.textSecondary}
-        aria-hidden
-      />
-      <EllipsisTooltip
-        text={job.fileName}
-        className={mergeClasses(
-          isCanceled ? classes.textSecondary : classes.text,
-          typography?.jobLabelClassName || 'dial-small-text',
-        )}
-        contentClassName="!z-[80]"
-      />
-      {job.status === ConversationTransferJobStatus.InProgress && (
-        <div className={mergeClasses(STATUS_SLOT_CLASS, 'grid')}>
-          <Spinner
-            size={DIAL_ICON_SIZE.SM}
-            ariaLabel={labels.jobProgressAriaLabel(job.fileName)}
-            className="col-start-1 row-start-1 opacity-100 transition-opacity group-focus-within:opacity-0 group-hover:opacity-0"
-          />
-          <GhostIconButton
-            aria-label={labels.cancelJobAriaLabel(job.fileName)}
-            size={ElementSize.Small}
-            icon={
-              <IconX
-                size={DIAL_ICON_SIZE.SM}
-                className={classes.textSecondary}
-                stroke={DIAL_KIT_ICON_STROKE}
-                aria-hidden
-              />
-            }
-            onClick={() => onCancel(job.id)}
-            className="col-start-1 row-start-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
-          />
-        </div>
-      )}
-      {job.status === ConversationTransferJobStatus.Success && (
-        <span className={STATUS_SLOT_CLASS}>
-          <IconCheck
-            size={DIAL_ICON_SIZE.SM}
-            stroke={DIAL_KIT_ICON_STROKE}
-            className={classes.successIcon}
-            aria-hidden
-          />
-        </span>
-      )}
-      {job.status === ConversationTransferJobStatus.Failed && (
-        <Tooltip
-          tooltip={labels.jobErrorMessage(job.errorCode)}
-          contentClassName="!z-[80]"
-          asChild
-        >
-          <span
-            className={STATUS_SLOT_CLASS}
-            role="img"
-            aria-label={labels.jobErrorMessage(job.errorCode)}
-            tabIndex={0}
-          >
-            <IconAlertCircleFilled
-              size={DIAL_ICON_SIZE.SM}
-              className={classes.errorIcon}
-              aria-hidden
-            />
-          </span>
-        </Tooltip>
-      )}
-      {isCanceled && (
-        <span
-          className={mergeClasses(
-            classes.textSecondary,
-            'shrink-0',
-            typography?.canceledLabelClassName || 'dial-small-text',
-          )}
-        >
-          {labels.canceledLabel}
-        </span>
-      )}
-    </div>
-  );
-};
-
 /** Floating queue panel showing the status of in-flight or recently completed export/import jobs. */
 export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
   ({ title, jobs, onClose, onCancel, labels, styles }) => {
@@ -159,7 +44,6 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
     const jobsId = useId();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const colors = styles?.colors;
-    const typography = styles?.typography;
     const cssVars = {
       ...buildCssVars({
         '--cp-transfer-queue-bg': colors?.background,
@@ -197,6 +81,10 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
       onClose();
     }, [onClose]);
 
+    const handleToggleCollapse = useCallback(() => {
+      setIsCollapsed((value) => !value);
+    }, []);
+
     useEffect(() => {
       if (!isEverySucceeded) return undefined;
 
@@ -221,80 +109,16 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
           styles?.rootClassName,
         )}
       >
-        <div
-          className={mergeClasses(
-            classes.divider,
-            'flex items-center justify-between px-4 py-3',
-          )}
-        >
-          <div className="flex min-w-0 items-center gap-2">
-            <span
-              className={mergeClasses(
-                classes.text,
-                'truncate',
-                typography?.titleClassName || 'dial-small-semi-text',
-              )}
-            >
-              {title}
-            </span>
-            {failedCount > 0 && (
-              <span
-                className={mergeClasses(
-                  classes.failureCount,
-                  'inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1',
-                  typography?.failureCountClassName || 'dial-small-semi-text',
-                )}
-              >
-                {failedCount}
-              </span>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <GhostIconButton
-              aria-label={
-                isCollapsed
-                  ? labels.expandQueueAriaLabel
-                  : labels.collapseQueueAriaLabel
-              }
-              size={ElementSize.Small}
-              aria-expanded={!isCollapsed}
-              aria-controls={jobsId}
-              icon={
-                isCollapsed ? (
-                  <IconChevronUp
-                    size={DIAL_ICON_SIZE.SM}
-                    className={classes.textSecondary}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                  />
-                ) : (
-                  <IconChevronDown
-                    size={DIAL_ICON_SIZE.SM}
-                    className={classes.textSecondary}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                  />
-                )
-              }
-              onClick={() => setIsCollapsed((value) => !value)}
-              className={STATUS_SLOT_CLASS}
-            />
-            <GhostIconButton
-              aria-label={labels.closeQueueAriaLabel}
-              size={ElementSize.Small}
-              icon={
-                <IconX
-                  size={DIAL_ICON_SIZE.SM}
-                  className={classes.textSecondary}
-                  stroke={DIAL_KIT_ICON_STROKE}
-                  aria-hidden
-                />
-              }
-              onClick={handleClose}
-              className={STATUS_SLOT_CLASS}
-            />
-          </div>
-        </div>
+        <ImportExportQueueHeader
+          title={title}
+          failedCount={failedCount}
+          isCollapsed={isCollapsed}
+          jobsId={jobsId}
+          labels={labels}
+          styles={styles}
+          onToggleCollapse={handleToggleCollapse}
+          onClose={handleClose}
+        />
         {!isCollapsed && (
           <div
             id={jobsId}
@@ -304,7 +128,7 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
             )}
           >
             {jobs.map((job) => (
-              <JobRow
+              <ImportExportQueueRow
                 key={job.id}
                 job={job}
                 labels={labels}

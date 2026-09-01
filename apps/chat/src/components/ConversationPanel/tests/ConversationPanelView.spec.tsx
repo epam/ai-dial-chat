@@ -471,6 +471,14 @@ const getImportFileInput = () =>
   // eslint-disable-next-line testing-library/no-node-access
   document.querySelector('input[type="file"]') as HTMLInputElement;
 
+/* A transfer queue panel is a polite live region; the kit Spinner on each
+   in-progress row carries its own bare `role="status"`, so the queues have to
+   be told apart by `aria-live`. */
+const getQueuePanels = () =>
+  screen
+    .getAllByRole('status')
+    .filter((element) => element.getAttribute('aria-live') === 'polite');
+
 const baseContextValue = {
   conversations: [
     {
@@ -1407,7 +1415,7 @@ describe('ConversationPanelView — export', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
 
-    expect(screen.getByRole('status')).toBeTruthy();
+    expect(getQueuePanels()).toHaveLength(1);
     expect(screen.getByText('export-1.dial')).toBeTruthy();
     expect(screen.queryByText('Chat 1')).toBeNull();
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -1595,7 +1603,7 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
 
     render(<ConversationPanelView {...defaultProps} />);
 
-    expect(screen.getByRole('status')).toBeTruthy();
+    expect(getQueuePanels()).toHaveLength(1);
     expect(screen.getByText('export-5.dial')).toBeTruthy();
     expect(screen.queryByText('Imported Chat')).toBeNull();
   });
@@ -1643,7 +1651,7 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
 
     render(<ConversationPanelView {...defaultProps} />);
 
-    expect(screen.getAllByRole('status')).toHaveLength(2);
+    expect(getQueuePanels()).toHaveLength(2);
     expect(screen.getByText('Exporting 1 file')).toBeTruthy();
     expect(screen.getByText('Importing 1 file')).toBeTruthy();
   });
