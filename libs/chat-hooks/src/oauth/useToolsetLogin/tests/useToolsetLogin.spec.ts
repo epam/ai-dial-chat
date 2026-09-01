@@ -8,6 +8,7 @@ import {
   openToolsetOAuthPopup,
 } from '../../popup';
 import {
+  OAuthResourceKind,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
@@ -232,6 +233,8 @@ describe('useToolsetLogin', () => {
         TOOLSET_ID,
         '/some/other/callback',
         ToolsetCredentialsLevel.User,
+        // Offline usage consent — undefined here because the caller did not ask for it.
+        undefined,
       );
       expect(waitForToolsetOAuthResult).toHaveBeenCalledWith(
         expect.anything(),
@@ -271,6 +274,8 @@ describe('useToolsetLogin', () => {
         TOOLSET_ID,
         CALLBACK_PATH,
         ToolsetCredentialsLevel.User,
+        OAuthResourceKind.Toolset,
+        undefined,
       );
       expect(initiateOAuthLogin).not.toHaveBeenCalled();
       expect(outcome).toEqual({ type: ToolsetLoginOutcomeType.Success });

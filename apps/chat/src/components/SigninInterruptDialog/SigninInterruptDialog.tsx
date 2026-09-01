@@ -7,6 +7,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  Checkbox,
   DIAL_ICON_SIZE,
   Popup,
   Spinner,
@@ -178,6 +179,7 @@ const getResourceKey = (event: PendingSigninEvent): string =>
  * when a tool call or an application's external service needs fresh
  * credentials) and lets the user log in or decline each one.
  */
+
 const SigninInterruptDialog: FC = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -381,6 +383,15 @@ const SigninInterruptDialog: FC = () => {
     [reportEvent, setRowState, pendingEvents, infoByResourceKey, t],
   );
 
+  /*
+   * Standing permission for the application to use these credentials while the
+   * user is away; Core gates every on-behalf-of mint on it. Offered checked
+   * because the interrupt only appears when an application has said it needs to
+   * act for the user — but shown and declinable, never attached silently to the
+   * "Log in" click.
+   */
+  const [offlineUsageConsent, setOfflineUsageConsent] = useState(true);
+
   const handleDeclineAll = useCallback(() => {
     for (const event of pendingEvents) {
       void handleDecline(event.id);
@@ -439,6 +450,7 @@ const SigninInterruptDialog: FC = () => {
           apiKey: rowState.apiKey,
           oauthSettings: info.oauthSettings,
           forceStale: true,
+          offlineUsageConsent,
         });
         if (outcome.type === ToolsetLoginOutcomeType.Success) {
           await refetchToolsets();
@@ -470,6 +482,7 @@ const SigninInterruptDialog: FC = () => {
       finishLogin,
       setRowState,
       t,
+      offlineUsageConsent,
     ],
   );
 
@@ -493,6 +506,7 @@ const SigninInterruptDialog: FC = () => {
           apiKey: rowState.apiKey,
           oauthSettings: info.oauthSettings,
           forceStale: true,
+          offlineUsageConsent,
         });
         if (outcome.type === ExternalServiceLoginOutcomeType.Success) {
           await finishLogin(event, info);
@@ -516,7 +530,14 @@ const SigninInterruptDialog: FC = () => {
       };
       void run();
     },
-    [getRowState, loginExternalService, finishLogin, setRowState, t],
+    [
+      getRowState,
+      loginExternalService,
+      finishLogin,
+      setRowState,
+      t,
+      offlineUsageConsent,
+    ],
   );
 
   const handleLogin = useCallback(
@@ -591,6 +612,13 @@ const SigninInterruptDialog: FC = () => {
             );
           })}
         </div>
+        <Checkbox
+          className="mt-2"
+          isSelected={offlineUsageConsent}
+          onChange={setOfflineUsageConsent}
+          labelProps={{ label: t(ToolsetSigninI18nKeys.OfflineUsageConsent) }}
+          caption={t(ToolsetSigninI18nKeys.OfflineUsageConsentHint)}
+        />
       </div>
     </Popup>
   );

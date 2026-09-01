@@ -59,6 +59,7 @@ export const toDialExternalServiceSigninBody = (
   apiKey: body.apiKey,
   code: body.code,
   redirectUri: body.redirectUri,
+  offlineUsageConsent: body.offlineUsageConsent,
 });
 
 export const toDialExternalServiceSignoutBody = (
