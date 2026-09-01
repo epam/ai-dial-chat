@@ -153,6 +153,9 @@ export const useDialFileListing = ({
   const [folderPopupLoadingPaths, setFolderPopupLoadingPaths] = useState<
     Set<string>
   >(() => new Set());
+  const [folderPopupPaths, setFolderPopupPaths] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   // Clear cache and reset path on tab switch
   const prevTabRef = useRef(activeTab);
@@ -167,6 +170,7 @@ export const useDialFileListing = ({
     expandingApiPathsRef.current = new Set();
     erroredApiPathsRef.current = new Set();
     setFolderPopupLoadingPaths(new Set());
+    setFolderPopupPaths(new Set());
     if (searchDebounceRef.current != null) {
       clearTimeout(searchDebounceRef.current);
       searchDebounceRef.current = null;
@@ -457,8 +461,14 @@ export const useDialFileListing = ({
     (nextPath?: string) => {
       const apiPath =
         nextPath == null ? '' : virtualPathToApiPath(nextPath, rootLabel);
-      const virtualPath =
-        nextPath == null ? `/${rootLabel}` : normalizeVirtualPath(nextPath);
+      const virtualPath = nextPath == null ? `/${rootLabel}` : nextPath;
+
+      setFolderPopupPaths((prev) => {
+        if (prev.has(virtualPath)) return prev;
+        const next = new Set(prev);
+        next.add(virtualPath);
+        return next;
+      });
 
       if (cacheRef.current.has(apiPath)) {
         return;
@@ -518,14 +528,15 @@ export const useDialFileListing = ({
 
   const loadedPaths = useMemo(() => {
     const result = new Set<string>();
-    for (const virtualPath of expandedPaths) {
+    const candidatePaths = new Set([...expandedPaths, ...folderPopupPaths]);
+    for (const virtualPath of candidatePaths) {
       const apiPath = virtualPathToApiPath(virtualPath, rootLabel);
       if (cache.has(apiPath)) {
         result.add(virtualPath);
       }
     }
     return result;
-  }, [expandedPaths, cache, rootLabel]);
+  }, [expandedPaths, folderPopupPaths, cache, rootLabel]);
 
   const onExpandedPathsChange = useCallback(
     (paths: Set<string>) => {
@@ -576,7 +587,7 @@ export const useDialFileListing = ({
             expandingApiPathsRef.current.delete(apiPath);
             setFolderPopupLoadingPaths((prev) => {
               const next = new Set(prev);
-              next.delete(normalizeVirtualPath(virtualPath));
+              next.delete(virtualPath);
               return next;
             });
           }
