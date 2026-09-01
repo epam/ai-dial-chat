@@ -48,6 +48,16 @@ export * from './components/EntityTypeLabel/EntityTypeLabel';
 export * from './components/FeaturedChip/FeaturedChip';
 export * from './components/EntityHeader/EntityHeader';
 export * from './components/ResourceSummary/ResourceSummary';
+export * from './components/CircularProgress/CircularProgress';
+export * from './components/ImportExportQueue/ImportExportQueue';
+export type {
+  ImportExportQueueProps,
+  ImportExportQueueLabels,
+  ImportExportQueueColors,
+  ImportExportQueueTypography,
+  ImportExportQueueStyles,
+} from './models/import-export-queue';
+export { getTransferFileIcon } from './utils/transfer-file';
 export * from './components/MarkdownRenderer/MarkdownRenderer';
 export * from './components/MarkdownRenderer/MDMessageViewer';
 export * from './components/MarkdownRenderer/markdown-class-names';

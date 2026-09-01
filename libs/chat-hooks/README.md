@@ -382,12 +382,12 @@ const Composer = ({
 
 ### useConversationExport / useConversationImport
 
-A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Both share the same job-queue semantics — `jobs`, `dismissJob`, `retryJob`, `dismissAll` — and report outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text.
+A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Both share the same job-queue semantics — `jobs`, `cancelJob`, `dismissJob`, `retryJob`, `dismissAll` — and report determinate per-job progress plus outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text. `cancelJob` and `dismissJob` differ: both abort the job's in-flight requests, but `cancelJob` leaves the job in `jobs` with status `Canceled` so the UI can keep showing it, while `dismissJob` removes it.
 
 ```tsx
+import { ConversationTransferErrorCode } from '@epam/ai-dial-chat-shared';
 import {
   ConversationExportMode,
-  ConversationTransferErrorCode,
   useConversationExport,
   useConversationImport,
 } from '@epam/ai-dial-chat-hooks';
@@ -437,19 +437,22 @@ const ExportButton = ({
 | `normalizeConversationPath` | `(conversationId: string) => string`                                     | Resolves a conversation id to the bucket-qualified path `getConversation` expects. |
 | `classifyTransferError`     | `(error: unknown) => { isUnauthorized?: boolean; isNotFound?: boolean }` | Host-owned error classification. Defaults to `{}` (never unauthorized/not-found).  |
 | `resolveErrorTraceId`       | `(error: unknown) => Promise<string \| undefined>`                       | Resolves a trace id for a failing request. Defaults to resolving `undefined`.      |
+| `maxArchiveBytes`           | `number`                                                                 | Ceiling on the summed byte length of an export's attachments; a larger export fails with `FileTooLarge` instead of being zipped. Defaults to `DEFAULT_MAX_ARCHIVE_BYTES` (512 MiB). |
 | `onSuccess`                 | `(event: ConversationTransferSuccessEvent) => void`                      | Called when a job completes successfully.                                          |
 | `onWarning`                 | `(event: ConversationTransferWarningEvent) => void`                      | Called when a job succeeds but had to skip something (e.g. an attachment).         |
 | `onError`                   | `(event: ConversationTransferErrorEvent) => void`                        | Called when a job fails.                                                           |
 
-**Returns** (`UseConversationExportResult`): `{ jobs, exportSingle(conversationId, title, mode), exportAll(), dismissJob(jobId), retryJob(jobId), dismissAll() }`.
+**Returns** (`UseConversationExportResult`): `{ jobs, exportSingle(conversationId, title, mode), exportAll(), cancelJob(jobId), dismissJob(jobId), retryJob(jobId), dismissAll() }`.
 
 **Parameters** (`UseConversationImportParams`): `conversationsApi: Pick<ConversationsApi, 'saveConversation'>`, `filesApi: Pick<FilesApi, 'listFiles' | 'uploadFile'>`, `bucket: string | undefined` (import fails with `MissingBucket` when absent), `onImported?: () => Promise<void> | void` (called after at least one conversation imports successfully), plus the same `classifyTransferError`/`resolveErrorTraceId`/`onSuccess`/`onWarning`/`onError` shape as export.
 
-**Returns** (`UseConversationImportResult`): `{ jobs, importConversations(file), dismissJob(jobId), retryJob(jobId), dismissAll() }`.
+**Returns** (`UseConversationImportResult`): `{ jobs, importConversations(file), cancelJob(jobId), dismissJob(jobId), retryJob(jobId), dismissAll() }`.
 
-`ConversationTransferJob`, `ConversationTransferSubject`, `ConversationTransferJobStatus` and `ConversationTransferSubjectKind` are owned and exported by `@epam/ai-dial-chat-shared` — import them from there, not from this package. `ConversationTransferJob` is `{ id: string; subject: ConversationTransferSubject; status: ConversationTransferJobStatus }`, where `ConversationTransferSubject` is `{ kind: Single; title: string; sourceBreadcrumb?: string } | { kind: All }` — render `label`/`description` text from `subject` at the call site (e.g. `subject.kind === Single ? subject.title : t('allConversations')`), never from a library-owned string. `ConversationTransferErrorEvent`/`WarningEvent`/`SuccessEvent` carry a `jobId`, a library-owned code (`ConversationTransferErrorCode`/`WarningCode`), and structured facts (`titles`, `names`, `traceId`) — never translated text.
+`ConversationTransferJob`, `ConversationTransferSubject`, `ConversationTransferJobStatus`, `ConversationTransferSubjectKind`, `ConversationTransferProgress`, `ConversationTransferUnitKind` and `ConversationTransferErrorCode` are owned and exported by `@epam/ai-dial-chat-shared` — import them from there, not from this package. `ConversationTransferJob` is `{ id: string; subject: ConversationTransferSubject; status: ConversationTransferJobStatus; fileName: string; progress: ConversationTransferProgress; errorCode?: ConversationTransferErrorCode }`, where `ConversationTransferSubject` is `{ kind: Single; title: string; sourceBreadcrumb?: string } | { kind: All }`. Render a row from `fileName` and translate `errorCode` at the call site — never from a library-owned string. `ConversationTransferErrorEvent`/`WarningEvent`/`SuccessEvent` carry a `jobId`, a library-owned code (`ConversationTransferErrorCode`/`WarningCode`), and structured facts (`titles`, `names`, `traceId`) — never translated text.
 
-Also exports `EXPORT_APP_NAME` and `formatQuotedNameList` (the standalone functions the hooks are built on) for hosts that render their own export file names or name lists outside the hooks' own notifications.
+`progress.percent` is an integer 0–100 that never decreases for a given job id: phase weights are fixed per transfer kind, so discovering how many attachments a job has subdivides the work still to do instead of moving the indicator backwards. `progress.units` describes only the phase currently advancing, and is intended for `aria-valuetext` rather than visible text.
+
+Also exports `DEFAULT_MAX_ARCHIVE_BYTES`, `EXPORT_APP_NAME` and `formatQuotedNameList` (the constants and standalone functions the hooks are built on) for hosts that tune the export size limit or render their own export file names or name lists outside the hooks' own notifications.
 
 ### useConversationStream
 

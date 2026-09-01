@@ -4,20 +4,13 @@ export enum ConversationExportMode {
   WithoutAttachments = 'withoutAttachments',
 }
 
+import type { ConversationTransferErrorCode } from '@epam/ai-dial-chat-shared';
+
 /** Which export file was produced, used to derive its file name/extension. */
 export enum ExportFileNameKind {
   SingleConversation = 'chat_conversation',
   SingleConversationWithAttachments = 'chat_with_attachments',
   AllConversationsHistory = 'chat_conversations_history',
-}
-
-/** Library-owned reason a transfer job failed. */
-export enum ConversationTransferErrorCode {
-  Unauthorized = 'unauthorized',
-  NotFound = 'notFound',
-  UnsupportedFormat = 'unsupportedFormat',
-  MissingBucket = 'missingBucket',
-  Unknown = 'unknown',
 }
 
 /** Structured, translation-free error report for a transfer job. */

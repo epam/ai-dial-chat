@@ -1,0 +1,52 @@
+.root {
+  background: var(--ieq-bg, var(--bg-layer-base, #f5f7fa));
+}
+
+.text {
+  color: var(--ieq-text, var(--text-primary, #161b2d));
+}
+
+.textSecondary {
+  color: var(
+    --ieq-text-secondary,
+    var(--text-secondary, #57647a)
+  );
+}
+
+.divider {
+  border-block-end: 1px solid
+    var(--ieq-divider, var(--stroke-primary, #dde1e6));
+}
+
+.successIcon {
+  color: var(
+    --ieq-success-icon,
+    var(--text-accent-primary, #2764d9)
+  );
+}
+
+.errorIcon {
+  color: var(--ieq-error-icon, var(--text-error, #ae2f2f));
+}
+
+.failureCount {
+  background: var(
+    --ieq-failure-count-bg,
+    var(--bg-control-error, #ae2f2f)
+  );
+  color: var(
+    --ieq-failure-count-text,
+    var(--text-tertiary, #848e9c)
+  );
+}
+
+/*
+ * The panel-level overrides feed the ring's own component-scoped variables, so
+ * a host that themes the queue does not have to reach past it to the ring.
+ */
+.progressRing {
+  --cprog-track: var(--ieq-progress-track);
+  --cprog-indicator: var(
+    --ieq-progress-indicator
+  );
+}

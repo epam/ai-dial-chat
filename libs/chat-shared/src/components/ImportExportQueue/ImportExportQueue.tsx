@@ -1,11 +1,4 @@
 import {
-  buildCssVars,
-  ConversationTransferJobStatus,
-  ConversationTransferSubjectKind,
-  mergeClasses,
-  type ConversationTransferJob,
-} from '@epam/ai-dial-chat-shared';
-import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
@@ -13,22 +6,29 @@ import {
   ElementSize,
   EllipsisTooltip,
   GhostIconButton,
-  ProgressBar,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertCircleFilled,
+  IconCheck,
   IconChevronDown,
   IconChevronUp,
-  IconCircleCheckFilled,
-  IconRefresh,
   IconX,
 } from '@tabler/icons-react';
-import { memo, useCallback, useEffect, useState, type FC } from 'react';
+import { memo, useCallback, useEffect, useId, useState, type FC } from 'react';
+import {
+  ConversationTransferJobStatus,
+  type ConversationTransferJob,
+} from '../../models/conversation-transfer';
 import type {
   ImportExportQueueLabels,
   ImportExportQueueProps,
   ImportExportQueueStyles,
 } from '../../models/import-export-queue';
+import { buildCssVars } from '../../utils/build-css-vars';
+import { mergeClasses } from '../../utils/merge-class';
+import { getTransferFileIcon } from '../../utils/transfer-file';
+import { CircularProgress } from '../CircularProgress/CircularProgress';
 import classes from './ImportExportQueue.module.scss';
 
 export type {
@@ -41,19 +41,6 @@ const AUTO_CLOSE_DELAY_MS = 8000;
 
 /* Fixed footprint for every trailing status slot so switching between statuses never shifts layout. */
 const STATUS_SLOT_CLASS = 'flex size-7 shrink-0 items-center justify-center';
-
-const getJobLabel = (
-  job: ConversationTransferJob,
-  allConversationsJobLabel: string,
-): string =>
-  job.subject.kind === ConversationTransferSubjectKind.Single
-    ? job.subject.title
-    : allConversationsJobLabel;
-
-const getJobDescription = (job: ConversationTransferJob): string | undefined =>
-  job.subject.kind === ConversationTransferSubjectKind.Single
-    ? job.subject.sourceBreadcrumb
-    : undefined;
 
 const getCloseConfirmDescription = (
   hasInProgress: boolean,
@@ -72,104 +59,136 @@ const getCloseConfirmDescription = (
 interface JobRowProps {
   job: ConversationTransferJob;
   labels: ImportExportQueueLabels;
-  onDismiss: (jobId: string) => void;
-  onRetry: (jobId: string) => void;
+  onCancel: (jobId: string) => void;
   styles?: ImportExportQueueStyles;
 }
 
-const JobRow: FC<JobRowProps> = ({
-  job,
-  labels,
-  onDismiss,
-  onRetry,
-  styles,
-}) => {
-  const label = getJobLabel(job, labels.allConversationsJobLabel);
-  const description = getJobDescription(job);
+const JobRow: FC<JobRowProps> = ({ job, labels, onCancel, styles }) => {
   const typography = styles?.typography;
+  const FileIcon = getTransferFileIcon(job.fileName);
+  const isCanceled = job.status === ConversationTransferJobStatus.Canceled;
+  const { units } = job.progress;
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2">
-      <div className="min-w-0 flex-1">
-        {description && (
-          <EllipsisTooltip
-            text={description}
-            className={mergeClasses(
-              classes.textSecondary,
-              typography?.jobDescriptionClassName || 'dial-caption-text',
-            )}
-            contentClassName="!z-[80]"
-          />
+    <div className="group flex items-center gap-2 px-4 py-2">
+      <FileIcon
+        size={DIAL_ICON_SIZE.SM}
+        stroke={DIAL_KIT_ICON_STROKE}
+        className={classes.textSecondary}
+        aria-hidden
+      />
+      <EllipsisTooltip
+        text={job.fileName}
+        className={mergeClasses(
+          isCanceled ? classes.textSecondary : classes.text,
+          typography?.jobLabelClassName || 'dial-small-text',
         )}
-        <EllipsisTooltip
-          text={label}
-          className={mergeClasses(
-            classes.text,
-            typography?.jobLabelClassName || 'dial-small-text',
-          )}
-          contentClassName="!z-[80]"
-        />
-      </div>
-      <div className="flex shrink-0 items-center gap-1">
-        {job.status === ConversationTransferJobStatus.Success && (
-          <span className={STATUS_SLOT_CLASS}>
-            <IconCircleCheckFilled size={16} className={classes.successIcon} />
-          </span>
-        )}
-        {job.status === ConversationTransferJobStatus.Failed && (
-          <>
-            <GhostIconButton
-              aria-label={labels.retryJobAriaLabel(label)}
-              icon={
-                <IconRefresh
-                  size={DIAL_ICON_SIZE.SM}
-                  className={classes.textSecondary}
-                  stroke={DIAL_KIT_ICON_STROKE}
-                />
+        contentClassName="!z-[80]"
+      />
+      {job.status === ConversationTransferJobStatus.InProgress && (
+        /*
+         * The ring and the cancel control share one grid cell so revealing one
+         * and hiding the other shifts nothing. The button stays mounted and
+         * focusable at all times — hiding it until hover would put cancel out
+         * of reach of a keyboard.
+         */
+        <div className={mergeClasses(STATUS_SLOT_CLASS, 'grid')}>
+          <span className="col-start-1 row-start-1 flex items-center justify-center opacity-100 transition-opacity group-focus-within:opacity-0 group-hover:opacity-0">
+            <CircularProgress
+              value={job.progress.percent}
+              ariaLabel={labels.jobProgressAriaLabel(job.fileName)}
+              ariaValueText={
+                units ? labels.jobProgressValueText(units) : undefined
               }
-              onClick={() => onRetry(job.id)}
+              className={classes.progressRing}
             />
-            <span className={STATUS_SLOT_CLASS}>
-              <IconAlertCircleFilled size={16} className={classes.errorIcon} />
-            </span>
-          </>
-        )}
-        {job.status === ConversationTransferJobStatus.InProgress && (
+          </span>
           <GhostIconButton
-            aria-label={labels.closeJobAriaLabel(label)}
+            aria-label={labels.cancelJobAriaLabel(job.fileName)}
             size={ElementSize.Small}
             icon={
               <IconX
                 size={DIAL_ICON_SIZE.SM}
                 className={classes.textSecondary}
                 stroke={DIAL_KIT_ICON_STROKE}
+                aria-hidden
               />
             }
-            onClick={() => onDismiss(job.id)}
-            className={STATUS_SLOT_CLASS}
+            onClick={() => onCancel(job.id)}
+            className="col-start-1 row-start-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
           />
-        )}
-      </div>
+        </div>
+      )}
+      {job.status === ConversationTransferJobStatus.Success && (
+        <span className={STATUS_SLOT_CLASS}>
+          <IconCheck
+            size={DIAL_ICON_SIZE.SM}
+            stroke={DIAL_KIT_ICON_STROKE}
+            className={classes.successIcon}
+            aria-hidden
+          />
+        </span>
+      )}
+      {job.status === ConversationTransferJobStatus.Failed && (
+        <Tooltip
+          tooltip={labels.jobErrorMessage(job.errorCode)}
+          contentClassName="!z-[80]"
+          asChild
+        >
+          {/*
+           * The reason is the icon's accessible name, not only its tooltip:
+           * a tooltip renders nothing on a mobile screen, so relying on it
+           * alone would leave the failure unexplained there.
+           */}
+          <span
+            className={STATUS_SLOT_CLASS}
+            role="img"
+            aria-label={labels.jobErrorMessage(job.errorCode)}
+            tabIndex={0}
+          >
+            <IconAlertCircleFilled
+              size={DIAL_ICON_SIZE.SM}
+              className={classes.errorIcon}
+              aria-hidden
+            />
+          </span>
+        </Tooltip>
+      )}
+      {isCanceled && (
+        <span
+          className={mergeClasses(
+            classes.textSecondary,
+            'shrink-0',
+            typography?.canceledLabelClassName || 'dial-small-text',
+          )}
+        >
+          {labels.canceledLabel}
+        </span>
+      )}
     </div>
   );
 };
 
 /** Floating queue panel showing the status of in-flight or recently completed export/import jobs. */
 export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
-  ({ title, jobs, onClose, onDismiss, onRetry, labels, styles }) => {
+  ({ title, jobs, onClose, onCancel, labels, styles }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const jobsId = useId();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const colors = styles?.colors;
     const typography = styles?.typography;
     const cssVars = {
       ...buildCssVars({
-        '--cp-transfer-queue-bg': colors?.background,
-        '--cp-transfer-queue-text': colors?.text,
-        '--cp-transfer-queue-text-secondary': colors?.textSecondary,
-        '--cp-transfer-queue-success-icon': colors?.successIcon,
-        '--cp-transfer-queue-error-icon': colors?.errorIcon,
-        '--cp-transfer-queue-failure-count-bg': colors?.failureCountBackground,
-        '--cp-transfer-queue-failure-count-text': colors?.failureCountText,
+        '--ieq-bg': colors?.background,
+        '--ieq-text': colors?.text,
+        '--ieq-text-secondary': colors?.textSecondary,
+        '--ieq-success-icon': colors?.successIcon,
+        '--ieq-error-icon': colors?.errorIcon,
+        '--ieq-progress-track': colors?.progressTrack,
+        '--ieq-progress-indicator': colors?.progressIndicator,
+        '--ieq-divider': colors?.divider,
+        '--ieq-failure-count-bg': colors?.failureCountBackground,
+        '--ieq-failure-count-text': colors?.failureCountText,
       }),
       ...styles?.cssVars,
     };
@@ -180,7 +199,9 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
     const hasFailed = jobs.some(
       (job) => job.status === ConversationTransferJobStatus.Failed,
     );
-    const canAutoClose = jobs.length > 0 && !hasInProgress && !hasFailed;
+    const isEverySucceeded =
+      jobs.length > 0 &&
+      jobs.every((job) => job.status === ConversationTransferJobStatus.Success);
 
     const handleClose = useCallback(() => {
       if (hasInProgress || hasFailed) {
@@ -196,21 +217,17 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
     }, [onClose]);
 
     useEffect(() => {
-      if (!canAutoClose) return undefined;
+      if (!isEverySucceeded) return undefined;
 
       const timeoutId = setTimeout(onClose, AUTO_CLOSE_DELAY_MS);
       return () => clearTimeout(timeoutId);
-    }, [canAutoClose, onClose]);
+    }, [isEverySucceeded, onClose]);
 
     if (jobs.length === 0) return null;
 
-    const finishedCount = jobs.filter(
-      (job) => job.status !== ConversationTransferJobStatus.InProgress,
-    ).length;
     const failedCount = jobs.filter(
       (job) => job.status === ConversationTransferJobStatus.Failed,
     ).length;
-    const percentage = Math.round((finishedCount / jobs.length) * 100);
 
     return (
       <div
@@ -219,15 +236,21 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
         style={cssVars}
         className={mergeClasses(
           classes.root,
-          'w-[320px] rounded-lg shadow-lg',
+          'w-[370px] rounded-lg shadow-lg',
           styles?.rootClassName,
         )}
       >
-        <div className="flex items-center justify-between px-3 py-2">
-          <div className="flex items-center gap-2">
+        <div
+          className={mergeClasses(
+            classes.divider,
+            'flex items-center justify-between px-4 py-3',
+          )}
+        >
+          <div className="flex min-w-0 items-center gap-2">
             <span
               className={mergeClasses(
                 classes.text,
+                'truncate',
                 typography?.titleClassName || 'dial-small-semi-text',
               )}
             >
@@ -237,7 +260,7 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
               <span
                 className={mergeClasses(
                   classes.failureCount,
-                  'inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1',
+                  'inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1',
                   typography?.failureCountClassName || 'dial-small-semi-text',
                 )}
               >
@@ -245,7 +268,7 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <GhostIconButton
               aria-label={
                 isCollapsed
@@ -253,18 +276,22 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
                   : labels.collapseQueueAriaLabel
               }
               size={ElementSize.Small}
+              aria-expanded={!isCollapsed}
+              aria-controls={jobsId}
               icon={
                 isCollapsed ? (
                   <IconChevronUp
                     size={DIAL_ICON_SIZE.SM}
                     className={classes.textSecondary}
                     stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
                   />
                 ) : (
                   <IconChevronDown
                     size={DIAL_ICON_SIZE.SM}
                     className={classes.textSecondary}
                     stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
                   />
                 )
               }
@@ -279,6 +306,7 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
                   size={DIAL_ICON_SIZE.SM}
                   className={classes.textSecondary}
                   stroke={DIAL_KIT_ICON_STROKE}
+                  aria-hidden
                 />
               }
               onClick={handleClose}
@@ -286,18 +314,11 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
             />
           </div>
         </div>
-        <div className="px-3 pb-2">
-          <ProgressBar
-            value={percentage}
-            size={ElementSize.Small}
-            aria-label={title}
-            className="w-full"
-          />
-        </div>
         {!isCollapsed && (
           <div
+            id={jobsId}
             className={mergeClasses(
-              'flex max-h-[40vh] flex-col overflow-y-auto',
+              'flex max-h-[40vh] flex-col overflow-y-auto py-1',
               styles?.bodyClassName,
             )}
           >
@@ -306,8 +327,7 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
                 key={job.id}
                 job={job}
                 labels={labels}
-                onDismiss={onDismiss}
-                onRetry={onRetry}
+                onCancel={onCancel}
                 styles={styles}
               />
             ))}

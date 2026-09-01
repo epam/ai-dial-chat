@@ -4,9 +4,10 @@ import type {
   FilesApi,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  ConversationTransferErrorCode,
   type ConversationTransferJob,
-  ConversationTransferJobStatus,
   ConversationTransferSubjectKind,
+  ConversationTransferUnitKind,
   generateUUID,
   Conversation,
 } from '@epam/ai-dial-chat-shared';
@@ -26,9 +27,13 @@ import {
   UnsupportedImportFormatError,
   type RewrittenAttachmentTarget,
 } from '../conversation-transfer/import-conversation';
+import {
+  buildTransferProgress,
+  ConversationTransferKind,
+  ConversationTransferPhase,
+} from '../conversation-transfer/progress';
 import { useConversationTransferQueue } from '../conversation-transfer/queue';
 import {
-  ConversationTransferErrorCode,
   type ConversationTransferErrorEvent,
   type ConversationTransferSuccessEvent,
   ConversationTransferWarningCode,
@@ -137,6 +142,7 @@ const uploadConversationAttachments = async (
   allocator: UploadPathAllocator,
   filesApi: Pick<FilesApi, 'uploadFile'>,
   isUnauthorizedError: (error: unknown) => boolean,
+  onAttachmentSettled: () => void,
   signal: AbortSignal,
 ): Promise<{
   targetMap: Map<string, RewrittenAttachmentTarget>;
@@ -173,6 +179,7 @@ const uploadConversationAttachments = async (
             { bucket, path: attempt.path, file, uploadMode: 'create-only' },
             { signal },
           );
+          onAttachmentSettled();
           return {
             kind: 'uploaded',
             oldFileId: item.fileId,
@@ -192,6 +199,7 @@ const uploadConversationAttachments = async (
             (error as { response?: { status?: number } }).response?.status ===
               409;
           if (!isConflict || retry === ATTACHMENT_CONFLICT_RETRY_LIMIT) {
+            onAttachmentSettled();
             return { kind: 'skipped', name: item.originalFileName };
           }
           allocator.markTaken(attempt.fileName);
@@ -230,9 +238,11 @@ export interface UseConversationImportResult {
   jobs: ConversationTransferJob[];
   /** Parses the given file and starts importing it as a new job. */
   importConversations: (file: File) => Promise<void>;
+  /** Aborts a job's underlying requests and marks it canceled, keeping it in `jobs`. */
+  cancelJob: (jobId: string) => void;
   /** Removes a job from the queue. If still in progress, aborts its underlying requests. */
   dismissJob: (jobId: string) => void;
-  /** Re-attempts a failed job in place (same job id, reusing the already-parsed file). */
+  /** Re-attempts a failed or canceled job in place (same job id, reusing the already-parsed file). */
   retryJob: (jobId: string) => void;
   /** Aborts all in-progress jobs and clears the entire queue. */
   dismissAll: () => void;
@@ -272,11 +282,50 @@ export const useConversationImport = ({
           jobId,
           code: ConversationTransferErrorCode.MissingBucket,
         });
-        queue.updateJob(jobId, {
-          status: ConversationTransferJobStatus.Failed,
-        });
+        queue.failJob(jobId, ConversationTransferErrorCode.MissingBucket);
         return;
       }
+
+      const kind = ConversationTransferKind.Import;
+      const attachmentTotal = parsed.attachments.size;
+      let attachmentsSettled = 0;
+      const reportAttachmentSettled = (): void => {
+        attachmentsSettled += 1;
+        queue.setJobProgress(
+          jobId,
+          buildTransferProgress(
+            {
+              kind,
+              phase: ConversationTransferPhase.Transfer,
+              completed: attachmentsSettled,
+              total: attachmentTotal,
+            },
+            {
+              completed: Math.min(attachmentsSettled, attachmentTotal),
+              total: attachmentTotal,
+              kind: ConversationTransferUnitKind.Attachment,
+            },
+          ),
+        );
+      };
+      const reportConversationSettled = (completed: number): void => {
+        queue.setJobProgress(
+          jobId,
+          buildTransferProgress(
+            {
+              kind,
+              phase: ConversationTransferPhase.Finalize,
+              completed,
+              total: parsed.history.length,
+            },
+            {
+              completed,
+              total: parsed.history.length,
+              kind: ConversationTransferUnitKind.Conversation,
+            },
+          ),
+        );
+      };
 
       const successNames: string[] = [];
       const failedNames: string[] = [];
@@ -314,9 +363,7 @@ export const useConversationImport = ({
               jobId,
               code: ConversationTransferErrorCode.Unauthorized,
             });
-            queue.updateJob(jobId, {
-              status: ConversationTransferJobStatus.Failed,
-            });
+            queue.failJob(jobId, ConversationTransferErrorCode.Unauthorized);
             return;
           }
           /* Listing is an optimization, not a correctness requirement — a
@@ -329,6 +376,23 @@ export const useConversationImport = ({
           );
         }
         allocator = createUploadPathAllocator({ date: today, existingNames });
+      }
+      queue.setJobProgress(
+        jobId,
+        buildTransferProgress({
+          kind,
+          phase: ConversationTransferPhase.Prepare,
+        }),
+      );
+      if (attachmentTotal === 0) {
+        /* Credits the upload phase in full for a plain `.json` import. */
+        queue.setJobProgress(
+          jobId,
+          buildTransferProgress({
+            kind,
+            phase: ConversationTransferPhase.Transfer,
+          }),
+        );
       }
 
       for (const conversation of parsed.history) {
@@ -345,6 +409,7 @@ export const useConversationImport = ({
               allocator,
               filesApi,
               isUnauthorizedError,
+              reportAttachmentSettled,
               signal,
             );
             if (signal.aborted) return;
@@ -398,14 +463,13 @@ export const useConversationImport = ({
           }
           console.error('Failed to import a conversation', error);
         }
+        reportConversationSettled(successNames.length + failedNames.length);
       }
       if (signal.aborted) return;
 
       if (isUnauthorized) {
         onError?.({ jobId, code: ConversationTransferErrorCode.Unauthorized });
-        queue.updateJob(jobId, {
-          status: ConversationTransferJobStatus.Failed,
-        });
+        queue.failJob(jobId, ConversationTransferErrorCode.Unauthorized);
         return;
       }
 
@@ -432,12 +496,11 @@ export const useConversationImport = ({
           names: skippedAttachmentNames,
         });
       }
-      queue.updateJob(jobId, {
-        status:
-          failedNames.length > 0
-            ? ConversationTransferJobStatus.Failed
-            : ConversationTransferJobStatus.Success,
-      });
+      if (failedNames.length > 0) {
+        queue.failJob(jobId, ConversationTransferErrorCode.Unknown);
+      } else {
+        queue.succeedJob(jobId);
+      }
     },
     [
       bucket,
@@ -484,7 +547,7 @@ export const useConversationImport = ({
               : undefined,
           };
 
-      const jobId = queue.addJob(subject);
+      const jobId = queue.addJob(subject, file.name);
       return queue.startJob(jobId, (signal) =>
         runImportJob(jobId, parsed, signal),
       );
@@ -495,6 +558,7 @@ export const useConversationImport = ({
   return {
     jobs: queue.jobs,
     importConversations,
+    cancelJob: queue.cancelJob,
     dismissJob: queue.dismissJob,
     retryJob: queue.retryJob,
     dismissAll: queue.dismissAll,
