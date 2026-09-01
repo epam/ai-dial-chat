@@ -1084,7 +1084,9 @@
     "errorRetry": "Retry",
     "statusLoginSuccess": "Login succeeded for {{name}}.",
     "statusDeclineSuccess": "Declined {{name}}.",
-    "noCredentialsRequired": "No credentials required"
+    "noCredentialsRequired": "No credentials required",
+    "offlineUsageConsent": "Allow offline use",
+    "offlineUsageConsentHint": "Required for scheduled and background runs."
   },
   "voiceRecording": {
     "micLabel": "Record voice message",

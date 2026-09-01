@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -74,6 +75,25 @@ export class ToolsetLoginBodyDto {
   @IsString()
   @IsNotEmpty()
   redirectUri?: string;
+
+  /*
+   * Whether the user permits an application to use this toolset credential
+   * while they are NOT present. DIAL Core records it on the credential and
+   * gates every on-behalf-of mint on it, so a toolset signed in without it
+   * works interactively and still fails with `consent-required` the moment an
+   * application reaches for it in the background.
+   *
+   * Optional and defaulted by the caller, never by this DTO: standing consent
+   * has to be a choice the user actually made.
+   */
+  @ApiPropertyOptional({
+    description:
+      'Whether the user consents to an application using this credential while ' +
+      'they are offline. Required for on-behalf-of use (e.g. scheduled runs).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  offlineUsageConsent?: boolean;
 }
 
 export class ToolsetLogoutBodyDto {

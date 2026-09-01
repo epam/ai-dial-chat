@@ -52,6 +52,13 @@ export interface ExternalServiceLoginParams {
   /** Required for `ExternalServiceAuthType.OAuth`. */
   oauthSettings?: ExternalServiceOAuthSettings;
   /**
+   * Whether the user agreed the application may use the credential while they
+   * are away. DIAL Core gates every on-behalf-of mint on it, so an application
+   * that works in the background cannot use a credential signed in without it.
+   * Absent means not granted — this is never defaulted on the user's behalf.
+   */
+  offlineUsageConsent?: boolean;
+  /**
    * Always logs out the target level first regardless of any cached status —
    * a Core-pushed `external-service/signin` event is proof credentials may
    * be stale even if a cached read still reports signed in. The signin
@@ -107,8 +114,14 @@ export const useExternalServiceLogin = (): {
     async (
       params: ExternalServiceLoginParams,
     ): Promise<ExternalServiceLoginOutcome> => {
-      const { appId, serviceId, credentialsLevel, oauthSettings, forceStale } =
-        params;
+      const {
+        appId,
+        serviceId,
+        credentialsLevel,
+        oauthSettings,
+        forceStale,
+        offlineUsageConsent,
+      } = params;
       /*
        * The shared OAuth popup/BroadcastChannel utilities (`utils/toolsets.ts`)
        * correlate a flow by a single opaque string id — this composite id is
@@ -154,6 +167,7 @@ export const useExternalServiceLogin = (): {
         ROUTES.ToolsetSignIn,
         toolsetLevel,
         OAuthResourceKind.ExternalService,
+        offlineUsageConsent,
       );
 
       if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
@@ -210,6 +224,7 @@ export const useExternalServiceLogin = (): {
         authenticationType,
         apiKey,
         forceStale,
+        offlineUsageConsent,
       } = params;
 
       try {
@@ -225,6 +240,7 @@ export const useExternalServiceLogin = (): {
           credentialsLevel,
           authenticationType,
           apiKey: apiKey?.trim(),
+          offlineUsageConsent,
         });
         return { type: ExternalServiceLoginOutcomeType.Success };
       } catch {

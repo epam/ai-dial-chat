@@ -43,6 +43,8 @@ export interface ExternalServiceSigninBodyDto {
   apiKey?: string;
   code?: string;
   redirectUri?: string;
+  /** Permit the application to use this credential while the user is away — see the BFF DTO. */
+  offlineUsageConsent?: boolean;
 }
 
 export interface ExternalServiceLogoutBodyDto {

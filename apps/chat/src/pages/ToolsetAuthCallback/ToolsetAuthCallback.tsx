@@ -70,6 +70,12 @@ const ToolsetAuthCallback: FC = () => {
           authenticationType: ExternalServiceAuthType.OAuth,
           code,
           redirectUri,
+          /*
+           * Decided before the redirect, carried through the popup's redirect
+           * state: the code exchange happens here, after the round-trip, so
+           * this is the only place the user's choice can still be submitted.
+           */
+          offlineUsageConsent: redirectState.offlineUsageConsent,
         });
         return null;
       }
@@ -87,6 +93,8 @@ const ToolsetAuthCallback: FC = () => {
           ToolsetAuthTypes.OAuth as ToolsetLoginBodyDto['authenticationType'],
         code,
         redirectUri,
+        /* Decided before the redirect; the exchange happens here — see the external-service branch. */
+        offlineUsageConsent: redirectState.offlineUsageConsent,
       };
       await loginToolset(redirectState.toolsetId, body);
       return null;
