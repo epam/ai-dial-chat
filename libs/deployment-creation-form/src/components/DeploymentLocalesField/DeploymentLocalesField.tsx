@@ -12,7 +12,7 @@ import {
   Select,
   Textarea,
 } from '@epam/ai-dial-ui-kit';
-import { IconPencil, IconPlus, IconTrashX } from '@tabler/icons-react';
+import { IconPlus, IconTrashX } from '@tabler/icons-react';
 import { useEffect, useRef, useState, type FC } from 'react';
 import type {
   DeploymentCreationFormLocaleEntry,
@@ -148,19 +148,15 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
 
   return (
     <div className={mergeClasses('flex items-center gap-2', className)}>
-      <span className={summaryClassName}>
-        {`${summaryLabel}: ${
-          value.length > 0
-            ? value
-                .map((entry) => `[${localeLabel(entry.language)}]`)
-                .join(', ')
-            : '—'
-        }`}
-      </span>
+      {value.length > 0 && (
+        <span className={summaryClassName}>
+          {`${summaryLabel}: ${value.map((entry) => `[${localeLabel(entry.language)}]`).join(', ')}`}
+        </span>
+      )}
       <LinkButton
         label={editLabel}
         iconBefore={
-          <IconPencil
+          <IconPlus
             size={DIAL_ICON_SIZE.SM}
             aria-hidden
             stroke={DIAL_KIT_ICON_STROKE}

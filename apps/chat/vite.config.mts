@@ -112,6 +112,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/builder-form/src/index.ts',
       ),
+      '@epam/ai-dial-editor-builder': path.resolve(
+        import.meta.dirname,
+        '../../libs/editor-builder/src/index.ts',
+      ),
       '@epam/ai-dial-skill-editor': path.resolve(
         import.meta.dirname,
         '../../libs/skill-editor/src/index.ts',

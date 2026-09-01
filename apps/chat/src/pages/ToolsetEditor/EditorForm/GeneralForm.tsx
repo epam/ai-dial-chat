@@ -1,4 +1,3 @@
-import { appendLocaleCode } from '@epam/ai-dial-chat-hooks';
 import type {
   DeploymentCreationFormLabels,
   DeploymentCreationFormValues,
@@ -10,13 +9,13 @@ import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
   EditorI18nKeys,
+  ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import type { CustomAppGeneralFormData } from '../../../models/custom-apps';
 import type { ToolsetFormErrors } from '../../../models/toolsets';
 import {
   buildAdditionalLocaleOptions,
   buildLocaleFieldLabels,
-  PRIMARY_LOCALE,
 } from '../../../utils/locale';
 
 interface Props {
@@ -45,14 +44,11 @@ const GeneralForm: FC<Props> = ({
   const labels: DeploymentCreationFormLabels = useMemo(
     () => ({
       name: {
-        label: appendLocaleCode(t(EditorI18nKeys.NameLabel), PRIMARY_LOCALE),
+        label: t(EditorI18nKeys.NameLabel),
         placeholder: namePlaceholder,
       },
       description: {
-        label: appendLocaleCode(
-          t(EditorI18nKeys.DescriptionLabel),
-          PRIMARY_LOCALE,
-        ),
+        label: t(EditorI18nKeys.DescriptionLabel),
         placeholder: descriptionPlaceholder,
       },
       iconUrl: {
@@ -65,7 +61,7 @@ const GeneralForm: FC<Props> = ({
       },
       topics: {
         label: t(EditorI18nKeys.TopicsLabel),
-        placeholder: t(EditorI18nKeys.TopicsPlaceholder),
+        placeholder: t(ToolsetEditorI18nKeys.TopicsPlaceholder),
       },
       otherLocales: buildLocaleFieldLabels(t),
       ariaLabel: t(EditorI18nKeys.StepGeneral),

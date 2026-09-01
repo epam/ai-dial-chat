@@ -1008,9 +1008,17 @@ export enum AppsEditorI18nKeys {
 }
 
 export enum ToolsetEditorI18nKeys {
+  // Page header
+  CreateTitle = 'toolsetEditor.createTitle',
+  EditTitle = 'toolsetEditor.editTitle',
+  BackAriaLabel = 'toolsetEditor.backAriaLabel',
+  MetadataSectionTitle = 'toolsetEditor.metadataSectionTitle',
+  SetupSectionTitle = 'toolsetEditor.setupSectionTitle',
+  SavingStatus = 'toolsetEditor.savingStatus',
   // General form
   NamePlaceholder = 'toolsetEditor.general.namePlaceholder',
   DescriptionPlaceholder = 'toolsetEditor.general.descriptionPlaceholder',
+  TopicsPlaceholder = 'toolsetEditor.general.topicsPlaceholder',
   // Settings form
   EndpointRequired = 'toolsetEditor.settings.endpointRequired',
   EndpointInvalid = 'toolsetEditor.settings.endpointInvalid',
@@ -1027,15 +1035,24 @@ export enum ToolsetEditorI18nKeys {
   WithLoginLabel = 'toolsetEditor.auth.withLoginLabel',
   WithoutLoginLabel = 'toolsetEditor.auth.withoutLoginLabel',
   WithConfigLabel = 'toolsetEditor.auth.withConfigLabel',
+  WithLoginOAuthLabel = 'toolsetEditor.auth.withLoginOAuthLabel',
+  WithConfigOAuthLabel = 'toolsetEditor.auth.withConfigOAuthLabel',
+  OpenAccessDescription = 'toolsetEditor.auth.openAccessDescription',
   KeyHeaderLabel = 'toolsetEditor.auth.keyHeaderLabel',
+  KeyHeaderPlaceholder = 'toolsetEditor.auth.keyHeaderPlaceholder',
   KeyHeaderRequired = 'toolsetEditor.auth.keyHeaderRequired',
+  ApiKeyPlaceholder = 'toolsetEditor.auth.apiKeyPlaceholder',
   ApiKeyRequired = 'toolsetEditor.auth.apiKeyRequired',
   ClientIdLabel = 'toolsetEditor.auth.clientIdLabel',
+  ClientIdPlaceholder = 'toolsetEditor.auth.clientIdPlaceholder',
   ClientIdRequired = 'toolsetEditor.auth.clientIdRequired',
   ClientSecretLabel = 'toolsetEditor.auth.clientSecretLabel',
+  ClientSecretPlaceholder = 'toolsetEditor.auth.clientSecretPlaceholder',
   ClientSecretRequired = 'toolsetEditor.auth.clientSecretRequired',
   AuthorizationEndpointLabel = 'toolsetEditor.auth.authorizationEndpointLabel',
+  AuthorizationEndpointPlaceholder = 'toolsetEditor.auth.authorizationEndpointPlaceholder',
   TokenEndpointLabel = 'toolsetEditor.auth.tokenEndpointLabel',
+  TokenEndpointPlaceholder = 'toolsetEditor.auth.tokenEndpointPlaceholder',
   ScopesLabel = 'toolsetEditor.auth.scopesLabel',
   ScopesPlaceholder = 'toolsetEditor.auth.scopesPlaceholder',
   LoggedInLabel = 'toolsetEditor.auth.loggedInLabel',

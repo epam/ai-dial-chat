@@ -1,0 +1,7 @@
+.headerBorder {
+  border-bottom-color: var(--el-header-border-color, var(--stroke-tertiary, #e0e6f0));
+}
+
+.sidebarBorder {
+  border-inline-end-color: var(--el-sidebar-border-color, var(--stroke-tertiary, #e0e6f0));
+}

@@ -192,6 +192,7 @@
   "workspaces": [
     "packages/*",
     "apps/*",
-    "libs/*"
+    "libs/*",
+    "tools/publish-lib"
   ]
 }

@@ -58,7 +58,6 @@ vi.mock('../../../../context/NotificationContext');
 const mockShowNotification = vi.fn();
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
   Input: ({
     value,
     onChange,
@@ -179,9 +178,43 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ConfirmationPopupVariant: { Danger: 'danger' },
   NotificationVariant: { Error: 'error', Success: 'success' },
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
+  SegmentedControl: ({
+    items,
+    value,
+    onChange,
+    'aria-label': ariaLabel,
+  }: {
+    items?: Array<{
+      value: string;
+      label?: string;
+      icon?: unknown;
+      disabled?: boolean;
+      'aria-label'?: string;
+    }>;
+    value?: string;
+    onChange?: (v: string) => void;
+    disabled?: boolean;
+    'aria-label'?: string;
+  }) => (
+    <div role="radiogroup" aria-label={ariaLabel}>
+      {(items ?? []).map((item) => (
+        <button
+          key={item.value}
+          role="radio"
+          aria-checked={item.value === value}
+          aria-label={
+            typeof item.label === 'string' ? item.label : item['aria-label']
+          }
+          disabled={item.disabled}
+          onClick={() => onChange?.(item.value)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ),
+  DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16 },
-  mergeClasses: (...classes: (string | undefined | false)[]) =>
-    classes.filter(Boolean).join(' '),
 }));
 
 const noneAuth = (): ToolsetAuthFormData => ({
@@ -265,11 +298,11 @@ describe('AuthSection', () => {
   });
 
   describe('type selection', () => {
-    it('calls onAuthChange with ApiKey type when the ApiKey row is clicked', async () => {
+    it('calls onAuthChange with ApiKey type when the ApiKey option is clicked', async () => {
       const onAuthChange = vi.fn();
       renderSection(noneAuth(), 'toolsets/b/my__1.0.0', onAuthChange);
       await user.click(
-        screen.getByRole('button', {
+        screen.getByRole('radio', {
           name: new RegExp(ToolsetEditorI18nKeys.AuthTypeApiKey, 'i'),
         }),
       );
@@ -280,11 +313,11 @@ describe('AuthSection', () => {
       );
     });
 
-    it('calls onAuthChange with OAuth type when the OAuth row is clicked', async () => {
+    it('calls onAuthChange with OAuth type when the OAuth option is clicked', async () => {
       const onAuthChange = vi.fn();
       renderSection(noneAuth(), 'toolsets/b/my__1.0.0', onAuthChange);
       await user.click(
-        screen.getByRole('button', {
+        screen.getByRole('radio', {
           name: new RegExp(ToolsetEditorI18nKeys.AuthTypeOAuth, 'i'),
         }),
       );
@@ -299,7 +332,7 @@ describe('AuthSection', () => {
       const onAuthChange = vi.fn();
       renderSection(noneAuth(), 'toolsets/b/my__1.0.0', onAuthChange);
       await user.click(
-        screen.getByRole('button', {
+        screen.getByRole('radio', {
           name: new RegExp(ToolsetEditorI18nKeys.AuthTypeOAuth, 'i'),
         }),
       );
@@ -316,7 +349,7 @@ describe('AuthSection', () => {
         onAuthChange,
       );
       await user.click(
-        screen.getByRole('button', {
+        screen.getByRole('radio', {
           name: new RegExp(ToolsetEditorI18nKeys.AuthTypeOAuth, 'i'),
         }),
       );
@@ -383,13 +416,13 @@ describe('AuthSection', () => {
       ).toBeTruthy();
     });
 
-    it('renders WithLogin and WithLogin+Config radio buttons for OAuth', () => {
+    it('renders Standard login and Custom login radio buttons for OAuth', () => {
       renderSection(oauthWithConfigAuth());
       expect(
-        screen.getByLabelText(ToolsetEditorI18nKeys.WithLoginLabel),
+        screen.getByLabelText(ToolsetEditorI18nKeys.WithLoginOAuthLabel),
       ).toBeTruthy();
       expect(
-        screen.getByLabelText(ToolsetEditorI18nKeys.WithConfigLabel),
+        screen.getByLabelText(ToolsetEditorI18nKeys.WithConfigOAuthLabel),
       ).toBeTruthy();
     });
 

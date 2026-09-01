@@ -1155,7 +1155,7 @@ const { onUploadFiles, uploadBatchState, cancelUpload, clearUploadBatch } =
 Scrolls a newly inline-edited or newly-inserted grid row into view. Binds directly to the AG Grid `GridApi` obtained via `DialFileManager`'s `onGridApiChange` prop, since `@epam/ai-dial-react-file-manager`'s own `GridOptions` type does not forward the raw AG Grid event callbacks this needs. `handleGridApiChange` accepts that raw `GridApi` only to bind to `onGridApiChange` — the narrow AGENTS.md D9 exception for this hook — and the hook otherwise never renders, themes, or depends on AG Grid beyond that one event-binding parameter.
 
 ```tsx
-import { useGridEditingScroll } from '@epam/ai-dial-chat-hooks';
+import { useGridEditingScroll } from '@epam/ai-dial-chat-shared';
 
 const { handleGridApiChange, reset } = useGridEditingScroll();
 

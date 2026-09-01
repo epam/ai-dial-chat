@@ -27,9 +27,10 @@ usable by any host whose skill storage differs from DIAL Core's.
 ## Peer Dependencies
 
 - `react` `^19.0.0`
-- `@epam/ai-dial-ui-kit` `^0.13.0-dev.26`
-- `@epam/ai-dial-react-file-manager` `^0.1.0-dev.17`
+- `@epam/ai-dial-ui-kit` `*`
+- `@epam/ai-dial-react-file-manager` `^0.2.0-dev.9`
 - `@epam/ai-dial-chat-shared` `*`
+- `@epam/ai-dial-editor-builder` `*`
 - `@tabler/icons-react` `^3.0.0`
 
 ## Components
@@ -63,12 +64,9 @@ const CreateSkillPage = () => {
       errors={errors}
       onSubmit={handleSubmit}
       onCancel={goBack}
-      headerContent={
-        <>
-          <BackButton onClick={goBack} />
-          <h1>{isEditMode ? 'Edit skill' : 'Create skill'}</h1>
-        </>
-      }
+      onBack={goBack}
+      backAriaLabel="Back to catalog"
+      title={isEditMode ? 'Edit skill' : 'Create skill'}
       fileActions={{
         validatePath: (path) => validateSkillRelativePath(path),
         onUploadFile: async (file, path) => {
@@ -101,12 +99,12 @@ other node requires the user to confirm a popup before
 "Upload from device" as an Add action; it does not support creating an empty
 file or folder.
 
-`headerContent` is rendered verbatim at the start of the desktop header row,
-before the Cancel/Create actions — typically a back button and page title
-supplied by the host, since the library has no navigation or i18n knowledge
-of its own. It is only shown at the `desktop` breakpoint; on narrower
-viewports the host is expected to render its own equivalent header above the
-`SkillEditor` component.
+The header is rendered by `EditorLayout` (from `@epam/ai-dial-editor-builder`).
+Pass `onBack` (called when the back arrow is activated), `title` (the page
+heading), and optionally `backAriaLabel` (accessible label for the arrow,
+defaults to `'Back'`). The header, including the back arrow, Cancel/Create
+actions, and saving status, appears on all viewports — no separate mobile
+header is needed from the host.
 
 ## Types
 

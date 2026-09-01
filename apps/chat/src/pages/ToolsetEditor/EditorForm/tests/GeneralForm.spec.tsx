@@ -101,12 +101,8 @@ describe('GeneralForm', () => {
 
   it('renders name, description, icon URL, version, and topics fields', () => {
     renderForm();
-    expect(
-      screen.getByLabelText(`${EditorI18nKeys.NameLabel} [EN]`),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText(`${EditorI18nKeys.DescriptionLabel} [EN]`),
-    ).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.NameLabel)).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.DescriptionLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.IconUrlLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.VersionLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.TopicsLabel)).toBeTruthy();
@@ -127,7 +123,7 @@ describe('GeneralForm', () => {
     const onChange = vi.fn();
     renderForm({}, {}, onChange);
     const nameInput = screen.getByLabelText(
-      `${EditorI18nKeys.NameLabel} [EN]`,
+      EditorI18nKeys.NameLabel,
     ) as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: 'Updated' } });
     expect(onChange).toHaveBeenCalledWith(
@@ -139,7 +135,7 @@ describe('GeneralForm', () => {
     const onChange = vi.fn();
     renderForm({}, {}, onChange);
     const textarea = screen.getByLabelText(
-      `${EditorI18nKeys.DescriptionLabel} [EN]`,
+      EditorI18nKeys.DescriptionLabel,
     ) as HTMLTextAreaElement;
     await user.type(textarea, 'A description');
     expect(onChange).toHaveBeenCalledWith(

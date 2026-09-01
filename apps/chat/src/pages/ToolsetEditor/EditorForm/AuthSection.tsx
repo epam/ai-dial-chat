@@ -17,15 +17,16 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { TAG_INPUT_TAG_CLASS_NAME } from '@epam/ai-dial-chat-shared';
 import {
+  ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  ConfirmationPopup,
-  Input,
-  Radio,
-  TagInput,
+  DIAL_KIT_ICON_STROKE,
   ElementSize,
-  mergeClasses,
+  Input,
   PrimaryButton,
+  Radio,
+  SegmentedControl,
+  TagInput,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useState } from 'react';
@@ -60,12 +61,6 @@ interface Props {
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
   onEnsureSaved: () => Promise<string | false>;
 }
-
-const ORDERED_AUTH_TYPES = [
-  ToolsetAuthTypes.OAuth,
-  ToolsetAuthTypes.ApiKey,
-  ToolsetAuthTypes.None,
-];
 
 /*
  * OAuth defaults to WithConfig when no client is configured yet, so a
@@ -359,13 +354,13 @@ const AuthSection: FC<Props> = ({
   };
 
   const renderOAuthContent = () => (
-    <div className="flex flex-col gap-3 pb-3 ps-4">
+    <div className="flex flex-col gap-3 pt-2">
       <div className="flex flex-col gap-2">
         <Radio
           name="oauth-login-mode"
           id="oauth-with-login"
           value={WithLogin.WithLogin}
-          labelProps={{ label: t(ToolsetEditorI18nKeys.WithLoginLabel) }}
+          labelProps={{ label: t(ToolsetEditorI18nKeys.WithLoginOAuthLabel) }}
           isSelected={auth.withLogin === WithLogin.WithLogin}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
@@ -374,7 +369,7 @@ const AuthSection: FC<Props> = ({
           name="oauth-login-mode"
           id="oauth-with-config"
           value={WithLogin.WithConfig}
-          labelProps={{ label: t(ToolsetEditorI18nKeys.WithConfigLabel) }}
+          labelProps={{ label: t(ToolsetEditorI18nKeys.WithConfigOAuthLabel) }}
           isSelected={auth.withLogin === WithLogin.WithConfig}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
@@ -391,6 +386,7 @@ const AuthSection: FC<Props> = ({
               label: t(ToolsetEditorI18nKeys.ClientIdLabel),
               required: true,
             }}
+            placeholder={t(ToolsetEditorI18nKeys.ClientIdPlaceholder)}
             error={errors.clientId || undefined}
             invalid={!!errors.clientId}
             disabled={isControlsDisabled}
@@ -403,6 +399,7 @@ const AuthSection: FC<Props> = ({
               label: t(ToolsetEditorI18nKeys.ClientSecretLabel),
               required: !isEditMode,
             }}
+            placeholder={t(ToolsetEditorI18nKeys.ClientSecretPlaceholder)}
             error={errors.clientSecret || undefined}
             invalid={!!errors.clientSecret}
             disabled={isControlsDisabled}
@@ -416,6 +413,9 @@ const AuthSection: FC<Props> = ({
             labelProps={{
               label: t(ToolsetEditorI18nKeys.AuthorizationEndpointLabel),
             }}
+            placeholder={t(
+              ToolsetEditorI18nKeys.AuthorizationEndpointPlaceholder,
+            )}
             error={errors.authorizationEndpoint || undefined}
             invalid={!!errors.authorizationEndpoint}
             disabled={isControlsDisabled}
@@ -427,6 +427,7 @@ const AuthSection: FC<Props> = ({
             labelProps={{
               label: t(ToolsetEditorI18nKeys.TokenEndpointLabel),
             }}
+            placeholder={t(ToolsetEditorI18nKeys.TokenEndpointPlaceholder)}
             error={errors.tokenEndpoint || undefined}
             invalid={!!errors.tokenEndpoint}
             disabled={isControlsDisabled}
@@ -449,8 +450,14 @@ const AuthSection: FC<Props> = ({
     </div>
   );
 
+  const renderNoneContent = () => (
+    <p className="dial-small-text pt-2 text-secondary">
+      {t(ToolsetEditorI18nKeys.OpenAccessDescription)}
+    </p>
+  );
+
   const renderApiKeyContent = () => (
-    <div className="flex flex-col gap-3 pb-3 ps-4">
+    <div className="flex flex-col gap-3 pt-2">
       <div className="flex flex-col gap-2">
         <Radio
           name="apikey-login-mode"
@@ -481,6 +488,7 @@ const AuthSection: FC<Props> = ({
             label: t(ToolsetEditorI18nKeys.KeyHeaderLabel),
             required: true,
           }}
+          placeholder={t(ToolsetEditorI18nKeys.KeyHeaderPlaceholder)}
           error={errors.keyHeader || undefined}
           invalid={!!errors.keyHeader}
           disabled={isControlsDisabled}
@@ -495,6 +503,7 @@ const AuthSection: FC<Props> = ({
               label: t(ApiI18nKeys.ApiKey),
               required: true,
             }}
+            placeholder={t(ToolsetEditorI18nKeys.ApiKeyPlaceholder)}
             error={errors.apiKey || undefined}
             invalid={!!errors.apiKey}
             disabled={isControlsDisabled}
@@ -508,51 +517,41 @@ const AuthSection: FC<Props> = ({
 
   return (
     <section className="flex flex-col gap-2">
-      <span className="dial-small-text text-secondary">
+      <h3 className="dial-h3-text">
         {t(ToolsetEditorI18nKeys.AuthSectionTitle)}
-      </span>
+      </h3>
 
-      {ORDERED_AUTH_TYPES.map((type) => {
-        const option = AUTH_TYPE_OPTIONS[type];
-        const Icon = option.Icon;
-        const isSelected = auth.authenticationType === type;
-        const isLocked = isControlsDisabled && !isSelected;
-
-        return (
-          <div key={type}>
-            <button
-              type="button"
-              className={mergeClasses(
-                'flex w-full items-center gap-3 border-s-2 px-4 py-3',
-                isSelected ? 'border-s-info' : 'border-s-transparent',
-                isLocked && 'cursor-not-allowed opacity-50',
-              )}
-              onClick={() => handleSelectType(type)}
-              disabled={isLocked}
-            >
+      <SegmentedControl
+        aria-label={t(ToolsetEditorI18nKeys.AuthSectionTitle)}
+        value={auth.authenticationType}
+        onChange={(type) => handleSelectType(type as ToolsetAuthTypes)}
+        items={[
+          ToolsetAuthTypes.None,
+          ToolsetAuthTypes.OAuth,
+          ToolsetAuthTypes.ApiKey,
+        ].map((type) => {
+          const { labelKey, Icon } = AUTH_TYPE_OPTIONS[type];
+          return {
+            value: type,
+            icon: (
               <Icon
+                className="shrink-0"
                 size={DIAL_ICON_SIZE.SM}
-                className={isSelected ? 'text-accent' : 'text-secondary'}
+                stroke={DIAL_KIT_ICON_STROKE}
+                aria-hidden
               />
-              <span
-                className={mergeClasses(
-                  'dial-small-text',
-                  isSelected ? 'text-accent' : 'text-primary',
-                )}
-              >
-                {t(option.labelKey)}
-              </span>
-            </button>
+            ),
+            label: t(labelKey),
+            disabled: isControlsDisabled && auth.authenticationType !== type,
+          };
+        })}
+      />
 
-            {isSelected &&
-              type === ToolsetAuthTypes.OAuth &&
-              renderOAuthContent()}
-            {isSelected &&
-              type === ToolsetAuthTypes.ApiKey &&
-              renderApiKeyContent()}
-          </div>
-        );
-      })}
+      {auth.authenticationType === ToolsetAuthTypes.None && renderNoneContent()}
+      {auth.authenticationType === ToolsetAuthTypes.OAuth &&
+        renderOAuthContent()}
+      {auth.authenticationType === ToolsetAuthTypes.ApiKey &&
+        renderApiKeyContent()}
 
       {showLogoutConfirm && (
         <ConfirmationPopup

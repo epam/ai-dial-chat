@@ -44,9 +44,9 @@ const renderField = (
 describe('DeploymentLocalesField', () => {
   const user = userEvent.setup({ delay: null });
 
-  it('renders a placeholder when no additional locales are configured', () => {
+  it('hides the summary text when no additional locales are configured', () => {
     renderField();
-    expect(screen.getByText('Locales: —')).toBeTruthy();
+    expect(screen.queryByText(/Locales:/)).toBeNull();
   });
 
   it('renders the configured locale codes in the summary', () => {
