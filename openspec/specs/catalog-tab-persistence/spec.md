@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Persisting the catalog's active tab selection and reconciling it into the controlled `Catalog` component.
+Persisting the catalog's active tab selection and reconciling it into the controlled `Catalog` component. Also the optional host-supplied tab list so a host can keep entity-type tabs that would disappear if `Catalog` derived them only from a narrowed `items` set.
 
 ## Requirements
 
@@ -13,13 +13,13 @@ Persisting the catalog's active tab selection and reconciling it into the contro
 - `activeTab?: string`
 - `onActiveTabChange?: (tabId: string) => void`
 
-`Catalog` (`libs/catalog/src/components/Catalog/Catalog.tsx`) SHALL use `props.activeTab ?? internalActiveTab` so it remains fully functional when the props are omitted (uncontrolled, current behavior unchanged: defaults to the first tab returned by `buildCatalogTabs`). When `onActiveTabChange` is supplied, `Catalog` SHALL call it on every tab-switch interaction in addition to updating its own internal fallback state.
+`Catalog` (`libs/catalog/src/components/Catalog/Catalog.tsx`) SHALL use `props.activeTab ?? internalActiveTab` so it remains fully functional when the props are omitted (uncontrolled, current behavior unchanged: defaults to the first tab of the resolved tab list — `tabs` when supplied, otherwise `buildCatalogTabs` on non-hidden `items`). When `onActiveTabChange` is supplied, `Catalog` SHALL call it on every tab-switch interaction in addition to updating its own internal fallback state.
 
 `Catalog` SHALL NOT read or write `localStorage`, `sessionStorage`, `URLSearchParams`, or any routing API to determine or persist the active tab — it remains host-agnostic per AGENTS.md §Library isolation.
 
 State owner: `Catalog`'s existing internal `activeTab` state remains the fallback owner when uncontrolled; `CatalogView` (via `useCatalogActiveTabPreference`, see below) is the owner when controlled.
 
-Memoisation: no new memoisation is required in `Catalog` beyond the existing `useMemo` for `tabs`.
+Memoisation: no new memoisation is required in `Catalog` beyond the existing `useMemo` for the resolved tab list.
 
 i18n keys needed: none (no new user-visible strings).
 
@@ -30,17 +30,50 @@ Accessibility: none — the existing `Tabs` component's `activeTabId`/`onTabChan
 #### Scenario: Uncontrolled Catalog behaves exactly as before
 
 - **WHEN** `Catalog` is rendered without `activeTab` or `onActiveTabChange`
-- **THEN** it defaults to the first tab id returned by `buildCatalogTabs` and tab switching works entirely from internal state, as it does today
+- **THEN** it defaults to the first tab id of the resolved tab list and tab switching works entirely from internal state, as it does today
 
 #### Scenario: Controlled activeTab overrides internal state
 
-- **WHEN** `Catalog` is rendered with `activeTab="skill"` and a `Skill` tab is present in `buildCatalogTabs`'s output
+- **WHEN** `Catalog` is rendered with `activeTab="skill"` and a `Skill` tab is present in the resolved tab list
 - **THEN** the Skill tab is shown as active regardless of any internal default
 
 #### Scenario: Switching tabs calls onActiveTabChange
 
 - **WHEN** the user clicks the "Agents" tab and `onActiveTabChange` is supplied
 - **THEN** `onActiveTabChange` is called with the Agent tab's id
+
+---
+
+### Requirement: Catalog accepts a host-supplied tab list
+
+`CatalogProps` SHALL include an optional `tabs?: TabModel[]` (`TabModel` from `@epam/ai-dial-ui-kit`).
+
+When `tabs` is supplied, `Catalog` SHALL render that list as the entity-type tab row and SHALL NOT call `buildCatalogTabs` on `items`. The Browse grid/list SHALL still be limited to the `items` prop: a host tab with no matching item type is shown, but its panel is empty.
+
+When `tabs` is omitted, `Catalog` SHALL derive the tab row from non-hidden `items` via `buildCatalogTabs(filteredItems, titles?.tabLabels)`. Host-supplied `titles.tabLabels` apply only on this default path; they SHALL NOT relabel a host-supplied `tabs` list.
+
+`@epam/ai-dial-catalog` SHALL export `buildCatalogTabs` so a host can compute tabs from a wider item set than it passes as `items` — for example after a category-tree selection that leaves one entity type with zero matches in the narrowed set.
+
+`Catalog` SHALL NOT read storage, routes, translations, or feature flags to decide the tab list.
+
+i18n keys needed: none. RTL/accessibility: the existing `Tabs` component already handles layout direction and ARIA tab semantics. Feature flag: none.
+
+#### Scenario: Host tabs survive a narrowed items list
+
+- **WHEN** `Catalog` is rendered with `items` containing only an Agent, and `tabs` computed via `buildCatalogTabs` from a wider set that also includes Model and Prompt items
+- **THEN** the tab row includes Models, Agents, and Prompts
+- **AND** the Browse grid still contains only the Agent item
+
+#### Scenario: Omitted tabs are still derived from items
+
+- **WHEN** `Catalog` is rendered with only an Agent item and no `tabs` prop
+- **THEN** the tab row includes Agents
+- **AND** it does not include Models, Prompts, or any other type absent from `items`
+
+#### Scenario: Host tabs are not relabelled by titles.tabLabels
+
+- **WHEN** `Catalog` is rendered with a host-supplied `tabs` list whose Agent label is `'Agents'` and `titles.tabLabels = { AGENT: 'Агенты' }`
+- **THEN** the Agents tab still shows `'Agents'`
 
 ---
 

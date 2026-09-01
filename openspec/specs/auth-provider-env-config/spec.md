@@ -22,7 +22,7 @@ The system SHALL read each provider's configuration from discrete environment va
 #### Scenario: Auth0 configured via discrete variables
 
 - **WHEN** `AUTH_AUTH0_CLIENT_ID`, `AUTH_AUTH0_SECRET`, and `AUTH_AUTH0_HOST` are set
-- **THEN** the system registers an `auth0` provider using those values, deriving the OIDC issuer as `https://${AUTH_AUTH0_HOST}/`
+- **THEN** the system registers an `auth0` provider using those values, deriving the OIDC issuer from `AUTH_AUTH0_HOST` with a trailing slash (`https://tenant.auth0.com/` for `AUTH_AUTH0_HOST=tenant.auth0.com`)
 
 ### Requirement: The legacy AUTH_PROVIDERS variable is no longer supported
 
@@ -65,15 +65,32 @@ When a provider's `CLIENT_ID` variable is set but another field required for tha
 
 The system SHALL derive each provider's OIDC issuer URL as follows, matching the reference app's documented formulas:
 
-- Auth0: `https://${AUTH_AUTH0_HOST}/`
+- Auth0: `${resolved AUTH_AUTH0_HOST}/`
 - Azure AD: `https://login.microsoftonline.com/${AUTH_AZURE_AD_TENANT_ID}/v2.0`
 - Azure B2C: `AUTH_AZURE_B2C_ISSUER` if set; otherwise `https://${AUTH_AZURE_B2C_TENANT_ID}.b2clogin.com/${AUTH_AZURE_B2C_TENANT_ID}.onmicrosoft.com/${AUTH_AZURE_B2C_USER_FLOW}/v2.0`
-- GitLab: `https://${AUTH_GITLAB_HOST}`
+- GitLab: resolved `AUTH_GITLAB_HOST`
 - Google: the fixed constant `https://accounts.google.com` (no host variable)
-- Keycloak: `https://${AUTH_KEYCLOAK_HOST}`
-- PingID: `https://${AUTH_PING_ID_HOST}`
-- Cognito: `https://${AUTH_COGNITO_HOST}`
+- Keycloak: resolved `AUTH_KEYCLOAK_HOST`
+- PingID: resolved `AUTH_PING_ID_HOST`
+- Cognito: resolved `AUTH_COGNITO_HOST`
 - Okta: `AUTH_OKTA_ISSUER` directly
+
+A host variable is "resolved" by taking its value as given when it already carries an `http://` or `https://` scheme, and by prepending `https://` when it does not; trailing slashes are stripped from the result. A host variable whose value carries any other scheme SHALL fail application boot with an error naming that variable.
+
+#### Scenario: Bare host is assumed to be HTTPS
+
+- **WHEN** `AUTH_KEYCLOAK_HOST=keycloak.example.com/realms/dial`
+- **THEN** the derived issuer is `https://keycloak.example.com/realms/dial`
+
+#### Scenario: Explicit scheme in a host variable is preserved
+
+- **WHEN** `AUTH_KEYCLOAK_HOST=http://keycloak.internal:8080/realms/dial`
+- **THEN** the derived issuer is exactly `http://keycloak.internal:8080/realms/dial`, with no `https://` prefix added
+
+#### Scenario: Unsupported scheme in a host variable fails boot
+
+- **WHEN** `AUTH_KEYCLOAK_HOST=ftp://keycloak.example.com/realms/dial`
+- **THEN** application boot fails with an error naming `AUTH_KEYCLOAK_HOST`
 
 #### Scenario: Azure B2C falls back to the tenant/user-flow formula
 

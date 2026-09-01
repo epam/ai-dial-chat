@@ -312,6 +312,75 @@ describe('ProviderRegistryService', () => {
     });
   });
 
+  describe('issuer derivation from host variables', () => {
+    const issuerOf = async (env: Record<string, unknown>, id: string) => {
+      const module = await buildModule(env);
+      await module.init();
+      return module.get(ProviderRegistryService).getProvider(id).config.issuer;
+    };
+
+    it('prefixes https:// when the host carries no scheme', async () => {
+      await expect(issuerOf(KEYCLOAK_ENV, 'keycloak')).resolves.toBe(
+        'https://keycloak.example.com/realms/test',
+      );
+    });
+
+    it('preserves an explicit https:// URL instead of prefixing it again', async () => {
+      await expect(
+        issuerOf(
+          {
+            ...KEYCLOAK_ENV,
+            AUTH_KEYCLOAK_HOST: 'https://keycloak.example.com/realms/test',
+          },
+          'keycloak',
+        ),
+      ).resolves.toBe('https://keycloak.example.com/realms/test');
+    });
+
+    it('preserves an explicit http:// URL for a provider without TLS', async () => {
+      await expect(
+        issuerOf(
+          {
+            ...KEYCLOAK_ENV,
+            AUTH_KEYCLOAK_HOST: 'http://keycloak.internal:8080/realms/test',
+          },
+          'keycloak',
+        ),
+      ).resolves.toBe('http://keycloak.internal:8080/realms/test');
+    });
+
+    it('strips a trailing slash from the configured URL', async () => {
+      await expect(
+        issuerOf(
+          {
+            ...KEYCLOAK_ENV,
+            AUTH_KEYCLOAK_HOST: 'https://keycloak.example.com/realms/test/',
+          },
+          'keycloak',
+        ),
+      ).resolves.toBe('https://keycloak.example.com/realms/test');
+    });
+
+    it('keeps exactly one trailing slash on the Auth0 issuer given a full URL', async () => {
+      await expect(
+        issuerOf(
+          { ...AUTH0_ENV, AUTH_AUTH0_HOST: 'https://tenant.auth0.com/' },
+          'auth0',
+        ),
+      ).resolves.toBe('https://tenant.auth0.com/');
+    });
+
+    it('fails boot when the host uses a non-http(s) scheme', async () => {
+      const module = await buildModule({
+        ...KEYCLOAK_ENV,
+        AUTH_KEYCLOAK_HOST: 'ftp://keycloak.example.com/realms/test',
+      });
+      await expect(module.init()).rejects.toThrow(
+        /AUTH_KEYCLOAK_HOST must be a bare host or an http/,
+      );
+    });
+  });
+
   describe('header-token auth config validation', () => {
     it('boots successfully when the feature is disabled (default) and no allowlist is set', async () => {
       const module = await buildModule({});

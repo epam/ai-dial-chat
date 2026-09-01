@@ -25,6 +25,7 @@ function makeService() {
   const dialClient = {
     client: {
       getExternalService: vi.fn(),
+      getCustomApplication: vi.fn(),
       externalServiceSignIn: vi.fn(),
       externalServiceSignOut: vi.fn(),
     },
@@ -75,10 +76,87 @@ describe('ExternalServicesService', () => {
       vi.mocked(dialClient.client.getExternalService).mockResolvedValue(
         errResponse(404),
       );
+      // The application is unreadable too, so there is nothing to fall back to.
+      vi.mocked(dialClient.client.getCustomApplication).mockResolvedValue(
+        errResponse(403),
+      );
 
       await expect(
         service.getExternalService('token', APP_ID, 'missing-service'),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    /*
+     * The management route reveals the inline `client_secret`, so Core serves
+     * admin-declared services only to callers who can manage the application.
+     * A user signing in to one through the sign-in interrupt is not such a
+     * caller, and the OAuth settings the popup needs are public.
+     */
+    it('falls back to the application resource when the management route denies an inline service', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.getExternalService).mockResolvedValue(
+        errResponse(404),
+      );
+      vi.mocked(dialClient.client.getCustomApplication).mockResolvedValue(
+        okResponse({
+          external_services: {
+            [SERVICE_ID]: {
+              display_name: 'GitLab',
+              auth_settings: {
+                authentication_type: 'OAUTH',
+                client_id: 'client-123',
+                authorization_endpoint: 'https://git.example/oauth/authorize',
+                scopes_supported: ['read_api'],
+              },
+            },
+          },
+        }),
+      );
+
+      const result = await service.getExternalService(
+        'token',
+        APP_ID,
+        SERVICE_ID,
+      );
+
+      expect(result).toMatchObject({
+        displayName: 'GitLab',
+        authenticationType: ExternalServiceAuthType.OAuth,
+        clientId: 'client-123',
+        authorizationEndpoint: 'https://git.example/oauth/authorize',
+        scopesSupported: ['read_api'],
+      });
+      expect(dialClient.client.getCustomApplication).toHaveBeenCalledWith(
+        'public',
+        'finhub-via-openapi__1.0.0',
+        expect.anything(),
+      );
+    });
+
+    it('reports the original 404 when the application declares no such service', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.getExternalService).mockResolvedValue(
+        errResponse(404),
+      );
+      vi.mocked(dialClient.client.getCustomApplication).mockResolvedValue(
+        okResponse({ external_services: {} }),
+      );
+
+      await expect(
+        service.getExternalService('token', APP_ID, 'missing-service'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('does not reach for the application on a non-404 failure', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.getExternalService).mockResolvedValue(
+        errResponse(403),
+      );
+
+      await expect(
+        service.getExternalService('token', APP_ID, SERVICE_ID),
+      ).rejects.toBeTruthy();
+      expect(dialClient.client.getCustomApplication).not.toHaveBeenCalled();
     });
   });
 

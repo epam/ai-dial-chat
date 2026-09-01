@@ -54,6 +54,19 @@ Correct:   https://portal.example.com
 Incorrect: https://portal.example.com/support
 ```
 
+An entry may also use a single leading `*.` wildcard label to allow an entire
+subdomain family instead of listing every host:
+
+```dotenv
+ALLOWED_IFRAME_ORIGINS=https://*.example.com
+```
+
+This matches `https://portal.example.com` and `https://a.b.example.com`, but
+not the bare apex `https://example.com` — list the apex separately if it must
+also be allowed. The wildcard label must be the leftmost part of the host; a
+bare `*`, a wildcard elsewhere in the host, or a path/query on either form are
+all rejected at boot.
+
 Both settings are required:
 
 - If `OVERLAY_ENABLED=false`, the application runs in normal mode.

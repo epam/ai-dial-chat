@@ -382,9 +382,10 @@ describe('useDialFileManager', () => {
 
     await waitFor(() =>
       expect(
-        result.current.folderPopupLoadingPaths.has('/My files/Folder1'),
+        result.current.folderPopupLoadingPaths.has('/My files/Folder1/'),
       ).toBe(true),
     );
+    expect(result.current.loadedPaths.has('/My files/Folder1/')).toBe(false);
 
     await act(async () => {
       resolveFolderListing({
@@ -398,9 +399,10 @@ describe('useDialFileManager', () => {
 
     await waitFor(() =>
       expect(
-        result.current.folderPopupLoadingPaths.has('/My files/Folder1'),
+        result.current.folderPopupLoadingPaths.has('/My files/Folder1/'),
       ).toBe(false),
     );
+    expect(result.current.loadedPaths.has('/My files/Folder1/')).toBe(true);
   });
 
   it('marks a destination-popup folder as loading when the same folder is already expanding in the tree', async () => {
@@ -453,7 +455,7 @@ describe('useDialFileManager', () => {
 
     await waitFor(() =>
       expect(
-        result.current.folderPopupLoadingPaths.has('/My files/Folder1'),
+        result.current.folderPopupLoadingPaths.has('/My files/Folder1/'),
       ).toBe(true),
     );
 
@@ -469,7 +471,7 @@ describe('useDialFileManager', () => {
 
     await waitFor(() =>
       expect(
-        result.current.folderPopupLoadingPaths.has('/My files/Folder1'),
+        result.current.folderPopupLoadingPaths.has('/My files/Folder1/'),
       ).toBe(false),
     );
   });
