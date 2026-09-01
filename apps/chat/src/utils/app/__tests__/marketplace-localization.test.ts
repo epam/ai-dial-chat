@@ -40,10 +40,18 @@ describe('marketplace-localization', () => {
       );
     });
 
-    it('returns an empty string when the primary locale is missing', () => {
+    it('falls back to the first available locale when the primary locale is missing', () => {
       LocalesService.setAvailableLocales(['de', 'en']);
 
-      expect(getLocalizedEntityIdName({ en: 'My App' })).toBe('');
+      expect(getLocalizedEntityIdName({ en: 'My App' })).toBe('My App');
+    });
+
+    it('falls back to the first available locale when neither the primary nor DEFAULT_LOCAL is present', () => {
+      LocalesService.setAvailableLocales(['de', 'en']);
+
+      expect(
+        getLocalizedEntityIdName({ fr: 'Mon App', it: 'La Mia App' }),
+      ).toBe('Mon App');
     });
 
     it('returns an empty string for an undefined name', () => {
@@ -114,10 +122,16 @@ describe('marketplace-localization', () => {
       expect(parseLocalizedField('de', { en: 'My App' })).toBe('My App');
     });
 
-    it('returns an empty string when nothing matches', () => {
+    it('falls back to the first available locale when nothing matches', () => {
       LocalesService.setAvailableLocales(['ar', 'en']);
 
-      expect(parseLocalizedField('de', { fr: 'Mon App' })).toBe('');
+      expect(parseLocalizedField('de', { fr: 'Mon App' })).toBe('Mon App');
+    });
+
+    it('returns an empty string when the field is an empty object', () => {
+      LocalesService.setAvailableLocales(['ar', 'en']);
+
+      expect(parseLocalizedField('de', {})).toBe('');
     });
 
     describe('strict', () => {
