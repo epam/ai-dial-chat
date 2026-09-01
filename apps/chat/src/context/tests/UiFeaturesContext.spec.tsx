@@ -140,9 +140,9 @@ describe('UiFeaturesContext', () => {
 
   describe('deprecated aliases', () => {
     it('resolves a deprecated value from the server baseline to its replacement', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(
-        () => undefined,
-      );
+      const warnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => undefined);
       mockAppConfig(['header', 'custom-applications']);
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
