@@ -26,8 +26,6 @@ import {
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConversationTransferErrorCode,
-  type ConversationTransferProgressUnits,
-  ConversationTransferUnitKind,
   FilterTab,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
@@ -442,20 +440,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   /*
    * Both queues share the direction-agnostic chrome (collapse/expand/close,
-   * the close-confirmation copy, the "Canceled" label and the progress unit
-   * readouts), so those strings live once under the export key set rather than
-   * being duplicated under the import one.
+   * the close-confirmation copy and the "Canceled" label), so those strings
+   * live once under the export key set rather than being duplicated under the
+   * import one.
    */
   const sharedQueueLabels = useMemo(
     () => ({
       canceledLabel: t(ConversationExportI18nKeys.CanceledLabel),
-      jobProgressValueText: (units: ConversationTransferProgressUnits) =>
-        t(
-          units.kind === ConversationTransferUnitKind.Attachment
-            ? ConversationExportI18nKeys.JobProgressAttachments
-            : ConversationExportI18nKeys.JobProgressConversations,
-          { completed: units.completed, total: units.total },
-        ),
       collapseQueueAriaLabel: t(
         ConversationExportI18nKeys.CollapseQueueAriaLabel,
       ),

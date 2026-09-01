@@ -2,7 +2,6 @@ import {
   ConversationTransferErrorCode,
   ConversationTransferJobStatus,
   ConversationTransferSubjectKind,
-  ConversationTransferUnitKind,
   type ConversationTransferJob,
   type ConversationTransferProgress,
 } from '@epam/ai-dial-chat-shared';
@@ -54,6 +53,17 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     );
   },
   ConfirmationPopupVariant: { Danger: 'danger', Info: 'info' },
+  Spinner: ({
+    ariaLabel,
+    className,
+  }: {
+    ariaLabel?: string;
+    className?: string;
+  }) => (
+    <div role="status" className={className}>
+      <div role="img" aria-label={ariaLabel} />
+    </div>
+  ),
   EllipsisTooltip: ({
     text,
     className,
@@ -72,8 +82,6 @@ const DEFAULT_LABELS: ImportExportQueueLabels = {
       ? 'Export failed. File is too large'
       : 'Export failed. Please try again',
   jobProgressAriaLabel: (fileName) => `Exporting ${fileName}`,
-  jobProgressValueText: (units) =>
-    `${units.completed} of ${units.total} attachments`,
   collapseQueueAriaLabel: 'Collapse queue',
   expandQueueAriaLabel: 'Expand queue',
   closeQueueAriaLabel: 'Close queue',
@@ -157,39 +165,15 @@ describe('ImportExportQueue', () => {
   });
 
   describe('status slot', () => {
-    it('shows a determinate ring for an in-progress job', () => {
-      renderQueue({
-        jobs: [
-          makeJob({
-            fileName: 'export.dial',
-            progress: {
-              percent: 36,
-              units: {
-                completed: 3,
-                total: 10,
-                kind: ConversationTransferUnitKind.Attachment,
-              },
-            },
-          }),
-        ],
-      });
-
-      const bar = screen.getByRole('progressbar', {
-        name: 'Exporting export.dial',
-      });
-      expect(bar.getAttribute('aria-valuenow')).toBe('36');
-      expect(bar.getAttribute('aria-valuetext')).toBe('3 of 10 attachments');
-    });
-
-    it('omits aria-valuetext while the unit count is unknown', () => {
-      renderQueue({ jobs: [makeJob({ progress: { percent: 15 } })] });
+    it('shows a named spinner for an in-progress job', () => {
+      renderQueue({ jobs: [makeJob({ fileName: 'export.dial' })] });
 
       expect(
-        screen.getByRole('progressbar').hasAttribute('aria-valuetext'),
-      ).toBe(false);
+        screen.getByRole('img', { name: 'Exporting export.dial' }),
+      ).toBeTruthy();
     });
 
-    it('renders no aggregate indicator — one ring per in-progress row', () => {
+    it('renders no aggregate indicator — one spinner per in-progress row', () => {
       renderQueue({
         jobs: [
           makeJob({ id: 'a' }),
@@ -198,7 +182,9 @@ describe('ImportExportQueue', () => {
         ],
       });
 
-      expect(screen.getAllByRole('progressbar')).toHaveLength(2);
+      expect(screen.getAllByRole('img', { name: /^Exporting / })).toHaveLength(
+        2,
+      );
     });
 
     it('explains a failed job and offers no retry', () => {
@@ -219,7 +205,7 @@ describe('ImportExportQueue', () => {
       expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
     });
 
-    it('keeps a canceled row visible with its label and no ring', () => {
+    it('keeps a canceled row visible with its label and no spinner', () => {
       renderQueue({
         jobs: [
           makeJob({
@@ -232,7 +218,7 @@ describe('ImportExportQueue', () => {
 
       expect(screen.getByText('Canceled')).toBeTruthy();
       expect(screen.getByText('export.dial')).toBeTruthy();
-      expect(screen.queryByRole('progressbar')).toBeNull();
+      expect(screen.queryByRole('img', { name: /^Exporting / })).toBeNull();
     });
 
     it('dims the file name once a job is canceled', () => {
@@ -297,13 +283,15 @@ describe('ImportExportQueue', () => {
       expect(onCancel).toHaveBeenCalledWith('job-9');
     });
 
-    it('coexists with the ring rather than replacing it', () => {
+    it('coexists with the spinner rather than replacing it', () => {
       renderQueue({ jobs: [makeJob({ fileName: 'export.dial' })] });
 
       expect(
         screen.getByRole('button', { name: 'Cancel export.dial' }),
       ).toBeTruthy();
-      expect(screen.getByRole('progressbar')).toBeTruthy();
+      expect(
+        screen.getByRole('img', { name: 'Exporting export.dial' }),
+      ).toBeTruthy();
     });
   });
 
@@ -542,10 +530,11 @@ describe('ImportExportQueue', () => {
   describe('style overrides', () => {
     it('applies typed colors as CSS custom properties', () => {
       renderQueue({
+        jobs: [makeJob({ status: ConversationTransferJobStatus.Success })],
         styles: {
           colors: {
             background: 'rebeccapurple',
-            progressIndicator: 'tomato',
+            successIcon: 'tomato',
           },
           rootClassName: 'custom-root',
         },
@@ -556,9 +545,9 @@ describe('ImportExportQueue', () => {
       expect(style.getPropertyValue('--cp-transfer-queue-bg')).toBe(
         'rebeccapurple',
       );
-      expect(
-        style.getPropertyValue('--cp-transfer-queue-progress-indicator'),
-      ).toBe('tomato');
+      expect(style.getPropertyValue('--cp-transfer-queue-success-icon')).toBe(
+        'tomato',
+      );
       expect(root.className).toContain('custom-root');
     });
   });

@@ -1,7 +1,6 @@
 import type {
   ConversationTransferErrorCode,
   ConversationTransferJob,
-  ConversationTransferProgressUnits,
 } from '@epam/ai-dial-chat-shared';
 import type { CSSProperties } from 'react';
 
@@ -13,10 +12,8 @@ export interface ImportExportQueueLabels {
   canceledLabel: string;
   /** Returns the tooltip text explaining why a job failed. */
   jobErrorMessage: (code: ConversationTransferErrorCode | undefined) => string;
-  /** Returns the accessible name for a row's progress indicator. */
+  /** Returns the accessible name for a row's in-progress spinner. */
   jobProgressAriaLabel: (fileName: string) => string;
-  /** Returns the spoken value for a row's progress indicator, e.g. `"3 of 10 attachments"`. */
-  jobProgressValueText: (units: ConversationTransferProgressUnits) => string;
   /** Accessible name for the queue collapse toggle when the panel is expanded. */
   collapseQueueAriaLabel: string;
   /** Accessible name for the queue expand toggle when the panel is collapsed. */
@@ -49,10 +46,6 @@ export interface ImportExportQueueColors {
   successIcon?: string;
   /** Failed-job status icon color. */
   errorIcon?: string;
-  /** Unfilled part of a row's progress ring. */
-  progressTrack?: string;
-  /** Filled arc of a row's progress ring. */
-  progressIndicator?: string;
   /** Divider between the header and the job rows. */
   divider?: string;
   /** Failed-job count badge background. */

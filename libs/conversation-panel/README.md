@@ -138,36 +138,9 @@ Payload for a completed drag-and-drop move: the dragged `draggedId`, the
 `targetGroupKey` it landed in, and `afterId` — the item to insert after, or
 `null` for the top of that group.
 
-## CircularProgress
-
-Determinate ring whose filled arc is `value` percent of its circumference, swept clockwise from twelve o'clock. Used by `ImportExportQueue` for per-row transfer progress, and exported for hosts that need the same indicator elsewhere. It is deliberately **not** mirrored under `dir="rtl"`: it is a symmetric indicator, and a counter-clockwise sweep reads as work being undone.
-
-```tsx
-import { CircularProgress } from '@epam/ai-dial-conversation-panel';
-
-<CircularProgress
-  value={36}
-  ariaLabel="Exporting my-chat.dial"
-  ariaValueText="3 of 10 attachments"
-/>;
-```
-
-### CircularProgressProps
-
-| Prop            | Type     | Required | Description                                                        |
-| --------------- | -------- | :------: | ------------------------------------------------------------------ |
-| `value`         | `number` |    ✓     | Completion as a percentage, clamped to 0–100                       |
-| `ariaLabel`     | `string` |    ✓     | Accessible name — a bare progressbar tells a screen reader nothing |
-| `ariaValueText` | `string` |          | Spoken value replacing the bare percentage                         |
-| `size`          | `number` |          | Outer diameter in pixels. Defaults to `16`                         |
-| `strokeWidth`   | `number` |          | Ring thickness in pixels. Defaults to `2`                          |
-| `className`     | `string` |          | Extra class name(s) merged onto the root `svg`                     |
-
-Colors come from `--cp-circular-progress-track` and `--cp-circular-progress-indicator`, each falling back to an app theme token.
-
 ## ImportExportQueue
 
-Floating queue panel that shows the status of in-flight or recently completed export/import jobs. Each row is identified by the **file** the job transfers — a file-type icon derived from the extension plus the file name, truncated with a tooltip — and ends in a fixed-footprint status slot: a determinate `CircularProgress` while in progress, a check on success, a filled alert icon whose accessible name and tooltip carry the failure reason, or a `Canceled` label with the file name dimmed.
+Floating queue panel that shows the status of in-flight or recently completed export/import jobs. Each row is identified by the **file** the job transfers — a file-type icon derived from the extension plus the file name, truncated with a tooltip — and ends in a fixed-footprint status slot: the UI kit `Spinner` while in progress, a check on success, a filled alert icon whose accessible name and tooltip carry the failure reason, or a `Canceled` label with the file name dimmed.
 
 Returns `null` when `jobs` is empty. Auto-closes 8 seconds after **every** job succeeds; a failed, in-progress, or canceled job suppresses the countdown. Prompts for confirmation before closing when any job is still in progress or has failed — a canceled job needs no confirmation, since the user already chose to stop that work.
 
@@ -199,8 +172,6 @@ const labels: ImportExportQueueLabels = {
       ? 'Export failed. File is too large'
       : 'Export failed. Please try again',
   jobProgressAriaLabel: (fileName) => `Exporting ${fileName}`,
-  jobProgressValueText: (units) =>
-    `${units.completed} of ${units.total} attachments`,
   collapseQueueAriaLabel: 'Collapse queue',
   expandQueueAriaLabel: 'Expand queue',
   closeQueueAriaLabel: 'Close queue',
@@ -252,8 +223,7 @@ The component has no retry control. `retryJob` stays on `useConversationExport` 
 | `cancelJobAriaLabel`                     | `(fileName: string) => string`                                 | Accessible name for cancelling an in-progress job            |
 | `canceledLabel`                          | `string`                                                       | Trailing text shown on a canceled row                        |
 | `jobErrorMessage`                        | `(code: ConversationTransferErrorCode \| undefined) => string` | Tooltip and accessible name explaining why a job failed      |
-| `jobProgressAriaLabel`                   | `(fileName: string) => string`                                 | Accessible name for a row's progress ring                    |
-| `jobProgressValueText`                   | `(units: ConversationTransferProgressUnits) => string`         | Spoken value for a row's progress ring                       |
+| `jobProgressAriaLabel`                   | `(fileName: string) => string`                                 | Accessible name for a row's in-progress spinner               |
 | `collapseQueueAriaLabel`                 | `string`                                                       | Accessible name for the collapse toggle                      |
 | `expandQueueAriaLabel`                   | `string`                                                       | Accessible name for the expand toggle                        |
 | `closeQueueAriaLabel`                    | `string`                                                       | Accessible name for the close button                         |
@@ -266,7 +236,7 @@ The component has no retry control. `retryJob` stays on `useConversationExport` 
 
 ### ImportExportQueueStyles
 
-`styles?: ImportExportQueueStyles` groups all customization hooks. `colors?: ImportExportQueueColors` overrides the panel background, primary/secondary text, status icons, progress-ring track and indicator, header divider, and failed-count badge through CSS custom properties. `typography?: ImportExportQueueTypography` provides classes for the title, job file name, canceled label, and failed-count badge. `rootClassName` and `bodyClassName` target the queue root and scrollable job list; `cssVars` is the last-resort CSS-variable escape hatch.
+`styles?: ImportExportQueueStyles` groups all customization hooks. `colors?: ImportExportQueueColors` overrides the panel background, primary/secondary text, status icons, header divider, and failed-count badge through CSS custom properties. `typography?: ImportExportQueueTypography` provides classes for the title, job file name, canceled label, and failed-count badge. `rootClassName` and `bodyClassName` target the queue root and scrollable job list; `cssVars` is the last-resort CSS-variable escape hatch.
 
 ## Utilities
 

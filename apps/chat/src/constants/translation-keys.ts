@@ -743,8 +743,6 @@ export enum ConversationExportI18nKeys {
   ErrorUnknown = 'conversationExport.errorUnknown',
   /* Queue chrome shared with the import queue — one instance of each string. */
   CanceledLabel = 'conversationExport.canceledLabel',
-  JobProgressAttachments = 'conversationExport.jobProgressAttachments',
-  JobProgressConversations = 'conversationExport.jobProgressConversations',
   CollapseQueueAriaLabel = 'conversationExport.collapseQueueAriaLabel',
   ExpandQueueAriaLabel = 'conversationExport.expandQueueAriaLabel',
   CloseQueueAriaLabel = 'conversationExport.closeQueueAriaLabel',

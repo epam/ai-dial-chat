@@ -527,8 +527,6 @@
     "errorFileTooLarge": "Export failed. File is too large",
     "errorUnknown": "Export failed. Please try again.",
     "canceledLabel": "Canceled",
-    "jobProgressAttachments": "{{completed}} of {{total}} attachments",
-    "jobProgressConversations": "{{completed}} of {{total}} conversations",
     "collapseQueueAriaLabel": "Collapse queue",
     "expandQueueAriaLabel": "Expand queue",
     "closeQueueAriaLabel": "Close queue",
