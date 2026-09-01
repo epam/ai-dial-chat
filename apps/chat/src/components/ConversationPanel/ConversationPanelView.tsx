@@ -466,6 +466,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       ),
       closeLabel: t(ButtonsI18nKeys.Close),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
+      queueProgressValueText: (completed: number, total: number) =>
+        t(ConversationExportI18nKeys.QueueProgressValueText, {
+          completed,
+          count: total,
+        }),
     }),
     [t],
   );
@@ -478,6 +483,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       jobProgressAriaLabel: (fileName) =>
         t(ConversationExportI18nKeys.JobProgressAriaLabel, { fileName }),
       jobErrorMessage: (code) => t(getExportErrorKey(code)),
+      jobWarningMessage: () =>
+        t(ConversationExportI18nKeys.WarningAttachmentSkipped),
+      queueProgressAriaLabel: t(
+        ConversationExportI18nKeys.QueueProgressAriaLabel,
+      ),
     }),
     [sharedQueueLabels, t],
   );
@@ -490,6 +500,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       jobProgressAriaLabel: (fileName) =>
         t(ConversationImportI18nKeys.JobProgressAriaLabel, { fileName }),
       jobErrorMessage: (code) => t(getImportErrorKey(code)),
+      jobWarningMessage: () =>
+        t(ConversationImportI18nKeys.WarningAttachmentSkipped),
+      queueProgressAriaLabel: t(
+        ConversationImportI18nKeys.QueueProgressAriaLabel,
+      ),
     }),
     [sharedQueueLabels, t],
   );

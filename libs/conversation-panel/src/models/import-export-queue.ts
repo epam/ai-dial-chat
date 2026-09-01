@@ -1,6 +1,7 @@
 import type {
   ConversationTransferErrorCode,
   ConversationTransferJob,
+  ConversationTransferWarningCode,
 } from '@epam/ai-dial-chat-shared';
 import type { CSSProperties } from 'react';
 
@@ -14,6 +15,18 @@ export interface ImportExportQueueLabels {
   jobErrorMessage: (code: ConversationTransferErrorCode | undefined) => string;
   /** Returns the accessible name for a row's in-progress spinner. */
   jobProgressAriaLabel: (fileName: string) => string;
+  /** Returns the tooltip text explaining what a warned job left out. */
+  jobWarningMessage: (
+    code: ConversationTransferWarningCode | undefined,
+  ) => string;
+  /** Accessible name for the collapsed queue's aggregate progress bar. */
+  queueProgressAriaLabel: string;
+  /**
+   * Returns the aggregate bar's `aria-valuetext`. Given settled and total job
+   * counts rather than a percentage, because "3 of 10 files" reads better than
+   * "36%" when the work is a list of files.
+   */
+  queueProgressValueText: (completed: number, total: number) => string;
   /** Accessible name for the queue collapse toggle when the panel is expanded. */
   collapseQueueAriaLabel: string;
   /** Accessible name for the queue expand toggle when the panel is collapsed. */
@@ -46,6 +59,12 @@ export interface ImportExportQueueColors {
   successIcon?: string;
   /** Failed-job status icon color. */
   errorIcon?: string;
+  /**
+   * Warned-job status icon color. The aggregate progress bar has no
+   * counterpart here: it is the UI kit's `ProgressBar`, which themes its own
+   * track and fill from the same 2.0 tokens.
+   */
+  warningIcon?: string;
   /** Divider between the header and the job rows. */
   divider?: string;
   /** Failed-job count badge background. */

@@ -737,6 +737,7 @@ export enum ConversationExportI18nKeys {
   WarningAttachmentSkipped = 'conversationExport.warningAttachmentSkipped',
   CancelJobAriaLabel = 'conversationExport.cancelJobAriaLabel',
   JobProgressAriaLabel = 'conversationExport.jobProgressAriaLabel',
+  QueueProgressAriaLabel = 'conversationExport.queueProgressAriaLabel',
   ErrorUnauthorized = 'conversationExport.errorUnauthorized',
   ErrorNotFound = 'conversationExport.errorNotFound',
   ErrorFileTooLarge = 'conversationExport.errorFileTooLarge',
@@ -750,6 +751,7 @@ export enum ConversationExportI18nKeys {
   CloseQueueConfirmDescriptionInProgress = 'conversationExport.closeQueueConfirmDescriptionInProgress',
   CloseQueueConfirmDescriptionFailed = 'conversationExport.closeQueueConfirmDescriptionFailed',
   CloseQueueConfirmDescriptionMixed = 'conversationExport.closeQueueConfirmDescriptionMixed',
+  QueueProgressValueText = 'conversationExport.queueProgressValueText',
 }
 
 export enum ConversationImportI18nKeys {
@@ -763,6 +765,7 @@ export enum ConversationImportI18nKeys {
   UnsupportedFormat = 'conversationImport.unsupportedFormat',
   CancelJobAriaLabel = 'conversationImport.cancelJobAriaLabel',
   JobProgressAriaLabel = 'conversationImport.jobProgressAriaLabel',
+  QueueProgressAriaLabel = 'conversationImport.queueProgressAriaLabel',
   ErrorUnauthorized = 'conversationImport.errorUnauthorized',
   ErrorMissingBucket = 'conversationImport.errorMissingBucket',
   ErrorUnsupportedFormat = 'conversationImport.errorUnsupportedFormat',

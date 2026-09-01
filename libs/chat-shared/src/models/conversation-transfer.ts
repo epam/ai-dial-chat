@@ -2,6 +2,8 @@
 export enum ConversationTransferJobStatus {
   InProgress = 'inProgress',
   Success = 'success',
+  /** Delivered its file, but not everything the user asked for made it in. */
+  Warning = 'warning',
   Failed = 'failed',
   Canceled = 'canceled',
 }
@@ -31,6 +33,14 @@ export enum ConversationTransferErrorCode {
   MissingBucket = 'missingBucket',
   FileTooLarge = 'fileTooLarge',
   Unknown = 'unknown',
+}
+
+/**
+ * Reason a transfer job completed with a non-fatal warning. Translation-free;
+ * hosts map each member to their own copy.
+ */
+export enum ConversationTransferWarningCode {
+  AttachmentSkipped = 'attachmentSkipped',
 }
 
 /** What one unit of a transfer job's discoverable work represents. */
@@ -83,4 +93,9 @@ export interface ConversationTransferJob {
   progress: ConversationTransferProgress;
   /** Why the job failed. Set only alongside {@link ConversationTransferJobStatus.Failed}. */
   errorCode?: ConversationTransferErrorCode;
+  /**
+   * What was incomplete about an otherwise-delivered job. Set only alongside
+   * {@link ConversationTransferJobStatus.Warning}.
+   */
+  warningCode?: ConversationTransferWarningCode;
 }

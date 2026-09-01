@@ -4,6 +4,7 @@ import {
   ConversationTransferJobStatus,
   type ConversationTransferProgress,
   type ConversationTransferSubject,
+  type ConversationTransferWarningCode,
   generateUUID,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -30,6 +31,15 @@ export interface ConversationTransferQueue {
   ) => void;
   /** Marks the job `Success` at 100%. */
   succeedJob: (jobId: string) => void;
+  /**
+   * Marks the job `Warning` at 100%, recording what was incomplete. The file
+   * was still delivered, so this settles the job exactly as `succeedJob` does
+   * apart from the status and the attached code.
+   */
+  warnJob: (
+    jobId: string,
+    warningCode: ConversationTransferWarningCode,
+  ) => void;
   /** Marks the job `Failed`, recording why. Progress freezes where it stopped. */
   failJob: (jobId: string, errorCode: ConversationTransferErrorCode) => void;
   /**
@@ -120,6 +130,33 @@ export const useConversationTransferQueue = (): ConversationTransferQueue => {
     [updateJob],
   );
 
+  const warnJob = useCallback(
+    (jobId: string, warningCode: ConversationTransferWarningCode) => {
+      setJobs((prev) =>
+        prev.map((job) => {
+          if (job.id !== jobId) return job;
+          /*
+           * A warning is raised after the transfer body has already finished,
+           * so it can land late. Refuse to relabel a job the user has since
+           * canceled — settling one here would turn their canceled row back
+           * into a delivered one.
+           */
+          if (job.status !== ConversationTransferJobStatus.InProgress) {
+            return job;
+          }
+          return {
+            ...job,
+            status: ConversationTransferJobStatus.Warning,
+            progress: { percent: TRANSFER_PROGRESS_COMPLETE },
+            errorCode: undefined,
+            warningCode,
+          };
+        }),
+      );
+    },
+    [],
+  );
+
   const failJob = useCallback(
     (jobId: string, errorCode: ConversationTransferErrorCode) => {
       updateJob(jobId, {
@@ -197,6 +234,7 @@ export const useConversationTransferQueue = (): ConversationTransferQueue => {
     updateJob,
     setJobProgress,
     succeedJob,
+    warnJob,
     failJob,
     cancelJob,
     dismissJob,

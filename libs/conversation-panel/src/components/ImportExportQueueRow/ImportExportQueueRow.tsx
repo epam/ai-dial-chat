@@ -12,7 +12,12 @@ import {
   Spinner,
   Tooltip,
 } from '@epam/ai-dial-ui-kit';
-import { IconAlertCircleFilled, IconCheck, IconX } from '@tabler/icons-react';
+import {
+  IconAlertCircleFilled,
+  IconAlertTriangleFilled,
+  IconCheck,
+  IconX,
+} from '@tabler/icons-react';
 import type { FC } from 'react';
 import { STATUS_SLOT_CLASS } from '../../constants/import-export-queue';
 import type {
@@ -99,6 +104,27 @@ export const ImportExportQueueRow: FC<ImportExportQueueRowProps> = ({
             aria-hidden
           />
         </span>
+      )}
+      {job.status === ConversationTransferJobStatus.Warning && (
+        <Tooltip
+          tooltip={labels.jobWarningMessage(job.warningCode)}
+          contentClassName="!z-[80]"
+          asChild
+        >
+          {/* Named on the element for the same reason as the failed row below. */}
+          <span
+            className={STATUS_SLOT_CLASS}
+            role="img"
+            aria-label={labels.jobWarningMessage(job.warningCode)}
+            tabIndex={0}
+          >
+            <IconAlertTriangleFilled
+              size={DIAL_ICON_SIZE.SM}
+              className={classes.warningIcon}
+              aria-hidden
+            />
+          </span>
+        </Tooltip>
       )}
       {job.status === ConversationTransferJobStatus.Failed && (
         <Tooltip

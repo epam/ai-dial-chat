@@ -187,7 +187,7 @@ describe('useConversationExport', () => {
     expect(onWarning).not.toHaveBeenCalled();
   });
 
-  it('warns and still succeeds when an attachment cannot be downloaded', async () => {
+  it('settles at Warning, still delivering the archive, when an attachment cannot be downloaded', async () => {
     const { result } = renderExport();
     getConversation.mockResolvedValue(
       makeConversation({
@@ -218,9 +218,12 @@ describe('useConversationExport', () => {
         code: ConversationTransferWarningCode.AttachmentSkipped,
       }),
     );
-    expect(result.current.jobs[0].status).toBe(
-      ConversationTransferJobStatus.Success,
-    );
+    expect(result.current.jobs[0]).toMatchObject({
+      status: ConversationTransferJobStatus.Warning,
+      warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+      progress: { percent: 100 },
+    });
+    expect(vi.mocked(triggerBlobDownload)).toHaveBeenCalledOnce();
   });
 
   it('reports unauthorized without a success/warning event', async () => {

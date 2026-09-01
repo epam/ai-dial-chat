@@ -2,6 +2,7 @@ import {
   ConversationTransferErrorCode,
   ConversationTransferJobStatus,
   ConversationTransferSubjectKind,
+  ConversationTransferWarningCode,
   type ConversationTransferJob,
   type ConversationTransferProgress,
 } from '@epam/ai-dial-chat-shared';
@@ -72,6 +73,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     className?: string;
   }) => <span className={className}>{text}</span>,
   Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  ProgressBar: ({ value, ...rest }: { value: number; size?: string }) => (
+    <div role="progressbar" aria-valuenow={value} {...rest} />
+  ),
 }));
 
 const DEFAULT_LABELS: ImportExportQueueLabels = {
@@ -82,6 +86,10 @@ const DEFAULT_LABELS: ImportExportQueueLabels = {
       ? 'Export failed. File is too large'
       : 'Export failed. Please try again',
   jobProgressAriaLabel: (fileName) => `Exporting ${fileName}`,
+  jobWarningMessage: () => 'Some attachments could not be exported.',
+  queueProgressAriaLabel: 'Export progress',
+  queueProgressValueText: (completed, total) =>
+    `${completed} of ${total} files done`,
   collapseQueueAriaLabel: 'Collapse queue',
   expandQueueAriaLabel: 'Expand queue',
   closeQueueAriaLabel: 'Close queue',
@@ -100,6 +108,7 @@ const makeJob = ({
   status = ConversationTransferJobStatus.InProgress,
   progress = { percent: 0 },
   errorCode,
+  warningCode,
 }: {
   id?: string;
   fileName?: string;
@@ -107,6 +116,7 @@ const makeJob = ({
   status?: ConversationTransferJobStatus;
   progress?: ConversationTransferProgress;
   errorCode?: ConversationTransferErrorCode;
+  warningCode?: ConversationTransferWarningCode;
 } = {}): ConversationTransferJob => ({
   id,
   subject: {
@@ -118,6 +128,7 @@ const makeJob = ({
   fileName,
   progress,
   errorCode,
+  warningCode,
 });
 
 const renderQueue = ({
@@ -203,6 +214,24 @@ describe('ImportExportQueue', () => {
         }),
       ).toBeTruthy();
       expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
+    });
+
+    it('names a warned job on the icon, reachable without hovering', () => {
+      renderQueue({
+        jobs: [
+          makeJob({
+            status: ConversationTransferJobStatus.Warning,
+            warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+          }),
+        ],
+      });
+
+      expect(
+        screen.getByRole('img', {
+          name: 'Some attachments could not be exported.',
+        }),
+      ).toBeTruthy();
+      expect(screen.queryByRole('button', { name: /^Cancel / })).toBeNull();
     });
 
     it('keeps a canceled row visible with its label and no spinner', () => {
@@ -423,6 +452,72 @@ describe('ImportExportQueue', () => {
     });
   });
 
+  describe('collapsed aggregate progress', () => {
+    const collapse = async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Collapse queue' }));
+
+    it('shows the mean of every job once collapsed', async () => {
+      renderQueue({
+        jobs: [
+          makeJob({
+            id: 'a',
+            status: ConversationTransferJobStatus.Success,
+            progress: { percent: 100 },
+          }),
+          makeJob({ id: 'b', progress: { percent: 40 } }),
+          makeJob({ id: 'c', progress: { percent: 10 } }),
+        ],
+      });
+      await collapse();
+
+      expect(
+        screen
+          .getByRole('progressbar', { name: 'Export progress' })
+          .getAttribute('aria-valuenow'),
+      ).toBe('50');
+    });
+
+    it('renders no bar while expanded', () => {
+      renderQueue({ jobs: [makeJob({ progress: { percent: 40 } })] });
+
+      expect(screen.queryByRole('progressbar')).toBeNull();
+    });
+
+    it('renders no bar once nothing is in progress', async () => {
+      renderQueue({
+        jobs: [
+          makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+          makeJob({ id: 'b', status: ConversationTransferJobStatus.Failed }),
+        ],
+      });
+      await collapse();
+
+      expect(screen.queryByRole('progressbar')).toBeNull();
+    });
+
+    it('announces settled file counts rather than a percentage', async () => {
+      renderQueue({
+        jobs: [
+          makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+          makeJob({ id: 'b', status: ConversationTransferJobStatus.Warning }),
+          makeJob({ id: 'c', progress: { percent: 20 } }),
+        ],
+      });
+      await collapse();
+
+      expect(
+        screen.getByRole('progressbar').getAttribute('aria-valuetext'),
+      ).toBe('2 of 3 files done');
+    });
+
+    it('never renders the percentage as visible text', async () => {
+      renderQueue({ jobs: [makeJob({ progress: { percent: 50 } })] });
+      await collapse();
+
+      expect(screen.queryByText(/50\s*%/)).toBeNull();
+    });
+  });
+
   describe('auto-close', () => {
     const advance = (ms: number) => {
       act(() => {
@@ -467,6 +562,26 @@ describe('ImportExportQueue', () => {
         const onClose = vi.fn();
         renderQueue({
           jobs: [makeJob({ status: ConversationTransferJobStatus.Failed })],
+          onClose,
+        });
+
+        advance(8000);
+        expect(onClose).not.toHaveBeenCalled();
+      });
+    });
+
+    it('does not close while a warned row is unread', () => {
+      withFakeTimers(() => {
+        const onClose = vi.fn();
+        renderQueue({
+          jobs: [
+            makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+            makeJob({
+              id: 'b',
+              status: ConversationTransferJobStatus.Warning,
+              warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+            }),
+          ],
           onClose,
         });
 

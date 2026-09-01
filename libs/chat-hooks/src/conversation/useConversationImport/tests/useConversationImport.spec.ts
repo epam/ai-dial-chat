@@ -253,9 +253,11 @@ describe('useConversationImport', () => {
         names: ['q1.pdf'],
       }),
     );
-    expect(result.current.jobs[0].status).toBe(
-      ConversationTransferJobStatus.Success,
-    );
+    expect(result.current.jobs[0]).toMatchObject({
+      status: ConversationTransferJobStatus.Warning,
+      warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+      progress: { percent: 100 },
+    });
   });
 
   it('reports MissingBucket and fails the job when there is no bucket', async () => {

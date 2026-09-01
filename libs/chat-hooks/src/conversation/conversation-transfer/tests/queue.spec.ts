@@ -3,6 +3,7 @@ import {
   ConversationTransferJobStatus,
   ConversationTransferSubjectKind,
   ConversationTransferUnitKind,
+  ConversationTransferWarningCode,
   type ConversationTransferSubject,
 } from '@epam/ai-dial-chat-shared';
 import { act, renderHook } from '@testing-library/react';
@@ -137,6 +138,48 @@ describe('useConversationTransferQueue', () => {
         progress: { percent: 100 },
       });
       expect(result.current.jobs[0].errorCode).toBeUndefined();
+    });
+  });
+
+  describe('warnJob', () => {
+    it('settles like a success but records what was incomplete', () => {
+      const { result, jobId } = renderQueueWithJob();
+
+      act(() => {
+        result.current.setJobProgress(jobId, { percent: 61 });
+      });
+      act(() => {
+        result.current.warnJob(
+          jobId,
+          ConversationTransferWarningCode.AttachmentSkipped,
+        );
+      });
+
+      expect(result.current.jobs[0]).toMatchObject({
+        status: ConversationTransferJobStatus.Warning,
+        warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+        progress: { percent: 100 },
+      });
+      expect(result.current.jobs[0].errorCode).toBeUndefined();
+    });
+
+    it('refuses to relabel a job the user has already canceled', () => {
+      const { result, jobId } = renderQueueWithJob();
+
+      act(() => {
+        result.current.cancelJob(jobId);
+      });
+      act(() => {
+        result.current.warnJob(
+          jobId,
+          ConversationTransferWarningCode.AttachmentSkipped,
+        );
+      });
+
+      expect(result.current.jobs[0].status).toBe(
+        ConversationTransferJobStatus.Canceled,
+      );
+      expect(result.current.jobs[0].warningCode).toBeUndefined();
     });
   });
 

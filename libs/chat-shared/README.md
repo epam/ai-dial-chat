@@ -83,13 +83,15 @@ const job: ConversationTransferJob = {
 };
 ```
 
-`ConversationTransferJobStatus` values: `InProgress`, `Success`, `Failed`, `Canceled`.
+`ConversationTransferJobStatus` values: `InProgress`, `Success`, `Warning`, `Failed`, `Canceled`.
 `ConversationTransferSubjectKind` values: `Single` (one named conversation), `All` (entire history).
 `ConversationTransferSubject` is a discriminated union on `kind`; the `Single` variant carries `title` and optional `sourceBreadcrumb`.
 `ConversationTransferProgress.percent` is an integer 0–100 that never decreases for a given job id; `units` is optional and describes only the phase currently advancing.
 `ConversationTransferUnitKind` values: `Attachment`, `Conversation`.
 
 A failed job additionally carries `errorCode: ConversationTransferErrorCode` — values `Unauthorized`, `NotFound`, `UnsupportedFormat`, `MissingBucket`, `FileTooLarge`, `Unknown`. The enum is translation-free; hosts map each member to their own copy.
+
+A `Warning` job delivered its file, but not everything the user asked for made it in. It carries `warningCode: ConversationTransferWarningCode` — currently the single value `AttachmentSkipped` — set only alongside `ConversationTransferJobStatus.Warning`, and translation-free in the same way.
 
 ### FilterTab
 

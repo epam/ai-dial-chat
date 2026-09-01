@@ -342,7 +342,8 @@ export const useConversationExport = ({
           envelope,
           zipAttachments,
         );
-        if (anySkipped || skippedPaths.length > 0) {
+        const hasSkippedAttachments = anySkipped || skippedPaths.length > 0;
+        if (hasSkippedAttachments) {
           onWarning?.({
             jobId,
             code: ConversationTransferWarningCode.AttachmentSkipped,
@@ -350,7 +351,18 @@ export const useConversationExport = ({
         }
         triggerBlobDownload(blob, fileName);
         onSuccess?.({ jobId, titles: [title] });
-        queue.succeedJob(jobId);
+        /*
+         * The archive was still delivered, so this settles at 100% either way;
+         * only the status differs, so the row can say the export is incomplete.
+         */
+        if (hasSkippedAttachments) {
+          queue.warnJob(
+            jobId,
+            ConversationTransferWarningCode.AttachmentSkipped,
+          );
+        } else {
+          queue.succeedJob(jobId);
+        }
       } catch (error) {
         if (signal.aborted) return;
         const code = isAllocationFailure(error)

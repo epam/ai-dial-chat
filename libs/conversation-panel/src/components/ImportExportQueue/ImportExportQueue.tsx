@@ -1,11 +1,14 @@
 import {
   buildCssVars,
+  type ConversationTransferJob,
   ConversationTransferJobStatus,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
+  ElementSize,
+  ProgressBar,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useEffect, useId, useState, type FC } from 'react';
 import { AUTO_CLOSE_DELAY_MS } from '../../constants/import-export-queue';
@@ -22,6 +25,23 @@ export type {
   ImportExportQueueProps,
   ImportExportQueueStyles,
 } from '../../models/import-export-queue';
+
+/**
+ * Mean completion across every job, terminal ones included at their settled
+ * percent. Unweighted on purpose: neither conversation counts nor byte sizes
+ * are known when the queue is built, so a weighted value would jump as
+ * discovery refined the weights, and each job's own percent is already
+ * phase-weighted internally.
+ */
+const getAggregatePercent = (jobs: ConversationTransferJob[]): number =>
+  Math.round(
+    jobs.reduce((total, job) => total + job.progress.percent, 0) / jobs.length,
+  );
+
+/** How many jobs have reached any terminal status. */
+const getSettledCount = (jobs: ConversationTransferJob[]): number =>
+  jobs.filter((job) => job.status !== ConversationTransferJobStatus.InProgress)
+    .length;
 
 const getCloseConfirmDescription = (
   hasInProgress: boolean,
@@ -51,6 +71,7 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
         '--cp-transfer-queue-text-secondary': colors?.textSecondary,
         '--cp-transfer-queue-success-icon': colors?.successIcon,
         '--cp-transfer-queue-error-icon': colors?.errorIcon,
+        '--cp-transfer-queue-warning-icon': colors?.warningIcon,
         '--cp-transfer-queue-divider': colors?.divider,
         '--cp-transfer-queue-failure-count-bg': colors?.failureCountBackground,
         '--cp-transfer-queue-failure-count-text': colors?.failureCountText,
@@ -105,7 +126,7 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
         style={cssVars}
         className={mergeClasses(
           classes.root,
-          'w-[370px] max-w-[calc(100vw-2rem)] rounded-lg shadow-lg',
+          'w-[370px] max-w-[calc(100vw-2rem)] rounded-xl shadow-md',
           styles?.rootClassName,
         )}
       >
@@ -119,6 +140,23 @@ export const ImportExportQueue: FC<ImportExportQueueProps> = memo(
           onToggleCollapse={handleToggleCollapse}
           onClose={handleClose}
         />
+        {isCollapsed && hasInProgress && (
+          /*
+           * Only while collapsed: expanded, every row already carries its own
+           * spinner, so an aggregate bar would restate what is on screen.
+           * Collapsed, the rows are unmounted and nothing else says work
+           * continues.
+           */
+          <ProgressBar
+            value={getAggregatePercent(jobs)}
+            size={ElementSize.Small}
+            aria-label={labels.queueProgressAriaLabel}
+            aria-valuetext={labels.queueProgressValueText(
+              getSettledCount(jobs),
+              jobs.length,
+            )}
+          />
+        )}
         {!isCollapsed && (
           <div
             id={jobsId}

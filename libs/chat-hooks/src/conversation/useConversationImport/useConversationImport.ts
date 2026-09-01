@@ -498,6 +498,12 @@ export const useConversationImport = ({
       }
       if (failedNames.length > 0) {
         queue.failJob(jobId, ConversationTransferErrorCode.Unknown);
+      } else if (skippedAttachmentNames.length > 0) {
+        /*
+         * Every conversation imported, but some of their attachments did not
+         * come across — delivered, yet not what the user asked for.
+         */
+        queue.warnJob(jobId, ConversationTransferWarningCode.AttachmentSkipped);
       } else {
         queue.succeedJob(jobId);
       }
