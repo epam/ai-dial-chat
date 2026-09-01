@@ -11,6 +11,7 @@ import {
   filterByMyApp,
   filterByTopics,
   filterCatalogItems,
+  getTopicOptions,
 } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { buildCatalogTabs } from '../../utils/catalog-tabs';
@@ -26,6 +27,8 @@ import { CreateButton } from './CreateButton';
 /** Root catalog component: entity browsing with tabs, search, sort, filter, favorites strip, and details panel. */
 export const Catalog: FC<CatalogProps> = ({
   items,
+  tabs: controlledTabs,
+  topicOptions: controlledTopicOptions,
   favorites,
   titles,
   onToggleFavorite,
@@ -174,13 +177,13 @@ export const Catalog: FC<CatalogProps> = ({
   );
 
   const allFilterValues = useMemo(
-    () => new Set(filteredItems.flatMap((item) => item.topics)),
-    [filteredItems],
+    () => controlledTopicOptions ?? getTopicOptions(filteredItems),
+    [controlledTopicOptions, filteredItems],
   );
 
   const tabs = useMemo(
-    () => buildCatalogTabs(filteredItems, titles?.tabLabels),
-    [filteredItems, titles?.tabLabels],
+    () => controlledTabs ?? buildCatalogTabs(filteredItems, titles?.tabLabels),
+    [controlledTabs, filteredItems, titles?.tabLabels],
   );
 
   const firstTabId = tabs[0]?.id ?? '';

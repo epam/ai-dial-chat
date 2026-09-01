@@ -6,6 +6,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogSortKey } from '../../../types/sort';
 import { CatalogViewMode } from '../../../types/view-mode';
+import { getTopicOptions } from '../../../utils/catalog-filter';
+import { buildCatalogTabs } from '../../../utils/catalog-tabs';
 import { Catalog } from '../Catalog';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -730,6 +732,66 @@ describe('Catalog', () => {
         .getByRole('tab', { name: /Prompts/i })
         .getAttribute('aria-selected'),
     ).toBe('true');
+  });
+
+  it('renders the controlled tabs prop instead of tabs derived from items, keeping the grid limited to items', () => {
+    const wideTabs = buildCatalogTabs([
+      makeItem('1', 'Claude', { type: CatalogEntityType.Agent }),
+      makeItem('2', 'GPT', { type: CatalogEntityType.Model }),
+      makeItem('3', 'My Prompt', { type: CatalogEntityType.Prompt }),
+    ]);
+
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude', { type: CatalogEntityType.Agent })]}
+        tabs={wideTabs}
+        favorites={[]}
+        activeTab={CatalogEntityType.Agent}
+      />,
+    );
+
+    expect(screen.getByRole('tab', { name: /Models/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Agents/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Prompts/i })).toBeTruthy();
+    expect(
+      screen.getByRole('grid', { name: 'catalog grid' }).textContent,
+    ).toContain('1 items');
+  });
+
+  it('renders the controlled topicOptions prop instead of options derived from items', () => {
+    const wideTopicOptions = getTopicOptions([
+      makeItem('1', 'Claude', { topics: ['Free'] }),
+      makeItem('2', 'GPT', { topics: ['Paid'] }),
+    ]);
+
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude', { topics: ['Free'] })]}
+        topicOptions={wideTopicOptions}
+        favorites={[]}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Free' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Paid' })).toBeTruthy();
+  });
+
+  it('falls back to deriving tabs and Topics options from items when tabs/topicOptions are omitted', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', {
+            type: CatalogEntityType.Agent,
+            topics: ['Free'],
+          }),
+        ]}
+        favorites={[]}
+      />,
+    );
+
+    expect(screen.getByRole('tab', { name: /Agents/i })).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: /Models/i })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Free' })).toBeTruthy();
   });
 
   it('calls onActiveTabChange with the clicked tab id', async () => {
