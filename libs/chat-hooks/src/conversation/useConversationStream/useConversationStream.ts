@@ -27,6 +27,14 @@ import { isAwaitingGenerationResume } from './generation-resume';
  */
 const GENERATION_RESUME_WATCH_TIMEOUT_MS = 5 * 60 * 1000;
 
+/*
+ * Bounded wait for the client-channel subscribe to resolve so that
+ * completions sent right after mount can carry a channelId. 20 s gives
+ * slow connections time to establish the channel while still being
+ * meaningfully shorter than the 40 s subscribe default.
+ */
+const CHANNEL_WAIT_TIMEOUT_MS = 20000;
+
 /** Options accepted by {@link ConversationStreamTransport.streamCompletion}. */
 export interface StreamCompletionOptions {
   onChunk: (chunk: StreamChunk) => void;
@@ -327,19 +335,30 @@ export const useConversationStream = ({
 
       // See client-channel-protocol spec for the full rationale.
       const send = async () => {
-        const clientChannelId =
-          channel?.channelId ?? (await channel?.waitForChannel()) ?? undefined;
-        transport.streamCompletion(
-          conversationPath,
-          userContent,
-          model,
-          completionOptions,
-          customContent,
-          genId,
-          mode,
-          serverMessageIndex,
-          clientChannelId,
-        );
+        try {
+          const clientChannelId =
+            channel?.channelId ??
+            (await channel?.waitForChannel(CHANNEL_WAIT_TIMEOUT_MS)) ??
+            undefined;
+          transport.streamCompletion(
+            conversationPath,
+            userContent,
+            model,
+            completionOptions,
+            customContent,
+            genId,
+            mode,
+            serverMessageIndex,
+            clientChannelId,
+          );
+        } catch (err: unknown) {
+          /* streamCompletion is typed void but may throw synchronously; route
+           * through onError to preserve the error semantics the calling effect
+           * previously got from a synchronous throw. */
+          completionOptions.onError(
+            err instanceof Error ? err : new Error(String(err)),
+          );
+        }
       };
       void send();
     },

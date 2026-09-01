@@ -7,8 +7,8 @@ import { IsEnum, IsString, Matches, MaxLength } from 'class-validator';
  * own trust boundary for it, since the value is echoed back to Core and may
  * end up in log lines. For a `toolset/signin`/`external-service/signin`
  * event the `id` is a percent-encoded resource path (e.g. an application
- * name containing spaces), so `%` must stay in the allowlist alongside the
- * hex digits `%XX` encodes.
+ * name containing spaces), so `%` must stay in the allowlist to support
+ * percent-encoded path segments.
  */
 export const RPC_ID_PATTERN = /^[\w.%/-]+$/;
 const RPC_ID_MESSAGE =
