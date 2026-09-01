@@ -36,7 +36,7 @@ The lib MUST NOT branch on `Prompt` to reach any host-owned fact. It MUST NOT im
 
 `buildCatalogTabs` (`libs/catalog/src/utils/catalog-tabs.ts`) SHALL add `Prompt` to `DEFAULT_TAB_LABELS` with the English default `'Prompts'`, and to `TAB_ORDER` immediately after `CatalogEntityType.Skill`, as the last entry.
 
-Tab derivation behaviour is unchanged: a tab appears only when at least one item of that type is present in `items`, and a host-supplied `tabLabels[CatalogEntityType.Prompt]` overrides the English default.
+Tab derivation behaviour of `buildCatalogTabs` is unchanged: a tab appears only when at least one item of that type is present in the items it is given, and a host-supplied `tabLabels[CatalogEntityType.Prompt]` overrides the English default. `Catalog` uses that helper when `tabs` is omitted; a host-supplied `tabs` list is rendered as-is and is not re-filtered against `items`.
 
 #### Scenario: Prompts tab appears when prompt items are present
 

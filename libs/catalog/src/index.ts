@@ -70,8 +70,9 @@ export type {
   OverviewSpec,
 } from './models/item-overview';
 // Utils
-export { filterCatalogItems } from './utils/catalog-filter';
+export { filterCatalogItems, getTopicOptions } from './utils/catalog-filter';
 export { sortCatalogItems } from './utils/catalog-sort';
+export { buildCatalogTabs } from './utils/catalog-tabs';
 export { useFavColumns } from './utils/use-fav-columns';
 export {
   getCredentialsBadgeState,
