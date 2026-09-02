@@ -78,10 +78,10 @@ export interface ListViewProps {
   isReadonly?: boolean;
   /**
    * Per-column overrides for whether an optional column (`folder`, `tags`,
-   * `favorite`) renders for the active tab, given its entity `type` and the
-   * items shown in it. Independent of `isFavoriteVisible` (which only gates
-   * the star on individual rows, not the column). Replaces that column's
-   * built-in default rule; columns omitted from this map keep their default.
+   * `favorite`) renders for the active tab, given its entity `type`.
+   * Independent of `isFavoriteVisible` (which only gates the star on
+   * individual rows, not the column). Replaces that column's built-in
+   * default rule; columns omitted from this map keep their default.
    * `favorite` is additionally combined (AND) with `isReadonly`.
    */
   columnVisibility?: ListViewColumnVisibility;

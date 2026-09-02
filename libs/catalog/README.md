@@ -549,9 +549,9 @@ for that.
 The list view's optional columns — `folder`, `tags`, and `favorite` — each
 have a built-in default rule (`folder` hides for `CatalogEntityType.Model`;
 `tags` and `favorite` are always shown). `columnVisibility` replaces any of
-these per column, given the active tab's `type` and its `items`; columns left
-out of the map keep their default. `favorite`'s resolved visibility is
-additionally combined (AND) with `isReadonly`.
+these per column, given the active tab's `type`; columns left out of the map
+keep their default. `favorite`'s resolved visibility is additionally combined
+(AND) with `isReadonly`.
 
 ```tsx
 <Catalog

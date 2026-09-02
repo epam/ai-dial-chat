@@ -121,14 +121,14 @@ export interface CatalogProps {
   isFavoriteVisible?: (item: CatalogItem) => boolean;
   /**
    * Per-column overrides for whether an optional `ListView` column (`folder`,
-   * `tags`, `favorite`) renders for the active tab, given its entity type and
-   * the items currently shown in it. Independent of `isFavoriteVisible`
-   * (which only gates the star on individual rows, in the browse grid and
-   * cards too, not the column). Replaces that column's built-in default rule
-   * — e.g. `folder` normally hides for `CatalogEntityType.Model`; columns
-   * omitted from this map keep their default. `favorite` is additionally
-   * combined (AND) with `isReadonly`. No effect on the Browse grid/cards,
-   * only the list view's table.
+   * `tags`, `favorite`) renders for the active tab, given its entity type.
+   * Independent of `isFavoriteVisible` (which only gates the star on
+   * individual rows, in the browse grid and cards too, not the column).
+   * Replaces that column's built-in default rule — e.g. `folder` normally
+   * hides for `CatalogEntityType.Model`; columns omitted from this map keep
+   * their default. `favorite` is additionally combined (AND) with
+   * `isReadonly`. No effect on the Browse grid/cards, only the list view's
+   * table.
    */
   columnVisibility?: ListViewColumnVisibility;
   /** Called when the "Use in chat" button is clicked in the details panel. */

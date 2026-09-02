@@ -13,15 +13,11 @@ export type ListViewColumnKey = 'folder' | 'tags' | 'favorite';
 
 /**
  * Per-column rule resolving whether an optional `ListView` column renders for
- * the active tab, given its entity `type` and the (unwindowed) `items`
- * currently shown in that tab. Overrides the column's built-in default rule;
- * omitted keys keep their default.
+ * the active tab, given its entity `type`. Overrides the column's built-in
+ * default rule; omitted keys keep their default.
  */
 export type ListViewColumnVisibility = Partial<
-  Record<
-    ListViewColumnKey,
-    (type: CatalogEntityType, items: CatalogItem[]) => boolean
-  >
+  Record<ListViewColumnKey, (type: CatalogEntityType) => boolean>
 >;
 
 /**
@@ -44,14 +40,13 @@ const defaultColumnVisibility: Required<ListViewColumnVisibility> = {
  */
 export const resolveColumnVisibility = (
   type: CatalogEntityType,
-  items: CatalogItem[],
   columnVisibility?: ListViewColumnVisibility,
 ): Record<ListViewColumnKey, boolean> => {
   const keys: ListViewColumnKey[] = ['folder', 'tags', 'favorite'];
   return Object.fromEntries(
     keys.map((key) => [
       key,
-      (columnVisibility?.[key] ?? defaultColumnVisibility[key])(type, items),
+      (columnVisibility?.[key] ?? defaultColumnVisibility[key])(type),
     ]),
   ) as Record<ListViewColumnKey, boolean>;
 };
@@ -60,10 +55,9 @@ export const resolveColumnVisibility = (
 export const CATALOG_COLUMNS = (
   type: CatalogEntityType,
   isReadonly = false,
-  items: CatalogItem[] = [],
   columnVisibility?: ListViewColumnVisibility,
 ): ColDef<CatalogItem>[] => {
-  const visibility = resolveColumnVisibility(type, items, columnVisibility);
+  const visibility = resolveColumnVisibility(type, columnVisibility);
 
   return [
     {

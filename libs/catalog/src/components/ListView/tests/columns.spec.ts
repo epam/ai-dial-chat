@@ -1,6 +1,5 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { CatalogItem } from '../../../models/catalog-item';
 import { CATALOG_COLUMNS } from '../columns';
 
 describe('CATALOG_COLUMNS', () => {
@@ -51,23 +50,16 @@ describe('CATALOG_COLUMNS', () => {
   });
 
   it('lets columnVisibility hide the Favorite column for a tab', () => {
-    const items = [{ id: '1', type: CatalogEntityType.Model }] as CatalogItem[];
-
-    const hiddenFavorite = CATALOG_COLUMNS(CatalogEntityType.Model, false, items, {
+    const hiddenFavorite = CATALOG_COLUMNS(CatalogEntityType.Model, false, {
       favorite: (type) => type !== CatalogEntityType.Model,
     }).find((c) => c.field === 'isStarred');
     expect(hiddenFavorite?.hide).toBe(true);
   });
 
   it("lets columnVisibility override the Folder column's default rule", () => {
-    const items = [{ id: '1', type: CatalogEntityType.Prompt }] as CatalogItem[];
-
-    const forcedHiddenFolder = CATALOG_COLUMNS(
-      CatalogEntityType.Prompt,
-      false,
-      items,
-      { folder: () => false },
-    ).find((c) => c.field === 'folder');
+    const forcedHiddenFolder = CATALOG_COLUMNS(CatalogEntityType.Prompt, false, {
+      folder: () => false,
+    }).find((c) => c.field === 'folder');
     expect(forcedHiddenFolder?.hide).toBe(true);
   });
 
