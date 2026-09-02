@@ -3,7 +3,7 @@ name: Deploy development
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ['Release Workflow']
+    workflows: ["Release Workflow"]
     types:
       - completed
 
@@ -18,10 +18,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - environment-name: 'development'
-            gitlab-project-id: '2977'
-          - environment-name: 'development-overlay'
-            gitlab-project-id: '3016'
+          - environment-name: "development"
+            gitlab-project-id: "2977"
+          - environment-name: "development-overlay"
+            gitlab-project-id: "3016"
 
     name: Deploy to ${{ matrix.environment-name }}
     uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@4.9.0
