@@ -31,6 +31,6 @@ export class ListConversationsQueryDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(512)
+  @MaxLength(4096)
   nextToken?: string;
 }
