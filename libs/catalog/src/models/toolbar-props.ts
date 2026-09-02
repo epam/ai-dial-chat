@@ -1,4 +1,5 @@
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
+import type { ReactNode } from 'react';
 import { CatalogViewMode } from '../types/view-mode';
 
 /** Typography class overrides for `Toolbar`. */
@@ -45,6 +46,12 @@ export interface ToolbarProps {
   onQueryChange: (q: string) => void;
   /** Section heading text. Default: 'Browse'. */
   title?: string;
+  /**
+   * Renders in place of the `title`/`totalCount` heading when supplied, e.g.
+   * so a host can render a clickable breadcrumb instead of a plain text
+   * label.
+   */
+  browseHeaderRenderer?: ReactNode;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
   searchPlaceholder?: string;
   /** Accessible label for switching to grid view. Default: 'Grid view'. */
