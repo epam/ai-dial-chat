@@ -98,6 +98,12 @@ FilterTab.Organization; // 'organization'
 ### MarkdownRenderer
 
 Renders markdown content with GFM support (tables, task lists, strikethrough).
+Plain text and unformatted messages render immediately. The KaTeX math engine
+and its stylesheet load asynchronously, and only the first time `content`
+actually contains a math block (`$$...$$`, or `\(...\)`/`\[...\]`) — a
+conversation with no math never pulls KaTeX into the bundle. Fenced code
+blocks render through `MarkdownCodeBlock` (below), which defers its own
+syntax-highlighting engine the same way.
 
 ```tsx
 import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
@@ -132,7 +138,11 @@ Syntax-highlighted code block with copy and download buttons. `language` and
 `value` are required; pass `isStreaming` to hide the copy button while content is
 still arriving. The copy button keeps `copyLabel` as its accessible name at all
 times; `copiedLabel` is announced through the block's own
-`role="status" aria-live="polite"` region once the copy succeeds.
+`role="status" aria-live="polite"` region once the copy succeeds. When
+`language` is set, the `react-syntax-highlighter` engine loads asynchronously
+behind a `Suspense` boundary — `value` is shown immediately as plain,
+unhighlighted text via the fallback, then swapped for the highlighted output
+once the engine resolves. A language-less block never loads the engine at all.
 
 ```tsx
 import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
@@ -365,14 +375,14 @@ import {
 } from '@epam/ai-dial-chat-shared';
 ```
 
-| Constant                                     | Purpose                                                           |
-| -------------------------------------------- | ----------------------------------------------------------------- |
-| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names    |
-| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists  |
-| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types   |
-| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders     |
-| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step |
-| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens               |
+| Constant                                     | Purpose                                                              |
+| -------------------------------------------- | -------------------------------------------------------------------- |
+| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names       |
+| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists     |
+| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types      |
+| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders        |
+| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step    |
+| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                  |
 | `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field |
 
 ## Stylesheet

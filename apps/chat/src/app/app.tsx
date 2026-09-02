@@ -60,6 +60,7 @@ import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
+import { configurePdfWorker } from '../utils/pdf';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
@@ -590,6 +591,7 @@ const App: FC = () => {
             defaultWidth={canvasDefaultWidth}
             maxWidth={canvasMaxWidth}
             codeBlockTheme={codeBlockTheme}
+            configurePdfWorker={configurePdfWorker}
           />
         )}
       </div>

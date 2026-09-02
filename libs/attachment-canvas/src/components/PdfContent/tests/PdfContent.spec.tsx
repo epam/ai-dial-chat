@@ -376,4 +376,38 @@ describe('PdfContent', () => {
       expect(input.value).toBe('3');
     });
   });
+
+  describe('configurePdfWorker', () => {
+    it('renders without error when configurePdfWorker is not provided', () => {
+      render(<PdfContent url="doc.pdf" highlights={[]} />);
+      expect(documentPreviewState.props).toBeDefined();
+    });
+
+    it('calls configurePdfWorker once, even across multiple PDF opens', async () => {
+      // `hasConfiguredPdfWorker` is module-scoped state; reset the module so
+      // this test doesn't inherit "already configured" from an earlier test.
+      vi.resetModules();
+      const { PdfContent: IsolatedPdfContent } = await import('../PdfContent');
+      const configurePdfWorker = vi.fn();
+
+      const { unmount } = render(
+        <IsolatedPdfContent
+          url="doc.pdf"
+          highlights={[]}
+          configurePdfWorker={configurePdfWorker}
+        />,
+      );
+      expect(configurePdfWorker).toHaveBeenCalledOnce();
+      unmount();
+
+      render(
+        <IsolatedPdfContent
+          url="doc-2.pdf"
+          highlights={[]}
+          configurePdfWorker={configurePdfWorker}
+        />,
+      );
+      expect(configurePdfWorker).toHaveBeenCalledOnce();
+    });
+  });
 });

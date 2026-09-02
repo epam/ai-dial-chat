@@ -343,6 +343,14 @@ export interface AttachmentCanvasProps {
    * plain `fetch` if not provided.
    */
   loadPdf?: (url: string) => Promise<Blob>;
+  /**
+   * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
+   * host app. Called once, the first time a PDF attachment is opened. When
+   * omitted, `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is
+   * used instead, so PDF rendering still works, just without the host's own
+   * bundled worker asset.
+   */
+  configurePdfWorker?: () => void | Promise<void>;
 }
 
 /** User-visible strings for `AttachmentCanvasBody`'s content states. */
@@ -393,4 +401,12 @@ export interface AttachmentCanvasBodyProps {
    * Ignored for every other content type. Defaults to `false`.
    */
   hidePdfToolbar?: boolean;
+  /**
+   * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
+   * host app. Called once, the first time a PDF attachment is opened. When
+   * omitted, `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is
+   * used instead, so PDF rendering still works, just without the host's own
+   * bundled worker asset.
+   */
+  configurePdfWorker?: () => void | Promise<void>;
 }
