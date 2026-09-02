@@ -110,6 +110,26 @@ import { buildCatalogTabs, Catalog, getTopicOptions } from '@epam/ai-dial-catalo
 />;
 ```
 
+#### Overriding the Browse heading
+
+By default the Browse section's heading is the plain text label
+`titles.browseTitle` (default `'Browse'`) rendered next to the item count. Pass
+`browseHeading` to replace that whole slot with any node — e.g. a clickable
+breadcrumb — instead. When supplied, the item count is not rendered alongside
+it, so include it in the node if needed; the host owns click handling and
+visual composition entirely, since the lib has no notion of the underlying
+navigation (a category tree, etc.).
+
+```tsx
+<Catalog
+  items={itemsNarrowedByCategory}
+  favorites={favoriteItems}
+  browseHeading={
+    <Breadcrumb segments={selectedPath} onSegmentClick={handleJumpToSegment} />
+  }
+/>;
+```
+
 ### CardGrid
 
 Virtualized grid view of catalog cards.

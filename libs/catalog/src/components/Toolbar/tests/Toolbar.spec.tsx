@@ -88,4 +88,15 @@ describe('Toolbar', () => {
     renderToolbar({ title: 'Browse' });
     expect(screen.getByText('Browse')).toBeTruthy();
   });
+
+  it('renders browseHeading instead of the title/count when provided', () => {
+    renderToolbar({
+      title: 'Browse',
+      totalCount: 5,
+      browseHeading: <nav aria-label="breadcrumb">All entities &gt; Org</nav>,
+    });
+
+    expect(screen.getByLabelText('breadcrumb')).toBeTruthy();
+    expect(screen.queryByText('Browse')).toBeNull();
+  });
 });

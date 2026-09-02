@@ -97,6 +97,13 @@ export interface CatalogProps {
   favorites: CatalogItem[];
   /** Grouped text labels for headings and actions. */
   titles?: CatalogTitles;
+  /**
+   * Renders in place of the Browse section's heading (`titles.browseTitle`)
+   * when supplied, e.g. so a host can render a clickable breadcrumb instead
+   * of a plain text label. The item count normally shown next to the heading
+   * is not rendered alongside it — include it in the supplied node if needed.
+   */
+  browseHeading?: ReactNode;
   /** Whether catalog data is loading (reserved for future loading state). */
   isLoading?: boolean;
   /** Error to display if data loading failed (reserved for future error state). */
