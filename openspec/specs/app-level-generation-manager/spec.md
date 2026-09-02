@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Frontend ownership of the streaming-generation UI: an app-level context that keeps a stream alive across conversation navigation, plus the per-conversation guards that keep chunks, reloads, stop, and the streaming indicator scoped to the displayed conversation.
+Frontend ownership of the streaming-generation UI: an app-level context that keeps a stream alive across conversation navigation, plus per-generation buffering and per-conversation guards that keep chunks, reloads, stop, and the streaming indicator scoped to the displayed conversation.
 
 ## Requirements
 
@@ -55,6 +55,29 @@ Because the conversation page is not remounted between conversations, `useConver
 
 - **WHEN** the user returns to a conversation whose stream is still active
 - **THEN** subsequent chunks render live again because the path matches
+
+### Requirement: Active generation content survives conversation navigation
+
+`useConversationStream` SHALL keep an in-memory, per-path snapshot of the assistant message for every stream it started. Every accepted chunk SHALL update that snapshot even while another conversation is displayed; it SHALL NOT update the foreground conversation in that case. The snapshot SHALL accumulate the same text and `custom_content` fields as normal live rendering, including all stage updates merged by index.
+
+The hook SHALL expose `restoreBufferedGeneration(conversationId, conversation)`. When `ConversationPage` loads a conversation, it SHALL call this function before rendering or deciding whether to auto-start/resume generation. If the path has an active buffered snapshot, the snapshot SHALL replace the corresponding persisted start-state placeholder (or be appended at its recorded index when the start-state save has not landed yet). Server-provided message fields that are absent from the live snapshot SHALL be preserved. The buffer SHALL be discarded when the stream completes or errors; terminal state continues to come from the backend's saved conversation.
+
+This buffer is navigation-scoped, not durable persistence: a hard refresh still follows the existing awaiting-generation watch flow and waits for the backend's terminal save.
+
+#### Scenario: Returning before completion restores earlier stages
+
+- **WHEN** conversation A receives stage chunks, the user opens conversation B, more stage chunks arrive for A, and the user returns to A before generation completes
+- **THEN** A renders the complete accumulated stage list, including chunks received both before and during the navigation, and later stage chunks continue from that accumulated state
+
+#### Scenario: Background chunks do not modify the foreground conversation
+
+- **WHEN** conversation A receives chunks while conversation B is displayed
+- **THEN** A's buffered snapshot is updated and B's messages remain unchanged
+
+#### Scenario: Terminal state replaces the navigation buffer
+
+- **WHEN** the stream completes or errors
+- **THEN** its in-memory snapshot is discarded and the backend-saved terminal conversation remains the source of truth
 
 ### Requirement: Auto-start on load is idempotent
 

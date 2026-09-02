@@ -98,6 +98,7 @@ export class ConversationController {
   }
 
   @Get('list')
+  @Throttle({ default: { limit: 300, ttl: 60000 } })
   @ApiOperation({
     summary: 'List conversations',
     description:
@@ -126,6 +127,7 @@ export class ConversationController {
   }
 
   @Get('metadata')
+  @Throttle({ default: { limit: 300, ttl: 60000 } })
   @ApiOperation({ summary: 'Get metadata for a conversation' })
   @ApiResponse({
     status: 200,
@@ -151,6 +153,7 @@ export class ConversationController {
   }
 
   @Get()
+  @Throttle({ default: { limit: 600, ttl: 60000 } })
   @ApiOperation({ summary: 'Get a conversation by path' })
   @ApiResponse({
     status: 200,

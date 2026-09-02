@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { Response } from 'express';
 import { extractDialErrorMessage } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { buildConversationIdHeaders } from '../../common/utils/header-value';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
@@ -125,7 +126,7 @@ export class ChatCompletionsAdapter {
             ...(clientChannelId
               ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
               : {}),
-            ...(conversationId ? { 'X-CONVERSATION-ID': conversationId } : {}),
+            ...buildConversationIdHeaders(conversationId),
           },
           params: { query: { 'api-version': this.dialClient.dialApiVersion } },
           parseAs: 'stream',

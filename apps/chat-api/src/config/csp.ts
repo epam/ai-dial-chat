@@ -15,6 +15,21 @@ export const buildFrameAncestorsDirective = (
   allowedOverlayOrigins.length > 0 ? allowedOverlayOrigins : ["'none'"];
 
 /**
+ * Builds the `Permissions-Policy` header value delegating the
+ * `local-network-access` feature to `'self'` plus every allowlisted iframe
+ * origin. Helmet has no built-in support for this header, so `main.ts`
+ * applies the returned value via its own middleware. Delegation lets the
+ * `/apps-editor` embedded schema iframe — and any window it opens, such as
+ * an identity-provider login popup — request the Local Network Access
+ * permission needed when the embedded app's or its identity provider's
+ * origin resolves to a private/internal IP address.
+ */
+export const buildPermissionsPolicyHeader = (
+  allowedIframeOrigins: string[],
+): string =>
+  `local-network-access=(self${allowedIframeOrigins.map((origin) => ` ${origin}`).join('')})`;
+
+/**
  * Builds the Helmet options used by `main.ts`'s security-headers middleware.
  * Disables `frameguard` (which sends `X-Frame-Options: SAMEORIGIN` by
  * default) only once at least one origin is allowlisted, relying solely on

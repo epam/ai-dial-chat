@@ -27,6 +27,7 @@ export const ListView: FC<ListViewProps> = ({
   selectedItemId,
   credentialsBadgeLoggedOutLabel,
   isReadonly = false,
+  columnVisibility,
 }) => {
   if (items.length === 0) {
     return (
@@ -109,7 +110,7 @@ export const ListView: FC<ListViewProps> = ({
           <div style={{ height: startRow * ROW_HEIGHT }} aria-hidden />
         )}
         <Grid<CatalogItem>
-          columnDefs={CATALOG_COLUMNS(type, isReadonly)}
+          columnDefs={CATALOG_COLUMNS(type, isReadonly, columnVisibility)}
           rowData={windowedItems}
           getRowId={(r) => r.id}
           withoutHeaderBorders

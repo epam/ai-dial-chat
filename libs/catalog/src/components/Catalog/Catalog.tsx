@@ -31,8 +31,10 @@ export const Catalog: FC<CatalogProps> = ({
   topicOptions: controlledTopicOptions,
   favorites,
   titles,
+  browseHeaderRenderer,
   onToggleFavorite,
   isFavoriteVisible,
+  columnVisibility,
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
@@ -462,6 +464,7 @@ export const Catalog: FC<CatalogProps> = ({
             query={query}
             onQueryChange={setQuery}
             title={browseTitle}
+            browseHeaderRenderer={browseHeaderRenderer}
             searchPlaceholder={searchPlaceholder}
             gridViewLabel={gridViewLabel}
             listViewLabel={listViewLabel}
@@ -543,6 +546,7 @@ export const Catalog: FC<CatalogProps> = ({
                 emptyStateTitle={emptyTitle}
                 onToggleFavorite={onToggleFavorite}
                 isFavoriteVisible={isFavoriteVisible}
+                columnVisibility={columnVisibility}
                 onItemClick={onCardClick ?? handleOpenDetails}
                 stickyHeaderTop={0}
                 selectedItemId={selectedItemId}

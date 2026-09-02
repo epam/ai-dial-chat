@@ -88,6 +88,26 @@ describe('PublishService', () => {
       );
     });
 
+    it('falls back to the caller-supplied author and the current time when Core returns no parseable publication body', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse(undefined),
+      );
+
+      const result = await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+        'Organization/Data Science',
+        undefined,
+        'Test User',
+      );
+
+      expect(result.publishedBy).toBe('Test User');
+      expect(new Date(result.publishedAt).toString()).not.toBe('Invalid Date');
+    });
+
     it('publishes an unversioned skill using only its leaf name in the publication title and targetUrl', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(

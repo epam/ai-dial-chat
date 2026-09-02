@@ -12,7 +12,7 @@ import {
   SegmentedControlItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
-import { FC, useMemo } from 'react';
+import { FC, ReactNode, useMemo } from 'react';
 import { ToolbarStyles } from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Filter } from '../../Filter/Filter';
@@ -23,6 +23,7 @@ interface TitleRowProps {
   viewMode: CatalogViewMode;
   onViewModeChange: (mode: CatalogViewMode) => void;
   title?: string;
+  browseHeaderRenderer?: ReactNode;
   styles?: ToolbarStyles;
   query: string;
   onQueryChange: (q: string) => void;
@@ -48,6 +49,7 @@ export const TitleRow: FC<TitleRowProps> = ({
   viewMode,
   onViewModeChange,
   title = 'Browse',
+  browseHeaderRenderer,
   styles: browseStyles,
   query,
   onQueryChange,
@@ -109,18 +111,20 @@ export const TitleRow: FC<TitleRowProps> = ({
     <div className="flex flex-col gap-3">
       {/* Row 1: title | view toggle | divider | sort */}
       <div className="flex items-center gap-2">
-        <ItemHeader
-          title={title}
-          postfix={totalCount}
-          titleClassName={titleClassName}
-          postfixClassName={countClassName}
-          className="shrink-0"
-          shouldTruncateTitle={false}
-          colors={{
-            title: browseStyles?.colors?.titleText,
-            count: browseStyles?.colors?.countText,
-          }}
-        />
+        {browseHeaderRenderer ?? (
+          <ItemHeader
+            title={title}
+            postfix={totalCount}
+            titleClassName={titleClassName}
+            postfixClassName={countClassName}
+            className="shrink-0"
+            shouldTruncateTitle={false}
+            colors={{
+              title: browseStyles?.colors?.titleText,
+              count: browseStyles?.colors?.countText,
+            }}
+          />
+        )}
 
         <div className="ms-auto flex items-center gap-2">
           <SegmentedControl

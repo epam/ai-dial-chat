@@ -56,6 +56,27 @@ describe('CATALOG_COLUMNS', () => {
     expect(folderOf(CatalogEntityType.Model)?.hide).toBe(true);
   });
 
+  it('shows the Favorite column by default, independent of isFavoriteVisible', () => {
+    const favColumn = CATALOG_COLUMNS(CatalogEntityType.Model).find(
+      (c) => c.field === 'isStarred',
+    );
+    expect(favColumn?.hide).toBeFalsy();
+  });
+
+  it('lets columnVisibility hide the Favorite column for a tab', () => {
+    const hiddenFavorite = CATALOG_COLUMNS(CatalogEntityType.Model, false, {
+      favorite: (type) => type !== CatalogEntityType.Model,
+    }).find((c) => c.field === 'isStarred');
+    expect(hiddenFavorite?.hide).toBe(true);
+  });
+
+  it("lets columnVisibility override the Folder column's default rule", () => {
+    const forcedHiddenFolder = CATALOG_COLUMNS(CatalogEntityType.Prompt, false, {
+      folder: () => false,
+    }).find((c) => c.field === 'folder');
+    expect(forcedHiddenFolder?.hide).toBe(true);
+  });
+
   it('disables sorting on Type and Tags, but not on Name and Folder', () => {
     const columns = CATALOG_COLUMNS(CatalogEntityType.Model);
     const byField = Object.fromEntries(columns.map((c) => [c.field, c]));

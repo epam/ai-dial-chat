@@ -90,6 +90,26 @@ describe('PublishService.unpublish', () => {
     );
   });
 
+  it('falls back to the caller-supplied author and the current time when Core returns no parseable publication body', async () => {
+    const { service, dialClient } = makeService();
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      okResponse(undefined),
+    );
+
+    const result = await service.unpublish(
+      'token-abc',
+      TEST_BUCKET,
+      CatalogEntityType.Toolset,
+      TOOLSET_ID,
+      'Organization/Data Science',
+      '1.2.0',
+      'Test User',
+    );
+
+    expect(result.requestedBy).toBe('Test User');
+    expect(new Date(result.requestedAt).toString()).not.toBe('Invalid Date');
+  });
+
   /*
    * The whole point of `getPublishedTargetUrl`: a DELETE resource whose
    * `targetUrl` does not match the published copy removes nothing, and Core

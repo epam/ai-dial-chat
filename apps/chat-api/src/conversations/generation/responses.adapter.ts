@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { Response } from 'express';
 import { extractDialErrorMessage } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { buildConversationIdHeaders } from '../../common/utils/header-value';
 import { StringUtils } from '../../common/utils/string-utils';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
@@ -198,7 +199,7 @@ export class ResponsesAdapter {
             ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
             : {}),
           ...(timezone ? { [TIMEZONE_HEADER]: timezone } : {}),
-          ...(conversationId ? { 'X-CONVERSATION-ID': conversationId } : {}),
+          ...buildConversationIdHeaders(conversationId),
         },
         parseAs: 'stream',
         signal,
