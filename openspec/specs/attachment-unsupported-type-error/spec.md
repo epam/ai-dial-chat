@@ -20,7 +20,7 @@ After processing a batch of added files (from file picker, drag-and-drop, or cli
 
 When the failure reason is that the deployment accepts **no** attachment types at all, the pair `attachments.noAttachmentsAllowed.title` / `.message` ("Attachments not supported" / "This model does not support file attachments.") SHALL be used instead, with no `{{formats}}` interpolation — listing zero accepted formats would produce an empty sentence.
 
-The `formats` list is produced by the pure `mimeTypesToExtensionLabels(types: string[], wildcardLabels?: Record<string, string>): string` utility exported from `@epam/ai-dial-attachment-input`, which converts MIME entries to uppercase extension labels (e.g. `image/jpeg` → `JPEG`, `application/pdf` → `PDF`, `text/csv` → `CSV`) and maps a `<major>/*` wildcard through a label table (`image/*` → `Image files`, `audio/*` → `Audio files`, `video/*` → `Video files`, `text/*` → `Text files`, `*/*` → `All files`), falling back to `<major> files` for an unlisted major type. A host may override that table through the second argument.
+The `formats` list is produced by the pure `mimeTypesToExtensionLabels(types: string[], wildcardLabels?: Record<string, string>): string` utility exported from `@epam/ai-dial-attachment-input`. For a concrete MIME value, the utility normalizes case and ignores MIME parameters, resolves known values through `MIME_TYPE_EXT_MAP`, and renders the mapped extension in uppercase (e.g. `application/vnd.openxmlformats-officedocument.wordprocessingml.document` → `DOCX`, `application/pdf` → `PDF`, `text/csv` → `CSV`). The established `image/jpeg` → `JPEG` label is preserved; an unknown concrete MIME falls back to its uppercased subtype. A `<major>/*` wildcard is mapped through a label table (`image/*` → `Image files`, `audio/*` → `Audio files`, `video/*` → `Video files`, `text/*` → `Text files`, `*/*` → `All files`), falling back to `<major> files` for an unlisted major type. A host may override that wildcard table through the second argument.
 
 **i18n keys:**
 - `attachments.unsupportedType.title`
@@ -54,6 +54,11 @@ The `formats` list is produced by the pure `mimeTypesToExtensionLabels(types: st
 
 - **WHEN** the deployment's `inputAttachmentTypes` is `['image/*']` and the user picks `photo.png` (MIME `image/png`)
 - **THEN** the file passes validation and `onUploadAttachment` is called normally
+
+#### Scenario: Structured MIME entry is readable in an error notification
+
+- **WHEN** validation fails for a deployment whose `inputAttachmentTypes` contains `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+- **THEN** the notification body lists `DOCX`, not the raw MIME subtype
 
 #### Scenario: Global wildcard accepts any file
 

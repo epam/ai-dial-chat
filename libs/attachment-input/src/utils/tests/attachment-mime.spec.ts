@@ -8,6 +8,17 @@ describe('mimeTypesToExtensionLabels', () => {
     expect(mimeTypesToExtensionLabels(['image/jpeg'])).toBe('JPEG');
   });
 
+  it('converts common vendor and structured MIME types to extension labels', () => {
+    expect(
+      mimeTypesToExtensionLabels([
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.amazon.ebook',
+        'application/epub+zip',
+        'font/woff2',
+      ]),
+    ).toBe('DOCX, AZW, EPUB, WOFF2');
+  });
+
   it('converts wildcard MIME types to human-readable group labels', () => {
     expect(mimeTypesToExtensionLabels(['image/*'])).toBe('Image files');
     expect(mimeTypesToExtensionLabels(['audio/*'])).toBe('Audio files');
