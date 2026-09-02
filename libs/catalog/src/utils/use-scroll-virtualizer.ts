@@ -39,16 +39,25 @@ export interface ScrollVirtualizerResult {
   totalHeight: number;
 }
 
+/** Options for `useScrollVirtualizer`. */
+export interface ScrollVirtualizerOptions {
+  /** Rows kept rendered beyond each edge of the viewport. Defaults to `3`. */
+  overscan?: number;
+  /**
+   * Set when the grid renders without the `CONTENT_MAX_WIDTH` column cap, so
+   * the first-paint column guess matches the width the container actually
+   * gets. Defaults to `false`.
+   */
+  isFullWidth?: boolean;
+}
+
 /**
  * Virtualizes a card grid driven by the nearest scrollable ancestor; returns
- * row window, column count, and total height. Pass `isFullWidth` when the grid
- * renders without the `CONTENT_MAX_WIDTH` column cap, so the first-paint column
- * guess matches the width the container actually gets.
+ * row window, column count, and total height.
  */
 export const useScrollVirtualizer = (
   itemCount: number,
-  overscan = 3,
-  isFullWidth = false,
+  { overscan = 3, isFullWidth = false }: ScrollVirtualizerOptions = {},
 ): ScrollVirtualizerResult => {
   const containerRef = useRef<HTMLDivElement>(null);
 

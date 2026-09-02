@@ -39,7 +39,7 @@ export const CardGrid: FC<CardGridProps> = memo(
       'Authorize to use this toolset.';
 
     const { containerRef, startRow, endRow, columnCount, totalHeight } =
-      useScrollVirtualizer(items.length, undefined, isFullWidth);
+      useScrollVirtualizer(items.length, { isFullWidth });
 
     const rowData = useMemo<CardRowData>(
       () => ({
