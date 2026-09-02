@@ -385,7 +385,7 @@ export const Filter: FC<FilterProps> = ({
         onKeyDown={handleTriggerKeyDown}
         style={cssVars}
         className={mergeClasses(
-          'flex h-[50px] shrink-0 cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-xl px-[18px]',
+          'flex h-12 shrink-0 cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-lg px-[18px]',
           styles.filterBtn,
           isActive && styles.filterBtnActive,
           isOpen && styles.filterBtnOpen,
