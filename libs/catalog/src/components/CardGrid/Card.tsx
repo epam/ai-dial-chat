@@ -56,9 +56,8 @@ export const Card: FC<CardProps> = ({
   }, [item.id, initialIsStarred]);
 
   const descriptionClassName =
-    cardStyles?.typography?.descriptionClassName ?? 'dial-small-text';
-  const descriptionSizeClassName =
-    cardStyles?.typography?.descriptionSizeClassName ?? 'dial-tiny-text';
+    cardStyles?.typography?.descriptionClassName ??
+    'dial-small-paragraph-text';
 
   const featuredChipClassName = cardStyles?.typography?.featuredChipClassName;
   const folderLabelClassName =
@@ -171,7 +170,6 @@ export const Card: FC<CardProps> = ({
            * lines. `2lh` tracks whichever typography class is applied.
            */
           'line-clamp-2 min-h-[2lh] break-words',
-          descriptionSizeClassName,
           styles.description,
         )}
       >
