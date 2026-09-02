@@ -61,13 +61,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     placeholder,
     value,
     clearLabel,
+    wrapperClassName,
   }: {
     onChange?: (v?: string) => void;
     placeholder?: string;
     value?: string;
     clearLabel?: string;
+    wrapperClassName?: string;
   }) => (
-    <>
+    <div data-testid="search-wrapper" className={wrapperClassName}>
       <input
         type="search"
         placeholder={placeholder}
@@ -75,7 +77,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         onChange={(e) => onChange?.(e.target.value)}
       />
       <button aria-label={clearLabel} onClick={() => onChange?.(undefined)} />
-    </>
+    </div>
   ),
 
   Button: ({
@@ -380,5 +382,26 @@ describe('ConversationPanel', () => {
     expect(
       screen.queryByRole('group', { name: 'panel header actions' }),
     ).toBeNull();
+  });
+
+  it('gives the search field fully rounded corners by default', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
+    expect(screen.getByTestId('search-wrapper').className).toBe('rounded-full');
+  });
+
+  it('replaces the search field corner radius with styles.searchWrapperClassName', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        styles={{ searchWrapperClassName: 'rounded-xl' }}
+      />,
+    );
+    /*
+     * The default has to be gone, not merely overridden: two competing
+     * `rounded-*` utilities would resolve by stylesheet order, not by the order
+     * they appear in the class attribute.
+     */
+    expect(screen.getByTestId('search-wrapper').className).toBe('rounded-xl');
   });
 });
