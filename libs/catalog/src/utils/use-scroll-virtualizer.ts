@@ -1,27 +1,13 @@
 import { type RefObject, useEffect, useRef, useState } from 'react';
 import { CARD_ROW_HEIGHT, CONTENT_MAX_WIDTH } from '../constants/virtual-grid';
 import { getColumnCount } from './card-grid';
+import { getScrollParent } from './scroll-window';
 
 interface VirtualizerState {
   startRow: number;
   endRow: number;
   columnCount: number;
 }
-
-/** Returns the nearest scrollable ancestor, falling back to `<html>`. */
-const getScrollParent = (el: Element | null): Element => {
-  if (!el || el === document.body) return document.documentElement;
-  const { overflow, overflowY } = getComputedStyle(el);
-  if (
-    overflow === 'auto' ||
-    overflow === 'scroll' ||
-    overflowY === 'auto' ||
-    overflowY === 'scroll'
-  ) {
-    return el;
-  }
-  return getScrollParent(el.parentElement);
-};
 
 /** Return value of `useScrollVirtualizer`. */
 export interface ScrollVirtualizerResult {

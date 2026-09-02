@@ -4,7 +4,7 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 
 ## Overview
 
-`@epam/ai-dial-catalog` is a self-contained marketplace panel for browsing the AI DIAL entity catalog — models, tools, and assistants. It addresses the challenge of presenting potentially hundreds of items in a performant, filterable, and searchable UI without forcing each app to re-implement pagination, sorting, and details logic. The library supports two view modes (card grid and ag-grid list table), virtualised rendering via `react-window` and ag-grid for large collections, sidebar filters by entity type and topic tags, a favorites section, and a per-item details panel with tabs for API documentation, tool definitions, pricing rows, and usage limits. Use it when an application needs to expose the full DIAL model/tool marketplace or any subset of it, or when building a picker for a specific entity type with consistent UX.
+`@epam/ai-dial-catalog` is a self-contained marketplace panel for browsing the AI DIAL entity catalog — models, tools, and assistants. It addresses the challenge of presenting potentially hundreds of items in a performant, filterable, and searchable UI without forcing each app to re-implement pagination, sorting, and details logic. The library supports two view modes (card grid and ag-grid list table), both windowed to the rows in view so a collection of any size keeps a bounded number of DOM nodes, sidebar filters by entity type and topic tags, a favorites section, and a per-item details panel with tabs for API documentation, tool definitions, pricing rows, and usage limits. Use it when an application needs to expose the full DIAL model/tool marketplace or any subset of it, or when building a picker for a specific entity type with consistent UX.
 
 ## Installation
 
@@ -171,6 +171,12 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
   stickyHeaderTop={headingHeight}
 />;
 ```
+
+The table scrolls with the page, which switches ag-grid's own row
+virtualisation off, so `ListView` windows the rows itself: it hands the grid
+only the rows around the viewport and reserves the rest of the table's height
+with spacers. Rows are a fixed 60 px for that reason — a `styles.typography`
+override that changes a cell's line count would break the reserved height.
 
 Name, Folder and Tags share the spare width (Name takes twice the share of the
 other two), so widening the table widens the columns that carry variable-length
