@@ -80,7 +80,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     filterValues?: Set<string>;
     isMyAppsActive?: boolean;
     onMyAppsChange?: (isActive: boolean) => void;
-    onViewModeChange?: (mode: string) => void;
+    onViewModeChange?: (mode: CatalogViewMode) => void;
     sortKey?: string;
     sortOptions?: { key: string; label: string; onClick?: () => void }[];
   }) => (
@@ -109,7 +109,9 @@ vi.mock('../../Toolbar/Toolbar', () => ({
         </button>
       ))}
       <button onClick={() => onMyAppsChange?.(!isMyAppsActive)}>My Apps</button>
-      <button onClick={() => onViewModeChange?.('list')}>List view</button>
+      <button onClick={() => onViewModeChange?.(CatalogViewMode.Cards)}>
+        List view
+      </button>
       {sortOptions.map((option) => (
         <button key={option.key} onClick={option.onClick}>
           Sort {option.label}
@@ -259,19 +261,29 @@ describe('Catalog', () => {
     expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
   });
 
-  it('defaults to the list view', () => {
+  it('defaults to the grid view', () => {
     render(<Catalog items={[]} favorites={[]} />);
-    expect(screen.getByLabelText('catalog list')).toBeTruthy();
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
   });
 
-  it('starts in the list view when initialViewMode is List', () => {
+  it('starts in the list view when initialViewMode is Cards', () => {
     render(
       <Catalog
         items={[]}
         favorites={[]}
-        initialViewMode={CatalogViewMode.List}
+        initialViewMode={CatalogViewMode.Cards}
       />,
     );
+    expect(screen.getByLabelText('catalog list')).toBeTruthy();
+  });
+
+  it('mounts the list view when the toolbar switches to Cards', async () => {
+    render(<Catalog items={[]} favorites={[]} />);
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+
     expect(screen.getByLabelText('catalog list')).toBeTruthy();
   });
 

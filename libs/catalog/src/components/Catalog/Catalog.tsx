@@ -77,7 +77,7 @@ export const Catalog: FC<CatalogProps> = ({
   hideCreateButton = false,
   hidePageTitle = false,
   isReadonly = false,
-  initialViewMode = CatalogViewMode.List,
+  initialViewMode = CatalogViewMode.Grid,
   selectedItemId,
   onCardClick,
   isLoading,
@@ -132,7 +132,7 @@ export const Catalog: FC<CatalogProps> = ({
   const [query, setQuery] = useState('');
   const [viewMode, setViewMode] = useState<CatalogViewMode>(initialViewMode);
   const [listEverShown, setListEverShown] = useState(
-    initialViewMode === CatalogViewMode.List,
+    initialViewMode === CatalogViewMode.Cards,
   );
   const [internalSortKey, setInternalSortKey] = useState<CatalogSortKey>(
     CatalogSortKey.RecentlyUpdated,
@@ -371,7 +371,7 @@ export const Catalog: FC<CatalogProps> = ({
   }, [selectedItem]);
 
   const handleViewModeChange = useCallback((mode: CatalogViewMode) => {
-    if (mode === CatalogViewMode.List) setListEverShown(true);
+    if (mode === CatalogViewMode.Cards) setListEverShown(true);
     setViewMode(mode);
   }, []);
 
@@ -522,7 +522,7 @@ export const Catalog: FC<CatalogProps> = ({
             <div
               className={mergeClasses(
                 'pb-8',
-                viewMode !== CatalogViewMode.List && 'hidden',
+                viewMode !== CatalogViewMode.Cards && 'hidden',
                 tabFiltered.length === 0 && 'h-full',
               )}
             >

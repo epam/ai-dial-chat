@@ -8,9 +8,9 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
  * observes zero behavior change.
  *
  * `CatalogTableView` is listed but no longer gates anything: Browse opens in
- * list view unconditionally, because `Catalog`'s own `initialViewMode` default
- * is `CatalogViewMode.List`. Gating it here made the landing view depend on
- * `ENABLED_UI_FEATURES`, whose replace semantics silently dropped the list
+ * `Catalog`'s own `initialViewMode` default view (`CatalogViewMode.Grid`)
+ * unconditionally. Gating it here made the landing view depend on
+ * `ENABLED_UI_FEATURES`, whose replace semantics silently dropped that
  * default for any deployment that configured the variable at all. The key is
  * kept so an overlay host still sending it is not warned about an unknown
  * feature.

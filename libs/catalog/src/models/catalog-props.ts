@@ -337,7 +337,7 @@ export interface CatalogProps {
   isReadonly?: boolean;
   /** Hides the page heading (title row), e.g. when the host renders its own title outside the catalog. Default: false. */
   hidePageTitle?: boolean;
-  /** Initial Browse view mode (grid or list). Default: `CatalogViewMode.List`. */
+  /** Initial Browse view mode (`Grid` renders the card grid, `Cards` the list view). Default: `CatalogViewMode.Grid`. */
   initialViewMode?: CatalogViewMode;
   /** ID of an item to visually mark as selected (border, tint, and checkmark) in the Browse grid. */
   selectedItemId?: string;

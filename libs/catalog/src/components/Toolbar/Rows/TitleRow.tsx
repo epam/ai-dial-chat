@@ -85,7 +85,7 @@ export const TitleRow: FC<TitleRowProps> = ({
         'aria-label': gridViewLabel,
       },
       {
-        value: CatalogViewMode.List,
+        value: CatalogViewMode.Cards,
         icon: (
           <IconLayoutList
             size={DIAL_ICON_SIZE.SM}

@@ -35,7 +35,7 @@
 
 `DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 25 default-on keys and exclude the 16 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `skills`... are default-off — the full 41-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 41 keys.
 
-`catalog-table-view` is the one initial-state modifier that defaults on rather than matching the surface's original unconditional behavior: Browse opens in list view, not the grid the original classification recorded. Every other modifier still defaults off, so a deployment that configures nothing observes no other behavior change.
+`catalog-table-view` is the one initial-state modifier that defaults on rather than matching the surface's original unconditional behavior. It no longer gates anything: `CatalogView` leaves `initialViewMode` unset, so Browse always opens in `Catalog`'s own default view (`CatalogViewMode.Grid`, the card grid). The key stays default-on so an overlay host still sending it is not warned about an unknown feature. Every other modifier still defaults off, so a deployment that configures nothing observes no other behavior change.
 
 **RTL impact:** None for this requirement itself — individual owning-surface gates state their own RTL impact where relevant (see per-surface requirements below).
 
@@ -49,10 +49,10 @@
 - **WHEN** no `enabledUiFeatures` and no overlay override are present
 - **THEN** `isEnabled('hide-new-conversation')`, `isEnabled('disabled-send')`, and `isEnabled('hide-user-menu')` all return `false`
 
-#### Scenario: Browse opens in list view
+#### Scenario: Browse opens in the catalog's own default view
 
 - **WHEN** no `enabledUiFeatures` and no overlay override are present
-- **THEN** `isEnabled('catalog-table-view')` returns `true`, and `CatalogView` passes `CatalogViewMode.List` as `Catalog`'s `initialViewMode`
+- **THEN** `isEnabled('catalog-table-view')` returns `true`, and `CatalogView` passes no `initialViewMode`, so Browse opens in `Catalog`'s default `CatalogViewMode.Grid`
 
 #### Scenario: Non-overlay app is unaffected by this change when nothing is configured
 

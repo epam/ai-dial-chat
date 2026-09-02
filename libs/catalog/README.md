@@ -100,7 +100,11 @@ a wider item set via the exported `buildCatalogTabs`/`getTopicOptions`
 helpers, to keep them stable while `items` stays narrowed:
 
 ```tsx
-import { buildCatalogTabs, Catalog, getTopicOptions } from '@epam/ai-dial-catalog';
+import {
+  buildCatalogTabs,
+  Catalog,
+  getTopicOptions,
+} from '@epam/ai-dial-catalog';
 
 <Catalog
   items={itemsNarrowedByCategory}
@@ -230,8 +234,8 @@ CatalogEntityType.Toolset; // 'TOOLSET'
 CatalogEntityType.Prompt; // 'PROMPT'
 CatalogEntityType.Skill; // 'SKILL'
 
-CatalogViewMode.Grid; // 'grid'
-CatalogViewMode.List; // 'list'
+CatalogViewMode.Grid; // 'grid' — card grid, the `initialViewMode` default
+CatalogViewMode.Cards; // 'cards' — list view
 
 CatalogDetailsTab.About; // 'about'
 CatalogDetailsTab.Content; // 'content' — long-form text body (prompts)
