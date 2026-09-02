@@ -50,6 +50,8 @@ export const useRowWindow = (
 ): RowWindow => {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  /* Deliberately unmeasured: the first paint has no layout to read, so it
+     renders the top of the list and the effect below corrects it. */
   const [range, setRange] = useState({ start: 0, end: UNMEASURED_ROWS });
 
   useEffect(() => {

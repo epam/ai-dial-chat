@@ -71,9 +71,13 @@ describe('CATALOG_COLUMNS', () => {
   });
 
   it("lets columnVisibility override the Folder column's default rule", () => {
-    const forcedHiddenFolder = CATALOG_COLUMNS(CatalogEntityType.Prompt, false, {
-      folder: () => false,
-    }).find((c) => c.field === 'folder');
+    const forcedHiddenFolder = CATALOG_COLUMNS(
+      CatalogEntityType.Prompt,
+      false,
+      {
+        folder: () => false,
+      },
+    ).find((c) => c.field === 'folder');
     expect(forcedHiddenFolder?.hide).toBe(true);
   });
 

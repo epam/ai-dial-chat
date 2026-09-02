@@ -197,6 +197,24 @@ describe('ListView', () => {
     expect(container.querySelectorAll('[data-row-class]')).toHaveLength(30);
   });
 
+  it('renders every row of a list shorter than the window', () => {
+    const items = Array.from({ length: 5 }, (_, i) =>
+      makeItem({ id: `item-${i}`, name: `Model ${i}` }),
+    );
+    const { container } = render(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={items}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
+
+    // Rows only exist as mocked ag-grid markup; no role identifies them.
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
+    expect(container.querySelectorAll('[data-row-class]')).toHaveLength(5);
+  });
+
   it('reserves the height of the rows outside the window', () => {
     const items = Array.from({ length: 200 }, (_, i) =>
       makeItem({ id: `item-${i}`, name: `Model ${i}` }),
