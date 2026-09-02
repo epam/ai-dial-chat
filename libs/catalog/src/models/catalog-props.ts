@@ -357,8 +357,15 @@ export interface CatalogProps {
   isReadonly?: boolean;
   /** Hides the page heading (title row), e.g. when the host renders its own title outside the catalog. Default: false. */
   hidePageTitle?: boolean;
-  /** Initial Browse view mode (grid or list). Default: `CatalogViewMode.List`. */
+  /** Initial Browse view mode (`Grid` renders the card grid, `Cards` the list view). Default: `CatalogViewMode.Grid`. */
   initialViewMode?: CatalogViewMode;
+  /**
+   * Lets the Browse content (card grid and list view) span the full width of
+   * its container instead of sitting in a centered, 1180 px-wide column with
+   * empty gutters on wide screens. The 32 px side padding is kept either way,
+   * and the wider container yields more card columns. Default: false.
+   */
+  isFullWidth?: boolean;
   /** ID of an item to visually mark as selected (border, tint, and checkmark) in the Browse grid. */
   selectedItemId?: string;
   /**
