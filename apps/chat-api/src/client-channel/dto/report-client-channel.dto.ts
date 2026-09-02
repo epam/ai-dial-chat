@@ -5,11 +5,14 @@ import { IsEnum, IsString, Matches, MaxLength } from 'class-validator';
  * DIAL Core's RpcRequest/RpcResponse `id` field is an opaque, untyped JSON
  * node in the client-channel OpenAPI schema — this allowlist is chat-api's
  * own trust boundary for it, since the value is echoed back to Core and may
- * end up in log lines.
+ * end up in log lines. For a `toolset/signin`/`external-service/signin`
+ * event the `id` is a percent-encoded resource path (e.g. an application
+ * name containing spaces), so `%` must stay in the allowlist to support
+ * percent-encoded path segments.
  */
-export const RPC_ID_PATTERN = /^[\w./-]+$/;
+export const RPC_ID_PATTERN = /^[\w.%/-]+$/;
 const RPC_ID_MESSAGE =
-  'Must contain only letters, digits, dashes, underscores, dots, and slashes';
+  'Must contain only letters, digits, dashes, underscores, dots, percent signs, and slashes';
 
 export enum ToolsetSigninResult {
   Success = 'success',

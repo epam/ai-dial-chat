@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -42,6 +43,8 @@ interface ClientChannelContextValue {
   ) => Promise<void>;
   /** Best-effort: triggers an immediate reconnect attempt if currently disconnected, without blocking the caller. */
   ensureConnected: () => void;
+  /** Resolves with the current channel id, nudging a connect attempt and waiting up to `timeoutMs` (default 40000) if one isn't established yet. Resolves `null` if the mechanism is inactive or the wait times out. */
+  waitForChannel: (timeoutMs?: number) => Promise<string | null>;
 }
 
 const ClientChannelContext = createContext<
@@ -110,9 +113,10 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   const [pendingEvents, setPendingEvents] = useState<PendingSigninEvent[]>([]);
 
   const isActiveRef = useRef(isActive);
-  useEffect(() => {
+  // Sync before effects fire so callbacks always see the latest value — see client-channel-protocol spec.
+  useLayoutEffect(() => {
     isActiveRef.current = isActive;
-  }, [isActive]);
+  });
 
   const channelIdRef = useRef<string | null>(null);
   const eventsMapRef = useRef(new Map<string, PendingSigninEvent>());
@@ -121,6 +125,15 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attemptRef = useRef(0);
   const isStoppedRef = useRef(false);
+  const channelWaitersRef = useRef<Set<(id: string | null) => void>>(
+    new Set(),
+  );
+
+  const resolveChannelWaiters = useCallback((id: string | null) => {
+    const waiters = channelWaitersRef.current;
+    channelWaitersRef.current = new Set();
+    waiters.forEach((resolve) => resolve(id));
+  }, []);
 
   const syncPendingEvents = useCallback(() => {
     setPendingEvents(Array.from(eventsMapRef.current.values()));
@@ -215,6 +228,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
       attemptRef.current = 0;
       channelIdRef.current = newChannelId;
       setChannelId(newChannelId);
+      resolveChannelWaiters(newChannelId);
 
       await readStream(body, controller.signal);
 
@@ -225,10 +239,11 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     } catch {
       abortControllerRef.current = null;
       if (!controller.signal.aborted) {
+        resolveChannelWaiters(null);
         scheduleReconnect();
       }
     }
-  }, [readStream, scheduleReconnect]);
+  }, [readStream, resolveChannelWaiters, scheduleReconnect]);
 
   useEffect(() => {
     connectRef.current = connect;
@@ -269,7 +284,32 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     eventsMapRef.current.clear();
     resolvedIdsRef.current.clear();
     syncPendingEvents();
-  }, [clearRetryTimeout, syncPendingEvents]);
+    resolveChannelWaiters(null);
+  }, [clearRetryTimeout, resolveChannelWaiters, syncPendingEvents]);
+
+  // See client-channel-protocol spec for the full rationale.
+  const waitForChannel = useCallback(
+    (timeoutMs = 40000): Promise<string | null> => {
+      if (channelIdRef.current) return Promise.resolve(channelIdRef.current);
+      if (isStoppedRef.current || !isActiveRef.current) {
+        return Promise.resolve(null);
+      }
+
+      ensureConnected();
+
+      return new Promise<string | null>((resolve) => {
+        const waiters = channelWaitersRef.current;
+        const settle = (id: string | null) => {
+          waiters.delete(settle);
+          clearTimeout(timeoutId);
+          resolve(id);
+        };
+        waiters.add(settle);
+        const timeoutId = setTimeout(() => settle(channelIdRef.current), timeoutMs);
+      });
+    },
+    [ensureConnected],
+  );
 
   useEffect(() => {
     isStoppedRef.current = false;
@@ -318,8 +358,14 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   );
 
   const value = useMemo(
-    () => ({ channelId, pendingEvents, reportEvent, ensureConnected }),
-    [channelId, pendingEvents, reportEvent, ensureConnected],
+    () => ({
+      channelId,
+      pendingEvents,
+      reportEvent,
+      ensureConnected,
+      waitForChannel,
+    }),
+    [channelId, pendingEvents, reportEvent, ensureConnected, waitForChannel],
   );
 
   return (

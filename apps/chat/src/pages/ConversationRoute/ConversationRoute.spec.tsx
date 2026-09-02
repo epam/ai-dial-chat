@@ -13,6 +13,7 @@ import { MemoryRouter, useLocation, useNavigate } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
+import * as IsolatedModelViewContextModule from '../../context/IsolatedModelViewContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
 import * as OverlayContextMock from '../../context/overlay/OverlayContext';
 import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
@@ -77,6 +78,13 @@ vi.mock('../../context/AppConfigContext', () => ({
   useFeatureFlag: () => false,
 }));
 vi.mock('../../context/DeploymentsContext');
+vi.mock('../../context/IsolatedModelViewContext', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('../../context/IsolatedModelViewContext')
+    >();
+  return { ...actual, useIsolatedModelView: vi.fn() };
+});
 vi.mock('../../context/auth/UserContext');
 vi.mock('../../context/NotificationContext');
 vi.mock('../../context/overlay/OverlayContext', async () => {
@@ -261,14 +269,23 @@ describe('ConversationRoute', () => {
     NotificationContextModule.useNotification,
   );
   const mockCreateConversation = vi.mocked(conversationsApi.createConversation);
+  const mockRenameConversation = vi.mocked(conversationsApi.renameConversation);
   const mockUploadFile = vi.mocked(apiClient.filesApi.uploadFile);
   const mockAttachmentsToDtos = vi.mocked(chatHooksModule.attachmentsToDtos);
+  const mockUseIsolatedModelView = vi.mocked(
+    IsolatedModelViewContextModule.useIsolatedModelView,
+  );
   const mockShowNotification = vi.fn();
   const mockRestoreSelectedItemId = vi.fn();
   const mockRestoreDefaultSelection = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseIsolatedModelView.mockReturnValue({
+      isActive: false,
+      isNotFound: false,
+      resolvedDeploymentId: null,
+    });
     mockUseDeployments.mockReturnValue({
       items: mockItems,
       selectedItemId: 'gpt-4o',
@@ -1176,6 +1193,139 @@ describe('ConversationRoute', () => {
         );
       });
       expect(mockRestoreSelectedItemId).not.toHaveBeenCalled();
+    });
+  });
+
+  /* TODO: remove in next release */
+  describe('isolated model view', () => {
+    it('preselects the resolved deployment without persisting it as the default', async () => {
+      mockUseIsolatedModelView.mockReturnValue({
+        isActive: true,
+        isNotFound: false,
+        resolvedDeploymentId: 'gpt-4o',
+      });
+
+      renderRoute();
+
+      await waitFor(() => {
+        expect(mockRestoreSelectedItemId).toHaveBeenCalledWith('gpt-4o');
+      });
+      expect(mockRestoreDefaultSelection).not.toHaveBeenCalled();
+    });
+
+    it('does not call restoreDefaultSelection while the deployment is still resolving', async () => {
+      mockUseIsolatedModelView.mockReturnValue({
+        isActive: true,
+        isNotFound: false,
+        resolvedDeploymentId: null,
+      });
+
+      renderRoute();
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Catalog items count').textContent).toBe(
+          '1',
+        );
+      });
+      expect(mockRestoreDefaultSelection).not.toHaveBeenCalled();
+      expect(mockRestoreSelectedItemId).not.toHaveBeenCalled();
+    });
+
+    it('renders NoDataContent instead of the composer when the model is not found', async () => {
+      mockUseIsolatedModelView.mockReturnValue({
+        isActive: true,
+        isNotFound: true,
+        resolvedDeploymentId: null,
+      });
+
+      renderRoute();
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('chat.isolatedModelNotFoundTitle'),
+        ).toBeTruthy();
+      });
+      expect(screen.queryByLabelText('Catalog items count')).toBeNull();
+    });
+
+    it('renames the conversation to isolated_<modelId> after the first message creates it', async () => {
+      mockUseIsolatedModelView.mockReturnValue({
+        isActive: true,
+        isNotFound: false,
+        resolvedDeploymentId: 'gpt 4!',
+      });
+
+      renderRoute();
+      const sendButton = await screen.findByRole('button', { name: 'Send' });
+
+      await act(async () => {
+        sendButton.click();
+      });
+
+      await waitFor(() => {
+        expect(mockRenameConversation).toHaveBeenCalledWith(
+          'path__Hello',
+          'isolated_gpt4',
+        );
+      });
+    });
+
+    it('renames the conversation after a submit starter creates it', async () => {
+      mockUseIsolatedModelView.mockReturnValue({
+        isActive: true,
+        isNotFound: false,
+        resolvedDeploymentId: 'gpt-4o',
+      });
+      mockUseDeployments.mockReturnValue({
+        items: [
+          {
+            ...mockItems[0],
+            conversationStarters: {
+              autoSubmit: true,
+              starters: [{ title: 'Summarize', text: 'Summarize this' }],
+            },
+          },
+        ],
+        selectedItemId: 'gpt-4o',
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: mockRestoreSelectedItemId,
+        restoreDefaultSelection: mockRestoreDefaultSelection,
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
+        mergeSharedItem: vi.fn(),
+      });
+
+      renderRoute();
+
+      await userEvent.click(screen.getByText('Summarize'));
+
+      await waitFor(() => {
+        expect(mockRenameConversation).toHaveBeenCalledWith(
+          'path__Hello',
+          'isolated_gpt-4o',
+        );
+      });
+    });
+
+    it('does not rename the conversation when isolated view is not active', async () => {
+      renderRoute();
+      const sendButton = await screen.findByRole('button', { name: 'Send' });
+
+      await act(async () => {
+        sendButton.click();
+      });
+
+      await waitFor(() => {
+        expect(mockCreateConversation).toHaveBeenCalledOnce();
+      });
+      expect(mockRenameConversation).not.toHaveBeenCalled();
     });
   });
 

@@ -38,7 +38,7 @@ The backend SHALL expose `POST /api/v1/client-channel/report` and `POST /api/v1/
 
 `POST /api/v1/client-channel/report`:
 - Request header: `X-DIAL-CLIENT-CHANNEL-ID` (required).
-- Request body (`ReportClientChannelDto`): `{ "id": string, "result": "success" | "denied" }` — validated with `class-validator`: `id` allowlisted to a safe opaque-id character set, `result` restricted to the enum.
+- Request body (`ReportClientChannelDto`): `{ "id": string, "result": "success" | "denied" }` — validated with `class-validator`: `id` allowlisted to a safe opaque-id character set (letters, digits, dashes, underscores, dots, `%`, and slashes — the `%` is required because a `toolset/signin`/`external-service/signin` event's `id` is a percent-encoded resource path, e.g. an application name containing spaces), `result` restricted to the enum.
 - Response: `200 {}` on success.
 - Error codes: `400` invalid/missing channel id or malformed body; `401` no valid BFF session; `502` if Core rejects or errors on the report call.
 
@@ -60,6 +60,10 @@ Generated-client impact: both endpoints SHALL be exposed through the generated `
 - **WHEN** the `X-DIAL-CLIENT-CHANNEL-ID` header value fails the allowlist validation
 - **THEN** the backend returns `400` without forwarding the value to Core or writing it to logs verbatim
 
+#### Scenario: Report with a percent-encoded event id
+- **WHEN** the frontend posts `{ id: "applications/<bucket>/My%20App__1.0/1", result: "denied" }` — an `id` containing `%` from percent-encoded path segments
+- **THEN** the `id` allowlist accepts it and the backend forwards the report to Core
+
 #### Scenario: Unsubscribe on a channel Core has already dropped
 - **WHEN** `POST /api/v1/client-channel/unsubscribe` targets a channel id Core responds to with 404
 - **THEN** the backend returns `200` to the frontend (idempotent)
@@ -72,12 +76,18 @@ Generated-client impact: both endpoints SHALL be exposed through the generated `
 
 `ConversationStreamingService.streamCompletion` (invoked via the `ConversationService` facade, which keeps the identical signature) SHALL accept an optional `clientChannelId` parameter. When the frontend's completion request includes a current channel id, `POST /api/conversations/completions` SHALL accept it (request field or header, backend-defined) and the backend SHALL forward it as the `X-DIAL-CLIENT-CHANNEL-ID` header on the upstream completion call to Core so Core can correlate a `toolset/signin` event to that specific tool invocation. This SHALL be additive and SHALL NOT change any existing documented completion persistence behavior.
 
+Since the subscribe request is asynchronous, the frontend's `useConversationStream.startStream` SHALL NOT read the channel id synchronously and give up if it is not yet set — it SHALL await `ConversationStreamChannel.waitForChannel()`, which resolves with the channel id once an in-flight subscribe completes or with `null` after a bounded timeout, so a completion sent immediately after mounting a streaming-capable page can still carry the id once the subscription catches up.
+
 #### Scenario: Completion sent with a known channel id
 - **WHEN** the frontend has an active channel id at the time it calls `streamCompletion`
 - **THEN** the upstream completion request to Core includes `X-DIAL-CLIENT-CHANNEL-ID` set to that id
 
-#### Scenario: Completion sent before a channel id is available
-- **WHEN** the frontend has not yet received a channel id (subscription still connecting or the feature flag is off)
+#### Scenario: Completion sent while the subscribe round trip is still in flight
+- **WHEN** the frontend calls `streamCompletion` before its client-channel subscribe request has resolved (e.g. the first message sent right after mounting a streaming-capable page)
+- **THEN** the frontend awaits the in-flight subscription, bounded by a short timeout, and attaches the resulting channel id to the completion if it resolves in time
+
+#### Scenario: Completion sent while the feature flag is off or the wait times out
+- **WHEN** the feature flag is off, or the subscribe attempt does not resolve within the bounded wait
 - **THEN** the completion request proceeds without the header, and behaves exactly as it does today
 
 ### Requirement: `liveChatInteraction` feature flag gates the mechanism
@@ -85,6 +95,12 @@ Generated-client impact: both endpoints SHALL be exposed through the generated `
 The mechanism SHALL be gated by a feature flag key `liveChatInteraction`, read via the existing `AppConfigContext`/`useFeatureFlag` mechanism (server-supplied `features` map). When the flag is `false` or not yet `Ready`, the frontend SHALL NOT attempt to subscribe to the client channel and SHALL NOT attach a channel id to completion requests.
 
 In addition, the frontend SHALL only hold an open client-channel subscription while the current route is a streaming-capable page — `ROUTES.Conversations` (`/conversations` and any sub-path, e.g. a specific `/conversations/<id>`) or `ROUTES.AppsEditor` (`/apps-editor`) — matching `useConversationStream`'s two call sites (`Conversation` and `AppPreviewChat`). `ROUTES.Root` (`/`, the pre-conversation composer/empty state rendered by `ConversationRoute`) SHALL NOT count as streaming-capable: it creates a new conversation via a plain REST call and navigates to `/conversations/<id>` before any stream can exist, so it never itself hosts a live stream. `ClientChannelProvider` SHALL derive this route condition using `react-router`'s `useMatch`, since the provider is mounted inside `BrowserRouter`. The connect/reconnect/visibility-resume logic SHALL require both the flag being enabled AND the route condition; leaving a streaming-capable route while the channel is open SHALL disconnect it (unsubscribe from Core, clear pending events) the same way disabling the flag does today, and returning to a streaming-capable route (flag still enabled) SHALL reconnect it.
+
+The active flag/route condition SHALL be available to `ensureConnected`/`waitForChannel` synchronously as of the render that computes it, not only after `ClientChannelProvider`'s own effect commits. Syncing the underlying ref inside a `useEffect` leaves a one-commit window, on the render that first makes a page streaming-capable, where a *child* page's own mount effect (e.g. `Conversation` auto-starting its first completion, which React runs before an ancestor provider's effect in the same commit) observes a stale "inactive" value and gives up without attempting to connect or wait.
+
+#### Scenario: A newly streaming-capable page's own mount effect needs the channel immediately
+- **WHEN** navigation makes the current route streaming-capable (e.g. a brand-new conversation created from `/` navigates to `/conversations/<id>`) and, in that same render, the page's own mount effect immediately calls `ensureConnected`/`waitForChannel`
+- **THEN** the active flag already reflects the new route for that call — it does not read a stale value left over from the previous route
 
 The backend SHALL also enforce the flag server-side (defense in depth, so a restricted or fully-disabled user cannot bypass the frontend gate by calling the API directly): `POST /api/v1/client-channel/subscribe` and `POST /api/v1/client-channel/report` SHALL apply the existing `FeatureGuard`/`@RequireFeature(FeatureKey.LiveChatInteraction)` mechanism and return `403` when the flag resolves to `false` for the caller (including role-restricted denials via `LIVE_CHAT_INTERACTION_ENABLED_ROLES`). `POST /api/v1/client-channel/unsubscribe` SHALL NOT be gated by the flag, so a client that already holds an open channel can always tear it down (e.g. the flag flips off mid-session, the user's role no longer qualifies, or the user navigates off a streaming-capable route) regardless of the flag's current value for that user.
 
