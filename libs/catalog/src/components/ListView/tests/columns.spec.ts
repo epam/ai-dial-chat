@@ -1,5 +1,6 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
+import { CatalogItem } from '../../../models/catalog-item';
 import { CATALOG_COLUMNS } from '../columns';
 
 describe('CATALOG_COLUMNS', () => {
@@ -40,6 +41,29 @@ describe('CATALOG_COLUMNS', () => {
 
     expect(folderOf(CatalogEntityType.Prompt)?.hide).toBe(false);
     expect(folderOf(CatalogEntityType.Model)?.hide).toBe(true);
+  });
+
+  it('hides the Favorite column when no item in the active tab is favoritable', () => {
+    const items = [
+      { id: '1', type: CatalogEntityType.Model },
+      { id: '2', type: CatalogEntityType.Model },
+    ] as CatalogItem[];
+
+    const hidden = CATALOG_COLUMNS(
+      CatalogEntityType.Model,
+      false,
+      items,
+      () => false,
+    ).find((c) => c.field === 'isStarred');
+    expect(hidden?.hide).toBe(true);
+
+    const visible = CATALOG_COLUMNS(
+      CatalogEntityType.Model,
+      false,
+      items,
+      (item) => item.id === '2',
+    ).find((c) => c.field === 'isStarred');
+    expect(visible?.hide).toBeFalsy();
   });
 
   it('disables sorting on Type and Tags, but not on Name and Folder', () => {

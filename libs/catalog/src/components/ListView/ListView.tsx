@@ -152,7 +152,7 @@ export const ListView: FC<ListViewProps> = ({
     >
       <div className={mergeClasses('rounded-xl', styles.gridClip)}>
         <Grid<CatalogItem>
-          columnDefs={CATALOG_COLUMNS(type, isReadonly)}
+          columnDefs={CATALOG_COLUMNS(type, isReadonly, items, isFavoriteVisible)}
           rowData={windowedItems}
           getRowId={(r) => r.id}
           withoutHeaderBorders

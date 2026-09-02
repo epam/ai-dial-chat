@@ -12,6 +12,8 @@ import { TagsCellRenderer } from './Renders/TagsCellRenderer';
 export const CATALOG_COLUMNS = (
   type: CatalogEntityType,
   isReadonly = false,
+  items: CatalogItem[] = [],
+  isFavoriteVisible?: (item: CatalogItem) => boolean,
 ): ColDef<CatalogItem>[] => {
   return [
     {
@@ -61,7 +63,16 @@ export const CATALOG_COLUMNS = (
       filter: false,
       sortable: false,
       resizable: false,
-      hide: isReadonly,
+      /**
+       * Also hidden when nothing in the active tab is favoritable at all
+       * (e.g. a pure-Models tab), so the header doesn't sit above an empty
+       * column. `.some` rather than `.every` keeps the column when only some
+       * rows lack a star.
+       */
+      hide:
+        isReadonly ||
+        (items.length > 0 &&
+          !items.some((item) => isFavoriteVisible?.(item) ?? true)),
       headerClass: styles.favHeader,
       cellRenderer: StarCellRenderer,
     },

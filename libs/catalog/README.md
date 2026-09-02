@@ -539,7 +539,9 @@ lib knowing why. All three default to **visible** when omitted.
 `isFavoriteVisible` is the same family for the favorite star: returning `false`
 for an item hides the star in the browse grid, the list view, the favorites
 strip, and the details panel, and makes that item non-favoritable. It defaults
-to **visible** when omitted, so a predicate can only narrow visibility.
+to **visible** when omitted, so a predicate can only narrow visibility. When
+every item in the active list-view tab is hidden this way, the list view also
+drops its "Favorite" column header, the same as it does under `isReadonly`.
 
 ```tsx
 <Catalog
