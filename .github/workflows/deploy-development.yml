@@ -33,25 +33,25 @@ jobs:
       DEPLOY_ACCESS_TOKEN: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
       DEPLOY_TRIGGER_TOKEN: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
 
-  trigger:
-    if: |
-      (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development') ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - environment-name: "development-ng"
-            gitlab-project-id: "3350"
-          - environment-name: "development-overlay-ng"
-            gitlab-project-id: "3351"
+  # trigger:
+  #   if: |
+  #     (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development') ||
+  #     (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include:
+  #         - environment-name: "development-ng"
+  #           gitlab-project-id: "3350"
+  #         - environment-name: "development-overlay-ng"
+  #           gitlab-project-id: "3351"
 
-    name: Deploy to ${{ matrix.environment-name }}
-    uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@4.9.0
-    with:
-      gitlab-project-id: ${{ matrix.gitlab-project-id }}
-      environment-name: ${{ matrix.environment-name }}
-    secrets:
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-      DEPLOY_ACCESS_TOKEN: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
-      DEPLOY_TRIGGER_TOKEN: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
+  #   name: Deploy to ${{ matrix.environment-name }}
+  #   uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@4.9.0
+  #   with:
+  #     gitlab-project-id: ${{ matrix.gitlab-project-id }}
+  #     environment-name: ${{ matrix.environment-name }}
+  #   secrets:
+  #     DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+  #     DEPLOY_ACCESS_TOKEN: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
+  #     DEPLOY_TRIGGER_TOKEN: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
