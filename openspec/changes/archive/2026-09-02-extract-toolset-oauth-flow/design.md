@@ -7,7 +7,7 @@ mapping, validation, and DIAL-error parsing. Nine modules import from it, and th
 independent consumers spanning three different OAuth resource kinds — toolsets, external services,
 and scheduled-task offline credentials.
 
-`pg-chat` has hand-copied ~800 lines of this into a second repository, and the copy has already
+A downstream repository has hand-copied ~800 lines of this, and the copy has already
 diverged: it fixes a dropped-acknowledgement bug that still exists here.
 
 Two constraints shape every decision below, both from `AGENTS.md` §Library isolation:
@@ -39,7 +39,8 @@ document-scoped `EventTarget` — precedent that browser-API code belongs there)
 - Changing the OAuth protocol, the DIAL Core contract, the `Cross-Origin-Opener-Policy` requirement,
   or any HTTP/route/session behaviour.
 - Extracting toolset-editor form mapping, `server-api/` wrappers, page shells, or i18n.
-- Migrating `pg-chat` in this change — it consumes the package once published, on its own schedule.
+- Migrating the downstream repository in this change — it consumes the package once published, on
+  its own schedule.
 - Renaming `ToolsetRedirectState.toolsetId` for non-toolset resource kinds (see D6).
 
 ## Decisions
@@ -54,7 +55,7 @@ Audited per function, not per file. Moves:
 | `buildToolsetAuthorizeUrl`, `initiateOAuthLogin`, `getToolsetOAuthChannelName`, redirect-state write | 2–3 | `ROUTES` (1 ref) |
 | `encodeToolsetId`, `decodeToolsetId`, `isPublicToolsetId` | 2–3 | none |
 | `useToolsetLogin` | 2 (Catalog, SigninInterruptDialog) | `server-api/toolsets` |
-| OAuth callback completion logic | 1 here + 1 in `pg-chat` | `server-api`, routing, i18n |
+| OAuth callback completion logic | 1 here + 1 downstream | `server-api`, routing, i18n |
 
 Stays: `toolsetDtoToForm`, `formToToolsetBody`, `getDefaultToolsetForm`, `isToolsetFormValid`,
 `isValidEndpointUrl`, `fetchToolsetAuthSettings`, `extractToolsetApiErrorMessage`,
@@ -92,7 +93,8 @@ plain string suffices.
 
 Chosen (1) because it keeps the hook trivially testable with plain `vi.fn()`s, matches the closest
 existing precedent in the same lib folder, and leaves each host free to keep its own `AbortSignal`
-convention (`pg-chat` uses a conditional-spread signal argument this repo does not have). The hook
+convention (the downstream repo uses a conditional-spread signal argument this repo does not have).
+The hook
 still builds the `ToolsetLoginBodyDto`/`ToolsetLogoutBodyDto` bodies itself — permitted, since the
 lib may depend on generated-client *types*.
 
@@ -115,7 +117,7 @@ the package instead (D11). The migration is import-path churn, not a behavioural
 `waitForToolsetOAuthResult` posts the acknowledgement and then closes the channel in the same tick
 (`apps/chat/src/utils/toolsets.ts:340-347`). The acknowledgement is discarded, so a callback popup
 that lost its `WindowProxy` — the only situation the acknowledgement exists for — can be left open.
-`pg-chat`'s port defers the close by one macrotask and has a regression test.
+The downstream port defers the close by one macrotask and has a regression test.
 
 Shipping the buggy version into a shared lib and fixing it afterwards would mean knowingly
 publishing a defect. The fix moves with the code and is recorded as a `toolset-authentication`
@@ -134,12 +136,12 @@ follow-up and flagged in the proposal for a reviewer to overrule.
 
 ### D7 — Callback completion moves as a hook; page shells stay
 
-`ToolsetAuthCallback.tsx` (238 lines here, 221 in `pg-chat`) is ~85% flow logic — read redirect
+`ToolsetAuthCallback.tsx` (238 lines here, 221 downstream) is ~85% flow logic — read redirect
 state, validate `state`, scrub the `code`, exchange, report, close — and ~15% page shell: route
 params, i18n, and the app's fallback/status rendering.
 
 The flow becomes `useOAuthCallbackCompletion({ exchange, callbackPath, searchParams })`. Each app
-keeps its own page: this repo renders `RouteFallback`, `pg-chat` renders a translated
+keeps its own page: this repo renders `RouteFallback`, the downstream repo renders a translated
 `role="status"` live region. Neither belongs in a lib.
 
 This repo's page additionally branches on three resource kinds, dispatching to `signInExternalService`
@@ -177,7 +179,7 @@ structural (so a rename costs nothing at any call site); the enum is nominal, is
 consuming repos. Renaming the enum instead would have pushed a nominal-type rename onto every host.
 
 **Alternative rejected:** leaving the enum app-owned. It would have avoided the collision, but
-`pg-chat`'s `useToolsetLogin` compares against `ToolsetAuthStatus.SignedIn` in exactly the branch
+the downstream `useToolsetLogin` compares against `ToolsetAuthStatus.SignedIn` in exactly the branch
 this change extracts, so the lib genuinely needs the declaration.
 
 ### D11 — Direct imports, not host-side re-export shims
@@ -287,13 +289,13 @@ required and is carried as follow-up 8.4.
 - **[The handshake's semantics are subtle and hard to test]** → COOP-severed `WindowProxy`,
   false-cancel suppression, and the focus-based cancellation rule are exactly the parts a refactor
   can silently break. Mitigation: the existing `apps/chat/src/utils/tests/toolsets.spec.ts` suite
-  moves with the implementation, plus `pg-chat`'s handshake tests (33 cases, including the
+  moves with the implementation, plus the downstream handshake tests (33 cases, including the
   acknowledgement regression) are ported into the lib rather than left behind.
 - **[Nominal enums make this a wide diff]** → ~30 call sites change import paths. Mitigation: every
   such change is compiler-checked (D11), so a missed or mistyped import is a build failure rather
   than a runtime one; the sweep was applied as one mechanical codemod rather than by hand.
-- **[Cross-repo coordination]** → `pg-chat` pins an exact package version, so it cannot consume this
-  until a build is published. Mitigation: nothing in `pg-chat` breaks meanwhile; its copy keeps
+- **[Cross-repo coordination]** → the downstream repo pins an exact package version, so it cannot
+  consume this until a build is published. Mitigation: nothing downstream breaks meanwhile; its copy keeps
   working, and its migration is a separate change in that repo.
 - **[Revisiting a recorded decision]** → Re-opening the "host-owned" classification invites future
   churn if done on thin grounds. Mitigation: the reversal is scoped to the popup half, justified by
