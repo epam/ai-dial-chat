@@ -4,6 +4,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { useRef, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
+  ConversationStreamChannel,
   ConversationStreamOverlayNotifier,
   ConversationStreamTransport,
   StreamCompletionOptions,
@@ -37,6 +38,7 @@ const useHookHarness = ({
   conversationId: string | undefined;
   onStopError?: (error: Error) => void;
   overlay?: ConversationStreamOverlayNotifier;
+  channel?: ConversationStreamChannel;
 }) => {
   const [conversation, setConversation] = useState<Conversation | null>(
     makeConversation(),
@@ -76,12 +78,12 @@ describe('useConversationStream', () => {
     };
   });
 
-  it('delegates start to the injected transport', () => {
+  it('delegates start to the injected transport', async () => {
     const { result } = renderHook(() =>
       useHookHarness({ transport, conversationId: 'bucket/conv' }),
     );
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream('bucket/conv', 'hi', 1, 'gpt-4o');
     });
 
@@ -93,7 +95,7 @@ describe('useConversationStream', () => {
       useHookHarness({ transport, conversationId: 'bucket/conv' }),
     );
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream('bucket/conv', 'hi', 1, 'gpt-4o');
     });
 
@@ -129,14 +131,14 @@ describe('useConversationStream', () => {
     expect(result.current.conversation?.messages).toHaveLength(0);
   });
 
-  it('drops a chunk whose generation id no longer matches the active generation', () => {
+  it('drops a chunk whose generation id no longer matches the active generation', async () => {
     const { result, rerender } = renderHook(
       (props: { conversationId: string }) =>
         useHookHarness({ transport, conversationId: props.conversationId }),
       { initialProps: { conversationId: 'bucket/conv' } },
     );
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream(
         'bucket/conv',
         'hi',
@@ -148,7 +150,7 @@ describe('useConversationStream', () => {
     });
     const staleOptions = capturedOptions;
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream(
         'bucket/conv',
         'hi again',
@@ -206,12 +208,12 @@ describe('useConversationStream', () => {
     expect(transport.getConversation).not.toHaveBeenCalled();
   });
 
-  it('passes generationId and mode, translating regenerate index for the backend', () => {
+  it('passes generationId and mode, translating regenerate index for the backend', async () => {
     const { result } = renderHook(() =>
       useHookHarness({ transport, conversationId: 'bucket/conv' }),
     );
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream(
         'bucket/conv',
         'hi',
@@ -236,12 +238,12 @@ describe('useConversationStream', () => {
     );
   });
 
-  it('translates the edit placeholder index to the user message index', () => {
+  it('translates the edit placeholder index to the user message index', async () => {
     const { result } = renderHook(() =>
       useHookHarness({ transport, conversationId: 'bucket/conv' }),
     );
 
-    act(() => {
+    await act(async () => {
       result.current.stream.startStream(
         'bucket/conv',
         'hi',
@@ -362,17 +364,49 @@ describe('useConversationStream', () => {
     );
   });
 
-  it('works without a client channel — passes no clientChannelId', () => {
+  it('works without a client channel — passes no clientChannelId', async () => {
     const { result } = renderHook(() =>
       useHookHarness({ transport, conversationId: 'bucket/conv' }),
+    );
+
+    await act(async () => {
+      result.current.stream.startStream('bucket/conv', 'hi', 0, 'gpt-4o');
+    });
+
+    const call = vi.mocked(transport.streamCompletion).mock.calls[0];
+    expect(call.at(-1)).toBeUndefined();
+  });
+
+  it('passes the awaited clientChannelId when a channel resolves during the wait', async () => {
+    let resolveWait!: (id: string | null) => void;
+    const channel = {
+      channelId: null as string | null,
+      ensureConnected: vi.fn(),
+      waitForChannel: vi.fn(
+        () =>
+          new Promise<string | null>((resolve) => {
+            resolveWait = resolve;
+          }),
+      ),
+    };
+
+    const { result } = renderHook(() =>
+      useHookHarness({ transport, conversationId: 'bucket/conv', channel }),
     );
 
     act(() => {
       result.current.stream.startStream('bucket/conv', 'hi', 0, 'gpt-4o');
     });
 
+    expect(transport.streamCompletion).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveWait('ch-123');
+    });
+
+    expect(transport.streamCompletion).toHaveBeenCalledOnce();
     const call = vi.mocked(transport.streamCompletion).mock.calls[0];
-    expect(call.at(-1)).toBeUndefined();
+    expect(call.at(-1)).toBe('ch-123');
   });
 
   it('works without an overlay notifier — no error thrown on start/stop', () => {
@@ -551,7 +585,7 @@ describe('useConversationStream', () => {
         useHookHarness({ transport, conversationId: 'bucket/conv', overlay }),
       );
 
-      act(() => {
+      await act(async () => {
         result.current.stream.startStream('bucket/conv', 'hi', 0, 'gpt-4o');
       });
       expect(overlay.notifyGenerationStart).toHaveBeenCalledOnce();

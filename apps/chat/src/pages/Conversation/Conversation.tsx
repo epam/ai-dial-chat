@@ -263,10 +263,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
 
   const { getGeneration, startGeneration, completeGeneration } =
     useGeneration();
-  const { channelId, ensureConnected } = useClientChannel();
+  const { channelId, ensureConnected, waitForChannel } = useClientChannel();
   const channel = useMemo(
-    () => ({ channelId, ensureConnected }),
-    [channelId, ensureConnected],
+    () => ({ channelId, ensureConnected, waitForChannel }),
+    [channelId, ensureConnected, waitForChannel],
   );
   /*
    * Conversation paths whose auto-stream has already been kicked off. Guards
