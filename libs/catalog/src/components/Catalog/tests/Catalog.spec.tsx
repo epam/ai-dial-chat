@@ -298,6 +298,25 @@ describe('Catalog', () => {
     expect(screen.queryByLabelText('catalog list')).toBeNull();
   });
 
+  it('caps the browse content column by default', () => {
+    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
+    // eslint-disable-next-line testing-library/no-node-access -- asserting the width class on the unlabeled content wrapper, which has no accessible role or text to query
+    const content = screen.getByRole('grid').parentElement?.parentElement;
+    expect(content?.className).toContain('max-w-[1180px]');
+    expect(content?.className).toContain('mx-auto');
+  });
+
+  it('drops the content column cap when isFullWidth is set', () => {
+    render(
+      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} isFullWidth />,
+    );
+    // eslint-disable-next-line testing-library/no-node-access -- same unlabeled content wrapper; verifying the centered cap is gone while the side padding stays
+    const content = screen.getByRole('grid').parentElement?.parentElement;
+    expect(content?.className).not.toContain('max-w-[1180px]');
+    expect(content?.className).not.toContain('mx-auto');
+    expect(content?.className).toContain('px-8');
+  });
+
   it('calls onCreateClick when Create is clicked', async () => {
     const onCreateClick = vi.fn();
     render(<Catalog items={[]} favorites={[]} onCreateClick={onCreateClick} />);

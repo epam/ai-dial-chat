@@ -160,6 +160,12 @@ interface Props {
    * model/agent picker.
    */
   visibleTypes?: Set<CatalogEntityType>;
+  /**
+   * Renders the Browse cards and list across the full width of the content
+   * area instead of the centered 1180 px column, so wide screens show no
+   * empty gutters beside the cards. Default: false.
+   */
+  isFullWidth?: boolean;
 }
 
 const CatalogView: FC<Props> = ({
@@ -167,6 +173,7 @@ const CatalogView: FC<Props> = ({
   onClose,
   onSelect,
   visibleTypes = PICKER_VISIBLE_TYPES,
+  isFullWidth = false,
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -1404,6 +1411,7 @@ const CatalogView: FC<Props> = ({
         createOptions={createOptions}
         hideCreateButton={isSelectorMode}
         hidePageTitle={isSelectorMode}
+        isFullWidth={isFullWidth}
         selectedItemId={
           isSelectorMode ? (selectedItemId ?? undefined) : undefined
         }

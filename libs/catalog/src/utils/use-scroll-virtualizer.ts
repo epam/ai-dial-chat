@@ -1,5 +1,5 @@
 import { type RefObject, useEffect, useRef, useState } from 'react';
-import { CARD_ROW_HEIGHT } from '../constants/virtual-grid';
+import { CARD_ROW_HEIGHT, CONTENT_MAX_WIDTH } from '../constants/virtual-grid';
 import { getColumnCount } from './card-grid';
 
 interface VirtualizerState {
@@ -39,21 +39,30 @@ export interface ScrollVirtualizerResult {
   totalHeight: number;
 }
 
-/** Virtualizes a card grid driven by the nearest scrollable ancestor; returns row window, column count, and total height. */
+/**
+ * Virtualizes a card grid driven by the nearest scrollable ancestor; returns
+ * row window, column count, and total height. Pass `isFullWidth` when the grid
+ * renders without the `CONTENT_MAX_WIDTH` column cap, so the first-paint column
+ * guess matches the width the container actually gets.
+ */
 export const useScrollVirtualizer = (
   itemCount: number,
   overscan = 3,
+  isFullWidth = false,
 ): ScrollVirtualizerResult => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [state, setState] = useState<VirtualizerState>(() => {
     const w = typeof window !== 'undefined' ? window.innerWidth : 1440;
     /*
-     * Approximate the grid container width: content column capped at 1180 px,
-     * minus sidebar (60 px on desktop) and 64 px horizontal padding (px-8 × 2).
+     * Approximate the grid container width: available width minus the sidebar
+     * (60 px on desktop) and 64 px horizontal padding (px-8 × 2), capped at
+     * CONTENT_MAX_WIDTH unless the grid spans the full width.
      */
     const sidebarWidth = w > 768 ? 60 : 0;
-    const approxContainer = Math.min(1180, Math.max(0, w - sidebarWidth)) - 64;
+    const available = Math.max(0, w - sidebarWidth);
+    const approxContainer =
+      (isFullWidth ? available : Math.min(CONTENT_MAX_WIDTH, available)) - 64;
     const cols = getColumnCount(approxContainer);
     const rows = Math.ceil(itemCount / cols);
     return { startRow: 0, endRow: Math.min(rows, 12), columnCount: cols };

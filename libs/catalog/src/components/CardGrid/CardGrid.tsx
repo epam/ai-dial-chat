@@ -26,6 +26,7 @@ export const CardGrid: FC<CardGridProps> = memo(
     skeletonColor = styles.skeletonColor,
     skeletonCardBackground,
     isReadonly = false,
+    isFullWidth = false,
   }) => {
     const noResultsTitle = titles?.noResultsTitle ?? 'No results';
     const featuredLabel = titles?.featuredLabel ?? 'Featured';
@@ -38,7 +39,7 @@ export const CardGrid: FC<CardGridProps> = memo(
       'Authorize to use this toolset.';
 
     const { containerRef, startRow, endRow, columnCount, totalHeight } =
-      useScrollVirtualizer(items.length);
+      useScrollVirtualizer(items.length, undefined, isFullWidth);
 
     const rowData = useMemo<CardRowData>(
       () => ({

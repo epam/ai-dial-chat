@@ -78,6 +78,7 @@ export const Catalog: FC<CatalogProps> = ({
   hidePageTitle = false,
   isReadonly = false,
   initialViewMode = CatalogViewMode.Grid,
+  isFullWidth = false,
   selectedItemId,
   onCardClick,
   isLoading,
@@ -495,7 +496,10 @@ export const Catalog: FC<CatalogProps> = ({
         <div
           className={mergeClasses(
             tabFiltered.length > 0
-              ? 'mx-auto min-h-full w-full max-w-[1180px] px-8 py-6'
+              ? [
+                  'min-h-full w-full px-8 py-6',
+                  !isFullWidth && 'mx-auto max-w-[1180px]',
+                ]
               : 'min-h-[180px] flex-1',
             tabFiltered.length === 0 && 'px-8 py-6',
           )}
@@ -515,6 +519,7 @@ export const Catalog: FC<CatalogProps> = ({
               titles={cardGridTitles}
               selectedItemId={selectedItemId}
               isReadonly={isReadonly}
+              isFullWidth={isFullWidth}
             />
           </div>
 

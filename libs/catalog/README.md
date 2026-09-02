@@ -89,6 +89,22 @@ render, as do search, sort, filters, tabs, and the details tabs.
 `Card`, `CardGrid`, `ListView`, and `DetailsPanel` each accept `isReadonly`
 directly too, for hosts composing their own layout instead of using `Catalog`.
 
+#### Full-width Browse content
+
+By default the Browse content — the card grid and the list view — sits in a
+centered column capped at 1180 px, so a wide screen shows empty gutters on both
+sides while the title, favorites strip, toolbar, and tabs above it already span
+the full width. `isFullWidth` removes that cap:
+
+```tsx
+<Catalog items={catalogItems} favorites={favoriteItems} isFullWidth />
+```
+
+The 32 px side padding stays either way; only the centered cap goes. Because
+the column count is derived from the container's width, the wider container
+also yields more card columns (4 instead of 3 once the grid area passes
+1280 px).
+
 #### Controlling tabs and Topics options independently of `items`
 
 By default the entity-type tabs and the Topics filter's option list are both
@@ -132,6 +148,10 @@ import { CardGrid } from '@epam/ai-dial-catalog';
 
 Pass `query` so each card highlights the matched text — the grid forwards it to
 `Card`, which renders the match through the shared `Highlight` component.
+
+Set `isFullWidth` when the grid is rendered without the 1180 px content cap. It
+only sharpens the column-count guess used for the first paint; the measured
+container width always wins afterwards.
 
 ### ListView
 
