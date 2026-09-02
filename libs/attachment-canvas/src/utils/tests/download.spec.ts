@@ -50,12 +50,31 @@ describe('OOXML download', () => {
     expect(mockTriggerBlobDownload).not.toHaveBeenCalled();
   });
 
-  it('falls back to a default file name when none is supplied', () => {
+  it('falls back to a default file name with the format extension when none is supplied', () => {
     downloadAttachmentContent(ooxmlContent());
 
     expect(mockTriggerAnchorDownload).toHaveBeenCalledWith(
       'blob:office-url',
-      'attachment',
+      'attachment.docx',
     );
   });
+
+  it.each([
+    [OoxmlFileType.Docx, 'docx'],
+    [OoxmlFileType.Xlsx, 'xlsx'],
+    [OoxmlFileType.Pptx, 'pptx'],
+  ])(
+    'appends .%s to a title with no extension, even though the content url is an extensionless blob url',
+    (format, ext) => {
+      downloadAttachmentContent(
+        ooxmlContent(format),
+        'Thermo Fisher Scientific - 10-K Risk Factors & Governance Briefing',
+      );
+
+      expect(mockTriggerAnchorDownload).toHaveBeenCalledWith(
+        'blob:office-url',
+        `Thermo Fisher Scientific - 10-K Risk Factors & Governance Briefing.${ext}`,
+      );
+    },
+  );
 });
