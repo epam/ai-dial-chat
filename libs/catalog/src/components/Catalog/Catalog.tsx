@@ -31,6 +31,7 @@ export const Catalog: FC<CatalogProps> = ({
   topicOptions: controlledTopicOptions,
   favorites,
   titles,
+  browseHeaderRenderer,
   onToggleFavorite,
   isFavoriteVisible,
   onUseInChat,
@@ -461,6 +462,7 @@ export const Catalog: FC<CatalogProps> = ({
             query={query}
             onQueryChange={setQuery}
             title={browseTitle}
+            browseHeaderRenderer={browseHeaderRenderer}
             searchPlaceholder={searchPlaceholder}
             gridViewLabel={gridViewLabel}
             listViewLabel={listViewLabel}
