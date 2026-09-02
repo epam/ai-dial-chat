@@ -5,7 +5,6 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import {
   ConversationExportMode,
-  ConversationTransferErrorCode,
   type ConversationTransferErrorEvent,
   type ConversationTransferSuccessEvent,
   ConversationTransferWarningCode,
@@ -25,7 +24,11 @@ import {
   useShareRecipientsCount,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { FilterTab, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  ConversationTransferErrorCode,
+  FilterTab,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
   ImportExportQueue,
@@ -105,6 +108,11 @@ import {
   conversationIdsMatch,
   toPanelConversationId,
 } from '../../utils/conversation-id-match';
+import {
+  getExportErrorKey,
+  getExportFailureToastKey,
+  getImportErrorKey,
+} from '../../utils/conversation-transfer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer/PublishConversationPanelContainer';
@@ -226,13 +234,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const handleExportError = useCallback(
     (event: ConversationTransferErrorEvent) => {
       if (event.code === ConversationTransferErrorCode.Unauthorized) return;
+      const title = event.titles?.[0];
       showErrorNotification({
         title: t(ConversationExportI18nKeys.FailedTitle),
-        message: event.titles?.length
-          ? t(ConversationExportI18nKeys.FailedSingle, {
-              title: event.titles[0],
-            })
-          : t(ConversationExportI18nKeys.FailedAll),
+        message: t(getExportFailureToastKey(event.code, title != null), {
+          title,
+        }),
         requestId: event.traceId,
       });
     },
@@ -243,8 +250,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     jobs: exportJobs,
     exportSingle,
     exportAll,
-    dismissJob: dismissExportJob,
-    retryJob: retryExportJob,
+    cancelJob: cancelExportJob,
     dismissAll: dismissAllExports,
   } = useConversationExport({
     conversationsApi,
@@ -310,8 +316,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const {
     jobs: importJobs,
     importConversations,
-    dismissJob: dismissImportJob,
-    retryJob: retryImportJob,
+    cancelJob: cancelImportJob,
     dismissAll: dismissAllImports,
   } = useConversationImport({
     conversationsApi,
@@ -426,18 +431,22 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     onFileSelected: handleFileSelected,
   });
 
-  const exportQueueTitle = t(ConversationExportI18nKeys.QueueTitle);
-  const importQueueTitle = t(ConversationImportI18nKeys.QueueTitle);
+  const exportQueueTitle = t(ConversationExportI18nKeys.QueueTitle, {
+    count: exportJobs.length,
+  });
+  const importQueueTitle = t(ConversationImportI18nKeys.QueueTitle, {
+    count: importJobs.length,
+  });
 
-  const queueLabels = useMemo<ImportExportQueueLabels>(
+  /*
+   * Both queues share the direction-agnostic chrome (collapse/expand/close,
+   * the close-confirmation copy and the "Canceled" label), so those strings
+   * live once under the export key set rather than being duplicated under the
+   * import one.
+   */
+  const sharedQueueLabels = useMemo(
     () => ({
-      allConversationsJobLabel: t(
-        ConversationExportI18nKeys.AllConversationsJobLabel,
-      ),
-      closeJobAriaLabel: (title) =>
-        t(ConversationExportI18nKeys.CloseJobAriaLabel, { title }),
-      retryJobAriaLabel: (title) =>
-        t(ConversationExportI18nKeys.RetryJobAriaLabel, { title }),
+      canceledLabel: t(ConversationExportI18nKeys.CanceledLabel),
       collapseQueueAriaLabel: t(
         ConversationExportI18nKeys.CollapseQueueAriaLabel,
       ),
@@ -457,8 +466,47 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       ),
       closeLabel: t(ButtonsI18nKeys.Close),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
+      queueProgressValueText: (completed: number, total: number) =>
+        t(ConversationExportI18nKeys.QueueProgressValueText, {
+          completed,
+          count: total,
+        }),
     }),
     [t],
+  );
+
+  const exportQueueLabels = useMemo<ImportExportQueueLabels>(
+    () => ({
+      ...sharedQueueLabels,
+      cancelJobAriaLabel: (fileName) =>
+        t(ConversationExportI18nKeys.CancelJobAriaLabel, { fileName }),
+      jobProgressAriaLabel: (fileName) =>
+        t(ConversationExportI18nKeys.JobProgressAriaLabel, { fileName }),
+      jobErrorMessage: (code) => t(getExportErrorKey(code)),
+      jobWarningMessage: () =>
+        t(ConversationExportI18nKeys.WarningAttachmentSkipped),
+      queueProgressAriaLabel: t(
+        ConversationExportI18nKeys.QueueProgressAriaLabel,
+      ),
+    }),
+    [sharedQueueLabels, t],
+  );
+
+  const importQueueLabels = useMemo<ImportExportQueueLabels>(
+    () => ({
+      ...sharedQueueLabels,
+      cancelJobAriaLabel: (fileName) =>
+        t(ConversationImportI18nKeys.CancelJobAriaLabel, { fileName }),
+      jobProgressAriaLabel: (fileName) =>
+        t(ConversationImportI18nKeys.JobProgressAriaLabel, { fileName }),
+      jobErrorMessage: (code) => t(getImportErrorKey(code)),
+      jobWarningMessage: () =>
+        t(ConversationImportI18nKeys.WarningAttachmentSkipped),
+      queueProgressAriaLabel: t(
+        ConversationImportI18nKeys.QueueProgressAriaLabel,
+      ),
+    }),
+    [sharedQueueLabels, t],
   );
 
   const renameLabels = useMemo<RenameConversationPopupLabels>(
@@ -1212,17 +1260,15 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           title={importQueueTitle}
           jobs={importJobs}
           onClose={dismissAllImports}
-          onDismiss={dismissImportJob}
-          onRetry={retryImportJob}
-          labels={queueLabels}
+          onCancel={cancelImportJob}
+          labels={importQueueLabels}
         />
         <ImportExportQueue
           title={exportQueueTitle}
           jobs={exportJobs}
           onClose={dismissAllExports}
-          onDismiss={dismissExportJob}
-          onRetry={retryExportJob}
-          labels={queueLabels}
+          onCancel={cancelExportJob}
+          labels={exportQueueLabels}
         />
       </div>
 

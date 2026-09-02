@@ -4,20 +4,16 @@ export enum ConversationExportMode {
   WithoutAttachments = 'withoutAttachments',
 }
 
+import {
+  ConversationTransferWarningCode,
+  type ConversationTransferErrorCode,
+} from '@epam/ai-dial-chat-shared';
+
 /** Which export file was produced, used to derive its file name/extension. */
 export enum ExportFileNameKind {
   SingleConversation = 'chat_conversation',
   SingleConversationWithAttachments = 'chat_with_attachments',
   AllConversationsHistory = 'chat_conversations_history',
-}
-
-/** Library-owned reason a transfer job failed. */
-export enum ConversationTransferErrorCode {
-  Unauthorized = 'unauthorized',
-  NotFound = 'notFound',
-  UnsupportedFormat = 'unsupportedFormat',
-  MissingBucket = 'missingBucket',
-  Unknown = 'unknown',
 }
 
 /** Structured, translation-free error report for a transfer job. */
@@ -30,10 +26,13 @@ export interface ConversationTransferErrorEvent {
   traceId?: string;
 }
 
-/** Library-owned reason a transfer job reports a non-fatal warning. */
-export enum ConversationTransferWarningCode {
-  AttachmentSkipped = 'attachmentSkipped',
-}
+/*
+ * Canonically declared in `@epam/ai-dial-chat-shared` beside
+ * `ConversationTransferErrorCode`, because `ConversationTransferJob.warningCode`
+ * is typed by it and `chat-shared` may not import from `chat-hooks`. Re-exported
+ * here so existing `chat-hooks` import paths keep resolving.
+ */
+export { ConversationTransferWarningCode };
 
 /** Structured, translation-free warning report for a transfer job. */
 export interface ConversationTransferWarningEvent {
