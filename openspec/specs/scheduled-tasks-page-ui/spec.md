@@ -364,7 +364,7 @@ Changing `searchQuery` (debounced ~300ms to avoid a request per keystroke) or `s
 
 ### Requirement: Infinite scroll loads and appends additional pages
 
-The Scheduled Tasks list SHALL support loading beyond the first page by scrolling: when the user scrolls the card grid's scroll container to reach a sentinel positioned at the end of the currently loaded content, and more pages exist (`hasMore`), the next page SHALL be requested and its items appended to the currently displayed list, without resetting scroll position or already-rendered cards. Scroll-position detection SHALL reuse the scroll-parent detection pattern already used by `libs/catalog/src/components/ListView/ListView.tsx` (`findScrollParent` + scroll-listener), not a bare `IntersectionObserver` against a non-document root, for consistency with the codebase's one existing infinite-scroll implementation.
+The Scheduled Tasks list SHALL support loading beyond the first page by scrolling: when the user scrolls the card grid's scroll container to reach a sentinel positioned at the end of the currently loaded content, and more pages exist (`hasMore`), the next page SHALL be requested and its items appended to the currently displayed list, without resetting scroll position or already-rendered cards. Scroll-position detection SHALL reuse the scroll-parent detection pattern already used elsewhere in the codebase — a walk up to the nearest scrollable ancestor plus a scroll listener, as in `findScrollParent` in `libs/scheduled-tasks/src/components/ScheduledTasks/ScheduledTasks.tsx` and `getScrollParent` in `libs/catalog/src/utils/scroll-window.ts` — not a bare `IntersectionObserver` against a non-document root.
 
 #### Scenario: Scrolling to the bottom loads the next page
 

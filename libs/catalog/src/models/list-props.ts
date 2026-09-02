@@ -7,9 +7,9 @@ export interface ListViewTypography {
   nameClassName?: string;
   /** Typography class for item version text. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
-  /** Typography class for folder path text. Default: `'dial-small-text'`. */
+  /** Typography class for the full folder path shown in the folder cell's tooltip. Default: `'dial-small-text'`. */
   folderClassName?: string;
-  /** Typography class for the last (deepest) folder segment. Default: `'dial-small-semi-text'`. */
+  /** Typography class for the last (deepest) folder segment, the one the folder cell displays. Default: `'dial-small-semi-text'`. */
   folderLastSegmentClassName?: string;
 }
 
@@ -25,6 +25,8 @@ export interface ListViewColors {
   rowDivider?: string;
   /** Color of the filled star icon in the favorite column. Fallback: `--text-warning-icon`. */
   starFilled?: string;
+  /** Color of the folder icon in the folder column. Fallback: `--text-secondary`. */
+  folderIcon?: string;
   /** Background color of even-indexed grid rows. Fallback: `--bg-layer-base`. */
   rowEvenBackground?: string;
   /** Border color of the selected row. Fallback: `--stroke-accent`. */

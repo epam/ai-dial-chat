@@ -18,6 +18,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     ariaLabel,
     withoutHeaderBorders,
     alternateOddRowColors,
+    wrapCustomCellRenderers,
   }: {
     rowData: CatalogItem[];
     emptyStateTitle?: string;
@@ -32,6 +33,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     ariaLabel?: string;
     withoutHeaderBorders?: boolean;
     alternateOddRowColors?: boolean;
+    wrapCustomCellRenderers?: boolean;
     [key: string]: unknown;
   }) => {
     const ctx = additionalGridOptions?.context;
@@ -41,6 +43,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         data-row-height={additionalGridOptions?.rowHeight}
         data-without-header-borders={String(Boolean(withoutHeaderBorders))}
         data-alternate-odd-row-colors={String(Boolean(alternateOddRowColors))}
+        data-wrap-custom-cell-renderers={String(
+          Boolean(wrapCustomCellRenderers),
+        )}
       >
         {!rowData?.length && emptyStateTitle && <span>{emptyStateTitle}</span>}
         {rowData?.map((item) => (
@@ -172,6 +177,78 @@ describe('ListView', () => {
     expect(
       screen.getByLabelText('Catalog').getAttribute('data-row-height'),
     ).toBe('60');
+  });
+
+  it('hands the grid a window of rows instead of the whole list', () => {
+    const items = Array.from({ length: 200 }, (_, i) =>
+      makeItem({ id: `item-${i}`, name: `Model ${i}` }),
+    );
+    const { container } = render(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={items}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
+
+    // Rows only exist as mocked ag-grid markup; no role identifies them.
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
+    expect(container.querySelectorAll('[data-row-class]')).toHaveLength(30);
+  });
+
+  it('renders every row of a list shorter than the window', () => {
+    const items = Array.from({ length: 5 }, (_, i) =>
+      makeItem({ id: `item-${i}`, name: `Model ${i}` }),
+    );
+    const { container } = render(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={items}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
+
+    // Rows only exist as mocked ag-grid markup; no role identifies them.
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
+    expect(container.querySelectorAll('[data-row-class]')).toHaveLength(5);
+  });
+
+  it('reserves the height of the rows outside the window', () => {
+    const items = Array.from({ length: 200 }, (_, i) =>
+      makeItem({ id: `item-${i}`, name: `Model ${i}` }),
+    );
+    const { container } = render(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={items}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
+
+    /* 170 unrendered rows × the 60px row height, so the page keeps the
+       scroll height it would have with every row mounted. */
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
+    const spacer = container.querySelector('[aria-hidden][style]');
+    expect(spacer?.getAttribute('style')).toContain('10200px');
+  });
+
+  it('drops the row context-menu wrapper ag-grid puts around every cell', () => {
+    render(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={[makeItem({ id: 'x', name: 'x' })]}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
+    expect(
+      screen
+        .getByLabelText('Catalog')
+        .getAttribute('data-wrap-custom-cell-renderers'),
+    ).toBe('false');
   });
 
   it('removes ag-grid header column dividers (no vertical dividers in this view)', () => {

@@ -42,4 +42,11 @@ export interface CardGridProps {
   skeletonCardBackground?: string;
   /** Renders every card read-only: no favorite star, no footer divider, and no "Featured" tag. Default: false. */
   isReadonly?: boolean;
+  /**
+   * Set when the host renders the grid without the `CONTENT_MAX_WIDTH` column
+   * cap, so the first-paint column-count guess matches the real container
+   * width. Purely an estimate hint — the observed width always wins once the
+   * grid is measured. Default: false.
+   */
+  isFullWidth?: boolean;
 }
