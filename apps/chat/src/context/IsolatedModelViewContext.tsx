@@ -15,7 +15,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useLocation } from 'react-router';
 import { useDeployments } from './DeploymentsContext';
 import { useUiFeatures } from './UiFeaturesContext';
 
@@ -48,15 +47,24 @@ export const IsolatedModelViewProvider = ({
 }: {
   children: ReactNode;
 }) => {
-  const { search } = useLocation();
   const { items, isLoading: isDeploymentsLoading } = useDeployments();
   const { applyIsolatedViewOverride } = useUiFeatures();
   const appliedOverrideRef = useRef(false);
 
-  const modelId = useMemo(() => {
-    const params = new URLSearchParams(search);
+  /*
+   * TODO: remove in next release. Captured once via a lazy initializer, not
+   * re-derived from `useLocation().search` on every render: the first
+   * message navigates away from `/?isolated-model-id=...` to
+   * `/conversations/<id>`, which has no such param. Isolated view must stay
+   * active for the rest of the tab's lifetime (matching the old SSR
+   * feature's per-page-load, not per-navigation, evaluation) — a reactive
+   * read would drop `isActive` back to `false` the moment that navigation
+   * happens, snapping every hidden surface back into view.
+   */
+  const [modelId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
     return params.get(ISOLATED_MODEL_ID_QUERY_PARAM) || null;
-  }, [search]);
+  });
 
   const resolvedDeployment = useMemo(
     () => (modelId ? findDeploymentByIdOrReference(items, modelId) : null),
