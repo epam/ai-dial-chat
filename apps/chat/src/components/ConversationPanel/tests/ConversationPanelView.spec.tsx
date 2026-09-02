@@ -4,12 +4,12 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import {
   ConversationExportMode,
-  ConversationTransferErrorCode,
   useConversationExport,
   useConversationImport,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  ConversationTransferErrorCode,
   ConversationTransferJobStatus,
   ConversationTransferSubjectKind,
 } from '@epam/ai-dial-chat-shared';
@@ -260,6 +260,10 @@ vi.mock('@tabler/icons-react', () => ({
   IconWorldShare: () => null,
   IconWorldOff: () => null,
   IconAlertCircleFilled: () => null,
+  IconCheck: () => null,
+  IconFile: () => null,
+  IconFileZip: () => null,
+  IconJson: () => null,
   IconChevronDown: () => null,
   IconChevronUp: () => null,
   IconCircleCheckFilled: () => null,
@@ -277,12 +281,18 @@ vi.mock('react-i18next', async () => {
     'conversationPanel.rename.renameWithAiError',
     'conversationPanel.rename.renameTitleTooLong',
     'conversationExport.queueTitle',
-    'conversationExport.allConversationsJobLabel',
-    'conversationExport.closeJobAriaLabel',
-    'conversationExport.retryJobAriaLabel',
+    'conversationExport.cancelJobAriaLabel',
+    'conversationExport.jobProgressAriaLabel',
+    'conversationExport.canceledLabel',
+    'conversationExport.errorFileTooLarge',
+    'conversationExport.errorUnknown',
     'conversationExport.collapseQueueAriaLabel',
     'conversationExport.expandQueueAriaLabel',
     'conversationExport.closeQueueAriaLabel',
+    'conversationImport.queueTitle',
+    'conversationImport.cancelJobAriaLabel',
+    'conversationImport.jobProgressAriaLabel',
+    'conversationImport.errorUnknown',
   ]);
 
   const resolveTranslation = (key: string): string | undefined => {
@@ -296,13 +306,22 @@ vi.mock('react-i18next', async () => {
 
   return {
     useTranslation: () => ({
-      t: (key: string, params?: { title?: string }) => {
+      t: (
+        key: string,
+        params?: { title?: string; fileName?: string; count?: number },
+      ) => {
         if (!translatedKeys.has(key)) return key;
 
-        return (resolveTranslation(key) ?? key).replace(
-          '{{title}}',
-          params?.title ?? '',
-        );
+        const { count } = params ?? {};
+        const plural =
+          count === undefined
+            ? undefined
+            : resolveTranslation(`${key}_${count === 1 ? 'one' : 'other'}`);
+
+        return (plural ?? resolveTranslation(key) ?? key)
+          .replace('{{title}}', params?.title ?? '')
+          .replace('{{fileName}}', params?.fileName ?? '')
+          .replace('{{count}}', String(count ?? ''));
       },
       i18n: { language: 'en' },
     }),
@@ -430,6 +449,8 @@ const REVOKE_ERROR = 'conversationPanel.revoke.revokeError';
 const mockDeleteAllConversations =
   vi.fn<() => Promise<ConversationDeletionResultDto>>();
 const mockShowNotification = vi.fn();
+const mockCancelJob = vi.fn();
+const mockCancelImportJob = vi.fn();
 const mockExportSingle = vi.fn().mockResolvedValue(undefined);
 const mockExportAll = vi.fn().mockResolvedValue(undefined);
 const mockDismissJob = vi.fn();
@@ -449,6 +470,14 @@ const IMPORT_LABEL = 'conversationImport.importLabel';
 const getImportFileInput = () =>
   // eslint-disable-next-line testing-library/no-node-access
   document.querySelector('input[type="file"]') as HTMLInputElement;
+
+/* A transfer queue panel is a polite live region; the kit Spinner on each
+   in-progress row carries its own bare `role="status"`, so the queues have to
+   be told apart by `aria-live`. */
+const getQueuePanels = () =>
+  screen
+    .getAllByRole('status')
+    .filter((element) => element.getAttribute('aria-live') === 'polite');
 
 const baseContextValue = {
   conversations: [
@@ -503,6 +532,7 @@ beforeEach(() => {
     jobs: [],
     exportSingle: mockExportSingle,
     exportAll: mockExportAll,
+    cancelJob: mockCancelJob,
     dismissJob: mockDismissJob,
     retryJob: mockRetryJob,
     dismissAll: vi.fn(),
@@ -510,6 +540,7 @@ beforeEach(() => {
   vi.mocked(useConversationImport).mockReturnValue({
     jobs: [],
     importConversations: mockImportConversations,
+    cancelJob: mockCancelImportJob,
     dismissJob: mockDismissImportJob,
     retryJob: mockRetryImportJob,
     dismissAll: vi.fn(),
@@ -1370,10 +1401,13 @@ describe('ConversationPanelView — export', () => {
             title: 'Chat 1',
           },
           status: ConversationTransferJobStatus.InProgress,
+          fileName: 'export-1.dial',
+          progress: { percent: 0 },
         },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
+      cancelJob: mockCancelJob,
       dismissJob: mockDismissJob,
       retryJob: mockRetryJob,
       dismissAll: vi.fn(),
@@ -1381,8 +1415,9 @@ describe('ConversationPanelView — export', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
 
-    expect(screen.getByRole('status')).toBeTruthy();
-    expect(screen.getByText('Chat 1')).toBeTruthy();
+    expect(getQueuePanels()).toHaveLength(1);
+    expect(screen.getByText('export-1.dial')).toBeTruthy();
+    expect(screen.queryByText('Chat 1')).toBeNull();
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
@@ -1391,7 +1426,7 @@ describe('ConversationPanelView — export', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
-  it('clicking close on a queue job calls dismissJob with its id', () => {
+  it('clicking cancel on a queue job calls cancelJob with its id', () => {
     vi.mocked(useConversationExport).mockReturnValue({
       jobs: [
         {
@@ -1401,22 +1436,30 @@ describe('ConversationPanelView — export', () => {
             title: 'Chat 2',
           },
           status: ConversationTransferJobStatus.InProgress,
+          fileName: 'export-2.dial',
+          progress: { percent: 0 },
         },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
+      cancelJob: mockCancelJob,
       dismissJob: mockDismissJob,
       retryJob: mockRetryJob,
       dismissAll: vi.fn(),
     });
 
     render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Close "Chat 2"' }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Cancel exporting "export-2.dial"',
+      }),
+    );
 
-    expect(mockDismissJob).toHaveBeenCalledWith('job-2');
+    expect(mockCancelJob).toHaveBeenCalledWith('job-2');
+    expect(mockDismissJob).not.toHaveBeenCalled();
   });
 
-  it('clicking retry on a failed queue job calls retryJob with its id', () => {
+  it('shows a failed export reason instead of a retry control', () => {
     vi.mocked(useConversationExport).mockReturnValue({
       jobs: [
         {
@@ -1426,19 +1469,24 @@ describe('ConversationPanelView — export', () => {
             title: 'Chat 3',
           },
           status: ConversationTransferJobStatus.Failed,
+          fileName: 'export-3.dial',
+          progress: { percent: 0 },
         },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
+      cancelJob: mockCancelJob,
       dismissJob: mockDismissJob,
       retryJob: mockRetryJob,
       dismissAll: vi.fn(),
     });
 
     render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Retry "Chat 3"' }));
 
-    expect(mockRetryJob).toHaveBeenCalledWith('job-3');
+    expect(
+      screen.getByRole('img', { name: 'Export failed. Please try again.' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
   });
 
   it('renders the real export queue with its translated collapse label', () => {
@@ -1451,10 +1499,13 @@ describe('ConversationPanelView — export', () => {
             title: 'Chat Label',
           },
           status: ConversationTransferJobStatus.InProgress,
+          fileName: 'export-4.dial',
+          progress: { percent: 0 },
         },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
+      cancelJob: mockCancelJob,
       dismissJob: mockDismissJob,
       retryJob: mockRetryJob,
       dismissAll: vi.fn(),
@@ -1539,9 +1590,12 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
             title: 'Imported Chat',
           },
           status: ConversationTransferJobStatus.InProgress,
+          fileName: 'export-5.dial',
+          progress: { percent: 0 },
         },
       ],
       importConversations: mockImportConversations,
+      cancelJob: mockCancelImportJob,
       dismissJob: mockDismissImportJob,
       retryJob: mockRetryImportJob,
       dismissAll: vi.fn(),
@@ -1549,8 +1603,9 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
 
     render(<ConversationPanelView {...defaultProps} />);
 
-    expect(screen.getByRole('status')).toBeTruthy();
-    expect(screen.getByText('Imported Chat')).toBeTruthy();
+    expect(getQueuePanels()).toHaveLength(1);
+    expect(screen.getByText('export-5.dial')).toBeTruthy();
+    expect(screen.queryByText('Imported Chat')).toBeNull();
   });
 
   it('renders two separate queues with their own titles when both import and export jobs are present', () => {
@@ -1563,10 +1618,13 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
             title: 'Chat 1',
           },
           status: ConversationTransferJobStatus.InProgress,
+          fileName: 'export-6.dial',
+          progress: { percent: 0 },
         },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
+      cancelJob: mockCancelJob,
       dismissJob: mockDismissJob,
       retryJob: mockRetryJob,
       dismissAll: vi.fn(),
@@ -1580,9 +1638,12 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
             title: 'Imported Chat',
           },
           status: ConversationTransferJobStatus.InProgress,
+          fileName: 'export-7.dial',
+          progress: { percent: 0 },
         },
       ],
       importConversations: mockImportConversations,
+      cancelJob: mockCancelImportJob,
       dismissJob: mockDismissImportJob,
       retryJob: mockRetryImportJob,
       dismissAll: vi.fn(),
@@ -1590,9 +1651,9 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
 
     render(<ConversationPanelView {...defaultProps} />);
 
-    expect(screen.getAllByRole('status')).toHaveLength(2);
-    expect(screen.getByText('Exporting')).toBeTruthy();
-    expect(screen.getByText('conversationImport.queueTitle')).toBeTruthy();
+    expect(getQueuePanels()).toHaveLength(2);
+    expect(screen.getByText('Exporting 1 file')).toBeTruthy();
+    expect(screen.getByText('Importing 1 file')).toBeTruthy();
   });
 
   it('shows the Importing title when only import jobs are present', () => {
@@ -1605,9 +1666,12 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
             title: 'Imported Chat',
           },
           status: ConversationTransferJobStatus.InProgress,
+          fileName: 'export-8.dial',
+          progress: { percent: 0 },
         },
       ],
       importConversations: mockImportConversations,
+      cancelJob: mockCancelImportJob,
       dismissJob: mockDismissImportJob,
       retryJob: mockRetryImportJob,
       dismissAll: vi.fn(),
@@ -1615,7 +1679,7 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
 
     render(<ConversationPanelView {...defaultProps} />);
 
-    expect(screen.getByText('conversationImport.queueTitle')).toBeTruthy();
+    expect(screen.getByText('Importing 1 file')).toBeTruthy();
   });
 
   it('shows the Exporting title when only export jobs are present', () => {
@@ -1628,10 +1692,13 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
             title: 'Chat 1',
           },
           status: ConversationTransferJobStatus.InProgress,
+          fileName: 'export-9.dial',
+          progress: { percent: 0 },
         },
       ],
       exportSingle: mockExportSingle,
       exportAll: mockExportAll,
+      cancelJob: mockCancelJob,
       dismissJob: mockDismissJob,
       retryJob: mockRetryJob,
       dismissAll: vi.fn(),
@@ -1639,10 +1706,10 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
 
     render(<ConversationPanelView {...defaultProps} />);
 
-    expect(screen.getByText('Exporting')).toBeTruthy();
+    expect(screen.getByText('Exporting 1 file')).toBeTruthy();
   });
 
-  it('wires the import queue dismiss button to the import hook', () => {
+  it('wires the import queue cancel button to the import hook', () => {
     vi.mocked(useConversationImport).mockReturnValue({
       jobs: [
         {
@@ -1652,9 +1719,12 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
             title: 'Imported Chat',
           },
           status: ConversationTransferJobStatus.InProgress,
+          fileName: 'export-10.dial',
+          progress: { percent: 0 },
         },
       ],
       importConversations: mockImportConversations,
+      cancelJob: mockCancelImportJob,
       dismissJob: mockDismissImportJob,
       retryJob: mockRetryImportJob,
       dismissAll: vi.fn(),
@@ -1662,14 +1732,16 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
 
     render(<ConversationPanelView {...defaultProps} />);
     fireEvent.click(
-      screen.getByRole('button', { name: 'Close "Imported Chat"' }),
+      screen.getByRole('button', {
+        name: 'Cancel importing "export-10.dial"',
+      }),
     );
 
-    expect(mockDismissImportJob).toHaveBeenCalledWith('imp-1');
-    expect(mockDismissJob).not.toHaveBeenCalled();
+    expect(mockCancelImportJob).toHaveBeenCalledWith('imp-1');
+    expect(mockCancelJob).not.toHaveBeenCalled();
   });
 
-  it('wires the import queue retry button to the import hook', () => {
+  it('shows a failed import reason instead of a retry control', () => {
     vi.mocked(useConversationImport).mockReturnValue({
       jobs: [
         {
@@ -1679,21 +1751,23 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
             title: 'Imported Chat',
           },
           status: ConversationTransferJobStatus.Failed,
+          fileName: 'export-11.dial',
+          progress: { percent: 0 },
         },
       ],
       importConversations: mockImportConversations,
+      cancelJob: mockCancelImportJob,
       dismissJob: mockDismissImportJob,
       retryJob: mockRetryImportJob,
       dismissAll: vi.fn(),
     });
 
     render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Retry "Imported Chat"' }),
-    );
 
-    expect(mockRetryImportJob).toHaveBeenCalledWith('imp-1');
-    expect(mockRetryJob).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('img', { name: 'Import failed. Please try again.' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
   });
 });
 

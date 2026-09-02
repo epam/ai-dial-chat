@@ -1,11 +1,14 @@
 import {
+  ConversationTransferErrorCode,
   ConversationTransferJobStatus,
   ConversationTransferSubjectKind,
+  ConversationTransferWarningCode,
   type ConversationTransferJob,
+  type ConversationTransferProgress,
 } from '@epam/ai-dial-chat-shared';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   ImportExportQueue,
@@ -15,31 +18,16 @@ import {
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
-  ProgressBar: ({
-    value,
-    'aria-label': ariaLabel,
-  }: {
-    value: number;
-    'aria-label'?: string;
-  }) => <div data-progress={value} aria-label={ariaLabel} />,
-  GhostIconButton: ({
-    'aria-label': ariaLabel,
-    onClick,
-    className,
-  }: {
-    'aria-label'?: string;
-    onClick?: () => void;
-    className?: string;
-  }) => (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      onClick={onClick}
-      className={className}
-    />
-  ),
-  ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
+  GhostIconButton: ({
+    icon: _icon,
+    size: _size,
+    ...rest
+  }: ButtonHTMLAttributes<HTMLButtonElement> & {
+    icon?: ReactNode;
+    size?: string;
+  }) => <button type="button" {...rest} />,
   ConfirmationPopup: ({
     open,
     header,
@@ -66,6 +54,17 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     );
   },
   ConfirmationPopupVariant: { Danger: 'danger', Info: 'info' },
+  Spinner: ({
+    ariaLabel,
+    className,
+  }: {
+    ariaLabel?: string;
+    className?: string;
+  }) => (
+    <div role="status" className={className}>
+      <div role="img" aria-label={ariaLabel} />
+    </div>
+  ),
   EllipsisTooltip: ({
     text,
     className,
@@ -73,21 +72,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text: ReactNode;
     className?: string;
   }) => <span className={className}>{text}</span>,
-}));
-
-vi.mock('@tabler/icons-react', () => ({
-  IconX: () => null,
-  IconCircleCheckFilled: () => null,
-  IconRefresh: () => null,
-  IconAlertCircleFilled: () => null,
-  IconChevronDown: () => null,
-  IconChevronUp: () => null,
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  ProgressBar: ({ value, ...rest }: { value: number; size?: string }) => (
+    <div role="progressbar" aria-valuenow={value} {...rest} />
+  ),
 }));
 
 const DEFAULT_LABELS: ImportExportQueueLabels = {
-  allConversationsJobLabel: 'All conversations',
-  closeJobAriaLabel: (title) => `Dismiss ${title}`,
-  retryJobAriaLabel: (title) => `Retry ${title}`,
+  cancelJobAriaLabel: (fileName) => `Cancel ${fileName}`,
+  canceledLabel: 'Canceled',
+  jobErrorMessage: (code) =>
+    code === ConversationTransferErrorCode.FileTooLarge
+      ? 'Export failed. File is too large'
+      : 'Export failed. Please try again',
+  jobProgressAriaLabel: (fileName) => `Exporting ${fileName}`,
+  jobWarningMessage: () => 'Some attachments could not be exported.',
+  queueProgressAriaLabel: 'Export progress',
+  queueProgressValueText: (completed, total) =>
+    `${completed} of ${total} files done`,
   collapseQueueAriaLabel: 'Collapse queue',
   expandQueueAriaLabel: 'Expand queue',
   closeQueueAriaLabel: 'Close queue',
@@ -101,481 +103,567 @@ const DEFAULT_LABELS: ImportExportQueueLabels = {
 
 const makeJob = ({
   id = 'job-1',
+  fileName = '2026-09-01_ai_dial_chat_with_attachments.dial',
   title = 'My Chat',
-  description,
   status = ConversationTransferJobStatus.InProgress,
+  progress = { percent: 0 },
+  errorCode,
+  warningCode,
 }: {
   id?: string;
+  fileName?: string;
   title?: string;
-  description?: string;
   status?: ConversationTransferJobStatus;
+  progress?: ConversationTransferProgress;
+  errorCode?: ConversationTransferErrorCode;
+  warningCode?: ConversationTransferWarningCode;
 } = {}): ConversationTransferJob => ({
   id,
   subject: {
     kind: ConversationTransferSubjectKind.Single,
     title,
-    sourceBreadcrumb: description,
+    sourceBreadcrumb: 'Work / ',
   },
   status,
+  fileName,
+  progress,
+  errorCode,
+  warningCode,
 });
 
-const TITLE = 'Exporting';
+const renderQueue = ({
+  jobs = [makeJob()],
+  title = 'Exporting 1 file',
+  onClose = vi.fn(),
+  onCancel = vi.fn(),
+  styles,
+}: {
+  jobs?: ConversationTransferJob[];
+  title?: string;
+  onClose?: () => void;
+  onCancel?: (jobId: string) => void;
+  styles?: ImportExportQueueStyles;
+} = {}) =>
+  render(
+    <ImportExportQueue
+      title={title}
+      jobs={jobs}
+      onClose={onClose}
+      onCancel={onCancel}
+      labels={DEFAULT_LABELS}
+      styles={styles}
+    />,
+  );
 
 describe('ImportExportQueue', () => {
-  const user = userEvent.setup({ delay: null });
-
-  const renderQueue = (
-    jobs: ConversationTransferJob[],
-    props: Partial<{
-      onDismiss: (id: string) => void;
-      onRetry: (id: string) => void;
-      onClose: () => void;
-      labels: ImportExportQueueLabels;
-      styles: ImportExportQueueStyles;
-    }> = {},
-  ) =>
-    render(
-      <ImportExportQueue
-        title={TITLE}
-        jobs={jobs}
-        onDismiss={props.onDismiss ?? vi.fn()}
-        onRetry={props.onRetry ?? vi.fn()}
-        onClose={props.onClose ?? vi.fn()}
-        labels={props.labels ?? DEFAULT_LABELS}
-        styles={props.styles}
-      />,
-    );
-
-  it('renders nothing when there are no jobs', () => {
-    renderQueue([]);
+  it('renders nothing with an empty queue', () => {
+    renderQueue({ jobs: [] });
     expect(screen.queryByRole('status')).toBeNull();
   });
 
-  it('renders the panel with a status region and every job label', () => {
-    renderQueue([
-      makeJob({ id: 'a', title: 'Chat A' }),
-      makeJob({
-        id: 'b',
-        title: 'Chat B',
-        status: ConversationTransferJobStatus.Success,
-      }),
-    ]);
-    const region = screen.getByRole('status');
-    expect(region.getAttribute('aria-live')).toBe('polite');
-    expect(screen.getByText('Chat A')).toBeTruthy();
-    expect(screen.getByText('Chat B')).toBeTruthy();
+  describe('row identity', () => {
+    it('is identified by its file name, with no title or breadcrumb', () => {
+      renderQueue({
+        jobs: [
+          makeJob({ fileName: 'my-export.dial', title: 'Dynamic Weather' }),
+        ],
+      });
+
+      expect(screen.getByText('my-export.dial')).toBeTruthy();
+      expect(screen.queryByText('Dynamic Weather')).toBeNull();
+      expect(screen.queryByText('Work / ')).toBeNull();
+    });
   });
 
-  it('never renders a dialog role — it is not a modal', () => {
-    renderQueue([makeJob()]);
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
+  describe('status slot', () => {
+    it('shows a named spinner for an in-progress job', () => {
+      renderQueue({ jobs: [makeJob({ fileName: 'export.dial' })] });
 
-  it('renders job rows without divider borders between them', () => {
-    renderQueue([makeJob({ id: 'a' }), makeJob({ id: 'b' })]);
-    /* CSS-level assertion — no semantic query applies. */
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(document.querySelector('.divide-y')).toBeNull();
-  });
-
-  it('shows aggregate progress as the fraction of finished jobs', () => {
-    renderQueue([
-      makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
-      makeJob({ id: 'b', status: ConversationTransferJobStatus.InProgress }),
-      makeJob({ id: 'c', status: ConversationTransferJobStatus.Failed }),
-      makeJob({ id: 'd', status: ConversationTransferJobStatus.InProgress }),
-    ]);
-    // 2 of 4 jobs finished (success or failed) = 50%
-    /* CSS-level assertion — no semantic query applies. */
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(document.querySelector('[data-progress="50"]')).toBeTruthy();
-  });
-
-  it('clicking close on an in-progress job calls onDismiss with its id', async () => {
-    const onDismiss = vi.fn();
-    renderQueue([makeJob({ id: 'job-x', title: 'Chat X' })], { onDismiss });
-
-    await user.click(screen.getByRole('button', { name: 'Dismiss Chat X' }));
-
-    expect(onDismiss).toHaveBeenCalledWith('job-x');
-  });
-
-  it('a successful job does not show a per-job close button', () => {
-    renderQueue([
-      makeJob({
-        id: 'job-y',
-        title: 'Chat Y',
-        status: ConversationTransferJobStatus.Success,
-      }),
-    ]);
-
-    expect(screen.queryByRole('button', { name: 'Dismiss Chat Y' })).toBeNull();
-  });
-
-  it('a failed job shows a retry button but no per-job close button', async () => {
-    const onRetry = vi.fn();
-    renderQueue(
-      [
-        makeJob({
-          id: 'job-z',
-          title: 'Chat Z',
-          status: ConversationTransferJobStatus.Failed,
-        }),
-      ],
-      { onRetry },
-    );
-
-    await user.click(screen.getByRole('button', { name: 'Retry Chat Z' }));
-    expect(onRetry).toHaveBeenCalledWith('job-z');
-
-    expect(screen.queryByRole('button', { name: 'Dismiss Chat Z' })).toBeNull();
-  });
-
-  it('collapsing the panel hides job rows without removing the header', async () => {
-    renderQueue([makeJob({ title: 'Chat A' })]);
-
-    expect(screen.getByText('Chat A')).toBeTruthy();
-
-    await user.click(
-      screen.getByRole('button', {
-        name: DEFAULT_LABELS.collapseQueueAriaLabel,
-      }),
-    );
-
-    expect(screen.queryByText('Chat A')).toBeNull();
-    expect(screen.getByText(TITLE)).toBeTruthy();
-
-    await user.click(
-      screen.getByRole('button', { name: DEFAULT_LABELS.expandQueueAriaLabel }),
-    );
-    expect(screen.getByText('Chat A')).toBeTruthy();
-  });
-
-  it('clicking close when all jobs succeeded calls onClose directly', async () => {
-    const onClose = vi.fn();
-    renderQueue([makeJob({ status: ConversationTransferJobStatus.Success })], {
-      onClose,
+      expect(
+        screen.getByRole('img', { name: 'Exporting export.dial' }),
+      ).toBeTruthy();
     });
 
-    await user.click(
-      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
-    );
+    it('renders no aggregate indicator — one spinner per in-progress row', () => {
+      renderQueue({
+        jobs: [
+          makeJob({ id: 'a' }),
+          makeJob({ id: 'b' }),
+          makeJob({ id: 'c', status: ConversationTransferJobStatus.Success }),
+        ],
+      });
 
-    expect(onClose).toHaveBeenCalledOnce();
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('clicking close with an in-progress job shows the confirmation dialog with the in-progress message', async () => {
-    const onClose = vi.fn();
-    renderQueue(
-      [makeJob({ status: ConversationTransferJobStatus.InProgress })],
-      { onClose },
-    );
-
-    await user.click(
-      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
-    );
-
-    expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(
-      screen.getByText(DEFAULT_LABELS.closeQueueConfirmDescriptionInProgress),
-    ).toBeTruthy();
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('clicking close with a failed job shows the confirmation dialog with the failed message', async () => {
-    const onClose = vi.fn();
-    renderQueue([makeJob({ status: ConversationTransferJobStatus.Failed })], {
-      onClose,
-    });
-
-    await user.click(
-      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
-    );
-
-    expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(
-      screen.getByText(DEFAULT_LABELS.closeQueueConfirmDescriptionFailed),
-    ).toBeTruthy();
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('clicking close with both an in-progress and a failed job shows the mixed message', async () => {
-    const onClose = vi.fn();
-    renderQueue(
-      [
-        makeJob({ id: 'a', status: ConversationTransferJobStatus.InProgress }),
-        makeJob({ id: 'b', status: ConversationTransferJobStatus.Failed }),
-      ],
-      { onClose },
-    );
-
-    await user.click(
-      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
-    );
-
-    expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(
-      screen.getByText(DEFAULT_LABELS.closeQueueConfirmDescriptionMixed),
-    ).toBeTruthy();
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('confirming the dialog calls onClose', async () => {
-    const onClose = vi.fn();
-    renderQueue(
-      [makeJob({ status: ConversationTransferJobStatus.InProgress })],
-      { onClose },
-    );
-
-    await user.click(
-      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
-    );
-    await user.click(
-      screen.getByRole('button', { name: DEFAULT_LABELS.closeLabel }),
-    );
-
-    expect(onClose).toHaveBeenCalledOnce();
-  });
-
-  it('does not reopen the confirmation dialog when a new job arrives after confirming', async () => {
-    const onClose = vi.fn();
-    const { rerender } = renderQueue(
-      [
-        makeJob({
-          id: 'job-1',
-          status: ConversationTransferJobStatus.InProgress,
-        }),
-      ],
-      { onClose },
-    );
-
-    await user.click(
-      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
-    );
-    expect(screen.getByRole('dialog')).toBeTruthy();
-
-    await user.click(
-      screen.getByRole('button', { name: DEFAULT_LABELS.closeLabel }),
-    );
-    expect(onClose).toHaveBeenCalledOnce();
-
-    /* Parent clears jobs in response to onClose — component stays mounted, renders null. */
-    rerender(
-      <ImportExportQueue
-        title={TITLE}
-        jobs={[]}
-        onDismiss={vi.fn()}
-        onRetry={vi.fn()}
-        onClose={onClose}
-        labels={DEFAULT_LABELS}
-      />,
-    );
-    expect(screen.queryByRole('status')).toBeNull();
-
-    /* A new export starts — the panel reappears and must not reopen the stale confirmation. */
-    rerender(
-      <ImportExportQueue
-        title={TITLE}
-        jobs={[
-          makeJob({
-            id: 'job-2',
-            status: ConversationTransferJobStatus.InProgress,
-          }),
-        ]}
-        onDismiss={vi.fn()}
-        onRetry={vi.fn()}
-        onClose={onClose}
-        labels={DEFAULT_LABELS}
-      />,
-    );
-
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('cancelling the dialog closes it without calling onClose', async () => {
-    const onClose = vi.fn();
-    renderQueue(
-      [makeJob({ status: ConversationTransferJobStatus.InProgress })],
-      { onClose },
-    );
-
-    await user.click(
-      screen.getByRole('button', { name: DEFAULT_LABELS.closeQueueAriaLabel }),
-    );
-    await user.click(screen.getByRole('button', { name: 'Cancel' }));
-
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('shows a failed count badge when at least one job has failed', () => {
-    renderQueue([
-      makeJob({ id: 'a', status: ConversationTransferJobStatus.Failed }),
-      makeJob({ id: 'b', status: ConversationTransferJobStatus.InProgress }),
-    ]);
-
-    expect(screen.getByText('1')).toBeTruthy();
-  });
-
-  it('does not show the failed count badge when no jobs have failed', () => {
-    renderQueue([
-      makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
-      makeJob({ id: 'b', status: ConversationTransferJobStatus.InProgress }),
-    ]);
-
-    expect(screen.queryByText('1')).toBeNull();
-    expect(screen.queryByText('2')).toBeNull();
-  });
-
-  it('renders a job description as a secondary line above the label', () => {
-    renderQueue([
-      makeJob({
-        title: 'My Chat',
-        description: 'Folder 1 / Folder 2',
-      }),
-    ]);
-
-    expect(screen.getByText('Folder 1 / Folder 2')).toBeTruthy();
-    expect(screen.getByText('My Chat')).toBeTruthy();
-  });
-
-  it('applies typed color, typography, and class overrides', () => {
-    renderQueue([makeJob({ title: 'My Chat', description: 'Folder' })], {
-      styles: {
-        colors: { background: '#ffffff', text: '#111111' },
-        typography: {
-          titleClassName: 'custom-title',
-          jobLabelClassName: 'custom-job-label',
-          jobDescriptionClassName: 'custom-job-description',
-        },
-        rootClassName: 'custom-root',
-        bodyClassName: 'custom-body',
-        cssVars: {
-          '--consumer-override': '#abcdef',
-        } as CSSProperties,
-      },
-    });
-
-    const region = screen.getByRole('status');
-    expect(region.classList.contains('custom-root')).toBe(true);
-    expect(region.style.getPropertyValue('--cp-transfer-queue-bg')).toBe(
-      '#ffffff',
-    );
-    expect(region.style.getPropertyValue('--cp-transfer-queue-text')).toBe(
-      '#111111',
-    );
-    expect(region.style.getPropertyValue('--consumer-override')).toBe(
-      '#abcdef',
-    );
-    expect(screen.getByText(TITLE).classList.contains('custom-title')).toBe(
-      true,
-    );
-    expect(
-      screen.getByText('My Chat').classList.contains('custom-job-label'),
-    ).toBe(true);
-    expect(
-      screen.getByText('Folder').classList.contains('custom-job-description'),
-    ).toBe(true);
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(region.querySelector('.custom-body')).toBeTruthy();
-  });
-
-  it('renders no secondary line when a job has no description', () => {
-    renderQueue([makeJob({ title: 'My Chat' })]);
-
-    expect(screen.getByText('My Chat')).toBeTruthy();
-    /* CSS-level assertion — no semantic query applies. */
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(document.querySelectorAll('.text-secondary').length).toBe(0);
-  });
-
-  it('uses allConversationsJobLabel for All-subject jobs', () => {
-    renderQueue([
-      {
-        id: 'job-all',
-        subject: { kind: ConversationTransferSubjectKind.All },
-        status: ConversationTransferJobStatus.InProgress,
-      },
-    ]);
-
-    expect(
-      screen.getByText(DEFAULT_LABELS.allConversationsJobLabel),
-    ).toBeTruthy();
-  });
-
-  it('automatically closes eight seconds after every job succeeds', () => {
-    vi.useFakeTimers();
-    try {
-      const onClose = vi.fn();
-      renderQueue(
-        [makeJob({ status: ConversationTransferJobStatus.Success })],
-        { onClose },
+      expect(screen.getAllByRole('img', { name: /^Exporting / })).toHaveLength(
+        2,
       );
+    });
 
-      act(() => vi.advanceTimersByTime(7999));
-      expect(onClose).not.toHaveBeenCalled();
-      act(() => vi.advanceTimersByTime(1));
-      expect(onClose).toHaveBeenCalledOnce();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('does not auto-close while a job is failed or in progress', () => {
-    vi.useFakeTimers();
-    try {
-      const onClose = vi.fn();
-      renderQueue(
-        [
-          makeJob({ id: 'a', status: ConversationTransferJobStatus.Failed }),
+    it('explains a failed job and offers no retry', () => {
+      renderQueue({
+        jobs: [
           makeJob({
-            id: 'b',
-            status: ConversationTransferJobStatus.InProgress,
+            status: ConversationTransferJobStatus.Failed,
+            errorCode: ConversationTransferErrorCode.FileTooLarge,
           }),
         ],
-        { onClose },
-      );
-
-      act(() => vi.advanceTimersByTime(16000));
-      expect(onClose).not.toHaveBeenCalled();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('cancels an auto-close countdown when a new in-progress job arrives', () => {
-    vi.useFakeTimers();
-    try {
-      const onClose = vi.fn();
-      const successfulJob = makeJob({
-        id: 'done',
-        status: ConversationTransferJobStatus.Success,
       });
-      const { rerender } = renderQueue([successfulJob], { onClose });
 
-      act(() => vi.advanceTimersByTime(4000));
+      expect(
+        screen.getByRole('img', {
+          name: 'Export failed. File is too large',
+        }),
+      ).toBeTruthy();
+      expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
+    });
+
+    it('names a warned job on the icon, reachable without hovering', () => {
+      renderQueue({
+        jobs: [
+          makeJob({
+            status: ConversationTransferJobStatus.Warning,
+            warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+          }),
+        ],
+      });
+
+      expect(
+        screen.getByRole('img', {
+          name: 'Some attachments could not be exported.',
+        }),
+      ).toBeTruthy();
+      expect(screen.queryByRole('button', { name: /^Cancel / })).toBeNull();
+    });
+
+    it('keeps a canceled row visible with its label and no spinner', () => {
+      renderQueue({
+        jobs: [
+          makeJob({
+            fileName: 'export.dial',
+            status: ConversationTransferJobStatus.Canceled,
+            progress: { percent: 42 },
+          }),
+        ],
+      });
+
+      expect(screen.getByText('Canceled')).toBeTruthy();
+      expect(screen.getByText('export.dial')).toBeTruthy();
+      expect(screen.queryByRole('img', { name: /^Exporting / })).toBeNull();
+    });
+
+    it('dims the file name once a job is canceled', () => {
+      const { rerender } = renderQueue({
+        jobs: [makeJob({ fileName: 'export.dial' })],
+      });
+      const inProgressClass = screen
+        .getByText('export.dial')
+        .getAttribute('class');
+
       rerender(
         <ImportExportQueue
-          title={TITLE}
+          title="Exporting 1 file"
           jobs={[
-            successfulJob,
             makeJob({
-              id: 'new',
-              status: ConversationTransferJobStatus.InProgress,
+              fileName: 'export.dial',
+              status: ConversationTransferJobStatus.Canceled,
             }),
           ]}
-          onDismiss={vi.fn()}
-          onRetry={vi.fn()}
-          onClose={onClose}
+          onClose={vi.fn()}
+          onCancel={vi.fn()}
           labels={DEFAULT_LABELS}
         />,
       );
-      act(() => vi.advanceTimersByTime(8000));
 
+      expect(screen.getByText('export.dial').getAttribute('class')).not.toBe(
+        inProgressClass,
+      );
+    });
+
+    it('exposes no control on a settled row', () => {
+      renderQueue({
+        jobs: [
+          makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+          makeJob({ id: 'b', status: ConversationTransferJobStatus.Failed }),
+          makeJob({ id: 'c', status: ConversationTransferJobStatus.Canceled }),
+        ],
+      });
+
+      /* Only the header's collapse and close controls remain. */
+      expect(screen.getAllByRole('button')).toHaveLength(2);
+    });
+  });
+
+  describe('cancel control', () => {
+    it('is mounted and reachable without hovering', async () => {
+      const onCancel = vi.fn();
+      renderQueue({
+        jobs: [makeJob({ id: 'job-9', fileName: 'export.dial' })],
+        onCancel,
+      });
+
+      /*
+       * Tab order is header collapse, header close, then the row's cancel —
+       * reaching it without ever hovering is the point of the assertion.
+       */
+      await userEvent.tab();
+      await userEvent.tab();
+      await userEvent.tab();
+      await userEvent.keyboard('{Enter}');
+
+      expect(onCancel).toHaveBeenCalledWith('job-9');
+    });
+
+    it('coexists with the spinner rather than replacing it', () => {
+      renderQueue({ jobs: [makeJob({ fileName: 'export.dial' })] });
+
+      expect(
+        screen.getByRole('button', { name: 'Cancel export.dial' }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('img', { name: 'Exporting export.dial' }),
+      ).toBeTruthy();
+    });
+  });
+
+  describe('header', () => {
+    it('renders the host-composed title verbatim', () => {
+      renderQueue({ title: 'Exporting 3 files' });
+      expect(screen.getByText('Exporting 3 files')).toBeTruthy();
+    });
+
+    it('collapses the rows without hiding itself', async () => {
+      renderQueue({ jobs: [makeJob({ fileName: 'export.dial' })] });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Collapse queue' }),
+      );
+
+      expect(screen.queryByText('export.dial')).toBeNull();
+      expect(screen.getByText('Exporting 1 file')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Expand queue' })).toBeTruthy();
+    });
+
+    it('shows the failed count only when a job has failed', () => {
+      const { rerender } = renderQueue({ jobs: [makeJob()] });
+      expect(screen.queryByText('1')).toBeNull();
+
+      rerender(
+        <ImportExportQueue
+          title="Exporting 1 file"
+          jobs={[makeJob({ status: ConversationTransferJobStatus.Failed })]}
+          onClose={vi.fn()}
+          onCancel={vi.fn()}
+          labels={DEFAULT_LABELS}
+        />,
+      );
+      expect(screen.getByText('1')).toBeTruthy();
+    });
+  });
+
+  describe('closing', () => {
+    it('closes immediately when every job succeeded', async () => {
+      const onClose = vi.fn();
+      renderQueue({
+        jobs: [makeJob({ status: ConversationTransferJobStatus.Success })],
+        onClose,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Close queue' }),
+      );
+
+      expect(onClose).toHaveBeenCalledOnce();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('closes immediately when the only unfinished work was canceled', async () => {
+      const onClose = vi.fn();
+      renderQueue({
+        jobs: [
+          makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+          makeJob({ id: 'b', status: ConversationTransferJobStatus.Canceled }),
+        ],
+        onClose,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Close queue' }),
+      );
+
+      expect(onClose).toHaveBeenCalledOnce();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('asks for confirmation while work is in progress', async () => {
+      const onClose = vi.fn();
+      renderQueue({ onClose });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Close queue' }),
+      );
+
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(screen.getByText('Jobs are still in progress.')).toBeTruthy();
       expect(onClose).not.toHaveBeenCalled();
-    } finally {
-      vi.useRealTimers();
-    }
+    });
+
+    it('asks for confirmation while a failure is unacknowledged', async () => {
+      const onClose = vi.fn();
+      renderQueue({
+        jobs: [makeJob({ status: ConversationTransferJobStatus.Failed })],
+        onClose,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Close queue' }),
+      );
+
+      expect(screen.getByText('Some jobs have failed.')).toBeTruthy();
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('uses the mixed description with both kinds present', async () => {
+      renderQueue({
+        jobs: [
+          makeJob({ id: 'a' }),
+          makeJob({ id: 'b', status: ConversationTransferJobStatus.Failed }),
+        ],
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Close queue' }),
+      );
+
+      expect(
+        screen.getByText('Some jobs are in progress or failed.'),
+      ).toBeTruthy();
+    });
+
+    it('leaves the queue open when the confirmation is dismissed', async () => {
+      const onClose = vi.fn();
+      renderQueue({ onClose });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Close queue' }),
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(onClose).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('collapsed aggregate progress', () => {
+    const collapse = async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Collapse queue' }));
+
+    it('shows the mean of every job once collapsed', async () => {
+      renderQueue({
+        jobs: [
+          makeJob({
+            id: 'a',
+            status: ConversationTransferJobStatus.Success,
+            progress: { percent: 100 },
+          }),
+          makeJob({ id: 'b', progress: { percent: 40 } }),
+          makeJob({ id: 'c', progress: { percent: 10 } }),
+        ],
+      });
+      await collapse();
+
+      expect(
+        screen
+          .getByRole('progressbar', { name: 'Export progress' })
+          .getAttribute('aria-valuenow'),
+      ).toBe('50');
+    });
+
+    it('renders no bar while expanded', () => {
+      renderQueue({ jobs: [makeJob({ progress: { percent: 40 } })] });
+
+      expect(screen.queryByRole('progressbar')).toBeNull();
+    });
+
+    it('renders no bar once nothing is in progress', async () => {
+      renderQueue({
+        jobs: [
+          makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+          makeJob({ id: 'b', status: ConversationTransferJobStatus.Failed }),
+        ],
+      });
+      await collapse();
+
+      expect(screen.queryByRole('progressbar')).toBeNull();
+    });
+
+    it('announces settled file counts rather than a percentage', async () => {
+      renderQueue({
+        jobs: [
+          makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+          makeJob({ id: 'b', status: ConversationTransferJobStatus.Warning }),
+          makeJob({ id: 'c', progress: { percent: 20 } }),
+        ],
+      });
+      await collapse();
+
+      expect(
+        screen.getByRole('progressbar').getAttribute('aria-valuetext'),
+      ).toBe('2 of 3 files done');
+    });
+
+    it('never renders the percentage as visible text', async () => {
+      renderQueue({ jobs: [makeJob({ progress: { percent: 50 } })] });
+      await collapse();
+
+      expect(screen.queryByText(/50\s*%/)).toBeNull();
+    });
+  });
+
+  describe('auto-close', () => {
+    const advance = (ms: number) => {
+      act(() => {
+        vi.advanceTimersByTime(ms);
+      });
+    };
+
+    const withFakeTimers = (assertions: () => void) => {
+      vi.useFakeTimers();
+      try {
+        assertions();
+      } finally {
+        vi.useRealTimers();
+      }
+    };
+
+    it('closes 8 seconds after every job succeeds', () => {
+      withFakeTimers(() => {
+        const onClose = vi.fn();
+        renderQueue({
+          jobs: [makeJob({ status: ConversationTransferJobStatus.Success })],
+          onClose,
+        });
+
+        advance(8000);
+        expect(onClose).toHaveBeenCalledOnce();
+      });
+    });
+
+    it('does not close while a job is still in progress', () => {
+      withFakeTimers(() => {
+        const onClose = vi.fn();
+        renderQueue({ onClose });
+
+        advance(8000);
+        expect(onClose).not.toHaveBeenCalled();
+      });
+    });
+
+    it('does not close while a job has failed', () => {
+      withFakeTimers(() => {
+        const onClose = vi.fn();
+        renderQueue({
+          jobs: [makeJob({ status: ConversationTransferJobStatus.Failed })],
+          onClose,
+        });
+
+        advance(8000);
+        expect(onClose).not.toHaveBeenCalled();
+      });
+    });
+
+    it('does not close while a warned row is unread', () => {
+      withFakeTimers(() => {
+        const onClose = vi.fn();
+        renderQueue({
+          jobs: [
+            makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+            makeJob({
+              id: 'b',
+              status: ConversationTransferJobStatus.Warning,
+              warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+            }),
+          ],
+          onClose,
+        });
+
+        advance(8000);
+        expect(onClose).not.toHaveBeenCalled();
+      });
+    });
+
+    it('does not close while a canceled row is unread', () => {
+      withFakeTimers(() => {
+        const onClose = vi.fn();
+        renderQueue({
+          jobs: [
+            makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+            makeJob({
+              id: 'b',
+              status: ConversationTransferJobStatus.Canceled,
+            }),
+          ],
+          onClose,
+        });
+
+        advance(8000);
+        expect(onClose).not.toHaveBeenCalled();
+      });
+    });
+
+    it('cancels the countdown when a new job starts', () => {
+      withFakeTimers(() => {
+        const onClose = vi.fn();
+        const { rerender } = renderQueue({
+          jobs: [
+            makeJob({ id: 'a', status: ConversationTransferJobStatus.Success }),
+          ],
+          onClose,
+        });
+
+        advance(4000);
+        rerender(
+          <ImportExportQueue
+            title="Exporting 2 files"
+            jobs={[
+              makeJob({
+                id: 'a',
+                status: ConversationTransferJobStatus.Success,
+              }),
+              makeJob({ id: 'b' }),
+            ]}
+            onClose={onClose}
+            onCancel={vi.fn()}
+            labels={DEFAULT_LABELS}
+          />,
+        );
+        advance(8000);
+
+        expect(onClose).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('style overrides', () => {
+    it('applies typed colors as CSS custom properties', () => {
+      renderQueue({
+        jobs: [makeJob({ status: ConversationTransferJobStatus.Success })],
+        styles: {
+          colors: {
+            background: 'rebeccapurple',
+            successIcon: 'tomato',
+          },
+          rootClassName: 'custom-root',
+        },
+      });
+
+      const root = screen.getByRole('status');
+      const style = root.style as CSSStyleDeclaration & CSSProperties;
+      expect(style.getPropertyValue('--cp-transfer-queue-bg')).toBe(
+        'rebeccapurple',
+      );
+      expect(style.getPropertyValue('--cp-transfer-queue-success-icon')).toBe(
+        'tomato',
+      );
+      expect(root.className).toContain('custom-root');
+    });
   });
 });

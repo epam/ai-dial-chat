@@ -13,6 +13,7 @@ export type {
   ImportExportQueueTypography,
   ImportExportQueueStyles,
 } from './models/import-export-queue';
+export { getTransferFileIcon } from './utils/transfer-file';
 export type {
   ConversationMove,
   ConversationPanelProps,
