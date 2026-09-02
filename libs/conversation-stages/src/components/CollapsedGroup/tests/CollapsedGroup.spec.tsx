@@ -96,6 +96,22 @@ describe('CollapsedGroup — collapsed states', () => {
     expect(screen.getByText(/1 failed/)).toBeTruthy();
   });
 
+  it('shows elapsed time without double-counting parallel stages', () => {
+    render(
+      <CollapsedGroup
+        stages={[
+          completed(0, 'Tool A (40s, Start: 11:21:00, End: 11:21:40)'),
+          completed(1, 'Tool B (40s, Start: 11:21:00, End: 11:21:40)'),
+          completed(2, 'Tool C (40s, Start: 11:21:00, End: 11:21:40)'),
+        ]}
+        isStreaming={false}
+      />,
+    );
+
+    expect(screen.getByText('40.0s')).toBeTruthy();
+    expect(screen.queryByText('2m 0s')).toBeNull();
+  });
+
   it('is expanded by default while running, showing progress through the live step', () => {
     render(
       <CollapsedGroup
