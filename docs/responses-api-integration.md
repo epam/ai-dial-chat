@@ -125,7 +125,7 @@ If the deployment is a toolset, generation is rejected with `400 Bad Request`. I
 2. `ConversationService` registers an active generation, preserving the existing protection against concurrent generations in the same conversation.
 3. The BFF retrieves details for the selected model or application and selects the generation API.
 4. The initial conversation state and assistant placeholder are created and saved before Core is called.
-5. The selected adapter sends the request to DIAL Core with the stable persisted conversation id in `X-CONVERSATION-ID` and processes the upstream SSE stream.
+5. The selected adapter sends the request to DIAL Core with the stable persisted conversation id in `X-CONVERSATION-ID` (percent-encoded, see below) and processes the upstream SSE stream.
 6. Response fragments are applied to the assistant message through the shared `applyChunkToMessage` function.
 7. The final text, status, optional error, and `responseId` are saved when generation ends.
 8. The active-generation record is removed regardless of the outcome.
@@ -212,6 +212,16 @@ an AbortSignal, the stable persisted conversation id in `X-CONVERSATION-ID`,
 `X-DIAL-CLIENT-CHANNEL-ID` when available, and the validated `X-Timezone` when
 supplied by the browser. The Chat Completions adapter forwards the same
 conversation and timezone headers.
+
+Both adapters build the conversation header through
+`buildConversationIdHeaders` (`apps/chat-api/src/common/utils/header-value.ts`),
+which percent-encodes the UTF-8 bytes that cannot appear literally in an HTTP
+header value. A conversation id embeds the user-authored title, so an id
+containing an em dash, Cyrillic text, an emoji or a currency sign would
+otherwise make Node's `fetch` throw a ByteString conversion `TypeError` before
+the request left the BFF. Plain-ASCII ids — including spaces — are forwarded
+byte-identical, so DIAL Core sees the same value it always has for them; the
+`/rate` call encodes the header the same way.
 
 ### Why the full history is sent
 
