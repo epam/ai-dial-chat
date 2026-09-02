@@ -692,7 +692,7 @@ When the registry is empty or no entry matches, `openFileCanvas` behaves exactly
 | `Image` | `content.url` | — |
 | `Audio` | `content.url` | `content.mimeType` |
 | `Pdf` | `content.url` | `MIMEType.PDF` (`'application/pdf'`) |
-| `Ooxml` | `content.url` | — |
+| `Ooxml` | `content.url` | MIME type for `content.format` (`docx`/`xlsx`/`pptx`) |
 | `Html` | `content.url` | `MIMEType.HTML` (`'text/html'`) |
 | `Unsupported`, `Error` | `content.url` | — |
 | `PlainText`, `Code` | — | `MIMEType.Plain` (`'text/plain'`) |
