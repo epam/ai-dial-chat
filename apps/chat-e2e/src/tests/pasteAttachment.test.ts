@@ -143,6 +143,7 @@ dialTest(
           'visible',
         );
         await fileManagerModal.getCloseButton().click();
+        await fileManagerModal.waitForState({ state: 'hidden' });
       },
     );
 
