@@ -34,6 +34,7 @@ export const Catalog: FC<CatalogProps> = ({
   browseHeaderRenderer,
   onToggleFavorite,
   isFavoriteVisible,
+  columnVisibility,
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
@@ -536,6 +537,7 @@ export const Catalog: FC<CatalogProps> = ({
                 emptyStateTitle={emptyTitle}
                 onToggleFavorite={onToggleFavorite}
                 isFavoriteVisible={isFavoriteVisible}
+                columnVisibility={columnVisibility}
                 onItemClick={onCardClick ?? handleOpenDetails}
                 stickyHeaderTop={0}
                 selectedItemId={selectedItemId}

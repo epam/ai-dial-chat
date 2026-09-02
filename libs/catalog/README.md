@@ -539,7 +539,36 @@ lib knowing why. All three default to **visible** when omitted.
 `isFavoriteVisible` is the same family for the favorite star: returning `false`
 for an item hides the star in the browse grid, the list view, the favorites
 strip, and the details panel, and makes that item non-favoritable. It defaults
-to **visible** when omitted, so a predicate can only narrow visibility.
+to **visible** when omitted, so a predicate can only narrow visibility. It
+only ever gates the star on individual rows — it has no effect on whether the
+list view's "Favorite" column itself is shown; see `columnVisibility` below
+for that.
+
+### Overriding which list-view columns show per tab
+
+The list view's optional columns — `folder`, `tags`, and `favorite` — each
+have a built-in default rule (`folder` hides for `CatalogEntityType.Model`;
+`tags` and `favorite` are always shown). `columnVisibility` replaces any of
+these per column, given the active tab's `type`; columns left out of the map
+keep their default. `favorite`'s resolved visibility is additionally combined
+(AND) with `isReadonly`.
+
+```tsx
+<Catalog
+  items={items}
+  favorites={favorites}
+  // The star itself is still gated per-row by isFavoriteVisible — this only
+  // decides whether the list view's "Favorite" column exists at all.
+  columnVisibility={{
+    favorite: (type) => type !== CatalogEntityType.Model,
+    // Also drop Tags for Skills — this app's skills carry no topics.
+    tags: (type) => type !== CatalogEntityType.Skill,
+  }}
+/>
+```
+
+This only affects the list view's table — the Browse grid's cards are
+unaffected, since they don't render these as columns.
 
 ```tsx
 <Catalog

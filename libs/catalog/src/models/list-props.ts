@@ -1,4 +1,5 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import type { ListViewColumnVisibility } from '../components/ListView/columns';
 import { CatalogItem } from './catalog-item';
 /** Typography class overrides for `ListView` cells. */
 export interface ListViewTypography {
@@ -75,4 +76,13 @@ export interface ListViewProps {
   credentialsBadgeLoggedOutLabel?: string;
   /** Renders the list read-only: the "Favorite" column is dropped entirely. Default: false. */
   isReadonly?: boolean;
+  /**
+   * Per-column overrides for whether an optional column (`folder`, `tags`,
+   * `favorite`) renders for the active tab, given its entity `type`.
+   * Independent of `isFavoriteVisible` (which only gates the star on
+   * individual rows, not the column). Replaces that column's built-in
+   * default rule; columns omitted from this map keep their default.
+   * `favorite` is additionally combined (AND) with `isReadonly`.
+   */
+  columnVisibility?: ListViewColumnVisibility;
 }
