@@ -24,7 +24,7 @@ export const NameCellRenderer: FC<
 
   if (!data) return null;
   return (
-    <div className="flex h-full min-w-0 items-center gap-2.5">
+    <div className="flex h-full w-full min-w-0 items-center gap-2.5">
       <div className="relative shrink-0">
         <DeploymentIcon
           src={data.iconUrl}
@@ -43,7 +43,11 @@ export const NameCellRenderer: FC<
         postfixClassName={versionClassName}
         query={searchQuery}
         titleClassName={nameClassName}
-        className="min-w-0 items-baseline gap-1.5"
+        /* `flex-1` gives the header the cell's width. Without it the header is
+           only as wide as its own text, and `ItemHeader` caps the version at
+           30% of that — which truncated "2026-07-15" to "2026-07-…" while the
+           rest of the column sat empty. */
+        className="min-w-0 flex-1 items-baseline gap-1.5"
         trailing={
           isSelected ? (
             <IconCheck

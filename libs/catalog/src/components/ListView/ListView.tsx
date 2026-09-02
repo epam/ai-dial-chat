@@ -64,6 +64,7 @@ export const ListView: FC<ListViewProps> = ({
     '--cat-list-header-bg': colors?.headerBackground,
     '--cat-list-row-divider': colors?.rowDivider,
     '--cat-card-star-filled': colors?.starFilled,
+    '--cat-list-folder-icon': colors?.folderIcon,
     '--cat-list-row-even-bg': colors?.rowEvenBackground,
     '--cat-list-selected-border': colors?.selectedRowBorder,
     '--cat-list-selected-bg': colors?.selectedRowBackground,

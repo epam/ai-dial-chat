@@ -8,7 +8,15 @@ import { NameCellRenderer } from './Renders/NameCellRenderer';
 import { StarCellRenderer } from './Renders/StarCellRenderer';
 import { TagsCellRenderer } from './Renders/TagsCellRenderer';
 
-/** Column definitions for the catalog ag-grid list view. A stable module-level constant so ag-grid never sees a new array/closures on each render. */
+/**
+ * Column definitions for the catalog ag-grid list view. A stable module-level constant so ag-grid never sees a new array/closures on each render.
+ *
+ * Name, Folder and Tags all flex, so spare width is shared instead of going to
+ * Name alone: entity names are short, and letting Name absorb every free pixel
+ * left Folder and Tags permanently at their floor, where paths collapsed into
+ * unreadable stubs and tags were clipped mid-word. Name keeps twice the share
+ * because it carries the icon, the name and the version.
+ */
 export const CATALOG_COLUMNS = (
   type: CatalogEntityType,
   isReadonly = false,
@@ -16,7 +24,7 @@ export const CATALOG_COLUMNS = (
   return [
     {
       headerName: 'Name',
-      flex: 1,
+      flex: 2,
       minWidth: 220,
       field: 'name',
       filter: false,
@@ -36,7 +44,7 @@ export const CATALOG_COLUMNS = (
     {
       headerName: 'Folder',
       field: 'folder',
-      width: 170,
+      flex: 1,
       minWidth: 170,
       filter: false,
       hide: type === CatalogEntityType.Model,
@@ -46,7 +54,7 @@ export const CATALOG_COLUMNS = (
     {
       headerName: 'Tags',
       field: 'topics',
-      width: 230,
+      flex: 1,
       minWidth: 230,
       filter: false,
       sortable: false,
@@ -56,8 +64,8 @@ export const CATALOG_COLUMNS = (
     {
       headerName: 'Favorite',
       field: 'isStarred',
-      width: 72,
-      minWidth: 72,
+      width: 88,
+      minWidth: 88,
       filter: false,
       sortable: false,
       resizable: false,

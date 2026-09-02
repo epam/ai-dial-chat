@@ -172,6 +172,16 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 />;
 ```
 
+Name, Folder and Tags share the spare width (Name takes twice the share of the
+other two), so widening the table widens the columns that carry variable-length
+values rather than only the name.
+
+The Folder cell shows the deepest folder and keeps the full path in a tooltip
+and in the accessible name — a breadcrumb of the whole path collapses into
+unreadable per-segment stubs at this width. `styles.typography.folderClassName`
+styles that tooltip path, `folderLastSegmentClassName` the folder on screen, and
+`styles.colors.folderIcon` the leading folder icon.
+
 ### Favorites
 
 Renders the user's favorited items in a dedicated, paginated section.
