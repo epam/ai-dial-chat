@@ -122,6 +122,10 @@ export type {
   ListViewStyles,
   ListViewTypography,
 } from './models/list-props';
+export type {
+  ListViewColumnKey,
+  ListViewColumnVisibility,
+} from './components/ListView/columns';
 
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
