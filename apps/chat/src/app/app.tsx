@@ -50,6 +50,7 @@ import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskConte
 import { useFeatureFlag } from '../context/AppConfigContext';
 import { useConversationPanel } from '../context/ConversationPanelContext';
 import { useDeployments } from '../context/DeploymentsContext';
+import { useIsolatedModelView } from '../context/IsolatedModelViewContext';
 import { useOptionalOverlay } from '../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
@@ -132,6 +133,8 @@ const App: FC = () => {
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
   const { isNewVersionAvailable } = useAppVersionCheck();
+  // TODO: remove in next release
+  const { isActive: isIsolatedView } = useIsolatedModelView();
 
   /*
    * Registers the overlay's conversation-list bridge. Mounted here (below
@@ -303,7 +306,15 @@ const App: FC = () => {
         <Suspense fallback={null}>
           <SigninInterruptDialog />
         </Suspense>
-        <Navigation isOpen={isNavOpen} onClose={closeNav} />
+        {/* TODO: remove in next release. hide-navigation-menu only ever
+            covered the mobile hamburger/sheet, not this desktop rail — see
+            ui-feature-toggles' "The key SHALL NOT affect the desktop
+            navigation rail" — so isolated view hides the whole component
+            directly instead of adding a new permanent OverlayFeature key for
+            a temporary shim. */}
+        {!isIsolatedView && (
+          <Navigation isOpen={isNavOpen} onClose={closeNav} />
+        )}
 
         <ConversationPanelView
           isOpen={isPanelOpen}

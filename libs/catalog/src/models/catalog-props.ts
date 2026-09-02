@@ -6,7 +6,7 @@ import type {
   PublishHistoryEntry,
   PublishPanelLabels,
 } from '@epam/ai-dial-publish-panel';
-import { DropdownItem } from '@epam/ai-dial-ui-kit';
+import { DropdownItem, TabModel } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
@@ -68,8 +68,31 @@ export interface CatalogTitles {
 
 /** Props for Catalog. */
 export interface CatalogProps {
-  /** Items to display in the Browse section. */
+  /**
+   * Items to display in the Browse section's grid/list. Also drives the
+   * default entity-type tabs and Topics filter options when `tabs`/
+   * `topicOptions` are omitted.
+   */
   items: CatalogItem[];
+  /**
+   * Externally-controlled entity-type tab list. When omitted, `Catalog`
+   * derives tabs internally from `items` via `buildCatalogTabs`.
+   *
+   * Lets a host compute tabs from a wider item set than `items` — e.g. so a
+   * host that narrows `items` for grid display (by a category-tree
+   * selection) doesn't lose a tab for a type with zero matches in that
+   * narrowed set.
+   */
+  tabs?: TabModel[];
+  /**
+   * Externally-controlled set of available Topics filter options. When
+   * omitted, `Catalog` derives them internally from `items` via
+   * `getTopicOptions`.
+   *
+   * Lets a host compute the option set from a wider item set than `items`,
+   * for the same reason as `tabs`.
+   */
+  topicOptions?: Set<string>;
   /** Items to display in the Favorites section. */
   favorites: CatalogItem[];
   /** Grouped text labels for headings and actions. */

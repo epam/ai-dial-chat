@@ -182,14 +182,14 @@ const NewConversationComposer: FC<Props> = ({
     handleAttach: handleAttachDialFiles,
   } = useDialFileManagerState(bucket);
 
-  const {
-    inputAttachmentTypes,
-    isAttachmentsAllowed,
-    validateAttachment,
-    fileAccept,
-  } = useAttachmentValidation({
-    allowedMimeTypes: resolvedSelectedDeployment?.inputAttachmentTypes ?? [],
-    onValidationError: ({ reason, formats }) => {
+  const handleAttachmentValidationError = useCallback(
+    ({
+      reason,
+      formats,
+    }: {
+      reason: AttachmentValidationErrorReason;
+      formats?: string;
+    }) => {
       const noTypesAllowed =
         reason === AttachmentValidationErrorReason.NoTypesAllowed;
       showErrorNotification({
@@ -206,6 +206,17 @@ const NewConversationComposer: FC<Props> = ({
         ),
       });
     },
+    [showErrorNotification, t],
+  );
+
+  const {
+    inputAttachmentTypes,
+    isAttachmentsAllowed,
+    validateAttachment,
+    fileAccept,
+  } = useAttachmentValidation({
+    allowedMimeTypes: resolvedSelectedDeployment?.inputAttachmentTypes ?? [],
+    onValidationError: handleAttachmentValidationError,
   });
 
   const handleNetworkUploadError = useCallback(

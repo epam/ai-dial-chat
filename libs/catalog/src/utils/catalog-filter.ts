@@ -30,6 +30,10 @@ export const filterByTopics = (
 export const filterByMyApp = (items: CatalogItem[]): CatalogItem[] =>
   items.filter((item) => item.isMyApp === true);
 
+/** Derives the set of distinct topic values present across `items`. */
+export const getTopicOptions = (items: CatalogItem[]): Set<string> =>
+  new Set(items.flatMap((item) => item.topics));
+
 /**
  * Returns a filtered array of items whose name, description, or type includes the query.
  * Case-insensitive and ignores leading/trailing whitespace.

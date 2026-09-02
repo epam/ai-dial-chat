@@ -534,4 +534,93 @@ describe('ClientChannelProvider', () => {
     });
     expect(result.current).toBeInstanceOf(Error);
   });
+
+  describe('waitForChannel', () => {
+    it('resolves immediately when channelId is already established', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { stream } = makeControllableStream();
+      mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+      const { result } = renderHook(() => useClientChannel(), { wrapper });
+      await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+      let resolved: string | null = null;
+      await act(async () => {
+        resolved = await result.current.waitForChannel();
+      });
+
+      expect(resolved).toBe('channel-1');
+    });
+
+    it('resolves with channelId when subscribe completes during the wait', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      let resolveSubscribe!: (value: {
+        body: ReadableStream<Uint8Array>;
+        channelId: string;
+      }) => void;
+      mockSubscribe.mockReturnValue(
+        new Promise((resolve) => {
+          resolveSubscribe = resolve;
+        }),
+      );
+
+      const { result } = renderHook(() => useClientChannel(), { wrapper });
+
+      /* Start waiting before the subscribe has resolved. */
+      const waitedId = result.current.waitForChannel(5000);
+
+      const { stream } = makeControllableStream();
+      await act(async () => {
+        resolveSubscribe({ body: stream, channelId: 'channel-async' });
+        await Promise.resolve();
+      });
+
+      expect(await waitedId).toBe('channel-async');
+    });
+
+    it('resolves with null when navigating away from the streaming page during the wait', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      /* Subscribe never resolves so the wait stays pending. */
+      mockSubscribe.mockReturnValue(new Promise(() => undefined));
+
+      const { Wrapper, navigate } = makeNavigableWrapper(ROUTES.Conversations);
+      const { result } = renderHook(() => useClientChannel(), {
+        wrapper: Wrapper,
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      /* Start waiting; subscription is still in flight. */
+      const waitedId = result.current.waitForChannel(5000);
+
+      /* Navigating away triggers disconnect → resolveChannelWaiters(null). */
+      await navigate('/files');
+
+      expect(await waitedId).toBeNull();
+    });
+
+    it('resolves with null on timeout when subscribe does not complete in time', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        mockSubscribe.mockReturnValue(new Promise(() => undefined));
+
+        const { result } = renderHook(() => useClientChannel(), { wrapper });
+        await act(async () => {
+          await Promise.resolve();
+        });
+
+        const waitedId = result.current.waitForChannel(2000);
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(2000);
+        });
+
+        expect(await waitedId).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
 });

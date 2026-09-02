@@ -47,6 +47,14 @@ interface UiFeaturesContextType {
    * `SET_OVERLAY_OPTIONS` handler; called with `undefined` is a no-op.
    */
   applyOverlayOverride: (features: string[] | undefined) => void;
+  /**
+   * TODO: remove in next release. Replaces the effective UI-feature set with
+   * exactly `features`, taking precedence over the overlay override, the
+   * server baseline, and the compiled defaults. Consumed only by
+   * `IsolatedModelViewContext`. `null` clears the override and restores the
+   * normal priority chain.
+   */
+  applyIsolatedViewOverride: (features: Set<OverlayFeature> | null) => void;
 }
 
 const UiFeaturesContext = createContext<UiFeaturesContextType | undefined>(
@@ -69,8 +77,15 @@ export const UiFeaturesProvider: FC<Props> = ({ children }) => {
   } = useAppConfig();
   const [overlayOverride, setOverlayOverride] =
     useState<Set<OverlayFeature> | null>(null);
+  // TODO: remove in next release
+  const [isolatedViewOverride, setIsolatedViewOverride] =
+    useState<Set<OverlayFeature> | null>(null);
 
   const enabledFeatures = useMemo(() => {
+    // TODO: remove in next release
+    if (isolatedViewOverride != null) {
+      return isolatedViewOverride;
+    }
     if (overlayOverride != null) {
       return overlayOverride;
     }
@@ -78,7 +93,7 @@ export const UiFeaturesProvider: FC<Props> = ({ children }) => {
       return normalizeOverlayFeatures(enabledUiFeatures);
     }
     return new Set<OverlayFeature>(DEFAULT_ENABLED_UI_FEATURES);
-  }, [enabledUiFeatures, overlayOverride]);
+  }, [enabledUiFeatures, overlayOverride, isolatedViewOverride]);
 
   const isEnabled = useCallback(
     (feature: OverlayFeature) => enabledFeatures.has(feature),
@@ -90,9 +105,27 @@ export const UiFeaturesProvider: FC<Props> = ({ children }) => {
     setOverlayOverride(normalizeOverlayFeatures(features));
   }, []);
 
+  // TODO: remove in next release
+  const applyIsolatedViewOverride = useCallback(
+    (features: Set<OverlayFeature> | null) => {
+      setIsolatedViewOverride(features);
+    },
+    [],
+  );
+
   const value = useMemo(
-    () => ({ isEnabled, enabledFeatures, applyOverlayOverride }),
-    [isEnabled, enabledFeatures, applyOverlayOverride],
+    () => ({
+      isEnabled,
+      enabledFeatures,
+      applyOverlayOverride,
+      applyIsolatedViewOverride,
+    }),
+    [
+      isEnabled,
+      enabledFeatures,
+      applyOverlayOverride,
+      applyIsolatedViewOverride,
+    ],
   );
 
   return (

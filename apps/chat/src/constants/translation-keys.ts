@@ -11,6 +11,10 @@ export enum ChatI18nKeys {
   StreamError = 'chat.streamError',
   CreateConversationError = 'chat.createConversationError',
   ConversationNotFound = 'chat.conversationNotFound',
+  /** TODO: remove in next release */
+  IsolatedModelNotFoundTitle = 'chat.isolatedModelNotFoundTitle',
+  /** TODO: remove in next release */
+  IsolatedModelNotFoundDescription = 'chat.isolatedModelNotFoundDescription',
   DeleteMessageTitle = 'chat.deleteMessageTitle',
   DeleteMessageDescription = 'chat.deleteMessageDescription',
   StarterConfirmTitle = 'chat.starterConfirmTitle',
@@ -727,16 +731,23 @@ export enum ConversationExportI18nKeys {
   WithAttachmentsOption = 'conversationExport.withAttachmentsOption',
   WithoutAttachmentsOption = 'conversationExport.withoutAttachmentsOption',
   QueueTitle = 'conversationExport.queueTitle',
-  AllConversationsJobLabel = 'conversationExport.allConversationsJobLabel',
   SuccessTitle = 'conversationExport.successTitle',
   SuccessSingle = 'conversationExport.successSingle',
   SuccessAll = 'conversationExport.successAll',
   FailedTitle = 'conversationExport.failedTitle',
   FailedSingle = 'conversationExport.failedSingle',
+  FailedSingleTooLarge = 'conversationExport.failedSingleTooLarge',
   FailedAll = 'conversationExport.failedAll',
   WarningAttachmentSkipped = 'conversationExport.warningAttachmentSkipped',
-  CloseJobAriaLabel = 'conversationExport.closeJobAriaLabel',
-  RetryJobAriaLabel = 'conversationExport.retryJobAriaLabel',
+  CancelJobAriaLabel = 'conversationExport.cancelJobAriaLabel',
+  JobProgressAriaLabel = 'conversationExport.jobProgressAriaLabel',
+  QueueProgressAriaLabel = 'conversationExport.queueProgressAriaLabel',
+  ErrorUnauthorized = 'conversationExport.errorUnauthorized',
+  ErrorNotFound = 'conversationExport.errorNotFound',
+  ErrorFileTooLarge = 'conversationExport.errorFileTooLarge',
+  ErrorUnknown = 'conversationExport.errorUnknown',
+  /* Queue chrome shared with the import queue — one instance of each string. */
+  CanceledLabel = 'conversationExport.canceledLabel',
   CollapseQueueAriaLabel = 'conversationExport.collapseQueueAriaLabel',
   ExpandQueueAriaLabel = 'conversationExport.expandQueueAriaLabel',
   CloseQueueAriaLabel = 'conversationExport.closeQueueAriaLabel',
@@ -744,6 +755,7 @@ export enum ConversationExportI18nKeys {
   CloseQueueConfirmDescriptionInProgress = 'conversationExport.closeQueueConfirmDescriptionInProgress',
   CloseQueueConfirmDescriptionFailed = 'conversationExport.closeQueueConfirmDescriptionFailed',
   CloseQueueConfirmDescriptionMixed = 'conversationExport.closeQueueConfirmDescriptionMixed',
+  QueueProgressValueText = 'conversationExport.queueProgressValueText',
 }
 
 export enum ConversationImportI18nKeys {
@@ -755,6 +767,13 @@ export enum ConversationImportI18nKeys {
   Failed = 'conversationImport.failed',
   WarningAttachmentSkipped = 'conversationImport.warningAttachmentSkipped',
   UnsupportedFormat = 'conversationImport.unsupportedFormat',
+  CancelJobAriaLabel = 'conversationImport.cancelJobAriaLabel',
+  JobProgressAriaLabel = 'conversationImport.jobProgressAriaLabel',
+  QueueProgressAriaLabel = 'conversationImport.queueProgressAriaLabel',
+  ErrorUnauthorized = 'conversationImport.errorUnauthorized',
+  ErrorMissingBucket = 'conversationImport.errorMissingBucket',
+  ErrorUnsupportedFormat = 'conversationImport.errorUnsupportedFormat',
+  ErrorUnknown = 'conversationImport.errorUnknown',
 }
 
 export enum SidebarI18nKeys {

@@ -15,7 +15,11 @@ import type {
   DeploymentItem,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  NoDataContent,
+} from '@epam/ai-dial-ui-kit';
 import { IconTelescope } from '@tabler/icons-react';
 import {
   FC,
@@ -46,11 +50,16 @@ import {
   ToolsI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
+import {
+  sanitizeIsolatedModelId,
+  useIsolatedModelView,
+} from '../../context/IsolatedModelViewContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import {
   createConversation as apiCreateConversation,
+  renameConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
@@ -97,8 +106,16 @@ const ConversationRoute: FC = () => {
     isLoading,
     error,
   } = useDeployments();
+  // TODO: remove in next release
+  const {
+    isActive: isIsolatedView,
+    isNotFound: isIsolatedModelNotFound,
+    resolvedDeploymentId: isolatedModelId,
+  } = useIsolatedModelView();
 
   const hasConsumedRouteDeploymentRef = useRef(false);
+  // TODO: remove in next release
+  const hasConsumedIsolatedModelIdRef = useRef(false);
 
   /*
    * Honors a deploymentId passed as router state (by the catalog's "Use in
@@ -131,6 +148,19 @@ const ConversationRoute: FC = () => {
      * route, resetting the flag, and the default resolves normally again.
      */
     if (hasConsumedRouteDeploymentRef.current) return;
+    /*
+     * TODO: remove in next release. Isolated view pins the deployment once it
+     * resolves, and must never fall through to the default selection even
+     * while still resolving — a briefly-wrong default would visibly flip to
+     * the pinned model a moment later.
+     */
+    if (isIsolatedView) {
+      if (isolatedModelId && !hasConsumedIsolatedModelIdRef.current) {
+        hasConsumedIsolatedModelIdRef.current = true;
+        restoreSelectedItemId(isolatedModelId);
+      }
+      return;
+    }
     if (!overlay?.pendingModelId) {
       restoreDefaultSelection();
     }
@@ -141,6 +171,8 @@ const ConversationRoute: FC = () => {
     overlay?.pendingModelId,
     navigate,
     pathname,
+    isIsolatedView,
+    isolatedModelId,
   ]);
 
   /*
@@ -258,8 +290,20 @@ const ConversationRoute: FC = () => {
         attachmentDtos,
         hasToolConfig ? toolConfigurationValue : undefined,
       );
+      // TODO: remove in next release
+      const isolatedName =
+        isIsolatedView && isolatedModelId
+          ? `isolated_${sanitizeIsolatedModelId(isolatedModelId)}`
+          : null;
+      if (isolatedName) {
+        await renameConversation(
+          getConversationPath(conversation.id),
+          isolatedName,
+        );
+      }
       const savedConversation = {
         ...conversation,
+        ...(isolatedName ? { name: isolatedName } : {}),
         prompt: chatSettingsValues.systemPrompt,
         temperature: chatSettingsValues.temperature,
         responseFormat: chatSettingsValues.responseFormat,
@@ -272,7 +316,13 @@ const ConversationRoute: FC = () => {
         state: { conversation: savedConversation },
       });
     },
-    [navigate, selectedItemId, toolConfigurationValue],
+    [
+      navigate,
+      selectedItemId,
+      toolConfigurationValue,
+      isIsolatedView,
+      isolatedModelId,
+    ],
   );
 
   const handleStarterSelect = useCallback(
@@ -299,6 +349,13 @@ const ConversationRoute: FC = () => {
               [],
               hasConfig ? mergedConfigurationValue : undefined,
             );
+            // TODO: remove in next release
+            if (isIsolatedView && isolatedModelId) {
+              await renameConversation(
+                getConversationPath(conversation.id),
+                `isolated_${sanitizeIsolatedModelId(isolatedModelId)}`,
+              );
+            }
             navigate(getConversationRoute(conversation.id));
           } catch (err) {
             const { message: errorMessage, traceId } =
@@ -324,10 +381,25 @@ const ConversationRoute: FC = () => {
       showErrorNotification,
       t,
       toolConfigurationValue,
+      isIsolatedView,
+      isolatedModelId,
     ],
   );
 
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
+
+  // TODO: remove in next release
+  if (isIsolatedModelNotFound) {
+    return (
+      <div className="flex size-full items-center justify-center">
+        <NoDataContent
+          title={t(ChatI18nKeys.IsolatedModelNotFoundTitle)}
+          description={t(ChatI18nKeys.IsolatedModelNotFoundDescription)}
+          live
+        />
+      </div>
+    );
+  }
 
   return (
     <Suspense fallback={<RouteFallback />}>

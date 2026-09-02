@@ -55,6 +55,34 @@ translated text.
 - **THEN** `validateAttachment` still returns
   `AttachmentErrorReason.UnsupportedType` and no error is thrown
 
+### Requirement: Content-stable `allowedMimeTypes` and `validateAttachment`
+The hook SHALL treat a newly-passed `allowedMimeTypes` array as unchanged
+when its contents are identical (same length, same entries in the same
+order) to the previous one, re-anchoring to the previous array reference
+instead. `validateAttachment`, `fileAccept`, and `inputAttachmentTypes`
+SHALL only change identity when the resolved MIME types actually change.
+
+This protects callers that recompute `allowedMimeTypes` from derived state
+(e.g. a deployment's `inputAttachmentTypes` falling back to `[]`) and would
+otherwise pass a new-but-equal array on every render. Without this, a
+consumer that re-validates the attachment tray whenever `validateAttachment`
+changes identity (see `conversation-input-attachments`) re-runs on every
+unrelated render, re-arming the debounce timer for a still-rejected
+attachment and reporting it again indefinitely.
+
+#### Scenario: Same-content array does not change validateAttachment's identity
+- **WHEN** the hook re-renders with a new `allowedMimeTypes` array instance
+  that has the same entries as the previous render
+- **THEN** `validateAttachment` (and `fileAccept`, `inputAttachmentTypes`)
+  keep the same reference as before
+
+#### Scenario: Changed content does change validateAttachment's identity
+- **WHEN** `allowedMimeTypes` changes to a different set of MIME types
+  (e.g. the user switches deployment)
+- **THEN** `validateAttachment` receives a new identity and, when called
+  again with an attachment already in the tray, reports validation errors
+  against the new set
+
 ### Requirement: Debounce timer cleanup on unmount
 The hook SHALL clear its pending debounce timer when the component using
 it unmounts, so no `onValidationError` call fires after unmount.

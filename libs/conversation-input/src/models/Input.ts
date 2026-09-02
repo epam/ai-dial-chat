@@ -173,13 +173,6 @@ export interface InputProps {
   /** Attachments pre-populated in the tray on mount (e.g. when editing an existing message). */
   initialAttachments?: Attachment[];
   /**
-   * When `true`, the textarea always renders on its own row above the action bar
-   * (attach button at the start, footer actions at the end), instead of the
-   * compact single-row layout. Used by the
-   * edit-message UI, which always wants the stacked layout.
-   */
-  isStacked?: boolean;
-  /**
    * When `true`, the attach (+) button and its associated hidden file input are
    * not rendered. Use this when the caller manages file picking outside the
    * component (e.g. `EditMessageInput` renders the `+` button outside the

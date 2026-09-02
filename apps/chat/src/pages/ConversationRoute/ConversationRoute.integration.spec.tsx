@@ -82,6 +82,13 @@ vi.mock('../../context/UserConfigContext', () => ({
     setSelectedDeployment: contextMocks.setSelectedDeployment,
   }),
 }));
+vi.mock('../../context/IsolatedModelViewContext', () => ({
+  useIsolatedModelView: () => ({
+    isActive: false,
+    isNotFound: false,
+    resolvedDeploymentId: null,
+  }),
+}));
 vi.mock('../../context/auth/UserContext');
 vi.mock('../../context/NotificationContext');
 vi.mock('../../context/overlay/OverlayContext', () => ({
