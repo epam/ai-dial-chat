@@ -18,9 +18,8 @@ import type {
 } from '../../models/stages-props';
 import { groupStagesByName } from '../../utils/stage-grouping';
 import {
-  cleanStageName,
+  calculateStagesDurationSeconds,
   formatTotalDuration,
-  parseDurationSeconds,
 } from '../../utils/stage-name';
 import { findLiveStage } from '../../utils/stage-progress';
 import { StageIcon } from '../StageIcon/StageIcon';
@@ -53,10 +52,9 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const hasFailed = row.attempts?.some((a) => a.status === StageStatus.Failed);
-  const totalSeconds = (row.attempts || []).reduce((sum, attempt) => {
-    const { durationLabel } = cleanStageName(attempt.name);
-    return sum + (parseDurationSeconds(durationLabel) ?? 0);
-  }, 0);
+  const totalSeconds = calculateStagesDurationSeconds(
+    (row.attempts || []).map((attempt) => attempt.name),
+  );
   const totalDurationLabel =
     totalSeconds > 0 ? formatTotalDuration(totalSeconds) : undefined;
 

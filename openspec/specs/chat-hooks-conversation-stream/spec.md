@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Reusable hook exported by `@epam/ai-dial-chat-hooks` that drives completion streaming exclusively through an injected transport, with per-path streaming state, stale-chunk rejection, reload-after-complete semantics, and awaiting-generation resume detection.
+Reusable hook exported by `@epam/ai-dial-chat-hooks` that drives completion streaming exclusively through an injected transport, with per-path streaming state and live-message buffering, stale-chunk rejection, reload-after-complete semantics, and awaiting-generation resume detection.
 
 ## Requirements
 
@@ -42,8 +42,30 @@ match the currently active generation for that path.
 #### Scenario: Chunk for a non-displayed conversation is dropped
 - **WHEN** a chunk arrives for a conversation path that is not the
   currently displayed `conversationId`
-- **THEN** the chunk is not applied to conversation state, but streaming
-  continues to be tracked for that path
+- **THEN** the chunk is not applied to the displayed conversation state, but
+  it is accumulated in that path's live-message buffer and streaming continues
+  to be tracked for the path
+
+### Requirement: Buffered live message can be restored after navigation
+The hook SHALL accumulate accepted chunks into a per-path assistant-message
+snapshot, including merged `custom_content.stages`, regardless of whether the
+path is displayed. It SHALL expose
+`restoreBufferedGeneration(conversationId, conversation)`, which returns the
+conversation unchanged when no buffer exists and otherwise restores the
+buffered message at its recorded index. Completion and error callbacks SHALL
+clear the buffer because the backend's terminal save is then authoritative.
+
+#### Scenario: Earlier and background stages are restored
+- **WHEN** stage chunks arrive before and while their conversation is hidden
+  and the host reloads that conversation before completion
+- **THEN** `restoreBufferedGeneration` returns it with every accumulated stage
+  update, rather than only updates received after the conversation became
+  visible again
+
+#### Scenario: Completed generation no longer uses its buffer
+- **WHEN** the transport signals completion or error for a generation
+- **THEN** a later `restoreBufferedGeneration` call does not restore that
+  generation's in-memory snapshot
 
 ### Requirement: Reload-after-complete, never trust the local stream
 On stream completion, the hook SHALL reload the conversation through
