@@ -1,19 +1,30 @@
 import {
   type Conversation,
+  ConversationTransferErrorCode,
   ConversationTransferJobStatus,
   ConversationTransferSubjectKind,
+  ConversationTransferUnitKind,
+  triggerBlobDownload,
 } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ConversationExportMode,
-  ConversationTransferErrorCode,
   ConversationTransferWarningCode,
 } from '../../conversation-transfer/types';
+import { buildDialArchive } from '../../conversation-transfer/zip-export';
 import {
   useConversationExport,
   type UseConversationExportParams,
 } from '../useConversationExport';
+
+vi.mock('../../conversation-transfer/zip-export', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('../../conversation-transfer/zip-export')
+    >();
+  return { ...actual, buildDialArchive: vi.fn(actual.buildDialArchive) };
+});
 
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   const actual =
@@ -176,7 +187,7 @@ describe('useConversationExport', () => {
     expect(onWarning).not.toHaveBeenCalled();
   });
 
-  it('warns and still succeeds when an attachment cannot be downloaded', async () => {
+  it('settles at Warning, still delivering the archive, when an attachment cannot be downloaded', async () => {
     const { result } = renderExport();
     getConversation.mockResolvedValue(
       makeConversation({
@@ -207,9 +218,12 @@ describe('useConversationExport', () => {
         code: ConversationTransferWarningCode.AttachmentSkipped,
       }),
     );
-    expect(result.current.jobs[0].status).toBe(
-      ConversationTransferJobStatus.Success,
-    );
+    expect(result.current.jobs[0]).toMatchObject({
+      status: ConversationTransferJobStatus.Warning,
+      warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+      progress: { percent: 100 },
+    });
+    expect(vi.mocked(triggerBlobDownload)).toHaveBeenCalledOnce();
   });
 
   it('reports unauthorized without a success/warning event', async () => {
@@ -367,5 +381,303 @@ describe('useConversationExport', () => {
     unmount();
 
     expect(capturedSignal?.aborted).toBe(true);
+  });
+
+  describe('file naming', () => {
+    it('names the job at enqueue with the file it will download', async () => {
+      const { result } = renderExport();
+
+      await act(() =>
+        result.current.exportSingle(
+          'bucket-a/gpt-4o__My Chat',
+          'My Chat',
+          ConversationExportMode.WithoutAttachments,
+        ),
+      );
+
+      const { fileName } = result.current.jobs[0];
+      expect(fileName).toMatch(
+        /^\d{4}-\d{2}-\d{2}_ai_dial_chat_conversation\.json$/,
+      );
+      expect(vi.mocked(triggerBlobDownload)).toHaveBeenCalledWith(
+        expect.any(Blob),
+        fileName,
+      );
+    });
+
+    it('names an attachment export with the .dial archive it will download', () => {
+      const { result } = renderExport();
+      getConversation.mockImplementation(
+        () =>
+          new Promise(() => {
+            /* never resolves */
+          }),
+      );
+
+      act(() => {
+        void result.current.exportSingle(
+          'bucket-a/gpt-4o__My Chat',
+          'My Chat',
+          ConversationExportMode.WithAttachments,
+        );
+      });
+
+      expect(result.current.jobs[0].fileName).toMatch(
+        /^\d{4}-\d{2}-\d{2}_ai_dial_chat_with_attachments\.dial$/,
+      );
+    });
+  });
+
+  describe('progress', () => {
+    it('advances one slice per settled attachment and completes at 100', async () => {
+      const { result } = renderExport();
+      getConversation.mockResolvedValue(
+        makeConversation({
+          messages: [
+            {
+              role: 'assistant' as Conversation['messages'][number]['role'],
+              content: '',
+              timestamp: '2026-07-10T00:00:00.000Z',
+              custom_content: {
+                attachments: [
+                  { title: 'a.pdf', url: 'files/bucket-a/a.pdf' },
+                  { title: 'b.pdf', url: 'files/bucket-a/b.pdf' },
+                  { title: 'c.pdf', url: 'files/bucket-a/c.pdf' },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+
+      const releases: Array<() => void> = [];
+      downloadFileRaw.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            releases.push(() =>
+              resolve({
+                raw: {
+                  arrayBuffer: async () =>
+                    new TextEncoder().encode('pdf').buffer,
+                },
+              }),
+            );
+          }),
+      );
+
+      let exportPromise: Promise<void> = Promise.resolve();
+      await act(async () => {
+        exportPromise = result.current.exportSingle(
+          'bucket-a/gpt-4o__My Chat',
+          'My Chat',
+          ConversationExportMode.WithAttachments,
+        );
+        await Promise.resolve();
+      });
+
+      await waitFor(() => expect(releases).toHaveLength(3));
+      expect(result.current.jobs[0].progress.percent).toBe(15);
+
+      await act(async () => {
+        releases[0]();
+        await Promise.resolve();
+      });
+      await waitFor(() =>
+        expect(result.current.jobs[0].progress).toEqual({
+          percent: 38,
+          units: {
+            completed: 1,
+            total: 3,
+            kind: ConversationTransferUnitKind.Attachment,
+          },
+        }),
+      );
+
+      await act(async () => {
+        releases[1]();
+        releases[2]();
+        await exportPromise;
+      });
+
+      expect(result.current.jobs[0]).toMatchObject({
+        status: ConversationTransferJobStatus.Success,
+        progress: { percent: 100 },
+      });
+    });
+
+    it('completes an attachment-free archive export without any download', async () => {
+      const { result } = renderExport();
+
+      await act(() =>
+        result.current.exportSingle(
+          'bucket-a/gpt-4o__My Chat',
+          'My Chat',
+          ConversationExportMode.WithAttachments,
+        ),
+      );
+
+      expect(downloadFileRaw).not.toHaveBeenCalled();
+      expect(result.current.jobs[0]).toMatchObject({
+        status: ConversationTransferJobStatus.Success,
+        progress: { percent: 100 },
+      });
+    });
+  });
+
+  describe('cancellation', () => {
+    it('keeps the row, downloads nothing, and reports no success', async () => {
+      const { result } = renderExport();
+      getConversation.mockResolvedValue(
+        makeConversation({
+          messages: [
+            {
+              role: 'assistant' as Conversation['messages'][number]['role'],
+              content: '',
+              timestamp: '2026-07-10T00:00:00.000Z',
+              custom_content: {
+                attachments: [
+                  { title: 'q1.pdf', url: 'files/bucket-a/q1.pdf' },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+      let capturedSignal: AbortSignal | undefined;
+      downloadFileRaw.mockImplementation(
+        (_params: unknown, options: { signal: AbortSignal }) => {
+          capturedSignal = options.signal;
+          return new Promise(() => {
+            /* never resolves */
+          });
+        },
+      );
+
+      await act(async () => {
+        void result.current.exportSingle(
+          'bucket-a/gpt-4o__My Chat',
+          'My Chat',
+          ConversationExportMode.WithAttachments,
+        );
+        await Promise.resolve();
+      });
+      await waitFor(() => expect(capturedSignal).toBeDefined());
+
+      act(() => {
+        result.current.cancelJob(result.current.jobs[0].id);
+      });
+
+      expect(capturedSignal?.aborted).toBe(true);
+      expect(result.current.jobs).toHaveLength(1);
+      expect(result.current.jobs[0].status).toBe(
+        ConversationTransferJobStatus.Canceled,
+      );
+      expect(vi.mocked(triggerBlobDownload)).not.toHaveBeenCalled();
+      expect(onSuccess).not.toHaveBeenCalled();
+      expect(onError).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('archive size limit', () => {
+    const renderExportWithLimit = (maxArchiveBytes: number) => {
+      getConversation = vi.fn().mockResolvedValue(
+        makeConversation({
+          messages: [
+            {
+              role: 'assistant' as Conversation['messages'][number]['role'],
+              content: '',
+              timestamp: '2026-07-10T00:00:00.000Z',
+              custom_content: {
+                attachments: [
+                  { title: 'q1.pdf', url: 'files/bucket-a/q1.pdf' },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+      listConversations = vi.fn();
+      downloadFileRaw = vi.fn().mockResolvedValue({
+        raw: {
+          arrayBuffer: async () =>
+            new TextEncoder().encode('0123456789').buffer,
+        },
+      });
+      onSuccess = vi.fn();
+      onWarning = vi.fn();
+      onError = vi.fn();
+
+      return renderHook(() =>
+        useConversationExport({
+          conversationsApi: { getConversation, listConversations },
+          filesApi: { downloadFileRaw },
+          normalizeConversationPath,
+          maxArchiveBytes,
+          onSuccess,
+          onWarning,
+          onError,
+        } as unknown as UseConversationExportParams),
+      );
+    };
+
+    it('fails as FileTooLarge before the archive is built', async () => {
+      const { result } = renderExportWithLimit(4);
+
+      await act(() =>
+        result.current.exportSingle(
+          'bucket-a/gpt-4o__My Chat',
+          'My Chat',
+          ConversationExportMode.WithAttachments,
+        ),
+      );
+
+      expect(vi.mocked(buildDialArchive)).not.toHaveBeenCalled();
+      expect(vi.mocked(triggerBlobDownload)).not.toHaveBeenCalled();
+      expect(result.current.jobs[0]).toMatchObject({
+        status: ConversationTransferJobStatus.Failed,
+        errorCode: ConversationTransferErrorCode.FileTooLarge,
+      });
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: ConversationTransferErrorCode.FileTooLarge,
+        }),
+      );
+    });
+
+    it('builds normally when the attachments fit', async () => {
+      const { result } = renderExportWithLimit(1024);
+
+      await act(() =>
+        result.current.exportSingle(
+          'bucket-a/gpt-4o__My Chat',
+          'My Chat',
+          ConversationExportMode.WithAttachments,
+        ),
+      );
+
+      expect(vi.mocked(buildDialArchive)).toHaveBeenCalledOnce();
+      expect(result.current.jobs[0].status).toBe(
+        ConversationTransferJobStatus.Success,
+      );
+    });
+
+    it('maps an allocation failure to FileTooLarge, not Unknown', async () => {
+      const { result } = renderExportWithLimit(1024);
+      vi.mocked(buildDialArchive).mockImplementationOnce(() => {
+        throw new RangeError('Array buffer allocation failed');
+      });
+
+      await act(() =>
+        result.current.exportSingle(
+          'bucket-a/gpt-4o__My Chat',
+          'My Chat',
+          ConversationExportMode.WithAttachments,
+        ),
+      );
+
+      expect(result.current.jobs[0].errorCode).toBe(
+        ConversationTransferErrorCode.FileTooLarge,
+      );
+    });
   });
 });

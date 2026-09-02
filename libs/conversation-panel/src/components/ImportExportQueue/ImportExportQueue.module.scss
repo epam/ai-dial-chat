@@ -13,10 +13,15 @@
   );
 }
 
+.divider {
+  border-block-end: 1px solid
+    var(--cp-transfer-queue-divider, var(--stroke-tertiary, #e0e6f0));
+}
+
 .successIcon {
   color: var(
     --cp-transfer-queue-success-icon,
-    var(--text-visual-green-2, #0d6e72)
+    var(--text-accent-primary, #2764d9)
   );
 }
 
@@ -29,8 +34,20 @@
     --cp-transfer-queue-failure-count-bg,
     var(--bg-control-error, #ae2f2f)
   );
+  /*
+   * This text sits on the filled --bg-control-error swatch, so it needs the
+   * design system's on-control token. --text-tertiary is for muted text on a
+   * plain background; over that fill it contrasts at 1.95:1.
+   */
   color: var(
     --cp-transfer-queue-failure-count-text,
-    var(--text-tertiary, #848e9c)
+    var(--text-control-permanent, #fcfcfc)
+  );
+}
+
+.warningIcon {
+  color: var(
+    --cp-transfer-queue-warning-icon,
+    var(--text-warning-icon, #eec840)
   );
 }
