@@ -23,7 +23,7 @@ interface TitleRowProps {
   viewMode: CatalogViewMode;
   onViewModeChange: (mode: CatalogViewMode) => void;
   title?: string;
-  browseHeading?: ReactNode;
+  browseHeaderRenderer?: ReactNode;
   styles?: ToolbarStyles;
   query: string;
   onQueryChange: (q: string) => void;
@@ -49,7 +49,7 @@ export const TitleRow: FC<TitleRowProps> = ({
   viewMode,
   onViewModeChange,
   title = 'Browse',
-  browseHeading,
+  browseHeaderRenderer,
   styles: browseStyles,
   query,
   onQueryChange,
@@ -111,7 +111,7 @@ export const TitleRow: FC<TitleRowProps> = ({
     <div className="flex flex-col gap-3">
       {/* Row 1: title | view toggle | divider | sort */}
       <div className="flex items-center gap-2">
-        {browseHeading ?? (
+        {browseHeaderRenderer ?? (
           <ItemHeader
             title={title}
             postfix={totalCount}

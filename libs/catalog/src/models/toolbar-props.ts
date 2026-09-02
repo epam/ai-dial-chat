@@ -51,7 +51,7 @@ export interface ToolbarProps {
    * so a host can render a clickable breadcrumb instead of a plain text
    * label.
    */
-  browseHeading?: ReactNode;
+  browseHeaderRenderer?: ReactNode;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
   searchPlaceholder?: string;
   /** Accessible label for switching to grid view. Default: 'Grid view'. */

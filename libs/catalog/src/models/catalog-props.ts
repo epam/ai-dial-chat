@@ -103,7 +103,7 @@ export interface CatalogProps {
    * of a plain text label. The item count normally shown next to the heading
    * is not rendered alongside it — include it in the supplied node if needed.
    */
-  browseHeading?: ReactNode;
+  browseHeaderRenderer?: ReactNode;
   /** Whether catalog data is loading (reserved for future loading state). */
   isLoading?: boolean;
   /** Error to display if data loading failed (reserved for future error state). */
