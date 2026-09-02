@@ -15,10 +15,8 @@ describe('PRIMARY_LOCALE', () => {
 });
 
 describe('buildAdditionalLocaleOptions', () => {
-  it('excludes the fixed primary locale from the supported languages', () => {
-    expect(buildAdditionalLocaleOptions()).toEqual([
-      { code: 'de', label: 'DE' },
-    ]);
+  it('returns no options when no additional content locales are configured', () => {
+    expect(buildAdditionalLocaleOptions()).toEqual([]);
   });
 });
 
