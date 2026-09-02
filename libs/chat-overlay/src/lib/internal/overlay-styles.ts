@@ -14,10 +14,27 @@ export enum OverlayClassName {
   LoaderHidden = 'dial-overlay-loader--hidden',
 }
 
+/**
+ * Custom properties the injected stylesheet reads, each with a literal
+ * fallback. This lib deliberately ships no CSS file and no `--cs-*` theming
+ * channel, so these are the supported way for a host to retheme the loader
+ * palette without an `!important` fight against the injected source order.
+ */
+export enum OverlayCssVariable {
+  /** Loader backdrop. Defaults to `#ffffff`. */
+  LoaderBackground = '--dial-overlay-loader-background',
+  /** Loader foreground, inherited by the spinner's `currentColor` stroke. Defaults to `#2764d9`. */
+  LoaderColor = '--dial-overlay-loader-color',
+}
+
 /*
- * `display: none !important` is deliberate: the loader look is overridable
- * through `loaderClass`/`loaderStyles`, but hiding it once the embedded app is
- * ready must never lose to host CSS or to a `display` entry in `loaderStyles`.
+ * Every declaration below is a look a host may override — except the hidden
+ * state. `display: none !important` is deliberate there: hiding the loader once
+ * the embedded app is ready is a state change, not styling, so it must not lose
+ * to `loaderClass` host CSS that happens to sit later in the cascade. The one
+ * layer an author `!important` cannot outrank is an inline declaration that is
+ * itself `!important`, so `ChatOverlay.hideLoader()` additionally clears any
+ * inline `display` the host set through the `loaderStyles` escape hatch.
  */
 const OVERLAY_CSS = `
 .${OverlayClassName.Root} {
@@ -37,8 +54,8 @@ const OVERLAY_CSS = `
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  background: #ffffff;
-  color: #2764d9;
+  background: var(${OverlayCssVariable.LoaderBackground}, #ffffff);
+  color: var(${OverlayCssVariable.LoaderColor}, #2764d9);
 }
 .${OverlayClassName.LoaderHidden} {
   display: none !important;

@@ -83,12 +83,16 @@ The publishable `chat-overlay` package: iframe lifecycle management, the v1 meth
 provided — that stays visible until the event named by `options.loaderHideEvent` occurs; if
 `loaderHideEvent` is unset, the loader hides on the app's `READY` event. Hiding SHALL be performed by
 adding the `dial-overlay-loader--hidden` class, not by writing an inline `display` value, and SHALL
-take effect regardless of host CSS or of a `display` entry in `options.loaderStyles`.
+take effect regardless of host CSS or of a `display` entry in `options.loaderStyles`. To make that
+guarantee hold against an inline declaration the host marked `!important` — the one layer an author
+`!important` cannot outrank — hiding SHALL additionally remove any inline `display` property from
+the loader element, leaving every other `loaderStyles` entry in place.
 
 The loader's appearance comes from three layers, in increasing precedence: the injected
 `dial-overlay-loader` defaults, then `options.loaderClass` (added alongside the default class, so it
 competes with the defaults through the normal cascade rather than replacing them), then
-`options.loaderStyles` (inline, always wins).
+`options.loaderStyles` (inline, always wins). Visibility is exempt from that ordering: `display` is
+owned by `loaderHideEvent`, not by the styling layers.
 
 #### Scenario: Default loader hides on READY
 
@@ -357,7 +361,21 @@ declaration, so that hiding the loader cannot be defeated by host CSS or by a `d
 `options.loaderStyles`. Every other declaration SHALL be overridable by host CSS of equal or higher
 specificity.
 
-The four class names and both `<style>` element ids SHALL be documented in
+Because this package deliberately ships no CSS file and does not participate in the
+`--cs-*`/`buildCssVars` theming channel, every color literal in either injected stylesheet SHALL be
+read through a custom property carrying that literal as its fallback, so a host can retheme by
+declaring the property on an ancestor instead of overriding the injected source order:
+
+| Custom property                       | Fallback  | Applies to                                               |
+| ------------------------------------- | --------- | -------------------------------------------------------- |
+| `--dial-overlay-loader-background`    | `#ffffff` | Loader backdrop.                                          |
+| `--dial-overlay-loader-color`         | `#2764d9` | Loader foreground, inherited by the spinner's stroke.     |
+| `--dial-overlay-btn-background`       | `#2764d9` | `ChatOverlayManager` chrome buttons.                      |
+| `--dial-overlay-btn-color`            | `#ffffff` | Chrome button icon.                                       |
+| `--dial-overlay-btn-background-hover` | `#1d4fb8` | Chrome button on `:hover` / `:focus-visible`.             |
+| `--dial-overlay-btn-outline`          | `#1d4fb8` | Chrome button focus outline.                              |
+
+The four class names, the custom properties, and both `<style>` element ids SHALL be documented in
 `libs/chat-overlay/README.md`, since hosts target them from their own CSS. The enum that declares
 them SHALL remain internal to the package — it SHALL NOT be exported from
 `libs/chat-overlay/src/index.ts`, because hosts consume these names as CSS strings, not as
@@ -397,4 +415,17 @@ rather than duplicating the inject-once logic.
 - **THEN** those entries are applied as inline styles on the loader and therefore take precedence over
   the injected stylesheet
 - **AND** they are the only inline styles the loader carries
+
+#### Scenario: An inline display from loaderStyles does not survive hiding
+
+- **WHEN** a `ChatOverlay` is constructed with `loaderStyles: { display: 'flex' }` and the configured
+  hide event arrives
+- **THEN** the loader gains the `dial-overlay-loader--hidden` class and its inline `display` is removed
+- **AND** every other `loaderStyles` entry remains applied
+
+#### Scenario: Host retheming through custom properties
+
+- **WHEN** a host declares `--dial-overlay-loader-color` on an ancestor of the overlay root
+- **THEN** the loader's spinner adopts that color without the host needing an `!important` override
+- **AND** with the property unset the injected fallback `#2764d9` applies
 

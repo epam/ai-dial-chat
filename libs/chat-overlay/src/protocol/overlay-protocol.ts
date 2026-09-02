@@ -220,7 +220,11 @@ export interface ChatOverlayOptions {
   domain: string;
   /** Milliseconds to wait for a request's response before rejecting. Defaults to `10000`. */
   requestTimeout?: number;
-  /** Inline CSS properties applied to the loader element while it is visible. */
+  /**
+   * Inline CSS properties applied to the loader element while it is visible.
+   * A `display` entry is dropped once `loaderHideEvent` arrives — use
+   * `loaderHideEvent` to control visibility, not `display`.
+   */
   loaderStyles?: Record<string, string>;
   /** CSS class applied to the loader element. */
   loaderClass?: string;

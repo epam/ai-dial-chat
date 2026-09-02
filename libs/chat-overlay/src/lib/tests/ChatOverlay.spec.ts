@@ -194,6 +194,52 @@ describe('ChatOverlay', () => {
     expect(loader.classList.contains(OverlayClassName.LoaderHidden)).toBe(true);
   });
 
+  it('hides the loader even when loaderStyles pins an inline display', () => {
+    const { root, iframe } = setup({
+      loaderStyles: { display: 'flex' },
+      loaderHideEvent: OverlayEventType.ReadyToInteract,
+    });
+    const loader = root.querySelector(
+      '[data-dial-overlay-loader]',
+    ) as HTMLElement;
+    expect(loader.style.display).toBe('flex');
+
+    dispatchFromApp(iframe, { type: OverlayEventType.InitReady });
+    dispatchFromApp(iframe, { type: OverlayEventType.Ready });
+    expect(loader.style.display).toBe('flex');
+
+    dispatchFromApp(iframe, { type: OverlayEventType.ReadyToInteract });
+    expect(loader.classList.contains(OverlayClassName.LoaderHidden)).toBe(true);
+    expect(loader.style.display).toBe('');
+  });
+
+  it('keeps non-display loaderStyles entries after the loader hides', () => {
+    const { root, iframe } = setup({
+      loaderStyles: { display: 'flex', backgroundColor: 'rgb(1, 2, 3)' },
+    });
+    const loader = root.querySelector(
+      '[data-dial-overlay-loader]',
+    ) as HTMLElement;
+
+    dispatchFromApp(iframe, { type: OverlayEventType.InitReady });
+    dispatchFromApp(iframe, { type: OverlayEventType.Ready });
+
+    expect(loader.style.display).toBe('');
+    expect(loader.style.backgroundColor).toBe('rgb(1, 2, 3)');
+  });
+
+  it('reads the loader palette from themable custom properties', () => {
+    setup();
+    const styleSheet = document.getElementById('dial-overlay-styles');
+
+    expect(styleSheet?.textContent).toContain(
+      'background: var(--dial-overlay-loader-background, #ffffff);',
+    );
+    expect(styleSheet?.textContent).toContain(
+      'color: var(--dial-overlay-loader-color, #2764d9);',
+    );
+  });
+
   it('does not resolve ready() on READY alone', async () => {
     const { overlay, iframe } = setup();
     let resolved = false;

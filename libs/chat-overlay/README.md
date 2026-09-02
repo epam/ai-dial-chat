@@ -168,7 +168,7 @@ manager.destroy();
 | ----------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | `domain`                | `string`                                                   | Full URL of the chat app instance to embed (origin + optional path).                   |
 | `requestTimeout`        | `number?`                                                  | Milliseconds to wait for a request's response before rejecting. Defaults to `10000`.   |
-| `loaderStyles`          | `Record<string, string>?`                                  | Inline CSS properties applied to the loader element, overriding the injected defaults. |
+| `loaderStyles`          | `Record<string, string>?`                                  | Inline CSS properties applied to the loader element, overriding the injected defaults — except `display`, which is cleared when the loader hides (see [Styling](#styling)). |
 | `loaderClass`           | `string?`                                                  | CSS class added to the loader element alongside `dial-overlay-loader`.                 |
 | `loaderInnerHTML`       | `string?`                                                  | Custom HTML rendered inside the loader, replacing the default spinner.                 |
 | `loaderHideEvent`       | `OverlayEventType?`                                        | Event whose receipt hides the loader. Defaults to `OverlayEventType.Ready`.            |
@@ -206,10 +206,38 @@ and elements carry classes instead of inline styles:
 | `dial-overlay-loader`          | The loader element.                                                             |
 | `dial-overlay-loader--hidden`  | The loader once `loaderHideEvent` arrives (`display: none !important`).          |
 
-Host CSS of equal or higher specificity can restyle any of these; `loaderStyles`
-remains an inline-style escape hatch that wins over both. `ChatOverlayManager`
-injects its own `<style id="dial-overlay-manager-styles">` element for the
-`dial-overlay-btn` chrome buttons.
+Host CSS of equal or higher specificity can restyle any of these, and
+`loaderStyles` is an inline-style escape hatch that wins over both — with one
+exception. Visibility is not styling: `dial-overlay-loader--hidden` declares
+`display: none !important`, and `hideLoader()` also clears any inline `display`
+the host set through `loaderStyles`, so the loader always disappears when
+`loaderHideEvent` arrives. Set every other property freely; do not use `display`
+to drive loader visibility — configure `loaderHideEvent` instead.
+
+The colors are fixed by design (this lib ships no CSS file and does not
+participate in the `--cs-*` / `buildCssVars` theming channel), but each one is
+read through a custom property with a literal fallback. Set these on any
+ancestor of the overlay root to retheme without an `!important` override:
+
+| Custom property                        | Default   | Applies to                                                    |
+| -------------------------------------- | --------- | ------------------------------------------------------------- |
+| `--dial-overlay-loader-background`     | `#ffffff` | Loader backdrop.                                              |
+| `--dial-overlay-loader-color`          | `#2764d9` | Loader foreground — the spinner's `currentColor` stroke.      |
+| `--dial-overlay-btn-background`        | `#2764d9` | `ChatOverlayManager` chrome buttons.                          |
+| `--dial-overlay-btn-color`             | `#ffffff` | Chrome button icon.                                           |
+| `--dial-overlay-btn-background-hover`  | `#1d4fb8` | Chrome button on `:hover` / `:focus-visible`.                 |
+| `--dial-overlay-btn-outline`           | `#1d4fb8` | Chrome button focus outline.                                  |
+
+```css
+:root {
+  --dial-overlay-loader-background: #131319;
+  --dial-overlay-loader-color: #5c8dea;
+}
+```
+
+`ChatOverlayManager` injects its own
+`<style id="dial-overlay-manager-styles">` element for the `dial-overlay-btn`
+chrome buttons.
 
 ## Deployment prerequisites
 

@@ -32,6 +32,12 @@ const ICON_FULLSCREEN =
 
 const STYLE_ELEMENT_ID = 'dial-overlay-manager-styles';
 
+/*
+ * The chrome palette is read through custom properties with literal fallbacks,
+ * so a host retheming the toggle sets `--dial-overlay-btn-*` on any ancestor
+ * instead of overriding the injected source order. See `OverlayCssVariable`
+ * for the loader's equivalent knobs.
+ */
 const MANAGER_CSS = `
 .dial-overlay-btn {
   display: inline-flex;
@@ -42,13 +48,13 @@ const MANAGER_CSS = `
   border: none;
   border-radius: 999px;
   cursor: pointer;
-  background: #2764d9;
-  color: #ffffff;
+  background: var(--dial-overlay-btn-background, #2764d9);
+  color: var(--dial-overlay-btn-color, #ffffff);
 }
 .dial-overlay-btn:hover,
 .dial-overlay-btn:focus-visible {
-  background: #1d4fb8;
-  outline: 2px solid #1d4fb8;
+  background: var(--dial-overlay-btn-background-hover, #1d4fb8);
+  outline: 2px solid var(--dial-overlay-btn-outline, #1d4fb8);
   outline-offset: 2px;
 }
 `;

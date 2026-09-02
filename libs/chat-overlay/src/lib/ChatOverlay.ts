@@ -470,6 +470,14 @@ export class ChatOverlay {
 
   private hideLoader(): void {
     this.loader.classList.add(OverlayClassName.LoaderHidden);
+    /*
+     * `loaderStyles` is an inline-style escape hatch for the loader's look, but
+     * a `display` entry in it competes with the hidden state rather than
+     * describing it. Dropping it here keeps the class the single source of
+     * truth for visibility, including when the host marked it `!important` —
+     * the one declaration the stylesheet's own `!important` cannot outrank.
+     */
+    this.loader.style.removeProperty('display');
   }
 
   private notifySubscribers(
