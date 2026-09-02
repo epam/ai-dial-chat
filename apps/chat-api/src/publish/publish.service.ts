@@ -148,6 +148,13 @@ export class PublishService {
 
     await this.cacheManager.del(historyCacheKey(entityType, entityId));
 
+    /*
+     * Core returns 200 with no parseable body for some auto-approved
+     * publications (observed for a resource published for the first time),
+     * leaving `result.data` undefined even though the request succeeded —
+     * fall back to what the caller already supplied rather than reading off
+     * a body that may not exist.
+     */
     const publication = result.data;
     this.logger.debug(
       `Published ${entityType} "${entityId}" to "${folderPath}"`,
@@ -158,10 +165,10 @@ export class PublishService {
       entityType,
       folderPath,
       version: publicationVersion,
-      publishedAt: publication.createdAt
+      publishedAt: publication?.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
-      publishedBy: publication.author ?? publication.displayAuthor ?? '',
+      publishedBy: publication?.author ?? publication?.displayAuthor ?? author,
     };
   }
 
@@ -242,6 +249,7 @@ export class PublishService {
 
     await this.cacheManager.del(historyCacheKey(entityType, entityId));
 
+    /* See the matching comment in `publish` above: `result.data` can be undefined. */
     const publication = result.data;
     this.logger.debug(
       `Requested unpublish of ${entityType} "${entityId}" from "${folderPath}"`,
@@ -252,10 +260,10 @@ export class PublishService {
       entityType,
       folderPath,
       version: publicationVersion,
-      requestedAt: publication.createdAt
+      requestedAt: publication?.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
-      requestedBy: publication.author ?? publication.displayAuthor ?? '',
+      requestedBy: publication?.author ?? publication?.displayAuthor ?? author,
     };
   }
 
