@@ -8,13 +8,63 @@ import { NameCellRenderer } from './Renders/NameCellRenderer';
 import { StarCellRenderer } from './Renders/StarCellRenderer';
 import { TagsCellRenderer } from './Renders/TagsCellRenderer';
 
+/** The optional built-in `ListView` columns a host can independently show or hide per entity type. */
+export type ListViewColumnKey = 'folder' | 'tags' | 'favorite';
+
+/**
+ * Per-column rule resolving whether an optional `ListView` column renders for
+ * the active tab, given its entity `type` and the (unwindowed) `items`
+ * currently shown in that tab. Overrides the column's built-in default rule;
+ * omitted keys keep their default.
+ */
+export type ListViewColumnVisibility = Partial<
+  Record<
+    ListViewColumnKey,
+    (type: CatalogEntityType, items: CatalogItem[]) => boolean
+  >
+>;
+
+/**
+ * Built-in default visibility rules, one per optional column. Independent of
+ * `isFavoriteVisible` (which only gates the star on individual rows) — a
+ * host that wants the "Favorite" column itself hidden for a tab (e.g.
+ * Models) does so explicitly via `columnVisibility.favorite`, not by an
+ * automatic aggregate over `isFavoriteVisible`.
+ */
+const defaultColumnVisibility: Required<ListViewColumnVisibility> = {
+  folder: (type) => type !== CatalogEntityType.Model,
+  tags: () => true,
+  favorite: () => true,
+};
+
+/**
+ * Resolves whether each optional `ListView` column renders for the active
+ * tab, applying `columnVisibility` overrides on top of the built-in
+ * defaults. Used by `CATALOG_COLUMNS` to compute each column's `ColDef.hide`.
+ */
+export const resolveColumnVisibility = (
+  type: CatalogEntityType,
+  items: CatalogItem[],
+  columnVisibility?: ListViewColumnVisibility,
+): Record<ListViewColumnKey, boolean> => {
+  const keys: ListViewColumnKey[] = ['folder', 'tags', 'favorite'];
+  return Object.fromEntries(
+    keys.map((key) => [
+      key,
+      (columnVisibility?.[key] ?? defaultColumnVisibility[key])(type, items),
+    ]),
+  ) as Record<ListViewColumnKey, boolean>;
+};
+
 /** Column definitions for the catalog ag-grid list view. A stable module-level constant so ag-grid never sees a new array/closures on each render. */
 export const CATALOG_COLUMNS = (
   type: CatalogEntityType,
   isReadonly = false,
   items: CatalogItem[] = [],
-  isFavoriteVisible?: (item: CatalogItem) => boolean,
+  columnVisibility?: ListViewColumnVisibility,
 ): ColDef<CatalogItem>[] => {
+  const visibility = resolveColumnVisibility(type, items, columnVisibility);
+
   return [
     {
       headerName: 'Name',
@@ -41,7 +91,7 @@ export const CATALOG_COLUMNS = (
       width: 170,
       minWidth: 170,
       filter: false,
-      hide: type === CatalogEntityType.Model,
+      hide: !visibility.folder,
       cellRenderer: FolderCellRenderer,
       valueGetter: (p) => p.data?.folder,
     },
@@ -52,6 +102,7 @@ export const CATALOG_COLUMNS = (
       minWidth: 230,
       filter: false,
       sortable: false,
+      hide: !visibility.tags,
       cellRenderer: TagsCellRenderer,
       valueGetter: (p) => p.data?.topics,
     },
@@ -63,16 +114,7 @@ export const CATALOG_COLUMNS = (
       filter: false,
       sortable: false,
       resizable: false,
-      /**
-       * Also hidden when nothing in the active tab is favoritable at all
-       * (e.g. a pure-Models tab), so the header doesn't sit above an empty
-       * column. `.some` rather than `.every` keeps the column when only some
-       * rows lack a star.
-       */
-      hide:
-        isReadonly ||
-        (items.length > 0 &&
-          !items.some((item) => isFavoriteVisible?.(item) ?? true)),
+      hide: isReadonly || !visibility.favorite,
       headerClass: styles.favHeader,
       cellRenderer: StarCellRenderer,
     },

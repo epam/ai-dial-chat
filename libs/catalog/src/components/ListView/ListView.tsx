@@ -47,6 +47,7 @@ export const ListView: FC<ListViewProps> = ({
   selectedItemId,
   credentialsBadgeLoggedOutLabel,
   isReadonly = false,
+  columnVisibility,
 }) => {
   if (items.length === 0) {
     return (
@@ -152,7 +153,7 @@ export const ListView: FC<ListViewProps> = ({
     >
       <div className={mergeClasses('rounded-xl', styles.gridClip)}>
         <Grid<CatalogItem>
-          columnDefs={CATALOG_COLUMNS(type, isReadonly, items, isFavoriteVisible)}
+          columnDefs={CATALOG_COLUMNS(type, isReadonly, items, columnVisibility)}
           rowData={windowedItems}
           getRowId={(r) => r.id}
           withoutHeaderBorders

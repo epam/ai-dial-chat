@@ -8,6 +8,7 @@ import type {
 } from '@epam/ai-dial-publish-panel';
 import { DropdownItem, TabModel } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
+import type { ListViewColumnVisibility } from '../components/ListView/columns';
 import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogViewMode } from '../types/view-mode';
@@ -118,6 +119,18 @@ export interface CatalogProps {
    * can only ever narrow visibility, never widen it.
    */
   isFavoriteVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Per-column overrides for whether an optional `ListView` column (`folder`,
+   * `tags`, `favorite`) renders for the active tab, given its entity type and
+   * the items currently shown in it. Independent of `isFavoriteVisible`
+   * (which only gates the star on individual rows, in the browse grid and
+   * cards too, not the column). Replaces that column's built-in default rule
+   * — e.g. `folder` normally hides for `CatalogEntityType.Model`; columns
+   * omitted from this map keep their default. `favorite` is additionally
+   * combined (AND) with `isReadonly`. No effect on the Browse grid/cards,
+   * only the list view's table.
+   */
+  columnVisibility?: ListViewColumnVisibility;
   /** Called when the "Use in chat" button is clicked in the details panel. */
   onUseInChat?: (item: CatalogItem) => void;
   /** Controls whether the primary action button is shown for an item. */

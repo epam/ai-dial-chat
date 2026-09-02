@@ -43,27 +43,32 @@ describe('CATALOG_COLUMNS', () => {
     expect(folderOf(CatalogEntityType.Model)?.hide).toBe(true);
   });
 
-  it('hides the Favorite column when no item in the active tab is favoritable', () => {
-    const items = [
-      { id: '1', type: CatalogEntityType.Model },
-      { id: '2', type: CatalogEntityType.Model },
-    ] as CatalogItem[];
+  it('shows the Favorite column by default, independent of isFavoriteVisible', () => {
+    const favColumn = CATALOG_COLUMNS(CatalogEntityType.Model).find(
+      (c) => c.field === 'isStarred',
+    );
+    expect(favColumn?.hide).toBeFalsy();
+  });
 
-    const hidden = CATALOG_COLUMNS(
-      CatalogEntityType.Model,
+  it('lets columnVisibility hide the Favorite column for a tab', () => {
+    const items = [{ id: '1', type: CatalogEntityType.Model }] as CatalogItem[];
+
+    const hiddenFavorite = CATALOG_COLUMNS(CatalogEntityType.Model, false, items, {
+      favorite: (type) => type !== CatalogEntityType.Model,
+    }).find((c) => c.field === 'isStarred');
+    expect(hiddenFavorite?.hide).toBe(true);
+  });
+
+  it("lets columnVisibility override the Folder column's default rule", () => {
+    const items = [{ id: '1', type: CatalogEntityType.Prompt }] as CatalogItem[];
+
+    const forcedHiddenFolder = CATALOG_COLUMNS(
+      CatalogEntityType.Prompt,
       false,
       items,
-      () => false,
-    ).find((c) => c.field === 'isStarred');
-    expect(hidden?.hide).toBe(true);
-
-    const visible = CATALOG_COLUMNS(
-      CatalogEntityType.Model,
-      false,
-      items,
-      (item) => item.id === '2',
-    ).find((c) => c.field === 'isStarred');
-    expect(visible?.hide).toBeFalsy();
+      { folder: () => false },
+    ).find((c) => c.field === 'folder');
+    expect(forcedHiddenFolder?.hide).toBe(true);
   });
 
   it('disables sorting on Type and Tags, but not on Name and Folder', () => {
