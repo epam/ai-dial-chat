@@ -16,6 +16,8 @@ export interface ScheduledTaskRunHistoryListLabels {
   runStatusLabels: Record<ScheduledTaskRunStatus, string>;
   /** Appended to the current run row's accessible name, e.g. "Current run". Omit to skip the accessible current-run suffix. */
   currentRunLabel?: string;
+  /** `sr-only` label announced alongside the unread-dot indicator on a row whose `isUnread` is `true`. Defaults to `'Unread'`. */
+  unreadIndicatorLabel?: string;
 }
 
 /**
@@ -33,6 +35,8 @@ export interface ScheduledTaskRunHistoryListColors {
   subtitleTextColor?: string;
   /** Current-run row background. Fallback: `--bg-control-accent-alpha-active`. */
   currentRunBackground?: string;
+  /** Unread-dot indicator fill color. Fallback: `--text-accent`. */
+  unreadDotColor?: string;
 }
 
 /** Typography overrides for the {@link ScheduledTaskRunHistoryList} component. */
@@ -67,8 +71,8 @@ export interface ScheduledTaskRunHistoryListProps {
   onRetry?: () => void;
   /** The `id` of the run to render with the current-run visual and accessible treatment. Omit to mark no row as current. */
   currentRunId?: string;
-  /** Called with a run's id when the user clicks its row. Omit to render rows with no added interactive semantics. */
-  onRunClick?: (id: string) => void;
+  /** Called with the run when the user clicks a row whose `conversationId` is set. Rows without a `conversationId` never invoke this, regardless of whether it is supplied. */
+  onRunClick?: (run: ScheduledTaskRunItem) => void;
   /** Localized labels. */
   labels: ScheduledTaskRunHistoryListLabels;
   /**

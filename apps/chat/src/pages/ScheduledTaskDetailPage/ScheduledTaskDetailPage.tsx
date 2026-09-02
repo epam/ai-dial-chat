@@ -23,12 +23,17 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import { getScheduledTaskEditRoute } from '../../constants/routes';
+import {
+  getConversationRoute,
+  getScheduledTaskEditRoute,
+} from '../../constants/routes';
 import {
   ButtonsI18nKeys,
+  ConversationPanelI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
@@ -58,6 +63,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
   const { items: deploymentItems } = useDeployments();
   const { language } = useLanguage();
+  const { conversations } = useConversations();
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
   const [isTaskLoading, setIsTaskLoading] = useState(true);
@@ -141,8 +147,16 @@ const ScheduledTaskDetailPage: FC = () => {
   }, [isEnabled, scheduleId, taskFetchToken]);
 
   const runItems: ScheduledTaskRunItem[] = useMemo(
-    () => mapScheduledTaskRunDtosToItems(runDtos, t),
-    [runDtos, t],
+    () => mapScheduledTaskRunDtosToItems(runDtos, t, conversations),
+    [runDtos, t, conversations],
+  );
+
+  const handleRunClick = useCallback(
+    (run: ScheduledTaskRunItem) => {
+      if (!run.conversationId) return;
+      navigate(getConversationRoute(run.conversationId));
+    },
+    [navigate],
   );
 
   const taskModel = task?.model;
@@ -219,6 +233,7 @@ const ScheduledTaskDetailPage: FC = () => {
       },
       activeStatusLabel: t(ScheduledTasksI18nKeys.DetailActiveStatusLabel),
       activeStatusAnnouncement,
+      unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
     }),
     [t, activeStatusAnnouncement],
   );
@@ -388,6 +403,7 @@ const ScheduledTaskDetailPage: FC = () => {
         onRunsRetry={refetchRuns}
         runsHasMore={runsHasMore}
         onRunsLoadMore={onRunsLoadMore}
+        onRunClick={handleRunClick}
       />
       <ConfirmationPopup
         open={isDeleteDialogOpen}

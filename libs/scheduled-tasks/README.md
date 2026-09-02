@@ -124,7 +124,7 @@ import {
 
 ### ScheduledTaskDetailView
 
-Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. Field values, runs, and markdown rendering are all supplied by the host app; this component holds no state of its own and performs no routing, i18n, or network calls.
+Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. Field values, runs, and markdown rendering are all supplied by the host app; this component holds no state of its own and performs no routing, i18n, or network calls.
 
 ```tsx
 import {
@@ -135,7 +135,7 @@ import {
 <ScheduledTaskDetailView
   labels={
     {
-      /* ... */
+      /* ..., unreadIndicatorLabel: 'Unread' */
     }
   }
   onBack={() => {}}
@@ -151,8 +151,11 @@ import {
       id: 'run_1',
       status: ScheduledTaskRunStatus.Success,
       timestampLabel: 'today at 9:01 AM (99s)',
+      conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
+      isUnread: true,
     },
   ]}
   onRunsLoadMore={() => {}}
+  onRunClick={(run) => navigateToConversation(run.conversationId)}
 />;
 ```

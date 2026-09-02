@@ -96,7 +96,8 @@ const ConversationSourcesPanelContainer: FC = () => {
   }, [activeScheduledTask.scheduleId]);
 
   const runItems = useMemo(
-    () => mapScheduledTaskRunDtosToItems(activeScheduledTask.history.items, t),
+    () =>
+      mapScheduledTaskRunDtosToItems(activeScheduledTask.history.items, t, []),
     [activeScheduledTask.history.items, t],
   );
 

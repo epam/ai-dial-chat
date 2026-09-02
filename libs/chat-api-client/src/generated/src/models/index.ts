@@ -3567,6 +3567,12 @@ export interface ExternalServiceSigninBodyDto {
    * @memberof ExternalServiceSigninBodyDto
    */
   redirectUri?: string;
+  /**
+   * Whether the user consents to the application using this credential while they are offline. Required for on-behalf-of use (e.g. scheduled runs).
+   * @type {boolean}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  offlineUsageConsent?: boolean;
 }
 
 /**
@@ -5539,6 +5545,12 @@ export interface ScheduledTaskRunDto {
    * @memberof ScheduledTaskRunDto
    */
   durationSeconds?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  conversationId?: string;
 }
 
 /**
