@@ -36,10 +36,27 @@ describe('useAnnotations', () => {
     expect(result.current[0]).toBe(validAnnotation);
   });
 
-  it('returns an empty array while streaming', () => {
+  it('returns an empty array while streaming when no html_tag annotations exist', () => {
     const msg = withAnnotation(baseMessage(), validAnnotation);
     const { result } = renderHook(() => useAnnotations(msg, true));
     expect(result.current).toHaveLength(0);
+  });
+
+  it('returns only html_tag annotations while streaming', () => {
+    const citAnnotation: Annotation = {
+      target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: { type: 'application/pdf', url: 'files/doc.pdf' },
+        },
+      },
+    };
+    let msg = withAnnotation(baseMessage(), validAnnotation);
+    msg = withAnnotation(msg, citAnnotation);
+    const { result } = renderHook(() => useAnnotations(msg, true));
+    expect(result.current).toHaveLength(1);
+    expect(result.current[0]).toBe(citAnnotation);
   });
 
   it('filters out annotations without a source URL', () => {

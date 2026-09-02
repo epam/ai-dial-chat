@@ -140,6 +140,176 @@ describe('applyChunkToMessage', () => {
     expect(annotations[0].body.quote).toBe('Quote');
   });
 
+  it('normalizes and persists raw custom_fields.annotations with two distinct html_tag entries', () => {
+    const msg = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'e43864' },
+              },
+              body: {
+                title: 'MT_14dayTrialNote (2).pdf',
+                quote: 'Patient meets ALL criteria',
+                source: {
+                  type: 'attachment',
+                  url: 'files/acc/uploads/MT_14dayTrialNote%20(2).pdf',
+                },
+              },
+            },
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'e52dc2' },
+              },
+              body: {
+                title: 'MT_14dayTrialNote (2).pdf',
+                quote: 'Recommend proceeding with Stage 2',
+                source: {
+                  type: 'attachment',
+                  url: 'files/acc/uploads/MT_14dayTrialNote%20(2).pdf',
+                },
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const annotations = (
+      msg.custom_content as {
+        annotations: {
+          target: { selector: { id: string } };
+          body: { source: { attachment: { type: string } } };
+        }[];
+      }
+    ).annotations;
+    expect(annotations).toHaveLength(2);
+    expect(annotations.map((a) => a.target.selector.id)).toEqual([
+      'e43864',
+      'e52dc2',
+    ]);
+    expect(annotations[0].body.source.attachment.type).toBe(
+      'application/pdf',
+    );
+  });
+
+  it('infers text/html for an html_tag annotation citing an .html URL', () => {
+    const msg = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+              body: {
+                title: 'page.html',
+                source: { type: 'attachment', url: 'https://example.com/page.html' },
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const annotations = (
+      msg.custom_content as {
+        annotations: { body: { source: { attachment: { type: string } } } }[];
+      }
+    ).annotations;
+    expect(annotations[0].body.source.attachment.type).toBe('text/html');
+  });
+
+  it('still normalizes the legacy attachment_index raw annotation shape', () => {
+    const msg1 = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_content: {
+          attachments: [
+            { index: 0, type: 'application/pdf', title: 'report.pdf', url: 'files/report.pdf' },
+          ],
+        },
+      }),
+    );
+    const msg2 = applyChunkToMessage(
+      msg1,
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              index: 0,
+              target: {
+                source: { attachment_index: 0 },
+                selector: {
+                  type: 'pdf_region',
+                  page: 1,
+                  bbox: { left: 1, top: 2, width: 3, height: 4 },
+                },
+              },
+              body: { title: 'Section 1' },
+            },
+          ],
+        },
+      }),
+    );
+    const annotations = (
+      msg2.custom_content as {
+        annotations: {
+          body: { source: { attachment: { url: string } } };
+        }[];
+      }
+    ).annotations;
+    expect(annotations).toHaveLength(1);
+    expect(annotations[0].body.source.attachment.url).toBe(
+      'files/report.pdf',
+    );
+  });
+
+  it('merges a later chunk for the same cit id into the existing entry', () => {
+    const msg1 = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'e1' },
+              },
+              body: {
+                quote: 'Patient',
+                source: { type: 'attachment', url: 'files/doc.pdf' },
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const msg2 = applyChunkToMessage(
+      msg1,
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'e1' },
+              },
+              body: {
+                quote: ' meets criteria',
+                source: { type: 'attachment', url: 'files/doc.pdf' },
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const annotations = (
+      msg2.custom_content as {
+        annotations: { body: { quote: string } }[];
+      }
+    ).annotations;
+    expect(annotations).toHaveLength(1);
+    expect(annotations[0].body.quote).toBe('Patient meets criteria');
+  });
+
   it('replaces form_schema (last wins)', () => {
     const schema1 = { type: 'object', properties: { a: {} } };
     const schema2 = { type: 'object', properties: { b: {} } };

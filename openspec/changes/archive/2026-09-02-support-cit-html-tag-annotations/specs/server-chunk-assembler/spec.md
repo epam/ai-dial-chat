@@ -1,8 +1,4 @@
-## Purpose
-
-Pure server-side assembly of DIAL SSE chunks into a conversation message, mirroring the frontend chunk applier.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Server-side SSE chunk assembler
 

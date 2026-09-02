@@ -33,7 +33,7 @@ import {
   CitationCardProvider,
   CitationDropdown,
   getReferenceAttachmentGroups,
-  groupAnnotationsBySource,
+  groupAnnotations,
   isReferenceOnlyAttachment,
   useAnnotations,
   useCitationCard,
@@ -279,7 +279,7 @@ const ConversationMessageItem: FC<Props> = ({
 
   const annotations = useAnnotations(msg, isStreaming);
   const citationGroups = useMemo(
-    () => groupAnnotationsBySource(annotations),
+    () => groupAnnotations(annotations),
     [annotations],
   );
   const citationCard = useCitationCard();
@@ -556,7 +556,7 @@ const ConversationMessageItem: FC<Props> = ({
                       ) != null;
                     return (
                       <CitationDropdown
-                        key={group.sourceUrl}
+                        key={group.groupKey}
                         group={group}
                         onPreview={
                           isPdfPagePreviewable ? onPreviewReference : undefined

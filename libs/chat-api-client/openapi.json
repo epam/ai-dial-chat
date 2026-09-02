@@ -2460,7 +2460,9 @@
           }
         },
         "summary": "Attach to an active generation and replay it live",
-        "tags": ["conversations"]
+        "tags": [
+          "conversations"
+        ]
       }
     },
     "/api/v1/conversations/watch": {
@@ -6603,7 +6605,7 @@
   ],
   "servers": [
     {
-      "url": "http://localhost:5000",
+      "url": "http://localhost:3005",
       "description": "Local development"
     }
   ],
@@ -9372,6 +9374,88 @@
           }
         }
       },
+      "AnnotationSelectorDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Selector discriminator, e.g. 'text_character_range', 'pdf_bbox', 'html_tag'"
+          },
+          "start": {
+            "type": "number",
+            "description": "Character range start (inclusive)"
+          },
+          "end": {
+            "type": "number",
+            "description": "Character range end (inclusive)"
+          },
+          "page": {
+            "type": "number",
+            "description": "1-based PDF page number"
+          },
+          "x1": {
+            "type": "number",
+            "description": "PDF bounding box left edge"
+          },
+          "y1": {
+            "type": "number",
+            "description": "PDF bounding box top edge"
+          },
+          "x2": {
+            "type": "number",
+            "description": "PDF bounding box right edge"
+          },
+          "y2": {
+            "type": "number",
+            "description": "PDF bounding box bottom edge"
+          },
+          "tag": {
+            "type": "string",
+            "description": "Inline tag name, e.g. 'cit'"
+          },
+          "id": {
+            "type": "string",
+            "description": "Inline tag's id attribute value"
+          }
+        }
+      },
+      "AnnotationTargetDto": {
+        "type": "object",
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/AnnotationSelectorDto"
+          }
+        }
+      },
+      "AttachmentResourceDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "MIME type of the attached file"
+          },
+          "url": {
+            "type": "string",
+            "description": "Remote URL pointing to the file content"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable display name for the file"
+          }
+        }
+      },
+      "AnnotationSourceDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Always 'attachment' for file-based sources"
+          },
+          "attachment": {
+            "$ref": "#/components/schemas/AttachmentResourceDto"
+          }
+        }
+      },
       "AnnotationBodyDto": {
         "type": "object",
         "properties": {
@@ -9382,6 +9466,9 @@
           "quote": {
             "type": "string",
             "description": "Quoted excerpt from the cited source"
+          },
+          "source": {
+            "$ref": "#/components/schemas/AnnotationSourceDto"
           }
         }
       },
@@ -9391,6 +9478,9 @@
           "index": {
             "type": "number",
             "description": "Zero-based position in the list"
+          },
+          "target": {
+            "$ref": "#/components/schemas/AnnotationTargetDto"
           },
           "body": {
             "$ref": "#/components/schemas/AnnotationBodyDto"
@@ -10241,7 +10331,9 @@
             "example": "gpt-4o__My Chat"
           }
         },
-        "required": ["path"]
+        "required": [
+          "path"
+        ]
       },
       "WatchConversationBodyDto": {
         "type": "object",

@@ -49,6 +49,12 @@ export interface AnnotationBodyDto {
    * @memberof AnnotationBodyDto
    */
   quote?: string;
+  /**
+   *
+   * @type {AnnotationSourceDto}
+   * @memberof AnnotationBodyDto
+   */
+  source?: AnnotationSourceDto;
 }
 /**
  *
@@ -64,10 +70,115 @@ export interface AnnotationDto {
   index?: number;
   /**
    *
+   * @type {AnnotationTargetDto}
+   * @memberof AnnotationDto
+   */
+  target?: AnnotationTargetDto;
+  /**
+   *
    * @type {AnnotationBodyDto}
    * @memberof AnnotationDto
    */
   body?: AnnotationBodyDto;
+}
+/**
+ *
+ * @export
+ * @interface AnnotationSelectorDto
+ */
+export interface AnnotationSelectorDto {
+  /**
+   * Selector discriminator, e.g. 'text_character_range', 'pdf_bbox', 'html_tag'
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  type?: string;
+  /**
+   * Character range start (inclusive)
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  start?: number;
+  /**
+   * Character range end (inclusive)
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  end?: number;
+  /**
+   * 1-based PDF page number
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  page?: number;
+  /**
+   * PDF bounding box left edge
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  x1?: number;
+  /**
+   * PDF bounding box top edge
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  y1?: number;
+  /**
+   * PDF bounding box right edge
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  x2?: number;
+  /**
+   * PDF bounding box bottom edge
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  y2?: number;
+  /**
+   * Inline tag name, e.g. 'cit'
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  tag?: string;
+  /**
+   * Inline tag's id attribute value
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  id?: string;
+}
+/**
+ *
+ * @export
+ * @interface AnnotationSourceDto
+ */
+export interface AnnotationSourceDto {
+  /**
+   * Always 'attachment' for file-based sources
+   * @type {string}
+   * @memberof AnnotationSourceDto
+   */
+  type?: string;
+  /**
+   *
+   * @type {AttachmentResourceDto}
+   * @memberof AnnotationSourceDto
+   */
+  attachment?: AttachmentResourceDto;
+}
+/**
+ *
+ * @export
+ * @interface AnnotationTargetDto
+ */
+export interface AnnotationTargetDto {
+  /**
+   *
+   * @type {AnnotationSelectorDto}
+   * @memberof AnnotationTargetDto
+   */
+  selector?: AnnotationSelectorDto;
 }
 /**
  *
@@ -419,6 +530,31 @@ export interface AttachmentDto {
    * @memberof AttachmentDto
    */
   referenceUrl?: string;
+}
+/**
+ *
+ * @export
+ * @interface AttachmentResourceDto
+ */
+export interface AttachmentResourceDto {
+  /**
+   * MIME type of the attached file
+   * @type {string}
+   * @memberof AttachmentResourceDto
+   */
+  type?: string;
+  /**
+   * Remote URL pointing to the file content
+   * @type {string}
+   * @memberof AttachmentResourceDto
+   */
+  url?: string;
+  /**
+   * Human-readable display name for the file
+   * @type {string}
+   * @memberof AttachmentResourceDto
+   */
+  title?: string;
 }
 /**
  *

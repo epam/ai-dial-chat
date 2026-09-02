@@ -32,8 +32,10 @@ const makeGroup = (
   overrides: Partial<AnnotationGroup> = {},
 ): AnnotationGroup => {
   const annotation = overrides.primaryAnnotation ?? makeAnnotation();
+  const sourceUrl = overrides.sourceUrl ?? 'https://example.com/a';
   return {
-    sourceUrl: 'https://example.com/a',
+    groupKey: sourceUrl,
+    sourceUrl,
     sourceName: 'example.com',
     annotations: [annotation],
     primaryAnnotation: annotation,
@@ -115,6 +117,20 @@ describe('useCitationMarkdownComponents', () => {
     );
 
     expect(result.current.processedContent).toBe('Hello world');
+    expect(result.current.markdownComponents).toEqual({});
+  });
+
+  it('strips an unmatched cit tag even with zero groups', () => {
+    const callbacks = makeCallbacks();
+    const { result } = renderHook(() =>
+      useCitationMarkdownComponents(
+        'See the note<cit id="e1">.',
+        [],
+        callbacks,
+      ),
+    );
+
+    expect(result.current.processedContent).toBe('See the note.');
     expect(result.current.markdownComponents).toEqual({});
   });
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Provides citation and annotation components, hooks, and utilities for AI DIAL conversations. This library handles the full lifecycle of inline citations: parsing annotation data from message payloads, grouping annotations by source document, injecting citation markers into rendered markdown, and rendering the `CitationCard`, `CitationMarker`, and `CitationDropdown` popup UI. It also covers reference-only attachments (RAG/search-grounding chunks) mapped to synthetic annotations.
+Provides citation and annotation components, hooks, and utilities for AI DIAL conversations. This library handles the full lifecycle of inline citations: parsing annotation data from message payloads (both offset-based `text_character_range`/`pdf_region` citations and inline `<tag id="…">` citations, e.g. `<cit id="…">`), grouping annotations (by source document, or by tag id for inline-tag citations), injecting citation markers into rendered markdown, and rendering the `CitationCard`, `CitationMarker`, and `CitationDropdown` popup UI. It also covers reference-only attachments (RAG/search-grounding chunks) mapped to synthetic annotations.
 
 ## Installation
 
@@ -35,7 +35,7 @@ import { CitationMarker } from '@epam/ai-dial-quotations';
 <CitationMarker
   sourceName="report.pdf"
   annotationCount={2}
-  onOpen={() => card.openPopup(sourceUrl)}
+  onOpen={() => card.openPopup(group.groupKey)}
   labels={{
     ariaLabel: `Citation from report.pdf`,
     label: 'report.pdf',
@@ -95,15 +95,15 @@ const card = useCitationCard();
 
 ### `useCitationCard`
 
-Manages open/close state and per-group active annotation index for citation popups within a single message.
+Manages open/close state and per-group active annotation index for citation popups within a single message, keyed by `AnnotationGroup.groupKey` (not `sourceUrl` — two groups can share a `sourceUrl`, e.g. two inline-tag citations of the same document, while having independent popup/switcher state).
 
 ### `useAnnotations`
 
-Returns the resolved `Annotation[]` for a message, returning an empty array while streaming.
+Returns the resolved `Annotation[]` for a message. While streaming, only inline-tag (`html_tag` selector) annotations are returned — every other selector family stays hidden until the message finishes streaming.
 
 ### `useCitationMarkdownComponents`
 
-Builds `react-markdown` component overrides (`p`/`li`) that inject citation markers into rendered paragraph text at the character offsets stored in each annotation group's primary selector. Returns `{ processedContent, markdownComponents }` — pass `processedContent` as the markdown source and spread `markdownComponents` into the renderer's `components` prop. When `groups` is empty, `processedContent` is returned unchanged and `markdownComponents` is `{}` without calling `buildLabels`.
+Builds `react-markdown` component overrides (`p`/`li`) that inject citation markers into rendered paragraph text — at the character offsets stored in each offset-based annotation group's primary selector, or at each matching `<tag id="…">` occurrence for inline-tag groups (an unmatched or still-streaming-in tag is stripped rather than shown as raw text). Returns `{ processedContent, markdownComponents }` — pass `processedContent` as the markdown source and spread `markdownComponents` into the renderer's `components` prop. When `groups` is empty and `content` has no inline tag, `processedContent` is returned unchanged and `markdownComponents` is `{}` without calling `buildLabels`.
 
 The hook owns no PDF-detection, attachment-DTO, or canvas-opening logic — that belongs in the host's `onPreview` implementation.
 
@@ -138,9 +138,11 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
 
 ## Utilities
 
-- `groupAnnotationsBySource(annotations)` — groups annotations by their source URL into `AnnotationGroup[]`
+- `groupAnnotations(annotations)` — dispatches by selector type and returns the concatenation of `groupAnnotationsByCitId` (for `html_tag` annotations) and `groupAnnotationsBySource` (for every other annotation); prefer this over calling either grouping function directly
+- `groupAnnotationsBySource(annotations)` — groups non-`html_tag` annotations by their source URL into `AnnotationGroup[]`
+- `groupAnnotationsByCitId(annotations)` — groups `html_tag`-selector annotations by `target.selector.id`, one group per distinct tag id (never collapsing two ids that cite the same document)
 - `resolveMessageAnnotations(message)` — resolves annotations from either internal or raw wire format
-- `normalizeRawAnnotations(raw, attachments)` — normalises raw API wire-format annotations
+- `normalizeRawAnnotations(raw, attachments)` — normalises raw API wire-format annotations; recognizes both the legacy `attachment_index` + `pdf_region` shape and the `html_tag` + flat `body.source.url` shape
 - `annotationsToPdfHighlights(annotations)` — maps annotations to PDF viewer highlight entries
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown
 - `replaceSentinelsInChildren(children, renderMarker)` — replaces sentinels with React nodes in a rendered tree

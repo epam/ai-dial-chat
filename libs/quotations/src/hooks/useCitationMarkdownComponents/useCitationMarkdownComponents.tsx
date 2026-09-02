@@ -52,7 +52,9 @@ export const useCitationMarkdownComponents = (
 
   const processedContent = useMemo(
     () =>
-      groups.length > 0 ? injectCitationSentinels(content, groups) : content,
+      groups.length > 0 || content.includes('<cit')
+        ? injectCitationSentinels(content, groups)
+        : content,
 
     [content, groups],
   );
@@ -68,7 +70,7 @@ export const useCitationMarkdownComponents = (
 
       return (
         <CitationDropdown
-          key={`citation-${group.sourceUrl}`}
+          key={`citation-${group.groupKey}`}
           group={group}
           onPreview={(annotation) => onPreview(annotation, group)}
           onOpenInBrowser={onOpenInBrowser}

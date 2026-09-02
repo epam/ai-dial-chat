@@ -9,6 +9,7 @@ const makeGroup = (
   attachmentType = 'application/pdf',
   title?: string,
 ): AnnotationGroup => ({
+  groupKey: 'https://files.example.com/report.pdf',
   sourceUrl: 'https://files.example.com/report.pdf',
   sourceName: 'report.pdf',
   annotations: Array.from({ length: count }, (_, i) => ({

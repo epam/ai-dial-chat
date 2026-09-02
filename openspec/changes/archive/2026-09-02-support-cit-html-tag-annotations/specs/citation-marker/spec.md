@@ -1,12 +1,4 @@
-# citation-marker Specification
-
-## Purpose
-
-Inline citation markers injected after cited text spans in assistant messages, grouped by source attachment.
-
-## Requirements
-
----
+## MODIFIED Requirements
 
 ### Requirement: Annotations grouped by source attachment URL
 
@@ -69,113 +61,6 @@ interface AnnotationGroup {
 
 - **WHEN** `groupAnnotationsBySource` is called with an annotation whose `target.selector.type === 'html_tag'`
 - **THEN** that annotation is excluded from every returned group
-
----
-
-### Requirement: Annotations grouped by cit tag id
-
-`libs/quotations/src/utils/group-annotations-by-source.ts` SHALL export `groupAnnotationsByCitId(annotations: Annotation[]): AnnotationGroup[]` that groups only annotations whose `target?.selector?.type === 'html_tag'`, one group per distinct `target.selector.id` — never collapsing two different `id`s that happen to cite the same source document into one group.
-
-For each group:
-- `groupKey` SHALL equal `` `cit:${id}` `` (prefixed so it can never collide with a `groupAnnotationsBySource` group's `groupKey`, which equals a raw URL).
-- `sourceUrl` SHALL equal the group's first annotation's `body.source.attachment.url` (used for Preview/Download — identical in meaning to `groupAnnotationsBySource`'s `sourceUrl`).
-- `sourceName` SHALL be resolved using the same priority order as `groupAnnotationsBySource` (attachment title, then URL filename, then hostname).
-- `annotations` and `primaryAnnotation` follow the same semantics as `groupAnnotationsBySource` (original order preserved; first annotation is primary).
-
-Annotations without `target.selector.id` or without `body.source.attachment.url` are excluded.
-
-**i18n**: none.
-**RTL**: none — pure data transformation.
-**Feature flag**: none.
-
-#### Scenario: Two cit ids citing the same document form two groups
-
-- **WHEN** `groupAnnotationsByCitId` is called with two `html_tag` annotations that share the same `body.source.attachment.url` but have `target.selector.id` values `"e43864"` and `"e52dc2"`
-- **THEN** the result contains two `AnnotationGroup` objects, with `groupKey` values `"cit:e43864"` and `"cit:e52dc2"`, each `sourceUrl` equal to the shared document URL
-
-#### Scenario: Two annotations sharing the same cit id form one group
-
-- **WHEN** two `html_tag` annotations both have `target.selector.id === "e43864"` (e.g. a partial chunk followed by a completion chunk for the same tag)
-- **THEN** the result contains one `AnnotationGroup` for `"e43864"` containing both annotations
-
-#### Scenario: Non-html_tag annotations are excluded from cit-id grouping
-
-- **WHEN** `groupAnnotationsByCitId` is called with a `text_character_range` annotation
-- **THEN** that annotation is excluded from every returned group
-
----
-
-### Requirement: Combined annotation grouping dispatcher
-
-`libs/quotations` SHALL export `groupAnnotations(annotations: Annotation[]): AnnotationGroup[]` that partitions its input by `target?.selector?.type` and returns the concatenation of `groupAnnotationsByCitId` (for `html_tag` annotations) and `groupAnnotationsBySource` (for every other annotation), so a host application never branches on selector type itself.
-
-The frontend host's citation-rendering call site SHALL call `groupAnnotations` instead of calling `groupAnnotationsBySource` directly.
-
-**i18n**: none.
-**RTL**: none — pure data transformation.
-**Feature flag**: none.
-
-#### Scenario: Mixed annotation list groups each family separately
-
-- **WHEN** `groupAnnotations` is called with one `text_character_range` annotation and two `html_tag` annotations with distinct ids citing the same document
-- **THEN** the result contains one URL-keyed group (from `groupAnnotationsBySource`) and two cit-id-keyed groups (from `groupAnnotationsByCitId`)
-
-#### Scenario: Empty input returns empty output
-
-- **WHEN** `groupAnnotations` is called with `[]`
-- **THEN** it returns `[]`
-
----
-
-### Requirement: `CitationMarker` renders an inline button after the cited text span
-
-`apps/chat/src/components/Citations/CitationMarker/CitationMarker.tsx` SHALL render a UI kit `Button` (variant neutral, appearance outlined, size small) with:
-- An optional leading icon, rendered before the label, when the `icon` prop is provided; omitted (no icon) when the prop is absent.
-- Label: `sourceName` when `annotationCount === 1`; `sourceName + " +" + (annotationCount - 1)` when `annotationCount > 1` (e.g. `"Wikipedia +1"`)
-- `aria-label`: `"Citation from <sourceName>"` (i18n key `citations.marker.ariaLabel`)
-- `onClick`: calls the `onOpen` callback prop
-
-The component SHALL accept:
-```ts
-interface CitationMarkerProps {
-  sourceName: string;
-  annotationCount: number;
-  onOpen: () => void;
-  icon?: ReactNode;
-}
-```
-
-Existing inline-citation call sites (`CitationDropdown` used from `useCitationMarkdownComponents`) SHALL NOT pass `icon`, preserving their current icon-less appearance.
-
-**i18n keys**: `citations.marker.label` (single), `citations.marker.labelWithOverflow` (with `+N`), `citations.marker.ariaLabel`.
-**RTL**: the button itself is direction-agnostic (text content only, no directional icon); when `icon` is provided, it is a symmetric icon (e.g. a link glyph) that SHALL NOT be mirrored.
-**Accessibility**: button role is already provided by the UI kit `Button`; the optional icon SHALL be marked `aria-hidden` by the caller.
-**Feature flag**: none.
-
-#### Scenario: Single-source marker shows source name only
-
-- **WHEN** `CitationMarker` is rendered with `sourceName="Wikipedia"` and `annotationCount={1}`
-- **THEN** the button label is `"Wikipedia"`
-
-#### Scenario: Multi-source marker shows overflow count
-
-- **WHEN** `CitationMarker` is rendered with `sourceName="Wikipedia"` and `annotationCount={3}`
-- **THEN** the button label is `"Wikipedia +2"`
-
-#### Scenario: Clicking the marker calls onOpen
-
-- **WHEN** the user clicks the `CitationMarker` button
-- **THEN** the `onOpen` callback is invoked once
-
-#### Scenario: Marker renders without an icon by default
-
-- **WHEN** `CitationMarker` is rendered without the `icon` prop
-- **THEN** no icon element is rendered before the label
-
-#### Scenario: Marker renders the provided icon before the label
-
-- **WHEN** `CitationMarker` is rendered with `icon={<IconLink />}`
-- **THEN** the icon is rendered before the label text inside the button
 
 ---
 
@@ -279,4 +164,58 @@ Injection rules:
 
 - **WHEN** the accumulated content ends with an incomplete tag fragment, e.g. `...permanent implantation<cit id="e4`
 - **THEN** the trailing incomplete fragment is stripped before rendering, and the visible text ends with "...permanent implantation"
-</content>
+
+## ADDED Requirements
+
+### Requirement: Annotations grouped by cit tag id
+
+`libs/quotations/src/utils/group-annotations-by-source.ts` SHALL export `groupAnnotationsByCitId(annotations: Annotation[]): AnnotationGroup[]` that groups only annotations whose `target?.selector?.type === 'html_tag'`, one group per distinct `target.selector.id` — never collapsing two different `id`s that happen to cite the same source document into one group.
+
+For each group:
+- `groupKey` SHALL equal `` `cit:${id}` `` (prefixed so it can never collide with a `groupAnnotationsBySource` group's `groupKey`, which equals a raw URL).
+- `sourceUrl` SHALL equal the group's first annotation's `body.source.attachment.url` (used for Preview/Download — identical in meaning to `groupAnnotationsBySource`'s `sourceUrl`).
+- `sourceName` SHALL be resolved using the same priority order as `groupAnnotationsBySource` (attachment title, then URL filename, then hostname).
+- `annotations` and `primaryAnnotation` follow the same semantics as `groupAnnotationsBySource` (original order preserved; first annotation is primary).
+
+Annotations without `target.selector.id` or without `body.source.attachment.url` are excluded.
+
+**i18n**: none.
+**RTL**: none — pure data transformation.
+**Feature flag**: none.
+
+#### Scenario: Two cit ids citing the same document form two groups
+
+- **WHEN** `groupAnnotationsByCitId` is called with two `html_tag` annotations that share the same `body.source.attachment.url` but have `target.selector.id` values `"e43864"` and `"e52dc2"`
+- **THEN** the result contains two `AnnotationGroup` objects, with `groupKey` values `"cit:e43864"` and `"cit:e52dc2"`, each `sourceUrl` equal to the shared document URL
+
+#### Scenario: Two annotations sharing the same cit id form one group
+
+- **WHEN** two `html_tag` annotations both have `target.selector.id === "e43864"` (e.g. a partial chunk followed by a completion chunk for the same tag)
+- **THEN** the result contains one `AnnotationGroup` for `"e43864"` containing both annotations
+
+#### Scenario: Non-html_tag annotations are excluded from cit-id grouping
+
+- **WHEN** `groupAnnotationsByCitId` is called with a `text_character_range` annotation
+- **THEN** that annotation is excluded from every returned group
+
+---
+
+### Requirement: Combined annotation grouping dispatcher
+
+`libs/quotations` SHALL export `groupAnnotations(annotations: Annotation[]): AnnotationGroup[]` that partitions its input by `target?.selector?.type` and returns the concatenation of `groupAnnotationsByCitId` (for `html_tag` annotations) and `groupAnnotationsBySource` (for every other annotation), so a host application never branches on selector type itself.
+
+The frontend host's citation-rendering call site SHALL call `groupAnnotations` instead of calling `groupAnnotationsBySource` directly.
+
+**i18n**: none.
+**RTL**: none — pure data transformation.
+**Feature flag**: none.
+
+#### Scenario: Mixed annotation list groups each family separately
+
+- **WHEN** `groupAnnotations` is called with one `text_character_range` annotation and two `html_tag` annotations with distinct ids citing the same document
+- **THEN** the result contains one URL-keyed group (from `groupAnnotationsBySource`) and two cit-id-keyed groups (from `groupAnnotationsByCitId`)
+
+#### Scenario: Empty input returns empty output
+
+- **WHEN** `groupAnnotations` is called with `[]`
+- **THEN** it returns `[]`
