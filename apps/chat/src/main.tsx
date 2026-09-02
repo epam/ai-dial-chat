@@ -22,6 +22,7 @@ import { ConversationsProvider } from './context/ConversationsContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
 import { FavoriteApplicationsProvider } from './context/FavoriteApplicationsContext';
 import { GenerationProvider } from './context/GenerationContext';
+import { IsolatedModelViewProvider } from './context/IsolatedModelViewContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { OverlayModeGate } from './context/overlay/OverlayContext';
 import { PromptsProvider } from './context/PromptsContext';
@@ -72,15 +73,18 @@ root.render(
                                       <ClientChannelProvider>
                                         <UserConfigProvider>
                                           <DeploymentsProvider>
-                                            <FavoriteApplicationsProvider>
-                                              <PromptsProvider>
-                                                <SkillsProvider>
-                                                  <ConversationsProvider>
-                                                    <App />
-                                                  </ConversationsProvider>
-                                                </SkillsProvider>
-                                              </PromptsProvider>
-                                            </FavoriteApplicationsProvider>
+                                            {/* TODO: remove in next release */}
+                                            <IsolatedModelViewProvider>
+                                              <FavoriteApplicationsProvider>
+                                                <PromptsProvider>
+                                                  <SkillsProvider>
+                                                    <ConversationsProvider>
+                                                      <App />
+                                                    </ConversationsProvider>
+                                                  </SkillsProvider>
+                                                </PromptsProvider>
+                                              </FavoriteApplicationsProvider>
+                                            </IsolatedModelViewProvider>
                                           </DeploymentsProvider>
                                         </UserConfigProvider>
                                       </ClientChannelProvider>
