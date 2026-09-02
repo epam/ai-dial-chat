@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   buildFrameAncestorsDirective,
   buildFrameSrcDirective,
+  buildPermissionsPolicyHeader,
   createHelmetOptions,
 } from '../csp';
 
@@ -53,6 +54,31 @@ describe('buildFrameAncestorsDirective', () => {
     expect(
       buildFrameAncestorsDirective(['https://partner.example.com']),
     ).toEqual(['https://partner.example.com']);
+  });
+});
+
+describe('buildPermissionsPolicyHeader', () => {
+  it('delegates to self only when the allowlist is empty', () => {
+    expect(buildPermissionsPolicyHeader([])).toBe(
+      'local-network-access=(self)',
+    );
+  });
+
+  it('delegates to self plus a single allowlisted origin', () => {
+    expect(
+      buildPermissionsPolicyHeader(['https://quickapps.example.com']),
+    ).toBe('local-network-access=(self https://quickapps.example.com)');
+  });
+
+  it('delegates to self plus every allowlisted origin', () => {
+    expect(
+      buildPermissionsPolicyHeader([
+        'https://quickapps.example.com',
+        'https://skills.example.com',
+      ]),
+    ).toBe(
+      'local-network-access=(self https://quickapps.example.com https://skills.example.com)',
+    );
   });
 });
 

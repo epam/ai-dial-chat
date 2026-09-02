@@ -524,6 +524,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           src={iframeUrl}
           title={schema.displayName}
           className="size-full border-none"
+          allow="local-network-access=*"
         />
       </div>
     );

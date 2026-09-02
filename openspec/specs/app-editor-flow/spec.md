@@ -456,7 +456,7 @@ interface Props {
 - Build the iframe src as: `${schema.editorUrl}?authProvider=${providerId}&id=${encodeURIComponent(appId)}&theme=${themeId}`
   - `providerId` from `useUser().user?.providerId`
   - `themeId` from `useTheme().currentTheme`
-- Render a full-height `<iframe>` (`className="size-full border-none"`).
+- Render a full-height `<iframe>` (`className="size-full border-none"`) with `allow="local-network-access=*"` so the embedded app — and any window it opens via `window.open` (e.g. an identity-provider login popup) — can request and receive the Local Network Access permission when the embedded app's or its identity provider's origin resolves to a private/internal IP address.
 - Show a `<Spinner />` overlay until the iframe dispatches `load` or fires a `readyToInteract` postMessage event; after either, hide the spinner.
 - Add a `window.addEventListener('message', handleMessage)` listener on mount and remove it on unmount (`useEffect` cleanup).
 - In `handleMessage`, after verifying `event.origin` matches `schema.editorUrl`'s origin:
@@ -496,6 +496,11 @@ interface Props {
 
 - **WHEN** `AppEditorIframe` renders with `schema.editorUrl = "https://editor.example.com"`, `appId = "abc"`, `providerId = "local"`, `themeId = "dark"`
 - **THEN** the `<iframe>` `src` is `"https://editor.example.com?authProvider=local&id=abc&theme=dark"`
+
+#### Scenario: Iframe delegates Local Network Access to the embedded app
+
+- **WHEN** `AppEditorIframe` renders
+- **THEN** the `<iframe>` has `allow="local-network-access=*"`
 
 #### Scenario: Spinner shown until iframe loads
 
