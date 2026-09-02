@@ -11,6 +11,10 @@ export enum ChatI18nKeys {
   StreamError = 'chat.streamError',
   CreateConversationError = 'chat.createConversationError',
   ConversationNotFound = 'chat.conversationNotFound',
+  /** TODO: remove in next release */
+  IsolatedModelNotFoundTitle = 'chat.isolatedModelNotFoundTitle',
+  /** TODO: remove in next release */
+  IsolatedModelNotFoundDescription = 'chat.isolatedModelNotFoundDescription',
   DeleteMessageTitle = 'chat.deleteMessageTitle',
   DeleteMessageDescription = 'chat.deleteMessageDescription',
   StarterConfirmTitle = 'chat.starterConfirmTitle',

@@ -138,6 +138,65 @@ describe('UiFeaturesContext', () => {
     });
   });
 
+  describe('isolated-view override', () => {
+    it('takes precedence over an active overlay override', () => {
+      mockAppConfig(null);
+      const { result } = renderHook(() => useUiFeatures(), { wrapper });
+
+      act(() => {
+        result.current.applyOverlayOverride(['header', 'likes']);
+      });
+      act(() => {
+        result.current.applyIsolatedViewOverride(
+          new Set([OverlayFeature.HideNavigationMenu]),
+        );
+      });
+
+      expect([...result.current.enabledFeatures]).toEqual([
+        OverlayFeature.HideNavigationMenu,
+      ]);
+      expect(result.current.isEnabled(OverlayFeature.Header)).toBe(false);
+      expect(result.current.isEnabled(OverlayFeature.Likes)).toBe(false);
+    });
+
+    it('takes precedence over the server baseline', () => {
+      mockAppConfig(['conversations-section', 'prompts']);
+      const { result } = renderHook(() => useUiFeatures(), { wrapper });
+
+      act(() => {
+        result.current.applyIsolatedViewOverride(
+          new Set([OverlayFeature.HideChangeAgent]),
+        );
+      });
+
+      expect([...result.current.enabledFeatures]).toEqual([
+        OverlayFeature.HideChangeAgent,
+      ]);
+      expect(
+        result.current.isEnabled(OverlayFeature.ConversationsSection),
+      ).toBe(false);
+      expect(result.current.isEnabled(OverlayFeature.Prompts)).toBe(false);
+    });
+
+    it('restores the prior priority chain when cleared with null', () => {
+      mockAppConfig(['header', 'likes']);
+      const { result } = renderHook(() => useUiFeatures(), { wrapper });
+
+      act(() => {
+        result.current.applyIsolatedViewOverride(
+          new Set([OverlayFeature.HideChangeAgent]),
+        );
+      });
+      act(() => {
+        result.current.applyIsolatedViewOverride(null);
+      });
+
+      expect([...result.current.enabledFeatures].sort()).toEqual(
+        ['header', 'likes'].sort(),
+      );
+    });
+  });
+
   describe('deprecated aliases', () => {
     it('resolves a deprecated value from the server baseline to its replacement', () => {
       const warnSpy = vi
