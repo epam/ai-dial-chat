@@ -238,4 +238,27 @@ describe('StagesPanel', () => {
     expect(screen.getByText('Attempt 2')).toBeTruthy();
     expect(screen.getByText('Attempt 3')).toBeTruthy();
   });
+
+  it('does not double-count overlapping attempts in a collapsed stage row', () => {
+    render(
+      <StagesPanel
+        stages={[
+          {
+            index: 0,
+            name: 'Search (40s, Start: 11:21:00, End: 11:21:40)',
+            status: StageStatus.Completed,
+          },
+          {
+            index: 1,
+            name: 'Search (40s, Start: 11:21:00, End: 11:21:40)',
+            status: StageStatus.Completed,
+          },
+        ]}
+        isStreaming={false}
+      />,
+    );
+
+    expect(screen.getByText('40.0s')).toBeTruthy();
+    expect(screen.queryByText('1m 20s')).toBeNull();
+  });
 });
