@@ -285,6 +285,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     startStream,
     handleStop,
     resumeIfAwaitingGeneration,
+    restoreBufferedGeneration,
     isStreaming,
     canStopStreaming,
   } = useConversationStream({
@@ -356,8 +357,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         setIsFetching(true);
       }
       try {
-        const result: Conversation =
+        const loadedConversation: Conversation =
           initialData ?? ((await apiGetConversation(id)) as Conversation);
+        const result = restoreBufferedGeneration(id, loadedConversation);
         if (result.name) {
           updateConversationTitle(id, result.name);
         }
@@ -453,6 +455,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       restoreToolConfiguration,
       startStream,
       resumeIfAwaitingGeneration,
+      restoreBufferedGeneration,
       updateConversationTitle,
       getGeneration,
       showErrorNotification,
