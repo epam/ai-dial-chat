@@ -59,8 +59,8 @@ than performed in sequence. Per-slice verification was unchanged.
       the caller's `callbackPath`.
 - [x] 3.3 Apply the acknowledgement fix from design D5: defer the channel close by one macrotask so
       the acknowledgement is delivered. Add the regression test asserting the callback receives it.
-- [x] 3.4 Port `pg-chat`'s 33 handshake cases
-      (`pg-chat/apps/chat/src/utils/tests/toolsets.spec.ts`) alongside this repo's existing cases —
+- [x] 3.4 Port the downstream repo's 33 handshake cases
+      (its `apps/chat/src/utils/tests/toolsets.spec.ts`) alongside this repo's existing cases —
       they cover channel-unavailable, unreadable cross-origin URL, closed-popup-without-focus, and
       single-teardown, which the current suite does not.
 - [x] 3.5 ~~Keep `apps/chat/src/utils/toolsets.ts` compiling by re-exporting the moved functions
@@ -152,15 +152,16 @@ than performed in sequence. Per-slice verification was unchanged.
 ## 8. Follow-ups — recorded, not done here
 
 These three are deliberately left unchecked: 8.1 and 8.2 ask for *new change proposals* (one here,
-one in `pg-chat`) rather than code in this change, and 8.3 needs a human at a real provider.
+one in the downstream repo) rather than code in this change, and 8.3 needs a human at a real
+provider.
 
 - [ ] 8.1 Record the `ToolsetRedirectState.toolsetId` → `resourceId` rename (design D6) as its own
       change: it touches all three resource-kind flows and their callback branches, and would blur
       this change's boundary.
-- [ ] 8.2 Record the `pg-chat` migration as a change **in that repo**: delete its ~800 copied lines
+- [ ] 8.2 Record the downstream migration as a change **in that repo**: delete its ~800 copied lines
       (`utils/toolsets.ts`, `types/toolsets.ts`, `models/toolsets.ts`,
       `hooks/toolsets/useToolsetLogin.ts`, the callback page's flow half) and consume the package.
-      Blocked only on a published build and a version bump there; nothing in `pg-chat` breaks in the
+      Blocked only on a published build and a version bump there; nothing downstream breaks in the
       meantime.
 - [ ] 8.4 Tighten the editor's own validation so an `http:` authorization endpoint is rejected at
       save time with a specific message. `isToolsetAuthValid` still accepts it via

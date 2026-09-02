@@ -17,7 +17,7 @@ consumers, only one of which is about toolsets at all:
 resource kinds already share this machinery. It is a reusable primitive that was simply never
 packaged.
 
-It is now being **hand-copied into a second repository**. `pg-chat` ported ~800 lines of it
+It is now being **hand-copied into a second repository**. A downstream repo ported ~800 lines of it
 (`apps/chat/src/utils/toolsets.ts`, `types/toolsets.ts`, `models/toolsets.ts`,
 `hooks/toolsets/useToolsetLogin.ts`, `pages/ToolsetAuthCallback/`) because no shared home exists.
 That is exactly the failure mode
@@ -76,7 +76,7 @@ is not the same as "host-owned"; `libs/chat-hooks` already owns browser-API code
 - Extract the OAuth **callback completion** logic — read redirect state, validate `state`, scrub the
   `code` from the URL, exchange it, report over channel + URL marker, close on acknowledgement — as
   a hook parameterised by the exchange call and the resource kind. `ToolsetAuthCallback.tsx` and
-  `pg-chat`'s equivalent keep their own thin page shells for routing and i18n.
+  the downstream equivalent keep their own thin page shells for routing and i18n.
 - **Fix the dropped-acknowledgement bug** as part of the move (defer the channel close by one
   macrotask), so both repos converge on the fixed behaviour rather than the buggy one.
 - Migrate all nine consumers to the package and delete the app-owned implementations.
@@ -123,7 +123,7 @@ prior audit concluded.
   editor-only halves; `apps/chat/src/hooks/toolsets/useToolsetLogin.ts` becomes a thin app adapter
   that injects the `server-api/toolsets` calls and the app's `callbackPath`; the nine consumers
   listed above switch imports to the package.
-- **Cross-repo**: `pg-chat` deletes ~800 lines and consumes the package instead. It pins
+- **Cross-repo**: the downstream repo deletes ~800 lines and consumes the package instead. It pins
   `@epam/ai-dial-chat-hooks` at an exact version, so it needs a published build and a version bump —
   it is **not** blocked by this change and can migrate whenever the package lands.
 - **i18n**: no new user-visible strings. The lib gains no `t()` calls; every message stays in the
