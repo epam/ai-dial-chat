@@ -79,6 +79,13 @@ interface Props {
   existingAttachmentsAmount?: number;
   canAttachFolders?: boolean;
   allowedTypesLabel?: string;
+  /*
+   * Whether a file uploaded from inside the modal is ticked automatically.
+   * Defaults to `true`: this modal exists to pick files to attach, so a file
+   * the user just uploaded here is the one they meant to attach. The
+   * standalone file-manager page renders DialFileManagerShell directly and
+   * opts out there.
+   */
   autoSelectUploadedItems?: boolean;
 }
 
@@ -115,7 +122,7 @@ const DialFileManagerModal: FC<Props> = ({
   existingAttachmentsAmount = 0,
   canAttachFolders = false,
   allowedTypesLabel,
-  autoSelectUploadedItems = false,
+  autoSelectUploadedItems = true,
 }) => {
   const { t } = useTranslation();
   const { showInfoNotification, showErrorNotification } = useNotification();

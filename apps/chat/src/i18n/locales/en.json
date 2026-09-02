@@ -588,6 +588,8 @@
   "attachments": {
     "downloadFile": "Download file",
     "openInNewTab": "Open in new tab",
+    "removeLabel": "Remove attachment",
+    "retryLabel": "Retry upload",
     "unsupportedType": {
       "title": "File extension not supported",
       "message": "This model can only process {{formats}}. Please upload a file in a supported format."
