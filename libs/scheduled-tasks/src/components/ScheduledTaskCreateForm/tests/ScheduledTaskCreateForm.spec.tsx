@@ -98,16 +98,23 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  /* Mirrors the real button: `aria-busy` and `iconBefore` are independent of
+     `disabled`, which is what lets a test tell "submitting" from "not ready". */
   PrimaryButton: ({
     label,
     onClick,
     disabled,
+    iconBefore,
+    'aria-busy': ariaBusy,
   }: {
     label: string;
     onClick: () => void;
     disabled?: boolean;
+    iconBefore?: ReactNode;
+    'aria-busy'?: boolean;
   }) => (
-    <button onClick={onClick} disabled={disabled} aria-busy={disabled}>
+    <button onClick={onClick} disabled={disabled} aria-busy={ariaBusy}>
+      {iconBefore}
       {label}
     </button>
   ),
@@ -385,6 +392,34 @@ describe('ScheduledTaskCreateForm', () => {
       (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
+  });
+
+  it('shows a busy affordance on Save while isSubmitting, not just a disabled button', async () => {
+    await renderForm({
+      values: {
+        ...baseValues,
+        displayName: 'Daily summary',
+        modelId: 'gpt-4o',
+        prompt: 'Summarize my inbox',
+      },
+      isSubmitting: true,
+    });
+
+    /* The name must not drift while submitting — the spinner is decorative. */
+    const save = screen.getByRole('button', { name: 'Save' });
+    expect(save.getAttribute('aria-busy')).toBe('true');
+    expect(screen.getByRole('status').textContent).toBe('Saving');
+  });
+
+  it('leaves Save disabled but not busy when the form is merely incomplete', async () => {
+    await renderForm({ values: baseValues, isSubmitting: false });
+
+    const save = screen.getByRole('button', {
+      name: 'Save',
+    }) as HTMLButtonElement;
+    expect(save.disabled).toBe(true);
+    expect(save.getAttribute('aria-busy')).toBe('false');
+    expect(screen.getByRole('status').textContent).toBe('');
   });
 
   it('renders Details and Configuration as two distinct regions', async () => {

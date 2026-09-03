@@ -62,7 +62,9 @@ lands inline rather than becoming an attachment.
 `removeLabel` and `retryLabel` are the accessible names of the remove and
 retry buttons on each attachment card in the tray. They default to English
 (`'Remove attachment'` / `'Retry upload'`); pass translated strings so the two
-adjacent buttons stay distinguishable to assistive technology.
+adjacent buttons stay distinguishable to assistive technology. `uploadingLabel`
+(default `'Uploading'`) names the indeterminate progress bar a card shows while
+its upload is still in flight.
 
 ### EditMessageInput
 

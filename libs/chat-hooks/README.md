@@ -2705,6 +2705,8 @@ const panelActiveConversationId = useActiveConversationSync({
 
 Generic single-slot pending/loading/error state machine for confirmation dialogs. The `confirm` method calls `run(pending)`, closes the dialog on success, or sets an error message and keeps the dialog open on throw.
 
+The hook also restores keyboard focus when the dialog closes — confirmed, cancelled or dismissed alike — so focus does not fall to `<body>`. By default it returns focus to whatever held it when `open()` was called. When that control will not outlive the dialog (a menu item unmounts with its menu), pass a stable element as `open()`'s second argument; a disconnected target is skipped rather than throwing.
+
 ```tsx
 import { useAsyncConfirmDialog } from '@epam/ai-dial-chat-hooks';
 
@@ -2712,6 +2714,10 @@ const deleteDialog = useAsyncConfirmDialog<string>();
 
 // Open the dialog with the item id as the pending value:
 deleteDialog.open(itemId);
+
+// Opened from a row menu, whose item unmounts with the menu: name the trigger
+// that survives, so focus has somewhere to return to.
+deleteDialog.open(itemId, rowActionsTriggerRef.current);
 
 // Confirm:
 await deleteDialog.confirm(
@@ -2735,7 +2741,7 @@ if (!deleteDialog.isRunning) deleteDialog.close();
 | `isPending` | `boolean`                                                                              | `true` while `pending` is non-null (dialog is open).                                             |
 | `isRunning` | `boolean`                                                                              | `true` while `confirm`'s `run` callback is executing.                                            |
 | `error`     | `string \| null`                                                                       | Error message from the most recent failed `confirm`, or `null`.                                  |
-| `open`      | `(value: T) => void`                                                                   | Opens the dialog with `value` as the pending payload; clears any prior error.                    |
+| `open`      | `(value: T, returnFocusTo?: HTMLElement | null) => void`                              | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
 | `close`     | `() => void`                                                                           | Closes the dialog and clears pending + error.                                                    |
 | `confirm`   | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
 

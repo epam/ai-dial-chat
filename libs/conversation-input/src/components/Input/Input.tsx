@@ -61,6 +61,7 @@ export const Input: FC<InputProps> = ({
   menuCloseLabel = 'Close',
   removeLabel,
   retryLabel,
+  uploadingLabel,
   sendLabel,
   stopLabel,
   micLabel = 'Record voice message',
@@ -434,7 +435,7 @@ export const Input: FC<InputProps> = ({
           }}
           onRetry={handleRetry}
           onExpand={handleExpand}
-          labels={{ removeLabel, retryLabel }}
+          labels={{ removeLabel, retryLabel, uploadingLabel }}
           onAttachmentClick={
             onAttachmentClick != null
               ? (id) => {

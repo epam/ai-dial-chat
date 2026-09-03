@@ -402,7 +402,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     path: string;
     title: string;
   } | null>(null);
-  const publishReturnFocusRef = useRef<HTMLButtonElement | null>(null);
+  /*
+   * The row's kebab trigger, captured whenever its menu opens. Every overlay
+   * launched from that menu returns focus here on close: the menu item that
+   * was actually clicked unmounts with the menu, so it is not a target a
+   * closing dialog can restore focus to.
+   */
+  const rowActionsTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const {
     requestRecipientsCount,
@@ -617,7 +623,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
    */
   const handleActionMenuOpen = useCallback(
     (item: ConversationItem, trigger: HTMLButtonElement) => {
-      publishReturnFocusRef.current = trigger;
+      rowActionsTriggerRef.current = trigger;
 
       const contextId = toContextId(item.id);
       if (!contextId) return;
@@ -780,7 +786,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 stroke={DIAL_KIT_ICON_STROKE}
               />
             ),
-            onClick: () => openUnshareDialog(contextId),
+            onClick: () =>
+              openUnshareDialog(contextId, rowActionsTriggerRef.current),
           });
         }
         return readonlyActions;
@@ -799,7 +806,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             />
           ),
           onClick: () =>
-            openRenameDialog({ id: contextId, title: panelItem.title }),
+            openRenameDialog(
+              { id: contextId, title: panelItem.title },
+              rowActionsTriggerRef.current,
+            ),
         },
         duplicateAction,
         exportAction,
@@ -878,11 +888,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 ),
                 onClick: () => {
                   setSelectedUnpublishFolder(null);
-                  openUnpublishDialog({
-                    path: conversationPath,
-                    title: panelItem.title,
-                    folders: publishedFolders,
-                  });
+                  openUnpublishDialog(
+                    {
+                      path: conversationPath,
+                      title: panelItem.title,
+                      folders: publishedFolders,
+                    },
+                    rowActionsTriggerRef.current,
+                  );
                 },
               },
             ]
@@ -915,7 +928,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                     stroke={DIAL_KIT_ICON_STROKE}
                   />
                 ),
-                onClick: () => openRevokeDialog(contextId),
+                onClick: () =>
+                  openRevokeDialog(contextId, rowActionsTriggerRef.current),
               },
             ]
           : []),
@@ -930,7 +944,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             />
           ),
           className: 'text-error',
-          onClick: () => openDeleteDialog(contextId),
+          onClick: () =>
+            openDeleteDialog(contextId, rowActionsTriggerRef.current),
         },
       ];
     },
@@ -1441,7 +1456,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             conversationPath={pendingPublishConversation.path}
             conversationTitle={pendingPublishConversation.title}
             onClose={handleClosePublishPanel}
-            returnFocusRef={publishReturnFocusRef}
+            returnFocusRef={rowActionsTriggerRef}
             history={publishPanelHistory.entries}
             isHistoryLoading={
               publishPanelHistory.status === PublishHistoryStatus.Loading

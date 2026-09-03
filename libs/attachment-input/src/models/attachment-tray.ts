@@ -10,6 +10,8 @@ export interface AttachmentTrayLabels {
   retryLabel?: string;
   /** Accessible label forwarded to each card's root when it is interactive. When omitted, the card's own default (`'Open attachment'`) applies. */
   clickLabel?: string;
+  /** Accessible label for each card's in-progress upload progress bar. Defaults to `'Uploading'`. */
+  uploadingLabel?: string;
 }
 
 /** Style overrides for the `AttachmentTray` component. */

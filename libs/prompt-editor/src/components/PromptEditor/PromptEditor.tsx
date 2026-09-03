@@ -113,6 +113,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
       backButtonLabel: labels?.backButtonLabel ?? 'Back to prompts',
       cancelButtonLabel: cancelLabel,
       submitButtonLabel: labels?.saveLabel ?? 'Save',
+      submittingLabel: labels?.savingStatusLabel ?? 'Saving',
     },
     onBack,
     onCancel,
@@ -175,7 +176,11 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     labels?.charactersRemaining?.(count) ?? `${count} characters remaining`;
 
   return (
-    <BuilderFormContainer {...containerProps} isSubmitDisabled={isSaving}>
+    <BuilderFormContainer
+      {...containerProps}
+      isSubmitDisabled={isSaving}
+      isSubmitting={isSaving}
+    >
       <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-5 px-4 py-6 desktop:px-8">
         <Input
           id="prompt-name"
