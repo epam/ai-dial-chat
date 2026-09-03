@@ -132,3 +132,32 @@ describe('AttachmentCard — corner actions in the error state', () => {
     expect(onClick).toHaveBeenCalledWith('a1');
   });
 });
+
+/*
+ * A long filename used to overflow the fixed 84px tile and get clipped by its
+ * `overflow-hidden` with no ellipsis: the name div sits in a column flex
+ * container with `items-start`, so it was sized to its min-content width, and
+ * `overflow-wrap: break-word` (Tailwind `break-words`) does not shrink
+ * min-content.
+ */
+describe('AttachmentCard — long filename', () => {
+  const longNameAttachment: DisplayAttachment = {
+    id: 'a2',
+    name: 'ARCHITECTUREDECISIONRECORDS.md',
+    contentType: 'text/markdown',
+    type: AttachmentType.File,
+    status: RequestStatus.Idle,
+  };
+
+  it('constrains the name to the tile width so it wraps and clamps', () => {
+    render(
+      <AttachmentCard attachment={longNameAttachment} onDownload={vi.fn()} />,
+    );
+
+    /* jsdom does no layout, so assert the classes that make the clamp work. */
+    const name = screen.getByTitle('ARCHITECTUREDECISIONRECORDS');
+    expect(name.className).toContain('w-full');
+    expect(name.className).toContain('break-words');
+    expect(name.className).toContain('line-clamp-2');
+  });
+});
