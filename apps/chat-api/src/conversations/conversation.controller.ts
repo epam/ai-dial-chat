@@ -15,7 +15,6 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import {
@@ -66,7 +65,6 @@ export class ConversationController {
 
   @Post()
   @HttpCode(201)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     summary: 'Create a new conversation',
     description:
@@ -98,7 +96,6 @@ export class ConversationController {
   }
 
   @Get('list')
-  @Throttle({ default: { limit: 300, ttl: 60000 } })
   @ApiOperation({
     summary: 'List conversations',
     description:
@@ -127,7 +124,6 @@ export class ConversationController {
   }
 
   @Get('metadata')
-  @Throttle({ default: { limit: 300, ttl: 60000 } })
   @ApiOperation({ summary: 'Get metadata for a conversation' })
   @ApiResponse({
     status: 200,
@@ -153,7 +149,6 @@ export class ConversationController {
   }
 
   @Get()
-  @Throttle({ default: { limit: 600, ttl: 60000 } })
   @ApiOperation({ summary: 'Get a conversation by path' })
   @ApiResponse({
     status: 200,
@@ -198,7 +193,6 @@ export class ConversationController {
 
   @Post('completions')
   @HttpCode(200)
-  @Throttle({ default: { limit: 100, ttl: 60000 } })
   @ApiOperation({
     summary: 'Stream a chat completion',
     description:
@@ -231,7 +225,6 @@ export class ConversationController {
     status: 409,
     description: 'Another generation is already active for this conversation',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
   async streamCompletion(
@@ -272,7 +265,6 @@ export class ConversationController {
   }
 
   @Post('completions/stop')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Stop an active generation' })
   @ApiResponse({ status: 204, description: 'Generation stopped successfully' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -302,7 +294,6 @@ export class ConversationController {
 
   @Post('watch')
   @HttpCode(200)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     operationId: 'watchConversation',
     summary: 'Subscribe to conversation resource updates via SSE',
@@ -380,7 +371,6 @@ export class ConversationController {
   }
 
   @Patch()
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({ summary: 'Rename a conversation by path' })
   @ApiResponse({
     status: 200,
@@ -411,7 +401,6 @@ export class ConversationController {
 
   @Post('generate-title')
   @HttpCode(200)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({
     operationId: 'generateConversationTitle',
     summary: 'Generate an LLM-based title suggestion for a conversation',
@@ -437,7 +426,6 @@ export class ConversationController {
     description: 'Not authorized to use the configured utility model',
   })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'LLM title generation failed' })
   @ApiResponse({
     status: 503,
@@ -457,7 +445,6 @@ export class ConversationController {
   }
 
   @Post('duplicate')
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     summary: "Duplicate a conversation into the user's own bucket",
   })
@@ -485,7 +472,6 @@ export class ConversationController {
 
   @Post('deletions')
   @HttpCode(200)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({
     operationId: 'deleteConversations',
     summary: 'Delete selected conversations',
@@ -503,7 +489,6 @@ export class ConversationController {
       'ids is empty, exceeds 100, contains non-strings, or body is missing',
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 500, description: 'Unexpected internal error' })
   deleteConversations(
     @Req() req: Request,
@@ -515,7 +500,6 @@ export class ConversationController {
 
   @Post('deletions/all')
   @HttpCode(200)
-  @Throttle({ default: { limit: 2, ttl: 60000 } })
   @ApiOperation({
     operationId: 'deleteAllConversations',
     summary: 'Delete all conversations in the user bucket',
@@ -532,7 +516,6 @@ export class ConversationController {
     description: 'confirm is missing, false, or non-boolean',
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core metadata listing failed (bucket unreadable)',
