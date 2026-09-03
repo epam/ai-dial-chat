@@ -2,6 +2,8 @@ import {
   AttachmentContentType,
   AttachmentErrorType,
   OoxmlFileType,
+  getOoxmlMimeType,
+  isOoxmlPreviewable,
   isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
 import {
@@ -60,44 +62,16 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
   },
   isHtmlPreviewable: vi.fn().mockReturnValue(false),
   isTextPreviewable: vi.fn(),
-  /* Real (not stubbed) behavior, mirroring the actual OOXML_MIME_TYPES map in
-   * `@epam/ai-dial-attachment-canvas`, since resolveExternalSourceContentType/
-   * isExternalSourcePreviewable tests assert genuine extension/MIME detection. */
-  getOoxmlMimeType: (name: string, mimeType?: string) => {
-    const mimeToType: Record<string, string> = {
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation':
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    };
-    const normalizedMime = mimeType?.split(';', 1)[0].trim().toLowerCase();
-    if (normalizedMime != null && mimeToType[normalizedMime] != null) {
-      return mimeToType[normalizedMime];
-    }
-    const dot = name.lastIndexOf('.');
-    if (dot === -1) return undefined;
-    const extToMime: Record<string, string> = {
-      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    };
-    return extToMime[name.slice(dot + 1).toLowerCase()];
-  },
-  isOoxmlPreviewable: (name: string, mimeType?: string) => {
-    const validMimes = new Set([
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    ]);
-    if (mimeType != null && validMimes.has(mimeType.split(';', 1)[0].trim())) {
-      return true;
-    }
-    const dot = name.lastIndexOf('.');
-    if (dot === -1) return false;
-    return ['docx', 'xlsx', 'pptx'].includes(name.slice(dot + 1).toLowerCase());
-  },
+  /* Plain stubs, not a reimplementation of the real OOXML_MIME_TYPES map —
+   * the map's own correctness is covered by
+   * `libs/attachment-canvas/src/utils/tests/content.spec.ts`, which imports
+   * `getOoxmlMimeType`/`isOoxmlPreviewable` directly from `../content` and so
+   * doesn't hit the `@epam/pdf-highlighter-kit` resolution problem above.
+   * Tests here only need to verify that `resolveExternalSourceContentType`/
+   * `isExternalSourcePreviewable` correctly use whatever these return —
+   * each test configures the exact return value it needs. */
+  getOoxmlMimeType: vi.fn(),
+  isOoxmlPreviewable: vi.fn(),
 }));
 
 /* Stand-in for the host's DIAL-URL resolvers, mirroring the app's real
@@ -1035,6 +1009,11 @@ describe('getUrlFileName', () => {
 });
 
 describe('resolveExternalSourceContentType', () => {
+  beforeEach(() => {
+    vi.mocked(isOoxmlPreviewable).mockReset();
+    vi.mocked(getOoxmlMimeType).mockReset();
+  });
+
   it('returns an image/* content type unchanged regardless of url', () => {
     expect(
       resolveExternalSourceContentType(
@@ -1087,30 +1066,37 @@ describe('resolveExternalSourceContentType', () => {
   ])(
     'overrides a mislabeled content type when the url ends with .%s',
     (ext, canonicalMime) => {
+      vi.mocked(isOoxmlPreviewable).mockReturnValue(false);
+      vi.mocked(getOoxmlMimeType).mockReturnValue(canonicalMime);
       expect(
         resolveExternalSourceContentType(
           'text/markdown',
           `https://example.com/citation/report.${ext}`,
         ),
       ).toBe(canonicalMime);
+      expect(getOoxmlMimeType).toHaveBeenCalledWith(`report.${ext}`);
     },
   );
 
   it('returns a canonical OOXML content type unchanged when already reported', () => {
     const pptxMime =
       'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    vi.mocked(isOoxmlPreviewable).mockReturnValue(true);
     expect(
       resolveExternalSourceContentType(
         pptxMime,
         'https://example.com/citation/doc-id-123',
       ),
     ).toBe(pptxMime);
+    expect(isOoxmlPreviewable).toHaveBeenCalledWith('', pptxMime);
   });
 });
 
 describe('isExternalSourcePreviewable', () => {
   beforeEach(() => {
     vi.mocked(isTextPreviewable).mockReturnValue(false);
+    vi.mocked(isOoxmlPreviewable).mockReset();
+    vi.mocked(getOoxmlMimeType).mockReset();
   });
 
   it('returns true for an image/* content type regardless of url', () => {
@@ -1147,6 +1133,17 @@ describe('isExternalSourcePreviewable', () => {
   });
 
   it('returns true for a url whose path ends with .pptx even with a mislabeled content type', () => {
+    const pptxMime =
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    /* First call (inside resolveExternalSourceContentType) checks the raw
+     * 'text/markdown' content type and must report it as untrusted so the
+     * extension override runs; the second call (isExternalSourcePreviewable's
+     * own check) queries the *resolved* pptx MIME type and must report it as
+     * trusted. */
+    vi.mocked(isOoxmlPreviewable).mockImplementation(
+      (_, mimeType) => mimeType === pptxMime,
+    );
+    vi.mocked(getOoxmlMimeType).mockReturnValue(pptxMime);
     expect(
       isExternalSourcePreviewable(
         'text/markdown',
@@ -1156,12 +1153,16 @@ describe('isExternalSourcePreviewable', () => {
   });
 
   it('returns true for a canonical pptx content type even when the url has no matching extension', () => {
+    const pptxMime =
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    vi.mocked(isOoxmlPreviewable).mockReturnValue(true);
     expect(
       isExternalSourcePreviewable(
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        pptxMime,
         'https://example.com/citation/doc-id-123',
       ),
     ).toBe(true);
+    expect(isOoxmlPreviewable).toHaveBeenCalledWith('', pptxMime);
   });
 
   it('returns true when isTextPreviewable reports the filename is previewable', () => {
