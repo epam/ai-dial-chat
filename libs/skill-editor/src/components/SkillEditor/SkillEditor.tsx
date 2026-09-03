@@ -155,7 +155,13 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [droppedFiles, setDroppedFiles] = useState<File[] | undefined>();
-  const [isFilesExpanded, setIsFilesExpanded] = useState(true);
+  /*
+   * Collapsed on first paint. The accordion only mounts under the mobile
+   * breakpoint — desktop renders the always-visible Files sidebar instead — so
+   * the initial state needs no breakpoint check, and starting expanded would
+   * push the Instructions editor below the fold on the narrowest layout.
+   */
+  const [isFilesExpanded, setIsFilesExpanded] = useState(false);
 
   /*
    * Files dropped anywhere on the editor surface (not just inside the
@@ -383,7 +389,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         styles={layoutStyles}
         leftContent={
           <>
-            {/* Mobile: collapsible file-list summary, defaults expanded. */}
+            {/* Mobile: collapsible file-list summary, collapsed by default. */}
             <div className="px-4 py-4 desktop:hidden">
               <Accordion
                 title={t.editingFileLabel ?? 'Editing file'}

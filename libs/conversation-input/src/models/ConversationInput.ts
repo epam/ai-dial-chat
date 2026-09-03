@@ -65,6 +65,8 @@ export interface EditMessageInputProps {
   removeLabel?: string;
   /** Accessible label for each attachment card's retry button (error state only). */
   retryLabel?: string;
+  /** Accessible label for each attachment card's in-progress upload progress bar. Defaults to `'Uploading'`. */
+  uploadingLabel?: string;
   /** Accessible label for the add-menu trigger button. */
   addMenuTitle?: string;
   /** Label for the attach-file menu item. */
@@ -209,6 +211,8 @@ export interface ConversationInputProps {
   removeLabel?: string;
   /** Accessible label for each attachment card's retry button (error state only). Defaults to `'Retry upload'`. */
   retryLabel?: string;
+  /** Accessible label for each attachment card's in-progress upload progress bar. Defaults to `'Uploading'`. */
+  uploadingLabel?: string;
   /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons and the model selector remain usable. Defaults to `false`. */
   isInputDisabled?: boolean;
   /**

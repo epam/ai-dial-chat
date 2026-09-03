@@ -829,5 +829,65 @@ describe('DeploymentsDetailsService', () => {
         service.getDeploymentDetails('user1', 'gpt-4o', 'token'),
       ).rejects.toThrow(ServiceUnavailableException);
     });
+
+    it('does not cache a fetch that was invalidated (e.g. by a logout) while still in flight', async () => {
+      const { service, sdkClient, cacheManager } = makeService();
+      let resolveToolset: (value: unknown) => void = () => undefined;
+      sdkClient.getToolset.mockReturnValue(
+        new Promise((resolve) => {
+          resolveToolset = resolve;
+        }),
+      );
+      sdkClient.getToolSetTools.mockResolvedValue(okResponse({ tools: [] }));
+
+      /* Details fetch starts (e.g. panel opened) but DIAL Core hasn't replied yet. */
+      const staleRequest = service.getDeploymentDetails(
+        'user1',
+        'toolsets/search-tool',
+        'token',
+      );
+
+      /* Logout completes and invalidates the (not-yet-populated) cache entry. */
+      await service.invalidateDetailsCache('user1', 'toolsets/search-tool');
+
+      /* The post-logout refetch must not join the stale in-flight promise. */
+      sdkClient.getToolset.mockResolvedValueOnce(
+        okResponse({
+          id: 'toolsets/search-tool',
+          auth_settings: { user_level_auth_status: 'SIGNED_OUT' },
+        }),
+      );
+      const freshRequest = service.getDeploymentDetails(
+        'user1',
+        'toolsets/search-tool',
+        'token',
+      );
+
+      /* The stale upstream call finally resolves with the pre-logout state. */
+      resolveToolset(
+        okResponse({
+          id: 'toolsets/search-tool',
+          auth_settings: { user_level_auth_status: 'SIGNED_IN' },
+        }),
+      );
+
+      const [staleResult, freshResult] = await Promise.all([
+        staleRequest,
+        freshRequest,
+      ]);
+
+      expect(
+        staleResult.toolsetDetails?.authSettings?.userLevelAuthStatus,
+      ).toBe('SIGNED_IN');
+      expect(
+        freshResult.toolsetDetails?.authSettings?.userLevelAuthStatus,
+      ).toBe('SIGNED_OUT');
+      expect(sdkClient.getToolset).toHaveBeenCalledTimes(2);
+
+      const cached = await cacheManager.get(
+        'deployments:details:user1:toolsets/search-tool',
+      );
+      expect(cached).toEqual(freshResult);
+    });
   });
 });

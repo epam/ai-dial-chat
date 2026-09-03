@@ -8,6 +8,8 @@ export interface BuilderFormHeaderLabels {
   cancelButtonLabel: string;
   /** Label for the submit action. */
   submitButtonLabel: string;
+  /** Accessible name for the submit action's busy indicator, announced while `isSubmitting` is `true`. Defaults to `'Submitting'`. */
+  submittingLabel?: string;
 }
 
 /**
@@ -49,6 +51,8 @@ export interface BuilderFormHeaderProps {
   isCancelDisabled?: boolean;
   /** When `true`, the submit action is disabled. Defaults to `false`. */
   isSubmitDisabled?: boolean;
+  /** When `true`, the submit action shows a spinner and reports `aria-busy`. Defaults to `false`. */
+  isSubmitting?: boolean;
   /** Style overrides. */
   styles?: BuilderFormHeaderStyles;
 }
