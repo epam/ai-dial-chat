@@ -76,6 +76,7 @@ describe('useConversationStream', () => {
       }),
       stopCompletion: vi.fn().mockResolvedValue(undefined),
       watchConversation: vi.fn(),
+      attachToGeneration: vi.fn().mockRejectedValue(new Error('not mocked')),
       getConversation: vi.fn().mockResolvedValue(makeConversation()),
     };
   });
@@ -627,6 +628,68 @@ describe('useConversationStream', () => {
 
       expect(result.current.stream.isStreaming).toBe(true);
       await waitFor(() => expect(transport.getConversation).toHaveBeenCalled());
+      // attachToGeneration is tried first; the default mock rejects, falling
+      // back to watchConversation for this test's terminal-check.
+      expect(transport.attachToGeneration).toHaveBeenCalledWith(
+        'conv',
+        expect.any(AbortSignal),
+      );
+      expect(transport.watchConversation).toHaveBeenCalledOnce();
+    });
+
+    it('attaches to the live replay: applies the snapshot and chunks progressively, then reloads on the terminal event', async () => {
+      const encoder = new TextEncoder();
+      transport.attachToGeneration = vi.fn().mockResolvedValue(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  type: 'snapshot',
+                  message: {
+                    role: MessageRole.Assistant,
+                    content: 'Hel',
+                    timestamp: '2026-01-01T00:00:00.000Z',
+                  },
+                })}\n\n`,
+              ),
+            );
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  type: 'chunk',
+                  chunk: { choices: [{ delta: { content: 'lo' } }] },
+                })}\n\n`,
+              ),
+            );
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`),
+            );
+            controller.close();
+          },
+        }),
+      );
+      transport.getConversation = vi
+        .fn()
+        .mockResolvedValue(makeConversation({ name: 'Resolved' }));
+
+      const { result } = renderHook(() =>
+        useHookHarness({ transport, conversationId: 'bucket/conv' }),
+      );
+
+      act(() => {
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          makeAwaitingConversation(),
+        );
+      });
+
+      await waitFor(() =>
+        expect(result.current.conversation?.name).toBe('Resolved'),
+      );
+      expect(result.current.stream.isStreaming).toBe(false);
+      // Attach fully resolved the resume — the watch fallback never ran.
+      expect(transport.watchConversation).not.toHaveBeenCalled();
     });
 
     it('does nothing for a conversation not awaiting resume', () => {
@@ -684,7 +747,7 @@ describe('useConversationStream', () => {
       expect(result.current.conversation?.name).toBe('Resolved');
     });
 
-    it('deduplicates resume watches for the same path', () => {
+    it('deduplicates resume watches for the same path', async () => {
       transport.watchConversation = vi.fn().mockResolvedValue(
         new ReadableStream({
           start(controller) {
@@ -707,7 +770,10 @@ describe('useConversationStream', () => {
         );
       });
 
-      expect(transport.watchConversation).toHaveBeenCalledOnce();
+      // attachToGeneration is tried (and rejects) before the watch fallback runs.
+      await waitFor(() =>
+        expect(transport.watchConversation).toHaveBeenCalledOnce(),
+      );
     });
 
     it('performs a final check and clears the streaming path when the watch stream errors', async () => {

@@ -14,6 +14,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  AttachGenerationDto,
   ConversationDeletionResultDto,
   ConversationListResponseDto,
   ConversationMetadataDto,
@@ -34,6 +35,10 @@ import type {
   UnpublishConversationResultDto,
   WatchConversationBodyDto,
 } from '../models/index';
+
+export interface AttachToGenerationRequest {
+  attachGenerationDto: AttachGenerationDto;
+}
 
 export interface CreateConversationRequest {
   createConversationDto: CreateConversationDto;
@@ -118,6 +123,54 @@ export interface WatchConversationRequest {
  *
  */
 export class ConversationsApi extends runtime.BaseAPI {
+  /**
+   * Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Session-scoped — only the session that could stop the generation can attach to it.
+   * Attach to an active generation and replay it live
+   */
+  async attachToGenerationRaw(
+    requestParameters: AttachToGenerationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['attachGenerationDto'] == null) {
+      throw new runtime.RequiredError(
+        'attachGenerationDto',
+        'Required parameter "attachGenerationDto" was null or undefined when calling attachToGeneration().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/completions/attach`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['attachGenerationDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Session-scoped — only the session that could stop the generation can attach to it.
+   * Attach to an active generation and replay it live
+   */
+  async attachToGeneration(
+    requestParameters: AttachToGenerationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.attachToGenerationRaw(requestParameters, initOverrides);
+  }
+
   /**
    * Creates a new conversation with an initial user message and returns it with a server-assigned ID.
    * Create a new conversation

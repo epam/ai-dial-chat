@@ -111,6 +111,11 @@ export * from './files/download-destination';
 export * from './files/prepare-download-destination';
 export * from './files/resolve-dial-file-api-path';
 export * from './files/file-manager-variant';
+/*
+ * Re-exported for backward compatibility — the canonical hook lives in
+ * `@epam/ai-dial-chat-shared` (see AGENTS.md §Conversation-history reuse).
+ */
+export { useGridEditingScroll } from '@epam/ai-dial-chat-shared';
 export {
   sanitizeFileName,
   splitFileNameExtension,

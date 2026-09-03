@@ -28,6 +28,23 @@ import { isAwaitingGenerationResume } from './generation-resume';
  */
 const GENERATION_RESUME_WATCH_TIMEOUT_MS = 5 * 60 * 1000;
 
+/**
+ * `BufferedGeneration.generationId` for a resumed (not locally-started)
+ * generation. `restoreBufferedGeneration`/`onChunk`'s staleness checks never
+ * compare against this value — a resume never sets `activeGenerationIdRef` —
+ * so any stable placeholder works; it exists only so the buffer entry has a
+ * value to carry.
+ */
+const RESUME_BUFFER_GENERATION_ID = 'awaiting-resume';
+
+/** One event on the `attachToGeneration` SSE stream (`generation-live-replay`). */
+type GenerationAttachEvent =
+  | { type: 'snapshot'; message: Message }
+  | { type: 'chunk'; chunk: StreamChunk }
+  | { type: 'done' }
+  | { type: 'error'; message?: string }
+  | { type: 'stopped' };
+
 /*
  * Bounded wait for the client-channel subscribe to resolve so that
  * completions sent right after mount can carry a channelId. 20 s gives
@@ -66,6 +83,18 @@ export interface ConversationStreamTransport {
   stopCompletion(params: { generationId: string; path: string }): Promise<void>;
   /** Opens a stream of resource-update events for `path`, until aborted via `signal`. */
   watchConversation(
+    path: string,
+    signal: AbortSignal,
+  ): Promise<ReadableStream<Uint8Array>>;
+  /**
+   * Attaches to an active generation's live replay: a `snapshot` event
+   * carrying the assistant message as assembled so far, then a `chunk` event
+   * per subsequent delta, then exactly one terminal event (`done`/`error`/
+   * `stopped`), until aborted via `signal`. Rejects when no active
+   * generation exists for `path` — including one that already finished —
+   * so the caller can fall back to `watchConversation`.
+   */
+  attachToGeneration(
     path: string,
     signal: AbortSignal,
   ): Promise<ReadableStream<Uint8Array>>;
@@ -522,11 +551,12 @@ export const useConversationStream = ({
       resumingPathsRef.current.add(conversationPath);
       addStreamingPath(conversationPath);
 
-      const controller = new AbortController();
+      const messageIndex = conversation.messages.length - 1;
 
       const finish = (result?: Conversation) => {
         resumingPathsRef.current.delete(conversationPath);
         removeStreamingPath(conversationPath);
+        bufferedGenerationsRef.current.delete(conversationPath);
         if (result && isPathDisplayed(conversationPath)) {
           setConversation(result);
           conversationRef.current = result;
@@ -544,12 +574,56 @@ export const useConversationStream = ({
         }
       };
 
-      const run = async () => {
+      const applySnapshot = (message: Message) => {
+        const buffered = {
+          generationId: RESUME_BUFFER_GENERATION_ID,
+          messageIndex,
+          message,
+        };
+        bufferedGenerationsRef.current.set(conversationPath, buffered);
+        if (!isPathDisplayed(conversationPath)) return;
+        setConversation((prev) => {
+          if (!prev) return prev;
+          const next = restoreBufferedMessage(prev, buffered);
+          conversationRef.current = next;
+          return next;
+        });
+      };
+
+      const applyAttachChunk = (chunk: StreamChunk) => {
+        const buffered = bufferedGenerationsRef.current.get(conversationPath);
+        if (buffered?.generationId === RESUME_BUFFER_GENERATION_ID) {
+          const updated = applyChunkToMessages([buffered.message], 0, chunk);
+          if (updated) buffered.message = updated[0];
+        }
+        if (!isPathDisplayed(conversationPath)) return;
+        setConversation((prev) => {
+          if (!prev) return prev;
+          const currentBuffer =
+            bufferedGenerationsRef.current.get(conversationPath);
+          if (currentBuffer?.generationId !== RESUME_BUFFER_GENERATION_ID) {
+            return prev;
+          }
+          const next = restoreBufferedMessage(prev, currentBuffer);
+          conversationRef.current = next;
+          return next;
+        });
+      };
+
+      /*
+       * Watch for a terminal update via the generic conversation-update SSE
+       * channel and re-check `isAwaitingGenerationResume` — the pre-existing
+       * behavior, unchanged, and the fallback whenever attach can't be used
+       * (older backend during a rollout, attach opened but ended without a
+       * terminal event, or its own timeout elapsed).
+       */
+      const runWatch = async () => {
+        const watchController = new AbortController();
         let stream: ReadableStream<Uint8Array>;
         try {
           stream = await transport.watchConversation(
             conversationPath,
-            controller.signal,
+            watchController.signal,
           );
         } catch {
           await finalCheck();
@@ -561,7 +635,7 @@ export const useConversationStream = ({
         let buffer = '';
 
         const timeoutId = window.setTimeout(() => {
-          controller.abort();
+          watchController.abort();
         }, GENERATION_RESUME_WATCH_TIMEOUT_MS);
 
         try {
@@ -618,7 +692,97 @@ export const useConversationStream = ({
         await finalCheck();
       };
 
-      void run();
+      /*
+       * Attaches to the backend's live replay of the in-flight generation, if
+       * one is available. Returns `true` when it fully resolved the resume
+       * (a genuine terminal event arrived, or its own timeout elapsed — both
+       * end in a `finalCheck`), or `false` when the caller should fall back
+       * to `runWatch` (attach couldn't open at all, or its stream ended
+       * without ever seeing a terminal event).
+       */
+      const runAttach = async (): Promise<boolean> => {
+        const attachController = new AbortController();
+        let reader: ReadableStreamDefaultReader<Uint8Array>;
+        try {
+          const stream = await transport.attachToGeneration(
+            conversationPath,
+            attachController.signal,
+          );
+          reader = stream.getReader();
+        } catch {
+          return false;
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let sawTimeout = false;
+        let sawTerminal = false;
+
+        const timeoutId = window.setTimeout(() => {
+          sawTimeout = true;
+          attachController.abort();
+        }, GENERATION_RESUME_WATCH_TIMEOUT_MS);
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() ?? '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith('data:')) continue;
+
+              const data = trimmed.slice(5).trim();
+              let event: GenerationAttachEvent | null = null;
+              try {
+                event = JSON.parse(data) as GenerationAttachEvent;
+              } catch {
+                continue;
+              }
+              if (!event) continue;
+
+              switch (event.type) {
+                case 'snapshot':
+                  applySnapshot(event.message);
+                  break;
+                case 'chunk':
+                  applyAttachChunk(event.chunk);
+                  break;
+                case 'done':
+                case 'error':
+                case 'stopped':
+                  sawTerminal = true;
+                  break;
+              }
+            }
+            if (sawTerminal) break;
+          }
+        } catch {
+          // Network error, or our own timeout-abort — handled below.
+        } finally {
+          clearTimeout(timeoutId);
+          reader.releaseLock();
+        }
+
+        if (sawTerminal) {
+          await finalCheck();
+          return true;
+        }
+        if (sawTimeout) {
+          await finalCheck();
+          return true;
+        }
+        return false;
+      };
+
+      void (async () => {
+        const handled = await runAttach();
+        if (!handled) await runWatch();
+      })();
     },
     // setConversation and conversationRef are stable refs — intentionally omitted
     // eslint-disable-next-line react-hooks/exhaustive-deps
