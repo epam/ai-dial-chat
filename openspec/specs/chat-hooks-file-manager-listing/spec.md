@@ -42,6 +42,32 @@ SHALL accept an injected `DialFilesApi` instance and SHALL NOT import
 - **THEN** the cache entry for that path is deleted immediately without a
   refetch
 
+### Requirement: A 404 on the browsed folder falls back to its parent instead of erroring
+
+The main folder-listing effect SHALL distinguish a `404` response for a
+non-root `folderPath` from every other failure. On `404`, the hook SHALL set
+`folderPath` to the parent of the failed path (via `getParentFolderPath`)
+instead of setting `error`, so a folder that disappeared between navigation
+and fetch (for example, its last remaining file was just deleted) resolves to
+its parent folder's listing rather than a dead-end error screen. Every other
+failure, and any `404` while `folderPath` is already root (`""`), SHALL still
+set `error` as before.
+
+#### Scenario: The current folder 404s after its last file is deleted
+
+- **GIVEN** the user is browsing `folderPath = "reports/"`
+- **WHEN** the last file in `reports/` is deleted and the resulting refetch of
+  `reports/` returns `404`
+- **THEN** the hook sets `folderPath` to its parent (`""`) and does not set
+  `error`
+
+#### Scenario: A 404 at the root folder still surfaces as an error
+
+- **GIVEN** `folderPath` is `""` (root)
+- **WHEN** the listing fetch returns `404`
+- **THEN** the hook sets `error` as it does for any other failure, since there
+  is no parent to fall back to
+
 ### Requirement: Search always searches from the current folder and cancels stale requests
 
 `onSearchFiles` SHALL ignore its `folder` parameter and always search from

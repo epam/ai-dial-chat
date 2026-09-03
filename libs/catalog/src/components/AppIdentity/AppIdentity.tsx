@@ -103,15 +103,14 @@ export const AppIdentity: FC<AppIdentityProps> = ({
 
         <div className="flex min-w-0 flex-col">
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">
-            <span
+            <EllipsisTooltip
+              text={query ? <Highlight text={name} query={query} /> : name}
               className={mergeClasses(
-                'min-w-0 flex-1 truncate',
+                'min-w-0 flex-1',
                 typography?.nameClassName ?? 'dial-body-semi-text',
                 styles.name,
               )}
-            >
-              {query ? <Highlight text={name} query={query} /> : name}
-            </span>
+            />
             {version && (
               /* Capped at 30% of the row so a long version truncates instead of
                  squeezing the name out of the card. */

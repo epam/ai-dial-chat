@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** State and controls returned by `useAsyncConfirmDialog`. */
 export interface AsyncConfirmDialogControls<T> {
@@ -13,8 +13,17 @@ export interface AsyncConfirmDialogControls<T> {
   isRunning: boolean;
   /** Error message set when the last `confirm` run threw, or `null` otherwise. */
   error: string | null;
-  /** Opens the dialog by setting `pending` to `value` and clearing any prior error. */
-  open: (value: T) => void;
+  /**
+   * Opens the dialog by setting `pending` to `value` and clearing any prior
+   * error.
+   *
+   * Pass `returnFocusTo` when the control that opened the dialog will not
+   * survive it — a row menu item, for instance, unmounts with its menu, so
+   * restoring focus to it is impossible and the caller should name a stable
+   * element such as the menu's own trigger. When omitted, whatever held focus
+   * at the moment of the call is used.
+   */
+  open: (value: T, returnFocusTo?: HTMLElement | null) => void;
   /** Closes the dialog by resetting `pending`, `error`, and `isRunning` to their initial values. */
   close: () => void;
   /**
@@ -46,8 +55,13 @@ export const useAsyncConfirmDialog = <T>(): AsyncConfirmDialogControls<T> => {
   const pendingRef = useRef<T | null>(null);
   const isRunningRef = useRef(false);
   const operationIdRef = useRef(0);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
-  const open = useCallback((value: T) => {
+  const open = useCallback((value: T, returnFocusTo?: HTMLElement | null) => {
+    const { activeElement } = document;
+    returnFocusRef.current =
+      returnFocusTo ??
+      (activeElement instanceof HTMLElement ? activeElement : null);
     operationIdRef.current += 1;
     pendingRef.current = value;
     isRunningRef.current = false;
@@ -55,6 +69,25 @@ export const useAsyncConfirmDialog = <T>(): AsyncConfirmDialogControls<T> => {
     setIsRunning(false);
     setError(null);
   }, []);
+
+  /*
+   * Returns keyboard focus to the control the dialog was opened from once it
+   * closes, whether it was confirmed, cancelled or dismissed. Without this the
+   * dialog unmounts with focus on it and the browser drops focus to <body>,
+   * stranding a keyboard user at the top of the document.
+   *
+   * It runs as an effect rather than inside close(): the restore has to land
+   * after the commit that unmounts the dialog, or the dialog's own teardown
+   * blurs the element we just focused.
+   */
+  useEffect(() => {
+    if (pending != null) return;
+    const opener = returnFocusRef.current;
+    returnFocusRef.current = null;
+    if (opener?.isConnected) {
+      opener.focus({ preventScroll: true });
+    }
+  }, [pending]);
 
   const close = useCallback(() => {
     operationIdRef.current += 1;

@@ -91,12 +91,14 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
         backButtonLabel: labels.backButtonLabel,
         cancelButtonLabel: labels.cancelButtonLabel,
         submitButtonLabel: labels.createButtonLabel,
+        submittingLabel: labels.submittingLabel ?? 'Saving',
       }}
       onBack={onBack}
       onCancel={onCancel}
       onSubmit={onSubmit}
       isCancelDisabled={isSubmitting}
       isSubmitDisabled={isCreateDisabled}
+      isSubmitting={isSubmitting}
       styles={{
         colors: { background: colors?.background },
         header: {

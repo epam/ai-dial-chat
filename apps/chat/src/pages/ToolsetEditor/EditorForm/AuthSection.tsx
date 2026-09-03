@@ -19,6 +19,7 @@ import { TAG_INPUT_TAG_CLASS_NAME } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   ConfirmationPopup,
   Input,
   Radio,
@@ -516,22 +517,30 @@ const AuthSection: FC<Props> = ({
         const option = AUTH_TYPE_OPTIONS[type];
         const Icon = option.Icon;
         const isSelected = auth.authenticationType === type;
-        const isLocked = isControlsDisabled && !isSelected;
 
         return (
           <div key={type}>
+            {/*
+             * Every option is disabled while the toolset is logged in, the
+             * selected one included. Leaving the checked option enabled is the
+             * usual instinct, but it makes a no-op control look actionable and
+             * hides that the whole selector is locked until Log out.
+             */}
             <button
               type="button"
+              aria-pressed={isSelected}
               className={mergeClasses(
                 'flex w-full items-center gap-3 border-s-2 px-4 py-3',
                 isSelected ? 'border-s-info' : 'border-s-transparent',
-                isLocked && 'cursor-not-allowed opacity-50',
+                isControlsDisabled && 'cursor-not-allowed opacity-50',
               )}
               onClick={() => handleSelectType(type)}
-              disabled={isLocked}
+              disabled={isControlsDisabled}
             >
               <Icon
                 size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
                 className={isSelected ? 'text-accent' : 'text-secondary'}
               />
               <span
