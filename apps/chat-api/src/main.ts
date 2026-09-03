@@ -22,6 +22,7 @@ import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import 'reflect-metadata';
 import { AppModule } from './app/app.module';
+import { clearLegacyCookies } from './auth/cookies/cookie-options';
 import { TraceparentErrorFilter } from './common/filters/traceparent-error.filter';
 import {
   buildPermissionsPolicyHeader,
@@ -81,13 +82,18 @@ async function bootstrap() {
    */
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
+  const configService = app.get(ConfigService<EnvironmentVariables, true>);
+
   app.use(cookieParser());
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    clearLegacyCookies(req, res, configService);
+    next();
+  });
   app.use(traceparentMiddleware);
   app.useGlobalFilters(new TraceparentErrorFilter());
 
   app.enableVersioning({ type: VersioningType.URI });
 
-  const configService = app.get(ConfigService<EnvironmentVariables, true>);
   const allowedIframeOrigins = configService.get('ALLOWED_IFRAME_ORIGINS', {
     infer: true,
   });

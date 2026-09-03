@@ -75,7 +75,10 @@ const isRateLimitError = (error: unknown): error is ResponseError =>
   error.response.status === RATE_LIMIT_HTTP_STATUS;
 
 /** Resolves how long to wait before retrying a rate-limited request, honoring `Retry-After` when present. */
-const getRateLimitRetryDelayMs = (error: ResponseError, attempt: number): number => {
+const getRateLimitRetryDelayMs = (
+  error: ResponseError,
+  attempt: number,
+): number => {
   const retryAfterSeconds = Number(error.response.headers.get('Retry-After'));
   if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
     return retryAfterSeconds * 1000;
@@ -91,10 +94,14 @@ const sleep = (ms: number, signal: AbortSignal): Promise<void> =>
       return;
     }
     const timer = setTimeout(resolve, ms);
-    signal.addEventListener('abort', () => {
-      clearTimeout(timer);
-      resolve();
-    }, { once: true });
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
   });
 
 /**

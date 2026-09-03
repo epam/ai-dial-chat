@@ -127,7 +127,7 @@ navigation (a category tree, etc.).
   browseHeaderRenderer={
     <Breadcrumb segments={selectedPath} onSegmentClick={handleJumpToSegment} />
   }
-/>;
+/>
 ```
 
 ### CardGrid
