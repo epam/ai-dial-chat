@@ -9,7 +9,6 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
@@ -38,7 +37,6 @@ export class ShareController {
 
   @Post()
   @HttpCode(201)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     operationId: 'createShareLink',
     summary: 'Create a share link',
@@ -62,7 +60,6 @@ export class ShareController {
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -81,7 +78,6 @@ export class ShareController {
 
   @Get('invitations/:invitationId')
   @HttpCode(200)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     operationId: 'acceptInvitation',
     summary: 'Accept a share invitation',
@@ -106,7 +102,6 @@ export class ShareController {
     status: 404,
     description: 'Invitation not found, expired, or already revoked',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -125,7 +120,6 @@ export class ShareController {
 
   @Post('discard')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'discardSharedCatalogItem',
     summary: 'Discard a shared catalog resource, conversation, or prompt',
@@ -155,7 +149,6 @@ export class ShareController {
     description: 'Resource is not shared with the caller',
   })
   @ApiResponse({ status: 404, description: 'Resource does not exist' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -174,7 +167,6 @@ export class ShareController {
 
   @Get('recipients')
   @HttpCode(200)
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'getShareRecipientsCount',
     summary: 'Count current recipients of an owned resource',
@@ -196,7 +188,6 @@ export class ShareController {
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -215,7 +206,6 @@ export class ShareController {
 
   @Post('revoke')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'revokeSharedAccess',
     summary: 'Revoke all shared access to an owned resource',
@@ -243,7 +233,6 @@ export class ShareController {
     description: 'Caller does not own the resource',
   })
   @ApiResponse({ status: 404, description: 'Resource does not exist' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

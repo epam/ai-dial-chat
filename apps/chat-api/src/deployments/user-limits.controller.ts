@@ -1,6 +1,5 @@
 import { Controller, Get, Header, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { UserLimitStatsResponseDto } from '../openapi/openapi-response.dto';
@@ -18,7 +17,6 @@ export class UserLimitsController {
   constructor(private readonly deploymentsService: DeploymentsService) {}
 
   @Get('limits')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({
     operationId: 'getUserLimits',
@@ -37,7 +35,6 @@ export class UserLimitsController {
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   @ApiResponse({
     status: 502,
@@ -53,7 +50,6 @@ export class UserLimitsController {
   }
 
   @Get('usage')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({
     operationId: 'getUserUsage',
@@ -72,7 +68,6 @@ export class UserLimitsController {
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   @ApiResponse({
     status: 502,

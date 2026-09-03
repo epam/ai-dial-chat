@@ -4,7 +4,6 @@ import {
   VersioningType,
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { ThrottlerModule } from '@nestjs/throttler';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OptionalSessionGuard } from '../../auth/session/optional-session.guard';
@@ -55,7 +54,6 @@ async function buildApp(
   mockService: ReturnType<typeof makeApp>['mockService'],
 ): Promise<INestApplication> {
   const module = await Test.createTestingModule({
-    imports: [ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }])],
     controllers: [AppConfigController],
     providers: [{ provide: AppConfigService, useValue: mockService }],
   })
