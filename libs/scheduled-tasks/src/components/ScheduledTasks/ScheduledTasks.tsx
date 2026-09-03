@@ -11,6 +11,7 @@ import {
   DIAL_KIT_ICON_STROKE,
   Dropdown,
   ElementSize,
+  EllipsisTooltip,
   GhostButton,
   PrimaryButton,
   Search,
@@ -130,7 +131,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
       checked: isActiveSort,
       renderItem: () => (
         <>
-          <span className="flex-1 truncate text-start">{option.label}</span>
+          <EllipsisTooltip text={option.label} />
           {isActiveSort && (
             <IconCheck
               size={DIAL_ICON_SIZE.SM}
