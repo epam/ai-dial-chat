@@ -15,6 +15,7 @@ import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
 import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
+import { startSseResponse } from '../common/utils/sse';
 import { ClientChannelService } from './client-channel.service';
 import {
   assertValidChannelId,
@@ -89,10 +90,7 @@ export class ClientChannelController {
     );
 
     res.setHeader(CHANNEL_ID_HEADER, channelId);
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
+    startSseResponse(res);
 
     const reader = stream.getReader();
     let isClientAborted = false;

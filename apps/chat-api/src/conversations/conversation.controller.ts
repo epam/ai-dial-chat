@@ -17,6 +17,7 @@ import {
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { SSE_KEEPALIVE_PAYLOAD, startSseResponse } from '../common/utils/sse';
 import {
   ConversationMetadataDto,
   ConversationResponseDto,
@@ -51,7 +52,6 @@ import {
 } from './utils/timezone-header';
 
 const SSE_KEEPALIVE_INTERVAL_MS = 15_000;
-const SSE_KEEPALIVE_PAYLOAD = ': keepalive\n\n';
 
 @ApiTags('conversations')
 @Controller({ path: 'conversations', version: '1' })
@@ -246,12 +246,7 @@ export class ConversationController {
       dto.model,
       dto.custom_content,
       sid,
-      () => {
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders();
-      },
+      () => startSseResponse(res),
       sub,
       dto.clientChannelId,
       timezone,
@@ -316,10 +311,7 @@ export class ConversationController {
       bucket,
     );
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
+    startSseResponse(res);
 
     const reader = stream.getReader();
 
