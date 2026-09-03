@@ -17,7 +17,10 @@ import {
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import type { SessionUser } from '../auth/session/session.types';
+import {
+  getJobTitleClaim,
+  type SessionUser,
+} from '../auth/session/session.types';
 import {
   ConversationMetadataDto,
   ConversationResponseDto,
@@ -240,7 +243,7 @@ export class ConversationController {
     @Body() dto: SendCompletionDto,
     @Headers(TIMEZONE_HEADER) timezoneHeader: string | string[] | undefined,
   ): Promise<void> {
-    const { at, bucket, sid, sub } = req.user as SessionUser;
+    const { at, bucket, sid, sub, claims } = req.user as SessionUser;
     const timezone = assertValidOptionalTimezone(timezoneHeader);
     const stream = this.conversationService.streamCompletion(
       dto.path,
@@ -262,6 +265,7 @@ export class ConversationController {
       sub,
       dto.clientChannelId,
       timezone,
+      getJobTitleClaim(claims),
     );
 
     for await (const chunk of stream) {

@@ -10,7 +10,10 @@ import {
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import type { SessionUser } from '../auth/session/session.types';
+import {
+  getJobTitleClaim,
+  type SessionUser,
+} from '../auth/session/session.types';
 import { DeploymentLimitsResponseDto } from '../openapi/openapi-response.dto';
 import { DeploymentsService } from './deployments.service';
 import { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
@@ -66,7 +69,7 @@ export class DeploymentsController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { sub, at, bucket } = req.user as SessionUser;
+    const { sub, at, bucket, claims } = req.user as SessionUser;
     res.setHeader(
       'Cache-Control',
       query.refresh ? 'private, no-store' : 'private, max-age=30',
@@ -77,6 +80,7 @@ export class DeploymentsController {
       bucket,
       query.interface_type,
       query.refresh,
+      getJobTitleClaim(claims),
     );
   }
 

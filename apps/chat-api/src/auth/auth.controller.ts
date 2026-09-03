@@ -314,6 +314,7 @@ export class AuthController {
       'picture',
       'locale',
       'zoneinfo',
+      'job_title',
     ]);
     const allClaims = claims as Record<string, unknown>;
     const filteredClaims: Record<string, unknown> = {};

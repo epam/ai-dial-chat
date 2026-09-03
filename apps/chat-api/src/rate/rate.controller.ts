@@ -2,7 +2,10 @@ import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
-import type { SessionUser } from '../auth/session/session.types';
+import {
+  getJobTitleClaim,
+  type SessionUser,
+} from '../auth/session/session.types';
 import { RateMessageDto } from './dto/rate-message.dto';
 import { RateService } from './rate.service';
 
@@ -45,7 +48,7 @@ export class RateController {
     @Body() dto: RateMessageDto,
     @Req() req: Request,
   ): Promise<void> {
-    const { at } = req.user as SessionUser;
-    return this.rateService.rateMessage(dto, at);
+    const { at, claims } = req.user as SessionUser;
+    return this.rateService.rateMessage(dto, at, getJobTitleClaim(claims));
   }
 }

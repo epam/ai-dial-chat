@@ -124,6 +124,32 @@ describe('RateService', () => {
       );
     });
 
+    it('forwards the job title in the X-JOB-TITLE header when provided', async () => {
+      fetchSpy.mockResolvedValue({ ok: true } as Response);
+      const service = makeService();
+
+      await service.rateMessage(
+        validDto,
+        ACCESS_TOKEN,
+        'Lead Software Engineer',
+      );
+
+      const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      const headers = init.headers as Record<string, string>;
+      expect(headers['X-JOB-TITLE']).toBe('Lead Software Engineer');
+    });
+
+    it('omits the X-JOB-TITLE header when no job title is provided', async () => {
+      fetchSpy.mockResolvedValue({ ok: true } as Response);
+      const service = makeService();
+
+      await service.rateMessage(validDto, ACCESS_TOKEN);
+
+      const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      const headers = init.headers as Record<string, string>;
+      expect(headers).not.toHaveProperty('X-JOB-TITLE');
+    });
+
     it('includes optional comment when provided', async () => {
       fetchSpy.mockResolvedValue({ ok: true } as Response);
       const service = makeService();

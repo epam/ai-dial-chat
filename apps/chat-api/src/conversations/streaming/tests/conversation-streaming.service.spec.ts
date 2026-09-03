@@ -99,6 +99,7 @@ describe('ConversationStreamingService', () => {
     res: ReturnType<typeof makeMockRes>,
     clientChannelId?: string,
     timezone?: string,
+    jobTitle?: string,
   ) => {
     const stream = service.streamCompletion(
       conversationPath,
@@ -120,6 +121,7 @@ describe('ConversationStreamingService', () => {
       'user1',
       clientChannelId,
       timezone,
+      jobTitle,
     );
     for await (const chunk of stream) {
       res.write(chunk);
@@ -215,6 +217,7 @@ describe('ConversationStreamingService', () => {
       streamChunks = [': keepalive\n\n'],
       clientChannelId?: string,
       timezone?: string,
+      jobTitle?: string,
     ) => {
       vi.spyOn(
         service['dialClient'].client,
@@ -252,6 +255,7 @@ describe('ConversationStreamingService', () => {
         res as never,
         clientChannelId,
         timezone,
+        jobTitle,
       );
       return { sendSpy, res };
     };
@@ -306,6 +310,60 @@ describe('ConversationStreamingService', () => {
       expect(sendSpy.mock.calls[0][1].headers).toMatchObject({
         'X-CONVERSATION-ID': baseConversation.id,
       });
+    });
+
+    it('forwards the job title as X-JOB-TITLE for Chat Completions', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+        undefined,
+        CompletionMode.Append,
+        [': keepalive\n\n'],
+        undefined,
+        undefined,
+        'Lead Software Engineer',
+      );
+
+      expect(sendSpy.mock.calls[0][1].headers).toMatchObject({
+        'X-JOB-TITLE': 'Lead Software Engineer',
+      });
+    });
+
+    it('omits X-JOB-TITLE for Chat Completions when no job title is provided', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(sendSpy.mock.calls[0][1].headers).not.toHaveProperty(
+        'X-JOB-TITLE',
+      );
     });
 
     it('percent-encodes non-Latin-1 characters in X-CONVERSATION-ID so the request reaches DIAL Core', async () => {
@@ -577,6 +635,52 @@ describe('ConversationStreamingService', () => {
       expect(sendSpy).not.toHaveBeenCalled();
       expect(res.getWritten()).toContain('Hello');
       expect(res.getWritten()).toContain('data: [DONE]');
+    });
+
+    it('forwards the job title as X-JOB-TITLE for the Responses API', async () => {
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { responsesApi: true } },
+      });
+      const createResponseSpy = vi
+        .spyOn(mockDialClient.client, 'createResponse')
+        .mockResolvedValue({
+          response: new Response(
+            textToStream([
+              'data: {"type":"response.completed","response":{"id":"resp-1","status":"completed"}}\n\n',
+            ]),
+            { status: 200 },
+          ),
+        } as never);
+
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+        undefined,
+        CompletionMode.Append,
+        [': keepalive\n\n'],
+        undefined,
+        undefined,
+        'Lead Software Engineer',
+      );
+
+      expect(createResponseSpy.mock.calls[0][0].headers).toMatchObject({
+        'X-JOB-TITLE': 'Lead Software Engineer',
+      });
     });
 
     it('resolves the feature flag via FeatureFlagsService.isEnabled with the fixed server context', async () => {
