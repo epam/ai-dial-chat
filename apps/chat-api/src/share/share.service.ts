@@ -20,6 +20,7 @@ import {
 } from '../common/utils/resource-ownership';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { EnvironmentVariables } from '../config/environment.config';
+import { PUBLIC_BUCKET } from '../conversations/constants/conversation.constants';
 import { resolveConversationLocation } from '../conversations/utils/conversation.utils';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
@@ -117,6 +118,10 @@ const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';
 /** DIAL Core conversation resource paths always start with this prefix. */
 const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
 const FILE_RESOURCE_PREFIX = 'files/';
+
+/** DIAL Core resource ids are `{type}/{bucket}/{...}` — bucket at segment [1]. */
+const extractResourceBucket = (resourceUrl: string): string | undefined =>
+  resourceUrl.split('/')[1];
 
 interface AnnotationWithAttachment {
   body?: {
@@ -287,7 +292,11 @@ export class ShareService {
       throw new BadGatewayException('DIAL Core returned an empty conversation');
     }
 
-    return collectConversationResourceUrls(result.data);
+    /* See openspec/specs/conversation-share/spec.md — "Related file resources outside the conversation's own bucket are dropped". */
+    return collectConversationResourceUrls(result.data).filter((url) => {
+      const fileBucket = extractResourceBucket(url);
+      return fileBucket === bucket || fileBucket === PUBLIC_BUCKET;
+    });
   }
 
   /**

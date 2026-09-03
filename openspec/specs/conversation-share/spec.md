@@ -112,6 +112,32 @@ If the conversation read throws, returns an upstream error, or returns no conver
 - **WHEN** DIAL Core rejects or fails the conversation read performed before sharing
 - **THEN** link creation fails through the existing DIAL error mapper and `shareResource` is not called
 
+### Requirement: Related file resources outside the conversation's own bucket are dropped, except the public/organization bucket
+
+A conversation duplicated from someone else's shared conversation keeps referencing the original owner's files in its messages — duplication copies the conversation into the caller's own bucket, but never copies the attachments it references. DIAL Core's `shareResource` rejects any single request whose `resources` mix more than one owning bucket, answering 400 with `"You're not allowed to share resources of different owners in a single request"`. The caller also does not own a file left behind in another user's bucket, so it is not theirs to grant access to regardless.
+
+`ShareService.getRelatedResourceUrls` SHALL filter the collected related file resource URLs to only those whose bucket segment (`{type}/{bucket}/...`, segment `[1]`) matches either the conversation's own resolved bucket, or the public/organization bucket (`PUBLIC_BUCKET`, `apps/chat-api/src/conversations/constants/conversation.constants.ts`). A related file in some other user's private bucket is silently omitted rather than causing the whole share request to fail; a related file in the public bucket has no exclusive owner to conflict with the conversation's owner, so it is kept.
+
+#### Scenario: A file left in the original owner's bucket is excluded
+
+- **GIVEN** a conversation was duplicated from a shared conversation and now lives in the caller's own bucket
+- **AND** one of its message attachments still references `files/original-owner-bucket/report.pdf`
+- **WHEN** a share link is created for the duplicated conversation
+- **THEN** `shareResource.resources` contains only the conversation itself — `files/original-owner-bucket/report.pdf` is not included
+- **AND** the request to DIAL Core succeeds
+
+#### Scenario: Files in the conversation's own bucket are still shared
+
+- **GIVEN** an owned conversation references `files/{same-bucket}/report.pdf`, where `{same-bucket}` matches the conversation's own bucket
+- **WHEN** a share link is created
+- **THEN** `shareResource.resources` includes that file alongside the conversation, as before
+
+#### Scenario: Files in the public/organization bucket are still shared
+
+- **GIVEN** an owned conversation references `files/public/template.pdf`
+- **WHEN** a share link is created
+- **THEN** `shareResource.resources` includes `files/public/template.pdf` alongside the conversation
+
 ### Requirement: Accepting a conversation share invitation redirects into the conversation, not the catalog
 
 `ShareService.buildInvitationUrl` (`apps/chat-api/src/share/share.service.ts`) SHALL route the generated invitation URL based on the shared resource's `itemId`: when `itemId` starts with `conversations/` (the DIAL Core conversation resource-path prefix), the URL SHALL use the `/conversations/shared/:invitationId` path; otherwise it SHALL use the existing `/catalog/shared/:invitationId` path.
