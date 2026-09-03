@@ -763,6 +763,25 @@ describe('resolvePdfCanvasContent', () => {
       url: 'https://example.com/citation/doc-id-123',
     });
   });
+
+  it('returns PdfCanvasContent with the raw url for a blob: source', async () => {
+    const result = await resolvePdfCanvasContent(
+      makeRemoteAttachment('citation.pdf', 'blob:http://localhost/abc-123'),
+      resolvers,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:http://localhost/abc-123',
+    });
+  });
+
+  it('returns null for a non-DIAL source url with no fetchable scheme', async () => {
+    const result = await resolvePdfCanvasContent(
+      makeRemoteAttachment('citation.pdf', 'citation-reference-id-123'),
+      resolvers,
+    );
+    expect(result).toBeNull();
+  });
 });
 
 describe('resolveOoxmlCanvasContent', () => {

@@ -468,6 +468,24 @@ export const referenceAttachmentToPdfCanvasContent = (
   };
 };
 
+/**
+ * True when `url` is an absolute URL the PDF canvas viewer can fetch directly:
+ * `http(s):` (a real external resource) or `blob:` (an already-created object
+ * URL). A relative or opaque string (e.g. a citation/reference id with no
+ * scheme) throws in the `URL` constructor and is rejected, since handing it
+ * to the viewer would render a silent blank canvas instead of a fetch error.
+ */
+const isFetchableExternalUrl = (url: string): boolean => {
+  try {
+    const protocol = new URL(url).protocol;
+    return (
+      protocol === 'http:' || protocol === 'https:' || protocol === 'blob:'
+    );
+  } catch {
+    return false;
+  }
+};
+
 /** Resolves a PDF canvas content payload from a DisplayAttachment, or `null` if unavailable. */
 export const resolvePdfCanvasContent = async (
   attachment: DisplayAttachment,
@@ -483,7 +501,11 @@ export const resolvePdfCanvasContent = async (
    * use for a citation whose source is an external (non-`files/`) PDF URL:
    * hand it to the PDF canvas viewer directly rather than failing, since it
    * fetches and renders the URL itself. */
-  if (attachment.url != null && !isDialFileId(attachment.url)) {
+  if (
+    attachment.url != null &&
+    !isDialFileId(attachment.url) &&
+    isFetchableExternalUrl(attachment.url)
+  ) {
     return { type: AttachmentContentType.Pdf, url: attachment.url };
   }
   return null;
