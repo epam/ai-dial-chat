@@ -11,6 +11,10 @@ export interface FileAttachmentLabels extends AttachmentTypeLabels {
   clickLabel?: string;
   /** Accessible label for the retry action. Defaults to `'Retry upload'`. */
   retryLabel?: string;
+  /** Accessible label for the remove action. Defaults to `'Remove attachment'`. */
+  removeLabel?: string;
+  /** Accessible label for the open-in-new-tab action on link attachments. Defaults to `'Open in new tab'`. */
+  openInNewTabLabel?: string;
   /** Human-readable size text (e.g. `'2.4 MB'`), appended after the type label in the meta line (`'.pdf · 2.4 MB'`) when derivable; omitted from the meta line if absent. */
   sizeLabel?: string;
   /** Accessible label for the in-progress upload progress bar. Defaults to `'Uploading'`. */

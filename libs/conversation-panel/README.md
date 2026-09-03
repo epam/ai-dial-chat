@@ -74,6 +74,14 @@ the group and defaults to `"Filter chats"`;
 `styles.typography.tabClassName` sets the label typography and defaults to
 `'dial-tiny-semi-text'`.
 
+The search field is a ui-kit `Search` inside a `role="search"` landmark.
+`styles.searchWrapperClassName` is the class applied to its wrapper and defaults
+to `'rounded-full'`. A value **replaces** that default rather than merging with
+it, so pass the full class you want — `'rounded-xl'` for a 12px radius, for
+example. Two competing `rounded-*` utilities on one element would resolve by
+stylesheet order rather than by the order they appear in the class attribute,
+which is why the slot overwrites instead of appending.
+
 ## Enums
 
 `FilterTab` is owned and exported by `@epam/ai-dial-chat-shared`, and this

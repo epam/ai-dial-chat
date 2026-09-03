@@ -49,9 +49,20 @@ import { ConversationInput } from '@epam/ai-dial-conversation-input';
 />;
 ```
 
-`pasteTextThreshold` (default `4000`) is the character count above which pasted
-plain text becomes an attachment instead of inline content, and
-`maxMessageLength` (default `50000`) caps the message text.
+`pasteTextThreshold` (default `4000`) and `maxMessageLength` (default `50000`)
+are two separate rules. `pasteTextThreshold` is the character count above which
+pasted plain text becomes an attachment instead of inline content — it applies
+only when attachments are supported. `maxMessageLength` caps the message text:
+sending at or above it is blocked on **every** model regardless of attachment
+support, `onMessageTooLong(length, maxMessageLength)` fires instead, and the
+textarea keeps its content. A paste at or above the cap also reports through
+`onMessageTooLong` when attachments are disabled, since there the pasted text
+lands inline rather than becoming an attachment.
+
+`removeLabel` and `retryLabel` are the accessible names of the remove and
+retry buttons on each attachment card in the tray. They default to English
+(`'Remove attachment'` / `'Retry upload'`); pass translated strings so the two
+adjacent buttons stay distinguishable to assistive technology.
 
 ### EditMessageInput
 
