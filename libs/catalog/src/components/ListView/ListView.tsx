@@ -125,6 +125,14 @@ export const ListView: FC<ListViewProps> = ({
           additionalGridOptions={{
             rowHeight: ROW_HEIGHT,
             defaultColDef: { filter: false, floatingFilter: false },
+            /* The kit's `Grid` hardcodes `autoSizeStrategy: fitGridWidth`, and
+               ag-grid ignores every `colDef.flex` when that strategy is set
+               (warning: "colDef.flex is not supported with
+               gridOptions.autoSizeStrategy"). Clearing it is what lets
+               CATALOG_COLUMNS' 2:1:1 share of the spare width apply at all;
+               `additionalGridOptions` is spread after the default, so
+               `undefined` wins. */
+            autoSizeStrategy: undefined,
             context: {
               searchQuery: query,
               typography,

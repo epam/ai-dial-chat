@@ -24,6 +24,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     emptyStateTitle?: string;
     additionalGridOptions?: {
       rowHeight?: number;
+      autoSizeStrategy?: unknown;
       context?: {
         onToggleFavorite?: (id: string, isStarred: boolean) => void;
         selectedItemId?: string;
@@ -41,6 +42,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <div
         aria-label={ariaLabel}
         data-row-height={additionalGridOptions?.rowHeight}
+        data-auto-size-strategy={
+          additionalGridOptions && 'autoSizeStrategy' in additionalGridOptions
+            ? 'cleared'
+            : 'kit-default'
+        }
         data-without-header-borders={String(Boolean(withoutHeaderBorders))}
         data-alternate-odd-row-colors={String(Boolean(alternateOddRowColors))}
         data-wrap-custom-cell-renderers={String(
@@ -177,6 +183,20 @@ describe('ListView', () => {
     expect(
       screen.getByLabelText('Catalog').getAttribute('data-row-height'),
     ).toBe('60');
+  });
+
+  it("clears the kit's autoSizeStrategy so the columns' flex shares apply (ag-grid ignores colDef.flex whenever an autoSizeStrategy is set)", () => {
+    render(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={[makeItem({ id: 'x', name: 'x' })]}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
+    expect(
+      screen.getByLabelText('Catalog').getAttribute('data-auto-size-strategy'),
+    ).toBe('cleared');
   });
 
   it('hands the grid a window of rows instead of the whole list', () => {
