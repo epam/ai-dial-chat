@@ -25,9 +25,6 @@ const RESTRICTED_FOLDER_SEGMENT = 'Production';
  */
 const MAX_REMEMBERED_FOLDERS = 50;
 
-const toApiPath = (path: string[]): string | undefined =>
-  path.length ? `${path.join('/')}/` : undefined;
-
 const buildFolderNodes = (
   cache: Map<string, ListFilesItemDto[]>,
   apiPath: string,
@@ -87,7 +84,9 @@ export interface UsePublishFoldersResult {
    * `folderPath`, which DIAL Core storage creates implicitly, the same way
    * writing a file to a new prefix does. This avoids leaving an orphaned
    * empty folder behind when the user picks a new-folder name and then
-   * cancels the publish.
+   * cancels the publish. Because the folder exists only locally, it is kept
+   * apart from the listing cache, so a listing that arrives afterwards
+   * cannot drop it again.
    */
   onCreatePublishFolder: (parentPath: string[], name: string) => Promise<void>;
   /**
@@ -131,6 +130,14 @@ export const usePublishFolders = ({
   const [loadingPaths, setLoadingPaths] = useState<Set<string>>(
     () => new Set(),
   );
+  /*
+   * Folders created during this session, kept as path keys outside `cache`
+   * because they exist only locally (see `onCreatePublishFolder`). Holding
+   * them in the listing cache instead lost them whenever the parent's real
+   * listing landed afterwards — which is exactly what "Add child" on a
+   * not-yet-listed folder triggers, since it expands that folder (#8568).
+   */
+  const [createdFolderKeys, setCreatedFolderKeys] = useState<string[]>([]);
 
   const loadedPaths = useMemo(() => {
     const result = new Set<string>();
@@ -181,32 +188,13 @@ export const usePublishFolders = ({
 
   const onCreatePublishFolder = useCallback(
     (parentPath: string[], name: string): Promise<void> => {
-      const parentApiPath = toApiPath(parentPath) ?? '';
-      const parentItems = cache.get(parentApiPath) ?? [];
-      const parentBucket = parentItems[0]?.bucket ?? cache.get('')?.[0]?.bucket;
-      if (parentBucket == null) {
-        throw new Error('Cannot create folder: parent bucket is unknown');
-      }
-      const folderApiPath = `${parentApiPath}${name}/`;
-      const folderItem: ListFilesItemDto = {
-        name,
-        path: folderApiPath,
-        folderId: `${parentBucket}/${folderApiPath}`,
-        nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
-        bucket: parentBucket,
-        parentPath: parentApiPath || undefined,
-      };
-      setCache((prev) => {
-        const next = new Map(prev);
-        next.set(parentApiPath, [
-          ...(next.get(parentApiPath) ?? []),
-          folderItem,
-        ]);
-        return next;
-      });
+      const folderKey = toFolderPathKey([...parentPath, name]);
+      setCreatedFolderKeys((prev) =>
+        prev.includes(folderKey) ? prev : [...prev, folderKey],
+      );
       return Promise.resolve();
     },
-    [cache],
+    [],
   );
 
   const rememberPublishFolder = useCallback(
@@ -235,11 +223,11 @@ export const usePublishFolders = ({
     const storedKeys = Array.isArray(rememberedFolderKeys)
       ? rememberedFolderKeys.filter((key) => typeof key === 'string')
       : [];
-    return mergeFolderPaths(
-      buildFolderNodes(cache, '', []),
-      storedKeys.map(fromFolderPathKey),
-    );
-  }, [cache, rememberedFolderKeys]);
+    return mergeFolderPaths(buildFolderNodes(cache, '', []), [
+      ...storedKeys.map(fromFolderPathKey),
+      ...createdFolderKeys.map(fromFolderPathKey),
+    ]);
+  }, [cache, rememberedFolderKeys, createdFolderKeys]);
 
   return {
     folderItems,

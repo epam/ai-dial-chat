@@ -125,7 +125,18 @@ Resolution order SHALL be **MIME type first, then file extension**:
 
 `isOoxmlPreviewable(name, mimeType)` SHALL return `getOoxmlFileType(name, mimeType) != null`.
 
-Both SHALL be exported from the library's public entry point.
+`libs/attachment-canvas/src/utils/content.ts` SHALL additionally export:
+
+```ts
+export const getOoxmlMimeType = (
+  name: string,
+  mimeType?: string,
+) => string | undefined
+```
+
+`getOoxmlMimeType` SHALL resolve a format the same way `getOoxmlFileType` does (same MIME-then-extension order) and return that format's canonical MIME type string (`OOXML_MIME_TYPES.docx`/`.xlsx`/`.pptx`), or `undefined` when neither signal matches. It exists because a caller correcting a mislabeled `contentType` (see `resolveExternalSourceContentType` in `libs/chat-hooks/src/files/attachment-canvas.ts`) needs the canonical MIME string itself, not just the `OoxmlFileType` enum member — the corrected `contentType` is what `useOpenAttachmentCanvas`'s `getOoxmlFileType('', contentType)` MIME branch checks downstream.
+
+All three SHALL be exported from the library's public entry point.
 
 **Rationale:** neither signal is reliable alone. DIAL attachments can carry a generic `application/octet-stream` for a correctly-named `report.docx`, and a correct `contentType` can arrive with a `name` that is a citation title with no extension. MIME is checked first because when present and canonical it is the stronger signal; extension is the fallback that covers a mislabeled `contentType`.
 
@@ -186,6 +197,21 @@ MIME parameters must be stripped because upstream `contentType` values are not c
 - **WHEN** `isOoxmlPreviewable('deck.pptx')` is called
 - **THEN** it returns `true`
 - **AND** `isOoxmlPreviewable('notes.txt')` returns `false`
+
+#### Scenario: getOoxmlMimeType resolves the canonical MIME type by extension
+
+- **WHEN** `getOoxmlMimeType('budget.xlsx')` is called
+- **THEN** it returns `OOXML_MIME_TYPES.xlsx`
+
+#### Scenario: getOoxmlMimeType resolves the canonical MIME type from a non-canonical MIME string
+
+- **WHEN** `getOoxmlMimeType('attachment', 'APPLICATION/VND.OPENXMLFORMATS-OFFICEDOCUMENT.SPREADSHEETML.SHEET; charset=binary')` is called
+- **THEN** it returns `OOXML_MIME_TYPES.xlsx`
+
+#### Scenario: getOoxmlMimeType returns undefined when unmatched
+
+- **WHEN** `getOoxmlMimeType('Quarterly Report')` is called
+- **THEN** it returns `undefined`
 
 ---
 
@@ -475,9 +501,10 @@ The function SHALL delegate to the existing `resolveAttachmentBlobUrl` helper an
 
 - return `{ type: AttachmentContentType.Ooxml, url: result, format }` when the helper yields a URL string;
 - return the helper's `ErrorCanvasContent` unchanged when it yields one;
-- return `null` when the helper yields `undefined` (no source available).
+- otherwise (the helper yields `undefined` — no local file, DIAL URL, preview URL, or inline data), return `{ type: AttachmentContentType.Ooxml, url: attachment.url, format }` when `attachment.url` is set, is not a DIAL `files/` id, and is a fetchable absolute URL (`http:`, `https:`, or `blob:` scheme, via the shared `resolveExternalAttachmentUrl` helper — a relative or opaque string, e.g. a bare citation/reference id, fails this check);
+- return `null` when none of the above yields a URL.
 
-This is the same three-way shape as `resolvePdfCanvasContent`, and reusing `resolveAttachmentBlobUrl` is deliberate: Office files inherit the blob LRU cache, the `403 → Forbidden` / other-failure → `LoadFailed` classification, and support for locally-picked `File`s, DIAL download URLs, `previewUrl`, and inline base64 — identically to PDFs, with no duplicated fetch logic.
+This is the same shape as `resolvePdfCanvasContent`, and reusing `resolveAttachmentBlobUrl` and `resolveExternalAttachmentUrl` is deliberate: Office files inherit the blob LRU cache, the `403 → Forbidden` / other-failure → `LoadFailed` classification, support for locally-picked `File`s, DIAL download URLs, `previewUrl`, and inline base64, and the external-URL fallback — identically to PDFs, with no duplicated fetch or URL-validation logic.
 
 **Adapter contract (library isolation).** This function keeps host knowledge out of `libs/attachment-canvas`. The fetch, the blob cache, and the HTTP status classification live in `libs/chat-hooks`, which is host-agnostic; the genuinely app-specific part — DIAL URL construction, CSRF/auth — is injected as the `resolvers` argument by `apps/chat/src/hooks/attachment/useAttachmentCanvasResolvers.ts`, which binds this function and exposes it to the canvas hook as `resolveOoxmlContent(attachment, format)`. What crosses into `libs/attachment-canvas` is a resolved `url` string and an `OoxmlFileType` — nothing more. No new backend endpoint is introduced; Office bytes are served by the existing DIAL file download route.
 
@@ -498,8 +525,18 @@ This is the same three-way shape as `resolvePdfCanvasContent`, and reusing `reso
 
 #### Scenario: no source available returns null
 
-- **WHEN** the attachment has no file, no DIAL URL, no `previewUrl`, and no inline data
+- **WHEN** the attachment has no file, no DIAL URL, no `previewUrl`, no inline data, and no `url`
 - **THEN** it returns `null`
+
+#### Scenario: external non-DIAL Office source resolves to its raw url
+
+- **WHEN** `resolveOoxmlCanvasContent` is called with an attachment whose `url` is an external `https://` `.xlsx` link (no DIAL download URL, `previewUrl`, or inline data)
+- **THEN** it returns `{ type: Ooxml, url: <the external url>, format }`
+
+#### Scenario: non-fetchable url is rejected rather than handed to the viewer
+
+- **WHEN** the attachment's `url` is a bare opaque string with no `http:`/`https:`/`blob:` scheme (e.g. a citation/reference id) and no other source is available
+- **THEN** it returns `null`, not a payload whose viewer would receive an unfetchable `url`
 
 #### Scenario: the format argument is passed through unchanged
 

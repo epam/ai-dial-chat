@@ -15,6 +15,7 @@ export {
   isHtmlPreviewable,
   isOoxmlPreviewable,
   getOoxmlFileType,
+  getOoxmlMimeType,
   extensionToLanguage,
   createUnsupportedCanvasContent,
   createLoadErrorCanvasContent,
