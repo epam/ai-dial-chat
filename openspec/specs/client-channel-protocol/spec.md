@@ -90,6 +90,10 @@ Since the subscribe request is asynchronous, the frontend's `useConversationStre
 - **WHEN** the feature flag is off, or the subscribe attempt does not resolve within the bounded wait
 - **THEN** the completion request proceeds without the header, and behaves exactly as it does today
 
+#### Scenario: QuickApps preview attaches the channel id like the main conversation page
+- **WHEN** a completion is started from the QuickApps preview (`AppPreviewChat`, mounted under `/apps-editor`) against a toolset-backed app whose tool requires sign-in
+- **THEN** `AppPreviewChat`'s own `useConversationStream` call supplies the same `ConversationStreamChannel` (`channelId`/`ensureConnected`/`waitForChannel` from `useClientChannel`) that `Conversation` supplies, so the completion carries `X-DIAL-CLIENT-CHANNEL-ID` and Core's `toolset/signin` event reaches `SigninInterruptDialog` instead of the stage only surfacing a stream error
+
 ### Requirement: `liveChatInteraction` feature flag gates the mechanism
 
 The mechanism SHALL be gated by a feature flag key `liveChatInteraction`, read via the existing `AppConfigContext`/`useFeatureFlag` mechanism (server-supplied `features` map). When the flag is `false` or not yet `Ready`, the frontend SHALL NOT attempt to subscribe to the client channel and SHALL NOT attach a channel id to completion requests.
