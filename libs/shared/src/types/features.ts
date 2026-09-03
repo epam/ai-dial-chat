@@ -86,6 +86,8 @@ export enum Feature {
   HideCustomAppCreation = 'hide-custom-app-creation', // Hide "Custom app" option in 'Add app' button/menu
   CodeApps = 'code-apps', // Enable creating of Code apps (into the 'Add app' menu)
   CodeInterpreter = 'code-interpreter', // Enable Code Interpreter feature
+  QuickAppWebFetch = 'quick-app-web-fetch', // Enable 'Web fetch' toggle for quick apps 2
+  QuickAppAddAttachment = 'quick-app-add-attachment', // Enable 'Add attachment' toggle for quick apps 2
 
   // Marketplace
   Marketplace = 'marketplace', // Enable Marketplace

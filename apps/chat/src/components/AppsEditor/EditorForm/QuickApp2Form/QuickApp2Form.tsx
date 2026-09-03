@@ -69,6 +69,7 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 
+import { Feature } from '@epam/ai-dial-shared';
 import { DialFileNodeType, DialInput } from '@epam/ai-dial-ui-kit';
 import { difference } from 'lodash-es';
 import uniq from 'lodash-es/uniq';
@@ -109,6 +110,12 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     SettingsSelectors.selectDefaults,
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
+  const isWebFetchEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.QuickAppWebFetch),
+  );
+  const isAddAttachmentEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.QuickAppAddAttachment),
+  );
 
   const { control, setValue, getValues } = useFormContext<QuickApp2FormType>();
   const { errors } = useFormState<QuickApp2FormType>({ control });
@@ -429,47 +436,51 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           )}
         />
 
-        <Controller
-          name="addAttachment"
-          control={control}
-          render={({ field }) => (
-            <ToggleSwitchField
-              isOn={field.value}
-              handleSwitch={() => field.onChange(!field.value)}
-              switchOnText="ON"
-              switchOFFText="OFF"
-              label={t(MarketplaceI18nKeys.AddAttachment)}
-              additionalText={t(
-                MarketplaceI18nKeys.AllowTheAgentToAttachFilesToTheResponse,
-              )}
-              info={t(MarketplaceI18nKeys.AddAttachmentDescription)}
-              className="flex items-center gap-2"
-              disabled={isAppPublic}
-              tooltip={isAppPublicTooltip}
-            />
-          )}
-        />
+        {isAddAttachmentEnabled && (
+          <Controller
+            name="addAttachment"
+            control={control}
+            render={({ field }) => (
+              <ToggleSwitchField
+                isOn={field.value}
+                handleSwitch={() => field.onChange(!field.value)}
+                switchOnText="ON"
+                switchOFFText="OFF"
+                label={t(MarketplaceI18nKeys.AddAttachment)}
+                additionalText={t(
+                  MarketplaceI18nKeys.AllowTheAgentToAttachFilesToTheResponse,
+                )}
+                info={t(MarketplaceI18nKeys.AddAttachmentDescription)}
+                className="flex items-center gap-2"
+                disabled={isAppPublic}
+                tooltip={isAppPublicTooltip}
+              />
+            )}
+          />
+        )}
 
-        <Controller
-          name="webFetch"
-          control={control}
-          render={({ field }) => (
-            <ToggleSwitchField
-              isOn={field.value}
-              handleSwitch={() => field.onChange(!field.value)}
-              switchOnText="ON"
-              switchOFFText="OFF"
-              label={t(MarketplaceI18nKeys.WebFetch)}
-              additionalText={t(
-                MarketplaceI18nKeys.AllowTheAgentToFetchWebResources,
-              )}
-              info={t(MarketplaceI18nKeys.WebFetchDescription)}
-              className="flex items-center gap-2"
-              disabled={isAppPublic}
-              tooltip={isAppPublicTooltip}
-            />
-          )}
-        />
+        {isWebFetchEnabled && (
+          <Controller
+            name="webFetch"
+            control={control}
+            render={({ field }) => (
+              <ToggleSwitchField
+                isOn={field.value}
+                handleSwitch={() => field.onChange(!field.value)}
+                switchOnText="ON"
+                switchOFFText="OFF"
+                label={t(MarketplaceI18nKeys.WebFetch)}
+                additionalText={t(
+                  MarketplaceI18nKeys.AllowTheAgentToFetchWebResources,
+                )}
+                info={t(MarketplaceI18nKeys.WebFetchDescription)}
+                className="flex items-center gap-2"
+                disabled={isAppPublic}
+                tooltip={isAppPublicTooltip}
+              />
+            )}
+          />
+        )}
       </FormCollapsibleSection>
 
       <FormCollapsibleSection
