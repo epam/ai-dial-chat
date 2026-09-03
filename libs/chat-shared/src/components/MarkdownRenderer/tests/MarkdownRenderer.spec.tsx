@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 
@@ -299,23 +299,29 @@ describe('MarkdownRenderer', () => {
     expect(codeEl.querySelectorAll('br').length).toBe(0);
   });
 
-  it('renders double-dollar LaTeX as a KaTeX math element', () => {
+  it('renders double-dollar LaTeX as a KaTeX math element once the engine loads', async () => {
     render(<MarkdownRenderer content="Equation: $$x^2 + y^2 = z^2$$" />);
 
     /*
-     * MathML's `<math>` element crashes `getByRole` under jsdom (jsdom
+     * KaTeX loads on demand (see the "math path" describe block below), so
+     * the <math> element only appears after that async load resolves.
+     * MathML's `<math>` element also crashes `getByRole` under jsdom (jsdom
      * cannot compute styles for MathML elements), so a plain selector is
      * the only reliable way to assert its presence here.
      */
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(document.querySelector('math')).toBeTruthy();
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(document.querySelector('math')).toBeTruthy();
+    });
   });
 
-  it('renders single-dollar inline LaTeX as a KaTeX math element', () => {
+  it('renders single-dollar inline LaTeX as a KaTeX math element once the engine loads', async () => {
     render(<MarkdownRenderer content="Cost: $x + y$" />);
 
-    // eslint-disable-next-line testing-library/no-node-access -- see note above: getByRole('math') crashes under jsdom
-    expect(document.querySelector('math')).toBeTruthy();
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- see note above: getByRole('math') crashes under jsdom
+      expect(document.querySelector('math')).toBeTruthy();
+    });
   });
 
   it('lets a long unbreakable URL wrap so a clipped ancestor cannot cut it off', () => {
@@ -348,4 +354,74 @@ describe('MarkdownRenderer', () => {
    * npm package (remark-math's own import of micromark-extension-math), so this can't be
    * asserted through this component test even though a real `vite build` picks up the alias
    * correctly (verified manually: the built dist bundle contains the aliased extension). */
+
+  describe('deferred heavy dependencies', () => {
+    it('renders plain text immediately with no math element and no highlighted-code marker (fast path)', () => {
+      render(
+        <MarkdownRenderer content="Just a plain sentence, nothing fancy." />,
+      );
+
+      expect(
+        screen.getByText('Just a plain sentence, nothing fancy.'),
+      ).toBeTruthy();
+      // eslint-disable-next-line testing-library/no-node-access -- no accessible role for either check; see the math-test notes above
+      expect(document.querySelector('math')).toBeNull();
+      // eslint-disable-next-line testing-library/no-node-access -- the mocked Prism output carries this attribute; its absence confirms the highlighter never loaded
+      expect(document.querySelector('[data-language]')).toBeNull();
+    });
+
+    it('highlights a fenced code block once the syntax-highlighting engine loads (code-block path)', async () => {
+      render(<MarkdownRenderer content={FENCED_TS_MARKDOWN} />);
+
+      await waitFor(() => {
+        // eslint-disable-next-line testing-library/no-node-access -- the mocked Prism output has no accessible role
+        const highlighted = document.querySelector(
+          '[data-language="typescript"]',
+        );
+        expect(highlighted).toBeTruthy();
+      });
+    });
+
+    it('renders a plain-text message, then gains a code fence mid-stream and highlights it once loaded', async () => {
+      const { rerender } = render(
+        <MarkdownRenderer content="Let me think about that..." />,
+      );
+
+      expect(screen.getByText('Let me think about that...')).toBeTruthy();
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(document.querySelector('[data-language]')).toBeNull();
+
+      rerender(
+        <MarkdownRenderer
+          content={`Let me think about that...\n\n${FENCED_TS_MARKDOWN}`}
+        />,
+      );
+
+      await waitFor(() => {
+        // eslint-disable-next-line testing-library/no-node-access
+        const highlighted = document.querySelector(
+          '[data-language="typescript"]',
+        );
+        expect(highlighted).toBeTruthy();
+      });
+    });
+
+    it('renders a plain-text message, then gains a math block mid-stream and renders it once loaded', async () => {
+      const { rerender } = render(
+        <MarkdownRenderer content="Let me think about that..." />,
+      );
+
+      // eslint-disable-next-line testing-library/no-node-access -- see math-test notes above
+      expect(document.querySelector('math')).toBeNull();
+
+      rerender(
+        <MarkdownRenderer content="Let me think about that... $$x^2 = 4$$" />,
+      );
+
+      await waitFor(() => {
+        // eslint-disable-next-line testing-library/no-node-access
+        expect(document.querySelector('math')).toBeTruthy();
+      });
+    });
+  });
 });

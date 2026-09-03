@@ -6,6 +6,7 @@ import {
   AttachmentErrorType,
   OoxmlFileType,
 } from '../../../types/attachment-canvas';
+import { PdfContent } from '../../PdfContent/PdfContent';
 import { AttachmentCanvasBody } from '../AttachmentCanvasBody';
 
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
@@ -36,10 +37,15 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
   }),
 }));
 
+interface PdfContentMockProps {
+  url: string;
+  configurePdfWorker?: () => void | Promise<void>;
+}
+
 vi.mock('../../PdfContent/PdfContent', () => ({
-  PdfContent: ({ url }: { url: string }) => (
+  PdfContent: vi.fn(({ url }: PdfContentMockProps) => (
     <section aria-label="pdf-content">{url}</section>
-  ),
+  )),
 }));
 
 vi.mock('../../OoxmlContent/OoxmlContent', () => ({
@@ -132,12 +138,55 @@ describe('AttachmentCanvasBody', () => {
     expect(screen.getByTitle('page.html')).toBeTruthy();
   });
 
-  it('renders PdfContent for Pdf content', () => {
+  it('renders PdfContent for Pdf content, loaded lazily behind a Suspense boundary', async () => {
     renderBody({
       type: AttachmentContentType.Pdf,
       url: 'blob:pdf-url',
     });
-    expect(screen.getByRole('region', { name: 'pdf-content' })).toBeTruthy();
+    /* `PdfContent` is behind `lazy()`, so it resolves asynchronously even
+     * though the mocked module itself is synchronous — `findByRole` waits
+     * for the Suspense fallback to be replaced by the real content. */
+    expect(
+      await screen.findByRole('region', { name: 'pdf-content' }),
+    ).toBeTruthy();
+  });
+
+  it('never loads the PdfContent module for non-Pdf content', () => {
+    renderBody({
+      type: AttachmentContentType.PlainText,
+      text: 'no pdf here',
+    });
+    expect(PdfContent).not.toHaveBeenCalled();
+  });
+
+  it('forwards configurePdfWorker to PdfContent', async () => {
+    const configurePdfWorker = vi.fn();
+    renderBody(
+      { type: AttachmentContentType.Pdf, url: 'blob:pdf-url' },
+      { configurePdfWorker },
+    );
+    await screen.findByRole('region', { name: 'pdf-content' });
+    const [props] = vi.mocked(PdfContent).mock.calls[0];
+    expect(props.configurePdfWorker).toBe(configurePdfWorker);
+  });
+
+  it("announces the pdfContentLoadingLabel while PdfContent's dynamic import is pending", async () => {
+    /*
+     * `PdfContent` is behind `lazy()`, so even a synchronously-resolving
+     * mocked module still suspends for the first render — the
+     * `LazyContentBoundary` pending state (asserted here) is what's on
+     * screen before that microtask settles.
+     */
+    renderBody(
+      { type: AttachmentContentType.Pdf, url: 'blob:pdf-url' },
+      { labels: { pdfContentLoadingLabel: 'Loading the PDF viewer…' } },
+    );
+
+    expect(screen.getByText('Loading the PDF viewer…')).toBeTruthy();
+
+    // Let the mocked dynamic import settle before the test ends, so its
+    // resolution doesn't land as an unwrapped `act(...)` update afterward.
+    await screen.findByRole('region', { name: 'pdf-content' });
   });
 
   it('renders OoxmlContent for OOXML content', () => {

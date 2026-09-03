@@ -1,7 +1,5 @@
-import 'katex/dist/katex.min.css';
-import { memo, useMemo, type FC } from 'react';
+import { memo, useEffect, useMemo, useState, type FC } from 'react';
 import ReactMarkdown, { type Components, type Options } from 'react-markdown';
-import rehypeKatex from 'rehype-katex';
 import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -147,13 +145,18 @@ const remarkPlugins: Options['remarkPlugins'] = [
   [remarkMath, { singleDollarTextMath: false }],
 ];
 
-/** KaTeX rehype plugin list, shared across all markdown instances. */
-const baseRehypePlugins: NonNullable<Options['rehypePlugins']> = [
-  [rehypeKatex, { output: 'mathml', strict: false }],
-];
-
 /** Stable empty plugin list used as the default when no extra plugins are passed. */
 const EMPTY_REHYPE_PLUGINS: NonNullable<Options['rehypePlugins']> = [];
+
+/**
+ * Cheap heuristic for "this content contains KaTeX math", checked before the heavy
+ * KaTeX engine is loaded rather than by parsing the full markdown AST: a literal
+ * `$$...$$` block (the form `preprocessLaTeX` normalizes single-dollar math into)
+ * or one of the `\(...\)`/`\[...\]` delimiters LLMs commonly emit.
+ */
+const MATH_DELIMITER_REGEX = /\$\$|\\\(|\\\[/;
+const hasMathContent = (text: string): boolean =>
+  MATH_DELIMITER_REGEX.test(text);
 
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
@@ -367,6 +370,48 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       [displayedContent],
     );
 
+    const needsMath = useMemo(
+      () => hasMathContent(processedContent),
+      [processedContent],
+    );
+
+    const [katexPlugin, setKatexPlugin] = useState<
+      NonNullable<Options['rehypePlugins']>[number] | null
+    >(null);
+
+    /*
+     * KaTeX and its stylesheet are loaded on demand, the first time a message
+     * actually contains a math block, so plain-text/code-only conversations
+     * never pull the ~150 KB engine into the initial bundle.
+     */
+    useEffect(() => {
+      if (!needsMath || katexPlugin) return;
+
+      let cancelled = false;
+      const loadKatex = async () => {
+        const [katexModule] = await Promise.all([
+          import('rehype-katex'),
+          import('katex/dist/katex.min.css'),
+        ]);
+        if (!cancelled) {
+          setKatexPlugin([
+            katexModule.default,
+            { output: 'mathml', strict: false },
+          ]);
+        }
+      };
+      void loadKatex();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [needsMath, katexPlugin]);
+
+    const effectiveRehypePlugins = useMemo(
+      () => (katexPlugin ? [katexPlugin, ...rehypePlugins] : rehypePlugins),
+      [katexPlugin, rehypePlugins],
+    );
+
     const cssVars = buildCssVars({
       '--cm-thinking-inverted': colors?.thinkingPrimary,
       '--cm-thinking-secondary': colors?.thinkingSecondary,
@@ -417,7 +462,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       <div style={cssVars}>
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
-          rehypePlugins={[...baseRehypePlugins, ...rehypePlugins]}
+          rehypePlugins={effectiveRehypePlugins}
           components={mergedComponents}
         >
           {processedContent}
