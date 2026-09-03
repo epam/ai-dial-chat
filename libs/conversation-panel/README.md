@@ -226,24 +226,24 @@ A job with status `Warning` — one that delivered its file but skipped part of 
 
 ### ImportExportQueueLabels
 
-| Field                                    | Type                                                           | Description                                                  |
-| ---------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------ |
-| `cancelJobAriaLabel`                     | `(fileName: string) => string`                                 | Accessible name for cancelling an in-progress job            |
-| `canceledLabel`                          | `string`                                                       | Trailing text shown on a canceled row                        |
-| `jobErrorMessage`                        | `(code: ConversationTransferErrorCode \| undefined) => string` | Tooltip and accessible name explaining why a job failed      |
-| `jobProgressAriaLabel`                   | `(fileName: string) => string`                                 | Accessible name for a row's in-progress spinner               |
-| `jobWarningMessage`                      | `(code: ConversationTransferWarningCode \| undefined) => string` | Tooltip and accessible name explaining what a warned job left out |
-| `queueProgressAriaLabel`                 | `string`                                                       | Accessible name for the collapsed queue's aggregate progress bar |
-| `queueProgressValueText`                 | `(completed: number, total: number) => string`                 | The aggregate bar's `aria-valuetext`, given settled and total job counts |
-| `collapseQueueAriaLabel`                 | `string`                                                       | Accessible name for the collapse toggle                      |
-| `expandQueueAriaLabel`                   | `string`                                                       | Accessible name for the expand toggle                        |
-| `closeQueueAriaLabel`                    | `string`                                                       | Accessible name for the close button                         |
-| `closeQueueConfirmHeader`                | `string`                                                       | Heading of the close-confirmation dialog                     |
-| `closeQueueConfirmDescriptionInProgress` | `string`                                                       | Dialog description when jobs are in progress                 |
-| `closeQueueConfirmDescriptionFailed`     | `string`                                                       | Dialog description when jobs have failed                     |
-| `closeQueueConfirmDescriptionMixed`      | `string`                                                       | Dialog description when jobs are both in-progress and failed |
-| `closeLabel`                             | `string`                                                       | Confirm button label in the dialog                           |
-| `cancelLabel`                            | `string`                                                       | Cancel button label in the dialog                            |
+| Field                                    | Type                                                             | Description                                                              |
+| ---------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `cancelJobAriaLabel`                     | `(fileName: string) => string`                                   | Accessible name for cancelling an in-progress job                        |
+| `canceledLabel`                          | `string`                                                         | Trailing text shown on a canceled row                                    |
+| `jobErrorMessage`                        | `(code: ConversationTransferErrorCode \| undefined) => string`   | Tooltip and accessible name explaining why a job failed                  |
+| `jobProgressAriaLabel`                   | `(fileName: string) => string`                                   | Accessible name for a row's in-progress spinner                          |
+| `jobWarningMessage`                      | `(code: ConversationTransferWarningCode \| undefined) => string` | Tooltip and accessible name explaining what a warned job left out        |
+| `queueProgressAriaLabel`                 | `string`                                                         | Accessible name for the collapsed queue's aggregate progress bar         |
+| `queueProgressValueText`                 | `(completed: number, total: number) => string`                   | The aggregate bar's `aria-valuetext`, given settled and total job counts |
+| `collapseQueueAriaLabel`                 | `string`                                                         | Accessible name for the collapse toggle                                  |
+| `expandQueueAriaLabel`                   | `string`                                                         | Accessible name for the expand toggle                                    |
+| `closeQueueAriaLabel`                    | `string`                                                         | Accessible name for the close button                                     |
+| `closeQueueConfirmHeader`                | `string`                                                         | Heading of the close-confirmation dialog                                 |
+| `closeQueueConfirmDescriptionInProgress` | `string`                                                         | Dialog description when jobs are in progress                             |
+| `closeQueueConfirmDescriptionFailed`     | `string`                                                         | Dialog description when jobs have failed                                 |
+| `closeQueueConfirmDescriptionMixed`      | `string`                                                         | Dialog description when jobs are both in-progress and failed             |
+| `closeLabel`                             | `string`                                                         | Confirm button label in the dialog                                       |
+| `cancelLabel`                            | `string`                                                         | Cancel button label in the dialog                                        |
 
 ### ImportExportQueueStyles
 
