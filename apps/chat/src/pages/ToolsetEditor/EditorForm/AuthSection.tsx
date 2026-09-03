@@ -23,11 +23,12 @@ import {
   DIAL_KIT_ICON_STROKE,
   ElementSize,
   Input,
-  PrimaryButton,
+  NeutralButton,
   Radio,
   SegmentedControl,
   TagInput,
 } from '@epam/ai-dial-ui-kit';
+import { IconLogin, IconLogout } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -328,13 +329,15 @@ const AuthSection: FC<Props> = ({
   const renderLoginStatus = () => {
     if (auth.isLoggedIn) {
       return (
-        <div className="flex items-center gap-3">
-          <span className="dial-small-text text-success">
-            {t(ToolsetEditorI18nKeys.LoggedInLabel)}
-          </span>
-          <PrimaryButton
-            size={ElementSize.Small}
+        <div className="flex">
+          <NeutralButton
             label={t(ButtonsI18nKeys.LogOut)}
+            iconBefore={
+              <IconLogout
+                size={DIAL_ICON_SIZE.MD}
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             onClick={() => setShowLogoutConfirm(true)}
             disabled={isSaving || isAuthBusy}
           />
@@ -343,9 +346,11 @@ const AuthSection: FC<Props> = ({
     }
     return (
       <div className="flex">
-        <PrimaryButton
-          size={ElementSize.Small}
+        <NeutralButton
           label={t(ButtonsI18nKeys.LogIn)}
+          iconBefore={
+            <IconLogin size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />
+          }
           onClick={handleLogIn}
           disabled={!canLogIn}
         />
@@ -525,6 +530,7 @@ const AuthSection: FC<Props> = ({
         aria-label={t(ToolsetEditorI18nKeys.AuthSectionTitle)}
         value={auth.authenticationType}
         onChange={(type) => handleSelectType(type as ToolsetAuthTypes)}
+        segmentClassName="px-2 !flex-none !min-w-0"
         items={[
           ToolsetAuthTypes.None,
           ToolsetAuthTypes.OAuth,
@@ -533,15 +539,17 @@ const AuthSection: FC<Props> = ({
           const { labelKey, Icon } = AUTH_TYPE_OPTIONS[type];
           return {
             value: type,
-            icon: (
-              <Icon
-                className="shrink-0"
-                size={DIAL_ICON_SIZE.SM}
-                stroke={DIAL_KIT_ICON_STROKE}
-                aria-hidden
-              />
+            label: (
+              <div className="flex items-center gap-2">
+                <Icon
+                  className="shrink-0"
+                  size={DIAL_ICON_SIZE.SM}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  aria-hidden
+                />
+                {t(labelKey)}
+              </div>
             ),
-            label: t(labelKey),
             disabled: isControlsDisabled && auth.authenticationType !== type,
           };
         })}

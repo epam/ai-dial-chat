@@ -53,7 +53,7 @@ const createEmptyRow = (
   description: '',
 });
 
-/** Summary row ("Locales: [DE]  Edit") plus the "Add locale" popup for editing additional name/description translations. */
+/** Summary row ("Locales: [DE]  Edit locales") plus the "Add locale" popup for editing additional name/description translations. Shows "Add locales" instead of "Edit locales" until at least one entry exists. */
 export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
   value,
   onChange,
@@ -66,6 +66,7 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
 }) => {
   const {
     summaryLabel,
+    addLabel,
     editLabel,
     popupTitle,
     addLocaleLabel,
@@ -154,7 +155,7 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
         </span>
       )}
       <LinkButton
-        label={editLabel}
+        label={value.length > 0 ? editLabel : addLabel}
         iconBefore={
           <IconPlus
             size={DIAL_ICON_SIZE.SM}

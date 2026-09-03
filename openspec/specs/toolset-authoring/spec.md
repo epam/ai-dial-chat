@@ -148,7 +148,20 @@ header. The editor SHALL NOT render a separate live preview or catalog-card prev
 ### Requirement: Settings step connection fields
 The Settings step SHALL allow editing the endpoint URL, the transport protocol (HTTP or
 SSE), and the allowed tools (tag input), and SHALL provide a control to copy the endpoint
-URL to the clipboard.
+URL to the clipboard. The endpoint field SHALL show the caption "The HTTPS address where
+the server accepts MCP requests." below the input. The transport protocol SHALL be
+presented as a vertical radio-button group (not a dropdown select) with two options, "HTTP"
+and "SSE", neither of which carries a "Deprecated" annotation.
+
+#### Scenario: Endpoint field caption
+- **WHEN** a user views the Settings step
+- **THEN** the endpoint field shows the caption "The HTTPS address where the server accepts
+  MCP requests."
+
+#### Scenario: Protocol is a radio-button choice
+- **WHEN** a user views the Settings step
+- **THEN** the transport protocol is presented as a vertical group of two radio buttons,
+  "HTTP" and "SSE", with no "Deprecated" label on either option
 
 #### Scenario: Valid endpoint URL
 - **WHEN** a user enters a well-formed `http(s)://` or `sse://` endpoint URL

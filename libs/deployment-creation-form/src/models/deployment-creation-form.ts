@@ -54,7 +54,9 @@ export interface DeploymentCreationFormFieldLabels {
 export interface DeploymentCreationFormLocaleLabels {
   /** Text preceding the list of configured locale codes, e.g. `'Locales'`. */
   summaryLabel: string;
-  /** Label for the link that opens the "Add locale" popup. */
+  /** Label for the link that opens the popup when no locale has been added yet, e.g. `'Add locales'`. */
+  addLabel: string;
+  /** Label for the link that opens the popup once at least one locale exists, e.g. `'Edit locales'`. */
   editLabel: string;
   /** Title of the "Add locale" popup. */
   popupTitle: string;

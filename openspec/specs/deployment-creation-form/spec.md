@@ -83,12 +83,18 @@ follow the same controlled, host-supplied-labels pattern as the rest of the shar
 SHALL NOT hold authoritative state beyond the open/closed popup, SHALL report changes to
 `otherLocales` through `onChange`, and SHALL NOT itself call any network API or persist
 anything — composing the entered locale entries back into a DIAL Core locale map for saving is
-the host app's responsibility.
+the host app's responsibility. The link that opens the popup SHALL show the host-supplied
+`labels.addLabel` (e.g. "Add locales") while `otherLocales` is empty, and switch to
+`labels.editLabel` (e.g. "Edit locales") once at least one entry exists.
 
 #### Scenario: Summary reflects the configured additional locales
 - **WHEN** `otherLocales` contains entries for one or more locales
 - **THEN** the summary row displays each entry's locale code next to the "Locales" label, e.g.
-  `Locales: [FR], [UA]`
+  `Locales: [FR], [UA]`, and the link to open the popup reads `labels.editLabel`
+
+#### Scenario: Popup-opening link reads "Add locales" before any locale exists
+- **WHEN** `otherLocales` is empty
+- **THEN** the link that opens the popup shows `labels.addLabel` instead of `labels.editLabel`
 
 #### Scenario: Adding a locale entry
 - **WHEN** a user opens the popup, selects a language not already used by another row, and

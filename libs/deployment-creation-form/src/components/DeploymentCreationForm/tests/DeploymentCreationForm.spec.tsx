@@ -87,7 +87,8 @@ const labels: DeploymentCreationFormLabels = {
   topics: { label: 'Topics', placeholder: 'Add a topic' },
   otherLocales: {
     summaryLabel: 'Locales',
-    editLabel: 'Edit',
+    addLabel: 'Add locales',
+    editLabel: 'Edit locales',
     popupTitle: 'Add locale',
     addLocaleLabel: 'Add locale',
     languageLabel: 'Language',

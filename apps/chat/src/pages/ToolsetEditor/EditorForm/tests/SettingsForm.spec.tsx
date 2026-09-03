@@ -102,28 +102,34 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <p role="alert">{error}</p>}
     </>
   ),
-  Select: ({
-    options,
+  RadioGroup: ({
+    items,
     value,
     onChange,
-    elementId,
+    labelProps,
+    id,
   }: {
-    options: { value: string; label: string; description?: string }[];
+    items: { value: string; label: string }[];
     value?: string;
     onChange?: (v: string) => void;
-    elementId?: string;
+    labelProps?: { label?: string };
+    id?: string;
   }) => (
-    <select
-      id={elementId}
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.description ? `${o.label} ${o.description}` : o.label}
-        </option>
+    <fieldset>
+      <legend>{labelProps?.label}</legend>
+      {items.map((item) => (
+        <label key={item.value}>
+          <input
+            type="radio"
+            name={id}
+            value={item.value}
+            checked={value === item.value}
+            onChange={() => onChange?.(item.value)}
+          />
+          {item.label}
+        </label>
       ))}
-    </select>
+    </fieldset>
   ),
   TagInput: ({
     labelProps,
@@ -257,12 +263,10 @@ describe('SettingsForm — copy endpoint', () => {
     );
   });
 
-  it('marks the SSE protocol option as deprecated', () => {
+  it('renders HTTP and SSE as protocol radio options', () => {
     renderSettings();
-    const sseOption = screen.getByRole('option', {
-      name: `SSE ${ToolsetEditorI18nKeys.ProtocolSseDeprecatedLabel}`,
-    });
-    expect(sseOption).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'HTTP' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'SSE' })).toBeTruthy();
   });
 });
 

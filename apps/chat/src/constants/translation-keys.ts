@@ -894,6 +894,8 @@ export enum EditorI18nKeys {
   LocalesSummaryLabel = 'editor.locales.summaryLabel',
   LocalesRowLabel = 'editor.locales.rowLabel',
   LocalesPopupTitle = 'editor.locales.popupTitle',
+  LocalesAddLabel = 'editor.locales.addLabel',
+  LocalesEditLabel = 'editor.locales.editLabel',
   LocalesAddLocaleLabel = 'editor.locales.addLocaleLabel',
   LocalesLanguageLabel = 'editor.locales.languageLabel',
   LocalesNameLabel = 'editor.locales.nameLabel',
@@ -1043,10 +1045,10 @@ export enum ToolsetEditorI18nKeys {
   DescriptionPlaceholder = 'toolsetEditor.general.descriptionPlaceholder',
   TopicsPlaceholder = 'toolsetEditor.general.topicsPlaceholder',
   // Settings form
+  EndpointCaption = 'toolsetEditor.settings.endpointCaption',
   EndpointRequired = 'toolsetEditor.settings.endpointRequired',
   EndpointInvalid = 'toolsetEditor.settings.endpointInvalid',
   ProtocolLabel = 'toolsetEditor.settings.protocolLabel',
-  ProtocolSseDeprecatedLabel = 'toolsetEditor.settings.protocolSseDeprecatedLabel',
   AllowedToolsLabel = 'toolsetEditor.settings.allowedToolsLabel',
   AllowedToolsPlaceholder = 'toolsetEditor.settings.allowedToolsPlaceholder',
   CopyUrlLabel = 'toolsetEditor.settings.copyUrlLabel',
@@ -1078,7 +1080,6 @@ export enum ToolsetEditorI18nKeys {
   TokenEndpointPlaceholder = 'toolsetEditor.auth.tokenEndpointPlaceholder',
   ScopesLabel = 'toolsetEditor.auth.scopesLabel',
   ScopesPlaceholder = 'toolsetEditor.auth.scopesPlaceholder',
-  LoggedInLabel = 'toolsetEditor.auth.loggedInLabel',
   LogoutConfirmDescription = 'toolsetEditor.auth.logoutConfirmDescription',
   // Errors
   ErrorCreateFailed = 'toolsetEditor.error.createFailed',

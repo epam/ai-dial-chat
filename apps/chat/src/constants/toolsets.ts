@@ -1,5 +1,5 @@
 import { ToolsetAuthTypes } from '@epam/ai-dial-chat-hooks';
-import { IconBrandOauth, IconKey, IconLockCancel } from '@tabler/icons-react';
+import { IconBrandOauth, IconKey, IconLockOff } from '@tabler/icons-react';
 import type { TablerIcon } from '@tabler/icons-react';
 import { ToolsetEditorI18nKeys } from './translation-keys';
 
@@ -39,6 +39,6 @@ export const AUTH_TYPE_OPTIONS: Record<ToolsetAuthTypes, AuthTypeOption> = {
   },
   [ToolsetAuthTypes.None]: {
     labelKey: ToolsetEditorI18nKeys.AuthTypeNone,
-    Icon: IconLockCancel,
+    Icon: IconLockOff,
   },
 };

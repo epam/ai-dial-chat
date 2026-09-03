@@ -51,7 +51,8 @@ import { DeploymentCreationForm } from '@epam/ai-dial-deployment-creation-form';
     topics: { label: 'Topics' },
     otherLocales: {
       summaryLabel: 'Locales',
-      editLabel: 'Edit',
+      addLabel: 'Add locales',
+      editLabel: 'Edit locales',
       popupTitle: 'Add locale',
       addLocaleLabel: 'Add locale',
       languageLabel: 'Language',

@@ -137,7 +137,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {labelProps?.label}
     </label>
   ),
-  PrimaryButton: ({
+  NeutralButton: ({
     label,
     onClick,
     disabled,
@@ -214,7 +214,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </div>
   ),
   DIAL_KIT_ICON_STROKE: 1.5,
-  DIAL_ICON_SIZE: { SM: 16 },
+  DIAL_ICON_SIZE: { SM: 16, MD: 20 },
 }));
 
 const noneAuth = (): ToolsetAuthFormData => ({

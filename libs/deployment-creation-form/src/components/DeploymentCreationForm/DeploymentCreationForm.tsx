@@ -89,6 +89,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         labelProps={{ label: labels.description.label }}
         placeholder={labels.description.placeholder}
         containerClassName={styles?.field}
+        // todo: set resize={'vertical'} when Textarea supports it
       />
 
       <DeploymentLocalesField

@@ -1010,6 +1010,8 @@
       "summaryLabel": "Locales",
       "rowLabel": "Locale",
       "popupTitle": "Add locale",
+      "addLabel": "Add locales",
+      "editLabel": "Edit locales",
       "addLocaleLabel": "Add locale",
       "languageLabel": "Language",
       "nameLabel": "Name",
@@ -1056,10 +1058,10 @@
       "topicsPlaceholder": "Add tags, comma separated"
     },
     "settings": {
+      "endpointCaption": "The HTTPS address where the server accepts MCP requests.",
       "endpointRequired": "Endpoint is required",
       "endpointInvalid": "Enter a valid http(s) or sse URL",
       "protocolLabel": "Protocol",
-      "protocolSseDeprecatedLabel": "Deprecated",
       "allowedToolsLabel": "Allowed tools",
       "allowedToolsPlaceholder": "Add tools, comma separated",
       "copyUrlLabel": "Copy endpoint URL"
@@ -1091,8 +1093,7 @@
       "tokenEndpointLabel": "Token endpoint",
       "tokenEndpointPlaceholder": "Enter token endpoint",
       "scopesLabel": "Scopes",
-      "scopesPlaceholder": "Add a scope",
-      "loggedInLabel": "Logged in",
+      "scopesPlaceholder": "Enter scopes",
       "logoutConfirmDescription": "Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again."
     },
     "error": {

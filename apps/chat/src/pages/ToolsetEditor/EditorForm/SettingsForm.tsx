@@ -9,7 +9,7 @@ import {
   ElementSize,
   GhostIconButton,
   Input,
-  Select,
+  RadioGroup,
   TagInput,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
@@ -66,13 +66,9 @@ const SettingsForm: FC<Props> = ({
   const protocolOptions = useMemo(
     () => [
       { value: ToolsetTransportType.Http, label: 'HTTP' },
-      {
-        value: ToolsetTransportType.Sse,
-        label: 'SSE',
-        description: t(ToolsetEditorI18nKeys.ProtocolSseDeprecatedLabel),
-      },
+      { value: ToolsetTransportType.Sse, label: 'SSE' },
     ],
-    [t],
+    [],
   );
 
   const handleCopyEndpoint = async () => {
@@ -86,10 +82,8 @@ const SettingsForm: FC<Props> = ({
     }
   };
 
-  const handleProtocolChange = (next: string | string[]) => {
-    if (typeof next === 'string') {
-      onChange({ protocol: next as ToolsetTransportType });
-    }
+  const handleProtocolChange = (next: string) => {
+    onChange({ protocol: next as ToolsetTransportType });
   };
 
   return (
@@ -105,6 +99,7 @@ const SettingsForm: FC<Props> = ({
               required: true,
             }}
             placeholder={t(BasicI18nKeys.UrlPlaceholder)}
+            caption={t(ToolsetEditorI18nKeys.EndpointCaption)}
             error={errors.endpoint || undefined}
             invalid={!!errors.endpoint}
           />
@@ -133,13 +128,13 @@ const SettingsForm: FC<Props> = ({
         />
       </div>
 
-      <Select
+      <RadioGroup
         labelProps={{
           label: t(ToolsetEditorI18nKeys.ProtocolLabel),
           required: true,
         }}
         id="toolset-protocol"
-        options={protocolOptions}
+        items={protocolOptions}
         value={form.protocol}
         onChange={handleProtocolChange}
       />
