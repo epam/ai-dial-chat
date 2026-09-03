@@ -60,6 +60,44 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
   },
   isHtmlPreviewable: vi.fn().mockReturnValue(false),
   isTextPreviewable: vi.fn(),
+  /* Real (not stubbed) behavior, mirroring the actual OOXML_MIME_TYPES map in
+   * `@epam/ai-dial-attachment-canvas`, since resolveExternalSourceContentType/
+   * isExternalSourcePreviewable tests assert genuine extension/MIME detection. */
+  getOoxmlMimeType: (name: string, mimeType?: string) => {
+    const mimeToType: Record<string, string> = {
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    };
+    const normalizedMime = mimeType?.split(';', 1)[0].trim().toLowerCase();
+    if (normalizedMime != null && mimeToType[normalizedMime] != null) {
+      return mimeToType[normalizedMime];
+    }
+    const dot = name.lastIndexOf('.');
+    if (dot === -1) return undefined;
+    const extToMime: Record<string, string> = {
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    };
+    return extToMime[name.slice(dot + 1).toLowerCase()];
+  },
+  isOoxmlPreviewable: (name: string, mimeType?: string) => {
+    const validMimes = new Set([
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ]);
+    if (mimeType != null && validMimes.has(mimeType.split(';', 1)[0].trim())) {
+      return true;
+    }
+    const dot = name.lastIndexOf('.');
+    if (dot === -1) return false;
+    return ['docx', 'xlsx', 'pptx'].includes(name.slice(dot + 1).toLowerCase());
+  },
 }));
 
 /* Stand-in for the host's DIAL-URL resolvers, mirroring the app's real
@@ -859,6 +897,47 @@ describe('resolveOoxmlCanvasContent', () => {
 
     expect(result).toBeNull();
   });
+
+  it('returns OOXML content with the raw url for a non-DIAL external xlsx source', async () => {
+    const result = await resolveOoxmlCanvasContent(
+      makeRemoteAttachment(
+        'budget.xlsx',
+        'https://example.com/citation/budget-report',
+      ),
+      resolvers,
+      OoxmlFileType.Xlsx,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Ooxml,
+      url: 'https://example.com/citation/budget-report',
+      format: OoxmlFileType.Xlsx,
+    });
+  });
+
+  it('returns OOXML content with the raw url for a non-DIAL external pptx source', async () => {
+    const result = await resolveOoxmlCanvasContent(
+      makeRemoteAttachment(
+        'slides.pptx',
+        'https://example.com/citation/slides-deck',
+      ),
+      resolvers,
+      OoxmlFileType.Pptx,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Ooxml,
+      url: 'https://example.com/citation/slides-deck',
+      format: OoxmlFileType.Pptx,
+    });
+  });
+
+  it('returns null for a non-DIAL Office source url with no fetchable scheme', async () => {
+    const result = await resolveOoxmlCanvasContent(
+      makeRemoteAttachment('report.docx', 'citation-reference-id-456'),
+      resolvers,
+      OoxmlFileType.Docx,
+    );
+    expect(result).toBeNull();
+  });
 });
 
 describe('resolveVisualizerCanvasContent', () => {
@@ -991,6 +1070,42 @@ describe('resolveExternalSourceContentType', () => {
       ),
     ).toBe('text/markdown');
   });
+
+  it.each([
+    [
+      'docx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+    [
+      'xlsx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
+    [
+      'pptx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ],
+  ])(
+    'overrides a mislabeled content type when the url ends with .%s',
+    (ext, canonicalMime) => {
+      expect(
+        resolveExternalSourceContentType(
+          'text/markdown',
+          `https://example.com/citation/report.${ext}`,
+        ),
+      ).toBe(canonicalMime);
+    },
+  );
+
+  it('returns a canonical OOXML content type unchanged when already reported', () => {
+    const pptxMime =
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    expect(
+      resolveExternalSourceContentType(
+        pptxMime,
+        'https://example.com/citation/doc-id-123',
+      ),
+    ).toBe(pptxMime);
+  });
 });
 
 describe('isExternalSourcePreviewable', () => {
@@ -1027,6 +1142,24 @@ describe('isExternalSourcePreviewable', () => {
       isExternalSourcePreviewable(
         'application/octet-stream',
         'https://example.com/files/report.pdf',
+      ),
+    ).toBe(true);
+  });
+
+  it('returns true for a url whose path ends with .pptx even with a mislabeled content type', () => {
+    expect(
+      isExternalSourcePreviewable(
+        'text/markdown',
+        'https://example.com/citation/slides.pptx',
+      ),
+    ).toBe(true);
+  });
+
+  it('returns true for a canonical pptx content type even when the url has no matching extension', () => {
+    expect(
+      isExternalSourcePreviewable(
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'https://example.com/citation/doc-id-123',
       ),
     ).toBe(true);
   });

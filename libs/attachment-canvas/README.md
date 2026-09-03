@@ -229,6 +229,7 @@ import {
   isHtmlPreviewable,
   isOoxmlPreviewable,
   getOoxmlFileType,
+  getOoxmlMimeType,
   extensionToLanguage,
   createUnsupportedCanvasContent,
   createLoadErrorCanvasContent,
@@ -242,6 +243,9 @@ if (isOoxmlPreviewable(fileName, mimeType)) { ... }
 
 // Resolve the format needed by OoxmlCanvasContent
 const format = getOoxmlFileType(fileName, mimeType);
+
+// Resolve the canonical MIME type for a recognized OOXML format
+const canonicalMimeType = getOoxmlMimeType(fileName, mimeType);
 
 // Resolve a syntax-highlighting language from a file extension
 const language = extensionToLanguage('ts');
