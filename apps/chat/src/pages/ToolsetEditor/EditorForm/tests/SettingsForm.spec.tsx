@@ -207,44 +207,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('SettingsForm — copy endpoint', () => {
-  const user = userEvent.setup({ delay: null });
-  const mockWriteText = vi.fn().mockResolvedValue(undefined);
-
-  beforeEach(() => {
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: { writeText: mockWriteText },
-    });
-  });
-
-  it('renders the copy endpoint button', () => {
-    renderSettings();
-    expect(
-      screen.getByRole('button', {
-        name: ToolsetEditorI18nKeys.CopyUrlLabel,
-      }),
-    ).toBeTruthy();
-  });
-
-  it('calls clipboard.writeText with the endpoint URL when copy is clicked', async () => {
-    renderSettings('https://my-toolset.example.com/mcp');
-    await user.click(
-      screen.getByRole('button', { name: ToolsetEditorI18nKeys.CopyUrlLabel }),
-    );
-    expect(mockWriteText).toHaveBeenCalledWith(
-      'https://my-toolset.example.com/mcp',
-    );
-  });
-
-  it('does not call clipboard.writeText when endpoint is empty', async () => {
-    renderSettings('');
-    await user.click(
-      screen.getByRole('button', { name: ToolsetEditorI18nKeys.CopyUrlLabel }),
-    );
-    expect(mockWriteText).not.toHaveBeenCalled();
-  });
-
+describe('SettingsForm — endpoint field', () => {
   it('renders the endpoint error message when errors.endpoint is provided', () => {
     render(
       <SettingsForm

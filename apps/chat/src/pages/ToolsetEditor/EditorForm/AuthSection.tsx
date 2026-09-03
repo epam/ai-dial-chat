@@ -21,7 +21,6 @@ import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  ElementSize,
   Input,
   NeutralButton,
   Radio,

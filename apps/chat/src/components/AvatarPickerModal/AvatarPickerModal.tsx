@@ -42,7 +42,7 @@ const AvatarPickerModal: FC<Props> = ({ isOpen, onClose, onSelect }) => {
             resolvePreviewUrl: resolveCatalogIconUrl,
           })
         : null;
-      if (attachment) {
+      if (attachment?.url) {
         onSelect(attachment.url);
       }
       onClose();
