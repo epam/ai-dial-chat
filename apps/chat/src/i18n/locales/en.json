@@ -588,6 +588,8 @@
   "attachments": {
     "downloadFile": "Download file",
     "openInNewTab": "Open in new tab",
+    "removeLabel": "Remove attachment",
+    "retryLabel": "Retry upload",
     "unsupportedType": {
       "title": "File extension not supported",
       "message": "This model can only process {{formats}}. Please upload a file in a supported format."
@@ -844,6 +846,8 @@
     "renameReservedName": "This name is reserved",
     "renameInvalidChars": "Name contains invalid characters",
     "renameNameTooLong": "Name must be 255 characters or fewer",
+    "renameHiddenItemWarning": "A dot at the start of the name will make the item hidden",
+    "nameConsecutiveDots": "Name cannot contain consecutive dots",
     "copyAction": "Copy to",
     "moveAction": "Move to",
     "copyingLabel": "Copying...",
