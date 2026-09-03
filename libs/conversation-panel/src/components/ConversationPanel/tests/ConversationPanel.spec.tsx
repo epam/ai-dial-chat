@@ -384,12 +384,20 @@ describe('ConversationPanel', () => {
     ).toBeNull();
   });
 
-  it('gives the search field fully rounded corners by default', () => {
+  /*
+   * The corner radius itself is a CSS custom property read by the stylesheet
+   * (--cp-search-radius), so what a DOM test can pin is that the panel no
+   * longer hardcodes a radius utility on the wrapper.
+   */
+  it('sets no radius utility on the search field by default', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
-    expect(screen.getByTestId('search-wrapper').className).toBe('rounded-full');
+
+    expect(screen.getByTestId('search-wrapper').className).not.toMatch(
+      /rounded-/,
+    );
   });
 
-  it('replaces the search field corner radius with styles.searchWrapperClassName', () => {
+  it('still forwards styles.searchWrapperClassName to the search field', () => {
     render(
       <ConversationPanel
         {...BASE_PROPS}
@@ -397,11 +405,9 @@ describe('ConversationPanel', () => {
         styles={{ searchWrapperClassName: 'rounded-xl' }}
       />,
     );
-    /*
-     * The default has to be gone, not merely overridden: two competing
-     * `rounded-*` utilities would resolve by stylesheet order, not by the order
-     * they appear in the class attribute.
-     */
-    expect(screen.getByTestId('search-wrapper').className).toBe('rounded-xl');
+
+    expect(
+      screen.getByTestId('search-wrapper').classList.contains('rounded-xl'),
+    ).toBe(true);
   });
 });
