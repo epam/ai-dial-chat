@@ -5,37 +5,14 @@ import {
   IsString,
   Matches,
   MaxLength,
-  registerDecorator,
-  ValidationOptions,
 } from 'class-validator';
 import {
   BUCKET_NAME_PATTERN,
   BUCKET_NAME_VALIDATION_MESSAGE,
 } from '../../common/validators/bucket-name.pattern';
-import { FOLDER_NODE_TYPE, MARKER_NAME } from '../files.constants';
+import { FOLDER_NODE_TYPE } from '../files.constants';
 import { IsValidFilePath } from './file-path.validator';
-
-const IsNotReservedMarkerName = (
-  validationOptions?: ValidationOptions,
-): PropertyDecorator => {
-  return (object: object, propertyName: string | symbol) => {
-    registerDecorator({
-      name: 'isNotReservedMarkerName',
-      target: (object as { constructor: new (...args: unknown[]) => unknown })
-        .constructor,
-      propertyName: propertyName as string,
-      options: validationOptions,
-      validator: {
-        validate(value: unknown) {
-          return value !== MARKER_NAME;
-        },
-        defaultMessage() {
-          return `name must not be the reserved marker name "${MARKER_NAME}"`;
-        },
-      },
-    });
-  };
-};
+import { IsNotReservedMarkerName } from './marker-name.validator';
 
 export class CreateFolderDto {
   @IsString()

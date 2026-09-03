@@ -535,6 +535,8 @@ export enum DialFileManagerI18nKeys {
   RenameReservedName = 'dialFileManager.renameReservedName',
   RenameInvalidChars = 'dialFileManager.renameInvalidChars',
   RenameNameTooLong = 'dialFileManager.renameNameTooLong',
+  RenameHiddenItemWarning = 'dialFileManager.renameHiddenItemWarning',
+  NameConsecutiveDots = 'dialFileManager.nameConsecutiveDots',
   CopyAction = 'dialFileManager.copyAction',
   MoveAction = 'dialFileManager.moveAction',
   CopyingLabel = 'dialFileManager.copyingLabel',
@@ -788,6 +790,8 @@ export enum SidebarI18nKeys {
 export enum AttachmentsI18nKeys {
   Download = 'attachments.downloadFile',
   OpenInNewTab = 'attachments.openInNewTab',
+  RemoveLabel = 'attachments.removeLabel',
+  RetryLabel = 'attachments.retryLabel',
   UnsupportedTypeTitle = 'attachments.unsupportedType.title',
   UnsupportedTypeMessage = 'attachments.unsupportedType.message',
   NoAttachmentsAllowedTitle = 'attachments.noAttachmentsAllowed.title',
