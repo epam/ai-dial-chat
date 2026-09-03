@@ -2,7 +2,7 @@
 
 ### Baseline (measured, not the brief's preliminary numbers)
 
-Reproduced with `npx nx build chat --skip-nx-cache` from `C:\dial_projects\ai-dial-chat` on 2026-09-01 (build succeeded in 21.55s; two warnings: `vite-plugin-svgr` plugin-timing notice, and Rollup's "chunks larger than 500 kB" warning naming the chunks below). `apps/chat/vite.config.mts` does not set `build.manifest`, so no `manifest.json` is emitted; chunk→source attribution below combines `apps/chat/dist/index.html`'s reference list with byte measurement (`gzip -c file | wc -c`) and grep-for-telltale-strings inside the minified output, and is marked accordingly where confidence is lower.
+Reproduced with `npm exec nx build chat -- --skip-nx-cache` on 2026-09-01 (build succeeded in 21.55s; two warnings: `vite-plugin-svgr` plugin-timing notice and Rollup's "chunks larger than 500 kB" warning). `apps/chat/vite.config.mts` does not set `build.manifest`, so no `manifest.json` is emitted; chunk→source attribution below combines `apps/chat/dist/index.html`'s reference list with byte measurement and telltale-string inspection inside the minified output, and is marked where confidence is lower.
 
 `apps/chat/dist/index.html` references 1 entry script + 18 `modulepreload` links + 7 stylesheets. Initial JS+CSS totals:
 
@@ -28,7 +28,7 @@ Largest individual files:
 
 CSS: `ui-kit-B0jAsjVO.css` (121,783 / 19,279), `index-DBlEiaay.css` (117,942 / 21,490 — app Tailwind output), `src-iwqijnls.css` (91,350 / 19,316), plus 4 smaller lib stylesheets.
 
-**Re-reproduced (task 1.1/1.2)**: a second clean build (`npx nx build chat --skip-nx-cache`) plus the new `scripts/measure-initial-bundle.mjs` (task 1.2's repeatable tool — reads `dist/index.html`, resolves every referenced file, prints raw/gzip sizes and totals) confirms these numbers within build-hash noise: **20 JS files** (1 entry + 19 `modulepreload`, one more than this table's count — a small `toolsets-*.js` chunk not present in the run above) totaling **5,697,013 raw / 1,656,352 gzip**, and the same **7 CSS files** totaling **364,637 raw / 68,287 gzip**. Grand total **1,724,639 gzip**, within 0.3% of this table's 1,718,799 — the baseline above is confirmed still current, not stale. Use `node scripts/measure-initial-bundle.mjs` for every subsequent before/after measurement in this change.
+**Re-reproduced (task 1.1/1.2)**: a second clean build (`npm exec nx build chat -- --skip-nx-cache`) plus `scripts/measure-initial-bundle.mjs` confirms these numbers within build-hash noise: **20 JS files** totaling **5,697,013 raw / 1,656,352 gzip**, and **7 CSS files** totaling **364,637 raw / 68,287 gzip**. Grand total: **1,724,639 gzip**. Use the script for every subsequent comparison in this change.
 
 ### Why each heavy dependency is in the initial graph (file:line citations)
 
@@ -54,39 +54,34 @@ CSS: `ui-kit-B0jAsjVO.css` (121,783 / 19,279), `index-DBlEiaay.css` (117,942 / 2
 ## Goals / Non-Goals
 
 **Goals:**
-- Remove Monaco, AG Grid, PDF.js, KaTeX, and `react-syntax-highlighter` from the JS/CSS referenced by `apps/chat/dist/index.html` for the `/` route, while keeping every feature that uses them (catalog grid, file manager, code editors, PDF preview, math/code rendering in messages) fully functional on demand.
-- Cut the initial-preload JS+CSS graph referenced by `dist/index.html` by at least 70% gzip from the ~1.72 MB baseline measured above (target: **≤ 516 KB gzip total**, itself split into a JS budget of **≤ 450 KB gzip** and a CSS budget of **≤ 66 KB gzip** — CSS budget is roughly flat because the render-blocking Tailwind/UI-kit stylesheet set is expected to shrink only modestly once non-critical component styles move behind lazy chunks, pending the content-glob measurement in Decision 5). These are **projected targets pending the measured lab run defined below**, not already-achieved results.
-- Keep `/conversations/:id` fully functional with no material regression, and preserve the deliberate eager-prefetch trade-off at `app.tsx:110-116`.
-- Keep every affected library's public root export, documented props/hooks, CSS contract, and publishability unchanged; any packaging change to `@epam/ai-dial-ui-kit` must be additive (new subpath exports) with the existing `.` entry point untouched.
-- Define a repeatable, fully specified lab measurement profile (below) so before/after numbers are comparable and reproducible by CI or a human runner with real browser access.
+- Remove Monaco, PDF.js, KaTeX, and `react-syntax-highlighter` from the JS/CSS referenced by `apps/chat/dist/index.html` for the `/` route, while keeping PDF preview, math rendering, and code highlighting fully functional on demand. AG Grid is excluded because its split requires a separate UI-kit package change.
+- Reduce the initial graph by at least 30% from the 1,724,639-byte gzip baseline and keep it within **1,100,000 gzip bytes of JS**, **60,000 gzip bytes of CSS**, and **1,160,000 gzip bytes total**. These limits deliberately cover only the app-side and in-repository lazy boundaries implemented here; generated-client and UI-kit packaging are separate follow-ups.
+- Keep `/conversations/:id` fully functional and preserve the deliberate eager-prefetch trade-off at `app.tsx:110-116`.
+- Preserve backward compatibility for affected libraries. The attachment-canvas PDF runtime callback is additive and optional; its host-owned implementation stays at the application edge.
+- Provide a repeatable build-time measurement tool and document a fully specified future lab profile without claiming browser measurements or production RUM that were not executed.
 
 **Non-Goals:**
 - Touching `apps/chat-api`, generated OpenAPI contracts, authentication/session/CSRF semantics, or streaming behavior.
 - Upgrading Vite, React, `@epam/ai-dial-ui-kit`, `pdfjs-dist`, or any other dependency version to chase bundle size, absent separately-approved evidence.
 - Removing or gating any user-visible feature to improve the metric (no artificial LCP placeholder, no feature removal).
-- Producing an actual measured Lighthouse/RUM number in this design — none was executed here; only the procedure is specified.
-- Rewriting `@epam/ai-dial-ui-kit`'s component architecture; the only in-scope packaging change is adding backward-compatible subpath exports (or an equivalent lazy-loading seam) if the investigation in Decision 1 confirms it's the smallest viable fix.
+- Producing an actual measured Lighthouse/RUM number or adding `chat-ready` instrumentation; only the reusable procedure and milestone definition are specified.
+- Changing `@epam/ai-dial-ui-kit` exports or removing its embedded AG Grid engine. That package-level work is owned and planned separately.
+- Decomposing the generated API client, changing `@epam/ai-dial-conversation-input` exports, or broadly redesigning the standalone attachment-canvas package.
 
 ## Decisions
 
-### Decision 1 — Isolate Monaco/AG Grid out of the eager `ui-kit` chunk
+### Decision 1 — Preserve the UI kit's lazy Monaco boundary in the app bundle
 
-**Problem**: `apps/chat/vite.config.mts:158` forces all of `@epam/ai-dial-ui-kit` into one manual chunk; the package's `package.json` `exports` map (`node_modules/@epam/ai-dial-ui-kit/package.json`) exposes only `"."` and `"./styles.css"`, so there is no way to import, e.g., `Button` without pulling in the same bundle that contains the `Grid`/editor components' Monaco and AG Grid dependencies.
+**Problem**: `apps/chat/vite.config.mts:158` used a broad package-path substring matcher. It re-merged the UI kit's dynamically imported Monaco editor chunk into the eager `ui-kit` manual chunk.
 
-**Resolved (task 1.3)**: `@epam/ai-dial-ui-kit`'s dist is a single monolithic bundle for **AG Grid** but *not* for **Monaco** — the two need different fixes:
-- `node_modules/@epam/ai-dial-ui-kit/dist/index-CIDIXPOX.js` (2.43 MB, the module `dial-ui-kit.es.js` re-exports everything from) contains `import ... from 'ag-grid-community'` and `'ag-grid-enterprise'` as **static, top-level imports** — grep confirms 7 `ag-grid-community`/`ag-grid-enterprise` hits and 15 `ag-grid` hits inside that one file, with zero internal dynamic-import boundary around them. This is genuinely a single non-splittable bundle for AG Grid; track 2 (additive subpath export) is required for it.
-- Monaco is **not** a `dependencies` entry of `@epam/ai-dial-ui-kit` at all (`node_modules/@epam/ai-dial-ui-kit/package.json` `dependencies` lists only `ag-grid-community`, `ag-grid-react`, `mime-types`, `re-resizable`, `react-dnd`, `react-dnd-html5-backend`, `tailwind-merge`; `@monaco-editor/react` and `monaco-editor` are **peerDependencies**). The package already ships Monaco behind its own async boundary: `LazyDialJsonEditor` (exported from `dial-ui-kit.es.js`) dynamically imports `JsonEditor-DRc7un9e.js`, which is the file that does `import { Editor } from "@monaco-editor/react"` — Monaco is only reachable through that one dynamically-imported chunk, not through `index-CIDIXPOX.js`. **The library has already done the split correctly for Monaco.**
-- **The actual defect is in the app's own config**: `apps/chat/vite.config.mts:158`'s `manualChunks` test is `id.includes('@epam/ai-dial-ui-kit')`, a substring match on the module's resolved file path. `JsonEditor-DRc7un9e.js` and the `MarkdownEditor-*.js` chunks physically live inside `node_modules/@epam/ai-dial-ui-kit/dist/`, so their paths *also* contain that substring — the app's own manual chunk rule re-merges the library's already-lazy Monaco chunk back into the single eager `ui-kit` chunk, destroying the boundary `@epam/ai-dial-ui-kit` deliberately built. Confirmed by content: `node_modules/@epam/ai-dial-ui-kit/dist/index-CIDIXPOX.js` itself contains zero `monaco` string hits, but the app's built `apps/chat/dist/assets/ui-kit-B67R9eSX.js` contains 5 `monaco` hits and the `cdn.jsdelivr.net/npm/monaco-editor@0.55.1` loader string — i.e. Monaco is absent from the library's core bundle and present only because the app's chunking rule pulls the library's own lazy chunk into it.
+**Resolved (task 1.3)**: the UI kit already places Monaco behind `LazyDialJsonEditor` → `JsonEditor-*.js`; Monaco is absent from the library's core entry. The app's matcher was the reason that async seam disappeared from the consumer build. AG Grid is different: it is statically imported by the UI kit entry and cannot be split by an app-only matcher change.
 
-**Decision (revised)**: Two separate, independently-landable fixes instead of the original two-track "try app-side, fall back to library" sequencing:
-1. **Monaco (app-side only, no library change)**: narrow `vite.config.mts:158`'s matcher so it only captures `@epam/ai-dial-ui-kit`'s *entry* module(s) (`dial-ui-kit.es.js` / `index-CIDIXPOX.js`), not every file whose path merely contains the package name — e.g. match on `id.includes('@epam/ai-dial-ui-kit/dist/index-CIDIXPOX')` or (more robustly) exclude any id already reachable only via a dynamic `import()` inside the package. This alone removes Monaco from the initial graph with zero library change, since the async seam already exists upstream.
-2. **AG Grid (library change required)**: since `ag-grid-community`/`ag-grid-enterprise` are statically imported inside `index-CIDIXPOX.js` itself with no internal split point, removing the manual chunk grouping entirely would just let Rollup's default heuristic re-merge them into whatever chunk first reaches `@epam/ai-dial-ui-kit`'s entry (likely the same eager result, possibly worse — merged into the main entry chunk instead of a separate one). The fix belongs in the library: propose additive subpath exports (e.g. `@epam/ai-dial-ui-kit/grid`) so AG Grid-backed components are only pulled in by consumers that actually import them, keeping the existing root `.` export unchanged. Ships with package-contract tests and a README update, per `AGENTS.md` §Docs and §Library isolation.
+**Decision**: narrow the app matcher so it captures the UI-kit entry but not files reached through the package's own dynamic imports. This removes Monaco from the initial graph without changing the UI-kit package. AG Grid remains in the eager graph and is explicitly deferred to a separate UI-kit change; it is not part of this change's tasks or byte-budget promise.
 
 **Alternatives considered**:
 - *Deep-import `@epam/ai-dial-ui-kit`'s internal files directly* — rejected: violates "no private deep imports" constraint and breaks on any internal restructuring of the package.
 - *Vendor/fork a slimmer UI kit build* — rejected: out of scope, disproportionate for a first change, and risks drifting from the design system.
-- *Leave the manual chunk but mark it `modulepreload="none"`* — rejected: doesn't reduce bytes, only defers the fetch; grid/editor consumers still eventually need the same 2.94 MB, and it does nothing for the eager code-execution/parse cost when the chunk is needed on the first lazy route that uses it (e.g. `CatalogView`).
-- *Simply delete the manual `ui-kit` chunk entirely and let Rollup's default heuristic handle everything, including AG Grid* — rejected after task 1.3's finding: AG Grid has no internal async boundary to exploit, so removing the manual grouping doesn't split it out; it only risks moving those bytes into a *different* eager chunk (e.g. the main entry chunk) with no measurement upside and a real risk of making attribution harder.
+- *Delete the manual chunk and rely entirely on Rollup heuristics* — rejected because it would not split the UI kit's statically imported AG Grid code and would make bundle attribution less stable.
 
 ### Decision 2 — Move `pdfjs-dist` behind the attachment/PDF-preview feature boundary
 
@@ -145,9 +140,9 @@ The 192 classes matched only by the `ui-kit` glob are not incidental substring n
 
 **Alternatives considered**: *Remove both globs immediately* — rejected: could silently strip Tailwind classes those library components rely on, causing a visual regression that would only surface at runtime, not at build/lint time.
 
-### Decision 6 — Lab measurement profile (procedure to run, not executed here)
+### Decision 6 — Future lab measurement profile (documented, not executed here)
 
-No browser or live server is available in this environment, so the numbers above are static/build-time measurements only. The following profile must be executed by a human or CI runner with real Chrome + Lighthouse access to validate the KPI-adjacent budgets in the proposal:
+No browser or live server is available in this environment, so this change's acceptance budgets are verified from production build output rather than Lighthouse or RUM. The profile below is documented for a future human or CI runner; executing it and adding instrumentation are explicitly outside this change.
 
 - **Device/CPU**: Lighthouse's default "mobile" CPU throttling profile (4x slowdown) on a mid-tier reference machine; record the exact machine spec (cores, RAM) in the run log since Lighthouse's CPU throttle is relative to the host.
 - **Network**: Lighthouse's "Slow 4G" throttling preset (RTT ~150 ms, throughput ~1.6 Mbps down / 750 Kbps up) for the primary comparative run; additionally record one "no throttling" run for a same-region baseline.
@@ -155,35 +150,41 @@ No browser or live server is available in this environment, so the numbers above
 - **Server location**: run Lighthouse from a client colocated in the same region as the deployed `apps/chat-api` origin (or from the same CI runner region every time) — record the region so run-to-run comparisons aren't confounded by cross-region RTT drift.
 - **Compression / cache**: cold load = HTTP cache cleared (`--disable-storage-reset=false` / a fresh Chrome profile per run); verify `Content-Encoding: gzip` or `br` and `Cache-Control: immutable` on hashed assets are actually present in the response headers of the deployed target (not just configured) — if the current environment lacks this, document it as a delivery-layer follow-up per the brief (BFF/server config is out of scope for this change).
 - **Auth state**: authenticated session cookie pre-seeded before navigation (per the brief's cold-load definition — empty HTTP cache, already-authenticated session); the interactive OIDC redirect is explicitly excluded from the timed navigation.
-- **Runs**: minimum 7 runs per configuration (odd count avoids median ties); report median and p95 (the 90th-percentile-of-7 nearest-rank value, or use ≥21 runs if a strict p95 percentile is required) LCP, plus the `chat-ready` custom mark defined below. Explicitly label these as **lab proxy results**, not field RUM, per the brief's requirement — this repo does not currently have field RUM instrumentation for `apps/chat`, which is itself a documented limitation, not something this change adds.
-- **`chat-ready` mark**: define and emit a custom performance mark when (a) the authenticated shell (header + navigation + conversation panel skeleton) has committed, and (b) the message composer's input is attached and enabled — i.e., the point a real user could start typing. This must be a real DOM/interaction milestone, not an artificially large placeholder painted early to game LCP.
-- **Route coverage**: run the full profile against `/` (primary target) and against `/conversations/:id` with a representative existing conversation (regression check only — no budget target, must not regress materially versus its own pre-change baseline).
+- **Runs**: minimum 7 runs per configuration; report median and p95 LCP. Explicitly label results as **lab proxy**, not field RUM.
+- **`chat-ready` milestone definition**: the authenticated shell has committed and the composer input is attached and enabled. A future instrumentation change may emit a performance mark at this point; this change does not claim to emit it.
+- **Route coverage**: run the profile against `/` and `/conversations/:id` with a representative existing conversation. Record both results without applying an undefined "material regression" threshold.
 
 Lighthouse scores from this procedure remain a **lab diagnostic**, not proof of production p95; they establish a repeatable before/after comparison for this change's bundle-shape work.
 
 ## Risks / Trade-offs
 
-- **[Risk] `@epam/ai-dial-ui-kit`'s dist may be a single non-splittable bundle, forcing a library packaging change** → Mitigation: Decision 1's two-track approach tries the zero-library-change path first; if a library change is required, it is strictly additive (new subpath exports, root export untouched) with package-contract tests and a README update, consistent with AGENTS.md's exception process — never a breaking change folded into this first change.
+- **[Risk] AG Grid remains embedded in the eager UI-kit entry** → Accepted for this change: removing it requires separately owned UI-kit package exports. The current byte budgets retain that known cost and do not depend on unfinished UI-kit work.
 - **[Risk] Deferring `pdfjs-dist` could introduce a visible delay the first time a user opens a PDF, or `@epam/ai-dial-attachment-canvas`'s provider may itself eagerly touch PDF.js internals in a way this design can't fully verify without reading that library's source in depth** → Mitigation: verify the provider's actual initialization path during implementation before assuming `main.tsx`'s import is the only entry point; if the provider needs a change, it must be behind the same "load on first PDF" trigger, with a loading state on first open (no silent broken UI).
 - **[Risk] Splitting KaTeX/syntax-highlighting behind a lazy boundary inside `MarkdownRenderer` could introduce a flash-of-unstyled-code or a rendering-order bug for messages with math/code, especially during streaming** → Mitigation: dedicated regression tests for streaming messages that start as plain text and later include a code fence or math block; verify no visible layout jump beyond what already happens when `react-markdown` re-renders during streaming today.
 - **[Risk] Collapsing `ConversationsContext`'s call sites (Decision 4) without full understanding of why there are three could remove a needed cache-invalidation or race-condition guard** → Mitigation: read and trace all three call sites' triggers exhaustively before touching any of them; if the three are not proven redundant on the same path, leave them and document the finding instead of forcing a consolidation.
-- **[Risk] Tailwind content-glob removal (Decision 5) could strip classes actually used by library components at runtime, causing a silent visual regression not caught by type-check or lint** → Mitigation: diff-before-cut methodology in Decision 5, plus a manual visual smoke pass over screens that render `@epam/ai-dial-ui-kit` grid/file-manager components after the change.
-- **[Risk] No live browser/Lighthouse/RUM access in this environment means all "target" budget numbers in this design are projections, not measured post-change results** → Mitigation: explicitly labeled throughout as projected/estimated; the lab profile in Decision 6 is the specified procedure a human/CI runner executes to produce the real before/after numbers; tasks.md requires that procedure to be run and its output recorded before the change is considered validated.
+- **[Risk] Tailwind content-glob removal could strip classes used by library components** → Mitigation: Decision 5 measured the selector differences and retained both globs, so no runtime styling change was made.
+- **[Risk] No live browser/Lighthouse/RUM evidence is available** → Accepted for this bundle-composition change: the committed script verifies byte budgets, while Decision 6 documents how a later instrumentation or performance-validation change can collect browser timings without overstating the present evidence.
 - **[Trade-off] Not building a repo-wide bootstrap orchestrator (Decision 4's alternative) leaves some uncoordinated-but-parallel provider fetches in place** → Accepted for this change: bytes-on-the-wire dominate the measured problem; request-fan-out coordination is noted as a candidate follow-up if the lab run shows it still matters after the JS/CSS cuts.
 
 ## Migration Plan
 
 1. Land Decision 2 (PDF.js) and Decision 3 (MarkdownRenderer heavy deps) first — narrowest blast radius, no library packaging risk, verifiable by unit/regression tests plus a clean rebuild's byte diff.
-2. Land Decision 1 (ui-kit chunk) — attempt the app-side manual-chunk removal first; only proceed to a library export change if proven necessary, and ship that as its own reviewable slice with package-contract tests.
+2. Land Decision 1's app-side matcher correction, preserving the package's existing lazy Monaco boundary. Do not include UI-kit export changes in this change.
 3. Land Decision 5 (Tailwind content globs) only after the diff-before-cut measurement confirms no visual regression.
 4. Land Decision 4 (provider dedup) last, since it's the lowest-certainty, lowest-byte-impact item, and depends on tracing that must happen during implementation.
-5. Run the Decision 6 lab profile before and after each slice that changes the initial JS/CSS graph, recording results in the change's before/after bundle table.
+5. Rebuild and run `node scripts/measure-initial-bundle.mjs` after each bundle-affecting slice. Decision 6's browser profile remains a future follow-up.
 6. **Rollback**: every slice is a self-contained, revertible commit (no data migration, no API contract, no persisted-state format change); reverting any slice restores the prior eager-import behavior with no cleanup required.
 
-## Open Questions
+## Resolved Questions
 
-- ~~Does `@epam/ai-dial-ui-kit`'s current dist output already have per-module ESM boundaries...~~ **Resolved (task 1.3)**: mixed answer — AG Grid has no internal split point (single non-splittable bundle, needs a library subpath-export change); Monaco already has one (`LazyDialJsonEditor` → `JsonEditor-*.js`) that the app's own overly-broad `manualChunks` matcher currently defeats. See revised Decision 1.
-- ~~Does `@epam/ai-dial-attachment-canvas`'s `AttachmentCanvasProvider` itself eagerly reference PDF.js internals...~~ **Resolved (task 1.4)**: the provider itself doesn't, but `AttachmentCanvasContainer` (eagerly, unconditionally mounted in `app.tsx`) has an unbroken static import chain down to `pdfjs-dist` via `PdfContent` → `@epam/ai-dial-react-pdf-highlighter` → `@epam/pdf-highlighter-kit`, independent of `main.tsx`'s own import. See revised Decision 2 — the fix now requires a lazy boundary inside `@epam/ai-dial-attachment-canvas`, not just deleting `main.tsx`'s import.
-- ~~Are all three `ConversationsContext.tsx` `listConversations()` call sites reachable on the same cold-load path...~~ **Resolved (task 1.5)**: no, only one (the mount/identity-change effect) is. The other two are guarded by explicit user mutation and background SSE-update triggers respectively. See revised Decision 4 — no consolidation.
-- What fraction of `api-client-BuHltpZu.js`'s 1.3 MB is executable code actually needed at bootstrap versus type-only/schema string literals that a smarter import boundary could keep out of the eager graph? This change does not commit to an `api-client` fix (out of scope per the brief's generated-client boundary), but the finding should be recorded to inform a possible separate follow-up.
-- Does the production deployment actually serve gzip/brotli + immutable cache headers for hashed assets today? Unverified in this environment (no deployment access) — must be checked separately; if missing, it's a BFF/delivery follow-up, not part of this change.
+- The UI kit already preserves a Monaco dynamic-import boundary; the app matcher defeated it. AG Grid has no equivalent seam and is out of scope.
+- `AttachmentCanvasProvider` does not eagerly touch PDF.js, but the PDF renderer had a static path through `AttachmentCanvasBody`; Decision 2 added the required internal lazy boundary.
+- Only one `ConversationsContext` call site is reachable during cold load. The other two serve explicit mutation and SSE triggers, so no consolidation is required.
+
+## Deferred Follow-ups
+
+- **UI-kit AG Grid packaging**: add a supported package boundary that keeps AG Grid-backed components out of the base entry. Owner: `@epam/ai-dial-ui-kit`; regression surface: catalog, file manager, and editors.
+- **Conversation-input package boundary**: expose `SendOnEnter` without statically reaching the component barrel. Expected app saving: approximately 15.7 KB gzip.
+- **Generated API-client decomposition**: determine how much of the remaining `api-client-*.js` is executable bootstrap code and whether generated entry boundaries can reduce it without hand-editing generated files.
+- **Attachment-canvas package optimization**: audit standalone dependency ownership, PDF/code chunk failure handling, version alignment, and package-level CSS splitting in its own OpenSpec change.
+- **Delivery headers and browser timings**: verify production gzip/brotli, immutable caching, and the Decision 6 lab profile in an environment with deployment and browser access.
