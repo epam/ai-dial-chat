@@ -22,7 +22,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { ArchiveUploadInterceptor } from './archive-upload.interceptor';
@@ -68,7 +67,6 @@ export class FilesController {
 
   @Post()
   @HttpCode(201)
-  @Throttle({ default: { limit: 100, ttl: 60000 } })
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -97,7 +95,6 @@ export class FilesController {
     description: 'File already exists (create-only mode)',
   })
   @ApiResponse({ status: 413, description: 'Payload too large' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -120,7 +117,6 @@ export class FilesController {
 
   @Post('upload-archive')
   @HttpCode(200)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @UseInterceptors(ArchiveUploadInterceptor)
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -153,7 +149,6 @@ export class FilesController {
     description:
       'Archive exceeds ARCHIVE_UPLOAD_MAX_FILES or ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -178,7 +173,6 @@ export class FilesController {
   }
 
   @Get('list')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     summary: 'List files and folders',
     description:
@@ -199,7 +193,6 @@ export class FilesController {
     description: 'Forbidden — user does not own the bucket',
   })
   @ApiResponse({ status: 404, description: 'Bucket or path not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -224,7 +217,6 @@ export class FilesController {
   }
 
   @Get('public')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     summary: 'List files from the organization (public) bucket',
     description:
@@ -239,7 +231,6 @@ export class FilesController {
   @ApiResponse({ status: 400, description: 'Invalid path or query parameter' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 404, description: 'Path not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -262,7 +253,6 @@ export class FilesController {
   }
 
   @Get('shared')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     summary: 'List files shared with the current user',
     description:
@@ -276,7 +266,6 @@ export class FilesController {
   })
   @ApiResponse({ status: 400, description: 'Invalid query parameter' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -298,7 +287,6 @@ export class FilesController {
   }
 
   @Get('shared-by-me')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     summary: 'List files and folders shared by the caller with others',
     operationId: 'listSharedByMe',
@@ -306,7 +294,6 @@ export class FilesController {
   @ApiResponse({ status: 200, type: ListFilesResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid query parameters' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -321,7 +308,6 @@ export class FilesController {
   }
 
   @Get('metadata')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     summary: 'Get file metadata',
     description:
@@ -339,7 +325,6 @@ export class FilesController {
     description: 'Forbidden — user lacks READ permission on the file',
   })
   @ApiResponse({ status: 404, description: 'File not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -355,7 +340,6 @@ export class FilesController {
 
   @Post('folders')
   @HttpCode(201)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Create a folder' })
   @ApiResponse({ status: 201, type: CreateFolderResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid bucket, path, or name' })
@@ -363,7 +347,6 @@ export class FilesController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Bucket or parent path not found' })
   @ApiResponse({ status: 409, description: 'Folder already exists' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -384,7 +367,6 @@ export class FilesController {
 
   @Post('download-archive')
   @HttpCode(200)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiProduces('application/zip')
   @ApiOperation({ summary: 'Download files and folders as a ZIP archive' })
   @ApiResponse({
@@ -400,7 +382,6 @@ export class FilesController {
     status: 413,
     description: 'Too many items or archive too large',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -436,13 +417,11 @@ export class FilesController {
 
   @Post('delete')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Delete files and folders' })
   @ApiBody({ type: DeleteFilesDto })
   @ApiResponse({ status: 200, type: DeleteFilesResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -458,13 +437,11 @@ export class FilesController {
 
   @Post('rename')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Rename files and folders' })
   @ApiBody({ type: RenameFilesDto })
   @ApiResponse({ status: 200, type: RenameFilesResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -480,13 +457,11 @@ export class FilesController {
 
   @Post('copy')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Copy files and folders' })
   @ApiBody({ type: CopyFilesDto })
   @ApiResponse({ status: 200, type: CopyFilesResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -502,13 +477,11 @@ export class FilesController {
 
   @Post('move')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Move files and folders across folders' })
   @ApiBody({ type: MoveFilesDto })
   @ApiResponse({ status: 200, type: MoveFilesResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -524,7 +497,6 @@ export class FilesController {
 
   @Post('revoke-access')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Revoke all shared access to files and folders' })
   @ApiBody({ type: RevokeAccessDto })
   @ApiResponse({ status: 200, type: RevokeAccessResponseDto })
@@ -535,7 +507,6 @@ export class FilesController {
     description: 'Caller does not own one or more resources',
   })
   @ApiResponse({ status: 404, description: 'A resource does not exist' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -551,7 +522,6 @@ export class FilesController {
 
   @Post('discard-shared')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Discard resources shared with the caller' })
   @ApiBody({ type: DiscardSharedDto })
   @ApiResponse({ status: 200, type: DiscardSharedResponseDto })
@@ -562,7 +532,6 @@ export class FilesController {
     description: 'Resource is not shared with the caller',
   })
   @ApiResponse({ status: 404, description: 'A resource does not exist' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -577,7 +546,6 @@ export class FilesController {
   }
 
   @Get('download')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiProduces('application/octet-stream')
   @ApiResponse({
     status: 200,
@@ -588,7 +556,6 @@ export class FilesController {
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'File not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,

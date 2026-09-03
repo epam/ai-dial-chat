@@ -2548,7 +2548,7 @@ const content = await resolveMarkdownCanvasContent(attachment, resolvers);
 clearAttachmentCache();
 ```
 
-Also exports `resolveImageCanvasContent`, `resolveTextCanvasContent`, `resolveCodeCanvasContent`, `resolveHtmlCanvasContent`, `resolveOoxmlCanvasContent`, `resolveJsonCanvasContent`, `resolveVisualizerCanvasContent`, `annotationToPdfCanvasContent`, `referenceAttachmentToPdfCanvasContent`, `hasAttachmentTextSource`, `getUrlFileName`, and `isExternalSourcePreviewable`.
+Also exports `resolveImageCanvasContent`, `resolveTextCanvasContent`, `resolveCodeCanvasContent`, `resolveHtmlCanvasContent`, `resolveOoxmlCanvasContent`, `resolveJsonCanvasContent`, `resolveVisualizerCanvasContent`, `annotationToPdfCanvasContent`, `referenceAttachmentToPdfCanvasContent`, `hasAttachmentTextSource`, `getUrlFileName`, `isExternalSourcePreviewable`, and `resolveExternalSourceContentType` (corrects a content type that mislabels an external citation — e.g. a web-search grounding API reporting `text/markdown` for every reference — against a `.pdf` URL extension).
 
 ### attachmentDtoToDisplayAttachment / attachmentDtosToDisplayAttachments / annotationToDisplayAttachment
 
