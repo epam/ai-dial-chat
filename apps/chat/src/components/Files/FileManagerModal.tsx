@@ -526,12 +526,7 @@ export const FileManagerModal = memo(
               emptyStateDescription={emptyStateDescription}
               hideSearchPathItemName
               autoSelectUploadedItems
-              initialUploadFilesOpen={
-                isPreUploadOpen &&
-                !areFilesLoading &&
-                !areFoldersLoading &&
-                !isAnyOperationInProgress
-              }
+              initialUploadFilesOpen={isPreUploadOpen}
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
