@@ -779,10 +779,11 @@ export const useConversationStream = ({
         return false;
       };
 
-      void (async () => {
+      const resume = async () => {
         const handled = await runAttach();
         if (!handled) await runWatch();
-      })();
+      };
+      void resume();
     },
     // setConversation and conversationRef are stable refs — intentionally omitted
     // eslint-disable-next-line react-hooks/exhaustive-deps
