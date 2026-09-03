@@ -13,10 +13,18 @@ const TEST_BUCKET = 'bucket-123';
 const TOOLSET_ID = 'toolsets/bucket-123/tool-abc123__1.2.0';
 
 const okResponse = (data: unknown) =>
-  ({ data, response: {} as Response }) as never;
+  ({ data, response: { ok: true, status: 200 } as Response }) as never;
 
 const errResponse = (status: number) =>
-  ({ error: {}, response: { status } as Response }) as never;
+  ({ error: {}, response: { ok: false, status } as Response }) as never;
+
+/*
+ * `openapi-fetch` short-circuits on an empty response body and returns
+ * `{ error: undefined }` without reading it, even for a non-2xx status — see
+ * the matching guard comment in `publish.service.ts`.
+ */
+const emptyBodyErrResponse = (status: number) =>
+  ({ response: { ok: false, status } as Response }) as never;
 
 const makeCacheManager = () => ({
   get: vi.fn(),
@@ -271,6 +279,26 @@ describe('PublishService.unpublish', () => {
         'Test User',
       ),
     ).rejects.toBeInstanceOf(expected);
+    expect(cacheManager.del).not.toHaveBeenCalled();
+  });
+
+  it('maps a Core 500 with an empty response body to BadGatewayException instead of reporting success', async () => {
+    const { service, dialClient, cacheManager } = makeService();
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      emptyBodyErrResponse(500),
+    );
+
+    await expect(
+      service.unpublish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        TOOLSET_ID,
+        'Organization/Data Science',
+        '1.2.0',
+        'Test User',
+      ),
+    ).rejects.toBeInstanceOf(BadGatewayException);
     expect(cacheManager.del).not.toHaveBeenCalled();
   });
 
