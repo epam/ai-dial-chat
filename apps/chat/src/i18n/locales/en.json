@@ -938,7 +938,11 @@
     "pdfThumbnailsLabel": "Thumbnails",
     "pdfShowThumbnailsLabel": "Show thumbnails",
     "pdfHideThumbnailsLabel": "Hide thumbnails",
-    "pdfPageNumberLabel": "Page number"
+    "pdfPageNumberLabel": "Page number",
+    "pdfContentLoadingLabel": "Loading the PDF viewer…",
+    "pdfContentErrorLabel": "Failed to load the PDF viewer",
+    "codeContentLoadingLabel": "Loading syntax highlighting…",
+    "codeContentErrorLabel": "Failed to load syntax highlighting"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",

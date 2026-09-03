@@ -43,6 +43,12 @@ interface InputMockProps {
   'aria-label'?: string;
 }
 
+interface ButtonMockProps {
+  label: string;
+  'aria-label'?: string;
+  onClick?: () => void;
+}
+
 const documentPreviewState = vi.hoisted(() => {
   return { props: undefined as DocumentPreviewMockProps | undefined };
 });
@@ -69,6 +75,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   DIAL_KIT_ICON_STROKE: 1.5,
   ElementSize: { Small: 'small', Medium: 'medium', Large: 'large' },
+  Button: ({ label, 'aria-label': ariaLabel, onClick }: ButtonMockProps) => (
+    <button aria-label={ariaLabel} onClick={onClick}>
+      {label}
+    </button>
+  ),
+  Spinner: () => <span>spinner</span>,
   FabButton: ({
     icon,
     'aria-label': ariaLabel,
@@ -153,6 +165,7 @@ const getThumbnailPageNumbers = (): number[] => {
 
 describe('PdfContent', () => {
   beforeEach(() => {
+    documentPreviewState.props = undefined;
     Element.prototype.scrollTo = vi.fn();
     vi.useFakeTimers();
     // Run rAF callbacks synchronously so a scroll's setScrollTop lands
@@ -378,17 +391,85 @@ describe('PdfContent', () => {
   });
 
   describe('configurePdfWorker', () => {
+    // `preparationPromise` is module-scoped state; reset the module before
+    // each test in this block so none of them inherit an already-resolved
+    // (or already-rejected) preparation from an earlier test.
+    const importIsolatedPdfContent = async () => {
+      vi.resetModules();
+      return (await import('../PdfContent')).PdfContent;
+    };
+
     it('renders without error when configurePdfWorker is not provided', () => {
       render(<PdfContent url="doc.pdf" highlights={[]} />);
       expect(documentPreviewState.props).toBeDefined();
     });
 
-    it('calls configurePdfWorker once, even across multiple PDF opens', async () => {
-      // `hasConfiguredPdfWorker` is module-scoped state; reset the module so
-      // this test doesn't inherit "already configured" from an earlier test.
-      vi.resetModules();
-      const { PdfContent: IsolatedPdfContent } = await import('../PdfContent');
-      const configurePdfWorker = vi.fn();
+    it('mounts the viewer immediately when configurePdfWorker is omitted', () => {
+      render(<PdfContent url="doc.pdf" highlights={[]} />);
+      expect(documentPreviewState.props).toBeDefined();
+    });
+
+    it('waits for configurePdfWorker to resolve before mounting the viewer', async () => {
+      const IsolatedPdfContent = await importIsolatedPdfContent();
+      let resolvePreparation: () => void = () => undefined;
+      const configurePdfWorker = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolvePreparation = resolve;
+          }),
+      );
+
+      render(
+        <IsolatedPdfContent
+          url="doc.pdf"
+          highlights={[]}
+          configurePdfWorker={configurePdfWorker}
+        />,
+      );
+      expect(configurePdfWorker).toHaveBeenCalledOnce();
+      expect(documentPreviewState.props).toBeUndefined();
+
+      await act(async () => {
+        resolvePreparation();
+      });
+      expect(documentPreviewState.props).toBeDefined();
+    });
+
+    it('shares one in-flight preparation across two concurrent opens', async () => {
+      const IsolatedPdfContent = await importIsolatedPdfContent();
+      let resolvePreparation: () => void = () => undefined;
+      const configurePdfWorker = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolvePreparation = resolve;
+          }),
+      );
+
+      render(
+        <IsolatedPdfContent
+          url="doc.pdf"
+          highlights={[]}
+          configurePdfWorker={configurePdfWorker}
+        />,
+      );
+      render(
+        <IsolatedPdfContent
+          url="doc-2.pdf"
+          highlights={[]}
+          configurePdfWorker={configurePdfWorker}
+        />,
+      );
+      expect(configurePdfWorker).toHaveBeenCalledOnce();
+
+      await act(async () => {
+        resolvePreparation();
+      });
+      expect(configurePdfWorker).toHaveBeenCalledOnce();
+    });
+
+    it('reuses an already-resolved preparation for a later open', async () => {
+      const IsolatedPdfContent = await importIsolatedPdfContent();
+      const configurePdfWorker = vi.fn().mockResolvedValue(undefined);
 
       const { unmount } = render(
         <IsolatedPdfContent
@@ -397,6 +478,9 @@ describe('PdfContent', () => {
           configurePdfWorker={configurePdfWorker}
         />,
       );
+      await act(async () => {
+        await Promise.resolve();
+      });
       expect(configurePdfWorker).toHaveBeenCalledOnce();
       unmount();
 
@@ -407,7 +491,49 @@ describe('PdfContent', () => {
           configurePdfWorker={configurePdfWorker}
         />,
       );
+      await act(async () => {
+        await Promise.resolve();
+      });
       expect(configurePdfWorker).toHaveBeenCalledOnce();
+      expect(documentPreviewState.props).toBeDefined();
+    });
+
+    it('shows a retryable error and re-invokes configurePdfWorker after a rejection', async () => {
+      const IsolatedPdfContent = await importIsolatedPdfContent();
+      const configurePdfWorker = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('worker setup failed'))
+        .mockResolvedValueOnce(undefined);
+
+      render(
+        <IsolatedPdfContent
+          url="doc.pdf"
+          highlights={[]}
+          configurePdfWorker={configurePdfWorker}
+          labels={{
+            errorLabel: 'Worker setup failed',
+            retryLabel: 'Retry worker setup',
+          }}
+        />,
+      );
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(screen.getByRole('alert')).toBeTruthy();
+      expect(screen.getByText('Worker setup failed')).toBeTruthy();
+      expect(configurePdfWorker).toHaveBeenCalledOnce();
+      expect(documentPreviewState.props).toBeUndefined();
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Retry worker setup' }),
+      );
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(documentPreviewState.props).toBeDefined();
+      expect(configurePdfWorker).toHaveBeenCalledTimes(2);
     });
   });
 });

@@ -24,31 +24,82 @@ Canvas/viewer component for rendering attachment content inline — images, audi
 - `@epam/ai-dial-sidebar`
 - `@epam/ai-dial-visualizer-connector`
 - `@epam/ai-dial-ui-kit`
-- `@epam/pdf-highlighter-kit`
-- `@epam/ai-dial-react-pdf-highlighter`
+- `@epam/pdf-highlighter-kit` (`^0.0.18`)
+- `@epam/ai-dial-react-pdf-highlighter` (`^0.2.0-dev.28`)
+- `pdfjs-dist` (`^5.4.149`)
 - `@tabler/icons-react`
 - `react-json-view-lite`
 - `react-syntax-highlighter`
+- `@mcp-ui/client`
+- `@modelcontextprotocol/sdk`
+
+Every peer above — including their deep JS subpaths (e.g.
+`react-syntax-highlighter/dist/esm/...`) — is externalized in the build: the
+built package never bundles its own copy, and always defers to whatever
+version the host app itself resolves. The two PDF-related peers' vendor CSS
+subpaths (`@epam/ai-dial-react-pdf-highlighter/styles.css`,
+`@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css`) are the one
+exception — they stay locally resolved so they can be built and split per
+[Styling](#styling) below, rather than left as unresolvable raw imports.
+Although this library does not import `pdfjs-dist` directly,
+`@epam/pdf-highlighter-kit` exposes it as part of the shared PDF runtime. It is
+therefore declared here as a peer too, so package managers validate that the
+host supplies the tested `^5.4.149` version instead of silently relying on a
+transitive dependency.
 
 The library uses `@silurus/ooxml` as a bundled runtime dependency. Its DOCX,
 XLSX, and PPTX entry points are loaded independently on demand, so opening one
 format does not eagerly load the other renderers.
 
 The PDF renderer (`PdfContent`, used internally by `AttachmentCanvasBody` for
-`AttachmentContentType.Pdf`) is loaded through a dynamic import the first time
-an attachment actually resolves to a PDF, not eagerly with the rest of the
-library — `pdfjs-dist` and `@epam/ai-dial-react-pdf-highlighter`'s own weight,
-including their CSS, only enters a host bundle once a user opens a PDF.
-`AttachmentCanvasBody` shows a `Spinner` while that first load resolves;
-opening a non-PDF attachment never triggers it.
+`AttachmentContentType.Pdf`) and the syntax-highlighter engine (used by
+`CodeContent` for non-plaintext languages) are each loaded through a dynamic
+import the first time they're actually needed, not eagerly with the rest of
+the library — `pdfjs-dist`, `@epam/ai-dial-react-pdf-highlighter`, and
+`react-syntax-highlighter`, including their CSS, only enter a host bundle once
+a user opens a PDF or a syntax-highlighted code file. While that import is
+pending, `AttachmentCanvasBody`/`CodeContent` render an accessible
+`role="status"` loading state (a `Spinner` for PDF; the plain-text fallback
+for code, which stays visible instead of being replaced by a spinner). If the
+import fails, a `role="alert"` message and a retry control are shown instead;
+activating retry genuinely re-attempts the import (recreating the underlying
+`lazy()` reference), not just re-rendering the cached failure — see
+`pdfContentLoadingLabel`/`pdfContentErrorLabel`/`pdfContentRetryLabel` and
+`codeContentLoadingLabel`/`codeContentErrorLabel`/`codeContentRetryLabel` on
+`AttachmentCanvasLabels`/`AttachmentCanvasBodyLabels`, and the `labels` prop
+on `CodeContent` itself, to customize those strings. Opening a non-PDF
+attachment never triggers the PDF import, and a plaintext code attachment
+never triggers the syntax-highlighter import.
 
 The library never configures `pdfjs-dist`'s worker itself —
 `GlobalWorkerOptions.workerSrc` is a global shared by every `pdfjs-dist`
 consumer in the host app, so deciding it is the host's responsibility, not
 this library's. Pass `configurePdfWorker` (on `AttachmentCanvasContainer`,
 `AttachmentCanvas`, or `AttachmentCanvasBody`) to supply it; it's called once,
-the first time a PDF is opened. When omitted,
+the first time a PDF is opened, and the PDF viewer waits for it to resolve
+before mounting. Two PDFs opened concurrently share that one in-flight call
+rather than each triggering their own; once it resolves, later opens reuse
+the same resolved result and never call it again. A rejection is not cached —
+the next PDF open (or an explicit retry) invokes `configurePdfWorker` again
+instead of being stuck on the first failure. When omitted,
 `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used instead.
+
+## Styling
+
+Import the package's base stylesheet once, alongside the component tree:
+
+```ts
+import '@epam/ai-dial-attachment-canvas/styles.css';
+```
+
+This base stylesheet covers every content type except the PDF preview's
+vendor styling (the CSS `@epam/ai-dial-react-pdf-highlighter` and
+`@epam/pdf-highlighter-kit` ship). That vendor CSS is split into its own
+build output file, kept out of the base stylesheet, and loads automatically
+the first time a PDF attachment opens — the built `PdfContent` chunk imports
+its own stylesheet as a side effect, allowing the consuming bundler to preload
+the CSS before resolving the dynamic JS import. No separate PDF CSS import is
+needed from the host.
 
 ## Components
 
@@ -111,7 +162,7 @@ import {
 
 ### CodeContent
 
-Standalone syntax-highlighted code view used by the canvas for `CodeCanvasContent`. Exported for hosts that need the same rendering outside the panel.
+Standalone syntax-highlighted code view used by the canvas for `CodeCanvasContent`. Exported for hosts that need the same rendering outside the panel. `labels` customizes the loading/error/retry strings shown while the syntax-highlighter engine's dynamic import is pending or fails — see [Styling](#styling) above.
 
 ```tsx
 import {
@@ -126,6 +177,7 @@ import {
     language: 'typescript',
   }}
   codeBlockTheme={codeBlockTheme}
+  labels={{ errorLabel: 'Could not load syntax highlighting' }}
 />;
 ```
 
@@ -283,5 +335,5 @@ Style overrides go through `AttachmentCanvasStyles` (`AttachmentCanvasColors`,
 `AttachmentCanvasTypography`, plus a `panelStyles` passthrough to the underlying
 `SidebarPanel`), and every user-visible string lives on
 `AttachmentCanvasLabels`. `AttachmentCanvasProps`,
-`AttachmentCanvasContainerProps`, `CodeContentProps`, and
+`AttachmentCanvasContainerProps`, `CodeContentProps`, `CodeContentLabels`, and
 `AttachmentCanvasContextValue` are exported for hosts building those objects.

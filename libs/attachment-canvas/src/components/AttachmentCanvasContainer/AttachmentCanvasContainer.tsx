@@ -29,9 +29,13 @@ export interface AttachmentCanvasContainerProps {
   codeBlockTheme?: CodeBlockTheme;
   /**
    * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
-   * host app. Called once, the first time a PDF attachment is opened. When
-   * omitted, `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is
-   * used instead, so PDF rendering still works, just without the host's own
+   * host app. Called once, the first time a PDF attachment is opened, and
+   * awaited before the viewer mounts. Concurrent PDF opens share one
+   * in-flight call; a successful call is memoized so later opens never
+   * repeat it. A rejected call is not cached — the next PDF open (or a
+   * subsequent retry) invokes it again. When omitted,
+   * `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used
+   * instead, so PDF rendering still works, just without the host's own
    * bundled worker asset.
    */
   configurePdfWorker?: () => void | Promise<void>;
@@ -69,6 +73,12 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         pdfShowThumbnailsLabel,
         pdfHideThumbnailsLabel,
         pdfPageNumberLabel,
+        pdfContentLoadingLabel,
+        pdfContentErrorLabel,
+        pdfContentRetryLabel,
+        codeContentLoadingLabel,
+        codeContentErrorLabel,
+        codeContentRetryLabel,
       } = labels ?? {};
 
       const { isOpen, isLoading, content, fileName, closeCanvas } =
@@ -128,6 +138,12 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
             pdfShowThumbnailsLabel,
             pdfHideThumbnailsLabel,
             pdfPageNumberLabel,
+            pdfContentLoadingLabel,
+            pdfContentErrorLabel,
+            pdfContentRetryLabel,
+            codeContentLoadingLabel,
+            codeContentErrorLabel,
+            codeContentRetryLabel,
           }}
           onDownload={handleDownload}
           onCopyText={

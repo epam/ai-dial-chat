@@ -597,6 +597,20 @@ const App: FC = () => {
               pdfPageNumberLabel: t(
                 AttachmentCanvasI18nKeys.PdfPageNumberLabel,
               ),
+              pdfContentLoadingLabel: t(
+                AttachmentCanvasI18nKeys.PdfContentLoadingLabel,
+              ),
+              pdfContentErrorLabel: t(
+                AttachmentCanvasI18nKeys.PdfContentErrorLabel,
+              ),
+              pdfContentRetryLabel: t(ButtonsI18nKeys.Retry),
+              codeContentLoadingLabel: t(
+                AttachmentCanvasI18nKeys.CodeContentLoadingLabel,
+              ),
+              codeContentErrorLabel: t(
+                AttachmentCanvasI18nKeys.CodeContentErrorLabel,
+              ),
+              codeContentRetryLabel: t(ButtonsI18nKeys.Retry),
             }}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}

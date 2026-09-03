@@ -49,6 +49,12 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     pdfShowThumbnailsLabel,
     pdfHideThumbnailsLabel,
     pdfPageNumberLabel,
+    pdfContentLoadingLabel,
+    pdfContentErrorLabel,
+    pdfContentRetryLabel,
+    codeContentLoadingLabel,
+    codeContentErrorLabel,
+    codeContentRetryLabel,
   },
   onDownload,
   onCopyText,
@@ -319,6 +325,12 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           pdfShowThumbnailsLabel,
           pdfHideThumbnailsLabel,
           pdfPageNumberLabel,
+          pdfContentLoadingLabel,
+          pdfContentErrorLabel,
+          pdfContentRetryLabel,
+          codeContentLoadingLabel,
+          codeContentErrorLabel,
+          codeContentRetryLabel,
         }}
         styles={bodyStylesProp}
         codeBlockTheme={codeBlockTheme}
