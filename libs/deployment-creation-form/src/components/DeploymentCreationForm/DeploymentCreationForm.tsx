@@ -3,7 +3,12 @@ import {
   TAG_INPUT_TAG_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
 import { AddAvatar } from '@epam/ai-dial-editor-builder';
-import { Input, TagInput, Textarea } from '@epam/ai-dial-ui-kit';
+import {
+  Input,
+  TagInput,
+  Textarea,
+  TextareaResize,
+} from '@epam/ai-dial-ui-kit';
 import { useEffect, useRef, type FC } from 'react';
 import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
 import { DeploymentLocalesField } from '../DeploymentLocalesField/DeploymentLocalesField';
@@ -92,7 +97,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         labelProps={{ label: labels.description.label }}
         placeholder={labels.description.placeholder}
         containerClassName={styles?.field}
-        // todo: set resize={'vertical'} when Textarea supports it
+        resize={TextareaResize.Vertical}
       />
 
       <DeploymentLocalesField

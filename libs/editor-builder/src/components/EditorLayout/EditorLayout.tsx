@@ -9,7 +9,11 @@ import { FC, useId } from 'react';
 import type { EditorLayoutProps } from '../../models/editor-layout-props';
 import styles from './EditorLayout.module.scss';
 
-/** Two-column editor shell with a sticky header row (back button, title, actions). */
+/**
+ * Two-column editor shell with a header row (back button, title, actions).
+ * On mobile/tablet, `actions` move out of the header into a dedicated bar
+ * pinned to the bottom of the page, outside the scrollable body.
+ */
 export const EditorLayout: FC<EditorLayoutProps> = ({
   title,
   onBack,
@@ -66,7 +70,9 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
           <h1 className="dial-h2-text min-w-0 truncate">{title}</h1>
         </div>
         {actions != null && (
-          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+          <div className="hidden shrink-0 items-center gap-2 desktop:flex">
+            {actions}
+          </div>
         )}
       </div>
 
@@ -84,11 +90,23 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
           {leftContent}
         </div>
         {rightContent != null && (
-          <div className="flex-1 overflow-y-auto desktop:overflow-y-auto">
+          <div className="desktop:flex-1 desktop:overflow-y-auto">
             {rightContent}
           </div>
         )}
       </div>
+
+      {/* Mobile/tablet action bar — kept out of the scrollable body so it never overlaps content. */}
+      {actions != null && (
+        <div
+          className={mergeClasses(
+            'flex shrink-0 flex-row-reverse items-center gap-2 border-t px-4 py-2 desktop:hidden [&>*]:flex-1',
+            styles.footerBorder,
+          )}
+        >
+          {actions}
+        </div>
+      )}
     </div>
   );
 };

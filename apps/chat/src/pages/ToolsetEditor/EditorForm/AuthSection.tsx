@@ -546,7 +546,9 @@ const AuthSection: FC<Props> = ({
                   stroke={DIAL_KIT_ICON_STROKE}
                   aria-hidden
                 />
-                {t(labelKey)}
+                <span className="sr-only desktop:not-sr-only">
+                  {t(labelKey)}
+                </span>
               </div>
             ),
             disabled: isControlsDisabled && auth.authenticationType !== type,

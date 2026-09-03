@@ -1006,7 +1006,7 @@
     "avatarCaption": "PNG, JPG or SVG (max 1 MB)",
     "versionLabel": "Version",
     "versionPlaceholder": "e.g. 1.0.0",
-    "topicsLabel": "Topics",
+    "topicsLabel": "Tags",
     "topicsPlaceholder": "Add a topic",
     "locales": {
       "summaryLabel": "Locales",

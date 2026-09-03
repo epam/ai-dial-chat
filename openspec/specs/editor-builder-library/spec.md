@@ -28,20 +28,20 @@ Specifies `libs/editor-builder`'s host-agnostic `EditorLayout` and `EditorSectio
 - **THEN** none are found; back-navigation is exposed only via `onBack` callback prop
 
 ### Requirement: EditorLayout — header row
-`EditorLayout` SHALL render a sticky header row containing:
+`EditorLayout` SHALL render a header row containing:
 - A `GhostIconButton` with a left-arrow icon on the inline-start side, labelled by `backAriaLabel` (English default `'Back'`), that calls `onBack` when clicked
 - A `title` text rendered as an `h1` heading element
-- An `actions` ReactNode slot on the inline-end side, rendered as-is (the host supplies the actual `GhostButton` / `PrimaryButton` instances)
+- An `actions` ReactNode slot on the inline-end side, rendered as-is (the host supplies the actual `GhostButton` / `PrimaryButton` instances), visible only at the `desktop` breakpoint and above
 - A `role="status"` aria-live polite SR-only region that announces `labels.savingStatusLabel` (default `'Saving'`) when `isSaving` is `true` and an empty string otherwise
 
-The header row SHALL be visible at all viewport widths (no `desktop:` visibility toggle inside `EditorLayout` itself). The back arrow icon SHALL carry `rtl:scale-x-[-1]` so it mirrors in RTL layouts.
+The back-button and title portion of the header row SHALL be visible at all viewport widths. The back arrow icon SHALL carry `rtl:scale-x-[-1]` so it mirrors in RTL layouts.
 
 #### Scenario: Back button calls onBack
 - **WHEN** a user clicks the back-arrow button in the header
 - **THEN** `onBack` is called exactly once
 
-#### Scenario: Actions slot renders host content
-- **WHEN** the host passes `actions={<><GhostButton label="Cancel" /><PrimaryButton label="Save" /></>}`
+#### Scenario: Actions slot renders host content on desktop
+- **WHEN** the host passes `actions={<><GhostButton label="Cancel" /><PrimaryButton label="Save" /></>}` at ≥ desktop width
 - **THEN** those two buttons appear in the header's inline-end area
 
 #### Scenario: Saving status is announced
@@ -51,6 +51,25 @@ The header row SHALL be visible at all viewport widths (no `desktop:` visibility
 #### Scenario: Back arrow mirrors in RTL
 - **WHEN** `EditorLayout` renders inside a `dir="rtl"` ancestor
 - **THEN** the back arrow icon visually points in the reading-direction-correct "back" direction
+
+### Requirement: EditorLayout — mobile/tablet action bar
+Below the `desktop` breakpoint, `EditorLayout` SHALL render the same `actions` content in a dedicated bar pinned to the bottom of the page, outside the scrollable body container, instead of in the header. The bar SHALL only render when `actions` is provided, and SHALL NOT overlap `leftContent`/`rightContent` — the scrollable body occupies the remaining vertical space above it via normal flex layout, not absolute/fixed positioning. Each direct child of `actions` SHALL grow to share the bar's width equally (accounting for the bar's padding and inter-button gap). The bar SHALL reverse the DOM order of `actions`' direct children, so the last child (the primary action, e.g. Save/Create) renders at the inline-start side and the first child (e.g. Cancel) renders at the inline-end side — the mirror of the header's inline-end-anchored order — using a writing-mode-aware reversal (`flex-row-reverse`) so the placement stays correct in RTL.
+
+#### Scenario: Actions render in a bottom bar on mobile/tablet
+- **WHEN** the host passes `actions` and `EditorLayout` renders below desktop width
+- **THEN** the header shows only the back button and title, and the action buttons appear in a bordered bar at the bottom of the page
+
+#### Scenario: Bottom bar does not cover content
+- **WHEN** the mobile/tablet action bar is rendered
+- **THEN** it occupies its own space in the layout and the scrollable body's content is never hidden underneath it
+
+#### Scenario: No bottom bar when actions are absent
+- **WHEN** `actions` is not provided
+- **THEN** no bottom bar is rendered on any viewport width
+
+#### Scenario: Primary action renders at the inline-start side
+- **WHEN** the host passes `actions={<><NeutralButton label="Cancel" /><PrimaryButton label="Save" /></>}` and `EditorLayout` renders below desktop width
+- **THEN** the Save button appears at the inline-start side of the bottom bar and the Cancel button appears at the inline-end side
 
 ### Requirement: EditorLayout — two-column responsive body
 `EditorLayout` SHALL render its body as a two-column layout on desktop and a single stacked column on mobile:
