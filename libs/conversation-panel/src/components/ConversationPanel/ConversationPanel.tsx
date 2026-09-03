@@ -72,7 +72,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       colors,
       typography,
       newChatButton: newChatButtonColors,
-      searchWrapperClassName = 'rounded-full',
+      searchWrapperClassName,
     } = panelStyles ?? {};
 
     const {
@@ -406,7 +406,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
 
         <div role="search" className="px-3 py-2">
           <Search
-            wrapperClassName={searchWrapperClassName}
+            wrapperClassName={mergeClasses(
+              styles.search,
+              searchWrapperClassName,
+            )}
             value={searchQuery}
             onChange={handleSearchChange}
             placeholder={searchPlaceholder}

@@ -45,6 +45,7 @@ import {
   ChatI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
+import { useClientChannel } from '../../context/ClientChannelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useGeneration } from '../../context/GenerationContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -165,6 +166,11 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   }, [showErrorNotification, t]);
 
   const { startGeneration, completeGeneration } = useGeneration();
+  const { channelId, ensureConnected, waitForChannel } = useClientChannel();
+  const channel = useMemo(
+    () => ({ channelId, ensureConnected, waitForChannel }),
+    [channelId, ensureConnected, waitForChannel],
+  );
 
   const { startStream, handleStop, isStreaming, canStopStreaming } =
     useConversationStream({
@@ -172,6 +178,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       state: { setConversation, conversationRef },
       transport: conversationStreamTransport,
       generation: { startGeneration, completeGeneration },
+      channel,
       onStopError: handleStopError,
     });
 

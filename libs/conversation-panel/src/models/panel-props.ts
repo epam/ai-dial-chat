@@ -113,10 +113,10 @@ export interface ConversationPanelStyles {
   /** Typography class applied to the task pill badge in each conversation row. Defaults to `'dial-caption-lead-semi-text'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
   /**
-   * CSS class applied to the search field's wrapper. Defaults to
-   * `'rounded-full'`; a value here replaces that default instead of merging with
-   * it, so a caller can set a different corner radius without two competing
-   * `rounded-*` utilities on the same element.
+   * Extra CSS class merged onto the search field's wrapper. The wrapper's
+   * corner radius is themed with the `--cp-search-radius` custom property, so
+   * this is only needed for anything the panel's own stylesheet does not
+   * cover; a `rounded-*` utility passed here still wins over that property.
    */
   searchWrapperClassName?: string;
 }

@@ -10,12 +10,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
 import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
+import { startSseResponse } from '../common/utils/sse';
 import { ClientChannelService } from './client-channel.service';
 import {
   assertValidChannelId,
@@ -36,7 +36,6 @@ export class ClientChannelController {
   @UseGuards(FeatureGuard)
   @RequireFeature(FeatureKey.LiveChatInteraction)
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'subscribeClientChannel',
     summary: 'Subscribe to the DIAL Core client channel',
@@ -91,10 +90,7 @@ export class ClientChannelController {
     );
 
     res.setHeader(CHANNEL_ID_HEADER, channelId);
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
+    startSseResponse(res);
 
     const reader = stream.getReader();
     let isClientAborted = false;
@@ -139,7 +135,6 @@ export class ClientChannelController {
   @UseGuards(FeatureGuard)
   @RequireFeature(FeatureKey.LiveChatInteraction)
   @HttpCode(200)
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({
     operationId: 'reportClientChannel',
     summary: 'Report an RPC response on the client channel',
@@ -163,7 +158,6 @@ export class ClientChannelController {
     status: 403,
     description: 'The liveChatInteraction feature is not enabled for this user',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -186,7 +180,6 @@ export class ClientChannelController {
    */
   @Post('unsubscribe')
   @HttpCode(200)
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({
     operationId: 'unsubscribeClientChannel',
     summary: 'Unsubscribe from the client channel',

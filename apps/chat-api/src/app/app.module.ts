@@ -1,9 +1,8 @@
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppConfigModule } from '../app-config/app-config.module';
 import { ApplicationSchemasModule } from '../application-schemas/application-schemas.module';
 import { ApplicationsModule } from '../applications/applications.module';
@@ -48,12 +47,6 @@ import { createServeStaticOptions } from './static-assets';
       ttl: 5 * 60 * 1000, // 5 minutes in milliseconds
       max: 100, // Maximum number of items in cache
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000, // 60 seconds
-        limit: 100, // 100 requests per minute
-      },
-    ]),
     ServeStaticModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService<EnvironmentVariables, true>) =>
@@ -88,10 +81,6 @@ import { createServeStaticOptions } from './static-assets';
   ],
   controllers: [AppController, HealthController],
   providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
     {
       provide: APP_INTERCEPTOR,
       useClass: MetricsInterceptor,

@@ -227,6 +227,9 @@ Behaviour applied automatically:
 - Uses `ReadableStream.getReader()` + line-by-line SSE parsing (`data: {json}`)
 - Handles `[DONE]` termination marker
 - Supports `AbortSignal` for cancellation
+- Ignores comment lines (those starting with `:`), as every SSE reader in the repo must
+
+Every `chat-api` SSE response (`conversations/completions`, `conversations/watch`, `client-channel/subscribe`) is opened through `startSseResponse` (`apps/chat-api/src/common/utils/sse.ts`), which sets the event-stream headers, flushes them, and immediately writes a `: init` comment. Firefox does not hand a streamed response to the `fetch()` caller until the first body byte arrives, and these endpoints flush headers long before their first real event exists — without the comment, Firefox leaves the request pending, so the client-channel id never resolves and `useConversationStream` blocks on `waitForChannel` before it even sends the completion request.
 
 ### Internationalisation
 
