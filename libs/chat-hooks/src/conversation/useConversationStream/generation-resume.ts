@@ -35,11 +35,14 @@ export const isAwaitingGenerationResume = (
 };
 
 /*
- * Safety-net only: the primary completion signal is a genuine terminal event
- * (attach) or the transport's `watch` event fired when the backend's
- * finalize save happens (fallback), independent of how long the generation
- * itself takes. This bounds the wait if that signal is ever missed (e.g. a
- * backend crash mid-generation that never finalizes).
+ * Fallback-path safety net only (`runWatch`). The generic conversation-watch
+ * channel has no guarantee it will ever emit again for a given path, so that
+ * path bounds its wait. `runAttach` deliberately has no such timeout: it is
+ * a direct subscription to the generation's own lifecycle (kept alive by the
+ * backend's periodic SSE keepalive), so it naturally ends when a genuine
+ * terminal event arrives — imposing an arbitrary cutoff there would abandon
+ * (and visibly erase the progress of) a legitimately long-running generation
+ * such as a multi-stage agent/Deep Research run (Issue #8494).
  */
 const GENERATION_RESUME_WATCH_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -274,11 +277,12 @@ export const createResumeIfAwaitingGeneration = ({
 
     /*
      * Attaches to the backend's live replay of the in-flight generation, if
-     * one is available. Returns `true` when it fully resolved the resume (a
-     * genuine terminal event arrived, or its own timeout elapsed — both end
-     * in a `finalCheck`), or `false` when the caller should fall back to
-     * `runWatch` (attach couldn't open at all, or its stream ended without
-     * ever seeing a terminal event).
+     * one is available. Waits indefinitely for a genuine terminal event —
+     * see the note on `GENERATION_RESUME_WATCH_TIMEOUT_MS` above for why no
+     * timeout is imposed here. Returns `true` when a terminal event arrived
+     * (ending in a `finalCheck`), or `false` when the caller should fall
+     * back to `runWatch` (attach couldn't open at all, or its stream ended
+     * — e.g. a network drop or backend restart — without ever seeing one).
      */
     const runAttach = async (): Promise<boolean> => {
       const attachController = new AbortController();
@@ -293,33 +297,23 @@ export const createResumeIfAwaitingGeneration = ({
       }
 
       let sawTerminal = false;
-      let sawTimeout = false;
-      const timeoutId = window.setTimeout(() => {
-        sawTimeout = true;
-        attachController.abort();
-      }, GENERATION_RESUME_WATCH_TIMEOUT_MS);
+      await readSseEvents<GenerationAttachEvent>(stream, (event) => {
+        switch (event.type) {
+          case 'snapshot':
+            applySnapshot(event.message);
+            return false;
+          case 'chunk':
+            applyAttachChunk(event.chunk);
+            return false;
+          case 'done':
+          case 'error':
+          case 'stopped':
+            sawTerminal = true;
+            return true;
+        }
+      });
 
-      try {
-        await readSseEvents<GenerationAttachEvent>(stream, (event) => {
-          switch (event.type) {
-            case 'snapshot':
-              applySnapshot(event.message);
-              return false;
-            case 'chunk':
-              applyAttachChunk(event.chunk);
-              return false;
-            case 'done':
-            case 'error':
-            case 'stopped':
-              sawTerminal = true;
-              return true;
-          }
-        });
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
-      if (sawTerminal || sawTimeout) {
+      if (sawTerminal) {
         await finalCheck();
         return true;
       }
