@@ -69,6 +69,7 @@ export const RowRenderer = ({
         unreadIndicatorLabel={unreadIndicatorLabel}
         itemTitleClassName={styles?.itemTitleClassName}
         itemIconBadgeClassName={styles?.itemIconBadgeClassName}
+        itemClassName={styles?.itemClassName}
         taskBadgeClassName={styles?.taskBadgeClassName}
         rowGroupKey={row.groupKey}
         rows={rows}

@@ -82,6 +82,11 @@ example. Two competing `rounded-*` utilities on one element would resolve by
 stylesheet order rather than by the order they appear in the class attribute,
 which is why the slot overwrites instead of appending.
 
+`styles.itemClassName` works the same way for the button inside each
+conversation row and defaults to `'rounded-xl'` (12px). The row's layout
+utilities — height, width, alignment, padding — are always applied and are not
+part of the slot; only the default corner radius is replaced.
+
 ## Enums
 
 `FilterTab` is owned and exported by `@epam/ai-dial-chat-shared`, and this

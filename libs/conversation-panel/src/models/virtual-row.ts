@@ -34,6 +34,8 @@ export interface RowStyles {
   itemTitleClassName?: string;
   /** CSS class applied to the icon badge in each conversation row. */
   itemIconBadgeClassName?: string;
+  /** CSS class applied to each conversation row's button. */
+  itemClassName?: string;
   /** CSS class applied to the task pill badge in each conversation row. */
   taskBadgeClassName?: string;
 }

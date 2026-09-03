@@ -35,15 +35,17 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     iconAfter,
     'aria-current': ariaCurrent,
     onClick,
+    className,
   }: {
     iconBefore?: React.ReactNode;
     label?: React.ReactNode;
     iconAfter?: React.ReactNode;
     'aria-current'?: React.AriaAttributes['aria-current'];
     onClick?: () => void;
+    className?: string;
     [key: string]: unknown;
   }) => (
-    <button aria-current={ariaCurrent} onClick={onClick}>
+    <button aria-current={ariaCurrent} onClick={onClick} className={className}>
       {iconBefore}
       {label}
       {iconAfter}
@@ -329,6 +331,45 @@ describe('ConversationRow', () => {
       fireEvent.click(screen.getByRole('button'));
 
       expect(onSelectConversation).toHaveBeenCalledWith(baseItem.id);
+    });
+  });
+
+  describe('itemClassName', () => {
+    it('gives the row button a 12px corner radius by default', () => {
+      render(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByRole('button').classList.contains('rounded-xl')).toBe(
+        true,
+      );
+    });
+
+    it('replaces the default corner radius with itemClassName', () => {
+      render(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+          itemClassName="rounded-lg"
+        />,
+      );
+
+      const button = screen.getByRole('button');
+      /*
+       * The default has to be gone, not merely overridden: two competing
+       * `rounded-*` utilities would resolve by stylesheet order, not by the
+       * order they appear in the class attribute.
+       */
+      expect(button.classList.contains('rounded-lg')).toBe(true);
+      expect(button.classList.contains('rounded-xl')).toBe(false);
+      /* The row's own layout utilities are not part of the slot. */
+      expect(button.classList.contains('h-8')).toBe(true);
+      expect(button.classList.contains('w-full')).toBe(true);
     });
   });
 });

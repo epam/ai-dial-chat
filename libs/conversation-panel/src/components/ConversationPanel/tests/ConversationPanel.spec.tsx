@@ -84,12 +84,14 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onClick,
     label,
     'aria-current': ariaCurrent,
+    className,
   }: {
     onClick?: () => void;
     label?: React.ReactNode;
     'aria-current'?: React.AriaAttributes['aria-current'];
+    className?: string;
   }) => (
-    <button onClick={onClick} aria-current={ariaCurrent}>
+    <button onClick={onClick} aria-current={ariaCurrent} className={className}>
       {label}
     </button>
   ),
@@ -382,6 +384,20 @@ describe('ConversationPanel', () => {
     expect(
       screen.queryByRole('group', { name: 'panel header actions' }),
     ).toBeNull();
+  });
+
+  it('forwards styles.itemClassName to the conversation rows', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[items[0]]}
+        styles={{ itemClassName: 'rounded-lg' }}
+      />,
+    );
+
+    const row = screen.getByRole('button', { name: 'First chat' });
+    expect(row.classList.contains('rounded-lg')).toBe(true);
+    expect(row.classList.contains('rounded-xl')).toBe(false);
   });
 
   it('gives the search field fully rounded corners by default', () => {

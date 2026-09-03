@@ -110,6 +110,14 @@ export interface ConversationPanelStyles {
   typography?: ConversationPanelTypography;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
+  /**
+   * CSS class applied to each conversation row's button, on top of the row's
+   * own layout utilities. Defaults to `'rounded-xl'`; a value here replaces
+   * that default instead of merging with it, so a caller can set a different
+   * corner radius without two competing `rounded-*` utilities on the same
+   * element.
+   */
+  itemClassName?: string;
   /** Typography class applied to the task pill badge in each conversation row. Defaults to `'dial-caption-lead-semi-text'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
   /**
