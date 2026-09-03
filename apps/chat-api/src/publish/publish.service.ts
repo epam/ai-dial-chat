@@ -11,6 +11,7 @@ import {
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
@@ -104,7 +105,15 @@ export class PublishService {
     author: string,
     rules?: PublishRuleDto[],
   ): Promise<PublishResultDto> {
-    const sourceUrl = entityId;
+    /*
+     * `entityId` arrives as plain, unencoded text (e.g. a prompt path can
+     * end in a literal space, `prompts/{bucket}/test space`) — DIAL Core
+     * rejects resource urls containing raw spaces/special characters, so
+     * `sourceUrl` must be percent-encoded per segment before it is sent to
+     * Core, exactly as `conversation-publish.service.ts` already does for
+     * conversations.
+     */
+    const sourceUrl = encodeDialResourcePath(entityId);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
     const targetUrl = getPublishedTargetUrl(
       getResourceTypePrefix(sourceUrl),
@@ -136,7 +145,14 @@ export class PublishService {
       throw new BadGatewayException('Failed to publish to DIAL Core');
     }
 
-    if (result.error) {
+    /*
+     * `openapi-fetch` short-circuits on an empty response body (e.g. a
+     * `Content-Length: 0` error response) and returns `{ error: undefined }`
+     * without reading the body, even for a non-2xx status — so `result.error`
+     * alone cannot be trusted to detect failure (see the same guard in
+     * `models.service.ts` and `files-listing.service.ts`).
+     */
+    if (!result.response.ok || result.error != null) {
       return mapDialHttpStatus(
         result.response.status,
         `publish ${entityType} "${entityId}"`,
@@ -198,7 +214,8 @@ export class PublishService {
     version: string | undefined,
     author: string,
   ): Promise<UnpublishResultDto> {
-    const sourceUrl = entityId;
+    /* See the matching `sourceUrl` encoding comment in `publish` above. */
+    const sourceUrl = encodeDialResourcePath(entityId);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
     const targetUrl = getPublishedTargetUrl(
       getResourceTypePrefix(sourceUrl),
@@ -237,7 +254,8 @@ export class PublishService {
       );
     }
 
-    if (result.error) {
+    /* See the matching `openapi-fetch` empty-body guard comment in `publish` above. */
+    if (!result.response.ok || result.error != null) {
       return mapDialHttpStatus(
         result.response.status,
         `unpublish ${entityType} "${entityId}"`,
