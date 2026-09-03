@@ -1,6 +1,5 @@
 import { Controller, Get, HttpCode, Query, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { GetPublishRulesQueryDto } from './dto/get-publish-rules-query.dto';
@@ -15,7 +14,6 @@ export class PublishRulesController {
 
   @Get('rules')
   @HttpCode(200)
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'getPublishRules',
     summary: "Get a destination folder's already-configured access rules",
@@ -36,7 +34,6 @@ export class PublishRulesController {
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
