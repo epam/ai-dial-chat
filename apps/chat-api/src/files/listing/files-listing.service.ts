@@ -10,6 +10,7 @@ import { DialClientService } from '../../dial/dial-client.service';
 import { toRelativePath } from '../dial-resource-path.util';
 import type { FileMetadataResponseDto } from '../dto/file-metadata-response.dto';
 import type { ListFilesResponseDto } from '../dto/list-files.dto';
+import { RESERVED_ROOT_FOLDER_NAMES } from '../files.constants';
 import type { DialFileItem } from '../normalize-file-item';
 import { normalizeFileItem } from '../normalize-file-item';
 import { resolveListingPermissions } from '../resolve-listing-permissions';
@@ -26,6 +27,16 @@ const FULL_FILE_LIST_PAGE_LIMIT = 1000;
 
 const safeDecodePathForCompare = (path: string): string =>
   path.split('/').map(safeDecodeURIComponent).join('/');
+
+const isReservedRootFolder = (item: DialFileItem): boolean => {
+  const nodeType = (item.nodeType ?? '').toLowerCase();
+  if (nodeType !== 'folder') return false;
+
+  const parentPath = (item.parentPath ?? '').replace(/\/+$/, '');
+  if (parentPath !== '') return false;
+
+  return RESERVED_ROOT_FOLDER_NAMES.includes(item.name ?? '');
+};
 
 @Injectable()
 export class FilesListingService {
@@ -147,9 +158,12 @@ export class FilesListingService {
           `listFiles DIAL page: bucket=${bucket}, path=${normalizedPath}, page=${page}, count=${pageData.items.length}, hasNextPage=${nextToken != null}`,
         );
       } while (shouldAggregateAllPages && token != null);
-      const items = rawItems.map((item) => normalizeFileItem(item, bucket));
+      const visibleItems = rawItems.filter(
+        (item) => !isReservedRootFolder(item),
+      );
+      const items = visibleItems.map((item) => normalizeFileItem(item, bucket));
       const resolvedPermissions = resolveListingPermissions(
-        rawItems,
+        visibleItems,
         normalizedPath,
       );
 
@@ -213,6 +227,7 @@ export class FilesListingService {
       const rawItems = sharedData.resources ?? [];
 
       const allItems = rawItems
+        .filter((item) => !isReservedRootFolder(item))
         .map((item) => normalizeFileItem(item, item.bucket ?? ''))
         .filter((item) => {
           if (!query.path) return true;
@@ -266,6 +281,7 @@ export class FilesListingService {
 
       const items = rawItems
         .filter((item) => (item.bucket ?? '') === bucket)
+        .filter((item) => !isReservedRootFolder(item))
         .map((item) => normalizeFileItem(item, bucket));
 
       this.logger.debug(

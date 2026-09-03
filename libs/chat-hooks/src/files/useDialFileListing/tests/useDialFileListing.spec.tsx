@@ -98,6 +98,33 @@ describe('useDialFileListing', () => {
     expect(filesApi.listPublicFiles).toHaveBeenCalled();
   });
 
+  it('falls back to the parent folder when the current folder 404s (e.g. emptied and removed)', async () => {
+    vi.mocked(filesApi.listFiles).mockImplementation((query) => {
+      if (query.path === 'reports/') {
+        return Promise.reject(
+          Object.assign(new Error('Not Found'), {
+            response: { status: 404, json: () => Promise.resolve({}) },
+          }),
+        );
+      }
+      return Promise.resolve({
+        bucket: BUCKET,
+        path: '',
+        items: [],
+        nextToken: undefined,
+      });
+    });
+
+    const { result } = renderListing();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => result.current.onPathChange('/My files/reports/'));
+
+    await waitFor(() => expect(result.current.folderPath).toBe(''));
+    expect(result.current.error).toBeNull();
+    expect(result.current.path).toBe('/My files');
+  });
+
   describe('onSearchFiles', () => {
     it('debounces search and calls listFiles only once after 300ms', async () => {
       vi.mocked(filesApi.listFiles).mockResolvedValue({
