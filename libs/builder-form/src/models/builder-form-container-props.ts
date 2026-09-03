@@ -41,6 +41,8 @@ export interface BuilderFormContainerProps {
   isCancelDisabled?: boolean;
   /** When `true`, the header's submit action is disabled. Defaults to `false`. */
   isSubmitDisabled?: boolean;
+  /** When `true`, the header's submit action shows a spinner and reports `aria-busy`. Defaults to `false`. */
+  isSubmitting?: boolean;
   /** Body's start-edge column. Full width on mobile, a fixed-width column on desktop. */
   left?: ReactNode;
   /** Body's main column, filling the space left by `left` and `metadata`. */

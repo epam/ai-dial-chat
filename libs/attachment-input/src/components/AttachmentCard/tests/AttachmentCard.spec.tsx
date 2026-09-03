@@ -132,3 +132,56 @@ describe('AttachmentCard — corner actions in the error state', () => {
     expect(onClick).toHaveBeenCalledWith('a1');
   });
 });
+
+describe('AttachmentCard — upload in progress', () => {
+  const uploadingAttachment: DisplayAttachment = {
+    id: 'a2',
+    name: 'report.pdf',
+    contentType: 'application/pdf',
+    type: AttachmentType.File,
+    status: RequestStatus.Loading,
+  };
+
+  it('exposes the in-flight upload as a named, indeterminate progressbar', () => {
+    render(<AttachmentCard attachment={uploadingAttachment} />);
+
+    const progress = screen.getByRole('progressbar', { name: 'Uploading' });
+    expect(progress.hasAttribute('aria-valuenow')).toBe(false);
+  });
+
+  it('uses the host-supplied uploading label', () => {
+    render(
+      <AttachmentCard
+        attachment={uploadingAttachment}
+        labels={{ uploadingLabel: 'Загрузка' }}
+      />,
+    );
+
+    expect(screen.getByRole('progressbar', { name: 'Загрузка' })).toBeTruthy();
+  });
+
+  it('marks the tile busy while uploading and not busy once settled', () => {
+    const { rerender } = render(
+      <AttachmentCard attachment={uploadingAttachment} />,
+    );
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Download attachment' })
+        .getAttribute('aria-busy'),
+    ).toBe('true');
+
+    rerender(
+      <AttachmentCard
+        attachment={{ ...uploadingAttachment, status: RequestStatus.Idle }}
+      />,
+    );
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Download attachment' })
+        .getAttribute('aria-busy'),
+    ).toBe('false');
+    expect(screen.queryByRole('progressbar')).toBeNull();
+  });
+});

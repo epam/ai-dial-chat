@@ -114,6 +114,8 @@ export interface ScheduledTaskCreateFormLabels {
   cancelButtonLabel: string;
   /** Label for the Save action (submits the create form). */
   createButtonLabel: string;
+  /** Accessible name for the Save action's busy indicator, announced while `isSubmitting` is `true`. Defaults to `'Saving'`. */
+  submittingLabel?: string;
 }
 
 /**

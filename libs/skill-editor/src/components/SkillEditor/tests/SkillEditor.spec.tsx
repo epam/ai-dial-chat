@@ -39,13 +39,25 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Accordion: ({
     title,
     children,
+    expanded,
+    onToggle,
   }: {
     title: ReactNode;
     children: ReactNode;
+    expanded?: boolean;
+    onToggle?: (next: boolean) => void;
   }) => (
     <section>
-      <h3>{title}</h3>
-      {children}
+      <h3>
+        <button
+          type="button"
+          aria-expanded={expanded ?? false}
+          onClick={() => onToggle?.(!expanded)}
+        >
+          {title}
+        </button>
+      </h3>
+      {expanded !== false && children}
     </section>
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
@@ -420,6 +432,29 @@ describe('SkillEditor', () => {
     expect(screen.getByText('Someone else changed this skill')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Reload latest' }));
     expect(onReloadLatest).toHaveBeenCalledOnce();
+  });
+
+  it('starts the mobile Files accordion collapsed so the Instructions editor stays above the fold', () => {
+    renderEditor();
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Editing file' })
+        .getAttribute('aria-expanded'),
+    ).toBe('false');
+  });
+
+  it('expands the mobile Files accordion once its header is activated', async () => {
+    const user = userEvent.setup();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Editing file' }));
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Editing file' })
+        .getAttribute('aria-expanded'),
+    ).toBe('true');
   });
 
   it('renders headerContent in the desktop header row alongside the actions', () => {

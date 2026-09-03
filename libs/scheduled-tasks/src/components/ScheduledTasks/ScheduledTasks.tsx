@@ -4,19 +4,26 @@ import {
   PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
 import {
+  Button,
   ButtonAppearance,
-  ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  Dropdown,
   ElementSize,
   GhostButton,
   PrimaryButton,
   Search,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconCalendarTime, IconPlus } from '@tabler/icons-react';
-import { FC, useEffect, useRef } from 'react';
+import {
+  IconCalendarTime,
+  IconCheck,
+  IconChevronDown,
+  IconChevronUp,
+  IconPlus,
+} from '@tabler/icons-react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../types/scheduled-tasks-sort-key';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
@@ -98,8 +105,47 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     onSearchQueryChange(value ?? '');
   };
 
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
+
+  /* Falls back to the control's own name so the trigger is never a button with
+   * no accessible name, which is what an unrecognised sortKey would produce. */
   const activeSortLabel =
-    labels.sortOptions.find((option) => option.key === sortKey)?.label ?? '';
+    labels.sortOptions.find((option) => option.key === sortKey)?.label ??
+    labels.sortLabel;
+
+  /*
+   * `selectable` is what makes each row a `menuitemcheckbox` carrying
+   * `aria-checked`, which is the only way this kit exposes "this is the sort
+   * currently in effect" to a screen reader. It also suppresses the kit's own
+   * auto-close and prepends a checkbox box, so the menu is closed explicitly
+   * below and `renderItem` replaces the row's content with a label and a
+   * trailing check — a single-choice list, not a set of checkboxes.
+   */
+  const sortItems = labels.sortOptions.map((option) => {
+    const isActiveSort = option.key === sortKey;
+
+    return {
+      ...option,
+      selectable: true,
+      checked: isActiveSort,
+      renderItem: () => (
+        <>
+          <span className="flex-1 truncate text-start">{option.label}</span>
+          {isActiveSort && (
+            <IconCheck
+              size={DIAL_ICON_SIZE.SM}
+              stroke={DIAL_KIT_ICON_STROKE}
+              aria-hidden
+            />
+          )}
+        </>
+      ),
+      onClick: () => {
+        setIsSortMenuOpen(false);
+        onSortChange(option.key as ScheduledTasksSortKey);
+      },
+    };
+  });
 
   const statusMessage = getStatusMessage(
     isLoading,
@@ -247,15 +293,33 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           />
         </div>
         {labels.sortOptions.length > 0 && (
-          <ButtonDropdown
-            label={activeSortLabel}
-            variant={ButtonVariant.Primary}
-            appearance={ButtonAppearance.Ghost}
-            items={labels.sortOptions.map((option) => ({
-              ...option,
-              onClick: () => onSortChange(option.key as ScheduledTasksSortKey),
-            }))}
-          />
+          <Dropdown
+            items={sortItems}
+            open={isSortMenuOpen}
+            onOpenChange={setIsSortMenuOpen}
+          >
+            <Button
+              label={activeSortLabel}
+              variant={ButtonVariant.Primary}
+              appearance={ButtonAppearance.Ghost}
+              className={styles.sortButton}
+              iconAfter={
+                isSortMenuOpen ? (
+                  <IconChevronUp
+                    size={DIAL_ICON_SIZE.SM}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
+                  />
+                ) : (
+                  <IconChevronDown
+                    size={DIAL_ICON_SIZE.SM}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
+                  />
+                )
+              }
+            />
+          </Dropdown>
         )}
       </div>
 

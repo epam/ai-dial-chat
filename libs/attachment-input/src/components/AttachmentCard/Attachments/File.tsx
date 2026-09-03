@@ -177,10 +177,17 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
       {typeRow}
 
       {isLoading && (
+        /*
+         * An aria-label on a plain div names nothing — a generic element has no
+         * role to hang a name on, so the upload was invisible to assistive tech.
+         * An indeterminate progressbar (a role, a name, no aria-valuenow) is the
+         * standard way to say "this is working and there is no percentage".
+         */
         <div
+          role="progressbar"
           aria-label={uploadingLabel}
           className={mergeClasses(
-            'absolute left-[-1px] top-[-1px] flex size-full items-center justify-center rounded',
+            'absolute start-[-1px] top-[-1px] flex size-full items-center justify-center rounded',
             styles.track,
           )}
         >
@@ -245,6 +252,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         role="button"
         tabIndex={0}
         aria-label={clickLabel}
+        aria-busy={isLoading}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         style={cssVars}

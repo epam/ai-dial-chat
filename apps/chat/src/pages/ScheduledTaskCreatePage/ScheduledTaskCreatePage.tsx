@@ -145,6 +145,7 @@ const ScheduledTaskCreatePage: FC = () => {
       instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
       cancelButtonLabel: t(ButtonsI18nKeys.Cancel),
       createButtonLabel: t(ButtonsI18nKeys.Save),
+      submittingLabel: t(ButtonsI18nKeys.Saving),
     }),
     [t],
   );
