@@ -79,6 +79,10 @@ The following utility functions SHALL be exported from `libs/attachment-input/sr
 
 The `useClipboardPaste` and `useLazyImageLoad` hooks (with `LazyImageLoadStatus`) SHALL be exported alongside them.
 
+`mimeTypesToExtensionLabels(types, wildcardLabels?)` SHALL return one comma-separated string. For each concrete MIME value, it SHALL normalize case and ignore MIME parameters, use the uppercased extension from `MIME_TYPE_EXT_MAP` when the normalized value is known, preserve the established `image/jpeg` → `JPEG` label, and otherwise fall back to the uppercased subtype. Wildcards SHALL retain their human-readable group-label behavior.
+
+`MIME_TYPE_EXT_MAP` SHALL cover the 78 unique MIME values in MDN's [Common media types](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/MIME_types/Common_types) table as retrieved on 2026-09-02, choosing one canonical extension when multiple extensions share one MIME value. Existing project-specific aliases MAY remain in addition to that baseline.
+
 #### Scenario: isMimeTypeAllowed returns correct result
 - **WHEN** `isMimeTypeAllowed` is called with a MIME type and an allowlist array
 - **THEN** it returns `true` if the MIME type matches an allowed entry, `false` otherwise
@@ -89,7 +93,11 @@ The `useClipboardPaste` and `useLazyImageLoad` hooks (with `LazyImageLoadStatus`
 
 #### Scenario: mimeTypesToExtensionLabels converts MIME types
 - **WHEN** `mimeTypesToExtensionLabels` is called with an array of MIME type strings
-- **THEN** it returns an array of human-readable extension label strings
+- **THEN** it returns one comma-separated string of human-readable extension labels
+
+#### Scenario: Structured MIME types use canonical extension labels
+- **WHEN** `mimeTypesToExtensionLabels` is called with `['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.amazon.ebook', 'application/epub+zip', 'font/woff2']`
+- **THEN** it returns `"DOCX, AZW, EPUB, WOFF2"`
 
 ### Requirement: Upload constants exported from new lib
 The upload constraint constants (e.g. `MAX_UPLOADS_PER_MINUTE`) from `libs/conversation-input/src/constants/upload.ts` SHALL be exported from `libs/attachment-input/src/index.ts`.

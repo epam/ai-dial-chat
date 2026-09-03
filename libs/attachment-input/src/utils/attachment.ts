@@ -60,17 +60,26 @@ const WILDCARD_TYPE_LABELS: Record<string, string> = {
   '*': 'All files',
 };
 
+const MIME_TYPE_LABEL_OVERRIDES: Record<string, string> = {
+  'image/jpeg': 'JPEG',
+};
+
 /** Converts an array of MIME type strings (including wildcards) into a comma-separated human-readable label string. */
 export const mimeTypesToExtensionLabels = (
   types: string[],
   wildcardLabels: Record<string, string> = WILDCARD_TYPE_LABELS,
 ): string => {
   const labels = types.map((type) => {
-    if (type.endsWith('/*')) {
-      const major = type.slice(0, -2);
+    const normalizedType = type.toLowerCase().split(';')[0].trim();
+    if (normalizedType.endsWith('/*')) {
+      const major = normalizedType.slice(0, -2);
       return wildcardLabels[major] ?? `${major} files`;
     }
-    const subtype = type.split('/')[1];
+    const labelOverride = MIME_TYPE_LABEL_OVERRIDES[normalizedType];
+    if (labelOverride) return labelOverride;
+    const extension = MIME_TYPE_EXT_MAP[normalizedType];
+    if (extension) return extension.toUpperCase();
+    const subtype = normalizedType.split('/')[1];
     return subtype != null ? subtype.toUpperCase() : type.toUpperCase();
   });
   return labels.join(', ');

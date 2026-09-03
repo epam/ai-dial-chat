@@ -308,6 +308,43 @@ describe('ConversationStreamingService', () => {
       });
     });
 
+    it('percent-encodes non-Latin-1 characters in X-CONVERSATION-ID so the request reaches DIAL Core', async () => {
+      /*
+       * A new conversation's id embeds the user-authored title, so a prompt
+       * containing an em dash / Cyrillic / an emoji used to make every
+       * completion request for it throw a ByteString conversion TypeError.
+       */
+      const conversation = {
+        ...baseConversation,
+        id: 'test-bucket/gpt-4o__Привет — 🙂__11111111-1111-1111-1111-111111111111',
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      const headerValue = (
+        sendSpy.mock.calls[0][1].headers as Record<string, string>
+      )['X-CONVERSATION-ID'];
+      expect(headerValue).toBe(
+        'test-bucket/gpt-4o__%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82 %E2%80%94 %F0%9F%99%82__11111111-1111-1111-1111-111111111111',
+      );
+      expect(decodeURIComponent(headerValue)).toBe(conversation.id);
+      expect(() =>
+        new Headers().set('X-CONVERSATION-ID', headerValue),
+      ).not.toThrow();
+    });
+
     it('omits X-DIAL-CLIENT-CHANNEL-ID when no channel id is provided', async () => {
       const conversation = {
         ...baseConversation,

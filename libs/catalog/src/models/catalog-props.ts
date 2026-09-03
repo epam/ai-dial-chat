@@ -8,6 +8,7 @@ import type {
 } from '@epam/ai-dial-publish-panel';
 import { DropdownItem, TabModel } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
+import type { ListViewColumnVisibility } from '../components/ListView/columns';
 import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogViewMode } from '../types/view-mode';
@@ -97,6 +98,13 @@ export interface CatalogProps {
   favorites: CatalogItem[];
   /** Grouped text labels for headings and actions. */
   titles?: CatalogTitles;
+  /**
+   * Renders in place of the Browse section's heading (`titles.browseTitle`)
+   * when supplied, e.g. so a host can render a clickable breadcrumb instead
+   * of a plain text label. The item count normally shown next to the heading
+   * is not rendered alongside it — include it in the supplied node if needed.
+   */
+  browseHeaderRenderer?: ReactNode;
   /** Whether catalog data is loading (reserved for future loading state). */
   isLoading?: boolean;
   /** Error to display if data loading failed (reserved for future error state). */
@@ -111,6 +119,18 @@ export interface CatalogProps {
    * can only ever narrow visibility, never widen it.
    */
   isFavoriteVisible?: (item: CatalogItem) => boolean;
+  /**
+   * Per-column overrides for whether an optional `ListView` column (`folder`,
+   * `tags`, `favorite`) renders for the active tab, given its entity type.
+   * Independent of `isFavoriteVisible` (which only gates the star on
+   * individual rows, in the browse grid and cards too, not the column).
+   * Replaces that column's built-in default rule — e.g. `folder` normally
+   * hides for `CatalogEntityType.Model`; columns omitted from this map keep
+   * their default. `favorite` is additionally combined (AND) with
+   * `isReadonly`. No effect on the Browse grid/cards, only the list view's
+   * table.
+   */
+  columnVisibility?: ListViewColumnVisibility;
   /** Called when the "Use in chat" button is clicked in the details panel. */
   onUseInChat?: (item: CatalogItem) => void;
   /** Controls whether the primary action button is shown for an item. */
@@ -337,8 +357,15 @@ export interface CatalogProps {
   isReadonly?: boolean;
   /** Hides the page heading (title row), e.g. when the host renders its own title outside the catalog. Default: false. */
   hidePageTitle?: boolean;
-  /** Initial Browse view mode (grid or list). Default: `CatalogViewMode.List`. */
+  /** Initial Browse view mode (`Grid` renders the card grid, `Cards` the list view). Default: `CatalogViewMode.Grid`. */
   initialViewMode?: CatalogViewMode;
+  /**
+   * Lets the Browse content (card grid and list view) span the full width of
+   * its container instead of sitting in a centered, 1180 px-wide column with
+   * empty gutters on wide screens. The 32 px side padding is kept either way,
+   * and the wider container yields more card columns. Default: false.
+   */
+  isFullWidth?: boolean;
   /** ID of an item to visually mark as selected (border, tint, and checkmark) in the Browse grid. */
   selectedItemId?: string;
   /**

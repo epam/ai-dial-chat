@@ -5,8 +5,8 @@ export enum ConversationExportMode {
 }
 
 import {
+  ConversationTransferErrorCode,
   ConversationTransferWarningCode,
-  type ConversationTransferErrorCode,
 } from '@epam/ai-dial-chat-shared';
 
 /** Which export file was produced, used to derive its file name/extension. */
@@ -27,12 +27,12 @@ export interface ConversationTransferErrorEvent {
 }
 
 /*
- * Canonically declared in `@epam/ai-dial-chat-shared` beside
- * `ConversationTransferErrorCode`, because `ConversationTransferJob.warningCode`
- * is typed by it and `chat-shared` may not import from `chat-hooks`. Re-exported
- * here so existing `chat-hooks` import paths keep resolving.
+ * Canonically declared in `@epam/ai-dial-chat-shared`, because
+ * `ConversationTransferJob.warningCode`/`.errorCode` are typed by them and
+ * `chat-shared` may not import from `chat-hooks`. Re-exported here so
+ * existing `chat-hooks` import paths keep resolving.
  */
-export { ConversationTransferWarningCode };
+export { ConversationTransferErrorCode, ConversationTransferWarningCode };
 
 /** Structured, translation-free warning report for a transfer job. */
 export interface ConversationTransferWarningEvent {

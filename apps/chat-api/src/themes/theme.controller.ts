@@ -1,6 +1,5 @@
 import { Controller, Get, Header, Query, Res } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { lookup } from 'mime-types';
 import { Public } from '../common/decorators/public.decorator';
@@ -29,7 +28,6 @@ export class ThemeController {
    * @throws {ServiceUnavailableException} When the external service is unavailable or times out
    */
   @Get()
-  @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 requests per minute
   @Header('Cache-Control', 'public, max-age=300') // 5 minutes
   @ApiOperation({
     summary: 'Get themes configuration',
@@ -75,7 +73,6 @@ export class ThemeController {
    * This prevents path traversal attacks.
    */
   @Get('icon')
-  @Throttle({ default: { limit: 50, ttl: 60000 } }) // 50 requests per minute
   @Header('Cache-Control', 'public, max-age=300') // 5 minutes
   @ApiOperation({
     summary: 'Get theme icon',

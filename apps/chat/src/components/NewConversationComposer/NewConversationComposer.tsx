@@ -352,6 +352,7 @@ const NewConversationComposer: FC<Props> = ({
           message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
           requestId: traceId,
         });
+        throw err;
       } finally {
         setIsSending(false);
       }
@@ -418,6 +419,8 @@ const NewConversationComposer: FC<Props> = ({
             firstName || undefined,
           )}
           placeholder={placeholder}
+          removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
+          retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
           styles={inputStyles}
           deployments={
             isHideEmptyChatChangeAgentEnabled ? undefined : deployments

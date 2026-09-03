@@ -8,7 +8,6 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { getUserDisplayName } from '../common/utils/user-display-name';
@@ -37,7 +36,6 @@ export class ConversationPublishController {
 
   @Post('publish')
   @HttpCode(201)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'publishConversation',
     summary: 'Publish a conversation to an Organization folder',
@@ -66,7 +64,6 @@ export class ConversationPublishController {
     description: 'Caller lacks write access to the target folder',
   })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -93,7 +90,6 @@ export class ConversationPublishController {
 
   @Post('unpublish')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'unpublishConversation',
     summary: 'Request removal of a published conversation from a folder',
@@ -124,7 +120,6 @@ export class ConversationPublishController {
     description: 'Caller lacks write access to the target folder',
   })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -150,7 +145,6 @@ export class ConversationPublishController {
 
   @Get('publish-history')
   @HttpCode(200)
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'getConversationPublishHistory',
     summary: 'Get publish history for a conversation',
@@ -169,7 +163,6 @@ export class ConversationPublishController {
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

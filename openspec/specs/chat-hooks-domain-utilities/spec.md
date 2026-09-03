@@ -6,8 +6,10 @@ The bulk of `apps/chat/src/utils/`'s remaining pure and mostly-pure domain
 utilities — conversation/message helpers, DIAL-file path/URL parsing,
 attachment-display mapping, catalog entity/prompt/scheduled-task/skill
 DTO-to-UI mapping, and locale/formatting/string helpers — published from
-`@epam/ai-dial-chat-hooks`, with every host-owned i18n/URL/context piece
-injected as a parameter rather than imported.
+`@epam/ai-dial-chat-hooks`, with each host-owned i18n/URL/context piece either
+injected as a parameter rather than imported, or — where the utility needs no
+host seam at all — dropped in favour of an English fallback the host overrides
+downstream.
 
 ## Requirements
 
@@ -69,7 +71,7 @@ Every file among `announcement-message.ts`, `application-schema.ts`, `browser-ti
 
 ### Requirement: Catalog entity/prompt/skill mapping utilities inject their i18n label resolution
 
-`@epam/ai-dial-chat-hooks` SHALL export `mapDeploymentToCatalogItem`, `mapToolsetToCatalogItem`, `mapPromptToCatalogItem`, `mapSkillToCatalogItem`, and their pure helper functions (`resolveSkillManifestFileId`, `resolveSkillFileDownloadPath`, `buildSkillContentTree`, `readSkillFileBytes`, `readSkillManifest`, etc.) from `map-deployment-to-catalog-item.ts`, `map-prompt-to-catalog-item.ts`, and `map-skill-to-catalog-item.ts`, with each function's `t()`-derived folder/overview label resolution replaced by explicit `folderLabels: DeploymentFolderLabels` / `overviewLabels: PromptOverviewLabels` / `overviewLabels: SkillOverviewLabels` parameters instead of importing `../constants/translation-keys` directly. `map-deployment-to-catalog-item.ts`'s own `mapToolsetCredentials` (operating on `DialToolsetAuthSettingsDto`) SHALL be renamed to `mapDeploymentToolsetCredentials` on the move, since `map-entity-details-to-catalog.ts` already exports a same-named, differently-shaped function (operating on `ToolsetEntityDetails`) — an `export *` barrel cannot re-export two functions under the same name. `map-entity-details-to-catalog.ts`'s `mapEntityDetailsToCatalogDetails`/`mapDeploymentDetailsDtoToEntityDetails` SHALL drop the `CatalogI18nKeys` import and the `t` parameter entirely — every label already had a hardcoded English fallback, so no seam is needed. `isPublicToolsetId` (currently imported from the host-owned `apps/chat/src/utils/toolsets.ts`) SHALL become a private, non-exported duplicate inside each moved module that needs it, matching the established pattern of not widening an unrelated host file's export surface for one small pure helper. Each mapper's companion pure type file (`apps/chat/src/types/entity-details.ts`, `apps/chat/src/types/prompt.ts`'s `PromptSource`/resource-URL helpers, `apps/chat/src/types/skill.ts`'s `SkillSource`/constants/resource-URL helpers) SHALL move alongside it into `libs/chat-hooks/src/catalog/entity-details.ts`, `libs/chat-hooks/src/prompt/prompt-resource.ts`, and `libs/chat-hooks/src/skill/skill-types.ts` respectively, since the lib cannot import types back from the app; each app types file SHALL re-export from `@epam/ai-dial-chat-hooks` for its other existing consumers.
+`@epam/ai-dial-chat-hooks` SHALL export `mapDeploymentToCatalogItem`, `mapToolsetToCatalogItem`, `mapPromptToCatalogItem`, `mapSkillToCatalogItem`, and their pure helper functions (`resolveSkillManifestFileId`, `resolveSkillFileDownloadPath`, `buildSkillContentTree`, `readSkillFileBytes`, `readSkillManifest`, etc.) from `map-deployment-to-catalog-item.ts`, `map-prompt-to-catalog-item.ts`, and `map-skill-to-catalog-item.ts`, with each function's `t()`-derived folder/overview label resolution replaced by explicit `folderLabels: DeploymentFolderLabels` / `overviewLabels: PromptOverviewLabels` / `overviewLabels: SkillOverviewLabels` parameters instead of importing `../constants/translation-keys` directly. `map-deployment-to-catalog-item.ts`'s own `mapToolsetCredentials` (operating on `DialToolsetAuthSettingsDto`) SHALL be renamed to `mapDeploymentToolsetCredentials` on the move, since `map-entity-details-to-catalog.ts` already exports a same-named, differently-shaped function (operating on `ToolsetEntityDetails`) — an `export *` barrel cannot re-export two functions under the same name. `map-entity-details-to-catalog.ts`'s `mapEntityDetailsToCatalogDetails`/`mapDeploymentDetailsDtoToEntityDetails` SHALL drop the `CatalogI18nKeys` import and the `t` parameter entirely — every label already had a hardcoded English fallback, so no seam is needed. `isPublicToolsetId` SHALL be owned by `libs/chat-hooks/src/oauth/toolset-id.ts` and imported from there by every module that needs it. The private, non-exported duplicate this requirement originally prescribed — which landed in **two** modules, `map-entity-details-to-catalog.ts` and `map-deployment-to-catalog-item.ts` — SHALL NOT exist: the helper moved into the library along with the rest of the toolset OAuth flow, so the compromise that duplication existed to avoid (widening a host file's export surface) no longer applies. Each mapper's companion pure type file (`apps/chat/src/types/entity-details.ts`, `apps/chat/src/types/prompt.ts`'s `PromptSource`/resource-URL helpers, `apps/chat/src/types/skill.ts`'s `SkillSource`/constants/resource-URL helpers) SHALL move alongside it into `libs/chat-hooks/src/catalog/entity-details.ts`, `libs/chat-hooks/src/prompt/prompt-resource.ts`, and `libs/chat-hooks/src/skill/skill-types.ts` respectively, since the lib cannot import types back from the app; each app types file SHALL re-export from `@epam/ai-dial-chat-hooks` for its other existing consumers.
 
 #### Scenario: Folder/overview-label resolution is behavior-preserving with the injected seam
 - **WHEN** `mapDeploymentToCatalogItem`/`mapToolsetToCatalogItem`/`mapPromptToCatalogItem`/`mapSkillToCatalogItem` are called with the same pre-resolved label objects the pre-move `t()` calls would have produced
@@ -82,6 +84,13 @@ Every file among `announcement-message.ts`, `application-schema.ts`, `browser-ti
 #### Scenario: Both `mapToolsetCredentials`-shaped functions remain independently callable
 - **WHEN** `apps/chat` imports both `mapToolsetCredentials` (from `map-entity-details-to-catalog.ts`) and `mapDeploymentToolsetCredentials` (from `map-deployment-to-catalog-item.ts`) from `@epam/ai-dial-chat-hooks`
 - **THEN** each resolves to its own distinct, behavior-preserved implementation
+
+#### Scenario: `isPublicToolsetId` has one shared declaration
+
+- **WHEN** `libs/chat-hooks` is type-checked
+- **THEN** `map-entity-details-to-catalog.ts` and `map-deployment-to-catalog-item.ts` both import
+  `isPublicToolsetId` from `oauth/toolset-id.ts`, and neither declares its own copy of the helper or
+  of the `TOOLSETS_ID_PREFIX`/`PUBLIC_BUCKET_SEGMENT` constants it reads
 
 ### Requirement: `publish.ts`'s pure DTO mapping moves; its i18n label builder and entity-type enum dependency are resolved
 

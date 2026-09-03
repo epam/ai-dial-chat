@@ -51,6 +51,8 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
   const {
     clickLabel = 'Download attachment',
     retryLabel = 'Retry upload',
+    removeLabel = 'Remove attachment',
+    openInNewTabLabel = 'Open in new tab',
     sizeLabel,
     uploadingLabel = 'Uploading',
     errorReasonLabels,
@@ -79,9 +81,26 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     !!onRetry &&
     errorReason !== AttachmentErrorReason.UnsupportedType;
 
-  const cornerIconSpacing = canDownload || canRetry ? 'pe-5' : undefined;
+  const cornerActionCount =
+    Number(!!canDownload) +
+    Number(!!canRetry) +
+    Number(!!isLink) +
+    Number(!!onRemove);
+  const cornerIconSpacing =
+    cornerActionCount > 1
+      ? 'pe-11'
+      : cornerActionCount === 1
+        ? 'pe-5'
+        : undefined;
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    /*
+     * Only the tile itself activates on Enter/Space. Without this guard the
+     * preventDefault() below cancels the native activation of the corner
+     * action buttons whose key events bubble through here, leaving retry and
+     * remove dead to the keyboard.
+     */
+    if (e.target !== e.currentTarget) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onClick?.(attachment.id);
@@ -169,7 +188,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         </div>
       )}
 
-      <div className={mergeClasses('absolute right-0 top-0 flex gap-1')}>
+      <div className="absolute end-1 top-1 flex gap-1">
         {canDownload && (
           <DownloadAction
             ariaLabel={clickLabel}
@@ -190,7 +209,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         )}
         {isLink && (
           <OpenLinkAction
-            ariaLabel={retryLabel}
+            ariaLabel={openInNewTabLabel}
             errorTitle={errorTitle}
             errorDescId={errorDescId}
             onClick={onOpenInNewTab}
@@ -198,7 +217,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         )}
         {onRemove && (
           <RemoveAction
-            ariaLabel={retryLabel}
+            ariaLabel={removeLabel}
             errorTitle={errorTitle}
             errorDescId={errorDescId}
             onClick={onRemove}

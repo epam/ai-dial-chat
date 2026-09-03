@@ -335,9 +335,9 @@ Images are rendered by the `ImageContent` sub-component, defined inside `libs/at
 
 #### Content resolution
 
-`resolvePdfCanvasContent` in `libs/chat-hooks/src/files/attachment-canvas.ts` is `async` and resolves `url` via the shared `resolveAttachmentBlobUrl` helper (see "Shared content resolution helpers" below). A resolved `ErrorCanvasContent` is returned as-is; a resolved string is wrapped as `{ type: AttachmentContentType.Pdf, url }`; `undefined` returns `null`.
+`resolvePdfCanvasContent` in `libs/chat-hooks/src/files/attachment-canvas.ts` is `async` and resolves `url` via the shared `resolveAttachmentBlobUrl` helper (see "Shared content resolution helpers" below). A resolved `ErrorCanvasContent` is returned as-is; a resolved string is wrapped as `{ type: AttachmentContentType.Pdf, url }`. When `resolveAttachmentBlobUrl` returns `undefined` (no local file, DIAL URL, preview URL, or inline data), `attachment.url` is set, is not a DIAL `files/` id, and is a fetchable absolute URL (`isFetchableExternalUrl`: `http:`, `https:`, or `blob:` scheme — a relative or opaque string, e.g. a bare citation/reference id, fails this check and is rejected rather than handed to the viewer as an unfetchable `url`), that raw external URL is used directly as `{ type: AttachmentContentType.Pdf, url: attachment.url }` instead of failing — the same fallback `annotationToPdfCanvasContent`/`referenceAttachmentToPdfCanvasContent` use for a citation whose source is an external PDF, since the PDF canvas viewer fetches and renders the URL itself. Otherwise `undefined` returns `null`.
 
-Precedence (via `resolveAttachmentBlobUrl`): local `attachment.file` (`URL.createObjectURL`) → `resolveDialUrl(attachment)` fetched via `fetchDialBlob` (LRU-cached; a non-OK response or network error yields `ErrorCanvasContent` instead) → `attachment.previewUrl` → inline base64 `attachment.data` decoded into a `Blob` (`type: attachment.contentType`) and turned into an object URL via `URL.createObjectURL`.
+Precedence (via `resolveAttachmentBlobUrl`): local `attachment.file` (`URL.createObjectURL`) → `resolveDialUrl(attachment)` fetched via `fetchDialBlob` (LRU-cached; a non-OK response or network error yields `ErrorCanvasContent` instead) → `attachment.previewUrl` → inline base64 `attachment.data` decoded into a `Blob` (`type: attachment.contentType`) and turned into an object URL via `URL.createObjectURL` → (PDF only) the raw `attachment.url` when it is a non-DIAL, fetchable (`http:`/`https:`/`blob:`) external URL.
 
 This covers stage attachments (e.g. from the DIAL Annotation API) that carry the PDF as inline base64 `data` with no `url` — `DocumentPreview` receives a `blob:` object URL and loads it the same way it would a remote URL. A DIAL-hosted PDF is fetched once at resolution time (to classify load/permission failures before rendering); `DocumentPreview`'s own `loadFileCb` then resolves that `blob:` URL from the in-memory blob store, so this does not add a second network round-trip.
 
@@ -692,7 +692,7 @@ When the registry is empty or no entry matches, `openFileCanvas` behaves exactly
 | `Image` | `content.url` | — |
 | `Audio` | `content.url` | `content.mimeType` |
 | `Pdf` | `content.url` | `MIMEType.PDF` (`'application/pdf'`) |
-| `Ooxml` | `content.url` | — |
+| `Ooxml` | `content.url` | MIME type for `content.format` (`docx`/`xlsx`/`pptx`) |
 | `Html` | `content.url` | `MIMEType.HTML` (`'text/html'`) |
 | `Unsupported`, `Error` | `content.url` | — |
 | `PlainText`, `Code` | — | `MIMEType.Plain` (`'text/plain'`) |

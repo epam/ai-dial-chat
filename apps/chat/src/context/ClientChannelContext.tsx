@@ -125,9 +125,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attemptRef = useRef(0);
   const isStoppedRef = useRef(false);
-  const channelWaitersRef = useRef<Set<(id: string | null) => void>>(
-    new Set(),
-  );
+  const channelWaitersRef = useRef<Set<(id: string | null) => void>>(new Set());
 
   const resolveChannelWaiters = useCallback((id: string | null) => {
     const waiters = channelWaitersRef.current;
@@ -305,7 +303,10 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
           resolve(id);
         };
         waiters.add(settle);
-        const timeoutId = setTimeout(() => settle(channelIdRef.current), timeoutMs);
+        const timeoutId = setTimeout(
+          () => settle(channelIdRef.current),
+          timeoutMs,
+        );
       });
     },
     [ensureConnected],

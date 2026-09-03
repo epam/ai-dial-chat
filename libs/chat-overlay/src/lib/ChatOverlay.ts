@@ -34,6 +34,10 @@ import {
 import { DEFAULT_LOADER_INNER_HTML } from './internal/default-loader';
 import { DeferredRequest } from './internal/deferred-request';
 import { setStyles } from './internal/dom-styles';
+import {
+  ensureOverlayStylesInjected,
+  OverlayClassName,
+} from './internal/overlay-styles';
 import { Task } from './internal/task';
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
@@ -81,12 +85,7 @@ const createIframe = (options: ChatOverlayOptions): HTMLIFrameElement => {
     allowedPermissions.push('microphone');
   }
   iframe.setAttribute('allow', allowedPermissions.join('; '));
-  setStyles(iframe, {
-    border: 'none',
-    display: 'block',
-    width: '100%',
-    height: '100%',
-  });
+  iframe.className = OverlayClassName.Iframe;
   return iframe;
 };
 
@@ -94,20 +93,9 @@ const createLoader = (options: ChatOverlayOptions): HTMLElement => {
   const loader = document.createElement('div');
   loader.setAttribute(LOADER_ATTRIBUTE, '');
   loader.innerHTML = options.loaderInnerHTML ?? DEFAULT_LOADER_INNER_HTML;
-  setStyles(loader, {
-    position: 'absolute',
-    inset: '0',
-    zIndex: '2',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxSizing: 'border-box',
-    background: '#ffffff',
-    color: '#2764d9',
-  });
-  if (options.loaderClass) {
-    loader.className = options.loaderClass;
-  }
+  loader.className = [OverlayClassName.Loader, options.loaderClass]
+    .filter(Boolean)
+    .join(' ');
   if (options.loaderStyles) {
     setStyles(loader, options.loaderStyles);
   }
@@ -143,11 +131,12 @@ export class ChatOverlay {
     this.root = resolveRoot(root);
     this.options = { ...options };
     this.targetOrigin = new URL(options.domain).origin;
+    ensureOverlayStylesInjected();
     this.iframe = createIframe(this.options);
     this.loader = createLoader(this.options);
     const rootPosition = window.getComputedStyle(this.root).position;
     if (rootPosition === 'static' || rootPosition === '') {
-      setStyles(this.root, { position: 'relative' });
+      this.root.classList.add(OverlayClassName.Root);
     }
     this.root.appendChild(this.loader);
     this.root.appendChild(this.iframe);
@@ -480,7 +469,15 @@ export class ChatOverlay {
   }
 
   private hideLoader(): void {
-    this.loader.style.display = 'none';
+    this.loader.classList.add(OverlayClassName.LoaderHidden);
+    /*
+     * `loaderStyles` is an inline-style escape hatch for the loader's look, but
+     * a `display` entry in it competes with the hidden state rather than
+     * describing it. Dropping it here keeps the class the single source of
+     * truth for visibility, including when the host marked it `!important` —
+     * the one declaration the stylesheet's own `!important` cannot outrank.
+     */
+    this.loader.style.removeProperty('display');
   }
 
   private notifySubscribers(

@@ -4,7 +4,7 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 
 ## Overview
 
-`@epam/ai-dial-catalog` is a self-contained marketplace panel for browsing the AI DIAL entity catalog — models, tools, and assistants. It addresses the challenge of presenting potentially hundreds of items in a performant, filterable, and searchable UI without forcing each app to re-implement pagination, sorting, and details logic. The library supports two view modes (card grid and ag-grid list table), virtualised rendering via `react-window` and ag-grid for large collections, sidebar filters by entity type and topic tags, a favorites section, and a per-item details panel with tabs for API documentation, tool definitions, pricing rows, and usage limits. Use it when an application needs to expose the full DIAL model/tool marketplace or any subset of it, or when building a picker for a specific entity type with consistent UX.
+`@epam/ai-dial-catalog` is a self-contained marketplace panel for browsing the AI DIAL entity catalog — models, tools, and assistants. It addresses the challenge of presenting potentially hundreds of items in a performant, filterable, and searchable UI without forcing each app to re-implement pagination, sorting, and details logic. The library supports two view modes (card grid and ag-grid list table), both windowed to the rows in view so a collection of any size keeps a bounded number of DOM nodes, sidebar filters by entity type and topic tags, a favorites section, and a per-item details panel with tabs for API documentation, tool definitions, pricing rows, and usage limits. Use it when an application needs to expose the full DIAL model/tool marketplace or any subset of it, or when building a picker for a specific entity type with consistent UX.
 
 ## Installation
 
@@ -89,6 +89,22 @@ render, as do search, sort, filters, tabs, and the details tabs.
 `Card`, `CardGrid`, `ListView`, and `DetailsPanel` each accept `isReadonly`
 directly too, for hosts composing their own layout instead of using `Catalog`.
 
+#### Full-width Browse content
+
+By default the Browse content — the card grid and the list view — sits in a
+centered column capped at 1180 px, so a wide screen shows empty gutters on both
+sides while the title, favorites strip, toolbar, and tabs above it already span
+the full width. `isFullWidth` removes that cap:
+
+```tsx
+<Catalog items={catalogItems} favorites={favoriteItems} isFullWidth />
+```
+
+The 32 px side padding stays either way; only the centered cap goes. Because
+the column count is derived from the container's width, the wider container
+also yields more card columns (4 instead of 3 once the grid area passes
+1280 px).
+
 #### Controlling tabs and Topics options independently of `items`
 
 By default the entity-type tabs and the Topics filter's option list are both
@@ -100,7 +116,11 @@ a wider item set via the exported `buildCatalogTabs`/`getTopicOptions`
 helpers, to keep them stable while `items` stays narrowed:
 
 ```tsx
-import { buildCatalogTabs, Catalog, getTopicOptions } from '@epam/ai-dial-catalog';
+import {
+  buildCatalogTabs,
+  Catalog,
+  getTopicOptions,
+} from '@epam/ai-dial-catalog';
 
 <Catalog
   items={itemsNarrowedByCategory}
@@ -108,6 +128,26 @@ import { buildCatalogTabs, Catalog, getTopicOptions } from '@epam/ai-dial-catalo
   topicOptions={getTopicOptions(allCatalogItems)}
   favorites={favoriteItems}
 />;
+```
+
+#### Overriding the Browse heading
+
+By default the Browse section's heading is the plain text label
+`titles.browseTitle` (default `'Browse'`) rendered next to the item count. Pass
+`browseHeaderRenderer` to replace that whole slot with any node — e.g. a clickable
+breadcrumb — instead. When supplied, the item count is not rendered alongside
+it, so include it in the node if needed; the host owns click handling and
+visual composition entirely, since the lib has no notion of the underlying
+navigation (a category tree, etc.).
+
+```tsx
+<Catalog
+  items={itemsNarrowedByCategory}
+  favorites={favoriteItems}
+  browseHeaderRenderer={
+    <Breadcrumb segments={selectedPath} onSegmentClick={handleJumpToSegment} />
+  }
+/>
 ```
 
 ### CardGrid
@@ -129,6 +169,10 @@ import { CardGrid } from '@epam/ai-dial-catalog';
 Pass `query` so each card highlights the matched text — the grid forwards it to
 `Card`, which renders the match through the shared `Highlight` component.
 
+Set `isFullWidth` when the grid is rendered without the 1180 px content cap. It
+only sharpens the column-count guess used for the first paint; the measured
+container width always wins afterwards.
+
 ### ListView
 
 Table view powered by ag-grid with column sorting and row selection. `type` and
@@ -147,6 +191,22 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
   stickyHeaderTop={headingHeight}
 />;
 ```
+
+The table scrolls with the page, which switches ag-grid's own row
+virtualisation off, so `ListView` windows the rows itself: it hands the grid
+only the rows around the viewport and reserves the rest of the table's height
+with spacers. Rows are a fixed 60 px for that reason — a `styles.typography`
+override that changes a cell's line count would break the reserved height.
+
+Name, Folder and Tags share the spare width (Name takes twice the share of the
+other two), so widening the table widens the columns that carry variable-length
+values rather than only the name.
+
+The Folder cell shows the deepest folder and keeps the full path in a tooltip
+and in the accessible name — a breadcrumb of the whole path collapses into
+unreadable per-segment stubs at this width. `styles.typography.folderClassName`
+styles that tooltip path, `folderLastSegmentClassName` the folder on screen, and
+`styles.colors.folderIcon` the leading folder icon.
 
 ### Favorites
 
@@ -230,8 +290,8 @@ CatalogEntityType.Toolset; // 'TOOLSET'
 CatalogEntityType.Prompt; // 'PROMPT'
 CatalogEntityType.Skill; // 'SKILL'
 
-CatalogViewMode.Grid; // 'grid'
-CatalogViewMode.List; // 'list'
+CatalogViewMode.Grid; // 'grid' — card grid, the `initialViewMode` default
+CatalogViewMode.Cards; // 'cards' — list view
 
 CatalogDetailsTab.About; // 'about'
 CatalogDetailsTab.Content; // 'content' — long-form text body (prompts)
@@ -519,7 +579,36 @@ lib knowing why. All three default to **visible** when omitted.
 `isFavoriteVisible` is the same family for the favorite star: returning `false`
 for an item hides the star in the browse grid, the list view, the favorites
 strip, and the details panel, and makes that item non-favoritable. It defaults
-to **visible** when omitted, so a predicate can only narrow visibility.
+to **visible** when omitted, so a predicate can only narrow visibility. It
+only ever gates the star on individual rows — it has no effect on whether the
+list view's "Favorite" column itself is shown; see `columnVisibility` below
+for that.
+
+### Overriding which list-view columns show per tab
+
+The list view's optional columns — `folder`, `tags`, and `favorite` — each
+have a built-in default rule (`folder` hides for `CatalogEntityType.Model`;
+`tags` and `favorite` are always shown). `columnVisibility` replaces any of
+these per column, given the active tab's `type`; columns left out of the map
+keep their default. `favorite`'s resolved visibility is additionally combined
+(AND) with `isReadonly`.
+
+```tsx
+<Catalog
+  items={items}
+  favorites={favorites}
+  // The star itself is still gated per-row by isFavoriteVisible — this only
+  // decides whether the list view's "Favorite" column exists at all.
+  columnVisibility={{
+    favorite: (type) => type !== CatalogEntityType.Model,
+    // Also drop Tags for Skills — this app's skills carry no topics.
+    tags: (type) => type !== CatalogEntityType.Skill,
+  }}
+/>
+```
+
+This only affects the list view's table — the Browse grid's cards are
+unaffected, since they don't render these as columns.
 
 ```tsx
 <Catalog

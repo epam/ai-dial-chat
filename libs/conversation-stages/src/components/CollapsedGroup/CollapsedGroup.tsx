@@ -18,9 +18,9 @@ import {
 import { FC, useEffect, useRef, useState } from 'react';
 import type { CollapsedGroupProps } from '../../models/collapsed-group';
 import {
+  calculateStagesDurationSeconds,
   cleanStageName,
   formatTotalDuration,
-  parseDurationSeconds,
 } from '../../utils/stage-name';
 import { findLiveStage, stagePosition } from '../../utils/stage-progress';
 import { StagesPanel } from '../StagesPanel/StagesPanel';
@@ -106,10 +106,9 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   }
 
   const hasFailed = stages.some((s) => s.status === StageStatus.Failed);
-  const totalSeconds = stages.reduce((sum, stage) => {
-    const { durationLabel } = cleanStageName(stage.name);
-    return sum + (parseDurationSeconds(durationLabel) ?? 0);
-  }, 0);
+  const totalSeconds = calculateStagesDurationSeconds(
+    stages.map((stage) => stage.name),
+  );
   const totalDurationLabel =
     totalSeconds > 0 ? formatTotalDuration(totalSeconds) : undefined;
 

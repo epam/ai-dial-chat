@@ -25,6 +25,14 @@ vi.mock('../../../context/NotificationContext', () => ({
 
 vi.mock('../../../context/DeploymentsContext');
 
+vi.mock('../../../context/ClientChannelContext', () => ({
+  useClientChannel: () => ({
+    channelId: null,
+    ensureConnected: vi.fn(),
+    waitForChannel: vi.fn(),
+  }),
+}));
+
 vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
   useAudioTranscription: () => ({
     handleUploadAudio: vi.fn(),

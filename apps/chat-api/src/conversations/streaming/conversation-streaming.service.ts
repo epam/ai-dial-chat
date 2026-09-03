@@ -8,6 +8,7 @@ import {
 } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import { buildConversationIdHeaders } from '../../common/utils/header-value';
 import { StringUtils } from '../../common/utils/string-utils';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -217,7 +218,7 @@ export class ConversationStreamingService {
               ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
               : {}),
             ...(timezone ? { 'X-Timezone': timezone } : {}),
-            ...(conversationId ? { 'X-CONVERSATION-ID': conversationId } : {}),
+            ...buildConversationIdHeaders(conversationId),
           },
           params: { query: { 'api-version': this.dialClient.dialApiVersion } },
           parseAs: 'stream',

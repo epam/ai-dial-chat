@@ -18,11 +18,16 @@ import { SwaggerModule } from '@nestjs/swagger';
 import type { ValidationError } from 'class-validator';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
+import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import 'reflect-metadata';
 import { AppModule } from './app/app.module';
+import { clearLegacyCookies } from './auth/cookies/cookie-options';
 import { TraceparentErrorFilter } from './common/filters/traceparent-error.filter';
-import { createHelmetOptions } from './config/csp';
+import {
+  buildPermissionsPolicyHeader,
+  createHelmetOptions,
+} from './config/csp';
 import { EnvironmentVariables } from './config/environment.config';
 import { resolveLogLevels } from './config/log-levels';
 import {
@@ -77,13 +82,18 @@ async function bootstrap() {
    */
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
+  const configService = app.get(ConfigService<EnvironmentVariables, true>);
+
   app.use(cookieParser());
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    clearLegacyCookies(req, res, configService);
+    next();
+  });
   app.use(traceparentMiddleware);
   app.useGlobalFilters(new TraceparentErrorFilter());
 
   app.enableVersioning({ type: VersioningType.URI });
 
-  const configService = app.get(ConfigService<EnvironmentVariables, true>);
   const allowedIframeOrigins = configService.get('ALLOWED_IFRAME_ORIGINS', {
     infer: true,
   });
@@ -100,6 +110,19 @@ async function bootstrap() {
   app.use(
     helmet(createHelmetOptions(allowedIframeOrigins ?? [], secureTransport)),
   );
+
+  /*
+   * Helmet has no built-in Permissions-Policy support, so it's applied here
+   * to delegate Local Network Access to the same origins allowlisted for
+   * iframe embedding (see csp.ts's buildPermissionsPolicyHeader doc comment).
+   */
+  const permissionsPolicyHeader = buildPermissionsPolicyHeader(
+    allowedIframeOrigins ?? [],
+  );
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('Permissions-Policy', permissionsPolicyHeader);
+    next();
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({

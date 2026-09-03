@@ -142,9 +142,11 @@ export interface InputProps {
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
   /**
-   * Maximum character count for the message text. When `isAttachmentsEnabled`
-   * is `false`, pasting or sending text at or above this length triggers
-   * `onMessageTooLong` instead of being accepted. Defaults to `50000`.
+   * Maximum character count for the message text. Sending text at or above this
+   * length triggers `onMessageTooLong` instead of being accepted, on every model.
+   * Pasting text that long additionally triggers it when `isAttachmentsEnabled`
+   * is `false`. Separate from `pasteTextThreshold`, which only decides when a
+   * paste becomes an attachment. Defaults to `50000`.
    */
   maxMessageLength?: number;
   /**
@@ -310,9 +312,10 @@ export interface InputProps {
   /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
   usageLimitsSlot?: ReactNode;
   /**
-   * Called when the user pastes or sends text whose length is ≥ `maxMessageLength`
-   * while `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
-   * host is responsible for surfacing the error to the user.
+   * Called when the user sends text whose length is ≥ `maxMessageLength`, and when
+   * they paste text that long while `isAttachmentsEnabled` is `false`. A blocked
+   * send leaves the textarea's content in place; a paste is still inserted inline.
+   * The host is responsible for surfacing the error to the user.
    */
   onMessageTooLong?: (length: number, max: number) => void;
 }

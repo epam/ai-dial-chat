@@ -1,27 +1,13 @@
 import { type RefObject, useEffect, useRef, useState } from 'react';
-import { CARD_ROW_HEIGHT } from '../constants/virtual-grid';
+import { CARD_ROW_HEIGHT, CONTENT_MAX_WIDTH } from '../constants/virtual-grid';
 import { getColumnCount } from './card-grid';
+import { getScrollParent } from './scroll-window';
 
 interface VirtualizerState {
   startRow: number;
   endRow: number;
   columnCount: number;
 }
-
-/** Returns the nearest scrollable ancestor, falling back to `<html>`. */
-const getScrollParent = (el: Element | null): Element => {
-  if (!el || el === document.body) return document.documentElement;
-  const { overflow, overflowY } = getComputedStyle(el);
-  if (
-    overflow === 'auto' ||
-    overflow === 'scroll' ||
-    overflowY === 'auto' ||
-    overflowY === 'scroll'
-  ) {
-    return el;
-  }
-  return getScrollParent(el.parentElement);
-};
 
 /** Return value of `useScrollVirtualizer`. */
 export interface ScrollVirtualizerResult {
@@ -39,21 +25,39 @@ export interface ScrollVirtualizerResult {
   totalHeight: number;
 }
 
-/** Virtualizes a card grid driven by the nearest scrollable ancestor; returns row window, column count, and total height. */
+/** Options for `useScrollVirtualizer`. */
+export interface ScrollVirtualizerOptions {
+  /** Rows kept rendered beyond each edge of the viewport. Defaults to `3`. */
+  overscan?: number;
+  /**
+   * Set when the grid renders without the `CONTENT_MAX_WIDTH` column cap, so
+   * the first-paint column guess matches the width the container actually
+   * gets. Defaults to `false`.
+   */
+  isFullWidth?: boolean;
+}
+
+/**
+ * Virtualizes a card grid driven by the nearest scrollable ancestor; returns
+ * row window, column count, and total height.
+ */
 export const useScrollVirtualizer = (
   itemCount: number,
-  overscan = 3,
+  { overscan = 3, isFullWidth = false }: ScrollVirtualizerOptions = {},
 ): ScrollVirtualizerResult => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [state, setState] = useState<VirtualizerState>(() => {
     const w = typeof window !== 'undefined' ? window.innerWidth : 1440;
     /*
-     * Approximate the grid container width: content column capped at 1180 px,
-     * minus sidebar (60 px on desktop) and 64 px horizontal padding (px-8 × 2).
+     * Approximate the grid container width: available width minus the sidebar
+     * (60 px on desktop) and 64 px horizontal padding (px-8 × 2), capped at
+     * CONTENT_MAX_WIDTH unless the grid spans the full width.
      */
     const sidebarWidth = w > 768 ? 60 : 0;
-    const approxContainer = Math.min(1180, Math.max(0, w - sidebarWidth)) - 64;
+    const available = Math.max(0, w - sidebarWidth);
+    const approxContainer =
+      (isFullWidth ? available : Math.min(CONTENT_MAX_WIDTH, available)) - 64;
     const cols = getColumnCount(approxContainer);
     const rows = Math.ceil(itemCount / cols);
     return { startRow: 0, endRow: Math.min(rows, 12), columnCount: cols };

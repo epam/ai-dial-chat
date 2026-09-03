@@ -1,4 +1,5 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import type { ListViewColumnVisibility } from '../components/ListView/columns';
 import { CatalogItem } from './catalog-item';
 /** Typography class overrides for `ListView` cells. */
 export interface ListViewTypography {
@@ -6,9 +7,9 @@ export interface ListViewTypography {
   nameClassName?: string;
   /** Typography class for item version text. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
-  /** Typography class for folder path text. Default: `'dial-small-text'`. */
+  /** Typography class for the full folder path shown in the folder cell's tooltip. Default: `'dial-small-text'`. */
   folderClassName?: string;
-  /** Typography class for the last (deepest) folder segment. Default: `'dial-small-semi-text'`. */
+  /** Typography class for the last (deepest) folder segment, the one the folder cell displays. Default: `'dial-small-semi-text'`. */
   folderLastSegmentClassName?: string;
 }
 
@@ -24,6 +25,8 @@ export interface ListViewColors {
   rowDivider?: string;
   /** Color of the filled star icon in the favorite column. Fallback: `--text-warning-icon`. */
   starFilled?: string;
+  /** Color of the folder icon in the folder column. Fallback: `--text-secondary`. */
+  folderIcon?: string;
   /** Background color of even-indexed grid rows. Fallback: `--bg-layer-base`. */
   rowEvenBackground?: string;
   /** Border color of the selected row. Fallback: `--stroke-accent`. */
@@ -75,4 +78,13 @@ export interface ListViewProps {
   credentialsBadgeLoggedOutLabel?: string;
   /** Renders the list read-only: the "Favorite" column is dropped entirely. Default: false. */
   isReadonly?: boolean;
+  /**
+   * Per-column overrides for whether an optional column (`folder`, `tags`,
+   * `favorite`) renders for the active tab, given its entity `type`.
+   * Independent of `isFavoriteVisible` (which only gates the star on
+   * individual rows, not the column). Replaces that column's built-in
+   * default rule; columns omitted from this map keep their default.
+   * `favorite` is additionally combined (AND) with `isReadonly`.
+   */
+  columnVisibility?: ListViewColumnVisibility;
 }

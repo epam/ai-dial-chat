@@ -2,21 +2,16 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   IsolatedModelViewProvider,
   useIsolatedModelView,
 } from '../IsolatedModelViewContext';
 
 const contextMocks = vi.hoisted(() => ({
-  search: '' as string,
   items: [] as { id: string; reference?: string }[],
   isLoading: false,
   applyIsolatedViewOverride: vi.fn(),
-}));
-
-vi.mock('react-router', () => ({
-  useLocation: () => ({ search: contextMocks.search }),
 }));
 
 vi.mock('../DeploymentsContext', () => ({
@@ -36,16 +31,24 @@ const wrapper = ({ children }: { children: ReactNode }) => (
   <IsolatedModelViewProvider>{children}</IsolatedModelViewProvider>
 );
 
+const setUrl = (pathOrSearch: string) => {
+  const url = pathOrSearch.startsWith('/') ? pathOrSearch : `/${pathOrSearch}`;
+  window.history.pushState({}, '', url);
+};
+
 describe('IsolatedModelViewContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    contextMocks.search = '';
     contextMocks.items = [];
     contextMocks.isLoading = false;
+    setUrl('');
+  });
+
+  afterEach(() => {
+    setUrl('');
   });
 
   it('is inactive when the query param is absent', () => {
-    contextMocks.search = '';
     const { result } = renderHook(() => useIsolatedModelView(), { wrapper });
 
     expect(result.current).toEqual({
@@ -57,7 +60,7 @@ describe('IsolatedModelViewContext', () => {
   });
 
   it('applies the forced feature set immediately, before deployments finish loading', () => {
-    contextMocks.search = '?isolated-model-id=gpt-4';
+    setUrl('?isolated-model-id=gpt-4');
     contextMocks.items = [];
     contextMocks.isLoading = true;
     const { result } = renderHook(() => useIsolatedModelView(), { wrapper });
@@ -80,7 +83,7 @@ describe('IsolatedModelViewContext', () => {
   });
 
   it('resolves the deployment once deployments finish loading', () => {
-    contextMocks.search = '?isolated-model-id=gpt-4';
+    setUrl('?isolated-model-id=gpt-4');
     contextMocks.items = [{ id: 'gpt-4' }];
     contextMocks.isLoading = false;
     const { result } = renderHook(() => useIsolatedModelView(), { wrapper });
@@ -93,7 +96,7 @@ describe('IsolatedModelViewContext', () => {
   });
 
   it('reports not-found once deployments have finished loading with no match, but still applies the override', () => {
-    contextMocks.search = '?isolated-model-id=unknown-model';
+    setUrl('?isolated-model-id=unknown-model');
     contextMocks.items = [{ id: 'gpt-4' }];
     contextMocks.isLoading = false;
     const { result } = renderHook(() => useIsolatedModelView(), { wrapper });
@@ -104,6 +107,30 @@ describe('IsolatedModelViewContext', () => {
       resolvedDeploymentId: null,
     });
     expect(contextMocks.applyIsolatedViewOverride).toHaveBeenCalledOnce();
+  });
+
+  /*
+   * Regression test: after the first message, the app navigates away from
+   * `/?isolated-model-id=...` to `/conversations/<id>`, which carries no
+   * such param. Isolated view must stay active for the rest of the tab's
+   * lifetime rather than re-reading the (now-changed) URL and snapping every
+   * hidden surface (navigation, announcement banner, etc.) back into view.
+   */
+  it('stays active after the URL changes away from the isolated-model-id param', () => {
+    setUrl('?isolated-model-id=gpt-4');
+    contextMocks.items = [{ id: 'gpt-4' }];
+    contextMocks.isLoading = false;
+    const { result, rerender } = renderHook(() => useIsolatedModelView(), {
+      wrapper,
+    });
+
+    expect(result.current.isActive).toBe(true);
+
+    setUrl('/conversations/some-id');
+    rerender();
+
+    expect(result.current.isActive).toBe(true);
+    expect(result.current.resolvedDeploymentId).toBe('gpt-4');
   });
 
   it('throws when used outside the provider', () => {
