@@ -195,20 +195,14 @@
       "uninstalled" peer from the workspace's own root `node_modules`, which really does have
       every peer installed for `apps/chat`. This was found the hard way: an early version
       nested fixtures under `libs/chat-hooks/e2e-fixtures/.tmp/` and the negative fixture (6.5)
-      passed without its target peer ever being installed. Two more implementation-time
-      corrections to the design as written: peers install off the `development` npm dist-tag,
-      not `latest`/`*` (this package family's `latest` tags are not kept mutually compatible —
-      e.g. `@epam/ai-dial-chat-shared@1.0.6`'s own peer range on `ui-kit` is
-      `^0.14.0-dev.15`, which `ui-kit@latest` (`0.13.0`) never satisfies); and each fixture
-      installs the full transitive peerDependencies closure of its documented peers
-      (`resolvePeerClosure` in `harness.mjs`, walking `npm view <pkg> peerDependencies`
-      recursively, memoized across the run), not just chat-hooks' own direct peer list. Modern
-      npm may auto-install peers, but the explicit closure pins a deterministic compatible set;
-      e.g. `@epam/ai-dial-quotations` needing
+      passed without its target peer ever being installed. Each fixture installs the full
+      transitive peerDependencies closure of its documented peers, not just chat-hooks' own
+      direct peer list. Modern npm may auto-install peers, but the explicit closure pins a
+      deterministic compatible set; e.g. `@epam/ai-dial-quotations` needing
       `@tabler/icons-react`/`react-markdown` is exactly as mandatory as chat-hooks' own
-      documented peers. The tarball uses the currently published coordinated development
-      version, because `publish-lib.mjs` pins workspace peers to that version and normal npm peer
-      resolution must validate them without `--legacy-peer-deps`. Before installing fixtures,
+      documented peers. Workspace peers are packed from the current checkout with one synthetic
+      version, while external peers use exact root-lockfile versions; see 6.8. Before installing
+      fixtures,
       the harness compares every published
       export target and every emitted `dist/` file with `npm pack --json`'s file list.
       npm itself is invoked through its JavaScript CLI rather than a Windows command shell, so
@@ -233,7 +227,7 @@
       **Done**: `SUBPATH_FIXTURES` in `fixtures.mjs` covers all 14 subpaths.
       Consumer compilation runs with `skipLibCheck: false`; fixture-only compatibility bridges
       cover React 18 global-JSX declarations, Monaco's extensionless declaration import, Vite
-      stylesheet modules, and the currently published catalog peer's broken monorepo-relative
+      stylesheet modules, and the catalog peer's existing broken monorepo-relative
       publish-panel declaration import without weakening type checking or replacing any peer.
       Fixing this end to end surfaced a real, second pre-existing defect (not a fixture bug):
       task 1.1's dependency matrix mis-classified `./sharing`'s `@epam/ai-dial-chat-api-client`
@@ -281,17 +275,32 @@
       would be redundant. The PR smoke SHALL retain the package-wide packed export/file check,
       minimal optional-peer isolation, the complete audited `sideEffects` manifest check, the
       OAuth side-effect-only bundle check, and the exact missing-peer failure. Do not run the
-      full registry-backed matrix in PR CI.
+      full install-heavy matrix in PR CI.
       **Done**: `libs/chat-hooks/package.json#nx.targets` exposes both targets,
-      `nx.json#targetDefaults` makes both depend on `build`, and
+      `nx.json#targetDefaults` makes both depend on `build` and `test-packed-unit`, and
       `.github/workflows/pr.yml#chat_hooks_packed_smoke` runs only `test-packed-smoke`.
-      The full registry-backed run remains available through `test-packed`; it previously took
+      The full isolated-install run remains available through `test-packed`; it previously took
       about 19 minutes for all 14 subpaths plus legacy-root and negative fixtures, so it is
       retained for local/release validation rather than made a required PR check.
       **Verified**: `npm exec nx run @epam/ai-dial-chat-hooks:test-packed-smoke` passes all three
       selected fixtures plus the packed export/file manifest, minimal isolation, complete
       side-effect manifest, and OAuth side-effect-only bundle checks.
-- [ ] 6.8 Follow-up: configure a scheduled nightly (or equivalent release-gated) workflow to
+- [x] 6.8 Make fixture dependency selection checkout- and lockfile-driven instead of using
+      mutable npm dist-tags. Pack every workspace peer reached by the transitive peer closure
+      from its current `dist/`, give all local artifacts the synthetic version
+      `0.0.0-packed.0`, and install external peers by their exact root `package-lock.json`
+      versions. Add an Nx unit guard proving the closure contains local artifact URLs and exact
+      external versions, and document that routine PRs do not update fixture versions.
+      **Done**: `createFixtureDependencyResolver` derives the workspace package set from workspace
+      entries in the root lockfile, lazily packs each used workspace peer once per run, and reads
+      external versions from that same lockfile. `test-packed-unit` guards the immutable closure
+      and cycle handling; both
+      packed targets depend on it. No `development`, `latest`, or open range selects a fixture
+      version. A fixture definition changes only when the public per-entry peer contract changes.
+      **Verified**: the complete `test-packed` matrix passes all 14 subpaths, legacy root,
+      negative OAuth, and all four package/side-effect checks; in particular, the former
+      version-conflict failures in `utils` and `legacy-root` now pass.
+- [ ] 6.9 Follow-up: configure a scheduled nightly (or equivalent release-gated) workflow to
       run `npm exec nx run @epam/ai-dial-chat-hooks:test-packed`. This is intentionally outside
       the current change; until that automation exists, maintainers invoke the full target
       explicitly before publishing changes to the package contract.

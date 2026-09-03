@@ -151,6 +151,10 @@ packed artifact — not the workspace's `@epam/source` resolution condition — 
 TypeScript compilation and production bundling using only their documented dependency sets.
 These fixtures SHALL assert against the installed `node_modules` dependency tree and the
 emitted bundle's contents, not merely against `libs/chat-hooks`'s own build succeeding.
+Every workspace peer in a fixture's transitive peer closure SHALL be packed from the current
+checkout with the same synthetic version as chat-hooks. Every external peer SHALL be requested
+at the exact version recorded in the root `package-lock.json`. Mutable registry selectors such
+as `development`, `latest`, and open ranges SHALL NOT select the fixture dependency set.
 
 PR CI SHALL run a bounded packed-package smoke suite containing the `minimal`, `oauth`, and
 negative OAuth fixtures. The smoke run SHALL still perform the package-wide
@@ -173,6 +177,12 @@ workflow is outside this change.
 - **THEN** every external package imported by that entry's rolled-up declaration resolves,
   and the fixture's TypeScript compilation and production bundle both succeed
 
+#### Scenario: Fixture versions follow the checkout and lockfile automatically
+- **WHEN** a workspace library changes without a release, or an external dependency's locked
+  version changes in the root `package-lock.json`
+- **THEN** the next packed-fixture run uses the newly packed workspace artifact or exact new
+  locked version without a manual fixture-version update
+
 #### Scenario: The negative fixture fails for the right reason
 - **WHEN** the negative-case fixture installs the packed tarball without one genuinely
   required peer for the entry it imports
@@ -187,7 +197,7 @@ workflow is outside this change.
 #### Scenario: The complete matrix remains available without blocking pull requests
 - **WHEN** a maintainer invokes the full packed-package Nx target
 - **THEN** every published subpath, the legacy root, and the negative fixture are exercised
-- **AND** the pull-request workflow does not require that registry-heavy full target while
+- **AND** the pull-request workflow does not require that install-heavy full target while
   nightly scheduling remains unconfigured
 
 ### Requirement: Library isolation is preserved in every new entry point

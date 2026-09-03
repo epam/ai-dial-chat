@@ -1,7 +1,7 @@
 /**
  * Shared helpers for the packed-package consumer fixtures (see README.md in
- * this folder and `openspec/changes/modularize-chat-hooks-package-exports/
- * design.md` D5). Each fixture installs the *packed* `@epam/ai-dial-chat-hooks`
+ * this folder and the archived modularize-chat-hooks-package-exports design,
+ * D5). Each fixture installs the *packed* `@epam/ai-dial-chat-hooks`
  * tarball — never the monorepo's `@epam/source` condition — into its own
  * isolated `node_modules`, so `npm install`'s peer-dependency resolution and
  * the package's real `exports`/`sideEffects` manifest are exercised exactly
@@ -83,16 +83,18 @@ const listFiles = (root, relativeDir = '') =>
  * from inside `dist/`, producing a real tarball other npm installs can
  * consume. Returns the absolute tarball path.
  */
-export const packChatHooks = ({
+const packWorkspacePackage = ({
   workspaceRoot,
-  chatHooksRoot,
+  projectName,
+  projectRoot,
   tmpRoot,
   version,
+  verifyPackedFileContract = false,
 }) => {
-  const distDir = path.join(chatHooksRoot, 'dist');
+  const distDir = path.join(workspaceRoot, projectRoot, 'dist');
   if (!existsSync(distDir)) {
     throw new Error(
-      `Build output not found at:\n  ${distDir}\nRun "npm exec nx build @epam/ai-dial-chat-hooks" first.`,
+      `Build output not found at:\n  ${distDir}\nRun "npm exec nx build ${projectName}" first.`,
     );
   }
 
@@ -100,7 +102,7 @@ export const packChatHooks = ({
     'node',
     [
       'tools/publish-lib.mjs',
-      '@epam/ai-dial-chat-hooks',
+      projectName,
       `--version=${version}`,
       '--dry=true',
     ],
@@ -147,7 +149,10 @@ export const packChatHooks = ({
   const missingDistFiles = listFiles(distDir).filter(
     (filePath) => !packedFiles.has(filePath),
   );
-  if (missingExportTargets.length > 0 || missingDistFiles.length > 0) {
+  if (
+    verifyPackedFileContract &&
+    (missingExportTargets.length > 0 || missingDistFiles.length > 0)
+  ) {
     throw new Error(
       [
         missingExportTargets.length > 0
@@ -173,6 +178,22 @@ export const packChatHooks = ({
     publishedManifest,
   };
 };
+
+/** Packs the built chat-hooks artifact and verifies its complete public file contract. */
+export const packChatHooks = ({
+  workspaceRoot,
+  chatHooksRoot,
+  tmpRoot,
+  version,
+}) =>
+  packWorkspacePackage({
+    workspaceRoot,
+    projectName: '@epam/ai-dial-chat-hooks',
+    projectRoot: path.relative(workspaceRoot, chatHooksRoot),
+    tmpRoot,
+    version,
+    verifyPackedFileContract: true,
+  });
 
 const packagePath = (dir, packageName) =>
   path.join(dir, 'node_modules', ...packageName.split('/'));
@@ -328,84 +349,41 @@ export const createFixtureDir = (tmpRoot, name) => {
   return dir;
 };
 
-/**
- * Every `@epam/ai-dial-*` peer is installed off the `development` npm
- * dist-tag, not `latest`/`*`. This whole package family releases stable
- * ("latest") tags on independent cadences that are *not* kept mutually
- * compatible — e.g. `@epam/ai-dial-chat-shared@1.0.6`'s own published peer
- * range on `@epam/ai-dial-ui-kit` is `^0.14.0-dev.15`, a range `ui-kit`'s
- * `latest` (`0.13.0`) never satisfies. The `development` tag is the one
- * mutually-compatible set across the family — confirmed by this workspace's
- * own two directly-published (non-workspace-symlinked) peers,
- * `@epam/ai-dial-react-file-manager` and `@epam/ai-dial-ui-kit`, both pinned
- * in the root `package.json` to a `-dev.N` prerelease of that same set.
- */
-const EPAM_PEER_VERSION_SPEC = 'development';
-
-/**
- * The publish transform pins workspace-library peers to the package version
- * being packed. Use the currently published coordinated development version
- * so npm's normal peer resolver can validate the tarball against the
- * `@epam/ai-dial-* @development` packages installed by the fixtures.
- */
-export const resolveFixturePublishVersion = (packageName) => {
-  const stdout = execNpmSync(
-    ['view', `${packageName}@${EPAM_PEER_VERSION_SPEC}`, 'version', '--json'],
-    { encoding: 'utf8' },
-  ).trim();
-  const parsed = JSON.parse(stdout);
-  const version = Array.isArray(parsed) ? parsed.at(-1) : parsed;
-  if (typeof version !== 'string' || version.length === 0) {
-    throw new Error(
-      `Could not resolve ${packageName}@${EPAM_PEER_VERSION_SPEC} version.`,
-    );
-  }
-  return version;
-};
-
 /*
- * Only the `@epam/ai-dial-*` family shares the `development`-dist-tag
- * convention (see the comment above). Other `@epam/*` scoped packages this
- * closure can reach — e.g. `@epam/pdf-highlighter-kit`, a peer of
- * `@epam/ai-dial-quotations` — are ordinary third-party packages from this
- * fixture harness's point of view and don't publish that tag at all.
+ * The publish transform replaces workspace peer ranges with the version being
+ * published. Give every locally packed workspace library the same synthetic
+ * version so npm validates the exact package set from this checkout without
+ * depending on a mutable registry dist-tag.
  */
-const isEpamAiDialPeer = (name) => name.startsWith('@epam/ai-dial-');
+export const FIXTURE_PACKAGE_VERSION = '0.0.0-packed.0';
 
-const IGNORED_TRANSITIVE_PEERS = new Set([
-  'react',
-  'react-dom',
-  'react/jsx-runtime',
-]);
+const IGNORED_TRANSITIVE_PEERS = new Set(['react', 'react/jsx-runtime']);
 
-/**
- * `npm view <nameAndSpec> peerDependencies --json`, memoized per exact
- * `name@spec` string for the lifetime of this module (i.e. shared across
- * every fixture in one `run.mjs` invocation — most fixtures share most of
- * the family's packages, so this keeps the number of registry round trips
- * closer to "one per distinct package" than "one per fixture").
- *
- * `<spec>` is a range (a third-party peer's declared range, e.g. `^3.0.0`),
- * not always one resolved version — when more than one published version
- * matches, `npm view` returns an *array* of that field, one entry per
- * matching version, ordered oldest to newest; this takes the newest (last)
- * entry rather than naively `Object.entries`-ing the array itself (which
- * silently produces bogus numeric-index "dependency names").
- */
-const peerDependenciesCache = new Map();
-const fetchPeerDependencies = (nameAndSpec) => {
-  if (peerDependenciesCache.has(nameAndSpec))
-    return peerDependenciesCache.get(nameAndSpec);
+/** Keeps optional peer dependencies out of an individual consumer fixture. */
+const requiredPeerDependencies = ({
+  peerDependencies = {},
+  peerDependenciesMeta = {},
+}) =>
+  Object.fromEntries(
+    Object.entries(peerDependencies).filter(
+      ([name]) => peerDependenciesMeta[name]?.optional !== true,
+    ),
+  );
+
+const fetchRequiredPeerDependencies = (name, version) => {
   const stdout = execNpmSync(
-    ['view', nameAndSpec, 'peerDependencies', '--json'],
+    [
+      'view',
+      `${name}@${version}`,
+      'peerDependencies',
+      'peerDependenciesMeta',
+      '--json',
+    ],
     {
       encoding: 'utf8',
     },
   ).trim();
-  const parsed = stdout ? JSON.parse(stdout) : {};
-  const peerDeps = Array.isArray(parsed) ? (parsed.at(-1) ?? {}) : parsed;
-  peerDependenciesCache.set(nameAndSpec, peerDeps);
-  return peerDeps;
+  return requiredPeerDependencies(stdout ? JSON.parse(stdout) : {});
 };
 
 /**
@@ -420,32 +398,30 @@ const fetchPeerDependencies = (nameAndSpec) => {
  * fixture doesn't test "chat-hooks' peer list is sufficient," it just
  * produces a build that fails on an unrelated, undocumented specifier.
  *
- * Every `@epam/ai-dial-*` package in the closure is pinned to the
- * `development` tag (see above); every other (third-party) package keeps
- * whichever version range the first peer that requires it declared — this
- * package family is not (yet) known to have two peers disagreeing on a
- * third-party range, so "first wins" is an acceptable simplification, not a
- * general-purpose resolver.
+ * The injected resolver maps workspace packages to local tarballs and
+ * external packages to exact root-lockfile versions. Peer ranges decide
+ * compatibility during `npm install`; they never decide which version the
+ * fixture requests.
  *
  * Returns a plain `{ name: versionSpec }` object suitable for a
  * package.json `dependencies` field.
  */
-export const resolvePeerClosure = (directPeers) => {
+export const resolvePeerClosure = (
+  directPeers,
+  { resolveDependencySpec, readRequiredPeerDependencies },
+) => {
   const closure = {};
-  const queue = directPeers.map((name) => ({ name, range: undefined }));
+  const queue = [...directPeers];
   const queued = new Set(directPeers);
 
   while (queue.length > 0) {
-    const { name, range } = queue.shift();
+    const name = queue.shift();
     if (name in closure) continue;
 
-    const versionSpec = isEpamAiDialPeer(name)
-      ? EPAM_PEER_VERSION_SPEC
-      : range || 'latest';
-    closure[name] = versionSpec;
+    closure[name] = resolveDependencySpec(name);
 
-    const peerDeps = fetchPeerDependencies(`${name}@${versionSpec}`);
-    for (const [depName, depRange] of Object.entries(peerDeps)) {
+    const peerDeps = readRequiredPeerDependencies(name);
+    for (const depName of Object.keys(peerDeps)) {
       if (
         IGNORED_TRANSITIVE_PEERS.has(depName) ||
         depName in closure ||
@@ -454,11 +430,118 @@ export const resolvePeerClosure = (directPeers) => {
         continue;
       }
       queued.add(depName);
-      queue.push({ name: depName, range: depRange });
+      queue.push(depName);
     }
   }
 
   return closure;
+};
+
+const readWorkspacePackages = (workspaceRoot, lock) => {
+  const packages = new Map();
+
+  for (const [projectRoot, metadata] of Object.entries(lock.packages ?? {})) {
+    if (
+      !projectRoot ||
+      projectRoot.startsWith('node_modules/') ||
+      !metadata.name
+    ) {
+      continue;
+    }
+    const manifestPath = path.join(workspaceRoot, projectRoot, 'package.json');
+    if (!existsSync(manifestPath)) continue;
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    if (!manifest.name) continue;
+    const projectName = manifest.nx?.name ?? manifest.name;
+    packages.set(manifest.name, { projectName, projectRoot, manifest });
+  }
+
+  return packages;
+};
+
+const readLockedExternalVersions = (lock) => {
+  const versions = new Map();
+
+  for (const [packagePath, metadata] of Object.entries(lock.packages ?? {})) {
+    if (!packagePath.startsWith('node_modules/') || metadata.link) continue;
+    const name = packagePath.slice('node_modules/'.length);
+    if (!name.includes('/node_modules/') && metadata.version) {
+      versions.set(name, metadata.version);
+    }
+  }
+
+  return versions;
+};
+
+/**
+ * Creates one immutable dependency plan for a fixture run. Workspace peers
+ * are packed from the current checkout with the same synthetic version as
+ * chat-hooks; registry peers use exact versions from package-lock.json.
+ */
+export const createFixtureDependencyResolver = ({
+  workspaceRoot,
+  tmpRoot,
+  version,
+}) => {
+  const lock = JSON.parse(
+    readFileSync(path.join(workspaceRoot, 'package-lock.json'), 'utf8'),
+  );
+  const workspacePackages = readWorkspacePackages(workspaceRoot, lock);
+  const lockedExternalVersions = readLockedExternalVersions(lock);
+  const packedWorkspacePeers = new Map();
+  const requiredPeersCache = new Map();
+  const peerTarballDir = path.join(tmpRoot, 'workspace-peer-tarballs');
+
+  const resolveDependencySpec = (name) => {
+    const workspacePackage = workspacePackages.get(name);
+    if (workspacePackage) {
+      if (!packedWorkspacePeers.has(name)) {
+        const artifact = packWorkspacePackage({
+          workspaceRoot,
+          projectName: workspacePackage.projectName,
+          projectRoot: workspacePackage.projectRoot,
+          tmpRoot: peerTarballDir,
+          version,
+        });
+        packedWorkspacePeers.set(
+          name,
+          pathToFileURL(artifact.tarballPath).href,
+        );
+      }
+      return packedWorkspacePeers.get(name);
+    }
+
+    const lockedVersion = lockedExternalVersions.get(name);
+    if (!lockedVersion) {
+      throw new Error(
+        `External peer ${name} has no exact root entry in package-lock.json. ` +
+          'Add it to the workspace dependency set and refresh the lockfile.',
+      );
+    }
+    return lockedVersion;
+  };
+
+  const readRequiredPeerDependencies = (name) => {
+    if (requiredPeersCache.has(name)) return requiredPeersCache.get(name);
+    const workspacePackage = workspacePackages.get(name);
+    const peers = workspacePackage
+      ? requiredPeerDependencies(workspacePackage.manifest)
+      : fetchRequiredPeerDependencies(
+          name,
+          lockedExternalVersions.get(name) ?? resolveDependencySpec(name),
+        );
+    requiredPeersCache.set(name, peers);
+    return peers;
+  };
+
+  return {
+    resolvePeerClosure: (directPeers) =>
+      resolvePeerClosure(directPeers, {
+        resolveDependencySpec,
+        readRequiredPeerDependencies,
+      }),
+    getPackedWorkspacePeerNames: () => [...packedWorkspacePeers.keys()].sort(),
+  };
 };
 
 /**
@@ -470,12 +553,19 @@ export const resolvePeerClosure = (directPeers) => {
  */
 export const writeFixturePackageJson = (
   dir,
-  { name, tarballPath, reactRange, reactTypesRange, peers },
+  {
+    name,
+    tarballPath,
+    reactVersion,
+    reactTypesVersion,
+    peers,
+    dependencyResolver,
+  },
 ) => {
   const dependencies = {
-    react: reactRange,
-    '@types/react': reactTypesRange,
-    ...resolvePeerClosure(peers),
+    react: reactVersion,
+    '@types/react': reactTypesVersion,
+    ...dependencyResolver.resolvePeerClosure(peers),
   };
   dependencies['@epam/ai-dial-chat-hooks'] = pathToFileURL(tarballPath).href;
 
@@ -623,12 +713,13 @@ declare module '*.scss';
 };
 
 /*
- * The currently published catalog declarations contain a monorepo-relative
+ * The catalog declarations currently emitted by this checkout contain a
+ * monorepo-relative
  * import (`../../../publish-panel/src/index.ts`) instead of the published
  * `@epam/ai-dial-publish-panel` specifier. Recreate only that missing bridge
  * inside the isolated consumer; the real peer must still be installed.
  */
-const writePublishedPeerCompatibility = (dir) => {
+const writeCatalogPeerCompatibility = (dir) => {
   if (
     !existsSync(packagePath(dir, '@epam/ai-dial-catalog')) ||
     !existsSync(packagePath(dir, '@epam/ai-dial-publish-panel'))
@@ -653,7 +744,7 @@ const writePublishedPeerCompatibility = (dir) => {
 export const typecheckFixture = (workspaceRoot, dir) => {
   writeReactJsxCompatibility(dir);
   writeAssetModuleDeclarations(dir);
-  writePublishedPeerCompatibility(dir);
+  writeCatalogPeerCompatibility(dir);
   writeFileSync(
     path.join(dir, 'tsconfig.json'),
     JSON.stringify(

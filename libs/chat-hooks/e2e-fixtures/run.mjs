@@ -28,12 +28,13 @@ import { fileURLToPath } from 'url';
 import {
   bundleFixture,
   cleanupDir,
+  createFixtureDependencyResolver,
   createFixtureDir,
+  FIXTURE_PACKAGE_VERSION,
   formatExecError,
   npmInstallFixture,
   packChatHooks,
   readBundle,
-  resolveFixturePublishVersion,
   typecheckFixture,
   verifyDeclarationImports,
   verifyMinimalPeerIsolation,
@@ -65,14 +66,18 @@ const tmpRoot = mkdtempSync(
 );
 const keepFixtures = process.env.KEEP_FIXTURES === '1';
 
-const chatHooksPkg = JSON.parse(
-  readFileSync(path.join(chatHooksRoot, 'package.json'), 'utf8'),
+const workspaceLock = JSON.parse(
+  readFileSync(path.join(workspaceRoot, 'package-lock.json'), 'utf8'),
 );
-const reactRange = chatHooksPkg.peerDependencies.react;
-const workspacePkg = JSON.parse(
-  readFileSync(path.join(workspaceRoot, 'package.json'), 'utf8'),
-);
-const reactTypesRange = workspacePkg.devDependencies['@types/react'];
+const lockedVersion = (name) => {
+  const version = workspaceLock.packages?.[`node_modules/${name}`]?.version;
+  if (!version) {
+    throw new Error(`package-lock.json has no exact root version for ${name}`);
+  }
+  return version;
+};
+const reactVersion = lockedVersion('react');
+const reactTypesVersion = lockedVersion('@types/react');
 
 /*
  * The PR gate covers the package-wide artifact contract, optional-peer
@@ -95,6 +100,7 @@ const SMOKE_FIXTURE_NAMES = new Set([
 const runFixture = (
   { name, subpath, peers, expectFailure, failureMustName },
   tarballPath,
+  dependencyResolver,
 ) => {
   const dir = createFixtureDir(tmpRoot, name);
   const steps = [];
@@ -102,9 +108,10 @@ const runFixture = (
   writeFixturePackageJson(dir, {
     name: `chat-hooks-e2e-fixture-${name}`,
     tarballPath,
-    reactRange,
-    reactTypesRange,
+    reactVersion,
+    reactTypesVersion,
     peers,
+    dependencyResolver,
   });
 
   try {
@@ -201,15 +208,23 @@ const main = () => {
   }
 
   console.info('Packing @epam/ai-dial-chat-hooks/dist into a tarball...');
-  const fixturePublishVersion = resolveFixturePublishVersion(chatHooksPkg.name);
   const packedArtifact = packChatHooks({
     workspaceRoot,
     chatHooksRoot,
     tmpRoot,
-    version: fixturePublishVersion,
+    version: FIXTURE_PACKAGE_VERSION,
   });
   const { tarballPath } = packedArtifact;
   console.info(`Packed: ${tarballPath}\n`);
+
+  const dependencyResolver = createFixtureDependencyResolver({
+    workspaceRoot,
+    tmpRoot,
+    version: FIXTURE_PACKAGE_VERSION,
+  });
+  console.info(
+    `Dependency plan: workspace peers use local tarballs at ${FIXTURE_PACKAGE_VERSION}; external peers use exact package-lock.json versions.\n`,
+  );
 
   let fixtureDefs = allFixtureDefs;
   if (selectedFixtureNames) {
@@ -224,7 +239,7 @@ const main = () => {
   const results = new Map();
   for (const def of fixtureDefs) {
     console.info(`Running fixture: ${def.name} (./${def.subpath})...`);
-    const result = runFixture(def, tarballPath);
+    const result = runFixture(def, tarballPath, dependencyResolver);
     results.set(def.name, result);
     console.info(`  ${result.pass ? 'PASS' : 'FAIL'}`);
   }
@@ -335,6 +350,12 @@ const main = () => {
       console.info(`  ${check.detail}`);
     }
   }
+
+  const packedWorkspacePeerNames =
+    dependencyResolver.getPackedWorkspacePeerNames();
+  console.info(
+    `Workspace peer tarballs used: ${packedWorkspacePeerNames.length ? packedWorkspacePeerNames.join(', ') : 'none'}`,
+  );
 
   if (!keepFixtures) {
     cleanupDir(tmpRoot);

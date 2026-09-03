@@ -5,9 +5,9 @@ Proves `@epam/ai-dial-chat-hooks`'s published `exports`/`peerDependenciesMeta`/
 **packed tarball** — never the monorepo's `@epam/source` resolution condition,
 which points straight at `src/` and bypasses the packaging boundary entirely —
 into its own isolated `node_modules`, then typechecks and production-bundles a
-small consumer file against it. See
-`openspec/changes/modularize-chat-hooks-package-exports/design.md` D5 for the
-full rationale.
+small consumer file against it. See the archived
+`2026-09-03-modularize-chat-hooks-package-exports` design, D5, for the full
+rationale.
 
 ## Running
 
@@ -33,7 +33,9 @@ npm exec nx run @epam/ai-dial-chat-hooks:test-packed
 The full target adds every published subpath and the legacy-root consumer. It
 is intentionally not a required PR check; it is reserved for a future nightly
 job, whose scheduling is outside the scope of the current change. Both targets
-run after `build`, so `dist/` is always fresh. To debug a single run without Nx:
+run after `build` and the dependency-plan unit tests, so `dist/` is always fresh
+and mutable version selectors cannot silently return. To debug a single run
+without Nx:
 
 ```sh
 node libs/chat-hooks/e2e-fixtures/run.mjs
@@ -97,8 +99,9 @@ type-only peers fail the same way they would for a strict consumer. Fixture-only
 compatibility declarations bridge peer-owned React-18 global `JSX` types to
 React 19, declare Vite-handled stylesheet modules, and map Monaco's extensionless
 declaration import to its installed `.d.ts`. A second narrow bridge redirects the
-currently published catalog peer's monorepo-relative `publish-panel/src/index.ts`
-declaration import to the installed `@epam/ai-dial-publish-panel` package. The
+locally packed catalog peer's existing monorepo-relative
+`publish-panel/src/index.ts` declaration import to the installed
+`@epam/ai-dial-publish-panel` package. The
 harness also scans the selected `chat-hooks` rolled-up declaration and requires
 every external package it imports to have an installed `package.json`.
 
@@ -131,10 +134,10 @@ fixture-runner dependency.
 A fixture declares `@epam/ai-dial-chat-hooks`'s documented direct runtime and
 type-only peers for its entry (per `fixtures.mjs`) **and** whatever _those_
 peers themselves require — `resolvePeerClosure` in `harness.mjs` walks each
-package's own `peerDependencies` recursively via `npm view`, memoized across
-the whole run. Modern npm may auto-install peers, but the explicit closure
-pins a mutually compatible set instead of leaving npm to choose versions
-independently, so
+package's own required `peerDependencies` recursively. Workspace metadata comes
+from the current package manifests; metadata for an external package is read by
+its exact locked version. Modern npm may auto-install peers, but the explicit
+closure pins one reproducible set instead of leaving npm to choose versions, so
 `@epam/ai-dial-quotations` needing `@tabler/icons-react`/`react-markdown`, or
 `@epam/ai-dial-chat-shared` needing `@epam/ai-dial-ui-kit`, are exactly as
 mandatory as chat-hooks' own documented peers. Omitting them from a fixture
@@ -142,20 +145,24 @@ wouldn't test "chat-hooks' peer list is sufficient" — it would just produce a
 build that fails on an unrelated, undocumented specifier, which is exactly
 what an earlier version of this harness did.
 
-## Peer versions: the `development` npm dist-tag, not `latest`
+## Peer versions: local workspace tarballs plus the root lockfile
 
-Fixtures install every `@epam/ai-dial-*` peer from the `development` dist-tag
-(`npm install <peer>@development`-equivalent), not `latest`/`*`. This
-package family's `latest` tags are **not** kept mutually compatible with each
-other across independent release cadences — e.g. the published
-`@epam/ai-dial-chat-shared@1.0.6` declares a peer range on
-`@epam/ai-dial-ui-kit` (`^0.14.0-dev.15`) that `ui-kit`'s own `latest`
-(`0.13.0`) never satisfies. `development` is the one set that is kept
-mutually compatible, confirmed by this workspace's own two peers that are
-genuinely installed from the registry (not workspace-symlinked) —
-`@epam/ai-dial-react-file-manager` and `@epam/ai-dial-ui-kit` — both pinned
-in the root `package.json` to a `-dev.N` prerelease of that same set. `npm
-install` deliberately uses npm's normal peer handling. The minimal fixture
+Every publishable workspace peer is built and packed from the **same checkout**
+as chat-hooks. The publish transform gives all of those tarballs the synthetic
+version `0.0.0-packed.0`, so workspace-to-workspace peer requirements agree
+without using a registry release or a mutable dist-tag. The tarballs are cached
+for the lifetime of the run and shared by all selected fixtures.
+
+External peers are requested by the exact versions recorded at the root of
+`package-lock.json`. The registry is still used to download those immutable
+versions and to read their peer metadata, but neither `development`, `latest`,
+nor an open range chooses the fixture dependency set. Consequently, an ordinary
+PR does **not** require fixture version edits: changing `package-lock.json`
+automatically changes the tested external set, and changing a workspace library
+automatically changes its packed artifact. `fixtures.mjs` only needs an edit when
+the public per-entry peer contract itself changes.
+
+`npm install` deliberately uses npm's normal peer handling. The minimal fixture
 also inspects its isolated `node_modules` and the installed manifest to prove
 that no optional feature peer was auto-installed and every non-React peer is
 still marked optional.

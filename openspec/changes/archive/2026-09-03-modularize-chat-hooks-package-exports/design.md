@@ -392,6 +392,15 @@ bundle a small consumer file:
 5. **Packed-file contract**: compares every published export target and every emitted `dist/`
    file with the `npm pack --json` file list before any consumer fixture runs.
 
+The dependency plan is derived for every run instead of storing release versions in fixture
+files. Each publishable workspace peer in the transitive peer closure is built and packed from
+the current checkout. `publish-lib.mjs` assigns chat-hooks and all of those local tarballs the
+same synthetic version (`0.0.0-packed.0`), preserving its workspace-peer version invariant.
+External peers are installed at their exact root `package-lock.json` versions; exact-version
+registry metadata supplies their required peer closure. Mutable selectors (`development`,
+`latest`, or an open range) never choose a fixture version. A normal PR therefore needs no
+fixture-version refresh: checkout and lockfile changes are picked up automatically.
+
 The harness exposes two Nx execution tiers. `test-packed-smoke`, required by PR CI, runs the
 `minimal`, `oauth`, and `negative-oauth` consumers. That selection exercises optional-peer
 isolation, one representative audited side-effect implementation, and the expected missing-peer
@@ -399,7 +408,7 @@ failure while the package-wide packed-file/export and complete `sideEffects` man
 (including the file-manager marker-bearing chunk) still run once for the entire artifact.
 `test-packed` runs all 14 subpath consumers plus the legacy-root and negative consumers. The
 complete matrix remains available for local and release validation but is deliberately not a
-PR gate: every consumer performs a real isolated registry-backed install, and the complete
+PR gate: every consumer performs a real isolated install, and the complete
 16-fixture matrix takes about 19 minutes. A scheduled nightly workflow is follow-up work, not
 part of this change.
 

@@ -82,10 +82,10 @@
       "dependsOn": ["build"]
     },
     "test-packed": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build", "test-packed-unit"]
     },
     "test-packed-smoke": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build", "test-packed-unit"]
     }
   },
   "generators": {

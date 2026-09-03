@@ -190,6 +190,9 @@
       },
       "test-packed-smoke": {
         "command": "node libs/chat-hooks/e2e-fixtures/run.mjs --suite=smoke"
+      },
+      "test-packed-unit": {
+        "command": "node --test libs/chat-hooks/e2e-fixtures/harness.spec.mjs"
       }
     }
   }
