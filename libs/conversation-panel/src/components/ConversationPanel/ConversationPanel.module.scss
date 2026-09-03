@@ -1,5 +1,12 @@
 .item {
   color: var(--cp-text, var(--text-primary, #161b2d));
+  /*
+   * The row is a ui-kit `Button`, which ships its own radius from
+   * `.dial-kit-base-button`. This rule sits on top of the kit's, which holds
+   * because a host imports this package's stylesheet after the kit's. The
+   * fallback is the 12px the row has always rendered.
+   */
+  border-radius: var(--cp-row-radius, 0.75rem);
 
   &:hover {
     background: var(--cp-item-hover, var(--bg-control-accent-alpha, #2764d90f));
@@ -45,6 +52,17 @@
 
 .unreadDot {
   background: var(--cp-unread-dot, var(--text-accent, #1d4ed8));
+}
+
+/*
+ * The search field is a ui-kit `Search`, which ships its own radius from
+ * `.dial-input`. Same layering as `.item` above; the fallback is the fully
+ * rounded field the panel has always rendered. A caller that still passes
+ * `styles.searchWrapperClassName` overrides this the way it always did — with
+ * a Tailwind utility from the host's own stylesheet.
+ */
+.search {
+  border-radius: var(--cp-search-radius, 9999px);
 }
 
 :export {
