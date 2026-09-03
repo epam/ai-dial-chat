@@ -2,7 +2,7 @@
 
 ## Overview
 
-Shared two-column editor layout and bordered section wrapper for DIAL authoring UIs (Skills, Prompts, Toolsets, and similar single-page editors). The package provides `EditorLayout` — a full-height shell with a sticky header row (back button, title, action buttons) and a responsive two-column body — and `EditorSection` — a bordered card wrapper for named groups of form fields. Section content is always supplied by the host; this lib owns only the structural chrome.
+Shared two-column editor layout and bordered section wrapper for DIAL authoring UIs (Skills, Prompts, Toolsets, and similar single-page editors). The package provides `EditorLayout` — a full-height shell with a sticky header row (back button, title, action buttons) and a responsive two-column body — `EditorSection` — a bordered card wrapper for named groups of form fields — and `AddAvatar` — an icon-upload preview control. Section content is always supplied by the host; this lib owns only the structural chrome. `AddAvatar` does not open a file picker itself — the host wires `onAddAvatarClick` to its own file manager/upload flow and passes the resulting URL back in as `avatarUrl`.
 
 ## Installation
 
@@ -85,4 +85,33 @@ import { EditorSection } from '@epam/ai-dial-editor-builder';
 | `title` | `string` | | — | Optional heading rendered above the section body. |
 | `children` | `ReactNode` | | — | Section body content. |
 | `styles` | `EditorSectionStyles` | | — | CSS custom property overrides. |
+| `className` | `string` | | — | Additional CSS class applied to the root element. |
+
+### `AddAvatar`
+
+Avatar preview box with an "Add avatar" button and a format/size caption. Opening a file picker and validating the chosen file (type, size) is the host's responsibility — this component only renders the current state and reports clicks.
+
+```tsx
+import { AddAvatar } from '@epam/ai-dial-editor-builder';
+
+<AddAvatar
+  label="Avatar"
+  avatarUrl={iconUrl}
+  addAvatarLabel="Add avatar"
+  captionText="PNG, JPG or SVG (max 1 MB)"
+  onAddAvatarClick={handleOpenAvatarPicker}
+/>
+```
+
+**Props**
+
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `label` | `string` | ✓ | — | Field label rendered above the preview box and button. |
+| `avatarUrl` | `string` | | — | URL of the currently selected avatar image. When set, it fills the 64x64 preview box instead of the placeholder icon. |
+| `avatarAlt` | `string` | | `''` | Alt text for the avatar image. |
+| `addAvatarLabel` | `string` | | `'Add avatar'` | Label for the "Add avatar" button. |
+| `captionText` | `string` | | `'PNG, JPG or SVG (max 1 MB)'` | Caption describing the accepted formats and max size. |
+| `onAddAvatarClick` | `() => void` | ✓ | — | Called when the "Add avatar" button is clicked. The host opens its own file picker/manager and passes the resulting URL back in as `avatarUrl`. |
+| `styles` | `AddAvatarStyles` | | — | CSS custom property overrides. |
 | `className` | `string` | | — | Additional CSS class applied to the root element. |

@@ -4,15 +4,16 @@ import type {
 } from '@epam/ai-dial-deployment-creation-form';
 import { DeploymentCreationForm } from '@epam/ai-dial-deployment-creation-form';
 import type { FC } from 'react';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import AvatarPickerModal from '../../../components/AvatarPickerModal/AvatarPickerModal';
 import {
-  BasicI18nKeys,
   EditorI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import type { CustomAppGeneralFormData } from '../../../models/custom-apps';
 import type { ToolsetFormErrors } from '../../../models/toolsets';
+import { resolveCatalogIconUrl } from '../../../utils/icon-path';
 import {
   buildAdditionalLocaleOptions,
   buildLocaleFieldLabels,
@@ -38,8 +39,14 @@ const GeneralForm: FC<Props> = ({
   onVersionBlur,
 }) => {
   const { t } = useTranslation();
+  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
 
   const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
+
+  const iconPreviewUrl = useMemo(
+    () => resolveCatalogIconUrl(form.iconUrl),
+    [form.iconUrl],
+  );
 
   const labels: DeploymentCreationFormLabels = useMemo(
     () => ({
@@ -52,8 +59,9 @@ const GeneralForm: FC<Props> = ({
         placeholder: descriptionPlaceholder,
       },
       iconUrl: {
-        label: t(EditorI18nKeys.IconUrlLabel),
-        placeholder: t(BasicI18nKeys.UrlPlaceholder),
+        label: t(EditorI18nKeys.AvatarLabel),
+        addAvatarLabel: t(EditorI18nKeys.AddAvatarButtonLabel),
+        captionText: t(EditorI18nKeys.AvatarCaption),
       },
       version: {
         label: t(EditorI18nKeys.VersionLabel),
@@ -79,15 +87,24 @@ const GeneralForm: FC<Props> = ({
   };
 
   return (
-    <DeploymentCreationForm
-      values={values}
-      errors={errors}
-      onChange={onChange}
-      onNameBlur={onNameBlur}
-      onVersionBlur={onVersionBlur}
-      labels={labels}
-      availableLocaleOptions={localeOptions}
-    />
+    <>
+      <DeploymentCreationForm
+        values={values}
+        errors={errors}
+        onChange={onChange}
+        onNameBlur={onNameBlur}
+        onVersionBlur={onVersionBlur}
+        iconPreviewUrl={iconPreviewUrl}
+        onAddAvatarClick={() => setIsAvatarPickerOpen(true)}
+        labels={labels}
+        availableLocaleOptions={localeOptions}
+      />
+      <AvatarPickerModal
+        isOpen={isAvatarPickerOpen}
+        onClose={() => setIsAvatarPickerOpen(false)}
+        onSelect={(iconUrl) => onChange({ iconUrl })}
+      />
+    </>
   );
 };
 

@@ -26,6 +26,7 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import AvatarPickerModal from '../../components/AvatarPickerModal/AvatarPickerModal';
 import {
   AppsEditorI18nKeys,
   BasicI18nKeys,
@@ -33,6 +34,7 @@ import {
 } from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
 import type { TriggerSaveGeneralPayload } from '../../types/apps-editor';
+import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import {
   buildAdditionalLocaleOptions,
   buildLocaleFieldLabels,
@@ -97,6 +99,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   const [errors, setErrors] = useState<DeploymentCreationFormFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
   const hasSeededInitialValuesRef = useRef(false);
 
   useEffect(() => {
@@ -106,6 +109,11 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   }, [initialValues]);
 
   const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
+
+  const iconPreviewUrl = useMemo(
+    () => resolveCatalogIconUrl(values.iconUrl),
+    [values.iconUrl],
+  );
 
   const labels: DeploymentCreationFormLabels = useMemo(
     () => ({
@@ -121,8 +129,9 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         placeholder: t(AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder),
       },
       iconUrl: {
-        label: t(EditorI18nKeys.IconUrlLabel),
-        placeholder: t(BasicI18nKeys.UrlPlaceholder),
+        label: t(EditorI18nKeys.AvatarLabel),
+        addAvatarLabel: t(EditorI18nKeys.AddAvatarButtonLabel),
+        captionText: t(EditorI18nKeys.AvatarCaption),
       },
       version: {
         label: t(EditorI18nKeys.VersionLabel),
@@ -244,9 +253,9 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       description: values.description,
       folder: [],
       topics: values.topics,
-      iconUrl: values.iconUrl.trim() || undefined,
+      iconUrl: iconPreviewUrl,
     }),
-    [values],
+    [values, iconPreviewUrl],
   );
 
   return (
@@ -264,8 +273,15 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
             values={values}
             errors={errors}
             onChange={handleChange}
+            iconPreviewUrl={iconPreviewUrl}
+            onAddAvatarClick={() => setIsAvatarPickerOpen(true)}
             labels={labels}
             availableLocaleOptions={localeOptions}
+          />
+          <AvatarPickerModal
+            isOpen={isAvatarPickerOpen}
+            onClose={() => setIsAvatarPickerOpen(false)}
+            onSelect={(iconUrl) => handleChange({ iconUrl })}
           />
 
           {submitError && <ErrorMessageNotification message={submitError} />}

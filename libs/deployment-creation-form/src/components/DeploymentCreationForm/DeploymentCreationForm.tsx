@@ -1,3 +1,4 @@
+import { AddAvatar } from '@epam/ai-dial-editor-builder';
 import {
   mergeClasses,
   TAG_INPUT_TAG_CLASS_NAME,
@@ -7,13 +8,15 @@ import { useEffect, useRef, type FC } from 'react';
 import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
 import { DeploymentLocalesField } from '../DeploymentLocalesField/DeploymentLocalesField';
 
-/** Controlled field set for deployment creation: name, description, icon URL, version, and topics. */
+/** Controlled field set for deployment creation: avatar, name, description, version, and topics. */
 export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   values,
   errors,
   onChange,
   onNameBlur,
   onVersionBlur,
+  iconPreviewUrl,
+  onAddAvatarClick,
   labels,
   styles,
   availableLocaleOptions = [],
@@ -45,13 +48,13 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
       aria-label={labels.ariaLabel}
       className={mergeClasses('flex flex-col gap-4', styles?.root)}
     >
-      <Input
-        id="deployment-creation-form-icon-url"
-        value={values.iconUrl}
-        onChange={(value) => onChange({ iconUrl: value ?? '' })}
-        labelProps={{ label: labels.iconUrl.label }}
-        placeholder={labels.iconUrl.placeholder}
-        containerClassName={styles?.field}
+      <AddAvatar
+        label={labels.iconUrl.label}
+        avatarUrl={iconPreviewUrl}
+        addAvatarLabel={labels.iconUrl.addAvatarLabel}
+        captionText={labels.iconUrl.captionText}
+        onAddAvatarClick={onAddAvatarClick}
+        className={styles?.field}
       />
 
       <div className={mergeClasses('flex items-start gap-4', styles?.field)}>

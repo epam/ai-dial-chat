@@ -24,7 +24,7 @@ export interface DeploymentCreationFormValues {
   name: string;
   /** Long-form description of the entity. */
   description: string;
-  /** Icon URL, entered as a plain URL text field. */
+  /** Icon/avatar reference (a DIAL file id or absolute URL), set by the host once a file is picked. */
   iconUrl: string;
   /** Version string (e.g. `'1.0.0'`). */
   version: string;
@@ -48,6 +48,16 @@ export interface DeploymentCreationFormFieldLabels {
   label: string;
   /** Placeholder text shown when the field is empty. */
   placeholder?: string;
+}
+
+/** Text labels for the icon/avatar field, supplied by the host app. */
+export interface DeploymentCreationFormIconLabels {
+  /** Field label rendered above the avatar preview and button (e.g. `'Avatar'`). */
+  label: string;
+  /** Label for the "Add avatar" button. */
+  addAvatarLabel: string;
+  /** Caption describing the accepted formats and max size (e.g. `'PNG, JPG or SVG (max 1 MB)'`). */
+  captionText: string;
 }
 
 /** Pre-translated labels/placeholders for the "Add locale" summary row and popup, supplied by the host app. */
@@ -88,8 +98,8 @@ export interface DeploymentCreationFormLabels {
   name: DeploymentCreationFormFieldLabels;
   /** Labels for the description field. */
   description: DeploymentCreationFormFieldLabels;
-  /** Labels for the icon URL field. */
-  iconUrl: DeploymentCreationFormFieldLabels;
+  /** Labels for the icon/avatar field. */
+  iconUrl: DeploymentCreationFormIconLabels;
   /** Labels for the version field. */
   version: DeploymentCreationFormFieldLabels;
   /** Labels for the topics field. */
@@ -120,6 +130,14 @@ export interface DeploymentCreationFormProps {
   onNameBlur?: () => void;
   /** Called when the version field loses focus, so the host can run on-blur validation. */
   onVersionBlur?: () => void;
+  /**
+   * URL to display in the avatar preview box. Resolved by the host from
+   * `values.iconUrl` (a DIAL file id or absolute URL) — this lib never
+   * resolves storage identifiers itself.
+   */
+  iconPreviewUrl?: string;
+  /** Called when the "Add avatar" button is clicked. The host opens its own file picker/manager and reports the result via `onChange({ iconUrl })`. */
+  onAddAvatarClick: () => void;
   /** Pre-translated labels/placeholders for every field. */
   labels: DeploymentCreationFormLabels;
   /** Optional per-slot class name overrides. */

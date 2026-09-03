@@ -4,6 +4,7 @@ export type { DeploymentLocalesFieldProps } from './components/DeploymentLocales
 export type {
   DeploymentCreationFormFieldErrors,
   DeploymentCreationFormFieldLabels,
+  DeploymentCreationFormIconLabels,
   DeploymentCreationFormLabels,
   DeploymentCreationFormLocaleEntry,
   DeploymentCreationFormLocaleLabels,

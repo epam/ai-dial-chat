@@ -132,7 +132,9 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 | `editor.nameLabel` | `Name` |
 | `editor.nameRequired` | `Name is required` |
 | `editor.descriptionLabel` | `Description` |
-| `editor.iconUrlLabel` | `Icon URL` |
+| `editor.avatarLabel` | `Avatar` |
+| `editor.addAvatarButtonLabel` | `Add avatar` |
+| `editor.avatarCaption` | `PNG, JPG or SVG (max 1 MB)` |
 | `editor.versionLabel` | `Version` |
 | `editor.topicsLabel` | `Topics` |
 | `appsEditor.generalForm.namePlaceholder` | `Enter application name` |
@@ -325,7 +327,9 @@ export interface GeneralFormHandle {
 **Right column** — live preview (`desktop:w-1/2`, `bg-layer-1`):
 
 - A "Preview" label (`basic.preview`) pinned to the top-left.
-- A `<Card>` from `@epam/ai-dial-catalog` centered vertically and horizontally in the remaining space, `w-full max-w-[280px]` so the card never overflows a narrow mobile viewport, driven by a `useMemo`-derived `CatalogItem` built from the current form state (`name`, `version`, `description`, `topics`, `iconUrl`). Uses `CatalogEntityType.Agent` to match how these applications appear in the catalog.
+- A `<Card>` from `@epam/ai-dial-catalog` centered vertically and horizontally in the remaining space, `w-full max-w-[280px]` so the card never overflows a narrow mobile viewport, driven by a `useMemo`-derived `CatalogItem` built from the current form state (`name`, `version`, `description`, `topics`) plus `iconPreviewUrl` — the host-resolved, directly displayable URL (via `resolveCatalogIconUrl(values.iconUrl)`), not the raw `values.iconUrl` DIAL file id `Card` cannot render as-is. Uses `CatalogEntityType.Agent` to match how these applications appear in the catalog.
+
+The avatar picker (clicking "Add avatar" opens `AvatarPickerModal`, restricted to a single PNG/JPG/SVG file up to 1 MB) lives in the left column alongside the rest of `DeploymentCreationForm`; selecting a file calls `handleChange({ iconUrl })` with the picked file's DIAL file id, which then flows into both `iconPreviewUrl` (for the avatar box and the preview card) and the eventual create/update payload.
 
 The column's surface is `bg-layer-sunken`.
 
@@ -607,7 +611,7 @@ Application IDs returned by `POST /api/v1/applications` (`createApplication` in 
 
 `apps/chat/src/pages/AppsEditor/tests/GeneralForm.spec.tsx` SHALL cover:
 
-1. Renders name, description, and icon URL fields.
+1. Renders the avatar picker, name, and description fields.
 2. Empty name — required error shown, API not called.
 3. Name with forbidden characters — invalid-format error shown, API not called.
 4. Version with forbidden characters — invalid-format error shown, API not called.

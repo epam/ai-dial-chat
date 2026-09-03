@@ -1001,7 +1001,9 @@
     "nameLabel": "Name",
     "nameRequired": "Name is required",
     "descriptionLabel": "Description",
-    "iconUrlLabel": "Icon URL",
+    "avatarLabel": "Avatar",
+    "addAvatarButtonLabel": "Add avatar",
+    "avatarCaption": "PNG, JPG or SVG (max 1 MB)",
     "versionLabel": "Version",
     "versionPlaceholder": "e.g. 1.0.0",
     "topicsLabel": "Topics",
@@ -1064,8 +1066,7 @@
       "protocolLabel": "Protocol",
       "allowedToolsLabel": "Allowed tools",
       "allowedToolsPlaceholder": "Add tools, comma separated",
-      "allowedToolsSelectPlaceholder": "Select allowed tools",
-      "copyUrlLabel": "Copy endpoint URL"
+      "allowedToolsSelectPlaceholder": "Select allowed tools"
     },
     "auth": {
       "sectionTitle": "Authentication",

@@ -1,6 +1,6 @@
 # @epam/ai-dial-deployment-creation-form
 
-The shared General-step field set for creating and editing a DIAL deployment — name, description, icon URL, version, topics, and per-locale translations.
+The shared General-step field set for creating and editing a DIAL deployment — avatar, name, description, version, topics, and per-locale translations.
 
 ## Overview
 
@@ -24,6 +24,7 @@ Use it as the General step inside a builder form shell (see `@epam/ai-dial-build
 
 - `react`
 - `@epam/ai-dial-chat-shared`
+- `@epam/ai-dial-editor-builder`
 - `@epam/ai-dial-ui-kit`
 - `@tabler/icons-react`
 
@@ -31,7 +32,7 @@ Use it as the General step inside a builder form shell (see `@epam/ai-dial-build
 
 ### DeploymentCreationForm
 
-Renders the whole field set. `values`, `errors`, `onChange`, and `labels` are required. Supplying `labels.ariaLabel` wraps the root in a named `role="group"`, so the field set is discoverable as one region inside a larger host form.
+Renders the whole field set. `values`, `errors`, `onChange`, `onAddAvatarClick`, and `labels` are required. The avatar field never opens a file picker itself — `onAddAvatarClick` is the host's hook to open its own file manager/upload flow, and the host reports the result back through `onChange({ iconUrl })`. `iconPreviewUrl` is the URL to actually render in the preview box; the host resolves it from `values.iconUrl` (which may be a DIAL file id rather than a directly displayable URL). Supplying `labels.ariaLabel` wraps the root in a named `role="group"`, so the field set is discoverable as one region inside a larger host form.
 
 ```tsx
 import { DeploymentCreationForm } from '@epam/ai-dial-deployment-creation-form';
@@ -42,11 +43,17 @@ import { DeploymentCreationForm } from '@epam/ai-dial-deployment-creation-form';
   onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}
   onNameBlur={handleNameBlur}
   onVersionBlur={handleVersionBlur}
+  iconPreviewUrl={resolveIconPreviewUrl(values.iconUrl)}
+  onAddAvatarClick={openAvatarPicker}
   availableLocaleOptions={localeOptions}
   labels={{
     name: { label: 'Name', placeholder: 'Enter a name' },
     description: { label: 'Description' },
-    iconUrl: { label: 'Icon URL' },
+    iconUrl: {
+      label: 'Avatar',
+      addAvatarLabel: 'Add avatar',
+      captionText: 'PNG, JPG or SVG (max 1 MB)',
+    },
     version: { label: 'Version', placeholder: '1.0.0' },
     topics: { label: 'Topics' },
     otherLocales: {
@@ -129,6 +136,7 @@ import type {
   DeploymentCreationFormValues,
   DeploymentCreationFormLabels,
   DeploymentCreationFormFieldLabels,
+  DeploymentCreationFormIconLabels,
   DeploymentCreationFormFieldErrors,
   DeploymentCreationFormLocaleEntry,
   DeploymentCreationFormLocaleOption,

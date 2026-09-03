@@ -4,17 +4,26 @@
 TBD - created by archiving change add-intro-field-quick-app-toolset. Update Purpose after archive.
 ## Requirements
 ### Requirement: General step fields
-The Quick App editor's General step SHALL allow editing the application name, version, icon
-URL, description, and topics. The icon SHALL be entered as a plain URL text field. Name
-SHALL be required and restricted to letters, digits, spaces, underscores, dots, and dashes.
-The General step SHALL NOT render an Intro field. The name and description fields SHALL also
-allow editing translations for additional locales through the shared `DeploymentLocalesField`
-popup. These fields SHALL be rendered and validated through the shared `deployment-creation-form`
-library component, the same component used by Toolset creation's General step.
+The Quick App editor's General step SHALL allow editing the application avatar, name, version,
+description, and topics. The avatar SHALL be picked via the shared `AddAvatar` control (preview
+box plus "Add avatar" button), which opens the file manager restricted to a single PNG/JPG/SVG
+image up to 1 MB, rather than a plain URL text field. Name SHALL be required and restricted to
+letters, digits, spaces, underscores, dots, and dashes. The General step SHALL NOT render an
+Intro field. The name and description fields SHALL also allow editing translations for
+additional locales through the shared `DeploymentLocalesField` popup. These fields SHALL be
+rendered and validated through the shared `deployment-creation-form` library component, the same
+component used by Toolset creation's General step.
 
 #### Scenario: Edit general fields
-- **WHEN** a user types a name, version, icon URL, description, and adds topic tags
+- **WHEN** a user picks an avatar image and types a name, version, description, and adds topic
+  tags
 - **THEN** those values are held in component state without saving
+
+#### Scenario: Pick an avatar image
+- **WHEN** a user clicks "Add avatar" on the General step
+- **THEN** the file manager opens restricted to PNG, JPG, or SVG files up to 1 MB, and
+  selecting one replaces the placeholder icon with that image while leaving the "Add avatar"
+  button in place so the user can pick a different file
 
 #### Scenario: Edit an additional-locale translation
 - **WHEN** a user opens the "Add locale" popup on the General step and adds a translated name

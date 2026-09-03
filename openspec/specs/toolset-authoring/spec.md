@@ -80,17 +80,26 @@ editor SHALL NOT send a create or update request and SHALL just switch to the Se
 - **THEN** the editor stays on the General step and shows an error notification
 
 ### Requirement: General step fields
-The General step SHALL allow editing the toolset name, version, icon URL, description, and
-topics. The icon SHALL be entered as a plain URL text field (no file-manager). Topics SHALL be
-entered as free-entry tags sourced from the application config. The General step SHALL NOT
-render an Intro field. The name and description fields SHALL also allow editing translations
-for additional locales through the shared `DeploymentLocalesField` popup. These fields SHALL be
-rendered and validated through the shared `deployment-creation-form` library component, the
-same component used by Quick App creation's General step.
+The General step SHALL allow editing the toolset avatar, name, version, description, and
+topics. The avatar SHALL be picked via the shared `AddAvatar` control (preview box plus "Add
+avatar" button), which opens the file manager restricted to a single PNG/JPG/SVG image up to
+1 MB, rather than a plain URL text field. Topics SHALL be entered as free-entry tags sourced
+from the application config. The General step SHALL NOT render an Intro field. The name and
+description fields SHALL also allow editing translations for additional locales through the
+shared `DeploymentLocalesField` popup. These fields SHALL be rendered and validated through the
+shared `deployment-creation-form` library component, the same component used by Quick App
+creation's General step.
 
 #### Scenario: Edit general fields
-- **WHEN** a user types a name, version, icon URL, description, and adds topic tags
+- **WHEN** a user picks an avatar image and types a name, version, description, and adds topic
+  tags
 - **THEN** those values are held in component state without saving
+
+#### Scenario: Pick an avatar image
+- **WHEN** a user clicks "Add avatar" on the General step
+- **THEN** the file manager opens restricted to PNG, JPG, or SVG files up to 1 MB, and
+  selecting one replaces the placeholder icon with that image while leaving the "Add avatar"
+  button in place so the user can pick a different file
 
 #### Scenario: Edit an additional-locale translation
 - **WHEN** a user opens the "Add locale" popup on the General step and adds a translated name
@@ -147,11 +156,14 @@ header. The editor SHALL NOT render a separate live preview or catalog-card prev
 
 ### Requirement: Settings step connection fields
 The Settings step SHALL allow editing the endpoint URL, the transport protocol (HTTP or
-SSE), and the allowed tools, and SHALL provide a control to copy the endpoint URL to the
-clipboard. The endpoint field SHALL show the caption "The HTTPS address where the server
-accepts MCP requests." below the input. The transport protocol SHALL be presented as a
-vertical radio-button group (not a dropdown select) with two options, "HTTP" and "SSE",
-neither of which carries a "Deprecated" annotation.
+SSE), and the allowed tools. The endpoint field SHALL show the caption "The HTTPS address
+where the server accepts MCP requests." below the input, and SHALL NOT have its own
+copy-to-clipboard control (copying the toolset's own MCP URL is handled separately by the
+Connect toolset section below). The transport protocol SHALL be presented as a vertical
+radio-button group (not a dropdown select) with two options, "HTTP" and "SSE", neither of
+which carries a "Deprecated" annotation. The Settings step's fields SHALL be capped at
+`max-w-[1060px]` so text inputs stay a bounded, readable width instead of stretching to fill
+the available column.
 
 The allowed-tools field SHALL default to a free-text tag input (type a tool name and
 commit it with Enter or comma). When the toolset has a persisted id and its authentication
@@ -185,10 +197,6 @@ toolset's current connection rather than a stale one.
 - **WHEN** a user enters a malformed endpoint URL (bad protocol, trailing `.`/`//`, or
   unparseable)
 - **THEN** the system shows a URL validation error and blocks the save
-
-#### Scenario: Copy endpoint URL
-- **WHEN** a user clicks the copy-endpoint control
-- **THEN** the endpoint URL is written to the clipboard
 
 #### Scenario: Discovered tools become a multi-select
 - **WHEN** the toolset has a persisted id, its authentication is usable, and its MCP

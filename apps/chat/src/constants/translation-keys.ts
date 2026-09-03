@@ -886,7 +886,9 @@ export enum EditorI18nKeys {
   NameLabel = 'editor.nameLabel',
   NameRequired = 'editor.nameRequired',
   DescriptionLabel = 'editor.descriptionLabel',
-  IconUrlLabel = 'editor.iconUrlLabel',
+  AvatarLabel = 'editor.avatarLabel',
+  AddAvatarButtonLabel = 'editor.addAvatarButtonLabel',
+  AvatarCaption = 'editor.avatarCaption',
   VersionLabel = 'editor.versionLabel',
   VersionPlaceholder = 'editor.versionPlaceholder',
   TopicsLabel = 'editor.topicsLabel',
@@ -1052,7 +1054,6 @@ export enum ToolsetEditorI18nKeys {
   AllowedToolsLabel = 'toolsetEditor.settings.allowedToolsLabel',
   AllowedToolsPlaceholder = 'toolsetEditor.settings.allowedToolsPlaceholder',
   AllowedToolsSelectPlaceholder = 'toolsetEditor.settings.allowedToolsSelectPlaceholder',
-  CopyUrlLabel = 'toolsetEditor.settings.copyUrlLabel',
   // Authentication
   AuthSectionTitle = 'toolsetEditor.auth.sectionTitle',
   AuthTypeOAuth = 'toolsetEditor.auth.typeOAuth',

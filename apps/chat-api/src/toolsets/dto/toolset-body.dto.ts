@@ -17,6 +17,7 @@ import {
   DISPLAY_NAME_PATTERN,
   DISPLAY_NAME_VALIDATION_MESSAGE,
 } from '../../common/validators/display-name.pattern';
+import { IsIconUrl } from '../../common/validators/icon-url.validator';
 import {
   LOCALE_CODE_PATTERN,
   LOCALE_CODE_VALIDATION_MESSAGE,
@@ -43,9 +44,6 @@ const ENDPOINT_URL_MESSAGE = 'Must be a valid http(s) or sse URL';
 const VERSION_PATTERN = /^[\w.+-]{1,64}$/;
 const VERSION_MESSAGE =
   'Must contain only word characters, dots, hyphens, and plus signs (max 64 chars)';
-
-const ICON_URL_PATTERN = /^https?:\/\/[^\s]+$/;
-const ICON_URL_MESSAGE = 'Must be a valid https?:// URL';
 
 export class ToolsetAuthSettingsBodyDto {
   @ApiProperty({ enum: ToolsetAuthType, example: ToolsetAuthType.None })
@@ -121,10 +119,15 @@ export class ToolsetBodyDto {
   @IsOptional()
   description?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/icon.svg' })
+  @ApiPropertyOptional({
+    example: 'files/6FEup.../uploads/2026-06/icon.png',
+    description:
+      'An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) ' +
+      'picked through the file manager.',
+  })
   @IsString()
   @IsOptional()
-  @Matches(ICON_URL_PATTERN, { message: ICON_URL_MESSAGE })
+  @IsIconUrl()
   iconUrl?: string;
 
   @ApiPropertyOptional({ type: [String], example: ['keyword1', 'keyword2'] })

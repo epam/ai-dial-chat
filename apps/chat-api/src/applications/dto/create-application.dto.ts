@@ -7,7 +7,6 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  IsUrl,
   Matches,
   ValidateIf,
   ValidateNested,
@@ -15,6 +14,7 @@ import {
 import { LocaleTextEntryDto } from '../../common/dto/locale-text-entry.dto';
 import { LOCALIZED_TEXT_SCHEMA } from '../../common/types/localized-text';
 import type { LocalizedText } from '../../common/types/localized-text';
+import { IsIconUrl } from '../../common/validators/icon-url.validator';
 import {
   LOCALE_CODE_PATTERN,
   LOCALE_CODE_VALIDATION_MESSAGE,
@@ -44,10 +44,15 @@ export class CreateApplicationBodyDto {
   @IsOptional()
   description?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/icon.svg' })
+  @ApiPropertyOptional({
+    example: 'files/6FEup.../uploads/2026-06/icon.png',
+    description:
+      'An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) ' +
+      'picked through the file manager.',
+  })
   @IsString()
   @IsOptional()
-  @IsUrl()
+  @IsIconUrl()
   iconUrl?: string;
 
   @ApiPropertyOptional({ example: '1.0' })
