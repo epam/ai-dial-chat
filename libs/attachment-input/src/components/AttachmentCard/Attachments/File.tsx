@@ -129,7 +129,16 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
       title={displayName}
       className={mergeClasses(
         typography?.nameClassName ?? 'dial-caption-text',
-        'line-clamp-2 min-w-0 break-words',
+        /*
+         * `w-full` is load-bearing here: the tile is a fixed-width (84px)
+         * column flex container with `items-start`, so the name div is sized to
+         * its min-content width. `break-words` (overflow-wrap: break-word) does
+         * not shrink min-content, so a filename with one long unbreakable run
+         * made the div wider than the tile — the text was then clipped by the
+         * tile's `overflow-hidden` instead of wrapping and clamping with an
+         * ellipsis.
+         */
+        'line-clamp-2 w-full min-w-0 break-words',
         styles.nameText,
         !isError && cornerIconSpacing,
       )}
