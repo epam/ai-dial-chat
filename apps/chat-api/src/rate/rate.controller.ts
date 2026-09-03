@@ -1,6 +1,5 @@
 import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { RateMessageDto } from './dto/rate-message.dto';
@@ -13,7 +12,6 @@ export class RateController {
 
   @Post()
   @HttpCode(204)
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({
     summary: 'Rate an assistant message',
     description:
@@ -32,7 +30,6 @@ export class RateController {
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an unexpected response',

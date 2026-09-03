@@ -8,6 +8,7 @@ import { useConversationSources } from '@epam/ai-dial-chat-hooks/conversation-so
 import {
   isDialFileId,
   isExternalSourcePreviewable,
+  resolveExternalSourceContentType,
 } from '@epam/ai-dial-chat-hooks/file-manager';
 import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import type {
@@ -232,11 +233,15 @@ const ConversationSourcesPanelContainer: FC = () => {
         window.open(url, '_blank', 'noopener,noreferrer');
         return;
       }
+      const resolvedContentType = resolveExternalSourceContentType(
+        contentType,
+        url,
+      );
       const attachment: DisplayAttachment = {
         id: url,
         name: title,
-        contentType,
-        type: contentType.startsWith('image/')
+        contentType: resolvedContentType,
+        type: resolvedContentType.startsWith('image/')
           ? AttachmentType.Image
           : AttachmentType.File,
         status: RequestStatus.Idle,

@@ -330,7 +330,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     defaultValue: [],
     critical: false,
     description:
-      'Registry of MIME type → visualizer iframe URL mappings. An attachment whose MIME type matches an entry opens in the AttachmentCanvas rendered by that visualizer instead of the default preview. Empty (feature dark) when CUSTOM_VISUALIZERS is unset. Invalid JSON or invalid entries are dropped with an error log; boot never fails on malformed config.',
+      'Registry of MIME type → visualizer iframe URL mappings. An attachment whose MIME type matches an entry opens in the AttachmentCanvas rendered by that visualizer instead of the default preview. The origin of each entry URL must also be listed in ALLOWED_IFRAME_ORIGINS, which is the sole source of CSP frame-src; otherwise the browser blocks the iframe. Empty (feature dark) when CUSTOM_VISUALIZERS is unset. Invalid JSON or invalid entries are dropped with an error log; boot never fails on malformed config.',
     owner: 'chat-team',
     envVar: 'CUSTOM_VISUALIZERS',
   },

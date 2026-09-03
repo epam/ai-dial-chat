@@ -1,11 +1,21 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { type DeploymentItem } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { act, render, screen } from '@testing-library/react';
 import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import NewConversationComposer from '../NewConversationComposer';
+
+const { mockShowNotification, capturedInputProps } = vi.hoisted(() => ({
+  mockShowNotification: vi.fn(),
+  capturedInputProps: {
+    onSend: undefined as
+      | ((message: string, attachments: never[]) => Promise<void>)
+      | undefined,
+  },
+}));
 
 vi.mock('../../../hooks/useUiFeature');
 
@@ -16,26 +26,33 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     isSendDisabled,
     inputClassName,
     autoFocus,
+    onSend,
   }: {
     deployments?: unknown[];
     chatSettings?: unknown;
     isSendDisabled?: boolean;
     inputClassName?: string;
     autoFocus?: boolean;
-  }) => (
-    <div data-testid="conversation-input">
-      Conversation input
-      <output aria-label="deployments">
-        {deployments === undefined ? 'undefined' : JSON.stringify(deployments)}
-      </output>
-      <output aria-label="chat-settings">
-        {chatSettings === undefined ? 'undefined' : 'defined'}
-      </output>
-      <output aria-label="send-disabled">{String(!!isSendDisabled)}</output>
-      <output aria-label="input-class-name">{inputClassName ?? ''}</output>
-      <output aria-label="auto-focus">{String(!!autoFocus)}</output>
-    </div>
-  ),
+    onSend?: (message: string, attachments: never[]) => Promise<void>;
+  }) => {
+    capturedInputProps.onSend = onSend;
+    return (
+      <div data-testid="conversation-input">
+        Conversation input
+        <output aria-label="deployments">
+          {deployments === undefined
+            ? 'undefined'
+            : JSON.stringify(deployments)}
+        </output>
+        <output aria-label="chat-settings">
+          {chatSettings === undefined ? 'undefined' : 'defined'}
+        </output>
+        <output aria-label="send-disabled">{String(!!isSendDisabled)}</output>
+        <output aria-label="input-class-name">{inputClassName ?? ''}</output>
+        <output aria-label="auto-focus">{String(!!autoFocus)}</output>
+      </div>
+    );
+  },
   FileDndOverlay: () => null,
 }));
 
@@ -53,7 +70,7 @@ vi.mock('../../../context/auth/UserContext', () => ({
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => createNotificationContextValue(vi.fn()),
+  useNotification: () => createNotificationContextValue(mockShowNotification),
 }));
 
 vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
@@ -174,6 +191,8 @@ describe('NewConversationComposer', () => {
   const mockUseUiFeature = vi.mocked(useUiFeatureModule.useUiFeature);
 
   beforeEach(() => {
+    mockShowNotification.mockClear();
+    capturedInputProps.onSend = undefined;
     mockUseUiFeature.mockImplementation(
       (feature) =>
         feature === OverlayFeature.EmptyChatSettings ||
@@ -349,5 +368,38 @@ describe('NewConversationComposer', () => {
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('auto-focus').textContent).toBe('true');
+  });
+
+  it('re-throws a failed conversation creation after showing the error notification', async () => {
+    const failure = new Error('Internal Server Error');
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn().mockRejectedValue(failure)}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+
+    /*
+     * ConversationInput clears the textarea and the attachment tray only when
+     * onSend resolves, and restores both when it rejects. Swallowing the
+     * failure here would read as a successful send and wipe an unsent draft
+     * together with its attachments.
+     */
+    await act(async () => {
+      await expect(
+        capturedInputProps.onSend?.('Describe the attachment.', []),
+      ).rejects.toBe(failure);
+    });
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Internal Server Error',
+        variant: NotificationVariant.Error,
+      }),
+    );
   });
 });

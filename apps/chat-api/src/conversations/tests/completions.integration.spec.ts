@@ -133,6 +133,28 @@ describe('POST /conversations/completions (integration)', () => {
     expect(mockService.streamCompletion.mock.calls[0][13]).toBeUndefined();
   });
 
+  /* Firefox keeps the fetch() promise pending until the first body byte
+   * arrives, so the stream has to open with a comment rather than waiting for
+   * the model's first token — see issue #8587. */
+  it('opens the stream with the init comment before the first model chunk', async () => {
+    mockService.streamCompletion.mockImplementation(async function* (
+      ...args: unknown[]
+    ) {
+      (args[10] as () => void)();
+      yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send(VALID_COMPLETION_BODY)
+      .expect(200);
+
+    expect(res.headers['content-type']).toContain('text/event-stream');
+    expect(res.text).toBe(
+      ': init\n\ndata: {"choices":[{"delta":{"content":"Hi"}}]}\n\n',
+    );
+  });
+
   it('passes a valid timezone header to the completion service', async () => {
     await request(app.getHttpServer())
       .post('/conversations/completions')

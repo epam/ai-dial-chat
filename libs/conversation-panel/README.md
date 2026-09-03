@@ -74,6 +74,33 @@ the group and defaults to `"Filter chats"`;
 `styles.typography.tabClassName` sets the label typography and defaults to
 `'dial-tiny-semi-text'`.
 
+### Corner radii
+
+The panel's controls take their corner radius from CSS custom properties, so a
+host sets them once instead of passing a class per control. Each falls back to
+the value the panel has always rendered:
+
+| Property             | Applies to                     | Default   |
+| -------------------- | ------------------------------ | --------- |
+| `--cp-row-radius`    | Each conversation row's button | `0.75rem` |
+| `--cp-search-radius` | The search field               | `9999px`  |
+
+```css
+/* a host that wants 8px rows under a 12px search field */
+:root {
+  --cp-row-radius: 8px;
+  --cp-search-radius: 12px;
+}
+```
+
+The New chat button is not on this list on purpose: it is a labelled button, so
+it reads the ui-kit's own `--radius-control` and stays in step with every other
+button in the host app.
+
+`styles.searchWrapperClassName` remains for anything else the search wrapper
+needs; a `rounded-*` utility passed there still wins over `--cp-search-radius`,
+since a host's utilities are emitted after this package's stylesheet.
+
 ## Enums
 
 `FilterTab` is owned and exported by `@epam/ai-dial-chat-shared`, and this
