@@ -25,6 +25,7 @@ import { resolveConversationLocation } from '../conversations/utils/conversation
 import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
 import { isPromptResourceUrl } from '../prompts/utils/prompt-mapper.util';
+import { getResourceBucket } from '../publish/publish-target.util';
 import { SkillsLookupService } from '../skills/lookup/skills-lookup.service';
 import { ToolsetsService } from '../toolsets/toolsets.service';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
@@ -118,10 +119,6 @@ const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';
 /** DIAL Core conversation resource paths always start with this prefix. */
 const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
 const FILE_RESOURCE_PREFIX = 'files/';
-
-/** DIAL Core resource ids are `{type}/{bucket}/{...}` — bucket at segment [1]. */
-const extractResourceBucket = (resourceUrl: string): string | undefined =>
-  resourceUrl.split('/')[1];
 
 interface AnnotationWithAttachment {
   body?: {
@@ -294,7 +291,7 @@ export class ShareService {
 
     /* See openspec/specs/conversation-share/spec.md — "Related file resources outside the conversation's own bucket are dropped". */
     return collectConversationResourceUrls(result.data).filter((url) => {
-      const fileBucket = extractResourceBucket(url);
+      const fileBucket = getResourceBucket(url);
       return fileBucket === bucket || fileBucket === PUBLIC_BUCKET;
     });
   }
