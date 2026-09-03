@@ -1064,6 +1064,7 @@
       "protocolLabel": "Protocol",
       "allowedToolsLabel": "Allowed tools",
       "allowedToolsPlaceholder": "Add tools, comma separated",
+      "allowedToolsSelectPlaceholder": "Select allowed tools",
       "copyUrlLabel": "Copy endpoint URL"
     },
     "auth": {

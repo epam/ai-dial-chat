@@ -2,6 +2,7 @@ import {
   McpAppToolCallRequestDtoKindEnum,
   ResponseError,
   type ListMcpAppToolsKindEnum,
+  type ListMcpToolNamesKindEnum,
   type McpAppToolSummaryDto,
 } from '@epam/ai-dial-chat-api-client';
 import { safeDecodeURIComponent } from '@epam/ai-dial-chat-hooks';
@@ -67,4 +68,16 @@ export const listMcpAppTools = async (
     kind,
   });
   return tools;
+};
+
+/** Lists every tool name exposed by an MCP-capable deployment's `tools/list`, unfiltered. */
+export const listMcpToolNames = async (
+  deploymentId: string,
+  kind: McpDeploymentKind,
+): Promise<string[]> => {
+  const { toolNames } = await toolsetsApi.listMcpToolNames({
+    deploymentId: safeDecodeURIComponent(deploymentId),
+    kind: kind as ListMcpToolNamesKindEnum,
+  });
+  return toolNames;
 };

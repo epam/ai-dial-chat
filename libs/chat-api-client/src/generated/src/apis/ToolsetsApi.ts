@@ -17,6 +17,7 @@ import type {
   DialToolsetDto,
   DialToolsetListResponseDto,
   ListMcpAppToolsResponseDto,
+  ListMcpToolNamesResponseDto,
   McpAppToolCallRequestDto,
   McpAppToolCallResponseDto,
   MutatedToolsetDto,
@@ -51,6 +52,11 @@ export interface GetToolsetMcpAppResourceRequest {
 export interface ListMcpAppToolsRequest {
   deploymentId: string;
   kind: ListMcpAppToolsKindEnum;
+}
+
+export interface ListMcpToolNamesRequest {
+  deploymentId: string;
+  kind: ListMcpToolNamesKindEnum;
 }
 
 export interface LoginToolsetRequest {
@@ -411,6 +417,70 @@ export class ToolsetsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Calls DIAL Core\'s generic MCP JSON-RPC proxy\'s tools/list for the given deployment (toolset or application) and returns every tool name, unfiltered — used to populate the toolset editor\'s \"Allowed tools\" picker.
+   * List every tool name exposed by an MCP-enabled deployment
+   */
+  async listMcpToolNamesRaw(
+    requestParameters: ListMcpToolNamesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListMcpToolNamesResponseDto>> {
+    if (requestParameters['deploymentId'] == null) {
+      throw new runtime.RequiredError(
+        'deploymentId',
+        'Required parameter "deploymentId" was null or undefined when calling listMcpToolNames().',
+      );
+    }
+
+    if (requestParameters['kind'] == null) {
+      throw new runtime.RequiredError(
+        'kind',
+        'Required parameter "kind" was null or undefined when calling listMcpToolNames().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['deploymentId'] != null) {
+      queryParameters['deploymentId'] = requestParameters['deploymentId'];
+    }
+
+    if (requestParameters['kind'] != null) {
+      queryParameters['kind'] = requestParameters['kind'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/toolsets/mcp-apps/tool-names`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListMcpToolNamesResponseDto>(response);
+  }
+
+  /**
+   * Calls DIAL Core\'s generic MCP JSON-RPC proxy\'s tools/list for the given deployment (toolset or application) and returns every tool name, unfiltered — used to populate the toolset editor\'s \"Allowed tools\" picker.
+   * List every tool name exposed by an MCP-enabled deployment
+   */
+  async listMcpToolNames(
+    requestParameters: ListMcpToolNamesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListMcpToolNamesResponseDto> {
+    const response = await this.listMcpToolNamesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Returns the list of DIAL Core toolsets visible to the authenticated session user. Proxies GET /openai/toolsets using the caller\'s session access token. Results are cached server-side for 30 seconds per user; the response carries no client-facing Cache-Control so a browser never serves a stale copy across a login/logout that already invalidated that cache.
    * List available toolsets
    */
@@ -646,3 +716,12 @@ export const ListMcpAppToolsKindEnum = {
 } as const;
 export type ListMcpAppToolsKindEnum =
   (typeof ListMcpAppToolsKindEnum)[keyof typeof ListMcpAppToolsKindEnum];
+/**
+ * @export
+ */
+export const ListMcpToolNamesKindEnum = {
+  Toolset: 'toolset',
+  Application: 'application',
+} as const;
+export type ListMcpToolNamesKindEnum =
+  (typeof ListMcpToolNamesKindEnum)[keyof typeof ListMcpToolNamesKindEnum];

@@ -1051,6 +1051,7 @@ export enum ToolsetEditorI18nKeys {
   ProtocolLabel = 'toolsetEditor.settings.protocolLabel',
   AllowedToolsLabel = 'toolsetEditor.settings.allowedToolsLabel',
   AllowedToolsPlaceholder = 'toolsetEditor.settings.allowedToolsPlaceholder',
+  AllowedToolsSelectPlaceholder = 'toolsetEditor.settings.allowedToolsSelectPlaceholder',
   CopyUrlLabel = 'toolsetEditor.settings.copyUrlLabel',
   // Authentication
   AuthSectionTitle = 'toolsetEditor.auth.sectionTitle',

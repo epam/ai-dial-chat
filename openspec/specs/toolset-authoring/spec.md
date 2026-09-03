@@ -147,11 +147,25 @@ header. The editor SHALL NOT render a separate live preview or catalog-card prev
 
 ### Requirement: Settings step connection fields
 The Settings step SHALL allow editing the endpoint URL, the transport protocol (HTTP or
-SSE), and the allowed tools (tag input), and SHALL provide a control to copy the endpoint
-URL to the clipboard. The endpoint field SHALL show the caption "The HTTPS address where
-the server accepts MCP requests." below the input. The transport protocol SHALL be
-presented as a vertical radio-button group (not a dropdown select) with two options, "HTTP"
-and "SSE", neither of which carries a "Deprecated" annotation.
+SSE), and the allowed tools, and SHALL provide a control to copy the endpoint URL to the
+clipboard. The endpoint field SHALL show the caption "The HTTPS address where the server
+accepts MCP requests." below the input. The transport protocol SHALL be presented as a
+vertical radio-button group (not a dropdown select) with two options, "HTTP" and "SSE",
+neither of which carries a "Deprecated" annotation.
+
+The allowed-tools field SHALL default to a free-text tag input (type a tool name and
+commit it with Enter or comma). When the toolset has a persisted id and its authentication
+is usable (no required auth fields missing, per the same validity check the Save action
+uses), the system SHALL call the toolset's own MCP `tools/list` and, if that call succeeds
+with a non-empty tool list, SHALL replace the tag input with a multiple-choice dropdown
+(new design-system `Select`, `multiple` + `searchable` + `selectAll`) offering exactly
+those tool names, sharing the same field label as the tag input but with its own
+placeholder, "Select allowed tools". If the call fails, returns no tools, or the toolset
+has no persisted id or usable auth yet, the field SHALL silently stay the free-text tag
+input (placeholder "Add tools, comma separated") with no error shown — a user can always
+type a tool name by hand. The system SHALL re-run this `tools/list` lookup whenever the
+endpoint URL or any authentication field/status changes, so the picker reflects the
+toolset's current connection rather than a stale one.
 
 #### Scenario: Endpoint field caption
 - **WHEN** a user views the Settings step
@@ -175,6 +189,25 @@ and "SSE", neither of which carries a "Deprecated" annotation.
 #### Scenario: Copy endpoint URL
 - **WHEN** a user clicks the copy-endpoint control
 - **THEN** the endpoint URL is written to the clipboard
+
+#### Scenario: Discovered tools become a multi-select
+- **WHEN** the toolset has a persisted id, its authentication is usable, and its MCP
+  `tools/list` call returns one or more tool names
+- **THEN** the allowed-tools field renders as a multiple-choice `Select` (searchable, with
+  Select All) offering exactly those tool names, with the same label as the tag input and
+  the placeholder "Select allowed tools"
+
+#### Scenario: No discovered tools falls back to free text
+- **WHEN** the toolset has no persisted id yet, its authentication is not yet usable, or the
+  `tools/list` call fails or returns no tools
+- **THEN** the allowed-tools field stays (or reverts to) the free-text tag input, and no
+  error is shown for the failed or skipped lookup
+
+#### Scenario: Endpoint or auth change triggers a refetch
+- **WHEN** the endpoint URL, the authentication type, any authentication field, or the
+  login/logout status changes while the toolset has a persisted id
+- **THEN** the system re-runs the `tools/list` lookup, updating or reverting the
+  allowed-tools field to match the new result
 
 ### Requirement: Settings step — Connect toolset section
 

@@ -109,3 +109,10 @@ export class ListMcpAppToolsResponseDto {
   @ApiProperty({ type: [McpAppToolSummaryDto] })
   tools!: McpAppToolSummaryDto[];
 }
+
+/** Response body for `GET /toolsets/mcp-apps/tool-names`. */
+export class ListMcpToolNamesResponseDto {
+  @ApiProperty({ type: [String], example: ['refresh_data', 'get_weather'] })
+  @IsString({ each: true })
+  toolNames!: string[];
+}
