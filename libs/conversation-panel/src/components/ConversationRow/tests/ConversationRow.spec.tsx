@@ -334,7 +334,7 @@ describe('ConversationRow', () => {
     });
   });
 
-  describe('itemClassName', () => {
+  describe('itemRadiusClassName', () => {
     it('gives the row button a 12px corner radius by default', () => {
       render(
         <ConversationRow
@@ -349,13 +349,13 @@ describe('ConversationRow', () => {
       );
     });
 
-    it('replaces the default corner radius with itemClassName', () => {
+    it('replaces the default corner radius with itemRadiusClassName', () => {
       render(
         <ConversationRow
           item={baseItem}
           isActive={false}
           onSelectConversation={vi.fn()}
-          itemClassName="rounded-lg"
+          itemRadiusClassName="rounded-lg"
         />,
       );
 

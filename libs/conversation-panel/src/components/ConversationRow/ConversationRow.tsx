@@ -47,12 +47,12 @@ export interface ConversationRowProps {
   /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
   /**
-   * CSS class applied to the row's button, on top of its layout utilities.
-   * Defaults to `'rounded-xl'`; a value replaces that default instead of
-   * merging with it, so a caller can set a different corner radius without two
-   * competing `rounded-*` utilities on the same element.
+   * Corner-radius class applied to the row's button. Defaults to
+   * `'rounded-xl'` (12px) and replaces that default rather than merging with
+   * it, so the button never carries two competing `rounded-*` utilities. The
+   * row's layout utilities are not part of this slot and are always applied.
    */
-  itemClassName?: string;
+  itemRadiusClassName?: string;
   /** Typography class applied to the task pill badge. Defaults to `'dial-caption-lead-semi-text'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
   /** Accessible (visually hidden) label announced for the unread indicator dot. Defaults to `"Unread"`. */
@@ -94,7 +94,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
   itemIconBadgeClassName,
-  itemClassName = 'rounded-xl',
+  itemRadiusClassName = 'rounded-xl',
   taskBadgeClassName = 'dial-caption-lead-semi-text',
   unreadIndicatorLabel = 'Unread',
   rowGroupKey,
@@ -260,7 +260,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
           tabIndex={item.href ? -1 : undefined}
           className={mergeClasses(
             'h-8 w-full justify-start gap-2 py-2 ps-0 after:pointer-events-none',
-            itemClassName,
+            itemRadiusClassName,
             buttonPaddingEnd,
             styles.item,
             isActive && styles.itemActive,

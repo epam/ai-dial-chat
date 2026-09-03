@@ -386,12 +386,12 @@ describe('ConversationPanel', () => {
     ).toBeNull();
   });
 
-  it('forwards styles.itemClassName to the conversation rows', () => {
+  it('forwards styles.itemRadiusClassName to the conversation rows', () => {
     render(
       <ConversationPanel
         {...BASE_PROPS}
         conversations={[items[0]]}
-        styles={{ itemClassName: 'rounded-lg' }}
+        styles={{ itemRadiusClassName: 'rounded-lg' }}
       />,
     );
 
