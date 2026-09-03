@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { Response } from 'express';
 import { extractDialErrorMessage } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
-import { buildConversationIdHeaders } from '../../common/utils/header-value';
+import {
+  buildConversationIdHeaders,
+  buildJobTitleHeaders,
+} from '../../common/utils/header-value';
 import { StringUtils } from '../../common/utils/string-utils';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
@@ -182,6 +185,7 @@ export class ResponsesAdapter {
     timezone?: string,
     timing?: GenerationRelayTiming,
     conversationId?: string,
+    jobTitle?: string,
   ): AsyncGenerator<string, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -200,6 +204,7 @@ export class ResponsesAdapter {
             : {}),
           ...(timezone ? { [TIMEZONE_HEADER]: timezone } : {}),
           ...buildConversationIdHeaders(conversationId),
+          ...buildJobTitleHeaders(jobTitle),
         },
         parseAs: 'stream',
         signal,

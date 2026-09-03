@@ -27,6 +27,17 @@ export interface SessionPayload {
   bucket: string;
 }
 
+/** Claim key the `job_title` OIDC claim (when allowlisted) is stored under. */
+export const JOB_TITLE_CLAIM = 'job_title';
+
+/** Reads the `job_title` claim out of `SessionUser.claims`, if present and a string. */
+export const getJobTitleClaim = (
+  claims: Record<string, unknown> | undefined,
+): string | undefined => {
+  const value = claims?.[JOB_TITLE_CLAIM];
+  return typeof value === 'string' ? value : undefined;
+};
+
 export interface SessionUser {
   /** Present only for cookie-authenticated callers — no session is created for header auth. */
   sid?: string;

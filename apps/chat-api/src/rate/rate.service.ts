@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { buildConversationIdHeaders } from '../common/utils/header-value';
+import {
+  buildConversationIdHeaders,
+  buildJobTitleHeaders,
+} from '../common/utils/header-value';
 import { DialClientService } from '../dial/dial-client.service';
 import type { RateMessageDto } from './dto/rate-message.dto';
 
@@ -11,7 +14,11 @@ export class RateService {
 
   constructor(private readonly dialClient: DialClientService) {}
 
-  async rateMessage(dto: RateMessageDto, accessToken: string): Promise<void> {
+  async rateMessage(
+    dto: RateMessageDto,
+    accessToken: string,
+    jobTitle?: string,
+  ): Promise<void> {
     const url = `${this.dialClient.baseUrl}/v1/${encodeURIComponent(dto.modelId)}/rate`;
 
     this.logger.debug(
@@ -35,6 +42,7 @@ export class RateService {
           'Content-Type': 'application/json',
           ...getBearerAuthHeaders(accessToken),
           ...buildConversationIdHeaders(dto.conversationId),
+          ...buildJobTitleHeaders(jobTitle),
         },
         body: JSON.stringify(body),
       });
