@@ -94,7 +94,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
 
   const handleSaveClick = () => {
     if (!canSend) return;
-    if (!isAttachmentsEnabled && currentText.length >= maxMessageLength) {
+    if (currentText.length >= maxMessageLength) {
       onMessageTooLong?.(currentText.length, maxMessageLength);
       return;
     }
@@ -140,7 +140,6 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
       <Input
         message={message}
         ariaLabel={ariaLabel}
-        isStacked
         hideActionBar
         pendingDropFiles={pendingDropFiles}
         onDropFilesConsumed={handleDropFilesConsumed}

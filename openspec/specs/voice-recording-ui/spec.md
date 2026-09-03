@@ -3,9 +3,7 @@
 ## Purpose
 
 The mic button and the voice bar that replaces the conversation input while a recording is in progress.
-
 ## Requirements
-
 ### Requirement: Mic button in ConversationInput
 
 `ConversationInput` SHALL render a ghost icon button (UI kit `GhostIconButton`, 40 px outer / 24 px icon) on the right side of the action bar when `isAudioMessageSupported` is `true`. The button SHALL be hidden when `isAudioMessageSupported` is `false` or not provided. The button SHALL remain visible regardless of whether there is text in the message field or attachments in the tray.
@@ -101,7 +99,7 @@ The RAF loop runs only while `state === 'recording'` and is cancelled when recor
 
 The waveform `<canvas>` element SHALL be:
 - `h-8` (32 px) on mobile breakpoints.
-- `h-6` (24 px) on desktop breakpoints, to fit within the single-row layout alongside controls.
+- `h-6` (24 px) on desktop breakpoints, to fit alongside the voice bar's controls on one row.
 
 A `ResizeObserver` SHALL be attached to the canvas so that the histogram redraws at the correct pixel width whenever the flex layout changes (e.g. on breakpoint change). Resizing SHALL NOT reset the ring buffer; it only redraws the existing buffer content at the new width.
 
@@ -115,8 +113,6 @@ A `ResizeObserver` SHALL be attached to the canvas so that the histogram redraws
 - **WHEN** the flex layout changes width while recording
 - **THEN** the `ResizeObserver` triggers a redraw at the new pixel width
 - **AND** the already-captured waveform history remains in the ring buffer
-
----
 
 ### Requirement: Mobile layout — waveform full-width, buttons on separate line
 
@@ -143,3 +139,4 @@ If the browser denies microphone access, the `useVoiceRecorder` hook SHALL catch
 - **WHEN** the user clicks the mic button and the browser denies microphone access
 - **THEN** the voice bar is shown in error state with a permission-denied error message
 - **THEN** the X button is visible to dismiss and return to normal input
+

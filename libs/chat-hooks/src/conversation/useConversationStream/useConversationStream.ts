@@ -2,6 +2,7 @@ import { SendCompletionDtoModeEnum } from '@epam/ai-dial-chat-api-client';
 import {
   type Conversation,
   generateUUID,
+  type Message,
   type MessageCustomContent,
   type StreamChunk,
 } from '@epam/ai-dial-chat-shared';
@@ -26,6 +27,14 @@ import { isAwaitingGenerationResume } from './generation-resume';
  * ever missed (e.g. a backend crash mid-generation that never finalizes).
  */
 const GENERATION_RESUME_WATCH_TIMEOUT_MS = 5 * 60 * 1000;
+
+/*
+ * Bounded wait for the client-channel subscribe to resolve so that
+ * completions sent right after mount can carry a channelId. 20 s gives
+ * slow connections time to establish the channel while still being
+ * meaningfully shorter than the 40 s subscribe default.
+ */
+const CHANNEL_WAIT_TIMEOUT_MS = 20000;
 
 /** Options accepted by {@link ConversationStreamTransport.streamCompletion}. */
 export interface StreamCompletionOptions {
@@ -79,6 +88,8 @@ export interface ConversationGenerationLifecycle {
 export interface ConversationStreamChannel {
   channelId: string | null;
   ensureConnected: () => void;
+  /** Resolves with a channel id, waiting for an in-flight subscribe if one isn't established yet, so a completion sent immediately after mount can still carry it. */
+  waitForChannel: (timeoutMs?: number) => Promise<string | null>;
 }
 
 /** Optional host-owned overlay generation-lifecycle notifications. Each method is independently optional. */
@@ -121,14 +132,60 @@ export interface UseConversationStreamResult {
     currentConversationId: string,
     conversation: Conversation,
   ) => void;
+  /** Restores the accumulated live assistant message when its conversation is loaded again before completion. */
+  restoreBufferedGeneration: (
+    currentConversationId: string,
+    conversation: Conversation,
+  ) => Conversation;
   isStreaming: boolean;
   canStopStreaming: boolean;
 }
 
+interface BufferedGeneration {
+  generationId: string;
+  messageIndex: number;
+  message: Message;
+}
+
+const mergeBufferedMessage = (
+  current: Message,
+  buffered: Message,
+): Message => ({
+  ...current,
+  ...buffered,
+  ...((current.custom_content || buffered.custom_content) && {
+    custom_content: {
+      ...current.custom_content,
+      ...buffered.custom_content,
+    },
+  }),
+});
+
+const restoreBufferedMessage = (
+  conversation: Conversation,
+  buffered: BufferedGeneration,
+): Conversation => {
+  if (buffered.messageIndex > conversation.messages.length) {
+    return conversation;
+  }
+
+  const messages = [...conversation.messages];
+  if (buffered.messageIndex === messages.length) {
+    messages.push(buffered.message);
+  } else {
+    messages[buffered.messageIndex] = mergeBufferedMessage(
+      messages[buffered.messageIndex],
+      buffered.message,
+    );
+  }
+  return { ...conversation, messages };
+};
+
 /**
  * Owns completion-streaming state: per-path streaming/stoppable tracking,
- * stale-chunk rejection, reload-after-complete, backend-driven stop, and
- * hard-refresh resume detection — all driven through the injected
+ * stale-chunk rejection, cross-navigation live-message buffering,
+ * reload-after-complete, backend-driven stop, and hard-refresh resume
+ * detection — all driven through the injected
  * `transport`/`generation`/`channel`/`overlay` capabilities rather than any
  * app context or `server-api` import.
  */
@@ -152,6 +209,9 @@ export const useConversationStream = ({
   const activeGenerationIdRef = useRef<string | null>(null);
   const activeGenerationPathRef = useRef<string | null>(null);
   const resumingPathsRef = useRef<Set<string>>(new Set());
+  const bufferedGenerationsRef = useRef<Map<string, BufferedGeneration>>(
+    new Map(),
+  );
   /* Generation ids stopped by the user — onComplete emits notifyStopGenerating's
    * counterpart (nothing) instead of notifyGenerationEnd for these. */
   const stoppedGenerationIdsRef = useRef<Set<string>>(new Set());
@@ -227,112 +287,169 @@ export const useConversationStream = ({
       }
 
       const controller = startGeneration(conversationPath, genId);
+      const initialMessage = conversationRef.current?.messages[messageIndex];
+      if (initialMessage) {
+        bufferedGenerationsRef.current.set(conversationPath, {
+          generationId: genId,
+          messageIndex,
+          message: initialMessage,
+        });
+      } else {
+        bufferedGenerationsRef.current.delete(conversationPath);
+      }
       addStreamingPath(conversationPath);
       overlay?.notifyGenerationStart?.();
 
       /*
        * Best-effort: nudge a disconnected client channel to reconnect so a
-       * tool-signin event has a chance to reach this completion. Never
-       * blocks or delays the send.
+       * tool-signin event has a chance to reach this completion.
        */
       channel?.ensureConnected();
 
-      transport.streamCompletion(
-        conversationPath,
-        userContent,
-        model,
-        {
-          signal: controller.signal,
-          onChunk: (chunk) => {
-            /*
-             * Drop stale chunks (a newer generation replaced this one) and
-             * chunks for a conversation the user is no longer viewing — the
-             * backend persists them, so the correct chat reloads them later.
-             */
-            if (activeGenerationIdRef.current !== genId) return;
-            if (!isPathDisplayed(conversationPath)) return;
-            setConversation((prev) => {
-              if (!prev) return prev;
+      const completionOptions: StreamCompletionOptions = {
+        signal: controller.signal,
+        onChunk: (chunk) => {
+          /*
+           * Drop stale chunks from a superseded generation. Background chunks
+           * still update the per-path buffer, so returning before the backend's
+           * terminal save restores the complete live message.
+           */
+          if (activeGenerationIdRef.current !== genId) return;
+
+          const buffered = bufferedGenerationsRef.current.get(conversationPath);
+          if (buffered?.generationId === genId) {
+            const updated = applyChunkToMessages([buffered.message], 0, chunk);
+            if (updated) buffered.message = updated[0];
+          }
+
+          if (!isPathDisplayed(conversationPath)) return;
+          setConversation((prev) => {
+            if (!prev) return prev;
+            const currentBuffer =
+              bufferedGenerationsRef.current.get(conversationPath);
+            let next: Conversation;
+            if (currentBuffer?.generationId === genId) {
+              next = restoreBufferedMessage(prev, currentBuffer);
+            } else {
               const updatedMessages = applyChunkToMessages(
                 prev.messages,
                 messageIndex,
                 chunk,
               );
               if (!updatedMessages) return prev;
-              const next = { ...prev, messages: updatedMessages };
-              conversationRef.current = next;
-              return next;
-            });
-          },
-          onComplete: async () => {
-            removeStreamingPath(conversationPath);
-            if (activeGenerationIdRef.current === genId) {
-              activeGenerationIdRef.current = null;
-              activeGenerationPathRef.current = null;
-              setStoppablePath(null);
+              next = { ...prev, messages: updatedMessages };
             }
-            completeGeneration(conversationPath, genId);
-            if (stoppedGenerationIdsRef.current.has(genId)) {
-              stoppedGenerationIdsRef.current.delete(genId);
-            } else {
-              overlay?.notifyGenerationEnd?.();
-            }
-            /*
-             * Only refresh displayed state if the user is still viewing this
-             * conversation; otherwise leave the currently-shown chat untouched.
-             */
-            if (!isPathDisplayed(conversationPath)) return;
-            try {
-              /*
-               * Backend has already saved the conversation; reload to get
-               * server-persisted state (including server-computed fields
-               * like stage attachment `data`). Unlike `streamCompletion`/
-               * `watchConversation` (which take the bucket-stripped
-               * `conversationPath`), `getConversation` needs the full
-               * `{bucket}/{name}` path — already-percent-encoded segments
-               * are decoded back to raw first so the transport's own
-               * encoding doesn't double-encode them.
-               */
-              const refreshed = await transport.getConversation(
-                safeDecodeURI(currentConversationId),
-              );
-              if (!isPathDisplayed(conversationPath)) return;
-              setConversation(refreshed);
-              conversationRef.current = refreshed;
-            } catch {
-              // Non-fatal: keep local state if reload fails
-            }
-          },
-          onError: (error: Error) => {
-            removeStreamingPath(conversationPath);
-            if (activeGenerationIdRef.current === genId) {
-              activeGenerationIdRef.current = null;
-              activeGenerationPathRef.current = null;
-              setStoppablePath(null);
-            }
-            // Surface the error only on the conversation the user is viewing.
-            if (!isPathDisplayed(conversationPath)) return;
-            setConversation((prev) => {
-              if (!prev) return prev;
-              const updated = {
-                ...prev,
-                messages: prev.messages.map((m, index) =>
-                  index === messageIndex
-                    ? { ...m, streamErrorMessage: error.message }
-                    : m,
-                ),
-              };
-              conversationRef.current = updated;
-              return updated;
-            });
-          },
+            conversationRef.current = next;
+            return next;
+          });
         },
-        customContent,
-        genId,
-        mode,
-        serverMessageIndex,
-        channel?.channelId ?? undefined,
-      );
+        onComplete: async () => {
+          if (
+            bufferedGenerationsRef.current.get(conversationPath)
+              ?.generationId === genId
+          ) {
+            bufferedGenerationsRef.current.delete(conversationPath);
+          }
+          removeStreamingPath(conversationPath);
+          if (activeGenerationIdRef.current === genId) {
+            activeGenerationIdRef.current = null;
+            activeGenerationPathRef.current = null;
+            setStoppablePath(null);
+          }
+          completeGeneration(conversationPath, genId);
+          if (stoppedGenerationIdsRef.current.has(genId)) {
+            stoppedGenerationIdsRef.current.delete(genId);
+          } else {
+            overlay?.notifyGenerationEnd?.();
+          }
+          /*
+           * Only refresh displayed state if the user is still viewing this
+           * conversation; otherwise leave the currently-shown chat untouched.
+           */
+          if (!isPathDisplayed(conversationPath)) return;
+          try {
+            /*
+             * Backend has already saved the conversation; reload to get
+             * server-persisted state (including server-computed fields
+             * like stage attachment `data`). Unlike `streamCompletion`/
+             * `watchConversation` (which take the bucket-stripped
+             * `conversationPath`), `getConversation` needs the full
+             * `{bucket}/{name}` path — already-percent-encoded segments
+             * are decoded back to raw first so the transport's own
+             * encoding doesn't double-encode them.
+             */
+            const refreshed = await transport.getConversation(
+              safeDecodeURI(currentConversationId),
+            );
+            if (!isPathDisplayed(conversationPath)) return;
+            setConversation(refreshed);
+            conversationRef.current = refreshed;
+          } catch {
+            // Non-fatal: keep local state if reload fails
+          }
+        },
+        onError: (error: Error) => {
+          const currentBuffer =
+            bufferedGenerationsRef.current.get(conversationPath);
+          const buffered =
+            currentBuffer?.generationId === genId ? currentBuffer : undefined;
+          if (buffered) bufferedGenerationsRef.current.delete(conversationPath);
+          removeStreamingPath(conversationPath);
+          if (activeGenerationIdRef.current === genId) {
+            activeGenerationIdRef.current = null;
+            activeGenerationPathRef.current = null;
+            setStoppablePath(null);
+          }
+          // Surface the error only on the conversation the user is viewing.
+          if (!isPathDisplayed(conversationPath)) return;
+          setConversation((prev) => {
+            if (!prev) return prev;
+            const restored =
+              buffered?.generationId === genId
+                ? restoreBufferedMessage(prev, buffered)
+                : prev;
+            const updated = {
+              ...restored,
+              messages: restored.messages.map((m, index) =>
+                index === messageIndex
+                  ? { ...m, streamErrorMessage: error.message }
+                  : m,
+              ),
+            };
+            conversationRef.current = updated;
+            return updated;
+          });
+        },
+      };
+
+      // See client-channel-protocol spec for the full rationale.
+      const send = async () => {
+        try {
+          const clientChannelId =
+            channel?.channelId ??
+            (await channel?.waitForChannel(CHANNEL_WAIT_TIMEOUT_MS)) ??
+            undefined;
+          transport.streamCompletion(
+            conversationPath,
+            userContent,
+            model,
+            completionOptions,
+            customContent,
+            genId,
+            mode,
+            serverMessageIndex,
+            clientChannelId,
+          );
+        } catch (err: unknown) {
+          /* streamCompletion is typed void but may throw synchronously; route
+           * through onError to preserve the error semantics the calling effect
+           * previously got from a synchronous throw. */
+          completionOptions.onError(
+            err instanceof Error ? err : new Error(String(err)),
+          );
+        }
+      };
+      void send();
     },
     // setConversation and conversationRef are stable refs — intentionally omitted
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -344,9 +461,24 @@ export const useConversationStream = ({
       isPathDisplayed,
       channel?.channelId,
       channel?.ensureConnected,
+      channel?.waitForChannel,
       overlay,
       transport,
     ],
+  );
+
+  const restoreBufferedGeneration = useCallback(
+    (
+      currentConversationId: string,
+      conversation: Conversation,
+    ): Conversation => {
+      const conversationPath = getConversationPath(currentConversationId);
+      const buffered = bufferedGenerationsRef.current.get(conversationPath);
+      return buffered
+        ? restoreBufferedMessage(conversation, buffered)
+        : conversation;
+    },
+    [],
   );
 
   const handleStop = useCallback(() => {
@@ -510,6 +642,7 @@ export const useConversationStream = ({
     startStream,
     handleStop,
     resumeIfAwaitingGeneration,
+    restoreBufferedGeneration,
     isStreaming,
     canStopStreaming,
   };

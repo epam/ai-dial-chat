@@ -1,7 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../models/catalog-item';
-import { filterCatalogItems } from './catalog-filter';
+import { filterCatalogItems, getTopicOptions } from './catalog-filter';
 
 const makeItem = (
   overrides: Partial<CatalogItem> & Pick<CatalogItem, 'id' | 'name'>,
@@ -64,5 +64,20 @@ describe('filterCatalogItems', () => {
       makeItem({ id: '2', name: 'Claude' }),
     ];
     expect(filterCatalogItems(items, 'xyzzy-no-match')).toHaveLength(0);
+  });
+});
+
+describe('getTopicOptions', () => {
+  it('returns the distinct set of topics across items', () => {
+    const items = [
+      makeItem({ id: '1', name: 'GPT-4', topics: ['Free', 'Text'] }),
+      makeItem({ id: '2', name: 'Claude', topics: ['Paid', 'Text'] }),
+    ];
+    expect(getTopicOptions(items)).toEqual(new Set(['Free', 'Text', 'Paid']));
+  });
+
+  it('returns an empty set when no items have topics', () => {
+    const items = [makeItem({ id: '1', name: 'GPT-4' })];
+    expect(getTopicOptions(items)).toEqual(new Set());
   });
 });

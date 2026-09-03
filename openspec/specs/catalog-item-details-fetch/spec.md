@@ -276,7 +276,7 @@ layout without physical-direction overrides. No new React state or memoisation i
 
 ### Requirement: Input/Output modalities render as friendly labels, and internal-only capability flags are hidden
 
-`apps/chat/src/utils/map-entity-details-to-catalog.ts` SHALL render a model's and application's
+`libs/chat-hooks/src/catalog/map-entity-details-to-catalog.ts` SHALL render a model's and application's
 `inputAttachmentTypes`/`outputAttachmentTypes` (surfaced as `ModelSpecification.inputTypes`/
 `outputTypes` and `AgentConfiguration.inputAttachmentTypes`/`outputAttachmentTypes`) as
 human-readable labels via `mimeTypesToExtensionLabels` (`@epam/ai-dial-attachment-input`) rather
@@ -284,7 +284,10 @@ than the raw MIME type strings DIAL Core returns. A wildcard major type (`image/
 `video/*`, `text/*`) SHALL render as `"<Major> files"` (e.g. `"Image files"`); the catch-all
 wildcard `*/*` SHALL render as `"All files"` rather than falling through to the generic
 `"<major> files"` template (which would otherwise render the nonsensical `"* files"`); a
-concrete MIME type (e.g. `application/pdf`) SHALL render as its uppercased subtype (`"PDF"`).
+known concrete MIME type SHALL render as its uppercased extension from `MIME_TYPE_EXT_MAP`
+(e.g. `application/pdf` → `"PDF"` and
+`application/vnd.openxmlformats-officedocument.wordprocessingml.document` → `"DOCX"`), while
+an unknown concrete MIME type SHALL fall back to its uppercased subtype.
 The `Specification` section's row labels for these two fields SHALL use the i18n keys
 `catalog.details.modelSpecification.inputModalities` / `.outputModalities`
 (`CatalogI18nKeys.DetailsModelInputModalities` / `DetailsModelOutputModalities`), replacing the
@@ -319,10 +322,15 @@ tool calls`, `Reasoning efforts` (model only), and `Configuration schema` (appli
 - **WHEN** a model's `input_attachment_types` is `["*/*"]`
 - **THEN** the Input modalities row renders `"All files"`, not `"* files"`
 
-#### Scenario: A concrete MIME type renders as its uppercased subtype
+#### Scenario: A known concrete MIME type renders as its extension label
 
 - **WHEN** an application's `input_attachment_types` is `["application/pdf"]`
 - **THEN** the `Configuration` section's Input attachments row renders `"PDF"`
+
+#### Scenario: A structured vendor MIME type does not render as a raw subtype
+
+- **WHEN** a model's `input_attachment_types` is `["application/vnd.openxmlformats-officedocument.wordprocessingml.document"]`
+- **THEN** the `Specification` section's Input modalities row renders `"DOCX"`
 
 #### Scenario: Toolset Capabilities section never renders
 

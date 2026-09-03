@@ -70,8 +70,9 @@ export type {
   OverviewSpec,
 } from './models/item-overview';
 // Utils
-export { filterCatalogItems } from './utils/catalog-filter';
+export { filterCatalogItems, getTopicOptions } from './utils/catalog-filter';
 export { sortCatalogItems } from './utils/catalog-sort';
+export { buildCatalogTabs } from './utils/catalog-tabs';
 export { useFavColumns } from './utils/use-fav-columns';
 export {
   getCredentialsBadgeState,
@@ -104,7 +105,10 @@ export type { CardRowRendererProps } from './components/CardGrid/CardRowRenderer
 export type { CardRowData } from './models/card-row-data';
 export type { CardGridProps, CardGridTitles } from './models/grid-props';
 export { useScrollVirtualizer } from './utils/use-scroll-virtualizer';
-export type { ScrollVirtualizerResult } from './utils/use-scroll-virtualizer';
+export type {
+  ScrollVirtualizerOptions,
+  ScrollVirtualizerResult,
+} from './utils/use-scroll-virtualizer';
 
 export { Favorites } from './components/Favorites/Favorites';
 export type {
@@ -121,6 +125,10 @@ export type {
   ListViewStyles,
   ListViewTypography,
 } from './models/list-props';
+export type {
+  ListViewColumnKey,
+  ListViewColumnVisibility,
+} from './components/ListView/columns';
 
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';

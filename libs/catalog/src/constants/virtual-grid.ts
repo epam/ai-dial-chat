@@ -43,3 +43,11 @@ export const TABLET_COLUMNS = 2;
 
 /** Column count on mobile viewports (< DESKTOP_BREAKPOINT). */
 export const MOBILE_COLUMNS = 1;
+
+/**
+ * Max width (px) of the Browse content column when the catalog is not
+ * full-width. Mirrors the `max-w-[1180px]` class on that column in `Catalog`;
+ * `useScrollVirtualizer` uses it to guess the column count before its
+ * `ResizeObserver` reports the real container width.
+ */
+export const CONTENT_MAX_WIDTH = 1180;

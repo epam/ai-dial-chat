@@ -8,13 +8,13 @@
 
 ### Requirement: UiFeaturesContext owns the effective UI-feature set
 
-`apps/chat/src/context/UiFeaturesContext.tsx` SHALL be the sole owner of the app's effective UI-feature set, computed from `DEFAULT_ENABLED_UI_FEATURES` (`apps/chat/src/constants/ui-features.ts`), `AppConfigContext.config.enabledUiFeatures`, and an overlay-supplied replacement (see "Overlay replace semantics" below). It SHALL follow the `ThemeContext` pattern: `createContext<UiFeaturesContextType | undefined>(undefined)`, a `useMemo`-wrapped provided value, and a `useUiFeatures()` hook that throws a descriptive `Error` when called outside the provider. It SHALL expose `useUiFeature(feature: OverlayFeature): boolean` (`apps/chat/src/hooks/useUiFeature.ts`) as the primary consumption point for gating components. `UiFeaturesProvider` SHALL be mounted in `apps/chat/src/main.tsx` below `AppConfigProvider` and above `OverlayModeGate`.
+`apps/chat/src/context/UiFeaturesContext.tsx` SHALL be the sole owner of the app's effective UI-feature set, computed from `DEFAULT_ENABLED_UI_FEATURES` (`apps/chat/src/constants/ui-features.ts`), `AppConfigContext.config.enabledUiFeatures`, an overlay-supplied replacement (see "Overlay replace semantics" below), and a temporary isolated-view override (see "Isolated-view override takes precedence over every other source", `// TODO: remove in next release`). It SHALL follow the `ThemeContext` pattern: `createContext<UiFeaturesContextType | undefined>(undefined)`, a `useMemo`-wrapped provided value, and a `useUiFeatures()` hook that throws a descriptive `Error` when called outside the provider. It SHALL expose `useUiFeature(feature: OverlayFeature): boolean` (`apps/chat/src/hooks/useUiFeature.ts`) as the primary consumption point for gating components. `UiFeaturesProvider` SHALL be mounted in `apps/chat/src/main.tsx` below `AppConfigProvider` and above `OverlayModeGate`.
 
-**State ownership:** `UiFeaturesContext` (new). Reads `AppConfigContext.config.enabledUiFeatures` (existing context, extended). Written to only by `OverlayContext`'s `SET_OVERLAY_OPTIONS` handler, via the context's own setter — no other consumer may mutate the effective set.
+**State ownership:** `UiFeaturesContext` (new). Reads `AppConfigContext.config.enabledUiFeatures` (existing context, extended). Written to by two callers: `OverlayContext`'s `SET_OVERLAY_OPTIONS` handler (via `applyOverlayOverride`), and — temporarily, `// TODO: remove in next release` — `useIsolatedModelView` (via the new `applyIsolatedViewOverride`, see `isolated-model-view`). No other consumer may mutate the effective set.
 
 **Feature flag:** Not gated behind any existing flag — this capability defines the toggle system itself, not a toggle within it.
 
-**Memoization:** The computed effective `Set<OverlayFeature>` and the provided context value SHALL both be wrapped in `useMemo`, recomputed only when baseline inputs (`enabledUiFeatures`, overlay override) change. `isEnabled` SHALL be wrapped in `useCallback`.
+**Memoization:** The computed effective `Set<OverlayFeature>` and the provided context value SHALL both be wrapped in `useMemo`, recomputed only when baseline inputs (`enabledUiFeatures`, overlay override, isolated-view override) change. `isEnabled` SHALL be wrapped in `useCallback`.
 
 #### Scenario: useUiFeatures throws outside the provider
 
@@ -28,14 +28,14 @@
 
 #### Scenario: Unrelated re-renders do not recompute the context value
 
-- **WHEN** a component elsewhere in the tree re-renders without `enabledUiFeatures` or the overlay override changing
+- **WHEN** a component elsewhere in the tree re-renders without `enabledUiFeatures`, the overlay override, or the isolated-view override changing
 - **THEN** `UiFeaturesContext`'s provided value reference is unchanged
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 25 default-on keys and exclude the 16 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `prompts`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `skills`... are default-off — the full 41-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 41 keys.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 25 default-on keys and exclude the 16 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`... are default-off — the full 41-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 41 keys.
 
-`catalog-table-view` is the one initial-state modifier that defaults on rather than matching the surface's original unconditional behavior: Browse opens in list view, not the grid the original classification recorded. Every other modifier still defaults off, so a deployment that configures nothing observes no other behavior change.
+`catalog-table-view` is the one initial-state modifier that defaults on rather than matching the surface's original unconditional behavior. It no longer gates anything: `CatalogView` leaves `initialViewMode` unset, so Browse always opens in `Catalog`'s own default view (`CatalogViewMode.Grid`, the card grid). The key stays default-on so an overlay host still sending it is not warned about an unknown feature. Every other modifier still defaults off, so a deployment that configures nothing observes no other behavior change.
 
 **RTL impact:** None for this requirement itself — individual owning-surface gates state their own RTL impact where relevant (see per-surface requirements below).
 
@@ -49,10 +49,10 @@
 - **WHEN** no `enabledUiFeatures` and no overlay override are present
 - **THEN** `isEnabled('hide-new-conversation')`, `isEnabled('disabled-send')`, and `isEnabled('hide-user-menu')` all return `false`
 
-#### Scenario: Browse opens in list view
+#### Scenario: Browse opens in the catalog's own default view
 
 - **WHEN** no `enabledUiFeatures` and no overlay override are present
-- **THEN** `isEnabled('catalog-table-view')` returns `true`, and `CatalogView` passes `CatalogViewMode.List` as `Catalog`'s `initialViewMode`
+- **THEN** `isEnabled('catalog-table-view')` returns `true`, and `CatalogView` passes no `initialViewMode`, so Browse opens in `Catalog`'s default `CatalogViewMode.Grid`
 
 #### Scenario: Non-overlay app is unaffected by this change when nothing is configured
 
@@ -311,3 +311,24 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 - **WHEN** `isEnabled('file-manager')` is `false` and `isEnabled('input-files')` is `true`
 - **THEN** the conversation input still renders the attach-file button and can open the file-manager modal — only the standalone `/files` section is gone
+
+### Requirement: Isolated-view override takes precedence over every other source
+
+`TODO: remove in next release.` `UiFeaturesContext` SHALL expose `applyIsolatedViewOverride(features: Set<OverlayFeature> | null)`, called only by `useIsolatedModelView` (see `isolated-model-view`). When set to a non-null value, the effective UI-feature set SHALL become exactly that set, taking precedence over the overlay override, the server `enabledUiFeatures` baseline, and the compiled defaults — none of those other sources SHALL be consulted while the isolated-view override is active. When `null` (the default, and the value whenever isolated view is not active), the existing three-level priority chain (overlay override → server baseline → compiled defaults) SHALL apply unchanged.
+
+This override SHALL NOT be normalized against `DEPRECATED_OVERLAY_FEATURE_ALIASES`/`resolveOverlayFeature` the way `applyOverlayOverride`'s input is, since its caller always supplies canonical `OverlayFeature` enum members directly rather than wire strings from an external host.
+
+#### Scenario: Isolated-view override wins over an active overlay override
+
+- **WHEN** an overlay override is already active with `{header, likes}` and `applyIsolatedViewOverride` is called with `{hide-navigation-menu}`
+- **THEN** the effective set becomes exactly `{hide-navigation-menu}` — `header` and `likes` are no longer enabled
+
+#### Scenario: Isolated-view override wins over the server baseline
+
+- **WHEN** `AppConfigContext.config.enabledUiFeatures` is `['conversations-section', 'prompts']` and `applyIsolatedViewOverride` is called with `{hide-change-agent}`
+- **THEN** the effective set is exactly `{hide-change-agent}` — `conversations-section` and `prompts` are not enabled
+
+#### Scenario: Clearing the isolated-view override restores the prior priority chain
+
+- **WHEN** `applyIsolatedViewOverride(null)` is called after previously being set
+- **THEN** the effective set is recomputed from the overlay override (if any), else the server baseline, else the compiled defaults — exactly as if the isolated-view override had never been applied

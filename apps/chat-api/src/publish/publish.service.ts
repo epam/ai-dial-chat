@@ -11,6 +11,7 @@ import {
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
@@ -104,7 +105,15 @@ export class PublishService {
     author: string,
     rules?: PublishRuleDto[],
   ): Promise<PublishResultDto> {
-    const sourceUrl = entityId;
+    /*
+     * `entityId` arrives as plain, unencoded text (e.g. a prompt path can
+     * end in a literal space, `prompts/{bucket}/test space`) — DIAL Core
+     * rejects resource urls containing raw spaces/special characters, so
+     * `sourceUrl` must be percent-encoded per segment before it is sent to
+     * Core, exactly as `conversation-publish.service.ts` already does for
+     * conversations.
+     */
+    const sourceUrl = encodeDialResourcePath(entityId);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
     const targetUrl = getPublishedTargetUrl(
       getResourceTypePrefix(sourceUrl),
@@ -136,7 +145,14 @@ export class PublishService {
       throw new BadGatewayException('Failed to publish to DIAL Core');
     }
 
-    if (result.error) {
+    /*
+     * `openapi-fetch` short-circuits on an empty response body (e.g. a
+     * `Content-Length: 0` error response) and returns `{ error: undefined }`
+     * without reading the body, even for a non-2xx status — so `result.error`
+     * alone cannot be trusted to detect failure (see the same guard in
+     * `models.service.ts` and `files-listing.service.ts`).
+     */
+    if (!result.response.ok || result.error != null) {
       return mapDialHttpStatus(
         result.response.status,
         `publish ${entityType} "${entityId}"`,
@@ -148,6 +164,13 @@ export class PublishService {
 
     await this.cacheManager.del(historyCacheKey(entityType, entityId));
 
+    /*
+     * Core returns 200 with no parseable body for some auto-approved
+     * publications (observed for a resource published for the first time),
+     * leaving `result.data` undefined even though the request succeeded —
+     * fall back to what the caller already supplied rather than reading off
+     * a body that may not exist.
+     */
     const publication = result.data;
     this.logger.debug(
       `Published ${entityType} "${entityId}" to "${folderPath}"`,
@@ -158,10 +181,10 @@ export class PublishService {
       entityType,
       folderPath,
       version: publicationVersion,
-      publishedAt: publication.createdAt
+      publishedAt: publication?.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
-      publishedBy: publication.author ?? publication.displayAuthor ?? '',
+      publishedBy: publication?.author ?? publication?.displayAuthor ?? author,
     };
   }
 
@@ -191,7 +214,8 @@ export class PublishService {
     version: string | undefined,
     author: string,
   ): Promise<UnpublishResultDto> {
-    const sourceUrl = entityId;
+    /* See the matching `sourceUrl` encoding comment in `publish` above. */
+    const sourceUrl = encodeDialResourcePath(entityId);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
     const targetUrl = getPublishedTargetUrl(
       getResourceTypePrefix(sourceUrl),
@@ -230,7 +254,8 @@ export class PublishService {
       );
     }
 
-    if (result.error) {
+    /* See the matching `openapi-fetch` empty-body guard comment in `publish` above. */
+    if (!result.response.ok || result.error != null) {
       return mapDialHttpStatus(
         result.response.status,
         `unpublish ${entityType} "${entityId}"`,
@@ -242,6 +267,7 @@ export class PublishService {
 
     await this.cacheManager.del(historyCacheKey(entityType, entityId));
 
+    /* See the matching comment in `publish` above: `result.data` can be undefined. */
     const publication = result.data;
     this.logger.debug(
       `Requested unpublish of ${entityType} "${entityId}" from "${folderPath}"`,
@@ -252,10 +278,10 @@ export class PublishService {
       entityType,
       folderPath,
       version: publicationVersion,
-      requestedAt: publication.createdAt
+      requestedAt: publication?.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
-      requestedBy: publication.author ?? publication.displayAuthor ?? '',
+      requestedBy: publication?.author ?? publication?.displayAuthor ?? author,
     };
   }
 

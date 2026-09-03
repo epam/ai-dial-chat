@@ -247,9 +247,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         }
         data-empty-state-title={emptyStateTitle}
         data-empty-state-description={emptyStateDescription}
-        data-auto-select-uploaded-items={String(
-          autoSelectUploadedItems ?? true,
-        )}
+        data-auto-select-uploaded-items={String(autoSelectUploadedItems)}
         data-hidden-file-selectable={String(
           gridOptions?.additionalGridOptions?.rowSelection?.isRowSelectable?.({
             data: {
@@ -1124,11 +1122,16 @@ describe('DialFileManagerModal — per-tab visibleColumns', () => {
 });
 
 describe('DialFileManagerModal — autoSelectUploadedItems', () => {
-  it('passes autoSelectUploadedItems=false by default', () => {
+  /*
+   * The attach modal exists to pick files to attach, so a file uploaded from
+   * inside it is ticked without being switched on at every call site — both
+   * composer call sites relied on the default and got no selection.
+   */
+  it('ticks items uploaded from inside the modal by default', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
-      'false',
+      'true',
     );
   });
 
@@ -1137,6 +1140,19 @@ describe('DialFileManagerModal — autoSelectUploadedItems', () => {
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
       'true',
+    );
+  });
+
+  it('honours an explicit opt-out', () => {
+    render(
+      <DialFileManagerModal
+        {...defaultProps}
+        autoSelectUploadedItems={false}
+      />,
+    );
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
+      'false',
     );
   });
 });

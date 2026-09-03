@@ -263,10 +263,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
 
   const { getGeneration, startGeneration, completeGeneration } =
     useGeneration();
-  const { channelId, ensureConnected } = useClientChannel();
+  const { channelId, ensureConnected, waitForChannel } = useClientChannel();
   const channel = useMemo(
-    () => ({ channelId, ensureConnected }),
-    [channelId, ensureConnected],
+    () => ({ channelId, ensureConnected, waitForChannel }),
+    [channelId, ensureConnected, waitForChannel],
   );
   /*
    * Conversation paths whose auto-stream has already been kicked off. Guards
@@ -285,6 +285,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     startStream,
     handleStop,
     resumeIfAwaitingGeneration,
+    restoreBufferedGeneration,
     isStreaming,
     canStopStreaming,
   } = useConversationStream({
@@ -356,8 +357,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         setIsFetching(true);
       }
       try {
-        const result: Conversation =
+        const loadedConversation: Conversation =
           initialData ?? ((await apiGetConversation(id)) as Conversation);
+        const result = restoreBufferedGeneration(id, loadedConversation);
         if (result.name) {
           updateConversationTitle(id, result.name);
         }
@@ -453,6 +455,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       restoreToolConfiguration,
       startStream,
       resumeIfAwaitingGeneration,
+      restoreBufferedGeneration,
       updateConversationTitle,
       getGeneration,
       showErrorNotification,

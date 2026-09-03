@@ -10,7 +10,7 @@ export const TagsCellRenderer: FC<ICellRendererParams<CatalogItem>> = ({
   if (!data || data.topics.length === 0) return null;
 
   return (
-    <div className="flex h-full items-center">
+    <div className="flex h-full w-full min-w-0 items-center">
       <TopicsLine topics={data.topics} />
     </div>
   );

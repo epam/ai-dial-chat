@@ -11,6 +11,7 @@ import {
   filterByMyApp,
   filterByTopics,
   filterCatalogItems,
+  getTopicOptions,
 } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { buildCatalogTabs } from '../../utils/catalog-tabs';
@@ -26,10 +27,14 @@ import { CreateButton } from './CreateButton';
 /** Root catalog component: entity browsing with tabs, search, sort, filter, favorites strip, and details panel. */
 export const Catalog: FC<CatalogProps> = ({
   items,
+  tabs: controlledTabs,
+  topicOptions: controlledTopicOptions,
   favorites,
   titles,
+  browseHeaderRenderer,
   onToggleFavorite,
   isFavoriteVisible,
+  columnVisibility,
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
@@ -74,7 +79,8 @@ export const Catalog: FC<CatalogProps> = ({
   hideCreateButton = false,
   hidePageTitle = false,
   isReadonly = false,
-  initialViewMode = CatalogViewMode.List,
+  initialViewMode = CatalogViewMode.Grid,
+  isFullWidth = false,
   selectedItemId,
   onCardClick,
   isLoading,
@@ -129,7 +135,7 @@ export const Catalog: FC<CatalogProps> = ({
   const [query, setQuery] = useState('');
   const [viewMode, setViewMode] = useState<CatalogViewMode>(initialViewMode);
   const [listEverShown, setListEverShown] = useState(
-    initialViewMode === CatalogViewMode.List,
+    initialViewMode === CatalogViewMode.Cards,
   );
   const [internalSortKey, setInternalSortKey] = useState<CatalogSortKey>(
     CatalogSortKey.RecentlyUpdated,
@@ -174,13 +180,13 @@ export const Catalog: FC<CatalogProps> = ({
   );
 
   const allFilterValues = useMemo(
-    () => new Set(filteredItems.flatMap((item) => item.topics)),
-    [filteredItems],
+    () => controlledTopicOptions ?? getTopicOptions(filteredItems),
+    [controlledTopicOptions, filteredItems],
   );
 
   const tabs = useMemo(
-    () => buildCatalogTabs(filteredItems, titles?.tabLabels),
-    [filteredItems, titles?.tabLabels],
+    () => controlledTabs ?? buildCatalogTabs(filteredItems, titles?.tabLabels),
+    [controlledTabs, filteredItems, titles?.tabLabels],
   );
 
   const firstTabId = tabs[0]?.id ?? '';
@@ -368,7 +374,7 @@ export const Catalog: FC<CatalogProps> = ({
   }, [selectedItem]);
 
   const handleViewModeChange = useCallback((mode: CatalogViewMode) => {
-    if (mode === CatalogViewMode.List) setListEverShown(true);
+    if (mode === CatalogViewMode.Cards) setListEverShown(true);
     setViewMode(mode);
   }, []);
 
@@ -458,6 +464,7 @@ export const Catalog: FC<CatalogProps> = ({
             query={query}
             onQueryChange={setQuery}
             title={browseTitle}
+            browseHeaderRenderer={browseHeaderRenderer}
             searchPlaceholder={searchPlaceholder}
             gridViewLabel={gridViewLabel}
             listViewLabel={listViewLabel}
@@ -492,7 +499,14 @@ export const Catalog: FC<CatalogProps> = ({
         <div
           className={mergeClasses(
             tabFiltered.length > 0
-              ? 'mx-auto min-h-full w-full max-w-[1180px] px-8 py-6'
+              ? [
+                  'min-h-full w-full px-8 py-6',
+                  /* Tailwind's JIT cannot scan a variable, so the cap is a
+                     literal here and `CONTENT_MAX_WIDTH` in
+                     `constants/virtual-grid.ts` — which the virtualizer reads
+                     to guess the column count. Change both together. */
+                  !isFullWidth && 'mx-auto max-w-[1180px]',
+                ]
               : 'min-h-[180px] flex-1',
             tabFiltered.length === 0 && 'px-8 py-6',
           )}
@@ -512,6 +526,7 @@ export const Catalog: FC<CatalogProps> = ({
               titles={cardGridTitles}
               selectedItemId={selectedItemId}
               isReadonly={isReadonly}
+              isFullWidth={isFullWidth}
             />
           </div>
 
@@ -519,7 +534,7 @@ export const Catalog: FC<CatalogProps> = ({
             <div
               className={mergeClasses(
                 'pb-8',
-                viewMode !== CatalogViewMode.List && 'hidden',
+                viewMode !== CatalogViewMode.Cards && 'hidden',
                 tabFiltered.length === 0 && 'h-full',
               )}
             >
@@ -531,6 +546,7 @@ export const Catalog: FC<CatalogProps> = ({
                 emptyStateTitle={emptyTitle}
                 onToggleFavorite={onToggleFavorite}
                 isFavoriteVisible={isFavoriteVisible}
+                columnVisibility={columnVisibility}
                 onItemClick={onCardClick ?? handleOpenDetails}
                 stickyHeaderTop={0}
                 selectedItemId={selectedItemId}

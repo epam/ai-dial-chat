@@ -6,6 +6,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogSortKey } from '../../../types/sort';
 import { CatalogViewMode } from '../../../types/view-mode';
+import { getTopicOptions } from '../../../utils/catalog-filter';
+import { buildCatalogTabs } from '../../../utils/catalog-tabs';
 import { Catalog } from '../Catalog';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -78,7 +80,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     filterValues?: Set<string>;
     isMyAppsActive?: boolean;
     onMyAppsChange?: (isActive: boolean) => void;
-    onViewModeChange?: (mode: string) => void;
+    onViewModeChange?: (mode: CatalogViewMode) => void;
     sortKey?: string;
     sortOptions?: { key: string; label: string; onClick?: () => void }[];
   }) => (
@@ -107,7 +109,9 @@ vi.mock('../../Toolbar/Toolbar', () => ({
         </button>
       ))}
       <button onClick={() => onMyAppsChange?.(!isMyAppsActive)}>My Apps</button>
-      <button onClick={() => onViewModeChange?.('list')}>List view</button>
+      <button onClick={() => onViewModeChange?.(CatalogViewMode.Cards)}>
+        List view
+      </button>
       {sortOptions.map((option) => (
         <button key={option.key} onClick={option.onClick}>
           Sort {option.label}
@@ -257,19 +261,29 @@ describe('Catalog', () => {
     expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
   });
 
-  it('defaults to the list view', () => {
+  it('defaults to the grid view', () => {
     render(<Catalog items={[]} favorites={[]} />);
-    expect(screen.getByLabelText('catalog list')).toBeTruthy();
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
   });
 
-  it('starts in the list view when initialViewMode is List', () => {
+  it('starts in the list view when initialViewMode is Cards', () => {
     render(
       <Catalog
         items={[]}
         favorites={[]}
-        initialViewMode={CatalogViewMode.List}
+        initialViewMode={CatalogViewMode.Cards}
       />,
     );
+    expect(screen.getByLabelText('catalog list')).toBeTruthy();
+  });
+
+  it('mounts the list view when the toolbar switches to Cards', async () => {
+    render(<Catalog items={[]} favorites={[]} />);
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+
     expect(screen.getByLabelText('catalog list')).toBeTruthy();
   });
 
@@ -282,6 +296,25 @@ describe('Catalog', () => {
       />,
     );
     expect(screen.queryByLabelText('catalog list')).toBeNull();
+  });
+
+  it('caps the browse content column by default', () => {
+    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
+    // eslint-disable-next-line testing-library/no-node-access -- asserting the width class on the unlabeled content wrapper, which has no accessible role or text to query
+    const content = screen.getByRole('grid').parentElement?.parentElement;
+    expect(content?.className).toContain('max-w-[1180px]');
+    expect(content?.className).toContain('mx-auto');
+  });
+
+  it('drops the content column cap when isFullWidth is set', () => {
+    render(
+      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} isFullWidth />,
+    );
+    // eslint-disable-next-line testing-library/no-node-access -- same unlabeled content wrapper; verifying the centered cap is gone while the side padding stays
+    const content = screen.getByRole('grid').parentElement?.parentElement;
+    expect(content?.className).not.toContain('max-w-[1180px]');
+    expect(content?.className).not.toContain('mx-auto');
+    expect(content?.className).toContain('px-8');
   });
 
   it('calls onCreateClick when Create is clicked', async () => {
@@ -730,6 +763,66 @@ describe('Catalog', () => {
         .getByRole('tab', { name: /Prompts/i })
         .getAttribute('aria-selected'),
     ).toBe('true');
+  });
+
+  it('renders the controlled tabs prop instead of tabs derived from items, keeping the grid limited to items', () => {
+    const wideTabs = buildCatalogTabs([
+      makeItem('1', 'Claude', { type: CatalogEntityType.Agent }),
+      makeItem('2', 'GPT', { type: CatalogEntityType.Model }),
+      makeItem('3', 'My Prompt', { type: CatalogEntityType.Prompt }),
+    ]);
+
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude', { type: CatalogEntityType.Agent })]}
+        tabs={wideTabs}
+        favorites={[]}
+        activeTab={CatalogEntityType.Agent}
+      />,
+    );
+
+    expect(screen.getByRole('tab', { name: /Models/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Agents/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Prompts/i })).toBeTruthy();
+    expect(
+      screen.getByRole('grid', { name: 'catalog grid' }).textContent,
+    ).toContain('1 items');
+  });
+
+  it('renders the controlled topicOptions prop instead of options derived from items', () => {
+    const wideTopicOptions = getTopicOptions([
+      makeItem('1', 'Claude', { topics: ['Free'] }),
+      makeItem('2', 'GPT', { topics: ['Paid'] }),
+    ]);
+
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude', { topics: ['Free'] })]}
+        topicOptions={wideTopicOptions}
+        favorites={[]}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Free' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Paid' })).toBeTruthy();
+  });
+
+  it('falls back to deriving tabs and Topics options from items when tabs/topicOptions are omitted', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', {
+            type: CatalogEntityType.Agent,
+            topics: ['Free'],
+          }),
+        ]}
+        favorites={[]}
+      />,
+    );
+
+    expect(screen.getByRole('tab', { name: /Agents/i })).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: /Models/i })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Free' })).toBeTruthy();
   });
 
   it('calls onActiveTabChange with the clicked tab id', async () => {

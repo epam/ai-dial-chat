@@ -1,38 +1,18 @@
 import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 import { Grid, mergeClasses } from '@epam/ai-dial-ui-kit';
 import type { GridApi } from 'ag-grid-community';
-import {
-  type CSSProperties,
-  FC,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { type CSSProperties, FC, useEffect, useMemo, useRef } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
 import { GridContext } from '../../models/grid-context';
 import { ListViewProps } from '../../models/list-props';
+import { useRowWindow } from '../../utils/scroll-window';
 import { CATALOG_COLUMNS } from './columns';
 import styles from './ListView.module.scss';
 
-/** How many rows to render in the initial load and each subsequent batch. */
-const PAGE_SIZE = 50;
+/** Height of every row, in pixels. Fixed, so the window's spacers are exact. */
+const ROW_HEIGHT = 60;
 
-const findScrollParent = (el: Element | null): Element | null => {
-  if (!el || el === document.body) return null;
-  const { overflow, overflowY } = getComputedStyle(el);
-  if (
-    overflow === 'auto' ||
-    overflow === 'scroll' ||
-    overflowY === 'auto' ||
-    overflowY === 'scroll'
-  ) {
-    return el;
-  }
-  return findScrollParent(el.parentElement);
-};
-
-/** ag-grid table view of catalog items with infinite-scroll windowing. */
+/** ag-grid table view of catalog items, windowed to the rows in view. */
 export const ListView: FC<ListViewProps> = ({
   items,
   type,
@@ -47,6 +27,7 @@ export const ListView: FC<ListViewProps> = ({
   selectedItemId,
   credentialsBadgeLoggedOutLabel,
   isReadonly = false,
+  columnVisibility,
 }) => {
   if (items.length === 0) {
     return (
@@ -64,6 +45,7 @@ export const ListView: FC<ListViewProps> = ({
     '--cat-list-header-bg': colors?.headerBackground,
     '--cat-list-row-divider': colors?.rowDivider,
     '--cat-card-star-filled': colors?.starFilled,
+    '--cat-list-folder-icon': colors?.folderIcon,
     '--cat-list-row-even-bg': colors?.rowEvenBackground,
     '--cat-list-selected-border': colors?.selectedRowBorder,
     '--cat-list-selected-bg': colors?.selectedRowBackground,
@@ -74,52 +56,22 @@ export const ListView: FC<ListViewProps> = ({
   } as CSSProperties;
 
   const gridApiRef = useRef<GridApi<CatalogItem> | null>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  const [visibleCount, setVisibleCount] = useState(() =>
-    Math.min(items.length, PAGE_SIZE),
-  );
-
-  // Reset window when the items array changes (search / filter / sort).
-  const prevItemsRef = useRef(items);
-  useEffect(() => {
-    if (prevItemsRef.current !== items) {
-      prevItemsRef.current = items;
-      setVisibleCount(Math.min(items.length, PAGE_SIZE));
-    }
-  }, [items]);
 
   /*
-   * Load the next batch when the sentinel scrolls into the visible area.
-   * IntersectionObserver with a non-document root is unreliable here, so
-   * a plain scroll listener on the nearest scroll ancestor is used instead.
+   * `domLayout: 'autoHeight'` is what lets the table scroll with the page
+   * instead of inside its own box, and it switches ag-grid's own row
+   * virtualisation off: every row it is given goes into the DOM, five React
+   * cell renderers each. So it is only ever given the rows around the
+   * viewport, with a spacer standing in for the rest of the table's height.
    */
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const scrollRoot = findScrollParent(sentinel.parentElement);
-    if (!scrollRoot) return;
-
-    const checkVisibility = () => {
-      const rootRect = scrollRoot.getBoundingClientRect();
-      const sentinelRect = sentinel.getBoundingClientRect();
-      if (
-        sentinelRect.top < rootRect.bottom &&
-        sentinelRect.bottom > rootRect.top
-      ) {
-        setVisibleCount((c) => Math.min(items.length, c + PAGE_SIZE));
-      }
-    };
-
-    scrollRoot.addEventListener('scroll', checkVisibility, { passive: true });
-    checkVisibility();
-    return () => scrollRoot.removeEventListener('scroll', checkVisibility);
-  }, [items.length]);
+  const { containerRef, startRow, endRow } = useRowWindow(
+    items.length,
+    ROW_HEIGHT,
+  );
 
   const windowedItems = useMemo(
-    () => items.slice(0, visibleCount),
-    [items, visibleCount],
+    () => items.slice(startRow, endRow),
+    [items, startRow, endRow],
   );
 
   /*
@@ -150,18 +102,28 @@ export const ListView: FC<ListViewProps> = ({
       style={cssVars}
       className={mergeClasses('w-full rounded-xl border', styles.listContainer)}
     >
-      <div className={mergeClasses('rounded-xl', styles.gridClip)}>
+      <div
+        ref={containerRef}
+        className={mergeClasses('rounded-xl', styles.gridClip)}
+      >
+        {startRow > 0 && (
+          <div style={{ height: startRow * ROW_HEIGHT }} aria-hidden />
+        )}
         <Grid<CatalogItem>
-          columnDefs={CATALOG_COLUMNS(type, isReadonly)}
+          columnDefs={CATALOG_COLUMNS(type, isReadonly, columnVisibility)}
           rowData={windowedItems}
           getRowId={(r) => r.id}
           withoutHeaderBorders
+          /* Nothing here opens a row context menu, so the wrapper ag-grid
+             cells would otherwise get — a dropdown plus a span around every
+             one of the five renderers in every row — is pure weight. */
+          wrapCustomCellRenderers={false}
           onGridApiChange={(api) => {
             gridApiRef.current = api;
           }}
           emptyStateTitle={emptyStateTitle}
           additionalGridOptions={{
-            rowHeight: 60,
+            rowHeight: ROW_HEIGHT,
             defaultColDef: { filter: false, floatingFilter: false },
             context: {
               searchQuery: query,
@@ -187,8 +149,11 @@ export const ListView: FC<ListViewProps> = ({
           }}
           ariaLabel={ariaLabel}
         />
-        {visibleCount < items.length && (
-          <div ref={sentinelRef} className="h-2" aria-hidden />
+        {endRow < items.length && (
+          <div
+            style={{ height: (items.length - endRow) * ROW_HEIGHT }}
+            aria-hidden
+          />
         )}
       </div>
     </div>

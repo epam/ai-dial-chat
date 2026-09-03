@@ -18,6 +18,7 @@ import {
 } from '../../common/validators/bucket-name.pattern';
 import { DialFileNodeType } from './dial-file-node-type';
 import { IsValidFilePath } from './file-path.validator';
+import { IsNotReservedMarkerPath } from './marker-name.validator';
 
 export const RenameItemNodeType = DialFileNodeType;
 export type RenameItemNodeType = DialFileNodeType;
@@ -43,6 +44,7 @@ export class RenameItemDto {
   @IsString()
   @IsNotEmpty()
   @IsValidFilePath()
+  @IsNotReservedMarkerPath()
   @MaxLength(1024)
   @ApiProperty({
     description: 'Relative destination path within bucket',

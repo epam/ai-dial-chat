@@ -129,7 +129,11 @@ same-origin URL. The callback SHALL remove the OAuth authorization code from its
 channel result until the opener acknowledges it, and close itself after acknowledgement. The
 opener SHALL continue listening when cross-origin navigation makes its retained `WindowProxy`
 appear closed while the opener is in the background, consume either the channel result or the
-popup URL marker, and acknowledge the result before refreshing status. A popup SHALL be treated
+popup URL marker, and acknowledge the result before refreshing status. The opener SHALL keep the
+flow's `BroadcastChannel` open long enough for that acknowledgement to be delivered, closing it no
+earlier than the next macrotask after posting — closing the channel in the same tick as the post
+discards the acknowledgement, which strands a callback popup whose `WindowProxy` was severed, the
+one case the acknowledgement exists to cover. A popup SHALL be treated
 as manually cancelled only after focus returns to the opener and the popup reference remains
 closed, or after the pending flow timeout. Therefore, a completed login cannot be mistaken for
 manual cancellation and the handoff requires no delay timer. The popup result URL SHALL NOT
@@ -211,6 +215,14 @@ extra fetch.
   `closed` while the OAuth window remains open
 - **THEN** the opener keeps the flow channel active, consumes and acknowledges the callback
   result, and the callback closes its own window
+
+#### Scenario: Acknowledgement reaches a callback whose popup reference was severed
+
+- **WHEN** the opener consumes a result and posts its acknowledgement on the flow's
+  `BroadcastChannel`
+- **THEN** the channel remains open past the current tick so the acknowledgement is delivered, and
+  the callback popup closes itself on receiving it — even when the opener's `WindowProxy` was
+  severed and it could not close the popup directly
 
 #### Scenario: User manually closes the OAuth popup
 - **WHEN** the popup is closed without a result and focus returns to the initiating tab

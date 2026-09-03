@@ -80,7 +80,6 @@ export const Input: FC<InputProps> = ({
   onDeploymentChange,
   modelSelectorLabels,
   initialAttachments = [],
-  isStacked = false,
   hideAddButton = false,
   hideAttachFile = false,
   hideActionBar = false,
@@ -158,7 +157,7 @@ export const Input: FC<InputProps> = ({
     [onDialFileSystemClick, dialFileSystemLabel],
   );
 
-  const { message, setMessage, textareaRef, isMultiLine } = useMessageState({
+  const { message, setMessage, textareaRef } = useMessageState({
     messageProp,
     messageRevision,
   });
@@ -221,6 +220,15 @@ export const Input: FC<InputProps> = ({
 
   const handlePaste = useCallback(
     (e: ClipboardEvent<HTMLTextAreaElement>) => {
+      /*
+       * Deliberately narrower than the send gate above. With attachments
+       * enabled an over-threshold paste is converted to an attachment and
+       * never reaches the textarea, so warning here would be about text the
+       * user did not paste inline; an under-threshold paste is at most
+       * pasteTextThreshold characters and cannot reach the cap on its own.
+       * Existing text plus a small paste crossing the cap is not visible from
+       * the pasted string's length at all — the send gate catches that.
+       */
       if (!isAttachmentsEnabled) {
         const text = e.clipboardData.getData('text/plain');
         if (text.length >= maxMessageLength) {
@@ -288,15 +296,6 @@ export const Input: FC<InputProps> = ({
     [toolsMenuItems, onToolToggle],
   );
 
-  const hasTools = visibleTools.length > 0 && onToolToggle != null;
-  /*
-   * Stacked layout: textarea on its own row above the action bar. Used when the
-   * caller opts in (edit mode), whenever the
-   * message spans multiple visual lines, or when the deployment exposes tools
-   * (chips need the row between textarea and buttons).
-   */
-  const isStackedLayout =
-    isStacked || message.includes('\n') || isMultiLine || hasTools;
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
   const shouldShowMicButton = useMemo(
@@ -306,7 +305,7 @@ export const Input: FC<InputProps> = ({
 
   const handleSend = async () => {
     if (isSendDisabled) return;
-    if (!isAttachmentsEnabled && message.length >= maxMessageLength) {
+    if (message.length >= maxMessageLength) {
       onMessageTooLong?.(message.length, maxMessageLength);
       return;
     }
@@ -417,7 +416,7 @@ export const Input: FC<InputProps> = ({
       className={mergeClasses(
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
-        'flex min-h-[64px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border shadow-md',
+        'flex w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border shadow-md',
         'focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
         attachments.length > 6 ? 'py-3 ps-3' : 'p-3',
         className,
@@ -449,22 +448,14 @@ export const Input: FC<InputProps> = ({
         />
       )}
       {hideActionBar ? (
-        isStackedLayout && textarea
+        textarea
       ) : (
-        <div
-          className={mergeClasses(
-            'flex items-center gap-2',
-            isStackedLayout ? 'flex-wrap' : 'flex-wrap desktop:flex-nowrap',
-          )}
-        >
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full min-w-0 items-center self-stretch">
+            {textarea}
+          </div>
           {!hideAddButton && (
-            <div
-              className={mergeClasses(
-                'flex',
-                'order-2',
-                !isStackedLayout && 'desktop:order-1',
-              )}
-            >
+            <div className="flex">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -499,35 +490,17 @@ export const Input: FC<InputProps> = ({
               />
             </div>
           )}
-          {isStackedLayout &&
-            visibleTools.length > 0 &&
-            onToolToggle != null && (
-              <div className="order-3 min-w-0 flex-1">
-                <ToolsChips
-                  items={visibleTools}
-                  onToolToggle={onToolToggle}
-                  onToolDismiss={handleToolDismiss}
-                  removeLabel={toolsChipLabels?.removeLabel}
-                />
-              </div>
-            )}
-          <div
-            className={mergeClasses(
-              'order-1 flex w-full min-w-0 items-center self-stretch',
-              !isStackedLayout &&
-                'desktop:order-2 desktop:w-auto desktop:flex-1',
-            )}
-          >
-            {textarea}
-          </div>
-          <div
-            className={mergeClasses(
-              'flex flex-shrink-0 items-center gap-2',
-              isStackedLayout && hasTools ? 'order-4' : 'order-3',
-              'ms-auto',
-              !isStackedLayout && 'desktop:ms-0',
-            )}
-          >
+          {visibleTools.length > 0 && onToolToggle != null && (
+            <div className="min-w-0 flex-1">
+              <ToolsChips
+                items={visibleTools}
+                onToolToggle={onToolToggle}
+                onToolDismiss={handleToolDismiss}
+                removeLabel={toolsChipLabels?.removeLabel}
+              />
+            </div>
+          )}
+          <div className="ms-auto flex flex-shrink-0 items-center gap-2">
             {renderFooterActions ? (
               renderFooterActions({ canSend, onSend: handleSend })
             ) : (

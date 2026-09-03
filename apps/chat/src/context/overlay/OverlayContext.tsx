@@ -43,6 +43,7 @@ import { getConversationRoute } from '../../constants/routes';
 import { AuthStatus } from '../../types/auth-status';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { conversationIdsMatch } from '../../utils/conversation-id-match';
+import { matchesAllowedOrigin } from '../../utils/overlay-origin';
 import { useAppConfig } from '../AppConfigContext';
 import { useUser } from '../auth/UserContext';
 import { useTheme } from '../ThemeContext';
@@ -428,7 +429,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const isTrustedHostOrigin = useCallback(
     (origin: string): boolean =>
       hostDomainRef.current === origin &&
-      overlayAllowedOrigins.includes(origin),
+      matchesAllowedOrigin(origin, overlayAllowedOrigins),
     [overlayAllowedOrigins],
   );
 
@@ -821,7 +822,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const handleSetOverlayOptions = useCallback(
     (origin: string, request: OverlayMessageRequest) => {
-      if (!overlayAllowedOrigins.includes(origin)) {
+      if (!matchesAllowedOrigin(origin, overlayAllowedOrigins)) {
         logOverlayWarning(`rejected SET_OVERLAY_OPTIONS from ${origin}`);
         return;
       }

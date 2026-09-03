@@ -288,14 +288,14 @@ const ConversationView: FC<Props> = ({
   const mcpAppTools = useMcpAppTools(selectedDeployment, messages, toolsets);
   useAutoOpenMcpAppCanvas(messages, mcpAppTools);
 
-  const {
-    inputAttachmentTypes,
-    isAttachmentsAllowed,
-    validateAttachment,
-    fileAccept,
-  } = useAttachmentValidation({
-    allowedMimeTypes: selectedDeployment?.inputAttachmentTypes ?? [],
-    onValidationError: ({ reason, formats }) => {
+  const handleAttachmentValidationError = useCallback(
+    ({
+      reason,
+      formats,
+    }: {
+      reason: AttachmentValidationErrorReason;
+      formats?: string;
+    }) => {
       const noTypesAllowed =
         reason === AttachmentValidationErrorReason.NoTypesAllowed;
       showErrorNotification({
@@ -312,6 +312,17 @@ const ConversationView: FC<Props> = ({
         ),
       });
     },
+    [showErrorNotification, t],
+  );
+
+  const {
+    inputAttachmentTypes,
+    isAttachmentsAllowed,
+    validateAttachment,
+    fileAccept,
+  } = useAttachmentValidation({
+    allowedMimeTypes: selectedDeployment?.inputAttachmentTypes ?? [],
+    onValidationError: handleAttachmentValidationError,
   });
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
@@ -834,6 +845,8 @@ const ConversationView: FC<Props> = ({
                 isStreaming={isAssistantTyping}
                 onAttachmentsChange={handleAttachmentsChange}
                 placeholder={placeholder}
+                removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
+                retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
                 deployments={
                   isAgentSelectorHidden ? undefined : agentSelectorItems
                 }

@@ -46,13 +46,34 @@ describe('FolderCellRenderer', () => {
     expect(screen.queryByText('—')).toBeNull();
   });
 
-  it('renders the folder path when the item belongs to a folder', () => {
+  it('shows the deepest folder, not the squeezed full path', () => {
     render(
       <FolderCellRenderer
-        {...makeParams(makeItem({ folder: ['Team', 'Shared'] }))}
+        {...makeParams(
+          makeItem({ folder: ['Organization', 'public', 'prompts'] }),
+        )}
       />,
     );
-    expect(screen.getByText('Shared')).toBeTruthy();
+    expect(screen.getByText('prompts')).toBeTruthy();
+    expect(screen.queryByText('Organization')).toBeNull();
     expect(screen.queryByText('—')).toBeNull();
+  });
+
+  it('keeps the whole path reachable for assistive tech', () => {
+    render(
+      <FolderCellRenderer
+        {...makeParams(
+          makeItem({ folder: ['Organization', 'public', 'prompts'] }),
+        )}
+      />,
+    );
+    expect(screen.getByText('Organization / public / prompts')).toBeTruthy();
+  });
+
+  it('does not repeat a single-segment path', () => {
+    render(
+      <FolderCellRenderer {...makeParams(makeItem({ folder: ['Shared'] }))} />,
+    );
+    expect(screen.getAllByText('Shared')).toHaveLength(1);
   });
 });

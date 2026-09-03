@@ -284,6 +284,48 @@ describe('OverlayContext', () => {
       expect(postMessageSpy).not.toHaveBeenCalled();
     });
 
+    it('accepts an origin matching a wildcard allowlist entry', async () => {
+      mockOverlayAllowedOrigins = ['https://*.example.com'];
+      renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost(
+        {
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-wildcard-match',
+          payload: { hostDomain: 'https://portal.example.com' },
+        },
+        'https://portal.example.com',
+      );
+
+      await waitFor(() => {
+        expect(
+          postMessageSpy.mock.calls.some(
+            ([message]) =>
+              (message as { requestId?: string }).requestId ===
+              'req-wildcard-match',
+          ),
+        ).toBe(true);
+      });
+    });
+
+    it('rejects an origin not matching a wildcard allowlist entry', () => {
+      mockOverlayAllowedOrigins = ['https://*.example.com'];
+      renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost(
+        {
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-wildcard-mismatch',
+          payload: { hostDomain: 'https://evil.example.com.attacker.test' },
+        },
+        'https://evil.example.com.attacker.test',
+      );
+
+      expect(postMessageSpy).not.toHaveBeenCalled();
+    });
+
     it('rejects a hostDomain payload that does not match the message origin', () => {
       mockOverlayAllowedOrigins = [
         'https://partner.example.com',

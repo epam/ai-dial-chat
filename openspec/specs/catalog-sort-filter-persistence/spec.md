@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Persisting the catalog's sort key and topic filter, and reconciling them into the controlled `Catalog` component.
+Persisting the catalog's sort key and topic filter, and reconciling them into the controlled `Catalog` component. Also the optional host-supplied Topics option set so a host can keep filter checkboxes that would disappear if `Catalog` derived them only from a narrowed `items` set.
 
 ## Requirements
 
@@ -47,6 +47,33 @@ RTL impact: none (no new layout).
 
 - **WHEN** the user checks a topic in the "From" filter dropdown and clicks Apply, and `onFilterTopicsChange` is supplied
 - **THEN** `onFilterTopicsChange` is called with a `Set<string>` containing the checked topic(s)
+
+---
+
+### Requirement: Catalog accepts a host-supplied Topics option set
+
+`CatalogProps` SHALL include an optional `topicOptions?: Set<string>`.
+
+When `topicOptions` is supplied, `Catalog` SHALL use it as the Topics filter checkbox values (`filterValues`) and SHALL NOT derive options from `items`. When omitted, `Catalog` SHALL derive them via `getTopicOptions` on non-hidden `items`.
+
+`topicOptions` controls only which topics are listed. The selected filter remains `filterTopics` / `onFilterTopicsChange` (or Catalog's internal filter state when those are omitted). A listed option with no matching item in the current `items` set is still shown; applying it may empty the Browse grid.
+
+`@epam/ai-dial-catalog` SHALL export `getTopicOptions` so a host can compute the option set from a wider item set than it passes as `items`, for the same reason as the host-supplied `tabs` list.
+
+`Catalog` SHALL NOT read storage, routes, translations, or feature flags to decide the Topics options.
+
+i18n keys needed: none. RTL/accessibility: the existing Filter dropdown already handles layout direction and checkbox labelling. Feature flag: none.
+
+#### Scenario: Host topicOptions include topics absent from current items
+
+- **WHEN** `Catalog` is rendered with items whose topics are only `['Free']`, and `topicOptions` computed via `getTopicOptions` from a wider set that also includes `'Paid'`
+- **THEN** the Topics filter lists both `Free` and `Paid`
+
+#### Scenario: Omitted topicOptions are still derived from items
+
+- **WHEN** `Catalog` is rendered with an item whose topics are `['Free']` and no `topicOptions` prop
+- **THEN** the Topics filter lists `Free`
+- **AND** it does not list topics that are absent from `items`
 
 ---
 

@@ -1,14 +1,13 @@
 import {
+  ConversationTransferErrorCode,
   ConversationTransferJobStatus,
   ConversationTransferSubjectKind,
+  ConversationTransferUnitKind,
 } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { strToU8, zipSync } from 'fflate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  ConversationTransferErrorCode,
-  ConversationTransferWarningCode,
-} from '../../conversation-transfer/types';
+import { ConversationTransferWarningCode } from '../../conversation-transfer/types';
 import {
   useConversationImport,
   type UseConversationImportParams,
@@ -254,9 +253,11 @@ describe('useConversationImport', () => {
         names: ['q1.pdf'],
       }),
     );
-    expect(result.current.jobs[0].status).toBe(
-      ConversationTransferJobStatus.Success,
-    );
+    expect(result.current.jobs[0]).toMatchObject({
+      status: ConversationTransferJobStatus.Warning,
+      warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+      progress: { percent: 100 },
+    });
   });
 
   it('reports MissingBucket and fails the job when there is no bucket', async () => {
@@ -378,5 +379,166 @@ describe('useConversationImport', () => {
     unmount();
 
     expect(capturedSignal?.aborted).toBe(true);
+  });
+
+  describe('file naming', () => {
+    it('names the job after the selected file', async () => {
+      const { result } = renderImport('new-bucket');
+
+      await act(() =>
+        result.current.importConversations(
+          jsonFile([makeConversation()], 'my-backup.json'),
+        ),
+      );
+
+      expect(result.current.jobs[0].fileName).toBe('my-backup.json');
+    });
+  });
+
+  describe('progress', () => {
+    it('advances through parse, upload, and save', async () => {
+      const { result } = renderImport('new-bucket');
+      const file = dialFile(
+        [
+          makeConversation({
+            name: 'First',
+            messages: [
+              {
+                role: 'assistant',
+                content: '',
+                timestamp: '2026-07-10T00:00:00.000Z',
+                custom_content: {
+                  attachments: [
+                    { title: 'a.pdf', url: 'files/old-bucket/a.pdf' },
+                  ],
+                },
+              },
+            ],
+          }),
+          makeConversation({ id: 'old-bucket/gpt-4o__Second', name: 'Second' }),
+        ],
+        { 'a.pdf': 'pdf-bytes' },
+      );
+
+      const saveGates: Array<() => void> = [];
+      saveConversation.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            saveGates.push(() => resolve(undefined));
+          }),
+      );
+
+      let importPromise: Promise<void> = Promise.resolve();
+      await act(async () => {
+        importPromise = result.current.importConversations(file);
+        await Promise.resolve();
+      });
+
+      /* 10 prepare + 70 upload, with neither conversation saved yet. */
+      await waitFor(() =>
+        expect(result.current.jobs[0].progress.percent).toBe(80),
+      );
+
+      await waitFor(() => expect(saveGates).toHaveLength(1));
+      await act(async () => {
+        saveGates[0]();
+        await Promise.resolve();
+      });
+      await waitFor(() =>
+        expect(result.current.jobs[0].progress).toEqual({
+          percent: 90,
+          units: {
+            completed: 1,
+            total: 2,
+            kind: ConversationTransferUnitKind.Conversation,
+          },
+        }),
+      );
+
+      await waitFor(() => expect(saveGates).toHaveLength(2));
+      await act(async () => {
+        saveGates[1]();
+        await importPromise;
+      });
+
+      expect(result.current.jobs[0]).toMatchObject({
+        status: ConversationTransferJobStatus.Success,
+        progress: { percent: 100 },
+      });
+    });
+
+    it('credits the upload phase in full for a plain JSON import', async () => {
+      const { result } = renderImport('new-bucket');
+
+      await act(() =>
+        result.current.importConversations(jsonFile([makeConversation()])),
+      );
+
+      expect(uploadFile).not.toHaveBeenCalled();
+      expect(result.current.jobs[0]).toMatchObject({
+        status: ConversationTransferJobStatus.Success,
+        progress: { percent: 100 },
+      });
+    });
+  });
+
+  describe('cancellation', () => {
+    it('aborts the in-flight save but keeps the row', async () => {
+      const { result } = renderImport('new-bucket');
+      let capturedSignal: AbortSignal | undefined;
+      saveConversation.mockImplementation(
+        (_params: unknown, options: { signal: AbortSignal }) => {
+          capturedSignal = options.signal;
+          return new Promise(() => {
+            /* never resolves */
+          });
+        },
+      );
+
+      act(() => {
+        void result.current.importConversations(jsonFile([makeConversation()]));
+      });
+      await waitFor(() => expect(capturedSignal).toBeDefined());
+
+      act(() => {
+        result.current.cancelJob(result.current.jobs[0].id);
+      });
+
+      expect(capturedSignal?.aborted).toBe(true);
+      expect(result.current.jobs).toHaveLength(1);
+      expect(result.current.jobs[0].status).toBe(
+        ConversationTransferJobStatus.Canceled,
+      );
+      expect(onSuccess).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('error codes on the job', () => {
+    it('records MissingBucket on the row, not only in the event', async () => {
+      const { result } = renderImport(undefined);
+
+      await act(() =>
+        result.current.importConversations(jsonFile([makeConversation()])),
+      );
+
+      expect(result.current.jobs[0]).toMatchObject({
+        status: ConversationTransferJobStatus.Failed,
+        errorCode: ConversationTransferErrorCode.MissingBucket,
+      });
+    });
+
+    it('records Unknown when a conversation fails to save', async () => {
+      const { result } = renderImport('new-bucket');
+      saveConversation.mockRejectedValue(new Error('boom'));
+
+      await act(() =>
+        result.current.importConversations(jsonFile([makeConversation()])),
+      );
+
+      expect(result.current.jobs[0]).toMatchObject({
+        status: ConversationTransferJobStatus.Failed,
+        errorCode: ConversationTransferErrorCode.Unknown,
+      });
+    });
   });
 });

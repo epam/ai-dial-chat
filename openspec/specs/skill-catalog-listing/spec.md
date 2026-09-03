@@ -17,7 +17,7 @@ This is an overlay feature key, not an `ENABLED_FEATURES` / `ENABLED_FEATURES_RO
 #### Scenario: Feature disabled
 
 - **WHEN** `OverlayFeature.Skills` is not enabled
-- **THEN** no skill item enters `catalogItems`, `buildCatalogTabs` derives no Skills tab, and the catalog renders exactly as it does without this change
+- **THEN** no skill item enters `catalogItems`, the catalog's default tab derivation (`buildCatalogTabs` on those items, used when `tabs` is omitted) includes no Skills tab, and the catalog renders exactly as it does without this change
 
 #### Scenario: Feature enabled with at least one skill
 
@@ -69,7 +69,7 @@ The decision remains at the app edge through `CatalogItem.isEditable` and `Catal
 
 When the skills context reports a non-null `error`, `CatalogView` SHALL surface it once through the existing notification path (`useOperationNotification`) using the i18n key `catalog.skillsLoadError`, and SHALL continue rendering every other catalog item.
 
-An empty listing is not an error: with no skills present, `buildCatalogTabs` simply derives no Skills tab, and no notification is raised.
+An empty listing is not an error: with no skills present, the catalog's default tab derivation (`buildCatalogTabs` on those items) simply includes no Skills tab, and no notification is raised.
 
 #### Scenario: Listing error notifies and degrades
 

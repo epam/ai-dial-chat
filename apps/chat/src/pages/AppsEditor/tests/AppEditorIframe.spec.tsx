@@ -82,6 +82,12 @@ describe('AppEditorIframe', () => {
     expect(url.searchParams.get('theme')).toBe('dark');
   });
 
+  it('delegates local-network-access to the embedded iframe', () => {
+    renderIframe();
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    expect(iframe.getAttribute('allow')).toBe('local-network-access=*');
+  });
+
   it('shows spinner on mount', () => {
     renderIframe();
     expect(screen.getByRole('status')).toBeTruthy();

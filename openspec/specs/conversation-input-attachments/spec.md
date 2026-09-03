@@ -323,44 +323,77 @@ This prevents the erroneous "Attachments not supported" error banner that appear
 
 ---
 
-### Requirement: Message length validation when attachments are disabled
+### Requirement: Message length validation
 
-When `isAttachmentsEnabled` is `false` and the user pastes plain text whose length is ≥ `pasteTextThreshold` (default `4000`), the `Input` component SHALL call `onMessageTooLong(length, max)`. The pasted text is still inserted inline — the component does NOT call `preventDefault`. The host app is responsible for surfacing the error to the user (e.g. via a notification).
+The `Input` component SHALL refuse to send a message whose text length is ≥
+`maxMessageLength` (default `50000`), regardless of whether attachments are supported, and
+SHALL call `onMessageTooLong(length, maxMessageLength)` instead. The textarea retains its
+content so the user can shorten it. `maxMessageLength` is the cap on message text and is a
+separate rule from `pasteTextThreshold`, which only decides when pasted text becomes an
+attachment.
+
+When `isAttachmentsEnabled` is `false` and the user pastes plain text whose length is ≥
+`maxMessageLength`, the `Input` component SHALL additionally call
+`onMessageTooLong(length, maxMessageLength)` at paste time. The pasted text is still
+inserted inline — the component does NOT call `preventDefault`. The host app is responsible
+for surfacing the error to the user (e.g. via a notification).
+
+The paste-time warning is deliberately limited to `isAttachmentsEnabled === false`. When
+attachments are enabled, an over-threshold paste becomes an attachment and leaves the inline
+text untouched, and an under-threshold paste is at most `pasteTextThreshold` characters and
+so cannot reach the cap on its own. Text already in the textarea plus a below-threshold
+paste can exceed the cap; that case is caught by the send-time gate, not at paste time.
 
 This applies to every surface that embeds `Input`:
+
 - `ConversationInput` (used in `ConversationView` and `NewConversationComposer`)
 - `EditMessageInput` (used in `ConversationMessageItem`)
 
-#### Scenario: Paste exceeds limit while attachments are disabled
+#### Scenario: Send blocked when message reaches the cap and attachments are disabled
+
+- **GIVEN** `isAttachmentsEnabled` is `false` and the textarea contains text of length ≥ `maxMessageLength`
+- **WHEN** the user clicks the send button or presses the send key
+- **THEN** `onMessageTooLong(length, maxMessageLength)` is called and the message is NOT sent
+- **AND** the textarea retains its current content
+
+#### Scenario: Send blocked when message reaches the cap and attachments are enabled
+
+- **GIVEN** `isAttachmentsEnabled` is `true` and the user has typed text of length ≥ `maxMessageLength`
+- **WHEN** the user clicks the send button or presses the send key
+- **THEN** `onMessageTooLong(length, maxMessageLength)` is called and the message is NOT sent
+- **AND** the textarea retains its current content
+
+#### Scenario: Send allowed below the cap
+
+- **GIVEN** the textarea contains text of length < `maxMessageLength`
+- **WHEN** the user clicks the send button or presses the send key
+- **THEN** `onMessageTooLong` is NOT called and the message is sent, whatever the value of `isAttachmentsEnabled`
+- **AND** a length at or above `pasteTextThreshold` but below `maxMessageLength` does NOT block the send
+
+#### Scenario: EditMessageInput Save & Submit blocked when message reaches the cap
+
+- **GIVEN** the edit textarea contains text of length ≥ `maxMessageLength`
+- **WHEN** the user clicks Save & Submit
+- **THEN** `onMessageTooLong(length, maxMessageLength)` is called and the edit is NOT submitted, whatever the value of `isAttachmentsEnabled`
+
+#### Scenario: Paste reaches the cap while attachments are disabled
 
 - **GIVEN** `isAttachmentsEnabled` is `false`
-- **WHEN** the user pastes text of length ≥ `pasteTextThreshold`
-- **THEN** `onMessageTooLong(length, pasteTextThreshold)` is called and the text is inserted inline
+- **WHEN** the user pastes text of length ≥ `maxMessageLength`
+- **THEN** `onMessageTooLong(length, maxMessageLength)` is called and the text is inserted inline
 
-#### Scenario: Paste within limit while attachments are disabled
+#### Scenario: Paste below the cap while attachments are disabled
 
 - **GIVEN** `isAttachmentsEnabled` is `false`
-- **WHEN** the user pastes text of length < `pasteTextThreshold`
-- **THEN** `onMessageTooLong` is NOT called and the text is inserted inline normally
+- **WHEN** the user pastes text of length < `maxMessageLength`
+- **THEN** `onMessageTooLong` is NOT called at paste time and the text is inserted inline normally
+- **AND** this holds even when the pasted length is at or above `pasteTextThreshold`
 
-#### Scenario: Paste exceeds limit while attachments are enabled
+#### Scenario: Paste over the attachment threshold while attachments are enabled
 
 - **GIVEN** `isAttachmentsEnabled` is `true`
-- **WHEN** the user pastes text of length ≥ `pasteTextThreshold`
-- **THEN** the pasted text is converted to an attachment as usual and `onMessageTooLong` is NOT called
-
-#### Scenario: Send blocked when message exceeds limit
-
-- **GIVEN** `isAttachmentsEnabled` is `false` and the textarea contains text of length ≥ `pasteTextThreshold`
-- **WHEN** the user clicks the send button or presses the send key
-- **THEN** `onMessageTooLong(length, pasteTextThreshold)` is called and the message is NOT sent
-- **THEN** the textarea retains its current content
-
-#### Scenario: EditMessageInput Save & Submit blocked when message exceeds limit
-
-- **GIVEN** `isAttachmentsEnabled` is `false` and the edit textarea contains text of length ≥ `pasteTextThreshold`
-- **WHEN** the user clicks Save & Submit
-- **THEN** `onMessageTooLong(length, pasteTextThreshold)` is called and the edit is NOT submitted
+- **WHEN** the user pastes text longer than `pasteTextThreshold`
+- **THEN** the pasted text is converted to an attachment as usual and `onMessageTooLong` is NOT called at paste time
 
 ---
 
@@ -520,23 +553,6 @@ When the total attachment count (prefix + new) reaches 7 or more, the `Input` wr
 
 ---
 
-### Requirement: Action bar stays inline when attachments are present
-
-The action bar layout (textarea, + button, model selector) SHALL remain on a single row on desktop even when the `AttachmentTray` is visible. Attachments are displayed in `AttachmentTray` above the action bar and MUST NOT trigger the stacked layout. The stacked layout (textarea above buttons) is only used when the caller explicitly opts in (`isStacked` prop) or when the message contains multiple visual lines.
-
-#### Scenario: Placeholder stays inline with buttons when files are attached
-
-- **WHEN** one or more files are attached and the message text is empty
-- **THEN** the placeholder text is on the same row as the + button and model selector on desktop
-- **AND** the `AttachmentTray` is rendered above the action bar
-
-#### Scenario: Stacked layout still activates for multi-line messages
-
-- **WHEN** the message text spans multiple lines (explicit newline or word-wrap)
-- **THEN** the textarea is on its own row above the action buttons
-
----
-
 ### Requirement: Retry button is suppressed for non-retryable error reasons
 
 `AttachmentCard` SHALL NOT render the retry button when `attachment.errorReason === AttachmentErrorReason.UnsupportedType`, even if an `onRetry` prop is provided.
@@ -590,3 +606,42 @@ Because the browser `accept` attribute is only a selection hint (the user can st
 
 - **WHEN** `fileAccept` is provided and the user overrides the OS dialog to pick an unsupported file
 - **THEN** `validateAttachment` is still invoked for that file and rejects it as before
+
+### Requirement: Input always uses the stacked two-row layout
+
+The `Input` component SHALL always render the textarea on its own full-width row above the action bar (`+` button, tools chips when present, model selector, send/stop, mic). There SHALL be no compact single-row layout: no prop, message length, visual line count, tool list, attachment count, or viewport width SHALL place the textarea on the same row as the action controls.
+
+The input wrapper SHALL NOT declare a minimum height; its height SHALL follow its content.
+
+Consequently `Input` SHALL NOT reorder or re-wrap its children per breakpoint. DOM order SHALL be the visual order — textarea container, `+` button, tools chips, trailing actions — with no `order-*` or `desktop:flex-nowrap` overrides.
+
+#### Scenario: Empty input renders two rows
+
+- **WHEN** `Input` is rendered with an empty message, no attachments, and no tools
+- **THEN** the textarea occupies its own row above the row holding the `+` button and model selector
+- **AND** the same layout is rendered at a mobile viewport and at a desktop viewport
+
+#### Scenario: Layout does not change as the message grows
+
+- **WHEN** the user types text that wraps onto a second visual line, or inserts an explicit newline
+- **THEN** the layout is unchanged — the textarea was already on its own row and stays there
+- **AND** the action controls do not move
+
+#### Scenario: Attachments do not change the layout
+
+- **WHEN** one or more files are attached
+- **THEN** the `AttachmentTray` is rendered above the textarea row
+- **AND** the textarea remains on its own row above the action bar
+
+#### Scenario: Tools chips render on their own row
+
+- **WHEN** the deployment exposes tools and at least one chip is visible
+- **THEN** the chips render in a row between the textarea row and the trailing action controls
+- **AND** the trailing action controls stay at the end of the action row
+
+#### Scenario: Textarea renders when the action bar is hidden
+
+- **WHEN** `Input` is rendered with `hideActionBar` and an empty message
+- **THEN** the textarea is rendered inside the bordered box
+- **AND** the action bar row is not rendered
+

@@ -26,6 +26,7 @@ import {
   DialFileManagerTabs,
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
+  NotificationVariant,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -79,6 +80,13 @@ interface Props {
   existingAttachmentsAmount?: number;
   canAttachFolders?: boolean;
   allowedTypesLabel?: string;
+  /*
+   * Whether a file uploaded from inside the modal is ticked automatically.
+   * Defaults to `true`: this modal exists to pick files to attach, so a file
+   * the user just uploaded here is the one they meant to attach. The
+   * standalone file-manager page renders DialFileManagerShell directly and
+   * opts out there.
+   */
   autoSelectUploadedItems?: boolean;
 }
 
@@ -115,7 +123,7 @@ const DialFileManagerModal: FC<Props> = ({
   existingAttachmentsAmount = 0,
   canAttachFolders = false,
   allowedTypesLabel,
-  autoSelectUploadedItems = false,
+  autoSelectUploadedItems = true,
 }) => {
   const { t } = useTranslation();
   const { showInfoNotification, showErrorNotification } = useNotification();
@@ -368,6 +376,15 @@ const DialFileManagerModal: FC<Props> = ({
     () => ({
       emptyName: t(DialFileManagerI18nKeys.RenameNameEmpty),
       duplicateName: t(DialFileManagerI18nKeys.RenameDuplicateName),
+      /*
+       * The leading-dot notice is rendered as a soft warning by the file
+       * manager, which recognizes it by this prefix; the message itself
+       * still has to come from the host so it is translated.
+       */
+      hiddenItemWarning: `${NotificationVariant.Warning}__${t(
+        DialFileManagerI18nKeys.RenameHiddenItemWarning,
+      )}`,
+      consecutiveDotsError: t(DialFileManagerI18nKeys.NameConsecutiveDots),
     }),
     [t],
   );
