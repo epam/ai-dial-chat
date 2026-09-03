@@ -52,6 +52,11 @@ takes.
   — the same navigation the conversation panel already uses — so the dot in
   both places clears together once the app's existing active-conversation
   sync marks the newly active conversation viewed.
+- Apply the same click/unread wiring to both places `ScheduledTaskRunHistoryList`
+  is mounted today: `ScheduledTaskDetailPage`'s History card, and
+  `ConversationSourcesPanel`'s History section (visible while viewing one of
+  a task's own conversations) — a user in either location has the same need
+  to jump to a different run's conversation.
 
 **Non-Goals:**
 
@@ -60,7 +65,7 @@ takes.
   `markConversationViewed` exactly as-is.
 - No redesign of History row chrome, pagination, or skeleton states.
 - No new feature flag — this rides inside the existing
-  `scheduledTasksEnabled`-gated detail page.
+  `scheduledTasksEnabled`-gated detail page and sources panel.
 - No opening the conversation in a new tab/overlay/preview pane — plain
   in-app navigation via `navigate()`.
 - No single-run detail endpoint (`GET .../runs/{runId}`) — out of scope, as
@@ -209,6 +214,32 @@ instead passed `run.conversationId` as-is, risk a silent no-op since
 `run.conversationId` carries a `conversations/` prefix the list item's `id`
 does not. Relying on navigation alone is simpler and reuses the
 already-correct centralized logic.
+
+### Decision 8: Extend the same wiring to `ConversationSourcesPanel`'s History section
+
+`ScheduledTaskRunHistoryList` is mounted in two places today:
+`ScheduledTaskDetailPage`'s History card, and `ConversationSourcesPanel`'s
+History section — the right-hand sources sidebar shown while the user is
+already viewing one of a task's own conversations (per
+`conversation-sources-sidebar`'s "History section shows the task's run
+list..." requirement, whose "Row click is a no-op" scenario predates this
+feature). Both mounts get the identical `onRunClick`/`isUnread` wiring
+described in Decisions 2–7: `ConversationSourcesPanelContainer` now also
+calls `useConversations()` to resolve `isUnread` via
+`mapScheduledTaskRunDtosToItems`, and passes an `onRunClick` handler that
+calls `navigate(getConversationRoute(run.conversationId))` — nothing else,
+per Decision 7, since `useActiveConversationSync` already marks the
+newly-active conversation viewed regardless of which History list the click
+originated from.
+
+**Alternative considered:** ship this change scoped to
+`ScheduledTaskDetailPage` only and leave `ConversationSourcesPanel`'s rows
+inert, matching the original proposal. Rejected — a user reading through a
+task's conversation is exactly as likely to want to jump to a sibling run's
+conversation as a user on the dedicated detail page, and the two mounts
+share the same lib component and the same data shape (`ScheduledTaskRunDto`
+→ `ScheduledTaskRunItem`), so wiring only one of them would be an
+inconsistent, surprising gap rather than a deliberate scope boundary.
 
 ## Risks / Trade-offs
 
