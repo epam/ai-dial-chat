@@ -18,18 +18,238 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Peer Dependencies
 
+`react` (`^19.2.6`) is the only mandatory peer, required by every entry point below. Every
+feature peer is **optional** (`package.json#peerDependenciesMeta` marks all of them
+`optional: true`) — `npm install` succeeds with none of them present. Which ones you actually
+need to install depends on which subpath(s) you import; see the matrix below. Importing a
+subpath without its documented peer installed does not fail at `npm install` — it fails later,
+at build time, when a bundler or `tsc` tries to resolve that subpath's own imports. See "Missing
+a peer" further down for what that failure looks like and how to fix it.
+
+Full peer set (the root `.` entry needs all of them; a subpath needs only its own row below):
+
 - `react` ^19.2.6
 - `@epam/ai-dial-attachment-canvas` \*
 - `@epam/ai-dial-attachment-input` \*
+- `@epam/ai-dial-catalog` \*
 - `@epam/ai-dial-chat-api-client` \*
+- `@epam/ai-dial-chat-overlay` \*
 - `@epam/ai-dial-chat-shared` \*
+- `@epam/ai-dial-deployment-creation-form` \*
+- `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
 - `@epam/ai-dial-react-file-manager` \*
+- `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
+- `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
 - `@epam/ai-dial-ui-kit` \*
-- `ag-grid-community` ^35.3.0
-- `fflate` ^0.8.3
+- `@epam/pdf-highlighter-kit` >=0.0.14
+
+`ag-grid-community` is not a peer of this package — no file under `src/` imports it, and it has
+never appeared in `package.json#peerDependencies`; a previous version of this section listed it
+in error. `fflate` is used internally by `./conversation-transfer` and `./skill-editor` (a zip
+codec for the `.dial` export/import format and skill archives) but is bundled into those entries'
+compiled output rather than externalized, so it is not a peer either — nothing to install for it.
+
+### Entry-point-to-peer matrix
+
+One row per subpath, its peers, and (right column) which peers are required only to resolve a
+type at build time — a name imported with `import type`, erased before the code runs. Both
+kinds still need the package installed for `tsc`/the bundler to resolve the specifier while
+building that entry; the distinction is about what the code does with the import, not about
+whether you need to `npm install` it.
+
+| Entry point               | Runtime peers beyond `react`                                                                                                                                                            | Type-only peers                                                                                                                   |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                                                          | `@epam/ai-dial-chat-overlay`, `@epam/ai-dial-deployment-creation-form`, `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit` |
+| `./viewport-layout`       | —                                                                                                                                                                                       | —                                                                                                                                 |
+| `./scroll-anchoring`      | —                                                                                                                                                                                       | —                                                                                                                                 |
+| `./conversation`          | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                                | `@epam/ai-dial-publish-panel`, `@epam/ai-dial-chat-overlay`                                                                       |
+| `./conversation-transfer` | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`                                                                                                                            | —                                                                                                                                 |
+| `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                                                                 | `@epam/ai-dial-source-panel`                                                                                                      |
+| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations` | `@epam/pdf-highlighter-kit`                                                                                                       |
+| `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor`    | —                                                                                                                                 |
+| `./skills-state`          | —                                                                                                                                                                                       | `@epam/ai-dial-chat-api-client`                                                                                                   |
+| `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                                                       | `@epam/ai-dial-chat-api-client`                                                                                                   |
+| `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                                                             | `@epam/ai-dial-chat-api-client`                                                                                                   |
+| `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                                                         | `@epam/ai-dial-chat-api-client`                                                                                                   |
+| `./sharing`               | `@epam/ai-dial-share`, `@epam/ai-dial-chat-api-client`                                                                                                                                  | —                                                                                                                                 |
+| `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                                                            | —                                                                                                                                 |
+| `./utils`                 | —                                                                                                                                                                                       | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-deployment-creation-form`                            |
+
+Six of the peers above (`@epam/ai-dial-catalog`, `@epam/ai-dial-chat-overlay`,
+`@epam/ai-dial-deployment-creation-form`, `@epam/ai-dial-publish-panel`,
+`@epam/ai-dial-scheduled-tasks`, `@epam/ai-dial-skill-editor`) were already declared in
+`package.json#peerDependencies` but missing from this section before this table was added.
+
+## Subpath imports
+
+Every hook and utility documented below the root-entry examples in this README is also reachable
+through a smaller, dependency-scoped subpath of the same package — `@epam/ai-dial-chat-hooks/<name>`
+— so a consumer who only needs, say, viewport tracking is not required to install (or bundle) the
+peers that `./catalog` or `./file-manager` need. The root (`.`) entry re-exports everything and
+keeps working exactly as before (see "Legacy root compatibility" below); subpaths are an
+additional, narrower way to reach the same exports, not a replacement for it.
+
+One minimal, real-export example per subpath:
+
+```tsx
+// ./viewport-layout — no peer beyond react
+import { useViewportWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
+
+const width = useViewportWidth(); // re-renders on window resize
+```
+
+```tsx
+// ./scroll-anchoring — no peer beyond react
+import { useConversationScroll } from '@epam/ai-dial-chat-hooks/scroll-anchoring';
+
+const {
+  containerRef,
+  contentRef,
+  spacerRef,
+  isScrollButtonVisible,
+  scrollToBottom,
+} = useConversationScroll({ messages, isAssistantTyping, conversationId });
+```
+
+```tsx
+// ./conversation
+import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks/conversation';
+
+/* Returns the model deployment id from the most recent `model_changed`
+   status message, or null if the conversation never switched models. */
+const newDeploymentId = getLastDeploymentId(conversation.messages);
+```
+
+```tsx
+// ./conversation-transfer
+import { formatDateYMD } from '@epam/ai-dial-chat-hooks/conversation-transfer';
+
+const exportFileDate = formatDateYMD(new Date());
+```
+
+```tsx
+// ./conversation-sources
+import { useConversationSources } from '@epam/ai-dial-chat-hooks/conversation-sources';
+
+const { uploaded, generated, sources } = useConversationSources(
+  conversation.messages,
+);
+```
+
+```tsx
+// ./file-manager
+import { sanitizeFileName } from '@epam/ai-dial-chat-hooks/file-manager';
+
+const safeName = sanitizeFileName(uploadedFile.name);
+```
+
+```tsx
+// ./catalog
+import { encodeDeploymentId } from '@epam/ai-dial-chat-hooks/catalog';
+
+const path = `applications/${encodeDeploymentId(deployment.id)}`;
+```
+
+```tsx
+// ./skills-state
+import { useSkillsState } from '@epam/ai-dial-chat-hooks/skills-state';
+
+const { skills, publicSkills, sharedWithMe, isLoading, refetch } =
+  useSkillsState({
+    listSkills, // host-configured fetch, same pattern as useUsageData
+    enabled: isSkillsFeatureEnabled,
+    ready: isSessionReady,
+  });
+```
+
+```tsx
+// ./skill-editor
+import { normalizeSkillName } from '@epam/ai-dial-chat-hooks/skill-editor';
+
+const skillId = normalizeSkillName(userTypedName);
+```
+
+```tsx
+// ./oauth
+import {
+  encodeToolsetId,
+  isPublicToolsetId,
+} from '@epam/ai-dial-chat-hooks/oauth';
+
+const encodedId = encodeToolsetId(toolset.id);
+const isPublic = isPublicToolsetId(toolset.id);
+```
+
+```tsx
+// ./scheduled-tasks
+import { mapFormValuesToCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const createBody = mapFormValuesToCreateBody(formValues);
+```
+
+```tsx
+// ./sharing
+import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
+
+const { requestRecipientsCount, getRecipientsCount } =
+  useShareRecipientsCount(shareApi);
+```
+
+```tsx
+// ./attachments
+import { useAttachmentValidation } from '@epam/ai-dial-chat-hooks/attachments';
+
+const { validateAttachment, fileAccept } = useAttachmentValidation({
+  allowedMimeTypes,
+});
+```
+
+```tsx
+// ./utils
+import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks/utils';
+
+const timezone = getBrowserTimezone();
+```
+
+## Missing a peer
+
+If you import a subpath without installing the peer(s) its row names in the matrix above, `npm
+install` still succeeds — every feature peer is optional, so npm never refuses to
+install this package or warns about a missing one. The failure shows up later, when a bundler
+(Vite/Rollup/Rolldown) or `tsc` tries to resolve that subpath's own module graph:
+
+```
+[vite]: Rollup failed to resolve import "@epam/ai-dial-react-file-manager" from
+".../node_modules/@epam/ai-dial-chat-hooks/file-manager.js".
+```
+
+or, under `tsc`:
+
+```
+error TS2307: Cannot find module '@epam/ai-dial-react-file-manager' or its corresponding
+type declarations.
+```
+
+This is a module-resolution error naming the exact missing specifier, scoped to the one entry
+you imported — not an install-time warning, and not a sign that this package or your build setup
+is broken. To recognize it: the error names the peer package that you have not installed, and
+it appears only after you added an import from one specific subpath. The fix is to install the
+peer(s) that subpath's row lists in the matrix above — you do not need any of the other 16 peers
+unless another subpath you also import needs them.
+
+## Legacy root compatibility
+
+The root (`.`) entry — imported as `@epam/ai-dial-chat-hooks` with no subpath, used throughout
+the "Hooks" section below — is unchanged in behavior and public surface by the introduction of
+subpaths. It re-exports everything it always did and requires the full current 17-peer set
+(`react` plus the 16 optional feature peers listed above), including the type-only
+`@epam/pdf-highlighter-kit` reference exposed by its declarations. Every existing import from
+`@epam/ai-dial-chat-hooks` keeps working exactly as before. No consumer is required to migrate
+to a subpath: subpaths are an additional, narrower way to reach a subset of the same exports, not
+a deprecation of the root entry or a breaking change to it.
 
 ## Hooks
 
@@ -439,7 +659,7 @@ const ExportButton = ({
 | `resolveErrorTraceId`       | `(error: unknown) => Promise<string \| undefined>`                       | Resolves a trace id for a failing request. Defaults to resolving `undefined`.                                                                                                       |
 | `maxArchiveBytes`           | `number`                                                                 | Ceiling on the summed byte length of an export's attachments; a larger export fails with `FileTooLarge` instead of being zipped. Defaults to `DEFAULT_MAX_ARCHIVE_BYTES` (512 MiB). |
 | `onSuccess`                 | `(event: ConversationTransferSuccessEvent) => void`                      | Called when a job completes successfully.                                                                                                                                           |
-| `onWarning`                 | `(event: ConversationTransferWarningEvent) => void`                      | Called when a job delivers its file but had to skip something (e.g. an attachment). The job settles at `Warning`, not `Success`.                                                                                                          |
+| `onWarning`                 | `(event: ConversationTransferWarningEvent) => void`                      | Called when a job delivers its file but had to skip something (e.g. an attachment). The job settles at `Warning`, not `Success`.                                                    |
 | `onError`                   | `(event: ConversationTransferErrorEvent) => void`                        | Called when a job fails.                                                                                                                                                            |
 
 **Returns** (`UseConversationExportResult`): `{ jobs, exportSingle(conversationId, title, mode), exportAll(), cancelJob(jobId), dismissJob(jobId), retryJob(jobId), dismissAll() }`.

@@ -14,9 +14,9 @@ import {
   referenceAttachmentToPdfCanvasContent,
   useAttachmentValidation,
   useChatSettingsFormConfig,
-  useConversationScroll,
-  usePageFileDrag,
 } from '@epam/ai-dial-chat-hooks';
+import { useConversationScroll } from '@epam/ai-dial-chat-hooks/scroll-anchoring';
+import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DisplayAttachment,

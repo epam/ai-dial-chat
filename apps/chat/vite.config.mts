@@ -32,6 +32,70 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/chat-shared/src/index.ts',
       ),
+      /* `@epam/ai-dial-chat-hooks` ships one root barrel plus 14 dependency-scoped
+       * subpaths (see `libs/chat-hooks/package.json#exports`). Vite's alias matcher
+       * treats a plain string `find` as a prefix match (`importee === find ||
+       * importee.startsWith(find + '/')`), so a bare `@epam/ai-dial-chat-hooks`
+       * entry would also swallow every subpath import and rewrite it onto
+       * `src/index.ts/<subpath>` — a path that does not exist. Listing each
+       * subpath's own explicit alias before the general one (object key order is
+       * preserved and checked in order) makes the more specific match win. */
+      '@epam/ai-dial-chat-hooks/viewport-layout': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/viewport-layout.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/scroll-anchoring': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/scroll-anchoring.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/conversation': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/conversation.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/conversation-transfer': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/conversation-transfer.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/conversation-sources': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/conversation-sources.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/file-manager': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/file-manager.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/catalog': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/catalog.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/skills-state': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/skills-state.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/skill-editor': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/skill-editor.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/oauth': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/oauth.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/scheduled-tasks': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/scheduled-tasks.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/sharing': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/sharing.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/attachments': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/attachments.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/utils': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/utils.ts',
+      ),
       '@epam/ai-dial-chat-hooks': path.resolve(
         import.meta.dirname,
         '../../libs/chat-hooks/src/index.ts',

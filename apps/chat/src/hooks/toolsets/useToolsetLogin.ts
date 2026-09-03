@@ -1,7 +1,7 @@
 import {
   useToolsetLogin as useSharedToolsetLogin,
   type UseToolsetLoginResult,
-} from '@epam/ai-dial-chat-hooks';
+} from '@epam/ai-dial-chat-hooks/oauth';
 import {
   getToolset,
   loginToolset,

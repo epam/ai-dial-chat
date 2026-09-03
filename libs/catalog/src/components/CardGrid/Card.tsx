@@ -56,8 +56,7 @@ export const Card: FC<CardProps> = ({
   }, [item.id, initialIsStarred]);
 
   const descriptionClassName =
-    cardStyles?.typography?.descriptionClassName ??
-    'dial-small-paragraph-text';
+    cardStyles?.typography?.descriptionClassName ?? 'dial-small-paragraph-text';
 
   const featuredChipClassName = cardStyles?.typography?.featuredChipClassName;
   const folderLabelClassName =

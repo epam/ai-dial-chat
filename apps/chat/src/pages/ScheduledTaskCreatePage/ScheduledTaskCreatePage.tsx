@@ -1,7 +1,5 @@
-import {
-  getApiErrorDetails,
-  mapFormValuesToCreateBody,
-} from '@epam/ai-dial-chat-hooks';
+import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
+import { mapFormValuesToCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import {
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,

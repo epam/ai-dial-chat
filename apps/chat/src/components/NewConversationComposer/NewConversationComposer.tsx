@@ -9,8 +9,8 @@ import {
   useAttachmentUpload,
   useAttachmentValidation,
   useChatSettingsFormConfig,
-  usePageFileDrag,
 } from '@epam/ai-dial-chat-hooks';
+import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ResponseFormat,

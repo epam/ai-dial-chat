@@ -118,23 +118,58 @@ vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
   useIsMobile: () => false,
 }));
 
-vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+vi.mock('@epam/ai-dial-chat-hooks/attachments', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+    await importOriginal<
+      typeof import('@epam/ai-dial-chat-hooks/attachments')
+    >();
   return {
     ...actual,
-    isDialFileId: (url: string) => url.startsWith('files/'),
-    usePanelMaxWidth: () => 800,
     downloadAttachment: (attachment: DisplayAttachment) =>
       mockDownloadAttachment(attachment),
     useAttachmentAction: () => ({
       handleAttachmentClick: mockHandleAttachmentClick,
     }),
-    useConversationSources: () => ({
-      uploaded: mockUploaded,
-      generated: mockGenerated,
-      sources: [],
-    }),
+  };
+});
+
+vi.mock(
+  '@epam/ai-dial-chat-hooks/conversation-sources',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('@epam/ai-dial-chat-hooks/conversation-sources')
+      >();
+    return {
+      ...actual,
+      useConversationSources: () => ({
+        uploaded: mockUploaded,
+        generated: mockGenerated,
+        sources: [],
+      }),
+    };
+  },
+);
+
+vi.mock('@epam/ai-dial-chat-hooks/file-manager', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('@epam/ai-dial-chat-hooks/file-manager')
+    >();
+  return {
+    ...actual,
+    isDialFileId: (url: string) => url.startsWith('files/'),
+  };
+});
+
+vi.mock('@epam/ai-dial-chat-hooks/viewport-layout', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('@epam/ai-dial-chat-hooks/viewport-layout')
+    >();
+  return {
+    ...actual,
+    usePanelMaxWidth: () => 800,
   };
 });
 
