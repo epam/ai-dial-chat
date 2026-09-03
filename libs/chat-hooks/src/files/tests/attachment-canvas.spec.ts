@@ -4,7 +4,11 @@ import {
   OoxmlFileType,
   isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
-import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentType,
+  MIMEType,
+  RequestStatus,
+} from '@epam/ai-dial-chat-shared';
 import type {
   CustomVisualizer,
   DisplayAttachment,
@@ -17,6 +21,7 @@ import {
   hasAttachmentTextSource,
   isExternalSourcePreviewable,
   referenceAttachmentToPdfCanvasContent,
+  resolveExternalSourceContentType,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
@@ -744,6 +749,20 @@ describe('resolvePdfCanvasContent', () => {
     );
     expect(result).toBeNull();
   });
+
+  it('returns PdfCanvasContent with the raw url for a non-DIAL external PDF source', async () => {
+    const result = await resolvePdfCanvasContent(
+      makeRemoteAttachment(
+        'citation.pdf',
+        'https://example.com/citation/doc-id-123',
+      ),
+      resolvers,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: 'https://example.com/citation/doc-id-123',
+    });
+  });
 });
 
 describe('resolveOoxmlCanvasContent', () => {
@@ -917,6 +936,44 @@ describe('getUrlFileName', () => {
   });
 });
 
+describe('resolveExternalSourceContentType', () => {
+  it('returns an image/* content type unchanged regardless of url', () => {
+    expect(
+      resolveExternalSourceContentType(
+        'image/jpeg',
+        'https://example.com/citation/doc-id-123',
+      ),
+    ).toBe('image/jpeg');
+  });
+
+  it('returns MIMEType.PDF unchanged when already reported', () => {
+    expect(
+      resolveExternalSourceContentType(
+        MIMEType.PDF,
+        'https://example.com/citation/doc-id-123',
+      ),
+    ).toBe(MIMEType.PDF);
+  });
+
+  it('overrides a mislabeled content type when the url ends with .pdf', () => {
+    expect(
+      resolveExternalSourceContentType(
+        'text/markdown',
+        'https://example.com/files/report.pdf',
+      ),
+    ).toBe(MIMEType.PDF);
+  });
+
+  it('returns the original content type when the url has no .pdf extension', () => {
+    expect(
+      resolveExternalSourceContentType(
+        'text/markdown',
+        'https://example.com/page/about',
+      ),
+    ).toBe('text/markdown');
+  });
+});
+
 describe('isExternalSourcePreviewable', () => {
   beforeEach(() => {
     vi.mocked(isTextPreviewable).mockReturnValue(false);
@@ -933,6 +990,15 @@ describe('isExternalSourcePreviewable', () => {
       isExternalSourcePreviewable(
         'audio/mpeg',
         'https://example.com/track.mp3',
+      ),
+    ).toBe(true);
+  });
+
+  it('returns true for a PDF content type even when the url has no .pdf extension', () => {
+    expect(
+      isExternalSourcePreviewable(
+        MIMEType.PDF,
+        'https://example.com/citation/doc-id-123',
       ),
     ).toBe(true);
   });
