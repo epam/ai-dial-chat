@@ -19,11 +19,15 @@ The system SHALL provide a `/toolset-editor` route that opens the toolset editor
 - **THEN** the system redirects the user out of the editor instead of rendering the form
 
 ### Requirement: Metadata section fields
-The Metadata section SHALL allow editing the toolset avatar (icon URL as a plain text field), name, version, description, and topics. The name and description fields SHALL also allow editing translations for additional locales through the shared `DeploymentLocalesField` popup. These fields SHALL be rendered and validated through the shared `deployment-creation-form` library component. The Metadata section SHALL NOT contain any connection or authentication fields.
+The Metadata section SHALL allow editing the toolset avatar, name, version, description, and topics. The avatar SHALL be picked via the shared `AddAvatar` control (preview box plus "Add avatar" button), which opens the `AvatarPickerModal` file manager restricted to a single image up to a host-configured size, rather than a plain URL text field. The name and description fields SHALL also allow editing translations for additional locales through the shared `DeploymentLocalesField` popup. These fields SHALL be rendered and validated through the shared `deployment-creation-form` library component. The Metadata section SHALL NOT contain any connection or authentication fields.
 
 #### Scenario: Edit metadata fields
-- **WHEN** a user types a name, version, icon URL, description, and adds topic tags
+- **WHEN** a user picks an avatar image and types a name, version, description, and adds topic tags
 - **THEN** those values are held in component state without saving
+
+#### Scenario: Pick an avatar image
+- **WHEN** a user clicks "Add avatar" in the Metadata section
+- **THEN** the file manager opens restricted to a single allowed image type up to the configured size, and selecting one replaces the placeholder icon with that image while leaving the "Add avatar" button in place so the user can pick a different file
 
 #### Scenario: Edit an additional-locale translation
 - **WHEN** a user opens the "Add locale" popup in the Metadata section and adds a translated name and description for another language
