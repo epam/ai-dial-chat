@@ -596,6 +596,7 @@ const App: FC = () => {
               pdfPageNumberLabel: t(
                 AttachmentCanvasI18nKeys.PdfPageNumberLabel,
               ),
+              mcpAppReloadLabel: t(ButtonsI18nKeys.Reload),
             }}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}

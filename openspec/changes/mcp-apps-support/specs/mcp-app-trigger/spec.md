@@ -78,90 +78,104 @@ This indirect source only ever adds entries alongside the direct source above; a
 
 ---
 
-### Requirement: The message body renders a normal-size primary "Open App" button below the stages when a match is found
+### Requirement: The message body renders an always-visible inline preview when a match is found, with a manual expand-to-canvas button
 
-**Revised three times** (supersedes the original `StageItem`-hosted action, the intermediate `MessageActions`-bar placement, and the `Stage`-keyed lookup — see `design.md` D5). Neither `libs/conversation-stages` (`StageItem`/`StagesPanel`/`CollapsedGroup`) nor `libs/conversation-messages` (`MessageActionsProps`/`MessageActions.tsx`) carry any MCP-Apps-related field. The trigger is a plain `PrimaryButton` rendered directly by `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx`, inside the message's `afterContent`, immediately below the `CollapsedGroup` stages block.
+**Revised four times** (supersedes the original `StageItem`-hosted action, the intermediate `MessageActions`-bar placement, the `Stage`-keyed lookup, and the unconditional-auto-open posture — see `design.md` D5, fourth revision / D11). Neither `libs/conversation-stages` (`StageItem`/`StagesPanel`/`CollapsedGroup`) nor `libs/conversation-messages` (`MessageActionsProps`/`MessageActions.tsx`) carry any MCP-Apps-related field. The trigger is `apps/chat/src/components/ConversationView/McpAppInlinePreview/McpAppInlinePreview.tsx`, rendered directly by `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx` inside the message's `afterContent`, immediately below the `CollapsedGroup` stages block.
 
-`ConversationMessageItem.tsx` SHALL compute `mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools)` and, when both `mcpAppMatch` and an `onOpenApp` callback are available, render `<PrimaryButton label={openCanvasLabel} onClick={() => onOpenApp(mcpAppMatch, mcpAppKey, resolveMcpAppToolCallSeed(msg, mcpAppMatch.toolName))} />` with **no `size` prop** — it uses `PrimaryButton`'s default size (`ElementSize.Standard`), not the small size used by icon-row actions elsewhere in the message. The label reads "Open App" (`AttachmentCanvasI18nKeys.OpenAppLabel`).
+`ConversationMessageItem.tsx` SHALL compute `mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools)` and, when both `mcpAppMatch` and an `onOpenApp` callback are available and the message's canvas is not currently open (`!isMcpAppOpenedInCanvas`), render `McpAppInlinePreview` with `match={mcpAppMatch}`, `toolCall={resolveMcpAppToolCallSeed(msg, mcpAppMatch.toolName)}`, the shared `cache` (`McpAppResponseCache`, see the response-cache requirement below), `cacheKey={mcpAppCanvasKey(index)}`, and `onExpand={() => onOpenApp(mcpAppMatch, mcpAppKey, toolCall)}`. When the message's canvas *is* currently open, a placeholder ("Opened in Canvas") renders instead of the inline preview.
 
-#### Scenario: Message with a matched tool shows the Open App button below its stages
+`McpAppInlinePreview` (backed by `useMcpAppInlinePreview`) independently fetches the resource HTML and resolves the tool result — it does not touch `AttachmentCanvas`'s panel/loading-state machinery, so it can render alongside the message instead of taking over a side panel. It renders:
 
-- **WHEN** `findMcpAppForMessage` returns a match for a message, and `onOpenApp` is supplied to `ConversationMessageItem`
-- **THEN** a `PrimaryButton` labeled "Open App" is rendered immediately below the `CollapsedGroup` stages block, at default (non-small) size
+- Nothing (`null`), when `useMcpAppSandboxUrl()` is unavailable (no sandbox proxy configured) or `match` is absent — matching `useOpenMcpAppCanvas`'s own no-op posture in that case. This status SHALL be computed synchronously on the initial render (not only inside an effect), so an unconfigured sandbox never renders any part of the preview box, even for a single frame.
+- A bordered box spanning the full available width, sized to the mounted app's actual content height (not fixed-height), with a header strip above the app's rendered content containing a reload button (`IconRefresh`) and an expand-to-canvas button (`IconArrowsMaximize`, calling `onExpand`) — the header sits outside the app's content so it can never be overlapped by whatever the app draws.
+- A loading spinner, an error message, or the mounted `McpAppCanvasRenderer` inside that box, depending on fetch/resolve status.
 
-#### Scenario: Message without a match shows no Open App button
+#### Scenario: Message with a matched tool shows the inline preview below its stages
+
+- **WHEN** `findMcpAppForMessage` returns a match for a message, `onOpenApp` is supplied to `ConversationMessageItem`, and the message's canvas is not open
+- **THEN** `McpAppInlinePreview` is rendered immediately below the `CollapsedGroup` stages block, full-width, sized to its content
+
+#### Scenario: Message without a match shows no inline preview
 
 - **WHEN** `findMcpAppForMessage` returns `undefined` for a message
-- **THEN** no "Open App" button is rendered
+- **THEN** no inline preview is rendered
 
-#### Scenario: onOpenApp omitted hides the action even when a match is found
+#### Scenario: onOpenApp omitted hides the inline preview even when a match is found
 
 - **WHEN** a message has a match but the caller does not pass `onOpenApp`
-- **THEN** no "Open App" button is rendered
+- **THEN** no inline preview is rendered
+
+#### Scenario: No sandbox proxy configured hides the inline preview entirely, with no flash
+
+- **WHEN** `useMcpAppSandboxUrl()` returns unavailable for a message with a match
+- **THEN** `McpAppInlinePreview` renders nothing, from its very first render — not even a loading spinner for one frame
+
+#### Scenario: Expanding the inline preview opens the full-width canvas
+
+- **WHEN** the user activates the inline preview's expand button
+- **THEN** `onOpenApp` is called with the message's matched tool, canvas key, and tool-call seed, opening `AttachmentCanvas`
 
 ---
 
-### Requirement: The canvas auto-opens for the last message with a matched tool
+### Requirement: The canvas never opens automatically; it is reached only via the inline preview's expand button
 
-**Revised** (supersedes the original manual-only posture and the stage-keyed guard — see `design.md` D5, revised). `apps/chat/src/hooks/attachment/useAutoOpenMcpAppCanvas.ts`'s `useAutoOpenMcpAppCanvas(messages, mcpAppTools)` SHALL, on every `messages`/`mcpAppTools` change, locate the last message (by index) for which `findMcpAppForMessage` returns a match (`apps/chat/src/utils/mcp-app.ts`'s `findLastMcpAppMessage`, scanning newest-first) and call `openMcpAppCanvas` for that match — without requiring a click.
+**Reversed** (supersedes the third revision's auto-open behavior — see `design.md` D5, fourth revision / D11). `apps/chat/src/hooks/attachment/useAutoOpenMcpAppCanvas.ts` and `apps/chat/src/utils/mcp-app.ts`'s `findLastMcpAppMessage` SHALL NOT exist in the codebase — no message's MCP App canvas opens without an explicit user action. `ConversationView.tsx` SHALL NOT call any auto-open hook.
 
-**Once-per-message guard:** the hook SHALL track the most recently auto-opened message via a key (`` `${messageIndex}:mcp-app` ``, from `mcpAppCanvasKey(messageIndex)`) in a ref, and SHALL only call `openMcpAppCanvas` when that key changes — so a rerender that doesn't introduce a *new* matched message does not reopen a canvas the user has since closed.
+The full-width canvas (`AttachmentCanvas`) opens only when the user activates a matched message's inline preview's expand-to-canvas button (previous requirement), or its reload button while already expanded (see the response-cache requirement below).
 
-**Manual override:** the "Open App" button (previous requirement) remains available regardless of auto-open state, so the user can reopen a closed canvas or open an earlier message's app instead of the auto-opened last one.
+#### Scenario: A new matched message never opens the canvas by itself
 
-#### Scenario: A new matched message auto-opens the canvas
+- **WHEN** the conversation's message list gains a new message for which `findMcpAppForMessage` returns a match
+- **THEN** `openMcpAppCanvas` is not called for that match unless the user activates the inline preview's expand button
 
-- **WHEN** the conversation's message list gains a new message for which `findMcpAppForMessage` returns a match, and no other message has already been auto-opened for that exact message index
-- **THEN** `openMcpAppCanvas` is called for that match without any user click
-
-#### Scenario: Multiple matched messages only auto-open the last one
+#### Scenario: Multiple matched messages each only ever show their own inline preview
 
 - **WHEN** the conversation contains more than one message with a match
-- **THEN** only the last such message's match is passed to `openMcpAppCanvas`
-
-#### Scenario: Closing the auto-opened canvas is not immediately reversed by an unrelated rerender
-
-- **WHEN** the user closes the canvas that was auto-opened for a given message, and `messages` re-renders without introducing a new matched message
-- **THEN** `openMcpAppCanvas` is not called again for that same message
+- **THEN** each such message renders its own inline preview; none of them opens the full-width canvas without its own explicit expand click
 
 ---
 
 ### Requirement: `useOpenMcpAppCanvas` hook opens the canvas for a discovered tool's UI resource
 
-**Revised** (supersedes the `Stage`-keyed signature — see `design.md` D5, third revision). `apps/chat/src/hooks/attachment/useOpenMcpAppCanvas.ts` SHALL expose `openMcpAppCanvas(match: McpAppToolRef, canvasKey?: string, toolCall?: McpAppToolCallSeed): Promise<boolean>`, following the `openCanvas`/`AttachmentCanvasContext` pattern already used by `useOpenAttachmentCanvas`.
+**Revised twice** (supersedes the `Stage`-keyed signature, and the earlier no-cache/`displayMode: 'inline'` version — see `design.md` D5 third revision, D11, D12). `apps/chat/src/hooks/attachment/useOpenMcpAppCanvas.ts` SHALL accept a shared `McpAppResponseCache` (see the response-cache requirement below) and expose `openMcpAppCanvas(match: McpAppToolRef, canvasKey?: string, toolCall?: McpAppToolCallSeed, forceReload = false): Promise<boolean>`, following the `openCanvas`/`AttachmentCanvasContext` pattern already used by `useOpenAttachmentCanvas`.
 
-The hook reads, at call site:
-- `mcpAppSandboxUrl` and `mcpAppTheme` from `AppConfigContext.config` (both follow the `CONFIG_DEFINITIONS`/`EnvConfigProvider` pipeline; `mcpAppTheme` is `'light' | 'dark' | null`).
-- `currentTheme` from `ThemeContext` — always `'dark'` or `'light'` at runtime (system-theme resolves before the hook runs).
-- `i18n` from `useTranslation()` (already present for `AttachmentCanvasI18nKeys`).
+The hook builds its `hostContext` via the shared `useMcpAppHostContext('fullscreen')` (see below) — **not** `'inline'`; the canvas is the full-width, take-over-the-panel presentation, and `'inline'` is reserved for the message-body preview (previous requirement).
 
 Steps:
 
 1. Return `false` immediately if `mcpAppSandboxUrl` (from `AppConfigContext`, see `mcp-app-sandbox-proxy`) is unavailable — no sandbox proxy deployed/configured means this feature cannot render safely, same "absence isn't failure" posture as `mcp_apps.domain_override`.
 2. Call `closePanel()` and `closeSourcesPanel()` synchronously (same mutual-exclusivity contract as every other canvas trigger in the `canvas` capability), then `openCanvasLoading(title, canvasKey)` where `title` is the fixed `AttachmentCanvasI18nKeys.McpAppTitle` string, not any per-tool or per-stage name.
-3. Call `fetchMcpAppResourceHtml(match.toolsetId, match.resourceUri)` (`mcp-app-proxy-api` client wrapper, `apps/chat/src/server-api/mcp-apps.ts`) — a GET against the `mcp-app-resource` route, resolving to the response body's text.
-4. On success, build a `McpUiHostContext` (imported from `@modelcontextprotocol/ext-apps/app-bridge`) with the following fields populated — this is the UI context delivered to the View during `ui/initialize`:
-   - `theme`: `mcpAppTheme ?? currentTheme` — admin override when set, otherwise the user's active theme.
+3. Compute `seedKey = computeMcpAppSeedKey(toolCall)` and, unless `forceReload` or `canvasKey` is absent, check `cache.get(canvasKey, seedKey)`. On a hit, reuse its `html`/`toolResult` and skip steps 4–5's fetch/re-call. On a miss, call `fetchMcpAppResourceHtml(match.toolsetId, match.resourceUri)` (`mcp-app-proxy-api` client wrapper, `apps/chat/src/server-api/mcp-apps.ts`) and `resolveMcpAppToolResult(match, toolCall)` (D10's live-re-call workaround), then `cache.set(canvasKey, {html, toolResult}, seedKey)`.
+4. On success, build an `McpAppCanvasContent` with `html`, `sandboxUrl: mcpAppSandboxUrl`, `toolName: match.mcpToolName` (real name, not correlation name — see `mcp-app-trigger` tool-discovery requirement), `toolInput: toolCall?.toolInput`, `toolResult` (from step 3), `hostContext` (the `'fullscreen'` `McpUiHostContext` above), `onToolCall` bound to a `apps/chat/src/server-api/mcp-apps.ts` wrapper that POSTs to the tool-call-forwarding endpoint with `match.toolsetId`, and `onReload` bound to a closure that invalidates the cache entry (`cache.invalidate(canvasKey)`) and re-invokes `openMcpAppCanvas` with `forceReload: true`. Call `openCanvas(content, title, canvasKey)` and return `true`.
+5. On failure (the fetch rejects or resolves with an error status), call `closeCanvas()` and return `false`.
+
+`useMcpAppHostContext(displayMode: 'inline' | 'fullscreen')` (`apps/chat/src/hooks/attachment/useMcpAppHostContext.ts`) is the single source of the `McpUiHostContext` (imported from `@modelcontextprotocol/ext-apps/app-bridge`) both the canvas and the inline preview build from, populated as follows — this is the UI context delivered to the View during `ui/initialize`:
+   - `theme`: `mcpAppTheme ?? currentTheme` (`AppConfigContext`/`ThemeContext`) — admin override when set, otherwise the user's active theme.
    - `locale`: `i18n.language` — the active BCP 47 locale tag.
    - `timeZone`: `Intl.DateTimeFormat().resolvedOptions().timeZone` — the user's IANA timezone.
    - `userAgent`: `mcpAppUserAgent ?? 'ai-dial-chat'` — admin-configurable host identifier (`MCP_APP_USER_AGENT` env var, from `AppConfigContext.config.mcpAppUserAgent`); falls back to `'ai-dial-chat'` when unset.
    - `platform`: `'web'` — static platform type.
-   - `displayMode`: `'inline'` — the View is always rendered in the attachment canvas panel, which is an inline embedded mode.
+   - `displayMode`: the caller-supplied `'inline'` or `'fullscreen'` — `'fullscreen'` for `useOpenMcpAppCanvas`, `'inline'` for `useMcpAppInlinePreview`.
    - `styles.variables`: a `Partial<Record<McpUiStyleVariableKey, string>>` built by reading each `McpUiStyleVariableKey` from `getComputedStyle(document.documentElement)` (calling `getPropertyValue(key).trim()`) and omitting keys whose resolved value is the empty string. The app SHALL define CSS variables with the exact `McpUiStyleVariableKey` names (e.g. `--color-background-primary`, `--color-text-primary`, …) mapped from its own design-token system in a global stylesheet, so that this read produces a complete set of theme values for the hosted View. `McpUiStyleVariableKey` is the union type of all standardized MCP UI CSS variable names (backgrounds, text, borders, rings, typography, border-radius/width, shadows) exported from `@modelcontextprotocol/ext-apps/app-bridge`.
-   Then build an `McpAppCanvasContent` with `html` set to the fetched text, `sandboxUrl: mcpAppSandboxUrl`, `toolName: match.mcpToolName` (real name, not correlation name — see `mcp-app-trigger` tool-discovery requirement), `toolInput: toolCall?.toolInput`, `toolResult: toolCall?.toolResult`, `hostContext` set to the `McpUiHostContext` built above, and `onToolCall` bound to a `apps/chat/src/server-api/mcp-apps.ts` wrapper that POSTs to the tool-call-forwarding endpoint with `match.toolsetId`. Call `openCanvas(content, title, canvasKey)` and return `true`.
-5. On failure (the fetch rejects or resolves with an error status), call `closeCanvas()` and return `false`.
 
-`ConversationView.tsx` SHALL pass `openMcpAppCanvas` as the `onOpenApp` prop to `ConversationMessageItem`, which uses it (per the trigger requirement above) to build the in-message "Open App" button's `onClick` handler, and separately calls it directly from the auto-open hook.
+For the canvas specifically (`displayMode: 'fullscreen'`), `McpAppCanvasRenderer` additionally watches its own root element with a `ResizeObserver` and merges the live pixel size into `hostContext.containerDimensions` before it reaches `AppRenderer` — every resize of the canvas panel sends a live `ui/notifications/host-context-changed` message to the mounted app — and forces its iframe to `100%`/`100%` width/height via CSS so it fills the panel instead of sizing to the app's own reported content size (which is reserved for the inline preview). See `design.md` D12.
+
+`ConversationView.tsx` SHALL create one `McpAppResponseCache` (`useMcpAppResponseCache(conversation.id)`) and pass it to `useOpenMcpAppCanvas`, and pass `openMcpAppCanvas` as the `onOpenApp` prop to `ConversationMessageItem`, which uses it (per the trigger requirement above) to build the inline preview's expand-button `onClick` handler. Nothing calls it automatically (see the no-auto-open requirement above).
 
 **Memoization:** `openMcpAppCanvas` SHALL be wrapped in `useCallback`, matching `useOpenAttachmentCanvas`'s existing hooks.
 
-**i18n:** the loading/error labels shown while resolving the resource reuse the existing `AttachmentCanvasI18nKeys` (`AriaLabel`, `LoadErrorLabel`) — no new keys are needed for the canvas chrome. A key `AttachmentCanvasI18nKeys.OpenAppLabel` (`en.json` value: `"Open App"`) is added for the message action's visible text, and a separate `AttachmentCanvasI18nKeys.McpAppTitle` (`"MCP App"`) is used as the canvas title.
+**i18n:** the loading/error labels shown while resolving the resource reuse the existing `AttachmentCanvasI18nKeys` (`AriaLabel`, `LoadErrorLabel`) — no new keys are needed for the canvas chrome. `AttachmentCanvasI18nKeys.ExpandAppLabel` (`en.json` value: `"Expand app"`) labels the inline preview's expand button; `AttachmentCanvasI18nKeys.McpAppTitle` (`"MCP App"`) is used as the canvas title; the shared `ButtonsI18nKeys.Reload` (`"Reload"`) labels both the inline preview's and the canvas's reload actions.
 
 #### Scenario: Successful resolution opens the canvas
 
-- **WHEN** `openMcpAppCanvas` is called for a valid `McpAppToolRef`, `mcpAppSandboxUrl` is available, and `fetchMcpAppResourceHtml` succeeds
-- **THEN** `AttachmentCanvasContext.content` becomes an `McpAppCanvasContent` with the fetched `html` and `sandboxUrl: mcpAppSandboxUrl`
+- **WHEN** `openMcpAppCanvas` is called for a valid `McpAppToolRef`, `mcpAppSandboxUrl` is available, and the cache misses and `fetchMcpAppResourceHtml` succeeds
+- **THEN** `AttachmentCanvasContext.content` becomes an `McpAppCanvasContent` with the fetched `html`, `sandboxUrl: mcpAppSandboxUrl`, and `hostContext.displayMode: 'fullscreen'`
 - **AND** the function resolves to `true`
+
+#### Scenario: A cache hit skips the fetch and live re-call
+
+- **WHEN** `openMcpAppCanvas` is called with a `canvasKey` and `toolCall` whose `computeMcpAppSeedKey` matches a still-fresh (under 15 minutes old) cache entry for that key, and `forceReload` is not set
+- **THEN** the cached `html`/`toolResult` are reused, and neither `fetchMcpAppResourceHtml` nor `resolveMcpAppToolResult` is called
 
 #### Scenario: Resource fetch failure shows an error state in the still-open canvas
 
@@ -174,6 +188,38 @@ Steps:
 - **WHEN** `openMcpAppCanvas` is called for a valid `McpAppToolRef` but `mcpAppSandboxUrl` is unavailable
 - **THEN** no panel state changes, no fetch is issued
 - **AND** the function resolves to `false`
+
+---
+
+### Requirement: A per-conversation response cache is seed- and TTL-aware, so a settling tool-call seed always triggers exactly one fresh fetch/re-call
+
+**Added** (`design.md` D12, plus the seed-mismatch fix and namespaced-key revision in D12's follow-ups). `apps/chat/src/hooks/attachment/useMcpAppResponseCache.ts`'s `useMcpAppResponseCache(conversationId)` SHALL hold one shared `Map<string, {html, toolResult, seedKey, cachedAt}>` across all conversations, keyed by `` `${conversationId}:${mcpAppCanvasKey}` `` rather than reset per conversation — an entry for one `conversationId` is never returned by `get` for a different `conversationId`, since the namespaced key never matches. `set` SHALL opportunistically delete any entry older than the TTL (below) on every write, bounding the shared map's size without a per-conversation reset. `ConversationView` SHALL create exactly one instance and share it between `useOpenMcpAppCanvas` and (via a required `mcpAppCache` prop on `ConversationMessageItem`) `useMcpAppInlinePreview`, so the inline preview and the canvas reuse the same fetch/live-tool-recall for a given message.
+
+`get(key, seedKey)` SHALL return `undefined` (a miss) — never a cached entry — when: no entry exists for `key`; the stored entry's `seedKey` does not equal the requested `seedKey`; or more than 15 minutes have elapsed since the entry was written (`cachedAt`). `seedKey` SHALL be computed by `apps/chat/src/utils/mcp-app.ts`'s `computeMcpAppSeedKey(toolCall)` — `undefined` when `toolCall` itself is `undefined` (a message whose `custom_content.state` has not yet arrived), otherwise `JSON.stringify(toolCall.toolInput ?? null)`.
+
+This exists because a freshly-streamed assistant message mounts its inline preview before `custom_content.state` carries a real tool call, writing a seedless entry (`seedKey: undefined`, `toolResult: undefined`); without seed-awareness, that entry would be served forever once the message settled and a real seed became available, permanently skipping D10's live tool re-call.
+
+`invalidate(key)` SHALL delete the entry unconditionally, used by both surfaces' reload actions.
+
+#### Scenario: A seedless entry is not reused once the seed settles
+
+- **WHEN** an entry for `key` was written with `seedKey: undefined` (message not yet settled), and a later call to `get(key, seedKey)` passes a defined `seedKey` (the message has since settled to a real tool call)
+- **THEN** `get` returns `undefined`, so the caller re-fetches and re-resolves the tool result
+
+#### Scenario: A matching, fresh seed is served from cache
+
+- **WHEN** `get(key, seedKey)` is called with the same `seedKey` an entry for `key` was `set` with, less than 15 minutes ago
+- **THEN** `get` returns that entry's `html`/`toolResult`
+
+#### Scenario: An entry older than 15 minutes is treated as a miss
+
+- **WHEN** `get(key, seedKey)` is called with a matching `seedKey`, but the entry was `set` more than 15 minutes ago
+- **THEN** `get` returns `undefined`
+
+#### Scenario: Entries are namespaced per conversation
+
+- **WHEN** an entry was `set` for `key` under one `conversationId`, and `useMcpAppResponseCache` is later called with a different `conversationId`
+- **THEN** `get(key, seedKey)` under the new `conversationId` returns `undefined`, regardless of `seedKey`, since it resolves a differently-namespaced map entry
 
 ---
 
@@ -212,11 +258,11 @@ Steps:
 
 ### Requirement: No feature-flag gating
 
-The "Open App" trigger and its auto-open behavior SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — availability is driven entirely by whether `useMcpAppTools` discovered any UI-capable tool for the active deployment, which itself depends on the upstream MCP tool declaring a UI resource.
+The inline preview SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — availability is driven entirely by whether `useMcpAppTools` discovered any UI-capable tool for the active deployment (which itself depends on the upstream MCP tool declaring a UI resource) and whether a sandbox proxy is configured (`useMcpAppSandboxUrl`).
 
-**RTL impact:** none — the button is a normal block-level element in the message flow, direction-agnostic.
+**RTL impact:** none — the preview box is a normal block-level element in the message flow, direction-agnostic.
 
-#### Scenario: Available whenever the deployment has a discovered tool, without any flag check
+#### Scenario: Available whenever the deployment has a discovered tool and a sandbox proxy is configured, without any flag check
 
-- **WHEN** `useMcpAppTools` returns a non-empty array for the active deployment
-- **THEN** the "Open App" button is shown (via the `mcpAppTools[0]` fallback at minimum), and auto-open fires, regardless of any `ENABLED_FEATURES` configuration
+- **WHEN** `useMcpAppTools` returns a non-empty array for the active deployment, and `useMcpAppSandboxUrl()` is available
+- **THEN** the inline preview is shown (via the `mcpAppTools[0]` fallback at minimum), regardless of any `ENABLED_FEATURES` configuration

@@ -74,7 +74,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useAutoOpenMcpAppCanvas } from '../../hooks/attachment/useAutoOpenMcpAppCanvas';
+import { useMcpAppResponseCache } from '../../hooks/attachment/useMcpAppResponseCache';
 import { useOpenMcpAppCanvas } from '../../hooks/attachment/useOpenMcpAppCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
@@ -240,7 +240,8 @@ const ConversationView: FC<Props> = ({
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
-  const { openMcpAppCanvas } = useOpenMcpAppCanvas();
+  const mcpAppCache = useMcpAppResponseCache(conversation.id);
+  const { openMcpAppCanvas } = useOpenMcpAppCanvas(mcpAppCache);
   const { openCanvas, attachmentId: selectedAttachmentKey } =
     useAttachmentCanvas();
 
@@ -286,7 +287,6 @@ const ConversationView: FC<Props> = ({
   }, [items, activeDeploymentId, language]);
 
   const mcpAppTools = useMcpAppTools(selectedDeployment, messages, toolsets);
-  useAutoOpenMcpAppCanvas(messages, mcpAppTools);
 
   const handleAttachmentValidationError = useCallback(
     ({
@@ -736,7 +736,7 @@ const ConversationView: FC<Props> = ({
                     stepsLabel={stepsLabel}
                     onOpenApp={openMcpAppCanvas}
                     mcpAppTools={mcpAppTools}
-                    openCanvasLabel={t(AttachmentCanvasI18nKeys.OpenAppLabel)}
+                    mcpAppCache={mcpAppCache}
                     openedInCanvasLabel={t(
                       AttachmentCanvasI18nKeys.OpenedInCanvasLabel,
                     )}

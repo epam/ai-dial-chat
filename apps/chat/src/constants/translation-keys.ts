@@ -71,6 +71,7 @@ export enum ApiI18nKeys {
 
 export enum ButtonsI18nKeys {
   Retry = 'buttons.retry',
+  Reload = 'buttons.reload',
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
   Create = 'buttons.create',
@@ -850,8 +851,8 @@ export enum AttachmentCanvasI18nKeys {
   HtmlOpenInNewTab = 'attachmentCanvas.htmlOpenInNewTab',
   HtmlViewSource = 'attachmentCanvas.htmlViewSource',
   HtmlViewRendered = 'attachmentCanvas.htmlViewRendered',
-  OpenAppLabel = 'attachmentCanvas.openAppLabel',
   OpenedInCanvasLabel = 'attachmentCanvas.openedInCanvasLabel',
+  ExpandAppLabel = 'attachmentCanvas.expandAppLabel',
   McpAppTitle = 'attachmentCanvas.mcpAppTitle',
   McpAppLoadErrorLabel = 'attachmentCanvas.mcpAppLoadErrorLabel',
   McpAppForbiddenErrorLabel = 'attachmentCanvas.mcpAppForbiddenErrorLabel',

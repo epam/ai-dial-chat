@@ -2,7 +2,13 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { AppRenderer } from '@mcp-ui/client';
 import { IconAlertTriangle } from '@tabler/icons-react';
-import { type FC, useState } from 'react';
+import {
+  type FC,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { McpAppCanvasContent } from '../../models/attachment-canvas';
 import styles from './McpAppCanvasRenderer.module.scss';
 
@@ -42,16 +48,65 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
     hostContext,
     onToolCall,
   } = content;
+  /*
+   * `AppFrame` re-creates its sandbox iframe whenever `sandbox.url` changes
+   * identity (its mount effect depends on the object itself, not just
+   * `.href`) — a literal `new URL(sandboxUrl)` on every render churns the
+   * iframe on every re-render of a host that doesn't memoize `content`
+   * itself (e.g. a preview mounted continuously alongside a streaming
+   * message), which can keep the app stuck reinitializing and never reach
+   * `onSizeChanged`. Memoized here so identity only changes with the URL.
+   */
+  const sandbox = useMemo(() => ({ url: new URL(sandboxUrl) }), [sandboxUrl]);
+  const isFullscreen = hostContext?.displayMode === 'fullscreen';
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState<{
+    width: number;
+    height: number;
+  }>();
+
+  /*
+   * Reports the real, live pixel size of this component's own container
+   * (e.g. the resizable attachment canvas panel) to the mounted app via
+   * `hostContext.containerDimensions` — `AppRenderer` calls the AppBridge's
+   * `setHostContext` whenever its `hostContext` prop changes, which sends a
+   * `ui/notifications/host-context-changed` notification, so a resize here
+   * (drag-resizing the panel, window resize) reaches a well-behaved app
+   * live, not just once at mount.
+   */
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      setContainerSize({ width: Math.round(width), height: Math.round(height) });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const liveHostContext = useMemo(() => {
+    if (hostContext == null || containerSize == null) return hostContext;
+    return { ...hostContext, containerDimensions: containerSize };
+  }, [hostContext, containerSize]);
 
   return (
-    <div className="relative h-full w-full">
+    <div
+      ref={containerRef}
+      className={mergeClasses(
+        'relative h-full w-full',
+        isFullscreen && styles.fullscreenFrame,
+      )}
+    >
       <AppRenderer
         html={html}
         toolName={toolName}
         toolInput={toolInput}
         toolResult={toolResult}
-        hostContext={hostContext}
-        sandbox={{ url: new URL(sandboxUrl) }}
+        hostContext={liveHostContext}
+        sandbox={sandbox}
         onCallTool={(params) => onToolCall(params.name, params.arguments)}
         /*
          * AppRenderer does not expose an explicit "ready"/handshake-complete
