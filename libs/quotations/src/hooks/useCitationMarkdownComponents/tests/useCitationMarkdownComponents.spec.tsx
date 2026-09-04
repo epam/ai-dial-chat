@@ -2,6 +2,8 @@ import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { describe, expect, it, vi } from 'vitest';
 import { CitationCardProvider } from '../../../context/CitationCardContext';
 import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
@@ -10,6 +12,13 @@ import {
   useCitationMarkdownComponents,
   type UseCitationMarkdownComponentsCallbacks,
 } from '../useCitationMarkdownComponents';
+
+/** Mirrors the `cit`/`dataId` allowlist extension `MarkdownRenderer` applies in production. */
+const citSanitizeSchema = {
+  ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames ?? []), 'cit'],
+  attributes: { ...defaultSchema.attributes, cit: ['dataId'] },
+};
 
 const makeAnnotation = (
   url = 'https://example.com/a',
@@ -74,6 +83,7 @@ interface HostProps {
   content: string;
   groups: AnnotationGroup[];
   callbacks: UseCitationMarkdownComponentsCallbacks;
+  isStreaming?: boolean;
   isCompactTypography?: boolean;
 }
 
@@ -81,6 +91,7 @@ const Host = ({
   content,
   groups,
   callbacks,
+  isStreaming,
   isCompactTypography,
 }: HostProps) => {
   const citationCard = useCitationCard();
@@ -89,11 +100,15 @@ const Host = ({
       content,
       groups,
       callbacks,
+      isStreaming,
       isCompactTypography,
     );
   return (
     <CitationCardProvider value={citationCard}>
-      <ReactMarkdown components={markdownComponents}>
+      <ReactMarkdown
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, citSanitizeSchema]]}
+        components={markdownComponents}
+      >
         {processedContent}
       </ReactMarkdown>
     </CitationCardProvider>
@@ -117,20 +132,6 @@ describe('useCitationMarkdownComponents', () => {
     );
 
     expect(result.current.processedContent).toBe('Hello world');
-    expect(result.current.markdownComponents).toEqual({});
-  });
-
-  it('strips an unmatched cit tag even with zero groups', () => {
-    const callbacks = makeCallbacks();
-    const { result } = renderHook(() =>
-      useCitationMarkdownComponents(
-        'See the note<cit id="e1">.',
-        [],
-        callbacks,
-      ),
-    );
-
-    expect(result.current.processedContent).toBe('See the note.');
     expect(result.current.markdownComponents).toEqual({});
   });
 
@@ -294,5 +295,87 @@ describe('useCitationMarkdownComponents', () => {
     expect(callbacks.buildLabels).toHaveBeenCalledTimes(2);
     expect(callbacks.buildLabels).toHaveBeenCalledWith(groupA);
     expect(callbacks.buildLabels).toHaveBeenCalledWith(groupB);
+  });
+});
+
+describe('useCitationMarkdownComponents — cit element rendering', () => {
+  const makeCitGroup = (
+    id: string,
+    url = 'https://example.com/doc.pdf',
+  ): AnnotationGroup => {
+    const annotation: Annotation = {
+      target: { selector: { type: 'html_tag', tag: 'cit', id } },
+      body: {
+        title: 'doc.pdf',
+        source: { type: 'attachment', attachment: { type: 'application/pdf', url } },
+      },
+    };
+    return {
+      groupKey: `cit:${id}`,
+      sourceUrl: url,
+      sourceName: 'doc.pdf',
+      annotations: [annotation],
+      primaryAnnotation: annotation,
+    };
+  };
+
+  it('renders a citation marker for a matched <cit> element when not streaming', () => {
+    const group = makeCitGroup('e1');
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Patient meets criteria<cit data-id="e1"></cit>.'
+        groups={[group]}
+        callbacks={callbacks}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: `Citation from ${group.sourceName}` }),
+    ).toBeTruthy();
+  });
+
+  it('hides an unmatched <cit> element (no group with that id) when not streaming', () => {
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Patient meets criteria<cit data-id="unknown"></cit>.'
+        groups={[]}
+        callbacks={callbacks}
+      />,
+    );
+
+    expect(screen.queryByRole('button')).toBeFalsy();
+  });
+
+  it('hides every <cit> tag while streaming, even a well-formed matched pair', () => {
+    const group = makeCitGroup('e1');
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Patient meets criteria<cit data-id="e1"></cit>.'
+        groups={[group]}
+        callbacks={callbacks}
+        isStreaming
+      />,
+    );
+
+    expect(screen.queryByRole('button')).toBeFalsy();
+    expect(screen.getByText('Patient meets criteria.')).toBeTruthy();
+  });
+
+  it('hides a dangling open <cit> tag and the text streamed after it', () => {
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Patient meets criteria<cit data-id="e438">and more streaming text'
+        groups={[]}
+        callbacks={callbacks}
+        isStreaming
+      />,
+    );
+
+    expect(screen.getByText('Patient meets criteria')).toBeTruthy();
+    expect(screen.queryByText(/more streaming text/)).toBeFalsy();
   });
 });

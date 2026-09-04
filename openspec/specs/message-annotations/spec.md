@@ -109,7 +109,7 @@ Raw wire-format annotations arriving via `delta.custom_fields.annotations` are n
 
 - Accepts a `message: Message` and an `isStreaming: boolean` argument.
 - When `isStreaming` is `false`, returns the full annotation list resolved via `resolveMessageAnnotations(message)` (which prefers `message.custom_content.annotations` and falls back to normalizing `message.custom_fields.annotations`).
-- When `isStreaming` is `true`, returns only the subset of `resolveMessageAnnotations(message)` whose `target?.selector?.type === 'html_tag'` — every other selector type (`text_character_range`, `pdf_bbox`, unknown) is suppressed while streaming, unchanged from prior behavior. This lets a `cit`-tag citation's pill appear as soon as its annotation resolves, mid-stream, while the offset-based citation family keeps rendering nothing until the message finishes.
+- When `isStreaming` is `true`, returns `[]` unconditionally — every selector family, including `html_tag`, is suppressed until the message finishes streaming. (An earlier revision of this requirement let `html_tag` annotations through mid-stream; that carve-out was reverted because a `<cit>` tag split across an SSE chunk boundary can cause the HTML parser to swallow subsequently-streamed text as the tag's content — see the `citation-marker` capability's "Citation markers injected into rendered assistant message text" requirement.)
 - Skips annotations that have no `body.source.attachment.url`.
 - Handles `undefined` or `null` annotation items gracefully (skips them without throwing).
 
@@ -132,14 +132,9 @@ Raw wire-format annotations arriving via `delta.custom_fields.annotations` are n
 - **WHEN** `message.custom_content.annotations` contains a `null` or `undefined` entry
 - **THEN** `useAnnotations` returns without throwing and the nullish entry is absent from the result
 
-#### Scenario: Streaming suppresses non-html_tag annotations
+#### Scenario: Streaming suppresses every selector family, including html_tag
 
 - **WHEN** `useAnnotations` is called with `isStreaming: true` and the message's resolved annotations contain one `text_character_range` annotation and one `html_tag` annotation
-- **THEN** it returns only the `html_tag` annotation
-
-#### Scenario: Streaming with no html_tag annotations returns empty
-
-- **WHEN** `useAnnotations` is called with `isStreaming: true` and the message's resolved annotations contain only `text_character_range` annotations
 - **THEN** it returns `[]`
 
 ---

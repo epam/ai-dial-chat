@@ -205,10 +205,18 @@ const baseRehypePlugins: NonNullable<Options['rehypePlugins']> = [
     rehypeSanitize,
     {
       ...defaultSchema,
-      tagNames: [...(defaultSchema.tagNames ?? []), ...mathMLTags],
+      tagNames: [...(defaultSchema.tagNames ?? []), ...mathMLTags, 'cit'],
       attributes: {
         ...defaultSchema.attributes,
         code: [...(defaultSchema.attributes?.code ?? []), ['className']],
+        /*
+         * `dataId`, not `id` — the inline citation tag (`@epam/ai-dial-quotations`'s
+         * `useCitationMarkdownComponents`) carries its lookup key as
+         * `data-id="…"` specifically because `hast-util-sanitize`'s default
+         * `clobber` list rewrites `id`/`name` to `user-content-…` to prevent
+         * DOM clobbering — `data-*` attributes are exempt.
+         */
+        cit: ['dataId'],
       },
     },
   ],
@@ -220,9 +228,19 @@ const EMPTY_REHYPE_PLUGINS: NonNullable<Options['rehypePlugins']> = [];
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
 
-/** Default react-markdown component overrides shared across all consumers. */
+/**
+ * Default react-markdown component overrides shared across all consumers.
+ * `cit` isn't a known JSX intrinsic element (see the sanitize schema above
+ * for why it's allow-listed), so it's added via a cast rather than the
+ * `Components` type literal directly. Renders nothing by default — a
+ * consumer that cares about `<cit>` elements (`@epam/ai-dial-quotations`'s
+ * `useCitationMarkdownComponents`) overrides this via its own `components`
+ * prop; every other consumer gets a silent, warning-free hide instead of an
+ * unstyled custom element.
+ */
 export const defaultMarkdownComponents: Components = {
   li: ({ children }) => <li className="mb-1.5 last:mb-0">{children}</li>,
+  ...({ cit: () => null } as Components),
 };
 
 /** Minimal shape shared by hast text and element nodes, enough to read a cell's plain text. */

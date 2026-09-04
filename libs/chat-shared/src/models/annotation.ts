@@ -24,13 +24,13 @@ export interface PdfBBoxSelector {
   y2: number;
 }
 
-/** Selector that targets a void inline tag (e.g. `<cit id="…">`) by its `id` attribute. */
+/** Selector that targets a paired inline tag (e.g. `<cit data-id="…"></cit>`) by its `id` value. */
 export interface HtmlTagSelector {
   /** Discriminator — always `'html_tag'`. */
   type: 'html_tag';
   /** The tag name (e.g. `'cit'`). */
   tag: string;
-  /** The tag's `id` attribute value, used to match this selector to its position in the message text. */
+  /** Matches the tag's `data-id` attribute value in the message text, used to associate this selector with its rendered position. */
   id: string;
 }
 

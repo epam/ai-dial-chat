@@ -1,7 +1,10 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { AnnotationGroup } from '../group-annotations-by-source';
-import { injectCitationSentinels } from '../citation-injection';
+import {
+  injectCitationSentinels,
+  stripCitTagsWhileStreaming,
+} from '../citation-injection';
 
 const makeOffsetGroup = (end: number): AnnotationGroup => {
   const annotation: Annotation = {
@@ -41,7 +44,7 @@ const makeCitGroup = (id: string): AnnotationGroup => {
   };
 };
 
-describe('injectCitationSentinels — offset-based (regression)', () => {
+describe('injectCitationSentinels — offset-based', () => {
   it('injects a sentinel at the character offset', () => {
     const result = injectCitationSentinels('The revenue was $1B.', [
       makeOffsetGroup(19),
@@ -53,36 +56,58 @@ describe('injectCitationSentinels — offset-based (regression)', () => {
     const result = injectCitationSentinels('Short', [makeOffsetGroup(100)]);
     expect(result).toBe('Short⟦C0⟧');
   });
+
+  it('leaves content unchanged when there are no groups', () => {
+    const result = injectCitationSentinels('plain text', []);
+    expect(result).toBe('plain text');
+  });
+
+  it('skips html_tag groups — those render as real <cit> elements instead, not sentinels', () => {
+    const content = 'before<cit data-id="e1"></cit>after';
+    const result = injectCitationSentinels(content, [makeCitGroup('e1')]);
+    expect(result).toBe(content);
+  });
+
+  it('preserves the original flat-array index for the offset group when an html_tag group precedes it', () => {
+    const result = injectCitationSentinels('The revenue was $1B.', [
+      makeCitGroup('e1'),
+      makeOffsetGroup(19),
+    ]);
+    expect(result).toBe('The revenue was $1B⟦C1⟧.');
+  });
 });
 
-describe('injectCitationSentinels — tag-based (cit id)', () => {
-  it('replaces two matched cit tags with their sentinels, no raw tag text remains', () => {
-    const content =
-      'The patient meets all criteria for permanent implantation<cit id="e43864">, and the plan is to proceed with the Stage 2 implantation of a Medtronic InterStim X implantable pulse generator<cit id="e52dc2">.';
-    const groups = [makeCitGroup('e43864'), makeCitGroup('e52dc2')];
-    const result = injectCitationSentinels(content, groups);
+describe('stripCitTagsWhileStreaming', () => {
+  it('leaves content unchanged when there is no cit tag', () => {
+    expect(stripCitTagsWhileStreaming('plain text')).toBe('plain text');
+  });
 
-    expect(result).not.toContain('<cit');
-    expect(result).toBe(
-      'The patient meets all criteria for permanent implantation⟦C0⟧, and the plan is to proceed with the Stage 2 implantation of a Medtronic InterStim X implantable pulse generator⟦C1⟧.',
+  it('removes a complete cit element entirely', () => {
+    const content =
+      'The patient meets criteria<cit data-id="e43864"></cit>, and the plan is X.';
+    expect(stripCitTagsWhileStreaming(content)).toBe(
+      'The patient meets criteria, and the plan is X.',
     );
   });
 
-  it('strips an unmatched cit tag instead of leaving it as raw text', () => {
-    const content = 'See the note<cit id="unknown-id">.';
-    const result = injectCitationSentinels(content, []);
-    expect(result).toBe('See the note.');
-    expect(result).not.toContain('<cit');
+  it('removes two complete cit elements', () => {
+    const content =
+      'First<cit data-id="e1"></cit> middle<cit data-id="e2"></cit> last';
+    expect(stripCitTagsWhileStreaming(content)).toBe('First middle last');
   });
 
-  it('strips a trailing incomplete tag fragment', () => {
-    const content = 'permanent implantation<cit id="e4';
-    const result = injectCitationSentinels(content, []);
-    expect(result).toBe('permanent implantation');
+  it('hides a dangling open tag and everything streamed after it', () => {
+    const content =
+      'The patient meets criteria<cit data-id="e438">and the plan is still streaming in';
+    expect(stripCitTagsWhileStreaming(content)).toBe(
+      'The patient meets criteria',
+    );
   });
 
-  it('leaves content unchanged when there is no cit tag and no groups', () => {
-    const result = injectCitationSentinels('plain text', []);
-    expect(result).toBe('plain text');
+  it('hides an incomplete opening tag fragment at the end of the buffer', () => {
+    const content = 'The patient meets criteria<cit data-id="e4';
+    expect(stripCitTagsWhileStreaming(content)).toBe(
+      'The patient meets criteria',
+    );
   });
 });

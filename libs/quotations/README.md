@@ -2,7 +2,7 @@
 
 ## Overview
 
-Provides citation and annotation components, hooks, and utilities for AI DIAL conversations. This library handles the full lifecycle of inline citations: parsing annotation data from message payloads (both offset-based `text_character_range`/`pdf_region` citations and inline `<tag id="…">` citations, e.g. `<cit id="…">`), grouping annotations (by source document, or by tag id for inline-tag citations), injecting citation markers into rendered markdown, and rendering the `CitationCard`, `CitationMarker`, and `CitationDropdown` popup UI. It also covers reference-only attachments (RAG/search-grounding chunks) mapped to synthetic annotations.
+Provides citation and annotation components, hooks, and utilities for AI DIAL conversations. This library handles the full lifecycle of inline citations: parsing annotation data from message payloads (both offset-based `text_character_range`/`pdf_region` citations and inline paired-tag citations, e.g. `<cit data-id="…"></cit>`), grouping annotations (by source document, or by tag id for inline-tag citations), building the `cit` react-markdown component override (rendered as a real element once the host's `rehype-raw`/`rehype-sanitize` pipeline allows the tag through — see `MarkdownRenderer`'s `baseRehypePlugins`), and rendering the `CitationCard`, `CitationMarker`, and `CitationDropdown` popup UI. It also covers reference-only attachments (RAG/search-grounding chunks) mapped to synthetic annotations.
 
 ## Installation
 
@@ -99,11 +99,13 @@ Manages open/close state and per-group active annotation index for citation popu
 
 ### `useAnnotations`
 
-Returns the resolved `Annotation[]` for a message. While streaming, only inline-tag (`html_tag` selector) annotations are returned — every other selector family stays hidden until the message finishes streaming.
+Returns the resolved `Annotation[]` for a message, returning an empty array while streaming — every citation family, including `html_tag`, only shows its pill once the message finishes streaming.
 
 ### `useCitationMarkdownComponents`
 
-Builds `react-markdown` component overrides (`p`/`li`) that inject citation markers into rendered paragraph text — at the character offsets stored in each offset-based annotation group's primary selector, or at each matching `<tag id="…">` occurrence for inline-tag groups (an unmatched or still-streaming-in tag is stripped rather than shown as raw text). Returns `{ processedContent, markdownComponents }` — pass `processedContent` as the markdown source and spread `markdownComponents` into the renderer's `components` prop. When `groups` is empty and `content` has no inline tag, `processedContent` is returned unchanged and `markdownComponents` is `{}` without calling `buildLabels`.
+Builds `react-markdown` component overrides for rendering citations: a `cit` element override (rendered once the host's `rehype-raw`/`rehype-sanitize` pipeline parses a `<cit data-id="…"></cit>` tag into a real element — see `MarkdownRenderer`'s `baseRehypePlugins`; the override looks the group up by `data-id` and renders nothing for an unmatched id), plus `p`/`li` overrides that inject markers at the character offsets stored in each offset-based annotation group's primary selector. Returns `{ processedContent, markdownComponents }` — pass `processedContent` as the markdown source and spread `markdownComponents` into the renderer's `components` prop.
+
+While `isStreaming` is `true`, `processedContent` has every `<cit>` tag hidden (complete or still arriving) via `stripCitTagsWhileStreaming` — an SSE chunk boundary can land between a tag's open and close, and an HTML parser given only the opening tag would otherwise swallow the rest of the already-streamed message as that element's content.
 
 The hook owns no PDF-detection, attachment-DTO, or canvas-opening logic — that belongs in the host's `onPreview` implementation.
 
@@ -133,6 +135,7 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
       },
     }),
   },
+  isStreaming,
 );
 ```
 
@@ -144,7 +147,8 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
 - `resolveMessageAnnotations(message)` — resolves annotations from either internal or raw wire format
 - `normalizeRawAnnotations(raw, attachments)` — normalises raw API wire-format annotations; recognizes both the legacy `attachment_index` + `pdf_region` shape and the `html_tag` + flat `body.source.url` shape
 - `annotationsToPdfHighlights(annotations)` — maps annotations to PDF viewer highlight entries
-- `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown
+- `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown, for offset-based (non-`html_tag`) groups only
+- `stripCitTagsWhileStreaming(content)` — hides every `<cit>` element (complete or still arriving) from `content` while a message is streaming
 - `replaceSentinelsInChildren(children, renderMarker)` — replaces sentinels with React nodes in a rendered tree
 - `getReferenceAttachmentGroups(dtos)` — maps reference-only attachments to synthetic annotation groups
 - `isReferenceOnlyAttachment(dto)` — returns true for RAG/grounding chunks without a direct URL

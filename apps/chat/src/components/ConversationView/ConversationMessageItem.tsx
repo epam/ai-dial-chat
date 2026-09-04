@@ -354,6 +354,7 @@ const ConversationMessageItem: FC<Props> = ({
       msg.content,
       citationGroups,
       citationCallbacks,
+      isStreaming,
       isCompactTypography,
     );
   const referenceGroups = useMemo(

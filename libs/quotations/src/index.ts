@@ -46,6 +46,7 @@ export {
 export {
   injectCitationSentinels,
   replaceSentinelsInChildren,
+  stripCitTagsWhileStreaming,
 } from './utils/citation-injection';
 
 export {
