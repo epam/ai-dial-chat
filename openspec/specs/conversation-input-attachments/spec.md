@@ -291,6 +291,10 @@ The host app is responsible for setting `isAttachmentsEnabled` based on whether 
 - When no deployment is selected, the prop is omitted (undefined → `true`), allowing conversion.
 - When a deployment is selected, the host passes `isAttachmentsEnabled={isAttachmentsAllowed}` where `isAttachmentsAllowed` is derived from `selectedDeployment.inputAttachmentTypes` being non-empty.
 
+`selectedDeployment` here is the BFF's `DeploymentItemDto`, so the field is
+`inputAttachmentTypes`. In a raw DIAL Core payload the same field is
+`input_attachment_types` — see the note in `attachment-unsupported-type-error`.
+
 This prevents the erroneous "Attachments not supported" error banner that appeared when a user pasted a long prompt into the input while a model with no attachment support was selected.
 
 #### Scenario: Long pasted text on a model without attachment support stays inline
