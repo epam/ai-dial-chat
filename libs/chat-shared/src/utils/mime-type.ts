@@ -83,13 +83,17 @@ const EXTENSION_TO_MIME_TYPE: Record<string, MIMEType> = {
   ogg: MIMEType.OGG,
 };
 
+/** Strips a trailing `?query` string and/or `#fragment` from a URL or path. */
+export const stripUrlQueryAndFragment = (url: string): string =>
+  url.split(/[?#]/)[0];
+
 /**
  * Infers a `MIMEType` from a file path's extension, ignoring any query string
  * or `#` fragment. Returns `undefined` when the path has no extension or the
  * extension is not recognized.
  */
 export const inferMimeTypeFromPath = (path: string): MIMEType | undefined => {
-  const clean = path.split(/[?#]/)[0];
+  const clean = stripUrlQueryAndFragment(path);
   const dotIdx = clean.lastIndexOf('.');
   if (dotIdx === -1) return undefined;
   const ext = clean.slice(dotIdx + 1).toLowerCase();
