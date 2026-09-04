@@ -1,5 +1,5 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 /** Cache entries older than this are treated as a miss, even if the seed still matches. */
 const CACHE_TTL_MS = 15 * 60 * 1000;
@@ -24,7 +24,10 @@ export interface McpAppResponseCache {
    * otherwise `undefined` (a miss), so a stale or seed-mismatched entry is
    * never served.
    */
-  get: (key: string, seedKey: string | undefined) => CachedMcpAppResponse | undefined;
+  get: (
+    key: string,
+    seedKey: string | undefined,
+  ) => CachedMcpAppResponse | undefined;
   set: (
     key: string,
     value: CachedMcpAppResponse,
@@ -39,9 +42,7 @@ export interface McpAppResponseCache {
  * Lets the inline preview (`useMcpAppInlinePreview`) and the full-width
  * canvas (`useOpenMcpAppCanvas`) reuse the same fetch/live-tool-re-call for
  * the same message instead of repeating it every time the user switches
- * between the two. Switching to a different conversation (`conversationId`
- * changes) starts a fresh, empty cache rather than serving another
- * conversation's stale entries.
+ * between the two.
  *
  * Each entry is tagged with the `seedKey` (`computeMcpAppSeedKey`) it was
  * resolved from and a 15-minute TTL: a freshly-streamed message mounts the
@@ -49,37 +50,48 @@ export interface McpAppResponseCache {
  * first write happens with an undefined seed. `get` treats a later, settled
  * seed as a miss rather than reusing that earlier, seedless entry — without
  * this, D10's live tool re-call would never run once the message settled.
+ *
+ * The underlying `Map` lives in a `useRef`, mutated only inside `get`/`set`/
+ * `invalidate` — functions called later by consumers (in an effect or event
+ * handler), never during this hook's own render — so no ref is read or
+ * written while rendering. Entries are namespaced by `conversationId`
+ * (`${conversationId}:${key}`) rather than clearing the map on conversation
+ * switch, since clearing would itself require touching the ref during
+ * render; `set` opportunistically prunes expired entries instead, keeping
+ * the map bounded without a per-conversation reset.
  */
 export const useMcpAppResponseCache = (
   conversationId: string,
 ): McpAppResponseCache => {
-  /*
-   * A plain `useMemo`-keyed `Map`, not a `useRef` reset during render — this
-   * repo's `react-hooks/refs` lint rule disallows reading/writing `.current`
-   * during render, and recreating the `Map` here (a new value, not a ref
-   * mutation) is what `useMemo` exists for.
-   */
-  const map = useMemo(
-    () => new Map<string, CacheEntry>(),
-    [conversationId],
-  );
+  const mapRef = useRef<Map<string, CacheEntry>>(new Map());
 
-  return useMemo<McpAppResponseCache>(
-    () => ({
+  return useMemo<McpAppResponseCache>(() => {
+    const namespacedKey = (key: string) => `${conversationId}:${key}`;
+
+    return {
       get: (key, seedKey) => {
-        const entry = map.get(key);
+        const entry = mapRef.current.get(namespacedKey(key));
         if (entry == null) return undefined;
         if (entry.seedKey !== seedKey) return undefined;
         if (Date.now() - entry.cachedAt > CACHE_TTL_MS) return undefined;
         return { html: entry.html, toolResult: entry.toolResult };
       },
       set: (key, value, seedKey) => {
-        map.set(key, { ...value, seedKey, cachedAt: Date.now() });
+        const now = Date.now();
+        for (const [existingKey, existingEntry] of mapRef.current) {
+          if (now - existingEntry.cachedAt > CACHE_TTL_MS) {
+            mapRef.current.delete(existingKey);
+          }
+        }
+        mapRef.current.set(namespacedKey(key), {
+          ...value,
+          seedKey,
+          cachedAt: now,
+        });
       },
       invalidate: (key) => {
-        map.delete(key);
+        mapRef.current.delete(namespacedKey(key));
       },
-    }),
-    [map],
-  );
+    };
+  }, [conversationId]);
 };

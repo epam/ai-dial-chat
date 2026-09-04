@@ -193,7 +193,7 @@ For the canvas specifically (`displayMode: 'fullscreen'`), `McpAppCanvasRenderer
 
 ### Requirement: A per-conversation response cache is seed- and TTL-aware, so a settling tool-call seed always triggers exactly one fresh fetch/re-call
 
-**Added** (`design.md` D12, plus the seed-mismatch fix in D12's follow-up). `apps/chat/src/hooks/attachment/useMcpAppResponseCache.ts`'s `useMcpAppResponseCache(conversationId)` SHALL hold one `Map<mcpAppCanvasKey, {html, toolResult, seedKey, cachedAt}>`, reset (a new, empty `Map`) whenever `conversationId` changes. `ConversationView` SHALL create exactly one instance and share it between `useOpenMcpAppCanvas` and (via a required `mcpAppCache` prop on `ConversationMessageItem`) `useMcpAppInlinePreview`, so the inline preview and the canvas reuse the same fetch/live-tool-recall for a given message.
+**Added** (`design.md` D12, plus the seed-mismatch fix and namespaced-key revision in D12's follow-ups). `apps/chat/src/hooks/attachment/useMcpAppResponseCache.ts`'s `useMcpAppResponseCache(conversationId)` SHALL hold one shared `Map<string, {html, toolResult, seedKey, cachedAt}>` across all conversations, keyed by `` `${conversationId}:${mcpAppCanvasKey}` `` rather than reset per conversation — an entry for one `conversationId` is never returned by `get` for a different `conversationId`, since the namespaced key never matches. `set` SHALL opportunistically delete any entry older than the TTL (below) on every write, bounding the shared map's size without a per-conversation reset. `ConversationView` SHALL create exactly one instance and share it between `useOpenMcpAppCanvas` and (via a required `mcpAppCache` prop on `ConversationMessageItem`) `useMcpAppInlinePreview`, so the inline preview and the canvas reuse the same fetch/live-tool-recall for a given message.
 
 `get(key, seedKey)` SHALL return `undefined` (a miss) — never a cached entry — when: no entry exists for `key`; the stored entry's `seedKey` does not equal the requested `seedKey`; or more than 15 minutes have elapsed since the entry was written (`cachedAt`). `seedKey` SHALL be computed by `apps/chat/src/utils/mcp-app.ts`'s `computeMcpAppSeedKey(toolCall)` — `undefined` when `toolCall` itself is `undefined` (a message whose `custom_content.state` has not yet arrived), otherwise `JSON.stringify(toolCall.toolInput ?? null)`.
 
@@ -216,10 +216,10 @@ This exists because a freshly-streamed assistant message mounts its inline previ
 - **WHEN** `get(key, seedKey)` is called with a matching `seedKey`, but the entry was `set` more than 15 minutes ago
 - **THEN** `get` returns `undefined`
 
-#### Scenario: Switching conversations starts a fresh, empty cache
+#### Scenario: Entries are namespaced per conversation
 
-- **WHEN** `useMcpAppResponseCache` is called with a new `conversationId`
-- **THEN** no entry from a previous `conversationId` is returned by `get`, regardless of key or seed
+- **WHEN** an entry was `set` for `key` under one `conversationId`, and `useMcpAppResponseCache` is later called with a different `conversationId`
+- **THEN** `get(key, seedKey)` under the new `conversationId` returns `undefined`, regardless of `seedKey`, since it resolves a differently-namespaced map entry
 
 ---
 
