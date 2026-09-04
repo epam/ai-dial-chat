@@ -2313,6 +2313,39 @@
         "tags": ["conversations"]
       }
     },
+    "/api/v1/conversations/completions/attach": {
+      "post": {
+        "description": "Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Session-scoped — only the session that could stop the generation can attach to it.",
+        "operationId": "attachToGeneration",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachGenerationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream: one snapshot event, live chunk events, then one terminal event"
+          },
+          "400": {
+            "description": "Invalid or missing path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No active generation found for the given path in this session — including one that already finished"
+          }
+        },
+        "summary": "Attach to an active generation and replay it live",
+        "tags": ["conversations"]
+      }
+    },
     "/api/v1/conversations/watch": {
       "post": {
         "description": "Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.",
@@ -9541,6 +9574,17 @@
           }
         },
         "required": ["generationId", "path"]
+      },
+      "AttachGenerationDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Conversation sub-path (bucket-stripped), e.g. \"gpt-4o__My Chat\".",
+            "example": "gpt-4o__My Chat"
+          }
+        },
+        "required": ["path"]
       },
       "WatchConversationBodyDto": {
         "type": "object",

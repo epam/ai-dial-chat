@@ -151,6 +151,9 @@ describe('ConversationStreamingService', () => {
       complete: vi.fn(),
       error: vi.fn(),
       getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
+      seedAssembledMessage: vi.fn(),
+      applyChunk: vi.fn(),
+      attach: vi.fn(),
     } as unknown as ConversationGenerationService;
     mockDeploymentsService = {
       getDeploymentDetails: vi.fn().mockResolvedValue({
@@ -1408,6 +1411,7 @@ describe('ConversationStreamingService', () => {
         'test-session-id',
         'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
         'test-gen-id',
+        undefined,
       );
     });
   });
