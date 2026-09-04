@@ -1,6 +1,12 @@
+export { AvatarPickerModal } from './components/AvatarPickerModal/AvatarPickerModal';
 export { DeploymentCreationForm } from './components/DeploymentCreationForm/DeploymentCreationForm';
 export { DeploymentLocalesField } from './components/DeploymentLocalesField/DeploymentLocalesField';
 export type { DeploymentLocalesFieldProps } from './components/DeploymentLocalesField/DeploymentLocalesField';
+export type {
+  AvatarPickerFileManagerModalProps,
+  AvatarPickerModalLabels,
+  AvatarPickerModalProps,
+} from './models/avatar-picker-modal';
 export type {
   DeploymentCreationFormFieldErrors,
   DeploymentCreationFormFieldLabels,

@@ -7,8 +7,21 @@ import { EditorI18nKeys } from '../../../../constants/translation-keys';
 import type { ToolsetFormData } from '../../../../models/toolsets';
 import GeneralForm from '../GeneralForm';
 
-vi.mock('../../../../components/AvatarPickerModal/AvatarPickerModal', () => ({
-  default: () => null,
+vi.mock('@epam/ai-dial-deployment-creation-form', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('@epam/ai-dial-deployment-creation-form')
+    >();
+  return {
+    ...actual,
+    AvatarPickerModal: () => null,
+  };
+});
+
+vi.mock('../../../../context/auth/UserContext', () => ({
+  useUser: () => ({
+    user: { bucket: 'bucket' },
+  }),
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({

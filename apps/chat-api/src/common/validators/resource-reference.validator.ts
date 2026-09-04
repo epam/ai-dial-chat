@@ -22,12 +22,12 @@ const hasTraversalSegment = (value: string): boolean =>
   );
 
 /**
- * An icon/avatar reference: either an absolute `http(s)://` URL, or a DIAL
- * file id (`files/{bucket}/{path}`) pointing at a file picked through the
- * file manager. Rejects whitespace, control characters, and path-traversal
- * segments in the DIAL file id form.
+ * A resource reference such as an icon/avatar: either an absolute
+ * `http(s)://` URL, or a DIAL file id (`files/{bucket}/{path}`) pointing at a
+ * file picked through the file manager. Rejects whitespace, control
+ * characters, and path-traversal segments in the DIAL file id form.
  */
-export const isIconUrl = (value: unknown): value is string => {
+export const isValidResourceReference = (value: unknown): value is string => {
   if (typeof value !== 'string' || value.length === 0) return false;
   if (HTTPS_URL_PATTERN.test(value)) return true;
   if (!value.startsWith(DIAL_FILE_ID_PREFIX)) return false;
@@ -35,15 +35,17 @@ export const isIconUrl = (value: unknown): value is string => {
   return !hasTraversalSegment(value);
 };
 
-export const IsIconUrl = (validationOptions?: ValidationOptions) => {
+export const IsValidResourceReference = (
+  validationOptions?: ValidationOptions,
+) => {
   return (object: object, propertyName: string) => {
     registerDecorator({
-      name: 'isIconUrl',
+      name: 'isValidResourceReference',
       target: object.constructor,
       propertyName,
       options: validationOptions,
       validator: {
-        validate: isIconUrl,
+        validate: isValidResourceReference,
         defaultMessage() {
           return (
             'Must be a valid https?:// URL or a DIAL file id ' +

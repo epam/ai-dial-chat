@@ -17,11 +17,11 @@ import {
   DISPLAY_NAME_PATTERN,
   DISPLAY_NAME_VALIDATION_MESSAGE,
 } from '../../common/validators/display-name.pattern';
-import { IsIconUrl } from '../../common/validators/icon-url.validator';
 import {
   LOCALE_CODE_PATTERN,
   LOCALE_CODE_VALIDATION_MESSAGE,
 } from '../../common/validators/locale-code.pattern';
+import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
 
 export enum ToolsetTransport {
   Http = 'HTTP',
@@ -127,7 +127,7 @@ export class ToolsetBodyDto {
   })
   @IsString()
   @IsOptional()
-  @IsIconUrl()
+  @IsValidResourceReference()
   iconUrl?: string;
 
   @ApiPropertyOptional({ type: [String], example: ['keyword1', 'keyword2'] })

@@ -3,10 +3,13 @@ import { Card } from '@epam/ai-dial-catalog';
 import {
   appendLocaleCode,
   composeLocalePayload,
+  dialFileToAttachment,
   isQuickAppSchema,
 } from '@epam/ai-dial-chat-hooks';
+import type { AttachResult } from '@epam/ai-dial-chat-shared';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
+  AvatarPickerModal,
   DeploymentCreationFieldErrorCode,
   DeploymentCreationForm,
   DeploymentCreationFormFieldErrors,
@@ -26,12 +29,19 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import AvatarPickerModal from '../../components/AvatarPickerModal/AvatarPickerModal';
+import DialFileManagerModal from '../../components/DialFileManagerModal/DialFileManagerModal';
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  AVATAR_MAX_FILE_SIZE_BYTES,
+} from '../../constants/files';
 import {
   AppsEditorI18nKeys,
   BasicI18nKeys,
+  ButtonsI18nKeys,
+  DialFileManagerI18nKeys,
   EditorI18nKeys,
 } from '../../constants/translation-keys';
+import { useUser } from '../../context/auth/UserContext';
 import { createApplication } from '../../server-api/applications';
 import type { TriggerSaveGeneralPayload } from '../../types/apps-editor';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
@@ -93,6 +103,8 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   ref,
 ) {
   const { t } = useTranslation();
+  const { user } = useUser();
+  const bucket = user?.bucket ?? '';
 
   const [values, setValues] =
     useState<DeploymentCreationFormValues>(EMPTY_VALUES);
@@ -143,6 +155,46 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       },
       otherLocales: buildLocaleFieldLabels(t),
       ariaLabel: t(EditorI18nKeys.StepGeneral),
+    }),
+    [t],
+  );
+
+  const avatarPickerLabels = useMemo(
+    () => ({
+      title: t(EditorI18nKeys.AddAvatarButtonLabel),
+      attachLabel: t(DialFileManagerI18nKeys.Attach),
+      emptyTitle: t(DialFileManagerI18nKeys.Empty),
+      emptyDescription: '',
+      errorMessage: t(DialFileManagerI18nKeys.Error),
+      retryLabel: t(DialFileManagerI18nKeys.Retry),
+      hiddenFilesLabel: t(DialFileManagerI18nKeys.HiddenFiles),
+      showHiddenFilesLabel: t(DialFileManagerI18nKeys.ShowHiddenFiles),
+      hideHiddenFilesLabel: t(DialFileManagerI18nKeys.HideHiddenFiles),
+      getSelectionLabel: (count: number) =>
+        t(DialFileManagerI18nKeys.ItemsSelected, { count }),
+      uploadFilesLabel: t(DialFileManagerI18nKeys.Upload),
+      newFolderLabel: t(DialFileManagerI18nKeys.NewFolder),
+      downloadLabel: t(ButtonsI18nKeys.Download),
+      downloadingLabel: t(DialFileManagerI18nKeys.Downloading),
+      deleteLabel: t(ButtonsI18nKeys.Delete),
+      deletingLabel: t(DialFileManagerI18nKeys.DeletingLabel),
+      deleteConfirmTitleSingle: t(
+        DialFileManagerI18nKeys.DeleteConfirmTitleSingle,
+      ),
+      deleteConfirmTitleMultiple: t(
+        DialFileManagerI18nKeys.DeleteConfirmTitleMultiple,
+      ),
+      deleteConfirmSingleText: t(BasicI18nKeys.DeleteConfirmDescription),
+      deleteConfirmMultipleText: t(
+        DialFileManagerI18nKeys.DeleteConfirmBodyMultiple,
+      ),
+      deleteConfirmItemsLabel: t(
+        DialFileManagerI18nKeys.DeleteConfirmBodyItems,
+      ),
+      deleteConfirmLabel: t(ButtonsI18nKeys.Delete),
+      deleteCancelLabel: t(ButtonsI18nKeys.Cancel),
+      uploadProgressTitle: t(DialFileManagerI18nKeys.UploadProgressTitle),
+      cancelLabel: t(ButtonsI18nKeys.Cancel),
     }),
     [t],
   );
@@ -281,7 +333,23 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
           <AvatarPickerModal
             isOpen={isAvatarPickerOpen}
             onClose={() => setIsAvatarPickerOpen(false)}
-            onSelect={(iconUrl) => handleChange({ iconUrl })}
+            onAttach={(result: AttachResult) => {
+              const [file] = result.files;
+              const attachment = file
+                ? dialFileToAttachment(file, bucket, {
+                    resolvePreviewUrl: resolveCatalogIconUrl,
+                  })
+                : null;
+              if (attachment?.url) {
+                handleChange({ iconUrl: attachment.url });
+              }
+              setIsAvatarPickerOpen(false);
+            }}
+            bucket={bucket}
+            FileManagerModal={DialFileManagerModal}
+            allowedMimeTypes={AVATAR_ALLOWED_MIME_TYPES}
+            maxFileSizeBytes={AVATAR_MAX_FILE_SIZE_BYTES}
+            labels={avatarPickerLabels}
           />
 
           {submitError && <ErrorMessageNotification message={submitError} />}

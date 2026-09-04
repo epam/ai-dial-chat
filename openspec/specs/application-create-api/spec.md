@@ -34,7 +34,7 @@ The endpoint SHALL:
   type?: string;         // optional — schema ID (e.g. "https://mydial.epam.com/..."); omit for a plain
                          //   custom application with no schema type. @IsString, @IsNotEmpty, @IsOptional
   description?: string;  // optional, @IsString, @IsOptional
-  iconUrl?: string;      // optional, @IsString, @IsOptional, @IsIconUrl (https?:// URL or a
+  iconUrl?: string;      // optional, @IsString, @IsOptional, @IsValidResourceReference (https?:// URL or a
                          //   DIAL file id "files/{bucket}/{path}", no traversal segments)
   version?: string;      // optional, @IsString, @IsOptional, @Matches(/^[a-zA-Z0-9._-]+$/)
                          //   — defaults to "0.0.1" in the service

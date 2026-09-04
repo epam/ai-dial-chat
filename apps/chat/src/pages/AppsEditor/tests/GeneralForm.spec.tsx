@@ -16,9 +16,22 @@ vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
 }));
 
-vi.mock('../../../components/AvatarPickerModal/AvatarPickerModal', () => ({
-  default: () => null,
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => ({
+    user: { bucket: 'bucket' },
+  }),
 }));
+
+vi.mock('@epam/ai-dial-deployment-creation-form', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('@epam/ai-dial-deployment-creation-form')
+    >();
+  return {
+    ...actual,
+    AvatarPickerModal: () => null,
+  };
+});
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();

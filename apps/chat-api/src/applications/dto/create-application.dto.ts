@@ -14,11 +14,11 @@ import {
 import { LocaleTextEntryDto } from '../../common/dto/locale-text-entry.dto';
 import { LOCALIZED_TEXT_SCHEMA } from '../../common/types/localized-text';
 import type { LocalizedText } from '../../common/types/localized-text';
-import { IsIconUrl } from '../../common/validators/icon-url.validator';
 import {
   LOCALE_CODE_PATTERN,
   LOCALE_CODE_VALIDATION_MESSAGE,
 } from '../../common/validators/locale-code.pattern';
+import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
 
 export class CreateApplicationBodyDto {
   @ApiProperty({ example: 'My App' })
@@ -52,7 +52,7 @@ export class CreateApplicationBodyDto {
   })
   @IsString()
   @IsOptional()
-  @IsIconUrl()
+  @IsValidResourceReference()
   iconUrl?: string;
 
   @ApiPropertyOptional({ example: '1.0' })
