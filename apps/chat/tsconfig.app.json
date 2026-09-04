@@ -45,6 +45,9 @@
   ],
   "references": [
     {
+      "path": "../../libs/editor-builder/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/usage-dashboard/tsconfig.lib.json"
     },
     {
@@ -90,6 +93,9 @@
       "path": "../../libs/scheduled-tasks/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/conversation-panel/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/skill-editor/tsconfig.lib.json"
     },
     {
@@ -100,9 +106,6 @@
     },
     {
       "path": "../../libs/catalog/tsconfig.lib.json"
-    },
-    {
-      "path": "../../libs/conversation-panel/tsconfig.lib.json"
     },
     {
       "path": "../../libs/chat-shared/tsconfig.lib.json"

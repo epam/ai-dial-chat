@@ -8,62 +8,38 @@ The prompt create/edit screen: the `@epam/ai-dial-prompt-editor` lib that owns t
 
 ### Requirement: The editor's UI lives in `@epam/ai-dial-prompt-editor`
 
-**Revised (see design.md D16):** `PromptEditor` SHALL no longer render a folder picker or own folder sub-form state — the approved Figma design (`513:49196`) has no folder control on the create/edit screen. `PromptFolderField` remains exported from the same lib as a standalone widget a host may compose in separately; the requirement below describes `PromptEditor` only.
+`PromptEditor` SHALL use `EditorLayout` from `@epam/ai-dial-editor-builder` as its outer shell, replacing the previous `BuilderFormContainer` from `@epam/ai-dial-builder-form`. The dependency on `@epam/ai-dial-builder-form` SHALL be removed from `libs/prompt-editor/package.json`. The peer dependency `@epam/ai-dial-editor-builder` SHALL be added.
 
-A new lib, `libs/prompt-editor`, SHALL own the prompt form: name, description, and content (labelled **Instructions**) as a single flat column, with no "Details"/"Configuration" section split. `apps/chat/src/pages/PromptEditor/PromptEditor.tsx` SHALL become a container that supplies data and behaviour and renders nothing itself.
+`EditorLayout` SHALL receive:
+- `onBack` — the back/cancel navigation callback (previously `onBack` on `BuilderFormContainer`)
+- `backAriaLabel` — forwarded from `PromptEditorProps.labels.backButtonAriaLabel` (English default `'Back'`)
+- `title` — the resolved create/edit title string (previously the `title` field of `BuilderFormContainer`'s `labels`)
+- `leftContent` — the flat single-column form body (name, description, content/instructions)
+- `rightContent` absent (single-column mode)
+- `actions` — the Cancel + Save buttons
+- `isSaving` — forwarded from `isSaving` prop
 
-The lib SHALL export `PromptEditor`, `PromptFolderField`, and every type reachable through their props (`PromptEditorProps`, `PromptEditorValues`, `PromptEditorErrors`, `PromptEditorFolder`, `PromptEditorLabels`, `PromptEditorStyles`, `PromptEditorTypography`, `PromptFolderActions`, `PromptFolderFieldProps`, `FolderFormMode`). `PromptEditorFolder` and `PromptFolderActions` remain reachable only through `PromptFolderFieldProps`, not through `PromptEditorProps`.
+`PromptEditorProps` changes:
+- `labels.backButtonLabel` is renamed to `labels.backButtonAriaLabel` (used as the aria-label on `EditorLayout`'s back button)
+- `onBack` prop remains; `onCancel` is passed to the Cancel button inside `actions`
 
-Division of responsibility:
+Division of responsibility remains unchanged: field values, character-counter announcements, a11y wiring owned by the lib; validation, API calls, notifications, routing, i18n owned by the app.
 
-| Concern | Owner |
-| --- | --- |
-| Field values, character-counter announcements, a11y wiring | lib (`PromptEditor`) |
-| Folder sub-form state (when a host composes `PromptFolderField` itself) | lib (`PromptFolderField`) |
-| Validation against the DIAL storage contract, API calls, notifications, routing, feature gate, i18n | app container |
+#### Scenario: Header row rendered by EditorLayout
+- **WHEN** `PromptEditor` renders
+- **THEN** the header row (back arrow, title, Cancel, Save) is rendered by `EditorLayout` from `@epam/ai-dial-editor-builder`, not by `BuilderFormContainer`
 
-The lib SHALL NOT validate field values, import i18n, call an API, or read a route. Specifically:
+#### Scenario: No BuilderFormContainer import
+- **WHEN** `libs/prompt-editor/src/**` is searched for `@epam/ai-dial-builder-form` imports
+- **THEN** none are found
 
-- Inline messages arrive as plain strings through `errors`; the lib renders them and never derives them.
-- `onSubmit` fires with the current values unconditionally — an empty form still submits, because "empty is invalid" is a contract fact the host owns.
-- Length limits arrive as `descriptionMaxLength` / `contentMaxLength` numbers, used only to decide when to announce the characters remaining.
+#### Scenario: Single-column layout preserved
+- **WHEN** `PromptEditor` renders at any viewport width
+- **THEN** the form fields (Name, Description, Instructions) occupy the full available content width, with no sidebar panel beside them
 
-`initialValues` SHALL re-seed the fields whenever its object identity changes, so a host that loads asynchronously can hand over a prompt once the fetch settles.
-
-Every user-visible string SHALL be an optional label with an English default, per the no-i18n-in-libs rule, and the lib SHALL NOT hardcode typography classes — `styles.typography` carries `titleClassName` (default `'dial-h1-text'`), `contentLabelClassName` (default `'dial-tiny-semi-text'`, matching `Input`/`Textarea`'s own label style), and `helperTextClassName` (default `'dial-small-text'`).
-
-The flat column SHALL be capped at `max-w-[1180px]` and horizontally centered (`mx-auto`), matching the convention already used for centered page-level content in `Catalog.tsx` and `ScheduledTasks.tsx`, so it does not stretch edge-to-edge on a wide viewport now that no fixed-width side column bounds it.
-
-#### Scenario: The lib does not validate
-
-- **WHEN** the form is submitted with every field empty
-- **THEN** `onSubmit` is called with empty values and the lib renders no error of its own
-
-#### Scenario: Host errors render inline
-
-- **WHEN** the host passes `errors: { name: 'Name is required' }`
-- **THEN** that message renders under the name field
-
-#### Scenario: Asynchronously-loaded values seed the form
-
-- **WHEN** the host re-renders with a new `initialValues` object after its fetch settles
-- **THEN** the fields show the loaded values
-
-#### Scenario: A load error replaces the form, not augments it
-
-- **WHEN** `hasLoadError` is true
-- **THEN** an `alert` region with the load-error message renders, no field is rendered, and the retry button appears only if `onRetry` was supplied
-
-#### Scenario: Saving blocks resubmission and announces status
-
-- **WHEN** `isSaving` is true and the save button is activated
-- **THEN** `onSubmit` is not called and a `status` region announces the saving label
-
-#### Scenario: The folder sub-form is a named region (applies to `PromptFolderField` in isolation)
-
-- **WHEN** a host composes `PromptFolderField` and its create-folder sub-form is open
-- **THEN** it is exposed as a `group` named by the create-folder label, so its Save and Cancel controls are distinguishable from an outer form's identically-labelled pair
-- **NOTE**: `PromptEditor` itself does not render `PromptFolderField`, so this scenario is not exercised from the editor screen
+#### Scenario: backButtonAriaLabel labels the back button
+- **WHEN** the host passes `labels.backButtonAriaLabel = 'Back to prompts'`
+- **THEN** the back-arrow button in the header has accessible name `'Back to prompts'`
 
 ---
 

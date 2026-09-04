@@ -1,6 +1,6 @@
 # @epam/ai-dial-deployment-creation-form
 
-The shared General-step field set for creating and editing a DIAL deployment — name, description, icon URL, version, topics, and per-locale translations.
+The shared General-step field set for creating and editing a DIAL deployment — avatar, name, description, version, topics, and per-locale translations.
 
 ## Overview
 
@@ -24,14 +24,67 @@ Use it as the General step inside a builder form shell (see `@epam/ai-dial-build
 
 - `react`
 - `@epam/ai-dial-chat-shared`
+- `@epam/ai-dial-editor-builder`
 - `@epam/ai-dial-ui-kit`
 - `@tabler/icons-react`
 
 ## Components
 
+### AvatarPickerModal
+
+The host-side counterpart to `DeploymentCreationForm`'s `onAddAvatarClick`: a file manager modal restricted to a single image, for picking an entity's avatar. It never talks to a backend, a specific file-manager implementation, or a storage identifier itself — `FileManagerModal` is the host's own DIAL file manager modal component (rendered for the actual browsing/upload UI), `bucket` comes from the host's user/session, `onAttach` is where the host resolves the picked file to a DIAL resource URL (and closes the modal), and every string is pre-translated through `labels`.
+
+```tsx
+import { AvatarPickerModal } from '@epam/ai-dial-deployment-creation-form';
+
+<AvatarPickerModal
+  isOpen={isAvatarPickerOpen}
+  onAttach={(result) => {
+    const [file] = result.files;
+    const attachment = file
+      ? dialFileToAttachment(file, bucket, { resolvePreviewUrl: resolveCatalogIconUrl })
+      : null;
+    if (attachment?.url) handleChange({ iconUrl: attachment.url });
+    setIsAvatarPickerOpen(false);
+  }}
+  onClose={() => setIsAvatarPickerOpen(false)}
+  bucket={bucket}
+  FileManagerModal={DialFileManagerModal}
+  allowedMimeTypes={AVATAR_ALLOWED_MIME_TYPES}
+  maxFileSizeBytes={AVATAR_MAX_FILE_SIZE_BYTES}
+  labels={{
+    title: 'Add avatar',
+    attachLabel: 'Attach',
+    emptyTitle: 'No files',
+    emptyDescription: '',
+    errorMessage: 'Something went wrong',
+    retryLabel: 'Retry',
+    hiddenFilesLabel: 'Hidden files',
+    showHiddenFilesLabel: 'Show hidden files',
+    hideHiddenFilesLabel: 'Hide hidden files',
+    getSelectionLabel: (count) => `${count} selected`,
+    uploadFilesLabel: 'Upload',
+    newFolderLabel: 'New folder',
+    downloadLabel: 'Download',
+    downloadingLabel: 'Downloading',
+    deleteLabel: 'Delete',
+    deletingLabel: 'Deleting',
+    deleteConfirmTitleSingle: 'Delete file?',
+    deleteConfirmTitleMultiple: 'Delete files?',
+    deleteConfirmSingleText: 'Are you sure you want to delete',
+    deleteConfirmMultipleText: 'Are you sure you want to delete',
+    deleteConfirmItemsLabel: 'items?',
+    deleteConfirmLabel: 'Delete',
+    deleteCancelLabel: 'Cancel',
+    uploadProgressTitle: 'Uploading',
+    cancelLabel: 'Cancel',
+  }}
+/>;
+```
+
 ### DeploymentCreationForm
 
-Renders the whole field set. `values`, `errors`, `onChange`, and `labels` are required. Supplying `labels.ariaLabel` wraps the root in a named `role="group"`, so the field set is discoverable as one region inside a larger host form.
+Renders the whole field set. `values`, `errors`, `onChange`, `onAddAvatarClick`, and `labels` are required. The avatar field never opens a file picker itself — `onAddAvatarClick` is the host's hook to open its own file manager/upload flow, and the host reports the result back through `onChange({ iconUrl })`. `iconPreviewUrl` is the URL to actually render in the preview box; the host resolves it from `values.iconUrl` (which may be a DIAL file id rather than a directly displayable URL). Supplying `labels.ariaLabel` wraps the root in a named `role="group"`, so the field set is discoverable as one region inside a larger host form.
 
 ```tsx
 import { DeploymentCreationForm } from '@epam/ai-dial-deployment-creation-form';
@@ -42,16 +95,23 @@ import { DeploymentCreationForm } from '@epam/ai-dial-deployment-creation-form';
   onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}
   onNameBlur={handleNameBlur}
   onVersionBlur={handleVersionBlur}
+  iconPreviewUrl={resolveIconPreviewUrl(values.iconUrl)}
+  onAddAvatarClick={openAvatarPicker}
   availableLocaleOptions={localeOptions}
   labels={{
     name: { label: 'Name', placeholder: 'Enter a name' },
     description: { label: 'Description' },
-    iconUrl: { label: 'Icon URL' },
+    iconUrl: {
+      label: 'Avatar',
+      addAvatarLabel: 'Add avatar',
+      captionText: 'PNG, JPG or SVG (max 1 MB)',
+    },
     version: { label: 'Version', placeholder: '1.0.0' },
     topics: { label: 'Topics' },
     otherLocales: {
       summaryLabel: 'Locales',
-      editLabel: 'Edit',
+      addLabel: 'Add locales',
+      editLabel: 'Edit locales',
       popupTitle: 'Add locale',
       addLocaleLabel: 'Add locale',
       languageLabel: 'Language',
@@ -124,10 +184,14 @@ DeploymentCreationFieldErrorCode.TooLong; // value exceeds its maximum length
 
 ```tsx
 import type {
+  AvatarPickerModalProps,
+  AvatarPickerModalLabels,
+  AvatarPickerFileManagerModalProps,
   DeploymentCreationFormProps,
   DeploymentCreationFormValues,
   DeploymentCreationFormLabels,
   DeploymentCreationFormFieldLabels,
+  DeploymentCreationFormIconLabels,
   DeploymentCreationFormFieldErrors,
   DeploymentCreationFormLocaleEntry,
   DeploymentCreationFormLocaleOption,

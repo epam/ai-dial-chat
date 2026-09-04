@@ -1,4 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { EditorLayout } from '@epam/ai-dial-editor-builder';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { DialFoldersTree } from '@epam/ai-dial-react-file-manager';
 import {
@@ -33,7 +34,6 @@ import {
   lazy,
   useCallback,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
@@ -82,10 +82,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   isNameReadOnly = false,
   onDirtyChange,
   fileActions,
-  headerContent,
   supportingFileContent,
   onSubmit,
   onCancel,
+  onBack,
+  backAriaLabel,
+  title,
   onRetry,
   labels,
   styles: stylesProp,
@@ -176,9 +178,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
    * clicking "Upload from device".
    */
   const handleSurfaceFilesDropped = useCallback(
-    (files: File[]) => {
+    (droppedFileList: File[]) => {
       if (isUploadDialogOpen) return;
-      setDroppedFiles(files);
+      setDroppedFiles(droppedFileList);
       setIsUploadDialogOpen(true);
     },
     [isUploadDialogOpen],
@@ -196,11 +198,20 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     typography.helperTextClassName ?? 'dial-tiny-semi-text';
   const removeIconClassName =
     typography.removeIconClassName ?? 'text-secondary';
+
   const cssVars = buildCssVars({
     '--se-title-color': colors?.title,
     '--se-helper-text-color': colors?.helperText,
-    '--se-border-color': colors?.border,
   });
+
+  const layoutStyles = colors?.border
+    ? {
+        colors: {
+          headerBorderColor: colors.border,
+          sidebarBorderColor: colors.border,
+        },
+      }
+    : undefined;
 
   const treeItems: DialFile[] = useMemo(
     () =>
@@ -259,10 +270,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [t.removeLabel, removeIconClassName, handleRemoveNode],
   );
 
-  const filesTreeId = useId();
-  const savingStatusId = useId();
-
-  const renderFilesPane = () => (
+  const filesPane = (
     <div className="flex flex-col gap-2 desktop:gap-5">
       <div className="flex items-center justify-between">
         <span className={mergeClasses(styles.title, titleClassName)}>
@@ -279,11 +287,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           }}
         />
       </div>
-      <div
-        id={filesTreeId}
-        role="tree"
-        aria-label={t.filesTreeAriaLabel ?? 'Skill files'}
-      >
+      <div role="tree" aria-label={t.filesTreeAriaLabel ?? 'Skill files'}>
         <DialFoldersTree
           items={treeItems}
           showFiles
@@ -298,15 +302,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     </div>
   );
 
-  const filesPaneContent = renderFilesPane();
-
-  const savingStatusText = isSubmitting
-    ? (t.savingStatusLabel ?? 'Saving')
-    : '';
-
   const actions = (
     <>
-      <GhostButton
+      <NeutralButton
         label={t.cancelLabel ?? 'Cancel'}
         onClick={onCancel}
         disabled={isSubmitting}
@@ -324,21 +322,55 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Spinner ariaLabel={t.loadingAriaLabel ?? 'Loading skill'} />
+      <div dir={dir} className="relative flex min-h-0 flex-1 flex-col">
+        <EditorLayout
+          title={title}
+          onBack={onBack}
+          backAriaLabel={backAriaLabel}
+          actions={actions}
+          isSaving={false}
+          labels={{ savingStatusLabel: t.savingStatusLabel }}
+          styles={layoutStyles}
+          leftContent={
+            <div
+              role="status"
+              aria-label={t.loadingAriaLabel ?? 'Loading skill'}
+              className="flex flex-1 items-center justify-center p-8"
+            >
+              <Spinner />
+            </div>
+          }
+        />
       </div>
     );
   }
 
   if (hasLoadError) {
     return (
-      <div role="alert" className="flex flex-col items-center gap-4 p-8">
-        <ErrorText
-          text={
-            t.loadErrorMessage ?? "Couldn't load this skill. Please try again."
+      <div dir={dir} className="relative flex min-h-0 flex-1 flex-col">
+        <EditorLayout
+          title={title}
+          onBack={onBack}
+          backAriaLabel={backAriaLabel}
+          actions={actions}
+          isSaving={false}
+          labels={{ savingStatusLabel: t.savingStatusLabel }}
+          styles={layoutStyles}
+          leftContent={
+            <div role="alert" className="flex flex-col items-center gap-4 p-8">
+              <ErrorText
+                text={
+                  t.loadErrorMessage ??
+                  "Couldn't load this skill. Please try again."
+                }
+              />
+              <PrimaryButton
+                label={t.retryLabel ?? 'Retry'}
+                onClick={onRetry}
+              />
+            </div>
           }
         />
-        <PrimaryButton label={t.retryLabel ?? 'Retry'} onClick={onRetry} />
       </div>
     );
   }
@@ -346,7 +378,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   return (
     <div
       dir={dir}
-      className="relative flex h-full flex-col"
+      className="relative flex min-h-0 flex-1 flex-col"
       style={cssVars}
       {...surfaceDropZoneHandlers}
     >
@@ -354,169 +386,152 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         isVisible={isSurfaceDragActive && !isUploadDialogOpen}
         labels={labels}
       />
-      <span
-        role="status"
-        aria-live="polite"
-        className="sr-only"
-        id={savingStatusId}
-      >
-        {savingStatusText}
-      </span>
-      {submitError && (
-        <div role="alert" className="px-4 pt-2">
-          <ErrorText text={submitError} />
-        </div>
-      )}
-      {conflict && (
-        <div role="alert" className="flex items-center gap-2 px-4 pt-2">
-          <ErrorText text={conflict.message} />
-          <GhostButton
-            label={t.reloadLatestLabel ?? 'Reload latest'}
-            onClick={onReloadLatest}
-          />
-        </div>
-      )}
 
-      {/* Desktop: static Files sidebar + main pane; host header content + actions share this row. */}
-      <div
-        className={mergeClasses(
-          'hidden items-center justify-between gap-2 border-b px-4 py-2 desktop:flex desktop:px-8 desktop:pb-3 desktop:pt-3',
-          styles.headerBorder,
-        )}
-      >
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          {headerContent}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">{actions}</div>
-      </div>
+      <EditorLayout
+        title={title}
+        onBack={onBack}
+        backAriaLabel={backAriaLabel}
+        actions={actions}
+        isSaving={isSubmitting}
+        labels={{ savingStatusLabel: t.savingStatusLabel }}
+        styles={layoutStyles}
+        leftContent={
+          <>
+            {/* Mobile: collapsible file-list summary, collapsed by default. */}
+            <div className="px-4 py-4 desktop:hidden">
+              <Accordion
+                title={t.editingFileLabel ?? 'Editing file'}
+                description={selectedNode?.name ?? SKILL_MANIFEST_PATH}
+                expanded={isFilesExpanded}
+                onToggle={setIsFilesExpanded}
+                ariaLabel={t.editingFileLabel ?? 'Editing file'}
+              >
+                {filesPane}
+              </Accordion>
+            </div>
 
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-20 desktop:flex-row desktop:gap-0 desktop:px-0 desktop:pb-0">
-        {/* Mobile: collapsible "Editing file" summary, collapsed by default. */}
-        <div className="desktop:hidden">
-          <Accordion
-            title={t.editingFileLabel ?? 'Editing file'}
-            description={selectedNode?.name ?? SKILL_MANIFEST_PATH}
-            expanded={isFilesExpanded}
-            onToggle={setIsFilesExpanded}
-            ariaLabel={t.editingFileLabel ?? 'Editing file'}
-          >
-            {filesPaneContent}
-          </Accordion>
-        </div>
-
-        {/* Desktop: always-visible Files sidebar. */}
-        <div
-          className={mergeClasses(
-            'hidden border-e desktop:block desktop:w-[360px] desktop:shrink-0 desktop:px-8 desktop:py-6',
-            styles.sidebarBorder,
-          )}
-        >
-          {filesPaneContent}
-        </div>
-
-        <div className="flex min-w-0 flex-1 flex-col gap-4 desktop:gap-5 desktop:px-8 desktop:py-6">
-          <h2 className={mergeClasses(styles.title, titleClassName)}>
-            {selectedPath === SKILL_MANIFEST_PATH
-              ? SKILL_MANIFEST_PATH
-              : (t.selectedFileHeading?.(selectedNode?.name ?? selectedPath) ??
-                selectedNode?.name ??
-                selectedPath)}
-          </h2>
-
-          {selectedPath === SKILL_MANIFEST_PATH ? (
-            <>
-              <Input
-                labelProps={{ label: t.nameLabel ?? 'Name', required: true }}
-                value={values.name}
-                onChange={(value) =>
-                  setValues((prev) => ({ ...prev, name: value ?? '' }))
-                }
-                placeholder={t.namePlaceholder ?? 'good-morning-breakfast'}
-                caption={
-                  errors?.name
-                    ? undefined
-                    : (t.nameCaption ??
-                      "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.")
-                }
-                error={errors?.name}
-                invalid={!!errors?.name}
-                disabled={isNameReadOnly}
-              />
-              <Textarea
-                labelProps={{
-                  label: t.descriptionLabel ?? 'Description',
-                  required: true,
-                }}
-                value={values.description}
-                placeholder={
-                  t.descriptionPlaceholder ??
-                  'What this skill does and when to use it'
-                }
-                onChange={(value) =>
-                  setValues((prev) => ({ ...prev, description: value }))
-                }
-                error={errors?.description}
-                invalid={!!errors?.description}
-              />
-              <div className="flex flex-1 flex-col gap-2">
-                <span className="flex items-center gap-0.5">
-                  <span
-                    className={mergeClasses(
-                      styles.helperText,
-                      helperTextClassName,
-                    )}
-                  >
-                    {t.instructionsLabel ?? 'Instructions'}
-                  </span>
-                  <span className="dial-tiny-text text-error">*</span>
-                </span>
-                <Suspense
-                  fallback={
-                    <Spinner
-                      ariaLabel={t.instructionsLoadingAriaLabel ?? 'Loading'}
-                    />
-                  }
-                >
-                  <LazyMarkdown
-                    value={values.instructions}
-                    onChange={(value) =>
-                      setValues((prev) => ({ ...prev, instructions: value }))
-                    }
-                    theme={instructionsEditorTheme}
-                    placeholder={
-                      t.instructionsPlaceholder ??
-                      'Write the skill instructions in Markdown'
-                    }
-                  />
-                </Suspense>
-                {errors?.instructions && (
-                  <ErrorText text={errors.instructions} />
-                )}
+            {/* Desktop: always-visible Files panel. */}
+            <div className="hidden px-8 py-6 desktop:block">{filesPane}</div>
+          </>
+        }
+        rightContent={
+          <div className="flex flex-1 flex-col gap-4 px-4 py-6 desktop:gap-5 desktop:px-8">
+            {submitError != null && (
+              <div role="alert">
+                <ErrorText text={submitError} />
               </div>
-            </>
-          ) : (
-            selectedNode?.kind === SkillFileNodeKind.File &&
-            (supportingFileContent ?? (
-              <CaptionText
-                text={
-                  t.supportingFileNote ??
-                  'This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.'
-                }
-              />
-            ))
-          )}
-        </div>
-      </div>
+            )}
+            {conflict != null && (
+              <div role="alert" className="flex items-center gap-2">
+                <ErrorText text={conflict.message} />
+                <GhostButton
+                  label={t.reloadLatestLabel ?? 'Reload latest'}
+                  onClick={onReloadLatest}
+                />
+              </div>
+            )}
 
-      {/* Mobile: sticky action bar, always reachable without scrolling. */}
-      <div
-        className={mergeClasses(
-          'fixed inset-x-0 bottom-0 flex items-center gap-2 border-t p-3 desktop:hidden',
-          styles.actionBarBorder,
-        )}
-      >
-        {actions}
-      </div>
+            <h2 className={mergeClasses(styles.title, titleClassName)}>
+              {selectedPath === SKILL_MANIFEST_PATH
+                ? SKILL_MANIFEST_PATH
+                : (t.selectedFileHeading?.(
+                    selectedNode?.name ?? selectedPath,
+                  ) ??
+                  selectedNode?.name ??
+                  selectedPath)}
+            </h2>
+
+            {selectedPath === SKILL_MANIFEST_PATH ? (
+              <>
+                <Input
+                  labelProps={{
+                    label: t.nameLabel ?? 'Name',
+                    required: true,
+                  }}
+                  value={values.name}
+                  onChange={(value) =>
+                    setValues((prev) => ({ ...prev, name: value ?? '' }))
+                  }
+                  placeholder={t.namePlaceholder ?? 'good-morning-breakfast'}
+                  caption={
+                    errors?.name
+                      ? undefined
+                      : (t.nameCaption ??
+                        "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.")
+                  }
+                  error={errors?.name}
+                  invalid={!!errors?.name}
+                  disabled={isNameReadOnly}
+                />
+                <Textarea
+                  labelProps={{
+                    label: t.descriptionLabel ?? 'Description',
+                    required: true,
+                  }}
+                  value={values.description}
+                  placeholder={
+                    t.descriptionPlaceholder ??
+                    'What this skill does and when to use it'
+                  }
+                  onChange={(value) =>
+                    setValues((prev) => ({ ...prev, description: value }))
+                  }
+                  error={errors?.description}
+                  invalid={!!errors?.description}
+                />
+                <div className="flex flex-1 flex-col gap-2">
+                  <span className="flex items-center gap-0.5">
+                    <span
+                      className={mergeClasses(
+                        styles.helperText,
+                        helperTextClassName,
+                      )}
+                    >
+                      {t.instructionsLabel ?? 'Instructions'}
+                    </span>
+                    <span className="dial-tiny-text text-error">*</span>
+                  </span>
+                  <Suspense
+                    fallback={
+                      <Spinner
+                        ariaLabel={t.instructionsLoadingAriaLabel ?? 'Loading'}
+                      />
+                    }
+                  >
+                    <LazyMarkdown
+                      value={values.instructions}
+                      onChange={(value) =>
+                        setValues((prev) => ({
+                          ...prev,
+                          instructions: value,
+                        }))
+                      }
+                      theme={instructionsEditorTheme}
+                      placeholder={
+                        t.instructionsPlaceholder ??
+                        'Write the skill instructions in Markdown'
+                      }
+                    />
+                  </Suspense>
+                  {errors?.instructions != null && (
+                    <ErrorText text={errors.instructions} />
+                  )}
+                </div>
+              </>
+            ) : (
+              selectedNode?.kind === SkillFileNodeKind.File &&
+              (supportingFileContent ?? (
+                <CaptionText
+                  text={
+                    t.supportingFileNote ??
+                    'This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.'
+                  }
+                />
+              ))
+            )}
+          </div>
+        }
+      />
 
       <SkillFileUploadDialog
         isOpen={isUploadDialogOpen}

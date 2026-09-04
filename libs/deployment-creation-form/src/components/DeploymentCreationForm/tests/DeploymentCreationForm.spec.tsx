@@ -82,12 +82,17 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
 const labels: DeploymentCreationFormLabels = {
   name: { label: 'Name', placeholder: 'Enter name' },
   description: { label: 'Description', placeholder: 'Describe it' },
-  iconUrl: { label: 'Icon URL', placeholder: 'https://...' },
+  iconUrl: {
+    label: 'Avatar',
+    addAvatarLabel: 'Add avatar',
+    captionText: 'PNG, JPG or SVG (max 1 MB)',
+  },
   version: { label: 'Version', placeholder: 'e.g. 1.0.0' },
   topics: { label: 'Topics', placeholder: 'Add a topic' },
   otherLocales: {
     summaryLabel: 'Locales',
-    editLabel: 'Edit',
+    addLabel: 'Add locales',
+    editLabel: 'Edit locales',
     popupTitle: 'Add locale',
     addLocaleLabel: 'Add locale',
     languageLabel: 'Language',
@@ -110,12 +115,14 @@ const renderComponent = (
   valuesOverrides?: Partial<DeploymentCreationFormValues>,
   errors: DeploymentCreationFormFieldErrors = {},
   onChange = vi.fn(),
+  onAddAvatarClick = vi.fn(),
 ) =>
   render(
     <DeploymentCreationForm
       values={{ ...baseValues, ...valuesOverrides }}
       errors={errors}
       onChange={onChange}
+      onAddAvatarClick={onAddAvatarClick}
       labels={labels}
     />,
   );
@@ -131,9 +138,18 @@ describe('DeploymentCreationForm', () => {
     renderComponent();
     expect(screen.getByLabelText('Name')).toBeTruthy();
     expect(screen.getByLabelText('Description')).toBeTruthy();
-    expect(screen.getByLabelText('Icon URL')).toBeTruthy();
+    expect(screen.getByText('Avatar')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add avatar' })).toBeTruthy();
+    expect(screen.getByText('PNG, JPG or SVG (max 1 MB)')).toBeTruthy();
     expect(screen.getByLabelText('Version')).toBeTruthy();
     expect(screen.getByLabelText('Topics')).toBeTruthy();
+  });
+
+  it('calls onAddAvatarClick when the Add avatar button is clicked', async () => {
+    const onAddAvatarClick = vi.fn();
+    renderComponent(undefined, {}, vi.fn(), onAddAvatarClick);
+    await user.click(screen.getByRole('button', { name: 'Add avatar' }));
+    expect(onAddAvatarClick).toHaveBeenCalledOnce();
   });
 
   it('calls onChange with a name patch when the name input changes', () => {

@@ -102,28 +102,34 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <p role="alert">{error}</p>}
     </>
   ),
-  Select: ({
-    options,
+  RadioGroup: ({
+    items,
     value,
     onChange,
-    elementId,
+    labelProps,
+    id,
   }: {
-    options: { value: string; label: string; description?: string }[];
+    items: { value: string; label: string }[];
     value?: string;
     onChange?: (v: string) => void;
-    elementId?: string;
+    labelProps?: { label?: string };
+    id?: string;
   }) => (
-    <select
-      id={elementId}
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.description ? `${o.label} ${o.description}` : o.label}
-        </option>
+    <fieldset>
+      <legend>{labelProps?.label}</legend>
+      {items.map((item) => (
+        <label key={item.value}>
+          <input
+            type="radio"
+            name={id}
+            value={item.value}
+            checked={value === item.value}
+            onChange={() => onChange?.(item.value)}
+          />
+          {item.label}
+        </label>
       ))}
-    </select>
+    </fieldset>
   ),
   TagInput: ({
     labelProps,
@@ -201,44 +207,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('SettingsForm — copy endpoint', () => {
-  const user = userEvent.setup({ delay: null });
-  const mockWriteText = vi.fn().mockResolvedValue(undefined);
-
-  beforeEach(() => {
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: { writeText: mockWriteText },
-    });
-  });
-
-  it('renders the copy endpoint button', () => {
-    renderSettings();
-    expect(
-      screen.getByRole('button', {
-        name: ToolsetEditorI18nKeys.CopyUrlLabel,
-      }),
-    ).toBeTruthy();
-  });
-
-  it('calls clipboard.writeText with the endpoint URL when copy is clicked', async () => {
-    renderSettings('https://my-toolset.example.com/mcp');
-    await user.click(
-      screen.getByRole('button', { name: ToolsetEditorI18nKeys.CopyUrlLabel }),
-    );
-    expect(mockWriteText).toHaveBeenCalledWith(
-      'https://my-toolset.example.com/mcp',
-    );
-  });
-
-  it('does not call clipboard.writeText when endpoint is empty', async () => {
-    renderSettings('');
-    await user.click(
-      screen.getByRole('button', { name: ToolsetEditorI18nKeys.CopyUrlLabel }),
-    );
-    expect(mockWriteText).not.toHaveBeenCalled();
-  });
-
+describe('SettingsForm — endpoint field', () => {
   it('renders the endpoint error message when errors.endpoint is provided', () => {
     render(
       <SettingsForm
@@ -257,12 +226,10 @@ describe('SettingsForm — copy endpoint', () => {
     );
   });
 
-  it('marks the SSE protocol option as deprecated', () => {
+  it('renders HTTP and SSE as protocol radio options', () => {
     renderSettings();
-    const sseOption = screen.getByRole('option', {
-      name: `SSE ${ToolsetEditorI18nKeys.ProtocolSseDeprecatedLabel}`,
-    });
-    expect(sseOption).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'HTTP' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'SSE' })).toBeTruthy();
   });
 });
 

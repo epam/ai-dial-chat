@@ -3,10 +3,13 @@ import { Card } from '@epam/ai-dial-catalog';
 import {
   appendLocaleCode,
   composeLocalePayload,
+  dialFileToAttachment,
   isQuickAppSchema,
 } from '@epam/ai-dial-chat-hooks';
+import type { AttachResult } from '@epam/ai-dial-chat-shared';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
+  AvatarPickerModal,
   DeploymentCreationFieldErrorCode,
   DeploymentCreationForm,
   DeploymentCreationFormFieldErrors,
@@ -26,13 +29,22 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import DialFileManagerModal from '../../components/DialFileManagerModal/DialFileManagerModal';
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  AVATAR_MAX_FILE_SIZE_BYTES,
+} from '../../constants/files';
 import {
   AppsEditorI18nKeys,
   BasicI18nKeys,
+  ButtonsI18nKeys,
+  DialFileManagerI18nKeys,
   EditorI18nKeys,
 } from '../../constants/translation-keys';
+import { useUser } from '../../context/auth/UserContext';
 import { createApplication } from '../../server-api/applications';
 import type { TriggerSaveGeneralPayload } from '../../types/apps-editor';
+import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import {
   buildAdditionalLocaleOptions,
   buildLocaleFieldLabels,
@@ -91,12 +103,15 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   ref,
 ) {
   const { t } = useTranslation();
+  const { user } = useUser();
+  const bucket = user?.bucket ?? '';
 
   const [values, setValues] =
     useState<DeploymentCreationFormValues>(EMPTY_VALUES);
   const [errors, setErrors] = useState<DeploymentCreationFormFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
   const hasSeededInitialValuesRef = useRef(false);
 
   useEffect(() => {
@@ -106,6 +121,11 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   }, [initialValues]);
 
   const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
+
+  const iconPreviewUrl = useMemo(
+    () => resolveCatalogIconUrl(values.iconUrl),
+    [values.iconUrl],
+  );
 
   const labels: DeploymentCreationFormLabels = useMemo(
     () => ({
@@ -121,8 +141,9 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         placeholder: t(AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder),
       },
       iconUrl: {
-        label: t(EditorI18nKeys.IconUrlLabel),
-        placeholder: t(BasicI18nKeys.UrlPlaceholder),
+        label: t(EditorI18nKeys.AvatarLabel),
+        addAvatarLabel: t(EditorI18nKeys.AddAvatarButtonLabel),
+        captionText: t(EditorI18nKeys.AvatarCaption),
       },
       version: {
         label: t(EditorI18nKeys.VersionLabel),
@@ -134,6 +155,46 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       },
       otherLocales: buildLocaleFieldLabels(t),
       ariaLabel: t(EditorI18nKeys.StepGeneral),
+    }),
+    [t],
+  );
+
+  const avatarPickerLabels = useMemo(
+    () => ({
+      title: t(EditorI18nKeys.AddAvatarButtonLabel),
+      attachLabel: t(DialFileManagerI18nKeys.Attach),
+      emptyTitle: t(DialFileManagerI18nKeys.Empty),
+      emptyDescription: '',
+      errorMessage: t(DialFileManagerI18nKeys.Error),
+      retryLabel: t(DialFileManagerI18nKeys.Retry),
+      hiddenFilesLabel: t(DialFileManagerI18nKeys.HiddenFiles),
+      showHiddenFilesLabel: t(DialFileManagerI18nKeys.ShowHiddenFiles),
+      hideHiddenFilesLabel: t(DialFileManagerI18nKeys.HideHiddenFiles),
+      getSelectionLabel: (count: number) =>
+        t(DialFileManagerI18nKeys.ItemsSelected, { count }),
+      uploadFilesLabel: t(DialFileManagerI18nKeys.Upload),
+      newFolderLabel: t(DialFileManagerI18nKeys.NewFolder),
+      downloadLabel: t(ButtonsI18nKeys.Download),
+      downloadingLabel: t(DialFileManagerI18nKeys.Downloading),
+      deleteLabel: t(ButtonsI18nKeys.Delete),
+      deletingLabel: t(DialFileManagerI18nKeys.DeletingLabel),
+      deleteConfirmTitleSingle: t(
+        DialFileManagerI18nKeys.DeleteConfirmTitleSingle,
+      ),
+      deleteConfirmTitleMultiple: t(
+        DialFileManagerI18nKeys.DeleteConfirmTitleMultiple,
+      ),
+      deleteConfirmSingleText: t(BasicI18nKeys.DeleteConfirmDescription),
+      deleteConfirmMultipleText: t(
+        DialFileManagerI18nKeys.DeleteConfirmBodyMultiple,
+      ),
+      deleteConfirmItemsLabel: t(
+        DialFileManagerI18nKeys.DeleteConfirmBodyItems,
+      ),
+      deleteConfirmLabel: t(ButtonsI18nKeys.Delete),
+      deleteCancelLabel: t(ButtonsI18nKeys.Cancel),
+      uploadProgressTitle: t(DialFileManagerI18nKeys.UploadProgressTitle),
+      cancelLabel: t(ButtonsI18nKeys.Cancel),
     }),
     [t],
   );
@@ -244,9 +305,9 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       description: values.description,
       folder: [],
       topics: values.topics,
-      iconUrl: values.iconUrl.trim() || undefined,
+      iconUrl: iconPreviewUrl,
     }),
-    [values],
+    [values, iconPreviewUrl],
   );
 
   return (
@@ -264,8 +325,31 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
             values={values}
             errors={errors}
             onChange={handleChange}
+            iconPreviewUrl={iconPreviewUrl}
+            onAddAvatarClick={() => setIsAvatarPickerOpen(true)}
             labels={labels}
             availableLocaleOptions={localeOptions}
+          />
+          <AvatarPickerModal
+            isOpen={isAvatarPickerOpen}
+            onClose={() => setIsAvatarPickerOpen(false)}
+            onAttach={(result: AttachResult) => {
+              const [file] = result.files;
+              const attachment = file
+                ? dialFileToAttachment(file, bucket, {
+                    resolvePreviewUrl: resolveCatalogIconUrl,
+                  })
+                : null;
+              if (attachment?.url) {
+                handleChange({ iconUrl: attachment.url });
+              }
+              setIsAvatarPickerOpen(false);
+            }}
+            bucket={bucket}
+            FileManagerModal={DialFileManagerModal}
+            allowedMimeTypes={AVATAR_ALLOWED_MIME_TYPES}
+            maxFileSizeBytes={AVATAR_MAX_FILE_SIZE_BYTES}
+            labels={avatarPickerLabels}
           />
 
           {submitError && <ErrorMessageNotification message={submitError} />}

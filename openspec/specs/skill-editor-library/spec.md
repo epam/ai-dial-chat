@@ -6,7 +6,12 @@ Specifies `libs/skill-editor`'s host-agnostic `SkillEditor` React component: its
 ## Requirements
 
 ### Requirement: Public package surface
-`libs/skill-editor/src/index.ts` SHALL export a `SkillEditor` React component plus every TypeScript type reachable through its props (form values, labels/texts, file-tree node types, callback signatures, error/status enums, edit-mode/conflict-state types). Internal-only helpers SHALL NOT be exported from the barrel. The package `libs/skill-editor/package.json` SHALL declare `name: "@epam/ai-dial-skill-editor"`, an `exports` map matching `libs/prompt-editor/package.json`'s shape (source/types/import/default for `.`, plus `./package.json`), and peer dependencies on `react`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-react-file-manager`, and `@tabler/icons-react`.
+`libs/skill-editor/src/index.ts` SHALL export a `SkillEditor` React component plus every TypeScript type reachable through its props (form values, labels/texts, file-tree node types, callback signatures, error/status enums, edit-mode/conflict-state types). Internal-only helpers SHALL NOT be exported from the barrel. The package `libs/skill-editor/package.json` SHALL declare `name: "@epam/ai-dial-skill-editor"`, an `exports` map matching `libs/prompt-editor/package.json`'s shape (source/types/import/default for `.`, plus `./package.json`), and peer dependencies on `react`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-editor-builder`, and `@tabler/icons-react`.
+
+The `headerContent?: ReactNode` prop IS REMOVED from `SkillEditorProps`. It is replaced by:
+- `onBack: () => void` — called when the back button is clicked
+- `backAriaLabel?: string` — accessible label for the back button (English default `'Back'`)
+- `title: string` — heading text shown in the header
 
 #### Scenario: Consumer imports the library's public surface
 - **WHEN** `apps/chat/src/pages/SkillEditor/SkillEditor.tsx` writes `import { SkillEditor, SkillEditorValues, SkillEditorLabels, SkillFileTreeNode, SkillEditorConflict } from '@epam/ai-dial-skill-editor'`
@@ -15,6 +20,14 @@ Specifies `libs/skill-editor`'s host-agnostic `SkillEditor` React component: its
 #### Scenario: Internal helper is not part of the public surface
 - **WHEN** code outside `libs/skill-editor` attempts to import an unexported internal helper (e.g. a path-formatting utility used only inside the component) from `@epam/ai-dial-skill-editor`
 - **THEN** the import fails to resolve, since the barrel does not re-export it
+
+#### Scenario: headerContent prop is removed
+- **WHEN** a consumer passes `headerContent={<>...</>}` to `SkillEditor`
+- **THEN** the TypeScript compiler reports an error — `headerContent` is no longer a valid prop
+
+#### Scenario: Back button delegates to onBack
+- **WHEN** a user clicks the back-arrow button in the skill editor header
+- **THEN** `onBack` is called exactly once
 
 ### Requirement: No host, REST, serialization, or i18n dependency
 `libs/skill-editor/src/**` SHALL NOT import `react-i18next`, `i18next`, any module under `apps/chat/src/server-api`, `@epam/chat-api-client`, `yaml`, `fflate`, any app-level React Context/provider, `react-router-dom`, or any environment/feature-flag/analytics module. All user-facing strings SHALL be supplied via a `labels`/`texts` prop object with English-language defaults. The library SHALL treat `name`, `description`, and `instructions` as opaque strings and SHALL NOT serialize them to YAML frontmatter or a ZIP archive itself.
@@ -136,12 +149,29 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 - **WHEN** the host passes a `conflict` prop describing a stale-ETag save failure
 - **THEN** the library renders the conflict message and a "Reload latest" control that calls `onReloadLatest` when activated, without itself discarding any field value
 
-### Requirement: Host-rendered header content on the desktop action row
-`SkillEditor` SHALL accept an optional `headerContent: ReactNode` prop and render it verbatim at the start of the desktop-breakpoint header row, before the Cancel/Create actions, with no knowledge of what it contains (typically a host-rendered back button and page title). This keeps navigation and page-title/i18n concerns entirely at the host boundary while still letting the host's header content and the library's own actions share one visual row, matching a single-row header design.
+### Requirement: EditorLayout delegates header and body frame
+`SkillEditor` SHALL use `EditorLayout` from `@epam/ai-dial-editor-builder` as its outer shell. `EditorLayout` SHALL receive:
+- `onBack` forwarded from `SkillEditorProps`
+- `backAriaLabel` forwarded from `SkillEditorProps`
+- `title` forwarded from `SkillEditorProps`
+- `leftContent` = the files-tree pane (sidebar)
+- `rightContent` = the manifest-form / supporting-file pane
+- `actions` = Cancel + Save buttons
+- `isSaving` = `isSubmitting` prop value
 
-#### Scenario: Host header content renders alongside the actions
-- **WHEN** the host passes `headerContent={<><BackButton /><h1>Create skill</h1></>}`
-- **THEN** at the `desktop` breakpoint that content renders at the start of the same row as the Cancel/Create actions, with no `SkillEditor`-imposed spacing between the two that isn't already covered by the row's own layout
+The existing mobile accordion for the files pane (wrapping the file-tree in a collapsible section) SHALL remain inside the `leftContent` slot — `EditorLayout` does not own it.
+
+#### Scenario: Header row rendered by EditorLayout
+- **WHEN** `SkillEditor` renders
+- **THEN** the header row (back arrow, title, Cancel, Save) is rendered by `EditorLayout`, not by a `div` local to `SkillEditor`
+
+#### Scenario: Desktop two-column layout
+- **WHEN** `SkillEditor` renders at desktop width
+- **THEN** the files sidebar occupies the left 360 px panel and the manifest form occupies the right panel, with a vertical divider between them, exactly as before
+
+#### Scenario: Mobile accordion stays in leftContent
+- **WHEN** `SkillEditor` renders at mobile width
+- **THEN** the files-tree accordion (collapsible "Editing file" summary) renders inside the left panel content — `EditorLayout` stacks the panels, and the accordion is contained within the left panel
 
 ### Requirement: Accessibility of the editor surface
 `SkillEditor` SHALL expose: a named, keyboard-operable file tree (each expandable node exposing `aria-expanded`, each selectable node exposing `aria-selected`); visible focus states on every interactive element at least as strong as its hover state; `aria-live="polite"` status text for save-in-progress and save-success feedback, separate from any static button `aria-label`; and no focusable descendant left reachable inside a collapsed/hidden region (using `inert`, not bare `aria-hidden`, for any collapsed panel that still contains focusable content). Since the "Upload from device" control is a plain button that opens the browser's native file picker rather than a menu or a region it expands in place, it SHALL NOT carry `aria-haspopup`/`aria-controls`.

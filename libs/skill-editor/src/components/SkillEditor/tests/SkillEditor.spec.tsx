@@ -229,6 +229,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
+  IconArrowNarrowLeft: () => <svg />,
   IconPlus: () => <svg />,
   IconTrashX: () => <svg />,
   IconUpload: () => <svg />,
@@ -244,6 +245,8 @@ const fileActions: SkillEditorFileActions = {
 const renderEditor = (props?: Partial<SkillEditorProps>) =>
   render(
     <SkillEditor
+      title="Test Skill"
+      onBack={vi.fn()}
       files={[]}
       fileActions={fileActions}
       onSubmit={vi.fn()}
@@ -340,7 +343,7 @@ describe('SkillEditor', () => {
     renderEditor({ isLoading: true });
 
     expect(screen.queryByRole('textbox', { name: /Name/ })).toBeNull();
-    expect(screen.getByRole('status')).toBeTruthy();
+    expect(screen.getAllByRole('status').length).toBeGreaterThan(0);
   });
 
   it('shows a retry action when hasLoadError is true', async () => {
@@ -405,6 +408,8 @@ describe('SkillEditor', () => {
     onDirtyChange.mockClear();
     rerender(
       <SkillEditor
+        title="Test Skill"
+        onBack={vi.fn()}
         initialValues={{
           name: 'good-morning-breakfast',
           description: 'A morning greeting skill',
@@ -455,13 +460,5 @@ describe('SkillEditor', () => {
         .getByRole('button', { name: 'Editing file' })
         .getAttribute('aria-expanded'),
     ).toBe('true');
-  });
-
-  it('renders headerContent in the desktop header row alongside the actions', () => {
-    renderEditor({
-      headerContent: <span>Back + Create skill</span>,
-    });
-
-    expect(screen.getByText('Back + Create skill')).toBeTruthy();
   });
 });

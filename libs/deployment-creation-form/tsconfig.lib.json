@@ -34,6 +34,9 @@
   ],
   "references": [
     {
+      "path": "../editor-builder/tsconfig.lib.json"
+    },
+    {
       "path": "../chat-shared/tsconfig.lib.json"
     }
   ]

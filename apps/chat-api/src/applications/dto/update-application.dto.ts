@@ -21,6 +21,7 @@ import {
   LOCALE_CODE_PATTERN,
   LOCALE_CODE_VALIDATION_MESSAGE,
 } from '../../common/validators/locale-code.pattern';
+import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
 
 /*
  * General-step update body. `applicationProperties` and `type` are
@@ -43,10 +44,15 @@ export class UpdateApplicationBodyDto {
   @IsOptional()
   description?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/icon.svg' })
+  @ApiPropertyOptional({
+    example: 'files/6FEup.../uploads/2026-06/icon.png',
+    description:
+      'An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) ' +
+      'picked through the file manager.',
+  })
   @IsString()
   @IsOptional()
-  @IsUrl()
+  @IsValidResourceReference()
   iconUrl?: string;
 
   @ApiPropertyOptional({ example: ['nlp', 'assistant'], type: [String] })

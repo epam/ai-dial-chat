@@ -3,18 +3,9 @@ import {
   CatalogEntityType,
   TAG_INPUT_TAG_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-  ElementSize,
-  GhostIconButton,
-  Input,
-  Select,
-  TagInput,
-} from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { Input, RadioGroup, Select, TagInput } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ConnectMcpUrlContent from '../../../components/ConnectMcpUrlContent/ConnectMcpUrlContent';
 import { ToolsetTransportType } from '../../../constants/toolsets';
@@ -30,6 +21,8 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../../models/toolsets';
+import { listMcpToolNames } from '../../../server-api/mcp-apps';
+import { isToolsetAuthValid } from '../../../utils/toolsets';
 import AuthSection from './AuthSection';
 
 interface Props {
@@ -55,7 +48,15 @@ const SettingsForm: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { config } = useAppConfig();
-  const [isCopied, setIsCopied] = useState(false);
+  /**
+   * Discovered tool names for the "Allowed tools" picker, fetched from the
+   * toolset's own MCP `tools/list` once it's saved and its auth is usable.
+   * `null` means "show the free-text TagInput" — no server round trip failed
+   * loudly here, since typing a tool name by hand must always stay possible.
+   */
+  const [availableToolNames, setAvailableToolNames] = useState<string[] | null>(
+    null,
+  );
 
   const dialCoreExternalUrl = config.dialCoreExternalUrl;
   const isConnectVisible = Boolean(dialCoreExternalUrl) && Boolean(toolsetId);
@@ -66,94 +67,98 @@ const SettingsForm: FC<Props> = ({
   const protocolOptions = useMemo(
     () => [
       { value: ToolsetTransportType.Http, label: 'HTTP' },
-      {
-        value: ToolsetTransportType.Sse,
-        label: 'SSE',
-        description: t(ToolsetEditorI18nKeys.ProtocolSseDeprecatedLabel),
-      },
+      { value: ToolsetTransportType.Sse, label: 'SSE' },
     ],
-    [t],
+    [],
   );
 
-  const handleCopyEndpoint = async () => {
-    if (!form.endpoint.trim()) return;
-    try {
-      await navigator.clipboard.writeText(form.endpoint.trim());
-      setIsCopied(true);
-      window.setTimeout(() => setIsCopied(false), 2000);
-    } catch {
-      // Clipboard unavailable — nothing to surface.
-    }
+  const handleProtocolChange = (next: string) => {
+    onChange({ protocol: next as ToolsetTransportType });
   };
 
-  const handleProtocolChange = (next: string | string[]) => {
-    if (typeof next === 'string') {
-      onChange({ protocol: next as ToolsetTransportType });
+  useEffect(() => {
+    if (!toolsetId || !isToolsetAuthValid(form.auth, isEditMode)) {
+      setAvailableToolNames(null);
+      return;
     }
-  };
+
+    let isCancelled = false;
+
+    const loadToolNames = async () => {
+      try {
+        const toolNames = await listMcpToolNames(toolsetId, 'toolset');
+        if (!isCancelled) {
+          setAvailableToolNames(toolNames.length > 0 ? toolNames : null);
+        }
+      } catch {
+        if (!isCancelled) setAvailableToolNames(null);
+      }
+    };
+    void loadToolNames();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [toolsetId, isEditMode, form.auth, form.endpoint]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
-          <Input
-            id="toolset-endpoint"
-            value={form.endpoint}
-            onChange={(value) => onChange({ endpoint: value ?? '' })}
-            labelProps={{
-              label: t(ApiI18nKeys.EndpointLabel),
-              required: true,
-            }}
-            placeholder={t(BasicI18nKeys.UrlPlaceholder)}
-            error={errors.endpoint || undefined}
-            invalid={!!errors.endpoint}
-          />
-        </div>
-        <GhostIconButton
-          aria-label={t(ToolsetEditorI18nKeys.CopyUrlLabel)}
-          size={ElementSize.Standard}
-          onClick={handleCopyEndpoint}
-          icon={
-            isCopied ? (
-              <IconCheck
-                size={DIAL_ICON_SIZE.SM}
-                className="text-success"
-                aria-hidden
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
-            ) : (
-              <IconCopy
-                size={DIAL_ICON_SIZE.SM}
-                className="text-secondary"
-                aria-hidden
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
-            )
-          }
-        />
-      </div>
+    <div className="flex max-w-[1060px] flex-col gap-4">
+      <Input
+        id="toolset-endpoint"
+        value={form.endpoint}
+        onChange={(value) => onChange({ endpoint: value ?? '' })}
+        labelProps={{
+          label: t(ApiI18nKeys.EndpointLabel),
+          required: true,
+        }}
+        placeholder={t(BasicI18nKeys.UrlPlaceholder)}
+        caption={t(ToolsetEditorI18nKeys.EndpointCaption)}
+        error={errors.endpoint || undefined}
+        invalid={!!errors.endpoint}
+      />
 
-      <Select
+      <RadioGroup
         labelProps={{
           label: t(ToolsetEditorI18nKeys.ProtocolLabel),
           required: true,
         }}
         id="toolset-protocol"
-        options={protocolOptions}
+        items={protocolOptions}
         value={form.protocol}
         onChange={handleProtocolChange}
       />
 
-      <TagInput
-        id="toolset-allowed-tools"
-        labelProps={{
-          label: t(ToolsetEditorI18nKeys.AllowedToolsLabel),
-        }}
-        placeholder={t(ToolsetEditorI18nKeys.AllowedToolsPlaceholder)}
-        value={form.allowedTools}
-        onChange={(allowedTools) => onChange({ allowedTools })}
-        tagClassName={TAG_INPUT_TAG_CLASS_NAME}
-      />
+      {availableToolNames ? (
+        <Select
+          id="toolset-allowed-tools"
+          multiple
+          searchable
+          selectAll
+          labelProps={{
+            label: t(ToolsetEditorI18nKeys.AllowedToolsLabel),
+          }}
+          placeholder={t(ToolsetEditorI18nKeys.AllowedToolsSelectPlaceholder)}
+          options={availableToolNames.map((toolName) => ({
+            value: toolName,
+            label: toolName,
+          }))}
+          value={form.allowedTools}
+          onChange={(allowedTools) =>
+            onChange({ allowedTools: allowedTools as string[] })
+          }
+        />
+      ) : (
+        <TagInput
+          id="toolset-allowed-tools"
+          labelProps={{
+            label: t(ToolsetEditorI18nKeys.AllowedToolsLabel),
+          }}
+          placeholder={t(ToolsetEditorI18nKeys.AllowedToolsPlaceholder)}
+          value={form.allowedTools}
+          onChange={(allowedTools) => onChange({ allowedTools })}
+          tagClassName={TAG_INPUT_TAG_CLASS_NAME}
+        />
+      )}
 
       <AuthSection
         auth={form.auth}

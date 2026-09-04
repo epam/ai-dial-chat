@@ -3999,6 +3999,19 @@ export interface ListMcpAppToolsResponseDto {
 /**
  *
  * @export
+ * @interface ListMcpToolNamesResponseDto
+ */
+export interface ListMcpToolNamesResponseDto {
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ListMcpToolNamesResponseDto
+   */
+  toolNames: Array<string>;
+}
+/**
+ *
+ * @export
  * @interface ListScheduledTaskRunsResponseDto
  */
 export interface ListScheduledTaskRunsResponseDto {

@@ -1378,7 +1378,7 @@ const { onUploadFiles, uploadBatchState, cancelUpload, clearUploadBatch } =
 Scrolls a newly inline-edited or newly-inserted grid row into view. Binds directly to the AG Grid `GridApi` obtained via `DialFileManager`'s `onGridApiChange` prop, since `@epam/ai-dial-react-file-manager`'s own `GridOptions` type does not forward the raw AG Grid event callbacks this needs. `handleGridApiChange` accepts that raw `GridApi` only to bind to `onGridApiChange` — the narrow AGENTS.md D9 exception for this hook — and the hook otherwise never renders, themes, or depends on AG Grid beyond that one event-binding parameter.
 
 ```tsx
-import { useGridEditingScroll } from '@epam/ai-dial-chat-hooks';
+import { useGridEditingScroll } from '@epam/ai-dial-chat-shared';
 
 const { handleGridApiChange, reset } = useGridEditingScroll();
 
@@ -2956,12 +2956,12 @@ if (!deleteDialog.isRunning) deleteDialog.close();
 **Returns** (`AsyncConfirmDialogControls<T>`):
 
 | Name        | Type                                                                                   | Description                                                                                      |
-| ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pending`   | `T \| null`                                                                            | The value passed to `open()`, or `null` when the dialog is closed.                               |
 | `isPending` | `boolean`                                                                              | `true` while `pending` is non-null (dialog is open).                                             |
 | `isRunning` | `boolean`                                                                              | `true` while `confirm`'s `run` callback is executing.                                            |
 | `error`     | `string \| null`                                                                       | Error message from the most recent failed `confirm`, or `null`.                                  |
-| `open`      | `(value: T, returnFocusTo?: HTMLElement | null) => void`                              | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
+| `open`      | `(value: T, returnFocusTo?: HTMLElement                                                | null) => void`                                                                                   | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
 | `close`     | `() => void`                                                                           | Closes the dialog and clears pending + error.                                                    |
 | `confirm`   | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
 

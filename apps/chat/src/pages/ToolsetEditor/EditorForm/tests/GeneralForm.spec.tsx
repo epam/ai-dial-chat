@@ -7,6 +7,23 @@ import { EditorI18nKeys } from '../../../../constants/translation-keys';
 import type { ToolsetFormData } from '../../../../models/toolsets';
 import GeneralForm from '../GeneralForm';
 
+vi.mock('@epam/ai-dial-deployment-creation-form', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('@epam/ai-dial-deployment-creation-form')
+    >();
+  return {
+    ...actual,
+    AvatarPickerModal: () => null,
+  };
+});
+
+vi.mock('../../../../context/auth/UserContext', () => ({
+  useUser: () => ({
+    user: { bucket: 'bucket' },
+  }),
+}));
+
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
@@ -99,15 +116,16 @@ describe('GeneralForm', () => {
     vi.clearAllMocks();
   });
 
-  it('renders name, description, icon URL, version, and topics fields', () => {
+  it('renders name, description, avatar, version, and topics fields', () => {
     renderForm();
+    expect(screen.getByLabelText(EditorI18nKeys.NameLabel)).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.DescriptionLabel)).toBeTruthy();
+    expect(screen.getByText(EditorI18nKeys.AvatarLabel)).toBeTruthy();
     expect(
-      screen.getByLabelText(`${EditorI18nKeys.NameLabel} [EN]`),
+      screen.getByRole('button', {
+        name: EditorI18nKeys.AddAvatarButtonLabel,
+      }),
     ).toBeTruthy();
-    expect(
-      screen.getByLabelText(`${EditorI18nKeys.DescriptionLabel} [EN]`),
-    ).toBeTruthy();
-    expect(screen.getByLabelText(EditorI18nKeys.IconUrlLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.VersionLabel)).toBeTruthy();
     expect(screen.getByLabelText(EditorI18nKeys.TopicsLabel)).toBeTruthy();
   });
@@ -127,7 +145,7 @@ describe('GeneralForm', () => {
     const onChange = vi.fn();
     renderForm({}, {}, onChange);
     const nameInput = screen.getByLabelText(
-      `${EditorI18nKeys.NameLabel} [EN]`,
+      EditorI18nKeys.NameLabel,
     ) as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: 'Updated' } });
     expect(onChange).toHaveBeenCalledWith(
@@ -139,7 +157,7 @@ describe('GeneralForm', () => {
     const onChange = vi.fn();
     renderForm({}, {}, onChange);
     const textarea = screen.getByLabelText(
-      `${EditorI18nKeys.DescriptionLabel} [EN]`,
+      EditorI18nKeys.DescriptionLabel,
     ) as HTMLTextAreaElement;
     await user.type(textarea, 'A description');
     expect(onChange).toHaveBeenCalledWith(

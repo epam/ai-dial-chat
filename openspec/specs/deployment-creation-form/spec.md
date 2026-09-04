@@ -5,15 +5,34 @@ TBD - created by archiving change add-intro-field-quick-app-toolset. Update Purp
 ## Requirements
 ### Requirement: Shared general creation form fields
 `libs/deployment-creation-form` SHALL export a controlled presentation component providing the
-field set common to Quick App and Toolset creation: name, description, icon URL, version, and
+field set common to Quick App and Toolset creation: avatar, name, description, version, and
 topics. The component SHALL accept the current field values, field-level errors, and an
 `onChange` callback as props, and SHALL NOT hold its own copy of field state, call any
 network API, or trigger submission. The component SHALL NOT render an Intro field.
 
 #### Scenario: Component renders all shared fields
 - **WHEN** a host app renders the shared component with a set of values
-- **THEN** it displays inputs for name, description, icon URL, version, and topics
-  reflecting those values
+- **THEN** it displays the avatar picker plus inputs for name, description, version, and
+  topics reflecting those values
+
+### Requirement: Avatar field delegates file selection to the host
+The icon/avatar field SHALL render `AddAvatar` from `@epam/ai-dial-editor-builder` — a preview
+box plus an "Add avatar" button — instead of a plain URL text input. The library SHALL NOT open
+a file picker or file manager itself: clicking the button SHALL call the host-supplied
+`onAddAvatarClick` prop, and the host SHALL report the picked file back through
+`onChange({ iconUrl })`. The avatar preview box SHALL render `iconPreviewUrl`, a separate
+host-supplied prop — the host resolves this from `values.iconUrl` (which MAY be a DIAL file id
+rather than a directly displayable URL); the library itself SHALL NOT resolve storage
+identifiers.
+
+#### Scenario: Add avatar button delegates to the host
+- **WHEN** a user clicks the "Add avatar" button
+- **THEN** the library calls `onAddAvatarClick` and does not open any file picker of its own
+
+#### Scenario: Preview box shows the host-resolved URL
+- **WHEN** the host passes a non-empty `iconPreviewUrl`
+- **THEN** the avatar preview box renders that URL instead of the placeholder photo icon, and
+  the "Add avatar" button remains visible so the user can replace it
 
 #### Scenario: Field edits are reported through onChange
 - **WHEN** a user edits any shared field
@@ -42,10 +61,11 @@ function SHALL have no side effects and SHALL NOT depend on i18n, routing, or ne
 
 ### Requirement: Library isolation boundary
 `libs/deployment-creation-form` SHALL NOT import `react-i18next`, `@epam/chat-api-client`,
-`apps/chat/src/server-api`, routing utilities, browser storage, feature-flag clients, or any
-DIAL Core/application-specific integration detail. All display strings SHALL be supplied by
-the host app through a `labels` prop; all request-body mapping and network calls SHALL happen
-in host app-level containers, not inside the library.
+`apps/chat/src/server-api`, routing utilities, browser storage, feature-flag clients, file
+manager/upload components, or any DIAL Core/application-specific integration detail. All
+display strings SHALL be supplied by the host app through a `labels` prop; all request-body
+mapping, network calls, and file-picker wiring SHALL happen in host app-level containers, not
+inside the library.
 
 #### Scenario: No generated client or i18n imports
 - **WHEN** the library's source is inspected
@@ -83,12 +103,18 @@ follow the same controlled, host-supplied-labels pattern as the rest of the shar
 SHALL NOT hold authoritative state beyond the open/closed popup, SHALL report changes to
 `otherLocales` through `onChange`, and SHALL NOT itself call any network API or persist
 anything — composing the entered locale entries back into a DIAL Core locale map for saving is
-the host app's responsibility.
+the host app's responsibility. The link that opens the popup SHALL show the host-supplied
+`labels.addLabel` (e.g. "Add locales") while `otherLocales` is empty, and switch to
+`labels.editLabel` (e.g. "Edit locales") once at least one entry exists.
 
 #### Scenario: Summary reflects the configured additional locales
 - **WHEN** `otherLocales` contains entries for one or more locales
 - **THEN** the summary row displays each entry's locale code next to the "Locales" label, e.g.
-  `Locales: [FR], [UA]`
+  `Locales: [FR], [UA]`, and the link to open the popup reads `labels.editLabel`
+
+#### Scenario: Popup-opening link reads "Add locales" before any locale exists
+- **WHEN** `otherLocales` is empty
+- **THEN** the link that opens the popup shows `labels.addLabel` instead of `labels.editLabel`
 
 #### Scenario: Adding a locale entry
 - **WHEN** a user opens the popup, selects a language not already used by another row, and
