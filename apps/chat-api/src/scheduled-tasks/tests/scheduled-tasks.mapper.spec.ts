@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest';
 import type { CreateScheduledTaskBodyDto } from '../dto/create-scheduled-task.dto';
 import {
   buildScheduledTaskChatCompletionUrl,
+  fromUpstreamRun,
   fromUpstreamSchedule,
   toUpstreamSchedulePayload,
   type UpstreamScheduleResponse,
+  type UpstreamScheduleRun,
 } from '../scheduled-tasks.mapper';
 
 const DIAL_CORE_URL = 'http://dial-core';
@@ -573,5 +575,43 @@ describe('fromUpstreamSchedule', () => {
       expect(result.nextRunTime).toBeUndefined();
       expect(result.isActive).toBe(false);
     });
+  });
+});
+
+describe('fromUpstreamRun', () => {
+  const baseUpstreamRun: UpstreamScheduleRun = {
+    id: 'run_9f2a',
+    status: 'success',
+    start_time: '2026-09-02T07:00:00.069010Z',
+    end_time: '2026-09-02T07:00:06.452480Z',
+  };
+
+  it('maps a present conversation_id to conversationId', () => {
+    const upstream: UpstreamScheduleRun = {
+      ...baseUpstreamRun,
+      conversation_id:
+        'conversations/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/.scheduler/57ef4647-eadf-4b84-ab60-43e366ced72e/dial-chathub-v2-gemini-3.5-flash__123123123123123__6f6ec619-7fd3-4908-9588-aeb950dcef8d',
+    };
+
+    const result = fromUpstreamRun(upstream);
+
+    expect(result.conversationId).toBe(upstream.conversation_id);
+  });
+
+  it('maps a missing conversation_id to undefined without throwing', () => {
+    const result = fromUpstreamRun(baseUpstreamRun);
+
+    expect(result.conversationId).toBeUndefined();
+  });
+
+  it('normalizes a null conversation_id to undefined', () => {
+    const upstream: UpstreamScheduleRun = {
+      ...baseUpstreamRun,
+      conversation_id: null,
+    };
+
+    const result = fromUpstreamRun(upstream);
+
+    expect(result.conversationId).toBeUndefined();
   });
 });

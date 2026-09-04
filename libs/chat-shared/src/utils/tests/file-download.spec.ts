@@ -50,6 +50,34 @@ describe('ensureDownloadFilename', () => {
       ),
     ).toBe('Report.pdf');
   });
+
+  it('appends the MIME-type extension when the title contains a dot that is not a real extension', () => {
+    expect(
+      ensureDownloadFilename(
+        'Blackstone vs. KKR Comparative Intelligence Briefing (Word Document)',
+        'files/bucket/appdata/applications/public/pg/pg-agent__1.0.0/Blackstone_KKR_Detailed_Report.docx',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ),
+    ).toBe(
+      'Blackstone vs. KKR Comparative Intelligence Briefing (Word Document).docx',
+    );
+  });
+
+  it('falls back to the url extension when the title has no real extension and no contentType is given', () => {
+    expect(
+      ensureDownloadFilename(
+        'Report v2. Final (draft)',
+        'files/bucket/report.pdf',
+        undefined,
+      ),
+    ).toBe('Report v2. Final (draft).pdf');
+  });
+
+  it('does not mistake a name ending in "vs." followed by more text for an extension', () => {
+    expect(
+      ensureDownloadFilename('Blackstone vs. KKR Report', undefined, undefined),
+    ).toBe('Blackstone vs. KKR Report');
+  });
 });
 
 describe('getFileExtensionForLanguage', () => {

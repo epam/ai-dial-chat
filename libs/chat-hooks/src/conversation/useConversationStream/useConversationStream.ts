@@ -2,7 +2,6 @@ import { SendCompletionDtoModeEnum } from '@epam/ai-dial-chat-api-client';
 import {
   type Conversation,
   generateUUID,
-  type Message,
   type MessageCustomContent,
   type StreamChunk,
 } from '@epam/ai-dial-chat-shared';
@@ -12,21 +11,18 @@ import {
   type SetStateAction,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
 import { safeDecodeURI } from '../../shared/string-utils';
 import { applyChunkToMessages } from './apply-chunk';
+import {
+  type BufferedGeneration,
+  restoreBufferedMessage,
+} from './buffered-generation';
 import { getConversationPath } from './conversation-path';
-import { isAwaitingGenerationResume } from './generation-resume';
-
-/*
- * Safety-net only: the primary completion signal is the transport's `watch`
- * event fired when the backend's finalize save happens, independent of how
- * long the generation itself takes. This bounds the wait if that event is
- * ever missed (e.g. a backend crash mid-generation that never finalizes).
- */
-const GENERATION_RESUME_WATCH_TIMEOUT_MS = 5 * 60 * 1000;
+import { createResumeIfAwaitingGeneration } from './generation-resume';
 
 /*
  * Bounded wait for the client-channel subscribe to resolve so that
@@ -66,6 +62,18 @@ export interface ConversationStreamTransport {
   stopCompletion(params: { generationId: string; path: string }): Promise<void>;
   /** Opens a stream of resource-update events for `path`, until aborted via `signal`. */
   watchConversation(
+    path: string,
+    signal: AbortSignal,
+  ): Promise<ReadableStream<Uint8Array>>;
+  /**
+   * Attaches to an active generation's live replay: a `snapshot` event
+   * carrying the assistant message as assembled so far, then a `chunk` event
+   * per subsequent delta, then exactly one terminal event (`done`/`error`/
+   * `stopped`), until aborted via `signal`. Rejects when no active
+   * generation exists for `path` — including one that already finished —
+   * so the caller can fall back to `watchConversation`.
+   */
+  attachToGeneration(
     path: string,
     signal: AbortSignal,
   ): Promise<ReadableStream<Uint8Array>>;
@@ -140,46 +148,6 @@ export interface UseConversationStreamResult {
   isStreaming: boolean;
   canStopStreaming: boolean;
 }
-
-interface BufferedGeneration {
-  generationId: string;
-  messageIndex: number;
-  message: Message;
-}
-
-const mergeBufferedMessage = (
-  current: Message,
-  buffered: Message,
-): Message => ({
-  ...current,
-  ...buffered,
-  ...((current.custom_content || buffered.custom_content) && {
-    custom_content: {
-      ...current.custom_content,
-      ...buffered.custom_content,
-    },
-  }),
-});
-
-const restoreBufferedMessage = (
-  conversation: Conversation,
-  buffered: BufferedGeneration,
-): Conversation => {
-  if (buffered.messageIndex > conversation.messages.length) {
-    return conversation;
-  }
-
-  const messages = [...conversation.messages];
-  if (buffered.messageIndex === messages.length) {
-    messages.push(buffered.message);
-  } else {
-    messages[buffered.messageIndex] = mergeBufferedMessage(
-      messages[buffered.messageIndex],
-      buffered.message,
-    );
-  }
-  return { ...conversation, messages };
-};
 
 /**
  * Owns completion-streaming state: per-path streaming/stoppable tracking,
@@ -504,122 +472,18 @@ export const useConversationStream = ({
       });
   }, [conversationId, onStopError, overlay, transport]);
 
-  /*
-   * A hard refresh mid-generation loads a conversation whose last message is
-   * the backend's empty start-state placeholder (no incremental save exists
-   * to show partial content). Rather than leaving that static and forever
-   * empty, mark the path as streaming — for free, this reuses the same
-   * typing indicator and any isStreaming guards a composed handlers hook
-   * already applies — and watch the conversation's existing resource-update
-   * channel until the backend's finalize save resolves the placeholder.
-   */
-  const resumeIfAwaitingGeneration = useCallback(
-    (currentConversationId: string, conversation: Conversation): void => {
-      if (!isAwaitingGenerationResume(conversation)) return;
-
-      const conversationPath = getConversationPath(currentConversationId);
-      if (resumingPathsRef.current.has(conversationPath)) return;
-      resumingPathsRef.current.add(conversationPath);
-      addStreamingPath(conversationPath);
-
-      const controller = new AbortController();
-
-      const finish = (result?: Conversation) => {
-        resumingPathsRef.current.delete(conversationPath);
-        removeStreamingPath(conversationPath);
-        if (result && isPathDisplayed(conversationPath)) {
-          setConversation(result);
-          conversationRef.current = result;
-        }
-      };
-
-      const finalCheck = async () => {
-        try {
-          const result = await transport.getConversation(
-            safeDecodeURI(currentConversationId),
-          );
-          finish(result);
-        } catch {
-          finish();
-        }
-      };
-
-      const run = async () => {
-        let stream: ReadableStream<Uint8Array>;
-        try {
-          stream = await transport.watchConversation(
-            conversationPath,
-            controller.signal,
-          );
-        } catch {
-          await finalCheck();
-          return;
-        }
-
-        const reader = stream.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        const timeoutId = window.setTimeout(() => {
-          controller.abort();
-        }, GENERATION_RESUME_WATCH_TIMEOUT_MS);
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() ?? '';
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed.startsWith('data:')) continue;
-
-              const data = trimmed.slice(5).trim();
-              let event: { action?: string } | null = null;
-              try {
-                event = JSON.parse(data) as { action?: string };
-              } catch {
-                continue;
-              }
-
-              if (event?.action !== 'UPDATE') continue;
-
-              try {
-                const result = await transport.getConversation(
-                  safeDecodeURI(currentConversationId),
-                );
-                if (!isAwaitingGenerationResume(result)) {
-                  finish(result);
-                  return;
-                }
-              } catch {
-                // Keep watching until stream ends or timeout.
-              }
-            }
-          }
-        } catch {
-          /*
-           * AbortError on timeout, or unexpected stream error — fall through
-           * to the final check below.
-           */
-        } finally {
-          clearTimeout(timeoutId);
-          reader.releaseLock();
-        }
-
-        /*
-         * Timed out or the stream ended without a qualifying event: do one
-         * last check before giving up, so regenerate/edit become available
-         * again either way.
-         */
-        await finalCheck();
-      };
-
-      void run();
-    },
+  const resumeIfAwaitingGeneration = useMemo(
+    () =>
+      createResumeIfAwaitingGeneration({
+        transport,
+        setConversation,
+        conversationRef,
+        resumingPathsRef,
+        bufferedGenerationsRef,
+        addStreamingPath,
+        removeStreamingPath,
+        isPathDisplayed,
+      }),
     // setConversation and conversationRef are stable refs — intentionally omitted
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [addStreamingPath, removeStreamingPath, isPathDisplayed, transport],

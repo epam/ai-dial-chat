@@ -48,6 +48,8 @@ export interface ScheduledTaskDetailViewLabels {
   historyShowMoreLabel?: string;
   /** Per-status label used to build each run row's accessible name, e.g. `{ success: 'Succeeded', ... }`. */
   runStatusLabels: Record<ScheduledTaskRunStatus, string>;
+  /** `sr-only` label announced alongside the unread-dot indicator on a run row whose `isUnread` is `true`. Defaults to `'Unread'`. */
+  unreadIndicatorLabel?: string;
 }
 
 /**
@@ -71,6 +73,8 @@ export interface ScheduledTaskDetailViewColors {
   missedIconColor?: string;
   /** History card background. Fallback: `--bg-layer-raised`. */
   historyCardBackground?: string;
+  /** Unread-dot indicator fill color. Fallback: `--text-accent`. */
+  unreadDotColor?: string;
 }
 
 /** Typography overrides for the {@link ScheduledTaskDetailView} component. */
@@ -155,8 +159,8 @@ export interface ScheduledTaskDetailViewProps {
   runsHasMore?: boolean;
   /** Called when the user activates the "Show more" button, rendered below the loaded runs while `runsHasMore` is `true`. Omit to hide the button entirely. */
   onRunsLoadMore?: () => void;
-  /** Called with a run's id when the user clicks its row. Omit to render rows with no added interactive semantics. */
-  onRunClick?: (id: string) => void;
+  /** Called with the run when the user clicks a row whose `conversationId` is set. Rows without a `conversationId` never invoke this, regardless of whether it is supplied. */
+  onRunClick?: (run: ScheduledTaskRunItem) => void;
   /** Style overrides. */
   styles?: ScheduledTaskDetailViewStyles;
 }

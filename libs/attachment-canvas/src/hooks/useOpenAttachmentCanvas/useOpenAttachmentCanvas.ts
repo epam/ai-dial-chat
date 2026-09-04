@@ -6,6 +6,7 @@ import {
   AttachmentType,
   FileExtension,
   MIMEType,
+  stripUrlQueryAndFragment,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import { useAttachmentCanvas } from '../../context/AttachmentCanvasContext';
@@ -131,7 +132,7 @@ const getUrlFileName = (url: string): string => {
   } catch {
     /* A relative DIAL resource path has no base to resolve against, so the
      * query and hash are stripped by hand instead. */
-    path = url.split(/[?#]/)[0];
+    path = stripUrlQueryAndFragment(url);
   }
   const segment = path.split('/').filter(Boolean).pop() ?? '';
   try {

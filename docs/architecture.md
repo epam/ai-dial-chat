@@ -343,16 +343,25 @@ prefix is fixed in `auth.controller.ts`, not derived from `API_PREFIX`.
 
 #### Conversations (`/api/v1/conversations`)
 
-| Method   | Path                                   | Description                   | Rate limit |
-| -------- | -------------------------------------- | ----------------------------- | ---------- |
-| `POST`   | `/api/v1/conversations`                | Create conversation           | 20/min     |
-| `GET`    | `/api/v1/conversations?path=`          | Get conversation by path      | —          |
-| `GET`    | `/api/v1/conversations/metadata?path=` | Get metadata + permissions    | —          |
-| `PUT`    | `/api/v1/conversations?path=`          | Save / overwrite conversation | —          |
-| `POST`   | `/api/v1/conversations/completions`    | SSE chat completion stream    | 10/min     |
-| `DELETE` | `/api/v1/conversations?path=`          | Delete conversation           | —          |
+No endpoint in this domain carries a per-route rate limit — repo-wide rate limiting was removed from `apps/chat-api`.
 
-`POST /api/v1/conversations/completions` routes to one of two upstream generation APIs per request — `ConversationService.streamCompletion` resolves `features.responsesApi` off `DeploymentsService.getDeploymentDetails` (under the caller's own token, before opening the upstream stream) and dispatches to `chat-completions.adapter.ts` or `responses.adapter.ts` (`apps/chat-api/src/conversations/generation/`) accordingly. Both adapters normalize their upstream SSE events into the same `chat.completion.chunk` shape, so the wire contract to the browser, `apply-chunk.server.ts`, and the persistence lifecycle are unchanged regardless of which API served the request. Deployments that don't declare `responses_api: true` keep using Chat Completions exactly as before.
+| Method   | Path                                       | Description                                                                             |
+| -------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `POST`   | `/api/v1/conversations`                    | Create conversation                                                                     |
+| `GET`    | `/api/v1/conversations?path=`              | Get conversation by path                                                                |
+| `GET`    | `/api/v1/conversations/metadata?path=`     | Get metadata + permissions                                                              |
+| `PUT`    | `/api/v1/conversations?path=`              | Save / overwrite conversation                                                           |
+| `POST`   | `/api/v1/conversations/completions`        | SSE chat completion stream — backend owns persistence for the full generation lifecycle |
+| `POST`   | `/api/v1/conversations/completions/stop`   | Stop an active generation by `generationId`                                             |
+| `POST`   | `/api/v1/conversations/completions/attach` | Attach to an active generation's live replay (SSE)                                      |
+| `POST`   | `/api/v1/conversations/watch`              | Subscribe to conversation resource-update events (SSE)                                  |
+| `DELETE` | `/api/v1/conversations?path=`              | Delete conversation                                                                     |
+
+`POST /api/v1/conversations/completions` routes to one of two upstream generation APIs per request — `ConversationStreamingService.streamCompletion` resolves `features.responsesApi` off `DeploymentsService.getDeploymentDetails` (under the caller's own token, before opening the upstream stream) and dispatches to an inline Chat Completions relay or `responses.adapter.ts` (`apps/chat-api/src/conversations/generation/`) accordingly. Both normalize their upstream SSE events into the same `chat.completion.chunk` shape, so `apply-chunk.server.ts` and the persistence lifecycle below are unchanged regardless of which API served the request. Deployments that don't declare `responses_api: true` keep using Chat Completions exactly as before.
+
+**The backend, not the frontend, owns conversation persistence** across a completion's full lifecycle. `ConversationGenerationService` keeps an in-memory registry keyed by `sessionId`+conversation path: `streamCompletion` saves the start state (user message + empty assistant placeholder) before opening the upstream stream, assembles the assistant message chunk-by-chunk as it relays the response, and saves the final/partial state on completion, stop, or error — regardless of whether the originating HTTP request is still connected. `ConversationController.streamCompletion` deliberately has no client-disconnect handler (unlike its sibling SSE endpoints below), so closing the tab does not stop generation. `POST .../completions/stop` aborts an active generation.
+
+Because generation survives a closed tab, reopening the conversation needs a way to see its progress: `POST .../completions/watch` proxies DIAL Core's generic resource-update events (also used to detect LLM-title-rename completion) so the frontend can poll for the terminal save. `POST .../completions/attach` — resolved from the same registry, looked up by conversation path rather than `generationId` (a freshly-opened tab has no `generationId` to send) — opens an SSE stream that immediately snapshots the assistant message as assembled so far, then delivers every subsequent chunk live, then exactly one terminal event (`done`/`error`/`stopped`), so a resumed conversation populates progressively instead of showing only a typing indicator until it finishes. It responds `404` when no active generation exists for that path in the caller's session — including one that already finished — in which case the frontend falls back to the `watch`-based terminal check.
 
 #### Models & Deployments
 
