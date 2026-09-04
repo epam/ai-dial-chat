@@ -2,6 +2,8 @@ import 'katex/dist/katex.min.css';
 import { memo, useMemo, type FC } from 'react';
 import ReactMarkdown, { type Components, type Options } from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -147,9 +149,69 @@ const remarkPlugins: Options['remarkPlugins'] = [
   [remarkMath, { singleDollarTextMath: false }],
 ];
 
-/** KaTeX rehype plugin list, shared across all markdown instances. */
+/**
+ * MathML element names produced by `rehypeKatex`'s `output: 'mathml'` mode.
+ * `rehype-sanitize`'s default schema doesn't know these tags, so they must be
+ * added explicitly or KaTeX output gets stripped.
+ * Source: https://developer.mozilla.org/en-US/docs/Web/MathML/Reference/Element
+ */
+const mathMLTags = [
+  'math',
+  'maction',
+  'annotation',
+  'annotation-xml',
+  'menclose',
+  'merror',
+  'mfenced',
+  'mfrac',
+  'mi',
+  'mmultiscripts',
+  'mn',
+  'mo',
+  'mover',
+  'mpadded',
+  'mphantom',
+  'mroot',
+  'mrow',
+  'ms',
+  'semantics',
+  'mspace',
+  'msqrt',
+  'mstyle',
+  'msub',
+  'msup',
+  'msubsup',
+  'mtable',
+  'mtd',
+  'mtext',
+  'mtr',
+  'munder',
+  'munderover',
+];
+
+/**
+ * KaTeX rehype plugin list, shared across all markdown instances.
+ *
+ * `rehypeRaw` re-parses raw HTML left as literal text by `remark` (e.g. a
+ * model emitting `<br>` for a line break) into real hast elements, so it
+ * must run before both `rehypeKatex` and `rehypeSanitize`. `rehypeSanitize`
+ * strips anything dangerous that raw HTML pass could have introduced —
+ * required whenever raw HTML is allowed through.
+ */
 const baseRehypePlugins: NonNullable<Options['rehypePlugins']> = [
+  rehypeRaw,
   [rehypeKatex, { output: 'mathml', strict: false }],
+  [
+    rehypeSanitize,
+    {
+      ...defaultSchema,
+      tagNames: [...(defaultSchema.tagNames ?? []), ...mathMLTags],
+      attributes: {
+        ...defaultSchema.attributes,
+        code: [...(defaultSchema.attributes?.code ?? []), ['className']],
+      },
+    },
+  ],
 ];
 
 /** Stable empty plugin list used as the default when no extra plugins are passed. */
