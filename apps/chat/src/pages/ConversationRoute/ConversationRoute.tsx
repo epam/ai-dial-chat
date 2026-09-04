@@ -230,13 +230,23 @@ const ConversationRoute: FC = () => {
 
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
-      items.map(({ id, displayName, iconUrl, type, inputAttachmentTypes }) => ({
-        id,
-        displayName: resolveLocalizedText(displayName, language),
-        iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
-        type,
-        inputAttachmentTypes,
-      })),
+      items.map(
+        ({
+          id,
+          displayName,
+          displayVersion,
+          iconUrl,
+          type,
+          inputAttachmentTypes,
+        }) => ({
+          id,
+          displayName: resolveLocalizedText(displayName, language),
+          displayVersion,
+          iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
+          type,
+          inputAttachmentTypes,
+        }),
+      ),
     [items, language],
   );
 

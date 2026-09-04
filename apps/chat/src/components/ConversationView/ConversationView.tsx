@@ -336,6 +336,7 @@ const ConversationView: FC<Props> = ({
         ({
           id,
           displayName,
+          displayVersion,
           iconUrl,
           type,
           inputAttachmentTypes,
@@ -343,6 +344,7 @@ const ConversationView: FC<Props> = ({
         }) => ({
           id,
           displayName: resolveLocalizedText(displayName, language),
+          displayVersion,
           iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
           type,
           inputAttachmentTypes,

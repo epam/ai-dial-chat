@@ -68,6 +68,8 @@ export interface UseModelSelectorResult {
   selectorAriaLabel: string;
   /** Display name of the currently selected deployment, or `undefined` when none is selected or loading. */
   selectedLabel: string | undefined;
+  /** Display version of the currently selected deployment, or `undefined` when none is selected, loading, or the deployment has no version. */
+  selectedVersion: string | undefined;
   /** Menu items for the deployment dropdown. */
   menuItems: DropdownItem[];
   /** Sticky search header rendered above the menu items. */
@@ -123,6 +125,7 @@ export const useModelSelector = ({
   );
 
   const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
+  const selectedVersion = selectedItem?.displayVersion;
   const selectorAriaLabel = selectedLabel
     ? `${modelSelectorLabels?.ariaLabel ?? 'Select model'}: ${selectedLabel}`
     : (modelSelectorLabels?.ariaLabel ?? 'Select model');
@@ -240,6 +243,7 @@ export const useModelSelector = ({
     selectorIcon,
     selectorAriaLabel,
     selectedLabel,
+    selectedVersion,
     menuItems,
     menuHeader,
     onOpenChange: handleOpenChange,
