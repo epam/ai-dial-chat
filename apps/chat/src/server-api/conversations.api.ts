@@ -116,3 +116,23 @@ export const watchConversation = async (
   }
   return apiResponse.raw.body as ReadableStream<Uint8Array>;
 };
+
+/**
+ * Attaches to an active generation's live replay stream. Rejects (via the
+ * generated client's `ResponseError`) when the backend responds non-2xx —
+ * including 404 for "no active generation" — so the caller can fall back to
+ * the terminal-update watch instead.
+ */
+export const attachToGeneration = async (
+  conversationPath: string,
+  signal?: AbortSignal,
+): Promise<ReadableStream<Uint8Array>> => {
+  const apiResponse = await conversationsApi.attachToGenerationRaw(
+    { attachGenerationDto: { path: conversationPath } },
+    signal ? { signal } : undefined,
+  );
+  if (!apiResponse.raw.body) {
+    throw new Error('Attach endpoint returned no response body');
+  }
+  return apiResponse.raw.body as ReadableStream<Uint8Array>;
+};

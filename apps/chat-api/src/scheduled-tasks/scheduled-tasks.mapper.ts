@@ -207,6 +207,7 @@ export interface UpstreamScheduleRun {
   status: 'success' | 'error' | 'in_progress' | 'missed' | string;
   start_time: string;
   end_time?: string | null;
+  conversation_id?: string | null;
 }
 
 const UPSTREAM_RUN_STATUS_MAP: Record<string, ScheduledTaskRunStatus> = {
@@ -239,4 +240,5 @@ export const fromUpstreamRun = (
     upstream.start_time,
     upstream.end_time,
   ),
+  conversationId: upstream.conversation_id ?? undefined,
 });

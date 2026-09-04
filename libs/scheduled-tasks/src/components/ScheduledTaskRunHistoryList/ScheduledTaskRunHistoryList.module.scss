@@ -20,3 +20,7 @@
     var(--bg-control-accent-alpha-active, #2764d933)
   );
 }
+
+.unreadDot {
+  background: var(--strhl-unread-dot, var(--text-accent, #1d4ed8));
+}

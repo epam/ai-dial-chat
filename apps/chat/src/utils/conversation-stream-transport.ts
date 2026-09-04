@@ -5,6 +5,7 @@ import {
   stopCompletion,
 } from '../server-api/chat-stream.api';
 import {
+  attachToGeneration,
   getConversation,
   watchConversation,
 } from '../server-api/conversations.api';
@@ -41,6 +42,7 @@ export const conversationStreamTransport: ConversationStreamTransport = {
     ),
   stopCompletion: (params) => stopCompletion(params),
   watchConversation: (path, signal) => watchConversation(path, signal),
+  attachToGeneration: (path, signal) => attachToGeneration(path, signal),
   getConversation: async (conversationId, signal) =>
     (await getConversation(conversationId, signal)) as Conversation,
 };

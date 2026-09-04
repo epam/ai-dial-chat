@@ -10,6 +10,16 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ConversationSourcesPanelContainer from '../ConversationSourcesPanel';
 
+const mockNavigate = vi.fn();
+vi.mock('react-router', () => ({
+  useNavigate: () => mockNavigate,
+}));
+
+let mockConversations: { id: string; isUnread?: boolean }[] = [];
+vi.mock('../../../context/ConversationsContext', () => ({
+  useConversations: () => ({ conversations: mockConversations }),
+}));
+
 const mockDownloadAttachment = vi.fn();
 const mockHandleAttachmentClick = vi.fn();
 const mockHandleClose = vi.fn();
@@ -181,6 +191,7 @@ describe('ConversationSourcesPanelContainer — download all', () => {
     vi.useFakeTimers();
     mockUploaded = [];
     mockGenerated = [];
+    mockConversations = [];
     resetActiveScheduledTaskMock();
   });
 
@@ -224,6 +235,7 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     vi.clearAllMocks();
     mockUploaded = [];
     mockGenerated = [];
+    mockConversations = [];
     resetActiveScheduledTaskMock();
   });
 
@@ -544,5 +556,91 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     render(<ConversationSourcesPanelContainer />);
 
     expect(screen.queryByText('Do the thing')).toBeNull();
+  });
+
+  it('navigates to the conversation route when a History run with a conversationId is activated', async () => {
+    activeScheduledTaskMock.status = 'task-conversation';
+    activeScheduledTaskMock.scheduleId = 'schedule-1';
+    activeScheduledTaskMock.runId = 'run-1';
+    activeScheduledTaskMock.taskState = 'success';
+    activeScheduledTaskMock.task = {
+      id: 'schedule-1',
+      displayName: 'Weekly digest',
+    } as ScheduledTaskDto;
+    activeScheduledTaskMock.historyItems = [
+      {
+        id: 'run-2',
+        status: 'Success',
+        startTime: '2026-07-24T09:01:00.000Z',
+        conversationId: 'conversations/bucket/.scheduler/schedule-1/run-2',
+      } as ScheduledTaskRunDto,
+    ];
+
+    render(<ConversationSourcesPanelContainer />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /historyDateAt/ }),
+    );
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/conversations/bucket/.scheduler/schedule-1/run-2',
+    );
+  });
+
+  it('does not navigate when a History run has no conversationId', async () => {
+    activeScheduledTaskMock.status = 'task-conversation';
+    activeScheduledTaskMock.scheduleId = 'schedule-1';
+    activeScheduledTaskMock.runId = 'run-1';
+    activeScheduledTaskMock.taskState = 'success';
+    activeScheduledTaskMock.task = {
+      id: 'schedule-1',
+      displayName: 'Weekly digest',
+    } as ScheduledTaskDto;
+    activeScheduledTaskMock.historyItems = [
+      {
+        id: 'run-2',
+        status: 'Success',
+        startTime: '2026-07-24T09:01:00.000Z',
+      } as ScheduledTaskRunDto,
+    ];
+
+    render(<ConversationSourcesPanelContainer />);
+
+    const row = screen.getByRole('listitem');
+    expect(row.getAttribute('role')).toBeNull();
+
+    await userEvent.click(row);
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('shows the unread indicator on a History run whose matched conversation is unread', () => {
+    activeScheduledTaskMock.status = 'task-conversation';
+    activeScheduledTaskMock.scheduleId = 'schedule-1';
+    activeScheduledTaskMock.runId = 'run-1';
+    activeScheduledTaskMock.taskState = 'success';
+    activeScheduledTaskMock.task = {
+      id: 'schedule-1',
+      displayName: 'Weekly digest',
+    } as ScheduledTaskDto;
+    activeScheduledTaskMock.historyItems = [
+      {
+        id: 'run-2',
+        status: 'Success',
+        startTime: '2026-07-24T09:01:00.000Z',
+        conversationId: 'conversations/bucket/.scheduler/schedule-1/run-2',
+      } as ScheduledTaskRunDto,
+    ];
+    mockConversations = [
+      { id: 'bucket/.scheduler/schedule-1/run-2', isUnread: true },
+    ];
+
+    render(<ConversationSourcesPanelContainer />);
+
+    expect(
+      screen.getByRole('button', {
+        name: /conversationPanel\.unreadIndicatorLabel$/,
+      }),
+    ).toBeTruthy();
   });
 });
