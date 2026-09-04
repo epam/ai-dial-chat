@@ -45,6 +45,12 @@ const TWO_PARAGRAPHS_MARKDOWN = 'Paragraph one.\n\nParagraph two.';
 
 const LIST_MARKDOWN = '- Item one\n- Item two\n- Item three';
 
+const DISPLAY_MATH_MARKDOWN = `Einstein's field equations:
+
+$$
+R_{\\mu\\nu} - \\frac{1}{2}g_{\\mu\\nu}R + \\Lambda g_{\\mu\\nu} = \\frac{8\\pi G}{c^4}T_{\\mu\\nu}
+$$`;
+
 describe('MarkdownRenderer', () => {
   it('renders GFM tables in a horizontally scrollable container', () => {
     render(<MarkdownRenderer content={TABLE_MARKDOWN} />);
@@ -320,6 +326,54 @@ describe('MarkdownRenderer', () => {
      */
     // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelector('math')).toBeTruthy();
+  });
+
+  it('wraps block LaTeX in a horizontally scrollable container so a wide formula stays reachable', () => {
+    render(<MarkdownRenderer content={DISPLAY_MATH_MARKDOWN} />);
+
+    /*
+     * MathML elements have no accessible role under jsdom, so the scroll
+     * container is reached by walking up from the <math> element itself.
+     */
+    // eslint-disable-next-line testing-library/no-node-access
+    const math = document.querySelector('math[display="block"]');
+    // eslint-disable-next-line testing-library/no-node-access
+    const katexSpan = math?.parentElement;
+    // eslint-disable-next-line testing-library/no-node-access
+    const scrollContainer = katexSpan?.parentElement;
+
+    expect(math).toBeTruthy();
+    expect(katexSpan?.className).toContain('katex');
+    expect(scrollContainer?.className).toContain('overflow-x-auto');
+    expect(scrollContainer?.className).toContain('max-w-full');
+    expect(scrollContainer?.className).toContain('min-w-0');
+  });
+
+  it('keeps KaTeX wrapper classes through sanitization but drops classes from raw HTML', () => {
+    render(
+      <MarkdownRenderer
+        content={`${DISPLAY_MATH_MARKDOWN}\n\n<span class="injected">text</span><script>alert(1)</script>`}
+      />,
+    );
+
+    // eslint-disable-next-line testing-library/no-node-access -- class-level assertions have no semantic query
+    expect(document.querySelector('span.katex')).toBeTruthy();
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('span.injected')).toBeNull();
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('script')).toBeNull();
+  });
+
+  it('leaves inline LaTeX inside its paragraph rather than in a scroll container', () => {
+    render(<MarkdownRenderer content="Cost: $x + y$ per unit" />);
+
+    // eslint-disable-next-line testing-library/no-node-access -- see note above: MathML has no role under jsdom
+    const math = document.querySelector('math');
+    // eslint-disable-next-line testing-library/no-node-access
+    const katexSpan = math?.parentElement;
+
+    expect(math?.getAttribute('display')).toBeNull();
+    expect(katexSpan?.parentElement?.tagName).toBe('P');
   });
 
   it('renders single-dollar inline LaTeX as a KaTeX math element', () => {

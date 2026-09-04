@@ -115,12 +115,21 @@ FilterTab.Organization; // 'organization'
 
 ### MarkdownRenderer
 
-Renders markdown content with GFM support (tables, task lists, strikethrough).
+Renders markdown content with GFM support (tables, task lists, strikethrough)
+and LaTeX math through KaTeX. Tables and block formulas each get their own
+horizontal scroll container, so content wider than the column stays reachable
+instead of being clipped; each container becomes a labelled, focusable
+`role="region"` only while it actually overflows. Pass
+`tableScrollRegionAriaLabel` and `mathScrollRegionAriaLabel` to translate those
+labels — they default to `'Scrollable table'` and `'Scrollable formula'`.
 
 ```tsx
 import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
 
-<MarkdownRenderer content={markdownText} />;
+<MarkdownRenderer
+  content={markdownText}
+  mathScrollRegionAriaLabel={t('Scrollable formula')}
+/>;
 ```
 
 ### MDMessageViewer
