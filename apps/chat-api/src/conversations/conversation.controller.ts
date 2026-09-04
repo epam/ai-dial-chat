@@ -22,8 +22,12 @@ import {
   ConversationMetadataDto,
   ConversationResponseDto,
 } from '../openapi/openapi-response.dto';
-import { ConversationGenerationService } from './conversation-generation.service';
+import {
+  ConversationGenerationService,
+  type GenerationTerminalEvent,
+} from './conversation-generation.service';
 import { ConversationService } from './conversation.service';
+import { AttachGenerationDto } from './dto/attach-generation.dto';
 import { ConversationListResponseDto } from './dto/conversation-list.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
@@ -285,6 +289,84 @@ export class ConversationController {
       );
     }
     res.status(204).end();
+  }
+
+  @Post('completions/attach')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'attachToGeneration',
+    summary: 'Attach to an active generation and replay it live',
+    description:
+      'Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Session-scoped — only the session that could stop the generation can attach to it.',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'SSE stream: one snapshot event, live chunk events, then one terminal event',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid or missing path' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 404,
+    description:
+      'No active generation found for the given path in this session — including one that already finished',
+  })
+  async attachToGeneration(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() dto: AttachGenerationDto,
+  ): Promise<void> {
+    const { sid } = req.user as SessionUser;
+    const attachment = this.generationService.attach(sid, dto.path);
+    if (!attachment) {
+      throw new NotFoundException(
+        'No active generation found for the given path',
+      );
+    }
+
+    startSseResponse(res);
+
+    const writeEvent = (payload: unknown): void => {
+      if (res.writableEnded) return;
+      res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    };
+
+    writeEvent({ type: 'snapshot', message: attachment.assembledMessage });
+
+    const keepaliveTimer = setInterval(() => {
+      if (!res.writableEnded) res.write(SSE_KEEPALIVE_PAYLOAD);
+    }, SSE_KEEPALIVE_INTERVAL_MS);
+
+    let isCleanedUp = false;
+    const onChunk = (rawChunk: unknown): void => {
+      writeEvent({ type: 'chunk', chunk: rawChunk });
+    };
+    const onTerminal = (event: GenerationTerminalEvent): void => {
+      writeEvent(event);
+      cleanup();
+    };
+    const handleClose = (): void => {
+      cleanup();
+    };
+    const cleanup = (): void => {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
+      clearInterval(keepaliveTimer);
+      attachment.emitter.off('chunk', onChunk);
+      attachment.emitter.off('terminal', onTerminal);
+      res.off('close', handleClose);
+      if (!res.writableEnded) res.end();
+    };
+
+    /*
+     * Subscribing here — synchronously, right after `attach()` read the
+     * snapshot above, with no `await` in between — is what guarantees no
+     * concurrently-emitted chunk is lost between the snapshot and the first
+     * live event (see ConversationGenerationService.attach).
+     */
+    attachment.emitter.on('chunk', onChunk);
+    attachment.emitter.on('terminal', onTerminal);
+    res.on('close', handleClose);
   }
 
   @Post('watch')

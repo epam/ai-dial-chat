@@ -361,6 +361,19 @@ export type ArchiveItemDtoNodeTypeEnum =
 /**
  *
  * @export
+ * @interface AttachGenerationDto
+ */
+export interface AttachGenerationDto {
+  /**
+   * Conversation sub-path (bucket-stripped), e.g. "gpt-4o__My Chat".
+   * @type {string}
+   * @memberof AttachGenerationDto
+   */
+  path: string;
+}
+/**
+ *
+ * @export
  * @interface AttachmentDto
  */
 export interface AttachmentDto {
