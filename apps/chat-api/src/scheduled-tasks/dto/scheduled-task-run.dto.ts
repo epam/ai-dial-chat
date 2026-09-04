@@ -39,4 +39,12 @@ export class ScheduledTaskRunDto {
   @IsOptional()
   @IsInt()
   durationSeconds?: number;
+
+  @ApiPropertyOptional({
+    example:
+      'conversations/bucket/.scheduler/sched_123/dial-chathub-v2-gemini-3.5-flash__123123123123123__run_9f2a',
+  })
+  @IsOptional()
+  @IsString()
+  conversationId?: string;
 }

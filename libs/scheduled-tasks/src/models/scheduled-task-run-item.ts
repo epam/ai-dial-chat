@@ -12,4 +12,8 @@ export interface ScheduledTaskRunItem {
   status: ScheduledTaskRunStatus;
   /** Pre-formatted timestamp, optionally including a duration suffix, e.g. `"today at 9:01 AM (99s)"`. */
   timestampLabel: string;
+  /** Id of the conversation this run produced, when one exists. When set together with `onRunClick`, the row renders as interactive. */
+  conversationId?: string;
+  /** Whether this run's conversation is unread. When `true`, the row renders the unread-dot indicator. Defaults to `false`. */
+  isUnread?: boolean;
 }

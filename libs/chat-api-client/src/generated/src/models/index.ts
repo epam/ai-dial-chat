@@ -5545,6 +5545,12 @@ export interface ScheduledTaskRunDto {
    * @memberof ScheduledTaskRunDto
    */
   durationSeconds?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  conversationId?: string;
 }
 
 /**
