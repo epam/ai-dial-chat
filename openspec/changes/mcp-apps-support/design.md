@@ -102,6 +102,8 @@ Both reuse whatever session/consent DIAL Core already establishes for that deplo
 
 An overlaid `GhostIconButton` (`IconArrowsMaximize`) on the inline preview calls the same `onOpenApp`/`useOpenMcpAppCanvas` path the old button used, expanding into the full-width canvas on demand — nothing about the canvas's own fetch/seed/error handling changed, only how it gets triggered.
 
+**Bug fix — one-frame flash when the sandbox proxy isn't configured.** `useMcpAppInlinePreview`'s status `useState` originally seeded `Loading` unconditionally; `McpAppInlinePreviewStatus.Unavailable` was only set inside a `useEffect`, which runs after the browser paints. With `MCP_APP_SANDBOX_URL` unset, this meant every qualifying message's preview box (border, header, loading spinner) rendered for one frame before disappearing, instead of never appearing at all. Fixed by lazily initializing `status` from `match`/`mcpAppSandboxUrl` directly, so an unconfigured sandbox renders `Unavailable` (nothing) from the very first render.
+
 **Trade-off, resolved**: the canvas and the inline preview initially each independently fetched the resource HTML and (per D10) could each independently re-call the tool live — expanding to canvas after already viewing the inline preview meant a second `fetchMcpAppResourceHtml` and potentially a second live tool re-call. Fixed by D12's shared per-conversation cache: both surfaces now check it before fetching, so switching between them for the same message only ever fetches/re-calls once.
 
 ### D12: Per-conversation response cache; canvas fills its container and reports live resize

@@ -57,8 +57,17 @@ export const useMcpAppInlinePreview = (
   const hostContext = useMcpAppHostContext('inline');
   const [html, setHtml] = useState<string>();
   const [toolResult, setToolResult] = useState<CallToolResult>();
-  const [status, setStatus] = useState<McpAppInlinePreviewStatus>(
-    McpAppInlinePreviewStatus.Loading,
+  /*
+   * Lazy-initialized so an unconfigured sandbox never renders the loading
+   * spinner for a frame before the effect below flips it to `Unavailable` —
+   * `useEffect` runs after the browser paints, so seeding `Loading`
+   * unconditionally here would flash the preview box even though it's about
+   * to disappear.
+   */
+  const [status, setStatus] = useState<McpAppInlinePreviewStatus>(() =>
+    match == null || mcpAppSandboxUrl == null
+      ? McpAppInlinePreviewStatus.Unavailable
+      : McpAppInlinePreviewStatus.Loading,
   );
   const [reloadToken, setReloadToken] = useState(0);
 
