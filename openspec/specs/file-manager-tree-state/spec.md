@@ -52,25 +52,39 @@ State ownership: `useDialFileListing` owns `expandedPaths`, destination-popup ca
 
 ### Requirement: DialFileManagerShell passes tree header i18n via treeOptions
 
-`DialFileManagerShell` SHALL pass `treeOptions` to `DialFileManager` with a localized header title per active tab using `dialFileManager.*` i18n keys. The tree header SHALL use the same tab-label keys already used for the tab selector to avoid key duplication.
+`DialFileManagerShell` SHALL pass `treeOptions` to `DialFileManager` with a localized header title per active tab, resolved by the host and supplied through `labels.treeHeaderByTab`. Only My Files carries a header string of its own; the other tabs reuse the label already shown in the tab selector rather than duplicating a key.
 
 i18n keys for tree headers:
-- My Files: `dialFileManager.myFiles.treeHeader`
-- Shared: `dialFileManager.shared.treeHeader`
-- Organization: `dialFileManager.organization.treeHeader`
+- My Files: `dialFileManager.myFiles.treeHeader` (`"Folder tree"`)
+- Shared: `dialFileManager.tab.shared` (`"Shared with Me"`)
+- Organization: `basic.organization`
+- Review: the empty string — that tab renders no tree panel
+
+There are no `dialFileManager.shared.treeHeader` or `dialFileManager.organization.treeHeader` keys, and none SHALL be added: a second key holding the tab's own wording would drift from the selector it is meant to match.
+
+**Where the header is visible.** `treeOptions.header` reaches the kit's `CollapsibleSidebar` as its `title`, and that component renders the title **only while the sidebar is collapsed**, as vertical text on the 48px rail. An expanded tree panel therefore shows no header text at all — by design, not by omission. This is a deliberate design-system decision: the expanded panel is already identified by the tree it contains and by the active tab above it, and a header row would cost content height on the narrowest layouts. The header exists to keep the collapsed rail identifiable.
+
+A consequence worth stating, since it looks like a defect from the outside: asserting that the header string appears in the DOM of an expanded tree panel will always fail, and the region will instead repeat the active tab's name from the tab selector and the panel's surrounding chrome. Any check on the header must collapse the sidebar first.
+
+Should the expanded panel ever need a visible header, that is a change to `CollapsibleSidebar` in `@epam/ai-dial-ui-kit` — the kit exposes no other slot above the tree — and not something the shell can arrange on its own.
 
 RTL: `DialFileManager` ui-kit component handles tree layout direction; no host-level RTL handling required.
 Memoisation: `treeOptions` object in `useMemo` keyed on active tab.
 
-#### Scenario: Tree header shows tab-specific label
+#### Scenario: Collapsed tree rail shows the tab-specific label
 
-- **WHEN** the My Files tab is active and the tree panel is visible
-- **THEN** the tree header displays the value of `dialFileManager.myFiles.treeHeader`
+- **WHEN** the My Files tab is active and the tree sidebar is collapsed
+- **THEN** the collapsed rail displays the value of `dialFileManager.myFiles.treeHeader`
 
-#### Scenario: Tree header updates on tab switch
+#### Scenario: Collapsed rail label updates on tab switch
 
-- **WHEN** user switches from My Files to Shared tab
-- **THEN** the tree header updates to the value of `dialFileManager.shared.treeHeader`
+- **WHEN** the tree sidebar is collapsed and the user switches from My Files to Shared
+- **THEN** the rail label updates to the value of `dialFileManager.tab.shared`
+
+#### Scenario: Expanded tree panel renders no header text
+
+- **WHEN** the tree sidebar is expanded on any tab
+- **THEN** no header row renders above the tree, and the header string for that tab appears nowhere in the panel
 
 ### Requirement: DialFileManagerShell forwards destination-popup tree state
 
