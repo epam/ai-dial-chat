@@ -3,8 +3,10 @@ import {
   type Message,
   type MessageState,
 } from '@epam/ai-dial-chat-shared';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { McpAppToolCallSeed } from '../hooks/attachment/useOpenMcpAppCanvas';
 import type { McpAppToolRef } from '../hooks/conversation/useMcpAppTools';
+import { callMcpAppTool } from '../server-api/mcp-apps';
 
 /*
  * The trigger/canvas no longer carries a `Stage` at all — it used to,
@@ -118,18 +120,6 @@ export const findMcpAppForMessage = (
   );
 };
 
-/** Returns the index and matched tool of the last message in the list with one, or `null`. */
-export const findLastMcpAppMessage = (
-  messages: Message[],
-  mcpAppTools: McpAppToolRef[],
-): { messageIndex: number; match: McpAppToolRef } | null => {
-  for (let i = messages.length - 1; i >= 0; i -= 1) {
-    const match = findMcpAppForMessage(messages[i], mcpAppTools);
-    if (match) return { messageIndex: i, match };
-  }
-  return null;
-};
-
 /** Stable key identifying a message's MCP App canvas in the attachment canvas's `attachmentId` tracking, mirroring the `${messageIndex}:${attachmentId}` scheme used for regular attachment tiles. */
 export const mcpAppCanvasKey = (messageIndex: number): string =>
   `${messageIndex}:mcp-app`;
@@ -163,4 +153,43 @@ export const resolveMcpAppToolCallSeed = (
         ? { content: [{ type: 'text', text: matched.result }] }
         : undefined,
   };
+};
+
+/**
+ * Resolves the `toolResult` an MCP App canvas should be seeded with. Prefers
+ * a live re-call of the tool over `seed.toolResult`'s lossy plain-text
+ * reconstruction (see `resolveMcpAppToolCallSeed`), because DIAL Core's
+ * conversation state never carries the tool's real `structuredContent` —
+ * only the orchestrator's flattened prose summary. This is a **temporary
+ * workaround**, tracked in `openspec/changes/mcp-apps-support/design.md`
+ * ("Known limitation: lossy `toolResult`"), to be removed once Core's
+ * conversation state preserves the tool's real result.
+ *
+ * Only attempted when the MCP endpoint is unambiguous — `match.kind ===
+ * 'application'`, i.e. the deployment is itself the MCP server. The
+ * `'toolset'` kind also covers indirect, name-prefix-guessed matches (see
+ * `useMcpAppTools`'s indirect-discovery effect), where re-calling could hit
+ * the wrong tool or re-trigger a non-idempotent side effect — those keep the
+ * lossy seed. Falls back to `seed?.toolResult` if the live call fails (e.g.
+ * the deployment has no live MCP session outside the original conversation
+ * turn) or has no arguments to replay.
+ */
+export const resolveMcpAppToolResult = async (
+  match: McpAppToolRef,
+  seed: McpAppToolCallSeed | undefined,
+): Promise<CallToolResult | undefined> => {
+  if (match.kind !== 'application' || seed?.toolInput == null) {
+    return seed?.toolResult;
+  }
+
+  try {
+    return (await callMcpAppTool(
+      match.toolsetId,
+      match.mcpToolName,
+      seed.toolInput,
+      match.kind,
+    )) as CallToolResult;
+  } catch {
+    return seed.toolResult;
+  }
 };

@@ -43,12 +43,12 @@ import {
 import {
   DIAL_KIT_ICON_STROKE,
   ErrorMessageNotification,
-  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  AttachmentCanvasI18nKeys,
   AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -56,6 +56,7 @@ import {
   CitationsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
+import type { McpAppResponseCache } from '../../hooks/attachment/useMcpAppResponseCache';
 import type { McpAppToolCallSeed } from '../../hooks/attachment/useOpenMcpAppCanvas';
 import type { McpAppToolRef } from '../../hooks/conversation/useMcpAppTools';
 import { useUiFeature } from '../../hooks/useUiFeature';
@@ -70,6 +71,7 @@ import {
   mcpAppCanvasKey,
   resolveMcpAppToolCallSeed,
 } from '../../utils/mcp-app';
+import McpAppInlinePreview from './McpAppInlinePreview/McpAppInlinePreview';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
@@ -141,7 +143,7 @@ interface Props {
   thinkingLabel: string;
   executedLabel: string;
   stepsLabel: (count: number) => string;
-  /** Called with the message's matched MCP App tool (its canvas key, and a toolInput/toolResult seed) when the user activates the "Open App" message action, or when it auto-opens. Omit to hide the action entirely. */
+  /** Called with the message's matched MCP App tool (its canvas key, and a toolInput/toolResult seed) when the user activates the inline preview's expand-to-canvas button, or when it auto-opens. Omit to hide the inline preview entirely. */
   onOpenApp?: (
     match: McpAppToolRef,
     canvasKey?: string,
@@ -149,9 +151,9 @@ interface Props {
   ) => void;
   /** The active deployment's tools that declare an MCP Apps UI resource. */
   mcpAppTools: McpAppToolRef[];
-  /** Visible label for the "Open App" message action. */
-  openCanvasLabel?: string;
-  /** Label shown instead of the "Open App" button when this message's canvas is the one currently open. */
+  /** Shared with `useOpenMcpAppCanvas` so switching between the inline preview and the full canvas for the same message reuses one fetch. */
+  mcpAppCache: McpAppResponseCache;
+  /** Label shown instead of the inline MCP App preview when this message's canvas is the one currently open. */
   openedInCanvasLabel?: string;
   /** Called when the user clicks the preview button on a PDF citation. */
   onPreviewReference?: (annotation: Annotation) => void;
@@ -225,7 +227,7 @@ const ConversationMessageItem: FC<Props> = ({
   stepsLabel,
   onOpenApp,
   mcpAppTools,
-  openCanvasLabel,
+  mcpAppCache,
   openedInCanvasLabel,
   onPreviewReference,
   validateAttachment,
@@ -384,6 +386,15 @@ const ConversationMessageItem: FC<Props> = ({
       openAnnotationAttachment(attachment, resolveDialFileDownloadUrl);
   }, []);
 
+  const mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools);
+  const mcpAppToolCallSeed = useMemo(
+    () =>
+      mcpAppMatch
+        ? resolveMcpAppToolCallSeed(msg, mcpAppMatch.toolName)
+        : undefined,
+    [msg, mcpAppMatch],
+  );
+
   const selectedAttachmentKeyPrefix = `${index}:`;
   const selectedAttachmentId = selectedAttachmentKey?.startsWith(
     selectedAttachmentKeyPrefix,
@@ -449,7 +460,6 @@ const ConversationMessageItem: FC<Props> = ({
   }
 
   const hasStages = messageHasStages(msg);
-  const mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools);
   const mcpAppKey = mcpAppMatch ? mcpAppCanvasKey(index) : undefined;
   const isMcpAppOpenedInCanvas =
     mcpAppKey != null && selectedAttachmentKey === mcpAppKey;
@@ -628,15 +638,19 @@ const ConversationMessageItem: FC<Props> = ({
                     </span>
                   </div>
                 ) : (
-                  <PrimaryButton
-                    label={openCanvasLabel}
-                    onClick={() =>
-                      onOpenApp(
-                        mcpAppMatch,
-                        mcpAppKey,
-                        resolveMcpAppToolCallSeed(msg, mcpAppMatch.toolName),
-                      )
+                  <McpAppInlinePreview
+                    match={mcpAppMatch}
+                    toolCall={mcpAppToolCallSeed}
+                    cache={mcpAppCache}
+                    cacheKey={mcpAppCanvasKey(index)}
+                    onExpand={() =>
+                      onOpenApp(mcpAppMatch, mcpAppKey, mcpAppToolCallSeed)
                     }
+                    expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
+                    reloadAriaLabel={t(ButtonsI18nKeys.Reload)}
+                    loadErrorLabel={t(
+                      AttachmentCanvasI18nKeys.McpAppLoadErrorLabel,
+                    )}
                   />
                 ))}
               {msg.streamErrorMessage != null && (

@@ -2,6 +2,20 @@
   background-color: var(--mcp-loading-bg, var(--bg-layer-1, #e0e6f0));
 }
 
+/*
+ * `AppFrame` sizes its sandbox iframe to the mounted app's own reported
+ * content size (an inline `style.width`/`style.height` in pixels), which is
+ * the right default for a compact inline preview but leaves the full-width
+ * canvas looking clipped/undersized against its own panel. Overrides that
+ * inline style so the canvas presentation always fills its container;
+ * `!important` is required since the library sets the style from JS, not a
+ * stylesheet, so normal specificity can't win against it.
+ */
+.fullscreenFrame :global(iframe) {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 .statusLabel {
   color: var(--mcp-status-text, var(--text-primary, #161b2d));
 }

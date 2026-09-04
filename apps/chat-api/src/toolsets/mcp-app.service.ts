@@ -42,7 +42,7 @@ interface McpTool {
 }
 
 const RESOURCE_CACHE_TTL_MS = 30_000;
-const TOOL_CALL_TIMEOUT_MS = 30_000;
+const TOOL_CALL_TIMEOUT_MS = 60_000;
 
 /**
  * Extracts the JSON-RPC message from an MCP Streamable HTTP SSE response

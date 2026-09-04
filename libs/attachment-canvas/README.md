@@ -38,7 +38,7 @@ format does not eagerly load the other renderers.
 
 ### AttachmentCanvas
 
-Renders the active attachment content based on its type, inside a resizable side panel. `isOpen`, `onClose`, `content`, and `labels` are required.
+Renders the active attachment content based on its type, inside a resizable side panel. `isOpen`, `onClose`, `content`, and `labels` are required. When `content.type` is `McpApp` and `content.onReload` is set, the header shows a reload action (labelled by `labels.mcpAppReloadLabel`, default `'Reload'`) that lets the host re-fetch the resource and re-resolve the tool result from scratch — the lib has no cache of its own, so this is purely a signal for the app layer to bypass whatever cache it keeps.
 
 ```tsx
 import {
@@ -107,6 +107,33 @@ import {
   }}
   codeBlockTheme={codeBlockTheme}
 />;
+```
+
+### McpAppCanvasRenderer
+
+Mounts an MCP tool's `ui://` resource via `@mcp-ui/client`'s `AppRenderer`, inside the isolated-origin sandbox proxy named by `content.sandboxUrl`, seeded with the original invocation's `content.toolInput`/`content.toolResult`. Handles its own loading/error overlay while the app initializes. Exported so a host can also mount a compact preview outside the full canvas — e.g. inline under a chat message — using the same `McpAppCanvasContent` payload it builds for `AttachmentCanvas`.
+
+Watches its own container with a `ResizeObserver` and reports the live pixel size to the mounted app via `hostContext.containerDimensions`, so a resize (the host dragging a resizable panel, a window resize) reaches a well-behaved app after mount, not just once. When `content.hostContext.displayMode` is `'fullscreen'` (the value `AttachmentCanvas`'s own usage sets), the mounted iframe is also forced to fill 100% of that container — overriding the mounted app's own reported content size, which is otherwise what drives the iframe's dimensions and is a better default for a compact inline preview.
+
+```tsx
+import {
+  McpAppCanvasRenderer,
+  AttachmentContentType,
+  type McpAppCanvasContent,
+} from '@epam/ai-dial-attachment-canvas';
+
+const content: McpAppCanvasContent = {
+  type: AttachmentContentType.McpApp,
+  html,
+  sandboxUrl,
+  toolName: 'get_weather',
+  toolInput,
+  toolResult,
+  hostContext,
+  onToolCall: (name, args) => callTool(name, args),
+};
+
+<McpAppCanvasRenderer content={content} errorLabel="Failed to load app" />;
 ```
 
 ## Context
