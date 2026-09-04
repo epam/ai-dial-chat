@@ -31,6 +31,8 @@ Like every lib in this workspace, it holds no i18n, no transport, and no state o
 
 Displays a single attachment with its name, status, and actions. Every callback receives the attachment `id`. Passing `searchQuery` highlights matches in the file name.
 
+Each action the card renders — download, retry, open-in-new-tab, remove — gets its own accessible name from `labels`, so pass every label whose action the card can show. They are laid out as one row in the tile's corner.
+
 ```tsx
 import { AttachmentCard } from '@epam/ai-dial-attachment-input';
 
@@ -41,13 +43,24 @@ import { AttachmentCard } from '@epam/ai-dial-attachment-input';
   onRetry={handleRetry}
   onDownload={handleDownload}
   isSelected={attachment.id === selectedAttachmentId}
-  labels={{ removeLabel: 'Remove', retryLabel: 'Retry' }}
+  labels={{
+    removeLabel: 'Remove attachment',
+    retryLabel: 'Retry upload',
+    openInNewTabLabel: 'Open in new tab',
+    downloadLabel: 'Download attachment',
+    uploadingLabel: 'Uploading',
+  }}
 />;
 ```
 
 ### AttachmentTray
 
 Renders the list of in-progress attachments above the composer.
+
+While a file's upload is in flight its tile carries `aria-busy` and renders an
+indeterminate `role="progressbar"` named by `labels.uploadingLabel` (default
+`'Uploading'`), so the state is reachable without sight of the spinner. Pass a
+translated string.
 
 ```tsx
 import { AttachmentTray } from '@epam/ai-dial-attachment-input';

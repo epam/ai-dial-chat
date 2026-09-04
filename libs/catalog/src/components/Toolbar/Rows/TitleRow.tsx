@@ -87,7 +87,7 @@ export const TitleRow: FC<TitleRowProps> = ({
         'aria-label': gridViewLabel,
       },
       {
-        value: CatalogViewMode.List,
+        value: CatalogViewMode.Cards,
         icon: (
           <IconLayoutList
             size={DIAL_ICON_SIZE.SM}
@@ -126,7 +126,7 @@ export const TitleRow: FC<TitleRowProps> = ({
           />
         )}
 
-        <div className="ms-auto flex items-center gap-2">
+        <div className="ms-auto flex shrink-0 items-center gap-2">
           <SegmentedControl
             aria-label={viewToggleLabel}
             value={viewMode}

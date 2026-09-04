@@ -69,6 +69,12 @@ import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 inner `StagesPanel`, so the group and the panel it wraps are themed from one
 place.
 
+When finished stage names include duration metadata with a start timestamp,
+such as `(7.18s, Start: 11:21:38, End: 11:21:45)`, the summary reports the
+elapsed union of those intervals. Parallel stages therefore contribute time
+only once. For legacy duration-only names such as `[3.99s]`, it falls back to
+summing the available durations.
+
 ## Types
 
 ```tsx

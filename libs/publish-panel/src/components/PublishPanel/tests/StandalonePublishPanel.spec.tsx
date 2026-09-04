@@ -149,6 +149,71 @@ describe('StandalonePublishPanel', () => {
     outside.remove();
   });
 
+  describe('Tab focus trap', () => {
+    /* Waits past the one-frame focus guard the panel installs on open, so the
+     * guard cannot be mistaken for the trap under test. */
+    const settleOpeningFrame = () =>
+      new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+    it('wraps Tab from the last control back to the first', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await settleOpeningFrame();
+
+      const publish = screen.getByRole('button', { name: 'Publish' });
+      publish.focus();
+      await user.tab();
+
+      expect(
+        screen.getByRole('button', { name: 'Close' }).matches(':focus'),
+      ).toBe(true);
+    });
+
+    it('wraps Shift+Tab from the first control back to the last', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await settleOpeningFrame();
+
+      screen.getByRole('button', { name: 'Close' }).focus();
+      await user.tab({ shift: true });
+
+      expect(
+        screen.getByRole('button', { name: 'Publish' }).matches(':focus'),
+      ).toBe(true);
+    });
+
+    it('does not trap Tab while focus sits outside the panel', async () => {
+      const user = userEvent.setup();
+      const outside = document.createElement('button');
+      const alsoOutside = document.createElement('button');
+      document.body.append(outside, alsoOutside);
+
+      renderPanel();
+      await settleOpeningFrame();
+      outside.focus();
+      await user.tab();
+
+      expect(alsoOutside.matches(':focus')).toBe(true);
+      outside.remove();
+      alsoOutside.remove();
+    });
+
+    it('leaves Tab alone while the panel is closed', async () => {
+      const user = userEvent.setup();
+      const outside = document.createElement('button');
+      const alsoOutside = document.createElement('button');
+      document.body.append(outside, alsoOutside);
+
+      renderPanel({ isOpen: false });
+      outside.focus();
+      await user.tab();
+
+      expect(alsoOutside.matches(':focus')).toBe(true);
+      outside.remove();
+      alsoOutside.remove();
+    });
+  });
+
   it('makes the closed panel inert', () => {
     renderPanel({ isOpen: false });
     const dialog = screen.getByRole('dialog', { hidden: true });

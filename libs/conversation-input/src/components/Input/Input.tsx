@@ -61,6 +61,7 @@ export const Input: FC<InputProps> = ({
   menuCloseLabel = 'Close',
   removeLabel,
   retryLabel,
+  uploadingLabel,
   sendLabel,
   stopLabel,
   micLabel = 'Record voice message',
@@ -220,6 +221,15 @@ export const Input: FC<InputProps> = ({
 
   const handlePaste = useCallback(
     (e: ClipboardEvent<HTMLTextAreaElement>) => {
+      /*
+       * Deliberately narrower than the send gate above. With attachments
+       * enabled an over-threshold paste is converted to an attachment and
+       * never reaches the textarea, so warning here would be about text the
+       * user did not paste inline; an under-threshold paste is at most
+       * pasteTextThreshold characters and cannot reach the cap on its own.
+       * Existing text plus a small paste crossing the cap is not visible from
+       * the pasted string's length at all — the send gate catches that.
+       */
       if (!isAttachmentsEnabled) {
         const text = e.clipboardData.getData('text/plain');
         if (text.length >= maxMessageLength) {
@@ -296,7 +306,7 @@ export const Input: FC<InputProps> = ({
 
   const handleSend = async () => {
     if (isSendDisabled) return;
-    if (!isAttachmentsEnabled && message.length >= maxMessageLength) {
+    if (message.length >= maxMessageLength) {
       onMessageTooLong?.(message.length, maxMessageLength);
       return;
     }
@@ -425,7 +435,7 @@ export const Input: FC<InputProps> = ({
           }}
           onRetry={handleRetry}
           onExpand={handleExpand}
-          labels={{ removeLabel, retryLabel }}
+          labels={{ removeLabel, retryLabel, uploadingLabel }}
           onAttachmentClick={
             onAttachmentClick != null
               ? (id) => {

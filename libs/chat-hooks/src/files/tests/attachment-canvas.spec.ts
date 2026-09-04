@@ -2,9 +2,15 @@ import {
   AttachmentContentType,
   AttachmentErrorType,
   OoxmlFileType,
+  getOoxmlMimeType,
+  isOoxmlPreviewable,
   isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
-import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentType,
+  MIMEType,
+  RequestStatus,
+} from '@epam/ai-dial-chat-shared';
 import type {
   CustomVisualizer,
   DisplayAttachment,
@@ -17,6 +23,7 @@ import {
   hasAttachmentTextSource,
   isExternalSourcePreviewable,
   referenceAttachmentToPdfCanvasContent,
+  resolveExternalSourceContentType,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
@@ -55,6 +62,16 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
   },
   isHtmlPreviewable: vi.fn().mockReturnValue(false),
   isTextPreviewable: vi.fn(),
+  /* Plain stubs, not a reimplementation of the real OOXML_MIME_TYPES map —
+   * the map's own correctness is covered by
+   * `libs/attachment-canvas/src/utils/tests/content.spec.ts`, which imports
+   * `getOoxmlMimeType`/`isOoxmlPreviewable` directly from `../content` and so
+   * doesn't hit the `@epam/pdf-highlighter-kit` resolution problem above.
+   * Tests here only need to verify that `resolveExternalSourceContentType`/
+   * `isExternalSourcePreviewable` correctly use whatever these return —
+   * each test configures the exact return value it needs. */
+  getOoxmlMimeType: vi.fn(),
+  isOoxmlPreviewable: vi.fn(),
 }));
 
 /* Stand-in for the host's DIAL-URL resolvers, mirroring the app's real
@@ -744,6 +761,39 @@ describe('resolvePdfCanvasContent', () => {
     );
     expect(result).toBeNull();
   });
+
+  it('returns PdfCanvasContent with the raw url for a non-DIAL external PDF source', async () => {
+    const result = await resolvePdfCanvasContent(
+      makeRemoteAttachment(
+        'citation.pdf',
+        'https://example.com/citation/doc-id-123',
+      ),
+      resolvers,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: 'https://example.com/citation/doc-id-123',
+    });
+  });
+
+  it('returns PdfCanvasContent with the raw url for a blob: source', async () => {
+    const result = await resolvePdfCanvasContent(
+      makeRemoteAttachment('citation.pdf', 'blob:http://localhost/abc-123'),
+      resolvers,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:http://localhost/abc-123',
+    });
+  });
+
+  it('returns null for a non-DIAL source url with no fetchable scheme', async () => {
+    const result = await resolvePdfCanvasContent(
+      makeRemoteAttachment('citation.pdf', 'citation-reference-id-123'),
+      resolvers,
+    );
+    expect(result).toBeNull();
+  });
 });
 
 describe('resolveOoxmlCanvasContent', () => {
@@ -819,6 +869,47 @@ describe('resolveOoxmlCanvasContent', () => {
       OoxmlFileType.Docx,
     );
 
+    expect(result).toBeNull();
+  });
+
+  it('returns OOXML content with the raw url for a non-DIAL external xlsx source', async () => {
+    const result = await resolveOoxmlCanvasContent(
+      makeRemoteAttachment(
+        'budget.xlsx',
+        'https://example.com/citation/budget-report',
+      ),
+      resolvers,
+      OoxmlFileType.Xlsx,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Ooxml,
+      url: 'https://example.com/citation/budget-report',
+      format: OoxmlFileType.Xlsx,
+    });
+  });
+
+  it('returns OOXML content with the raw url for a non-DIAL external pptx source', async () => {
+    const result = await resolveOoxmlCanvasContent(
+      makeRemoteAttachment(
+        'slides.pptx',
+        'https://example.com/citation/slides-deck',
+      ),
+      resolvers,
+      OoxmlFileType.Pptx,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Ooxml,
+      url: 'https://example.com/citation/slides-deck',
+      format: OoxmlFileType.Pptx,
+    });
+  });
+
+  it('returns null for a non-DIAL Office source url with no fetchable scheme', async () => {
+    const result = await resolveOoxmlCanvasContent(
+      makeRemoteAttachment('report.docx', 'citation-reference-id-456'),
+      resolvers,
+      OoxmlFileType.Docx,
+    );
     expect(result).toBeNull();
   });
 });
@@ -917,9 +1008,95 @@ describe('getUrlFileName', () => {
   });
 });
 
+describe('resolveExternalSourceContentType', () => {
+  beforeEach(() => {
+    vi.mocked(isOoxmlPreviewable).mockReset();
+    vi.mocked(getOoxmlMimeType).mockReset();
+  });
+
+  it('returns an image/* content type unchanged regardless of url', () => {
+    expect(
+      resolveExternalSourceContentType(
+        'image/jpeg',
+        'https://example.com/citation/doc-id-123',
+      ),
+    ).toBe('image/jpeg');
+  });
+
+  it('returns MIMEType.PDF unchanged when already reported', () => {
+    expect(
+      resolveExternalSourceContentType(
+        MIMEType.PDF,
+        'https://example.com/citation/doc-id-123',
+      ),
+    ).toBe(MIMEType.PDF);
+  });
+
+  it('overrides a mislabeled content type when the url ends with .pdf', () => {
+    expect(
+      resolveExternalSourceContentType(
+        'text/markdown',
+        'https://example.com/files/report.pdf',
+      ),
+    ).toBe(MIMEType.PDF);
+  });
+
+  it('returns the original content type when the url has no .pdf extension', () => {
+    expect(
+      resolveExternalSourceContentType(
+        'text/markdown',
+        'https://example.com/page/about',
+      ),
+    ).toBe('text/markdown');
+  });
+
+  it.each([
+    [
+      'docx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+    [
+      'xlsx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
+    [
+      'pptx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ],
+  ])(
+    'overrides a mislabeled content type when the url ends with .%s',
+    (ext, canonicalMime) => {
+      vi.mocked(isOoxmlPreviewable).mockReturnValue(false);
+      vi.mocked(getOoxmlMimeType).mockReturnValue(canonicalMime);
+      expect(
+        resolveExternalSourceContentType(
+          'text/markdown',
+          `https://example.com/citation/report.${ext}`,
+        ),
+      ).toBe(canonicalMime);
+      expect(getOoxmlMimeType).toHaveBeenCalledWith(`report.${ext}`);
+    },
+  );
+
+  it('returns a canonical OOXML content type unchanged when already reported', () => {
+    const pptxMime =
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    vi.mocked(isOoxmlPreviewable).mockReturnValue(true);
+    expect(
+      resolveExternalSourceContentType(
+        pptxMime,
+        'https://example.com/citation/doc-id-123',
+      ),
+    ).toBe(pptxMime);
+    expect(isOoxmlPreviewable).toHaveBeenCalledWith('', pptxMime);
+  });
+});
+
 describe('isExternalSourcePreviewable', () => {
   beforeEach(() => {
     vi.mocked(isTextPreviewable).mockReturnValue(false);
+    vi.mocked(isOoxmlPreviewable).mockReset();
+    vi.mocked(getOoxmlMimeType).mockReset();
   });
 
   it('returns true for an image/* content type regardless of url', () => {
@@ -937,6 +1114,15 @@ describe('isExternalSourcePreviewable', () => {
     ).toBe(true);
   });
 
+  it('returns true for a PDF content type even when the url has no .pdf extension', () => {
+    expect(
+      isExternalSourcePreviewable(
+        MIMEType.PDF,
+        'https://example.com/citation/doc-id-123',
+      ),
+    ).toBe(true);
+  });
+
   it('returns true for a url whose path ends with .pdf', () => {
     expect(
       isExternalSourcePreviewable(
@@ -944,6 +1130,39 @@ describe('isExternalSourcePreviewable', () => {
         'https://example.com/files/report.pdf',
       ),
     ).toBe(true);
+  });
+
+  it('returns true for a url whose path ends with .pptx even with a mislabeled content type', () => {
+    const pptxMime =
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    /* First call (inside resolveExternalSourceContentType) checks the raw
+     * 'text/markdown' content type and must report it as untrusted so the
+     * extension override runs; the second call (isExternalSourcePreviewable's
+     * own check) queries the *resolved* pptx MIME type and must report it as
+     * trusted. */
+    vi.mocked(isOoxmlPreviewable).mockImplementation(
+      (_, mimeType) => mimeType === pptxMime,
+    );
+    vi.mocked(getOoxmlMimeType).mockReturnValue(pptxMime);
+    expect(
+      isExternalSourcePreviewable(
+        'text/markdown',
+        'https://example.com/citation/slides.pptx',
+      ),
+    ).toBe(true);
+  });
+
+  it('returns true for a canonical pptx content type even when the url has no matching extension', () => {
+    const pptxMime =
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    vi.mocked(isOoxmlPreviewable).mockReturnValue(true);
+    expect(
+      isExternalSourcePreviewable(
+        pptxMime,
+        'https://example.com/citation/doc-id-123',
+      ),
+    ).toBe(true);
+    expect(isOoxmlPreviewable).toHaveBeenCalledWith('', pptxMime);
   });
 
   it('returns true when isTextPreviewable reports the filename is previewable', () => {

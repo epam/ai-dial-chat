@@ -10,7 +10,7 @@ How the catalog details panel fetches an item's tab data on open: the lib's host
 
 `CatalogItemDetailsFetchResult` (`libs/catalog/src/models/item-details-data.ts`, exported from the lib's entry point) is the fetch-shaped counterpart of `CatalogItemTabData` — the type a host returns, distinct from the type the panel renders.
 
-Note: this is the only async fetch-on-open mechanism in `Catalog.tsx`. An earlier `onFetchAboutContent`/`aboutContent`/`isAboutLoading` prop existed for the Summary section but was removed as dead code (`CatalogView`'s implementation always resolved `undefined`); the Summary section now reads the static `item.description` synchronously, with no fetch or loading state of its own.
+Note: this is the only async fetch-on-open mechanism in `Catalog.tsx`. An earlier `onFetchAboutContent`/`aboutContent`/`isAboutLoading` prop existed for the since-removed Summary section but was dropped as dead code (`CatalogView`'s implementation always resolved `undefined`); the `About` tab reads the static `item.description` synchronously, with no fetch or loading state of its own.
 
 The lib MUST remain host-agnostic: `onFetchDetails` accepts only a `CatalogItem` and returns only the lib's own result type — it MUST NOT know about DIAL Core endpoint paths, `@epam/ai-dial-chat-api-client`, or any backend DTO shape. All of that knowledge lives in the app-level adapter (`apps/chat/src/components/CatalogView/CatalogView.tsx`) and in the host-agnostic mappers it calls.
 
@@ -92,7 +92,8 @@ If a details server-api call rejects (network error or a mapped HTTP exception s
 #### Scenario: Unlimited limit stats
 
 - **WHEN** DIAL Core returns an effectively-unlimited `total` value (for example Java `Long.MAX_VALUE` rounded in JSON/JavaScript)
-- **THEN** the app-level mapper marks the row as unlimited, formats the visible value as `Unlimited`, preserves the numeric `used`/`total` for progress rendering, and still includes the row in the `Limits` tab
+- **THEN** the app-level mapper marks the row as unlimited, formats the visible value as `Unlimited`, preserves the numeric `used`/`total` on the row, and still includes the row in the `Limits` tab
+- **AND** the row renders as a plain value with no progress bar, since a bar drawn against an effectively-infinite total carries no information
 
 #### Scenario: Toolset detail fetch renders the Tools tab
 
@@ -172,7 +173,7 @@ The `getDeploymentDetails` endpoint SHALL satisfy the following generated-client
 - **RTL / direction impact**: the Limits tab UI MUST use logical/flexible layout utilities only; it MUST NOT introduce physical left/right classes or directional icons. Progress rows contain text and a progress bar, so no icon mirroring is required.
 - **Feature flag**: not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — this is a data-completeness fix for an existing, already-shipped catalog details panel, not a new feature surface.
 - **Memoisation**: `onFetchDetails` in `CatalogView.tsx` MUST be wrapped in `useCallback`; the DTO-to-`EntitySpecificDetails` mapping functions and deployment-limits mapper MUST remain pure functions (no new memoisation needed beyond the callback itself, consistent with `mapEntityDetailsToCatalogDetails` today).
-- **Accessibility**: `isDetailsLoading` renders its own `role="status"` indicator next to the tab row (`texts.detailsLoadingAriaLabel`, default `'Loading details'`). It is the panel's only loading indicator — the Summary section (`item.description`) is always available synchronously and has no loading state. Every limits row progress bar MUST receive an accessible label naming the limit and the used/total value; rows formatted as `Unlimited` still render a progress bar and MUST keep an accessible label.
+- **Accessibility**: `isDetailsLoading` renders its own `role="status"` indicator next to the tab row (`texts.detailsLoadingAriaLabel`, default `'Loading details'`). It is the panel's only loading indicator — the `About` tab's `item.description` is always available synchronously and has no loading state. Every limits row progress bar MUST receive an accessible label naming the limit and the used/total value. Rows formatted as `Unlimited` render no progress bar at all, so there is no bar to label: their value text carries the whole meaning, and a panel whose rows are all unlimited legitimately mounts zero `role="progressbar"` nodes.
 - **Observability**: no new metrics/telemetry are required; failures are absorbed into `onFetchDetails` resolving `undefined` (per the Non-Goals in design.md, no new logging beyond what `apps/chat/src/server-api`'s shared client already emits on error). On the backend, `deployments.service.ts` logs raw-toolset and mapped-response payloads at debug level (secrets redacted) to aid diagnosing field-mapping gaps — this is diagnostic logging, not user-facing observability.
 
 #### Scenario: No new context or global state
@@ -344,7 +345,7 @@ tool calls`, `Reasoning efforts` (model only), and `Configuration schema` (appli
 - **THEN** the model's `Capabilities` section renders only `Tools` and `Parallel tool calls`
   (plus `Reasoning efforts` when present), with no rows for the seven hidden flags
 
-### Requirement: Only the About tab reads `item.description`; the Summary section shows topics and usage limits
+### Requirement: The About tab is the only surface that reads `item.description`
 
 `CatalogItem` (`libs/catalog/src/models/catalog-item.ts`) SHALL NOT define an `intro` field.
 The dedicated `About` tab (`CatalogDetailsTab.About`, `libs/catalog/src/types/detail-tab.ts`)
@@ -353,6 +354,21 @@ SHALL display `item.description` via the shared `AboutTab` component
 `content: string` prop rather than deriving its own fallback. The `About` tab is the only
 `DetailsPanel` surface that renders `item.description`; it uses no async fetch, callback prop,
 or loading state for this content.
+
+`DetailsPanel` SHALL NOT render an always-visible summary section. The `Summary` component
+(`libs/catalog/src/components/Details/Summary/`) and the `CatalogItem.summary` and
+`CatalogItem.intro` fields it read were removed in the 1.0 redesign; nothing in
+`libs/catalog` renders them today, and they MUST NOT be reintroduced as a second surface
+for the same text. `AboutTab` SHALL carry what that section used to show that is still
+in the model — it renders `content` followed by `item.topics` as `TopicTag`s — so the
+description and the topic tags live on exactly one surface. Usage limits live in their own
+`Limits` tab (see above), not in a summary strip.
+
+The panel does still render `item.description` in the `Content` tab for long-form entities,
+but only as the `CatalogItemPromptContent.description` fallback (`promptContent?.description ??
+item.description`), which is a different tab and never visible at the same time as `About`.
+The catalog grid card (`libs/catalog/src/components/CardGrid/Card.tsx`) also shows the
+description; the "only surface" rule is scoped to `DetailsPanel`, not to the whole catalog.
 
 `AboutTab` SHALL render `content` as Markdown via the shared `MarkdownRenderer`
 (`@epam/ai-dial-chat-shared`) — the same renderer used for chat message content — rather than
@@ -364,11 +380,6 @@ uniformly to every entity type that supplies a description (models, applications
 prompts, skills) since `content` is the same `item.description` string regardless
 of type.
 
-The details panel's always-visible Summary section (rendered by `Summary`) SHALL NOT render
-`item.description` or any `AboutTab` content. `Summary` SHALL render only the item's topics
-(when `item.topics.length > 0`) and usage-limit summary (when `item.summary` is non-null);
-when both are absent, `Summary` SHALL render nothing.
-
 The `About` tab SHALL always be present in the tab row, as the first entry, regardless of
 whether `item.details` is populated — unlike `Overview`/`Pricing`/`Api`/`Tools`, which only
 appear when their corresponding `item.details` field is non-null.
@@ -379,8 +390,8 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
 
 #### Scenario: Only the About tab renders the description
 - **WHEN** the details panel opens for any `CatalogItem`
-- **THEN** the About tab renders `item.description`, and the Summary section does not render
-  `item.description` anywhere
+- **THEN** the About tab renders `item.description`, and no other visible region of the
+  panel repeats it
 
 #### Scenario: Description renders as Markdown, not plain text
 - **WHEN** `item.description` contains Markdown syntax (e.g. `**bold**`, a `-`/`*` bullet list,
@@ -389,16 +400,14 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
   a real `<ul>`/`<ol>` list, a syntax-highlighted code block, a clickable link) rather than the
   raw Markdown source or a heuristic bullet-only parse
 
-#### Scenario: Summary section renders topics and usage limits only
-- **WHEN** the details panel opens for a `CatalogItem` with a non-empty `topics` array and a
-  non-null `summary`
-- **THEN** the Summary section renders the topic tags and the usage-limit summary, and
-  nothing else
+#### Scenario: Topics render inside the About tab
+- **WHEN** the details panel opens for a `CatalogItem` with a non-empty `topics` array
+- **THEN** the About tab renders the description followed by the topic tags, and no separate
+  summary strip renders above the tab row
 
-#### Scenario: Summary section renders nothing when topics and summary are both absent
-- **WHEN** the details panel opens for a `CatalogItem` with an empty `topics` array and no
-  `summary`
-- **THEN** the Summary section renders no content
+#### Scenario: About tab renders topics only when present
+- **WHEN** the details panel opens for a `CatalogItem` with an empty `topics` array
+- **THEN** the About tab renders the description alone, with no empty tag row
 
 #### Scenario: About tab is always first
 - **WHEN** the details panel opens for any `CatalogItem`, regardless of which of
@@ -407,7 +416,7 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
 
 #### Scenario: Limits tab is shown only when usage limits are present
 - **WHEN** `item.details.limits` is populated with one or more progress rows
-- **THEN** the details panel includes a `Limits` tab after `Pricing` and renders those rows with progress bars
+- **THEN** the details panel includes a `Limits` tab after `Pricing` and renders each row, with a progress bar on the capped rows and a plain value on the unlimited ones
 
 #### Scenario: Limits tab is hidden when usage limits are absent
 - **WHEN** `item.details.limits` is `undefined`
@@ -475,8 +484,9 @@ configured client's existing behavior.
 #### Scenario: Unlimited limits remain accessible
 
 - **WHEN** DIAL Core returns its effectively unlimited total
-- **THEN** the existing mapper preserves numeric progress and resolved unlimited
-  visible/accessibility labels
+- **THEN** the existing mapper preserves the numeric values and the resolved
+  unlimited visible/accessibility labels, which the row renders without a
+  progress bar
 
 #### Scenario: Toolset details preserve credentials
 

@@ -1,7 +1,8 @@
-import type {
-  ConversationListItemDto,
-  ConversationsApi,
-  FilesApi,
+import {
+  ResponseError,
+  type ConversationListItemDto,
+  type ConversationsApi,
+  type FilesApi,
 } from '@epam/ai-dial-chat-api-client';
 import {
   type Conversation,
@@ -58,6 +59,79 @@ const ATTACHMENT_CONCURRENCY = 5;
  * the wrong bound — that limits one buffer, not the three held together.
  */
 export const DEFAULT_MAX_ARCHIVE_BYTES = 512 * 1024 * 1024;
+
+/** HTTP status the chat-api throttler guard returns once a caller exceeds its rate limit. */
+const RATE_LIMIT_HTTP_STATUS = 429;
+
+/** How many times a single conversation fetch is retried after a 429 before the export gives up on it. */
+const MAX_RATE_LIMIT_RETRIES = 5;
+
+/** Backoff used when the 429 response carries no `Retry-After` header. */
+const DEFAULT_RATE_LIMIT_RETRY_MS = 2000;
+
+/** True when `error` is the generated client's wrapper around an HTTP 429 response. */
+const isRateLimitError = (error: unknown): error is ResponseError =>
+  error instanceof ResponseError &&
+  error.response.status === RATE_LIMIT_HTTP_STATUS;
+
+/** Resolves how long to wait before retrying a rate-limited request, honoring `Retry-After` when present. */
+const getRateLimitRetryDelayMs = (
+  error: ResponseError,
+  attempt: number,
+): number => {
+  const retryAfterSeconds = Number(error.response.headers.get('Retry-After'));
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return retryAfterSeconds * 1000;
+  }
+  return DEFAULT_RATE_LIMIT_RETRY_MS * attempt;
+};
+
+/** Resolves after `ms`, or immediately once `signal` aborts. */
+const sleep = (ms: number, signal: AbortSignal): Promise<void> =>
+  new Promise((resolve) => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
+  });
+
+/**
+ * Fetches one conversation, transparently retrying on 429 (chat-api's per-user
+ * rate limit) with backoff so a bulk export-all over many conversations
+ * survives the limiter instead of failing the whole job on the first throttle.
+ */
+const fetchConversationWithRetry = async (
+  conversationsApi: Pick<ConversationsApi, 'getConversation'>,
+  path: string,
+  signal: AbortSignal,
+): Promise<Conversation> => {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return (await conversationsApi.getConversation(
+        { path },
+        { signal },
+      )) as unknown as Conversation;
+    } catch (error) {
+      if (
+        signal.aborted ||
+        !isRateLimitError(error) ||
+        attempt >= MAX_RATE_LIMIT_RETRIES
+      ) {
+        throw error;
+      }
+      await sleep(getRateLimitRetryDelayMs(error, attempt), signal);
+    }
+  }
+};
 
 interface ExportErrorClassification {
   isUnauthorized?: boolean;
@@ -228,10 +302,11 @@ export const useConversationExport = ({
       const kind = getExportKind(mode);
       let conversation: Conversation;
       try {
-        conversation = (await conversationsApi.getConversation(
-          { path: normalizeConversationPath(conversationId) },
-          { signal },
-        )) as unknown as Conversation;
+        conversation = await fetchConversationWithRetry(
+          conversationsApi,
+          normalizeConversationPath(conversationId),
+          signal,
+        );
       } catch (error) {
         if (signal.aborted) return;
         const classification = classifyTransferError(error);
@@ -474,10 +549,11 @@ export const useConversationExport = ({
       for (const ref of conversationRefs) {
         if (signal.aborted) return;
         try {
-          const conversation = (await conversationsApi.getConversation(
-            { path: normalizeConversationPath(ref.id) },
-            { signal },
-          )) as unknown as Conversation;
+          const conversation = await fetchConversationWithRetry(
+            conversationsApi,
+            normalizeConversationPath(ref.id),
+            signal,
+          );
           conversations.push(conversation);
         } catch (error) {
           if (signal.aborted) return;

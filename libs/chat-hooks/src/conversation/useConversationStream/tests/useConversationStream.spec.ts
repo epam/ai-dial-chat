@@ -32,6 +32,7 @@ const makeConversation = (
 const useHookHarness = ({
   transport,
   conversationId,
+  initialConversation,
   ...rest
 }: {
   transport: ConversationStreamTransport;
@@ -39,9 +40,10 @@ const useHookHarness = ({
   onStopError?: (error: Error) => void;
   overlay?: ConversationStreamOverlayNotifier;
   channel?: ConversationStreamChannel;
+  initialConversation?: Conversation;
 }) => {
   const [conversation, setConversation] = useState<Conversation | null>(
-    makeConversation(),
+    initialConversation ?? makeConversation(),
   );
   const conversationRef = useRef<Conversation | null>(conversation);
   conversationRef.current = conversation;
@@ -190,6 +192,162 @@ describe('useConversationStream', () => {
 
     rerender({ conversationId: 'bucket/convB' });
     expect(result.current.stream.isStreaming).toBe(false);
+  });
+
+  it('restores stages accumulated before and during background navigation', async () => {
+    const initialConversation = makeConversation({
+      messages: [
+        {
+          role: MessageRole.User,
+          content: 'Use a tool',
+          timestamp: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          role: MessageRole.Assistant,
+          content: '',
+          timestamp: '2026-01-01T00:00:01.000Z',
+        },
+      ],
+    });
+    const { result, rerender } = renderHook(
+      (props: { conversationId: string }) =>
+        useHookHarness({
+          transport,
+          conversationId: props.conversationId,
+          initialConversation,
+        }),
+      { initialProps: { conversationId: 'bucket/convA' } },
+    );
+
+    await act(async () => {
+      result.current.stream.startStream(
+        'bucket/convA',
+        'Use a tool',
+        1,
+        'gpt-4o',
+        undefined,
+        'gen-1',
+      );
+      await Promise.resolve();
+    });
+
+    act(() => {
+      capturedOptions?.onChunk({
+        id: 'chunk-1',
+        object: 'chat.completion.chunk',
+        choices: [
+          {
+            delta: {
+              custom_content: {
+                stages: [
+                  {
+                    index: 0,
+                    name: 'Calling ',
+                    status: null,
+                    content: 'first ',
+                  },
+                ],
+              },
+            },
+            finish_reason: null,
+            index: 0,
+          },
+        ],
+      });
+    });
+
+    rerender({ conversationId: 'bucket/convB' });
+    act(() => {
+      capturedOptions?.onChunk({
+        id: 'chunk-2',
+        object: 'chat.completion.chunk',
+        choices: [
+          {
+            delta: {
+              custom_content: {
+                stages: [
+                  {
+                    index: 0,
+                    name: 'tool',
+                    status: null,
+                    content: 'second',
+                  },
+                ],
+              },
+            },
+            finish_reason: null,
+            index: 0,
+          },
+        ],
+      });
+    });
+
+    const reloadedPlaceholder = makeConversation({
+      messages: initialConversation.messages.map((message) => ({ ...message })),
+    });
+    const restored = result.current.stream.restoreBufferedGeneration(
+      'bucket/convA',
+      reloadedPlaceholder,
+    );
+
+    expect(restored.messages[1].custom_content?.stages).toEqual([
+      {
+        index: 0,
+        name: 'Calling tool',
+        status: null,
+        content: 'first second',
+      },
+    ]);
+
+    rerender({ conversationId: 'bucket/convA' });
+    act(() => {
+      capturedOptions?.onChunk({
+        id: 'chunk-3',
+        object: 'chat.completion.chunk',
+        choices: [
+          {
+            delta: {
+              custom_content: {
+                stages: [
+                  {
+                    index: 0,
+                    name: '',
+                    status: null,
+                    content: ' third',
+                  },
+                ],
+              },
+            },
+            finish_reason: null,
+            index: 0,
+          },
+        ],
+      });
+    });
+
+    expect(
+      result.current.conversation?.messages[1].custom_content?.stages,
+    ).toEqual([
+      {
+        index: 0,
+        name: 'Calling tool',
+        status: null,
+        content: 'first second third',
+      },
+    ]);
+
+    await act(async () => {
+      await capturedOptions?.onComplete();
+    });
+    const afterCompletion = makeConversation({
+      messages: reloadedPlaceholder.messages,
+    });
+    expect(
+      result.current.stream.restoreBufferedGeneration(
+        'bucket/convA',
+        afterCompletion,
+      ),
+    ).toBe(afterCompletion);
   });
 
   it('does not reload the displayed conversation when a different conversation completes', async () => {

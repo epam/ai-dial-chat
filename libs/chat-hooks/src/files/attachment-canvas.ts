@@ -14,7 +14,9 @@ import type {
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  getOoxmlMimeType,
   isHtmlPreviewable,
+  isOoxmlPreviewable,
   isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
 import type {
@@ -93,10 +95,15 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
 /* Returns true when an external source URL should be opened in the canvas
  * rather than a new browser tab.
  *
- * Image and audio content types are trusted directly since web-search grounding
- * APIs do not mislabel them. For document types we rely solely on the URL path
+ * Image, audio, PDF, and OOXML (docx/xlsx/pptx) content types are trusted
+ * directly: web-search grounding APIs do not mislabel images/audio, and a
+ * citation annotation's `attachment.type` is the same authoritative PDF/OOXML
+ * marker the quotation canvas path (`annotationToPdfCanvasContent`) trusts —
+ * such a URL commonly carries no matching extension (a citation/reference id,
+ * not a file name). For other document types we rely on the URL path
  * extension — Google's grounding API labels every web reference (YouTube,
- * Forbes, etc.) as 'text/markdown', so content-type alone is unreliable. */
+ * Forbes, etc.) as 'text/markdown', so content-type alone is unreliable
+ * there. */
 /**
  * Returns the last path segment of `url` — its file name — for both absolute
  * URLs and DIAL-relative resource paths such as
@@ -124,24 +131,52 @@ export const getUrlFileName = (url: string): string => {
   }
 };
 
+/** Returns true when `contentType` alone already trustworthily identifies an image, audio, PDF, or OOXML (docx/xlsx/pptx) source. */
+const isTrustedSourceContentType = (contentType: string): boolean =>
+  contentType.startsWith('image/') ||
+  contentType.startsWith('audio/') ||
+  contentType === MIMEType.PDF ||
+  isOoxmlPreviewable('', contentType);
+
+/**
+ * Returns the content type to trust for an external citation source: `contentType`
+ * unchanged when it is already an image/audio/PDF/OOXML marker, otherwise the
+ * type implied by `url`'s path extension (`MIMEType.PDF` for `.pdf`, the
+ * canonical OOXML MIME for `.docx`/`.xlsx`/`.pptx`) when that extension is
+ * recognized, otherwise `contentType` unchanged.
+ *
+ * Web-search grounding APIs label every reference — PDFs and Office documents
+ * included — as `text/markdown`, so a mislabeled `contentType` must not win
+ * over a recognized URL extension: doing so previously sent a PDF's raw bytes
+ * into the markdown/text canvas viewer, rendering garbled text instead of
+ * opening the PDF/OOXML viewer.
+ */
+export const resolveExternalSourceContentType = (
+  contentType: string,
+  url: string,
+): string => {
+  if (isTrustedSourceContentType(contentType)) {
+    return contentType;
+  }
+  const fileName = getUrlFileName(url);
+  const dot = fileName.lastIndexOf('.');
+  const ext = dot === -1 ? '' : fileName.slice(dot + 1).toLowerCase();
+  if (ext === FileExtension.PDF) return MIMEType.PDF;
+  return getOoxmlMimeType(fileName) ?? contentType;
+};
+
 /** Returns true when an external (non-DIAL) source URL should be opened in the canvas rather than a new browser tab. */
 export const isExternalSourcePreviewable = (
   contentType: string,
   url: string,
 ): boolean => {
-  if (contentType.startsWith('image/') || contentType.startsWith('audio/')) {
+  const resolvedType = resolveExternalSourceContentType(contentType, url);
+  if (isTrustedSourceContentType(resolvedType)) {
     return true;
   }
   const fileName = getUrlFileName(url);
-  const dot = fileName.lastIndexOf('.');
-  if (dot === -1) return false;
-  const ext = fileName.slice(dot + 1).toLowerCase();
-  /* 'pdf' is not in TEXT_EXTENSIONS; 'html'/'htm' are not in TEXT_EXTENSIONS (they use HtmlContent), so both must be checked explicitly. */
-  return (
-    ext === FileExtension.PDF ||
-    isTextPreviewable(fileName) ||
-    isHtmlPreviewable(fileName)
-  );
+  /* 'html'/'htm' are not in TEXT_EXTENSIONS (they use HtmlContent), so both must be checked explicitly. */
+  return isTextPreviewable(fileName) || isHtmlPreviewable(fileName);
 };
 
 /*
@@ -438,17 +473,58 @@ export const referenceAttachmentToPdfCanvasContent = (
   };
 };
 
+/**
+ * True when `url` is an absolute URL the PDF canvas viewer can fetch directly:
+ * `http(s):` (a real external resource) or `blob:` (an already-created object
+ * URL). A relative or opaque string (e.g. a citation/reference id with no
+ * scheme) throws in the `URL` constructor and is rejected, since handing it
+ * to the viewer would render a silent blank canvas instead of a fetch error.
+ */
+const isFetchableExternalUrl = (url: string): boolean => {
+  try {
+    const protocol = new URL(url).protocol;
+    return (
+      protocol === 'http:' || protocol === 'https:' || protocol === 'blob:'
+    );
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Returns `attachment.url` when it is a fetchable external (non-DIAL) URL the
+ * canvas viewer can load directly, or `undefined` otherwise. Shared by
+ * `resolvePdfCanvasContent`/`resolveOoxmlCanvasContent` as the fallback used
+ * when `resolveAttachmentBlobUrl` has no DIAL-hosted download URL, preview
+ * URL, or inline data to offer — the same approach
+ * `annotationToPdfCanvasContent`/`referenceAttachmentToPdfCanvasContent` use
+ * for a citation whose source is an external PDF: hand the URL to the canvas
+ * viewer directly rather than failing, since it fetches and renders the URL
+ * itself.
+ */
+const resolveExternalAttachmentUrl = (
+  attachment: DisplayAttachment,
+): string | undefined =>
+  attachment.url != null &&
+  !isDialFileId(attachment.url) &&
+  isFetchableExternalUrl(attachment.url)
+    ? attachment.url
+    : undefined;
+
 /** Resolves a PDF canvas content payload from a DisplayAttachment, or `null` if unavailable. */
 export const resolvePdfCanvasContent = async (
   attachment: DisplayAttachment,
   resolvers: AttachmentCanvasUrlResolvers,
 ): Promise<PdfCanvasContent | ErrorCanvasContent | null> => {
   const result = await resolveAttachmentBlobUrl(attachment, resolvers);
-  if (result == null) return null;
-  if (typeof result !== 'string') {
-    return result;
+  if (result != null) {
+    if (typeof result !== 'string') return result;
+    return { type: AttachmentContentType.Pdf, url: result };
   }
-  return { type: AttachmentContentType.Pdf, url: result };
+  const externalUrl = resolveExternalAttachmentUrl(attachment);
+  return externalUrl != null
+    ? { type: AttachmentContentType.Pdf, url: externalUrl }
+    : null;
 };
 
 /** Resolves an OOXML canvas content payload from a DisplayAttachment, or `null` if unavailable. */
@@ -458,9 +534,14 @@ export const resolveOoxmlCanvasContent = async (
   format: OoxmlFileType,
 ): Promise<OoxmlCanvasContent | ErrorCanvasContent | null> => {
   const result = await resolveAttachmentBlobUrl(attachment, resolvers);
-  if (result == null) return null;
-  if (typeof result !== 'string') return result;
-  return { type: AttachmentContentType.Ooxml, url: result, format };
+  if (result != null) {
+    if (typeof result !== 'string') return result;
+    return { type: AttachmentContentType.Ooxml, url: result, format };
+  }
+  const externalUrl = resolveExternalAttachmentUrl(attachment);
+  return externalUrl != null
+    ? { type: AttachmentContentType.Ooxml, url: externalUrl, format }
+    : null;
 };
 
 /**

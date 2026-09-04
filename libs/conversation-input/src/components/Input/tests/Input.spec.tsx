@@ -992,3 +992,102 @@ describe('Input — pasted attachment expand', () => {
     });
   });
 });
+
+describe('Input — message length cap', () => {
+  const MAX = 10;
+  const atCap = 'x'.repeat(MAX);
+  const belowCap = 'x'.repeat(MAX - 1);
+
+  it('blocks sending at the cap when attachments are disabled', () => {
+    const onSend = vi.fn();
+    const onMessageTooLong = vi.fn();
+    render(
+      <Input
+        isAttachmentsEnabled={false}
+        maxMessageLength={MAX}
+        message={atCap}
+        onSend={onSend}
+        onMessageTooLong={onMessageTooLong}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText('Send message'));
+
+    expect(onMessageTooLong).toHaveBeenCalledWith(MAX, MAX);
+    expect(onSend).not.toHaveBeenCalled();
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe(
+      atCap,
+    );
+  });
+
+  /*
+   * The regressed case: the cap used to be checked only when attachments were
+   * disabled, so a typed message past the cap went out silently on every model
+   * that accepts attachments.
+   */
+  it('blocks sending at the cap when attachments are enabled', () => {
+    const onSend = vi.fn();
+    const onMessageTooLong = vi.fn();
+    render(
+      <Input
+        isAttachmentsEnabled
+        maxMessageLength={MAX}
+        message={atCap}
+        onSend={onSend}
+        onMessageTooLong={onMessageTooLong}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText('Send message'));
+
+    expect(onMessageTooLong).toHaveBeenCalledWith(MAX, MAX);
+    expect(onSend).not.toHaveBeenCalled();
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe(
+      atCap,
+    );
+  });
+
+  it.each([true, false])(
+    'sends below the cap even past pasteTextThreshold (attachments enabled: %s)',
+    (isAttachmentsEnabled) => {
+      const onSend = vi.fn();
+      const onMessageTooLong = vi.fn();
+      render(
+        <Input
+          isAttachmentsEnabled={isAttachmentsEnabled}
+          maxMessageLength={MAX}
+          pasteTextThreshold={2}
+          message={belowCap}
+          onSend={onSend}
+          onMessageTooLong={onMessageTooLong}
+        />,
+      );
+
+      fireEvent.click(screen.getByLabelText('Send message'));
+
+      expect(onMessageTooLong).not.toHaveBeenCalled();
+      expect(onSend).toHaveBeenCalledWith(belowCap, []);
+    },
+  );
+
+  it('does not warn at paste time when the paste becomes an attachment', () => {
+    const onMessageTooLong = vi.fn();
+    render(
+      <Input
+        isAttachmentsEnabled
+        maxMessageLength={MAX}
+        pasteTextThreshold={2}
+        onMessageTooLong={onMessageTooLong}
+      />,
+    );
+
+    fireEvent.paste(screen.getByRole('textbox'), {
+      clipboardData: {
+        items: [] as unknown as DataTransferItemList,
+        getData: () => 'x'.repeat(MAX + 5),
+      },
+    });
+
+    expect(onMessageTooLong).not.toHaveBeenCalled();
+  });
+});

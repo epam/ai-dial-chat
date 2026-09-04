@@ -93,3 +93,51 @@ describe('EditMessageInput — DIAL file system menu item', () => {
     expect(handleClick).toHaveBeenCalledOnce();
   });
 });
+
+describe('EditMessageInput — message length cap', () => {
+  const MAX = 10;
+
+  /*
+   * The cap used to be checked only when attachments were disabled, so an
+   * oversized edit was submitted silently on attachment-enabled models.
+   */
+  it('blocks Save & Submit at the cap when attachments are enabled', () => {
+    const onSave = vi.fn();
+    const onMessageTooLong = vi.fn();
+    render(
+      <EditMessageInput
+        onCancel={vi.fn()}
+        onSave={onSave}
+        isAttachmentsEnabled
+        maxMessageLength={MAX}
+        message={'x'.repeat(MAX)}
+        onMessageTooLong={onMessageTooLong}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Save & Submit'));
+
+    expect(onMessageTooLong).toHaveBeenCalledWith(MAX, MAX);
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('submits below the cap', () => {
+    const onSave = vi.fn();
+    const onMessageTooLong = vi.fn();
+    render(
+      <EditMessageInput
+        onCancel={vi.fn()}
+        onSave={onSave}
+        isAttachmentsEnabled
+        maxMessageLength={MAX}
+        message={'x'.repeat(MAX - 1)}
+        onMessageTooLong={onMessageTooLong}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Save & Submit'));
+
+    expect(onMessageTooLong).not.toHaveBeenCalled();
+    expect(onSave).toHaveBeenCalled();
+  });
+});

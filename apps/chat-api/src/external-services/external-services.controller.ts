@@ -9,7 +9,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
@@ -34,7 +33,6 @@ export class ExternalServicesController {
   @Get(':appId/:serviceId')
   @UseGuards(FeatureGuard)
   @RequireFeature(FeatureKey.LiveChatInteraction)
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'getExternalService',
     summary: 'Get application external-service metadata',
@@ -63,7 +61,6 @@ export class ExternalServicesController {
       'Caller lacks permission, or the liveChatInteraction feature is not enabled',
   })
   @ApiResponse({ status: 404, description: 'External service not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -84,7 +81,6 @@ export class ExternalServicesController {
   @UseGuards(FeatureGuard)
   @RequireFeature(FeatureKey.LiveChatInteraction)
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'signInExternalService',
     summary: 'Submit external-service credentials',
@@ -109,7 +105,6 @@ export class ExternalServicesController {
     description:
       'Caller lacks permission, or the liveChatInteraction feature is not enabled',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response or rejected sign-in',
@@ -133,7 +128,6 @@ export class ExternalServicesController {
   @UseGuards(FeatureGuard)
   @RequireFeature(FeatureKey.LiveChatInteraction)
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'signOutExternalService',
     summary: 'Revoke external-service credentials',
@@ -158,7 +152,6 @@ export class ExternalServicesController {
     description:
       'Caller lacks permission, or the liveChatInteraction feature is not enabled',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

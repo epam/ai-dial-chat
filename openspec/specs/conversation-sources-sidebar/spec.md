@@ -263,18 +263,23 @@ For both states:
 `ConversationSourcesPanel` SHALL wire `handleSourceClick` as `onSourceClick` on `SourcesSection`. `handleSourceClick` SHALL route each click as follows:
 
 1. **External non-previewable URL** — if the URL is not a DIAL file ID and does not pass the previewability test (see below), open `window.open(url, '_blank', 'noopener,noreferrer')` immediately and return.
-2. **External previewable document or DIAL file** — build a `DisplayAttachment` from the `QuotationSource` and call `openAttachmentCanvas(attachment)`. If the canvas opens (`true`), close the sources sidebar. If the canvas does not open (`false`) and the URL is not a DIAL file ID, open `window.open(url, '_blank', 'noopener,noreferrer')`. If the canvas does not open and the URL is a DIAL file ID, trigger a download.
+2. **External previewable document or DIAL file** — resolve the source's effective content type via `resolveExternalSourceContentType(contentType, url)` (see below), build a `DisplayAttachment` from the `QuotationSource` using that resolved content type, and call `openAttachmentCanvas(attachment)`. If the canvas opens (`true`), close the sources sidebar. If the canvas does not open (`false`) and the URL is not a DIAL file ID, open `window.open(url, '_blank', 'noopener,noreferrer')`. If the canvas does not open and the URL is a DIAL file ID, trigger a download.
 
-**Previewability test** — `isExternalSourcePreviewable(contentType, url)` exported from `apps/chat/src/utils/attachment-canvas.ts`:
+**Content type resolution** — `resolveExternalSourceContentType(contentType, url)` exported from `libs/chat-hooks/src/files/attachment-canvas.ts`:
 
-- Returns `true` if `contentType` starts with `'image/'` or `'audio/'` (these content types are specific and unlikely to be mislabelled by web-search grounding APIs).
-- Otherwise, extracts the last path segment of `url` (ignoring query string and fragment) and finds the extension after the last `.`. Returns `true` when:
-  - the extension is `'pdf'` (`FileExtension.PDF`) — binary format rendered by the PDF canvas renderer; or
-  - `isTextPreviewable(fileName)` from `@epam/ai-dial-attachment-canvas` returns `true` — covers `.md`, `.markdown`, `.json`, `.txt`, `.xml`, `.csv`, and all other plain-text formats the canvas text renderer supports.
-- If there is no dot in the last path segment, returns `false`.
-- Returns `false` on invalid URLs.
+- Returns `contentType` unchanged if it already trustworthily identifies the source: it starts with `'image/'`, starts with `'audio/'`, equals `MIMEType.PDF` (`'application/pdf'`), or `isOoxmlPreviewable('', contentType)` (from `@epam/ai-dial-attachment-canvas`) recognizes it as a canonical DOCX/XLSX/PPTX MIME type.
+- Otherwise, extracts the last path segment of `url` (ignoring query string and fragment): if its extension after the last `.` is `'pdf'` (`FileExtension.PDF`), returns `MIMEType.PDF`; otherwise, if `getOoxmlMimeType(fileName)` (from `@epam/ai-dial-attachment-canvas`) recognizes a `.docx`/`.xlsx`/`.pptx` extension, returns that format's canonical OOXML MIME type. Either case **overrides** the reported `contentType`.
+- Otherwise returns `contentType` unchanged.
 
-The rationale: some web-search grounding APIs (e.g. Google Vertex AI) label every web reference — YouTube, news articles, blog posts — with `content-type: text/markdown` regardless of actual content. Relying on the content type alone would route all web sources through the canvas pipeline and produce a "Preview not supported" error. The URL extension is the reliable signal; image and audio types are exempted because they are not mislabelled this way.
+This override exists because some web-search grounding APIs (e.g. Google Vertex AI) label every web reference — YouTube, news articles, blog posts, PDFs, and Office documents alike — with `content-type: text/markdown` regardless of actual content. Without it, a mislabelled PDF's or Office document's `contentType` would win over its `.pdf`/`.docx`/`.xlsx`/`.pptx` URL extension when building the `DisplayAttachment`, routing the canvas into the markdown/text viewer, which renders the file's raw bytes as garbled text instead of opening the PDF/OOXML viewer. The `DisplayAttachment` built in step 2 above uses this resolved content type (not the raw `QuotationSource.contentType`) for both its `contentType` and `type` (`AttachmentType.Image` vs `AttachmentType.File`) fields.
+
+**Previewability test** — `isExternalSourcePreviewable(contentType, url)` exported from `libs/chat-hooks/src/files/attachment-canvas.ts`, built on `resolveExternalSourceContentType`:
+
+- Resolves the effective content type via `resolveExternalSourceContentType(contentType, url)`. Returns `true` if the resolved type starts with `'image/'`, starts with `'audio/'`, equals `MIMEType.PDF`, or `isOoxmlPreviewable('', resolvedType)` recognizes it as a canonical OOXML MIME type.
+- Otherwise, extracts the last path segment of `url` and returns `true` when `isTextPreviewable(fileName)` or `isHtmlPreviewable(fileName)` from `@epam/ai-dial-attachment-canvas` returns `true` — covers `.md`, `.markdown`, `.json`, `.txt`, `.xml`, `.csv`, `.html`/`.htm`, and all other plain-text formats the canvas text renderer supports.
+- Returns `false` on invalid URLs or a last path segment with no file extension.
+
+Image and audio content types, and an already-correct PDF or OOXML content type, are trusted directly because web-search grounding APIs do not mislabel images/audio (or, for PDF/OOXML, because a citation annotation's own `attachment.type` field — the same authoritative marker `annotationToPdfCanvasContent` trusts — is reliable even when the source's URL carries no matching extension, e.g. an opaque citation/reference id rather than a file name).
 
 #### Scenario: Web-search reference URL without a file extension opens in a new tab
 
@@ -289,6 +294,19 @@ The rationale: some web-search grounding APIs (e.g. Google Vertex AI) label ever
 - **WHEN** the user clicks the source link
 - **THEN** `openAttachmentCanvas` is called with a `DisplayAttachment` built from the source
 - **AND** if the canvas opens, the sources sidebar is closed
+
+#### Scenario: Mislabelled content type is overridden by a .pdf URL extension
+
+- **GIVEN** a `QuotationSource` with `contentType = 'text/markdown'` (mislabelled by a web-search grounding API) and a URL whose last path segment ends in `.pdf`
+- **WHEN** the user clicks the source link
+- **THEN** `openAttachmentCanvas` is called with a `DisplayAttachment` whose `contentType` is `MIMEType.PDF`, not the source's original `'text/markdown'`
+- **AND** the PDF opens in the PDF canvas viewer, not the markdown/text viewer
+
+#### Scenario: PDF content type without a .pdf URL extension still opens in the canvas
+
+- **GIVEN** a `QuotationSource` with `contentType = MIMEType.PDF` and a URL with no recognisable file extension (e.g. an opaque citation/reference id)
+- **WHEN** the user clicks the source link
+- **THEN** `openAttachmentCanvas` is called with a `DisplayAttachment` whose `contentType` is `MIMEType.PDF`
 
 #### Scenario: External text-previewable URL opens in the canvas
 

@@ -25,6 +25,12 @@ const OOXML_MIME_TO_FILE_TYPE: Record<string, OoxmlFileType> = {
   [OOXML_MIME_TYPES.pptx]: OoxmlFileType.Pptx,
 };
 
+const OOXML_FILE_TYPE_TO_MIME: Record<OoxmlFileType, string> = {
+  [OoxmlFileType.Docx]: OOXML_MIME_TYPES.docx,
+  [OoxmlFileType.Xlsx]: OOXML_MIME_TYPES.xlsx,
+  [OoxmlFileType.Pptx]: OOXML_MIME_TYPES.pptx,
+};
+
 /** Resolves a supported OOXML format from a MIME type or file extension. */
 export const getOoxmlFileType = (
   name: string,
@@ -44,6 +50,15 @@ export const getOoxmlFileType = (
 /** Returns true when a file can be rendered by the built-in OOXML viewer. */
 export const isOoxmlPreviewable = (name: string, mimeType?: string): boolean =>
   getOoxmlFileType(name, mimeType) != null;
+
+/** Returns the canonical OOXML MIME type recognized from `name`'s extension or `mimeType`, or `undefined` if neither matches a supported format. */
+export const getOoxmlMimeType = (
+  name: string,
+  mimeType?: string,
+): string | undefined => {
+  const fileType = getOoxmlFileType(name, mimeType);
+  return fileType != null ? OOXML_FILE_TYPE_TO_MIME[fileType] : undefined;
+};
 
 /** Returns true if the file name has an extension known to be text-previewable. */
 export const isTextPreviewable = (name: string): boolean => {

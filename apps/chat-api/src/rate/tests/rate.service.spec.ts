@@ -104,6 +104,26 @@ describe('RateService', () => {
       expect(headers['X-CONVERSATION-ID']).toBe(validDto.conversationId);
     });
 
+    it('percent-encodes non-Latin-1 characters in the X-CONVERSATION-ID header', async () => {
+      fetchSpy.mockResolvedValue({ ok: true } as Response);
+      const service = makeService();
+      const unicodeDto = {
+        ...validDto,
+        conversationId: 'bucket/gpt-4o__Привет — 🙂__uuid',
+      };
+
+      await service.rateMessage(unicodeDto, ACCESS_TOKEN);
+
+      const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      const headers = init.headers as Record<string, string>;
+      expect(headers['X-CONVERSATION-ID']).toBe(
+        'bucket/gpt-4o__%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82 %E2%80%94 %F0%9F%99%82__uuid',
+      );
+      expect(decodeURIComponent(headers['X-CONVERSATION-ID'])).toBe(
+        unicodeDto.conversationId,
+      );
+    });
+
     it('includes optional comment when provided', async () => {
       fetchSpy.mockResolvedValue({ ok: true } as Response);
       const service = makeService();

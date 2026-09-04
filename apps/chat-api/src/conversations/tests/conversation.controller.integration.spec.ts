@@ -571,9 +571,9 @@ describe('ConversationController (integration)', () => {
         .expect(400);
     });
 
-    it('returns 400 when nextToken exceeds 512 characters', async () => {
+    it('returns 400 when nextToken exceeds 4096 characters', async () => {
       await request(app.getHttpServer())
-        .get(`/conversations/list?nextToken=${'x'.repeat(513)}`)
+        .get(`/conversations/list?nextToken=${'x'.repeat(4097)}`)
         .expect(400);
     });
 

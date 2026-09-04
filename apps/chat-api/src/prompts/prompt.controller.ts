@@ -11,7 +11,6 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { CreatePromptFolderDto } from './dto/create-prompt-folder.dto';
@@ -94,7 +93,6 @@ export class PromptController {
 
   @Post()
   @HttpCode(201)
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({
     operationId: 'createPrompt',
     summary: 'Create a personal prompt',
@@ -214,7 +212,6 @@ export class PromptController {
 
   @Post('folders')
   @HttpCode(201)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     operationId: 'createPromptFolder',
     summary: 'Create a prompt folder',

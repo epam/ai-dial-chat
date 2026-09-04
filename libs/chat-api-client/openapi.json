@@ -214,9 +214,6 @@
           },
           "400": {
             "description": "Missing or invalid appId"
-          },
-          "429": {
-            "description": "Too Many Requests"
           }
         },
         "summary": "Get client-safe application configuration and feature flags",
@@ -246,9 +243,6 @@
           },
           "403": {
             "description": "Caller lacks permission to list application schemas"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -303,9 +297,6 @@
           "404": {
             "description": "Schema not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -340,9 +331,6 @@
           },
           "403": {
             "description": "Caller lacks permission to list applications"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -389,9 +377,6 @@
           },
           "409": {
             "description": "Application name already taken"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "503": {
             "description": "DIAL Core is unavailable or timed out"
@@ -453,9 +438,6 @@
           "404": {
             "description": "Application not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -499,9 +481,6 @@
           },
           "404": {
             "description": "Application not found"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -568,9 +547,6 @@
           },
           "403": {
             "description": "Caller lacks permission"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -675,9 +651,6 @@
           "404": {
             "description": "Deployment limits not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "500": {
             "description": "Internal server error"
           },
@@ -731,9 +704,6 @@
           "404": {
             "description": "Deployment not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -765,9 +735,6 @@
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "500": {
             "description": "Internal server error"
@@ -803,9 +770,6 @@
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "500": {
             "description": "Internal server error"
@@ -1053,9 +1017,6 @@
           "403": {
             "description": "Caller lacks permission to list models"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "500": {
             "description": "Internal server error"
           },
@@ -1111,9 +1072,6 @@
           "404": {
             "description": "Model not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "500": {
             "description": "Internal server error"
           },
@@ -1151,9 +1109,6 @@
           },
           "403": {
             "description": "Caller lacks permission to list toolsets"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "500": {
             "description": "Internal server error"
@@ -1207,9 +1162,6 @@
           "409": {
             "description": "Toolset name already taken"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -1261,9 +1213,6 @@
           },
           "404": {
             "description": "Toolset not found"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "500": {
             "description": "Internal server error"
@@ -1328,9 +1277,6 @@
           "404": {
             "description": "Toolset not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -1373,9 +1319,6 @@
           },
           "404": {
             "description": "Toolset not found"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -1435,9 +1378,6 @@
           },
           "403": {
             "description": "Caller lacks permission"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -1501,9 +1441,6 @@
           "404": {
             "description": "Toolset not found (only reachable when `authenticationType` is omitted and the lookup fails)"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -1557,9 +1494,6 @@
           },
           "404": {
             "description": "Toolset or resource not found"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -1621,9 +1555,6 @@
           "404": {
             "description": "Deployment not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core's proxied tools/list failed"
           }
@@ -1682,9 +1613,6 @@
           },
           "404": {
             "description": "Toolset not found"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core's proxied tools/call failed"
@@ -1819,9 +1747,6 @@
           "403": {
             "description": "The liveChatInteraction feature is not enabled for this user"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           }
@@ -1915,9 +1840,6 @@
           "404": {
             "description": "External service not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           }
@@ -1986,9 +1908,6 @@
           "403": {
             "description": "Caller lacks permission, or the liveChatInteraction feature is not enabled"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response or rejected sign-in"
           }
@@ -2056,9 +1975,6 @@
           },
           "403": {
             "description": "Caller lacks permission, or the liveChatInteraction feature is not enabled"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -2470,9 +2386,6 @@
           "409": {
             "description": "Another generation is already active for this conversation"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core error"
           },
@@ -2591,9 +2504,6 @@
           "404": {
             "description": "Conversation not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "LLM title generation failed"
           },
@@ -2687,9 +2597,6 @@
           "401": {
             "description": "Not authenticated"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "500": {
             "description": "Unexpected internal error"
           }
@@ -2731,9 +2638,6 @@
           },
           "401": {
             "description": "Not authenticated"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "500": {
             "description": "Unexpected internal error"
@@ -2836,9 +2740,6 @@
           "404": {
             "description": "Conversation not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -2901,9 +2802,6 @@
           "404": {
             "description": "Conversation not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -2952,9 +2850,6 @@
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -3517,9 +3412,6 @@
           "413": {
             "description": "Payload too large"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -3585,9 +3477,6 @@
           },
           "422": {
             "description": "Archive exceeds ARCHIVE_UPLOAD_MAX_FILES or ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error"
@@ -3690,9 +3579,6 @@
           "404": {
             "description": "Bucket or path not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -3771,9 +3657,6 @@
           "404": {
             "description": "Path not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -3839,9 +3722,6 @@
           "401": {
             "description": "Not authenticated"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -3886,9 +3766,6 @@
           },
           "401": {
             "description": "Not authenticated"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error"
@@ -3952,9 +3829,6 @@
           "404": {
             "description": "File not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -4007,9 +3881,6 @@
           },
           "409": {
             "description": "Folder already exists"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error"
@@ -4065,9 +3936,6 @@
           "413": {
             "description": "Too many items or archive too large"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -4111,9 +3979,6 @@
           },
           "401": {
             "description": "Not authenticated"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error"
@@ -4159,9 +4024,6 @@
           "401": {
             "description": "Not authenticated"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -4206,9 +4068,6 @@
           "401": {
             "description": "Not authenticated"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -4252,9 +4111,6 @@
           },
           "401": {
             "description": "Not authenticated"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error"
@@ -4306,9 +4162,6 @@
           "404": {
             "description": "A resource does not exist"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -4358,9 +4211,6 @@
           },
           "404": {
             "description": "A resource does not exist"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error"
@@ -4424,9 +4274,6 @@
           "404": {
             "description": "File not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -4463,9 +4310,6 @@
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an unexpected response"
@@ -4652,9 +4496,6 @@
           "401": {
             "description": "Not authenticated — valid session cookie required"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -4704,9 +4545,6 @@
           },
           "404": {
             "description": "Invitation not found, expired, or already revoked"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -4759,9 +4597,6 @@
           "404": {
             "description": "Resource does not exist"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -4807,9 +4642,6 @@
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -4862,9 +4694,6 @@
           "404": {
             "description": "Resource does not exist"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -4899,9 +4728,6 @@
           },
           "403": {
             "description": "Forbidden"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error"
@@ -4994,9 +4820,6 @@
           "404": {
             "description": "Grouping folder not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -5079,9 +4902,6 @@
           },
           "413": {
             "description": "A file or the total content is too large"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -5182,9 +5002,6 @@
           "428": {
             "description": "If-Match header is required for update"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -5256,9 +5073,6 @@
           },
           "412": {
             "description": "If-Match precondition failed"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -5361,9 +5175,6 @@
           "404": {
             "description": "Skill not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -5456,9 +5267,6 @@
           "422": {
             "description": "Core resource validation failure"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -5541,9 +5349,6 @@
           "412": {
             "description": "If-Match precondition failed"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -5612,9 +5417,6 @@
           },
           "422": {
             "description": "Unprocessable entity"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -5686,9 +5488,6 @@
           "404": {
             "description": "File or skill not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -5755,9 +5554,6 @@
           "422": {
             "description": "Archive is structurally invalid: too many entries, more than one skill, duplicate paths, or an encrypted/symlink/unsupported entry (standalone SKILL.md uploads never produce this status)"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -5819,9 +5615,6 @@
           },
           "404": {
             "description": "Parent path not found"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -5898,9 +5691,6 @@
           "412": {
             "description": "If-Match precondition failed"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -5976,9 +5766,6 @@
           },
           "403": {
             "description": "Caller lacks write access to the target folder"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6059,9 +5846,6 @@
           "404": {
             "description": "DIAL Core reports the entity or target folder as unknown"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -6128,9 +5912,6 @@
           "401": {
             "description": "Not authenticated — valid session cookie required"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -6176,9 +5957,6 @@
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6270,9 +6048,6 @@
           "403": {
             "description": "The scheduledTasksEnabled feature is not enabled for this user"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -6318,9 +6093,6 @@
           },
           "403": {
             "description": "The scheduledTasksEnabled feature is not enabled for this user"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6374,9 +6146,6 @@
           },
           "404": {
             "description": "Scheduled task not found"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6439,9 +6208,6 @@
           "404": {
             "description": "Scheduled task not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -6488,9 +6254,6 @@
           },
           "409": {
             "description": "Scheduled task is already soft-deleted"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Scheduler could not unregister the job; no data changed and retrying is safe"
@@ -6570,9 +6333,6 @@
           "404": {
             "description": "Scheduled task not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -6625,9 +6385,6 @@
           },
           "404": {
             "description": "Scheduled task not found"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6682,9 +6439,6 @@
           "404": {
             "description": "Scheduled task not found"
           },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -6719,9 +6473,6 @@
           },
           "403": {
             "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6770,9 +6521,6 @@
           },
           "403": {
             "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response or rejected sign-in"

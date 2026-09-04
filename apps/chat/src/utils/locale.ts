@@ -41,7 +41,7 @@ export const resolveLocalizedText = (
  * attached to a toolset/application, not an app UI string, so it never
  * requires a UI translation file to be offered here.
  */
-const ADDITIONAL_CONTENT_LOCALE_CODES: string[] = ['de'];
+const ADDITIONAL_CONTENT_LOCALE_CODES: string[] = [];
 
 /**
  * Selectable additional-locale options for the "Add locale" popup: every

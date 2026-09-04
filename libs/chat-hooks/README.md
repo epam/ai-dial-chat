@@ -439,7 +439,7 @@ const ExportButton = ({
 | `resolveErrorTraceId`       | `(error: unknown) => Promise<string \| undefined>`                       | Resolves a trace id for a failing request. Defaults to resolving `undefined`.                                                                                                       |
 | `maxArchiveBytes`           | `number`                                                                 | Ceiling on the summed byte length of an export's attachments; a larger export fails with `FileTooLarge` instead of being zipped. Defaults to `DEFAULT_MAX_ARCHIVE_BYTES` (512 MiB). |
 | `onSuccess`                 | `(event: ConversationTransferSuccessEvent) => void`                      | Called when a job completes successfully.                                                                                                                                           |
-| `onWarning`                 | `(event: ConversationTransferWarningEvent) => void`                      | Called when a job delivers its file but had to skip something (e.g. an attachment). The job settles at `Warning`, not `Success`.                                                                                                          |
+| `onWarning`                 | `(event: ConversationTransferWarningEvent) => void`                      | Called when a job delivers its file but had to skip something (e.g. an attachment). The job settles at `Warning`, not `Success`.                                                    |
 | `onError`                   | `(event: ConversationTransferErrorEvent) => void`                        | Called when a job fails.                                                                                                                                                            |
 
 **Returns** (`UseConversationExportResult`): `{ jobs, exportSingle(conversationId, title, mode), exportAll(), cancelJob(jobId), dismissJob(jobId), retryJob(jobId), dismissAll() }`.
@@ -456,7 +456,7 @@ Also exports `DEFAULT_MAX_ARCHIVE_BYTES`, `EXPORT_APP_NAME` and `formatQuotedNam
 
 ### useConversationStream
 
-Owns completion-streaming state — per-conversation-path streaming/stoppable tracking, stale-chunk rejection, reload-after-complete, and hard-refresh resume detection — driven entirely through an injected `ConversationStreamTransport`. The library never hardcodes an `/api` path, CSRF handling, or a `server-api` import; the host implements the transport against its own BFF/generated-client calls.
+Owns completion-streaming state — per-conversation-path streaming/stoppable tracking, cross-navigation live-message buffering, stale-chunk rejection, reload-after-complete, and hard-refresh resume detection — driven entirely through an injected `ConversationStreamTransport`. The library never hardcodes an `/api` path, CSRF handling, or a `server-api` import; the host implements the transport against its own BFF/generated-client calls.
 
 ```tsx
 import {
@@ -509,7 +509,7 @@ const ChatPage = ({
 
 `ConversationStreamTransport` has four methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, and `getConversation(conversationId, signal?)`.
 
-**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, isStreaming, canStopStreaming }`. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and watches for its resolution.
+**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and watches for its resolution.
 
 Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on) for hosts that need the same checks outside the hook.
 
@@ -2548,7 +2548,7 @@ const content = await resolveMarkdownCanvasContent(attachment, resolvers);
 clearAttachmentCache();
 ```
 
-Also exports `resolveImageCanvasContent`, `resolveTextCanvasContent`, `resolveCodeCanvasContent`, `resolveHtmlCanvasContent`, `resolveOoxmlCanvasContent`, `resolveJsonCanvasContent`, `resolveVisualizerCanvasContent`, `annotationToPdfCanvasContent`, `referenceAttachmentToPdfCanvasContent`, `hasAttachmentTextSource`, `getUrlFileName`, and `isExternalSourcePreviewable`.
+Also exports `resolveImageCanvasContent`, `resolveTextCanvasContent`, `resolveCodeCanvasContent`, `resolveHtmlCanvasContent`, `resolveOoxmlCanvasContent`, `resolveJsonCanvasContent`, `resolveVisualizerCanvasContent`, `annotationToPdfCanvasContent`, `referenceAttachmentToPdfCanvasContent`, `hasAttachmentTextSource`, `getUrlFileName`, `isExternalSourcePreviewable`, and `resolveExternalSourceContentType` (corrects a content type that mislabels an external citation — e.g. a web-search grounding API reporting `text/markdown` for every reference — against a `.pdf`/`.docx`/`.xlsx`/`.pptx` URL extension).
 
 ### attachmentDtoToDisplayAttachment / attachmentDtosToDisplayAttachments / annotationToDisplayAttachment
 
@@ -2705,6 +2705,8 @@ const panelActiveConversationId = useActiveConversationSync({
 
 Generic single-slot pending/loading/error state machine for confirmation dialogs. The `confirm` method calls `run(pending)`, closes the dialog on success, or sets an error message and keeps the dialog open on throw.
 
+The hook also restores keyboard focus when the dialog closes — confirmed, cancelled or dismissed alike — so focus does not fall to `<body>`. By default it returns focus to whatever held it when `open()` was called. When that control will not outlive the dialog (a menu item unmounts with its menu), pass a stable element as `open()`'s second argument; a disconnected target is skipped rather than throwing.
+
 ```tsx
 import { useAsyncConfirmDialog } from '@epam/ai-dial-chat-hooks';
 
@@ -2712,6 +2714,10 @@ const deleteDialog = useAsyncConfirmDialog<string>();
 
 // Open the dialog with the item id as the pending value:
 deleteDialog.open(itemId);
+
+// Opened from a row menu, whose item unmounts with the menu: name the trigger
+// that survives, so focus has somewhere to return to.
+deleteDialog.open(itemId, rowActionsTriggerRef.current);
 
 // Confirm:
 await deleteDialog.confirm(
@@ -2735,7 +2741,7 @@ if (!deleteDialog.isRunning) deleteDialog.close();
 | `isPending` | `boolean`                                                                              | `true` while `pending` is non-null (dialog is open).                                             |
 | `isRunning` | `boolean`                                                                              | `true` while `confirm`'s `run` callback is executing.                                            |
 | `error`     | `string \| null`                                                                       | Error message from the most recent failed `confirm`, or `null`.                                  |
-| `open`      | `(value: T) => void`                                                                   | Opens the dialog with `value` as the pending payload; clears any prior error.                    |
+| `open`      | `(value: T, returnFocusTo?: HTMLElement | null) => void`                              | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
 | `close`     | `() => void`                                                                           | Closes the dialog and clears pending + error.                                                    |
 | `confirm`   | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
 

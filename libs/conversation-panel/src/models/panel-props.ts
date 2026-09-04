@@ -112,6 +112,13 @@ export interface ConversationPanelStyles {
   itemIconBadgeClassName?: string;
   /** Typography class applied to the task pill badge in each conversation row. Defaults to `'dial-caption-lead-semi-text'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
+  /**
+   * Extra CSS class merged onto the search field's wrapper. The wrapper's
+   * corner radius is themed with the `--cp-search-radius` custom property, so
+   * this is only needed for anything the panel's own stylesheet does not
+   * cover; a `rounded-*` utility passed here still wins over that property.
+   */
+  searchWrapperClassName?: string;
 }
 
 /** Localised labels and text content for `ConversationPanel`. */

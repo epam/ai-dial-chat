@@ -114,6 +114,23 @@ export class EnvironmentVariables {
   @IsString()
   AUTH_TRANSACTION_COOKIE_NAME?: string = '__Host-chat.tx';
 
+  /*
+   * Names of cookies set by a previously deployed auth stack (e.g. NextAuth's
+   * `next-auth.session-token`) that must be actively expired on this
+   * deployment. The old service is gone, so only this one can ever issue the
+   * `Max-Age=0` response that removes them from the browser.
+   */
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return undefined;
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  AUTH_LEGACY_COOKIE_NAMES?: string[];
+
   @IsOptional()
   @Transform(({ obj, key }) => {
     const raw = (obj as Record<string, unknown>)[key];
