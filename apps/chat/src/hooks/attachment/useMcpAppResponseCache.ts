@@ -30,7 +30,7 @@ export const useMcpAppResponseCache = (
   const stateRef = useRef<{
     conversationId: string;
     map: Map<string, CachedMcpAppResponse>;
-  }>();
+  } | null>(null);
   if (stateRef.current?.conversationId !== conversationId) {
     stateRef.current = { conversationId, map: new Map() };
   }
