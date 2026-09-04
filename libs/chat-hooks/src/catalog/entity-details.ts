@@ -74,6 +74,11 @@ export interface ModelEntityDetails {
 
 /** Catalog-facing specification fields for an agent (application) deployment. */
 export interface AgentSpecification {
+  provider?: string;
+  vendor?: string;
+  license?: string;
+  knowledgeCutoffDate?: string;
+  parameters?: string;
   hostedBy?: string;
   createdAt?: number;
   routes?: string[];
@@ -128,6 +133,11 @@ export interface ToolsetAuthStatusDetails {
 
 /** Catalog-facing specification fields for a toolset. */
 export interface ToolsetSpecification {
+  provider?: string;
+  vendor?: string;
+  license?: string;
+  knowledgeCutoffDate?: string;
+  parameters?: string;
   authentication?: AuthenticationType;
   permissions?: string[];
   hostedBy?: string;

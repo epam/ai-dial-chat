@@ -204,6 +204,17 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
     const { specification: s } = data;
     const specs: OverviewSection['specs'] = [];
 
+    if (s.provider != null)
+      specs.push({ label: 'Provider', value: s.provider });
+    if (s.vendor != null) specs.push({ label: 'Vendor', value: s.vendor });
+    if (s.license != null) specs.push({ label: 'License', value: s.license });
+    if (s.knowledgeCutoffDate != null)
+      specs.push({
+        label: 'Knowledge cutoff date',
+        value: formatCatalogDate(s.knowledgeCutoffDate),
+      });
+    if (s.parameters != null)
+      specs.push({ label: 'Parameters', value: s.parameters });
     if (s.hostedBy != null)
       specs.push({ label: 'Hosted by', value: s.hostedBy });
     if (s.createdAt != null)
@@ -325,6 +336,17 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
 
     if (s.authentication != null)
       specs.push({ label: 'Authentication', value: s.authentication });
+    if (s.provider != null)
+      specs.push({ label: 'Provider', value: s.provider });
+    if (s.vendor != null) specs.push({ label: 'Vendor', value: s.vendor });
+    if (s.license != null) specs.push({ label: 'License', value: s.license });
+    if (s.knowledgeCutoffDate != null)
+      specs.push({
+        label: 'Knowledge cutoff date',
+        value: formatCatalogDate(s.knowledgeCutoffDate),
+      });
+    if (s.parameters != null)
+      specs.push({ label: 'Parameters', value: s.parameters });
     if (s.hostedBy != null)
       specs.push({ label: 'Hosted by', value: s.hostedBy });
     if (s.createdAt != null)
@@ -494,11 +516,20 @@ const mapModelDetailsDto = (
 const mapApplicationDetailsDto = (
   dto: DeploymentDetailsDto,
 ): EntitySpecificDetails => {
-  const { routes, owner, inputAttachmentTypes, features, createdAt } =
-    dto.applicationDetails ?? {};
+  const {
+    routes,
+    owner,
+    inputAttachmentTypes,
+    features,
+    catalogProperties,
+    createdAt,
+  } = dto.applicationDetails ?? {};
 
   const hasSpecification =
-    owner != null || createdAt != null || (routes?.length ?? 0) > 0;
+    catalogProperties != null ||
+    owner != null ||
+    createdAt != null ||
+    (routes?.length ?? 0) > 0;
 
   return {
     type: 'AGENT',
@@ -506,6 +537,11 @@ const mapApplicationDetailsDto = (
       capabilities: mapFeaturesToCapabilities(features),
       specification: hasSpecification
         ? {
+            provider: catalogProperties?.provider,
+            vendor: catalogProperties?.vendor,
+            license: catalogProperties?.license,
+            knowledgeCutoffDate: catalogProperties?.knowledgeCutoffDate,
+            parameters: catalogProperties?.parameters,
             hostedBy: owner,
             createdAt,
             routes,
@@ -580,6 +616,12 @@ const mapToolsetDetailsDto = (
               authentication: isKnownToolsetAuthType(authenticationType)
                 ? authenticationType
                 : undefined,
+              provider: toolsetDetails.catalogProperties?.provider,
+              vendor: toolsetDetails.catalogProperties?.vendor,
+              license: toolsetDetails.catalogProperties?.license,
+              knowledgeCutoffDate:
+                toolsetDetails.catalogProperties?.knowledgeCutoffDate,
+              parameters: toolsetDetails.catalogProperties?.parameters,
               permissions: toolsetDetails.allowedTools,
               allTools: toolsetDetails.allToolNames,
               hostedBy: toolsetDetails.owner,

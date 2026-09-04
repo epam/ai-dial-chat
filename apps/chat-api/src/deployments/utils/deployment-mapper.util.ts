@@ -1,6 +1,7 @@
 import { getResourceDisplayNameFallback } from '../../common/utils/resource-name';
 import type {
   DeploymentFeaturesDetailsDto,
+  ModelCatalogPropertiesDto,
   ToolsetAuthSettingsDto,
 } from '../dto/deployment-details.dto';
 import { DeploymentItemType } from '../dto/deployment-item.dto';
@@ -141,6 +142,31 @@ export const redactToolsetAuthSettings = (raw: unknown): unknown => {
  * reasoning_efforts), so this reads defensively off the raw object instead of
  * the typed SDK shape.
  */
+/**
+ * Allow-lists `catalog_properties` (schema-driven, identical shape across
+ * model/application/toolset DIAL Core responses) to the five recognized
+ * string fields shown in the catalog Overview panel. Unknown keys and
+ * non-string values are dropped; the result is omitted entirely rather than
+ * returned as an empty object when nothing recognized remains.
+ */
+export const mapCatalogProperties = (
+  raw: unknown,
+): ModelCatalogPropertiesDto | undefined => {
+  if (!isRecord(raw)) return undefined;
+
+  const properties = {
+    provider: getString(raw, 'provider'),
+    vendor: getString(raw, 'vendor'),
+    license: getString(raw, 'license'),
+    knowledgeCutoffDate: getString(raw, 'knowledgeCutoffDate'),
+    parameters: getString(raw, 'parameters'),
+  };
+
+  return Object.values(properties).some((value) => value != null)
+    ? properties
+    : undefined;
+};
+
 export const mapDeploymentFeatures = (
   raw: unknown,
 ): DeploymentFeaturesDetailsDto | undefined => {

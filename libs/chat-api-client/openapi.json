@@ -2460,7 +2460,9 @@
           }
         },
         "summary": "Attach to an active generation and replay it live",
-        "tags": ["conversations"]
+        "tags": [
+          "conversations"
+        ]
       }
     },
     "/api/v1/conversations/watch": {
@@ -7906,6 +7908,9 @@
               "type": "string"
             }
           },
+          "catalogProperties": {
+            "$ref": "#/components/schemas/ModelCatalogPropertiesDto"
+          },
           "applicationTypeSchemaId": {
             "type": "string",
             "description": "URI of the custom application type schema, when present"
@@ -8036,6 +8041,9 @@
           },
           "features": {
             "$ref": "#/components/schemas/DeploymentFeaturesDetailsDto"
+          },
+          "catalogProperties": {
+            "$ref": "#/components/schemas/ModelCatalogPropertiesDto"
           },
           "createdAt": {
             "type": "number",
@@ -10241,7 +10249,9 @@
             "example": "gpt-4o__My Chat"
           }
         },
-        "required": ["path"]
+        "required": [
+          "path"
+        ]
       },
       "WatchConversationBodyDto": {
         "type": "object",
