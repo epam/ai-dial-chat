@@ -79,6 +79,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     ...initialValues,
   });
   const contentLabelId = useId();
+  const contentEditorId = useId();
 
   /* Hosts that load asynchronously re-seed the form through `initialValues`. */
   useEffect(() => {
@@ -209,8 +210,13 @@ export const PromptEditor: FC<PromptEditorProps> = ({
           aria-labelledby={contentLabelId}
           className="flex flex-1 flex-col gap-2"
         >
+          {/*
+           * htmlFor is what names the editor's textarea; without it the label
+           * is only visible text sitting above an unnamed control.
+           */}
           <Label
             id={contentLabelId}
+            htmlFor={contentEditorId}
             label={labels?.contentLabel ?? 'Instructions'}
             required
             className={contentLabelClassName}
@@ -225,6 +231,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
             }
           >
             <MarkdownEditor
+              id={contentEditorId}
               value={values.content}
               onChange={(value) => setField('content', value)}
               height={480}

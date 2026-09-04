@@ -61,6 +61,7 @@ export const ModelSelectorControl: FC<Props> = ({
     selectorIcon,
     selectorAriaLabel,
     selectedLabel,
+    selectedVersion,
     menuItems,
     menuHeader,
     onOpenChange: handleModelSelectorOpenChange,
@@ -144,6 +145,10 @@ export const ModelSelectorControl: FC<Props> = ({
   }
 
   if (modelPickerOverlay) {
+    const chipTooltip = selectedVersion
+      ? `${selectedLabel} · ${selectedVersion}`
+      : selectedLabel;
+
     return (
       <Dropdown
         placement="top-end"
@@ -157,13 +162,13 @@ export const ModelSelectorControl: FC<Props> = ({
         }
         listClassName="!w-[368px] !bg-layer-raised"
       >
-        <Tooltip tooltip={selectedLabel}>
+        <Tooltip tooltip={chipTooltip}>
           <button
             type="button"
             aria-label={selectorAriaLabel}
             aria-disabled={isDisabled || undefined}
             className={mergeClasses(
-              'flex items-center justify-center gap-1 rounded-full p-2',
+              'flex min-w-0 items-center gap-1.5 rounded-full py-1.5 pe-2 ps-1.5',
               styles.modelSelectorButton,
               disabledIconClassName,
               isDisabled && styles.modelSelectorButtonDisabled,
@@ -175,6 +180,26 @@ export const ModelSelectorControl: FC<Props> = ({
             }}
           >
             {selectorIcon}
+            <span className="flex min-w-0 max-w-[180px] items-baseline gap-1">
+              <span
+                className={mergeClasses(
+                  'dial-small-text max-w-[180px] shrink-0 truncate',
+                  styles.modelSelectorName,
+                )}
+              >
+                {selectedLabel}
+              </span>
+              {selectedVersion && (
+                <span
+                  className={mergeClasses(
+                    'dial-tiny-text min-w-0 truncate',
+                    styles.modelSelectorVersion,
+                  )}
+                >
+                  {selectedVersion}
+                </span>
+              )}
+            </span>
             {caretIcon}
           </button>
         </Tooltip>
