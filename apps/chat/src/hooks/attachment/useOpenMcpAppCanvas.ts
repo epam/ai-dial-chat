@@ -64,13 +64,14 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
    * (never during render) so the "latest" version is always called.
    */
   const openMcpAppCanvasRef = useRef<
-    (
-      match: McpAppToolRef,
-      canvasKey?: string,
-      toolCall?: McpAppToolCallSeed,
-      forceReload?: boolean,
-    ) => Promise<boolean>
-  >();
+    | ((
+        match: McpAppToolRef,
+        canvasKey?: string,
+        toolCall?: McpAppToolCallSeed,
+        forceReload?: boolean,
+      ) => Promise<boolean>)
+    | null
+  >(null);
 
   const openMcpAppCanvas = useCallback(
     async (
