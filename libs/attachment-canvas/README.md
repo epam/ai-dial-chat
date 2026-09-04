@@ -34,6 +34,22 @@ The library uses `@silurus/ooxml` as a bundled runtime dependency. Its DOCX,
 XLSX, and PPTX entry points are loaded independently on demand, so opening one
 format does not eagerly load the other renderers.
 
+The PDF renderer (`PdfContent`, used internally by `AttachmentCanvasBody` for
+`AttachmentContentType.Pdf`) is loaded through a dynamic import the first time
+an attachment actually resolves to a PDF, not eagerly with the rest of the
+library — `pdfjs-dist` and `@epam/ai-dial-react-pdf-highlighter`'s own weight,
+including their CSS, only enters a host bundle once a user opens a PDF.
+`AttachmentCanvasBody` shows a `Spinner` while that first load resolves;
+opening a non-PDF attachment never triggers it.
+
+The library never configures `pdfjs-dist`'s worker itself —
+`GlobalWorkerOptions.workerSrc` is a global shared by every `pdfjs-dist`
+consumer in the host app, so deciding it is the host's responsibility, not
+this library's. Pass `configurePdfWorker` (on `AttachmentCanvasContainer`,
+`AttachmentCanvas`, or `AttachmentCanvasBody`) to supply it; it's called once,
+the first time a PDF is opened. When omitted,
+`@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used instead.
+
 ## Components
 
 ### AttachmentCanvas
@@ -85,7 +101,11 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 
 <AttachmentCanvasProvider>
-  <AttachmentCanvasContainer isMobile={isMobile} maxWidth={1200} />
+  <AttachmentCanvasContainer
+    isMobile={isMobile}
+    maxWidth={1200}
+    configurePdfWorker={configurePdfWorker}
+  />
 </AttachmentCanvasProvider>;
 ```
 

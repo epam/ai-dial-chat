@@ -19,6 +19,14 @@ import {
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconPlus, IconTrashX } from '@tabler/icons-react';
+/*
+ * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
+ * it here, rather than eagerly from the host app's entry point, keeps this
+ * vendor CSS out of the initial page load — it loads only when this module
+ * does, i.e. when the (already route-lazy) skill editor page mounts.
+ */
+import '@uiw/react-markdown-preview/markdown.css';
+import '@uiw/react-md-editor/markdown-editor.css';
 import {
   ComponentType,
   FC,

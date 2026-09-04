@@ -32,6 +32,8 @@ usable by any host whose skill storage differs from DIAL Core's.
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-editor-builder` `*`
 - `@tabler/icons-react` `^3.0.0`
+- `@uiw/react-markdown-preview` — CSS only, required by `LazyMarkdownEditor`
+- `@uiw/react-md-editor` — CSS only, required by `LazyMarkdownEditor`
 
 ## Components
 

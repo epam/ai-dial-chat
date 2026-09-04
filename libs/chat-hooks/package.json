@@ -15,13 +15,91 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./viewport-layout": {
+      "@epam/source": "./src/entry-points/viewport-layout.ts",
+      "types": "./dist/viewport-layout.d.ts",
+      "import": "./dist/viewport-layout.js",
+      "default": "./dist/viewport-layout.js"
+    },
+    "./scroll-anchoring": {
+      "@epam/source": "./src/entry-points/scroll-anchoring.ts",
+      "types": "./dist/scroll-anchoring.d.ts",
+      "import": "./dist/scroll-anchoring.js",
+      "default": "./dist/scroll-anchoring.js"
+    },
+    "./conversation": {
+      "@epam/source": "./src/entry-points/conversation.ts",
+      "types": "./dist/conversation.d.ts",
+      "import": "./dist/conversation.js",
+      "default": "./dist/conversation.js"
+    },
+    "./conversation-transfer": {
+      "@epam/source": "./src/entry-points/conversation-transfer.ts",
+      "types": "./dist/conversation-transfer.d.ts",
+      "import": "./dist/conversation-transfer.js",
+      "default": "./dist/conversation-transfer.js"
+    },
+    "./conversation-sources": {
+      "@epam/source": "./src/entry-points/conversation-sources.ts",
+      "types": "./dist/conversation-sources.d.ts",
+      "import": "./dist/conversation-sources.js",
+      "default": "./dist/conversation-sources.js"
+    },
+    "./file-manager": {
+      "@epam/source": "./src/entry-points/file-manager.ts",
+      "types": "./dist/file-manager.d.ts",
+      "import": "./dist/file-manager.js",
+      "default": "./dist/file-manager.js"
+    },
+    "./catalog": {
+      "@epam/source": "./src/entry-points/catalog.ts",
+      "types": "./dist/catalog.d.ts",
+      "import": "./dist/catalog.js",
+      "default": "./dist/catalog.js"
+    },
+    "./skills-state": {
+      "@epam/source": "./src/entry-points/skills-state.ts",
+      "types": "./dist/skills-state.d.ts",
+      "import": "./dist/skills-state.js",
+      "default": "./dist/skills-state.js"
+    },
+    "./skill-editor": {
+      "@epam/source": "./src/entry-points/skill-editor.ts",
+      "types": "./dist/skill-editor.d.ts",
+      "import": "./dist/skill-editor.js",
+      "default": "./dist/skill-editor.js"
+    },
+    "./oauth": {
+      "@epam/source": "./src/entry-points/oauth.ts",
+      "types": "./dist/oauth.d.ts",
+      "import": "./dist/oauth.js",
+      "default": "./dist/oauth.js"
+    },
+    "./scheduled-tasks": {
+      "@epam/source": "./src/entry-points/scheduled-tasks.ts",
+      "types": "./dist/scheduled-tasks.d.ts",
+      "import": "./dist/scheduled-tasks.js",
+      "default": "./dist/scheduled-tasks.js"
+    },
+    "./sharing": {
+      "@epam/source": "./src/entry-points/sharing.ts",
+      "types": "./dist/sharing.d.ts",
+      "import": "./dist/sharing.js",
+      "default": "./dist/sharing.js"
+    },
+    "./attachments": {
+      "@epam/source": "./src/entry-points/attachments.ts",
+      "types": "./dist/attachments.d.ts",
+      "import": "./dist/attachments.js",
+      "default": "./dist/attachments.js"
+    },
+    "./utils": {
+      "@epam/source": "./src/entry-points/utils.ts",
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.js",
+      "default": "./dist/utils.js"
     }
-  },
-  "dependencies": {
-    "dompurify": "3.4.13",
-    "lru-cache": "^10.4.3",
-    "mime-types": "^3.0.2",
-    "yaml": "2.8.3"
   },
   "peerDependencies": {
     "react": "^19.2.6",
@@ -40,8 +118,65 @@
     "@epam/ai-dial-skill-editor": "*",
     "@epam/ai-dial-source-panel": "*",
     "@epam/ai-dial-ui-kit": "*",
-    "fflate": "^0.8.3"
+    "@epam/pdf-highlighter-kit": ">=0.0.14"
   },
+  "peerDependenciesMeta": {
+    "@epam/ai-dial-attachment-canvas": {
+      "optional": true
+    },
+    "@epam/ai-dial-attachment-input": {
+      "optional": true
+    },
+    "@epam/ai-dial-catalog": {
+      "optional": true
+    },
+    "@epam/ai-dial-chat-api-client": {
+      "optional": true
+    },
+    "@epam/ai-dial-chat-overlay": {
+      "optional": true
+    },
+    "@epam/ai-dial-chat-shared": {
+      "optional": true
+    },
+    "@epam/ai-dial-deployment-creation-form": {
+      "optional": true
+    },
+    "@epam/ai-dial-publish-panel": {
+      "optional": true
+    },
+    "@epam/ai-dial-quotations": {
+      "optional": true
+    },
+    "@epam/ai-dial-react-file-manager": {
+      "optional": true
+    },
+    "@epam/ai-dial-scheduled-tasks": {
+      "optional": true
+    },
+    "@epam/ai-dial-share": {
+      "optional": true
+    },
+    "@epam/ai-dial-skill-editor": {
+      "optional": true
+    },
+    "@epam/ai-dial-source-panel": {
+      "optional": true
+    },
+    "@epam/ai-dial-ui-kit": {
+      "optional": true
+    },
+    "@epam/pdf-highlighter-kit": {
+      "optional": true
+    }
+  },
+  "sideEffects": [
+    "./dist/index.js",
+    "./dist/oauth.js",
+    "./dist/file-manager.js",
+    "./dist/useToolsetLogin-*.js",
+    "./dist/useDialFileManagerTabConfig-*.js"
+  ],
   "nx": {
     "tags": [
       "publishable"
@@ -49,6 +184,15 @@
     "targets": {
       "publish": {
         "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      },
+      "test-packed": {
+        "command": "node libs/chat-hooks/e2e-fixtures/run.mjs"
+      },
+      "test-packed-smoke": {
+        "command": "node libs/chat-hooks/e2e-fixtures/run.mjs --suite=smoke"
+      },
+      "test-packed-unit": {
+        "command": "node --test libs/chat-hooks/e2e-fixtures/harness.spec.mjs"
       }
     }
   }

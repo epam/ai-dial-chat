@@ -168,6 +168,12 @@ export interface ApplicationDetailsDto {
    */
   inputAttachmentTypes?: Array<string>;
   /**
+   *
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ApplicationDetailsDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
+  /**
    * URI of the custom application type schema, when present
    * @type {string}
    * @memberof ApplicationDetailsDto
@@ -6537,6 +6543,12 @@ export interface ToolsetDetailsDto {
    * @memberof ToolsetDetailsDto
    */
   features?: DeploymentFeaturesDetailsDto;
+  /**
+   *
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ToolsetDetailsDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
   /**
    * Timestamp of creation time from DIAL Core (e.g. 1714768496000)
    * @type {number}

@@ -6,7 +6,7 @@ import {
   SKILL_MANIFEST_FILE,
   skillFileToAttachment,
   type SkillFileContent,
-} from '@epam/ai-dial-chat-hooks';
+} from '@epam/ai-dial-chat-hooks/skill-editor';
 import {
   SkillFileNodeKind,
   type SkillFileTreeNode,

@@ -33,6 +33,8 @@ folder sub-form's own state and delegates mutations through `folderActions`.
 - `@epam/ai-dial-ui-kit` `*`
 - `@epam/ai-dial-chat-shared` `*`
 - `@tabler/icons-react` `^3.0.0`
+- `@uiw/react-markdown-preview` — CSS only, required by `LazyMarkdownEditor`
+- `@uiw/react-md-editor` — CSS only, required by `LazyMarkdownEditor`
 
 ## Components
 

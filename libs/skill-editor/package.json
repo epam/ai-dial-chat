@@ -23,6 +23,8 @@
     "@epam/ai-dial-ui-kit": "*",
     "@epam/ai-dial-react-file-manager": "^0.2.0-dev.10",
     "@tabler/icons-react": "^3.0.0",
+    "@uiw/react-markdown-preview": "*",
+    "@uiw/react-md-editor": "*",
     "react": "^19.0.0"
   },
   "nx": {

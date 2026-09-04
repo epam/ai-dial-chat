@@ -6,7 +6,15 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle, IconLock } from '@tabler/icons-react';
-import { type FC, memo, useEffect, useMemo, useState } from 'react';
+import {
+  type FC,
+  lazy,
+  memo,
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { defaultStyles, JsonView } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import type { AttachmentCanvasBodyProps } from '../../models/attachment-canvas';
@@ -18,9 +26,20 @@ import { CodeContent } from '../CodeContent/CodeContent';
 import { HtmlContent } from '../HtmlContent/HtmlContent';
 import { McpAppCanvasRenderer } from '../McpAppCanvasRenderer/McpAppCanvasRenderer';
 import { OoxmlContent } from '../OoxmlContent/OoxmlContent';
-import { PdfContent } from '../PdfContent/PdfContent';
 import { VisualizerCanvasRenderer } from '../VisualizerCanvasRenderer/VisualizerCanvasRenderer';
 import styles from './AttachmentCanvasBody.module.scss';
+
+/*
+ * `PdfContent` pulls in `@epam/ai-dial-react-pdf-highlighter` ->
+ * `@epam/pdf-highlighter-kit` -> `pdfjs-dist`, a multi-hundred-KB dependency
+ * chain. Loading it through a dynamic import keeps that chain out of the
+ * initial bundle — it's only fetched the first time an attachment actually
+ * resolves to the PDF content type.
+ */
+const PdfContent = lazy(async () => {
+  const module = await import('../PdfContent/PdfContent');
+  return { default: module.PdfContent };
+});
 
 interface ImageContentProps {
   url: string;
@@ -97,6 +116,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   codeBlockTheme,
   loadPdf,
   hidePdfToolbar = false,
+  configurePdfWorker,
 }) => {
   const {
     colors,
@@ -282,21 +302,24 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         );
       case AttachmentContentType.Pdf:
         return (
-          <PdfContent
-            key={content.url}
-            fileName={fileName}
-            url={content.url}
-            highlights={content.highlights ?? []}
-            selectedHighlightId={content.selectedHighlightId}
-            loadPdf={loadPdf}
-            hideHeader={hidePdfToolbar}
-            labels={{
-              thumbnailsLabel: pdfThumbnailsLabel,
-              showThumbnailsLabel: pdfShowThumbnailsLabel,
-              hideThumbnailsLabel: pdfHideThumbnailsLabel,
-              pageNumberLabel: pdfPageNumberLabel,
-            }}
-          />
+          <Suspense fallback={<Spinner />}>
+            <PdfContent
+              key={content.url}
+              fileName={fileName}
+              url={content.url}
+              highlights={content.highlights ?? []}
+              selectedHighlightId={content.selectedHighlightId}
+              loadPdf={loadPdf}
+              hideHeader={hidePdfToolbar}
+              configurePdfWorker={configurePdfWorker}
+              labels={{
+                thumbnailsLabel: pdfThumbnailsLabel,
+                showThumbnailsLabel: pdfShowThumbnailsLabel,
+                hideThumbnailsLabel: pdfHideThumbnailsLabel,
+                pageNumberLabel: pdfPageNumberLabel,
+              }}
+            />
+          </Suspense>
         );
       case AttachmentContentType.Ooxml:
         return (
@@ -360,6 +383,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     isHtmlSourceView,
     loadPdf,
     hidePdfToolbar,
+    configurePdfWorker,
     pdfThumbnailsLabel,
     pdfShowThumbnailsLabel,
     pdfHideThumbnailsLabel,
