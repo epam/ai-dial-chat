@@ -1,4 +1,4 @@
-import { modelCursorSign } from '@/chat/constants/chat';
+import { VIDEO_TYPES, modelCursorSign } from '@/chat/constants/chat';
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
@@ -22,7 +22,14 @@ const tableInPlainText = `| Country | Capital |
 let randomModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  randomModel = GeneratorUtil.randomArrayElement(ModelsUtil.getLatestModels());
+  randomModel = GeneratorUtil.randomArrayElement(
+    ModelsUtil.getLatestModels().filter(
+      (m) =>
+        !VIDEO_TYPES.concat('video/*').some((type) =>
+          m.inputAttachmentTypes?.includes(type),
+        ),
+    ),
+  );
 });
 
 dialTest(

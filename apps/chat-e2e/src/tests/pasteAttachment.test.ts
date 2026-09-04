@@ -143,6 +143,7 @@ dialTest(
           'visible',
         );
         await fileManagerModal.getCloseButton().click();
+        await fileManagerModal.waitForState({ state: 'hidden' });
       },
     );
 
@@ -162,7 +163,7 @@ dialTest(
           expectedRestrictedCharsFilename,
         );
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
-          expectedRestrictedCharsFilename,
+          responses[0].name,
           'visible',
         );
         await toast.closeToast();

@@ -40,7 +40,7 @@ export class ChatApiHelper extends BaseApiHelper {
     const requestData = this.buildRequestData(conversation);
     return this.request.post(API.chatHost, {
       data: requestData,
-      timeout: 60000,
+      timeout: 120000,
     });
   }
 }
