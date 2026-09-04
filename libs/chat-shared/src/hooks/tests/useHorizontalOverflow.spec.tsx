@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { type FC } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useTableScroll } from '../../../../chat-shared/src/hooks/useTableScroll';
+import { useHorizontalOverflow } from '../useHorizontalOverflow';
 
 let resizeObserverCallback: ResizeObserverCallback;
 
@@ -21,16 +21,16 @@ class ResizeObserverMock {
   }
 }
 
-const TestTableScroll: FC<{ direction?: 'ltr' | 'rtl' }> = ({
+const TestHorizontalOverflow: FC<{ direction?: 'ltr' | 'rtl' }> = ({
   direction = 'ltr',
 }) => {
   const {
     scrollContainerRef,
-    tableRef,
+    contentRef,
     hasContentBeyondStart,
     hasContentBeyondEnd,
     handleScroll,
-  } = useTableScroll();
+  } = useHorizontalOverflow<HTMLTableElement>();
 
   return (
     <div
@@ -42,7 +42,7 @@ const TestTableScroll: FC<{ direction?: 'ltr' | 'rtl' }> = ({
       style={{ direction }}
       onScroll={handleScroll}
     >
-      <table ref={tableRef}>
+      <table ref={contentRef}>
         <tbody>
           <tr>
             <td>Value</td>
@@ -97,11 +97,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('useTableScroll', () => {
+describe('useHorizontalOverflow', () => {
   it.each(['ltr', 'rtl'] as const)(
     'tracks content beyond both logical edges in %s',
     (direction) => {
-      render(<TestTableScroll direction={direction} />);
+      render(<TestHorizontalOverflow direction={direction} />);
       const scrollContainer = setHorizontalMeasurements({
         direction,
         position: 'start',
