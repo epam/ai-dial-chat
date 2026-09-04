@@ -34,7 +34,7 @@
     "unused-exports": "nx run-many -t unused-exports"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "0.13.0",
+    "@epam/ai-dial-ui-kit": "^0.14.0-dev.23",
     "@epam/pdf-highlighter-kit": "^0.0.18",
     "@floating-ui/react": "^0.27.19",
     "@hookform/resolvers": "^5.2.1",
@@ -216,10 +216,12 @@
     "@opentelemetry/propagator-jaeger": "2.9.0",
     "@opentelemetry/core": "2.9.0",
     "sharp": "0.35.0",
-    "fast-uri": "3.1.5",
+    "fast-uri": "3.1.7",
     "immutable": "5.1.9",
     "svgo": "3.3.4",
-    "ip-address": "10.3.1"
+    "ip-address": "10.3.1",
+    "qs": "6.16.0",
+    "less": "4.9.1"
   },
   "engines": {
     "node": ">=24.11.1",
