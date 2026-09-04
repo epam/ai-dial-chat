@@ -328,7 +328,7 @@ describe('AuthSection', () => {
       );
     });
 
-    it('disables every auth-type option while the toolset is logged in, including the selected one', () => {
+    it('disables every non-selected auth-type option while the toolset is logged in, leaving the selected one enabled', () => {
       renderSection({ ...apiKeyAuth(), isLoggedIn: true });
 
       const typeOptions = [
@@ -337,34 +337,34 @@ describe('AuthSection', () => {
         ToolsetEditorI18nKeys.AuthTypeOAuth,
       ].map(
         (labelKey) =>
-          screen.getByRole('button', {
+          screen.getByRole('radio', {
             name: new RegExp(labelKey, 'i'),
           }) as HTMLButtonElement,
       );
 
       expect(typeOptions.map((option) => option.disabled)).toEqual([
         true,
-        true,
+        false,
         true,
       ]);
     });
 
-    it('marks the active auth type as pressed for assistive technology', () => {
+    it('marks the active auth type as checked for assistive technology', () => {
       renderSection(apiKeyAuth());
 
       expect(
         screen
-          .getByRole('button', {
+          .getByRole('radio', {
             name: new RegExp(ToolsetEditorI18nKeys.AuthTypeApiKey, 'i'),
           })
-          .getAttribute('aria-pressed'),
+          .getAttribute('aria-checked'),
       ).toBe('true');
       expect(
         screen
-          .getByRole('button', {
+          .getByRole('radio', {
             name: new RegExp(ToolsetEditorI18nKeys.AuthTypeOAuth, 'i'),
           })
-          .getAttribute('aria-pressed'),
+          .getAttribute('aria-checked'),
       ).toBe('false');
     });
 
