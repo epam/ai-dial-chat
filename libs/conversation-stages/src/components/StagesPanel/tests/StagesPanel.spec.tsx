@@ -1,5 +1,5 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { StagesPanel } from '../StagesPanel';
 
@@ -193,10 +193,23 @@ describe('StagesPanel', () => {
     expect(screen.queryByRole('status', { name: 'Running' })).toBeNull();
   });
 
-  it('shows the running spinner only for the last null-status stage when streaming', () => {
-    render(
+  it('keeps every null-status stage running until its completed status arrives', () => {
+    const { rerender } = render(
       <StagesPanel
         stages={[stageRunning, stageCompleted, stageRunningSecond]}
+        isStreaming
+      />,
+    );
+
+    expect(screen.getAllByRole('status', { name: 'Running' })).toHaveLength(2);
+
+    rerender(
+      <StagesPanel
+        stages={[
+          { ...stageRunning, status: StageStatus.Completed },
+          stageCompleted,
+          stageRunningSecond,
+        ]}
         isStreaming
       />,
     );
@@ -237,6 +250,44 @@ describe('StagesPanel', () => {
     expect(screen.getByText('Attempt 1')).toBeTruthy();
     expect(screen.getByText('Attempt 2')).toBeTruthy();
     expect(screen.getByText('Attempt 3')).toBeTruthy();
+  });
+
+  it('keeps a repeated-stage group running while any attempt is unresolved', () => {
+    const completedAttempt = {
+      index: 0,
+      name: 'Search weather forecast',
+      status: StageStatus.Completed,
+    };
+    const runningAttempt = {
+      index: 1,
+      name: 'Search weather forecast',
+      status: null,
+    };
+    const { rerender } = render(
+      <StagesPanel stages={[completedAttempt, runningAttempt]} isStreaming />,
+    );
+
+    expect(
+      within(screen.getByRole('button')).getByRole('status', {
+        name: 'Running',
+      }),
+    ).toBeTruthy();
+
+    rerender(
+      <StagesPanel
+        stages={[
+          completedAttempt,
+          { ...runningAttempt, status: StageStatus.Completed },
+        ]}
+        isStreaming
+      />,
+    );
+
+    expect(
+      within(screen.getByRole('button')).queryByRole('status', {
+        name: 'Running',
+      }),
+    ).toBeNull();
   });
 
   it('does not double-count overlapping attempts in a collapsed stage row', () => {

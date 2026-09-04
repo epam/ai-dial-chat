@@ -16,7 +16,7 @@ The lib MUST remain host-agnostic: `onFetchDetails` accepts only a `CatalogItem`
 
 When `onFetchDetails` resolves data, it SHALL **replace** any statically-provided `item.details` for the currently open item wholesale — fetched data is considered more current, and the panel does not merge the two. A host whose fetch covers only part of the panel must therefore rebuild the rest of the sections it still wants shown; the prompt branch below is the worked example. When `onFetchDetails` is not provided, or resolves `undefined`, behavior is unchanged from today: the panel falls back to `item.details` if present, otherwise hides the corresponding tabs.
 
-`CatalogItemTabData` SHALL support an optional `limits?: CatalogItemLimits` field. When present, `DetailsPanel` SHALL add a `Limits` tab after `Pricing` and before `API`; when absent, the tab is hidden. `CatalogItemLimits` SHALL contain app-resolved progress rows only (`label`, `used`, `total`, optional `isUnlimited`, `valueLabel`, `ariaLabel`) so `libs/catalog` remains host-agnostic and never imports generated API clients, server-api wrappers, DIAL Core DTOs, auth/session state, route knowledge, or endpoint paths.
+`CatalogItemTabData` SHALL support an optional `limits?: CatalogItemLimits` field. When present, `DetailsPanel` SHALL add a `Limits` tab after `Pricing` and before `API`; when absent, the tab is hidden. `CatalogItemLimits` SHALL contain app-resolved progress rows only (`label`, `used`, `total`, optional `isUnlimited`, `valueLabel`, `usedLabel`, `totalLabel`, `noteLabel`, `captionLabel`, `ariaLabel`) so `libs/catalog` remains host-agnostic and never imports generated API clients, server-api wrappers, DIAL Core DTOs, auth/session state, route knowledge, or endpoint paths. Every visible string on a row is preformatted by the app; the lib formats nothing itself.
 
 #### Scenario: Details panel fetches on open
 
@@ -91,9 +91,26 @@ If a details server-api call rejects (network error or a mapped HTTP exception s
 
 #### Scenario: Unlimited limit stats
 
-- **WHEN** DIAL Core returns an effectively-unlimited `total` value (for example Java `Long.MAX_VALUE` rounded in JSON/JavaScript)
-- **THEN** the app-level mapper marks the row as unlimited, formats the visible value as `Unlimited`, preserves the numeric `used`/`total` on the row, and still includes the row in the `Limits` tab
+A row counts as unlimited when `total >= Number.MAX_SAFE_INTEGER`
+(`UNLIMITED_TOTAL_THRESHOLD` in `map-deployment-limits-to-catalog.ts`), which is
+how DIAL Core's Java `Long.MAX_VALUE` arrives once JSON has rounded it.
+
+- **WHEN** DIAL Core returns an effectively-unlimited `total` for a limit stat
+- **THEN** the app-level mapper sets `isUnlimited: true`, preserves the numeric `used`/`total` on the row, and still includes the row in the `Limits` tab
+- **AND** the row's `valueLabel` is the formatted **`used`** amount alone — the visible value never reads `Unlimited`, and there is no `unlimitedValue` i18n key
+- **AND** `noteLabel` is `catalog.details.limits.followsCostLimit` ("Follows cost limit"), rendered under the value, and `ariaLabel` reads "{label}: {used} used. Follows cost limit."
+- **AND** `captionLabel` carries the attributed spend ("$20.00 spent") under the row's label whenever cost stats are usable, since per-deployment cost is attributed spend rather than a cap
 - **AND** the row renders as a plain value with no progress bar, since a bar drawn against an effectively-infinite total carries no information
+
+So a Limits tab whose rows are all unlimited reads as "$0.29 spent / 0 / Follows
+cost limit" per row, with zero `role="progressbar"` nodes and the word
+`Unlimited` nowhere on screen. That is the correct rendering, not a fixture in
+an unexpected shape.
+
+#### Scenario: Limit stat with no usable total
+
+- **WHEN** a limit stat's `total` is zero, negative, or not finite
+- **THEN** `isUsableLimitStats` rejects it and no row is emitted for it — an uncapped stat is not rendered as a zero-capacity bar
 
 #### Scenario: Toolset detail fetch renders the Tools tab
 
@@ -173,7 +190,7 @@ The `getDeploymentDetails` endpoint SHALL satisfy the following generated-client
 - **RTL / direction impact**: the Limits tab UI MUST use logical/flexible layout utilities only; it MUST NOT introduce physical left/right classes or directional icons. Progress rows contain text and a progress bar, so no icon mirroring is required.
 - **Feature flag**: not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — this is a data-completeness fix for an existing, already-shipped catalog details panel, not a new feature surface.
 - **Memoisation**: `onFetchDetails` in `CatalogView.tsx` MUST be wrapped in `useCallback`; the DTO-to-`EntitySpecificDetails` mapping functions and deployment-limits mapper MUST remain pure functions (no new memoisation needed beyond the callback itself, consistent with `mapEntityDetailsToCatalogDetails` today).
-- **Accessibility**: `isDetailsLoading` renders its own `role="status"` indicator next to the tab row (`texts.detailsLoadingAriaLabel`, default `'Loading details'`). It is the panel's only loading indicator — the `About` tab's `item.description` is always available synchronously and has no loading state. Every limits row progress bar MUST receive an accessible label naming the limit and the used/total value. Rows formatted as `Unlimited` render no progress bar at all, so there is no bar to label: their value text carries the whole meaning, and a panel whose rows are all unlimited legitimately mounts zero `role="progressbar"` nodes.
+- **Accessibility**: `isDetailsLoading` renders its own `role="status"` indicator next to the tab row (`texts.detailsLoadingAriaLabel`, default `'Loading details'`). It is the panel's only loading indicator — the `About` tab's `item.description` is always available synchronously and has no loading state. Every capped limits row's progress bar MUST receive an accessible label naming the limit and the used/total value. An unlimited row renders no progress bar at all, so there is no bar to label: its `ariaLabel` ("{label}: {used} used. Follows cost limit.") carries the whole meaning, and a panel whose rows are all unlimited legitimately mounts zero `role="progressbar"` nodes.
 - **Observability**: no new metrics/telemetry are required; failures are absorbed into `onFetchDetails` resolving `undefined` (per the Non-Goals in design.md, no new logging beyond what `apps/chat/src/server-api`'s shared client already emits on error). On the backend, `deployments.service.ts` logs raw-toolset and mapped-response payloads at debug level (secrets redacted) to aid diagnosing field-mapping gaps — this is diagnostic logging, not user-facing observability.
 
 #### Scenario: No new context or global state
@@ -484,9 +501,9 @@ configured client's existing behavior.
 #### Scenario: Unlimited limits remain accessible
 
 - **WHEN** DIAL Core returns its effectively unlimited total
-- **THEN** the existing mapper preserves the numeric values and the resolved
-  unlimited visible/accessibility labels, which the row renders without a
-  progress bar
+- **THEN** the existing mapper preserves the numeric values and emits the
+  used-only `valueLabel`, the "Follows cost limit" `noteLabel` and the
+  matching `ariaLabel`, which the row renders without a progress bar
 
 #### Scenario: Toolset details preserve credentials
 
