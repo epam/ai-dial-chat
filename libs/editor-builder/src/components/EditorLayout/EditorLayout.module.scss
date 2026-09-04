@@ -1,11 +1,20 @@
 .headerBorder {
-  border-bottom-color: var(--el-header-border-color, var(--stroke-tertiary, #e0e6f0));
+  border-bottom-color: var(
+    --el-header-border-color,
+    var(--stroke-tertiary, #e0e6f0)
+  );
 }
 
 .footerBorder {
-  border-top-color: var(--el-header-border-color, var(--stroke-tertiary, #e0e6f0));
+  border-top-color: var(
+    --el-header-border-color,
+    var(--stroke-tertiary, #e0e6f0)
+  );
 }
 
 .sidebarBorder {
-  border-inline-end-color: var(--el-sidebar-border-color, var(--stroke-tertiary, #e0e6f0));
+  border-inline-end-color: var(
+    --el-sidebar-border-color,
+    var(--stroke-tertiary, #e0e6f0)
+  );
 }

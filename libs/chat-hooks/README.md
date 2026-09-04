@@ -2736,12 +2736,12 @@ if (!deleteDialog.isRunning) deleteDialog.close();
 **Returns** (`AsyncConfirmDialogControls<T>`):
 
 | Name        | Type                                                                                   | Description                                                                                      |
-| ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pending`   | `T \| null`                                                                            | The value passed to `open()`, or `null` when the dialog is closed.                               |
 | `isPending` | `boolean`                                                                              | `true` while `pending` is non-null (dialog is open).                                             |
 | `isRunning` | `boolean`                                                                              | `true` while `confirm`'s `run` callback is executing.                                            |
 | `error`     | `string \| null`                                                                       | Error message from the most recent failed `confirm`, or `null`.                                  |
-| `open`      | `(value: T, returnFocusTo?: HTMLElement | null) => void`                              | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
+| `open`      | `(value: T, returnFocusTo?: HTMLElement                                                | null) => void`                                                                                   | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
 | `close`     | `() => void`                                                                           | Closes the dialog and clears pending + error.                                                    |
 | `confirm`   | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
 

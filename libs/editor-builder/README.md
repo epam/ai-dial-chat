@@ -45,23 +45,23 @@ import { GhostButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
   labels={{ savingStatusLabel: 'Saving' }}
   leftContent={<MetadataSection />}
   rightContent={<SetupSection />}
-/>
+/>;
 ```
 
 **Props**
 
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `title` | `string` | ✓ | — | Heading text rendered as `<h1>` in the header row. |
-| `onBack` | `() => void` | ✓ | — | Called when the back-arrow button is clicked. |
-| `backAriaLabel` | `string` | | `'Back'` | Accessible label for the back-arrow button. |
-| `actions` | `ReactNode` | | — | Cancel + Save buttons. Rendered inline-end in the header on desktop, or in a pinned bottom bar on mobile/tablet. |
-| `leftContent` | `ReactNode` | | — | Left column (Metadata). |
-| `rightContent` | `ReactNode` | | — | Right column (Setup). When absent, left content fills full width. |
-| `isSaving` | `boolean` | | `false` | When `true`, announces `savingStatusLabel` via `aria-live`. |
-| `labels` | `EditorLayoutLabels` | | — | Text overrides with English defaults. |
-| `styles` | `EditorLayoutStyles` | | — | CSS custom property overrides. |
-| `dir` | `'ltr' \| 'rtl'` | | — | Explicit direction override forwarded to the root element. |
+| Prop            | Type                 | Required | Default  | Description                                                                                                      |
+| --------------- | -------------------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `title`         | `string`             | ✓        | —        | Heading text rendered as `<h1>` in the header row.                                                               |
+| `onBack`        | `() => void`         | ✓        | —        | Called when the back-arrow button is clicked.                                                                    |
+| `backAriaLabel` | `string`             |          | `'Back'` | Accessible label for the back-arrow button.                                                                      |
+| `actions`       | `ReactNode`          |          | —        | Cancel + Save buttons. Rendered inline-end in the header on desktop, or in a pinned bottom bar on mobile/tablet. |
+| `leftContent`   | `ReactNode`          |          | —        | Left column (Metadata).                                                                                          |
+| `rightContent`  | `ReactNode`          |          | —        | Right column (Setup). When absent, left content fills full width.                                                |
+| `isSaving`      | `boolean`            |          | `false`  | When `true`, announces `savingStatusLabel` via `aria-live`.                                                      |
+| `labels`        | `EditorLayoutLabels` |          | —        | Text overrides with English defaults.                                                                            |
+| `styles`        | `EditorLayoutStyles` |          | —        | CSS custom property overrides.                                                                                   |
+| `dir`           | `'ltr' \| 'rtl'`     |          | —        | Explicit direction override forwarded to the root element.                                                       |
 
 When `rightContent` is omitted, `leftContent` expands to full width at all viewport sizes.
 
@@ -75,17 +75,17 @@ import { EditorSection } from '@epam/ai-dial-editor-builder';
 <EditorSection title="Metadata">
   <NameField />
   <DescriptionField />
-</EditorSection>
+</EditorSection>;
 ```
 
 **Props**
 
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `title` | `string` | | — | Optional heading rendered above the section body. |
-| `children` | `ReactNode` | | — | Section body content. |
-| `styles` | `EditorSectionStyles` | | — | CSS custom property overrides. |
-| `className` | `string` | | — | Additional CSS class applied to the root element. |
+| Prop        | Type                  | Required | Default | Description                                       |
+| ----------- | --------------------- | -------- | ------- | ------------------------------------------------- |
+| `title`     | `string`              |          | —       | Optional heading rendered above the section body. |
+| `children`  | `ReactNode`           |          | —       | Section body content.                             |
+| `styles`    | `EditorSectionStyles` |          | —       | CSS custom property overrides.                    |
+| `className` | `string`              |          | —       | Additional CSS class applied to the root element. |
 
 ### `AddAvatar`
 
@@ -100,18 +100,18 @@ import { AddAvatar } from '@epam/ai-dial-editor-builder';
   addAvatarLabel="Add avatar"
   captionText="PNG, JPG or SVG (max 1 MB)"
   onAddAvatarClick={handleOpenAvatarPicker}
-/>
+/>;
 ```
 
 **Props**
 
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `label` | `string` | ✓ | — | Field label rendered above the preview box and button. |
-| `avatarUrl` | `string` | | — | URL of the currently selected avatar image. When set, it fills the 64x64 preview box instead of the placeholder icon. |
-| `avatarAlt` | `string` | | `''` | Alt text for the avatar image. |
-| `addAvatarLabel` | `string` | | `'Add avatar'` | Label for the "Add avatar" button. |
-| `captionText` | `string` | | `'PNG, JPG or SVG (max 1 MB)'` | Caption describing the accepted formats and max size. |
-| `onAddAvatarClick` | `() => void` | ✓ | — | Called when the "Add avatar" button is clicked. The host opens its own file picker/manager and passes the resulting URL back in as `avatarUrl`. |
-| `styles` | `AddAvatarStyles` | | — | CSS custom property overrides. |
-| `className` | `string` | | — | Additional CSS class applied to the root element. |
+| Prop               | Type              | Required | Default                        | Description                                                                                                                                     |
+| ------------------ | ----------------- | -------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`            | `string`          | ✓        | —                              | Field label rendered above the preview box and button.                                                                                          |
+| `avatarUrl`        | `string`          |          | —                              | URL of the currently selected avatar image. When set, it fills the 64x64 preview box instead of the placeholder icon.                           |
+| `avatarAlt`        | `string`          |          | `''`                           | Alt text for the avatar image.                                                                                                                  |
+| `addAvatarLabel`   | `string`          |          | `'Add avatar'`                 | Label for the "Add avatar" button.                                                                                                              |
+| `captionText`      | `string`          |          | `'PNG, JPG or SVG (max 1 MB)'` | Caption describing the accepted formats and max size.                                                                                           |
+| `onAddAvatarClick` | `() => void`      | ✓        | —                              | Called when the "Add avatar" button is clicked. The host opens its own file picker/manager and passes the resulting URL back in as `avatarUrl`. |
+| `styles`           | `AddAvatarStyles` |          | —                              | CSS custom property overrides.                                                                                                                  |
+| `className`        | `string`          |          | —                              | Additional CSS class applied to the root element.                                                                                               |
