@@ -295,6 +295,46 @@ describe('AuthSection', () => {
       );
     });
 
+    it('disables every auth-type option while the toolset is logged in, including the selected one', () => {
+      renderSection({ ...apiKeyAuth(), isLoggedIn: true });
+
+      const typeOptions = [
+        ToolsetEditorI18nKeys.AuthTypeNone,
+        ToolsetEditorI18nKeys.AuthTypeApiKey,
+        ToolsetEditorI18nKeys.AuthTypeOAuth,
+      ].map(
+        (labelKey) =>
+          screen.getByRole('button', {
+            name: new RegExp(labelKey, 'i'),
+          }) as HTMLButtonElement,
+      );
+
+      expect(typeOptions.map((option) => option.disabled)).toEqual([
+        true,
+        true,
+        true,
+      ]);
+    });
+
+    it('marks the active auth type as pressed for assistive technology', () => {
+      renderSection(apiKeyAuth());
+
+      expect(
+        screen
+          .getByRole('button', {
+            name: new RegExp(ToolsetEditorI18nKeys.AuthTypeApiKey, 'i'),
+          })
+          .getAttribute('aria-pressed'),
+      ).toBe('true');
+      expect(
+        screen
+          .getByRole('button', {
+            name: new RegExp(ToolsetEditorI18nKeys.AuthTypeOAuth, 'i'),
+          })
+          .getAttribute('aria-pressed'),
+      ).toBe('false');
+    });
+
     it('defaults a fresh OAuth selection to WithConfig so config fields are visible immediately', async () => {
       const onAuthChange = vi.fn();
       renderSection(noneAuth(), 'toolsets/b/my__1.0.0', onAuthChange);

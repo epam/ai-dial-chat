@@ -421,6 +421,7 @@ const NewConversationComposer: FC<Props> = ({
           placeholder={placeholder}
           removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
           retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
+          uploadingLabel={t(AttachmentsI18nKeys.UploadingLabel)}
           styles={inputStyles}
           deployments={
             isHideEmptyChatChangeAgentEnabled ? undefined : deployments

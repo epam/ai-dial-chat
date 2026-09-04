@@ -61,6 +61,7 @@ export const Input: FC<InputProps> = ({
   menuCloseLabel = 'Close',
   removeLabel,
   retryLabel,
+  uploadingLabel,
   sendLabel,
   stopLabel,
   micLabel = 'Record voice message',
@@ -129,6 +130,8 @@ export const Input: FC<InputProps> = ({
         '--ci-model-selector-caret-color': colors?.modelSelectorCaret,
         '--ci-model-selector-hover-bg': colors?.modelSelectorHoverBg,
         '--ci-model-selector-disabled-color': colors?.modelSelectorDisabled,
+        '--ci-model-selector-name-color': colors?.modelSelectorName,
+        '--ci-model-selector-version-color': colors?.modelSelectorVersion,
         '--ci-voice-error': colors?.voiceError,
         '--ci-voice-waveform': colors?.voiceWaveform,
         '--ci-voice-accent': colors?.voiceAccent,
@@ -434,7 +437,7 @@ export const Input: FC<InputProps> = ({
           }}
           onRetry={handleRetry}
           onExpand={handleExpand}
-          labels={{ removeLabel, retryLabel }}
+          labels={{ removeLabel, retryLabel, uploadingLabel }}
           onAttachmentClick={
             onAttachmentClick != null
               ? (id) => {

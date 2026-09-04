@@ -21,6 +21,7 @@ import {
 import {
   ScheduledTaskDetailsSummary,
   ScheduledTaskRunHistoryList,
+  type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
 import { ConversationSourcesPanel } from '@epam/ai-dial-source-panel';
 import type { QuotationSource } from '@epam/ai-dial-source-panel';
@@ -34,15 +35,19 @@ import {
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import { MIN_CONTENT_AREA_WIDTH } from '../../constants/layout';
+import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
+  ConversationPanelI18nKeys,
   ScheduledTasksI18nKeys,
   SidebarI18nKeys,
 } from '../../constants/translation-keys';
 import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
+import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
@@ -85,6 +90,8 @@ const ConversationSourcesPanelContainer: FC = () => {
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const activeScheduledTask = useActiveScheduledTask();
   const { items: deploymentItems } = useDeployments();
+  const { conversations } = useConversations();
+  const navigate = useNavigate();
   const isTaskConversation =
     activeScheduledTask.status === ActiveScheduledTaskStatus.TaskConversation;
 
@@ -97,8 +104,21 @@ const ConversationSourcesPanelContainer: FC = () => {
   }, [activeScheduledTask.scheduleId]);
 
   const runItems = useMemo(
-    () => mapScheduledTaskRunDtosToItems(activeScheduledTask.history.items, t),
-    [activeScheduledTask.history.items, t],
+    () =>
+      mapScheduledTaskRunDtosToItems(
+        activeScheduledTask.history.items,
+        t,
+        conversations,
+      ),
+    [activeScheduledTask.history.items, t, conversations],
+  );
+
+  const handleRunClick = useCallback(
+    (run: ScheduledTaskRunItem) => {
+      if (!run.conversationId) return;
+      navigate(getConversationRoute(run.conversationId));
+    },
+    [navigate],
   );
 
   const taskModel = activeScheduledTask.task?.model;
@@ -125,6 +145,7 @@ const ConversationSourcesPanelContainer: FC = () => {
       currentRunLabel: t(
         ScheduledTasksI18nKeys.ConversationPanelCurrentRunLabel,
       ),
+      unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
     }),
     [t],
   );
@@ -185,6 +206,7 @@ const ConversationSourcesPanelContainer: FC = () => {
             error={activeScheduledTask.history.error}
             onRetry={activeScheduledTask.history.refetch}
             currentRunId={activeScheduledTask.runId}
+            onRunClick={handleRunClick}
             labels={historyLabels}
             footer={historyFooter}
           />

@@ -32,6 +32,8 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 Page shell: header with title/subtitle/create action, a search + sort toolbar, and a content region that shows a loading spinner, an error with retry, the empty state, a no-results state, or a section-grouped card grid, depending on `isLoading`/`error`/`items`.
 
+The sort control's trigger shows the active option's label, falling back to `labels.sortLabel` when `sortKey` matches no option. Inside the menu each option is a `menuitemcheckbox` whose `aria-checked` marks the sort currently in effect, with a check icon carrying the same meaning visually; picking one reports through `onSortChange` and closes the menu. The lib never sorts `items` — it renders them in the order it receives them.
+
 ```tsx
 import {
   ScheduledTasks,
@@ -91,6 +93,8 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control itself is a fully-composed `modelSelector` element the host renders — the lib only wraps it with the field's required label and error message. This component holds no state of its own.
 
+`isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). Save is equally disabled whenever a required field is empty, so the affordance is the only thing that separates "submitting" from "not ready".
+
 ```tsx
 import {
   ScheduledTaskCreateForm,
@@ -120,13 +124,14 @@ import {
   onBack={() => {}}
   onCancel={() => {}}
   onSubmit={() => {}}
+  isSubmitting={false}
   markdownEditorTheme="light"
 />;
 ```
 
 ### ScheduledTaskDetailView
 
-Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. Field values, runs, and markdown rendering are all supplied by the host app; this component holds no state of its own and performs no routing, i18n, or network calls.
+Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. Field values, runs, and markdown rendering are all supplied by the host app; this component holds no state of its own and performs no routing, i18n, or network calls.
 
 ```tsx
 import {
@@ -137,7 +142,7 @@ import {
 <ScheduledTaskDetailView
   labels={
     {
-      /* ... */
+      /* ..., unreadIndicatorLabel: 'Unread' */
     }
   }
   onBack={() => {}}
@@ -153,8 +158,11 @@ import {
       id: 'run_1',
       status: ScheduledTaskRunStatus.Success,
       timestampLabel: 'today at 9:01 AM (99s)',
+      conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
+      isUnread: true,
     },
   ]}
   onRunsLoadMore={() => {}}
+  onRunClick={(run) => navigateToConversation(run.conversationId)}
 />;
 ```

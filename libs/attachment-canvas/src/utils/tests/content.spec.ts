@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { OoxmlFileType } from '../../types/attachment-canvas';
 import {
   getOoxmlFileType,
+  getOoxmlMimeType,
   isOoxmlPreviewable,
   isTextPreviewable,
 } from '../content';
@@ -82,5 +83,35 @@ describe('OOXML content detection', () => {
     expect(isTextPreviewable('report.docx')).toBe(false);
     expect(isTextPreviewable('budget.xlsx')).toBe(false);
     expect(isTextPreviewable('slides.pptx')).toBe(false);
+  });
+
+  it.each([
+    [
+      'report.docx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+    [
+      'budget.xlsx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
+    [
+      'slides.pptx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ],
+  ])('resolves the canonical MIME type for %s by extension', (name, mime) => {
+    expect(getOoxmlMimeType(name)).toBe(mime);
+  });
+
+  it('resolves the canonical MIME type from a recognized but non-canonical MIME string', () => {
+    expect(
+      getOoxmlMimeType(
+        'attachment',
+        'APPLICATION/VND.OPENXMLFORMATS-OFFICEDOCUMENT.SPREADSHEETML.SHEET; charset=binary',
+      ),
+    ).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  });
+
+  it('returns undefined without an extension or a matching MIME type', () => {
+    expect(getOoxmlMimeType('Quarterly Report')).toBeUndefined();
   });
 });

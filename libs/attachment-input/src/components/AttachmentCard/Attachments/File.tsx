@@ -129,7 +129,16 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
       title={displayName}
       className={mergeClasses(
         typography?.nameClassName ?? 'dial-caption-text',
-        'line-clamp-2 min-w-0 break-words',
+        /*
+         * `w-full` is load-bearing here: the tile is a fixed-width (84px)
+         * column flex container with `items-start`, so the name div is sized to
+         * its min-content width. `break-words` (overflow-wrap: break-word) does
+         * not shrink min-content, so a filename with one long unbreakable run
+         * made the div wider than the tile — the text was then clipped by the
+         * tile's `overflow-hidden` instead of wrapping and clamping with an
+         * ellipsis.
+         */
+        'line-clamp-2 w-full min-w-0 break-words',
         styles.nameText,
         !isError && cornerIconSpacing,
       )}
@@ -177,10 +186,17 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
       {typeRow}
 
       {isLoading && (
+        /*
+         * An aria-label on a plain div names nothing — a generic element has no
+         * role to hang a name on, so the upload was invisible to assistive tech.
+         * An indeterminate progressbar (a role, a name, no aria-valuenow) is the
+         * standard way to say "this is working and there is no percentage".
+         */
         <div
+          role="progressbar"
           aria-label={uploadingLabel}
           className={mergeClasses(
-            'absolute left-[-1px] top-[-1px] flex size-full items-center justify-center rounded',
+            'absolute start-[-1px] top-[-1px] flex size-full items-center justify-center rounded',
             styles.track,
           )}
         >
@@ -245,6 +261,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         role="button"
         tabIndex={0}
         aria-label={clickLabel}
+        aria-busy={isLoading}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         style={cssVars}

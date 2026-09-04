@@ -37,6 +37,10 @@ export interface InputColors {
   modelSelectorHoverBg?: string;
   /** Model-selector chip caret color when disabled. Defaults to `--text-control-disable-primary`. */
   modelSelectorDisabled?: string;
+  /** Model-selector chip name text color (desktop only). Defaults to `--text-primary`. */
+  modelSelectorName?: string;
+  /** Model-selector chip version text color (desktop only). Defaults to `--text-secondary`. */
+  modelSelectorVersion?: string;
   /** Voice bar error border/icon color. Defaults to `--stroke-error`/`--text-error`. */
   voiceError?: string;
   /** Voice bar waveform and timer text color. Defaults to `--text-primary`. */
@@ -123,6 +127,8 @@ export interface InputProps {
   removeLabel?: string;
   /** Accessible label for each attachment card's retry button (error state only). */
   retryLabel?: string;
+  /** Accessible label for each attachment card's in-progress upload progress bar. Defaults to `'Uploading'`. */
+  uploadingLabel?: string;
   /** Accessible label for the send button. */
   sendLabel?: string;
   /** Tooltip shown on hover over the send button. */

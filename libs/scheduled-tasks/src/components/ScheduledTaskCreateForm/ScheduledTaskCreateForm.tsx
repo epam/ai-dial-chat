@@ -19,7 +19,7 @@ import {
  */
 import '@uiw/react-markdown-preview/markdown.css';
 import '@uiw/react-md-editor/markdown-editor.css';
-import { lazy, Suspense, type FC } from 'react';
+import { lazy, Suspense, useId, type FC } from 'react';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
@@ -62,6 +62,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   markdownEditorTheme,
   styles: formStyles,
 }) => {
+  const instructionsEditorId = useId();
   const { colors, typography } = formStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const sectionTitleClassName =
@@ -91,12 +92,14 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
         backButtonLabel: labels.backButtonLabel,
         cancelButtonLabel: labels.cancelButtonLabel,
         submitButtonLabel: labels.createButtonLabel,
+        submittingLabel: labels.submittingLabel ?? 'Saving',
       }}
       onBack={onBack}
       onCancel={onCancel}
       onSubmit={onSubmit}
       isCancelDisabled={isSubmitting}
       isSubmitDisabled={isCreateDisabled}
+      isSubmitting={isSubmitting}
       styles={{
         colors: { background: colors?.background },
         header: {
@@ -388,16 +391,21 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           </p>
         </div>
 
-        <div
-          role="group"
-          aria-label={labels.instructionsLabel}
-          className="flex flex-1 flex-col gap-1"
-        >
-          <span className={instructionsLabelClassName}>
+        <div className="flex flex-1 flex-col gap-1">
+          {/*
+           * A real <label for>, not a span: the markdown editor renders a plain
+           * textarea, and text sitting next to it names nothing the browser
+           * associates with the control.
+           */}
+          <label
+            htmlFor={instructionsEditorId}
+            className={instructionsLabelClassName}
+          >
             {labels.instructionsLabel}
-          </span>
+          </label>
           <Suspense fallback={<Spinner />}>
             <MarkdownEditor
+              id={instructionsEditorId}
               value={values.prompt}
               onChange={(value) => onFieldChange('prompt', value)}
               height={480}

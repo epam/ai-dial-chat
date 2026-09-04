@@ -45,6 +45,12 @@ const TWO_PARAGRAPHS_MARKDOWN = 'Paragraph one.\n\nParagraph two.';
 
 const LIST_MARKDOWN = '- Item one\n- Item two\n- Item three';
 
+const DISPLAY_MATH_MARKDOWN = `Einstein's field equations:
+
+$$
+R_{\\mu\\nu} - \\frac{1}{2}g_{\\mu\\nu}R + \\Lambda g_{\\mu\\nu} = \\frac{8\\pi G}{c^4}T_{\\mu\\nu}
+$$`;
+
 describe('MarkdownRenderer', () => {
   it('renders GFM tables in a horizontally scrollable container', () => {
     render(<MarkdownRenderer content={TABLE_MARKDOWN} />);
@@ -249,6 +255,17 @@ describe('MarkdownRenderer', () => {
     expect(document.querySelectorAll('br').length).toBe(2);
   });
 
+  it('renders a literal <br> tag in the source as a real line break', () => {
+    render(<MarkdownRenderer content="Line one <br>Line two" />);
+
+    // <br> has no accessible role, so this needs direct DOM access.
+    // eslint-disable-next-line testing-library/no-node-access
+    const paragraph = document.querySelector('p');
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(paragraph?.querySelectorAll('br').length).toBe(1);
+    expect(paragraph?.textContent).not.toContain('<br>');
+  });
+
   it('keeps blank-line-separated paragraphs as two distinct <p> elements with no extra break inside either', () => {
     render(<MarkdownRenderer content={TWO_PARAGRAPHS_MARKDOWN} />);
 
@@ -313,6 +330,67 @@ describe('MarkdownRenderer', () => {
       // eslint-disable-next-line testing-library/no-node-access
       expect(document.querySelector('math')).toBeTruthy();
     });
+  });
+
+  it('wraps block LaTeX in a horizontally scrollable container so a wide formula stays reachable', async () => {
+    render(<MarkdownRenderer content={DISPLAY_MATH_MARKDOWN} />);
+
+    /*
+     * MathML elements have no accessible role under jsdom, so the scroll
+     * container is reached by walking up from the <math> element itself —
+     * which only exists once the on-demand KaTeX load has resolved.
+     */
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(document.querySelector('math[display="block"]')).toBeTruthy();
+    });
+
+    // eslint-disable-next-line testing-library/no-node-access
+    const math = document.querySelector('math[display="block"]');
+    // eslint-disable-next-line testing-library/no-node-access
+    const katexSpan = math?.parentElement;
+    // eslint-disable-next-line testing-library/no-node-access
+    const scrollContainer = katexSpan?.parentElement;
+
+    expect(katexSpan?.className).toContain('katex');
+    expect(scrollContainer?.className).toContain('overflow-x-auto');
+    expect(scrollContainer?.className).toContain('max-w-full');
+    expect(scrollContainer?.className).toContain('min-w-0');
+  });
+
+  it('keeps KaTeX wrapper classes through sanitization but drops classes from raw HTML', async () => {
+    render(
+      <MarkdownRenderer
+        content={`${DISPLAY_MATH_MARKDOWN}\n\n<span class="injected">text</span><script>alert(1)</script>`}
+      />,
+    );
+
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- class-level assertions have no semantic query
+      expect(document.querySelector('span.katex')).toBeTruthy();
+    });
+
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('span.injected')).toBeNull();
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('script')).toBeNull();
+  });
+
+  it('leaves inline LaTeX inside its paragraph rather than in a scroll container', async () => {
+    render(<MarkdownRenderer content="Cost: $x + y$ per unit" />);
+
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- see note above: MathML has no role under jsdom
+      expect(document.querySelector('math')).toBeTruthy();
+    });
+
+    // eslint-disable-next-line testing-library/no-node-access
+    const math = document.querySelector('math');
+    // eslint-disable-next-line testing-library/no-node-access
+    const katexSpan = math?.parentElement;
+
+    expect(math?.getAttribute('display')).toBeNull();
+    expect(katexSpan?.parentElement?.tagName).toBe('P');
   });
 
   it('renders single-dollar inline LaTeX as a KaTeX math element once the engine loads', async () => {

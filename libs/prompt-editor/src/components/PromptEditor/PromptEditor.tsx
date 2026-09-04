@@ -87,6 +87,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     ...initialValues,
   });
   const contentLabelId = useId();
+  const contentEditorId = useId();
 
   /* Hosts that load asynchronously re-seed the form through `initialValues`. */
   useEffect(() => {
@@ -121,6 +122,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
       backButtonLabel: labels?.backButtonLabel ?? 'Back to prompts',
       cancelButtonLabel: cancelLabel,
       submitButtonLabel: labels?.saveLabel ?? 'Save',
+      submittingLabel: labels?.savingStatusLabel ?? 'Saving',
     },
     onBack,
     onCancel,
@@ -183,7 +185,11 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     labels?.charactersRemaining?.(count) ?? `${count} characters remaining`;
 
   return (
-    <BuilderFormContainer {...containerProps} isSubmitDisabled={isSaving}>
+    <BuilderFormContainer
+      {...containerProps}
+      isSubmitDisabled={isSaving}
+      isSubmitting={isSaving}
+    >
       <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-5 px-4 py-6 desktop:px-8">
         <Input
           id="prompt-name"
@@ -212,8 +218,13 @@ export const PromptEditor: FC<PromptEditorProps> = ({
           aria-labelledby={contentLabelId}
           className="flex flex-1 flex-col gap-2"
         >
+          {/*
+           * htmlFor is what names the editor's textarea; without it the label
+           * is only visible text sitting above an unnamed control.
+           */}
           <Label
             id={contentLabelId}
+            htmlFor={contentEditorId}
             label={labels?.contentLabel ?? 'Instructions'}
             required
             className={contentLabelClassName}
@@ -228,6 +239,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
             }
           >
             <MarkdownEditor
+              id={contentEditorId}
               value={values.content}
               onChange={(value) => setField('content', value)}
               height={480}

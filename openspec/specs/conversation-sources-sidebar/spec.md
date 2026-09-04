@@ -267,19 +267,19 @@ For both states:
 
 **Content type resolution** — `resolveExternalSourceContentType(contentType, url)` exported from `libs/chat-hooks/src/files/attachment-canvas.ts`:
 
-- Returns `contentType` unchanged if it starts with `'image/'`, starts with `'audio/'`, or already equals `MIMEType.PDF` (`'application/pdf'`).
-- Otherwise, extracts the last path segment of `url` (ignoring query string and fragment); if its extension after the last `.` is `'pdf'` (`FileExtension.PDF`), returns `MIMEType.PDF` — **overriding** the reported `contentType`.
+- Returns `contentType` unchanged if it already trustworthily identifies the source: it starts with `'image/'`, starts with `'audio/'`, equals `MIMEType.PDF` (`'application/pdf'`), or `isOoxmlPreviewable('', contentType)` (from `@epam/ai-dial-attachment-canvas`) recognizes it as a canonical DOCX/XLSX/PPTX MIME type.
+- Otherwise, extracts the last path segment of `url` (ignoring query string and fragment): if its extension after the last `.` is `'pdf'` (`FileExtension.PDF`), returns `MIMEType.PDF`; otherwise, if `getOoxmlMimeType(fileName)` (from `@epam/ai-dial-attachment-canvas`) recognizes a `.docx`/`.xlsx`/`.pptx` extension, returns that format's canonical OOXML MIME type. Either case **overrides** the reported `contentType`.
 - Otherwise returns `contentType` unchanged.
 
-This override exists because some web-search grounding APIs (e.g. Google Vertex AI) label every web reference — YouTube, news articles, blog posts, and PDFs alike — with `content-type: text/markdown` regardless of actual content. Without it, a mislabelled PDF's `contentType` would win over its `.pdf` URL extension when building the `DisplayAttachment`, routing the canvas into the markdown/text viewer, which renders the PDF's raw bytes as garbled text instead of opening the PDF viewer. The `DisplayAttachment` built in step 2 above uses this resolved content type (not the raw `QuotationSource.contentType`) for both its `contentType` and `type` (`AttachmentType.Image` vs `AttachmentType.File`) fields.
+This override exists because some web-search grounding APIs (e.g. Google Vertex AI) label every web reference — YouTube, news articles, blog posts, PDFs, and Office documents alike — with `content-type: text/markdown` regardless of actual content. Without it, a mislabelled PDF's or Office document's `contentType` would win over its `.pdf`/`.docx`/`.xlsx`/`.pptx` URL extension when building the `DisplayAttachment`, routing the canvas into the markdown/text viewer, which renders the file's raw bytes as garbled text instead of opening the PDF/OOXML viewer. The `DisplayAttachment` built in step 2 above uses this resolved content type (not the raw `QuotationSource.contentType`) for both its `contentType` and `type` (`AttachmentType.Image` vs `AttachmentType.File`) fields.
 
 **Previewability test** — `isExternalSourcePreviewable(contentType, url)` exported from `libs/chat-hooks/src/files/attachment-canvas.ts`, built on `resolveExternalSourceContentType`:
 
-- Resolves the effective content type via `resolveExternalSourceContentType(contentType, url)`. Returns `true` if the resolved type starts with `'image/'`, starts with `'audio/'`, or equals `MIMEType.PDF`.
+- Resolves the effective content type via `resolveExternalSourceContentType(contentType, url)`. Returns `true` if the resolved type starts with `'image/'`, starts with `'audio/'`, equals `MIMEType.PDF`, or `isOoxmlPreviewable('', resolvedType)` recognizes it as a canonical OOXML MIME type.
 - Otherwise, extracts the last path segment of `url` and returns `true` when `isTextPreviewable(fileName)` or `isHtmlPreviewable(fileName)` from `@epam/ai-dial-attachment-canvas` returns `true` — covers `.md`, `.markdown`, `.json`, `.txt`, `.xml`, `.csv`, `.html`/`.htm`, and all other plain-text formats the canvas text renderer supports.
 - Returns `false` on invalid URLs or a last path segment with no file extension.
 
-Image and audio content types, and an already-correct `application/pdf` content type, are trusted directly because web-search grounding APIs do not mislabel them (or, for PDF, because a citation annotation's own `attachment.type` field — the same authoritative marker `annotationToPdfCanvasContent` trusts — is reliable even when the PDF's URL carries no `.pdf` extension, e.g. an opaque citation/reference id rather than a file name).
+Image and audio content types, and an already-correct PDF or OOXML content type, are trusted directly because web-search grounding APIs do not mislabel images/audio (or, for PDF/OOXML, because a citation annotation's own `attachment.type` field — the same authoritative marker `annotationToPdfCanvasContent` trusts — is reliable even when the source's URL carries no matching extension, e.g. an opaque citation/reference id rather than a file name).
 
 #### Scenario: Web-search reference URL without a file extension opens in a new tab
 
@@ -574,7 +574,9 @@ Each row SHALL show: a localized timestamp (reusing the existing `formatRunTimes
 
 The row whose `id` equals the active conversation's `runId` SHALL receive a current-run visual treatment matching the reference design, AND an accessible indication that does not rely on color alone (e.g. an `aria-current="true"` attribute or equivalent text conveyed to assistive technology). If the active `runId` is not present in the currently loaded pages, no row is marked current until a subsequent page load includes it; the section SHALL NOT eagerly fetch every page solely to locate that run.
 
-Run rows are informational only in this section: activating a row SHALL NOT navigate to another conversation, fetch run details, or expose any additional row actions.
+A row SHALL render as interactive (`role="button"`, keyboard-activatable) and, on activation, navigate to that run's conversation via `getConversationRoute(run.conversationId)` — if and only if that run has a non-empty `conversationId` (mapped from the upstream `conversation_id` field, per the `scheduled-tasks-api` capability). A row whose run has no `conversationId` SHALL remain informational-only: activating it SHALL NOT navigate, fetch run details, or expose any additional row action. `ConversationSourcesPanelContainer` performs no `markConversationViewed` call itself for this navigation — the app's existing `useActiveConversationSync` already marks the newly-active conversation viewed once the URL changes, the same mechanism `scheduled-task-detail-page`'s equivalent History card relies on.
+
+A row whose matched conversation (resolved by matching `run.conversationId` against `useConversations().conversations` via `conversationIdsMatch`, tolerating id-format differences) has `isUnread: true` SHALL additionally show the shared unread-dot indicator, with the unread state folded into that row's accessible name (per `scheduled-task-detail-page`'s equivalent requirement — an ancestor `aria-label` overrides nested `sr-only` content, so the label cannot be a separate nested span). A run with no `conversationId`, or whose `conversationId` matches no loaded conversation item, SHALL show no unread dot.
 
 Runs SHALL be shown in server order (newest first), matching the order already returned by `listScheduledTaskRuns` and preserved by `useScheduledTaskRuns`'s append-without-resort behavior.
 
@@ -597,10 +599,25 @@ Runs SHALL be shown in server order (newest first), matching the order already r
 - **AND WHEN** a later page load includes that run
 - **THEN** that row becomes marked as current without any additional fetch triggered solely to find it
 
-#### Scenario: Row click is a no-op
+#### Scenario: Row with a conversation id navigates to it
 
-- **WHEN** the user clicks or activates a run row
+- **WHEN** the user clicks (or activates via keyboard) a row whose run has a non-empty `conversationId`
+- **THEN** the app navigates to `getConversationRoute(run.conversationId)`, and `ConversationSourcesPanelContainer` makes no direct `markConversationViewed` call
+
+#### Scenario: Row without a conversation id stays a no-op
+
+- **WHEN** the user clicks or activates a run row whose run has no `conversationId`
 - **THEN** no navigation occurs, no run-detail request is issued, and no additional menu or action appears
+
+#### Scenario: Unread run shows the dot and accessible suffix
+
+- **WHEN** a row's run has a `conversationId` matching a loaded conversation-list item whose `isUnread` is `true`
+- **THEN** the row renders the unread dot and its accessible name ends with the unread indicator label
+
+#### Scenario: Read or unmatched run shows no dot
+
+- **WHEN** a row's run has no `conversationId`, or a `conversationId` that matches no loaded conversation-list item, or matches one whose `isUnread` is `false`
+- **THEN** the row renders no unread dot and no unread suffix in its accessible name
 
 ---
 
