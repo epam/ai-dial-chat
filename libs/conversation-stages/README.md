@@ -28,7 +28,7 @@ Panel component for displaying the processing stages of an agent or LLM response
 
 ### StagesPanel
 
-Renders the full list of stages for the current response. `stages` and `isStreaming` are both required — while `isStreaming` is `true`, the last stage with `status: null` shows a live spinner.
+Renders the full list of stages for the current response. `stages` and `isStreaming` are both required — while `isStreaming` is `true`, every stage with `status: null` shows a live spinner. A completed check is rendered only after that stage explicitly receives `status: "completed"`.
 
 ```tsx
 import { StagesPanel } from '@epam/ai-dial-conversation-stages';
@@ -102,5 +102,5 @@ stream delivers:
 import type { Stage } from '@epam/ai-dial-chat-shared';
 ```
 
-A stage with `status: null` is still executing; that is what `isStreaming` keys
-the live spinner off.
+A stage with `status: null` is still executing; `isStreaming` controls whether
+that unresolved state is animated with a live spinner.
