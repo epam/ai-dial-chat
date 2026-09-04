@@ -5,7 +5,7 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import { getApiErrorMessage } from '@epam/ai-dial-chat-hooks';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AttachmentCanvasI18nKeys } from '../../constants/translation-keys';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
@@ -54,6 +54,23 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
   const mcpAppSandboxUrl = useMcpAppSandboxUrl();
   const hostContext = useMcpAppHostContext('fullscreen');
+
+  /*
+   * `onReload` below needs to re-invoke `openMcpAppCanvas` recursively, but
+   * referencing it directly from inside its own `useCallback` initializer is
+   * a temporal-dead-zone access (`openMcpAppCanvas` isn't declared yet at
+   * that point). Routed through a ref, updated after every render in the
+   * effect below, and read only from `onReload`'s event-handler closure
+   * (never during render) so the "latest" version is always called.
+   */
+  const openMcpAppCanvasRef = useRef<
+    (
+      match: McpAppToolRef,
+      canvasKey?: string,
+      toolCall?: McpAppToolCallSeed,
+      forceReload?: boolean,
+    ) => Promise<boolean>
+  >();
 
   const openMcpAppCanvas = useCallback(
     async (
@@ -119,7 +136,12 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
             },
             onReload: () => {
               if (canvasKey != null) cache.invalidate(canvasKey);
-              void openMcpAppCanvas(match, canvasKey, toolCall, true);
+              void openMcpAppCanvasRef.current?.(
+                match,
+                canvasKey,
+                toolCall,
+                true,
+              );
             },
           },
           title,
@@ -158,6 +180,10 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
       cache,
     ],
   );
+
+  useEffect(() => {
+    openMcpAppCanvasRef.current = openMcpAppCanvas;
+  }, [openMcpAppCanvas]);
 
   return { openMcpAppCanvas };
 };

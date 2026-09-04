@@ -1,5 +1,5 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 
 /** Cache entries older than this are treated as a miss, even if the seed still matches. */
 const CACHE_TTL_MS = 15 * 60 * 1000;
@@ -53,34 +53,33 @@ export interface McpAppResponseCache {
 export const useMcpAppResponseCache = (
   conversationId: string,
 ): McpAppResponseCache => {
-  const stateRef = useRef<{
-    conversationId: string;
-    map: Map<string, CacheEntry>;
-  } | null>(null);
-  if (stateRef.current?.conversationId !== conversationId) {
-    stateRef.current = { conversationId, map: new Map() };
-  }
+  /*
+   * A plain `useMemo`-keyed `Map`, not a `useRef` reset during render — this
+   * repo's `react-hooks/refs` lint rule disallows reading/writing `.current`
+   * during render, and recreating the `Map` here (a new value, not a ref
+   * mutation) is what `useMemo` exists for.
+   */
+  const map = useMemo(
+    () => new Map<string, CacheEntry>(),
+    [conversationId],
+  );
 
   return useMemo<McpAppResponseCache>(
     () => ({
       get: (key, seedKey) => {
-        const entry = stateRef.current?.map.get(key);
+        const entry = map.get(key);
         if (entry == null) return undefined;
         if (entry.seedKey !== seedKey) return undefined;
         if (Date.now() - entry.cachedAt > CACHE_TTL_MS) return undefined;
         return { html: entry.html, toolResult: entry.toolResult };
       },
       set: (key, value, seedKey) => {
-        stateRef.current?.map.set(key, {
-          ...value,
-          seedKey,
-          cachedAt: Date.now(),
-        });
+        map.set(key, { ...value, seedKey, cachedAt: Date.now() });
       },
       invalidate: (key) => {
-        stateRef.current?.map.delete(key);
+        map.delete(key);
       },
     }),
-    [],
+    [map],
   );
 };
