@@ -1063,7 +1063,6 @@ export enum ToolsetEditorI18nKeys {
   AuthTypeNone = 'toolsetEditor.auth.typeNone',
   WithLoginLabel = 'toolsetEditor.auth.withLoginLabel',
   WithoutLoginLabel = 'toolsetEditor.auth.withoutLoginLabel',
-  WithConfigLabel = 'toolsetEditor.auth.withConfigLabel',
   WithLoginOAuthLabel = 'toolsetEditor.auth.withLoginOAuthLabel',
   WithConfigOAuthLabel = 'toolsetEditor.auth.withConfigOAuthLabel',
   OpenAccessDescription = 'toolsetEditor.auth.openAccessDescription',

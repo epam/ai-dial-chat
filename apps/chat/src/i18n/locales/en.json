@@ -1078,7 +1078,6 @@
       "openAccessDescription": "Open endpoint, no credentials",
       "withLoginLabel": "With login",
       "withoutLoginLabel": "Without login",
-      "withConfigLabel": "With login & config",
       "withLoginOAuthLabel": "Standard login",
       "withConfigOAuthLabel": "Custom login",
       "keyHeaderLabel": "API Key parameter name",
