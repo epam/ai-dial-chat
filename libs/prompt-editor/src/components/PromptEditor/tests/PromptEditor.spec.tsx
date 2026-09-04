@@ -17,12 +17,15 @@ vi.mock('@epam/ai-dial-ui-kit', async () => {
           value,
           onChange,
           placeholder,
+          id,
         }: {
           value?: string;
           onChange?: (value: string) => void;
           placeholder?: string;
+          id?: string;
         }) => (
           <textarea
+            id={id}
             value={value}
             placeholder={placeholder}
             onChange={(event) => onChange?.(event.target.value)}
@@ -206,5 +209,10 @@ describe('PromptEditor', () => {
 
     expect(screen.getByRole('heading', { name: 'Neuer Prompt' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'OK' })).toBeTruthy();
+  });
+  it('names the Instructions editor through its label', () => {
+    renderEditor();
+
+    expect(screen.getByRole('textbox', { name: /Instructions/ })).toBeTruthy();
   });
 });
