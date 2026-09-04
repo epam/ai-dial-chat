@@ -123,7 +123,6 @@ export * from './files/useDialFileMetadata/useDialFileMetadata';
 export * from './files/useDialFileMutations/useDialFileMutations';
 export * from './files/useDialFileSharing/useDialFileSharing';
 export * from './files/useDialFileUploadBatch/useDialFileUploadBatch';
-export { useGridEditingScroll } from '@epam/ai-dial-chat-shared';
 export * from './shared/application-schema';
 export * from './shared/browser-timezone';
 export * from './shared/cron-weekday';
