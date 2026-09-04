@@ -249,6 +249,17 @@ describe('MarkdownRenderer', () => {
     expect(document.querySelectorAll('br').length).toBe(2);
   });
 
+  it('renders a literal <br> tag in the source as a real line break', () => {
+    render(<MarkdownRenderer content="Line one <br>Line two" />);
+
+    // <br> has no accessible role, so this needs direct DOM access.
+    // eslint-disable-next-line testing-library/no-node-access
+    const paragraph = document.querySelector('p');
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(paragraph?.querySelectorAll('br').length).toBe(1);
+    expect(paragraph?.textContent).not.toContain('<br>');
+  });
+
   it('keeps blank-line-separated paragraphs as two distinct <p> elements with no extra break inside either', () => {
     render(<MarkdownRenderer content={TWO_PARAGRAPHS_MARKDOWN} />);
 
