@@ -7,15 +7,35 @@ A framework-level, headless React hook (`useConversationScroll`) published from 
 ## Requirements
 
 ### Requirement: Library isolation
-The `libs/chat-hooks` package SHALL declare `react` as its only runtime `peerDependency` and SHALL NOT import, at runtime or as a type dependency, any `@epam/ai-dial-*` package, any REST/API-client module, any application context/provider, any routing, storage, analytics, or i18n module. Hooks in this library SHALL accept all chat-domain data and behavior through function parameters (props/callbacks), never through implicit access to app-owned singletons or global state.
+`libs/chat-hooks`'s `./scroll-anchoring` entry point (which publishes `useConversationScroll`) SHALL require no runtime `peerDependency` beyond `react` — no consumer that imports only
+`@epam/ai-dial-chat-hooks/scroll-anchoring` is required to install any `@epam/ai-dial-*`
+package, any REST/API-client module, or any other feature-specific peer. The `libs/chat-hooks`
+package as a whole declares many peers, one per feature entry point it also publishes (see
+`chat-hooks-package-distribution`); this requirement constrains the `./scroll-anchoring` entry
+point specifically, not the package's flat `peerDependencies` list.
+`useConversationScroll` itself SHALL NOT import, at runtime or as a type dependency, any
+`@epam/ai-dial-*` package, any REST/API-client module, any application context/provider, any
+routing, storage, analytics, or i18n module. The hook SHALL accept all chat-domain data and
+behavior through function parameters (props/callbacks), never through implicit access to
+app-owned singletons or global state.
 
-#### Scenario: Building the library without the host app
-- **WHEN** `libs/chat-hooks` is built in isolation via its own Nx `build` target
-- **THEN** the build succeeds without resolving any `@epam/ai-dial-ui-kit`, `@epam/chat-api-client`, `@epam/ai-dial-chat-shared`, or `apps/chat/**` module
+#### Scenario: Building the `./scroll-anchoring` entry without the host app or other features
+- **WHEN** the `./scroll-anchoring` entry point is built in isolation
+- **THEN** the build succeeds without resolving `@epam/ai-dial-ui-kit`,
+  `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-react-file-manager`,
+  any other `@epam/ai-dial-*` package, or any `apps/chat/**` module
 
-#### Scenario: Module boundary lint passes
-- **WHEN** `@nx/enforce-module-boundaries` lints `libs/chat-hooks`
-- **THEN** no violation is reported for importing an app, a generated API client, or another `@epam/ai-dial-*` library beyond `react`
+#### Scenario: Module boundary lint passes for `useConversationScroll`'s own module graph
+- **WHEN** `@nx/enforce-module-boundaries` lints the source files reachable from
+  `useConversationScroll`'s implementation
+- **THEN** no violation is reported for importing an app, a generated API client, or another
+  `@epam/ai-dial-*` library beyond `react`
+
+#### Scenario: Installing only for `./scroll-anchoring` requires only `react`
+- **WHEN** a consumer runs `npm install @epam/ai-dial-chat-hooks react` and imports only
+  `@epam/ai-dial-chat-hooks/scroll-anchoring`
+- **THEN** the install succeeds with no unmet-peer warning, and the consumer's build resolves
+  `useConversationScroll` without any other package present
 
 ### Requirement: `useConversationScroll` public API
 The library SHALL export a hook `useConversationScroll<T>(params: { messages: T[]; isAssistantTyping: boolean; conversationId: string }): result` where `T` is an unconstrained generic type parameter (the hook reads only `messages.length`, never message field values), and `result` SHALL contain exactly: `containerRef`, `contentRef`, `spacerRef` (each a `RefObject<HTMLDivElement | null>`), `setMessageRef: (index: number, el: HTMLDivElement | null) => void`, `isScrollButtonVisible: boolean`, `scrollToBottom: () => void`, and `armAnchor: (index: number) => void`. This signature SHALL be identical in shape and semantics to the current `apps/chat/src/hooks/conversation/useConversationScroll.ts` implementation, differing only in the generic message type.

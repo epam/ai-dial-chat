@@ -80,6 +80,12 @@
     },
     "publish": {
       "dependsOn": ["build"]
+    },
+    "test-packed": {
+      "dependsOn": ["build", "test-packed-unit"]
+    },
+    "test-packed-smoke": {
+      "dependsOn": ["build", "test-packed-unit"]
     }
   },
   "generators": {
