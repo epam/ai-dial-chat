@@ -27,6 +27,8 @@ import { Spinner } from './Spinner';
 
 import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
+export const MODAL_CLOSE_BUTTON_WIDTH = 36;
+
 export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   children: ReactNode | ReactNode[];
   portalId: string;
