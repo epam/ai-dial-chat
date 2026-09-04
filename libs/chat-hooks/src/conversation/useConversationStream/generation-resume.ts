@@ -15,6 +15,26 @@ import { getConversationPath } from './conversation-path';
 import type { ConversationStreamTransport } from './useConversationStream';
 
 /**
+ * True when the assistant message carries anything the backend's finalize save
+ * would have written. Text alone is not enough to tell a finished response from
+ * the start-state placeholder: an image-generation answer settles with an empty
+ * `content` and only `custom_content.attachments`, and a stage-only or
+ * form-only answer is just as text-free.
+ */
+const hasGeneratedPayload = (message: Message): boolean => {
+  const customContent = message.custom_content;
+  return (
+    !!message.content ||
+    message.responseId != null ||
+    !!customContent?.attachments?.length ||
+    !!customContent?.stages?.length ||
+    !!customContent?.annotations?.length ||
+    !!customContent?.form_schema ||
+    customContent?.state != null
+  );
+};
+
+/**
  * True when the conversation's last message is an unresolved assistant
  * placeholder: the backend only persists a conversation at generation start
  * (empty placeholder) and at generation end (final content, or a partial
@@ -28,7 +48,7 @@ export const isAwaitingGenerationResume = (
   return (
     !!lastMessage &&
     lastMessage.role === MessageRole.Assistant &&
-    !lastMessage.content &&
+    !hasGeneratedPayload(lastMessage) &&
     lastMessage.streamErrorMessage == null &&
     !lastMessage.wasStoppedByUser
   );

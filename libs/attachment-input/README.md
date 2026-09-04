@@ -48,6 +48,7 @@ import { AttachmentCard } from '@epam/ai-dial-attachment-input';
     retryLabel: 'Retry upload',
     openInNewTabLabel: 'Open in new tab',
     downloadLabel: 'Download attachment',
+    uploadingLabel: 'Uploading',
   }}
 />;
 ```
@@ -55,6 +56,11 @@ import { AttachmentCard } from '@epam/ai-dial-attachment-input';
 ### AttachmentTray
 
 Renders the list of in-progress attachments above the composer.
+
+While a file's upload is in flight its tile carries `aria-busy` and renders an
+indeterminate `role="progressbar"` named by `labels.uploadingLabel` (default
+`'Uploading'`), so the state is reachable without sight of the spinner. Pass a
+translated string.
 
 ```tsx
 import { AttachmentTray } from '@epam/ai-dial-attachment-input';

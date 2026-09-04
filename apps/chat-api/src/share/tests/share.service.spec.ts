@@ -270,6 +270,96 @@ describe('ShareService', () => {
       });
     });
 
+    it('excludes a related file left in a different bucket than the conversation', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({
+          messages: [
+            {
+              custom_content: {
+                attachments: [
+                  { url: 'files/owner-bucket/report.pdf' },
+                  { url: 'files/original-owner-bucket/shared-in.pdf' },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/conv' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'conversations/owner-bucket/my-chat.json',
+        access: [ShareAccess.View],
+      });
+
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'conversations/owner-bucket/my-chat.json',
+              permissions: ['READ'],
+            },
+            {
+              url: 'files/owner-bucket/report.pdf',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('still shares a related file in the public/organization bucket', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({
+          messages: [
+            {
+              custom_content: {
+                attachments: [
+                  { url: 'files/owner-bucket/report.pdf' },
+                  { url: 'files/public/template.pdf' },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/conv' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'conversations/owner-bucket/my-chat.json',
+        access: [ShareAccess.View],
+      });
+
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'conversations/owner-bucket/my-chat.json',
+              permissions: ['READ'],
+            },
+            {
+              url: 'files/owner-bucket/report.pdf',
+              permissions: ['READ'],
+            },
+            {
+              url: 'files/public/template.pdf',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
     it('does not share partial resources when the conversation lookup rejects', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'getConversation').mockRejectedValue(

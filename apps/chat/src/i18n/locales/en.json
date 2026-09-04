@@ -327,6 +327,7 @@
     "cancel": "Cancel",
     "add": "Add",
     "save": "Save",
+    "saving": "Saving",
     "select": "Select",
     "close": "Close",
     "apply": "Apply",
@@ -590,6 +591,7 @@
     "openInNewTab": "Open in new tab",
     "removeLabel": "Remove attachment",
     "retryLabel": "Retry upload",
+    "uploadingLabel": "Uploading",
     "unsupportedType": {
       "title": "File extension not supported",
       "message": "This model can only process {{formats}}. Please upload a file in a supported format."

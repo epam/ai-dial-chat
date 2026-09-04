@@ -30,6 +30,8 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 Page shell: header with title/subtitle/create action, a search + sort toolbar, and a content region that shows a loading spinner, an error with retry, the empty state, a no-results state, or a section-grouped card grid, depending on `isLoading`/`error`/`items`.
 
+The sort control's trigger shows the active option's label, falling back to `labels.sortLabel` when `sortKey` matches no option. Inside the menu each option is a `menuitemcheckbox` whose `aria-checked` marks the sort currently in effect, with a check icon carrying the same meaning visually; picking one reports through `onSortChange` and closes the menu. The lib never sorts `items` — it renders them in the order it receives them.
+
 ```tsx
 import {
   ScheduledTasks,
@@ -89,6 +91,8 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control itself is a fully-composed `modelSelector` element the host renders — the lib only wraps it with the field's required label and error message. This component holds no state of its own.
 
+`isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). Save is equally disabled whenever a required field is empty, so the affordance is the only thing that separates "submitting" from "not ready".
+
 ```tsx
 import {
   ScheduledTaskCreateForm,
@@ -118,6 +122,7 @@ import {
   onBack={() => {}}
   onCancel={() => {}}
   onSubmit={() => {}}
+  isSubmitting={false}
   markdownEditorTheme="light"
 />;
 ```
