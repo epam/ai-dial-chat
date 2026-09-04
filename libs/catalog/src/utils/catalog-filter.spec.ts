@@ -34,7 +34,7 @@ describe('filterCatalogItems', () => {
     expect(result[0].id).toBe('1');
   });
 
-  it('matches items by description', () => {
+  it('does not match items by description', () => {
     const items = [
       makeItem({
         id: '1',
@@ -43,17 +43,34 @@ describe('filterCatalogItems', () => {
       }),
       makeItem({ id: '2', name: 'Model B', description: 'Text only' }),
     ];
-    const result = filterCatalogItems(items, 'vision');
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('1');
+    expect(filterCatalogItems(items, 'vision')).toHaveLength(0);
   });
 
-  it('matches items by type', () => {
+  it('does not match items by type', () => {
     const items = [
       makeItem({ id: '1', name: 'Alpha', type: CatalogEntityType.Agent }),
-      makeItem({ id: '2', name: 'Beta', type: CatalogEntityType.Model }),
+      makeItem({ id: '2', name: 'Beta', type: CatalogEntityType.Toolset }),
     ];
-    const result = filterCatalogItems(items, 'agent');
+    expect(filterCatalogItems(items, 'agent')).toHaveLength(0);
+    expect(filterCatalogItems(items, 'toolset')).toHaveLength(0);
+  });
+
+  it('keeps only the toolsets whose name contains the query', () => {
+    const items = [
+      makeItem({
+        id: '1',
+        name: 'BigQuery',
+        type: CatalogEntityType.Toolset,
+        description: 'Warehouse access',
+      }),
+      makeItem({
+        id: '2',
+        name: 'Confluence',
+        type: CatalogEntityType.Toolset,
+        description: 'Run a query against pages',
+      }),
+    ];
+    const result = filterCatalogItems(items, 'query');
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('1');
   });
