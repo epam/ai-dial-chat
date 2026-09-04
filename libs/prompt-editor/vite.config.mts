@@ -48,6 +48,8 @@ export default defineConfig(() => ({
         '@epam/ai-dial-ui-kit',
         '@epam/ai-dial-chat-shared',
         '@tabler/icons-react',
+        '@uiw/react-markdown-preview',
+        '@uiw/react-md-editor',
       ],
     },
   },

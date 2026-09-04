@@ -1,7 +1,5 @@
-import 'katex/dist/katex.min.css';
-import { memo, useMemo, type FC } from 'react';
+import { memo, useEffect, useMemo, useState, type FC } from 'react';
 import ReactMarkdown, { type Components, type Options } from 'react-markdown';
-import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkBreaks from 'remark-breaks';
@@ -216,39 +214,53 @@ const mathMLAttributes: Record<string, string[]> = {
 };
 
 /**
- * KaTeX rehype plugin list, shared across all markdown instances.
+ * Rehype steps that run before the on-demand KaTeX plugin.
  *
  * `rehypeRaw` re-parses raw HTML left as literal text by `remark` (e.g. a
- * model emitting `<br>` for a line break) into real hast elements, so it
- * must run before both `rehypeKatex` and `rehypeSanitize`. `rehypeSanitize`
- * strips anything dangerous that raw HTML pass could have introduced —
- * required whenever raw HTML is allowed through.
+ * model emitting `<br>` for a line break) into real hast elements, so it must
+ * run before both `rehypeKatex` and `rehypeSanitize`.
  */
-const baseRehypePlugins: NonNullable<Options['rehypePlugins']> = [
+const preKatexRehypePlugins: NonNullable<Options['rehypePlugins']> = [
   rehypeRaw,
-  [rehypeKatex, { output: 'mathml', strict: false }],
-  [
-    rehypeSanitize,
-    {
-      ...defaultSchema,
-      tagNames: [...(defaultSchema.tagNames ?? []), ...mathMLTags],
-      attributes: {
-        ...defaultSchema.attributes,
-        ...mathMLAttributes,
-        code: [...(defaultSchema.attributes?.code ?? []), ['className']],
-        /* Only KaTeX's own wrapper classes — a class from raw model HTML is
+];
+
+/**
+ * Sanitization step, always the last built-in plugin: it strips anything
+ * dangerous the raw HTML pass could have introduced — required whenever raw
+ * HTML is allowed through — while letting through the MathML that
+ * `rehypeKatex` emits once it has been loaded on demand.
+ */
+const sanitizeRehypePlugin: NonNullable<Options['rehypePlugins']>[number] = [
+  rehypeSanitize,
+  {
+    ...defaultSchema,
+    tagNames: [...(defaultSchema.tagNames ?? []), ...mathMLTags],
+    attributes: {
+      ...defaultSchema.attributes,
+      ...mathMLAttributes,
+      code: [...(defaultSchema.attributes?.code ?? []), ['className']],
+      /* Only KaTeX's own wrapper classes — a class from raw model HTML is
            still dropped. `katex` is what marks a formula for MarkdownMathBlock. */
-        span: [
-          ...(defaultSchema.attributes?.span ?? []),
-          ['className', 'katex', 'katex-error'],
-        ],
-      },
+      span: [
+        ...(defaultSchema.attributes?.span ?? []),
+        ['className', 'katex', 'katex-error'],
+      ],
     },
-  ],
+  },
 ];
 
 /** Stable empty plugin list used as the default when no extra plugins are passed. */
 const EMPTY_REHYPE_PLUGINS: NonNullable<Options['rehypePlugins']> = [];
+
+/**
+ * Cheap heuristic for "this content contains KaTeX math", checked before the heavy
+ * KaTeX engine is loaded rather than by parsing the full markdown AST: a literal
+ * `$$...$$` block (the form `preprocessLaTeX` normalizes single-dollar math into)
+ * or one of the `\(...\)`/`\[...\]` delimiters LLMs commonly emit.
+ */
+const MATH_DELIMITER_REGEX = /\$\$|\\\(|\\\[/;
+const hasMathContent = (text: string): boolean =>
+  MATH_DELIMITER_REGEX.test(text);
 
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
@@ -513,6 +525,58 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       [displayedContent],
     );
 
+    const needsMath = useMemo(
+      () => hasMathContent(processedContent),
+      [processedContent],
+    );
+
+    const [katexPlugin, setKatexPlugin] = useState<
+      NonNullable<Options['rehypePlugins']>[number] | null
+    >(null);
+
+    /*
+     * KaTeX and its stylesheet are loaded on demand, the first time a message
+     * actually contains a math block, so plain-text/code-only conversations
+     * never pull the ~150 KB engine into the initial bundle.
+     */
+    useEffect(() => {
+      if (!needsMath || katexPlugin) return;
+
+      let cancelled = false;
+      const loadKatex = async () => {
+        const [katexModule] = await Promise.all([
+          import('rehype-katex'),
+          import('katex/dist/katex.min.css'),
+        ]);
+        if (!cancelled) {
+          setKatexPlugin([
+            katexModule.default,
+            { output: 'mathml', strict: false },
+          ]);
+        }
+      };
+      void loadKatex();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [needsMath, katexPlugin]);
+
+    /*
+     * Pipeline order matters: raw HTML is re-parsed first, KaTeX (once loaded)
+     * turns math spans into MathML, and sanitization runs last over everything
+     * both passes produced.
+     */
+    const effectiveRehypePlugins = useMemo(
+      () => [
+        ...preKatexRehypePlugins,
+        ...(katexPlugin ? [katexPlugin] : []),
+        sanitizeRehypePlugin,
+        ...rehypePlugins,
+      ],
+      [katexPlugin, rehypePlugins],
+    );
+
     const cssVars = buildCssVars({
       '--cm-thinking-inverted': colors?.thinkingPrimary,
       '--cm-thinking-secondary': colors?.thinkingSecondary,
@@ -564,7 +628,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       <div style={cssVars}>
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
-          rehypePlugins={[...baseRehypePlugins, ...rehypePlugins]}
+          rehypePlugins={effectiveRehypePlugins}
           components={mergedComponents}
         >
           {processedContent}

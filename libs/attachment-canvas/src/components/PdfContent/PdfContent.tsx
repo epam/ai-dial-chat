@@ -26,6 +26,29 @@ import {
 } from 'react';
 import { fetchBlobFromUrl } from '../../utils/download';
 import styles from './PdfContent.module.scss';
+/*
+ * These stylesheets are only needed once a PDF is actually being rendered.
+ * `PdfContent` is itself only ever reached through a `lazy()` dynamic import
+ * (see AttachmentCanvasBody), so importing them here — rather than eagerly
+ * from the host app's entry point — keeps this ~20 KB of vendor CSS out of
+ * the initial page load.
+ */
+import '@epam/ai-dial-react-pdf-highlighter/styles.css';
+import '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css';
+
+/*
+ * `pdfjs-dist`'s `GlobalWorkerOptions.workerSrc` is a global, shared by every
+ * consumer of the package in the host app — this library must not decide it
+ * unilaterally (library-isolation: a host-owned third-party runtime setting,
+ * and a different `pdfjs-dist` version/consumer elsewhere in the app could
+ * disagree with a value hardcoded here). The host supplies `configurePdfWorker`
+ * instead; it's called once, the first time a PDF is actually opened, since
+ * this module is only ever reached through the dynamic import above. Guarded
+ * by a module-scope flag (not React state) so React's render/effect timing
+ * can't delay it past the point `DocumentPreview` below starts loading the
+ * document — it must run before that, not merely before paint.
+ */
+let hasConfiguredPdfWorker = false;
 
 /** Number of pages eagerly requested as soon as the document loads, before the user opens the panel. */
 const THUMBNAIL_EAGER_BATCH_SIZE = 15;
@@ -72,6 +95,14 @@ export interface PdfContentProps {
   /** File name shown in the canvas header. */
   fileName?: string;
   /**
+   * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
+   * host app. Called once, the first time a PDF attachment is opened. When
+   * omitted, `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is
+   * used instead, so PDF rendering still works, just without the host's own
+   * bundled worker asset.
+   */
+  configurePdfWorker?: () => void | Promise<void>;
+  /**
    * Hides the underlying `DocumentPreview`'s own title/zoom toolbar row —
    * for hosts that render their own header and don't want it duplicated.
    * `DocumentPreview` (`@epam/ai-dial-react-pdf-highlighter`) has no public
@@ -92,6 +123,7 @@ export const PdfContent: FC<PdfContentProps> = ({
   highlights,
   selectedHighlightId,
   loadPdf,
+  configurePdfWorker,
   hideHeader = false,
   labels: {
     thumbnailsLabel = 'Thumbnails',
@@ -100,6 +132,17 @@ export const PdfContent: FC<PdfContentProps> = ({
     pageNumberLabel = 'Page number',
   } = {},
 }) => {
+  /*
+   * Run before any child (including `DocumentPreview` below) is created, so
+   * the worker is configured before the document fetch/parse it triggers —
+   * not inside a `useEffect`, which would fire after `DocumentPreview`'s own
+   * mount effect (child effects run before the parent's).
+   */
+  if (!hasConfiguredPdfWorker && configurePdfWorker) {
+    hasConfiguredPdfWorker = true;
+    void configurePdfWorker();
+  }
+
   const thumbnailsRegionId = useId();
   const [totalPages, setTotalPages] = useState(0);
   const [thumbnails, setThumbnails] = useState<Map<number, string>>(new Map());

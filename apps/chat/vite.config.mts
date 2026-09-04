@@ -155,7 +155,17 @@ export default defineConfig(() => ({
           if (id.includes('classnames') || id.includes('tailwind-merge'))
             return 'vendor-utils';
           if (id.includes('@tabler/icons-react')) return 'tabler-icons';
-          if (id.includes('@epam/ai-dial-ui-kit')) return 'ui-kit';
+          /* `@epam/ai-dial-ui-kit` already splits Monaco behind its own dynamic-import
+           * boundary (`LazyDialJsonEditor` -> `JsonEditor-*.js` -> `MarkdownEditor-*.js`).
+           * A bare substring match on the package name would re-merge those already-lazy
+           * chunks (they physically live under the package's `dist/` folder too) back into
+           * this eager chunk, defeating the library's own split. Exclude them explicitly. */
+          if (
+            id.includes('@epam/ai-dial-ui-kit') &&
+            !id.includes('JsonEditor') &&
+            !id.includes('MarkdownEditor')
+          )
+            return 'ui-kit';
           return undefined;
         },
       },

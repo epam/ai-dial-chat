@@ -14,6 +14,25 @@ export default defineConfig(() => ({
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
     }),
   ],
+  resolve: {
+    alias: {
+      /*
+       * Neither package declares these CSS files in its `exports` map, so
+       * strict `exports`-map resolution (this lib's own build, and Vitest)
+       * rejects the subpath import `PdfContent.tsx` uses. `apps/chat`
+       * carries the same alias for the same reason when it bundles this
+       * lib's source directly.
+       */
+      '@epam/ai-dial-react-pdf-highlighter/styles.css': path.resolve(
+        import.meta.dirname,
+        '../../node_modules/@epam/ai-dial-react-pdf-highlighter/dist/index.css',
+      ),
+      '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css': path.resolve(
+        import.meta.dirname,
+        '../../node_modules/@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css',
+      ),
+    },
+  },
   build: {
     outDir: './dist',
     emptyOutDir: true,

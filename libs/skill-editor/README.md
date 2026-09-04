@@ -31,6 +31,8 @@ usable by any host whose skill storage differs from DIAL Core's.
 - `@epam/ai-dial-react-file-manager` `^0.1.0-dev.17`
 - `@epam/ai-dial-chat-shared` `*`
 - `@tabler/icons-react` `^3.0.0`
+- `@uiw/react-markdown-preview` — CSS only, required by `LazyMarkdownEditor`
+- `@uiw/react-md-editor` — CSS only, required by `LazyMarkdownEditor`
 
 ## Components
 
