@@ -143,7 +143,7 @@ interface Props {
   thinkingLabel: string;
   executedLabel: string;
   stepsLabel: (count: number) => string;
-  /** Called with the message's matched MCP App tool (its canvas key, and a toolInput/toolResult seed) when the user activates the inline preview's expand-to-canvas button, or when it auto-opens. Omit to hide the inline preview entirely. */
+  /** Called with the message's matched MCP App tool (its canvas key, and a toolInput/toolResult seed) when the user activates the inline preview's expand-to-canvas button. Omit to hide the inline preview entirely. */
   onOpenApp?: (
     match: McpAppToolRef,
     canvasKey?: string,

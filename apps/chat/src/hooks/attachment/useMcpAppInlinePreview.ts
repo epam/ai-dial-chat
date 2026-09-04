@@ -9,7 +9,10 @@ import {
   callMcpAppTool,
   fetchMcpAppResourceHtml,
 } from '../../server-api/mcp-apps';
-import { resolveMcpAppToolResult } from '../../utils/mcp-app';
+import {
+  computeMcpAppSeedKey,
+  resolveMcpAppToolResult,
+} from '../../utils/mcp-app';
 import type { McpAppToolRef } from '../conversation/useMcpAppTools';
 import { useMcpAppHostContext } from './useMcpAppHostContext';
 import type { McpAppResponseCache } from './useMcpAppResponseCache';
@@ -87,7 +90,8 @@ export const useMcpAppInlinePreview = (
 
     void (async () => {
       try {
-        const cached = cache.get(cacheKey);
+        const seedKey = computeMcpAppSeedKey(toolCall);
+        const cached = cache.get(cacheKey, seedKey);
         let fetchedHtml: string;
         let resolvedResult: CallToolResult | undefined;
         if (cached) {
@@ -97,7 +101,11 @@ export const useMcpAppInlinePreview = (
             fetchMcpAppResourceHtml(match.toolsetId, match.resourceUri),
             resolveMcpAppToolResult(match, toolCall),
           ]);
-          cache.set(cacheKey, { html: fetchedHtml, toolResult: resolvedResult });
+          cache.set(
+            cacheKey,
+            { html: fetchedHtml, toolResult: resolvedResult },
+            seedKey,
+          );
         }
         if (cancelled) return;
         setHtml(fetchedHtml);

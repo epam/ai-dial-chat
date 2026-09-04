@@ -15,7 +15,10 @@ import {
   fetchMcpAppResourceHtml,
   McpAppResourceFetchError,
 } from '../../server-api/mcp-apps';
-import { resolveMcpAppToolResult } from '../../utils/mcp-app';
+import {
+  computeMcpAppSeedKey,
+  resolveMcpAppToolResult,
+} from '../../utils/mcp-app';
 import type { McpAppToolRef } from '../conversation/useMcpAppTools';
 import { useMcpAppHostContext } from './useMcpAppHostContext';
 import type { McpAppResponseCache } from './useMcpAppResponseCache';
@@ -69,8 +72,11 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
       openCanvasLoading(title, canvasKey);
 
       try {
+        const seedKey = computeMcpAppSeedKey(toolCall);
         const cached =
-          canvasKey != null && !forceReload ? cache.get(canvasKey) : undefined;
+          canvasKey != null && !forceReload
+            ? cache.get(canvasKey, seedKey)
+            : undefined;
 
         let html: string;
         let toolResult: CallToolResult | undefined;
@@ -82,7 +88,9 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
             match.resourceUri,
           );
           toolResult = await resolveMcpAppToolResult(match, toolCall);
-          if (canvasKey != null) cache.set(canvasKey, { html, toolResult });
+          if (canvasKey != null) {
+            cache.set(canvasKey, { html, toolResult }, seedKey);
+          }
         }
 
         openCanvas(

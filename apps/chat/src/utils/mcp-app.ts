@@ -125,6 +125,21 @@ export const mcpAppCanvasKey = (messageIndex: number): string =>
   `${messageIndex}:mcp-app`;
 
 /**
+ * Identifies which seed a `useMcpAppResponseCache` entry was resolved from,
+ * so a cache lookup can tell a settled tool-call seed apart from the
+ * no-tool-call-parsed-yet seed a freshly-streamed message mounts with.
+ * `resolveMcpAppToolCallSeed` returns `undefined` until `custom_content.state`
+ * carries a real tool call, then a defined seed with the call's real
+ * `toolInput` — without this, a cache entry written for the earlier,
+ * seedless mount would be reused for the later, real seed, permanently
+ * skipping `resolveMcpAppToolResult`'s live re-call (D10).
+ */
+export const computeMcpAppSeedKey = (
+  toolCall: McpAppToolCallSeed | undefined,
+): string | undefined =>
+  toolCall == null ? undefined : JSON.stringify(toolCall.toolInput ?? null);
+
+/**
  * Seeds the mounted app's initial `toolInput`/`toolResult` from the
  * message's real tool-call data (`custom_content.state`, in whichever of its
  * two known orchestrator-specific shapes is present) — `toolInput` is the
