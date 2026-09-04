@@ -28,4 +28,8 @@ export * from '../files/useDialFileMetadata/useDialFileMetadata';
 export * from '../files/useDialFileMutations/useDialFileMutations';
 export * from '../files/useDialFileSharing/useDialFileSharing';
 export * from '../files/useDialFileUploadBatch/useDialFileUploadBatch';
+export type {
+  UseGridEditingScrollOptions,
+  UseGridEditingScrollResult,
+} from '@epam/ai-dial-chat-shared';
 export { useGridEditingScroll } from '@epam/ai-dial-chat-shared';
