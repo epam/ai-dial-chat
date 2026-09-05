@@ -1,0 +1,819 @@
+import {
+  BadGatewayException,
+  BadRequestException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { EnvironmentVariables } from '../../../config/environment.config';
+import type { DeploymentsService } from '../../../deployments/deployments.service';
+import type { DialClientService } from '../../../dial/dial-client.service';
+import type { SkillsLookupService } from '../../../skills/lookup/skills-lookup.service';
+import type { ToolsetsService } from '../../../toolsets/toolsets.service';
+import { ShareAccess } from '../../dto/create-share-link.dto';
+import { ShareInvitationService } from '../share-invitation.service';
+
+const okResponse = (data: unknown) =>
+  ({ data, response: {} as Response }) as never;
+
+const errResponse = (status: number) =>
+  ({ error: {}, response: { status } as Response }) as never;
+
+function makeService(callbackBaseUrl = 'https://example.com/callback') {
+  const dialClient = {
+    client: {
+      shareResource: vi.fn(),
+      getConversation: vi.fn().mockResolvedValue(okResponse({ messages: [] })),
+      getInvitation: vi.fn(),
+    },
+    baseUrl: 'http://dial-core',
+    dialApiVersion: '2024-10-21',
+  } as unknown as DialClientService;
+
+  const configService = {
+    get: vi.fn((key: string) =>
+      key === 'AUTH_CALLBACK_BASE_URL' ? callbackBaseUrl : undefined,
+    ),
+  } as unknown as ConfigService<EnvironmentVariables>;
+
+  const deploymentsService = {
+    invalidateListCache: vi.fn().mockResolvedValue(undefined),
+    resolveDeploymentItem: vi.fn().mockResolvedValue(null),
+  } as unknown as DeploymentsService;
+
+  const toolsetsService = {
+    invalidateListCache: vi.fn().mockResolvedValue(undefined),
+    resolveToolsetItem: vi.fn().mockResolvedValue(null),
+  } as unknown as ToolsetsService;
+
+  const skillsLookupService = {
+    resolveSkillItem: vi.fn().mockResolvedValue(null),
+  } as unknown as SkillsLookupService;
+
+  const service = new ShareInvitationService(
+    dialClient,
+    configService,
+    deploymentsService,
+    toolsetsService,
+    skillsLookupService,
+  );
+  return {
+    service,
+    dialClient,
+    deploymentsService,
+    toolsetsService,
+    skillsLookupService,
+  };
+}
+
+describe('ShareInvitationService', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('createShareLink', () => {
+    it('maps a successful DIAL Core response to ShareLinkResponseDto', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
+        okResponse({ invitationLink: '/v1/invitations/abc123' }),
+      );
+
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'gpt-4o',
+        access: [ShareAccess.View],
+      });
+
+      expect(result).toEqual({
+        url: 'https://example.com/catalog/shared/abc123',
+        expiresInDays: 3,
+        access: [ShareAccess.View],
+      });
+    });
+
+    it('builds the frontend invitation URL from an absolute DIAL Core link', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
+        okResponse({ invitationLink: 'https://dial-core/invite/abc' }),
+      );
+
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'gpt-4o',
+        access: [ShareAccess.View],
+      });
+
+      expect(result.url).toBe('https://example.com/catalog/shared/abc');
+    });
+
+    it('forwards the Authorization header and requested permissions to DIAL Core', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/abc' }));
+
+      await service.createShareLink('my-token', 'my-bucket', {
+        itemId: 'my-app-id',
+        access: [ShareAccess.View, ShareAccess.Edit],
+      });
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer my-token' },
+        body: {
+          invitationType: 'LINK',
+          resources: [{ url: 'my-app-id', permissions: ['READ', 'WRITE'] }],
+        },
+      });
+    });
+
+    /*
+     * Regression: `itemId` is a resource's public id, kept unencoded and
+     * human-readable end to end (see `buildPromptId`), but DIAL Core's own
+     * `shareResource` expects a percent-encoded resource url — sending the
+     * raw id straight through used to 400 for any name containing a space.
+     */
+    it('percent-encodes a resource id containing spaces before sending it to DIAL Core', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/abc' }));
+
+      await service.createShareLink('my-token', 'my-bucket', {
+        itemId: 'prompts/owner-bucket/Work/AI/tone of voice',
+        access: [ShareAccess.View],
+      });
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer my-token' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'prompts/owner-bucket/Work/AI/tone%20of%20voice',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('routes conversation itemIds to the conversation accept-invitation path', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
+        okResponse({ invitationLink: '/v1/invitations/conv-abc' }),
+      );
+
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'conversations/bucket/my-chat.json',
+        access: [ShareAccess.View],
+      });
+
+      expect(result.url).toBe(
+        'https://example.com/conversations/shared/conv-abc',
+      );
+      expect(dialClient.client.getConversation).toHaveBeenCalledWith(
+        'bucket',
+        'my-chat.json',
+        { headers: { Authorization: 'Bearer token-abc' } },
+      );
+    });
+
+    it('shares unique DIAL file attachments referenced by a conversation', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({
+          messages: [
+            {
+              custom_content: {
+                attachments: [
+                  { url: 'files/owner-bucket/report.pdf' },
+                  { url: 'https://example.com/public.pdf' },
+                  { data: 'aW5saW5l' },
+                ],
+                annotations: [
+                  {
+                    body: {
+                      source: {
+                        attachment: {
+                          url: 'files/owner-bucket/citation.pdf',
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              custom_content: {
+                attachments: [
+                  { url: 'files/owner-bucket/report.pdf' },
+                  {
+                    reference_url: 'files/owner-bucket/source.pdf#page=2',
+                  },
+                ],
+                stages: [
+                  {
+                    attachments: [{ url: 'files/owner-bucket/generated.csv' }],
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/conv' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'conversations/owner-bucket/Planning/My%20conversation.json',
+        access: [ShareAccess.View, ShareAccess.Edit],
+      });
+
+      expect(dialClient.client.getConversation).toHaveBeenCalledWith(
+        'owner-bucket',
+        'Planning/My%20conversation.json',
+        { headers: { Authorization: 'Bearer token-abc' } },
+      );
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'conversations/owner-bucket/Planning/My%20conversation.json',
+              permissions: ['READ', 'WRITE'],
+            },
+            {
+              url: 'files/owner-bucket/report.pdf',
+              permissions: ['READ', 'WRITE'],
+            },
+            {
+              url: 'files/owner-bucket/citation.pdf',
+              permissions: ['READ', 'WRITE'],
+            },
+            {
+              url: 'files/owner-bucket/source.pdf',
+              permissions: ['READ', 'WRITE'],
+            },
+            {
+              url: 'files/owner-bucket/generated.csv',
+              permissions: ['READ', 'WRITE'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('excludes a related file left in a different bucket than the conversation', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({
+          messages: [
+            {
+              custom_content: {
+                attachments: [
+                  { url: 'files/owner-bucket/report.pdf' },
+                  { url: 'files/original-owner-bucket/shared-in.pdf' },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/conv' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'conversations/owner-bucket/my-chat.json',
+        access: [ShareAccess.View],
+      });
+
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'conversations/owner-bucket/my-chat.json',
+              permissions: ['READ'],
+            },
+            {
+              url: 'files/owner-bucket/report.pdf',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('still shares a related file in the public/organization bucket', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({
+          messages: [
+            {
+              custom_content: {
+                attachments: [
+                  { url: 'files/owner-bucket/report.pdf' },
+                  { url: 'files/public/template.pdf' },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/conv' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'conversations/owner-bucket/my-chat.json',
+        access: [ShareAccess.View],
+      });
+
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'conversations/owner-bucket/my-chat.json',
+              permissions: ['READ'],
+            },
+            {
+              url: 'files/owner-bucket/report.pdf',
+              permissions: ['READ'],
+            },
+            {
+              url: 'files/public/template.pdf',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('does not share partial resources when the conversation lookup rejects', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+      const shareSpy = vi.spyOn(dialClient.client, 'shareResource');
+
+      await expect(
+        service.createShareLink('token-abc', 'session-bucket', {
+          itemId: 'conversations/owner-bucket/my-chat.json',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(ServiceUnavailableException);
+      expect(shareSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not share partial resources when the conversation lookup returns an upstream error', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        errResponse(404),
+      );
+      const shareSpy = vi.spyOn(dialClient.client, 'shareResource');
+
+      await expect(
+        service.createShareLink('token-abc', 'session-bucket', {
+          itemId: 'conversations/owner-bucket/my-chat.json',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(NotFoundException);
+      expect(shareSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not share partial resources when the conversation lookup returns no data', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse(null),
+      );
+      const shareSpy = vi.spyOn(dialClient.client, 'shareResource');
+
+      await expect(
+        service.createShareLink('token-abc', 'session-bucket', {
+          itemId: 'conversations/owner-bucket/my-chat.json',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(BadGatewayException);
+      expect(shareSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not load related resources for a non-conversation item', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'shareResource').mockResolvedValue(
+        okResponse({ invitationLink: '/invite/app' }),
+      );
+
+      await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'applications/my-bucket/my-app',
+        access: [ShareAccess.View],
+      });
+
+      expect(dialClient.client.getConversation).not.toHaveBeenCalled();
+    });
+
+    it('creates a share link for a skills/{bucket}/{path} itemId', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(
+          okResponse({ invitationLink: '/v1/invitations/skill-abc' }),
+        );
+
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'skills/owner-bucket/team-a/docs-helper',
+        access: [ShareAccess.View],
+      });
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'skills/owner-bucket/team-a/docs-helper',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+      expect(result.url).toBe('https://example.com/catalog/shared/skill-abc');
+    });
+
+    it('creates a share link for a full prompts/{bucket}/{path} itemId, unmodified', async () => {
+      const { service, dialClient } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/p1' }));
+
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'prompts/my-bucket/Work/AI/summarize',
+        access: [ShareAccess.View],
+      });
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'prompts/my-bucket/Work/AI/summarize',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+      /* Prompts live in the catalog, so they use the catalog accept route. */
+      expect(result.url).toBe('https://example.com/catalog/shared/p1');
+      expect(dialClient.client.getConversation).not.toHaveBeenCalled();
+    });
+
+    it('leaves any itemId untouched, with no per-kind qualification', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/abc' }));
+
+      await service.createShareLink('token-abc', 'my-bucket', {
+        itemId: 'applications/other-bucket/my-app',
+        access: [ShareAccess.View],
+      });
+
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            resources: [
+              {
+                url: 'applications/other-bucket/my-app',
+                permissions: ['READ'],
+              },
+            ],
+          }),
+        }),
+      );
+    });
+
+    it('throws BadGatewayException when DIAL Core returns an empty invitation link', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
+        okResponse({}),
+      );
+
+      await expect(
+        service.createShareLink('token', 'my-bucket', {
+          itemId: 'gpt-4o',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(BadGatewayException);
+    });
+
+    it('throws BadGatewayException on upstream 502', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
+        errResponse(502),
+      );
+
+      await expect(
+        service.createShareLink('token', 'my-bucket', {
+          itemId: 'gpt-4o',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(BadGatewayException);
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'shareResource').mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+
+      await expect(
+        service.createShareLink('token', 'my-bucket', {
+          itemId: 'gpt-4o',
+          access: [ShareAccess.View],
+        }),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
+  describe('acceptInvitation', () => {
+    it('peeks the invitation for its itemId, then accepts it via DIAL Core', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'getInvitation')
+        .mockResolvedValue(
+          okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
+        );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+        'bucket-1',
+      );
+
+      expect(spy).toHaveBeenNthCalledWith(1, 'abc123', {
+        headers: { Authorization: 'Bearer token-abc' },
+      });
+      expect(spy).toHaveBeenNthCalledWith(2, 'abc123', {
+        headers: { Authorization: 'Bearer token-abc' },
+        params: { query: { accept: true } },
+      });
+      expect(result).toEqual({ itemId: 'gpt-4o' });
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+      expect(toolsetsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+    });
+
+    it('throws BadGatewayException when DIAL Core returns no shared resource', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({ id: 'abc123', resources: [] }),
+      );
+
+      await expect(
+        service.acceptInvitation('token', 'abc123', 'user-sub-1', 'bucket-1'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+
+    it('throws NotFoundException on upstream 404', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        errResponse(404),
+      );
+
+      await expect(
+        service.acceptInvitation('token', 'missing', 'user-sub-1', 'bucket-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+
+      await expect(
+        service.acceptInvitation('token', 'abc123', 'user-sub-1', 'bucket-1'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('treats a 400 "already belong to you" accept error as success instead of throwing', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation')
+        .mockResolvedValueOnce(
+          okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
+        )
+        .mockResolvedValueOnce({
+          error: 'Resource gpt-4o already belong to you',
+          response: { status: 400 } as Response,
+        } as never);
+
+      const result = await service.acceptInvitation(
+        'token',
+        'abc123',
+        'user-sub-1',
+        'bucket-1',
+      );
+
+      expect(result).toEqual({ itemId: 'gpt-4o' });
+    });
+
+    it('still throws BadRequestException for a 400 accept error unrelated to already owning the resource', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation')
+        .mockResolvedValueOnce(
+          okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
+        )
+        .mockResolvedValueOnce({
+          error: 'Invitation has expired',
+          response: { status: 400 } as Response,
+        } as never);
+
+      await expect(
+        service.acceptInvitation('token', 'abc123', 'user-sub-1', 'bucket-1'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('returns sharedToolset for a toolsets/-prefixed itemId, without calling resolveDeploymentItem', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({
+          id: 'abc123',
+          resources: [{ url: 'toolsets/b/search__0.0.1' }],
+        }),
+      );
+      const sharedToolset = { id: 'toolsets/b/search__0.0.1', toolset: 'x' };
+      vi.mocked(toolsetsService.resolveToolsetItem).mockResolvedValue(
+        sharedToolset as never,
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+        'bucket-1',
+      );
+
+      expect(result).toEqual({
+        itemId: 'toolsets/b/search__0.0.1',
+        sharedToolset,
+      });
+      expect(toolsetsService.resolveToolsetItem).toHaveBeenCalledWith(
+        'user-sub-1',
+        'token-abc',
+        'toolsets/b/search__0.0.1',
+      );
+      expect(deploymentsService.resolveDeploymentItem).not.toHaveBeenCalled();
+    });
+
+    it('returns sharedSkill for a skills/-prefixed itemId, without calling resolveDeploymentItem or resolveToolsetItem', async () => {
+      const {
+        service,
+        deploymentsService,
+        toolsetsService,
+        skillsLookupService,
+      } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({
+          id: 'abc123',
+          resources: [{ url: 'skills/owner-bucket/team-a/docs-helper' }],
+        }),
+      );
+      const sharedSkill = {
+        name: 'docs-helper',
+        path: 'team-a/docs-helper',
+        url: 'skills/owner-bucket/team-a/docs-helper',
+        bucket: 'owner-bucket',
+        nodeType: 'item',
+      };
+      vi.mocked(skillsLookupService.resolveSkillItem).mockResolvedValue(
+        sharedSkill as never,
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+        'bucket-1',
+      );
+
+      expect(result).toEqual({
+        itemId: 'skills/owner-bucket/team-a/docs-helper',
+        sharedSkill,
+      });
+      expect(skillsLookupService.resolveSkillItem).toHaveBeenCalledWith(
+        'skills/owner-bucket/team-a/docs-helper',
+        'token-abc',
+        'bucket-1',
+      );
+      expect(deploymentsService.resolveDeploymentItem).not.toHaveBeenCalled();
+      expect(toolsetsService.resolveToolsetItem).not.toHaveBeenCalled();
+    });
+
+    it('returns sharedDeployment for an applications/-prefixed itemId', async () => {
+      const { service, deploymentsService } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({
+          id: 'abc123',
+          resources: [{ url: 'applications/b/my-app__1.0' }],
+        }),
+      );
+      const sharedDeployment = {
+        id: 'applications/b/my-app__1.0',
+        type: 'application',
+      };
+      vi.mocked(deploymentsService.resolveDeploymentItem).mockResolvedValue(
+        sharedDeployment as never,
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+        'bucket-1',
+      );
+
+      expect(result).toEqual({
+        itemId: 'applications/b/my-app__1.0',
+        sharedDeployment,
+      });
+      expect(deploymentsService.resolveDeploymentItem).toHaveBeenCalledWith(
+        'applications/b/my-app__1.0',
+        'token-abc',
+        'bucket-1',
+      );
+    });
+
+    it('falls back to resolveToolsetItem for an ambiguous id when resolveDeploymentItem finds nothing', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({
+          id: 'abc123',
+          resources: [{ url: 'root-toolset-copy' }],
+        }),
+      );
+      vi.mocked(deploymentsService.resolveDeploymentItem).mockResolvedValue(
+        null,
+      );
+      const sharedToolset = { id: 'root-toolset-copy', toolset: 'x' };
+      vi.mocked(toolsetsService.resolveToolsetItem).mockResolvedValue(
+        sharedToolset as never,
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+        'bucket-1',
+      );
+
+      expect(result).toEqual({
+        itemId: 'root-toolset-copy',
+        sharedToolset,
+      });
+    });
+
+    it('omits both sharedDeployment and sharedToolset when nothing resolves', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({ id: 'abc123', resources: [{ url: 'unknown-id' }] }),
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+        'bucket-1',
+      );
+
+      expect(result).toEqual({ itemId: 'unknown-id' });
+    });
+
+    it('still succeeds with only itemId when summary resolution throws', async () => {
+      const { service, deploymentsService } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
+      );
+      vi.mocked(deploymentsService.resolveDeploymentItem).mockRejectedValue(
+        new Error('upstream boom'),
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+        'bucket-1',
+      );
+
+      expect(result).toEqual({ itemId: 'gpt-4o' });
+    });
+  });
+});
