@@ -219,6 +219,93 @@ describe('applyChunkToMessages — stage merging', () => {
     expect(att?.data).toBe('Full markdown');
   });
 
+  it('does not merge two html_tag annotations that both lack an index', () => {
+    const messages = [makeAssistantMessage()];
+    const chunk = makeChunk('', {
+      custom_fields: {
+        annotations: [
+          {
+            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+            body: {
+              title: 'doc.pdf',
+              quote: 'first',
+              source: { type: 'attachment', url: 'files/doc.pdf' },
+            },
+          },
+          {
+            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e2' } },
+            body: {
+              title: 'doc.pdf',
+              quote: 'second',
+              source: { type: 'attachment', url: 'files/doc.pdf' },
+            },
+          },
+        ],
+      },
+    });
+    const result = applyChunkToMessages(messages, 0, chunk);
+    const annotations = result?.[0].custom_content?.annotations;
+    expect(annotations).toHaveLength(2);
+    expect(annotations?.map((a) => a.target?.selector)).toEqual([
+      { type: 'html_tag', tag: 'cit', id: 'e1' },
+      { type: 'html_tag', tag: 'cit', id: 'e2' },
+    ]);
+  });
+
+  it('merges a later chunk for the same cit id, concatenating the quote', () => {
+    const messages = [
+      makeAssistantMessage({
+        custom_content: {
+          annotations: [
+            {
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+              body: {
+                quote: 'Patient meets',
+                source: {
+                  type: 'attachment',
+                  attachment: { type: 'application/pdf', url: 'files/doc.pdf' },
+                },
+              },
+            },
+          ],
+        },
+      }),
+    ];
+    const chunk = makeChunk('', {
+      custom_content: {
+        annotations: [
+          {
+            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+            body: { quote: ' ALL criteria' },
+          },
+        ],
+      },
+    });
+    const result = applyChunkToMessages(messages, 0, chunk);
+    const annotations = result?.[0].custom_content?.annotations;
+    expect(annotations).toHaveLength(1);
+    expect(annotations?.[0].body?.quote).toBe('Patient meets ALL criteria');
+  });
+
+  it('still merges index-based annotations by index (regression)', () => {
+    const messages = [
+      makeAssistantMessage({
+        custom_content: {
+          annotations: [{ index: 0, body: { quote: 'Q3 rev' } }],
+        },
+      }),
+    ];
+    const chunk = makeChunk('', {
+      custom_content: {
+        annotations: [{ index: 0, body: { quote: 'enue was 1B$' } }],
+      },
+    });
+    const result = applyChunkToMessages(messages, 0, chunk);
+    const annotations = result?.[0].custom_content?.annotations;
+    expect(annotations).toHaveLength(1);
+    expect(annotations?.[0].body?.quote).toBe('Q3 revenue was 1B$');
+  });
+
   it('appends new attachments with a different index', () => {
     const messages = [
       makeAssistantMessage({

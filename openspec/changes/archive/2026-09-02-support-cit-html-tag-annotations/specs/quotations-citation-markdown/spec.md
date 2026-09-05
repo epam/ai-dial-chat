@@ -1,16 +1,4 @@
-# quotations-citation-markdown Specification
-
-## Purpose
-
-Specifies the host-agnostic citation-aware markdown hook exported from
-`@epam/ai-dial-quotations` — the generalized form of `apps/chat`'s
-`useCitationMarkdownComponents` — covering sentinel injection, the
-`react-markdown` `p`/`li` overrides that render `CitationDropdown`, and the
-delegation of preview/open-in-browser actions and label text to
-host-supplied callbacks instead of `react-i18next`, application DTO
-conversion, or `@epam/ai-dial-attachment-canvas`.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Citation-aware markdown hook exported from the package root
 
@@ -32,53 +20,6 @@ conversion, or `@epam/ai-dial-attachment-canvas`.
 
 - **WHEN** the hook is called with `groups.length === 0` and `content` containing a `<cit id="e43864">` tag
 - **THEN** `processedContent` has the tag removed, and `markdownComponents` is an empty object
-
-### Requirement: Preview and browser-open actions are delegated to injected callbacks
-
-The hook SHALL call the host-supplied `onPreview(annotation, group)` when a
-citation marker's preview action is invoked, and `onOpenInBrowser(annotation)`
-when its open-in-browser action is invoked. The hook SHALL own none of the
-PDF-source detection, attachment-DTO conversion, or canvas-opening logic that
-`apps/chat`'s app hook previously performed inline — that logic moves to the
-application's own composed `onPreview` implementation. The hook SHALL NOT
-depend on `@epam/ai-dial-attachment-canvas`.
-
-#### Scenario: Preview action delegates without PDF-source branching in the library
-
-- **WHEN** a citation marker's preview action is invoked for any annotation,
-  regardless of whether its source is a PDF
-- **THEN** the hook calls `onPreview(annotation, group)` and performs no
-  content-type-specific branching itself
-
-#### Scenario: Open-in-browser action delegates directly
-
-- **WHEN** a citation marker's open-in-browser action is invoked
-- **THEN** the hook calls `onOpenInBrowser(annotation)` and performs no
-  DIAL-file-id resolution or `window.open` call itself
-
-### Requirement: Marker labels are built per group via an injected callback
-
-The hook SHALL call the host-supplied `buildLabels(group): { cardLabels;
-markerLabels }` to obtain all translated strings for a given citation
-group, memoizing the resulting override map so that `p`/`li` overrides only
-change identity when `groups`, `buildLabels`, `onPreview`, `onOpenInBrowser`,
-or `isCompactTypography` change — never on citation-card open/close
-interaction state.
-
-#### Scenario: Stable component references across unrelated re-renders
-
-- **WHEN** the host re-renders with the same `groups`, `callbacks`, and
-  `isCompactTypography`, but changed, unrelated component state
-- **THEN** `markdownComponents` retains the same object identity as the
-  previous render
-
-#### Scenario: Component references change only when groups transition between empty and non-empty
-
-- **WHEN** `groups` changes from an empty array to a non-empty array (or vice
-  versa) between renders
-- **THEN** `markdownComponents` is recomputed; a change to `groups`'
-  contents alone (same emptiness) with the same `buildLabels` reference does
-  not otherwise change unrelated overrides' identity
 
 ### Requirement: Out-of-range or malformed annotation input is handled defensively
 

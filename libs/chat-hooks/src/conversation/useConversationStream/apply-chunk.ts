@@ -1,5 +1,6 @@
 import type {
   Annotation,
+  HtmlTagSelector,
   Message,
   MessageAttachment,
   Stage,
@@ -7,13 +8,40 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import { normalizeRawAnnotations } from '@epam/ai-dial-quotations';
 
+/**
+ * Narrowed via an explicit cast rather than control-flow narrowing, because
+ * `AnnotationSelector`'s open catch-all variant
+ * (`{ type: string; [key: string]: unknown }`) also satisfies
+ * `type === 'html_tag'` and would otherwise widen `.id` to `unknown`.
+ */
+const htmlTagSelectorId = (annotation: Annotation): string | undefined => {
+  const selector = annotation.target?.selector;
+  return selector?.type === 'html_tag'
+    ? (selector as HtmlTagSelector).id
+    : undefined;
+};
+
+/**
+ * Two annotations are the same when both carry the same `index`, or — for
+ * `html_tag`-selector annotations, which never carry an `index` — when both
+ * have the same `target.selector.id`. Two annotations that both lack an
+ * `index` and are not matching `html_tag` ids are never considered the
+ * same, so distinct `html_tag` citations don't collapse into one entry.
+ */
+const sameAnnotation = (a: Annotation, b: Annotation): boolean => {
+  if (a.index != null && b.index != null) return a.index === b.index;
+  const aId = htmlTagSelectorId(a);
+  const bId = htmlTagSelectorId(b);
+  return aId != null && aId === bId;
+};
+
 const mergeAnnotations = (
   existing: Annotation[],
   incoming: Annotation[],
 ): Annotation[] => {
   const result = [...existing];
   for (const annotation of incoming) {
-    const idx = result.findIndex((a) => a.index === annotation.index);
+    const idx = result.findIndex((a) => sameAnnotation(a, annotation));
     if (idx >= 0) {
       const prev = result[idx];
       result[idx] = {

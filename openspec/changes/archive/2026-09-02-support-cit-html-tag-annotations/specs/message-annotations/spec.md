@@ -1,12 +1,4 @@
-# message-annotations Specification
-
-## Purpose
-
-Annotation types, delta accumulation during streaming, and the filtering `useAnnotations` applies.
-
-## Requirements
-
----
+## MODIFIED Requirements
 
 ### Requirement: Annotation types defined in `libs/chat-shared`
 
@@ -142,7 +134,7 @@ Raw wire-format annotations arriving via `delta.custom_fields.annotations` are n
 - **WHEN** `useAnnotations` is called with `isStreaming: true` and the message's resolved annotations contain only `text_character_range` annotations
 - **THEN** it returns `[]`
 
----
+## ADDED Requirements
 
 ### Requirement: Dual-shape wire normalization in `normalizeRawAnnotations`
 
@@ -175,4 +167,3 @@ A raw entry that matches neither shape (no resolvable attachment index and no `h
 
 - **WHEN** a raw entry has neither a resolvable `attachment_index` nor an `html_tag` selector with `body.source.url`
 - **THEN** the entry is omitted from the result
-</content>
