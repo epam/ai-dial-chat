@@ -34,6 +34,7 @@ interface Props {
   disallowSelectRootFolder?: boolean;
   warningMessage?: string;
   reviewBucket?: string;
+  showHiddenFolders?: boolean;
 }
 
 export const SelectFolderModal = ({
@@ -44,6 +45,7 @@ export const SelectFolderModal = ({
   disallowSelectRootFolder,
   warningMessage,
   reviewBucket,
+  showHiddenFolders = false,
 }: Props) => {
   const dispatch = useAppDispatch();
   const fileManagerActionRef = useRef<DialFileManagerActionsRef>(null);
@@ -100,6 +102,7 @@ export const SelectFolderModal = ({
     },
     availableTabs: isReview ? reviewTabs : defaultTabs,
     reviewBucket,
+    allowDotAtStart: showHiddenFolders,
   });
 
   useEffect(() => {
@@ -198,6 +201,7 @@ export const SelectFolderModal = ({
         gridOptions={modalGridOptions}
         navigationPanelOptions={navigationPanelOptions}
         collapsedFileTree={collapsedTree}
+        showHiddenFiles={showHiddenFolders}
         allowedFileTypes={[]}
         actionsRef={fileManagerActionRef}
         onCreateFolder={handleCreateFolder}

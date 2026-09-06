@@ -24,5 +24,28 @@ describe('constants/validation-helpers.ts', () => {
       expect(schema.safeParse('тест').success).toBe(false);
       expect(schema.safeParse('ab').success).toBe(true);
     });
+
+    it('rejects a dot at the start when checkDotsInTheStart is set', () => {
+      const schema = getEntityNameSchema({
+        name: 'Folder name',
+        checkDotsInTheEnd: true,
+        checkDotsInTheStart: true,
+      });
+
+      expect(schema.safeParse('.github').success).toBe(false);
+      expect(schema.safeParse('src').success).toBe(true);
+    });
+
+    it('accepts a dot at the start when checkDotsInTheStart is unset, still rejecting a trailing dot', () => {
+      const schema = getEntityNameSchema({
+        name: 'Folder name',
+        checkDotsInTheEnd: true,
+        checkDotsInTheStart: false,
+      });
+
+      expect(schema.safeParse('.github').success).toBe(true);
+      expect(schema.safeParse('.env').success).toBe(true);
+      expect(schema.safeParse('trailing.').success).toBe(false);
+    });
   });
 });

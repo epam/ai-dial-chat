@@ -150,6 +150,7 @@ export interface FolderProps<T, P = unknown> {
   canManageOnlyTemporaryFolders?: boolean;
   onShowError?: (error: string) => void;
   showTechnicalFolders?: boolean;
+  allowDotAtStart?: boolean;
 }
 
 export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -191,6 +192,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   canManageOnlyTemporaryFolders = false,
   onShowError,
   showTechnicalFolders = false,
+  allowDotAtStart = false,
 }: FolderProps<T>) => {
   const router = useRouter();
   const { t } = useTranslation(Translation.Chat);
@@ -497,7 +499,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         return;
       }
 
-      if (newName.startsWith('.')) {
+      if (!allowDotAtStart && newName.startsWith('.')) {
         dispatch(
           UIActions.showErrorToast({
             message: t(ChatI18nKeys.DotAtStartNotPermitted),
@@ -531,6 +533,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     onRenameFolder,
     renameValue,
     skipFolderRenameValidation,
+    allowDotAtStart,
     currentFolder,
     newAddedFolderId,
     handleNewFolderRename,
@@ -1336,6 +1339,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     canManageOnlyTemporaryFolders={
                       canManageOnlyTemporaryFolders
                     }
+                    showTechnicalFolders={showTechnicalFolders}
+                    allowDotAtStart={allowDotAtStart}
                   />
                 </Fragment>
               );

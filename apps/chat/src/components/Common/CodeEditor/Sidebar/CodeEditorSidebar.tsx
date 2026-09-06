@@ -3,14 +3,17 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getLastPathSegment, trimEndDots } from '@/src/utils/app/common';
-import { constructPath, prepareFileName } from '@/src/utils/app/file';
+import {
+  constructPath,
+  prepareFileName,
+  withoutFileManagerPlaceholderByName,
+} from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 import {
   ResolvedUploadFile,
   dispatchPreparedFileUploads,
 } from '@/src/utils/app/prepare-files-for-upload';
-import { isHiddenEntity } from '@/src/utils/app/search';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Translation } from '@/src/types/translation';
@@ -61,8 +64,8 @@ export const CodeEditorSidebar = ({
 
   const rootFiles = useMemo(
     () =>
-      allFiles.filter(
-        (file) => !isHiddenEntity(file) && file.folderId === sourcesFolderId,
+      withoutFileManagerPlaceholderByName(allFiles).filter(
+        (file) => file.folderId === sourcesFolderId,
       ),
     [allFiles, sourcesFolderId],
   );
@@ -179,6 +182,7 @@ export const CodeEditorSidebar = ({
           maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
           rootFolderId={sourcesFolderId}
           reviewBucket={reviewBucket}
+          showHiddenFolders
         />
       )}
       <ConfirmDialog
