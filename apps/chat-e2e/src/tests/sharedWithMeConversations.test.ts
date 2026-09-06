@@ -1430,7 +1430,7 @@ dialTest(
         );
         const sortedConversationNames = SortingUtil.sortStringsArray(
           conversationsInFolder.conversations.map((c) => c.name),
-          (i) => i.toLowerCase(),
+          (i) => i,
           'asc',
         );
         openedConversationName = sortedConversationNames[0];

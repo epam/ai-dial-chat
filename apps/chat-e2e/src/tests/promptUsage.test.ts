@@ -706,6 +706,9 @@ dialSharedWithMeTest(
         await additionalShareUserSystemPromptListAssertion.assertPromptListOptions(
           [promptWithParams.name, promptInFolder.name],
         );
+        await additionalShareUserAgentSettings.setSystemPrompt(
+          promptWithParams.name,
+        );
         await additionalShareUserAgentSettings
           .getPromptList()
           .selectPromptWithKeyboard(promptWithParams.name, {
@@ -733,6 +736,9 @@ dialSharedWithMeTest(
       `Type / in system prompt field, select shared folder prompt and verify it is applied after the first prompt`,
       async () => {
         await additionalShareUserAgentSettings.setSystemPrompt('/');
+        await additionalShareUserAgentSettings.setSystemPrompt(
+          promptInFolder.name,
+        );
         await additionalShareUserAgentSettings
           .getPromptList()
           .selectPromptWithKeyboard(promptInFolder.name, {

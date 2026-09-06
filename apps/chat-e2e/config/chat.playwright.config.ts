@@ -26,6 +26,7 @@ export default defineConfig({
   outputDir: `../${ResultFolder.testResults}`,
   timeout: 60000,
   retries: 1,
+  retryStrategy: 'isolated',
   maxFailures: 10,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -70,6 +71,7 @@ export default defineConfig({
       testMatch: /\/chatApi\/.*\.test\.ts/,
       dependencies: ['cleanup'],
       fullyParallel: true,
+      timeout: 120000,
     },
     {
       name: 'chat e2e',

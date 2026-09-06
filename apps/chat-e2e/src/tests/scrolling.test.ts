@@ -68,7 +68,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.listTextBody,
         );
-        await chat.sendRequestWithButton('request to mock', false);
+        await chat.sendRequestWithButton('request to mock');
 
         const scrollPosition =
           await chat.scrollableArea.getVerticalScrollPosition();

@@ -433,11 +433,15 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await sendMessage.attachmentMenuTrigger.click();
-        await dialHomePage.uploadData({ path: file1, dataType: 'upload' }, () =>
-          attachmentDropdownMenu.selectMenuOption(
-            UploadMenuOptions.uploadFromDevice,
-            { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
-          ),
+        await dialHomePage.waitForExpectedResponses(
+          () =>
+            dialHomePage.uploadData({ path: file1, dataType: 'upload' }, () =>
+              attachmentDropdownMenu.selectMenuOption(
+                UploadMenuOptions.uploadFromDevice,
+                { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
+              ),
+            ),
+          [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
         await fileManagerModal.getAttachButton().click();
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(

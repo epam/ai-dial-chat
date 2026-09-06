@@ -636,7 +636,7 @@ dialSharedWithMeTest(
         folder = folderPrompts.folders;
         const sortedPromptNames = SortingUtil.sortStringsArray(
           folderPrompts.prompts.map((p) => p.name),
-          (i) => i.toLowerCase(),
+          (i) => i,
           'asc',
         );
         openedPromptName = sortedPromptNames[0];
