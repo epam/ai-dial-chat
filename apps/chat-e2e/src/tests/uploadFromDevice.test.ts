@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   Attachment,
   CheckboxState,
   ExpectedMessages,
@@ -318,16 +319,20 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
-        await dialHomePage.uploadData(
-          { path: attachments, dataType: 'upload' },
+        await dialHomePage.waitForExpectedResponses(
           () =>
-            attachmentDropdownMenu.selectMenuOption(
-              UploadMenuOptions.uploadFromDevice,
-              {
-                isHttpMethodTriggered: true,
-                triggeredHttpMethod: 'GET',
-              },
+            dialHomePage.uploadData(
+              { path: attachments, dataType: 'upload' },
+              () =>
+                attachmentDropdownMenu.selectMenuOption(
+                  UploadMenuOptions.uploadFromDevice,
+                  {
+                    isHttpMethodTriggered: true,
+                    triggeredHttpMethod: 'GET',
+                  },
+                ),
             ),
+          [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
         for (const attachment of attachments) {
           await fileManagerModalGridAssertion.assertGridRowByNameState(
@@ -385,13 +390,17 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
-        await dialHomePage.uploadData(
-          { path: Attachment.sunImageName, dataType: 'upload' },
+        await dialHomePage.waitForExpectedResponses(
           () =>
-            attachmentDropdownMenu.selectMenuOption(
-              UploadMenuOptions.uploadFromDevice,
-              { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
+            dialHomePage.uploadData(
+              { path: Attachment.sunImageName, dataType: 'upload' },
+              () =>
+                attachmentDropdownMenu.selectMenuOption(
+                  UploadMenuOptions.uploadFromDevice,
+                  { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
+                ),
             ),
+          [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
         await baseAssertion.assertElementState(fileManagerModal, 'visible');
         await fileManagerModalGridAssertion.assertGridRowByNameState(
@@ -424,9 +433,13 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await dialHomePage.uploadData(
-          { path: Attachment.dotExtensionImageName, dataType: 'upload' },
-          () => fileManagerModal.openUploadFromDevice(),
+        await dialHomePage.waitForExpectedResponses(
+          () =>
+            dialHomePage.uploadData(
+              { path: Attachment.dotExtensionImageName, dataType: 'upload' },
+              () => fileManagerModal.openUploadFromDevice(),
+            ),
+          [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
         await fileManagerModalGridAssertion.assertGridRowByNameState(
           dotExtensionFileName,
