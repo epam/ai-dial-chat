@@ -5,6 +5,7 @@ import {
   getLastDeploymentId,
   getLastUserMessageToolConfiguration,
   isAwaitingGenerationResume,
+  isConversationNotFoundError,
   shouldWatchForDisplayNameUpdate,
   useConversationHandlers,
   useConversationStream,
@@ -456,6 +457,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
             requestId: traceId,
           });
         }
+        /* Self-heal the panel: a conversation the backend no longer has (deleted
+         * here, in another tab, or by emptying its messages) must not stay in the
+         * list, where every later open or delete would fail the same way. */
+        if (isConversationNotFoundError(error)) {
+          removeConversationFromList(id);
+        }
         navigate(ROUTES.Root);
       } finally {
         setIsFetching(false);
@@ -470,6 +477,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       restoreBufferedGeneration,
       updateConversationTitle,
       getGeneration,
+      removeConversationFromList,
       showErrorNotification,
       t,
     ],
