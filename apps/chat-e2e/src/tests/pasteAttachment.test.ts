@@ -438,6 +438,7 @@ dialTest(
     fileDropArea,
     chat,
     toast,
+    page,
   }) => {
     setTestIds('EPMDIAL-6816');
     const yearMonthSubfolder = DateUtil.getCurrentYearMonth();
@@ -486,6 +487,7 @@ dialTest(
             ),
           [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
+        await waitForFolderListingToSettle(page, yearMonthSubfolder);
         await fileManagerModal.getAttachButton().click();
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
           file1,

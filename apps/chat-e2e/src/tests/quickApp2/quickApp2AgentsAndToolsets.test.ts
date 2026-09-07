@@ -460,10 +460,8 @@ dialTest(
     toolsetApiHelper,
     baseAssertion,
     setTestIds,
-    setIssueIds,
   }) => {
     setTestIds('EPMDIAL-4936');
-    setIssueIds('6530');
     const appName = GeneratorUtil.randomApplicationName();
     const toolsetName = GeneratorUtil.randomToolsetName();
 
