@@ -859,6 +859,10 @@ export enum AttachmentCanvasI18nKeys {
   PdfShowThumbnailsLabel = 'attachmentCanvas.pdfShowThumbnailsLabel',
   PdfHideThumbnailsLabel = 'attachmentCanvas.pdfHideThumbnailsLabel',
   PdfPageNumberLabel = 'attachmentCanvas.pdfPageNumberLabel',
+  PdfContentLoadingLabel = 'attachmentCanvas.pdfContentLoadingLabel',
+  PdfContentErrorLabel = 'attachmentCanvas.pdfContentErrorLabel',
+  CodeContentLoadingLabel = 'attachmentCanvas.codeContentLoadingLabel',
+  CodeContentErrorLabel = 'attachmentCanvas.codeContentErrorLabel',
 }
 
 export enum AnnouncementBannerI18nKeys {

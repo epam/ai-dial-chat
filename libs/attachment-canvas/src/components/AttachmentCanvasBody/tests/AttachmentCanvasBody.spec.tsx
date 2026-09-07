@@ -170,6 +170,25 @@ describe('AttachmentCanvasBody', () => {
     expect(props.configurePdfWorker).toBe(configurePdfWorker);
   });
 
+  it("announces the pdfContentLoadingLabel while PdfContent's dynamic import is pending", async () => {
+    /*
+     * `PdfContent` is behind `lazy()`, so even a synchronously-resolving
+     * mocked module still suspends for the first render — the
+     * `LazyContentBoundary` pending state (asserted here) is what's on
+     * screen before that microtask settles.
+     */
+    renderBody(
+      { type: AttachmentContentType.Pdf, url: 'blob:pdf-url' },
+      { labels: { pdfContentLoadingLabel: 'Loading the PDF viewer…' } },
+    );
+
+    expect(screen.getByText('Loading the PDF viewer…')).toBeTruthy();
+
+    // Let the mocked dynamic import settle before the test ends, so its
+    // resolution doesn't land as an unwrapped `act(...)` update afterward.
+    await screen.findByRole('region', { name: 'pdf-content' });
+  });
+
   it('renders OoxmlContent for OOXML content', () => {
     renderBody({
       type: AttachmentContentType.Ooxml,
