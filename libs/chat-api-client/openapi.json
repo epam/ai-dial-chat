@@ -1482,6 +1482,61 @@
         "tags": ["toolsets"]
       }
     },
+    "/api/v1/toolsets/mcp-apps/tool-names": {
+      "get": {
+        "description": "Calls DIAL Core's generic MCP JSON-RPC proxy's tools/list for the given deployment (toolset or application) and returns every tool name, unfiltered — used to populate the toolset editor's \"Allowed tools\" picker.",
+        "operationId": "listMcpToolNames",
+        "parameters": [
+          {
+            "name": "deploymentId",
+            "required": true,
+            "in": "query",
+            "description": "DIAL deployment identifier (toolset or application) to list MCP Apps-capable tools for.",
+            "schema": {
+              "maxLength": 2048,
+              "example": "toolsets/bucket/weather__0.0.1",
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "required": true,
+            "in": "query",
+            "description": "Which of Core's MCP proxy route prefixes to use for this deployment.",
+            "schema": {
+              "type": "string",
+              "enum": ["toolset", "application"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListMcpToolNamesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid deploymentId or kind"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "404": {
+            "description": "Deployment not found"
+          },
+          "502": {
+            "description": "DIAL Core's proxied tools/list failed"
+          }
+        },
+        "summary": "List every tool name exposed by an MCP-enabled deployment",
+        "tags": ["toolsets"]
+      }
+    },
     "/api/v1/toolsets/{toolsetName}/mcp-app-tool-call": {
       "post": {
         "description": "Validates toolName against the tools the MCP session currently exposes, then forwards a tools/call JSON-RPC request through DIAL Core's existing generic MCP proxy for this toolset. Not cached — every call is a live, potentially side-effecting tool invocation.",
@@ -2311,6 +2366,41 @@
         },
         "summary": "Stop an active generation",
         "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/completions/attach": {
+      "post": {
+        "description": "Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Session-scoped — only the session that could stop the generation can attach to it.",
+        "operationId": "attachToGeneration",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachGenerationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream: one snapshot event, live chunk events, then one terminal event"
+          },
+          "400": {
+            "description": "Invalid or missing path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No active generation found for the given path in this session — including one that already finished"
+          }
+        },
+        "summary": "Attach to an active generation and replay it live",
+        "tags": [
+          "conversations"
+        ]
       }
     },
     "/api/v1/conversations/watch": {
@@ -6743,7 +6833,8 @@
           },
           "iconUrl": {
             "type": "string",
-            "example": "https://example.com/icon.svg"
+            "example": "files/6FEup.../uploads/2026-06/icon.png",
+            "description": "An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager."
           },
           "version": {
             "type": "string",
@@ -6824,7 +6915,8 @@
           },
           "iconUrl": {
             "type": "string",
-            "example": "https://example.com/icon.svg"
+            "example": "files/6FEup.../uploads/2026-06/icon.png",
+            "description": "An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager."
           },
           "topics": {
             "example": ["nlp", "assistant"],
@@ -7473,6 +7565,9 @@
               "type": "string"
             }
           },
+          "catalogProperties": {
+            "$ref": "#/components/schemas/ModelCatalogPropertiesDto"
+          },
           "applicationTypeSchemaId": {
             "type": "string",
             "description": "URI of the custom application type schema, when present"
@@ -7590,6 +7685,9 @@
           },
           "features": {
             "$ref": "#/components/schemas/DeploymentFeaturesDetailsDto"
+          },
+          "catalogProperties": {
+            "$ref": "#/components/schemas/ModelCatalogPropertiesDto"
           },
           "createdAt": {
             "type": "number",
@@ -8523,7 +8621,8 @@
           },
           "iconUrl": {
             "type": "string",
-            "example": "https://example.com/icon.svg"
+            "example": "files/6FEup.../uploads/2026-06/icon.png",
+            "description": "An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager."
           },
           "topics": {
             "example": ["keyword1", "keyword2"],
@@ -8670,6 +8769,19 @@
           }
         },
         "required": ["tools"]
+      },
+      "ListMcpToolNamesResponseDto": {
+        "type": "object",
+        "properties": {
+          "toolNames": {
+            "example": ["refresh_data", "get_weather"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["toolNames"]
       },
       "McpAppToolCallRequestDto": {
         "type": "object",
@@ -9541,6 +9653,19 @@
           }
         },
         "required": ["generationId", "path"]
+      },
+      "AttachGenerationDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Conversation sub-path (bucket-stripped), e.g. \"gpt-4o__My Chat\".",
+            "example": "gpt-4o__My Chat"
+          }
+        },
+        "required": [
+          "path"
+        ]
       },
       "WatchConversationBodyDto": {
         "type": "object",
@@ -11547,6 +11672,10 @@
           "durationSeconds": {
             "type": "number",
             "example": 99
+          },
+          "conversationId": {
+            "type": "string",
+            "example": "conversations/bucket/.scheduler/sched_123/dial-chathub-v2-gemini-3.5-flash__123123123123123__run_9f2a"
           }
         },
         "required": ["id", "status", "startTime"]

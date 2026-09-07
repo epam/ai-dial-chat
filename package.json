@@ -42,6 +42,7 @@
     "publish": "nx run-many -t publish --projects=tag:publishable",
     "publish:npm": "node tools/publish-npm.mjs",
     "publish:dry": "nx run-many -t publish --output-style=static --projects=tag:publishable --dry=true --ver=0.0.0-preview.0 --tag=dev",
+    "publish:lib:test": "node --test tools/publish-lib-package-json.spec.mjs",
     "validate:agent-docs": "node scripts/validate-agent-docs.mjs",
     "validate:agent-docs:test": "node --test scripts/validate-agent-docs.spec.mjs",
     "validate:docs": "node scripts/validate-docs.mjs",
@@ -118,11 +119,10 @@
     "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
-    "@epam/ai-dial-react-file-manager": "0.2.0-dev.10",
+    "@epam/ai-dial-react-file-manager": "0.2.0-dev.11",
     "@epam/ai-dial-react-pdf-highlighter": "0.2.0-dev.28",
     "@epam/ai-dial-shared": "0.48.0",
-    "@epam/ai-dial-typescript-sdk": "0.1.0-dev.39",
-    "@epam/ai-dial-ui-kit": "^0.14.0-dev.15",
+    "@epam/ai-dial-ui-kit": "^0.14.0-dev.28",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
     "@epam/pdf-highlighter-kit": "^0.0.18",
     "@mcp-ui/client": "^7.1.1",
@@ -162,6 +162,8 @@
     "react-syntax-highlighter": "^16.1.1",
     "reflect-metadata": "^0.2.2",
     "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
     "rehype-stringify": "^10.0.1",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
@@ -192,6 +194,7 @@
   "workspaces": [
     "packages/*",
     "apps/*",
-    "libs/*"
+    "libs/*",
+    "tools/publish-lib"
   ]
 }

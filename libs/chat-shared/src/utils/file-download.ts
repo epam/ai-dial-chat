@@ -1,27 +1,43 @@
 import { MIME_TYPE_EXT_MAP } from '../constants/mime-types';
+import { stripUrlQueryAndFragment } from './mime-type';
+
+/**
+ * Matches a plausible file extension: letters/digits only, no spaces or
+ * punctuation. Guards against a title's incidental `.` (e.g. `"vs. KKR"` or
+ * `"(Word Document)"`) being mistaken for a real extension.
+ */
+const PLAUSIBLE_EXTENSION_REGEXP = /^[a-zA-Z0-9]{1,10}$/;
+
+/** Returns the trailing extension of `value` (without the dot) when it looks like a real file extension. */
+const extractPlausibleExtension = (value: string): string | undefined => {
+  const dot = value.lastIndexOf('.');
+  if (dot <= 0 || dot >= value.length - 1) return undefined;
+  const ext = value.slice(dot + 1);
+  return PLAUSIBLE_EXTENSION_REGEXP.test(ext) ? ext : undefined;
+};
 
 /**
  * Returns `name` with a file extension appended when it lacks one.
- * Priority: extension already present → extension from the last segment of `url` → extension from `contentType` via `MIME_TYPE_EXT_MAP`.
+ * Priority: extension already present on `name` → extension from `contentType` via `MIME_TYPE_EXT_MAP` → extension from the last segment of `url`.
+ * A trailing `.` in `name` or the `url` segment is only trusted when it looks
+ * like a real extension (letters/digits only) — otherwise it is treated as
+ * ordinary punctuation (e.g. a title such as `"Report vs. Summary"`).
  */
 export const ensureDownloadFilename = (
   name: string,
   url: string | undefined,
   contentType: string | undefined,
 ): string => {
-  const dot = name.lastIndexOf('.');
-  if (dot > 0 && dot < name.length - 1) return name;
-
-  if (url != null) {
-    const segment = url.split(/[?#]/)[0].split('/').pop() ?? '';
-    const segDot = segment.lastIndexOf('.');
-    if (segDot > 0 && segDot < segment.length - 1) {
-      return `${name}.${segment.slice(segDot + 1)}`;
-    }
-  }
+  if (extractPlausibleExtension(name) != null) return name;
 
   if (contentType != null) {
     const ext = MIME_TYPE_EXT_MAP[contentType];
+    if (ext != null) return `${name}.${ext}`;
+  }
+
+  if (url != null) {
+    const segment = stripUrlQueryAndFragment(url).split('/').pop() ?? '';
+    const ext = extractPlausibleExtension(segment);
     if (ext != null) return `${name}.${ext}`;
   }
 

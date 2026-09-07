@@ -84,6 +84,7 @@ export const ScheduledTaskRunHistoryList: FC<
   const runTimestampClassName =
     typography?.runTimestampClassName ?? 'dial-small-text';
   const subtitleClassName = typography?.subtitleClassName ?? 'dial-body-text';
+  const unreadIndicatorLabel = labels.unreadIndicatorLabel ?? 'Unread';
 
   const cssVars = buildCssVars({
     '--strhl-success-icon': colors?.successIconColor,
@@ -91,16 +92,33 @@ export const ScheduledTaskRunHistoryList: FC<
     '--strhl-missed-icon': colors?.missedIconColor,
     '--strhl-subtitle-text': colors?.subtitleTextColor,
     '--strhl-current-run-bg': colors?.currentRunBackground,
+    '--strhl-unread-dot': colors?.unreadDotColor,
   });
 
   const renderRow = (run: ScheduledTaskRunItem) => {
     const statusLabel = labels.runStatusLabels[run.status];
     const isCurrent = run.id === currentRunId;
-    const accessibleName =
-      isCurrent && labels.currentRunLabel
-        ? `${statusLabel} ${run.timestampLabel} — ${labels.currentRunLabel}`
-        : `${statusLabel} ${run.timestampLabel}`;
-    const isClickable = Boolean(onRunClick);
+    /*
+     * The row's own aria-label overrides all descendant text per the ARIA
+     * accessible-name algorithm, so the unread state must be folded in here
+     * rather than left as a nested sr-only span the label would otherwise
+     * swallow — the same reason currentRunLabel is appended this way.
+     */
+    const accessibleNameSuffixes = [
+      run.isUnread ? unreadIndicatorLabel : undefined,
+      isCurrent ? labels.currentRunLabel : undefined,
+    ].filter((suffix): suffix is string => Boolean(suffix));
+    const accessibleName = [
+      `${statusLabel} ${run.timestampLabel}`,
+      ...accessibleNameSuffixes,
+    ].join(' — ');
+    /*
+     * A row is only ever interactive when its own run produced a
+     * conversation — an older/missed/in-progress run with no
+     * `conversationId` always renders static, even if the host supplies
+     * `onRunClick` unconditionally for the whole list.
+     */
+    const isClickable = Boolean(run.conversationId) && Boolean(onRunClick);
 
     return (
       <li
@@ -109,11 +127,11 @@ export const ScheduledTaskRunHistoryList: FC<
           ? {
               role: 'button',
               tabIndex: 0,
-              onClick: () => onRunClick?.(run.id),
+              onClick: () => onRunClick?.(run),
               onKeyDown: (event: KeyboardEvent) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  onRunClick?.(run.id);
+                  onRunClick?.(run);
                 }
               },
             }
@@ -126,8 +144,26 @@ export const ScheduledTaskRunHistoryList: FC<
           isClickable && 'cursor-pointer',
         )}
       >
-        <span className={mergeClasses(runTimestampClassName, 'truncate')}>
-          {run.timestampLabel}
+        <span className="flex items-center gap-2 truncate">
+          {/*
+           * A fixed 12x12 slot is always reserved before the timestamp so its
+           * horizontal position stays identical across rows whether or not
+           * the unread dot itself is rendered.
+           */}
+          <span className="relative flex size-3 shrink-0 items-center justify-center">
+            {run.isUnread && (
+              <span
+                className={mergeClasses(
+                  'size-[5.33px] rounded-full',
+                  styles.unreadDot,
+                )}
+                aria-hidden
+              />
+            )}
+          </span>
+          <span className={mergeClasses(runTimestampClassName, 'truncate')}>
+            {run.timestampLabel}
+          </span>
         </span>
         <span className="flex h-8 w-14 shrink-0 items-center justify-end">
           <RunStatusIcon status={run.status} />

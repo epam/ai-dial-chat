@@ -6,7 +6,7 @@ import {
   ConversationExportMode,
   useConversationExport,
   useConversationImport,
-} from '@epam/ai-dial-chat-hooks';
+} from '@epam/ai-dial-chat-hooks/conversation-transfer';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConversationTransferErrorCode,
@@ -389,15 +389,20 @@ vi.mock(
     ),
   }),
 );
-vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
-  return {
-    ...actual,
-    useConversationExport: vi.fn(),
-    useConversationImport: vi.fn(),
-  };
-});
+vi.mock(
+  '@epam/ai-dial-chat-hooks/conversation-transfer',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('@epam/ai-dial-chat-hooks/conversation-transfer')
+      >();
+    return {
+      ...actual,
+      useConversationExport: vi.fn(),
+      useConversationImport: vi.fn(),
+    };
+  },
+);
 vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({ user: { bucket: 'bucket' } }),
 }));

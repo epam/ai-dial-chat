@@ -1,8 +1,44 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PromptEditor } from '../PromptEditor';
+
+vi.mock('@epam/ai-dial-editor-builder', () => ({
+  EditorLayout: ({
+    title,
+    onBack,
+    backAriaLabel,
+    isSaving,
+    labels,
+    actions,
+    leftContent,
+    rightContent,
+  }: {
+    title?: string;
+    onBack?: () => void;
+    backAriaLabel?: string;
+    isSaving?: boolean;
+    labels?: { savingStatusLabel?: string };
+    actions?: ReactNode;
+    leftContent?: ReactNode;
+    rightContent?: ReactNode;
+  }) => (
+    <div>
+      <button aria-label={backAriaLabel} onClick={onBack} />
+      <h1>{title}</h1>
+      <span role="status">
+        {isSaving ? (labels?.savingStatusLabel ?? 'Saving') : ''}
+      </span>
+      <div>{actions}</div>
+      <div>{leftContent}</div>
+      <div>{rightContent}</div>
+    </div>
+  ),
+  EditorSection: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
 
 vi.mock('@epam/ai-dial-ui-kit', async () => {
   const actual = await vi.importActual<typeof import('@epam/ai-dial-ui-kit')>(
@@ -17,12 +53,15 @@ vi.mock('@epam/ai-dial-ui-kit', async () => {
           value,
           onChange,
           placeholder,
+          id,
         }: {
           value?: string;
           onChange?: (value: string) => void;
           placeholder?: string;
+          id?: string;
         }) => (
           <textarea
+            id={id}
             value={value}
             placeholder={placeholder}
             onChange={(event) => onChange?.(event.target.value)}
@@ -206,5 +245,10 @@ describe('PromptEditor', () => {
 
     expect(screen.getByRole('heading', { name: 'Neuer Prompt' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'OK' })).toBeTruthy();
+  });
+  it('names the Instructions editor through its label', () => {
+    renderEditor();
+
+    expect(screen.getByRole('textbox', { name: /Instructions/ })).toBeTruthy();
   });
 });

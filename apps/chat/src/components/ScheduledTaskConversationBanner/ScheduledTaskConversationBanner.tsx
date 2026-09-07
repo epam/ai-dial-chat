@@ -44,7 +44,7 @@ const ScheduledTaskConversationBanner: FC = () => {
   const timestampLabel = useMemo(() => {
     const currentRun = history.items.find((run) => run.id === runId);
     if (currentRun) {
-      return mapScheduledTaskRunDtoToItem(currentRun, t).timestampLabel;
+      return mapScheduledTaskRunDtoToItem(currentRun, t, []).timestampLabel;
     }
     /*
      * The run that just created this conversation is often not yet present

@@ -2,10 +2,8 @@ import {
   AttachmentCanvasContainer,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import {
-  clearAttachmentCache,
-  usePanelMaxWidth,
-} from '@epam/ai-dial-chat-hooks';
+import { clearAttachmentCache } from '@epam/ai-dial-chat-hooks/file-manager';
+import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CodeBlockTheme, FilterTab } from '@epam/ai-dial-chat-shared';
 import {

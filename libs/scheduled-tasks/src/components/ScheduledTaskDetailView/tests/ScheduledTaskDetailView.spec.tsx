@@ -895,7 +895,27 @@ describe('ScheduledTaskDetailView', () => {
     });
   });
 
-  it('invokes onRunClick with the run id when a row is clicked, when supplied', async () => {
+  it('invokes onRunClick with the run when a row with a conversationId is clicked', async () => {
+    const onRunClick = vi.fn();
+    const run = buildRun({ conversationId: 'conversations/c1' });
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="Daily summary"
+        runs={[run]}
+        onRunClick={onRunClick}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Succeeded today at 9:01 AM (99s)' }),
+    );
+
+    expect(onRunClick).toHaveBeenCalledWith(run);
+  });
+
+  it('does not invoke onRunClick for a row whose run has no conversationId', async () => {
     const onRunClick = vi.fn();
     render(
       <ScheduledTaskDetailView
@@ -907,10 +927,24 @@ describe('ScheduledTaskDetailView', () => {
       />,
     );
 
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Succeeded today at 9:01 AM (99s)' }),
+    expect(
+      screen.queryByRole('button', {
+        name: 'Succeeded today at 9:01 AM (99s)',
+      }),
+    ).toBeNull();
+    expect(onRunClick).not.toHaveBeenCalled();
+  });
+
+  it('folds the unread label into the run row accessible name when isUnread is true', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="Daily summary"
+        runs={[buildRun({ isUnread: true })]}
+      />,
     );
 
-    expect(onRunClick).toHaveBeenCalledWith('run_1');
+    expect(screen.getByRole('listitem', { name: /Unread$/ })).toBeTruthy();
   });
 });

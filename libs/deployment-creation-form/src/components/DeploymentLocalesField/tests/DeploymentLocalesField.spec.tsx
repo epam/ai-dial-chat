@@ -10,7 +10,8 @@ import { DeploymentLocalesField } from '../DeploymentLocalesField';
 
 const labels: DeploymentCreationFormLocaleLabels = {
   summaryLabel: 'Locales',
-  editLabel: 'Edit',
+  addLabel: 'Add locales',
+  editLabel: 'Edit locales',
   popupTitle: 'Add locale',
   addLocaleLabel: 'Add locale',
   languageLabel: 'Language',
@@ -44,9 +45,9 @@ const renderField = (
 describe('DeploymentLocalesField', () => {
   const user = userEvent.setup({ delay: null });
 
-  it('renders a placeholder when no additional locales are configured', () => {
+  it('hides the summary text when no additional locales are configured', () => {
     renderField();
-    expect(screen.getByText('Locales: —')).toBeTruthy();
+    expect(screen.queryByText(/Locales:/)).toBeNull();
   });
 
   it('renders the configured locale codes in the summary', () => {
@@ -61,22 +62,35 @@ describe('DeploymentLocalesField', () => {
     expect(screen.getByText('Locales: [DE]')).toBeTruthy();
   });
 
-  it('opens the add-locale popup when Edit is clicked', async () => {
+  it('shows "Add locales" and opens the popup when clicked, given no configured locales', async () => {
     renderField();
-    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Add locales' }));
     expect(screen.getByRole('heading', { name: 'Add locale' })).toBeTruthy();
+  });
+
+  it('shows "Edit locales" once at least one locale is configured', () => {
+    renderField([
+      {
+        id: 'locale-de',
+        language: 'de',
+        name: 'Mein Toolset',
+        description: '',
+      },
+    ]);
+    expect(screen.getByRole('button', { name: 'Edit locales' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Add locales' })).toBeNull();
   });
 
   it('adds a new empty row when "Add locale" is clicked', async () => {
     renderField();
-    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Add locales' }));
     await user.click(screen.getByRole('button', { name: 'Add locale' }));
     expect(screen.getByRole('group', { name: 'Locale 1' })).toBeTruthy();
   });
 
   it('disables save while a row has no name', async () => {
     renderField();
-    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Add locales' }));
     await user.click(screen.getByRole('button', { name: 'Add locale' }));
     expect(
       screen.getByRole('button', { name: 'Save' }).hasAttribute('disabled'),
@@ -96,7 +110,7 @@ describe('DeploymentLocalesField', () => {
       ],
       onChange,
     );
-    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Edit locales' }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(onChange).toHaveBeenCalledWith([
       {
@@ -117,7 +131,7 @@ describe('DeploymentLocalesField', () => {
         description: '',
       },
     ]);
-    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Edit locales' }));
     await user.click(screen.getByRole('button', { name: 'Delete locale 1' }));
     expect(screen.queryByRole('group', { name: 'Locale 1' })).toBeNull();
   });
@@ -125,11 +139,11 @@ describe('DeploymentLocalesField', () => {
   it('discards edits when the popup is cancelled', async () => {
     const onChange = vi.fn();
     renderField([], onChange);
-    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Add locales' }));
     await user.click(screen.getByRole('button', { name: 'Add locale' }));
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onChange).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Add locales' }));
     // Reopening with no saved value re-seeds a single unconfigured row, not
     // the two rows added-then-discarded in the previous open.
     expect(screen.getAllByRole('group', { name: 'Locale 1' })).toHaveLength(1);
@@ -138,7 +152,7 @@ describe('DeploymentLocalesField', () => {
 
   it('disables "Add locale" once every available language is used', async () => {
     renderField();
-    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Add locales' }));
     await user.click(screen.getByRole('button', { name: 'Add locale' }));
     await user.click(screen.getByRole('button', { name: 'Add locale' }));
     expect(

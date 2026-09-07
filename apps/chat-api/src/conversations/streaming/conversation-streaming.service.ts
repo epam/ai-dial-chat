@@ -200,6 +200,10 @@ export class ConversationStreamingService {
     timezone?: string,
     timing?: GenerationRelayTiming,
     conversationId?: string,
+    onChunkApplied?: (
+      rawChunk: unknown,
+      message: ConversationMessageDto,
+    ) => void,
   ): AsyncGenerator<Uint8Array, RelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -320,6 +324,7 @@ export class ConversationStreamingService {
                 timing.firstDeltaAt = Date.now();
               }
               assembledMessage = applyChunkToMessage(assembledMessage, parsed);
+              onChunkApplied?.(parsed, assembledMessage);
             } catch {
               /*
                * Never log the payload itself here — chunk content is
@@ -439,7 +444,12 @@ export class ConversationStreamingService {
       });
     } catch (err) {
       generationCapabilityResolutionTotal.add(1, { outcome: 'failed' });
-      this.generationService.error(sessionId, conversationPath, generationId);
+      this.generationService.error(
+        sessionId,
+        conversationPath,
+        generationId,
+        err instanceof Error ? err.message : undefined,
+      );
       throw err;
     }
 
@@ -464,7 +474,12 @@ export class ConversationStreamingService {
        * doesn't leave the conversation "locked" — otherwise the next request
        * (e.g. regenerate) would be rejected with a 409 until stale eviction.
        */
-      this.generationService.error(sessionId, conversationPath, generationId);
+      this.generationService.error(
+        sessionId,
+        conversationPath,
+        generationId,
+        err instanceof Error ? err.message : undefined,
+      );
       throw err;
     }
 
@@ -540,6 +555,24 @@ export class ConversationStreamingService {
     const assembledMessage = {
       ...startConversation.messages[assistantMessageIndex],
     };
+    this.generationService.seedAssembledMessage(
+      sessionId,
+      conversationPath,
+      generationId,
+      assembledMessage,
+    );
+    const publishChunk = (
+      rawChunk: unknown,
+      message: ConversationMessageDto,
+    ) => {
+      this.generationService.applyChunk(
+        sessionId,
+        conversationPath,
+        generationId,
+        rawChunk,
+        message,
+      );
+    };
 
     const finalize = async (
       status:
@@ -572,7 +605,12 @@ export class ConversationStreamingService {
           generationId,
         );
       } else {
-        this.generationService.error(sessionId, conversationPath, generationId);
+        this.generationService.error(
+          sessionId,
+          conversationPath,
+          generationId,
+          partialMessage.streamErrorMessage,
+        );
       }
     };
 
@@ -596,6 +634,7 @@ export class ConversationStreamingService {
             timezone,
             timing,
             startConversation.id,
+            publishChunk,
           )
         : this.relayModelCompletion(
             model,
@@ -607,6 +646,7 @@ export class ConversationStreamingService {
             timezone,
             timing,
             startConversation.id,
+            publishChunk,
           );
     let next = await relayIterator.next();
     while (!next.done) {

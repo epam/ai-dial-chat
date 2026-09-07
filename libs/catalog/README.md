@@ -658,9 +658,9 @@ import {
 } from '@epam/ai-dial-catalog';
 
 /*
- * Matches an item's `name`, `description`, or `type` — case-insensitive.
- * Note that a prompt's body is not searched: `details.promptContent` is
- * resolved lazily and is not part of the search index.
+ * Matches an item's `name` only — case-insensitive, whitespace-trimmed. An
+ * item's `description`, `type`, and a prompt's body are not searched: the name
+ * is the only text the card and list row highlight.
  */
 const filtered = filterCatalogItems(items, 'gpt');
 const sorted = sortCatalogItems(filtered, CatalogSortKey.NameAZ);
