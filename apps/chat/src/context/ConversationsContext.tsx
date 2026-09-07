@@ -319,7 +319,12 @@ export const ConversationsProvider = ({
     let snapshot: ConversationListItemDto[] | undefined;
     setConversations((prev) => {
       snapshot = prev;
-      return prev.filter((c) => c.id !== id);
+      /*
+       * Matched the same way as removeConversationFromList: a caller passing a
+       * differently-encoded id would otherwise keep its stale row on a 404 —
+       * the exact staleness this path exists to clear.
+       */
+      return prev.filter((c) => !conversationIdsMatch(c.id, id));
     });
     const conversationPath = getConversationPath(normalizeConversationId(id));
     try {

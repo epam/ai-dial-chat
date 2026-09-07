@@ -522,7 +522,15 @@ not-found error.
 `deleteConversation` SHALL treat a not-found response as success: the row
 stays removed and no error is raised, mirroring the bulk deletion endpoint's
 already-absent accounting. Any other failure SHALL still restore the row and
-rethrow.
+rethrow. Both removal paths SHALL match ids with `conversationIdsMatch`, so a
+differently-encoded id clears the same row either way.
+
+Reporting an already-absent deletion as success is deliberate: every consumer
+of a resolved `deleteConversation` — the panel's and header menu's
+`notifyOperationSuccess`, `useConversationListBridge`, the overlay bridge —
+then reports the deletion as done. From the user's side that is accurate: the
+conversation they asked to delete is gone. Distinguishing "was already gone"
+would raise a failure or a caveat for an outcome the user asked for and got.
 
 #### Scenario: Deleting the last message removes the row
 
@@ -537,7 +545,12 @@ rethrow.
 #### Scenario: Deleting an already-absent conversation succeeds
 
 - **WHEN** the user confirms deletion of a row whose conversation the backend no longer has
-- **THEN** the delete resolves successfully, the row stays removed, and no inline delete error is shown
+- **THEN** the delete resolves successfully, the row stays removed, no inline delete error is shown, and the caller's usual deletion-success notification is raised
+
+#### Scenario: A differently-encoded id clears the same row
+
+- **WHEN** `deleteConversation` is called with an id whose encoding differs from the listed id (e.g. `folder%2Fchat%20one` for `folder/chat one`)
+- **THEN** that row is the one removed from the list
 
 #### Scenario: Any other delete failure still restores the row
 

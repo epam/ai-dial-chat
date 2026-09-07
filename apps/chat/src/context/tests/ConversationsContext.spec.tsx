@@ -417,6 +417,39 @@ describe('ConversationsContext — deleteConversation', () => {
     ]);
   });
 
+  it('removes the row whose id differs only by encoding', async () => {
+    mockListConversations.mockResolvedValueOnce({
+      items: [
+        ...seedConversations,
+        {
+          id: 'folder/chat one',
+          title: 'Chat with space',
+          isPinned: false,
+          updatedAt: 0,
+          sharedWithMe: false,
+          publishedWithMe: false,
+          isReadonly: false,
+          isScheduledTask: false,
+        },
+      ],
+    });
+    mockDeleteConversation.mockResolvedValueOnce(undefined);
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(4));
+
+    await act(async () => {
+      await result.current.deleteConversation('folder%2Fchat%20one');
+    });
+
+    expect(
+      result.current.conversations.some((c) => c.id === 'folder/chat one'),
+    ).toBe(false);
+    expect(result.current.conversations).toHaveLength(3);
+  });
+
   it('restores the conversation and rethrows on any other failure', async () => {
     mockDeleteConversation.mockRejectedValueOnce({
       response: { status: 502, json: vi.fn() },
