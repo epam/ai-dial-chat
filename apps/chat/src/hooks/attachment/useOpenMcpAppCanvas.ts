@@ -3,32 +3,21 @@ import {
   AttachmentErrorType,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import { getApiErrorMessage } from '@epam/ai-dial-chat-hooks';
+import {
+  computeMcpAppSeedKey,
+  resolveMcpAppToolResult,
+  type McpAppResponseCache,
+  type McpAppToolCallSeed,
+  type McpAppToolRef,
+} from '@epam/ai-dial-mcp-apps';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AttachmentCanvasI18nKeys } from '../../constants/translation-keys';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
-import {
-  callMcpAppTool,
-  fetchMcpAppResourceHtml,
-  McpAppResourceFetchError,
-} from '../../server-api/mcp-apps';
-import {
-  computeMcpAppSeedKey,
-  resolveMcpAppToolResult,
-} from '../../utils/mcp-app';
-import type { McpAppToolRef } from '../conversation/useMcpAppTools';
-import { useMcpAppHostContext } from './useMcpAppHostContext';
-import type { McpAppResponseCache } from './useMcpAppResponseCache';
-import { useMcpAppSandboxUrl } from './useMcpAppSandboxUrl';
-
-/** Original tool call's arguments/result, seeded into the mounted app so it renders that invocation immediately instead of an empty initial state. */
-export interface McpAppToolCallSeed {
-  toolInput?: Record<string, unknown>;
-  toolResult?: CallToolResult;
-}
+import { McpAppResourceFetchError } from '../../server-api/mcp-apps';
+import { useMcpAppHostAdapter } from './useMcpAppHostAdapter';
 
 /**
  * Returns `openMcpAppCanvas`, an async function that opens the attachment
@@ -52,8 +41,8 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
   const { openCanvas, openCanvasLoading } = useAttachmentCanvas();
   const { closePanel } = useConversationPanel();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
-  const mcpAppSandboxUrl = useMcpAppSandboxUrl();
-  const hostContext = useMcpAppHostContext('fullscreen');
+  const { hostContext, sandboxUrl, fetchResourceHtml, callTool } =
+    useMcpAppHostAdapter('fullscreen');
 
   /*
    * `onReload` below needs to re-invoke `openMcpAppCanvas` recursively, but
@@ -80,7 +69,7 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
       toolCall?: McpAppToolCallSeed,
       forceReload = false,
     ): Promise<boolean> => {
-      if (mcpAppSandboxUrl == null) {
+      if (sandboxUrl == null) {
         return false;
       }
 
@@ -101,11 +90,12 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
         if (cached) {
           ({ html, toolResult } = cached);
         } else {
-          html = await fetchMcpAppResourceHtml(
-            match.toolsetId,
-            match.resourceUri,
+          html = await fetchResourceHtml(match.toolsetId, match.resourceUri);
+          toolResult = await resolveMcpAppToolResult(
+            match,
+            toolCall,
+            callTool,
           );
-          toolResult = await resolveMcpAppToolResult(match, toolCall);
           if (canvasKey != null) {
             cache.set(canvasKey, { html, toolResult }, seedKey);
           }
@@ -115,26 +105,13 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
           {
             type: AttachmentContentType.McpApp,
             html,
-            sandboxUrl: mcpAppSandboxUrl,
+            sandboxUrl,
             toolName: match.mcpToolName,
             toolInput: toolCall?.toolInput,
             toolResult,
             hostContext,
-            onToolCall: async (name, args) => {
-              try {
-                return (await callMcpAppTool(
-                  match.toolsetId,
-                  name,
-                  args,
-                  match.kind,
-                )) as CallToolResult;
-              } catch (error) {
-                throw new Error(
-                  (await getApiErrorMessage(error)) ??
-                    `Tool call "${name}" failed`,
-                );
-              }
-            },
+            onToolCall: (name, args) =>
+              callTool(match.toolsetId, name, args, match.kind),
             onReload: () => {
               if (canvasKey != null) cache.invalidate(canvasKey);
               void openMcpAppCanvasRef.current?.(
@@ -176,8 +153,10 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
       openCanvasLoading,
       closePanel,
       closeSourcesPanel,
-      mcpAppSandboxUrl,
+      sandboxUrl,
       hostContext,
+      fetchResourceHtml,
+      callTool,
       cache,
     ],
   );

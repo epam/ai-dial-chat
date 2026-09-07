@@ -36,6 +36,7 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
+import { useMcpAppResponseCache } from '@epam/ai-dial-mcp-apps';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -74,7 +75,6 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useMcpAppResponseCache } from '../../hooks/attachment/useMcpAppResponseCache';
 import { useOpenMcpAppCanvas } from '../../hooks/attachment/useOpenMcpAppCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';

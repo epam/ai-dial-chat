@@ -30,6 +30,15 @@ import {
 } from '@epam/ai-dial-conversation-messages';
 import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 import {
+  McpAppInlinePreview,
+  findMcpAppForMessage,
+  mcpAppCanvasKey,
+  resolveMcpAppToolCallSeed,
+  type McpAppResponseCache,
+  type McpAppToolCallSeed,
+  type McpAppToolRef,
+} from '@epam/ai-dial-mcp-apps';
+import {
   CitationCardProvider,
   CitationDropdown,
   getReferenceAttachmentGroups,
@@ -56,9 +65,7 @@ import {
   CitationsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
-import type { McpAppResponseCache } from '../../hooks/attachment/useMcpAppResponseCache';
-import type { McpAppToolCallSeed } from '../../hooks/attachment/useOpenMcpAppCanvas';
-import type { McpAppToolRef } from '../../hooks/conversation/useMcpAppTools';
+import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
 import {
@@ -66,12 +73,6 @@ import {
   attachmentDisplayResolvers,
 } from '../../utils/attachment-display-resolvers';
 import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
-import {
-  findMcpAppForMessage,
-  mcpAppCanvasKey,
-  resolveMcpAppToolCallSeed,
-} from '../../utils/mcp-app';
-import McpAppInlinePreview from './McpAppInlinePreview/McpAppInlinePreview';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
@@ -394,6 +395,7 @@ const ConversationMessageItem: FC<Props> = ({
         : undefined,
     [msg, mcpAppMatch],
   );
+  const mcpAppHostAdapter = useMcpAppHostAdapter('inline');
 
   const selectedAttachmentKeyPrefix = `${index}:`;
   const selectedAttachmentId = selectedAttachmentKey?.startsWith(
@@ -643,6 +645,7 @@ const ConversationMessageItem: FC<Props> = ({
                     toolCall={mcpAppToolCallSeed}
                     cache={mcpAppCache}
                     cacheKey={mcpAppCanvasKey(index)}
+                    hostAdapter={mcpAppHostAdapter}
                     onExpand={() =>
                       onOpenApp(mcpAppMatch, mcpAppKey, mcpAppToolCallSeed)
                     }

@@ -156,6 +156,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/attachment-input/src/index.ts',
       ),
+      '@epam/ai-dial-mcp-apps': path.resolve(
+        import.meta.dirname,
+        '../../libs/mcp-apps/src/index.ts',
+      ),
       '@epam/ai-dial-share': path.resolve(
         import.meta.dirname,
         '../../libs/share/src/index.ts',

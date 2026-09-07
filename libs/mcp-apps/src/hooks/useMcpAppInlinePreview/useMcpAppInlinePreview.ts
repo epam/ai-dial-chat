@@ -2,32 +2,23 @@ import {
   AttachmentContentType,
   type McpAppCanvasContent,
 } from '@epam/ai-dial-attachment-canvas';
-import { getApiErrorMessage } from '@epam/ai-dial-chat-hooks';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  callMcpAppTool,
-  fetchMcpAppResourceHtml,
-} from '../../server-api/mcp-apps';
+  McpAppInlinePreviewStatus,
+  type McpAppHostAdapter,
+  type McpAppResponseCache,
+  type McpAppToolCallSeed,
+  type McpAppToolRef,
+} from '../../models/mcp-apps';
 import {
   computeMcpAppSeedKey,
   resolveMcpAppToolResult,
 } from '../../utils/mcp-app';
-import type { McpAppToolRef } from '../conversation/useMcpAppTools';
-import { useMcpAppHostContext } from './useMcpAppHostContext';
-import type { McpAppResponseCache } from './useMcpAppResponseCache';
-import { useMcpAppSandboxUrl } from './useMcpAppSandboxUrl';
-import type { McpAppToolCallSeed } from './useOpenMcpAppCanvas';
 
-/** Load state of `useMcpAppInlinePreview`'s fetch. */
-export enum McpAppInlinePreviewStatus {
-  Loading = 'loading',
-  Ready = 'ready',
-  Error = 'error',
-  Unavailable = 'unavailable',
-}
-
+/** State returned by `useMcpAppInlinePreview`. */
 export interface McpAppInlinePreviewState {
+  /** Current load state of the preview's fetch. */
   status: McpAppInlinePreviewStatus;
   /** Present only when `status` is `Ready`. */
   content?: McpAppCanvasContent;
@@ -38,13 +29,13 @@ export interface McpAppInlinePreviewState {
 /**
  * Fetches an MCP App's `ui://` resource and resolves its seeded tool result
  * for a compact, inline preview embedded directly under a message — a
- * lighter-weight sibling of `useOpenMcpAppCanvas` that mounts independently
- * of `AttachmentCanvas`'s side-panel/loading-state machinery, so it can
- * render alongside the message body instead of taking over the canvas.
- * Builds `hostContext` with `displayMode: 'inline'` so the app can render a
- * more compact layout than it would inside the full-width canvas.
+ * lighter-weight sibling of a full-width canvas that mounts independently of
+ * any canvas/side-panel machinery, so it can render alongside the message
+ * body instead of taking over the canvas. Builds `content.hostContext` from
+ * `hostAdapter.hostContext` so the app can render a layout appropriate to
+ * where it's mounted.
  *
- * `cache` (shared with `useOpenMcpAppCanvas` via the same
+ * `cache` (shared with a full-width canvas via the same
  * `useMcpAppResponseCache` instance, keyed by `cacheKey`) is checked before
  * fetching — switching from this preview to the full canvas (or back) for
  * the same message reuses the same fetch/live-tool-re-call instead of
@@ -55,9 +46,9 @@ export const useMcpAppInlinePreview = (
   toolCall: McpAppToolCallSeed | undefined,
   cache: McpAppResponseCache,
   cacheKey: string,
+  hostAdapter: McpAppHostAdapter,
 ): McpAppInlinePreviewState => {
-  const mcpAppSandboxUrl = useMcpAppSandboxUrl();
-  const hostContext = useMcpAppHostContext('inline');
+  const { hostContext, sandboxUrl, fetchResourceHtml, callTool } = hostAdapter;
   const [html, setHtml] = useState<string>();
   const [toolResult, setToolResult] = useState<CallToolResult>();
   /*
@@ -68,7 +59,7 @@ export const useMcpAppInlinePreview = (
    * to disappear.
    */
   const [status, setStatus] = useState<McpAppInlinePreviewStatus>(() =>
-    match == null || mcpAppSandboxUrl == null
+    match == null || sandboxUrl == null
       ? McpAppInlinePreviewStatus.Unavailable
       : McpAppInlinePreviewStatus.Loading,
   );
@@ -79,16 +70,10 @@ export const useMcpAppInlinePreview = (
     setReloadToken((n) => n + 1);
   }, [cache, cacheKey]);
 
-  useEffect(() => {
-    if (match == null || mcpAppSandboxUrl == null) {
-      setStatus(McpAppInlinePreviewStatus.Unavailable);
-      return;
-    }
+  const loadPreview = useCallback(
+    async (isCancelled: () => boolean) => {
+      if (match == null || sandboxUrl == null) return;
 
-    let cancelled = false;
-    setStatus(McpAppInlinePreviewStatus.Loading);
-
-    void (async () => {
       try {
         const seedKey = computeMcpAppSeedKey(toolCall);
         const cached = cache.get(cacheKey, seedKey);
@@ -98,8 +83,8 @@ export const useMcpAppInlinePreview = (
           ({ html: fetchedHtml, toolResult: resolvedResult } = cached);
         } else {
           [fetchedHtml, resolvedResult] = await Promise.all([
-            fetchMcpAppResourceHtml(match.toolsetId, match.resourceUri),
-            resolveMcpAppToolResult(match, toolCall),
+            fetchResourceHtml(match.toolsetId, match.resourceUri),
+            resolveMcpAppToolResult(match, toolCall, callTool),
           ]);
           cache.set(
             cacheKey,
@@ -107,45 +92,46 @@ export const useMcpAppInlinePreview = (
             seedKey,
           );
         }
-        if (cancelled) return;
+        if (isCancelled()) return;
         setHtml(fetchedHtml);
         setToolResult(resolvedResult);
         setStatus(McpAppInlinePreviewStatus.Ready);
       } catch {
-        if (!cancelled) setStatus(McpAppInlinePreviewStatus.Error);
+        if (!isCancelled()) setStatus(McpAppInlinePreviewStatus.Error);
       }
-    })();
+    },
+    [match, toolCall, sandboxUrl, cache, cacheKey, fetchResourceHtml, callTool],
+  );
+
+  useEffect(() => {
+    if (match == null || sandboxUrl == null) {
+      setStatus(McpAppInlinePreviewStatus.Unavailable);
+      return;
+    }
+
+    let cancelled = false;
+    setStatus(McpAppInlinePreviewStatus.Loading);
+    void loadPreview(() => cancelled);
 
     return () => {
       cancelled = true;
     };
-  }, [match, toolCall, mcpAppSandboxUrl, cache, cacheKey, reloadToken]);
+  }, [match, sandboxUrl, loadPreview, reloadToken]);
 
   const onToolCall = useCallback(
     async (name: string, args: unknown): Promise<CallToolResult> => {
       if (match == null) {
         throw new Error(`Tool call "${name}" failed: no matching MCP App`);
       }
-      try {
-        return (await callMcpAppTool(
-          match.toolsetId,
-          name,
-          args,
-          match.kind,
-        )) as CallToolResult;
-      } catch (error) {
-        throw new Error(
-          (await getApiErrorMessage(error)) ?? `Tool call "${name}" failed`,
-        );
-      }
+      return callTool(match.toolsetId, name, args, match.kind);
     },
-    [match],
+    [match, callTool],
   );
 
   if (
     status !== McpAppInlinePreviewStatus.Ready ||
     match == null ||
-    mcpAppSandboxUrl == null ||
+    sandboxUrl == null ||
     html == null
   ) {
     return { status, reload };
@@ -157,7 +143,7 @@ export const useMcpAppInlinePreview = (
     content: {
       type: AttachmentContentType.McpApp,
       html,
-      sandboxUrl: mcpAppSandboxUrl,
+      sandboxUrl,
       toolName: match.mcpToolName,
       toolInput: toolCall?.toolInput,
       toolResult,

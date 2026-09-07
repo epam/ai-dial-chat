@@ -10,24 +10,27 @@ import {
   IconRefresh,
 } from '@tabler/icons-react';
 import { FC, memo } from 'react';
+import { useMcpAppInlinePreview } from '../../hooks/useMcpAppInlinePreview/useMcpAppInlinePreview';
 import {
   McpAppInlinePreviewStatus,
-  useMcpAppInlinePreview,
-} from '../../../hooks/attachment/useMcpAppInlinePreview';
-import type { McpAppResponseCache } from '../../../hooks/attachment/useMcpAppResponseCache';
-import type { McpAppToolCallSeed } from '../../../hooks/attachment/useOpenMcpAppCanvas';
-import type { McpAppToolRef } from '../../../hooks/conversation/useMcpAppTools';
+  type McpAppHostAdapter,
+  type McpAppResponseCache,
+  type McpAppToolCallSeed,
+  type McpAppToolRef,
+} from '../../models/mcp-apps';
 
 /** Props for the `McpAppInlinePreview` component. */
-export interface Props {
+export interface McpAppInlinePreviewProps {
   /** Matched MCP App tool to preview. */
   match: McpAppToolRef;
   /** Original tool call's arguments/result, seeding the mounted app's initial state. */
   toolCall?: McpAppToolCallSeed;
-  /** Shared cache (with `useOpenMcpAppCanvas`) so switching to the full canvas for this message reuses this preview's fetch instead of repeating it. */
+  /** Shared cache (with a full-width canvas) so switching to it for this message reuses this preview's fetch instead of repeating it. */
   cache: McpAppResponseCache;
-  /** This message's cache key (`mcpAppCanvasKey(index)`). */
+  /** This message's cache key (e.g. `mcpAppCanvasKey(index)`). */
   cacheKey: string;
+  /** Host-supplied dependencies — display context, sandbox URL, and the resource-fetch/tool-call functions. */
+  hostAdapter: McpAppHostAdapter;
   /** Called when the user activates the expand-to-canvas button. */
   onExpand: () => void;
   /** Accessible label for the expand-to-canvas button. */
@@ -44,17 +47,15 @@ export interface Props {
  * sized to the mounted app's actual content height. A header strip above the
  * app — outside its rendered content, so it never overlaps whatever the app
  * draws — carries a reload button (re-fetches from scratch, bypassing
- * `cache`) and the expand-to-canvas button (`onExpand`,
- * `useOpenMcpAppCanvas`, which reuses the same cache entry this preview
- * populated). Renders nothing while the MCP Apps sandbox proxy isn't
- * configured, matching `useOpenMcpAppCanvas`'s own no-op behavior in that
- * case.
+ * `cache`) and the expand-to-canvas button (`onExpand`). Renders nothing
+ * while `hostAdapter.sandboxUrl` isn't configured.
  */
-const McpAppInlinePreview: FC<Props> = ({
+const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   match,
   toolCall,
   cache,
   cacheKey,
+  hostAdapter,
   onExpand,
   expandAriaLabel,
   reloadAriaLabel,
@@ -65,6 +66,7 @@ const McpAppInlinePreview: FC<Props> = ({
     toolCall,
     cache,
     cacheKey,
+    hostAdapter,
   );
 
   if (status === McpAppInlinePreviewStatus.Unavailable) {
@@ -123,4 +125,5 @@ const McpAppInlinePreview: FC<Props> = ({
   );
 };
 
-export default memo(McpAppInlinePreview);
+/** Renders a compact, always-visible preview of a message's matched MCP App — see `McpAppInlinePreviewProps`. */
+export const McpAppInlinePreview = memo(McpAppInlinePreviewBase);

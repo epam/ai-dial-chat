@@ -3,31 +3,16 @@ import type {
   DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { Message } from '@epam/ai-dial-chat-shared';
+import {
+  collectToolCallNames,
+  type McpAppToolRef,
+  type McpDeploymentKind,
+} from '@epam/ai-dial-mcp-apps';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   listMcpAppTools,
   type McpAppToolSummary,
-  type McpDeploymentKind,
 } from '../../server-api/mcp-apps';
-import { collectToolCallNames } from '../../utils/mcp-app';
-
-/** A tool's declared MCP Apps UI resource, keyed by the toolset it was discovered on. */
-export interface McpAppToolRef {
-  toolsetId: string;
-  resourceUri: string;
-  /**
-   * Name used to correlate this ref against a message's real tool-call data
-   * (`resolveMcpAppToolCallSeed`/`findMcpAppForMessage`). For a directly-discovered
-   * tool this is the same as `mcpToolName`; for a tool discovered indirectly through
-   * an internally-delegated toolset, it's re-prefixed (`{toolset}_{tool}`) to match
-   * the name the orchestrator actually calls it by.
-   */
-  toolName: string;
-  /** The tool's real name as declared by its owning toolset's `tools/list` — what must be passed to `AppRenderer`/`onToolCall`, since the mounted app only recognizes its own unprefixed name. */
-  mcpToolName: string;
-  /** Deployment kind — determines which Core MCP proxy prefix to use for `tools/list`/`tools/call` (`/v1/toolset/` vs `/v1/deployments/`). */
-  kind: McpDeploymentKind;
-}
 
 /**
  * Discovers MCP Apps-capable tools available to the current conversation, merging two

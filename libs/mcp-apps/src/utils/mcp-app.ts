@@ -4,20 +4,11 @@ import {
   type MessageState,
 } from '@epam/ai-dial-chat-shared';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { McpAppToolCallSeed } from '../hooks/attachment/useOpenMcpAppCanvas';
-import type { McpAppToolRef } from '../hooks/conversation/useMcpAppTools';
-import { callMcpAppTool } from '../server-api/mcp-apps';
-
-/*
- * The trigger/canvas no longer carries a `Stage` at all — it used to,
- * because `Stage.mcp_app` was designed as the contract for when Core's
- * agent orchestrator eventually attaches `{resource_uri, toolset_id,
- * tool_name}` to the specific stage that made the call. But the trigger
- * shows for a message whenever the deployment has any MCP-Apps-capable
- * tool (regardless of whether a real tool-call stage exists), so threading
- * a `Stage` through was dead weight. Everything here operates on the
- * message directly instead.
- */
+import type {
+  CallMcpAppTool,
+  McpAppToolCallSeed,
+  McpAppToolRef,
+} from '../models/mcp-apps';
 
 /** A tool-call request paired with its result content, keyed by `tool_call_id`. */
 interface ResolvedToolCall {
@@ -79,7 +70,7 @@ const resolveToolCalls = (
 /**
  * Collects every real tool-call name seen across `messages`' `custom_content.state`
  * (in whichever known orchestrator shape is present). Used to discover an MCP-capable
- * toolset that a non-MCP application delegates to internally — see `useMcpAppTools`.
+ * toolset that a non-MCP application delegates to internally.
  */
 export const collectToolCallNames = (messages: Message[]): Set<string> => {
   const names = new Set<string>();
@@ -96,12 +87,12 @@ export const collectToolCallNames = (messages: Message[]): Set<string> => {
 /**
  * Returns the `mcpAppTools` entry that best matches this message: the one
  * whose name was actually called (per `custom_content.state`, in whichever
- * of its two known orchestrator-specific shapes is present — confirmed via
- * spike against two different agents), or — since the trigger is meant to
- * always be available once the deployment supports MCP Apps — falls back to
- * the first discovered tool when no real call matches yet (e.g. the model
- * hasn't called a tool this turn). Returns `undefined` for non-assistant
- * messages or when the deployment has no MCP-Apps-capable tool at all.
+ * of its two known orchestrator-specific shapes is present), or — since the
+ * trigger is meant to always be available once the deployment supports MCP
+ * Apps — falls back to the first discovered tool when no real call matches
+ * yet (e.g. the model hasn't called a tool this turn). Returns `undefined`
+ * for non-assistant messages or when the deployment has no MCP-Apps-capable
+ * tool at all.
  */
 export const findMcpAppForMessage = (
   message: Message,
@@ -120,7 +111,7 @@ export const findMcpAppForMessage = (
   );
 };
 
-/** Stable key identifying a message's MCP App canvas in the attachment canvas's `attachmentId` tracking, mirroring the `${messageIndex}:${attachmentId}` scheme used for regular attachment tiles. */
+/** Stable key identifying a message's MCP App canvas in an attachment canvas's `attachmentId` tracking, mirroring the `${messageIndex}:${attachmentId}` scheme used for regular attachment tiles. */
 export const mcpAppCanvasKey = (messageIndex: number): string =>
   `${messageIndex}:mcp-app`;
 
@@ -128,11 +119,6 @@ export const mcpAppCanvasKey = (messageIndex: number): string =>
  * Identifies which seed a `useMcpAppResponseCache` entry was resolved from,
  * so a cache lookup can tell a settled tool-call seed apart from the
  * no-tool-call-parsed-yet seed a freshly-streamed message mounts with.
- * `resolveMcpAppToolCallSeed` returns `undefined` until `custom_content.state`
- * carries a real tool call, then a defined seed with the call's real
- * `toolInput` — without this, a cache entry written for the earlier,
- * seedless mount would be reused for the later, real seed, permanently
- * skipping `resolveMcpAppToolResult`'s live re-call (D10).
  */
 export const computeMcpAppSeedKey = (
   toolCall: McpAppToolCallSeed | undefined,
@@ -172,38 +158,35 @@ export const resolveMcpAppToolCallSeed = (
 
 /**
  * Resolves the `toolResult` an MCP App canvas should be seeded with. Prefers
- * a live re-call of the tool over `seed.toolResult`'s lossy plain-text
- * reconstruction (see `resolveMcpAppToolCallSeed`), because DIAL Core's
- * conversation state never carries the tool's real `structuredContent` —
- * only the orchestrator's flattened prose summary. This is a **temporary
- * workaround**, tracked in `openspec/changes/mcp-apps-support/design.md`
- * ("Known limitation: lossy `toolResult`"), to be removed once Core's
- * conversation state preserves the tool's real result.
+ * a live re-call of the tool (through `callTool`) over `seed.toolResult`'s
+ * lossy plain-text reconstruction, since a host's conversation state
+ * typically never carries the tool's real `structuredContent` — only the
+ * orchestrator's flattened prose summary.
  *
  * Only attempted when the MCP endpoint is unambiguous — `match.kind ===
  * 'application'`, i.e. the deployment is itself the MCP server. The
- * `'toolset'` kind also covers indirect, name-prefix-guessed matches (see
- * `useMcpAppTools`'s indirect-discovery effect), where re-calling could hit
- * the wrong tool or re-trigger a non-idempotent side effect — those keep the
- * lossy seed. Falls back to `seed?.toolResult` if the live call fails (e.g.
- * the deployment has no live MCP session outside the original conversation
- * turn) or has no arguments to replay.
+ * `'toolset'` kind also covers indirect, name-prefix-guessed matches, where
+ * re-calling could hit the wrong tool or re-trigger a non-idempotent side
+ * effect — those keep the lossy seed. Falls back to `seed?.toolResult` if the
+ * live call fails (e.g. the deployment has no live MCP session outside the
+ * original conversation turn) or has no arguments to replay.
  */
 export const resolveMcpAppToolResult = async (
   match: McpAppToolRef,
   seed: McpAppToolCallSeed | undefined,
+  callTool: CallMcpAppTool,
 ): Promise<CallToolResult | undefined> => {
   if (match.kind !== 'application' || seed?.toolInput == null) {
     return seed?.toolResult;
   }
 
   try {
-    return (await callMcpAppTool(
+    return await callTool(
       match.toolsetId,
       match.mcpToolName,
       seed.toolInput,
       match.kind,
-    )) as CallToolResult;
+    );
   } catch {
     return seed.toolResult;
   }
