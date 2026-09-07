@@ -173,6 +173,24 @@ Set `isFullWidth` when the grid is rendered without the 1180 px content cap. It
 only sharpens the column-count guess used for the first paint; the measured
 container width always wins afterwards.
 
+### Card
+
+Single catalog item card, exported for hosts composing their own grid or list.
+
+```tsx
+import { Card } from '@epam/ai-dial-catalog';
+
+<Card
+  item={item}
+  query={searchQuery}
+  onClick={handleItemClick}
+  onToggle={handleToggleFavorite}
+  initialIsStarred={isFavorited}
+/>
+```
+
+The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's fixed 2-line clamp; they appear normally in the About tab. Links render as real `<a>` elements and do not trigger the card's own `onClick` handler due to event stopPropagation on the description wrapper.
+
 ### ListView
 
 Table view powered by ag-grid with column sorting and row selection. `type` and
