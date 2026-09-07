@@ -231,6 +231,7 @@ const ConversationView: FC<Props> = ({
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
+  const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -878,6 +879,7 @@ const ConversationView: FC<Props> = ({
                 chatSettings={isChatSettingsEnabled ? chatSettings : undefined}
                 toolsMenuItems={toolsMenuItems}
                 onToolToggle={onToolToggle}
+                canRemoveTools={isRemovableToolsEnabled}
                 toolsMenuTitle={toolsMenuTitle}
                 toolsChipLabels={toolsChipLabels}
                 pendingDropFiles={!isEditActive ? pendingFiles : undefined}
