@@ -140,7 +140,7 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 | `appsEditor.generalForm.namePlaceholder` | `Enter application name` |
 | `appsEditor.generalForm.descriptionPlaceholder` | `Describe your application` |
 | `appsEditor.generalForm.nameInvalid` | `Name may only contain letters, digits, spaces, underscores, dots, and dashes` |
-| `appsEditor.generalForm.versionInvalid` | `Version may only contain letters, digits, dots, underscores, and dashes` |
+| `appsEditor.generalForm.versionInvalid` | `Version format is invalid (example: 0.0.1)` |
 | `appsEditor.settingsStep.loadingLabel` | `Loading editor…` |
 | `appsEditor.settingsStep.noEditorPlaceholder` | `Editor not available for this application type yet.` |
 | `appsEditor.error.createFailed` | `Failed to create application. Please try again.` |
@@ -341,7 +341,7 @@ State owned locally via `useState`:
 
 `initialValues`, when supplied, SHALL seed `values` exactly once (guarded by a ref) so later edits are never overwritten by a re-render of the host.
 
-Client-side validation SHALL run through `validateDeploymentCreationFields` with both `validateNamePattern` and `validateVersionPattern` enabled: the Name field is required and must match the allowed-character pattern, and the Version field — when non-empty — must match its own pattern. No URL format validation is performed on the icon URL field; that is enforced server-side only.
+Client-side validation SHALL run through `validateDeploymentCreationFields` with `validateNamePattern` enabled and `validateVersionPattern` set to the library's exported `SEMVER_VERSION_PATTERN`: the Name field is required and must match the allowed-character pattern, and the Version field — when non-empty — must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`), stricter than the shared library's default character-set-only version pattern. No URL format validation is performed on the icon URL field; that is enforced server-side only.
 
 Submitting the form (via the imperative `submit()` handle, or the underlying `<form onSubmit>` if the user presses Enter):
 - Is a no-op while `isSubmitting` is already true.

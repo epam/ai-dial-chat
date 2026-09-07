@@ -21,6 +21,16 @@ The system SHALL provide a `/toolset-editor` route that opens the toolset editor
 ### Requirement: Metadata section fields
 The Metadata section SHALL allow editing the toolset avatar, name, version, description, and topics. The avatar SHALL be picked via the shared `AddAvatar` control (preview box plus "Add avatar" button), which opens the `AvatarPickerModal` file manager restricted to a single image up to a host-configured size, rather than a plain URL text field. The name and description fields SHALL also allow editing translations for additional locales through the shared `DeploymentLocalesField` popup. These fields SHALL be rendered and validated through the shared `deployment-creation-form` library component. The Metadata section SHALL NOT contain any connection or authentication fields.
 
+The Version field SHALL be validated against the shared `deployment-creation-form` library's default `VERSION_PATTERN` (via `validateDeploymentCreationFields` with `validateVersionPattern: true`) — letters, digits, dots, underscores, and dashes are all allowed, unlike the stricter dot-separated-numeric-only pattern the Quick App and Custom App editors use. A non-empty version that contains any other character SHALL surface a version-invalid error (`toolsetEditor.general.versionInvalid`, "Version may only contain letters, digits, dots, underscores, and dashes") under the Version field and SHALL keep the Save button disabled.
+
+#### Scenario: Version format error
+- **WHEN** a user types a version containing a character outside letters, digits, dots, underscores, and dashes (e.g. a space or `/`)
+- **THEN** a version-invalid error is shown under the Version field and the Save button stays disabled
+
+#### Scenario: Letters-only version is accepted
+- **WHEN** a user types a version made only of letters, digits, dots, underscores, and dashes (e.g. `abc` or `1.0-beta`)
+- **THEN** no version error is shown
+
 #### Scenario: Edit metadata fields
 - **WHEN** a user picks an avatar image and types a name, version, description, and adds topic tags
 - **THEN** those values are held in component state without saving

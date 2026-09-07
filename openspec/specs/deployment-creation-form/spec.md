@@ -46,10 +46,20 @@ identifiers.
 
 ### Requirement: Shared field validation function
 `libs/deployment-creation-form` SHALL export a pure `validateDeploymentCreationFields` function that
-takes the shared field values and returns field-level errors: a required-name error when name
-is empty, and a name-format error when name contains characters outside letters, digits, spaces,
-underscores, dots, and dashes. The function SHALL NOT validate an `intro` field. The
-function SHALL have no side effects and SHALL NOT depend on i18n, routing, or network state.
+takes the shared field values and an options object, and returns field-level errors: a
+required-name error when name is empty, a name-format error (opt-in via `validateNamePattern`)
+when name contains characters outside letters, digits, spaces, underscores, dots, and dashes
+(`NAME_PATTERN`), and a version-format error (opt-in via `validateVersionPattern`) for a
+non-empty version that fails the applicable version pattern. A non-empty version never produces
+a required error. The function SHALL NOT validate an `intro` field. The function SHALL have no
+side effects and SHALL NOT depend on i18n, routing, or network state.
+
+`validateVersionPattern` SHALL accept either `true` — checking the non-empty version against the
+exported default `VERSION_PATTERN` (letters, digits, dots, underscores, dashes) — or a `RegExp`,
+checked instead of the default. The library SHALL also export `SEMVER_VERSION_PATTERN` (one or
+more dot-separated numeric segments, e.g. `0.0.1`, `2.0`) as a stricter alternative a host can
+pass when it requires a dot-separated numeric version rather than the default permissive
+character-set check.
 
 #### Scenario: Valid values produce no errors
 - **WHEN** the function is called with a non-empty, correctly formatted name
@@ -58,6 +68,22 @@ function SHALL have no side effects and SHALL NOT depend on i18n, routing, or ne
 #### Scenario: Name is required
 - **WHEN** the function is called with an empty name
 - **THEN** it returns a required-field error for name
+
+#### Scenario: Default version pattern check
+- **WHEN** the function is called with `validateVersionPattern: true` and a non-empty version
+  containing a character outside `VERSION_PATTERN`
+- **THEN** it returns a version-format error; a version made only of letters, digits, dots,
+  underscores, and dashes (e.g. `abc`) produces no error
+
+#### Scenario: Stricter version pattern override
+- **WHEN** the function is called with `validateVersionPattern: SEMVER_VERSION_PATTERN` and a
+  non-empty version that is not entirely dot-separated numeric segments (e.g. `abc`)
+- **THEN** it returns a version-format error; a version such as `0.0.1` or `2.0` produces no error
+
+#### Scenario: Empty version is never flagged
+- **WHEN** the function is called with `validateVersionPattern` set (either `true` or a `RegExp`)
+  and an empty version
+- **THEN** it returns no error for version
 
 ### Requirement: Library isolation boundary
 `libs/deployment-creation-form` SHALL NOT import `react-i18next`, `@epam/chat-api-client`,

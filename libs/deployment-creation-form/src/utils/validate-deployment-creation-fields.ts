@@ -11,6 +11,9 @@ export const NAME_PATTERN = /^[a-zA-Z0-9 _.-]+$/;
 /** Allowed characters for the version field: letters, digits, dots, underscores, dashes. */
 export const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/;
 
+/** Stricter version shape: one or more dot-separated numeric segments (e.g. `0.0.1`). */
+export const SEMVER_VERSION_PATTERN = /^\d+(\.\d+)*$/;
+
 /** Validates the General-step fields and returns untranslated error codes; has no side effects. */
 export const validateDeploymentCreationFields = (
   values: DeploymentCreationFormValues,
@@ -26,12 +29,14 @@ export const validateDeploymentCreationFields = (
   }
 
   const trimmedVersion = values.version.trim();
-  if (
-    options.validateVersionPattern &&
-    trimmedVersion &&
-    !VERSION_PATTERN.test(trimmedVersion)
-  ) {
-    errors.version = DeploymentCreationFieldErrorCode.InvalidFormat;
+  if (options.validateVersionPattern && trimmedVersion) {
+    const pattern =
+      options.validateVersionPattern instanceof RegExp
+        ? options.validateVersionPattern
+        : VERSION_PATTERN;
+    if (!pattern.test(trimmedVersion)) {
+      errors.version = DeploymentCreationFieldErrorCode.InvalidFormat;
+    }
   }
 
   return errors;
