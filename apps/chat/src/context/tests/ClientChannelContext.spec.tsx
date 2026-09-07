@@ -19,6 +19,7 @@ import {
   ClientChannelProvider,
   useClientChannel,
 } from '../ClientChannelContext';
+import { GenerationProvider, useGeneration } from '../GenerationContext';
 
 vi.mock('../AppConfigContext', () => ({
   useFeatureFlag: vi.fn(),
@@ -61,7 +62,11 @@ const makeWrapper =
       <Routes>
         <Route
           path="*"
-          element={<ClientChannelProvider>{children}</ClientChannelProvider>}
+          element={
+            <GenerationProvider>
+              <ClientChannelProvider>{children}</ClientChannelProvider>
+            </GenerationProvider>
+          }
         />
       </Routes>
     </MemoryRouter>
@@ -94,7 +99,11 @@ const makeNavigableWrapper = (initialPath: string) => {
       <Routes>
         <Route
           path="*"
-          element={<ClientChannelProvider>{children}</ClientChannelProvider>}
+          element={
+            <GenerationProvider>
+              <ClientChannelProvider>{children}</ClientChannelProvider>
+            </GenerationProvider>
+          }
         />
       </Routes>
     </MemoryRouter>
@@ -522,6 +531,192 @@ describe('ClientChannelProvider', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  describe('idle disconnect', () => {
+    const useHarness = () => ({
+      channel: useClientChannel(),
+      generation: useGeneration(),
+    });
+
+    it('disconnects ~1000ms after notifyGenerationSettled() when no generation is active', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const { stream } = makeControllableStream();
+        mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
+
+        const { result } = renderHook(() => useHarness(), { wrapper });
+        await act(async () => {
+          await Promise.resolve();
+        });
+        expect(result.current.channel.channelId).toBe('ch-1');
+
+        act(() => {
+          result.current.generation.startGeneration('path-a', 'gen-1');
+          result.current.generation.completeGeneration('path-a', 'gen-1');
+          result.current.channel.notifyGenerationSettled();
+        });
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(999);
+        });
+        expect(mockUnsubscribe).not.toHaveBeenCalled();
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1);
+        });
+        expect(mockUnsubscribe).toHaveBeenCalledWith('ch-1');
+        expect(result.current.channel.channelId).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('cancels the pending disconnect when ensureConnected() is called within the grace window', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const { stream } = makeControllableStream();
+        mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
+
+        const { result } = renderHook(() => useHarness(), { wrapper });
+        await act(async () => {
+          await Promise.resolve();
+        });
+        expect(result.current.channel.channelId).toBe('ch-1');
+
+        act(() => {
+          result.current.generation.startGeneration('path-a', 'gen-1');
+          result.current.generation.completeGeneration('path-a', 'gen-1');
+          result.current.channel.notifyGenerationSettled();
+        });
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(500);
+        });
+
+        act(() => {
+          result.current.channel.ensureConnected();
+        });
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1000);
+        });
+
+        expect(mockUnsubscribe).not.toHaveBeenCalled();
+        expect(result.current.channel.channelId).toBe('ch-1');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('is a no-op while another generation is still active', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const { stream } = makeControllableStream();
+        mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
+
+        const { result } = renderHook(() => useHarness(), { wrapper });
+        await act(async () => {
+          await Promise.resolve();
+        });
+
+        act(() => {
+          result.current.generation.startGeneration('path-a', 'gen-1');
+          result.current.generation.startGeneration('path-b', 'gen-2');
+          result.current.generation.completeGeneration('path-a', 'gen-1');
+          // path-b is still Active — hasActiveGeneration() must be true.
+          result.current.channel.notifyGenerationSettled();
+        });
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(2000);
+        });
+
+        expect(mockUnsubscribe).not.toHaveBeenCalled();
+        expect(result.current.channel.channelId).toBe('ch-1');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('does not fire the idle timer again after unmount', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const { stream } = makeControllableStream();
+        mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
+
+        const { result, unmount } = renderHook(() => useHarness(), {
+          wrapper,
+        });
+        await act(async () => {
+          await Promise.resolve();
+        });
+
+        act(() => {
+          result.current.generation.startGeneration('path-a', 'gen-1');
+          result.current.generation.completeGeneration('path-a', 'gen-1');
+          result.current.channel.notifyGenerationSettled();
+        });
+
+        unmount();
+        // Unmount's own cleanup disconnects synchronously.
+        expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(5000);
+        });
+
+        // The idle timer must not fire a second, stray disconnect.
+        expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('reconnects transparently when a new completion starts after an idle disconnect', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const first = makeControllableStream();
+        const second = makeControllableStream();
+        mockSubscribe
+          .mockResolvedValueOnce({ body: first.stream, channelId: 'ch-1' })
+          .mockResolvedValueOnce({ body: second.stream, channelId: 'ch-2' });
+
+        const { result } = renderHook(() => useHarness(), { wrapper });
+        await act(async () => {
+          await Promise.resolve();
+        });
+        expect(result.current.channel.channelId).toBe('ch-1');
+
+        act(() => {
+          result.current.generation.startGeneration('path-a', 'gen-1');
+          result.current.generation.completeGeneration('path-a', 'gen-1');
+          result.current.channel.notifyGenerationSettled();
+        });
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1000);
+        });
+        expect(result.current.channel.channelId).toBeNull();
+
+        act(() => {
+          result.current.channel.ensureConnected();
+        });
+        await act(async () => {
+          await Promise.resolve();
+        });
+
+        expect(mockSubscribe).toHaveBeenCalledTimes(2);
+        expect(result.current.channel.channelId).toBe('ch-2');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   it('throws when used outside a ClientChannelProvider', () => {

@@ -1,3 +1,4 @@
+import http from 'node:http';
 import {
   ConflictException,
   INestApplication,
@@ -44,6 +45,7 @@ describe('POST /conversations/completions (integration)', () => {
   let mockGenerationService: {
     register: ReturnType<typeof vi.fn>;
     abort: ReturnType<typeof vi.fn>;
+    abortSignal: ReturnType<typeof vi.fn>;
     complete: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
     getStatus: ReturnType<typeof vi.fn>;
@@ -73,6 +75,7 @@ describe('POST /conversations/completions (integration)', () => {
     mockGenerationService = {
       register: vi.fn().mockReturnValue(new AbortController()),
       abort: vi.fn().mockReturnValue(true),
+      abortSignal: vi.fn(),
       complete: vi.fn(),
       error: vi.fn(),
       getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
@@ -246,6 +249,59 @@ describe('POST /conversations/completions (integration)', () => {
     const [, , , , mode, , msgIdx] = mockService.streamCompletion.mock.calls[0];
     expect(mode).toBe('regenerate');
     expect(msgIdx).toBe(2);
+  });
+
+  it('aborts the generation signal when the client disconnects mid-stream', async () => {
+    let releaseSecondChunk: () => void = () => undefined;
+    const secondChunkGate = new Promise<void>((resolve) => {
+      releaseSecondChunk = resolve;
+    });
+    mockService.streamCompletion.mockImplementation(async function* (
+      ...args: unknown[]
+    ) {
+      (args[10] as () => void)();
+      yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
+      // Holds the generator open past the first chunk so the client can
+      // disconnect before the stream would otherwise finish on its own.
+      await secondChunkGate;
+      yield Buffer.from('data: [DONE]\n\n');
+    });
+
+    const address = app.getHttpServer().address();
+    const port =
+      typeof address === 'object' && address !== null ? address.port : 0;
+
+    await new Promise<void>((resolve) => {
+      const req = http.request(
+        {
+          host: '127.0.0.1',
+          port,
+          path: '/conversations/completions',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        },
+        (res) => {
+          res.once('data', () => {
+            // First chunk arrived — simulate the browser tab closing.
+            req.destroy();
+          });
+        },
+      );
+      req.on('error', () => resolve());
+      req.on('close', () => resolve());
+      req.write(JSON.stringify(VALID_COMPLETION_BODY));
+      req.end();
+    });
+
+    await vi.waitFor(() =>
+      expect(mockGenerationService.abortSignal).toHaveBeenCalledWith(
+        TEST_USER.sid,
+        VALID_COMPLETION_BODY.path,
+        VALID_COMPLETION_BODY.generationId,
+      ),
+    );
+
+    releaseSecondChunk();
   });
 });
 
