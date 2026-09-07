@@ -74,6 +74,7 @@ interface Props {
   customUploadButtonLabel?: string;
   rootFolderId?: string;
   reviewBucket?: string;
+  showHiddenFolders?: boolean;
 }
 
 export const PreUploadDialog = ({
@@ -88,6 +89,7 @@ export const PreUploadDialog = ({
   customUploadButtonLabel,
   rootFolderId,
   reviewBucket,
+  showHiddenFolders = false,
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
@@ -486,6 +488,7 @@ export const PreUploadDialog = ({
 
       <SelectFolderModal
         reviewBucket={reviewBucket}
+        showHiddenFolders={showHiddenFolders}
         isOpen={isChangeFolderModalOpened}
         initialSelectedFolderId={selectedFolderId}
         rootFolderId={rootFolderId ?? getFileRootId(uploadBucket)}
