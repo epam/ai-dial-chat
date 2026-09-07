@@ -596,6 +596,20 @@ const App: FC = () => {
                 AttachmentCanvasI18nKeys.PdfPageNumberLabel,
               ),
               mcpAppReloadLabel: t(ButtonsI18nKeys.Reload),
+              pdfContentLoadingLabel: t(
+                AttachmentCanvasI18nKeys.PdfContentLoadingLabel,
+              ),
+              pdfContentErrorLabel: t(
+                AttachmentCanvasI18nKeys.PdfContentErrorLabel,
+              ),
+              pdfContentRetryLabel: t(ButtonsI18nKeys.Retry),
+              codeContentLoadingLabel: t(
+                AttachmentCanvasI18nKeys.CodeContentLoadingLabel,
+              ),
+              codeContentErrorLabel: t(
+                AttachmentCanvasI18nKeys.CodeContentErrorLabel,
+              ),
+              codeContentRetryLabel: t(ButtonsI18nKeys.Retry),
             }}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}

@@ -59,6 +59,7 @@ const mockListConversations = vi.mocked(conversationsApi.listConversations);
 const mockDeleteAllConversations = vi.mocked(
   conversationsApi.deleteAllConversations,
 );
+const mockDeleteConversation = vi.mocked(conversationsApi.deleteConversation);
 const mockRenameConversation = vi.mocked(conversationsApi.renameConversation);
 const mockMarkConversationViewed = vi.mocked(
   conversationsApi.markConversationViewed,
@@ -151,6 +152,72 @@ describe('ConversationsContext — identity-keyed refetch', () => {
     rerender();
 
     expect(mockListConversations).toHaveBeenCalledOnce();
+  });
+});
+
+describe('ConversationsContext — background refresh', () => {
+  it('keeps the loaded list visible while conversations are refreshed', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let resolveRefresh!: (value: { items: typeof seedConversations }) => void;
+    const refreshResponse = new Promise<{ items: typeof seedConversations }>(
+      (resolve) => {
+        resolveRefresh = resolve;
+      },
+    );
+    mockListConversations.mockReturnValueOnce(refreshResponse);
+
+    let refreshPromise!: Promise<void>;
+    act(() => {
+      refreshPromise = result.current.refreshConversations();
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.conversations).toEqual(seedConversations);
+
+    await act(async () => {
+      resolveRefresh({ items: [seedConversations[0]] });
+      await refreshPromise;
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.conversations).toEqual([seedConversations[0]]);
+  });
+
+  it('keeps the loaded list visible when a background refresh fails', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let rejectRefresh!: (reason: Error) => void;
+    const refreshResponse = new Promise<never>((_resolve, reject) => {
+      rejectRefresh = reject;
+    });
+    mockListConversations.mockReturnValueOnce(refreshResponse);
+
+    let refreshPromise!: Promise<void>;
+    act(() => {
+      refreshPromise = result.current.refreshConversations();
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.conversations).toEqual(seedConversations);
+
+    const refreshError = new Error('Refresh failed');
+    await act(async () => {
+      rejectRefresh(refreshError);
+      await refreshPromise;
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.conversations).toEqual(seedConversations);
+    expect(result.current.error).toBe(refreshError);
   });
 });
 
@@ -392,6 +459,82 @@ describe('ConversationsContext — renameConversation', () => {
     });
 
     expect(userConfigApi.pinConversation).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationsContext — removeConversationFromList', () => {
+  it('removes only the conversation matching the given id', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    act(() => {
+      result.current.removeConversationFromList('conv2');
+    });
+
+    expect(result.current.conversations.map((c) => c.id)).toEqual([
+      'conv1',
+      'conv3',
+    ]);
+  });
+
+  it('matches ids via conversationIdsMatch, including URL-encoded variants', async () => {
+    mockListConversations.mockResolvedValueOnce({
+      items: [
+        ...seedConversations,
+        {
+          id: 'folder/chat one',
+          title: 'Chat with space',
+          isPinned: false,
+          updatedAt: 0,
+          sharedWithMe: false,
+          publishedWithMe: false,
+          isReadonly: false,
+          isScheduledTask: false,
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(4));
+
+    act(() => {
+      result.current.removeConversationFromList('folder%2Fchat%20one');
+    });
+
+    expect(
+      result.current.conversations.some((c) => c.id === 'folder/chat one'),
+    ).toBe(false);
+    expect(result.current.conversations).toHaveLength(3);
+  });
+
+  it('does not call the delete API', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    act(() => {
+      result.current.removeConversationFromList('conv1');
+    });
+
+    expect(mockDeleteConversation).not.toHaveBeenCalled();
+  });
+
+  it('is a no-op when the id does not match any conversation', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    act(() => {
+      result.current.removeConversationFromList('does-not-exist');
+    });
+
+    expect(result.current.conversations).toHaveLength(3);
   });
 });
 
