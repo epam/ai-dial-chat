@@ -731,6 +731,49 @@ export class BasePage {
     return { actionResult: actionResult, responses: responses };
   }
 
+  /**
+   * The app can re-fetch a folder's listing from more than one place
+   * (ChatDropArea's eager preload, the file manager modal's own tree, the
+   * upload-success handler's own refresh, etc.), and any one of those
+   * un-awaited requests can land at an inconvenient moment and leave
+   * dependent UI state (e.g. the "Attach" button, or a just-added file
+   * entry) stuck until it resolves. Rather than chasing every individual
+   * trigger, wait until no such listing request has fired for a quiet
+   * period before proceeding.
+   */
+  public async waitForFolderListingToSettle(
+    folderName: string,
+    { quietMs = 1000, maxWaitMs = 10000 } = {},
+  ) {
+    await new Promise<void>((resolve) => {
+      let timer: ReturnType<typeof setTimeout>;
+      const onResponse = (response: {
+        url: () => string;
+        request: () => { method: () => string };
+      }) => {
+        if (
+          response.request().method() === 'GET' &&
+          response.url().endsWith(API.folderFilesListingHost(folderName))
+        ) {
+          scheduleResolve();
+        }
+      };
+      const finish = () => {
+        clearTimeout(timer);
+        clearTimeout(hardStop);
+        this.page.off('response', onResponse);
+        resolve();
+      };
+      const scheduleResolve = () => {
+        clearTimeout(timer);
+        timer = setTimeout(finish, quietMs);
+      };
+      const hardStop = setTimeout(finish, maxWaitMs);
+      this.page.on('response', onResponse);
+      scheduleResolve();
+    });
+  }
+
   public async getAttachmentFileMetadataAndContent(
     filename: string,
   ): Promise<FileMetadata> {

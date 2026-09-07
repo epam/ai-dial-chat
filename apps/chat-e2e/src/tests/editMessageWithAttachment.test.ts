@@ -11,7 +11,7 @@ import {
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Attachment as AttachmentInterface } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
@@ -96,6 +96,9 @@ dialTest(
               ),
           ),
         [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
+      );
+      await dialHomePage.waitForFolderListingToSettle(
+        DateUtil.getCurrentYearMonth(),
       );
       await fileManagerModal.getAttachButton().click();
     });

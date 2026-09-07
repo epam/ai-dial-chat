@@ -14,50 +14,9 @@ import {
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { DateUtil } from '@/src/utils';
 import { Conversation } from '@epam/ai-dial-shared';
-import { Page } from '@playwright/test';
 
 let appEntity: DialAIEntityModel;
 let conversation: Conversation;
-
-// The app can re-fetch a folder's listing from more than one place
-// (ChatDropArea's eager preload, the file manager modal's own tree, etc.),
-// and any one of those un-awaited requests can land after a paste starts
-// and silently wipe it from state (getFilesSuccess replaces the folder's
-// file list wholesale). Rather than chasing every individual trigger,
-// wait until no such listing request has fired for a quiet period.
-async function waitForFolderListingToSettle(
-  page: Page,
-  folderName: string,
-  { quietMs = 1000, maxWaitMs = 10000 } = {},
-) {
-  await new Promise<void>((resolve) => {
-    let timer: ReturnType<typeof setTimeout>;
-    const onResponse = (response: {
-      url: () => string;
-      request: () => { method: () => string };
-    }) => {
-      if (
-        response.request().method() === 'GET' &&
-        response.url().endsWith(API.folderFilesListingHost(folderName))
-      ) {
-        scheduleResolve();
-      }
-    };
-    const finish = () => {
-      clearTimeout(timer);
-      clearTimeout(hardStop);
-      page.off('response', onResponse);
-      resolve();
-    };
-    const scheduleResolve = () => {
-      clearTimeout(timer);
-      timer = setTimeout(finish, quietMs);
-    };
-    const hardStop = setTimeout(finish, maxWaitMs);
-    page.on('response', onResponse);
-    scheduleResolve();
-  });
-}
 
 dialTest(
   'Ctrl-V pastes a file into input.\n' +
@@ -93,7 +52,6 @@ dialTest(
     editMessageInputAttachmentsAssertions,
     customApplicationPublishingUtil,
     replaceConfirmationModal,
-    page,
   }) => {
     setTestIds(
       'EPMDIAL-6822',
@@ -186,7 +144,7 @@ dialTest(
         );
         await fileManagerModal.getCloseButton().click();
         await fileManagerModal.waitForState({ state: 'hidden' });
-        await waitForFolderListingToSettle(page, yearMonthSubfolder);
+        await dialHomePage.waitForFolderListingToSettle(yearMonthSubfolder);
       },
     );
 
@@ -438,7 +396,6 @@ dialTest(
     fileDropArea,
     chat,
     toast,
-    page,
   }) => {
     setTestIds('EPMDIAL-6816');
     const yearMonthSubfolder = DateUtil.getCurrentYearMonth();
@@ -487,7 +444,7 @@ dialTest(
             ),
           [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
-        await waitForFolderListingToSettle(page, yearMonthSubfolder);
+        await dialHomePage.waitForFolderListingToSettle(yearMonthSubfolder);
         await fileManagerModal.getAttachButton().click();
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
           file1,
