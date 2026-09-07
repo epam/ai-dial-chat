@@ -295,8 +295,10 @@ export const useConversationHandlers = ({
       conversationsApi
         .deleteConversation({ path: conversationPath })
         .catch(() => {
-          // Already gone (e.g. a concurrent delete won the race) — the
-          // desired end state is reached either way.
+          /**
+           * Already gone (e.g. a concurrent delete won the race) — the
+           * desired end state is reached either way.
+           */
         });
       onConversationDeleted?.();
       return;
