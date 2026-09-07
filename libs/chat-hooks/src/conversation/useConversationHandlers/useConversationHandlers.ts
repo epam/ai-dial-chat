@@ -275,37 +275,29 @@ export const useConversationHandlers = ({
   );
 
   const handleConfirmDelete = useCallback(() => {
-    if (!conversationId || pendingDeleteIndex == null || !conversation) return;
+    if (!conversationId || pendingDeleteIndex == null) return;
+    const idx = pendingDeleteIndex;
     setPendingDeleteIndex(null);
 
-    const idx = pendingDeleteIndex;
-    if (idx === -1) return;
+    const prev = conversationRef.current;
+    if (!prev || idx === -1) return;
 
     const conversationPath = getConversationPath(conversationId);
+    const next =
+      prev.messages[idx + 1]?.role === MessageRole.Assistant
+        ? prev.messages.filter((_, i) => i !== idx && i !== idx + 1)
+        : prev.messages.filter((_, i) => i !== idx);
 
-    const remaining =
-      conversation.messages[idx + 1]?.role === MessageRole.Assistant
-        ? conversation.messages.filter((_, i) => i !== idx && i !== idx + 1)
-        : conversation.messages.filter((_, i) => i !== idx);
-
-    /*
-     * Nothing displayable is left, so the conversation itself goes. The
-     * request and `onConversationDeleted` run here rather than inside a
-     * `setConversation` updater: React invokes an updater during render,
-     * where a host callback that drops the conversation from its own list
-     * would be a cross-component state update, and a StrictMode re-run of
-     * the updater would fire the delete request twice.
-     */
     if (
-      remaining.length === 0 ||
-      (remaining.length === 1 && remaining[0].role === MessageRole.Status)
+      next.length === 0 ||
+      (next.length === 1 && next[0].role === MessageRole.Status)
     ) {
       void conversationsApi.deleteConversation({ path: conversationPath });
       onConversationDeleted?.();
       return;
     }
 
-    const updated = { ...conversation, messages: remaining };
+    const updated = { ...prev, messages: next };
     conversationRef.current = updated;
     setConversation(updated);
     void conversationsApi.saveConversation({
@@ -315,7 +307,6 @@ export const useConversationHandlers = ({
       },
     });
   }, [
-    conversation,
     conversationId,
     conversationRef,
     conversationsApi,

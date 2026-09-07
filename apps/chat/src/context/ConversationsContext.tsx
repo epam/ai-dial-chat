@@ -57,10 +57,9 @@ interface ConversationsContextType {
   /** Delete a conversation by id, removing it from the local list on success. */
   deleteConversation: (id: string) => Promise<void>;
   /**
-   * Drops a conversation from the local list without calling the API — for a
-   * conversation the backend has already deleted (e.g. deleting its last
-   * message removed it), which would otherwise linger as a row that no
-   * longer resolves.
+   * Removes a conversation from the local list without calling the delete
+   * API. Use when the conversation was already deleted server-side by
+   * another flow (e.g. deleting its last message empties it out).
    */
   removeConversationFromList: (id: string) => void;
   /** Rename a conversation; optimistically updates title, reverts on failure. The conversation id never changes. */
@@ -337,6 +336,11 @@ export const ConversationsProvider = ({
     }
   }, []);
 
+  /**
+   * Removes a conversation from the local list without calling the delete
+   * API. Use when the conversation was already deleted server-side by
+   * another flow (e.g. deleting its last message empties it out).
+   */
   const removeConversationFromList = useCallback((id: string) => {
     setConversations((prev) =>
       prev.filter((c) => !conversationIdsMatch(c.id, id)),

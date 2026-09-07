@@ -59,8 +59,8 @@ const mockListConversations = vi.mocked(conversationsApi.listConversations);
 const mockDeleteAllConversations = vi.mocked(
   conversationsApi.deleteAllConversations,
 );
-const mockRenameConversation = vi.mocked(conversationsApi.renameConversation);
 const mockDeleteConversation = vi.mocked(conversationsApi.deleteConversation);
+const mockRenameConversation = vi.mocked(conversationsApi.renameConversation);
 const mockMarkConversationViewed = vi.mocked(
   conversationsApi.markConversationViewed,
 );
@@ -438,7 +438,7 @@ describe('ConversationsContext — deleteConversation', () => {
 });
 
 describe('ConversationsContext — removeConversationFromList', () => {
-  it('drops the conversation locally without calling the delete API', async () => {
+  it('removes only the conversation matching the given id', async () => {
     const { result } = renderHook(() => useConversations(), {
       wrapper: ConversationsProvider,
     });
@@ -452,15 +452,21 @@ describe('ConversationsContext — removeConversationFromList', () => {
       'conv1',
       'conv3',
     ]);
-    expect(mockDeleteConversation).not.toHaveBeenCalled();
   });
 
-  it('matches a decoded route id against the encoded listed id', async () => {
+  it('matches ids via conversationIdsMatch, including URL-encoded variants', async () => {
     mockListConversations.mockResolvedValueOnce({
       items: [
+        ...seedConversations,
         {
-          ...seedConversations[0],
-          id: 'conversations/bucket/gpt-4o__My%20Chat',
+          id: 'folder/chat one',
+          title: 'Chat with space',
+          isPinned: false,
+          updatedAt: 0,
+          sharedWithMe: false,
+          publishedWithMe: false,
+          isReadonly: false,
+          isScheduledTask: false,
         },
       ],
     });
@@ -468,15 +474,42 @@ describe('ConversationsContext — removeConversationFromList', () => {
     const { result } = renderHook(() => useConversations(), {
       wrapper: ConversationsProvider,
     });
-    await waitFor(() => expect(result.current.conversations).toHaveLength(1));
+    await waitFor(() => expect(result.current.conversations).toHaveLength(4));
 
     act(() => {
-      result.current.removeConversationFromList(
-        'conversations/bucket/gpt-4o__My Chat',
-      );
+      result.current.removeConversationFromList('folder%2Fchat%20one');
     });
 
-    expect(result.current.conversations).toHaveLength(0);
+    expect(
+      result.current.conversations.some((c) => c.id === 'folder/chat one'),
+    ).toBe(false);
+    expect(result.current.conversations).toHaveLength(3);
+  });
+
+  it('does not call the delete API', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    act(() => {
+      result.current.removeConversationFromList('conv1');
+    });
+
+    expect(mockDeleteConversation).not.toHaveBeenCalled();
+  });
+
+  it('is a no-op when the id does not match any conversation', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    act(() => {
+      result.current.removeConversationFromList('does-not-exist');
+    });
+
+    expect(result.current.conversations).toHaveLength(3);
   });
 });
 

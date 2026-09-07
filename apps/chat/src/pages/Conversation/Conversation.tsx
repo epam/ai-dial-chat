@@ -122,9 +122,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const {
     conversations,
     duplicateConversation,
-    removeConversationFromList,
     updateConversationTitle,
     watchForDisplayNameUpdate,
+    removeConversationFromList,
   } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const overlay = useOptionalOverlay();
@@ -426,6 +426,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           }
         } else {
           setConversation(result);
+          conversationRef.current = result;
 
           /*
            * A hard refresh mid-generation loads the backend's empty
@@ -503,11 +504,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     [currentSelectedItemId, conversation?.model.id],
   );
 
-  /*
-   * Deleting the last message deletes the conversation itself, so drop it
-   * from the panel list as well — a leftover row points at a resource that
-   * no longer exists and fails on both open and delete.
-   */
   const handleConversationDeleted = useCallback(() => {
     if (conversationId) removeConversationFromList(conversationId);
     navigate(ROUTES.Root);
