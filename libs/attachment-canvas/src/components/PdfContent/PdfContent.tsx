@@ -25,6 +25,10 @@ import {
   useState,
 } from 'react';
 import { fetchBlobFromUrl } from '../../utils/download';
+import {
+  LazyContentError,
+  LazyContentPending,
+} from '../LazyContentBoundary/LazyContentBoundary';
 import styles from './PdfContent.module.scss';
 /*
  * These stylesheets are only needed once a PDF is actually being rendered.
@@ -43,12 +47,58 @@ import '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css';
  * and a different `pdfjs-dist` version/consumer elsewhere in the app could
  * disagree with a value hardcoded here). The host supplies `configurePdfWorker`
  * instead; it's called once, the first time a PDF is actually opened, since
- * this module is only ever reached through the dynamic import above. Guarded
- * by a module-scope flag (not React state) so React's render/effect timing
- * can't delay it past the point `DocumentPreview` below starts loading the
- * document — it must run before that, not merely before paint.
+ * this module is only ever reached through the dynamic import above.
  */
-let hasConfiguredPdfWorker = false;
+
+/** Lifecycle of the host-supplied `configurePdfWorker` preparation step. */
+enum PdfWorkerPreparationState {
+  /** Waiting for `configurePdfWorker` to resolve; `DocumentPreview` must not mount yet. */
+  Preparing = 'preparing',
+  /** Preparation resolved (or was never needed); safe to mount `DocumentPreview`. */
+  Ready = 'ready',
+  /** Preparation rejected; a later call re-invokes `configurePdfWorker`. */
+  Error = 'error',
+}
+
+/*
+ * Module-scope, not React state: concurrent `PdfContent` mounts must share
+ * one in-flight preparation instead of each triggering their own call to
+ * `configurePdfWorker`. Memoized on success (the fulfilled promise itself is
+ * the cache); cleared back to `null` on rejection so the *next* attempt —
+ * an explicit retry, or a later independent PDF open — invokes
+ * `configurePdfWorker` again rather than being permanently stuck on the
+ * first failure.
+ */
+let preparationPromise: Promise<void> | null = null;
+
+/**
+ * Runs `configurePdfWorker` at most once per successful resolution, sharing
+ * one in-flight/resolved promise across every caller until it rejects.
+ */
+const preparePdfWorker = (
+  configurePdfWorker: () => void | Promise<void>,
+): Promise<void> => {
+  if (!preparationPromise) {
+    /*
+     * `configurePdfWorker()` is invoked synchronously, right here — not
+     * deferred behind a `Promise.resolve().then(...)` microtask — so it
+     * still runs before `DocumentPreview` could start its own document
+     * fetch, matching the timing guarantee the original fire-and-forget
+     * call made.
+     */
+    preparationPromise = new Promise<void>((resolve, reject) => {
+      try {
+        resolve(configurePdfWorker());
+      } catch (error) {
+        reject(error);
+      }
+    }).catch((error: unknown) => {
+      preparationPromise = null;
+      throw error;
+    });
+  }
+  return preparationPromise;
+};
 
 /** Number of pages eagerly requested as soon as the document loads, before the user opens the panel. */
 const THUMBNAIL_EAGER_BATCH_SIZE = 15;
@@ -80,6 +130,12 @@ export interface PdfContentLabels {
   hideThumbnailsLabel?: string;
   /** Accessible label for the current-page number input at the top of the thumbnails panel. Defaults to `'Page number'`. */
   pageNumberLabel?: string;
+  /** Accessible status text announced while the host prepares the PDF runtime. Defaults to `'Loading…'`. */
+  loadingLabel?: string;
+  /** Message shown when the host fails to prepare the PDF runtime. Defaults to `'Failed to load content'`. */
+  errorLabel?: string;
+  /** Label and accessible name for retrying PDF runtime preparation. Defaults to `'Retry'`. */
+  retryLabel?: string;
 }
 
 /** Props for the `PdfContent` component. */
@@ -96,9 +152,13 @@ export interface PdfContentProps {
   fileName?: string;
   /**
    * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
-   * host app. Called once, the first time a PDF attachment is opened. When
-   * omitted, `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is
-   * used instead, so PDF rendering still works, just without the host's own
+   * host app. Called once, the first time a PDF attachment is opened, and
+   * awaited before the viewer mounts. Concurrent PDF opens share one
+   * in-flight call; a successful call is memoized so later opens never
+   * repeat it. A rejected call is not cached — the next PDF open (or a
+   * subsequent retry) invokes it again. When omitted,
+   * `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used
+   * instead, so PDF rendering still works, just without the host's own
    * bundled worker asset.
    */
   configurePdfWorker?: () => void | Promise<void>;
@@ -130,18 +190,45 @@ export const PdfContent: FC<PdfContentProps> = ({
     showThumbnailsLabel = 'Show thumbnails',
     hideThumbnailsLabel = 'Hide thumbnails',
     pageNumberLabel = 'Page number',
+    loadingLabel = 'Loading…',
+    errorLabel = 'Failed to load content',
+    retryLabel = 'Retry',
   } = {},
 }) => {
+  const [preparationState, setPreparationState] = useState(() =>
+    configurePdfWorker
+      ? PdfWorkerPreparationState.Preparing
+      : PdfWorkerPreparationState.Ready,
+  );
+  const [preparationRetryKey, setPreparationRetryKey] = useState(0);
+
   /*
-   * Run before any child (including `DocumentPreview` below) is created, so
-   * the worker is configured before the document fetch/parse it triggers —
-   * not inside a `useEffect`, which would fire after `DocumentPreview`'s own
-   * mount effect (child effects run before the parent's).
+   * `DocumentPreview` below only mounts once this resolves — see the
+   * `preparationState === Ready` check below — so the worker is always
+   * configured before the document fetch/parse it triggers, without racing
+   * `DocumentPreview`'s own mount effect.
    */
-  if (!hasConfiguredPdfWorker && configurePdfWorker) {
-    hasConfiguredPdfWorker = true;
-    void configurePdfWorker();
-  }
+  useEffect(() => {
+    if (!configurePdfWorker) return;
+    setPreparationState(PdfWorkerPreparationState.Preparing);
+    let isCancelled = false;
+    preparePdfWorker(configurePdfWorker)
+      .then(() => {
+        if (!isCancelled) {
+          setPreparationState(PdfWorkerPreparationState.Ready);
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) setPreparationState(PdfWorkerPreparationState.Error);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, [configurePdfWorker, preparationRetryKey]);
+
+  const handleRetryPreparation = useCallback(() => {
+    setPreparationRetryKey((key) => key + 1);
+  }, []);
 
   const thumbnailsRegionId = useId();
   const [totalPages, setTotalPages] = useState(0);
@@ -397,6 +484,20 @@ export const PdfContent: FC<PdfContentProps> = ({
   );
 
   if (!url) return null;
+
+  if (preparationState === PdfWorkerPreparationState.Preparing) {
+    return <LazyContentPending loadingLabel={loadingLabel} />;
+  }
+
+  if (preparationState === PdfWorkerPreparationState.Error) {
+    return (
+      <LazyContentError
+        errorLabel={errorLabel}
+        retryLabel={retryLabel}
+        onRetry={handleRetryPreparation}
+      />
+    );
+  }
 
   const thumbnailItems: ReactElement[] = [];
   for (

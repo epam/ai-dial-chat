@@ -1,0 +1,7 @@
+{
+  "name": "attachment-canvas-consumer-fixture",
+  "description": "Isolated Vite app that installs the packed @epam/ai-dial-attachment-canvas tarball and imports only its public exports, proving the published package's exports map, externalized peers, and split CSS resolve outside the workspace's own @epam/source alias graph",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0"
+}
