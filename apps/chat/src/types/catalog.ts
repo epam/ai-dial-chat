@@ -10,12 +10,13 @@ export enum CatalogQuery {
  * Canonical display order for Catalog entity-type tabs, mirroring
  * `TAB_ORDER` in `libs/catalog/src/utils/catalog-tabs.ts`. Kept in sync here
  * because `CatalogView` needs the same ordering to resolve the persisted
- * active tab against the tabs currently available.
+ * active tab against the tabs currently available, and to name the available
+ * entity types in the search placeholder in the order their tabs appear.
  */
 export const CATALOG_TAB_ORDER: CatalogEntityType[] = [
   CatalogEntityType.Model,
   CatalogEntityType.Agent,
   CatalogEntityType.Toolset,
-  CatalogEntityType.Prompt,
   CatalogEntityType.Skill,
+  CatalogEntityType.Prompt,
 ];
