@@ -27,9 +27,13 @@ import {
 } from '../types/client-channel';
 import { ROUTES } from '../types/routes';
 import { useFeatureFlag } from './AppConfigContext';
+import { useGeneration } from './GenerationContext';
 
 /** Capped exponential backoff for reconnect attempts (ms). After these are exhausted, the provider waits for `ensureConnected` (e.g. the next completion) or tab visibility to resume. */
 const RECONNECT_DELAYS_MS = [1000, 2000, 4000, 8000, 16000];
+
+/** Idle grace period (ms) after a generation settles before disconnecting the channel, if nothing else is generating. Mirrors chat 1.0's `UNSUBSCRIBE_IDLE_DELAY_MS`. */
+const IDLE_DISCONNECT_DELAY_MS = 1000;
 
 interface ClientChannelContextValue {
   /** Current DIAL Core client-channel id, or `null` while disconnected/connecting. */
@@ -45,6 +49,8 @@ interface ClientChannelContextValue {
   ensureConnected: () => void;
   /** Resolves with the current channel id, nudging a connect attempt and waiting up to `timeoutMs` (default 40000) if one isn't established yet. Resolves `null` if the mechanism is inactive or the wait times out. */
   waitForChannel: (timeoutMs?: number) => Promise<string | null>;
+  /** Notifies the provider that a generation just settled (completed or errored), so it can schedule an idle disconnect if nothing else is generating. */
+  notifyGenerationSettled: () => void;
 }
 
 const ClientChannelContext = createContext<
@@ -93,6 +99,7 @@ const parseSigninEvent = (payload: string): PendingSigninEvent | null => {
 
 export const ClientChannelProvider: FC<Props> = ({ children }) => {
   const isEnabled = useFeatureFlag('liveChatInteraction');
+  const { hasActiveGeneration } = useGeneration();
   /*
    * `toolset/signin` and `external_service/signin` events can only ever be
    * pushed by DIAL Core while a completion is streaming, which only happens
@@ -123,6 +130,9 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   const resolvedIdsRef = useRef(new Set<string>());
   const abortControllerRef = useRef<AbortController | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleDisconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const attemptRef = useRef(0);
   const isStoppedRef = useRef(false);
   const channelWaitersRef = useRef<Set<(id: string | null) => void>>(new Set());
@@ -164,6 +174,13 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     if (retryTimeoutRef.current != null) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
+    }
+  }, []);
+
+  const clearIdleDisconnectTimeout = useCallback(() => {
+    if (idleDisconnectTimeoutRef.current != null) {
+      clearTimeout(idleDisconnectTimeoutRef.current);
+      idleDisconnectTimeoutRef.current = null;
     }
   }, []);
 
@@ -248,6 +265,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   }, [connect]);
 
   const ensureConnected = useCallback(() => {
+    clearIdleDisconnectTimeout();
     if (isStoppedRef.current || !isActiveRef.current) return;
 
     /*
@@ -265,10 +283,11 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     attemptRef.current = 0;
     clearRetryTimeout();
     void connect();
-  }, [clearRetryTimeout, connect]);
+  }, [clearIdleDisconnectTimeout, clearRetryTimeout, connect]);
 
   const disconnect = useCallback(() => {
     clearRetryTimeout();
+    clearIdleDisconnectTimeout();
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -283,7 +302,21 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     resolvedIdsRef.current.clear();
     syncPendingEvents();
     resolveChannelWaiters(null);
-  }, [clearRetryTimeout, resolveChannelWaiters, syncPendingEvents]);
+  }, [
+    clearIdleDisconnectTimeout,
+    clearRetryTimeout,
+    resolveChannelWaiters,
+    syncPendingEvents,
+  ]);
+
+  const notifyGenerationSettled = useCallback(() => {
+    if (hasActiveGeneration()) return;
+    clearIdleDisconnectTimeout();
+    idleDisconnectTimeoutRef.current = setTimeout(() => {
+      idleDisconnectTimeoutRef.current = null;
+      disconnect();
+    }, IDLE_DISCONNECT_DELAY_MS);
+  }, [hasActiveGeneration, clearIdleDisconnectTimeout, disconnect]);
 
   // See client-channel-protocol spec for the full rationale.
   const waitForChannel = useCallback(
@@ -365,8 +398,16 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
       reportEvent,
       ensureConnected,
       waitForChannel,
+      notifyGenerationSettled,
     }),
-    [channelId, pendingEvents, reportEvent, ensureConnected, waitForChannel],
+    [
+      channelId,
+      pendingEvents,
+      reportEvent,
+      ensureConnected,
+      waitForChannel,
+      notifyGenerationSettled,
+    ],
   );
 
   return (

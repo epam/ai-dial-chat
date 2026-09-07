@@ -37,6 +37,31 @@ or a configured API client singleton.
 - **THEN** the conversation is deleted via the injected `conversationsApi`
   and `onConversationDeleted` is called
 
+### Requirement: handleConfirmDelete reads the conversation ref, not a state updater
+`handleConfirmDelete` SHALL compute the post-delete message list from
+`state.conversationRef.current` (a synchronous snapshot read outside
+`setConversation`) rather than inside a `setConversation` functional
+update, so the delete side effects (`conversationsApi.deleteConversation`/
+`saveConversation`, `onConversationDeleted`) run outside React's render
+phase and are not subject to React re-invoking an impure state updater.
+Callers MUST keep `state.conversationRef.current` synchronized with the
+conversation identified by `conversationId` on every state change — the
+hook has no way to detect a stale or mismatched ref, and a caller that
+lets the two drift (e.g. updating `conversation` state on a route change
+without also writing the ref) risks deleting/saving the wrong messages
+under the current `conversationId`'s path.
+
+#### Scenario: Confirm-delete is a no-op when the ref was never synced
+- **WHEN** `handleConfirmDelete` runs while `state.conversationRef.current`
+  is `null`
+- **THEN** no API call is made and `onConversationDeleted` is not called
+
+#### Scenario: Confirm-delete derives its result from the ref, not the conversation prop
+- **WHEN** `state.conversationRef.current` holds different messages than
+  the `conversation` value passed as a prop to `useConversationHandlers`
+- **THEN** the deleted/saved message list reflects
+  `state.conversationRef.current`'s messages, not the prop's
+
 #### Scenario: Rate is optimistic with revert on failure
 - **WHEN** `handleRateMessage(messageIndex, rating)` is called and the
   injected `rateApi.rateMessage` call rejects

@@ -806,6 +806,10 @@ const ChatPage = ({
 
 **Returns** (`UseConversationHandlersResult`): `{ handleSend, handleUploadAttachment, handleRegenerateMessage, handleDeleteMessage, handleConfirmDelete, handleRateMessage, handleButtonSelect, handleConfirmStarter, handleStartEdit, handleCancelEdit, handleEditMessage, editingMessageIndexes, pendingDeleteIndex, setPendingDeleteIndex, pendingStarterContext, setPendingStarterContext }`.
 
+`onConversationDeleted` is invoked from the handler body, never from inside a
+state updater, so a host may update its own state from it — for example dropping
+the deleted conversation from a list it renders.
+
 Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`, and `getStarterConversationText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
 
 ### useAttachmentValidation
@@ -2432,6 +2436,155 @@ const tabs = deriveAvailableTabIds(items, tabOrder);
 
 // Intersect persisted filter topics with those that still exist in items
 const topics = reconcileFilterTopics(persistedTopics, items);
+```
+
+### useCatalogEditNavigation
+
+Owns the catalog's edit/delete/create-menu navigation: routing the details panel's Edit action to the right editor URL for each item type, deleting an item through the endpoint its type owns and refetching on completion, and building the Create dropdown's options. Every editor route arrives as an injected `CatalogEditNavigationUrls` adapter — the hook knows no route path or query-parameter scheme, only "the URL to edit/create this kind of item".
+
+**Parameters** (`UseCatalogEditNavigationParams`):
+
+| Name                                                                          | Type                                                        | Description                                                                                        |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `deployments`                                                                 | `DeploymentItemDto[]`                                       | Used to tell a custom app apart from a quick app when routing Edit.                                |
+| `isCustomAppsEnabled`                                                         | `boolean`                                                   | Gates the custom-app editor route and Create option.                                               |
+| `isSchemaAppsEnabled`                                                         | `boolean`                                                   | Gates the quick-app Create option.                                                                 |
+| `isHideCustomAppCreationEnabled`                                              | `boolean`                                                   | Hides the quick-app and custom-app Create options.                                                 |
+| `isToolsetsEnabled`                                                           | `boolean`                                                   | Gates the toolset Create option.                                                                   |
+| `isPromptsEnabled`                                                            | `boolean`                                                   | Gates the prompt Create option.                                                                    |
+| `quickAppSchemaId`                                                            | `string \| undefined`                                       | The quick-app schema id, or `undefined` when none exists.                                          |
+| `urls`                                                                        | `CatalogEditNavigationUrls`                                 | Injected editor-route URL builders.                                                                |
+| `onNavigate`                                                                  | `(url: string) => void`                                     | Navigates the host to a URL built by `urls`.                                                       |
+| `deletePrompt`                                                                | `(id: string) => Promise<unknown>`                          | Deletes a personal or shared prompt.                                                               |
+| `deleteToolset`                                                               | `(id: string) => Promise<unknown>`                          | Deletes a toolset.                                                                                 |
+| `deleteSkill`                                                                 | `(bucket: string, path: string) => Promise<unknown>`        | Deletes a skill package.                                                                           |
+| `deleteApplication`                                                           | `(id: string) => Promise<unknown>`                          | Deletes a deployment/application.                                                                  |
+| `refetchPrompts` / `refetchToolsets` / `refetchSkills` / `refetchDeployments` | `() => Promise<void>`                                       | Refreshes the deleted item's list.                                                                 |
+| `onDeleteSuccess`                                                             | `(item: CatalogItem) => void`                               | Called after a successful delete, so the host can notify with its own entity/operation vocabulary. |
+| `labels`                                                                      | `CatalogEditNavigationLabels`                               | Localized notification and Create-menu copy, resolved by the host.                                 |
+| `onNotify`                                                                    | `(notification: CatalogEditNavigationNotification) => void` | Called to surface a host notification when a delete fails.                                         |
+| `triggerSkillArchivePicker`                                                   | `() => void`                                                | Opens the file picker used to upload a skill archive from the Create menu.                         |
+
+`CatalogEditNavigationUrls` has one URL-builder pair per item kind — `buildPromptEditUrl(promptId)` / `buildPromptCreateUrl()`, and the same edit/create pair for `Skill`, `Toolset`, and `CustomApp` — plus `buildQuickAppEditUrl(schemaId, appId)` / `buildQuickAppCreateUrl(schemaId)`.
+
+**Returns** (`UseCatalogEditNavigationResult`):
+
+| Name            | Type                                   | Description                                                      |
+| --------------- | -------------------------------------- | ---------------------------------------------------------------- |
+| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.           |
+| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                       |
+| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags. |
+
+```tsx
+import {
+  useCatalogEditNavigation,
+  type CatalogEditNavigationLabels,
+  type CatalogEditNavigationUrls,
+} from '@epam/ai-dial-chat-hooks';
+
+const urls: CatalogEditNavigationUrls = {
+  buildPromptEditUrl: (id) => `${ROUTES.PromptEditor}?id=${id}`,
+  buildPromptCreateUrl: () => ROUTES.PromptEditor,
+  // ...buildSkillEditUrl/buildSkillCreateUrl, buildToolsetEditUrl/buildToolsetCreateUrl,
+  // buildCustomAppEditUrl/buildCustomAppCreateUrl, buildQuickAppEditUrl/buildQuickAppCreateUrl
+};
+
+const labels: CatalogEditNavigationLabels = {
+  createQuickApp: t('catalog.create.quickApp'),
+  createToolset: t('catalog.create.toolset'),
+  createCustomApp: t('catalog.create.customApp'),
+  createSkill: t('catalog.create.skill'),
+  createSkillWriteInstructions: t('catalog.create.skillWriteInstructions'),
+  createSkillUpload: t('catalog.create.skillUpload'),
+  createPrompt: t('catalog.create.prompt'),
+  deleteError: t('catalog.details.deleteError'),
+};
+
+const { handleEdit, handleDelete, createOptions } = useCatalogEditNavigation({
+  deployments,
+  isCustomAppsEnabled,
+  isSchemaAppsEnabled,
+  isHideCustomAppCreationEnabled,
+  isToolsetsEnabled,
+  isPromptsEnabled,
+  quickAppSchemaId,
+  urls,
+  onNavigate: navigate,
+  deletePrompt,
+  deleteToolset,
+  deleteSkill,
+  deleteApplication,
+  refetchPrompts,
+  refetchToolsets,
+  refetchSkills,
+  refetchDeployments,
+  onDeleteSuccess: (item) => notifyOperationSuccess(item),
+  labels,
+  onNotify: showErrorNotification,
+  triggerSkillArchivePicker,
+});
+```
+
+### useCatalogToolsetCredentials
+
+Owns the catalog's toolset credential login/logout flow: wires `useToolsetLogin` (see OAuth Popup Flow) to the host's DIAL Core operations, resolves each outcome to a notification and toolset refetch, and owns the notification copy for every credential level / API-key / org-fallback combination. Every backend call and OAuth callback route arrives as an injected parameter — the hook constructs no client instance and reads no app context or i18n.
+
+**Parameters** (`UseCatalogToolsetCredentialsParams`):
+
+| Name              | Type                                                                  | Description                                                      |
+| ----------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `isAdmin`         | `boolean`                                                             | Whether the user has admin privileges.                           |
+| `toolsets`        | `DialToolsetDto[]`                                                    | All toolsets, used to look up OAuth client settings.             |
+| `refetchToolsets` | `() => Promise<void>`                                                 | Refreshes the toolset list after a successful login/logout.      |
+| `callbackPath`    | `string`                                                              | The host's OAuth callback route, forwarded to `useToolsetLogin`. |
+| `loginToolset`    | `(toolsetId: string, body: ToolsetLoginBodyDto) => Promise<unknown>`  | Submits credentials at one level.                                |
+| `logoutToolset`   | `(toolsetId: string, body: ToolsetLogoutBodyDto) => Promise<unknown>` | Clears credentials at one level.                                 |
+| `getToolset`      | `(toolsetId: string) => Promise<DialToolsetDto>`                      | Re-reads a toolset to verify a reported OAuth cancellation.      |
+| `labels`          | `ToolsetCredentialsLabels`                                            | Localized notification copy, resolved by the host.               |
+| `onNotify`        | `(notification: ToolsetCredentialsNotification) => void`              | Called to surface a host notification.                           |
+
+`ToolsetCredentialsLabels` holds a title plus a `ToolsetCredentialsMessageLabels` (`user` / `org` / `global` formatter functions, each `(params: { name: string; version?: string }) => string`) for each of four outcomes — `loginSuccess`, `apiKeyAddedSuccess`, `logoutSuccess`, `apiKeyDeletedSuccess` — plus three flat error strings: `popupBlockedError`, `loginFailedError`, `logoutFailedError`.
+
+**Returns** (`UseCatalogToolsetCredentialsResult`):
+
+| Name           | Type                                                                                         | Description                                      |
+| -------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `handleLogin`  | `(item: CatalogItem, params: { level: CredentialsLevel; apiKey?: string }) => Promise<void>` | Runs one login attempt and notifies the outcome. |
+| `handleLogout` | `(item: CatalogItem, params: { level: CredentialsLevel }) => Promise<void>`                  | Clears credentials and notifies the outcome.     |
+
+```tsx
+import {
+  useCatalogToolsetCredentials,
+  type ToolsetCredentialsLabels,
+} from '@epam/ai-dial-chat-hooks';
+
+const labels: ToolsetCredentialsLabels = {
+  loginSuccessTitle: t('catalog.credentials.loginSuccessTitle'),
+  loginSuccess: {
+    user: ({ name, version }) =>
+      t('catalog.credentials.loginSuccessUser', { name, version }),
+    org: ({ name, version }) =>
+      t('catalog.credentials.loginSuccessOrg', { name, version }),
+    global: ({ name, version }) =>
+      t('catalog.credentials.loginSuccessGlobal', { name, version }),
+  },
+  // ...apiKeyAddedSuccess, logoutSuccess, apiKeyDeletedSuccess follow the same shape
+  popupBlockedError: t('catalog.credentials.popupBlockedError'),
+  loginFailedError: t('catalog.credentials.loginFailedError'),
+  logoutFailedError: t('catalog.credentials.logoutFailedError'),
+};
+
+const { handleLogin, handleLogout } = useCatalogToolsetCredentials({
+  isAdmin,
+  toolsets,
+  refetchToolsets,
+  callbackPath: ROUTES.ToolsetSignIn,
+  loginToolset,
+  logoutToolset,
+  getToolset,
+  labels,
+  onNotify: showNotification,
+});
 ```
 
 ## Skill Utilities

@@ -166,10 +166,20 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   }, [showErrorNotification, t]);
 
   const { startGeneration, completeGeneration } = useGeneration();
-  const { channelId, ensureConnected, waitForChannel } = useClientChannel();
+  const {
+    channelId,
+    ensureConnected,
+    waitForChannel,
+    notifyGenerationSettled,
+  } = useClientChannel();
   const channel = useMemo(
-    () => ({ channelId, ensureConnected, waitForChannel }),
-    [channelId, ensureConnected, waitForChannel],
+    () => ({
+      channelId,
+      ensureConnected,
+      waitForChannel,
+      notifyGenerationSettled,
+    }),
+    [channelId, ensureConnected, waitForChannel, notifyGenerationSettled],
   );
 
   const { startStream, handleStop, isStreaming, canStopStreaming } =
