@@ -425,6 +425,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           }
         } else {
           setConversation(result);
+          conversationRef.current = result;
 
           /*
            * A hard refresh mid-generation loads the backend's empty
