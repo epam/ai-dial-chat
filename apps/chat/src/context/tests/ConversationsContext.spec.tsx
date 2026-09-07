@@ -155,6 +155,72 @@ describe('ConversationsContext — identity-keyed refetch', () => {
   });
 });
 
+describe('ConversationsContext — background refresh', () => {
+  it('keeps the loaded list visible while conversations are refreshed', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let resolveRefresh!: (value: { items: typeof seedConversations }) => void;
+    const refreshResponse = new Promise<{ items: typeof seedConversations }>(
+      (resolve) => {
+        resolveRefresh = resolve;
+      },
+    );
+    mockListConversations.mockReturnValueOnce(refreshResponse);
+
+    let refreshPromise!: Promise<void>;
+    act(() => {
+      refreshPromise = result.current.refreshConversations();
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.conversations).toEqual(seedConversations);
+
+    await act(async () => {
+      resolveRefresh({ items: [seedConversations[0]] });
+      await refreshPromise;
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.conversations).toEqual([seedConversations[0]]);
+  });
+
+  it('keeps the loaded list visible when a background refresh fails', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let rejectRefresh!: (reason: Error) => void;
+    const refreshResponse = new Promise<never>((_resolve, reject) => {
+      rejectRefresh = reject;
+    });
+    mockListConversations.mockReturnValueOnce(refreshResponse);
+
+    let refreshPromise!: Promise<void>;
+    act(() => {
+      refreshPromise = result.current.refreshConversations();
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.conversations).toEqual(seedConversations);
+
+    const refreshError = new Error('Refresh failed');
+    await act(async () => {
+      rejectRefresh(refreshError);
+      await refreshPromise;
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.conversations).toEqual(seedConversations);
+    expect(result.current.error).toBe(refreshError);
+  });
+});
+
 describe('ConversationsContext — deleteAllConversations', () => {
   it('refreshes list on complete success (preserves shared/public)', async () => {
     const { result } = renderHook(() => useConversations(), {
