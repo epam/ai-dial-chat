@@ -64,7 +64,10 @@ interface ConversationsContextType {
   generateConversationTitle: (id: string) => Promise<string>;
   /** Duplicate a conversation into the user's own bucket; returns the new conversation id. */
   duplicateConversation: (id: string) => Promise<string>;
-  /** Re-fetch the full conversation list from the server. */
+  /**
+   * Re-fetch the full conversation list in the background without hiding
+   * loaded items.
+   */
   refreshConversations: () => Promise<void>;
   /** Updates the sidebar title for a conversation without changing its id. */
   updateConversationTitle: (id: string, title: string) => void;
@@ -117,15 +120,12 @@ export const ConversationsProvider = ({
   }, [conversations]);
 
   const refreshConversations = useCallback(async () => {
-    setIsLoading(true);
     setError(null);
     try {
       const response = await listConversations();
       setConversations(response.items);
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
