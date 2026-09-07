@@ -23,8 +23,8 @@ export const useMcpAppHostAdapter = (
 
   return useMcpAppHostAdapterBase(displayMode, mcpAppsApiClient, sandboxUrl, {
     theme: currentTheme,
-    mcpAppTheme: config.mcpAppTheme,
+    mcpAppTheme: config.mcpAppTheme ?? undefined,
     locale: i18n.language,
-    mcpAppUserAgent: config.mcpAppUserAgent,
+    mcpAppUserAgent: config.mcpAppUserAgent ?? undefined,
   });
 };

@@ -105,7 +105,12 @@ const defaultProps = {
   executedLabel: 'Executed',
   stepsLabel: (count: number) => `${count} Steps`,
   mcpAppTools: [],
-  mcpAppCache: { get: vi.fn(), set: vi.fn(), invalidate: vi.fn() },
+  mcpAppCache: {
+    get: vi.fn(),
+    set: vi.fn(),
+    invalidate: vi.fn(),
+    getOrFetch: vi.fn(),
+  },
 };
 
 beforeEach(() => {
