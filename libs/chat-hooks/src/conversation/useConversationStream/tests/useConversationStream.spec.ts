@@ -917,4 +917,88 @@ describe('useConversationStream', () => {
       expect(overlay.notifyGenerationEnd).not.toHaveBeenCalled();
     });
   });
+
+  describe('notifyGenerationSettled', () => {
+    it('calls channel.notifyGenerationSettled exactly once on successful completion', async () => {
+      const channel = {
+        channelId: 'ch-1',
+        ensureConnected: vi.fn(),
+        waitForChannel: vi.fn(),
+        notifyGenerationSettled: vi.fn(),
+      };
+      const { result } = renderHook(() =>
+        useHookHarness({ transport, conversationId: 'bucket/conv', channel }),
+      );
+
+      await act(async () => {
+        result.current.stream.startStream('bucket/conv', 'hi', 0, 'gpt-4o');
+      });
+      expect(channel.notifyGenerationSettled).not.toHaveBeenCalled();
+
+      await act(async () => {
+        await capturedOptions?.onComplete();
+      });
+
+      expect(channel.notifyGenerationSettled).toHaveBeenCalledOnce();
+    });
+
+    it('calls channel.notifyGenerationSettled exactly once on error', async () => {
+      const channel = {
+        channelId: 'ch-1',
+        ensureConnected: vi.fn(),
+        waitForChannel: vi.fn(),
+        notifyGenerationSettled: vi.fn(),
+      };
+      const { result } = renderHook(() =>
+        useHookHarness({ transport, conversationId: 'bucket/conv', channel }),
+      );
+
+      act(() => {
+        result.current.stream.startStream('bucket/conv', 'hi', 0, 'gpt-4o');
+      });
+      act(() => {
+        capturedOptions?.onError(new Error('generation failed'));
+      });
+
+      expect(channel.notifyGenerationSettled).toHaveBeenCalledOnce();
+    });
+
+    it('does not throw when the channel or the callback itself is omitted', async () => {
+      const channelWithoutCallback = {
+        channelId: 'ch-1',
+        ensureConnected: vi.fn(),
+        waitForChannel: vi.fn(),
+      };
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          channel: channelWithoutCallback,
+        }),
+      );
+
+      await expect(
+        act(async () => {
+          result.current.stream.startStream('bucket/conv', 'hi', 0, 'gpt-4o');
+          await capturedOptions?.onComplete();
+        }),
+      ).resolves.not.toThrow();
+
+      const { result: resultNoChannel } = renderHook(() =>
+        useHookHarness({ transport, conversationId: 'bucket/conv' }),
+      );
+
+      await expect(
+        act(async () => {
+          resultNoChannel.current.stream.startStream(
+            'bucket/conv',
+            'hi',
+            0,
+            'gpt-4o',
+          );
+          await capturedOptions?.onComplete();
+        }),
+      ).resolves.not.toThrow();
+    });
+  });
 });

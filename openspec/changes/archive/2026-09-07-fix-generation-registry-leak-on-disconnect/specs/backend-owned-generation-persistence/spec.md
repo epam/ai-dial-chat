@@ -1,10 +1,4 @@
-# backend-owned-generation-persistence Specification
-
-## Purpose
-
-The backend owns conversation persistence across the generation lifecycle — saving the start, final, and partial (stop/error) states — so the frontend never races to save and chunks cannot land in the wrong conversation.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Backend persists the conversation across the generation lifecycle
 
@@ -57,23 +51,3 @@ The terminal save and registry release MUST run exactly once per generation rega
 - **GIVEN** a generation is actively streaming and has not yet reached `[DONE]`, stop, or error
 - **WHEN** the client's HTTP connection closes (e.g. the browser tab is closed or navigates away) before the controller's consuming loop reaches the end of the stream
 - **THEN** the backend saves the partial assistant message accumulated so far with `streamErrorMessage: ''` (or `wasStoppedByUser: true` if the user had already pressed Stop), marks the generation `Error` (or `Stopped`), and releases the registry entry — exactly once, with no dependency on the 30-minute stale-entry sweep
-
-### Requirement: Generation finalizes on `[DONE]`, not on socket close
-
-The streaming read loop SHALL treat the `[DONE]` SSE payload as the completion signal: it MUST save the final conversation, mark the generation complete in the registry, and close the response. It MUST NOT wait for the upstream socket to close, because providers may keep the connection open after `[DONE]`, which would otherwise leave the generation registered as active and reject the next request with HTTP 409. Stopping at `[DONE]` SHALL cancel the upstream reader rather than merely releasing its lock, so the connection is actually closed instead of left dangling.
-
-An upstream socket that closes **without** ever sending `[DONE]` SHALL be treated as the end of the stream too, and logged as such, so a truncated response still finalizes rather than hanging.
-
-#### Scenario: Provider keeps the connection open after `[DONE]`
-
-- **WHEN** the upstream emits `[DONE]` but does not close the connection
-- **THEN** the backend still finalizes the generation, releases the registry entry, and closes its response
-
-### Requirement: A pre-stream failure releases the registry entry
-
-If any step between registering the generation and opening the upstream stream fails — resolving the deployment's generation capability, fetching the conversation, or building its history — the backend SHALL release the registry entry before rethrowing, so a transient failure does not lock the conversation until stale eviction.
-
-#### Scenario: Conversation fetch fails after registration
-
-- **WHEN** registration succeeds but the subsequent `getConversation` throws
-- **THEN** the backend marks the generation errored (releasing the entry) and rethrows, so a retry is not rejected with 409

@@ -27,6 +27,8 @@ interface GenerationContextValue {
   startGeneration: (path: string, generationId: string) => AbortController;
   completeGeneration: (path: string, generationId: string) => void;
   getGeneration: (path: string) => GenerationEntry | undefined;
+  /** True iff any tracked generation, on any path, is currently `Active`. */
+  hasActiveGeneration: () => boolean;
 }
 
 const GenerationContext = createContext<GenerationContextValue | null>(null);
@@ -71,12 +73,20 @@ export const GenerationProvider: FC<Props> = ({ children }) => {
     [],
   );
 
+  const hasActiveGeneration = useCallback((): boolean => {
+    for (const entry of registryRef.current.values()) {
+      if (entry.status === ClientGenerationStatus.Active) return true;
+    }
+    return false;
+  }, []);
+
   return (
     <GenerationContext.Provider
       value={{
         startGeneration,
         completeGeneration,
         getGeneration,
+        hasActiveGeneration,
       }}
     >
       {children}
