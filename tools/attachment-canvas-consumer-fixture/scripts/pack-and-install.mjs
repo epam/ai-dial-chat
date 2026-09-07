@@ -109,7 +109,7 @@ try {
       '--ignore-scripts',
       '--legacy-peer-deps',
       '--package-lock=false',
-      '--offline',
+      '--prefer-offline',
       tarballPath,
     ],
     {
