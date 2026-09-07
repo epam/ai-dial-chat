@@ -1,58 +1,20 @@
 import {
   Catalog,
-  CatalogItem,
   CredentialsLevel,
-  CredentialStatus,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
-import type {
-  PromptResponseDto,
-  ToolsetLogoutBodyDto,
-} from '@epam/ai-dial-chat-api-client';
 import {
-  buildPromptExportEnvelope,
-  buildPromptExportFileName,
-  type CatalogDetailsApi,
-  CatalogPrimaryActionType,
-  deriveAvailableTabIds,
-  deriveFavoriteItems,
-  type DeploymentLimitsLabels,
-  EXPORT_APP_NAME,
-  filterCatalogItemsBySelector,
-  filterHiddenOwnedItems,
+  type CatalogEditNavigationLabels,
+  type CatalogEditNavigationUrls,
   findDeploymentByIdOrReference,
-  getApiErrorDetails,
-  isOrganisationPromptItem,
-  isQuickAppSchema,
-  mapPromptToCatalogItem,
-  mapPublishHistoryEntryDto,
-  mapSkillToCatalogItem,
-  parsePromptResourceUrl,
-  parseSkillResourceUrl,
-  type PromptOverviewLabels,
-  PromptSource,
-  reconcileFilterTopics,
-  resolveCatalogPrimaryAction,
-  sanitizeFileName,
-  serializePromptExport,
-  type SkillOverviewLabels,
-  SkillSource,
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetLoginOutcomeType,
-  toPublishEntityType,
-  toPublishRuleDto,
-  useCatalogItemDetails,
+  type ToolsetCredentialsLabels,
+  useCatalogEditNavigation,
+  useCatalogToolsetCredentials,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import {
-  CatalogEntityType,
-  triggerBlobDownload,
-} from '@epam/ai-dial-chat-shared';
-import type { PublicationRule } from '@epam/ai-dial-publish-panel';
-import { DropdownItem } from '@epam/ai-dial-ui-kit';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
@@ -80,56 +42,31 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useSkillArchiveImport } from '../../hooks/skills/useSkillArchiveImport';
-import { useToolsetLogin } from '../../hooks/toolsets/useToolsetLogin';
 import { useCatalogActiveTabPreference } from '../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
+import { useCatalogItemActions } from '../../hooks/useCatalogItemActions/useCatalogItemActions';
+import { useCatalogItems } from '../../hooks/useCatalogItems/useCatalogItems';
+import { useCatalogPublishing } from '../../hooks/useCatalogPublishing/useCatalogPublishing';
+import { useCatalogSharing } from '../../hooks/useCatalogSharing/useCatalogSharing';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { deleteApplication } from '../../server-api/applications';
-import { getDeploymentLimits } from '../../server-api/deployment-limits';
-import { getDeploymentDetails } from '../../server-api/deployments';
+import { deletePrompt } from '../../server-api/prompts.api';
+import { deleteSkill } from '../../server-api/skills.api';
 import {
-  deletePrompt,
-  getPrompt,
-  getPublicPrompt,
-} from '../../server-api/prompts.api';
-import { getPublishRules } from '../../server-api/publish-rules.api';
-import {
-  getCatalogPublishHistory,
-  publishCatalogEntity,
-  unpublishCatalogEntity,
-} from '../../server-api/publish.api';
-import {
-  discardSharedCatalogItem,
-  getShareRecipientsCount,
-  revokeSharedAccess,
-} from '../../server-api/share.api';
-import {
-  deleteSkill,
-  downloadSkill,
-  downloadSkillFile,
-  listSkillFiles,
-} from '../../server-api/skills.api';
-import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
+  deleteToolset,
+  getToolset,
+  loginToolset,
+  logoutToolset,
+} from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
-import { CATALOG_TAB_ORDER, CatalogQuery } from '../../types/catalog';
+import { CatalogQuery } from '../../types/catalog';
 import { EditorQuery } from '../../types/editor-query';
-import {
-  EntityOperation,
-  NotifiableEntity,
-} from '../../types/entity-notification';
+import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
-import { resolveFavoriteEntityType } from '../../utils/favorites';
-import { triggerBrowserDownload } from '../../utils/file-download';
-import {
-  buildDeploymentFolderLabels,
-  mapDeploymentToCatalogItem,
-  mapToolsetToCatalogItem,
-} from '../../utils/map-deployment-to-catalog-item';
 import { getAccessRulesLabels } from '../../utils/publish';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
-import { SkillDetailsFilePreview } from './SkillDetailsFilePreview';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
@@ -201,7 +138,8 @@ const CatalogView: FC<Props> = ({
     );
   }, [itemIdParam, setSearchParams]);
 
-  const { showSuccessNotification, showErrorNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification, showNotification } =
+    useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
   const { user } = useUser();
   const isAdmin = user?.isAdmin ?? false;
@@ -230,23 +168,6 @@ const CatalogView: FC<Props> = ({
     isMyAppsActive,
     setIsMyAppsActive,
   } = useCatalogSortFilterPreference();
-
-  const quickAppSchemaId = useMemo(
-    () => schemas.find((s) => isQuickAppSchema(s))?.id,
-    [schemas],
-  );
-
-  const quickAppDeploymentIds = useMemo(
-    () =>
-      new Set(
-        quickAppSchemaId
-          ? deployments
-              .filter((d) => d.applicationTypeSchemaId === quickAppSchemaId)
-              .map((d) => d.id)
-          : [],
-      ),
-    [deployments, quickAppSchemaId],
-  );
 
   const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
   const isCatalogHideMyAppsEnabled = useUiFeature(
@@ -296,198 +217,41 @@ const CatalogView: FC<Props> = ({
     showErrorNotification({ message: t(CatalogI18nKeys.SkillsLoadError) });
   }, [skillsError, showErrorNotification, t]);
 
-  const promptOverviewLabels: PromptOverviewLabels = useMemo(
-    () => ({
-      authorLabel: t(CatalogI18nKeys.DetailsPromptAuthor),
-      updatedLabel: t(CatalogI18nKeys.DetailsPromptUpdated),
-      sectionTitle: t(CatalogI18nKeys.DetailsPromptSection),
-    }),
-    [t],
-  );
-
-  const skillOverviewLabels: SkillOverviewLabels = useMemo(
-    () => ({
-      whenToUseLabel: t(CatalogI18nKeys.DetailsSkillWhenToUse),
-      allowedToolsLabel: t(CatalogI18nKeys.DetailsSkillAllowedTools),
-      bundledResourcesLabel: t(CatalogI18nKeys.DetailsSkillBundledResources),
-      specificationSectionTitle: t(
-        CatalogI18nKeys.DetailsSkillSpecificationSection,
-      ),
-      authorLabel: t(CatalogI18nKeys.DetailsSkillAuthor),
-      updatedLabel: t(CatalogI18nKeys.DetailsSkillUpdated),
-      fileCountLabel: t(CatalogI18nKeys.DetailsSkillFileCount),
-      detailsSectionTitle: t(CatalogI18nKeys.DetailsSkillSection),
-    }),
-    [t],
-  );
-
-  const deploymentLimitsLabels: DeploymentLimitsLabels = useMemo(
-    () => ({
-      tokenGroup: t(CatalogI18nKeys.DetailsLimitsTokenGroupLabel),
-      tokensPerDay: t(CatalogI18nKeys.DetailsLimitsTokensPerDay),
-      tokensPerWeek: t(CatalogI18nKeys.DetailsLimitsTokensPerWeek),
-      tokensPerMonth: t(CatalogI18nKeys.DetailsLimitsTokensPerMonth),
-      followsCostLimit: t(CatalogI18nKeys.DetailsLimitsFollowsCostLimitLabel),
-      formatSpentCaption: (amount) =>
-        t(CatalogI18nKeys.DetailsLimitsSpentLabel, { amount }),
-      formatValueLabel: (used, total) =>
-        t(CatalogI18nKeys.DetailsLimitsValue, { used, total }),
-      formatProgressAriaLabel: ({ label, used, total }) =>
-        t(CatalogI18nKeys.DetailsLimitsProgressAriaLabel, {
-          label,
-          used,
-          total,
-        }),
-      formatFollowsCostLimitAriaLabel: ({ label, used }) =>
-        t(CatalogI18nKeys.DetailsLimitsFollowsCostLimitAriaLabel, {
-          label,
-          used,
-        }),
-    }),
-    [t],
-  );
-
-  const catalogDetailsApi: CatalogDetailsApi = useMemo(
-    () => ({
-      getDeploymentDetails,
-      getDeploymentLimits,
-      getPrompt,
-      getPublicPrompt,
-      downloadSkillFile,
-      listSkillFiles,
-    }),
-    [],
-  );
-
-  const combinedSkills = useMemo(
-    () => [...skills, ...sharedSkills, ...publicSkills],
-    [skills, sharedSkills, publicSkills],
-  );
-
-  const { onFetchDetails, onLoadContentFile, onLoadSkillDetailsFile } =
-    useCatalogItemDetails({
-      api: catalogDetailsApi,
-      skills: combinedSkills,
-      isAdmin,
-      dialCoreExternalUrl,
-      skillOverviewLabels,
-      promptOverviewLabels,
-      deploymentLimitsLabels,
-    });
-
-  const catalogItems = useMemo(() => {
-    const folderLabels = buildDeploymentFolderLabels(t);
-    return [
-      ...deployments.map((d) =>
-        mapDeploymentToCatalogItem(d, {
-          favoriteIds,
-          t,
-          editableSchemaIds: quickAppSchemaId ? [quickAppSchemaId] : [],
-          isCustomAppsEditable: isCustomAppsEnabled,
-          activeLocale: language,
-        }),
-      ),
-      ...(isToolsetsEnabled
-        ? toolsets.map((toolset) =>
-            mapToolsetToCatalogItem(toolset, {
-              favoriteIds,
-              isAdmin,
-              t,
-              activeLocale: language,
-            }),
-          )
-        : []),
-      ...(isPromptsEnabled
-        ? [
-            ...prompts.map((prompt) =>
-              mapPromptToCatalogItem(prompt, {
-                folderLabels,
-                overviewLabels: promptOverviewLabels,
-                source: PromptSource.Personal,
-                favoriteIds,
-              }),
-            ),
-            ...sharedPrompts.map((prompt) =>
-              mapPromptToCatalogItem(prompt, {
-                folderLabels,
-                overviewLabels: promptOverviewLabels,
-                source: PromptSource.SharedWithMe,
-                favoriteIds,
-              }),
-            ),
-            ...publicPrompts.map((prompt) =>
-              mapPromptToCatalogItem(prompt, {
-                folderLabels,
-                overviewLabels: promptOverviewLabels,
-                source: PromptSource.Public,
-                favoriteIds,
-              }),
-            ),
-          ]
-        : []),
-      ...(isSkillsEnabled
-        ? [
-            ...skills.map((skill) =>
-              mapSkillToCatalogItem(skill, {
-                folderLabels,
-                source: SkillSource.Personal,
-                favoriteIds,
-              }),
-            ),
-            ...sharedSkills.map((skill) =>
-              mapSkillToCatalogItem(skill, {
-                folderLabels,
-                source: SkillSource.SharedWithMe,
-                favoriteIds,
-              }),
-            ),
-            ...publicSkills.map((skill) =>
-              mapSkillToCatalogItem(skill, {
-                folderLabels,
-                source: SkillSource.Public,
-                favoriteIds,
-              }),
-            ),
-          ]
-        : []),
-    ];
-  }, [
+  const {
+    quickAppSchemaId,
+    quickAppDeploymentIds,
+    catalogItems,
+    visibleCatalogItems,
+    reconciledFilterTopics,
+    availableTabIds,
+    favorites,
+    onFetchDetails,
+    onLoadContentFile,
+    onLoadSkillDetailsFile,
+  } = useCatalogItems({
+    schemas,
     deployments,
     favoriteIds,
     t,
     language,
     toolsets,
-    quickAppSchemaId,
     isAdmin,
+    dialCoreExternalUrl,
     isToolsetsEnabled,
     isCustomAppsEnabled,
     isPromptsEnabled,
+    isSkillsEnabled,
     prompts,
     sharedPrompts,
     publicPrompts,
-    promptOverviewLabels,
-    isSkillsEnabled,
     skills,
     sharedSkills,
     publicSkills,
-  ]);
-
-  const visibleCatalogItems = useMemo(() => {
-    const selectorFiltered = isSelectorMode
-      ? filterCatalogItemsBySelector(catalogItems, visibleTypes)
-      : catalogItems;
-    return filterHiddenOwnedItems(selectorFiltered, isCatalogHideMyAppsEnabled);
-  }, [catalogItems, isSelectorMode, isCatalogHideMyAppsEnabled, visibleTypes]);
-
-  const reconciledFilterTopics = useMemo(
-    () => reconcileFilterTopics(persistedFilterTopics, visibleCatalogItems),
-    [visibleCatalogItems, persistedFilterTopics],
-  );
-
-  const availableTabIds = useMemo(
-    () => deriveAvailableTabIds(visibleCatalogItems, CATALOG_TAB_ORDER),
-    [visibleCatalogItems],
-  );
+    isSelectorMode,
+    visibleTypes,
+    isCatalogHideMyAppsEnabled,
+    persistedFilterTopics,
+  });
 
   const { activeTab, setActiveTab } =
     useCatalogActiveTabPreference(availableTabIds);
@@ -504,887 +268,225 @@ const CatalogView: FC<Props> = ({
 
   const showPublishError = usePublishErrorNotification();
 
-  const favorites = useMemo(
-    () => deriveFavoriteItems(visibleCatalogItems),
-    [visibleCatalogItems],
-  );
-
-  /*
-   * Reads a prompt item back through whichever endpoint owns it. `item.id` is
-   * always the full `prompts/{bucket}/{path}` resource path — the owner
-   * bucket for a shared prompt, the caller's own bucket otherwise — so the
-   * personal endpoint takes it unconditionally. The organisation source still
-   * routes through the separate public endpoint, which kept its
-   * bucket-relative `path` argument, so its qualified id is parsed back down
-   * to that sub-path first.
-   */
-  const fetchPromptDto = useCallback(
-    (item: CatalogItem): Promise<PromptResponseDto> => {
-      if (!isOrganisationPromptItem(item)) return getPrompt(item.id);
-      const parsed = parsePromptResourceUrl(item.id);
-      return getPublicPrompt(parsed?.path ?? item.id);
-    },
-    [],
-  );
-
-  const getLevelStatus = useCallback(
-    (
-      item: CatalogItem,
-      level: CredentialsLevel,
-    ): CredentialStatus | undefined =>
-      level === CredentialsLevel.User
-        ? item.credentials?.userStatus
-        : item.credentials?.globalStatus,
-    [],
-  );
-
-  const showLoginSuccess = useCallback(
-    (item: CatalogItem, level: CredentialsLevel) => {
-      const isAdminAndPublic = isAdmin && !!item.credentials?.isPublic;
-      const isApiKey =
-        item.credentials?.authenticationType ===
-        ToolsetAuthenticationType.ApiKey;
-      if (isApiKey) {
-        const messageKey =
-          level === CredentialsLevel.User
-            ? CatalogI18nKeys.CredentialsApiKeyAddedSuccessUser
-            : isAdminAndPublic
-              ? CatalogI18nKeys.CredentialsApiKeyAddedSuccessOrg
-              : CatalogI18nKeys.CredentialsApiKeyAddedSuccessGlobal;
-        showSuccessNotification({
-          title: t(CatalogI18nKeys.CredentialsApiKeyAddedSuccessTitle),
-          message: t(messageKey, { name: item.name, version: item.version }),
-        });
-        return;
-      }
-      const messageKey =
-        level === CredentialsLevel.User
-          ? CatalogI18nKeys.CredentialsLoginSuccessUser
-          : isAdminAndPublic
-            ? CatalogI18nKeys.CredentialsLoginSuccessOrg
-            : CatalogI18nKeys.CredentialsLoginSuccessGlobal;
-      showSuccessNotification({
-        title: t(CatalogI18nKeys.CredentialsLoginSuccessTitle),
-        message: t(messageKey, { name: item.name, version: item.version }),
-      });
-    },
-    [isAdmin, showSuccessNotification, t],
-  );
-
-  const showLogoutSuccess = useCallback(
-    (item: CatalogItem, level: CredentialsLevel) => {
-      const isAdminAndPublic = isAdmin && !!item.credentials?.isPublic;
-      const isApiKey =
-        item.credentials?.authenticationType ===
-        ToolsetAuthenticationType.ApiKey;
-      if (isApiKey) {
-        const messageKey =
-          level === CredentialsLevel.User
-            ? CatalogI18nKeys.CredentialsApiKeyDeletedSuccessUser
-            : isAdminAndPublic
-              ? CatalogI18nKeys.CredentialsApiKeyDeletedSuccessOrg
-              : CatalogI18nKeys.CredentialsApiKeyDeletedSuccessGlobal;
-        showSuccessNotification({
-          title: t(CatalogI18nKeys.CredentialsApiKeyDeletedSuccessTitle),
-          message: t(messageKey, { name: item.name, version: item.version }),
-        });
-        return;
-      }
-      const messageKey =
-        level === CredentialsLevel.User
-          ? CatalogI18nKeys.CredentialsLogoutSuccessUser
-          : isAdminAndPublic
-            ? CatalogI18nKeys.CredentialsLogoutSuccessOrg
-            : CatalogI18nKeys.CredentialsLogoutSuccessGlobal;
-      showSuccessNotification({
-        title: t(CatalogI18nKeys.CredentialsLogoutSuccessTitle),
-        message: t(messageKey, { name: item.name, version: item.version }),
-      });
-    },
-    [isAdmin, showSuccessNotification, t],
-  );
-
-  const { login: loginToolsetShared } = useToolsetLogin();
-
-  const handleLogin = useCallback(
-    async (
-      item: CatalogItem,
-      params: { level: CredentialsLevel; apiKey?: string },
-    ) => {
-      const authenticationType = item.credentials?.authenticationType;
-      const credentialsLevel =
-        params.level === CredentialsLevel.User
-          ? ToolsetCredentialsLevel.User
-          : ToolsetCredentialsLevel.Global;
-      const toolset = toolsets.find((t) => t.id === item.id);
-
-      const outcome = await loginToolsetShared({
-        toolsetId: item.id,
-        credentialsLevel,
-        authenticationType: authenticationType as unknown as ToolsetAuthTypes,
-        apiKey: params.apiKey,
-        oauthSettings: {
-          clientId: toolset?.authSettings?.clientId,
-          authorizationEndpoint: toolset?.authSettings?.authorizationEndpoint,
-          scopes: toolset?.authSettings?.scopesSupported,
-          codeChallenge: toolset?.authSettings?.codeChallenge,
-          codeChallengeMethod: toolset?.authSettings?.codeChallengeMethod,
-        },
-        isCurrentlyFailed:
-          getLevelStatus(item, params.level) === CredentialStatus.Failed,
-      });
-
-      switch (outcome.type) {
-        case ToolsetLoginOutcomeType.Success:
-          showLoginSuccess(item, params.level);
-          await refetchToolsets();
-          return;
-        case ToolsetLoginOutcomeType.PopupBlocked:
-          showErrorNotification({
-            message: t(ToolsetEditorI18nKeys.ErrorPopupBlocked),
-          });
-          return;
-        case ToolsetLoginOutcomeType.Failure:
-          showErrorNotification({
-            message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
-          });
-          return;
-        case ToolsetLoginOutcomeType.Cancelled:
-          // Silent — matches the pre-refactor behavior for a genuine cancel.
-          return;
-      }
-    },
-    [
-      toolsets,
-      showErrorNotification,
-      t,
-      getLevelStatus,
-      showLoginSuccess,
-      refetchToolsets,
-      loginToolsetShared,
-    ],
-  );
-
-  const handleLogout = useCallback(
-    async (item: CatalogItem, params: { level: CredentialsLevel }) => {
-      const credentialsLevel =
-        params.level === CredentialsLevel.User
-          ? ToolsetCredentialsLevel.User
-          : ToolsetCredentialsLevel.Global;
-      try {
-        const body: ToolsetLogoutBodyDto = {
-          url: item.id,
-          credentialsLevel:
-            credentialsLevel as ToolsetLogoutBodyDto['credentialsLevel'],
-          authenticationType: item.credentials
-            ?.authenticationType as ToolsetLogoutBodyDto['authenticationType'],
-        };
-        await logoutToolset(item.id, body);
-        showLogoutSuccess(item, params.level);
-        await refetchToolsets();
-      } catch (error) {
-        const { traceId } = await getApiErrorDetails(error);
-        showErrorNotification({
-          message: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
-          requestId: traceId,
-        });
-      }
-    },
-    [showErrorNotification, t, showLogoutSuccess, refetchToolsets],
-  );
-
-  const onToggleFavorite = useCallback(
-    async (id: string, isFavorite: boolean) => {
-      if (isLoading) return;
-      const item = catalogItems.find((catalogItem) => catalogItem.id === id);
-      const name = item?.name ?? id;
-
-      try {
-        await toggleFavorite(
-          id,
-          isFavorite,
-          resolveFavoriteEntityType(item?.type),
-        );
-
-        /* Removing a favourite is as successful an outcome as adding one. */
-        showSuccessNotification({
-          title: t(
-            isFavorite
-              ? FavoritesI18nKeys.AddedTitle
-              : FavoritesI18nKeys.RemovedTitle,
-          ),
-          message: t(
-            isFavorite ? FavoritesI18nKeys.Added : FavoritesI18nKeys.Removed,
-            { name },
-          ),
-        });
-      } catch (error) {
-        const { traceId } = await getApiErrorDetails(error);
-        showErrorNotification({
-          title: t(
-            isFavorite
-              ? FavoritesI18nKeys.AddFailedTitle
-              : FavoritesI18nKeys.RemoveFailedTitle,
-          ),
-          message: t(
-            isFavorite
-              ? FavoritesI18nKeys.AddFailed
-              : FavoritesI18nKeys.RemoveFailed,
-            { name },
-          ),
-          requestId: traceId,
-        });
-      }
-    },
-    [
-      isLoading,
-      toggleFavorite,
-      catalogItems,
-      showSuccessNotification,
-      showErrorNotification,
-      t,
-    ],
-  );
-
-  const handleUseInChat = useCallback(
-    async (item: CatalogItem) => {
-      /*
-       * A prompt contributes text, not a runtime: it seeds the composer and
-       * leaves the user's selected deployment untouched. The body travels as
-       * router state rather than a query param — it can run to 50 000
-       * characters, which would blow the URL length limit and leak content
-       * into browser history.
-       */
-      let action;
-      try {
-        action = await resolveCatalogPrimaryAction(item, fetchPromptDto);
-      } catch (err) {
-        const { traceId } = await getApiErrorDetails(err);
-        showErrorNotification({
-          message: t(CatalogI18nKeys.DetailsPromptLoadError),
-          requestId: traceId,
-        });
-        return;
-      }
-
-      if (action.kind === CatalogPrimaryActionType.Prompt) {
-        if (action.hasParameters) {
-          navigate(ROUTES.Root, {
-            state: {
-              pendingPrompt: {
-                id: action.id,
-                name: action.name,
-                content: action.content,
-                description: action.description,
-              },
-            },
-          });
-          return;
-        }
-        navigate(ROUTES.Root, { state: { promptContent: action.content } });
-        return;
-      }
-
-      /*
-       * The pick is persisted as the user's own preference *and* carried in
-       * router state: the new-chat route resets an unstated selection back to
-       * the configured default on mount, which would otherwise discard this
-       * one before the persisted value has propagated.
-       */
-      setSelectedItemId(action.id);
-      navigate(ROUTES.Root, { state: { deploymentId: action.id } });
-    },
-    [setSelectedItemId, navigate, showErrorNotification, t, fetchPromptDto],
-  );
-
-  /* Picker mode: a card click selects it and closes the modal immediately,
-   * without opening its details. When `onSelect` is supplied (a form-owned
-   * selection, decoupled from the chat input's active deployment), the pick
-   * is routed there instead of committing to `DeploymentsContext`. */
-  const handleCardSelect = useCallback(
-    (item: CatalogItem) => {
-      if (onSelect) {
-        onSelect(item.id);
-      } else {
-        setSelectedItemId(item.id);
-      }
-      onClose?.();
-    },
-    [onSelect, setSelectedItemId, onClose],
-  );
-
-  /*
-   * The body is re-fetched rather than taken from `item.details.promptContent`:
-   * the listing seeds that field, so a prompt edited in another tab would be
-   * written to disk stale. Organisation prompts download through the public
-   * endpoint, exactly as their details do.
-   */
-  const handleDownload = useCallback(
-    async (item: CatalogItem) => {
-      if (item.type === CatalogEntityType.Prompt) {
-        try {
-          const dto = await fetchPromptDto(item);
-          triggerBlobDownload(
-            serializePromptExport(buildPromptExportEnvelope(dto)),
-            buildPromptExportFileName(dto.name, EXPORT_APP_NAME),
-          );
-          notifyOperationSuccess(
-            NotifiableEntity.Prompt,
-            EntityOperation.Downloaded,
-            { name: dto.name },
-          );
-        } catch (err) {
-          const { traceId } = await getApiErrorDetails(err);
-          showErrorNotification({
-            message: t(CatalogI18nKeys.DetailsPromptDownloadError),
-            requestId: traceId,
-          });
-        }
-        return;
-      }
-
-      if (item.type === CatalogEntityType.Skill) {
-        const openSkill = parseSkillResourceUrl(item.id);
-        if (openSkill == null) return;
-        try {
-          const response = await downloadSkill(
-            openSkill.bucket,
-            openSkill.path,
-          );
-          if (!response.ok) {
-            throw new Error(`Download failed with status ${response.status}`);
-          }
-          const fallbackName = `${sanitizeFileName(item.name)}.zip`;
-          const savedName = await triggerBrowserDownload(
-            response,
-            fallbackName,
-          );
-          notifyOperationSuccess(
-            NotifiableEntity.Skill,
-            EntityOperation.Downloaded,
-            { name: savedName },
-          );
-        } catch (err) {
-          const { traceId } = await getApiErrorDetails(err);
-          showErrorNotification({
-            message: t(CatalogI18nKeys.DetailsSkillDownloadError),
-            requestId: traceId,
-          });
-        }
-      }
-    },
-    [notifyOperationSuccess, showErrorNotification, t, fetchPromptDto],
-  );
-
-  /* A prompt has a downloadable body and a skill has a whole-archive download; every other type is backed by config the catalog does not export. */
-  const isDownloadVisible = useCallback(
-    (item: CatalogItem) =>
-      item.type === CatalogEntityType.Prompt ||
-      item.type === CatalogEntityType.Skill,
-    [],
-  );
-
-  const renderContentFilePreview = useCallback(
-    (fileId: string, fileName: string) => (
-      <SkillDetailsFilePreview
-        fileId={fileId}
-        fileName={fileName}
-        onLoadFile={onLoadSkillDetailsFile}
-      />
-    ),
-    [onLoadSkillDetailsFile],
-  );
-
-  const isPrimaryActionVisible = useCallback((item: CatalogItem) => {
-    /*
-     * A prompt contributes text rather than a runtime, so it is always
-     * usable in chat; `supportsChat` describes a deployment's interfaces
-     * and is absent on prompt items.
-     */
-    if (item.type === CatalogEntityType.Prompt) return true;
-    return (
-      (item.type === CatalogEntityType.Model ||
-        item.type === CatalogEntityType.Agent) &&
-      item.supportsChat !== false
-    );
-  }, []);
-
-  /*
-   * Every catalog item type — prompts included — is visible for unsharing:
-   * `DiscardSharedCatalogItemDto.itemId` now accepts a full `prompts/{bucket}/{path}`
-   * resource path like any other entity type.
-   */
-  const isUnshareVisible = useCallback(() => true, []);
-
-  /*
-   * Every catalog item type — prompts included — is visible for revoking
-   * share access: `RevokeSharedAccessDto.itemId` now accepts a full
-   * `prompts/{bucket}/{path}` resource path like any other entity type.
-   */
-  const isRevokeShareVisible = useCallback(() => true, []);
-
-  const isPublishVisible = useCallback(
-    (item: CatalogItem) =>
-      Boolean(item.isMyApp) && toPublishEntityType(item.type) != null,
-    [],
-  );
-
-  const isApplicationsSharingEnabled = useUiFeature(
-    OverlayFeature.ApplicationsSharing,
-  );
-  const isToolsetsSharingEnabled = useUiFeature(OverlayFeature.ToolsetsSharing);
-  const isShareVisible = useCallback(
-    (item: CatalogItem) => {
-      /*
-       * Only your own prompts can be shared: DIAL Core grants access from the
-       * owner's bucket, which is the only one the backend can qualify a
-       * bucket-relative prompt path against.
-       */
-      if (item.type === CatalogEntityType.Prompt) return Boolean(item.isMyApp);
-      /*
-       * Same ownership rule as prompts: a skill shared to the current user
-       * with `WRITE` (`isEditable: true`) must not become re-shareable
-       * merely from holding that permission — only the owner can share.
-       */
-      if (item.type === CatalogEntityType.Skill) return Boolean(item.isMyApp);
-      if (item.type === CatalogEntityType.Toolset) {
-        return isToolsetsSharingEnabled;
-      }
-      return isApplicationsSharingEnabled;
-    },
-    [isApplicationsSharingEnabled, isToolsetsSharingEnabled],
-  );
-
-  /*
-   * Load-bearing beyond the publish panel: this is the only source of the
-   * folder list an unpublish request needs, and what makes the details
-   * panel's Unpublish action visible at all. The GH #7897 `503` this call
-   * was stubbed out for was never Core being down: `PublishService` called
-   * `.filter` on a `getPublications` response Core returns as an envelope,
-   * and the resulting `TypeError` was reported as "DIAL Core is currently
-   * unavailable". Fixed in `publication.util.ts`.
-   */
-  const getPublishHistory = useCallback(async (item: CatalogItem) => {
-    const entityType = toPublishEntityType(item.type);
-    if (!entityType) return [];
-    const entries = await getCatalogPublishHistory(entityType, item.id);
-    return entries.map(mapPublishHistoryEntryDto);
-  }, []);
-
-  const handlePublish = useCallback(
-    async (
-      item: CatalogItem,
-      folderPath: string[],
-      rules: PublicationRule[],
-    ) => {
-      const entityType = toPublishEntityType(item.type);
-      if (!entityType) {
-        throw new Error(`Entity type "${item.type}" is not publishable`);
-      }
-      await publishCatalogEntity(entityType, item.id, {
-        folderPath: folderPath.join('/'),
-        ...(item.version ? { version: item.version } : {}),
-        rules: rules.map(toPublishRuleDto),
-      });
-    },
-    [],
-  );
-
-  const handleFetchExistingRules = useCallback(
-    (folderPath: string[]) => getPublishRules(folderPath.join('/')),
-    [],
-  );
-
-  const buildEditorUrl = useCallback(
-    ({
-      schemaId,
-      step,
-      appId,
-      isCreating,
-    }: {
-      schemaId: string;
-      step: AppsEditorStep;
-      appId?: string;
-      isCreating?: boolean;
-    }): string => {
-      const params = new URLSearchParams({
-        [AppsEditorQuery.Step]: step,
-        [AppsEditorQuery.Schema]: schemaId,
-        [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
-      });
-      if (appId) params.set(AppsEditorQuery.AppId, appId);
-      if (isCreating) params.set(AppsEditorQuery.IsCreating, QUERY_VALUE_TRUE);
-      return `${ROUTES.AppsEditor}?${params.toString()}`;
-    },
-    [],
-  );
-
-  /*
-   * Reports a submitted request, never a completed removal: the published
-   * copy survives until an administrator approves, so nothing here refreshes
-   * the list or drops the folder from history.
-   */
-  const handleUnpublish = useCallback(
-    async (item: CatalogItem, folderPath: string[]) => {
-      const entityType = toPublishEntityType(item.type);
-      if (!entityType) {
-        throw new Error(`Entity type "${item.type}" is not publishable`);
-      }
-      try {
-        await unpublishCatalogEntity(entityType, item.id, {
-          folderPath: folderPath.join('/'),
-          ...(item.version ? { version: item.version } : {}),
-        });
-      } catch (error) {
-        /* Notified here, then rethrown so the panel's own rejection path runs
-         * — matching `handlePublish`, which lets the error reach the lib. */
-        showPublishError(error, EntityOperation.UnpublishRequested);
-        throw error;
-      }
-      notifyOperationSuccess(
-        resolveCatalogItemEntity(
-          item.type,
-          findDeploymentByIdOrReference(deployments, item.id),
+  const toolsetCredentialsLabels: ToolsetCredentialsLabels = useMemo(() => {
+    const formatMessage =
+      (key: CatalogI18nKeys) =>
+      ({ name, version }: { name: string; version?: string }) =>
+        t(key, { name, version });
+    return {
+      loginSuccessTitle: t(CatalogI18nKeys.CredentialsLoginSuccessTitle),
+      loginSuccess: {
+        user: formatMessage(CatalogI18nKeys.CredentialsLoginSuccessUser),
+        org: formatMessage(CatalogI18nKeys.CredentialsLoginSuccessOrg),
+        global: formatMessage(CatalogI18nKeys.CredentialsLoginSuccessGlobal),
+      },
+      apiKeyAddedSuccessTitle: t(
+        CatalogI18nKeys.CredentialsApiKeyAddedSuccessTitle,
+      ),
+      apiKeyAddedSuccess: {
+        user: formatMessage(CatalogI18nKeys.CredentialsApiKeyAddedSuccessUser),
+        org: formatMessage(CatalogI18nKeys.CredentialsApiKeyAddedSuccessOrg),
+        global: formatMessage(
+          CatalogI18nKeys.CredentialsApiKeyAddedSuccessGlobal,
         ),
-        EntityOperation.UnpublishRequested,
-        {
-          name: item.name,
-          folder: folderPath[folderPath.length - 1],
-        },
-      );
-    },
-    [deployments, notifyOperationSuccess, showPublishError],
-  );
-
-  const handlePublishSuccess = useCallback(
-    (item: CatalogItem, folderPath: string[]) => {
-      rememberPublishFolder(folderPath);
-      notifyOperationSuccess(
-        resolveCatalogItemEntity(
-          item.type,
-          findDeploymentByIdOrReference(deployments, item.id),
+      },
+      logoutSuccessTitle: t(CatalogI18nKeys.CredentialsLogoutSuccessTitle),
+      logoutSuccess: {
+        user: formatMessage(CatalogI18nKeys.CredentialsLogoutSuccessUser),
+        org: formatMessage(CatalogI18nKeys.CredentialsLogoutSuccessOrg),
+        global: formatMessage(CatalogI18nKeys.CredentialsLogoutSuccessGlobal),
+      },
+      apiKeyDeletedSuccessTitle: t(
+        CatalogI18nKeys.CredentialsApiKeyDeletedSuccessTitle,
+      ),
+      apiKeyDeletedSuccess: {
+        user: formatMessage(
+          CatalogI18nKeys.CredentialsApiKeyDeletedSuccessUser,
         ),
-        EntityOperation.PublishRequested,
-        {
-          name: item.name,
-          folder: folderPath[folderPath.length - 1],
-        },
-      );
-    },
-    [deployments, rememberPublishFolder, notifyOperationSuccess],
-  );
+        org: formatMessage(CatalogI18nKeys.CredentialsApiKeyDeletedSuccessOrg),
+        global: formatMessage(
+          CatalogI18nKeys.CredentialsApiKeyDeletedSuccessGlobal,
+        ),
+      },
+      popupBlockedError: t(ToolsetEditorI18nKeys.ErrorPopupBlocked),
+      loginFailedError: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+      logoutFailedError: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
+    };
+  }, [t]);
 
-  const handlePublishError = useCallback(
-    (_item: CatalogItem, _folderPath: string[], error: unknown) =>
-      showPublishError(error),
-    [showPublishError],
-  );
+  const { handleLogin, handleLogout } = useCatalogToolsetCredentials({
+    isAdmin,
+    toolsets,
+    refetchToolsets,
+    callbackPath: ROUTES.ToolsetSignIn,
+    loginToolset,
+    logoutToolset,
+    getToolset,
+    labels: toolsetCredentialsLabels,
+    onNotify: showNotification,
+  });
 
-  const handleEdit = useCallback(
-    (item: CatalogItem) => {
-      if (item.type === CatalogEntityType.Prompt) {
-        const params = new URLSearchParams({
-          [EditorQuery.Id]: item.id,
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        });
-        navigate(`${ROUTES.PromptEditor}?${params.toString()}`);
-        return;
-      }
-
-      if (item.type === CatalogEntityType.Skill) {
-        const params = new URLSearchParams({
-          [EditorQuery.Id]: item.id,
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        });
-        navigate(`${ROUTES.SkillEditor}?${params.toString()}`);
-        return;
-      }
-
-      if (item.type === CatalogEntityType.Toolset) {
-        const params = new URLSearchParams({
-          [ToolsetEditorQuery.Id]: item.id,
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        });
-        navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
-        return;
-      }
-
-      const deployment = findDeploymentByIdOrReference(deployments, item.id);
-      if (
-        isCustomAppsEnabled &&
-        deployment != null &&
-        !deployment.applicationTypeSchemaId
-      ) {
-        const params = new URLSearchParams({
-          [ToolsetEditorQuery.Id]: item.id,
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        });
-        navigate(`${ROUTES.CustomAppEditor}?${params.toString()}`);
-        return;
-      }
-
-      if (!quickAppSchemaId) return;
-      navigate(
-        buildEditorUrl({
-          schemaId: quickAppSchemaId,
-          step: AppsEditorStep.Settings,
-          appId: item.id,
-        }),
-      );
-    },
-    [
-      deployments,
-      isCustomAppsEnabled,
-      quickAppSchemaId,
-      navigate,
-      buildEditorUrl,
-    ],
-  );
-
-  const handleDelete = useCallback(
-    async (item: CatalogItem) => {
-      try {
-        if (item.type === CatalogEntityType.Prompt) {
-          await deletePrompt(item.id);
-          await refetchPrompts();
-        } else if (item.type === CatalogEntityType.Toolset) {
-          await deleteToolset(item.id);
-          await refetchToolsets();
-        } else if (item.type === CatalogEntityType.Skill) {
-          const parsed = parseSkillResourceUrl(item.id);
-          if (parsed == null) {
-            throw new Error(`Invalid skill resource url: ${item.id}`);
-          }
-          await deleteSkill(parsed.bucket, parsed.path);
-          await refetchSkills();
-        } else {
-          await deleteApplication(item.id);
-          await refetchDeployments();
-        }
-
-        notifyOperationSuccess(
-          resolveCatalogItemEntity(
-            item.type,
-            findDeploymentByIdOrReference(deployments, item.id),
-          ),
-          EntityOperation.Deleted,
-          { name: item.name },
-        );
-      } catch (err) {
-        const { traceId } = await getApiErrorDetails(err);
-        showErrorNotification({
-          message: t(CatalogI18nKeys.DetailsDeleteError),
-          requestId: traceId,
-        });
-        throw err;
-      }
-    },
-    [
-      deployments,
-      refetchToolsets,
-      refetchDeployments,
-      refetchPrompts,
-      refetchSkills,
-      notifyOperationSuccess,
-      showErrorNotification,
-      t,
-    ],
-  );
-
-  const handleUnshare = useCallback(
-    async (item: CatalogItem) => {
-      try {
-        await discardSharedCatalogItem(item.id);
-      } catch (err) {
-        const { traceId } = await getApiErrorDetails(err);
-        showErrorNotification({
-          title: t(CatalogI18nKeys.DetailsUnshareErrorTitle),
-          message: t(CatalogI18nKeys.DetailsUnshareError, { name: item.name }),
-          requestId: traceId,
-        });
-        throw err;
-      }
-
-      try {
-        if (item.type === CatalogEntityType.Toolset) {
-          await refetchToolsets();
-        } else if (item.type === CatalogEntityType.Skill) {
-          await refetchSkills();
-        } else if (item.type === CatalogEntityType.Prompt) {
-          await refetchPrompts();
-        } else {
-          await refetchDeployments();
-        }
-      } catch {
-        /*
-         * The discard mutation has already succeeded. A refresh failure must
-         * not turn that irreversible success into an actionable retry error;
-         * the deployments context retains its own fetch error state.
-         */
-      }
-
-      if (item.id === selectedItemId) {
-        setSelectedItemId(null);
-      }
-
-      showSuccessNotification({
-        title: t(CatalogI18nKeys.DetailsUnshareSuccessTitle),
-        message: t(CatalogI18nKeys.DetailsUnshareSuccess, { name: item.name }),
-      });
-    },
-    [
-      refetchToolsets,
-      refetchDeployments,
-      refetchSkills,
-      refetchPrompts,
-      selectedItemId,
-      setSelectedItemId,
-      showSuccessNotification,
-      showErrorNotification,
-      t,
-    ],
-  );
-
-  /*
-   * Revoking removes every *recipient's* access; the item itself stays in the
-   * owner's catalog, so — unlike `handleUnshare` — there is nothing to refetch
-   * and no selection to clear.
-   */
-  const handleRevokeShare = useCallback(
-    async (item: CatalogItem) => {
-      try {
-        await revokeSharedAccess(item.id);
-      } catch (err) {
-        const { traceId } = await getApiErrorDetails(err);
-        showErrorNotification({
-          title: t(CatalogI18nKeys.DetailsRevokeShareErrorTitle),
-          message: t(CatalogI18nKeys.DetailsRevokeShareError, {
-            name: item.name,
-          }),
-          requestId: traceId,
-        });
-        throw err;
-      }
-
-      showSuccessNotification({
-        title: t(CatalogI18nKeys.DetailsRevokeShareSuccessTitle),
-        message: t(CatalogI18nKeys.DetailsRevokeShareSuccess, {
-          name: item.name,
-        }),
-      });
-    },
-    [showErrorNotification, showSuccessNotification, t],
-  );
-
-  /*
-   * Resolved per item when the details panel's Manage menu opens, rather than
-   * carried on the list items: the count only matters at the moment the owner
-   * is about to act on it, and a snapshot taken at list-fetch time would still
-   * offer "Revoke access (3)" right after those three grants were revoked.
-   * A failure resolves to `undefined`, which keeps the action reachable
-   * without a count instead of hiding the only way to revoke.
-   */
-  const handleFetchRecipientsCount = useCallback(async (item: CatalogItem) => {
-    const { recipientsCount } = await getShareRecipientsCount(item.id);
-    return recipientsCount;
-  }, []);
-
-  const createOptions = useMemo<DropdownItem[]>(() => {
-    const options: DropdownItem[] = [];
-
-    if (
-      quickAppSchemaId &&
-      isSchemaAppsEnabled &&
-      !isHideCustomAppCreationEnabled
-    ) {
-      options.push({
-        key: 'quick-app',
-        label: t(CatalogI18nKeys.CreateQuickApp),
-        onClick: () =>
-          navigate(
-            buildEditorUrl({
-              schemaId: quickAppSchemaId,
-              step: AppsEditorStep.General,
-              isCreating: true,
-            }),
-          ),
-      });
-    }
-
-    if (isToolsetsEnabled) {
-      options.push({
-        key: 'toolset',
-        label: t(CatalogI18nKeys.CreateToolset),
-        onClick: () => {
-          const params = new URLSearchParams({
-            [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-          });
-          navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
-        },
-      });
-    }
-
-    if (isCustomAppsEnabled && !isHideCustomAppCreationEnabled) {
-      options.push({
-        key: 'custom-app',
-        label: t(CatalogI18nKeys.CreateCustomApp),
-        onClick: () => {
-          const params = new URLSearchParams({
-            [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-          });
-          navigate(`${ROUTES.CustomAppEditor}?${params.toString()}`);
-        },
-      });
-    }
-
-    options.push({
-      key: 'skill',
-      label: t(CatalogI18nKeys.CreateSkill),
-      children: [
-        {
-          key: 'skill-write-instructions',
-          label: t(CatalogI18nKeys.CreateSkillWriteInstructions),
-          onClick: () => {
-            const params = new URLSearchParams({
-              [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-            });
-            navigate(`${ROUTES.SkillEditor}?${params.toString()}`);
-          },
-        },
-        {
-          key: 'skill-upload',
-          label: t(CatalogI18nKeys.CreateSkillUpload),
-          onClick: triggerSkillArchivePicker,
-        },
-      ],
-    });
-
-    if (isPromptsEnabled) {
-      options.push({
-        key: 'prompt',
-        label: t(CatalogI18nKeys.CreatePrompt),
-        onClick: () => {
-          const params = new URLSearchParams({
-            [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-          });
-          navigate(`${ROUTES.PromptEditor}?${params.toString()}`);
-        },
-      });
-    }
-
-    return options;
-  }, [
-    quickAppSchemaId,
-    navigate,
-    isPromptsEnabled,
+  const {
+    onToggleFavorite,
+    handleUseInChat,
+    handleCardSelect,
+    handleDownload,
+    isDownloadVisible,
+    isPrimaryActionVisible,
+    renderContentFilePreview,
+  } = useCatalogItemActions({
     t,
-    buildEditorUrl,
+    navigate,
+    onClose,
+    onSelect,
+    setSelectedItemId,
+    catalogItems,
+    isLoading,
+    toggleFavorite,
+    showSuccessNotification,
+    showErrorNotification,
+    notifyOperationSuccess,
+    onLoadSkillDetailsFile,
+  });
+
+  const {
+    getPublishHistory,
+    handlePublish,
+    handleUnpublish,
+    handlePublishSuccess,
+    handlePublishError,
+    handleFetchExistingRules,
+    isPublishVisible,
+  } = useCatalogPublishing({
+    deployments,
+    rememberPublishFolder,
+    notifyOperationSuccess,
+    showPublishError,
+  });
+
+  const {
+    isShareVisible,
+    isUnshareVisible,
+    isRevokeShareVisible,
+    handleUnshare,
+    handleRevokeShare,
+    handleFetchRecipientsCount,
+  } = useCatalogSharing({
+    t,
+    refetchToolsets,
+    refetchSkills,
+    refetchPrompts,
+    refetchDeployments,
+    selectedItemId,
+    setSelectedItemId,
+    showSuccessNotification,
+    showErrorNotification,
+  });
+
+  const catalogEditUrls: CatalogEditNavigationUrls = useMemo(() => {
+    const buildUrl = (route: string, params: Record<string, string>) =>
+      `${route}?${new URLSearchParams(params).toString()}`;
+    return {
+      buildPromptEditUrl: (id) =>
+        buildUrl(ROUTES.PromptEditor, {
+          [EditorQuery.Id]: id,
+          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
+        }),
+      buildPromptCreateUrl: () =>
+        buildUrl(ROUTES.PromptEditor, {
+          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
+        }),
+      buildSkillEditUrl: (id) =>
+        buildUrl(ROUTES.SkillEditor, {
+          [EditorQuery.Id]: id,
+          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
+        }),
+      buildSkillCreateUrl: () =>
+        buildUrl(ROUTES.SkillEditor, {
+          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
+        }),
+      buildToolsetEditUrl: (id) =>
+        buildUrl(ROUTES.ToolsetEditor, {
+          [ToolsetEditorQuery.Id]: id,
+          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+        }),
+      buildToolsetCreateUrl: () =>
+        buildUrl(ROUTES.ToolsetEditor, {
+          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+        }),
+      buildCustomAppEditUrl: (id) =>
+        buildUrl(ROUTES.CustomAppEditor, {
+          [ToolsetEditorQuery.Id]: id,
+          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+        }),
+      buildCustomAppCreateUrl: () =>
+        buildUrl(ROUTES.CustomAppEditor, {
+          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+        }),
+      buildQuickAppEditUrl: (schemaId, appId) =>
+        buildUrl(ROUTES.AppsEditor, {
+          [AppsEditorQuery.Step]: AppsEditorStep.Settings,
+          [AppsEditorQuery.Schema]: schemaId,
+          [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          [AppsEditorQuery.AppId]: appId,
+        }),
+      buildQuickAppCreateUrl: (schemaId) =>
+        buildUrl(ROUTES.AppsEditor, {
+          [AppsEditorQuery.Step]: AppsEditorStep.General,
+          [AppsEditorQuery.Schema]: schemaId,
+          [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          [AppsEditorQuery.IsCreating]: QUERY_VALUE_TRUE,
+        }),
+    };
+  }, []);
+
+  const catalogEditNavigationLabels: CatalogEditNavigationLabels = useMemo(
+    () => ({
+      createQuickApp: t(CatalogI18nKeys.CreateQuickApp),
+      createToolset: t(CatalogI18nKeys.CreateToolset),
+      createCustomApp: t(CatalogI18nKeys.CreateCustomApp),
+      createSkill: t(CatalogI18nKeys.CreateSkill),
+      createSkillWriteInstructions: t(
+        CatalogI18nKeys.CreateSkillWriteInstructions,
+      ),
+      createSkillUpload: t(CatalogI18nKeys.CreateSkillUpload),
+      createPrompt: t(CatalogI18nKeys.CreatePrompt),
+      deleteError: t(CatalogI18nKeys.DetailsDeleteError),
+    }),
+    [t],
+  );
+
+  const { handleEdit, handleDelete, createOptions } = useCatalogEditNavigation({
+    deployments,
+    isCustomAppsEnabled,
     isSchemaAppsEnabled,
     isHideCustomAppCreationEnabled,
     isToolsetsEnabled,
-    isCustomAppsEnabled,
+    isPromptsEnabled,
+    quickAppSchemaId,
+    urls: catalogEditUrls,
+    onNavigate: navigate,
+    deletePrompt,
+    deleteToolset,
+    deleteSkill,
+    deleteApplication,
+    refetchPrompts,
+    refetchToolsets,
+    refetchSkills,
+    refetchDeployments,
+    onDeleteSuccess: (item) =>
+      notifyOperationSuccess(
+        resolveCatalogItemEntity(
+          item.type,
+          findDeploymentByIdOrReference(deployments, item.id),
+        ),
+        EntityOperation.Deleted,
+        { name: item.name },
+      ),
+    labels: catalogEditNavigationLabels,
+    onNotify: showErrorNotification,
     triggerSkillArchivePicker,
-  ]);
+  });
 
   if (!isCatalogEnabled && !isSelectorMode) {
     return null;
