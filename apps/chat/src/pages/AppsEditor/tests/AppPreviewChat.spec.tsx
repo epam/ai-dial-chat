@@ -30,6 +30,7 @@ vi.mock('../../../context/ClientChannelContext', () => ({
     channelId: null,
     ensureConnected: vi.fn(),
     waitForChannel: vi.fn(),
+    notifyGenerationSettled: vi.fn(),
   }),
 }));
 
