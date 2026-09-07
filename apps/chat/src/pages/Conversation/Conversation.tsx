@@ -5,6 +5,7 @@ import {
   getLastDeploymentId,
   getLastUserMessageToolConfiguration,
   isAwaitingGenerationResume,
+  isConversationNotFoundError,
   shouldWatchForDisplayNameUpdate,
   useConversationHandlers,
   useConversationStream,
@@ -121,6 +122,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const {
     conversations,
     duplicateConversation,
+    removeConversationFromList,
     updateConversationTitle,
     watchForDisplayNameUpdate,
   } = useConversations();
@@ -444,6 +446,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
             requestId: traceId,
           });
         }
+        /* Self-heal the panel: a conversation the backend no longer has (deleted
+         * here, in another tab, or by emptying its messages) must not stay in the
+         * list, where every later open or delete would fail the same way. */
+        if (isConversationNotFoundError(error)) {
+          removeConversationFromList(id);
+        }
         navigate(ROUTES.Root);
       } finally {
         setIsFetching(false);
@@ -458,6 +466,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       restoreBufferedGeneration,
       updateConversationTitle,
       getGeneration,
+      removeConversationFromList,
       showErrorNotification,
       t,
     ],
@@ -494,6 +503,16 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     [currentSelectedItemId, conversation?.model.id],
   );
 
+  /*
+   * Deleting the last message deletes the conversation itself, so drop it
+   * from the panel list as well — a leftover row points at a resource that
+   * no longer exists and fails on both open and delete.
+   */
+  const handleConversationDeleted = useCallback(() => {
+    if (conversationId) removeConversationFromList(conversationId);
+    navigate(ROUTES.Root);
+  }, [conversationId, navigate, removeConversationFromList]);
+
   const {
     handleSend,
     handleUploadAttachment,
@@ -522,7 +541,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     conversationsApi: configuredConversationsApi,
     rateApi: configuredRateApi,
     resolveModelId,
-    onConversationDeleted: () => navigate(ROUTES.Root),
+    onConversationDeleted: handleConversationDeleted,
     showNetworkError: handleNetworkUploadError,
     toolConfigurationValue,
   });

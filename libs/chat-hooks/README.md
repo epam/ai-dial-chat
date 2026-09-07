@@ -800,7 +800,7 @@ const ChatPage = ({
 | `conversationsApi`       | `Pick<ConversationsApi, 'saveConversation' \| 'deleteConversation'>` | Already-configured generated-client instance used to save/delete the conversation.           |
 | `rateApi`                | `Pick<RateApi, 'rateMessage'>`                                       | Already-configured generated-client instance used to rate a message.                         |
 | `resolveModelId`         | `() => string`                                                       | Resolves the model id to send with the next completion. Re-evaluated on every call.          |
-| `onConversationDeleted`  | `() => void`                                                         | Optional. Called when deleting the last message also deletes the whole conversation.         |
+| `onConversationDeleted`  | `() => void`                                                         | Optional. Called when deleting the last message also deletes the whole conversation. Invoked outside any state updater, so the host may update its own state from it (e.g. drop the conversation from a list). |
 | `showNetworkError`       | `(filenames: string[]) => void`                                      | Optional. Called with batched filenames after a burst of network-error upload failures.      |
 | `toolConfigurationValue` | `Record<string, boolean>`                                            | Optional. Tool toggle configuration values merged into every outgoing completion request.    |
 

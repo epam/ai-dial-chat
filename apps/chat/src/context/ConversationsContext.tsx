@@ -5,6 +5,7 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import {
   getConversationPath,
+  isConversationNotFoundError,
   safeDecodeURIComponent,
 } from '@epam/ai-dial-chat-hooks';
 import { generateUUID } from '@epam/ai-dial-chat-shared';
@@ -55,6 +56,13 @@ interface ConversationsContextType {
   markConversationViewed: (id: string) => Promise<void>;
   /** Delete a conversation by id, removing it from the local list on success. */
   deleteConversation: (id: string) => Promise<void>;
+  /**
+   * Drops a conversation from the local list without calling the API — for a
+   * conversation the backend has already deleted (e.g. deleting its last
+   * message removed it), which would otherwise linger as a row that no
+   * longer resolves.
+   */
+  removeConversationFromList: (id: string) => void;
   /** Rename a conversation; optimistically updates title, reverts on failure. The conversation id never changes. */
   renameConversation: (id: string, newTitle: string) => Promise<void>;
   /**
@@ -318,9 +326,21 @@ export const ConversationsProvider = ({
     try {
       await apiDeleteConversation(conversationPath);
     } catch (err) {
+      /*
+       * Already gone upstream: the row was stale, so removing it is the
+       * intended outcome. Restoring it would leave the user with an entry
+       * that neither opens nor deletes.
+       */
+      if (isConversationNotFoundError(err)) return;
       if (snapshot) setConversations(snapshot);
       throw err;
     }
+  }, []);
+
+  const removeConversationFromList = useCallback((id: string) => {
+    setConversations((prev) =>
+      prev.filter((c) => !conversationIdsMatch(c.id, id)),
+    );
   }, []);
 
   const renameConversation = useCallback(
@@ -419,6 +439,7 @@ export const ConversationsProvider = ({
       pinConversation,
       markConversationViewed,
       deleteConversation,
+      removeConversationFromList,
       renameConversation,
       generateConversationTitle,
       duplicateConversation,
@@ -434,6 +455,7 @@ export const ConversationsProvider = ({
       pinConversation,
       markConversationViewed,
       deleteConversation,
+      removeConversationFromList,
       renameConversation,
       generateConversationTitle,
       duplicateConversation,

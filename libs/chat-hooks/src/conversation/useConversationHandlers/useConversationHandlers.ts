@@ -275,41 +275,47 @@ export const useConversationHandlers = ({
   );
 
   const handleConfirmDelete = useCallback(() => {
-    if (!conversationId || pendingDeleteIndex == null) return;
+    if (!conversationId || pendingDeleteIndex == null || !conversation) return;
     setPendingDeleteIndex(null);
+
+    const idx = pendingDeleteIndex;
+    if (idx === -1) return;
 
     const conversationPath = getConversationPath(conversationId);
 
-    setConversation((prev) => {
-      if (!prev) return prev;
-      const idx = pendingDeleteIndex;
-      if (idx === -1) return prev;
+    const remaining =
+      conversation.messages[idx + 1]?.role === MessageRole.Assistant
+        ? conversation.messages.filter((_, i) => i !== idx && i !== idx + 1)
+        : conversation.messages.filter((_, i) => i !== idx);
 
-      const next =
-        prev.messages[idx + 1]?.role === MessageRole.Assistant
-          ? prev.messages.filter((_, i) => i !== idx && i !== idx + 1)
-          : prev.messages.filter((_, i) => i !== idx);
+    /*
+     * Nothing displayable is left, so the conversation itself goes. The
+     * request and `onConversationDeleted` run here rather than inside a
+     * `setConversation` updater: React invokes an updater during render,
+     * where a host callback that drops the conversation from its own list
+     * would be a cross-component state update, and a StrictMode re-run of
+     * the updater would fire the delete request twice.
+     */
+    if (
+      remaining.length === 0 ||
+      (remaining.length === 1 && remaining[0].role === MessageRole.Status)
+    ) {
+      void conversationsApi.deleteConversation({ path: conversationPath });
+      onConversationDeleted?.();
+      return;
+    }
 
-      if (
-        next.length === 0 ||
-        (next.length === 1 && next[0].role === MessageRole.Status)
-      ) {
-        void conversationsApi.deleteConversation({ path: conversationPath });
-        onConversationDeleted?.();
-        return prev;
-      }
-
-      const updated = { ...prev, messages: next };
-      conversationRef.current = updated;
-      void conversationsApi.saveConversation({
-        path: conversationPath,
-        saveConversationBodyDto: {
-          conversation: updated as unknown as ConversationResponseDto,
-        },
-      });
-      return updated;
+    const updated = { ...conversation, messages: remaining };
+    conversationRef.current = updated;
+    setConversation(updated);
+    void conversationsApi.saveConversation({
+      path: conversationPath,
+      saveConversationBodyDto: {
+        conversation: updated as unknown as ConversationResponseDto,
+      },
     });
   }, [
+    conversation,
     conversationId,
     conversationRef,
     conversationsApi,

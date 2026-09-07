@@ -60,6 +60,7 @@ const mockDeleteAllConversations = vi.mocked(
   conversationsApi.deleteAllConversations,
 );
 const mockRenameConversation = vi.mocked(conversationsApi.renameConversation);
+const mockDeleteConversation = vi.mocked(conversationsApi.deleteConversation);
 const mockMarkConversationViewed = vi.mocked(
   conversationsApi.markConversationViewed,
 );
@@ -392,6 +393,90 @@ describe('ConversationsContext — renameConversation', () => {
     });
 
     expect(userConfigApi.pinConversation).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationsContext — deleteConversation', () => {
+  it('keeps the conversation removed when it is already absent upstream', async () => {
+    mockDeleteConversation.mockRejectedValueOnce({
+      response: { status: 404, json: vi.fn() },
+    });
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await act(async () => {
+      await result.current.deleteConversation('conv1');
+    });
+
+    expect(result.current.conversations.map((c) => c.id)).toEqual([
+      'conv2',
+      'conv3',
+    ]);
+  });
+
+  it('restores the conversation and rethrows on any other failure', async () => {
+    mockDeleteConversation.mockRejectedValueOnce({
+      response: { status: 502, json: vi.fn() },
+    });
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await expect(
+      act(async () => {
+        await result.current.deleteConversation('conv1');
+      }),
+    ).rejects.toBeDefined();
+
+    expect(result.current.conversations).toHaveLength(3);
+  });
+});
+
+describe('ConversationsContext — removeConversationFromList', () => {
+  it('drops the conversation locally without calling the delete API', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    act(() => {
+      result.current.removeConversationFromList('conv2');
+    });
+
+    expect(result.current.conversations.map((c) => c.id)).toEqual([
+      'conv1',
+      'conv3',
+    ]);
+    expect(mockDeleteConversation).not.toHaveBeenCalled();
+  });
+
+  it('matches a decoded route id against the encoded listed id', async () => {
+    mockListConversations.mockResolvedValueOnce({
+      items: [
+        {
+          ...seedConversations[0],
+          id: 'conversations/bucket/gpt-4o__My%20Chat',
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(1));
+
+    act(() => {
+      result.current.removeConversationFromList(
+        'conversations/bucket/gpt-4o__My Chat',
+      );
+    });
+
+    expect(result.current.conversations).toHaveLength(0);
   });
 });
 

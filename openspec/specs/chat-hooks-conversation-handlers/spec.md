@@ -37,6 +37,13 @@ or a configured API client singleton.
 - **THEN** the conversation is deleted via the injected `conversationsApi`
   and `onConversationDeleted` is called
 
+#### Scenario: Delete side effects run outside the state updater
+- **WHEN** `handleConfirmDelete` runs
+- **THEN** the `conversationsApi` request and `onConversationDeleted` are
+  invoked from the handler body rather than from inside a `setConversation`
+  updater, so the request is issued once and the host may update its own
+  state (such as removing the conversation from a list) in the callback
+
 #### Scenario: Rate is optimistic with revert on failure
 - **WHEN** `handleRateMessage(messageIndex, rating)` is called and the
   injected `rateApi.rateMessage` call rejects
