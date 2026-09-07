@@ -6,7 +6,7 @@
  * plain `node_modules`, never the workspace's `@epam/source` alias) and
  * bundled into an ordinary app, the PDF engine (`pdfjs-dist`, via
  * `@epam/ai-dial-react-pdf-highlighter`) and the syntax-highlighter engine
- * (`react-syntax-highlighter`'s `refractor` grammar library) load only
+ * (`react-syntax-highlighter`'s package-specific line-number class) load only
  * on demand — never as part of this app's eager entry graph.
  *
  * Usage: node scripts/verify-build-output.mjs
@@ -49,7 +49,8 @@ const onDemandRefs = allAssetFiles.filter((file) => !eagerRefs.includes(file));
 const readAsset = (ref) => readFileSync(resolve(distDir, ref), 'utf-8');
 
 const PDF_ENGINE_TELLTALE = 'GlobalWorkerOptions'; // pdfjs-dist's own API surface
-const SYNTAX_HIGHLIGHTER_ENGINE_TELLTALE = 'refractor'; // react-syntax-highlighter's grammar engine
+const SYNTAX_HIGHLIGHTER_ENGINE_TELLTALE =
+  'react-syntax-highlighter-line-number'; // package-specific rendered class
 
 const eagerJsRefs = eagerRefs.filter((ref) => ref.endsWith('.js'));
 const eagerCssRefs = eagerRefs.filter((ref) => ref.endsWith('.css'));

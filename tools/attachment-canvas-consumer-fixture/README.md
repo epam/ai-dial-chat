@@ -23,7 +23,7 @@ and then builds against it.
    shape `tools/publish-lib.mjs` produces for a real `npm publish` (strips
    `"./dist/"` export prefixes, drops the `"@epam/source"` condition,
    `"private"`, and `"nx"`), runs `npm pack` from inside `dist/`, and installs
-   the resulting tarball with a real offline `npm install` into this project's own
+   the resulting tarball with a real cache-first `npm install` into this project's own
    `node_modules/@epam/ai-dial-attachment-canvas` — never the workspace
    root's, which npm workspaces symlinks straight to `libs/attachment-canvas`
    source.
