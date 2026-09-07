@@ -119,6 +119,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     pdfContentLoadingLabel,
     pdfContentErrorLabel,
     pdfContentRetryLabel,
+    xlsxFormulaLabel = 'Formula',
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,
@@ -170,6 +171,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         '--ac-json-toggle-icon': colors?.jsonToggleIcon,
         '--ac-json-toggle-icon-hover': colors?.jsonToggleIconHover,
         '--ac-ooxml-bg': colors?.ooxmlBackground,
+        '--ac-ooxml-formula-border': colors?.ooxmlFormulaBorder,
+        '--ac-ooxml-formula-bg': colors?.ooxmlFormulaBackground,
+        '--ac-ooxml-formula-text': colors?.ooxmlFormulaText,
         '--ac-json-collapsed-text': colors?.jsonCollapsedText,
         '--ac-json-collapsed-bg': colors?.jsonCollapsedBackground,
         '--ac-font-family': hasFontClassName
@@ -368,6 +372,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             content={content}
             fileName={fileName}
             loadErrorLabel={loadErrorLabel}
+            formulaLabel={xlsxFormulaLabel}
           />
         );
       case AttachmentContentType.Visualizer:
@@ -432,6 +437,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     pdfContentLoadingLabel,
     pdfContentErrorLabel,
     pdfContentRetryLabel,
+    xlsxFormulaLabel,
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,

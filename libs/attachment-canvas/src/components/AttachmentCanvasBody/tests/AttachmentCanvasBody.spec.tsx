@@ -49,8 +49,16 @@ vi.mock('../../PdfContent/PdfContent', () => ({
 }));
 
 vi.mock('../../OoxmlContent/OoxmlContent', () => ({
-  OoxmlContent: ({ content }: { content: { format: string } }) => (
-    <section aria-label="ooxml-content">{content.format}</section>
+  OoxmlContent: ({
+    content,
+    formulaLabel,
+  }: {
+    content: { format: string };
+    formulaLabel: string;
+  }) => (
+    <section aria-label="ooxml-content">
+      {content.format}:{formulaLabel}
+    </section>
   ),
 }));
 
@@ -198,20 +206,49 @@ describe('AttachmentCanvasBody', () => {
     expect(screen.getByRole('region', { name: 'ooxml-content' })).toBeTruthy();
   });
 
-  it('exposes the OOXML background as a host-overridable CSS variable', () => {
+  it('forwards the XLSX formula label to OoxmlContent', () => {
+    renderBody(
+      {
+        type: AttachmentContentType.Ooxml,
+        url: 'blob:office-url',
+        format: OoxmlFileType.Xlsx,
+      },
+      { labels: { xlsxFormulaLabel: 'Cell formula' } },
+    );
+
+    expect(screen.getByText('xlsx:Cell formula')).toBeTruthy();
+  });
+
+  it('exposes the OOXML colors as host-overridable CSS variables', () => {
     const { container } = renderBody(
       {
         type: AttachmentContentType.Ooxml,
         url: 'blob:office-url',
         format: OoxmlFileType.Docx,
       },
-      { styles: { colors: { ooxmlBackground: 'rebeccapurple' } } },
+      {
+        styles: {
+          colors: {
+            ooxmlBackground: 'rebeccapurple',
+            ooxmlFormulaBorder: 'gold',
+            ooxmlFormulaBackground: 'navy',
+            ooxmlFormulaText: 'white',
+          },
+        },
+      },
     );
 
     /* Set on the body root and inherited by OoxmlContent through the cascade. */
     // eslint-disable-next-line testing-library/no-node-access -- reading an inline CSS custom property, which has no accessible representation to query
     const root = container.firstElementChild as HTMLElement;
     expect(root.style.getPropertyValue('--ac-ooxml-bg')).toBe('rebeccapurple');
+    expect(root.style.getPropertyValue('--ac-ooxml-formula-border')).toBe(
+      'gold',
+    );
+    expect(root.style.getPropertyValue('--ac-ooxml-formula-bg')).toBe('navy');
+    expect(root.style.getPropertyValue('--ac-ooxml-formula-text')).toBe(
+      'white',
+    );
   });
 
   it('does not add its own scroll container for OOXML content', () => {

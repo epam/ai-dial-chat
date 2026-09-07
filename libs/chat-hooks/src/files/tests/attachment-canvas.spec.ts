@@ -56,6 +56,7 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
     LoadFailed: 'load_failed',
   },
   OoxmlFileType: {
+    Csv: 'csv',
     Docx: 'docx',
     Pptx: 'pptx',
     Xlsx: 'xlsx',
@@ -817,6 +818,20 @@ describe('resolveOoxmlCanvasContent', () => {
     });
   });
 
+  it('returns renderer content from a local CSV file', async () => {
+    const result = await resolveOoxmlCanvasContent(
+      makeLocalAttachment('export.csv', 'name,total\nAlice,42'),
+      resolvers,
+      OoxmlFileType.Csv,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Ooxml,
+      url: 'blob:mock-ooxml-url',
+      format: 'csv',
+    });
+  });
+
   it('returns a Forbidden error when a remote Office file cannot be fetched', async () => {
     vi.stubGlobal(
       'fetch',
@@ -1063,6 +1078,7 @@ describe('resolveExternalSourceContentType', () => {
       'pptx',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     ],
+    ['csv', 'text/csv'],
   ])(
     'overrides a mislabeled content type when the url ends with .%s',
     (ext, canonicalMime) => {

@@ -602,6 +602,7 @@ const App: FC = () => {
                 AttachmentCanvasI18nKeys.PdfContentErrorLabel,
               ),
               pdfContentRetryLabel: t(ButtonsI18nKeys.Retry),
+              xlsxFormulaLabel: t(AttachmentCanvasI18nKeys.XlsxFormulaLabel),
               codeContentLoadingLabel: t(
                 AttachmentCanvasI18nKeys.CodeContentLoadingLabel,
               ),

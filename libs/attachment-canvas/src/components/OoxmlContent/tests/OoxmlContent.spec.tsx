@@ -9,20 +9,26 @@ import { OoxmlContent } from '../OoxmlContent';
 const {
   mockDocxConstructor,
   mockXlsxConstructor,
+  mockXlsxSheetConstructor,
   mockPptxConstructor,
   mockLoad,
   mockDestroy,
+  mockChartEx,
   importState,
 } = vi.hoisted(() => ({
   mockDocxConstructor: vi.fn(),
   mockXlsxConstructor: vi.fn(),
+  mockXlsxSheetConstructor: vi.fn(),
   mockPptxConstructor: vi.fn(),
   mockLoad: vi.fn(),
   mockDestroy: vi.fn(),
+  mockChartEx: {},
   /* Lets one test simulate a failed chunk load: reading the export throws
    * while the module specifier itself still resolves. */
   importState: { shouldFailDocx: false },
 }));
+
+vi.mock('@silurus/ooxml/chart-ex', () => ({ chartEx: mockChartEx }));
 
 vi.mock('@silurus/ooxml/docx', () => ({
   get DocxScrollViewer() {
@@ -39,6 +45,10 @@ vi.mock('@silurus/ooxml/docx', () => ({
 vi.mock('@silurus/ooxml/xlsx', () => ({
   XlsxViewer: function (...args: unknown[]) {
     mockXlsxConstructor(...args);
+    return { load: mockLoad, destroy: mockDestroy };
+  },
+  XlsxSheetViewer: function (...args: unknown[]) {
+    mockXlsxSheetConstructor(...args);
     return { load: mockLoad, destroy: mockDestroy };
   },
 }));
@@ -62,6 +72,7 @@ const renderContent = (format: OoxmlFileType) =>
       content={makeContent(format)}
       fileName={`report.${format}`}
       loadErrorLabel="Failed to load file"
+      formulaLabel="Formula"
     />,
   );
 
@@ -90,6 +101,48 @@ describe('OoxmlContent', () => {
       );
     },
   );
+
+  it('loads CSV through the Excel-style sheet viewer', async () => {
+    renderContent(OoxmlFileType.Csv);
+
+    await waitFor(() =>
+      expect(mockXlsxSheetConstructor).toHaveBeenCalledOnce(),
+    );
+    expect(mockXlsxSheetConstructor.mock.calls[0][0]).toBeInstanceOf(
+      HTMLCanvasElement,
+    );
+    expect(mockXlsxSheetConstructor.mock.calls[0][1]).toMatchObject({
+      showScrollbars: true,
+    });
+    expect(mockLoad).toHaveBeenCalledWith('blob:csv', { format: 'csv' });
+    await waitFor(() =>
+      expect(screen.getByRole('document').getAttribute('aria-busy')).toBe(
+        'false',
+      ),
+    );
+  });
+
+  it('does not render the XLSX formula panel for CSV', async () => {
+    renderContent(OoxmlFileType.Csv);
+
+    await waitFor(() =>
+      expect(mockXlsxSheetConstructor).toHaveBeenCalledOnce(),
+    );
+    expect(screen.queryByRole('region', { name: 'Formula' })).toBeNull();
+  });
+
+  it.each([
+    [OoxmlFileType.Docx, mockDocxConstructor],
+    [OoxmlFileType.Xlsx, mockXlsxConstructor],
+    [OoxmlFileType.Pptx, mockPptxConstructor],
+  ])('enables ChartEx rendering for %s', async (format, constructor) => {
+    renderContent(format);
+    await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+
+    expect(constructor.mock.calls[0][1]).toMatchObject({
+      chartEx: mockChartEx,
+    });
+  });
 
   it('destroys the viewer on unmount', async () => {
     const view = renderContent(OoxmlFileType.Docx);
@@ -140,6 +193,82 @@ describe('OoxmlContent', () => {
     );
   });
 
+  it('shows the active XLSX cell formula in a separate panel', async () => {
+    renderContent(OoxmlFileType.Xlsx);
+    await waitFor(() => expect(mockXlsxConstructor).toHaveBeenCalledOnce());
+
+    const options = mockXlsxConstructor.mock.calls[0][1] as {
+      onSelectionContextChange: (context: {
+        kind: 'range';
+        selection: { activeCell: { row: number; col: number } };
+        cells: Array<{
+          address: { row: number; col: number };
+          formula?: string;
+        }>;
+      }) => void;
+    };
+    act(() =>
+      options.onSelectionContextChange({
+        kind: 'range',
+        selection: { activeCell: { row: 2, col: 3 } },
+        cells: [
+          {
+            address: { row: 2, col: 3 },
+            formula: 'SUM(A1:A2)',
+          },
+        ],
+      }),
+    );
+
+    expect(screen.getByRole('region', { name: 'Formula' }).textContent).toBe(
+      'Formula=SUM(A1:A2)',
+    );
+  });
+
+  it('hides the formula panel when the active XLSX cell has no formula', async () => {
+    renderContent(OoxmlFileType.Xlsx);
+    await waitFor(() => expect(mockXlsxConstructor).toHaveBeenCalledOnce());
+
+    const options = mockXlsxConstructor.mock.calls[0][1] as {
+      onSelectionContextChange: (context: {
+        kind: 'range';
+        selection: { activeCell: { row: number; col: number } };
+        cells: Array<{
+          address: { row: number; col: number };
+          formula?: string;
+        }>;
+      }) => void;
+    };
+    act(() =>
+      options.onSelectionContextChange({
+        kind: 'range',
+        selection: { activeCell: { row: 2, col: 3 } },
+        cells: [
+          {
+            address: { row: 2, col: 3 },
+            formula: 'SUM(A1:A2)',
+          },
+        ],
+      }),
+    );
+    expect(screen.getByRole('region', { name: 'Formula' })).toBeTruthy();
+
+    act(() =>
+      options.onSelectionContextChange({
+        kind: 'range',
+        selection: { activeCell: { row: 2, col: 3 } },
+        cells: [
+          {
+            address: { row: 2, col: 4 },
+            formula: 'SUM(A1:A2)',
+          },
+        ],
+      }),
+    );
+
+    expect(screen.queryByRole('region', { name: 'Formula' })).toBeNull();
+  });
+
   it('removes the status overlay after a successful load', async () => {
     renderContent(OoxmlFileType.Docx);
 
@@ -187,6 +316,7 @@ describe('OoxmlContent', () => {
       <OoxmlContent
         content={makeContent(OoxmlFileType.Docx, 'blob:first')}
         loadErrorLabel="Failed to load file"
+        formulaLabel="Formula"
       />,
     );
     await waitFor(() => expect(mockLoad).toHaveBeenCalledWith('blob:first'));
@@ -195,6 +325,7 @@ describe('OoxmlContent', () => {
       <OoxmlContent
         content={makeContent(OoxmlFileType.Docx, 'blob:second')}
         loadErrorLabel="Failed to load file"
+        formulaLabel="Formula"
       />,
     );
 
@@ -208,6 +339,7 @@ describe('OoxmlContent', () => {
       <OoxmlContent
         content={makeContent(OoxmlFileType.Docx)}
         loadErrorLabel="Failed to load file"
+        formulaLabel="Formula"
       />,
     );
     await waitFor(() => expect(mockDocxConstructor).toHaveBeenCalledOnce());
@@ -216,6 +348,7 @@ describe('OoxmlContent', () => {
       <OoxmlContent
         content={makeContent(OoxmlFileType.Xlsx)}
         loadErrorLabel="Failed to load file"
+        formulaLabel="Formula"
       />,
     );
 
@@ -228,6 +361,7 @@ describe('OoxmlContent', () => {
       <OoxmlContent
         content={makeContent(OoxmlFileType.Docx)}
         loadErrorLabel="Failed to load file"
+        formulaLabel="Formula"
       />,
     );
     await waitFor(() => expect(mockDocxConstructor).toHaveBeenCalledOnce());
@@ -236,6 +370,7 @@ describe('OoxmlContent', () => {
       <OoxmlContent
         content={makeContent(OoxmlFileType.Docx)}
         loadErrorLabel="Failed to load file"
+        formulaLabel="Formula"
       />,
     );
 

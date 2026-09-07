@@ -861,6 +861,7 @@ export enum AttachmentCanvasI18nKeys {
   PdfPageNumberLabel = 'attachmentCanvas.pdfPageNumberLabel',
   PdfContentLoadingLabel = 'attachmentCanvas.pdfContentLoadingLabel',
   PdfContentErrorLabel = 'attachmentCanvas.pdfContentErrorLabel',
+  XlsxFormulaLabel = 'attachmentCanvas.xlsxFormulaLabel',
   CodeContentLoadingLabel = 'attachmentCanvas.codeContentLoadingLabel',
   CodeContentErrorLabel = 'attachmentCanvas.codeContentErrorLabel',
 }

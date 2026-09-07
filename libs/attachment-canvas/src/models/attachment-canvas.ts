@@ -57,13 +57,13 @@ export interface PdfCanvasContent {
   selectedHighlightId?: string;
 }
 
-/** Content payload for Office Open XML document attachments. */
+/** Content payload for OOXML document and CSV spreadsheet attachments. */
 export interface OoxmlCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
   type: AttachmentContentType.Ooxml;
-  /** Resolved download URL or object URL for the OOXML file. */
+  /** Resolved download URL or object URL for the source file. */
   url: string;
-  /** The document format used to select the format-specific renderer. */
+  /** The document format used to select and configure the format-specific renderer. */
   format: OoxmlFileType;
 }
 
@@ -203,8 +203,14 @@ export interface AttachmentCanvasColors {
   jsonToggleIcon?: string;
   /** Expand/collapse triangle color on hover. Defaults to `--text-primary`. */
   jsonToggleIconHover?: string;
-  /** Background color of the OOXML (DOCX/XLSX/PPTX) viewer surface and its loading/error overlay. Defaults to `--bg-layer-raised`. */
+  /** Background color of the OOXML/CSV viewer surface and its loading/error overlay. Defaults to `--bg-layer-raised`. */
   ooxmlBackground?: string;
+  /** Border color of the XLSX formula panel and value field. Defaults to `--stroke-secondary`. */
+  ooxmlFormulaBorder?: string;
+  /** Background color of the XLSX formula value field. Defaults to `--bg-layer-base`. */
+  ooxmlFormulaBackground?: string;
+  /** Text color of the XLSX formula panel. Defaults to `--text-primary`. */
+  ooxmlFormulaText?: string;
   /** Text color of the collapsed-content ellipsis. Defaults to `--text-secondary`. */
   jsonCollapsedText?: string;
   /** Background color of the collapsed-content ellipsis. Defaults to `--bg-layer-raised`. */
@@ -305,6 +311,8 @@ export interface AttachmentCanvasLabels {
   pdfContentErrorLabel?: string;
   /** Label and accessible name for the retry control shown alongside `pdfContentErrorLabel`. Defaults to `'Retry'`. */
   pdfContentRetryLabel?: string;
+  /** Visible and accessible label for the active XLSX cell's formula panel. Defaults to `'Formula'`. */
+  xlsxFormulaLabel?: string;
   /** Accessible status text announced while the syntax-highlighter engine's dynamic import is loading. Defaults to `'Loading…'`. */
   codeContentLoadingLabel?: string;
   /** Message shown when the syntax-highlighter engine's dynamic import fails to load. Defaults to `'Failed to load content'`. */
@@ -385,6 +393,7 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'pdfContentLoadingLabel'
   | 'pdfContentErrorLabel'
   | 'pdfContentRetryLabel'
+  | 'xlsxFormulaLabel'
   | 'codeContentLoadingLabel'
   | 'codeContentErrorLabel'
   | 'codeContentRetryLabel'

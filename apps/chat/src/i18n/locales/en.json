@@ -943,6 +943,7 @@
     "pdfPageNumberLabel": "Page number",
     "pdfContentLoadingLabel": "Loading the PDF viewer…",
     "pdfContentErrorLabel": "Failed to load the PDF viewer",
+    "xlsxFormulaLabel": "Formula",
     "codeContentLoadingLabel": "Loading syntax highlighting…",
     "codeContentErrorLabel": "Failed to load syntax highlighting"
   },

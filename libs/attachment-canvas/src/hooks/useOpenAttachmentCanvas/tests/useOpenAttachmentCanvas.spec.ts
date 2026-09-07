@@ -104,6 +104,7 @@ describe('useOpenAttachmentCanvas routing', () => {
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       'pptx',
     ],
+    ['export.csv', 'text/csv', 'csv'],
   ])('routes %s to the OOXML resolver', async (name, mimeType, format) => {
     const content = { type: 'ooxml', url: `blob:${name}`, format };
     mockResolveOoxml.mockResolvedValue(content);
@@ -134,6 +135,22 @@ describe('useOpenAttachmentCanvas routing', () => {
     );
 
     expect(mockResolveOoxml).toHaveBeenCalledWith(expect.anything(), 'pptx');
+  });
+
+  it('routes CSV by extension to the @silurus/ooxml resolver instead of the code renderer', async () => {
+    mockResolveOoxml.mockResolvedValue({
+      type: 'ooxml',
+      url: 'blob:csv',
+      format: 'csv',
+    });
+
+    const { result } = renderOpenAttachmentCanvas();
+    await result.current.openAttachmentCanvas(
+      makeAttachment('export.CSV', 'application/octet-stream'),
+    );
+
+    expect(mockResolveOoxml).toHaveBeenCalledWith(expect.anything(), 'csv');
+    expect(mockResolveCode).not.toHaveBeenCalled();
   });
 
   it('routes an OOXML attachment whose name has no extension by MIME type', async () => {
