@@ -4,6 +4,23 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 /** Which of the host's two MCP proxy routes a deployment id resolves through — a plain toolset, or an application that is itself an MCP server. */
 export type McpDeploymentKind = 'toolset' | 'application';
 
+/**
+ * How a tool was discovered — determines whether it's safe to live-re-call
+ * (see `resolveMcpAppToolResult`) or treat as "always available" for a
+ * message with no other evidence (see `findMcpAppForMessage`).
+ *
+ * - `'direct'`: the active deployment itself IS this MCP server (whether
+ *   it's a bare Toolset or an Application declaring `features.mcp`) — the
+ *   host is talking to it directly, so which tool a mounted app's own
+ *   invocation targets is unambiguous.
+ * - `'indirect'`: a different, tool-calling deployment's message happened to
+ *   call a name prefixed with a toolset's display name; the toolset is a
+ *   name-prefix *guess*, not a confirmed link the host was told about, so
+ *   re-calling it live risks hitting the wrong tool or re-triggering a
+ *   non-idempotent side effect.
+ */
+export type McpAppToolDiscovery = 'direct' | 'indirect';
+
 /** A tool's declared MCP Apps UI resource, keyed by the toolset it was discovered on. */
 export interface McpAppToolRef {
   /** Id of the toolset/application this tool was discovered on. */
@@ -16,6 +33,8 @@ export interface McpAppToolRef {
   mcpToolName: string;
   /** Deployment kind — determines which host MCP proxy route resolves `tools/call` for this tool. */
   kind: McpDeploymentKind;
+  /** How this tool was discovered — see `McpAppToolDiscovery`. */
+  discovery: McpAppToolDiscovery;
 }
 
 /** Original tool call's arguments/result, seeded into the mounted app so it renders that invocation immediately instead of an empty initial state. */
@@ -68,6 +87,21 @@ export interface McpAppResponseCache {
   ) => void;
   /** Removes the cached entry for `key`, if any. */
   invalidate: (key: string) => void;
+  /**
+   * Returns the fresh cached entry for `(key, seedKey)` if one exists
+   * (same rules as `get`); otherwise runs `fetchFn` and caches its result.
+   * Concurrent calls for the same `(key, seedKey)` before `fetchFn` settles
+   * are coalesced onto the same in-flight promise instead of each starting
+   * their own — without this, a component re-rendered before its first
+   * fetch resolves (e.g. React StrictMode's dev-only double effect
+   * invocation) would race two independent fetches/live tool re-calls for
+   * the same message.
+   */
+  getOrFetch: (
+    key: string,
+    seedKey: string | undefined,
+    fetchFn: () => Promise<CachedMcpAppResponse>,
+  ) => Promise<CachedMcpAppResponse>;
 }
 
 /** Load state of `useMcpAppInlinePreview`'s fetch. */

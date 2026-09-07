@@ -6,18 +6,24 @@ import {
 import {
   computeMcpAppSeedKey,
   resolveMcpAppToolResult,
+  type McpAppHostAdapter,
   type McpAppResponseCache,
   type McpAppToolCallSeed,
   type McpAppToolRef,
 } from '@epam/ai-dial-mcp-apps';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { useCallback, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { AttachmentCanvasI18nKeys } from '../../constants/translation-keys';
-import { useConversationPanel } from '../../context/ConversationPanelContext';
-import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
-import { McpAppResourceFetchError } from '../../server-api/mcp-apps';
-import { useMcpAppHostAdapter } from './useMcpAppHostAdapter';
+import { McpAppResourceFetchError } from '../mcp-apps-api-client';
+
+/** User-facing text `useOpenMcpAppCanvas` needs but cannot resolve itself — a lib must not call `t()`. */
+export interface UseOpenMcpAppCanvasLabels {
+  /** Canvas panel title while an MCP App is loading or open. */
+  title: string;
+  /** Error label shown when the resource fetch is forbidden (HTTP 403). */
+  forbiddenErrorLabel: string;
+  /** Error label shown for any other resource-load/tool-call failure. */
+  loadErrorLabel: string;
+}
 
 /**
  * Returns `openMcpAppCanvas`, an async function that opens the attachment
@@ -26,23 +32,32 @@ import { useMcpAppHostAdapter } from './useMcpAppHostAdapter';
  * callers can compare it against `useAttachmentCanvas().attachmentId` to
  * know whether this exact canvas is the one currently open. `toolCall`, when
  * passed, seeds the mounted app's initial `toolInput`/`toolResult`. Returns
- * `true` if the canvas was opened, `false` if no sandbox proxy is configured
- * or the resource failed to load.
+ * `true` if the canvas was opened, `false` if `hostAdapter.sandboxUrl` isn't
+ * configured or the resource failed to load.
  *
- * `cache` (shared with `useMcpAppInlinePreview` via the same
- * `useMcpAppResponseCache` instance) is checked before fetching the resource
- * or re-resolving the tool result — reopening the canvas for a message
- * already seen (inline or in a prior canvas open) reuses that fetch instead
- * of repeating it. Pass `forceReload: true` (wired to the canvas header's
- * reload button, `content.onReload`) to bypass and refresh the cache entry.
+ * `cache` (shared with `@epam/ai-dial-mcp-apps`'s `useMcpAppInlinePreview` via
+ * the same cache instance) is checked before fetching the resource or
+ * re-resolving the tool result — reopening the canvas for a message already
+ * seen (inline or in a prior canvas open) reuses that fetch instead of
+ * repeating it, and a concurrent in-flight fetch for the same message (e.g.
+ * the inline preview hasn't finished loading yet) is coalesced onto rather
+ * than raced against (`cache.getOrFetch`). Pass `forceReload: true` (wired to
+ * the canvas header's reload button, `content.onReload`) to bypass and
+ * refresh the cache entry.
+ *
+ * `onBeforeOpen`, if passed, runs before the canvas opens (e.g. to close
+ * other panels a host keeps mutually exclusive with the canvas) — this hook
+ * has no opinion on what else is open in the host UI.
  */
-export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
-  const { t } = useTranslation();
+export const useOpenMcpAppCanvas = (
+  cache: McpAppResponseCache,
+  hostAdapter: McpAppHostAdapter,
+  labels: UseOpenMcpAppCanvasLabels,
+  onBeforeOpen?: () => void,
+) => {
   const { openCanvas, openCanvasLoading } = useAttachmentCanvas();
-  const { closePanel } = useConversationPanel();
-  const { handleClose: closeSourcesPanel } = useSourcesSidebar();
   const { hostContext, sandboxUrl, fetchResourceHtml, callTool } =
-    useMcpAppHostAdapter('fullscreen');
+    hostAdapter;
 
   /*
    * `onReload` below needs to re-invoke `openMcpAppCanvas` recursively, but
@@ -73,29 +88,38 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
         return false;
       }
 
-      const title = t(AttachmentCanvasI18nKeys.McpAppTitle);
-      closePanel();
-      closeSourcesPanel();
-      openCanvasLoading(title, canvasKey);
+      onBeforeOpen?.();
+      openCanvasLoading(labels.title, canvasKey);
 
       try {
         const seedKey = computeMcpAppSeedKey(toolCall);
-        const cached =
-          canvasKey != null && !forceReload
-            ? cache.get(canvasKey, seedKey)
-            : undefined;
+        const fetchFresh = async (): Promise<{
+          html: string;
+          toolResult: CallToolResult | undefined;
+        }> => {
+          const [html, toolResult] = await Promise.all([
+            fetchResourceHtml(match.toolsetId, match.resourceUri),
+            resolveMcpAppToolResult(match, toolCall, callTool),
+          ]);
+          return { html, toolResult };
+        };
 
         let html: string;
         let toolResult: CallToolResult | undefined;
-        if (cached) {
-          ({ html, toolResult } = cached);
+        if (canvasKey != null && !forceReload) {
+          /*
+           * `getOrFetch` coalesces this with a concurrent in-flight fetch for
+           * the same message — e.g. the inline preview is still loading when
+           * the user expands to the canvas — instead of racing a second,
+           * redundant fetch/live tool re-call.
+           */
+          ({ html, toolResult } = await cache.getOrFetch(
+            canvasKey,
+            seedKey,
+            fetchFresh,
+          ));
         } else {
-          html = await fetchResourceHtml(match.toolsetId, match.resourceUri);
-          toolResult = await resolveMcpAppToolResult(
-            match,
-            toolCall,
-            callTool,
-          );
+          ({ html, toolResult } = await fetchFresh());
           if (canvasKey != null) {
             cache.set(canvasKey, { html, toolResult }, seedKey);
           }
@@ -122,7 +146,7 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
               );
             },
           },
-          title,
+          labels.title,
           canvasKey,
         );
         return true;
@@ -135,29 +159,26 @@ export const useOpenMcpAppCanvas = (cache: McpAppResponseCache) => {
             errorType: isForbidden
               ? AttachmentErrorType.Forbidden
               : AttachmentErrorType.LoadFailed,
-            label: t(
-              isForbidden
-                ? AttachmentCanvasI18nKeys.McpAppForbiddenErrorLabel
-                : AttachmentCanvasI18nKeys.McpAppLoadErrorLabel,
-            ),
+            label: isForbidden
+              ? labels.forbiddenErrorLabel
+              : labels.loadErrorLabel,
           },
-          title,
+          labels.title,
           canvasKey,
         );
         return false;
       }
     },
     [
-      t,
       openCanvas,
       openCanvasLoading,
-      closePanel,
-      closeSourcesPanel,
+      onBeforeOpen,
       sandboxUrl,
       hostContext,
       fetchResourceHtml,
       callTool,
       cache,
+      labels,
     ],
   );
 

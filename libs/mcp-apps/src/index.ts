@@ -9,6 +9,7 @@ export {
 export { useMcpAppResponseCache } from './hooks/useMcpAppResponseCache/useMcpAppResponseCache';
 export type {
   McpDeploymentKind,
+  McpAppToolDiscovery,
   McpAppToolRef,
   McpAppToolCallSeed,
   FetchMcpAppResourceHtml,

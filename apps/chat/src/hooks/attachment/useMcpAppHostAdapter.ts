@@ -1,52 +1,30 @@
-import { getApiErrorMessage } from '@epam/ai-dial-chat-hooks';
-import type { CallMcpAppTool, McpAppHostAdapter } from '@epam/ai-dial-mcp-apps';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { useMemo } from 'react';
-import {
-  callMcpAppTool,
-  fetchMcpAppResourceHtml,
-} from '../../server-api/mcp-apps';
-import { useMcpAppHostContext } from './useMcpAppHostContext';
-import { useMcpAppSandboxUrl } from './useMcpAppSandboxUrl';
+import { useMcpAppHostAdapter as useMcpAppHostAdapterBase } from '@epam/ai-dial-chat-hooks/mcp-apps';
+import type { McpAppHostAdapter } from '@epam/ai-dial-mcp-apps';
+import { useTranslation } from 'react-i18next';
+import { useAppConfig } from '../../context/AppConfigContext';
+import { useTheme } from '../../context/ThemeContext';
+import { mcpAppsApiClient } from '../../server-api/mcp-apps';
+import { UserConfigStatus } from '../../types/user-config-status';
 
 /**
- * Builds the `McpAppHostAdapter` this app injects into `@epam/ai-dial-mcp-apps`'s
- * hooks/components, wiring the library's host-context/tool-call/resource-fetch
- * contract to this app's config (`useMcpAppHostContext`, `useMcpAppSandboxUrl`)
- * and server-api calls.
+ * App-level adapter wiring `@epam/ai-dial-chat-hooks/mcp-apps`'s host-agnostic
+ * `useMcpAppHostAdapter` to this app's config/theme/i18n context and the
+ * configured `mcpAppsApiClient` — the only piece of this glue that can't live
+ * in a lib, since a lib must never read app context directly.
  */
 export const useMcpAppHostAdapter = (
   displayMode: 'inline' | 'fullscreen',
 ): McpAppHostAdapter => {
-  const hostContext = useMcpAppHostContext(displayMode);
-  const sandboxUrl = useMcpAppSandboxUrl();
+  const { status, config } = useAppConfig();
+  const { currentTheme } = useTheme();
+  const { i18n } = useTranslation();
+  const sandboxUrl =
+    status === UserConfigStatus.Ready ? config.mcpAppSandboxUrl : null;
 
-  const callTool = useMemo<CallMcpAppTool>(
-    () => async (toolsetId, toolName, args, kind) => {
-      try {
-        return (await callMcpAppTool(
-          toolsetId,
-          toolName,
-          args,
-          kind,
-        )) as CallToolResult;
-      } catch (error) {
-        throw new Error(
-          (await getApiErrorMessage(error)) ??
-            `Tool call "${toolName}" failed`,
-        );
-      }
-    },
-    [],
-  );
-
-  return useMemo(
-    () => ({
-      hostContext,
-      sandboxUrl,
-      fetchResourceHtml: fetchMcpAppResourceHtml,
-      callTool,
-    }),
-    [hostContext, sandboxUrl, callTool],
-  );
+  return useMcpAppHostAdapterBase(displayMode, mcpAppsApiClient, sandboxUrl, {
+    theme: currentTheme,
+    mcpAppTheme: config.mcpAppTheme,
+    locale: i18n.language,
+    mcpAppUserAgent: config.mcpAppUserAgent,
+  });
 };

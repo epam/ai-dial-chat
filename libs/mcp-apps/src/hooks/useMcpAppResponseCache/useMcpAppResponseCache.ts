@@ -26,10 +26,11 @@ interface CacheEntry extends CachedMcpAppResponse {
  * undefined seed. `get` treats a later, settled seed as a miss rather than
  * reusing that earlier, seedless entry.
  *
- * The underlying `Map` lives in a `useRef`, mutated only inside `get`/`set`/
- * `invalidate` — functions called later by consumers (in an effect or event
- * handler), never during this hook's own render — so no ref is read or
- * written while rendering. Entries are namespaced by `conversationId`
+ * The underlying `Map`s (entries, and `getOrFetch`'s in-flight promises)
+ * live in `useRef`s, mutated only inside `get`/`set`/`invalidate`/`getOrFetch`
+ * — functions called later by consumers (in an effect or event handler),
+ * never during this hook's own render — so no ref is read or written while
+ * rendering. Entries are namespaced by `conversationId`
  * (`${conversationId}:${key}`) rather than clearing the map on conversation
  * switch, since clearing would itself require touching the ref during
  * render; `set` opportunistically prunes expired entries instead, keeping
@@ -39,33 +40,74 @@ export const useMcpAppResponseCache = (
   conversationId: string,
 ): McpAppResponseCache => {
   const mapRef = useRef<Map<string, CacheEntry>>(new Map());
+  const pendingRef = useRef<Map<string, Promise<CachedMcpAppResponse>>>(
+    new Map(),
+  );
 
   return useMemo<McpAppResponseCache>(() => {
     const namespacedKey = (key: string) => `${conversationId}:${key}`;
+    const pendingKey = (key: string, seedKey: string | undefined) =>
+      `${namespacedKey(key)}::${seedKey ?? ''}`;
+
+    const get: McpAppResponseCache['get'] = (key, seedKey) => {
+      const entry = mapRef.current.get(namespacedKey(key));
+      if (entry == null) return undefined;
+      if (entry.seedKey !== seedKey) return undefined;
+      if (Date.now() - entry.cachedAt > CACHE_TTL_MS) return undefined;
+      return { html: entry.html, toolResult: entry.toolResult };
+    };
+
+    const set: McpAppResponseCache['set'] = (key, value, seedKey) => {
+      const now = Date.now();
+      for (const [existingKey, existingEntry] of mapRef.current) {
+        if (now - existingEntry.cachedAt > CACHE_TTL_MS) {
+          mapRef.current.delete(existingKey);
+        }
+      }
+      mapRef.current.set(namespacedKey(key), {
+        ...value,
+        seedKey,
+        cachedAt: now,
+      });
+    };
 
     return {
-      get: (key, seedKey) => {
-        const entry = mapRef.current.get(namespacedKey(key));
-        if (entry == null) return undefined;
-        if (entry.seedKey !== seedKey) return undefined;
-        if (Date.now() - entry.cachedAt > CACHE_TTL_MS) return undefined;
-        return { html: entry.html, toolResult: entry.toolResult };
-      },
-      set: (key, value, seedKey) => {
-        const now = Date.now();
-        for (const [existingKey, existingEntry] of mapRef.current) {
-          if (now - existingEntry.cachedAt > CACHE_TTL_MS) {
-            mapRef.current.delete(existingKey);
-          }
-        }
-        mapRef.current.set(namespacedKey(key), {
-          ...value,
-          seedKey,
-          cachedAt: now,
-        });
-      },
+      get,
+      set,
       invalidate: (key) => {
         mapRef.current.delete(namespacedKey(key));
+        const prefix = `${namespacedKey(key)}::`;
+        for (const existingPendingKey of pendingRef.current.keys()) {
+          if (existingPendingKey.startsWith(prefix)) {
+            pendingRef.current.delete(existingPendingKey);
+          }
+        }
+      },
+      getOrFetch: (key, seedKey, fetchFn) => {
+        const cached = get(key, seedKey);
+        if (cached) return Promise.resolve(cached);
+
+        const pKey = pendingKey(key, seedKey);
+        let pending = pendingRef.current.get(pKey);
+        if (!pending) {
+          pending = fetchFn().then((result) => {
+            set(key, result, seedKey);
+            return result;
+          });
+          pendingRef.current.set(pKey, pending);
+          /*
+           * Chained on `pending` itself (not a separate `.catch`/`.then`), so
+           * this runs only after the `set()` above has already happened on
+           * success — closing the window between "fetch settled" and "cache
+           * updated" during which a call arriving right then would find
+           * neither the cache entry nor the (already-deleted) pending
+           * promise and start a third, redundant fetch.
+           */
+          pending.finally(() => {
+            pendingRef.current.delete(pKey);
+          });
+        }
+        return pending;
       },
     };
   }, [conversationId]);

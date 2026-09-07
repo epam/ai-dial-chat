@@ -76,22 +76,14 @@ export const useMcpAppInlinePreview = (
 
       try {
         const seedKey = computeMcpAppSeedKey(toolCall);
-        const cached = cache.get(cacheKey, seedKey);
-        let fetchedHtml: string;
-        let resolvedResult: CallToolResult | undefined;
-        if (cached) {
-          ({ html: fetchedHtml, toolResult: resolvedResult } = cached);
-        } else {
-          [fetchedHtml, resolvedResult] = await Promise.all([
-            fetchResourceHtml(match.toolsetId, match.resourceUri),
-            resolveMcpAppToolResult(match, toolCall, callTool),
-          ]);
-          cache.set(
-            cacheKey,
-            { html: fetchedHtml, toolResult: resolvedResult },
-            seedKey,
-          );
-        }
+        const { html: fetchedHtml, toolResult: resolvedResult } =
+          await cache.getOrFetch(cacheKey, seedKey, async () => {
+            const [html, toolResult] = await Promise.all([
+              fetchResourceHtml(match.toolsetId, match.resourceUri),
+              resolveMcpAppToolResult(match, toolCall, callTool),
+            ]);
+            return { html, toolResult };
+          });
         if (isCancelled()) return;
         setHtml(fetchedHtml);
         setToolResult(resolvedResult);

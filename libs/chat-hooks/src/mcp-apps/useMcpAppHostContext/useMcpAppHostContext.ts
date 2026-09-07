@@ -1,8 +1,5 @@
 import type { McpUiHostContext } from '@mcp-ui/client';
 import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useAppConfig } from '../../context/AppConfigContext';
-import { useTheme } from '../../context/ThemeContext';
 
 /* All CSS variable names defined by the MCP UI standard (McpUiStyleVariableKey union). */
 const MCP_UI_CSS_VAR_KEYS = [
@@ -98,32 +95,38 @@ const readMcpStyleVariables = (): McpStyleVariables => {
   return vars as McpStyleVariables;
 };
 
+/** Host values `useMcpAppHostContext` needs but cannot read itself — a lib must not import the app's theme/i18n/config context. */
+export interface McpAppHostContextParams {
+  /** Host's current theme id (e.g. `'light'`/`'dark'`), used when `mcpAppTheme` is unset. */
+  theme: string;
+  /** Operator-configured MCP App theme override, if any. */
+  mcpAppTheme?: string;
+  /** Host's current i18n locale (BCP 47). */
+  locale: string;
+  /** Operator-configured MCP App user-agent override. Defaults to `'ai-dial-chat'`. */
+  mcpAppUserAgent?: string;
+}
+
 /**
  * Builds the `McpUiHostContext` delivered to a mounted MCP App during its
  * `ui/initialize` handshake, shared by every place that mounts an app —
- * the full-width attachment canvas (`displayMode: 'fullscreen'`) and the
- * compact inline preview under a message (`displayMode: 'inline'`) — so the
- * app can size/style itself differently for each.
+ * a full-width attachment canvas (`displayMode: 'fullscreen'`) and a compact
+ * inline preview under a message (`displayMode: 'inline'`) — so the app can
+ * size/style itself differently for each.
  */
 export const useMcpAppHostContext = (
   displayMode: 'inline' | 'fullscreen',
-): McpUiHostContext => {
-  const { i18n } = useTranslation();
-  const { currentTheme } = useTheme();
-  const { config } = useAppConfig();
-  const mcpAppTheme = config.mcpAppTheme;
-  const mcpAppUserAgent = config.mcpAppUserAgent;
-
-  return useMemo(
+  { theme, mcpAppTheme, locale, mcpAppUserAgent }: McpAppHostContextParams,
+): McpUiHostContext =>
+  useMemo(
     () => ({
-      theme: (mcpAppTheme ?? currentTheme) as 'light' | 'dark',
-      locale: i18n.language,
+      theme: (mcpAppTheme ?? theme) as 'light' | 'dark',
+      locale,
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       userAgent: mcpAppUserAgent ?? 'ai-dial-chat',
       platform: 'web',
       displayMode,
       styles: { variables: readMcpStyleVariables() },
     }),
-    [mcpAppTheme, currentTheme, i18n.language, mcpAppUserAgent, displayMode],
+    [mcpAppTheme, theme, locale, mcpAppUserAgent, displayMode],
   );
-};

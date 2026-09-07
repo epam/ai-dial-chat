@@ -87,16 +87,34 @@ export const collectToolCallNames = (messages: Message[]): Set<string> => {
 /**
  * Returns the `mcpAppTools` entry that best matches this message: the one
  * whose name was actually called (per `custom_content.state`, in whichever
- * of its two known orchestrator-specific shapes is present), or — since the
- * trigger is meant to always be available once the deployment supports MCP
- * Apps — falls back to the first discovered tool when no real call matches
- * yet (e.g. the model hasn't called a tool this turn). Returns `undefined`
- * for non-assistant messages or when the deployment has no MCP-Apps-capable
- * tool at all.
+ * of its two known orchestrator-specific shapes is present).
+ *
+ * If no real call matches, a `discovery: 'direct'` tool (the deployment
+ * itself IS this MCP server, whether it's a bare Toolset or an Application —
+ * see `useMcpAppTools`) always wins regardless: such a deployment's own
+ * response IS its MCP App responding, and it typically never populates
+ * `custom_content.state` at all — it isn't an LLM-orchestrated tool-call
+ * turn, so there is no call to find evidence of in the first place (the same
+ * class of self-hosted-app gap `design.md`'s D9 "Known gap" documents for
+ * discovery — here it recurs at per-message matching).
+ *
+ * Otherwise (a `discovery: 'indirect'` match — a real MCP-capable toolset a
+ * different, tool-calling deployment delegates to, guessed by name-prefix), a
+ * real match is required once the message has settled; while still
+ * streaming, `custom_content.state` may not have caught up with a tool call
+ * the model already made this turn, so the first such tool is guessed
+ * optimistically rather than popping in a beat late. Once settled, a
+ * deployment that finished without calling any MCP-capable toolset must
+ * never show the trigger, even though the deployment supports MCP Apps in
+ * general.
+ *
+ * Returns `undefined` for non-assistant messages or when the deployment has
+ * no MCP-Apps-capable tool at all.
  */
 export const findMcpAppForMessage = (
   message: Message,
   mcpAppTools: McpAppToolRef[],
+  isStreaming: boolean,
 ): McpAppToolRef | undefined => {
   if (mcpAppTools.length === 0 || message.role !== MessageRole.Assistant) {
     return undefined;
@@ -106,9 +124,11 @@ export const findMcpAppForMessage = (
       (call) => call.name,
     ),
   );
-  return (
-    mcpAppTools.find((tool) => calledNames.has(tool.toolName)) ?? mcpAppTools[0]
-  );
+  const matched = mcpAppTools.find((tool) => calledNames.has(tool.toolName));
+  if (matched) return matched;
+  const selfHosted = mcpAppTools.find((tool) => tool.discovery === 'direct');
+  if (selfHosted) return selfHosted;
+  return isStreaming ? mcpAppTools[0] : undefined;
 };
 
 /** Stable key identifying a message's MCP App canvas in an attachment canvas's `attachmentId` tracking, mirroring the `${messageIndex}:${attachmentId}` scheme used for regular attachment tiles. */
@@ -132,8 +152,11 @@ export const computeMcpAppSeedKey = (
  * tool call's real structured arguments; `toolResult` is still a lossy
  * wrapper around the result message's plain-text `content`, since that's
  * still all the orchestrator's state carries (no `_meta` or
- * `structuredContent` survives into it). Returns `undefined` if no matching
- * tool call is found for `toolName`.
+ * `structuredContent` survives into it). When the same tool was called more
+ * than once this turn (e.g. the model retried after a failed first attempt
+ * with corrected arguments), the **last** matching call is used — an earlier
+ * attempt's failure is superseded, not authoritative. Returns `undefined` if
+ * no matching tool call is found for `toolName`.
  */
 export const resolveMcpAppToolCallSeed = (
   message: Message,
@@ -142,9 +165,9 @@ export const resolveMcpAppToolCallSeed = (
   const state = message.custom_content?.state;
   if (!state) return undefined;
 
-  const matched = [...resolveToolCalls(state).values()].find(
-    (call) => call.name === toolName,
-  );
+  const matched = [...resolveToolCalls(state).values()]
+    .reverse()
+    .find((call) => call.name === toolName);
   if (!matched) return undefined;
 
   return {
@@ -161,22 +184,40 @@ export const resolveMcpAppToolCallSeed = (
  * a live re-call of the tool (through `callTool`) over `seed.toolResult`'s
  * lossy plain-text reconstruction, since a host's conversation state
  * typically never carries the tool's real `structuredContent` — only the
- * orchestrator's flattened prose summary.
+ * orchestrator's flattened prose summary, which is often not enough for the
+ * app's UI to render anything at all.
  *
- * Only attempted when the MCP endpoint is unambiguous — `match.kind ===
- * 'application'`, i.e. the deployment is itself the MCP server. The
- * `'toolset'` kind also covers indirect, name-prefix-guessed matches, where
- * re-calling could hit the wrong tool or re-trigger a non-idempotent side
- * effect — those keep the lossy seed. Falls back to `seed?.toolResult` if the
- * live call fails (e.g. the deployment has no live MCP session outside the
- * original conversation turn) or has no arguments to replay.
+ * Attempted whenever the call is confirmed safe:
+ * - `match.discovery === 'direct'` — the deployment the host is talking to
+ *   IS this MCP server (whether a bare Toolset or an Application), so
+ *   `toolsetId`/`mcpToolName`/`kind` are unambiguous. Called even when `seed`
+ *   has no `toolInput`, since a self-hosting MCP App never populates
+ *   `custom_content.state` in the first place (see `findMcpAppForMessage`) —
+ *   `{}` is passed instead, the same "give me your current/initial state"
+ *   call the app's own resource would make on `ui/initialize`.
+ * - `seed?.toolInput != null` — a `discovery: 'indirect'` match (the toolset
+ *   a *different*, tool-calling deployment appears to delegate to) whose
+ *   `toolName` was matched against a *real* tool call actually seen in
+ *   `custom_content.state` (`findMcpAppForMessage`'s name-match branch, not
+ *   its streaming-optimistic `mcpAppTools[0]` guess). Once a real call is
+ *   confirmed, re-calling it with the exact same `toolsetId`/args it was
+ *   really invoked with carries no more risk than the direct case.
+ *
+ * Only the streaming-optimistic guess (`discovery: 'indirect'` with no real
+ * call seen yet, so `seed` is `undefined`) is skipped — that toolset/tool
+ * pairing is still an unconfirmed guess, and re-calling it could hit the
+ * wrong tool or re-trigger a non-idempotent side effect; it keeps
+ * `seed?.toolResult` (`undefined` here) as-is. Falls back to
+ * `seed?.toolResult` if an attempted live call fails (e.g. the deployment
+ * has no live MCP session outside the original conversation turn).
  */
 export const resolveMcpAppToolResult = async (
   match: McpAppToolRef,
   seed: McpAppToolCallSeed | undefined,
   callTool: CallMcpAppTool,
 ): Promise<CallToolResult | undefined> => {
-  if (match.kind !== 'application' || seed?.toolInput == null) {
+  const isConfirmed = match.discovery === 'direct' || seed?.toolInput != null;
+  if (!isConfirmed) {
     return seed?.toolResult;
   }
 
@@ -184,10 +225,10 @@ export const resolveMcpAppToolResult = async (
     return await callTool(
       match.toolsetId,
       match.mcpToolName,
-      seed.toolInput,
+      seed?.toolInput ?? {},
       match.kind,
     );
   } catch {
-    return seed.toolResult;
+    return seed?.toolResult;
   }
 };

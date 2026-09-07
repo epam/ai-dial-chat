@@ -2,9 +2,11 @@
 
 ### Requirement: Real MCP App tools are discovered per-deployment via `tools/list`, keyed by tool name
 
-**Revised** (supersedes the original `Stage.mcp_app` design — see `design.md` D5, third revision). DIAL Core does not attach a UI resource reference to individual stages/tool-call results; the UI resource is a property of the **tool's declaration**, returned by the MCP `tools/list` method as `_meta.ui.resourceUri`. `apps/chat/src/hooks/conversation/useMcpAppTools.ts`'s `useMcpAppTools(deployment)` SHALL, whenever `deployment.features.mcp === true` and `deployment.type` is `'toolset'` or `'application'`, call `listMcpAppTools` (`apps/chat/src/server-api/mcp-apps.ts`, backed by `apps/chat-api`'s `GET /api/v1/toolsets/mcp-apps/tools`) and keep the full list of matching tools as `McpAppToolRef[]`, each `{ toolsetId: string; resourceUri: string; toolName: string; mcpToolName: string; kind: McpDeploymentKind }`.
+**Revised** (supersedes the original `Stage.mcp_app` design — see `design.md` D5, third revision). DIAL Core does not attach a UI resource reference to individual stages/tool-call results; the UI resource is a property of the **tool's declaration**, returned by the MCP `tools/list` method as `_meta.ui.resourceUri`. `libs/chat-hooks`'s `useMcpAppTools(client, deployment, messages, toolsets)` SHALL, whenever `deployment.features.mcp === true` and `deployment.type` is `'toolset'` or `'application'`, call `client.listAppTools` (`createMcpAppsApiClient`, backed by `apps/chat-api`'s `GET /api/v1/toolsets/mcp-apps/tools`) and keep the full list of matching tools as `McpAppToolRef[]`, each `{ toolsetId: string; resourceUri: string; toolName: string; mcpToolName: string; kind: McpDeploymentKind; discovery: McpAppToolDiscovery }`.
 
-`McpAppToolRef.kind` mirrors `deployment.type` at discovery time (`'toolset'` for a toolset deployment, `'application'` for an application). It is passed through `callMcpAppTool` in `apps/chat/src/server-api/mcp-apps.ts` and forwarded as `McpAppToolCallRequestDto.kind` to `apps/chat-api`, which uses it to select the correct Core MCP proxy prefix for `tools/list`/`tools/call` (`/v1/toolset/{id}/mcp` vs `/v1/deployments/{id}/mcp` — see `design.md` D4).
+`McpAppToolRef.kind` mirrors `deployment.type` at discovery time (`'toolset'` for a toolset deployment, `'application'` for an application). It is passed through `client.callTool` and forwarded as `McpAppToolCallRequestDto.kind` to `apps/chat-api`, which uses it to select the correct Core MCP proxy prefix for `tools/list`/`tools/call` (`/v1/toolset/{id}/mcp` vs `/v1/deployments/{id}/mcp` — see `design.md` D4).
+
+**Added** (tasks.md item 14.6). `McpAppToolRef.discovery` SHALL be `'direct'` for every tool this requirement's direct-discovery source yields — `kind` only says which MCP proxy route to use, not whether the active deployment IS the MCP server; a directly-discovered `kind: 'toolset'` deployment is exactly as self-hosting as a directly-discovered `kind: 'application'` one, since in both cases the host is talking to it directly with no name-prefix guessing involved. The indirect-discovery source below SHALL always set `discovery: 'indirect'`. `findMcpAppForMessage`'s self-hosted-fallback and `resolveMcpAppToolResult`'s live-call gate key off `discovery`, not `kind`.
 
 `libs/chat-shared`'s `Stage` interface SHALL NOT carry an `mcp_app` field — there is no per-stage UI resource reference in the actual DIAL Core contract, so no such field is populated or read anywhere in the codebase.
 
@@ -54,22 +56,35 @@ This indirect source only ever adds entries alongside the direct source above; a
 
 ### Requirement: Each assistant message is matched against the discovered tools at the message level, not via `Stage`
 
-**Revised** (supersedes stage-based correlation — see `design.md` D5, third revision). `apps/chat/src/utils/mcp-app.ts`'s `findMcpAppForMessage(message, mcpAppTools)` SHALL:
+**Revised twice more** (supersedes stage-based correlation — see `design.md` D5, third revision — and the always-fallback bug fixed as tasks.md item 14.1/14.2). `libs/mcp-apps/src/utils/mcp-app.ts`'s `findMcpAppForMessage(message, mcpAppTools, isStreaming)` SHALL:
 
 1. Return `undefined` immediately if `mcpAppTools` is empty or `message.role` is not `MessageRole.Assistant`.
 2. Read `message.custom_content.state` and, via `resolveToolCalls` (see the tool-call-data requirement below), collect the set of tool names actually called this turn from whichever of `tool_messages` or `tool_execution_history` is present.
-3. Return the first entry of `mcpAppTools` whose `toolName` is in that set.
-4. If no real call matches (including when neither field is present — e.g. an orchestrator outside the two known shapes), fall back to `mcpAppTools[0]` — preserving "the trigger is always available once the deployment supports it" regardless of whether tool-call correlation data exists for this specific message.
+3. Return the first entry of `mcpAppTools` whose `toolName` is in that set, if any.
+4. Otherwise, return the first entry of `mcpAppTools` whose `discovery` is `'direct'` (the deployment itself is the MCP server — regardless of `kind`, i.e. whether it's registered as a Toolset or an Application, see tasks.md 14.6), if any — such a deployment's own response IS its MCP App responding, and it typically never populates `custom_content.state` in the first place, so it can never satisfy step 3.
+5. Otherwise, return `mcpAppTools[0]` only if `isStreaming` is `true` (the message may still be streaming and `custom_content.state` may not have caught up with a tool call the model already made this turn); once the message has settled (`isStreaming: false`), return `undefined` — a settled message that called none of the discovered `discovery: 'indirect'` tools must never show the trigger, even though the deployment supports MCP Apps in general.
+
+**Fixed bug**: before this revision, step 5's fallback applied unconditionally regardless of `isStreaming`, so once any MCP-capable tool was discovered for the conversation, every settled assistant message showed the inline preview forever, even messages that never called any tool.
 
 #### Scenario: Assistant message with a matched real tool call
 
 - **WHEN** `message.custom_content.state.tool_messages` (or, equivalently, `state.tool_execution_history`) includes a call to a tool named `refresh_data`, and `mcpAppTools` contains an entry with `toolName: 'refresh_data'`
 - **THEN** `findMcpAppForMessage` returns that entry
 
-#### Scenario: Assistant message with no tool-call data falls back to the first discovered tool
+#### Scenario: Settled message with no tool-call data and only indirectly-discovered tools shows no preview
 
-- **WHEN** `message.custom_content.state` is `undefined` and `mcpAppTools` is non-empty
+- **WHEN** `message.custom_content.state` is `undefined`, `isStreaming` is `false`, and every entry of `mcpAppTools` has `discovery: 'indirect'`
+- **THEN** `findMcpAppForMessage` returns `undefined`
+
+#### Scenario: Streaming message with no tool-call data yet falls back to the first discovered tool
+
+- **WHEN** `message.custom_content.state` is `undefined`, `isStreaming` is `true`, and `mcpAppTools` is non-empty
 - **THEN** `findMcpAppForMessage` returns `mcpAppTools[0]`
+
+#### Scenario: Settled message with no tool-call data still matches a self-hosted MCP App
+
+- **WHEN** `message.custom_content.state` is `undefined`, `isStreaming` is `false`, and `mcpAppTools` contains an entry with `discovery: 'direct'` (whatever its `kind`)
+- **THEN** `findMcpAppForMessage` returns that `discovery: 'direct'` entry, regardless of `isStreaming`
 
 #### Scenario: Non-assistant message never matches
 
@@ -145,7 +160,13 @@ Steps:
 
 1. Return `false` immediately if `mcpAppSandboxUrl` (from `AppConfigContext`, see `mcp-app-sandbox-proxy`) is unavailable — no sandbox proxy deployed/configured means this feature cannot render safely, same "absence isn't failure" posture as `mcp_apps.domain_override`.
 2. Call `closePanel()` and `closeSourcesPanel()` synchronously (same mutual-exclusivity contract as every other canvas trigger in the `canvas` capability), then `openCanvasLoading(title, canvasKey)` where `title` is the fixed `AttachmentCanvasI18nKeys.McpAppTitle` string, not any per-tool or per-stage name.
-3. Compute `seedKey = computeMcpAppSeedKey(toolCall)` and, unless `forceReload` or `canvasKey` is absent, check `cache.get(canvasKey, seedKey)`. On a hit, reuse its `html`/`toolResult` and skip steps 4–5's fetch/re-call. On a miss, call `fetchMcpAppResourceHtml(match.toolsetId, match.resourceUri)` (`mcp-app-proxy-api` client wrapper, `apps/chat/src/server-api/mcp-apps.ts`) and `resolveMcpAppToolResult(match, toolCall)` (D10's live-re-call workaround), then `cache.set(canvasKey, {html, toolResult}, seedKey)`.
+3. Compute `seedKey = computeMcpAppSeedKey(toolCall)` and, unless `forceReload` or `canvasKey` is absent, check `cache.get(canvasKey, seedKey)`. On a hit, reuse its `html`/`toolResult` and skip steps 4–5's fetch/re-call. On a miss, call `fetchResourceHtml(match.toolsetId, match.resourceUri)` and `resolveMcpAppToolResult(match, toolCall, callTool)` (D10's live-re-call workaround), then `cache.set(canvasKey, {html, toolResult}, seedKey)`.
+
+**Revised three times** (tasks.md items 14.3, 14.6, and 14.7, fixing missing initial data first for a self-hosted app such as a quick app that is itself the MCP server, then for a quick app only discoverable *indirectly*). `resolveMcpAppToolResult` calls live whenever **either** condition holds:
+- `match.discovery === 'direct'` (**not** `match.kind === 'application'` — a directly-discovered `kind: 'toolset'` deployment is just as self-hosting) — passing `seed?.toolInput ?? {}` even with no seed, because such an app is never an LLM-orchestrated tool-call turn and so never populates `custom_content.state` for `resolveMcpAppToolCallSeed` to find a seed in the first place (see the per-message-matching requirement above); or
+- `seed?.toolInput != null` — a `discovery: 'indirect'` match whose `toolName` was matched against a *real* tool call actually seen in `custom_content.state` (the per-message-matching requirement's name-match branch, never its streaming-optimistic `mcpAppTools[0]` guess), so the exact `toolsetId`/args to re-call are confirmed, not guessed.
+
+It returns `seed?.toolResult` unresolved only for the one remaining unconfirmed case — an indirect match with no seed, i.e. the streaming-optimistic guess — and falls back to `seed?.toolResult` if an attempted live call throws.
 4. On success, build an `McpAppCanvasContent` with `html`, `sandboxUrl: mcpAppSandboxUrl`, `toolName: match.mcpToolName` (real name, not correlation name — see `mcp-app-trigger` tool-discovery requirement), `toolInput: toolCall?.toolInput`, `toolResult` (from step 3), `hostContext` (the `'fullscreen'` `McpUiHostContext` above), `onToolCall` bound to a `apps/chat/src/server-api/mcp-apps.ts` wrapper that POSTs to the tool-call-forwarding endpoint with `match.toolsetId`, and `onReload` bound to a closure that invalidates the cache entry (`cache.invalidate(canvasKey)`) and re-invokes `openMcpAppCanvas` with `forceReload: true`. Call `openCanvas(content, title, canvasKey)` and return `true`.
 5. On failure (the fetch rejects or resolves with an error status), call `closeCanvas()` and return `false`.
 
@@ -171,6 +192,11 @@ For the canvas specifically (`displayMode: 'fullscreen'`), `McpAppCanvasRenderer
 - **WHEN** `openMcpAppCanvas` is called for a valid `McpAppToolRef`, `mcpAppSandboxUrl` is available, and the cache misses and `fetchMcpAppResourceHtml` succeeds
 - **THEN** `AttachmentCanvasContext.content` becomes an `McpAppCanvasContent` with the fetched `html`, `sandboxUrl: mcpAppSandboxUrl`, and `hostContext.displayMode: 'fullscreen'`
 - **AND** the function resolves to `true`
+
+#### Scenario: A confirmed indirect match still calls live
+
+- **WHEN** `match.discovery` is `'indirect'` and `toolCall.toolInput` is not `null`/`undefined` (i.e. `findMcpAppForMessage` matched this tool by a real call name in `custom_content.state`, not the streaming-optimistic guess)
+- **THEN** `resolveMcpAppToolResult` calls `callTool(match.toolsetId, match.mcpToolName, toolCall.toolInput, match.kind)` instead of returning `toolCall.toolResult` unresolved
 
 #### Scenario: A cache hit skips the fetch and live re-call
 
@@ -232,6 +258,8 @@ This exists because a freshly-streamed assistant message mounts its inline previ
 
 `resolveMcpAppToolCallSeed(message, toolName)` SHALL find the resolved pair whose `name` equals `toolName` and return `{ toolInput: <args>, toolResult: { content: [{ type: 'text', text: <result content> }] } }` — or `undefined` if `state` is absent or no pair matches. `findMcpAppForMessage` SHALL likewise collect called-tool names from `resolveToolCalls(state)` rather than reading `tool_messages` directly, so both orchestrator shapes drive tool discovery/matching identically.
 
+**Fixed bug** (tasks.md item 14.4): when the same `toolName` was called more than once in the turn (a retry after a failed first attempt with corrected arguments — confirmed via a real "NT Weather App" conversation, first call `location: "London,UK"` → `Location not found`, retried with `location: "London"` → success), `resolveMcpAppToolCallSeed` SHALL return the **last** matching pair by call order, not the first — an earlier attempt's failure is superseded, not authoritative, and must never win over a later successful retry.
+
 `libs/chat-shared`'s `Message.custom_content` SHALL include an optional `state?: MessageState` field: `MessageState { tool_messages?: ToolStateMessage[]; tool_execution_history?: ToolExecutionHistoryMessage[] }`, `ToolStateMessage { type: string; name?: string; tool_calls?: ToolCallRequest[]; tool_call_id?: string; content?: string }`, `ToolCallRequest { name: string; args: Record<string, unknown>; id: string }`, `ToolExecutionHistoryMessage { role: string; tool_calls?: OpenAiToolCall[]; tool_call_id?: string; content?: string }`, `OpenAiToolCall { id: string; type: string; function: { name: string; arguments: string } }`. Both fields are wire-verbatim and orchestrator-specific — a given orchestrator is expected to emit at most one (confirmed: `tool_messages` for the StatGPT agent, `tool_execution_history` for a second, unrelated app; neither is a general DIAL Core or MCP Apps spec guarantee). Both `apps/chat-api/src/conversations/utils/apply-chunk.server.ts` and `apps/chat/src/utils/apply-chunk.ts` SHALL extract `delta.custom_content.state` from SSE chunks and merge it wholesale (replace, not accumulate) into `Message.custom_content.state`, alongside the existing `stages`/`attachments`/`form_schema`/`annotations` handling.
 
 #### Scenario: Matching tool_messages pair seeds toolInput and toolResult
@@ -243,6 +271,11 @@ This exists because a freshly-streamed assistant message mounts its inline previ
 
 - **WHEN** `message.custom_content.state.tool_execution_history` contains a `role: 'assistant'` entry with `tool_calls: [{ id: 'call-1', type: 'function', function: { name: 'weather_get_weather', arguments: '{"location":"Kyiv, UA"}' } }]` and a `role: 'tool'` entry with `{ tool_call_id: 'call-1', content: 'Weather in Kyiv: ...' }`
 - **THEN** `resolveMcpAppToolCallSeed(message, 'weather_get_weather')` returns `{ toolInput: { location: 'Kyiv, UA' }, toolResult: { content: [{ type: 'text', text: 'Weather in Kyiv: ...' }] } }`
+
+#### Scenario: Two calls to the same tool seed from the last (retried) call, not the first (failed) one
+
+- **WHEN** `message.custom_content.state.tool_execution_history` contains, in order: a failed call `{ id: 'call-1', function: { name: 'weather_get_weather', arguments: '{"location":"London,UK"}' } }` paired with `{ tool_call_id: 'call-1', content: 'Error: Location not found: London,UK' }`, then a successful retry `{ id: 'call-2', function: { name: 'weather_get_weather', arguments: '{"location":"London"}' } }` paired with `{ tool_call_id: 'call-2', content: 'Weather in London: ...' }`
+- **THEN** `resolveMcpAppToolCallSeed(message, 'weather_get_weather')` returns `{ toolInput: { location: 'London' }, toolResult: { content: [{ type: 'text', text: 'Weather in London: ...' }] } }` — the retried call's data, not the failed first attempt's
 
 #### Scenario: Neither field present yields no seed
 
