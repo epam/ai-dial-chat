@@ -5,6 +5,7 @@ import {
   getLastDeploymentId,
   getLastUserMessageToolConfiguration,
   isAwaitingGenerationResume,
+  isConversationNotFoundError,
   shouldWatchForDisplayNameUpdate,
   useConversationHandlers,
   useConversationStream,
@@ -264,10 +265,20 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
 
   const { getGeneration, startGeneration, completeGeneration } =
     useGeneration();
-  const { channelId, ensureConnected, waitForChannel } = useClientChannel();
+  const {
+    channelId,
+    ensureConnected,
+    waitForChannel,
+    notifyGenerationSettled,
+  } = useClientChannel();
   const channel = useMemo(
-    () => ({ channelId, ensureConnected, waitForChannel }),
-    [channelId, ensureConnected, waitForChannel],
+    () => ({
+      channelId,
+      ensureConnected,
+      waitForChannel,
+      notifyGenerationSettled,
+    }),
+    [channelId, ensureConnected, waitForChannel, notifyGenerationSettled],
   );
   /*
    * Conversation paths whose auto-stream has already been kicked off. Guards
@@ -446,6 +457,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
             requestId: traceId,
           });
         }
+        /* Self-heal the panel: a conversation the backend no longer has (deleted
+         * here, in another tab, or by emptying its messages) must not stay in the
+         * list, where every later open or delete would fail the same way. */
+        if (isConversationNotFoundError(error)) {
+          removeConversationFromList(id);
+        }
         navigate(ROUTES.Root);
       } finally {
         setIsFetching(false);
@@ -460,23 +477,36 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       restoreBufferedGeneration,
       updateConversationTitle,
       getGeneration,
+      removeConversationFromList,
       showErrorNotification,
       t,
     ],
   );
+
+  /*
+   * `loadConversation` is recreated whenever `startStream` is (which itself
+   * changes identity on every client-channel connect/idle-disconnect cycle —
+   * see client-channel-idle-disconnect) — read the latest version through a
+   * ref so the mount-load effect below only re-runs for a real `conversationId`
+   * change, not for unrelated churn in one of loadConversation's many deps.
+   */
+  const loadConversationRef = useRef(loadConversation);
+  useEffect(() => {
+    loadConversationRef.current = loadConversation;
+  });
 
   useEffect(() => {
     if (!conversationId) {
       setIsFetching(false);
       return;
     }
-    void loadConversation(conversationId, prefetchedConversation);
+    void loadConversationRef.current(conversationId, prefetchedConversation);
     /*
      * prefetchedConversation intentionally omitted: it is router state captured at mount,
      * re-running when it changes would re-initialize an already-loaded conversation.
      */
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId, loadConversation]);
+  }, [conversationId]);
 
   const clearedPrefetchIdRef = useRef<string | null>(null);
   useEffect(() => {

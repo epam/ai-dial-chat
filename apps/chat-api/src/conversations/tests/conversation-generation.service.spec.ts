@@ -158,6 +158,31 @@ describe('ConversationGenerationService', () => {
     });
   });
 
+  describe('abortSignal', () => {
+    it('aborts the entry AbortController without marking it Stopped', () => {
+      const abortController = service.register(SESSION, PATH, GENERATION_ID);
+
+      service.abortSignal(SESSION, PATH, GENERATION_ID);
+
+      expect(abortController.signal.aborted).toBe(true);
+      expect(service.getStatus(SESSION, PATH)).toBe(GenerationStatus.Active);
+    });
+
+    it('is a no-op for a generationId that does not match the active one', () => {
+      const abortController = service.register(SESSION, PATH, GENERATION_ID);
+
+      service.abortSignal(SESSION, PATH, 'other-gen');
+
+      expect(abortController.signal.aborted).toBe(false);
+    });
+
+    it('is a no-op when no matching generation exists', () => {
+      expect(() =>
+        service.abortSignal(SESSION, PATH, GENERATION_ID),
+      ).not.toThrow();
+    });
+  });
+
   describe('many concurrent attach subscribers', () => {
     it('supports more than the default max-listener count without warning', () => {
       const onWarning = vi.fn();

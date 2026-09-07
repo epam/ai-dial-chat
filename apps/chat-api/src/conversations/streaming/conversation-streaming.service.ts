@@ -648,50 +648,99 @@ export class ConversationStreamingService {
             startConversation.id,
             publishChunk,
           );
-    let next = await relayIterator.next();
-    while (!next.done) {
-      yield next.value;
-      next = await relayIterator.next();
-    }
-    const relayResult = next.value;
-
-    generationRequestsTotal.add(1, {
-      'generation.api': generationApi,
-      outcome: relayResult.outcome,
-    });
-    if (timing.firstDeltaAt != null) {
-      generationTimeToFirstDelta.record(
-        (timing.firstDeltaAt - streamStartedAt) / 1000,
-        { 'generation.api': generationApi },
-      );
-    }
-    generationStreamDuration.record((Date.now() - streamStartedAt) / 1000, {
-      'generation.api': generationApi,
-      outcome: relayResult.outcome,
-    });
-
-    switch (relayResult.outcome) {
-      case 'rejected': {
-        const errored = {
-          ...relayResult.assembledMessage,
-          custom_content: {
-            ...relayResult.assembledMessage.custom_content,
-            event_type: undefined,
-          } as never,
-          streamErrorMessage: relayResult.errorMessage,
-        };
-        await finalize(GenerationStatus.Error, errored);
-        break;
+    let relayCompletedNormally = false;
+    try {
+      let next = await relayIterator.next();
+      while (!next.done) {
+        yield next.value;
+        next = await relayIterator.next();
       }
-      case 'completed':
-        await finalize(GenerationStatus.Done, relayResult.assembledMessage);
-        break;
-      case 'aborted': {
+      relayCompletedNormally = true;
+      const relayResult = next.value;
+
+      generationRequestsTotal.add(1, {
+        'generation.api': generationApi,
+        outcome: relayResult.outcome,
+      });
+      if (timing.firstDeltaAt != null) {
+        generationTimeToFirstDelta.record(
+          (timing.firstDeltaAt - streamStartedAt) / 1000,
+          { 'generation.api': generationApi },
+        );
+      }
+      generationStreamDuration.record((Date.now() - streamStartedAt) / 1000, {
+        'generation.api': generationApi,
+        outcome: relayResult.outcome,
+      });
+
+      switch (relayResult.outcome) {
+        case 'rejected': {
+          const errored = {
+            ...relayResult.assembledMessage,
+            custom_content: {
+              ...relayResult.assembledMessage.custom_content,
+              event_type: undefined,
+            } as never,
+            streamErrorMessage: relayResult.errorMessage,
+          };
+          await finalize(GenerationStatus.Error, errored);
+          break;
+        }
+        case 'completed':
+          await finalize(GenerationStatus.Done, relayResult.assembledMessage);
+          break;
+        case 'aborted': {
+          const wasStopped =
+            this.generationService.getStatus(sessionId, conversationPath) ===
+            GenerationStatus.Stopped;
+          const partialMsg = {
+            ...relayResult.assembledMessage,
+            ...(wasStopped
+              ? { wasStoppedByUser: true }
+              : { streamErrorMessage: '' }),
+          } as ConversationMessageDto;
+          await finalize(
+            wasStopped ? GenerationStatus.Stopped : GenerationStatus.Error,
+            partialMsg,
+          );
+          break;
+        }
+        case 'error': {
+          this.logger.error(
+            'DIAL Core streamCompletion failed',
+            relayResult.error,
+          );
+          const errorMessage =
+            relayResult.error instanceof Error ? relayResult.error.message : '';
+          const partialMsg = {
+            ...relayResult.assembledMessage,
+            streamErrorMessage: errorMessage,
+          } as ConversationMessageDto;
+          await finalize(GenerationStatus.Error, partialMsg);
+          break;
+        }
+      }
+    } finally {
+      /*
+       * Reached when the consuming `for await` (the controller's) is
+       * abandoned before the relay loop above reaches a terminal outcome —
+       * e.g. the client disconnected mid-stream. `.return()` injected by the
+       * abandoned consumer unwinds this generator at its current `yield`,
+       * skipping the `switch` above entirely, so without this branch the
+       * registry entry would never be released outside the 30-minute stale
+       * sweep. Abort defensively (idempotent) so the upstream relay notices
+       * and stops even if the caller's own disconnect handling didn't.
+       */
+      if (!relayCompletedNormally) {
+        abortController.abort();
         const wasStopped =
           this.generationService.getStatus(sessionId, conversationPath) ===
           GenerationStatus.Stopped;
+        const currentAssembledMessage =
+          this.generationService.attach(sessionId, conversationPath)
+            ?.assembledMessage ?? assembledMessage;
         const partialMsg = {
-          ...relayResult.assembledMessage,
+          ...currentAssembledMessage,
           ...(wasStopped
             ? { wasStoppedByUser: true }
             : { streamErrorMessage: '' }),
@@ -700,21 +749,6 @@ export class ConversationStreamingService {
           wasStopped ? GenerationStatus.Stopped : GenerationStatus.Error,
           partialMsg,
         );
-        break;
-      }
-      case 'error': {
-        this.logger.error(
-          'DIAL Core streamCompletion failed',
-          relayResult.error,
-        );
-        const errorMessage =
-          relayResult.error instanceof Error ? relayResult.error.message : '';
-        const partialMsg = {
-          ...relayResult.assembledMessage,
-          streamErrorMessage: errorMessage,
-        } as ConversationMessageDto;
-        await finalize(GenerationStatus.Error, partialMsg);
-        break;
       }
     }
   }
