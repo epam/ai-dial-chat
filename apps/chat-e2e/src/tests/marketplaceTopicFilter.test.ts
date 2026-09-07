@@ -9,7 +9,7 @@ import {
   MenuOptions,
 } from '@/src/testData';
 import { BaseElement } from '@/src/ui/webElements';
-import { GeneratorUtil, SortingUtil } from '@/src/utils';
+import { GeneratorUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { Locator } from '@playwright/test';
 
@@ -142,15 +142,7 @@ dialTest(
           [firstTopic, secondTopic, longTopic],
           MarketplaceExpectedMessages.filterOptionsAreValid,
         );
-        baseAssertion.assertValuesAreEqual(
-          actualTopicsFilterOptions,
-          SortingUtil.sortStringsArray(
-            actualTopicsFilterOptions,
-            (f) => f,
-            'asc',
-          ),
-          ExpectedMessages.elementsOrderIsCorrect,
-        );
+        baseAssertion.assertStringsSorting(actualTopicsFilterOptions, 'asc');
       },
     );
 
