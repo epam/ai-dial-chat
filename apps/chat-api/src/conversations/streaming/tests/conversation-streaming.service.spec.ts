@@ -1414,5 +1414,124 @@ describe('ConversationStreamingService', () => {
         undefined,
       );
     });
+
+    it('finalizes as an error and releases the registry entry when the consumer abandons the stream mid-generation (e.g. client disconnect)', async () => {
+      vi.spyOn(
+        service['dialClient'].client,
+        'getConversation',
+      ).mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(service['dialClient'].client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      const generationAbortController = new AbortController();
+      vi.mocked(mockGenerationService.register).mockReturnValue(
+        generationAbortController,
+      );
+
+      const encoder = new TextEncoder();
+      const cancel = vi.fn();
+      const neverEndingStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n',
+            ),
+          );
+          // never close — the consumer abandons before any more data arrives
+        },
+        cancel,
+      });
+      vi.spyOn(
+        service['dialClient'].client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(neverEndingStream, { status: 200 }),
+      } as never);
+
+      const stream = service.streamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        () => undefined,
+        'user1',
+      );
+
+      /*
+       * Mirrors ConversationController.streamCompletion abandoning its
+       * `for await` on client disconnect: `break` here triggers the JS
+       * runtime to call `.return()` on `stream`, the same way an early exit
+       * from the controller's consuming loop would.
+       */
+      for await (const _chunk of stream) {
+        break;
+      }
+
+      expect(generationAbortController.signal.aborted).toBe(true);
+      expect(mockGenerationService.complete).not.toHaveBeenCalled();
+      expect(mockGenerationService.error).toHaveBeenCalledOnce();
+      expect(mockGenerationService.error).toHaveBeenCalledWith(
+        'test-session-id',
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-gen-id',
+        '',
+      );
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const partialSave = saveConversationSpy.mock.calls[1][2].body as {
+        messages: { streamErrorMessage?: string }[];
+      };
+      expect(partialSave.messages.at(-1)?.streamErrorMessage).toBe('');
+    });
+
+    it('does not finalize twice when the relay reaches a normal terminal outcome', async () => {
+      vi.spyOn(
+        service['dialClient'].client,
+        'getConversation',
+      ).mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      vi.spyOn(
+        service['dialClient'].client,
+        'saveConversation',
+      ).mockResolvedValue({ data: {} } as never);
+      vi.spyOn(
+        service['dialClient'].client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([
+            'data: {"id":"resp-1","choices":[{"delta":{"content":"Hello"}}]}\n\n',
+            'data: [DONE]\n\n',
+          ]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      await runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res,
+      );
+
+      expect(mockGenerationService.complete).toHaveBeenCalledOnce();
+      expect(mockGenerationService.error).not.toHaveBeenCalled();
+    });
   });
 });
