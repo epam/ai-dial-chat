@@ -1,14 +1,16 @@
 import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import {
   useAttachmentAction,
-  useConversationSources,
-  usePanelMaxWidth,
   isDownloadableAttachment,
+  downloadAttachment as triggerAttachmentDownload,
+} from '@epam/ai-dial-chat-hooks/attachments';
+import { useConversationSources } from '@epam/ai-dial-chat-hooks/conversation-sources';
+import {
   isDialFileId,
   isExternalSourcePreviewable,
   resolveExternalSourceContentType,
-  downloadAttachment as triggerAttachmentDownload,
-} from '@epam/ai-dial-chat-hooks';
+} from '@epam/ai-dial-chat-hooks/file-manager';
+import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import type {
   AttachmentDisplayResolvers,
   DisplayAttachment,

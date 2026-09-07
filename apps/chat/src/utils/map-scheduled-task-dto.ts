@@ -3,7 +3,7 @@ import {
   apSchedulerDayToJsDay,
   jsDayToApSchedulerDay,
   padTwoDigits,
-} from '@epam/ai-dial-chat-hooks';
+} from '@epam/ai-dial-chat-hooks/utils';
 import type { ScheduledTaskItem } from '@epam/ai-dial-scheduled-tasks';
 import type { TFunction } from 'i18next';
 import { ScheduledTasksI18nKeys } from '../constants/translation-keys';

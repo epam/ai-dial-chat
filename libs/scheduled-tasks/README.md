@@ -23,6 +23,8 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-builder-form`
+- `@uiw/react-markdown-preview` — CSS only, required by `LazyMarkdownEditor`
+- `@uiw/react-md-editor` — CSS only, required by `LazyMarkdownEditor`
 
 ## Components
 

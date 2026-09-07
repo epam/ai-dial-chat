@@ -16,6 +16,23 @@ vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
 }));
 
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => ({
+    user: { bucket: 'bucket' },
+  }),
+}));
+
+vi.mock('@epam/ai-dial-deployment-creation-form', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('@epam/ai-dial-deployment-creation-form')
+    >();
+  return {
+    ...actual,
+    AvatarPickerModal: () => null,
+  };
+});
+
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
@@ -105,7 +122,7 @@ describe('GeneralForm', () => {
     vi.clearAllMocks();
   });
 
-  it('renders name, description, and icon URL fields', () => {
+  it('renders name, description, and avatar fields', () => {
     renderForm();
     expect(
       screen.getByLabelText(`${EditorI18nKeys.NameLabel} [EN]`),
@@ -113,7 +130,12 @@ describe('GeneralForm', () => {
     expect(
       screen.getByLabelText(`${EditorI18nKeys.DescriptionLabel} [EN]`),
     ).toBeTruthy();
-    expect(screen.getByLabelText(EditorI18nKeys.IconUrlLabel)).toBeTruthy();
+    expect(screen.getByText(EditorI18nKeys.AvatarLabel)).toBeTruthy();
+    expect(
+      screen.getByRole('button', {
+        name: EditorI18nKeys.AddAvatarButtonLabel,
+      }),
+    ).toBeTruthy();
   });
 
   it('shows required error and does not call API when name is empty', async () => {

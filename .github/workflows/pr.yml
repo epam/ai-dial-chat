@@ -37,7 +37,27 @@ jobs:
       node-version: 24
       maximize-build-space: true
       # ORT 90: fixes ORT 85 NPM graph mapping (analyzer: ~25m → ~3m)
-      ort-version: "90.0.0"
+      ort-version: '90.0.0'
       # ort-config-revision for ORT 90
-      ort-config-revision: "605e909bfe81ee916f66533b7139ac5bdaf1081c"
+      ort-config-revision: '605e909bfe81ee916f66533b7139ac5bdaf1081c'
     secrets: inherit
+
+  chat_hooks_packed_smoke:
+    # `npm run test` (the reusable workflow's own code_checks job) runs the
+    # fast `nx run-many -t test` suite only. Keep the PR gate to the three
+    # highest-value packed consumers; the complete network-heavy matrix stays
+    # available as `test-packed` for a future nightly job. See
+    # libs/chat-hooks/e2e-fixtures/README.md.
+    name: chat-hooks packed-package smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build @epam/ai-dial-chat-hooks and run packed-package smoke
+        run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-smoke

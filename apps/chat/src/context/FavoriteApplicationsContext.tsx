@@ -1,7 +1,7 @@
 import {
   FavoriteEntityType,
   useFavoriteEntitiesState,
-} from '@epam/ai-dial-chat-hooks';
+} from '@epam/ai-dial-chat-hooks/catalog';
 import { createContext, ReactNode, useCallback, useContext } from 'react';
 import {
   getUserConfig,

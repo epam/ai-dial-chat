@@ -64,6 +64,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   styles: stylesProp,
   codeBlockTheme,
   loadPdf,
+  configurePdfWorker,
 }) => {
   const [isCopiedText, setIsCopiedText] = useState(false);
   const [isCopiedMarkdown, setIsCopiedMarkdown] = useState(false);
@@ -347,6 +348,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         styles={bodyStylesProp}
         codeBlockTheme={codeBlockTheme}
         loadPdf={loadPdf}
+        configurePdfWorker={configurePdfWorker}
       />
     </SidebarPanel>
   );

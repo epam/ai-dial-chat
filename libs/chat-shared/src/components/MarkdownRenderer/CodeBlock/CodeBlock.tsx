@@ -5,8 +5,7 @@ import {
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy, IconDownload } from '@tabler/icons-react';
-import { type FC, memo, type ReactNode } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { lazy, type FC, memo, type ReactNode, Suspense } from 'react';
 import { useCodeCopy } from '../../../hooks/useCodeCopy';
 import { CodeBlockTheme } from '../../../types/code-editor';
 import { buildCssVars } from '../../../utils/build-css-vars';
@@ -73,6 +72,16 @@ const syntaxTheme = {
   light: restrainedSyntaxTheme,
 };
 
+/**
+ * Loads the Prism syntax-highlighting engine only the first time a language-tagged
+ * code block actually renders, keeping `react-syntax-highlighter` out of the
+ * initial bundle for plain-text conversations and language-less code blocks.
+ */
+const LazySyntaxHighlighter = lazy(async () => {
+  const { Prism } = await import('react-syntax-highlighter');
+  return { default: Prism };
+});
+
 /** Renders a fenced or multi-line code block with syntax highlighting and a copy button. */
 export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
   ({
@@ -97,6 +106,15 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     const handleDownload = () => {
       downloadTextFile(value, `code.${getFileExtensionForLanguage(language)}`);
     };
+    /* Rendered for language-less blocks, and as the Suspense fallback while
+     * the syntax-highlighting engine loads for a language-tagged block. */
+    const plainCode = (
+      <pre className="p-4">
+        <code className={mergeClasses('whitespace-pre', codeClassName)}>
+          {value}
+        </code>
+      </pre>
+    );
     const cssVars = buildCssVars({
       '--cm-code-block-bg': colors?.background,
       '--cm-code-block-border': colors?.border,
@@ -181,28 +199,26 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
           dir="ltr"
         >
           {language ? (
-            <SyntaxHighlighter
-              language={language}
-              style={syntaxTheme[theme] ?? restrainedSyntaxTheme}
-              customStyle={{
-                margin: 0,
-                borderRadius: 0,
-                background: 'transparent',
-                fontSize: 14,
-                lineHeight: 1.5,
-                padding: '14px 16px',
-                letterSpacing: 0,
-              }}
-              codeTagProps={{ className: codeClassName }}
-            >
-              {value}
-            </SyntaxHighlighter>
-          ) : (
-            <pre className="p-4">
-              <code className={mergeClasses('whitespace-pre', codeClassName)}>
+            <Suspense fallback={plainCode}>
+              <LazySyntaxHighlighter
+                language={language}
+                style={syntaxTheme[theme] ?? restrainedSyntaxTheme}
+                customStyle={{
+                  margin: 0,
+                  borderRadius: 0,
+                  background: 'transparent',
+                  fontSize: 14,
+                  lineHeight: 1.5,
+                  padding: '14px 16px',
+                  letterSpacing: 0,
+                }}
+                codeTagProps={{ className: codeClassName }}
+              >
                 {value}
-              </code>
-            </pre>
+              </LazySyntaxHighlighter>
+            </Suspense>
+          ) : (
+            plainCode
           )}
         </div>
         {/*

@@ -16,6 +16,7 @@ import {
   GetMcpAppResourceDto,
   ListMcpAppToolsQueryDto,
   ListMcpAppToolsResponseDto,
+  ListMcpToolNamesResponseDto,
   McpAppToolCallRequestDto,
   McpAppToolCallResponseDto,
 } from './dto/mcp-app.dto';
@@ -102,6 +103,44 @@ export class McpAppController {
       at,
     );
     return { tools };
+  }
+
+  /**
+   * Shares `deploymentId`/`kind` query params with `listMcpAppTools` for the
+   * same route-collision reason documented on that endpoint above.
+   */
+  @Get('mcp-apps/tool-names')
+  @ApiOperation({
+    operationId: 'listMcpToolNames',
+    summary: 'List every tool name exposed by an MCP-enabled deployment',
+    description:
+      "Calls DIAL Core's generic MCP JSON-RPC proxy's tools/list for the " +
+      'given deployment (toolset or application) and returns every tool ' +
+      "name, unfiltered — used to populate the toolset editor's " +
+      '"Allowed tools" picker.',
+  })
+  @ApiResponse({ status: 200, type: ListMcpToolNamesResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid deploymentId or kind' })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 404, description: 'Deployment not found' })
+  @ApiResponse({
+    status: 502,
+    description: "DIAL Core's proxied tools/list failed",
+  })
+  async listMcpToolNames(
+    @Req() req: Request,
+    @Query() query: ListMcpAppToolsQueryDto,
+  ): Promise<ListMcpToolNamesResponseDto> {
+    const { at } = req.user as SessionUser;
+    const toolNames = await this.mcpAppService.listToolNames(
+      query.deploymentId,
+      query.kind,
+      at,
+    );
+    return { toolNames };
   }
 
   @Post(':toolsetName/mcp-app-tool-call')

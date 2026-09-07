@@ -12,6 +12,16 @@ Before calling `onUploadAttachment`, the app SHALL validate each attachment's MI
 
 A file is invalid when none of the allowed MIME entries match: exact equality (`application/pdf`) OR wildcard prefix match (`image/*` matches `image/jpeg`). Global wildcards `*` and `*/*` match any MIME type. When `inputAttachmentTypes` is empty or undefined, the attachment button is hidden; however, clipboard paste of images can still add attachments and will reach this validation path. Long pasted plain text is handled separately — see the `isAttachmentsEnabled` requirement in `conversation-input-attachments`.
 
+**Which `inputAttachmentTypes` this is.** The name belongs to the BFF's own API
+(`DeploymentItemDto`, `ModelDetailsDto`, `ApplicationDetailsDto`) and to everything
+downstream of it, which is what this requirement describes. DIAL Core sends the same
+field one layer up as **`input_attachment_types`**, and
+`deployment-mapper.util.ts` renames it on the way through — see the field table in
+`deployments-api`. Read the camelCase name from `/api/v1/deployments`, and the
+snake_case one only from a raw Core payload. Asking Core for the camelCase name
+returns `undefined` for every deployment, which reads as "this model accepts no
+attachments" and is indistinguishable from a model that genuinely accepts none.
+
 Invalid files SHALL be placed immediately into `status: RequestStatus.Error` with `errorReason: AttachmentErrorReason.UnsupportedType` without calling `onUploadAttachment`.
 
 After processing a batch of added files (from file picker, drag-and-drop, or clipboard), if any were invalid the app SHALL show exactly one error notification through the variant-specific `showErrorNotification` helper, with:

@@ -4,25 +4,27 @@ import {
   type DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
-  ConversationExportMode,
-  type ConversationTransferErrorEvent,
-  type ConversationTransferSuccessEvent,
-  ConversationTransferWarningCode,
-  type ConversationTransferWarningEvent,
   deriveConversationRowActionState,
-  formatQuotedNameList,
   getApiErrorDetails,
   getConversationPath,
   safeDecodeURIComponent,
   useActiveConversationSync,
   useAsyncConfirmDialog,
-  useConversationExport,
-  useConversationImport,
   useConversationLookupMaps,
   useConversationPanelItems,
   useImportFilePicker,
-  useShareRecipientsCount,
 } from '@epam/ai-dial-chat-hooks';
+import {
+  ConversationExportMode,
+  type ConversationTransferErrorEvent,
+  type ConversationTransferSuccessEvent,
+  ConversationTransferWarningCode,
+  type ConversationTransferWarningEvent,
+  formatQuotedNameList,
+  useConversationExport,
+  useConversationImport,
+} from '@epam/ai-dial-chat-hooks/conversation-transfer';
+import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConversationTransferErrorCode,

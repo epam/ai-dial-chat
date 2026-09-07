@@ -27,12 +27,27 @@ export interface AttachmentCanvasContainerProps {
   maxWidth?: number;
   /** Syntax highlight color theme forwarded to MarkdownRenderer code blocks. */
   codeBlockTheme?: CodeBlockTheme;
+  /**
+   * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
+   * host app. Called once, the first time a PDF attachment is opened. When
+   * omitted, `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is
+   * used instead, so PDF rendering still works, just without the host's own
+   * bundled worker asset.
+   */
+  configurePdfWorker?: () => void | Promise<void>;
 }
 
 /** Context-connected container that renders `AttachmentCanvas` with download support. */
 export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
   memo(
-    ({ labels, isMobile = false, defaultWidth, maxWidth, codeBlockTheme }) => {
+    ({
+      labels,
+      isMobile = false,
+      defaultWidth,
+      maxWidth,
+      codeBlockTheme,
+      configurePdfWorker,
+    }) => {
       const {
         ariaLabel = 'Attachment preview',
         closeLabel = 'Close',
@@ -135,6 +150,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           defaultWidth={defaultWidth}
           maxWidth={maxWidth}
           codeBlockTheme={codeBlockTheme}
+          configurePdfWorker={configurePdfWorker}
         />
       );
     },

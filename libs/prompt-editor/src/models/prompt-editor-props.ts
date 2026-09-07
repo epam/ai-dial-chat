@@ -50,7 +50,7 @@ export interface PromptEditorLabels {
   /** Heading shown in edit mode. Defaults to `'Edit prompt'`. */
   editTitle?: string;
   /** Accessible label of the header back button. Defaults to `'Back to prompts'`. */
-  backButtonLabel?: string;
+  backButtonAriaLabel?: string;
   /** Name field label. Defaults to `'Name'`. */
   nameLabel?: string;
   /** Name field placeholder. Defaults to `'Prompt name'`. */
@@ -101,8 +101,6 @@ export interface PromptEditorLabels {
 
 /** Typography class overrides for `PromptEditor`. */
 export interface PromptEditorTypography {
-  /** Class applied to the heading. Defaults to `'dial-h1-text'`. */
-  titleClassName?: string;
   /** Class applied to the prompt editor label. Defaults to `'dial-tiny-semi-text'`. */
   contentLabelClassName?: string;
   /** Class applied to helper, error, and confirmation text. Defaults to `'dial-small-text'`. */
@@ -111,10 +109,6 @@ export interface PromptEditorTypography {
 
 /** Color overrides for `PromptEditor`. */
 export interface PromptEditorColors {
-  /** Form background. Fallback: `--bg-layer-base`. */
-  background?: string;
-  /** Header bottom border. Fallback: `--stroke-tertiary`. */
-  headerBorder?: string;
   /** Prompt validation error text. Fallback: `--text-error`. */
   contentErrorText?: string;
 }
