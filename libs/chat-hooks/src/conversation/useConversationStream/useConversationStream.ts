@@ -98,6 +98,8 @@ export interface ConversationStreamChannel {
   ensureConnected: () => void;
   /** Resolves with a channel id, waiting for an in-flight subscribe if one isn't established yet, so a completion sent immediately after mount can still carry it. */
   waitForChannel: (timeoutMs?: number) => Promise<string | null>;
+  /** Notifies the host that a generation just ended (completed or errored), so it can consider disconnecting an idle channel. */
+  notifyGenerationSettled?: () => void;
 }
 
 /** Optional host-owned overlay generation-lifecycle notifications. Each method is independently optional. */
@@ -325,6 +327,7 @@ export const useConversationStream = ({
             setStoppablePath(null);
           }
           completeGeneration(conversationPath, genId);
+          channel?.notifyGenerationSettled?.();
           if (stoppedGenerationIdsRef.current.has(genId)) {
             stoppedGenerationIdsRef.current.delete(genId);
           } else {
@@ -368,6 +371,8 @@ export const useConversationStream = ({
             activeGenerationPathRef.current = null;
             setStoppablePath(null);
           }
+          completeGeneration(conversationPath, genId);
+          channel?.notifyGenerationSettled?.();
           // Surface the error only on the conversation the user is viewing.
           if (!isPathDisplayed(conversationPath)) return;
           setConversation((prev) => {
@@ -430,6 +435,7 @@ export const useConversationStream = ({
       channel?.channelId,
       channel?.ensureConnected,
       channel?.waitForChannel,
+      channel?.notifyGenerationSettled,
       overlay,
       transport,
     ],
