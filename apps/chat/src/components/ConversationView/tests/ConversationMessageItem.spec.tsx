@@ -26,6 +26,14 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
 
 vi.mock('../../../hooks/useUiFeature');
 
+vi.mock('../../../hooks/attachment/useMcpAppHostAdapter', () => ({
+  useMcpAppHostAdapter: () => ({
+    apiClient: {},
+    theme: 'dark',
+    locale: 'en',
+  }),
+}));
+
 let capturedActions: MessageActionsProps | undefined;
 
 vi.mock('@epam/ai-dial-conversation-messages', async (importOriginal) => {

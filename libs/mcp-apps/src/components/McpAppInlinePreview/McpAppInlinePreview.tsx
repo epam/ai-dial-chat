@@ -74,8 +74,8 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   }
 
   return (
-    <div className="border-tertiary bg-layer-2 flex w-full flex-col overflow-hidden rounded border">
-      <div className="border-tertiary flex items-center justify-end gap-1 border-b px-3 py-1.5">
+    <div className="bg-layer-2 flex w-full flex-col overflow-hidden rounded border border-tertiary">
+      <div className="flex items-center justify-end gap-1 border-b border-tertiary px-3 py-1.5">
         <GhostIconButton
           icon={
             <IconRefresh size={16} stroke={DIAL_KIT_ICON_STROKE} aria-hidden />
@@ -109,10 +109,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
               aria-hidden
               className="text-error"
             />
-            <p
-              role="alert"
-              className="dial-body-text text-center text-primary"
-            >
+            <p role="alert" className="dial-body-text text-center text-primary">
               {loadErrorLabel}
             </p>
           </div>

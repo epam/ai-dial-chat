@@ -2,13 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { AppRenderer } from '@mcp-ui/client';
 import { IconAlertTriangle } from '@tabler/icons-react';
-import {
-  type FC,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { type FC, useEffect, useMemo, useRef, useState } from 'react';
 import type { McpAppCanvasContent } from '../../models/attachment-canvas';
 import styles from './McpAppCanvasRenderer.module.scss';
 
@@ -81,7 +75,10 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
     const observer = new ResizeObserver(([entry]) => {
       if (!entry) return;
       const { width, height } = entry.contentRect;
-      setContainerSize({ width: Math.round(width), height: Math.round(height) });
+      setContainerSize({
+        width: Math.round(width),
+        height: Math.round(height),
+      });
     });
     observer.observe(el);
     return () => observer.disconnect();

@@ -28,8 +28,7 @@ export const useMcpAppHostAdapter = (
         return await client.callTool(toolsetId, toolName, args, kind);
       } catch (error) {
         throw new Error(
-          (await getApiErrorMessage(error)) ??
-            `Tool call "${toolName}" failed`,
+          (await getApiErrorMessage(error)) ?? `Tool call "${toolName}" failed`,
         );
       }
     },

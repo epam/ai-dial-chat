@@ -56,8 +56,7 @@ export const useOpenMcpAppCanvas = (
   onBeforeOpen?: () => void,
 ) => {
   const { openCanvas, openCanvasLoading } = useAttachmentCanvas();
-  const { hostContext, sandboxUrl, fetchResourceHtml, callTool } =
-    hostAdapter;
+  const { hostContext, sandboxUrl, fetchResourceHtml, callTool } = hostAdapter;
 
   /*
    * `onReload` below needs to re-invoke `openMcpAppCanvas` recursively, but
