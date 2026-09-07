@@ -276,38 +276,40 @@ export const useConversationHandlers = ({
 
   const handleConfirmDelete = useCallback(() => {
     if (!conversationId || pendingDeleteIndex == null) return;
+    const idx = pendingDeleteIndex;
     setPendingDeleteIndex(null);
 
+    const prev = conversationRef.current;
+    if (!prev || idx === -1) return;
+
     const conversationPath = getConversationPath(conversationId);
+    const next =
+      prev.messages[idx + 1]?.role === MessageRole.Assistant
+        ? prev.messages.filter((_, i) => i !== idx && i !== idx + 1)
+        : prev.messages.filter((_, i) => i !== idx);
 
-    setConversation((prev) => {
-      if (!prev) return prev;
-      const idx = pendingDeleteIndex;
-      if (idx === -1) return prev;
+    if (
+      next.length === 0 ||
+      (next.length === 1 && next[0].role === MessageRole.Status)
+    ) {
+      conversationsApi
+        .deleteConversation({ path: conversationPath })
+        .catch(() => {
+          // Already gone (e.g. a concurrent delete won the race) — the
+          // desired end state is reached either way.
+        });
+      onConversationDeleted?.();
+      return;
+    }
 
-      const next =
-        prev.messages[idx + 1]?.role === MessageRole.Assistant
-          ? prev.messages.filter((_, i) => i !== idx && i !== idx + 1)
-          : prev.messages.filter((_, i) => i !== idx);
-
-      if (
-        next.length === 0 ||
-        (next.length === 1 && next[0].role === MessageRole.Status)
-      ) {
-        void conversationsApi.deleteConversation({ path: conversationPath });
-        onConversationDeleted?.();
-        return prev;
-      }
-
-      const updated = { ...prev, messages: next };
-      conversationRef.current = updated;
-      void conversationsApi.saveConversation({
-        path: conversationPath,
-        saveConversationBodyDto: {
-          conversation: updated as unknown as ConversationResponseDto,
-        },
-      });
-      return updated;
+    const updated = { ...prev, messages: next };
+    conversationRef.current = updated;
+    setConversation(updated);
+    void conversationsApi.saveConversation({
+      path: conversationPath,
+      saveConversationBodyDto: {
+        conversation: updated as unknown as ConversationResponseDto,
+      },
     });
   }, [
     conversationId,

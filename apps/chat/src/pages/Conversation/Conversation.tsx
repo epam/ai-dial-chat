@@ -123,6 +123,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     duplicateConversation,
     updateConversationTitle,
     watchForDisplayNameUpdate,
+    removeConversationFromList,
   } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const overlay = useOptionalOverlay();
@@ -494,6 +495,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     [currentSelectedItemId, conversation?.model.id],
   );
 
+  const handleConversationDeleted = useCallback(() => {
+    if (conversationId) removeConversationFromList(conversationId);
+    navigate(ROUTES.Root);
+  }, [conversationId, navigate, removeConversationFromList]);
+
   const {
     handleSend,
     handleUploadAttachment,
@@ -522,7 +528,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     conversationsApi: configuredConversationsApi,
     rateApi: configuredRateApi,
     resolveModelId,
-    onConversationDeleted: () => navigate(ROUTES.Root),
+    onConversationDeleted: handleConversationDeleted,
     showNetworkError: handleNetworkUploadError,
     toolConfigurationValue,
   });
