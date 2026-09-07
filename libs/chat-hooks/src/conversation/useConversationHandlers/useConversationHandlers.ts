@@ -292,14 +292,7 @@ export const useConversationHandlers = ({
       next.length === 0 ||
       (next.length === 1 && next[0].role === MessageRole.Status)
     ) {
-      conversationsApi
-        .deleteConversation({ path: conversationPath })
-        .catch(() => {
-          /**
-           * Already gone (e.g. a concurrent delete won the race) — the
-           * desired end state is reached either way.
-           */
-        });
+      void conversationsApi.deleteConversation({ path: conversationPath });
       onConversationDeleted?.();
       return;
     }
