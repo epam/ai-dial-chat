@@ -55,6 +55,12 @@ interface ConversationsContextType {
   markConversationViewed: (id: string) => Promise<void>;
   /** Delete a conversation by id, removing it from the local list on success. */
   deleteConversation: (id: string) => Promise<void>;
+  /**
+   * Removes a conversation from the local list without calling the delete
+   * API. Use when the conversation was already deleted server-side by
+   * another flow (e.g. deleting its last message empties it out).
+   */
+  removeConversationFromList: (id: string) => void;
   /** Rename a conversation; optimistically updates title, reverts on failure. The conversation id never changes. */
   renameConversation: (id: string, newTitle: string) => Promise<void>;
   /**
@@ -323,6 +329,17 @@ export const ConversationsProvider = ({
     }
   }, []);
 
+  /**
+   * Removes a conversation from the local list without calling the delete
+   * API. Use when the conversation was already deleted server-side by
+   * another flow (e.g. deleting its last message empties it out).
+   */
+  const removeConversationFromList = useCallback((id: string) => {
+    setConversations((prev) =>
+      prev.filter((c) => !conversationIdsMatch(c.id, id)),
+    );
+  }, []);
+
   const renameConversation = useCallback(
     async (id: string, newTitle: string) => {
       let originalTitle: string | undefined;
@@ -419,6 +436,7 @@ export const ConversationsProvider = ({
       pinConversation,
       markConversationViewed,
       deleteConversation,
+      removeConversationFromList,
       renameConversation,
       generateConversationTitle,
       duplicateConversation,
@@ -434,6 +452,7 @@ export const ConversationsProvider = ({
       pinConversation,
       markConversationViewed,
       deleteConversation,
+      removeConversationFromList,
       renameConversation,
       generateConversationTitle,
       duplicateConversation,
