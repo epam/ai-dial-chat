@@ -46,7 +46,6 @@ import {
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
 import { useFeatureFlag } from '../context/AppConfigContext';
-import { useConversationPanel } from '../context/ConversationPanelContext';
 import { useDeployments } from '../context/DeploymentsContext';
 import { useIsolatedModelView } from '../context/IsolatedModelViewContext';
 import { useOptionalOverlay } from '../context/overlay/OverlayContext';
@@ -54,6 +53,7 @@ import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
+import { useConversationPanelRouteState } from '../hooks/conversation-panel/useConversationPanelRouteState';
 import { useAppVersionCheck } from '../hooks/useAppVersionCheck/useAppVersionCheck';
 import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
@@ -185,54 +185,20 @@ const App: FC = () => {
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
-  const { isPanelOpen, openPanel, closePanel } = useConversationPanel();
 
-  /* Tracks whether the user has explicitly closed the panel. When true, prevents
-     automatic panel opening on navigation (new chat, starter send). Reset on route
-     changes that leave the conversation section. */
-  const userClosedPanelRef = useRef(false);
-
-  const togglePanel = useCallback(() => {
-    if (!isPanelOpen) {
-      closeCanvas();
-      userClosedPanelRef.current = false;
-    } else {
-      userClosedPanelRef.current = true;
-    }
-    isPanelOpen ? closePanel() : openPanel();
-  }, [isPanelOpen, closeCanvas, openPanel, closePanel]);
-
-  // Always close the panel when switching to mobile so a stored desktop `true` doesn't bleed through
-  useEffect(() => {
-    if (isMobile) {
-      closePanel();
-      userClosedPanelRef.current = false;
-    }
-  }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { isPanelOpen, closePanel, togglePanel } =
+    useConversationPanelRouteState({
+      pathname,
+      isMobile,
+      isCanvasOpen,
+      isOpenByDefault: isConversationsSectionOpenByDefault,
+      onCloseCanvas: closeCanvas,
+      onCloseSourcesPanel: closeSourcesPanel,
+    });
 
   useEffect(() => {
-    closeCanvas();
     clearAttachmentCache();
-    if (
-      pathname !== ROUTES.Root &&
-      pathname !== ROUTES.Conversations &&
-      !pathname.startsWith(ROUTES.Conversations)
-    ) {
-      closePanel();
-      userClosedPanelRef.current = false;
-    } else if (!isMobile && !isCanvasOpen && !userClosedPanelRef.current) {
-      isConversationsSectionOpenByDefault ? openPanel() : closePanel();
-    }
-  }, [pathname, isConversationsSectionOpenByDefault]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /* Safety net for openCanvas call sites that bypass useOpenAttachmentCanvas
-     (e.g. citation preview, collapsed stage attachments). */
-  useEffect(() => {
-    if (isCanvasOpen) {
-      closePanel();
-      closeSourcesPanel();
-    }
-  }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const matchRoot = useMatch(ROUTES.Root);
   const matchConversation = useMatch(`${ROUTES.Conversations}/*`);
