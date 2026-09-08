@@ -24,6 +24,16 @@ export interface PdfBBoxSelector {
   y2: number;
 }
 
+/** Selector that targets a paired inline tag (e.g. `<cit data-id="…"></cit>`) by its `id` value. */
+export interface HtmlTagSelector {
+  /** Discriminator — always `'html_tag'`. */
+  type: 'html_tag';
+  /** The tag name (e.g. `'cit'`). */
+  tag: string;
+  /** Matches the tag's `data-id` attribute value in the message text, used to associate this selector with its rendered position. */
+  id: string;
+}
+
 /**
  * Discriminated union of all recognised annotation selector shapes.
  * Unknown selector types are preserved as an open record to allow forward-compatibility.
@@ -31,6 +41,7 @@ export interface PdfBBoxSelector {
 export type AnnotationSelector =
   | TextCharacterRangeSelector
   | PdfBBoxSelector
+  | HtmlTagSelector
   | { type: string; [key: string]: unknown };
 
 /** Identifies the part of the message (or a related resource) that the annotation refers to. */

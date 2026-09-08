@@ -14,27 +14,29 @@ conversion, or `@epam/ai-dial-attachment-canvas`.
 
 ### Requirement: Citation-aware markdown hook exported from the package root
 
-`@epam/ai-dial-quotations` SHALL export a hook (the generalized form of
-`apps/chat`'s `useCitationMarkdownComponents`) that, given raw markdown
-content, a list of `AnnotationGroup`s, and a callbacks object
-(`onPreview`, `onOpenInBrowser`, `buildLabels`), returns `{ processedContent:
-string; markdownComponents: Components }` for `react-markdown`. The hook
-SHALL NOT import `react-i18next`, any application context, any
-attachment-canvas hook, or any application DTO-conversion helper.
+`@epam/ai-dial-quotations` SHALL export a hook (`useCitationMarkdownComponents`) that, given raw markdown content, a list of `AnnotationGroup`s (which may mix URL-keyed groups and `cit`-id-keyed groups), a callbacks object (`onPreview`, `onOpenInBrowser`, `buildLabels`), and an `isStreaming: boolean`, returns `{ processedContent: string; markdownComponents: Components }` for `react-markdown`. The hook SHALL NOT import `react-i18next`, any application context, any attachment-canvas hook, or any application DTO-conversion helper.
 
-#### Scenario: Uncited content takes the stable empty-overrides fast path
+`processedContent` computation depends on `isStreaming`:
+- When `isStreaming` is `true`: applies `stripCitTagsWhileStreaming(content)` unconditionally (regardless of `groups`), which hides complete supported `<cit data-id="…"></cit>` elements and escapes every other `cit` shape for literal display. `groups` is expected to be `[]` in this state (per the `message-annotations`/`citation-marker` capabilities' `useAnnotations` requirement), so no offset-based sentinel injection runs either.
+- When `isStreaming` is `false`: injects sentinels for non-`html_tag` groups when present, then escapes every unsupported `cit` shape so it is displayed as ordinary text. The exact supported paired shape remains a real `<cit>` element handled by the component override.
 
-- **WHEN** the hook is called with `groups.length === 0`
-- **THEN** `processedContent` equals the input `content` unchanged, and
-  `markdownComponents` is an empty object, without calling `buildLabels`
+`markdownComponents` includes a `cit` override when a supported element is present or groups are non-empty. It looks the element's `data-id` prop up against an `html_tag`-selector group and renders the existing citation dropdown for a match; an unmatched supported element is serialized back to visible literal text.
 
-#### Scenario: Cited content injects sentinels and returns paragraph/list overrides
+#### Scenario: Uncited content with empty groups takes the stable empty-overrides fast path
 
-- **WHEN** the hook is called with one or more `AnnotationGroup`s
-- **THEN** `processedContent` has sentinel markers injected at each group's
-  primary annotation's character-range end offset, and `markdownComponents`
-  contains `p` and `li` overrides that replace sentinels in their children
-  with a rendered `CitationDropdown`
+- **WHEN** the hook is called with `groups.length === 0`, `isStreaming: false`, and `content` containing no `<cit` markup
+- **THEN** `processedContent` equals the input `content` unchanged, and `markdownComponents` is an empty object, without calling `buildLabels`
+
+#### Scenario: Cited content injects sentinels and returns paragraph/list/cit overrides
+
+- **WHEN** the hook is called with one or more `AnnotationGroup`s and `isStreaming: false`
+- **THEN** `processedContent` has sentinel markers injected at each non-`html_tag` group's character-offset insertion point, and `markdownComponents` contains `p`, `li`, and `cit` overrides
+
+#### Scenario: A supported citation element is hidden while streaming
+
+- **WHEN** the hook is called with `isStreaming: true` and `content` containing a `<cit data-id="e43864"></cit>` element
+- **THEN** `processedContent` has that element removed, whether or not `groups` currently has a matching entry
+- **AND** an unsupported or partial `cit` shape would instead be escaped for literal display
 
 ### Requirement: Preview and browser-open actions are delegated to injected callbacks
 
@@ -85,21 +87,24 @@ interaction state.
 
 ### Requirement: Out-of-range or malformed annotation input is handled defensively
 
-The hook SHALL return `null` for a sentinel marker whose index has no
-corresponding entry in `groups`, and SHALL leave content unchanged when
-`injectCitationSentinels` receives a group whose primary annotation has no
-`text_character_range` selector (defaulting the injection point to the end
-of the content).
+The hook SHALL return `null` for a sentinel marker whose index has no corresponding entry in `groups`, and SHALL leave content unchanged when the offset-based injection path receives a group whose primary annotation has no `text_character_range` selector (defaulting the injection point to the end of the content). For the tag-based (`cit` element) path, a `data-id` with no corresponding group SHALL render as literal `<cit data-id="…"></cit>` text. Unsupported shapes, including dangling tags and tags using `id` instead of `data-id`, SHALL be escaped before `react-markdown` parses them so the original markup and following text remain visible without mounting a custom element.
 
 #### Scenario: Sentinel index beyond the groups array renders nothing
 
-- **WHEN** `processedContent` contains a sentinel referencing an index with
-  no corresponding `groups` entry
+- **WHEN** `processedContent` contains a sentinel referencing an index with no corresponding `groups` entry
 - **THEN** the corresponding marker renders as `null` rather than throwing
 
 #### Scenario: Missing character-range selector defaults to end-of-content injection
 
-- **WHEN** a group's primary annotation has a selector that is not
-  `text_character_range`
-- **THEN** its sentinel is injected at the end of `content` rather than at an
-  undefined offset
+- **WHEN** a group's primary annotation has a selector that is not `text_character_range`
+- **THEN** its sentinel is injected at the end of `content` rather than at an undefined offset
+
+#### Scenario: Unmatched cit data-id renders as text without error
+
+- **WHEN** `content` contains a `<cit data-id="unknown-id"></cit>` element and no group's `target.selector.id` equals `"unknown-id"`
+- **THEN** the `cit` component override renders the original element markup as literal text and the hook does not throw
+
+#### Scenario: A dangling open tag while streaming remains literal text
+
+- **WHEN** `isStreaming` is `true` and `content` ends with `<cit data-id="e438">` followed by more already-streamed text but no `</cit>`
+- **THEN** the dangling tag is escaped and both its markup and the text after it remain visible

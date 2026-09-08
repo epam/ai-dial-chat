@@ -129,7 +129,9 @@ actually contains a math block (`$$...$$`, or `\(...\)`/`\[...\]`) — a
 conversation with no math never pulls KaTeX into the bundle, and a formula
 appears once that load resolves. Fenced code blocks render through
 `MarkdownCodeBlock` (below), which defers its own syntax-highlighting engine
-the same way.
+the same way. The sanitizer allows the citation-specific `cit` element, but
+the default component renders its markup literally; a citation-aware consumer
+must explicitly override `components.cit` to turn it into interactive UI.
 
 ```tsx
 import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';

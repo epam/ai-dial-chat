@@ -53,8 +53,8 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   markerLabelClassName,
 }) => {
   const citationCard = useCitationCardContext();
-  const isOpen = citationCard.isOpen(group.sourceUrl);
-  const activeIndex = citationCard.getActiveIndex(group.sourceUrl);
+  const isOpen = citationCard.isOpen(group.groupKey);
+  const activeIndex = citationCard.getActiveIndex(group.groupKey);
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
@@ -93,7 +93,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
         <CitationCard
           group={group}
           activeIndex={activeIndex}
-          onIndexChange={(i) => citationCard.setActiveIndex(group.sourceUrl, i)}
+          onIndexChange={(i) => citationCard.setActiveIndex(group.groupKey, i)}
           onPreview={handlePreview}
           onOpenInBrowser={onOpenInBrowser}
           headerIcon={headerIcon}
@@ -105,7 +105,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
       <CitationMarker
         sourceName={group.sourceName}
         annotationCount={group.annotations.length}
-        onOpen={() => citationCard.openPopup(group.sourceUrl)}
+        onOpen={() => citationCard.openPopup(group.groupKey)}
         icon={icon}
         labels={markerLabels}
         labelClassName={markerLabelClassName}

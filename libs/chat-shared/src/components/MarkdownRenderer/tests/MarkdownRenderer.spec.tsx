@@ -266,6 +266,30 @@ describe('MarkdownRenderer', () => {
     expect(paragraph?.textContent).not.toContain('<br>');
   });
 
+  it('renders a <cit data-id> element as literal text by default', () => {
+    render(
+      <MarkdownRenderer content='Patient meets criteria<cit data-id="e1"></cit>.' />,
+    );
+
+    expect(
+      screen.getByText('Patient meets criteria<cit data-id="e1"></cit>.'),
+    ).toBeTruthy();
+  });
+
+  it('lets a host-supplied components.cit override render the element', () => {
+    render(
+      <MarkdownRenderer
+        content='Patient meets criteria<cit data-id="e1"></cit>.'
+        components={{
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...({ cit: () => <span>[1]</span> } as any),
+        }}
+      />,
+    );
+
+    expect(screen.getByText('[1]')).toBeTruthy();
+  });
+
   it('keeps blank-line-separated paragraphs as two distinct <p> elements with no extra break inside either', () => {
     render(<MarkdownRenderer content={TWO_PARAGRAPHS_MARKDOWN} />);
 
