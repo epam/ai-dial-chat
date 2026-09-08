@@ -7,19 +7,6 @@
   color: var(--sb-text, var(--text-primary, #161b2d));
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.appear {
-  animation: fadeIn 200ms ease-out forwards;
-}
-
 .resizeHandler {
   width: 4px !important;
   color: var(--sb-resize-handler, var(--text-accent, #1d4ed8)) !important;
