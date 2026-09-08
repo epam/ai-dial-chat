@@ -102,16 +102,22 @@ Copy mode SHALL NOT set `sourceFolder` — copying an item into its own current 
 
 ---
 
-### Requirement: Folder-only, action-free browsing inside the popup
+### Requirement: Action-free browsing inside the popup, with files shown for context
 
-The popup SHALL display only folders (no files) and SHALL NOT render row-level context actions (no Rename/Delete/etc. on folders shown inside the popup).
+The popup SHALL list the browsed folder's full contents — **files as well as subfolders** — and SHALL NOT render row-level context actions (no Rename/Delete/etc. on rows shown inside the popup).
 
-The application SHALL still keep the popup's browsed folder listing complete in the `DialFileManager.items` tree, including files, so ui-kit's copy/move conflict resolver can detect destination-name collisions. Files are hidden only from the popup grid/tree presentation.
+Listing files is deliberate. An earlier revision of this requirement specified a folder-only grid; bug epam/ai-dial-chat#7796 ("[File Manager] Copy/Move Dialog — Files Not Shown Inside Selected Folder") asked for the opposite and was closed by the fix that shows them, so that a user choosing a destination can see what the folder already holds and anticipate a name collision. This requirement now records the shipped behaviour.
 
-#### Scenario: Files are not shown in the popup
+The destination is always the **browsed folder**, carried by `DestinationFolderPopup`'s `destinationFolderPath`, never a row the user ticks; a file row is context, not a selectable target. The confirm action stays disabled while the browsed folder is the source folder.
+
+The application SHALL keep that listing complete in the `DialFileManager.items` tree regardless, so the copy/move conflict resolver can detect destination-name collisions.
+
+#### Scenario: Files are shown alongside subfolders
 
 - **WHEN** the popup is open and the current folder contains both files and subfolders
-- **THEN** only the subfolders are listed
+- **THEN** both are listed
+- **AND** neither carries a row action menu
+- **AND** the confirm action still resolves to the browsed folder, not to any listed row
 
 #### Scenario: No context menu on popup rows
 
