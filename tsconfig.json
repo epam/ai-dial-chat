@@ -92,6 +92,9 @@
     },
     {
       "path": "./libs/usage-dashboard"
+    },
+    {
+      "path": "./libs/editor-builder"
     }
   ]
 }

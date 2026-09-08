@@ -1,0 +1,12 @@
+.box {
+  background: var(--aa-box-bg, var(--bg-layer-raised, #fcfcfc));
+  border-color: var(--aa-box-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.icon {
+  color: var(--aa-icon, var(--text-secondary, #57647a));
+}
+
+.caption {
+  color: var(--aa-caption, var(--text-tertiary, #848e9c));
+}

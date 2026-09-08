@@ -244,17 +244,17 @@ No type-specific branching SHALL be added to `filterCatalogItems`, `sortCatalogI
 
 `libs/catalog/src/components/ListView/columns.ts` currently hides the Folder column only for `CatalogEntityType.Model`. Prompt items SHALL keep the Folder column visible, since folder position is a prompt library's primary organising signal.
 
-Prompt body text is NOT searchable: `filterCatalogItems` matches `name`, `description`, and `type` only. This is a known limitation, not a defect.
+`filterCatalogItems` matches `name` only. A prompt's body text is NOT searchable: `content` is not part of the search index. Neither `description` nor `type` is searched — the name is the only text a card or list row highlights, so matching anything else returned rows with no visible match.
 
 #### Scenario: Searching matches a prompt by name
 
 - **WHEN** the user types a substring of a prompt's name into the catalog search
 - **THEN** that prompt item appears in the results
 
-#### Scenario: Searching matches prompts by type keyword
+#### Scenario: Searching does not match prompts by type keyword
 
 - **WHEN** the user searches `prompt`
-- **THEN** every prompt item matches, because `filterCatalogItems` already tests `item.type`
+- **THEN** only items whose name contains `prompt` match, not every prompt item
 
 #### Scenario: Searching does not match prompt body text
 

@@ -14,9 +14,9 @@ import {
   referenceAttachmentToPdfCanvasContent,
   useAttachmentValidation,
   useChatSettingsFormConfig,
-  useConversationScroll,
-  usePageFileDrag,
 } from '@epam/ai-dial-chat-hooks';
+import { useConversationScroll } from '@epam/ai-dial-chat-hooks/scroll-anchoring';
+import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DisplayAttachment,
@@ -336,6 +336,7 @@ const ConversationView: FC<Props> = ({
         ({
           id,
           displayName,
+          displayVersion,
           iconUrl,
           type,
           inputAttachmentTypes,
@@ -343,6 +344,7 @@ const ConversationView: FC<Props> = ({
         }) => ({
           id,
           displayName: resolveLocalizedText(displayName, language),
+          displayVersion,
           iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
           type,
           inputAttachmentTypes,

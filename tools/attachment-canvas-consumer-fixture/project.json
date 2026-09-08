@@ -1,0 +1,30 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "attachment-canvas-consumer-fixture",
+  "targets": {
+    "pack-lib": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/pack-and-install.mjs",
+        "cwd": "tools/attachment-canvas-consumer-fixture"
+      },
+      "dependsOn": [
+        {
+          "projects": ["@epam/ai-dial-attachment-canvas"],
+          "target": "build"
+        }
+      ]
+    },
+    "build": {
+      "dependsOn": ["pack-lib"]
+    },
+    "verify": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/verify-build-output.mjs",
+        "cwd": "tools/attachment-canvas-consumer-fixture"
+      },
+      "dependsOn": ["build"]
+    }
+  }
+}

@@ -15,11 +15,12 @@ import {
   DeploymentCreationFieldErrorCode,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
-import { ConfirmationPopup, Spinner } from '@epam/ai-dial-ui-kit';
+import { ConfirmationPopup, Spinner, StepStatus } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
+import EditorHeader from '../../components/EditorHeader/EditorHeader';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import {
   DEFAULT_CUSTOM_APP_GENERAL_FORM,
@@ -32,6 +33,7 @@ import {
 } from '../../constants/toolsets';
 import {
   AppsEditorI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
   CustomAppI18nKeys,
   EditorI18nKeys,
@@ -56,7 +58,6 @@ import {
 import { ROUTES } from '../../types/routes';
 import { PRIMARY_LOCALE, resolveLocalizedText } from '../../utils/locale';
 import CustomAppEditorView from './CustomAppEditorView';
-import ToolsetEditorHeader from './ToolsetEditorHeader';
 
 const CustomAppEditor: FC = () => {
   const { t } = useTranslation();
@@ -199,6 +200,22 @@ const CustomAppEditor: FC = () => {
   const isResolvingContext = isEditMode && !isLoading && !isGeneralFormReady;
 
   const canOpenSettings = Boolean(generalForm.name.trim());
+
+  const steps = useMemo(
+    () => [
+      {
+        id: ToolsetEditorSteps.General,
+        name: t(EditorI18nKeys.StepGeneral),
+        status: canOpenSettings ? StepStatus.VALID : undefined,
+      },
+      {
+        id: ToolsetEditorSteps.Settings,
+        name: t(BasicI18nKeys.Settings),
+        status: canOpenSettings ? StepStatus.VALID : undefined,
+      },
+    ],
+    [t, canOpenSettings],
+  );
 
   const setEditorStep = useCallback(
     (stepId: string) => {
@@ -454,11 +471,14 @@ const CustomAppEditor: FC = () => {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <ToolsetEditorHeader
-        step={step}
+      <EditorHeader
+        steps={steps}
+        currentStep={step}
+        navAriaLabel={t(EditorI18nKeys.StepsNavAriaLabel)}
         isSaving={isSaving}
         isSaveDisabled={isSaveDisabled}
-        canOpenSettings={canOpenSettings}
+        cancelButtonLabel={t(ButtonsI18nKeys.Cancel)}
+        saveButtonLabel={t(EditorI18nKeys.SaveButton)}
         onChangeStep={handleChangeStep}
         onCancel={handleCancel}
         onSave={handleSave}

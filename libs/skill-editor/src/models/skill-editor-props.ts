@@ -210,7 +210,7 @@ export interface SkillEditorColors {
   title?: string;
   /** Color of the hand-rendered Instructions field label. Defaults to `--text-secondary`. */
   helperText?: string;
-  /** Border color of the desktop header row, the Files sidebar divider, and the mobile sticky action bar. Defaults to `--stroke-tertiary`. */
+  /** Border color of the layout header row and Files sidebar divider. Defaults to `--stroke-tertiary`. */
   border?: string;
 }
 
@@ -284,12 +284,12 @@ export interface SkillEditorProps {
   onDirtyChange?: (isDirty: boolean) => void;
   /** File-tree mutation operations. */
   fileActions: SkillEditorFileActions;
-  /**
-   * Host-rendered content (e.g. a back button and page title) placed at the
-   * start of the desktop header row, before the Cancel/Create actions. The
-   * library renders it verbatim with no knowledge of what it contains.
-   */
-  headerContent?: ReactNode;
+  /** Called when the header back button is activated. */
+  onBack: () => void;
+  /** Accessible label of the header back button. Defaults to `'Back'`. */
+  backAriaLabel?: string;
+  /** Page title displayed in the header. */
+  title: string;
   /**
    * Host-rendered content shown in the main pane in place of `labels.supportingFileNote`
    * whenever the currently selected node is a supporting file (not `SKILL.md`, not a

@@ -279,6 +279,12 @@ export interface ApplicationDetailsDto {
    */
   inputAttachmentTypes?: Array<string>;
   /**
+   *
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ApplicationDetailsDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
+  /**
    * URI of the custom application type schema, when present
    * @type {string}
    * @memberof ApplicationDetailsDto
@@ -4129,6 +4135,19 @@ export interface ListMcpAppToolsResponseDto {
 /**
  *
  * @export
+ * @interface ListMcpToolNamesResponseDto
+ */
+export interface ListMcpToolNamesResponseDto {
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ListMcpToolNamesResponseDto
+   */
+  toolNames: Array<string>;
+}
+/**
+ *
+ * @export
  * @interface ListScheduledTaskRunsResponseDto
  */
 export interface ListScheduledTaskRunsResponseDto {
@@ -6660,6 +6679,12 @@ export interface ToolsetDetailsDto {
    * @memberof ToolsetDetailsDto
    */
   features?: DeploymentFeaturesDetailsDto;
+  /**
+   *
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ToolsetDetailsDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
   /**
    * Timestamp of creation time from DIAL Core (e.g. 1714768496000)
    * @type {number}

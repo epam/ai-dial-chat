@@ -209,3 +209,73 @@ describe('Card — read-only state', () => {
     expect(card.innerHTML).not.toContain('pt-3');
   });
 });
+
+describe('Card — description rendering', () => {
+  it('renders a Markdown-formatted description as formatted text, not literal characters', () => {
+    render(<Card item={makeItem({ description: '**bold** text' })} />);
+
+    const boldElement = screen.getByText('bold');
+    expect(boldElement.tagName).toBe('STRONG');
+  });
+
+  it('renders an HTML-like description as sanitized text content without literal tag markup', () => {
+    render(
+      <Card
+        item={makeItem({ description: "<span style='color:red'>text</span>" })}
+      />,
+    );
+
+    expect(screen.getByText('text')).toBeTruthy();
+    // Verify the style attribute was stripped by checking the span has no style
+    const span = screen.getByText('text');
+    expect(span.parentElement?.getAttribute('style')).toBeNull();
+  });
+
+  it('renders a plain-text description unchanged', () => {
+    const plainText = 'Plain text description with no markdown or HTML';
+    render(<Card item={makeItem({ description: plainText })} />);
+
+    expect(screen.getByText(plainText)).toBeTruthy();
+  });
+
+  it('renders a Markdown link as a real, clickable <a> element', () => {
+    render(
+      <Card
+        item={makeItem({ description: '[link text](https://example.com)' })}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: 'link text' });
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toBe('https://example.com');
+  });
+
+  it('does not trigger the card onClick when clicking a description link', async () => {
+    const onCardClick = vi.fn();
+    render(
+      <Card
+        item={makeItem({ description: '[link](https://example.com)' })}
+        onClick={onCardClick}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: 'link' });
+    await userEvent.click(link);
+
+    expect(onCardClick).not.toHaveBeenCalled();
+  });
+
+  it('keeps the description wrapper with line-clamp-2 and min-h-[2lh] classes for truncation', () => {
+    const longDescription =
+      'Line 1\nLine 2\nLine 3\nLine 4 which should be hidden due to clamping';
+    render(<Card item={makeItem({ description: longDescription })} />);
+
+    const card = screen.getByRole('article', { hidden: true });
+    // eslint-disable-next-line testing-library/no-node-access
+    const descriptionDiv = Array.from(card.querySelectorAll('div')).find((el) =>
+      el.className.includes('line-clamp-2'),
+    );
+    expect(descriptionDiv?.className).toContain('line-clamp-2');
+    expect(descriptionDiv?.className).toContain('min-h-[2lh]');
+  });
+});

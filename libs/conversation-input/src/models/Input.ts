@@ -37,6 +37,10 @@ export interface InputColors {
   modelSelectorHoverBg?: string;
   /** Model-selector chip caret color when disabled. Defaults to `--text-control-disable-primary`. */
   modelSelectorDisabled?: string;
+  /** Model-selector chip name text color (desktop only). Defaults to `--text-primary`. */
+  modelSelectorName?: string;
+  /** Model-selector chip version text color (desktop only). Defaults to `--text-secondary`. */
+  modelSelectorVersion?: string;
   /** Voice bar error border/icon color. Defaults to `--stroke-error`/`--text-error`. */
   voiceError?: string;
   /** Voice bar waveform and timer text color. Defaults to `--text-primary`. */

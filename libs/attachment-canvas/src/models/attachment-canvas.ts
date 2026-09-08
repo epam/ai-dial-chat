@@ -299,6 +299,18 @@ export interface AttachmentCanvasLabels {
   pdfHideThumbnailsLabel?: string;
   /** Accessible label for the current-page number input at the top of the PDF thumbnails panel. Defaults to `'Page number'`. */
   pdfPageNumberLabel?: string;
+  /** Accessible status text announced while the PDF viewer's dynamic import is loading. Defaults to `'Loading…'`. */
+  pdfContentLoadingLabel?: string;
+  /** Message shown when the PDF viewer's dynamic import fails to load. Defaults to `'Failed to load content'`. */
+  pdfContentErrorLabel?: string;
+  /** Label and accessible name for the retry control shown alongside `pdfContentErrorLabel`. Defaults to `'Retry'`. */
+  pdfContentRetryLabel?: string;
+  /** Accessible status text announced while the syntax-highlighter engine's dynamic import is loading. Defaults to `'Loading…'`. */
+  codeContentLoadingLabel?: string;
+  /** Message shown when the syntax-highlighter engine's dynamic import fails to load. Defaults to `'Failed to load content'`. */
+  codeContentErrorLabel?: string;
+  /** Label and accessible name for the retry control shown alongside `codeContentErrorLabel`. Defaults to `'Retry'`. */
+  codeContentRetryLabel?: string;
 }
 
 /** Props for the AttachmentCanvas component. */
@@ -343,6 +355,18 @@ export interface AttachmentCanvasProps {
    * plain `fetch` if not provided.
    */
   loadPdf?: (url: string) => Promise<Blob>;
+  /**
+   * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
+   * host app. Called once, the first time a PDF attachment is opened, and
+   * awaited before the viewer mounts. Concurrent PDF opens share one
+   * in-flight call; a successful call is memoized so later opens never
+   * repeat it. A rejected call is not cached — the next PDF open (or a
+   * subsequent retry) invokes it again. When omitted,
+   * `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used
+   * instead, so PDF rendering still works, just without the host's own
+   * bundled worker asset.
+   */
+  configurePdfWorker?: () => void | Promise<void>;
 }
 
 /** User-visible strings for `AttachmentCanvasBody`'s content states. */
@@ -358,6 +382,12 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'pdfShowThumbnailsLabel'
   | 'pdfHideThumbnailsLabel'
   | 'pdfPageNumberLabel'
+  | 'pdfContentLoadingLabel'
+  | 'pdfContentErrorLabel'
+  | 'pdfContentRetryLabel'
+  | 'codeContentLoadingLabel'
+  | 'codeContentErrorLabel'
+  | 'codeContentRetryLabel'
 >;
 
 /** Props for the `AttachmentCanvasBody` component. */
@@ -393,4 +423,16 @@ export interface AttachmentCanvasBodyProps {
    * Ignored for every other content type. Defaults to `false`.
    */
   hidePdfToolbar?: boolean;
+  /**
+   * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
+   * host app. Called once, the first time a PDF attachment is opened, and
+   * awaited before the viewer mounts. Concurrent PDF opens share one
+   * in-flight call; a successful call is memoized so later opens never
+   * repeat it. A rejected call is not cached — the next PDF open (or a
+   * subsequent retry) invokes it again. When omitted,
+   * `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used
+   * instead, so PDF rendering still works, just without the host's own
+   * bundled worker asset.
+   */
+  configurePdfWorker?: () => void | Promise<void>;
 }

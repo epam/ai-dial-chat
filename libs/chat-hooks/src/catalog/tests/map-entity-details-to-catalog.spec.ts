@@ -60,6 +60,60 @@ describe('mapEntityDetailsToCatalogDetails', () => {
     });
   });
 
+  describe('AGENT', () => {
+    it('maps known catalog properties into Overview Specification rows', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'applications/als-test-catalog',
+          type: 'application',
+          applicationDetails: {
+            catalogProperties: {
+              provider: 'Provider',
+              vendor: 'Vendor',
+              license: 'License',
+              knowledgeCutoffDate: '2026-08-17',
+              parameters: '100B',
+            },
+          },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      expect(result.overview?.sections).toEqual([
+        {
+          title: 'Specification',
+          specs: [
+            { label: 'Provider', value: 'Provider' },
+            { label: 'Vendor', value: 'Vendor' },
+            { label: 'License', value: 'License' },
+            {
+              label: 'Knowledge cutoff date',
+              value: new Date(2026, 7, 17).toLocaleDateString(),
+            },
+            { label: 'Parameters', value: '100B' },
+          ],
+        },
+      ]);
+    });
+
+    it('omits Specification rows when the application reports no catalog properties, owner, release date, or routes', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'applications/als-test-catalog',
+          type: 'application',
+          applicationDetails: {},
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      expect(result.overview?.sections ?? []).toEqual([]);
+    });
+  });
+
   describe('MODEL pricing', () => {
     const mapPricingRows = (pricing: {
       unit?: string;
@@ -168,6 +222,43 @@ describe('mapEntityDetailsToCatalogDetails', () => {
       });
 
       expect(result.tools).toBeUndefined();
+    });
+
+    it('maps known catalog properties into Overview Specification rows', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'toolsets/ALS-OauthToolset-copy',
+          type: 'toolset',
+          toolsetDetails: {
+            catalogProperties: {
+              provider: 'Provider',
+              vendor: 'Vendor',
+              license: 'License',
+              knowledgeCutoffDate: '2026-08-17',
+              parameters: '100B',
+            },
+          },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      expect(result.overview?.sections).toEqual([
+        {
+          title: 'Specification',
+          specs: [
+            { label: 'Provider', value: 'Provider' },
+            { label: 'Vendor', value: 'Vendor' },
+            { label: 'License', value: 'License' },
+            {
+              label: 'Knowledge cutoff date',
+              value: new Date(2026, 7, 17).toLocaleDateString(),
+            },
+            { label: 'Parameters', value: '100B' },
+          ],
+        },
+      ]);
     });
 
     it('does not duplicate tool names as Overview specification rows', () => {

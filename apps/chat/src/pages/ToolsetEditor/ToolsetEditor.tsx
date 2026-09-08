@@ -9,18 +9,18 @@ import {
   DeploymentCreationFieldErrorCode,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
+import { EditorLayout, EditorSection } from '@epam/ai-dial-editor-builder';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
-  ToolsetEditorQuery,
-  ToolsetEditorSteps,
-} from '../../constants/toolsets';
-import {
-  ToolsetEditorI18nKeys,
+  ButtonsI18nKeys,
   EditorI18nKeys,
+  ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -52,8 +52,8 @@ import {
   isValidEndpointUrl,
   toolsetDtoToForm,
 } from '../../utils/toolsets';
-import ToolsetEditorHeader from './ToolsetEditorHeader';
-import ToolsetEditorView from './ToolsetEditorView';
+import GeneralForm from './EditorForm/GeneralForm';
+import SettingsForm from './EditorForm/SettingsForm';
 
 const AUTH_ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
   'keyHeader',
@@ -91,15 +91,12 @@ const ToolsetEditor: FC = () => {
   const { notifyOperationSuccess } = useOperationNotification();
   const { refetchToolsets } = useDeployments();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   const routeToolsetId = searchParams.get(ToolsetEditorQuery.Id) ?? '';
   const isEditMode = Boolean(routeToolsetId);
   const [draftToolsetId, setDraftToolsetId] = useState('');
   const persistedToolsetId = routeToolsetId || draftToolsetId;
-  const step =
-    (searchParams.get(ToolsetEditorQuery.Step) as ToolsetEditorSteps) ??
-    ToolsetEditorSteps.General;
   const returnUrl = useMemo(() => {
     const raw = searchParams.get(ToolsetEditorQuery.ReturnUrl);
     return raw?.startsWith('/') && !raw.startsWith('//') ? raw : ROUTES.Catalog;
@@ -211,24 +208,13 @@ const ToolsetEditor: FC = () => {
     [refetchToolsets],
   );
 
-  const setEditorStep = useCallback(
-    (stepId: string) => {
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev);
-        next.set(ToolsetEditorQuery.Step, stepId);
-        return next;
-      });
-    },
-    [setSearchParams],
-  );
-
   /**
    * Creates the toolset (if it has no id yet) or updates it (if the form has
    * changed since it was last persisted), so the backend reflects whatever
    * the user has typed so far. Returns the toolset id on success — including
    * when nothing needed to be sent — or `null` if a create/update call
-   * failed. Shared by "Next" (advancing past General) and by Log In (which
-   * must not authenticate against stale endpoint/auth settings).
+   * failed. Used by Log In (which must not authenticate against stale
+   * endpoint/auth settings).
    */
   const persistFormIfChanged = useCallback(async (): Promise<string | null> => {
     if (!form) return null;
@@ -273,37 +259,9 @@ const ToolsetEditor: FC = () => {
     }
   }, [form, persistedToolsetId, t, showErrorNotification, refetchToolsets]);
 
-  const handleNext = useCallback(async () => {
-    if (!form) return;
-    if (!form.name.trim()) {
-      setErrors({ name: t(EditorI18nKeys.NameRequired) });
-      return;
-    }
-    setErrors({});
-
-    const id = await persistFormIfChanged();
-    if (id != null) {
-      setEditorStep(ToolsetEditorSteps.Settings);
-    }
-  }, [form, t, persistFormIfChanged, setEditorStep]);
-
   const handleEnsureSaved = useCallback(
     async () => (await persistFormIfChanged()) ?? false,
     [persistFormIfChanged],
-  );
-
-  const handleChangeStep = useCallback(
-    (stepId: string) => {
-      if (
-        stepId === ToolsetEditorSteps.Settings &&
-        step === ToolsetEditorSteps.General
-      ) {
-        void handleNext();
-        return;
-      }
-      setEditorStep(stepId);
-    },
-    [step, handleNext, setEditorStep],
   );
 
   const handleCancel = useCallback(() => {
@@ -394,20 +352,6 @@ const ToolsetEditor: FC = () => {
     const nextErrors = validate(form);
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
-      // Surface the General-step error first by switching to it when needed.
-      if (nextErrors.name) {
-        setEditorStep(ToolsetEditorSteps.General);
-      } else if (
-        nextErrors.endpoint ||
-        nextErrors.keyHeader ||
-        nextErrors.apiKey ||
-        nextErrors.clientId ||
-        nextErrors.clientSecret ||
-        nextErrors.authorizationEndpoint ||
-        nextErrors.tokenEndpoint
-      ) {
-        setEditorStep(ToolsetEditorSteps.Settings);
-      }
       return;
     }
 
@@ -467,7 +411,6 @@ const ToolsetEditor: FC = () => {
     t,
     showErrorNotification,
     notifyOperationSuccess,
-    setEditorStep,
     runPostSaveAuth,
     refetchToolsets,
   ]);
@@ -500,30 +443,65 @@ const ToolsetEditor: FC = () => {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <ToolsetEditorHeader
-        step={step}
-        isSaving={isSaving}
-        isSaveDisabled={isSaveDisabled}
-        canOpenSettings={Boolean(form.name.trim())}
-        onChangeStep={handleChangeStep}
-        onCancel={handleCancel}
-        onSave={handleSave}
-      />
-      <ToolsetEditorView
-        step={step}
-        form={form}
-        errors={visibleErrors}
-        isSaving={isSaving}
-        toolsetId={persistedToolsetId}
-        isEditMode={isEditMode}
-        onNext={handleNext}
-        onCancel={handleCancel}
-        onEnsureSaved={handleEnsureSaved}
-        onChange={handleChange}
-        onAuthChange={handleAuthChange}
-      />
-    </div>
+    <EditorLayout
+      title={
+        isEditMode
+          ? t(ToolsetEditorI18nKeys.EditTitle)
+          : t(ToolsetEditorI18nKeys.CreateTitle)
+      }
+      onBack={handleCancel}
+      backAriaLabel={t(ToolsetEditorI18nKeys.BackAriaLabel)}
+      isSaving={isSaving}
+      labels={{ savingStatusLabel: t(ToolsetEditorI18nKeys.SavingStatus) }}
+      actions={
+        <>
+          <NeutralButton
+            label={t(ButtonsI18nKeys.Cancel)}
+            onClick={handleCancel}
+          />
+          <PrimaryButton
+            label={
+              isEditMode ? t(ButtonsI18nKeys.Save) : t(ButtonsI18nKeys.Create)
+            }
+            disabled={isSaveDisabled}
+            onClick={handleSave}
+          />
+        </>
+      }
+      leftContent={
+        <EditorSection
+          title={t(ToolsetEditorI18nKeys.MetadataSectionTitle)}
+          className="border-0 p-4 desktop:p-6"
+        >
+          <GeneralForm
+            form={form}
+            errors={visibleErrors}
+            namePlaceholder={t(ToolsetEditorI18nKeys.NamePlaceholder)}
+            descriptionPlaceholder={t(
+              ToolsetEditorI18nKeys.DescriptionPlaceholder,
+            )}
+            onChange={handleChange}
+          />
+        </EditorSection>
+      }
+      rightContent={
+        <EditorSection
+          title={t(ToolsetEditorI18nKeys.SetupSectionTitle)}
+          className="border-0 p-4 desktop:p-6"
+        >
+          <SettingsForm
+            form={form}
+            errors={visibleErrors}
+            isSaving={isSaving}
+            toolsetId={persistedToolsetId}
+            isEditMode={isEditMode}
+            onChange={handleChange}
+            onAuthChange={handleAuthChange}
+            onEnsureSaved={handleEnsureSaved}
+          />
+        </EditorSection>
+      }
+    />
   );
 };
 

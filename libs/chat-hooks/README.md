@@ -18,18 +18,238 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Peer Dependencies
 
+`react` (`^19.2.6`) is the only mandatory peer, required by every entry point below. Every
+feature peer is **optional** (`package.json#peerDependenciesMeta` marks all of them
+`optional: true`) — `npm install` succeeds with none of them present. Which ones you actually
+need to install depends on which subpath(s) you import; see the matrix below. Importing a
+subpath without its documented peer installed does not fail at `npm install` — it fails later,
+at build time, when a bundler or `tsc` tries to resolve that subpath's own imports. See "Missing
+a peer" further down for what that failure looks like and how to fix it.
+
+Full peer set (the root `.` entry needs all of them; a subpath needs only its own row below):
+
 - `react` ^19.2.6
 - `@epam/ai-dial-attachment-canvas` \*
 - `@epam/ai-dial-attachment-input` \*
+- `@epam/ai-dial-catalog` \*
 - `@epam/ai-dial-chat-api-client` \*
+- `@epam/ai-dial-chat-overlay` \*
 - `@epam/ai-dial-chat-shared` \*
+- `@epam/ai-dial-deployment-creation-form` \*
+- `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
 - `@epam/ai-dial-react-file-manager` \*
+- `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
+- `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
 - `@epam/ai-dial-ui-kit` \*
-- `ag-grid-community` ^35.3.0
-- `fflate` ^0.8.3
+- `@epam/pdf-highlighter-kit` >=0.0.14
+
+`ag-grid-community` is not a peer of this package — no file under `src/` imports it, and it has
+never appeared in `package.json#peerDependencies`; a previous version of this section listed it
+in error. `fflate` is used internally by `./conversation-transfer` and `./skill-editor` (a zip
+codec for the `.dial` export/import format and skill archives) but is bundled into those entries'
+compiled output rather than externalized, so it is not a peer either — nothing to install for it.
+
+### Entry-point-to-peer matrix
+
+One row per subpath, its peers, and (right column) which peers are required only to resolve a
+type at build time — a name imported with `import type`, erased before the code runs. Both
+kinds still need the package installed for `tsc`/the bundler to resolve the specifier while
+building that entry; the distinction is about what the code does with the import, not about
+whether you need to `npm install` it.
+
+| Entry point               | Runtime peers beyond `react`                                                                                                                                                            | Type-only peers                                                                                                                   |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                                                          | `@epam/ai-dial-chat-overlay`, `@epam/ai-dial-deployment-creation-form`, `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit` |
+| `./viewport-layout`       | —                                                                                                                                                                                       | —                                                                                                                                 |
+| `./scroll-anchoring`      | —                                                                                                                                                                                       | —                                                                                                                                 |
+| `./conversation`          | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                                | `@epam/ai-dial-publish-panel`, `@epam/ai-dial-chat-overlay`                                                                       |
+| `./conversation-transfer` | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`                                                                                                                            | —                                                                                                                                 |
+| `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                                                                 | `@epam/ai-dial-source-panel`                                                                                                      |
+| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations` | `@epam/pdf-highlighter-kit`                                                                                                       |
+| `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor`    | —                                                                                                                                 |
+| `./skills-state`          | —                                                                                                                                                                                       | `@epam/ai-dial-chat-api-client`                                                                                                   |
+| `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                                                       | `@epam/ai-dial-chat-api-client`                                                                                                   |
+| `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                                                             | `@epam/ai-dial-chat-api-client`                                                                                                   |
+| `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                                                         | `@epam/ai-dial-chat-api-client`                                                                                                   |
+| `./sharing`               | `@epam/ai-dial-share`, `@epam/ai-dial-chat-api-client`                                                                                                                                  | —                                                                                                                                 |
+| `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                                                            | —                                                                                                                                 |
+| `./utils`                 | —                                                                                                                                                                                       | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-deployment-creation-form`                            |
+
+Six of the peers above (`@epam/ai-dial-catalog`, `@epam/ai-dial-chat-overlay`,
+`@epam/ai-dial-deployment-creation-form`, `@epam/ai-dial-publish-panel`,
+`@epam/ai-dial-scheduled-tasks`, `@epam/ai-dial-skill-editor`) were already declared in
+`package.json#peerDependencies` but missing from this section before this table was added.
+
+## Subpath imports
+
+Every hook and utility documented below the root-entry examples in this README is also reachable
+through a smaller, dependency-scoped subpath of the same package — `@epam/ai-dial-chat-hooks/<name>`
+— so a consumer who only needs, say, viewport tracking is not required to install (or bundle) the
+peers that `./catalog` or `./file-manager` need. The root (`.`) entry re-exports everything and
+keeps working exactly as before (see "Legacy root compatibility" below); subpaths are an
+additional, narrower way to reach the same exports, not a replacement for it.
+
+One minimal, real-export example per subpath:
+
+```tsx
+// ./viewport-layout — no peer beyond react
+import { useViewportWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
+
+const width = useViewportWidth(); // re-renders on window resize
+```
+
+```tsx
+// ./scroll-anchoring — no peer beyond react
+import { useConversationScroll } from '@epam/ai-dial-chat-hooks/scroll-anchoring';
+
+const {
+  containerRef,
+  contentRef,
+  spacerRef,
+  isScrollButtonVisible,
+  scrollToBottom,
+} = useConversationScroll({ messages, isAssistantTyping, conversationId });
+```
+
+```tsx
+// ./conversation
+import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks/conversation';
+
+/* Returns the model deployment id from the most recent `model_changed`
+   status message, or null if the conversation never switched models. */
+const newDeploymentId = getLastDeploymentId(conversation.messages);
+```
+
+```tsx
+// ./conversation-transfer
+import { formatDateYMD } from '@epam/ai-dial-chat-hooks/conversation-transfer';
+
+const exportFileDate = formatDateYMD(new Date());
+```
+
+```tsx
+// ./conversation-sources
+import { useConversationSources } from '@epam/ai-dial-chat-hooks/conversation-sources';
+
+const { uploaded, generated, sources } = useConversationSources(
+  conversation.messages,
+);
+```
+
+```tsx
+// ./file-manager
+import { sanitizeFileName } from '@epam/ai-dial-chat-hooks/file-manager';
+
+const safeName = sanitizeFileName(uploadedFile.name);
+```
+
+```tsx
+// ./catalog
+import { encodeDeploymentId } from '@epam/ai-dial-chat-hooks/catalog';
+
+const path = `applications/${encodeDeploymentId(deployment.id)}`;
+```
+
+```tsx
+// ./skills-state
+import { useSkillsState } from '@epam/ai-dial-chat-hooks/skills-state';
+
+const { skills, publicSkills, sharedWithMe, isLoading, refetch } =
+  useSkillsState({
+    listSkills, // host-configured fetch, same pattern as useUsageData
+    enabled: isSkillsFeatureEnabled,
+    ready: isSessionReady,
+  });
+```
+
+```tsx
+// ./skill-editor
+import { normalizeSkillName } from '@epam/ai-dial-chat-hooks/skill-editor';
+
+const skillId = normalizeSkillName(userTypedName);
+```
+
+```tsx
+// ./oauth
+import {
+  encodeToolsetId,
+  isPublicToolsetId,
+} from '@epam/ai-dial-chat-hooks/oauth';
+
+const encodedId = encodeToolsetId(toolset.id);
+const isPublic = isPublicToolsetId(toolset.id);
+```
+
+```tsx
+// ./scheduled-tasks
+import { mapFormValuesToCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const createBody = mapFormValuesToCreateBody(formValues);
+```
+
+```tsx
+// ./sharing
+import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
+
+const { requestRecipientsCount, getRecipientsCount } =
+  useShareRecipientsCount(shareApi);
+```
+
+```tsx
+// ./attachments
+import { useAttachmentValidation } from '@epam/ai-dial-chat-hooks/attachments';
+
+const { validateAttachment, fileAccept } = useAttachmentValidation({
+  allowedMimeTypes,
+});
+```
+
+```tsx
+// ./utils
+import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks/utils';
+
+const timezone = getBrowserTimezone();
+```
+
+## Missing a peer
+
+If you import a subpath without installing the peer(s) its row names in the matrix above, `npm
+install` still succeeds — every feature peer is optional, so npm never refuses to
+install this package or warns about a missing one. The failure shows up later, when a bundler
+(Vite/Rollup/Rolldown) or `tsc` tries to resolve that subpath's own module graph:
+
+```
+[vite]: Rollup failed to resolve import "@epam/ai-dial-react-file-manager" from
+".../node_modules/@epam/ai-dial-chat-hooks/file-manager.js".
+```
+
+or, under `tsc`:
+
+```
+error TS2307: Cannot find module '@epam/ai-dial-react-file-manager' or its corresponding
+type declarations.
+```
+
+This is a module-resolution error naming the exact missing specifier, scoped to the one entry
+you imported — not an install-time warning, and not a sign that this package or your build setup
+is broken. To recognize it: the error names the peer package that you have not installed, and
+it appears only after you added an import from one specific subpath. The fix is to install the
+peer(s) that subpath's row lists in the matrix above — you do not need any of the other 16 peers
+unless another subpath you also import needs them.
+
+## Legacy root compatibility
+
+The root (`.`) entry — imported as `@epam/ai-dial-chat-hooks` with no subpath, used throughout
+the "Hooks" section below — is unchanged in behavior and public surface by the introduction of
+subpaths. It re-exports everything it always did and requires the full current 17-peer set
+(`react` plus the 16 optional feature peers listed above), including the type-only
+`@epam/pdf-highlighter-kit` reference exposed by its declarations. Every existing import from
+`@epam/ai-dial-chat-hooks` keeps working exactly as before. No consumer is required to migrate
+to a subpath: subpaths are an additional, narrower way to reach a subset of the same exports, not
+a deprecation of the root entry or a breaking change to it.
 
 ## Hooks
 
@@ -585,6 +805,10 @@ const ChatPage = ({
 | `toolConfigurationValue` | `Record<string, boolean>`                                            | Optional. Tool toggle configuration values merged into every outgoing completion request.    |
 
 **Returns** (`UseConversationHandlersResult`): `{ handleSend, handleUploadAttachment, handleRegenerateMessage, handleDeleteMessage, handleConfirmDelete, handleRateMessage, handleButtonSelect, handleConfirmStarter, handleStartEdit, handleCancelEdit, handleEditMessage, editingMessageIndexes, pendingDeleteIndex, setPendingDeleteIndex, pendingStarterContext, setPendingStarterContext }`.
+
+`onConversationDeleted` is invoked from the handler body, never from inside a
+state updater, so a host may update its own state from it — for example dropping
+the deleted conversation from a list it renders.
 
 Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`, and `getStarterConversationText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
 
@@ -1158,7 +1382,7 @@ const { onUploadFiles, uploadBatchState, cancelUpload, clearUploadBatch } =
 Scrolls a newly inline-edited or newly-inserted grid row into view. Binds directly to the AG Grid `GridApi` obtained via `DialFileManager`'s `onGridApiChange` prop, since `@epam/ai-dial-react-file-manager`'s own `GridOptions` type does not forward the raw AG Grid event callbacks this needs. `handleGridApiChange` accepts that raw `GridApi` only to bind to `onGridApiChange` — the narrow AGENTS.md D9 exception for this hook — and the hook otherwise never renders, themes, or depends on AG Grid beyond that one event-binding parameter.
 
 ```tsx
-import { useGridEditingScroll } from '@epam/ai-dial-chat-hooks';
+import { useGridEditingScroll } from '@epam/ai-dial-chat-shared';
 
 const { handleGridApiChange, reset } = useGridEditingScroll();
 
@@ -2214,6 +2438,155 @@ const tabs = deriveAvailableTabIds(items, tabOrder);
 const topics = reconcileFilterTopics(persistedTopics, items);
 ```
 
+### useCatalogEditNavigation
+
+Owns the catalog's edit/delete/create-menu navigation: routing the details panel's Edit action to the right editor URL for each item type, deleting an item through the endpoint its type owns and refetching on completion, and building the Create dropdown's options. Every editor route arrives as an injected `CatalogEditNavigationUrls` adapter — the hook knows no route path or query-parameter scheme, only "the URL to edit/create this kind of item".
+
+**Parameters** (`UseCatalogEditNavigationParams`):
+
+| Name                                                                          | Type                                                        | Description                                                                                        |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `deployments`                                                                 | `DeploymentItemDto[]`                                       | Used to tell a custom app apart from a quick app when routing Edit.                                |
+| `isCustomAppsEnabled`                                                         | `boolean`                                                   | Gates the custom-app editor route and Create option.                                               |
+| `isSchemaAppsEnabled`                                                         | `boolean`                                                   | Gates the quick-app Create option.                                                                 |
+| `isHideCustomAppCreationEnabled`                                              | `boolean`                                                   | Hides the quick-app and custom-app Create options.                                                 |
+| `isToolsetsEnabled`                                                           | `boolean`                                                   | Gates the toolset Create option.                                                                   |
+| `isPromptsEnabled`                                                            | `boolean`                                                   | Gates the prompt Create option.                                                                    |
+| `quickAppSchemaId`                                                            | `string \| undefined`                                       | The quick-app schema id, or `undefined` when none exists.                                          |
+| `urls`                                                                        | `CatalogEditNavigationUrls`                                 | Injected editor-route URL builders.                                                                |
+| `onNavigate`                                                                  | `(url: string) => void`                                     | Navigates the host to a URL built by `urls`.                                                       |
+| `deletePrompt`                                                                | `(id: string) => Promise<unknown>`                          | Deletes a personal or shared prompt.                                                               |
+| `deleteToolset`                                                               | `(id: string) => Promise<unknown>`                          | Deletes a toolset.                                                                                 |
+| `deleteSkill`                                                                 | `(bucket: string, path: string) => Promise<unknown>`        | Deletes a skill package.                                                                           |
+| `deleteApplication`                                                           | `(id: string) => Promise<unknown>`                          | Deletes a deployment/application.                                                                  |
+| `refetchPrompts` / `refetchToolsets` / `refetchSkills` / `refetchDeployments` | `() => Promise<void>`                                       | Refreshes the deleted item's list.                                                                 |
+| `onDeleteSuccess`                                                             | `(item: CatalogItem) => void`                               | Called after a successful delete, so the host can notify with its own entity/operation vocabulary. |
+| `labels`                                                                      | `CatalogEditNavigationLabels`                               | Localized notification and Create-menu copy, resolved by the host.                                 |
+| `onNotify`                                                                    | `(notification: CatalogEditNavigationNotification) => void` | Called to surface a host notification when a delete fails.                                         |
+| `triggerSkillArchivePicker`                                                   | `() => void`                                                | Opens the file picker used to upload a skill archive from the Create menu.                         |
+
+`CatalogEditNavigationUrls` has one URL-builder pair per item kind — `buildPromptEditUrl(promptId)` / `buildPromptCreateUrl()`, and the same edit/create pair for `Skill`, `Toolset`, and `CustomApp` — plus `buildQuickAppEditUrl(schemaId, appId)` / `buildQuickAppCreateUrl(schemaId)`.
+
+**Returns** (`UseCatalogEditNavigationResult`):
+
+| Name            | Type                                   | Description                                                      |
+| --------------- | -------------------------------------- | ---------------------------------------------------------------- |
+| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.           |
+| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                       |
+| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags. |
+
+```tsx
+import {
+  useCatalogEditNavigation,
+  type CatalogEditNavigationLabels,
+  type CatalogEditNavigationUrls,
+} from '@epam/ai-dial-chat-hooks';
+
+const urls: CatalogEditNavigationUrls = {
+  buildPromptEditUrl: (id) => `${ROUTES.PromptEditor}?id=${id}`,
+  buildPromptCreateUrl: () => ROUTES.PromptEditor,
+  // ...buildSkillEditUrl/buildSkillCreateUrl, buildToolsetEditUrl/buildToolsetCreateUrl,
+  // buildCustomAppEditUrl/buildCustomAppCreateUrl, buildQuickAppEditUrl/buildQuickAppCreateUrl
+};
+
+const labels: CatalogEditNavigationLabels = {
+  createQuickApp: t('catalog.create.quickApp'),
+  createToolset: t('catalog.create.toolset'),
+  createCustomApp: t('catalog.create.customApp'),
+  createSkill: t('catalog.create.skill'),
+  createSkillWriteInstructions: t('catalog.create.skillWriteInstructions'),
+  createSkillUpload: t('catalog.create.skillUpload'),
+  createPrompt: t('catalog.create.prompt'),
+  deleteError: t('catalog.details.deleteError'),
+};
+
+const { handleEdit, handleDelete, createOptions } = useCatalogEditNavigation({
+  deployments,
+  isCustomAppsEnabled,
+  isSchemaAppsEnabled,
+  isHideCustomAppCreationEnabled,
+  isToolsetsEnabled,
+  isPromptsEnabled,
+  quickAppSchemaId,
+  urls,
+  onNavigate: navigate,
+  deletePrompt,
+  deleteToolset,
+  deleteSkill,
+  deleteApplication,
+  refetchPrompts,
+  refetchToolsets,
+  refetchSkills,
+  refetchDeployments,
+  onDeleteSuccess: (item) => notifyOperationSuccess(item),
+  labels,
+  onNotify: showErrorNotification,
+  triggerSkillArchivePicker,
+});
+```
+
+### useCatalogToolsetCredentials
+
+Owns the catalog's toolset credential login/logout flow: wires `useToolsetLogin` (see OAuth Popup Flow) to the host's DIAL Core operations, resolves each outcome to a notification and toolset refetch, and owns the notification copy for every credential level / API-key / org-fallback combination. Every backend call and OAuth callback route arrives as an injected parameter — the hook constructs no client instance and reads no app context or i18n.
+
+**Parameters** (`UseCatalogToolsetCredentialsParams`):
+
+| Name              | Type                                                                  | Description                                                      |
+| ----------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `isAdmin`         | `boolean`                                                             | Whether the user has admin privileges.                           |
+| `toolsets`        | `DialToolsetDto[]`                                                    | All toolsets, used to look up OAuth client settings.             |
+| `refetchToolsets` | `() => Promise<void>`                                                 | Refreshes the toolset list after a successful login/logout.      |
+| `callbackPath`    | `string`                                                              | The host's OAuth callback route, forwarded to `useToolsetLogin`. |
+| `loginToolset`    | `(toolsetId: string, body: ToolsetLoginBodyDto) => Promise<unknown>`  | Submits credentials at one level.                                |
+| `logoutToolset`   | `(toolsetId: string, body: ToolsetLogoutBodyDto) => Promise<unknown>` | Clears credentials at one level.                                 |
+| `getToolset`      | `(toolsetId: string) => Promise<DialToolsetDto>`                      | Re-reads a toolset to verify a reported OAuth cancellation.      |
+| `labels`          | `ToolsetCredentialsLabels`                                            | Localized notification copy, resolved by the host.               |
+| `onNotify`        | `(notification: ToolsetCredentialsNotification) => void`              | Called to surface a host notification.                           |
+
+`ToolsetCredentialsLabels` holds a title plus a `ToolsetCredentialsMessageLabels` (`user` / `org` / `global` formatter functions, each `(params: { name: string; version?: string }) => string`) for each of four outcomes — `loginSuccess`, `apiKeyAddedSuccess`, `logoutSuccess`, `apiKeyDeletedSuccess` — plus three flat error strings: `popupBlockedError`, `loginFailedError`, `logoutFailedError`.
+
+**Returns** (`UseCatalogToolsetCredentialsResult`):
+
+| Name           | Type                                                                                         | Description                                      |
+| -------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `handleLogin`  | `(item: CatalogItem, params: { level: CredentialsLevel; apiKey?: string }) => Promise<void>` | Runs one login attempt and notifies the outcome. |
+| `handleLogout` | `(item: CatalogItem, params: { level: CredentialsLevel }) => Promise<void>`                  | Clears credentials and notifies the outcome.     |
+
+```tsx
+import {
+  useCatalogToolsetCredentials,
+  type ToolsetCredentialsLabels,
+} from '@epam/ai-dial-chat-hooks';
+
+const labels: ToolsetCredentialsLabels = {
+  loginSuccessTitle: t('catalog.credentials.loginSuccessTitle'),
+  loginSuccess: {
+    user: ({ name, version }) =>
+      t('catalog.credentials.loginSuccessUser', { name, version }),
+    org: ({ name, version }) =>
+      t('catalog.credentials.loginSuccessOrg', { name, version }),
+    global: ({ name, version }) =>
+      t('catalog.credentials.loginSuccessGlobal', { name, version }),
+  },
+  // ...apiKeyAddedSuccess, logoutSuccess, apiKeyDeletedSuccess follow the same shape
+  popupBlockedError: t('catalog.credentials.popupBlockedError'),
+  loginFailedError: t('catalog.credentials.loginFailedError'),
+  logoutFailedError: t('catalog.credentials.logoutFailedError'),
+};
+
+const { handleLogin, handleLogout } = useCatalogToolsetCredentials({
+  isAdmin,
+  toolsets,
+  refetchToolsets,
+  callbackPath: ROUTES.ToolsetSignIn,
+  loginToolset,
+  logoutToolset,
+  getToolset,
+  labels,
+  onNotify: showNotification,
+});
+```
+
 ## Skill Utilities
 
 ### isValidSkillRelativePath / normalizeSkillName / buildSkillManifest / buildSkillManifestFromFrontmatter / parseSkillManifest / unpackSkillArchive
@@ -2736,12 +3109,12 @@ if (!deleteDialog.isRunning) deleteDialog.close();
 **Returns** (`AsyncConfirmDialogControls<T>`):
 
 | Name        | Type                                                                                   | Description                                                                                      |
-| ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pending`   | `T \| null`                                                                            | The value passed to `open()`, or `null` when the dialog is closed.                               |
 | `isPending` | `boolean`                                                                              | `true` while `pending` is non-null (dialog is open).                                             |
 | `isRunning` | `boolean`                                                                              | `true` while `confirm`'s `run` callback is executing.                                            |
 | `error`     | `string \| null`                                                                       | Error message from the most recent failed `confirm`, or `null`.                                  |
-| `open`      | `(value: T, returnFocusTo?: HTMLElement | null) => void`                              | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
+| `open`      | `(value: T, returnFocusTo?: HTMLElement                                                | null) => void`                                                                                   | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
 | `close`     | `() => void`                                                                           | Closes the dialog and clears pending + error.                                                    |
 | `confirm`   | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
 

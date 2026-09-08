@@ -345,6 +345,9 @@ export class ApplicationDetailsDto {
   })
   inputAttachmentTypes?: string[];
 
+  @ApiPropertyOptional({ type: ModelCatalogPropertiesDto })
+  catalogProperties?: ModelCatalogPropertiesDto;
+
   @ApiPropertyOptional({
     description: 'URI of the custom application type schema, when present',
   })
@@ -396,6 +399,9 @@ export class ToolsetDetailsDto {
 
   @ApiPropertyOptional({ type: DeploymentFeaturesDetailsDto })
   features?: DeploymentFeaturesDetailsDto;
+
+  @ApiPropertyOptional({ type: ModelCatalogPropertiesDto })
+  catalogProperties?: ModelCatalogPropertiesDto;
 
   @ApiPropertyOptional({
     description:

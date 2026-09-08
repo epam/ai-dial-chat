@@ -27,10 +27,6 @@ export const StageIcon: FC<StageIconProps> = ({
   runningLabel = 'Running',
   failedLabel = 'Failed',
 }) => {
-  if (isLive) {
-    return <Spinner size={16} ariaLabel={runningLabel} />;
-  }
-
   if (status === StageStatus.Failed) {
     return (
       <>
@@ -45,12 +41,16 @@ export const StageIcon: FC<StageIconProps> = ({
     );
   }
 
-  return (
-    <IconCheck
-      size={DIAL_ICON_SIZE.SM}
-      className={styles.iconCompleted}
-      aria-hidden
-      stroke={DIAL_KIT_ICON_STROKE}
-    />
-  );
+  if (status === StageStatus.Completed) {
+    return (
+      <IconCheck
+        size={DIAL_ICON_SIZE.SM}
+        className={styles.iconCompleted}
+        aria-hidden
+        stroke={DIAL_KIT_ICON_STROKE}
+      />
+    );
+  }
+
+  return isLive ? <Spinner size={16} ariaLabel={runningLabel} /> : null;
 };

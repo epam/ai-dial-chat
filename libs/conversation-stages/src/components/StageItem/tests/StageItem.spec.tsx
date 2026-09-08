@@ -149,8 +149,14 @@ describe('StageItem — icon priority and failed styling', () => {
     expect(nameEl.className).toMatch(/stageNameFailed|Failed/);
   });
 
-  it('shows the running spinner when isLive is true, regardless of status', () => {
-    render(<StageItem stage={baseStage} isLive typography={{}} />);
+  it('shows the running spinner for a live unresolved stage', () => {
+    render(
+      <StageItem
+        stage={{ ...baseStage, status: null }}
+        isLive
+        typography={{}}
+      />,
+    );
     expect(screen.getByRole('status')).toBeTruthy();
   });
 });

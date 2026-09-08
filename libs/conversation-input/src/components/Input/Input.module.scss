@@ -37,6 +37,17 @@
     color: var(--ci-model-selector-caret-color, var(--text-primary, #161b2d));
   }
 
+  .modelSelectorName {
+    color: var(--ci-model-selector-name-color, var(--text-primary, #161b2d));
+  }
+
+  .modelSelectorVersion {
+    color: var(
+      --ci-model-selector-version-color,
+      var(--text-secondary, #57647a)
+    );
+  }
+
   &:hover {
     background: var(
       --ci-model-selector-hover-bg,

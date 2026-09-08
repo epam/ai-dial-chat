@@ -26,6 +26,15 @@ export default defineConfig(() => ({
     dts({
       entryRoot: 'src',
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
+      /*
+       * Multi-entry lib builds emit per-source-file declarations mirroring
+       * src/'s folder structure by default (e.g. dist/entry-points/
+       * viewport-layout.d.ts), which does not match the flat
+       * dist/<entry>.d.ts paths package.json#exports points at. rollupTypes
+       * bundles each entry's declarations (via api-extractor) into one
+       * top-level .d.ts per entry key instead.
+       */
+      rollupTypes: true,
     }),
   ],
   build: {
@@ -36,9 +45,24 @@ export default defineConfig(() => ({
       transformMixedEsModules: true,
     },
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+        'viewport-layout': 'src/entry-points/viewport-layout.ts',
+        'scroll-anchoring': 'src/entry-points/scroll-anchoring.ts',
+        conversation: 'src/entry-points/conversation.ts',
+        'conversation-transfer': 'src/entry-points/conversation-transfer.ts',
+        'conversation-sources': 'src/entry-points/conversation-sources.ts',
+        'file-manager': 'src/entry-points/file-manager.ts',
+        catalog: 'src/entry-points/catalog.ts',
+        'skills-state': 'src/entry-points/skills-state.ts',
+        'skill-editor': 'src/entry-points/skill-editor.ts',
+        oauth: 'src/entry-points/oauth.ts',
+        'scheduled-tasks': 'src/entry-points/scheduled-tasks.ts',
+        sharing: 'src/entry-points/sharing.ts',
+        attachments: 'src/entry-points/attachments.ts',
+        utils: 'src/entry-points/utils.ts',
+      },
       name: '@epam/ai-dial-chat-hooks',
-      fileName: 'index',
       formats: ['es' as const],
     },
     rollupOptions: {
@@ -61,8 +85,6 @@ export default defineConfig(() => ({
         '@epam/ai-dial-skill-editor',
         '@epam/ai-dial-source-panel',
         '@epam/ai-dial-ui-kit',
-        'ag-grid-community',
-        'fflate',
       ],
     },
   },

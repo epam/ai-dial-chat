@@ -24,6 +24,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../chat-shared/src/index.ts',
       ),
+      '@epam/ai-dial-editor-builder': path.resolve(
+        import.meta.dirname,
+        '../editor-builder/src/index.ts',
+      ),
     },
   },
   build: {
@@ -48,6 +52,8 @@ export default defineConfig(() => ({
         '@epam/ai-dial-ui-kit',
         '@epam/ai-dial-chat-shared',
         '@tabler/icons-react',
+        '@uiw/react-markdown-preview',
+        '@uiw/react-md-editor',
       ],
     },
   },
