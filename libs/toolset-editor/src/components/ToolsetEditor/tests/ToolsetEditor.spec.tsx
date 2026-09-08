@@ -4,12 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolsetTransportType } from '../../../constants/toolsets';
+import type { ToolsetEditorProps } from '../../../models/toolset-editor-props';
 import type {
   ToolsetAuthActions,
   ToolsetAuthFormData,
   ToolsetFormData,
 } from '../../../models/toolset-form';
-import type { ToolsetEditorProps } from '../../../models/toolset-editor-props';
 import { ToolsetEditor } from '../ToolsetEditor';
 
 vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
@@ -241,9 +241,7 @@ const authActions: ToolsetAuthActions = {
   fetchAuthSettings: vi.fn(),
 };
 
-const makeForm = (
-  overrides?: Partial<ToolsetFormData>,
-): ToolsetFormData => ({
+const makeForm = (overrides?: Partial<ToolsetFormData>): ToolsetFormData => ({
   name: 'My toolset',
   version: '1.0.0',
   iconUrl: '',
@@ -301,9 +299,7 @@ describe('ToolsetEditor', () => {
   it('renders the create title and actions with the default labels', () => {
     renderEditor();
     expect(screen.getByText('Create toolset')).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'Create' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
   });
 

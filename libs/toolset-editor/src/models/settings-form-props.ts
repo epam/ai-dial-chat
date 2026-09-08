@@ -1,10 +1,10 @@
+import type { AuthSectionLabels } from './auth-section-props';
 import type {
   ToolsetAuthActions,
   ToolsetAuthFormData,
   ToolsetFormData,
   ToolsetFormErrors,
 } from './toolset-form';
-import type { AuthSectionLabels } from './auth-section-props';
 
 /** Pre-translated labels for the Connect section, all optional with English defaults. */
 export interface ConnectMcpUrlContentLabels {

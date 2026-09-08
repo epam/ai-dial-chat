@@ -115,16 +115,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   errorLabel = 'Failed to load app',
 }) => {
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
-  const {
-    html,
-    sandboxUrl,
-    toolInput,
-    toolResult,
-    hostContext,
-    onToolCall,
-    onOpenLink,
-    onRequestDisplayMode,
-  } = content;
+  const { html, sandboxUrl, toolInput, toolResult, hostContext } = content;
   /*
    * `AppFrame` re-creates its sandbox iframe whenever `sandbox.url` changes
    * identity (its mount effect depends on the object itself, not just
@@ -201,8 +192,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
       });
       bridge.onopenlink = async ({ url }) => {
         const handler = contentRef.current.onOpenLink;
-        const isOpened =
-          handler != null ? handler(url) : openLinkInNewTab(url);
+        const isOpened = handler != null ? handler(url) : openLinkInNewTab(url);
         return isOpened === false ? { isError: true } : {};
       };
       bridge.onrequestdisplaymode = async ({ mode }) => {

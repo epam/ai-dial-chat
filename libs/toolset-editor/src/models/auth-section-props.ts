@@ -1,4 +1,8 @@
-import type { ToolsetAuthActions, ToolsetAuthFormData, ToolsetFormErrors } from './toolset-form';
+import type {
+  ToolsetAuthActions,
+  ToolsetAuthFormData,
+  ToolsetFormErrors,
+} from './toolset-form';
 
 /** Pre-translated labels for the auth block, all optional with English defaults. */
 export interface AuthSectionLabels {

@@ -1,5 +1,3 @@
-import { dialFileToAttachment } from '@epam/ai-dial-chat-hooks';
-import type { AttachResult } from '@epam/ai-dial-chat-shared';
 import type {
   AvatarPickerModalLabels,
   DeploymentCreationFormLabels,
@@ -9,9 +7,11 @@ import {
   AvatarPickerModal,
   DeploymentCreationForm,
 } from '@epam/ai-dial-builder-form';
+import { dialFileToAttachment } from '@epam/ai-dial-chat-hooks';
+import type { AttachResult } from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
 import { useMemo, useState } from 'react';
-import type { GeneralFormLabels, GeneralFormProps } from '../../models/general-form-props';
+import type { GeneralFormProps } from '../../models/general-form-props';
 
 /* English defaults applied when the host omits the corresponding labels group. */
 const DEFAULT_FORM_LABELS: DeploymentCreationFormLabels = {

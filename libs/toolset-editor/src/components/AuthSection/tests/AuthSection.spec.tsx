@@ -209,11 +209,11 @@ const LOGOUT_FAILED_MESSAGE = 'Failed to log out. Please try again.';
 const POPUP_BLOCKED_MESSAGE =
   'The login popup was blocked by your browser. Please allow popups for this site and try again.';
 
-const authActions: ToolsetAuthActions = {
-  login: vi.fn(),
-  logout: vi.fn(),
-  fetchAuthSettings: vi.fn(),
-};
+const authActions = {
+  login: vi.fn<ToolsetAuthActions['login']>(),
+  logout: vi.fn<ToolsetAuthActions['logout']>(),
+  fetchAuthSettings: vi.fn<ToolsetAuthActions['fetchAuthSettings']>(),
+} satisfies ToolsetAuthActions;
 const onNotifySuccess = vi.fn();
 const onNotifyError = vi.fn();
 
@@ -316,8 +316,7 @@ describe('AuthSection', () => {
       renderSection({ auth: { ...apiKeyAuth(), isLoggedIn: true } });
 
       const typeOptions = ['Open access', 'API Key', 'OAuth'].map(
-        (name) =>
-          screen.getByRole('radio', { name }) as HTMLButtonElement,
+        (name) => screen.getByRole('radio', { name }) as HTMLButtonElement,
       );
 
       expect(typeOptions.map((option) => option.disabled)).toEqual([
@@ -336,7 +335,9 @@ describe('AuthSection', () => {
           .getAttribute('aria-checked'),
       ).toBe('true');
       expect(
-        screen.getByRole('radio', { name: 'OAuth' }).getAttribute('aria-checked'),
+        screen
+          .getByRole('radio', { name: 'OAuth' })
+          .getAttribute('aria-checked'),
       ).toBe('false');
     });
 
@@ -365,9 +366,7 @@ describe('AuthSection', () => {
   describe('API Key conditional fields', () => {
     it('renders key header and API key inputs when ApiKey + WithLogin is active', () => {
       renderSection({ auth: apiKeyAuth() });
-      expect(
-        screen.getByLabelText('API Key parameter name'),
-      ).toBeTruthy();
+      expect(screen.getByLabelText('API Key parameter name')).toBeTruthy();
       expect(screen.getByLabelText('API key')).toBeTruthy();
     });
 
@@ -379,13 +378,9 @@ describe('AuthSection', () => {
           apiKey: '',
         },
       });
-      expect(
-        screen.getByLabelText('API Key parameter name'),
-      ).toBeTruthy();
+      expect(screen.getByLabelText('API Key parameter name')).toBeTruthy();
 
-      expect(
-        screen.queryByRole('button', { name: 'Log in' }),
-      ).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Log in' })).toBeNull();
     });
 
     it('renders WithLogin and WithoutLogin radio buttons for ApiKey', () => {
@@ -400,9 +395,7 @@ describe('AuthSection', () => {
       renderSection({ auth: oauthWithConfigAuth() });
       expect(screen.getByLabelText('Client ID')).toBeTruthy();
       expect(screen.getByLabelText('Client secret')).toBeTruthy();
-      expect(
-        screen.getByLabelText('Authorization endpoint'),
-      ).toBeTruthy();
+      expect(screen.getByLabelText('Authorization endpoint')).toBeTruthy();
       expect(screen.getByLabelText('Token endpoint')).toBeTruthy();
       expect(screen.getByLabelText('Scopes')).toBeTruthy();
     });
@@ -420,9 +413,7 @@ describe('AuthSection', () => {
         isEditMode: false,
       });
       expect(
-        (
-          screen.getByLabelText('Client secret') as HTMLInputElement
-        ).required,
+        (screen.getByLabelText('Client secret') as HTMLInputElement).required,
       ).toBe(true);
     });
 
@@ -431,14 +422,11 @@ describe('AuthSection', () => {
         auth: { ...oauthWithConfigAuth(), clientSecret: '' },
       });
       expect(
-        (
-          screen.getByLabelText('Client secret') as HTMLInputElement
-        ).required,
+        (screen.getByLabelText('Client secret') as HTMLInputElement).required,
       ).toBe(false);
       expect(
-        (
-          screen.getByRole('button', { name: 'Log in' }) as HTMLButtonElement
-        ).disabled,
+        (screen.getByRole('button', { name: 'Log in' }) as HTMLButtonElement)
+          .disabled,
       ).toBe(false);
     });
 
@@ -528,10 +516,7 @@ describe('AuthSection', () => {
       renderSection({ auth: oauthWithConfigAuth(), onAuthChange });
       await user.click(screen.getByRole('button', { name: 'Log in' }));
 
-      const callbackUrl = new URL(
-        OAUTH_CALLBACK_PATH,
-        window.location.origin,
-      );
+      const callbackUrl = new URL(OAUTH_CALLBACK_PATH, window.location.origin);
       callbackUrl.searchParams.set(
         ToolsetOAuthCallbackQuery.Result,
         ToolsetOAuthResultType.Success,
@@ -564,9 +549,7 @@ describe('AuthSection', () => {
         expect(onNotifyError).toHaveBeenCalledWith(LOGIN_FAILED_MESSAGE),
       );
       expect(onAuthChange).not.toHaveBeenCalledWith({ isLoggedIn: true });
-      expect(
-        screen.getByRole('button', { name: 'Log in' }),
-      ).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Log in' })).toBeTruthy();
     });
 
     it('clears the busy state without a notification when the popup is closed manually', async () => {
@@ -909,9 +892,7 @@ describe('AuthSection', () => {
 
       await user.click(screen.getByRole('button', { name: 'Log out' }));
       const dialog = screen.getByRole('dialog');
-      await user.click(
-        within(dialog).getByRole('button', { name: 'Log out' }),
-      );
+      await user.click(within(dialog).getByRole('button', { name: 'Log out' }));
 
       await waitFor(() =>
         expect(authActions.logout).toHaveBeenCalledWith(
@@ -930,9 +911,7 @@ describe('AuthSection', () => {
 
       await user.click(screen.getByRole('button', { name: 'Log out' }));
       const dialog = screen.getByRole('dialog');
-      await user.click(
-        within(dialog).getByRole('button', { name: 'Log out' }),
-      );
+      await user.click(within(dialog).getByRole('button', { name: 'Log out' }));
 
       await waitFor(() =>
         expect(onNotifyError).toHaveBeenCalledWith(
@@ -947,9 +926,7 @@ describe('AuthSection', () => {
 
       await user.click(screen.getByRole('button', { name: 'Log out' }));
       const dialog = screen.getByRole('dialog');
-      await user.click(
-        within(dialog).getByRole('button', { name: 'Cancel' }),
-      );
+      await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
 
       expect(authActions.logout).not.toHaveBeenCalled();
       expect(screen.queryByRole('dialog')).toBeNull();

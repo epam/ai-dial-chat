@@ -15,7 +15,10 @@ import type { DialClientService } from '../../dial/dial-client.service';
 import type { SkillsLookupService } from '../../skills/lookup/skills-lookup.service';
 import type { ToolsetsService } from '../../toolsets/toolsets.service';
 import { ShareAccess } from '../dto/create-share-link.dto';
-import { collectApplicationPromptResourceUrls, ShareService } from '../share.service';
+import {
+  collectApplicationPromptResourceUrls,
+  ShareService,
+} from '../share.service';
 
 const okResponse = (data: unknown) =>
   ({ data, response: {} as Response }) as never;

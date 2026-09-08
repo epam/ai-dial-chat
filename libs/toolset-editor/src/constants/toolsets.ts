@@ -1,9 +1,5 @@
 import { ToolsetAuthTypes } from '@epam/ai-dial-chat-hooks';
-import {
-  IconBrandOauth,
-  IconKey,
-  IconLockOff,
-} from '@tabler/icons-react';
+import { IconBrandOauth, IconKey, IconLockOff } from '@tabler/icons-react';
 import type { TablerIcon } from '@tabler/icons-react';
 
 export enum ToolsetTransportType {

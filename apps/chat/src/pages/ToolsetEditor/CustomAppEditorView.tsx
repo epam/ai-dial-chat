@@ -148,7 +148,7 @@ const CustomAppEditorView: FC<Props> = ({
               errors={generalErrors}
               bucket={bucket}
               FileManagerModal={DialFileManagerModal}
-              resolveIconUrl={resolveCatalogIconUrl}
+              resolveIconUrl={(url) => resolveCatalogIconUrl(url) ?? ''}
               allowedMimeTypes={AVATAR_ALLOWED_MIME_TYPES}
               maxFileSizeBytes={AVATAR_MAX_FILE_SIZE_BYTES}
               availableLocaleOptions={localeOptions}

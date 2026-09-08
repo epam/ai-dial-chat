@@ -1,24 +1,19 @@
 import { ResponseError } from '@epam/ai-dial-chat-api-client';
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
-  WithLogin,
 } from '@epam/ai-dial-chat-hooks';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
-import { useAppConfig } from '../../../context/AppConfigContext';
-import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import { useUser } from '../../../context/auth/UserContext';
-import { useOperationNotification } from '../../../hooks/useOperationNotification';
 import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import {
@@ -119,7 +114,10 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
         <button
           type="button"
           onClick={async () => {
-            const id = await props.onPersist(props.initialForm, props.toolsetId);
+            const id = await props.onPersist(
+              props.initialForm,
+              props.toolsetId,
+            );
             setPersistResult(id ?? 'null');
           }}
         >
@@ -159,9 +157,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
         </button>
         <button
           type="button"
-          onClick={() =>
-            void props.listToolNames?.('toolsets/b/my__1.0.0')
-          }
+          onClick={() => void props.listToolNames?.('toolsets/b/my__1.0.0')}
         >
           adapter-list-tool-names
         </button>
@@ -218,10 +214,7 @@ const renderPage = (initialEntry: string = ROUTES.ToolsetEditor) =>
   render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
-        <Route
-          path={ROUTES.ToolsetEditor}
-          element={<ToolsetEditorPage />}
-        />
+        <Route path={ROUTES.ToolsetEditor} element={<ToolsetEditorPage />} />
         <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
         <Route path="/previous" element={<div>Previous screen</div>} />
       </Routes>
@@ -270,16 +263,23 @@ describe('ToolsetEditorPage', () => {
 
   it('shows the route fallback while the edit target is still loading', () => {
     vi.mocked(toolsetsApi.getToolset).mockImplementation(
-      () => new Promise(() => {}),
+      () =>
+        new Promise(() => {
+          /* empty */
+        }),
     );
-    renderPage(`${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`);
+    renderPage(
+      `${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`,
+    );
 
     expect(screen.getByText('Loading')).toBeTruthy();
   });
 
   it('loads the persisted toolset into the editor in edit mode', async () => {
     vi.mocked(toolsetsApi.getToolset).mockResolvedValue(editDto());
-    renderPage(`${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`);
+    renderPage(
+      `${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`,
+    );
 
     expect(await screen.findByText('My toolset')).toBeTruthy();
     expect(screen.getByText(EDIT_TOOLSET_ID)).toBeTruthy();
@@ -305,9 +305,11 @@ describe('ToolsetEditorPage', () => {
   it('persists a new toolset through createToolset and resolves the created id', async () => {
     renderPage();
 
-    await user.click(await screen.findByRole('button', {
-      name: 'adapter-persist',
-    }));
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'adapter-persist',
+      }),
+    );
 
     expect(
       await screen.findByText(`persist-result-${NEW_TOOLSET_ID}`),
@@ -319,7 +321,9 @@ describe('ToolsetEditorPage', () => {
 
   it('persists an existing toolset through updateToolset', async () => {
     vi.mocked(toolsetsApi.getToolset).mockResolvedValue(editDto());
-    renderPage(`${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`);
+    renderPage(
+      `${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`,
+    );
 
     await user.click(
       await screen.findByRole('button', { name: 'adapter-persist' }),
@@ -338,9 +342,11 @@ describe('ToolsetEditorPage', () => {
     vi.mocked(toolsetsApi.createToolset).mockRejectedValue(new Error('fail'));
     renderPage();
 
-    await user.click(await screen.findByRole('button', {
-      name: 'adapter-persist',
-    }));
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'adapter-persist',
+      }),
+    );
 
     await waitFor(() =>
       expect(mockShowNotification).toHaveBeenCalledWith(
@@ -349,9 +355,7 @@ describe('ToolsetEditorPage', () => {
         }),
       ),
     );
-    expect(
-      await screen.findByText('persist-result-null'),
-    ).toBeTruthy();
+    expect(await screen.findByText('persist-result-null')).toBeTruthy();
   });
 
   it('shows the DIAL Core error reason instead of a generic message when create fails', async () => {
@@ -367,9 +371,11 @@ describe('ToolsetEditorPage', () => {
     );
     renderPage();
 
-    await user.click(await screen.findByRole('button', {
-      name: 'adapter-persist',
-    }));
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'adapter-persist',
+      }),
+    );
 
     await waitFor(() =>
       expect(mockShowNotification).toHaveBeenCalledWith(
@@ -384,9 +390,11 @@ describe('ToolsetEditorPage', () => {
   it('logs in a saved API-key toolset with a trimmed key through the post-save login', async () => {
     renderPage();
 
-    await user.click(await screen.findByRole('button', {
-      name: 'adapter-post-save-login',
-    }));
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'adapter-post-save-login',
+      }),
+    );
 
     await waitFor(() =>
       expect(toolsetsApi.loginToolset).toHaveBeenCalledWith(
@@ -404,24 +412,28 @@ describe('ToolsetEditorPage', () => {
   it('does not start a post-save login for non-API-key auth', async () => {
     renderPage();
 
-    await user.click(await screen.findByRole('button', {
-      name: 'adapter-post-save-login-oauth',
-    }));
-
-    await waitFor(() =>
-      expect(screen.getByRole('button', {
+    await user.click(
+      await screen.findByRole('button', {
         name: 'adapter-post-save-login-oauth',
-      })).toBeTruthy(),
+      }),
     );
+
+    expect(
+      await screen.findByRole('button', {
+        name: 'adapter-post-save-login-oauth',
+      }),
+    ).toBeTruthy();
     expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
   });
 
   it('forwards authActions.login to loginToolset with the DTO body', async () => {
     renderPage();
 
-    await user.click(await screen.findByRole('button', {
-      name: 'adapter-auth-login',
-    }));
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'adapter-auth-login',
+      }),
+    );
 
     await waitFor(() =>
       expect(toolsetsApi.loginToolset).toHaveBeenCalledWith(
@@ -437,9 +449,11 @@ describe('ToolsetEditorPage', () => {
   it('forwards authActions.logout to logoutToolset with the DTO body', async () => {
     renderPage();
 
-    await user.click(await screen.findByRole('button', {
-      name: 'adapter-auth-logout',
-    }));
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'adapter-auth-logout',
+      }),
+    );
 
     await waitFor(() =>
       expect(toolsetsApi.logoutToolset).toHaveBeenCalledWith(
@@ -452,9 +466,11 @@ describe('ToolsetEditorPage', () => {
   it('raises the operation success toast through the operation notification hook', async () => {
     renderPage();
 
-    await user.click(await screen.findByRole('button', {
-      name: 'adapter-save-success',
-    }));
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'adapter-save-success',
+      }),
+    );
 
     expect(mockNotifyOperationSuccess).toHaveBeenCalledWith(
       NotifiableEntity.Toolset,
@@ -466,9 +482,11 @@ describe('ToolsetEditorPage', () => {
   it('returns to the requested screen when the save completes', async () => {
     renderPage(`${ROUTES.ToolsetEditor}?returnUrl=%2Fprevious`);
 
-    await user.click(await screen.findByRole('button', {
-      name: 'adapter-save-complete',
-    }));
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'adapter-save-complete',
+      }),
+    );
 
     expect(await screen.findByText('Previous screen')).toBeTruthy();
   });
@@ -476,9 +494,11 @@ describe('ToolsetEditorPage', () => {
   it('falls back to the catalog route from an unsafe returnUrl when going back', async () => {
     renderPage(`${ROUTES.ToolsetEditor}?returnUrl=//evil`);
 
-    await user.click(await screen.findByRole('button', {
-      name: 'adapter-back',
-    }));
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'adapter-back',
+      }),
+    );
 
     expect(await screen.findByText('Catalog')).toBeTruthy();
   });
@@ -504,9 +524,11 @@ describe('ToolsetEditorPage', () => {
   it('lists tool names through the MCP Apps client for toolset deployments', async () => {
     renderPage();
 
-    await user.click(await screen.findByRole('button', {
-      name: 'adapter-list-tool-names',
-    }));
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'adapter-list-tool-names',
+      }),
+    );
 
     expect(mcpAppsApiClient.listToolNames).toHaveBeenCalledWith(
       EDIT_TOOLSET_ID,

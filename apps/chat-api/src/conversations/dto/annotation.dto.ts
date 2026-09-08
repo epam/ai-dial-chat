@@ -86,12 +86,16 @@ export class AttachmentResourceDto {
   @IsString()
   type?: string;
 
-  @ApiPropertyOptional({ description: 'Remote URL pointing to the file content' })
+  @ApiPropertyOptional({
+    description: 'Remote URL pointing to the file content',
+  })
   @IsOptional()
   @IsAttachmentUrl()
   url?: string;
 
-  @ApiPropertyOptional({ description: 'Human-readable display name for the file' })
+  @ApiPropertyOptional({
+    description: 'Human-readable display name for the file',
+  })
   @IsOptional()
   @IsString()
   title?: string;
@@ -99,7 +103,9 @@ export class AttachmentResourceDto {
 
 /** Identifies the cited document attached to the annotation. */
 export class AnnotationSourceDto {
-  @ApiPropertyOptional({ description: "Always 'attachment' for file-based sources" })
+  @ApiPropertyOptional({
+    description: "Always 'attachment' for file-based sources",
+  })
   @IsOptional()
   @IsIn(['attachment'])
   type?: 'attachment';

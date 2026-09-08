@@ -2,7 +2,6 @@ import {
   mergeClasses,
   TAG_INPUT_TAG_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
-import { AddAvatar } from '../AddAvatar/AddAvatar';
 import {
   Input,
   TagInput,
@@ -11,6 +10,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { useEffect, useRef, type FC } from 'react';
 import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
+import { AddAvatar } from '../AddAvatar/AddAvatar';
 import { DeploymentLocalesField } from '../DeploymentLocalesField/DeploymentLocalesField';
 
 /** Controlled field set for deployment creation: avatar, name, description, version, and topics. */

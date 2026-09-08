@@ -27,3 +27,8 @@ export {
   resolveMcpAppToolCallSeed,
   resolveMcpAppToolResult,
 } from './utils/mcp-app';
+export {
+  MCP_CLIENT_INFO,
+  MCP_PROTOCOL_VERSION,
+  MCP_SESSION_ID_HEADER,
+} from './constants/mcp-protocol';

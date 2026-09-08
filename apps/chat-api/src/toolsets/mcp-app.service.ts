@@ -1,3 +1,13 @@
+/*
+ * MCP wire-protocol constants live in `@epam/ai-dial-mcp-apps` — imported
+ * through its React-free `./constants` entry point, not the package barrel,
+ * so this backend never pulls the frontend barrel or its React peers.
+ */
+import {
+  MCP_CLIENT_INFO,
+  MCP_PROTOCOL_VERSION,
+  MCP_SESSION_ID_HEADER,
+} from '@epam/ai-dial-mcp-apps/constants';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
@@ -9,11 +19,11 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
-import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import { McpAppToolSummaryDto, McpDeploymentKindDto } from './dto/mcp-app.dto';
@@ -46,15 +56,6 @@ interface McpTool {
 
 const RESOURCE_CACHE_TTL_MS = 30_000;
 const TOOL_CALL_TIMEOUT_MS = 60_000;
-
-/** MCP protocol version this proxy advertises in the `initialize` handshake. */
-const MCP_PROTOCOL_VERSION = '2024-11-05';
-
-/** Header the MCP Streamable HTTP transport uses to carry the session id. */
-const MCP_SESSION_ID_HEADER = 'mcp-session-id';
-
-/** Client identity advertised in the `initialize` handshake. */
-const MCP_CLIENT_INFO = { name: 'ai-dial-chat', version: '1.0.0' };
 
 /**
  * Extracts the JSON-RPC message from an MCP Streamable HTTP SSE response

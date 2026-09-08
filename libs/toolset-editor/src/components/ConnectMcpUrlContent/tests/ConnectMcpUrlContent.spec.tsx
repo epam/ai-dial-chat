@@ -17,9 +17,7 @@ describe('ConnectMcpUrlContent', () => {
         'Copy endpoint URL to easily integrate toolset into your workflows',
       ),
     ).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'Copy URL' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy URL' })).toBeTruthy();
   });
 
   it('renders host-supplied labels instead of the defaults', () => {

@@ -52,6 +52,7 @@ Do not use a `.utils`, `.types`, `.models`, or `.constants` suffix in file names
 
 ```
 utils/attachment.ts   ✓   (contains generateAttachmentId, validateAttachment, …)
+
 utils/generate-attachment-id.ts   ✗   (too narrow — one function per file)
 
 models/conversation.ts   ✓

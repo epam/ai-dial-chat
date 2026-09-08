@@ -1,11 +1,14 @@
-import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import { validateDeploymentCreationFields } from '@epam/ai-dial-builder-form';
+import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import {
   DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,
   ToolsetTransportType,
 } from '../constants/toolsets';
-import type { ToolsetAuthFormData, ToolsetFormData } from '../models/toolset-form';
+import type {
+  ToolsetAuthFormData,
+  ToolsetFormData,
+} from '../models/toolset-form';
 
 /**
  * Returns a storage-safe toolset name that does not collide with any existing

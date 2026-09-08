@@ -1,13 +1,3 @@
-import type { CatalogItem } from '@epam/ai-dial-catalog';
-import { Card } from '@epam/ai-dial-catalog';
-import {
-  appendLocaleCode,
-  composeLocalePayload,
-  dialFileToAttachment,
-  isQuickAppSchema,
-} from '@epam/ai-dial-chat-hooks';
-import type { AttachResult } from '@epam/ai-dial-chat-shared';
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   AvatarPickerModal,
   DeploymentCreationFieldErrorCode,
@@ -18,6 +8,16 @@ import {
   SEMVER_VERSION_PATTERN,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-builder-form';
+import type { CatalogItem } from '@epam/ai-dial-catalog';
+import { Card } from '@epam/ai-dial-catalog';
+import {
+  appendLocaleCode,
+  composeLocalePayload,
+  dialFileToAttachment,
+  isQuickAppSchema,
+} from '@epam/ai-dial-chat-hooks';
+import type { AttachResult } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,

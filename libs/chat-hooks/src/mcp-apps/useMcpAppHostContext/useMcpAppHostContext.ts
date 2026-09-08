@@ -124,7 +124,13 @@ export interface McpAppHostContextParams {
  */
 export const useMcpAppHostContext = (
   displayMode: 'inline' | 'fullscreen',
-  { theme, mcpAppTheme, locale, mcpAppUserAgent, availableDisplayModes }: McpAppHostContextParams,
+  {
+    theme,
+    mcpAppTheme,
+    locale,
+    mcpAppUserAgent,
+    availableDisplayModes,
+  }: McpAppHostContextParams,
 ): McpUiHostContext =>
   useMemo(
     () => ({

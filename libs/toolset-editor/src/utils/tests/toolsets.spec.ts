@@ -110,9 +110,9 @@ describe('normalizeReturnedEndpointUrl', () => {
   });
 
   it('decodes percent-encoded URLs before repairing them', () => {
-    expect(
-      normalizeReturnedEndpointUrl('https%3A%2F%2Fmcp.example.com'),
-    ).toBe('https://mcp.example.com');
+    expect(normalizeReturnedEndpointUrl('https%3A%2F%2Fmcp.example.com')).toBe(
+      'https://mcp.example.com',
+    );
   });
 
   it('returns the trimmed value unchanged when no repair produces a valid URL', () => {

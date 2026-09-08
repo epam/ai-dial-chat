@@ -1,4 +1,8 @@
-import { CopyButton, mergeClasses, useCodeCopy } from '@epam/ai-dial-chat-shared';
+import {
+  CopyButton,
+  mergeClasses,
+  useCodeCopy,
+} from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
 import { memo } from 'react';
 import type { ConnectMcpUrlContentLabels } from '../../models/settings-form-props';

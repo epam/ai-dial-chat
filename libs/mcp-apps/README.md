@@ -89,6 +89,24 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
 - `collectToolCallNames(messages)` — collects every real tool-call name seen across a conversation's messages.
 - `mcpAppCanvasKey(messageIndex)` — stable per-message cache/canvas key.
 
+## Constants
+
+MCP wire-protocol constants shared by every surface that talks to an MCP server over the Streamable HTTP transport: `MCP_PROTOCOL_VERSION` (`'2024-11-05'`), `MCP_SESSION_ID_HEADER` (`'mcp-session-id'`), and `MCP_CLIENT_INFO` (`{ name: 'ai-dial-chat', version: '1.0.0' }`).
+
+```ts
+import {
+  MCP_CLIENT_INFO,
+  MCP_PROTOCOL_VERSION,
+  MCP_SESSION_ID_HEADER,
+} from '@epam/ai-dial-mcp-apps';
+```
+
+Non-React consumers (`apps/chat-api`'s MCP proxy) import the same constants through the React-free `./constants` entry point instead of the barrel, so they never pull the React-peered barrel:
+
+```ts
+import { MCP_PROTOCOL_VERSION } from '@epam/ai-dial-mcp-apps/constants';
+```
+
 ## Types
 
 - `McpAppToolRef`, `McpAppToolCallSeed`, `McpDeploymentKind`

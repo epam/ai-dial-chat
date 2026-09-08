@@ -31,8 +31,8 @@ import type {
   AuthSectionLabels,
   AuthSectionProps,
 } from '../../models/auth-section-props';
-import type { ToolsetAuthFormData } from '../../models/toolset-form';
 import type {
+  ToolsetAuthFormData,
   ToolsetLoginRequest,
   ToolsetLogoutRequest,
 } from '../../models/toolset-form';
@@ -163,9 +163,8 @@ export const AuthSection: FC<AuthSectionProps> = ({
        * actually completed server-side.
        */
       try {
-        const refreshedAuth = await authActions.fetchAuthSettings(
-          savedToolsetId,
-        );
+        const refreshedAuth =
+          await authActions.fetchAuthSettings(savedToolsetId);
         if (refreshedAuth.isLoggedIn) {
           onAuthChange({ isLoggedIn: true });
           onNotifySuccess(

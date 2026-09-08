@@ -1,17 +1,18 @@
-import { getApiErrorDetails, ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import {
   DeploymentCreationFieldErrorCode,
   EditorLayout,
   EditorSection,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-builder-form';
+import {
+  getApiErrorDetails,
+  ToolsetAuthTypes,
+  WithLogin,
+} from '@epam/ai-dial-chat-hooks';
 import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type {
-  ToolsetEditorLabels,
-  ToolsetEditorProps,
-} from '../../models/toolset-editor-props';
+import type { ToolsetEditorProps } from '../../models/toolset-editor-props';
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,

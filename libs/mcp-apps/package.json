@@ -15,6 +15,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./constants": {
+      "@epam/source": "./src/constants/mcp-protocol.ts",
+      "types": "./dist/constants/mcp-protocol.d.ts",
+      "import": "./dist/constants.js",
+      "default": "./dist/constants.js"
     }
   },
   "peerDependencies": {

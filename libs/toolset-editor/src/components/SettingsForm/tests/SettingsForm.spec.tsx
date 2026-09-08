@@ -1,14 +1,15 @@
 import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
-import { render, screen, waitFor } from '@testing-library/react';
+import { useCodeCopy } from '@epam/ai-dial-chat-shared';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolsetTransportType } from '../../../constants/toolsets';
+import type { SettingsFormProps } from '../../../models/settings-form-props';
 import type {
   ToolsetAuthActions,
   ToolsetAuthFormData,
   ToolsetFormData,
 } from '../../../models/toolset-form';
-import type { SettingsFormProps } from '../../../models/settings-form-props';
 import { SettingsForm } from '../SettingsForm';
 
 vi.mock('../../AuthSection/AuthSection', () => ({
@@ -207,7 +208,9 @@ describe('SettingsForm — endpoint field', () => {
 
     await user.click(screen.getByRole('radio', { name: 'SSE' }));
 
-    expect(onChange).toHaveBeenCalledWith({ protocol: ToolsetTransportType.Sse });
+    expect(onChange).toHaveBeenCalledWith({
+      protocol: ToolsetTransportType.Sse,
+    });
   });
 });
 
@@ -235,25 +238,19 @@ describe('SettingsForm — allowed tools field', () => {
     const listToolNames = vi.fn().mockResolvedValue([]);
     renderSettings({ listToolNames });
 
-    await waitFor(() =>
-      expect(
-        screen.getByPlaceholderText('Add tools, comma separated'),
-      ).toBeTruthy(),
-    );
     expect(
-      screen.queryByText('Select allowed tools'),
-    ).toBeNull();
+      await screen.findByPlaceholderText('Add tools, comma separated'),
+    ).toBeTruthy();
+    expect(screen.queryByText('Select allowed tools')).toBeNull();
   });
 
   it('falls back to the tag input when the fetch rejects', async () => {
     const listToolNames = vi.fn().mockRejectedValue(new Error('fail'));
     renderSettings({ listToolNames });
 
-    await waitFor(() =>
-      expect(
-        screen.getByPlaceholderText('Add tools, comma separated'),
-      ).toBeTruthy(),
-    );
+    expect(
+      await screen.findByPlaceholderText('Add tools, comma separated'),
+    ).toBeTruthy();
   });
 
   it('does not fetch tool names before the toolset is persisted', () => {
@@ -276,9 +273,7 @@ describe('SettingsForm — Connect toolset section', () => {
         'Copy endpoint URL to easily integrate toolset into your workflows',
       ),
     ).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'Copy URL' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy URL' })).toBeTruthy();
   });
 
   it('hides the connect section when toolsetId is empty', () => {
@@ -298,7 +293,6 @@ describe('SettingsForm — Connect toolset section', () => {
   it('passes the host-resolved URL to the shared copy control', async () => {
     const user = userEvent.setup({ delay: null });
     const mockCopy = vi.fn();
-    const { useCodeCopy } = await import('@epam/ai-dial-chat-shared');
     vi.mocked(useCodeCopy).mockReturnValueOnce({
       isCopied: false,
       copy: mockCopy,
@@ -327,8 +321,6 @@ describe('SettingsForm — Connect toolset section', () => {
     });
     expect(screen.getByText('Connect toolset title')).toBeTruthy();
     expect(screen.getByText('Connect toolset description')).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'Copy the URL' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy the URL' })).toBeTruthy();
   });
 });

@@ -1,5 +1,5 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { EditorLayout } from '@epam/ai-dial-builder-form';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   Input,
   Label,

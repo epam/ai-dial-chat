@@ -22,9 +22,16 @@ export default defineConfig(() => ({
       transformMixedEsModules: true,
     },
     lib: {
-      entry: 'src/index.ts',
+      /*
+       * `constants` is a separate entry so the package's `./constants`
+       * subpath exports a React-free module backend consumers can import
+       * (apps/chat-api's MCP proxy) without pulling the React-peered barrel.
+       */
+      entry: {
+        index: 'src/index.ts',
+        constants: 'src/constants/mcp-protocol.ts',
+      },
       name: '@epam/ai-dial-mcp-apps',
-      fileName: 'index',
       formats: ['es' as const],
     },
     rollupOptions: {

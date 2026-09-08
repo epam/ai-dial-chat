@@ -1,12 +1,12 @@
+import type {
+  DeploymentCreationFormLocaleLabels,
+  DeploymentCreationFormLocaleOption,
+} from '@epam/ai-dial-builder-form';
 import {
   buildAdditionalLocaleOptions as buildAdditionalLocaleOptionsLib,
   resolveLocalizedText as resolveLocalizedTextLib,
   type LocalizedText,
 } from '@epam/ai-dial-chat-hooks';
-import type {
-  DeploymentCreationFormLocaleLabels,
-  DeploymentCreationFormLocaleOption,
-} from '@epam/ai-dial-builder-form';
 import type { TFunction } from 'i18next';
 import { ButtonsI18nKeys, EditorI18nKeys } from '../constants/translation-keys';
 import { SUPPORTED_LANGUAGES } from '../hooks/language/useLanguage';

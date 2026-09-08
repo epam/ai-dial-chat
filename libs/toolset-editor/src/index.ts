@@ -6,7 +6,10 @@ export type {
   ToolsetEditorProps,
   ToolsetEditorValidationLabels,
 } from './models/toolset-editor-props';
-export type { GeneralFormLabels, GeneralFormProps } from './models/general-form-props';
+export type {
+  GeneralFormLabels,
+  GeneralFormProps,
+} from './models/general-form-props';
 export type {
   ConnectMcpUrlContentLabels,
   SettingsFormLabels,
