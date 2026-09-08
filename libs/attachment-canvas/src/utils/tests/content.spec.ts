@@ -12,6 +12,7 @@ describe('OOXML content detection', () => {
     ['report.DOCX', OoxmlFileType.Docx],
     ['budget.xlsx', OoxmlFileType.Xlsx],
     ['slides.pptx', OoxmlFileType.Pptx],
+    ['export.csv', OoxmlFileType.Csv],
   ])('detects %s by extension', (name, expected) => {
     expect(getOoxmlFileType(name)).toBe(expected);
   });
@@ -29,6 +30,7 @@ describe('OOXML content detection', () => {
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       OoxmlFileType.Pptx,
     ],
+    ['text/csv', OoxmlFileType.Csv],
   ])('detects a document by MIME type', (mimeType, expected) => {
     expect(getOoxmlFileType('attachment', mimeType)).toBe(expected);
   });
@@ -70,6 +72,7 @@ describe('OOXML content detection', () => {
 
   it('reports supported formats as previewable', () => {
     expect(isOoxmlPreviewable('slides.pptx')).toBe(true);
+    expect(isOoxmlPreviewable('export.csv')).toBe(true);
     expect(isOoxmlPreviewable('notes.txt')).toBe(false);
   });
 
@@ -98,6 +101,7 @@ describe('OOXML content detection', () => {
       'slides.pptx',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     ],
+    ['export.csv', 'text/csv'],
   ])('resolves the canonical MIME type for %s by extension', (name, mime) => {
     expect(getOoxmlMimeType(name)).toBe(mime);
   });

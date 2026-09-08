@@ -2,26 +2,27 @@
 
 ## Purpose
 
-The Office-document variant of the attachment canvas: the `Ooxml` content type, MIME/extension format detection, the lazily-loaded renderer, and routing.
+The Office-document and CSV-spreadsheet variant of the attachment canvas: the `Ooxml` content type, MIME/extension format detection, the lazily-loaded renderer, and routing.
 
 ## Capability: attachment-canvas-ooxml-viewer
 
 ### Overview
 
-Adds a DOCX/XLSX/PPTX viewer to `AttachmentCanvas` as a new `Ooxml` content type. Office files are opaque ZIP containers rather than natively-renderable binaries, so they are parsed in the browser by `@silurus/ooxml`, whose three separate entry points are each loaded through their own dynamic `import()` — opening a DOCX downloads only the DOCX parser. Format is resolved from the MIME type first and the file extension second, so either signal alone is enough. The file's bytes are resolved at the application boundary and the library receives only a URL and a format enum.
+Adds a DOCX/XLSX/PPTX and CSV viewer to `AttachmentCanvas` under the `Ooxml` content type. Office files are opaque ZIP containers rather than natively-renderable binaries, while CSV is delimited text; both are parsed in the browser by `@silurus/ooxml`. Format-specific entry points are loaded through dynamic `import()` — opening a DOCX downloads only the DOCX parser, while XLSX and CSV share the XLSX entry point. Format is resolved from the MIME type first and the file extension second, so either signal alone is enough. The file's bytes are resolved at the application boundary and the library receives only a URL and a format enum.
 
 ---
 
 ## Requirements
 ### Requirement: `OoxmlFileType` enum
 
-`libs/attachment-canvas/src/types/attachment-canvas.ts` SHALL export a string enum naming the supported Office Open XML formats:
+`libs/attachment-canvas/src/types/attachment-canvas.ts` SHALL export a string enum naming the formats supported by the bundled `@silurus/ooxml` runtime:
 
 ```ts
 export enum OoxmlFileType {
   Docx = 'docx',
   Xlsx = 'xlsx',
   Pptx = 'pptx',
+  Csv = 'csv',
 }
 ```
 
@@ -32,7 +33,7 @@ export enum OoxmlFileType {
 #### Scenario: enum members exist
 
 - **WHEN** a consumer imports `OoxmlFileType` from `@epam/ai-dial-attachment-canvas`
-- **THEN** `OoxmlFileType.Docx` equals `'docx'`, `OoxmlFileType.Xlsx` equals `'xlsx'`, and `OoxmlFileType.Pptx` equals `'pptx'`
+- **THEN** `OoxmlFileType.Docx` equals `'docx'`, `OoxmlFileType.Xlsx` equals `'xlsx'`, `OoxmlFileType.Pptx` equals `'pptx'`, and `OoxmlFileType.Csv` equals `'csv'`
 
 ---
 
@@ -61,12 +62,12 @@ interface OoxmlCanvasContent {
 }
 ```
 
-- `url` — a resolved download URL or object URL for the Office file. Required; the viewer has no other source.
+- `url` — a resolved download URL or object URL for the Office or CSV file. Required; the viewer has no other source.
 - `format` — selects the format-specific renderer.
 
 `OoxmlCanvasContent` SHALL be added to the `AttachmentCanvasContent` discriminated union, and both the interface type and `OoxmlFileType` SHALL be exported from the library's public entry point.
 
-These two fields are the **entire** library boundary contract for Office previews. The library SHALL NOT receive a MIME type, a DIAL file path, a bucket, an auth token, or a fetch function — see the app-layer resolver requirement below.
+These two fields are the **entire** library boundary contract for Office and CSV previews. The library SHALL NOT receive a MIME type, a DIAL file path, a bucket, an auth token, or a fetch function — see the app-layer resolver requirement below.
 
 #### Scenario: OoxmlCanvasContent is part of the union
 
@@ -94,6 +95,11 @@ export const OOXML_MIME_TYPES = {
 
 The Office extensions SHALL NOT be added to `TEXT_EXTENSIONS`. An Office file routed to `CodeContent` or the plain-text renderer would display raw ZIP bytes.
 
+CSV SHALL be recognized separately through the canonical `text/csv` MIME type
+and `.csv` extension. It remains in `TEXT_EXTENSIONS` for compatibility with
+callers that only ask whether it is textual, but the document-renderer routing
+branch SHALL run first and select `OoxmlFileType.Csv`.
+
 #### Scenario: docx mime type is exact
 
 - **WHEN** `OOXML_MIME_TYPES.docx` is read
@@ -119,8 +125,8 @@ export const getOoxmlFileType = (
 
 Resolution order SHALL be **MIME type first, then file extension**:
 
-1. When `mimeType` is provided, normalize it — take the substring before the first `;`, trim it, and lowercase it — then look it up against `OOXML_MIME_TYPES`. On a match, return that format immediately.
-2. Otherwise, take the substring after the **last** `.` in `name`, lowercase it, and look it up against the extension map. Return `undefined` when `name` contains no `.`.
+1. When `mimeType` is provided, normalize it — take the substring before the first `;`, trim it, and lowercase it — then look it up against the supported MIME map (`OOXML_MIME_TYPES` plus `text/csv`). On a match, return that format immediately.
+2. Otherwise, take the substring after the **last** `.` in `name`, lowercase it, and look it up against the `docx`/`xlsx`/`pptx`/`csv` extension map. Return `undefined` when `name` contains no `.`.
 3. Return `undefined` when neither signal matches.
 
 `isOoxmlPreviewable(name, mimeType)` SHALL return `getOoxmlFileType(name, mimeType) != null`.
@@ -134,7 +140,7 @@ export const getOoxmlMimeType = (
 ) => string | undefined
 ```
 
-`getOoxmlMimeType` SHALL resolve a format the same way `getOoxmlFileType` does (same MIME-then-extension order) and return that format's canonical MIME type string (`OOXML_MIME_TYPES.docx`/`.xlsx`/`.pptx`), or `undefined` when neither signal matches. It exists because a caller correcting a mislabeled `contentType` (see `resolveExternalSourceContentType` in `libs/chat-hooks/src/files/attachment-canvas.ts`) needs the canonical MIME string itself, not just the `OoxmlFileType` enum member — the corrected `contentType` is what `useOpenAttachmentCanvas`'s `getOoxmlFileType('', contentType)` MIME branch checks downstream.
+`getOoxmlMimeType` SHALL resolve a format the same way `getOoxmlFileType` does (same MIME-then-extension order) and return that format's canonical MIME type string (`OOXML_MIME_TYPES.docx`/`.xlsx`/`.pptx` or `text/csv`), or `undefined` when neither signal matches. It exists because a caller correcting a mislabeled `contentType` (see `resolveExternalSourceContentType` in `libs/chat-hooks/src/files/attachment-canvas.ts`) needs the canonical MIME string itself, not just the `OoxmlFileType` enum member — the corrected `contentType` is what `useOpenAttachmentCanvas`'s `getOoxmlFileType('', contentType)` MIME branch checks downstream.
 
 All three SHALL be exported from the library's public entry point.
 
@@ -156,6 +162,16 @@ MIME parameters must be stripped because upstream `contentType` values are not c
 
 - **WHEN** `getOoxmlFileType('deck.pptx')` is called
 - **THEN** it returns `OoxmlFileType.Pptx`
+
+#### Scenario: csv resolved from canonical mime type
+
+- **WHEN** `getOoxmlFileType('', 'text/csv')` is called
+- **THEN** it returns `OoxmlFileType.Csv`
+
+#### Scenario: csv resolved from extension with a generic mime type
+
+- **WHEN** `getOoxmlFileType('export.csv', 'application/octet-stream')` is called
+- **THEN** it returns `OoxmlFileType.Csv`
 
 #### Scenario: mime type with parameters is normalized
 
@@ -221,17 +237,18 @@ MIME parameters must be stripped because upstream `contentType` values are not c
 
 | Format | Module specifier | Exported class | Options |
 |---|---|---|---|
-| `Docx` | `@silurus/ooxml/docx` | `DocxScrollViewer` | `{ enableTextSelection: true, refitOnResize: true, onError }` |
-| `Xlsx` | `@silurus/ooxml/xlsx` | `XlsxViewer` | `{ showZoomSlider: true, onError }` |
-| `Pptx` | `@silurus/ooxml/pptx` | `PptxScrollViewer` | `{ enableTextSelection: true, refitOnResize: true, onError }` |
+| `Docx` | `@silurus/ooxml/docx` | `DocxScrollViewer` | `{ enableTextSelection: true, refitOnResize: true, chartEx, onError }` |
+| `Xlsx` | `@silurus/ooxml/xlsx` | `XlsxViewer` | `{ showZoomSlider: true, chartEx, onError, onSelectionContextChange }` |
+| `Pptx` | `@silurus/ooxml/pptx` | `PptxScrollViewer` | `{ enableTextSelection: true, refitOnResize: true, chartEx, onError }` |
+| `Csv` | `@silurus/ooxml/xlsx` | `XlsxSheetViewer` | `{ showScrollbars: true, onError }`; load with `{ format: 'csv' }` |
 
 Each module specifier SHALL be a **static string literal** inside its own `switch` arm. A computed or templated specifier defeats bundler code-splitting.
 
-The viewers SHALL NOT be imported statically at module scope. A static import places all three parsers in the chunk that contains `libs/attachment-canvas`, which the conversation view loads eagerly — meaning every user downloads three Office parsers whether or not they open one.
+The viewers SHALL NOT be imported statically at module scope. A static import places every parser in the chunk that contains `libs/attachment-canvas`, which the conversation view loads eagerly — meaning every user downloads document parsers whether or not they open one.
 
 The `switch` SHALL be exhaustive over `OoxmlFileType` with **no `default` arm**, so adding a future format is a compile error at this site rather than a runtime `undefined`.
 
-The three viewer classes SHALL be typed against a locally-declared structural interface rather than their imported types:
+The viewer classes SHALL be adapted to a locally-declared structural lifecycle interface:
 
 ```ts
 interface OoxmlViewer {
@@ -240,7 +257,7 @@ interface OoxmlViewer {
 }
 ```
 
-**Rationale:** one lifecycle to drive instead of three, and the module's static type surface stays free of the parser packages so no type-only import can become a runtime edge.
+**Rationale:** one lifecycle drives every format, including the CSV loader's required second argument, while every renderer remains a lazy runtime import.
 
 #### Scenario: opening a docx loads only the docx parser
 
@@ -253,6 +270,13 @@ interface OoxmlViewer {
 - **WHEN** `OoxmlContent` renders content with `format: OoxmlFileType.Xlsx`
 - **THEN** `XlsxViewer` is constructed with `showZoomSlider: true` and an `onError` callback
 
+#### Scenario: csv uses the delimited-text sheet surface
+
+- **WHEN** `OoxmlContent` renders content with `format: OoxmlFileType.Csv`
+- **THEN** `XlsxSheetViewer` is constructed with a canvas that fills the viewer container
+- **AND** its `load` method receives the source and `{ format: 'csv' }`
+- **AND** values beginning with `=` remain text rather than being inferred as formulas
+
 #### Scenario: viewer is constructed against the container element and loaded with the url
 
 - **WHEN** `OoxmlContent` renders content `{ type: Ooxml, url: 'blob:abc', format: Docx }`
@@ -263,7 +287,7 @@ interface OoxmlViewer {
 
 ### Requirement: `OoxmlContent` renderer component
 
-`libs/attachment-canvas/src/components/OoxmlContent/OoxmlContent.tsx` SHALL render an Office document into an uncontrolled container element, with a status overlay covering the loading and error states.
+`libs/attachment-canvas/src/components/OoxmlContent/OoxmlContent.tsx` SHALL render an Office document or CSV spreadsheet into an uncontrolled container element, with a status overlay covering the loading and error states.
 
 **Props interface:**
 
@@ -272,6 +296,8 @@ interface OoxmlContentProps {
   content: OoxmlCanvasContent;
   fileName?: string;
   loadErrorLabel: string;
+  formulaLabel: string;
+  formulaLabelClassName: string;
 }
 ```
 
@@ -294,12 +320,13 @@ Because `createViewer` is itself awaited, the effect can be torn down **before a
 - `onError` — the viewer is alive; the handler only flips state.
 - `catch` — the viewer's state is unknown, so it SHALL `destroy()` the viewer, clear the reference, and call `container.replaceChildren()`.
 
-**Markup.** A relatively-positioned wrapper (`relative h-full w-full overflow-hidden`) containing:
+**Markup.** A relatively-positioned flex-column wrapper filling the available width and height, containing:
 
-- the viewer container `<div ref>` — `role="document"`, `aria-label={fileName}`, `aria-busy={isLoading}`, filling the wrapper;
+- the persistent XLSX-only formula bar;
+- the viewer container `<div ref>` — `role="document"`, `aria-label={fileName}`, `aria-busy={isLoading}`, filling the remaining wrapper space;
 - the status overlay, rendered only while `isLoading || hasError`, absolutely positioned over the container and centered.
 
-**Overlay content.** While loading, a `Spinner` (`size={48}`). On error, an `IconAlertTriangle` (`size={60}`, `stroke={1.5}`, `aria-hidden="true"` because the adjacent text carries the meaning) above the `loadErrorLabel` text.
+**Overlay content.** While loading, a `Spinner` (`size={48}`). On error, an `IconAlertTriangle` (`size={60}`, `stroke={DIAL_KIT_ICON_STROKE}`, `aria-hidden="true"` because the adjacent text carries the meaning) above the `loadErrorLabel` text.
 
 **Accessibility.**
 
@@ -308,19 +335,25 @@ Because `createViewer` is itself awaited, the effect can be torn down **before a
 - The overlay SHALL carry `aria-live="polite"`, and `role="alert"` **only** when `hasError` is `true`, so a failure is announced without the loading state raising an alert.
 - Keyboard navigation inside the rendered document is the viewer's own DOM and is outside this component's control. Per the scope boundary in `.claude/rules/a11y.md`, vendor-rendered output is noted, not patched; the panel's download button remains the accessible fallback.
 
-**i18n:** no new keys. The only user-visible string is `loadErrorLabel`, an existing required prop of the canvas already threaded through `AttachmentCanvasContainer` and already translated. An Office-specific variant would add translation work for a message indistinguishable from the PDF or image load failure.
+**i18n:** `loadErrorLabel` remains the shared translated load error. The XLSX formula bar receives its accessible `formulaLabel` from `AttachmentCanvasLabels.xlsxFormulaLabel`, defaulting to `Formula`; the app supplies the translated `attachmentCanvas.xlsxFormulaLabel` value. Its visible, italic `fx` mark is universal spreadsheet notation, carries `aria-hidden="true"`, and is not localized.
 
-**RTL / direction impact:** none for this component. The overlay uses `inset-0` with centered flex — both direction-agnostic — and no directional margins, padding, insets, or mirrored icons are introduced. The rendered document's own text direction is the viewer's concern.
+**Typography:** `AttachmentCanvasTypography.xlsxFormulaLabelClassName` is forwarded as `formulaLabelClassName` and defaults to the UI Kit's `dial-italic-text`. Hosts MAY replace it with another UI Kit typography class; `OoxmlContent` SHALL NOT define the mark's font family, size, style, or line-height locally.
 
-**Styling.** `OoxmlContent.module.scss` SHALL set only the viewer and overlay backgrounds and the error icon color, and every declaration SHALL use this library's three-level chain `var(--ac-<name>, var(--<design-token>, #hex))` so each color is overridable through `AttachmentCanvasColors`, falls back to the shared design token, and finally to a literal:
+**RTL / direction impact:** the layout uses direction-neutral spacing and fills the inherited panel direction. The formula/value field carries `dir="ltr"` because spreadsheet formulas and cell references are LTR syntax; the `fx` mark is direction-neutral. The rendered document's own text direction is otherwise the viewer's concern.
+
+**Styling.** `OoxmlContent.module.scss` SHALL size the CSV canvas to its container and set the viewer, formula panel, overlay, and error colors. Every color declaration SHALL use this library's three-level chain `var(--ac-<name>, var(--<design-token>, #hex))` so each color is overridable through `AttachmentCanvasColors`, falls back to the shared design token, and finally to a literal:
 
 - backgrounds — `var(--ac-ooxml-bg, var(--bg-layer-raised, #fcfcfc))`
+- formula border — `var(--ac-ooxml-formula-border, var(--stroke-secondary, #d1dbea))`
+- formula value background — `var(--ac-ooxml-formula-bg, var(--bg-layer-base, #f5f7fa))`
+- formula text — `var(--ac-ooxml-formula-text, var(--text-primary, #161b2d))`
 - status/error text — `var(--ac-status-text, var(--text-secondary, …))`
 - error icon — `var(--ac-error-icon, var(--text-error, …))`
 
-`--ac-status-text` and `--ac-error-icon` are the canvas's existing variables, already set on the `AttachmentCanvasBody` root and inherited through the cascade. `--ac-ooxml-bg` is new and therefore requires the bidirectional mapping in `.claude/rules/libs.md`: an `ooxmlBackground?: string` field on `AttachmentCanvasColors` (documented with its `--bg-layer-raised` default) **and** an `'--ac-ooxml-bg': colors?.ooxmlBackground` entry in the `buildCssVars` call. A background painted from a bare global token with no `--ac-*` level would be the only color in the file that hosts cannot theme.
+`--ac-status-text` and `--ac-error-icon` are the canvas's existing variables, already set on the `AttachmentCanvasBody` root and inherited through the cascade. The OOXML background and formula variables require matching optional fields on `AttachmentCanvasColors` and `buildCssVars` mappings. A color painted from a bare global token with no `--ac-*` level would prevent hosts from theming it.
 
-Layout stays in Tailwind. The stylesheet SHALL contain no `font-size`, `line-height`, `font-weight`, or `!important` declaration.
+Layout stays in Tailwind. The stylesheet SHALL contain no `font-size`, `line-height`, `font-weight`, or `!important` declaration. The decorative `fx` typography comes entirely from the UI Kit's `dial-italic-text` class supplied through `formulaLabelClassName`.
+The formula/value field SHALL have a fixed height whether its content is empty or populated, preventing the spreadsheet viewport from shifting when the active cell changes.
 
 #### Scenario: every color is host-overridable
 
@@ -332,7 +365,7 @@ Layout stays in Tailwind. The stylesheet SHALL contain no `font-size`, `line-hei
 - **WHEN** no `ooxmlBackground` is supplied
 - **THEN** the viewer background resolves through `--bg-layer-raised`
 
-**Memoisation:** none required. The component holds two booleans and one ref, and the effect's dependency array is already narrowed to the two fields that matter — `content.format` and `content.url`, not the `content` object, so a new object identity with unchanged fields does not rebuild the viewer.
+**Memoisation:** none required. The component holds loading, error, and active-cell-content state plus one ref, and the effect's dependency array is narrowed to the two fields that require a fresh viewer — `content.format` and `content.url`, not the `content` object.
 
 #### Scenario: spinner shows while parsing
 
@@ -350,6 +383,14 @@ Layout stays in Tailwind. The stylesheet SHALL contain no `font-size`, `line-hei
 
 - **WHEN** `OoxmlContent` is rendered with `fileName: 'Q3 Report.docx'`
 - **THEN** the container element has `role="document"` and `aria-label="Q3 Report.docx"`
+
+#### Scenario: persistent XLSX formula bar shows active cell content
+
+- **WHEN** the XLSX selection context identifies an active cell with formula `SUM(A1:A2)`
+- **THEN** the formula bar displays `=SUM(A1:A2)` after an italic, decorative `fx` mark and under the accessible `formulaLabel`
+- **AND** selecting a cell without a formula displays that cell's `displayText`
+- **AND** before a cell is selected, the empty formula bar remains visible and reserves its layout space
+- **AND** CSV content never renders the formula panel
 
 #### Scenario: viewer onError shows the error panel
 
@@ -391,7 +432,7 @@ Layout stays in Tailwind. The stylesheet SHALL contain no `font-size`, `line-hei
 
 #### Scenario: changing content rebuilds the viewer
 
-- **WHEN** `content.url` changes to a different Office file
+- **WHEN** `content.url` changes to a different Office or CSV file
 - **THEN** the previous viewer is destroyed and the container emptied
 - **AND** a new viewer is constructed and loaded with the new URL
 
@@ -422,6 +463,7 @@ Layout stays in Tailwind. The stylesheet SHALL contain no `font-size`, `line-hei
   content={content}
   fileName={fileName}
   loadErrorLabel={loadErrorLabel}
+  formulaLabel={xlsxFormulaLabel}
 />
 ```
 
@@ -441,14 +483,14 @@ The panel chrome SHALL be identical to other content types.
 
 ---
 
-### Requirement: Office previews are downloadable
+### Requirement: Office and CSV previews are downloadable
 
 `libs/attachment-canvas/src/utils/download.ts` SHALL treat `Ooxml` exactly as `Pdf`:
 
 - `isDownloadable(content)` SHALL return `true` for `AttachmentContentType.Ooxml`. `url` is required on `OoxmlCanvasContent`, so no null check is needed.
 - `downloadAttachmentContent(content, fileName)` SHALL call `triggerAnchorDownload(content.url, name)` for `Ooxml`, sharing the `Image`/`Audio`/`Pdf` arm.
 
-The download button MUST remain available in every Office state, including the error panel, so a document that fails to render is still retrievable — the download is the fallback for the fidelity limits of client-side parsing.
+The download button MUST remain available in every document-renderer state, including the error panel, so a file that fails to render is still retrievable — the download is the fallback for the fidelity limits of client-side parsing.
 
 #### Scenario: ooxml content is downloadable
 
@@ -462,16 +504,16 @@ The download button MUST remain available in every Office state, including the e
 
 #### Scenario: download is available while the error panel is shown
 
-- **WHEN** an Office document fails to render and `onDownload` is provided
+- **WHEN** an Office document or CSV spreadsheet fails to render and `onDownload` is provided
 - **THEN** the panel's download button is rendered
 
 ---
 
-### Requirement: object URLs for Office content are revoked
+### Requirement: object URLs for Office and CSV content are revoked
 
 `libs/attachment-canvas/src/context/AttachmentCanvasContext.tsx`'s `getRevocableObjectUrl` SHALL include `AttachmentContentType.Ooxml` alongside `Image`, `Audio`, and `Pdf` in the set of content types whose `url` is revoked when the canvas closes or its content is replaced.
 
-**Rationale:** the app-layer resolver can produce an object URL from a fetched blob or a locally-picked `File`. Office documents are among the largest attachments the canvas handles, so a leaked blob costs disproportionately more memory than a leaked icon. This is a correctness requirement, not tidiness.
+**Rationale:** the app-layer resolver can produce an object URL from a fetched blob or a locally-picked `File`. Documents and spreadsheets can be large, so a leaked blob costs disproportionately more memory than a leaked icon. This is a correctness requirement, not tidiness.
 
 #### Scenario: ooxml object url is revoked on close
 
@@ -504,7 +546,7 @@ The function SHALL delegate to the existing `resolveAttachmentBlobUrl` helper an
 - otherwise (the helper yields `undefined` — no local file, DIAL URL, preview URL, or inline data), return `{ type: AttachmentContentType.Ooxml, url: attachment.url, format }` when `attachment.url` is set, is not a DIAL `files/` id, and is a fetchable absolute URL (`http:`, `https:`, or `blob:` scheme, via the shared `resolveExternalAttachmentUrl` helper — a relative or opaque string, e.g. a bare citation/reference id, fails this check);
 - return `null` when none of the above yields a URL.
 
-This is the same shape as `resolvePdfCanvasContent`, and reusing `resolveAttachmentBlobUrl` and `resolveExternalAttachmentUrl` is deliberate: Office files inherit the blob LRU cache, the `403 → Forbidden` / other-failure → `LoadFailed` classification, support for locally-picked `File`s, DIAL download URLs, `previewUrl`, and inline base64, and the external-URL fallback — identically to PDFs, with no duplicated fetch or URL-validation logic.
+This is the same shape as `resolvePdfCanvasContent`, and reusing `resolveAttachmentBlobUrl` and `resolveExternalAttachmentUrl` is deliberate: Office and CSV files inherit the blob LRU cache, the `403 → Forbidden` / other-failure → `LoadFailed` classification, support for locally-picked `File`s, DIAL download URLs, `previewUrl`, and inline base64, and the external-URL fallback — identically to PDFs, with no duplicated fetch or URL-validation logic.
 
 **Adapter contract (library isolation).** This function keeps host knowledge out of `libs/attachment-canvas`. The fetch, the blob cache, and the HTTP status classification live in `libs/chat-hooks`, which is host-agnostic; the genuinely app-specific part — DIAL URL construction, CSRF/auth — is injected as the `resolvers` argument by `apps/chat/src/hooks/attachment/useAttachmentCanvasResolvers.ts`, which binds this function and exposes it to the canvas hook as `resolveOoxmlContent(attachment, format)`. What crosses into `libs/attachment-canvas` is a resolved `url` string and an `OoxmlFileType` — nothing more. No new backend endpoint is introduced; Office bytes are served by the existing DIAL file download route.
 
@@ -528,7 +570,7 @@ This is the same shape as `resolvePdfCanvasContent`, and reusing `resolveAttachm
 - **WHEN** the attachment has no file, no DIAL URL, no `previewUrl`, no inline data, and no `url`
 - **THEN** it returns `null`
 
-#### Scenario: external non-DIAL Office source resolves to its raw url
+#### Scenario: external non-DIAL document source resolves to its raw url
 
 - **WHEN** `resolveOoxmlCanvasContent` is called with an attachment whose `url` is an external `https://` `.xlsx` link (no DIAL download URL, `previewUrl`, or inline data)
 - **THEN** it returns `{ type: Ooxml, url: <the external url>, format }`
@@ -545,18 +587,18 @@ This is the same shape as `resolvePdfCanvasContent`, and reusing `resolveAttachm
 
 ---
 
-### Requirement: routing — Office attachments open the `Ooxml` content type
+### Requirement: routing — Office and CSV attachments open the `Ooxml` content type
 
-The canvas hook's internal `openFileCanvas` SHALL add **two** Office branches — in `libs/attachment-canvas/src/hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas.ts` — each placed immediately before the dispatch that consumes the same signal:
+The canvas hook's internal `openFileCanvas` SHALL add **two** document-renderer branches — in `libs/attachment-canvas/src/hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas.ts` — each placed immediately before the dispatch that consumes the same signal:
 
 1. **MIME branch** — before the `switch (contentType)`: call `getOoxmlFileType('', contentType)`; when it yields a format, resolve and open the canvas.
 2. **Extension branch** — before the `switch (ext)`: call `getOoxmlFileType(fileName)`; when it yields a format, resolve and open the canvas.
 
 Each branch SHALL call the injected `resolvers.resolveOoxmlContent(attachment, format)`, then `openCanvas(content ?? createUnsupportedCanvasContent(resolvers.resolveContentUrl(attachment)), attachment.name, canvasAttachmentId)`, then return `true`.
 
-Both branches SHALL return `true` even when resolution fails, because the attachment **was** recognized as a supported Office format. The unsupported panel — which still offers a download when a URL is available — is the correct outcome, and returning `false` would make the caller fall back to a bare browser download and lose the panel entirely.
+Both branches SHALL return `true` even when resolution fails, because the attachment **was** recognized as a supported renderer format. The unsupported panel — which still offers a download when a URL is available — is the correct outcome, and returning `false` would make the caller fall back to a bare browser download and lose the panel entirely.
 
-**Placement rationale:** two branches rather than one consolidated earlier check. Each Office check runs immediately ahead of the switch keyed on the same signal, so the pairing is local and survives edits to either switch. A single earlier check would read as unrelated to both.
+**Placement rationale:** two branches rather than one consolidated earlier check. Each document-renderer check runs immediately ahead of the switch keyed on the same signal, so the pairing is local and survives edits to either switch. A single earlier check would read as unrelated to both.
 
 **State ownership:** no new state. Canvas content and visibility remain owned by `AttachmentCanvasContext` via `useAttachmentCanvas().openCanvas`; this hook only resolves and dispatches.
 
@@ -574,6 +616,12 @@ Both branches SHALL return `true` even when resolution fails, because the attach
 
 - **WHEN** the user opens `deck.pptx`
 - **THEN** `openCanvas` is called with `OoxmlCanvasContent { format: Pptx }`
+
+#### Scenario: csv extension opens the Excel-style canvas
+
+- **WHEN** the user opens `export.csv` whose `contentType` is `application/octet-stream`
+- **THEN** `openCanvas` is called with `OoxmlCanvasContent { format: Csv }`
+- **AND** the code renderer is not used
 
 #### Scenario: correct mime type with an extension-less name opens the canvas
 
@@ -594,27 +642,27 @@ Both branches SHALL return `true` even when resolution fails, because the attach
 #### Scenario: pdf routing is unchanged
 
 - **WHEN** the user opens a `application/pdf` attachment
-- **THEN** `openCanvas` is called with `PdfCanvasContent`, and no Office branch is taken
+- **THEN** `openCanvas` is called with `PdfCanvasContent`, and no document-renderer branch is taken
 
 #### Scenario: text routing is unchanged
 
 - **WHEN** the user opens `notes.md`
-- **THEN** `openCanvas` is called with `MarkdownCanvasContent`, and no Office branch is taken
+- **THEN** `openCanvas` is called with `MarkdownCanvasContent`, and no document-renderer branch is taken
 
 #### Scenario: legacy binary office format still falls through
 
 - **WHEN** the user opens `old.doc` with a generic `contentType`
-- **THEN** no Office branch is taken and the existing fallback behavior applies
+- **THEN** no document-renderer branch is taken and the existing fallback behavior applies
 
 ---
 
 ### Requirement: `@silurus/ooxml` dependency and documentation
 
-`libs/attachment-canvas/package.json` SHALL declare `@silurus/ooxml` (`^0.80.2`) under `dependencies` — a runtime dependency of the library, not a peer, because the library imports it directly and hosts do not configure it.
+`libs/attachment-canvas/package.json` SHALL declare `@silurus/ooxml` (`^0.86.1`) under `dependencies` — a runtime dependency of the library, not a peer, because the library imports it directly and hosts do not configure it.
 
 `libs/attachment-canvas/README.md` SHALL document the new content type, the `OoxmlFileType` enum with its members, and the `getOoxmlFileType` / `isOoxmlPreviewable` utilities, with examples using the exact exported names and the required props of `OoxmlCanvasContent`.
 
-`docs/architecture.md` SHALL update the `@epam/ai-dial-attachment-canvas` row to name the Office formats among the supported types.
+`docs/architecture.md` SHALL update the `@epam/ai-dial-attachment-canvas` row to name the Office and CSV formats among the supported types.
 
 `npm run validate:docs` SHALL pass — it checks that every name a lib README imports is actually exported.
 
@@ -628,8 +676,7 @@ Both branches SHALL return `true` even when resolution fails, because the attach
 - **WHEN** `npm run validate:docs` runs
 - **THEN** it passes, confirming every name the README imports is exported from the package
 
-#### Scenario: architecture doc lists the office formats
+#### Scenario: architecture doc lists the document formats
 
 - **WHEN** the `@epam/ai-dial-attachment-canvas` row in `docs/architecture.md` is read
-- **THEN** it names DOCX, XLSX, and PPTX among the supported attachment types
-
+- **THEN** it names DOCX, XLSX, PPTX, and CSV among the supported attachment types

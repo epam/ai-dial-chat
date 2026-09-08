@@ -1,6 +1,8 @@
 import {
   buildCssVars,
   FeaturedChip,
+  MarkdownRenderer,
+  MarkdownRendererClassNames,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -26,6 +28,13 @@ import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { TopicsLine } from '../TopicTag/TopicTag';
 import styles from './CardGrid.module.scss';
+
+const DESCRIPTION_MARKDOWN_COMPONENTS = { img: () => null };
+
+const isLinkEvent = (
+  event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
+): boolean =>
+  event.target instanceof Element && event.target.closest('a') !== null;
 
 /** Browse grid card: AppIdentity header + description + topic chips + breadcrumbs + star. */
 export const Card: FC<CardProps> = ({
@@ -78,11 +87,15 @@ export const Card: FC<CardProps> = ({
    * thing left in it without the star — has nothing to render. */
   const isFooterVisible = !isReadonly || item.folder.length > 0;
 
-  const handleClick = onClick ? () => onClick(item) : undefined;
+  const handleClick = onClick
+    ? (e: MouseEvent<HTMLElement>) => {
+        if (!isLinkEvent(e)) onClick(item);
+      }
+    : undefined;
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLElement>) => {
-      if (!onClick) return;
+      if (!onClick || isLinkEvent(e)) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         onClick(item);
@@ -159,9 +172,8 @@ export const Card: FC<CardProps> = ({
         }
       />
 
-      <p
+      <div
         className={mergeClasses(
-          descriptionClassName,
           /*
            * `min-h` is two line-heights, not a fixed px value: `line-clamp-2`
            * limits the text to 2 lines but `overflow: hidden` clips at the box
@@ -172,8 +184,26 @@ export const Card: FC<CardProps> = ({
           styles.description,
         )}
       >
-        {item.description}
-      </p>
+        {item.description && (
+          <MarkdownRenderer
+            content={item.description}
+            classNames={
+              {
+                p: descriptionClassName,
+                ul: descriptionClassName,
+                ol: descriptionClassName,
+                h1: descriptionClassName,
+                h2: descriptionClassName,
+                h3: descriptionClassName,
+                h4: descriptionClassName,
+                h5: descriptionClassName,
+                h6: descriptionClassName,
+              } satisfies MarkdownRendererClassNames
+            }
+            components={DESCRIPTION_MARKDOWN_COMPONENTS}
+          />
+        )}
+      </div>
 
       {/* `mt-auto` pins the topics row and footer to the card bottom — the job
        * `flex-1` on the description used to do before it broke the clamp. */}
