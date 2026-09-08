@@ -30,7 +30,7 @@ usable by any host whose skill storage differs from DIAL Core's.
 - `@epam/ai-dial-ui-kit` `*`
 - `@epam/ai-dial-react-file-manager` `^0.2.0-dev.9`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-editor-builder` `*`
+- `@epam/ai-dial-builder-form` `*`
 - `@tabler/icons-react` `^3.0.0`
 - `@uiw/react-markdown-preview` — CSS only, required by `LazyMarkdownEditor`
 - `@uiw/react-md-editor` — CSS only, required by `LazyMarkdownEditor`
@@ -101,7 +101,7 @@ other node requires the user to confirm a popup before
 "Upload from device" as an Add action; it does not support creating an empty
 file or folder.
 
-The header is rendered by `EditorLayout` (from `@epam/ai-dial-editor-builder`).
+The header is rendered by `EditorLayout` (from `@epam/ai-dial-builder-form`).
 Pass `onBack` (called when the back arrow is activated), `title` (the page
 heading), and optionally `backAriaLabel` (accessible label for the arrow,
 defaults to `'Back'`). The header, including the back arrow, Cancel/Create

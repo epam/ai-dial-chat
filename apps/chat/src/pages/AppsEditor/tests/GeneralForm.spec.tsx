@@ -22,11 +22,8 @@ vi.mock('../../../context/auth/UserContext', () => ({
   }),
 }));
 
-vi.mock('@epam/ai-dial-deployment-creation-form', async (importOriginal) => {
-  const actual =
-    await importOriginal<
-      typeof import('@epam/ai-dial-deployment-creation-form')
-    >();
+vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-builder-form')>();
   return {
     ...actual,
     AvatarPickerModal: () => null,

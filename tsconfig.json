@@ -49,9 +49,6 @@
       "path": "./libs/attachment-input"
     },
     {
-      "path": "./libs/deployment-creation-form"
-    },
-    {
       "path": "./libs/share"
     },
     {
@@ -92,9 +89,6 @@
     },
     {
       "path": "./libs/usage-dashboard"
-    },
-    {
-      "path": "./libs/editor-builder"
     }
   ]
 }

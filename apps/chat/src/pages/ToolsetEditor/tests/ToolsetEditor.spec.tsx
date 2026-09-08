@@ -39,27 +39,31 @@ vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
   default: () => <div>Loading</div>,
 }));
 
-vi.mock('@epam/ai-dial-editor-builder', () => ({
-  EditorLayout: ({
-    actions,
-    leftContent,
-    rightContent,
-  }: {
-    title?: string;
-    actions?: unknown;
-    leftContent?: unknown;
-    rightContent?: unknown;
-  }) => (
-    <div>
-      <div>{actions as never}</div>
-      <div>{leftContent as never}</div>
-      <div>{rightContent as never}</div>
-    </div>
-  ),
-  EditorSection: ({ children }: { children?: unknown }) => (
-    <div>{children as never}</div>
-  ),
-}));
+vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-builder-form')>();
+  return {
+    ...actual,
+    EditorLayout: ({
+      actions,
+      leftContent,
+      rightContent,
+    }: {
+      title?: string;
+      actions?: unknown;
+      leftContent?: unknown;
+      rightContent?: unknown;
+    }) => (
+      <div>
+        <div>{actions as never}</div>
+        <div>{leftContent as never}</div>
+        <div>{rightContent as never}</div>
+      </div>
+    ),
+    EditorSection: ({ children }: { children?: unknown }) => (
+      <div>{children as never}</div>
+    ),
+  };
+});
 
 vi.mock('../EditorForm/GeneralForm', () => ({
   default: () => <div />,

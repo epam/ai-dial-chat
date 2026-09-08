@@ -38,7 +38,7 @@
   ],
   "references": [
     {
-      "path": "../../libs/editor-builder/tsconfig.lib.json"
+      "path": "../../libs/builder-form/tsconfig.lib.json"
     },
     {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"

@@ -33,7 +33,7 @@
       "path": "../publish-panel/tsconfig.lib.json"
     },
     {
-      "path": "../deployment-creation-form/tsconfig.lib.json"
+      "path": "../builder-form/tsconfig.lib.json"
     },
     {
       "path": "../chat-shared/tsconfig.lib.json"

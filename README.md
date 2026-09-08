@@ -448,8 +448,7 @@ published to npm today. Each library has its own README with its public API.
 | `@epam/ai-dial-prompt-editor`            | [`libs/prompt-editor`](libs/prompt-editor)                       | Host-agnostic prompt authoring form with an inline folder picker             |
 | `@epam/ai-dial-prompts`                  | [`libs/prompts`](libs/prompts)                                   | Favorite-prompts panel and the prompt-parameters popup for the composer      |
 | `@epam/ai-dial-skill-editor`             | [`libs/skill-editor`](libs/skill-editor)                         | Skill authoring form with a file tree and conflict handling                  |
-| `@epam/ai-dial-builder-form`             | [`libs/builder-form`](libs/builder-form)                         | Presentational builder form shell for composing and editing DIAL entities    |
-| `@epam/ai-dial-deployment-creation-form` | [`libs/deployment-creation-form`](libs/deployment-creation-form) | Form for creating and editing a deployment, with locale fields               |
+| `@epam/ai-dial-builder-form`             | [`libs/builder-form`](libs/builder-form)                         | Builder/editor form shells, editor layout, and shared deployment-creation field set |
 | `@epam/ai-dial-scheduled-tasks`          | [`libs/scheduled-tasks`](libs/scheduled-tasks)                   | Scheduled Tasks surfaces — cards, create form, detail view, run history      |
 
 > `libs/ai-dial-kit/` is a leftover build-output directory from a removed

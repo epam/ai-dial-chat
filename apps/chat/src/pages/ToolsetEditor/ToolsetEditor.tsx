@@ -7,9 +7,10 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import {
   DeploymentCreationFieldErrorCode,
+  EditorLayout,
+  EditorSection,
   validateDeploymentCreationFields,
-} from '@epam/ai-dial-deployment-creation-form';
-import { EditorLayout, EditorSection } from '@epam/ai-dial-editor-builder';
+} from '@epam/ai-dial-builder-form';
 import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';

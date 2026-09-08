@@ -160,10 +160,6 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/share/src/index.ts',
       ),
-      '@epam/ai-dial-deployment-creation-form': path.resolve(
-        import.meta.dirname,
-        '../../libs/deployment-creation-form/src/index.ts',
-      ),
       '@epam/ai-dial-scheduled-tasks': path.resolve(
         import.meta.dirname,
         '../../libs/scheduled-tasks/src/index.ts',
@@ -175,10 +171,6 @@ export default defineConfig(() => ({
       '@epam/ai-dial-builder-form': path.resolve(
         import.meta.dirname,
         '../../libs/builder-form/src/index.ts',
-      ),
-      '@epam/ai-dial-editor-builder': path.resolve(
-        import.meta.dirname,
-        '../../libs/editor-builder/src/index.ts',
       ),
       '@epam/ai-dial-skill-editor': path.resolve(
         import.meta.dirname,

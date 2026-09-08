@@ -8,7 +8,7 @@ The prompt create/edit screen: the `@epam/ai-dial-prompt-editor` lib that owns t
 
 ### Requirement: The editor's UI lives in `@epam/ai-dial-prompt-editor`
 
-`PromptEditor` SHALL use `EditorLayout` from `@epam/ai-dial-editor-builder` as its outer shell, replacing the previous `BuilderFormContainer` from `@epam/ai-dial-builder-form`. The dependency on `@epam/ai-dial-builder-form` SHALL be removed from `libs/prompt-editor/package.json`. The peer dependency `@epam/ai-dial-editor-builder` SHALL be added.
+`PromptEditor` SHALL use `EditorLayout` from `@epam/ai-dial-builder-form` as its outer shell, replacing the previous `BuilderFormContainer`. `@epam/ai-dial-builder-form` SHALL be a peer dependency of `libs/prompt-editor/package.json`.
 
 `EditorLayout` SHALL receive:
 - `onBack` — the back/cancel navigation callback (previously `onBack` on `BuilderFormContainer`)
@@ -27,10 +27,10 @@ Division of responsibility remains unchanged: field values, character-counter an
 
 #### Scenario: Header row rendered by EditorLayout
 - **WHEN** `PromptEditor` renders
-- **THEN** the header row (back arrow, title, Cancel, Save) is rendered by `EditorLayout` from `@epam/ai-dial-editor-builder`, not by `BuilderFormContainer`
+- **THEN** the header row (back arrow, title, Cancel, Save) is rendered by `EditorLayout` from `@epam/ai-dial-builder-form`, not by `BuilderFormContainer`
 
-#### Scenario: No BuilderFormContainer import
-- **WHEN** `libs/prompt-editor/src/**` is searched for `@epam/ai-dial-builder-form` imports
+#### Scenario: No BuilderFormContainer usage
+- **WHEN** `libs/prompt-editor/src/**` is searched for `BuilderFormContainer` usage
 - **THEN** none are found
 
 #### Scenario: Single-column layout preserved

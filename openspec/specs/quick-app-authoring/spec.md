@@ -11,7 +11,7 @@ image up to 1 MB, rather than a plain URL text field. Name SHALL be required and
 letters, digits, spaces, underscores, dots, and dashes. The General step SHALL NOT render an
 Intro field. The name and description fields SHALL also allow editing translations for
 additional locales through the shared `DeploymentLocalesField` popup. These fields SHALL be
-rendered and validated through the shared `deployment-creation-form` library component, the same
+rendered and validated through the shared `DeploymentCreationForm` component from `@epam/ai-dial-builder-form`, the same
 component used by Toolset creation's General step.
 
 #### Scenario: Edit general fields

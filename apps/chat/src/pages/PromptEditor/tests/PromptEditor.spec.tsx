@@ -14,7 +14,7 @@ import {
 } from '../../../server-api/prompts.api';
 import PromptEditor from '../PromptEditor';
 
-vi.mock('@epam/ai-dial-editor-builder', () => ({
+vi.mock('@epam/ai-dial-builder-form', () => ({
   EditorLayout: ({
     title,
     onBack,

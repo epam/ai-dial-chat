@@ -11,7 +11,7 @@ import {
   ToolsetAuthTypes,
   WithLogin,
 } from '@epam/ai-dial-chat-hooks';
-import { validateDeploymentCreationFields } from '@epam/ai-dial-deployment-creation-form';
+import { validateDeploymentCreationFields } from '@epam/ai-dial-builder-form';
 import {
   DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,

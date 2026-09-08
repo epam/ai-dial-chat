@@ -31,11 +31,11 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `react` ^19.2.6
 - `@epam/ai-dial-attachment-canvas` \*
 - `@epam/ai-dial-attachment-input` \*
+- `@epam/ai-dial-builder-form` \*
 - `@epam/ai-dial-catalog` \*
 - `@epam/ai-dial-chat-api-client` \*
 - `@epam/ai-dial-chat-overlay` \*
 - `@epam/ai-dial-chat-shared` \*
-- `@epam/ai-dial-deployment-creation-form` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
 - `@epam/ai-dial-react-file-manager` \*
@@ -62,7 +62,7 @@ whether you need to `npm install` it.
 
 | Entry point               | Runtime peers beyond `react`                                                                                                                                                            | Type-only peers                                                                                                                   |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                                                          | `@epam/ai-dial-chat-overlay`, `@epam/ai-dial-deployment-creation-form`, `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit` |
+| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                                                          | `@epam/ai-dial-builder-form`, `@epam/ai-dial-chat-overlay`, `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit`              |
 | `./viewport-layout`       | —                                                                                                                                                                                       | —                                                                                                                                 |
 | `./scroll-anchoring`      | —                                                                                                                                                                                       | —                                                                                                                                 |
 | `./conversation`          | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                                | `@epam/ai-dial-publish-panel`, `@epam/ai-dial-chat-overlay`                                                                       |
@@ -76,10 +76,10 @@ whether you need to `npm install` it.
 | `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                                                         | `@epam/ai-dial-chat-api-client`                                                                                                   |
 | `./sharing`               | `@epam/ai-dial-share`, `@epam/ai-dial-chat-api-client`                                                                                                                                  | —                                                                                                                                 |
 | `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                                                            | —                                                                                                                                 |
-| `./utils`                 | —                                                                                                                                                                                       | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-deployment-creation-form`                            |
+| `./utils`                 | —                                                                                                                                                                                       | `@epam/ai-dial-builder-form`, `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`                                        |
 
-Six of the peers above (`@epam/ai-dial-catalog`, `@epam/ai-dial-chat-overlay`,
-`@epam/ai-dial-deployment-creation-form`, `@epam/ai-dial-publish-panel`,
+Six of the peers above (`@epam/ai-dial-builder-form`, `@epam/ai-dial-catalog`,
+`@epam/ai-dial-chat-overlay`, `@epam/ai-dial-publish-panel`,
 `@epam/ai-dial-scheduled-tasks`, `@epam/ai-dial-skill-editor`) were already declared in
 `package.json#peerDependencies` but missing from this section before this table was added.
 

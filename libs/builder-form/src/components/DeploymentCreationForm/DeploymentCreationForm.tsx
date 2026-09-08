@@ -2,7 +2,7 @@ import {
   mergeClasses,
   TAG_INPUT_TAG_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
-import { AddAvatar } from '@epam/ai-dial-editor-builder';
+import { AddAvatar } from '../AddAvatar/AddAvatar';
 import {
   Input,
   TagInput,

@@ -3,11 +3,11 @@ import type { AttachResult } from '@epam/ai-dial-chat-shared';
 import type {
   DeploymentCreationFormLabels,
   DeploymentCreationFormValues,
-} from '@epam/ai-dial-deployment-creation-form';
+} from '@epam/ai-dial-builder-form';
 import {
   AvatarPickerModal,
   DeploymentCreationForm,
-} from '@epam/ai-dial-deployment-creation-form';
+} from '@epam/ai-dial-builder-form';
 import type { FC } from 'react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

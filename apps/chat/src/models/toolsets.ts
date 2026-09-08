@@ -1,5 +1,5 @@
 import type { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
-import type { DeploymentCreationFormLocaleEntry } from '@epam/ai-dial-deployment-creation-form';
+import type { DeploymentCreationFormLocaleEntry } from '@epam/ai-dial-builder-form';
 import type { ToolsetTransportType } from '../constants/toolsets';
 
 export interface ToolsetAuthFormData {

@@ -1,4 +1,4 @@
-import type { DeploymentCreationFormLocaleEntry } from '@epam/ai-dial-deployment-creation-form';
+import type { DeploymentCreationFormLocaleEntry } from '@epam/ai-dial-builder-form';
 import { describe, expect, it } from 'vitest';
 import {
   appendLocaleCode,
