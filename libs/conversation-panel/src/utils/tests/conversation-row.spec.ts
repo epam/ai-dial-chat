@@ -57,6 +57,14 @@ describe('getButtonPaddingEnd', () => {
   it('returns pe-9 when actions exist and the menu is open', () => {
     expect(getButtonPaddingEnd(true, true)).toBe('pe-9');
   });
+
+  it('reserves the trigger gutter on hover and on focus-within while idle', () => {
+    /* The trigger is painted in both states, so both have to reserve room or it
+       lands on top of the truncated title. */
+    expect(getButtonPaddingEnd(true, false)).toBe(
+      'pe-2 group-focus-within/conversation:pe-9 group-hover/conversation:pe-9',
+    );
+  });
 });
 
 describe('getRowHeight', () => {

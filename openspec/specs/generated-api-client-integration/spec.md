@@ -34,7 +34,7 @@ Defines how frontend domain modules consume the generated `@epam/chat-api-client
 - **THEN** no `X-CSRF-Token` header SHALL be added
 
 #### Scenario: Middleware is produced by the shared factory
-- **WHEN** `apps/chat/src/server-api/api-client.ts` is inspected after this change
+- **WHEN** `apps/chat/src/server-api/api-client.ts` is inspected
 - **THEN** its CSRF middleware is the return value of `createCsrfMiddleware` imported from `@epam/ai-dial-chat-hooks`, with no locally re-implemented CSRF-header-injection logic
 
 ---
@@ -61,7 +61,7 @@ Defines how frontend domain modules consume the generated `@epam/chat-api-client
 - **THEN** the middleware refreshes the CSRF token via `refreshCsrfToken` and retries the original request exactly once
 
 #### Scenario: Middleware is produced by the shared factory
-- **WHEN** `apps/chat/src/server-api/api-client.ts` is inspected after this change
+- **WHEN** `apps/chat/src/server-api/api-client.ts` is inspected
 - **THEN** its unauthorized middleware is the return value of `createUnauthorizedMiddleware` imported from `@epam/ai-dial-chat-hooks`, with no locally re-implemented 401/invalid-CSRF-retry logic
 
 ---

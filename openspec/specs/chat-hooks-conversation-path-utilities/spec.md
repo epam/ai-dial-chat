@@ -42,5 +42,5 @@ depend on the package instead of hand-copying
 `apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx` SHALL import `getModelIdFromConversationId` from `@epam/ai-dial-chat-hooks`. `apps/chat/src/utils/get-model-id-from-conversation-id.ts` and its test SHALL be removed once the migration is verified.
 
 #### Scenario: No app-owned duplicate remains
-- **WHEN** the repository is inspected after this change
+- **WHEN** the repository is inspected
 - **THEN** `apps/chat/src/utils/get-model-id-from-conversation-id.ts` does not exist and `ConversationPanelView.tsx` resolves `getModelIdFromConversationId` from `@epam/ai-dial-chat-hooks`
