@@ -343,6 +343,27 @@ const isDisplayMathElement = (node: HastElementLike | undefined): boolean => {
   );
 };
 
+/*
+ * GFM column alignment (`:---`, `---:`, `:---:`) survives the pipeline as the
+ * hast `align` property on each cell. It maps to logical text-align utilities
+ * rather than physical ones so an aligned table still flips with the document
+ * direction, like the rest of the renderer.
+ */
+const TABLE_ALIGN_CLASSES: Record<string, string> = {
+  left: 'text-start',
+  center: 'text-center',
+  right: 'text-end',
+};
+
+/** Returns the text-align class for a table cell's GFM column alignment, or `undefined` when the column is unaligned. */
+const getTableCellAlignClass = (
+  node: HastElementLike | undefined,
+): string | undefined => {
+  const align = node?.properties?.align;
+
+  return typeof align === 'string' ? TABLE_ALIGN_CLASSES[align] : undefined;
+};
+
 /** Recursively concatenates the text content of a hast node. */
 const getNodeText = (node: HastTextLike | undefined): string => {
   if (!node) return '';
@@ -509,11 +530,12 @@ const buildMarkdownComponents = (
       </tr>
     );
   },
-  th: ({ children }) => (
+  th: ({ children, node }) => (
     <th
       scope="col"
       className={mergeClasses(
         'sticky top-0 z-[2] max-w-96 whitespace-normal break-words px-3 py-2.5 text-start',
+        getTableCellAlignClass(node),
         tableStyles.rowDivider,
         tableStyles.tableHeaderCell,
         cn.tableHeaderFont ?? 'dial-tiny-lead-semi-text',
@@ -524,10 +546,11 @@ const buildMarkdownComponents = (
       {children}
     </th>
   ),
-  td: ({ children }) => (
+  td: ({ children, node }) => (
     <td
       className={mergeClasses(
         'max-w-96 whitespace-normal px-3 py-2.5 align-top [overflow-wrap:anywhere]',
+        getTableCellAlignClass(node),
         tableStyles.rowDivider,
         cn.tableBodyCell,
         cn.tableCell,

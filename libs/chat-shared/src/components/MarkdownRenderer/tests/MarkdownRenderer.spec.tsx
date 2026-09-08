@@ -23,6 +23,10 @@ const SECTION_ROW_MARKDOWN = `| Name | Description |
 const EMPTY_TABLE_MARKDOWN = `| Name | Description |
 | --- | --- |`;
 
+const ALIGNED_TABLE_MARKDOWN = `| Right | Plain | Left | Center |
+| ---: | --- | :--- | :---: |
+| 1 | 2 | 3 | 4 |`;
+
 const FENCED_TS_MARKDOWN = `\`\`\`typescript
 const x = 1;
 \`\`\``;
@@ -111,6 +115,36 @@ describe('MarkdownRenderer', () => {
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeTruthy();
     // Only the header row exists — no body rows were rendered.
     expect(screen.getAllByRole('row')).toHaveLength(1);
+  });
+
+  it('applies GFM column alignment to header and body cells', () => {
+    render(<MarkdownRenderer content={ALIGNED_TABLE_MARKDOWN} />);
+
+    const alignmentByColumn = [
+      { header: 'Right', cell: '1', expected: 'text-end' },
+      { header: 'Left', cell: '3', expected: 'text-start' },
+      { header: 'Center', cell: '4', expected: 'text-center' },
+    ];
+
+    alignmentByColumn.forEach(({ header, cell, expected }) => {
+      const columnHeader = screen.getByRole('columnheader', { name: header });
+      const bodyCell = screen.getByRole('cell', { name: cell });
+
+      expect(columnHeader.className).toContain(expected);
+      expect(bodyCell.className).toContain(expected);
+    });
+
+    /* An explicit alignment replaces the header default rather than stacking
+       on it, and an unaligned column keeps the inherited start alignment. */
+    expect(
+      screen.getByRole('columnheader', { name: 'Center' }).className,
+    ).not.toContain('text-start');
+    expect(
+      screen.getByRole('columnheader', { name: 'Plain' }).className,
+    ).toContain('text-start');
+    expect(screen.getByRole('cell', { name: '2' }).className).not.toMatch(
+      /text-(start|center|end)/,
+    );
   });
 
   it('merges table class overrides with the scrolling defaults', () => {

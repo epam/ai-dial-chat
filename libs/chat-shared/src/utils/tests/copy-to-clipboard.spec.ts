@@ -12,7 +12,34 @@ const TABLE_MARKDOWN = [
   '| **2024** | *"The Code"* |',
 ].join('\n');
 
+const ALIGNED_TABLE_MARKDOWN = [
+  '| Right | Plain | Center |',
+  '| ---: | --- | :---: |',
+  '| 1 | 2 | 3 |',
+].join('\n');
+
 describe('markdownToRichTextHtml', () => {
+  it('carries GFM column alignment past the base cell style', () => {
+    const html = markdownToRichTextHtml(ALIGNED_TABLE_MARKDOWN);
+
+    const cells = html.match(/<(?:th|td) [^>]*style="[^"]*"/g) ?? [];
+
+    /* The base cell style already sets `text-align:start`, so the column's own
+       alignment only survives if it is appended after it. */
+    const alignedCells = cells.filter((cell) =>
+      /text-align:start[^"]*text-align:(?:end|center)/.test(cell),
+    );
+
+    // One right-aligned and one centered cell in each of the two rows.
+    expect(alignedCells).toHaveLength(4);
+    expect(
+      alignedCells.filter((cell) => cell.endsWith('text-align:end"')),
+    ).toHaveLength(2);
+    expect(
+      alignedCells.filter((cell) => cell.endsWith('text-align:center"')),
+    ).toHaveLength(2);
+  });
+
   it('gives the table its border so a paste target draws the grid', () => {
     const html = markdownToRichTextHtml(TABLE_MARKDOWN);
 
