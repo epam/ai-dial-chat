@@ -2,8 +2,16 @@ import {
   isValidAbsoluteUrl,
   isValidFeaturesData,
 } from '@epam/ai-dial-chat-hooks';
-import { TAG_INPUT_TAG_CLASS_NAME } from '@epam/ai-dial-chat-shared';
-import { Input, Textarea, TagInput } from '@epam/ai-dial-ui-kit';
+import {
+  RESIZABLE_TEXTAREA_CLASS_NAME,
+  TAG_INPUT_TAG_CLASS_NAME,
+} from '@epam/ai-dial-chat-shared';
+import {
+  Input,
+  Textarea,
+  TagInput,
+  TextareaResize,
+} from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -87,7 +95,8 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
         placeholder={t(CustomAppI18nKeys.FeaturesDataPlaceholder)}
         error={featuresDataError}
         invalid={!!featuresDataError || undefined}
-        resize
+        className={RESIZABLE_TEXTAREA_CLASS_NAME}
+        resize={TextareaResize.Vertical}
       />
 
       <TagInput
