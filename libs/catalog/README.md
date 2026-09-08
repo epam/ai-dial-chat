@@ -107,6 +107,11 @@ also yields more card columns (4 instead of 3 once the grid area passes
 
 #### Controlling tabs and Topics options independently of `items`
 
+The entity-type tab row appears only when `items` span **two or more** types: a
+single tab is not a choice, so a catalog restricted to one entity type (an
+agent picker, a prompt picker) renders no tab row at all. The active tab still
+resolves to that one type, so the grid is unaffected.
+
 By default the entity-type tabs and the Topics filter's option list are both
 derived from `items` — the same list the grid renders. A host that narrows
 `items` for the grid (e.g. filtering by a selected category-tree node) would

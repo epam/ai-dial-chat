@@ -327,6 +327,12 @@ export interface ConversationInputProps {
   toolsMenuItems?: ToolMenuItem[];
   /** Called when a tool row is toggled. Receives the tool id. */
   onToolToggle?: (toolId: string) => void;
+  /**
+   * When `false`, every tool chip is a persistent on/off toggle: chips render
+   * without a ×, and the `+` menu carries no "Tools" item, since there is
+   * nothing to bring back. Defaults to `true`.
+   */
+  canRemoveTools?: boolean;
   /** Label for the "Tools" menu item and mobile sheet title. Defaults to `'Tools'`. */
   toolsMenuTitle?: string;
   /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */

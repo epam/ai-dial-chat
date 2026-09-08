@@ -90,7 +90,14 @@
     "removeFromFavoritesLabel": "Remove from favorites"
   },
   "catalog": {
-    "searchPlaceholder": "Search models, tools, agents…",
+    "searchPlaceholder": "Search {{entities}}…",
+    "searchEntity": {
+      "models": "models",
+      "applications": "agents",
+      "toolsets": "toolsets",
+      "prompts": "prompts",
+      "skills": "skills"
+    },
     "noResultsTitle": "No results for \"{{query}}\"",
     "sorts": {
       "recentlyUpdated": "Recently Updated",

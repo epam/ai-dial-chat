@@ -151,6 +151,11 @@ export enum FavoritesI18nKeys {
 
 export enum CatalogI18nKeys {
   SearchPlaceholder = 'catalog.searchPlaceholder',
+  SearchEntityModels = 'catalog.searchEntity.models',
+  SearchEntityApplications = 'catalog.searchEntity.applications',
+  SearchEntityToolsets = 'catalog.searchEntity.toolsets',
+  SearchEntityPrompts = 'catalog.searchEntity.prompts',
+  SearchEntitySkills = 'catalog.searchEntity.skills',
   NoResultsTitle = 'catalog.noResultsTitle',
   SortRecentlyUpdated = 'catalog.sorts.recentlyUpdated',
   SortNewest = 'catalog.sorts.newest',

@@ -481,7 +481,10 @@ export const Catalog: FC<CatalogProps> = ({
           />
         </div>
 
-        {tabs.length > 0 && (
+        {/* A lone tab is not a choice — with nothing to switch to, the row is
+            dropped rather than rendered as a single inert tab. `activeTab`
+            still resolves to that one type, so the grid is unaffected. */}
+        {tabs.length > 1 && (
           <div className="min-w-0 shrink-0 overflow-x-auto px-8">
             <Tabs
               tabs={tabs.map((tab) => ({
