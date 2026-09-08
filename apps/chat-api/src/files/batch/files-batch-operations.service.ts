@@ -2,10 +2,12 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
-import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
-import { buildDialFileResourceUrl } from '../dial-resource-path.util';
+import {
+  buildDialFileResourceUrl,
+  encodeDialFilePath,
+} from '../dial-resource-path.util';
 import type { CopyItemDto } from '../dto/copy-files.dto';
 import { CopyFilesResponseDto, CopyItemResultDto } from '../dto/copy-files.dto';
 import type { DeleteItemDto } from '../dto/delete-files.dto';
@@ -196,7 +198,7 @@ export class FilesBatchOperationsService {
       const { data, error, response } =
         await this.dialClient.client.getFileMetadata(
           bucket,
-          encodeDialResourcePath(path),
+          encodeDialFilePath(path),
           {
             headers: getBearerAuthHeaders(at),
             signal: AbortSignal.timeout(this.getTimeoutMs()),
@@ -257,7 +259,7 @@ export class FilesBatchOperationsService {
     try {
       const { error, response } = (await this.dialClient.client.deleteFile(
         bucket,
-        encodeDialResourcePath(relPath),
+        encodeDialFilePath(relPath),
         {
           headers: getBearerAuthHeaders(at),
           signal: AbortSignal.timeout(this.getTimeoutMs()),
