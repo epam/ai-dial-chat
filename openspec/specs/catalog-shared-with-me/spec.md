@@ -9,7 +9,7 @@ TBD - created by archiving change add-catalog-unshare. Update Purpose after arch
 
 `DeploymentsService` SHALL resolve this from a single unfiltered `getSharedResources({ resourceTypes: ['APPLICATION'], with: 'me' })` call per request, factored into shared private helpers (`getSharedApplicationUrlSets` for the URL sets, `computeOwnershipFlags` for the per-item `isMy`/`canEdit`/`sharedWithMe` computation) reused by both `listDeployments` and the single-item `resolveDeploymentItem` — neither path SHALL issue two separate `getSharedResources` calls per request. `sharedWithMe` SHALL NOT be cached independently of this per-request resolution (the underlying deployments list is cached 30s per `deployments:list:<userSub>`; `sharedWithMe`, like `isMy`/`canEdit`, is recomputed on every response derived from that cache entry, and on every `resolveDeploymentItem` call).
 
-`resolveDeploymentItem` SHALL accept the requesting user's `bucket` and apply the same `computeOwnershipFlags` enrichment as `listDeployments`, so a deployment resolved through it (e.g. right after `ShareService.acceptInvitation` accepts a share) reports the same `isMy`/`canEdit`/`sharedWithMe` values a subsequent `listDeployments` call would produce for the same item — the frontend's post-accept summary SHALL NOT depend on a page refresh to see the correct ownership flags.
+`resolveDeploymentItem` SHALL accept the requesting user's `bucket` and apply the same `computeOwnershipFlags` enrichment as `listDeployments`, so a deployment resolved through it (e.g. right after `ShareInvitationService.acceptInvitation` accepts a share) reports the same `isMy`/`canEdit`/`sharedWithMe` values a subsequent `listDeployments` call would produce for the same item — the frontend's post-accept summary SHALL NOT depend on a page refresh to see the correct ownership flags.
 
 A failure resolving shared resources SHALL degrade to `sharedWithMe: false` for every item in the response (never fail the whole deployments list, and never fail `resolveDeploymentItem`) and SHALL be logged at `warn` level.
 
@@ -48,7 +48,7 @@ A failure resolving shared resources SHALL degrade to `sharedWithMe: false` for 
 #### Scenario: Just-accepted shared application resolves with correct ownership flags immediately
 
 - **GIVEN** a user has just accepted a share invitation for an application owned by another bucket
-- **WHEN** `ShareService.acceptInvitation` calls `resolveDeploymentItem` with the requesting user's `bucket` to build the accept response's `sharedDeployment`
+- **WHEN** `ShareInvitationService.acceptInvitation` calls `resolveDeploymentItem` with the requesting user's `bucket` to build the accept response's `sharedDeployment`
 - **THEN** the returned item has `isMy: false`, `sharedWithMe: true`, and `canEdit` matching the grant's permissions — without requiring a subsequent `listDeployments` call or a page refresh
 
 #### Scenario: Just-accepted own application resolves as owned, not shared

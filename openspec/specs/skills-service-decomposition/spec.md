@@ -54,11 +54,11 @@ Other domains that need a skills capability SHALL inject the narrowest focused s
 
 `SkillsModule` SHALL export `SkillsService` and `SkillsLookupService` only — not `SkillsListingService`, `SkillsUploadService`, `SkillsDownloadService`, or `SkillsMutationService` — since no verified cross-domain consumer needs them directly.
 
-No skills sub-service SHALL inject `ShareService` or `PublishService`. No `forwardRef` SHALL be introduced between the skills domain and any other domain.
+No skills sub-service SHALL inject `ShareService`, `ShareInvitationService`, `ShareManagementService`, or `PublishService`. No `forwardRef` SHALL be introduced between the skills domain and any other domain.
 
-#### Scenario: ShareService depends on SkillsLookupService directly
-- **WHEN** `ShareService.acceptInvitation` needs to resolve a just-accepted shared skill into a summary DTO
-- **THEN** `ShareModule` imports `SkillsModule` and `ShareService` injects `SkillsLookupService` directly, not `SkillsService`
+#### Scenario: ShareInvitationService depends on SkillsLookupService directly
+- **WHEN** `ShareInvitationService.acceptInvitation` (`apps/chat-api/src/share/invitation/share-invitation.service.ts`) needs to resolve a just-accepted shared skill into a summary DTO
+- **THEN** `ShareModule` imports `SkillsModule` and `ShareInvitationService` injects `SkillsLookupService` directly, not `SkillsService`
 
 #### Scenario: PublishService has no skills dependency
 - **WHEN** `PublishService` is constructed
