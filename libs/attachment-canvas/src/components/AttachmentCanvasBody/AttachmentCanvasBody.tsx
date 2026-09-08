@@ -373,6 +373,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             fileName={fileName}
             loadErrorLabel={loadErrorLabel}
             formulaLabel={xlsxFormulaLabel}
+            formulaLabelClassName={
+              typography?.xlsxFormulaLabelClassName ?? 'dial-italic-text'
+            }
           />
         );
       case AttachmentContentType.Visualizer:
@@ -418,6 +421,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     content,
     typography?.fontClassName,
     typography?.jsonClassName,
+    typography?.xlsxFormulaLabelClassName,
     fileName,
     codeBlockTheme,
     unsupportedLabel,

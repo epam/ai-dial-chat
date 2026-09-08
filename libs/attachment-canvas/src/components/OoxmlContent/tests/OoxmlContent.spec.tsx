@@ -73,6 +73,7 @@ const renderContent = (format: OoxmlFileType) =>
       fileName={`report.${format}`}
       loadErrorLabel="Failed to load file"
       formulaLabel="Formula"
+      formulaLabelClassName="dial-italic-text"
     />,
   );
 
@@ -138,6 +139,8 @@ describe('OoxmlContent', () => {
     const panel = screen.getByRole('region', { name: 'Formula' });
     expect(panel.textContent).toBe('fx');
     expect(screen.getByText('fx').getAttribute('aria-hidden')).toBe('true');
+    expect(screen.getByText('fx').className).toContain('shrink-0');
+    expect(screen.getByText('fx').className).toContain('dial-italic-text');
   });
 
   it.each([
@@ -332,6 +335,7 @@ describe('OoxmlContent', () => {
         content={makeContent(OoxmlFileType.Docx, 'blob:first')}
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
+        formulaLabelClassName="dial-italic-text"
       />,
     );
     await waitFor(() => expect(mockLoad).toHaveBeenCalledWith('blob:first'));
@@ -341,6 +345,7 @@ describe('OoxmlContent', () => {
         content={makeContent(OoxmlFileType.Docx, 'blob:second')}
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
+        formulaLabelClassName="dial-italic-text"
       />,
     );
 
@@ -355,6 +360,7 @@ describe('OoxmlContent', () => {
         content={makeContent(OoxmlFileType.Docx)}
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
+        formulaLabelClassName="dial-italic-text"
       />,
     );
     await waitFor(() => expect(mockDocxConstructor).toHaveBeenCalledOnce());
@@ -364,6 +370,7 @@ describe('OoxmlContent', () => {
         content={makeContent(OoxmlFileType.Xlsx)}
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
+        formulaLabelClassName="dial-italic-text"
       />,
     );
 
@@ -377,6 +384,7 @@ describe('OoxmlContent', () => {
         content={makeContent(OoxmlFileType.Docx)}
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
+        formulaLabelClassName="dial-italic-text"
       />,
     );
     await waitFor(() => expect(mockDocxConstructor).toHaveBeenCalledOnce());
@@ -386,6 +394,7 @@ describe('OoxmlContent', () => {
         content={makeContent(OoxmlFileType.Docx)}
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
+        formulaLabelClassName="dial-italic-text"
       />,
     );
 

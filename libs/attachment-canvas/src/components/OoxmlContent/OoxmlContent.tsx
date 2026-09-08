@@ -21,6 +21,8 @@ interface OoxmlContentProps {
   loadErrorLabel: string;
   /** Accessible label for the panel that shows the active XLSX cell content. */
   formulaLabel: string;
+  /** CSS class applied to the decorative `fx` label. */
+  formulaLabelClassName: string;
 }
 
 const getActiveCellContent = (context: XlsxSelectionContext | null): string => {
@@ -107,6 +109,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
   fileName,
   loadErrorLabel,
   formulaLabel,
+  formulaLabelClassName,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -181,7 +184,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
         >
           <span
             aria-hidden="true"
-            className="shrink-0 font-serif text-lg italic"
+            className={mergeClasses('shrink-0', formulaLabelClassName)}
           >
             fx
           </span>

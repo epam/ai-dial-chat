@@ -297,6 +297,7 @@ interface OoxmlContentProps {
   fileName?: string;
   loadErrorLabel: string;
   formulaLabel: string;
+  formulaLabelClassName: string;
 }
 ```
 
@@ -336,6 +337,8 @@ Because `createViewer` is itself awaited, the effect can be torn down **before a
 
 **i18n:** `loadErrorLabel` remains the shared translated load error. The XLSX formula bar receives its accessible `formulaLabel` from `AttachmentCanvasLabels.xlsxFormulaLabel`, defaulting to `Formula`; the app supplies the translated `attachmentCanvas.xlsxFormulaLabel` value. Its visible, italic `fx` mark is universal spreadsheet notation, carries `aria-hidden="true"`, and is not localized.
 
+**Typography:** `AttachmentCanvasTypography.xlsxFormulaLabelClassName` is forwarded as `formulaLabelClassName` and defaults to the UI Kit's `dial-italic-text`. Hosts MAY replace it with another UI Kit typography class; `OoxmlContent` SHALL NOT define the mark's font family, size, style, or line-height locally.
+
 **RTL / direction impact:** the layout uses direction-neutral spacing and fills the inherited panel direction. The formula/value field carries `dir="ltr"` because spreadsheet formulas and cell references are LTR syntax; the `fx` mark is direction-neutral. The rendered document's own text direction is otherwise the viewer's concern.
 
 **Styling.** `OoxmlContent.module.scss` SHALL size the CSV canvas to its container and set the viewer, formula panel, overlay, and error colors. Every color declaration SHALL use this library's three-level chain `var(--ac-<name>, var(--<design-token>, #hex))` so each color is overridable through `AttachmentCanvasColors`, falls back to the shared design token, and finally to a literal:
@@ -349,7 +352,7 @@ Because `createViewer` is itself awaited, the effect can be torn down **before a
 
 `--ac-status-text` and `--ac-error-icon` are the canvas's existing variables, already set on the `AttachmentCanvasBody` root and inherited through the cascade. The OOXML background and formula variables require matching optional fields on `AttachmentCanvasColors` and `buildCssVars` mappings. A color painted from a bare global token with no `--ac-*` level would prevent hosts from theming it.
 
-Layout stays in Tailwind. The stylesheet SHALL contain no `font-size`, `line-height`, `font-weight`, or `!important` declaration.
+Layout stays in Tailwind. The stylesheet SHALL contain no `font-size`, `line-height`, `font-weight`, or `!important` declaration. The decorative `fx` typography comes entirely from the UI Kit's `dial-italic-text` class supplied through `formulaLabelClassName`.
 The formula/value field SHALL have a fixed height whether its content is empty or populated, preventing the spreadsheet viewport from shifting when the active cell changes.
 
 #### Scenario: every color is host-overridable

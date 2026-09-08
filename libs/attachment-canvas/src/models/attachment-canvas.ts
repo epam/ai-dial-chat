@@ -236,6 +236,8 @@ export interface AttachmentCanvasTypography {
   fontClassName?: string;
   /** CSS utility class applied to the JSON tree viewer. Defaults to `'dial-code-text'`. */
   jsonClassName?: string;
+  /** CSS utility class applied to the decorative XLSX `fx` label. Defaults to `'dial-italic-text'`. */
+  xlsxFormulaLabelClassName?: string;
 }
 
 /** Style override prop for `AttachmentCanvasBody`'s content-rendering area. */
@@ -311,7 +313,7 @@ export interface AttachmentCanvasLabels {
   pdfContentErrorLabel?: string;
   /** Label and accessible name for the retry control shown alongside `pdfContentErrorLabel`. Defaults to `'Retry'`. */
   pdfContentRetryLabel?: string;
-  /** Visible and accessible label for the active XLSX cell's formula panel. Defaults to `'Formula'`. */
+  /** Accessible label for the active XLSX cell's formula panel. Defaults to `'Formula'`. */
   xlsxFormulaLabel?: string;
   /** Accessible status text announced while the syntax-highlighter engine's dynamic import is loading. Defaults to `'Loading…'`. */
   codeContentLoadingLabel?: string;

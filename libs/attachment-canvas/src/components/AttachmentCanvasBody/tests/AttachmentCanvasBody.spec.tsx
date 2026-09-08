@@ -52,11 +52,16 @@ vi.mock('../../OoxmlContent/OoxmlContent', () => ({
   OoxmlContent: ({
     content,
     formulaLabel,
+    formulaLabelClassName,
   }: {
     content: { format: string };
     formulaLabel: string;
+    formulaLabelClassName: string;
   }) => (
-    <section aria-label="ooxml-content">
+    <section
+      aria-label="ooxml-content"
+      data-formula-label-class-name={formulaLabelClassName}
+    >
       {content.format}:{formulaLabel}
     </section>
   ),
@@ -217,6 +222,32 @@ describe('AttachmentCanvasBody', () => {
     );
 
     expect(screen.getByText('xlsx:Cell formula')).toBeTruthy();
+  });
+
+  it('forwards the default and overridden XLSX formula typography', () => {
+    const content = {
+      type: AttachmentContentType.Ooxml as const,
+      url: 'blob:office-url',
+      format: OoxmlFileType.Xlsx,
+    };
+    const view = renderBody(content);
+    expect(
+      screen
+        .getByRole('region', { name: 'ooxml-content' })
+        .getAttribute('data-formula-label-class-name'),
+    ).toBe('dial-italic-text');
+
+    view.unmount();
+    renderBody(content, {
+      styles: {
+        typography: { xlsxFormulaLabelClassName: 'custom-formula-text' },
+      },
+    });
+    expect(
+      screen
+        .getByRole('region', { name: 'ooxml-content' })
+        .getAttribute('data-formula-label-class-name'),
+    ).toBe('custom-formula-text');
   });
 
   it('exposes the OOXML colors as host-overridable CSS variables', () => {

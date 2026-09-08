@@ -350,4 +350,6 @@ Style overrides go through `AttachmentCanvasStyles` (`AttachmentCanvasColors`,
 `AttachmentCanvasContextValue` are exported for hosts building those objects.
 Use `xlsxFormulaLabel` to localize the persistent XLSX `fx` bar's accessible
 label; it defaults to `Formula`. The visual `fx` mark is direction-neutral and
-does not replace that label for assistive technology.
+does not replace that label for assistive technology. Its typography defaults
+to the UI Kit's `dial-italic-text` and can be overridden through
+`styles.typography.xlsxFormulaLabelClassName`.
