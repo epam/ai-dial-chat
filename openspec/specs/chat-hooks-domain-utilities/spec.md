@@ -38,8 +38,8 @@ Every file among `announcement-message.ts`, `application-schema.ts`, `browser-ti
 `@epam/ai-dial-chat-hooks` SHALL export `isDialFileId`, `resolveRelativeDialFilePath`, and `resolveDialFileBucketAndPath` with their exact current parsing behavior. `resolveDialFileDownloadUrl` and `resolveDialUrl` (which hardcode the `/api/v1/files/download` BFF path) SHALL remain in `apps/chat/src/utils/dial-file.ts`, which SHALL import the three pure functions from `@epam/ai-dial-chat-hooks` and continue re-exporting them under their current names so every existing `apps/chat` consumer's import path is unaffected.
 
 #### Scenario: `apps/chat` consumers see no import-path change
-- **WHEN** `apps/chat/src/utils/icon-path.ts` or any other current consumer imports `isDialFileId`/`resolveRelativeDialFilePath` from `../utils/dial-file` (or `./dial-file`)
-- **THEN** the import continues to resolve successfully, now to a re-export of the `@epam/ai-dial-chat-hooks` implementation
+- **WHEN** `apps/chat` is type-checked
+- **THEN** `isDialFileId`/`resolveRelativeDialFilePath` imported from `../utils/dial-file` (or `./dial-file`) resolve to a re-export of the `@epam/ai-dial-chat-hooks` implementation
 
 #### Scenario: `useAttachmentAction` consolidates onto the shared implementation
 - **WHEN** `libs/chat-hooks/src/attachment/useAttachmentAction/useAttachmentAction.ts` is inspected
@@ -113,8 +113,8 @@ Every file among `announcement-message.ts`, `application-schema.ts`, `browser-ti
 `@epam/ai-dial-chat-hooks` SHALL export `prepareDownloadDestination` and the `DownloadDestinationType` it resolves to, reproducing `apps/chat/src/utils/file-download.ts`'s current decision logic exactly. `triggerBrowserDownload` (which creates and clicks a DOM `<a>` element) SHALL remain in `apps/chat/src/utils/file-download.ts`, which SHALL re-export `prepareDownloadDestination` from `@epam/ai-dial-chat-hooks` for its existing consumers' unchanged import path.
 
 #### Scenario: Existing consumers see no import-path change
-- **WHEN** `apps/chat/src/components/CatalogView/CatalogView.tsx` imports `prepareDownloadDestination` from `../../utils/file-download`
-- **THEN** the import continues to resolve successfully, now to a re-export of the `@epam/ai-dial-chat-hooks` implementation
+- **WHEN** `apps/chat` is type-checked
+- **THEN** `prepareDownloadDestination` imported by `CatalogView.tsx` from `../../utils/file-download` resolves to a re-export of the `@epam/ai-dial-chat-hooks` implementation
 
 ### Requirement: `skill.ts` and `skill-manifest.ts` resolve their `parseSkillManifest` naming collision
 
