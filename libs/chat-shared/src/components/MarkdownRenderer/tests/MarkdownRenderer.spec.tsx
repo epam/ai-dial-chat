@@ -266,12 +266,14 @@ describe('MarkdownRenderer', () => {
     expect(paragraph?.textContent).not.toContain('<br>');
   });
 
-  it('renders nothing for a <cit data-id> citation element by default', () => {
+  it('renders a <cit data-id> element as literal text by default', () => {
     render(
       <MarkdownRenderer content='Patient meets criteria<cit data-id="e1"></cit>.' />,
     );
 
-    expect(screen.getByText('Patient meets criteria.')).toBeTruthy();
+    expect(
+      screen.getByText('Patient meets criteria<cit data-id="e1"></cit>.'),
+    ).toBeTruthy();
   });
 
   it('lets a host-supplied components.cit override render the element', () => {

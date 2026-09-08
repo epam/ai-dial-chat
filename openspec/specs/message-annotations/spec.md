@@ -13,7 +13,7 @@ Annotation types, delta accumulation during streaming, and the filtering `useAnn
 `libs/chat-shared/src/models/annotation.ts` SHALL export the following TypeScript interfaces:
 
 - `TextCharacterRangeSelector` — `{ type: 'text_character_range'; start: number; end: number }`
-- `HtmlTagSelector` — `{ type: 'html_tag'; tag: string; id: string }` — targets a void inline tag (e.g. `<cit id="e43864">`) inside the accumulated message text by its `id` attribute.
+- `HtmlTagSelector` — `{ type: 'html_tag'; tag: string; id: string }` — targets the supported paired inline element `<cit data-id="e43864"></cit>` inside the accumulated message text by its `data-id` attribute.
 - `AnnotationSelector` — discriminated union of `TextCharacterRangeSelector`, `PdfBBoxSelector`, and `HtmlTagSelector`; unknown selector shapes SHALL be represented as `{ type: string; [key: string]: unknown }`
 - `AnnotationTarget` — `{ source?: unknown; selector?: AnnotationSelector }`
 - `AttachmentResource` — `{ type: string; url: string }` (same shape as `MessageAttachment` but scoped to citations)

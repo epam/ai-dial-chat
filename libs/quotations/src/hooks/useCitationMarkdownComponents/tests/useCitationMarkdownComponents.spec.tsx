@@ -307,7 +307,10 @@ describe('useCitationMarkdownComponents — cit element rendering', () => {
       target: { selector: { type: 'html_tag', tag: 'cit', id } },
       body: {
         title: 'doc.pdf',
-        source: { type: 'attachment', attachment: { type: 'application/pdf', url } },
+        source: {
+          type: 'attachment',
+          attachment: { type: 'application/pdf', url },
+        },
       },
     };
     return {
@@ -335,7 +338,7 @@ describe('useCitationMarkdownComponents — cit element rendering', () => {
     ).toBeTruthy();
   });
 
-  it('hides an unmatched <cit> element (no group with that id) when not streaming', () => {
+  it('renders an unmatched supported <cit> element as literal text', () => {
     const callbacks = makeCallbacks();
     render(
       <Host
@@ -346,9 +349,12 @@ describe('useCitationMarkdownComponents — cit element rendering', () => {
     );
 
     expect(screen.queryByRole('button')).toBeFalsy();
+    expect(
+      screen.getByText('Patient meets criteria<cit data-id="unknown"></cit>.'),
+    ).toBeTruthy();
   });
 
-  it('hides every <cit> tag while streaming, even a well-formed matched pair', () => {
+  it('hides a supported <cit> citation while streaming', () => {
     const group = makeCitGroup('e1');
     const callbacks = makeCallbacks();
     render(
@@ -364,7 +370,7 @@ describe('useCitationMarkdownComponents — cit element rendering', () => {
     expect(screen.getByText('Patient meets criteria.')).toBeTruthy();
   });
 
-  it('hides a dangling open <cit> tag and the text streamed after it', () => {
+  it('renders a dangling open <cit> tag and the text after it literally', () => {
     const callbacks = makeCallbacks();
     render(
       <Host
@@ -375,7 +381,42 @@ describe('useCitationMarkdownComponents — cit element rendering', () => {
       />,
     );
 
-    expect(screen.getByText('Patient meets criteria')).toBeTruthy();
-    expect(screen.queryByText(/more streaming text/)).toBeFalsy();
+    expect(
+      screen.getByText(
+        'Patient meets criteria<cit data-id="e438">and more streaming text',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('renders an unsupported id-based cit tag literally', () => {
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Patient meets criteria<cit id="legacy"></cit>.'
+        groups={[]}
+        callbacks={callbacks}
+      />,
+    );
+
+    expect(screen.queryByRole('button')).toBeFalsy();
+    expect(
+      screen.getByText('Patient meets criteria<cit id="legacy"></cit>.'),
+    ).toBeTruthy();
+  });
+
+  it('renders a non-empty data-id element literally even when its annotation matches', () => {
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Patient meets criteria<cit data-id="e1">source</cit>.'
+        groups={[makeCitGroup('e1')]}
+        callbacks={callbacks}
+      />,
+    );
+
+    expect(screen.queryByRole('button')).toBeFalsy();
+    expect(
+      screen.getByText('Patient meets criteria<cit data-id="e1">source</cit>.'),
+    ).toBeTruthy();
   });
 });

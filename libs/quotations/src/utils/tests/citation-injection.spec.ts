@@ -1,10 +1,11 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import type { AnnotationGroup } from '../group-annotations-by-source';
 import {
+  escapeUnsupportedCitTags,
   injectCitationSentinels,
   stripCitTagsWhileStreaming,
 } from '../citation-injection';
+import type { AnnotationGroup } from '../group-annotations-by-source';
 
 const makeOffsetGroup = (end: number): AnnotationGroup => {
   const annotation: Annotation = {
@@ -96,18 +97,49 @@ describe('stripCitTagsWhileStreaming', () => {
     expect(stripCitTagsWhileStreaming(content)).toBe('First middle last');
   });
 
-  it('hides a dangling open tag and everything streamed after it', () => {
+  it('renders a dangling open tag and the streamed suffix as text', () => {
     const content =
       'The patient meets criteria<cit data-id="e438">and the plan is still streaming in';
     expect(stripCitTagsWhileStreaming(content)).toBe(
-      'The patient meets criteria',
+      'The patient meets criteria&lt;cit data-id="e438"&gt;and the plan is still streaming in',
     );
   });
 
-  it('hides an incomplete opening tag fragment at the end of the buffer', () => {
+  it('renders an incomplete opening tag fragment as text', () => {
     const content = 'The patient meets criteria<cit data-id="e4';
     expect(stripCitTagsWhileStreaming(content)).toBe(
-      'The patient meets criteria',
+      'The patient meets criteria&lt;cit data-id="e4',
+    );
+  });
+
+  it('renders unsupported differently-cased markup as text while streaming', () => {
+    expect(stripCitTagsWhileStreaming('<CIT data-id="e1"></CIT>')).toBe(
+      '&lt;CIT data-id="e1"&gt;&lt;/CIT&gt;',
+    );
+  });
+});
+
+describe('escapeUnsupportedCitTags', () => {
+  it('keeps the supported empty paired data-id element parseable', () => {
+    const content = 'before<cit data-id="e1"></cit>after';
+    expect(escapeUnsupportedCitTags(content)).toBe(content);
+  });
+
+  it('escapes an id tag instead of interpreting it as a citation', () => {
+    expect(escapeUnsupportedCitTags('<cit id="e1"></cit>')).toBe(
+      '&lt;cit id="e1"&gt;&lt;/cit&gt;',
+    );
+  });
+
+  it('escapes a data-id element containing text', () => {
+    expect(escapeUnsupportedCitTags('<cit data-id="e1">visible</cit>')).toBe(
+      '&lt;cit data-id="e1"&gt;visible&lt;/cit&gt;',
+    );
+  });
+
+  it('escapes differently-cased cit markup instead of treating it as supported', () => {
+    expect(escapeUnsupportedCitTags('<CIT data-id="e1"></CIT>')).toBe(
+      '&lt;CIT data-id="e1"&gt;&lt;/CIT&gt;',
     );
   });
 });

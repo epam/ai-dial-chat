@@ -143,7 +143,9 @@ export const groupAnnotationsByCitId = (
  * other annotation via `groupAnnotationsBySource`. Lets a host render
  * citations without branching on selector type itself.
  */
-export const groupAnnotations = (annotations: Annotation[]): AnnotationGroup[] => [
+export const groupAnnotations = (
+  annotations: Annotation[],
+): AnnotationGroup[] => [
   ...groupAnnotationsByCitId(annotations),
   ...groupAnnotationsBySource(annotations),
 ];

@@ -133,9 +133,7 @@ describe('groupAnnotations', () => {
       makeCitAnnotation('e2', url),
     ]);
     expect(groups).toHaveLength(3);
-    expect(groups.filter((g) => g.groupKey.startsWith('cit:'))).toHaveLength(
-      2,
-    );
+    expect(groups.filter((g) => g.groupKey.startsWith('cit:'))).toHaveLength(2);
     expect(groups.filter((g) => g.groupKey === url)).toHaveLength(1);
   });
 

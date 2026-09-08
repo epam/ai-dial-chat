@@ -25,7 +25,9 @@ export const injectCitationSentinels = (
 ): string => {
   const positions = groups
     .map((g, idx) => ({ g, idx }))
-    .filter(({ g }) => g.primaryAnnotation.target?.selector?.type !== 'html_tag')
+    .filter(
+      ({ g }) => g.primaryAnnotation.target?.selector?.type !== 'html_tag',
+    )
     .map(({ g, idx }) => {
       const selector = g.primaryAnnotation.target?.selector;
       const end =
@@ -46,27 +48,40 @@ export const injectCitationSentinels = (
   return result;
 };
 
-/** Matches a complete `<cit data-id="…">…</cit>` element, non-greedily. */
-const CIT_ELEMENT_RE = /<cit\b[^>]*>[\s\S]*?<\/cit>/g;
+/** Matches the only markup shape interpreted as a citation element. */
+const CIT_ELEMENT_RE = /<cit\s+data-id=(?:"[^"]+"|'[^']+')\s*>\s*<\/cit>/g;
+
+const EXACT_CIT_ELEMENT_RE =
+  /^<cit\s+data-id=(?:"[^"]+"|'[^']+')\s*>\s*<\/cit>$/;
+
+/*
+ * Matches either the supported paired citation element (first alternative)
+ * or an individual/partial cit tag. Ordering matters: a supported pair must
+ * be consumed as one match before the individual-tag alternatives see it.
+ */
+const CIT_MARKUP_RE =
+  /<cit\s+data-id=(?:"[^"]+"|'[^']+')\s*>\s*<\/cit>|<\/?cit\b[^>]*>|<\/?cit\b[^>]*$/gi;
+
+const escapeHtmlMarkup = (markup: string): string =>
+  markup.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /**
- * Hides every `<cit>` citation element from `content` while the message is
- * still streaming — including one whose opening tag has streamed in but
- * whose `</cit>` hasn't arrived yet (an HTML parser would otherwise treat
- * every character between the two as the element's content, which a
- * streaming re-render can't yet know the end of). Once the closing tag
- * arrives it renders as a real element instead (see
- * `useCitationMarkdownComponents`'s `cit` component override), so this is
- * only ever applied during streaming.
+ * Leaves the one supported paired citation element parseable as HTML and
+ * escapes every other `cit` shape so Markdown renders the original markup as
+ * visible text. Unsupported markup is never interpreted as a citation.
+ */
+export const escapeUnsupportedCitTags = (content: string): string =>
+  content.replace(CIT_MARKUP_RE, (markup) =>
+    EXACT_CIT_ELEMENT_RE.test(markup) ? markup : escapeHtmlMarkup(markup),
+  );
+
+/**
+ * Hides supported paired citation elements while the message is streaming.
+ * Every other `cit` shape is escaped and remains visible as ordinary text,
+ * preventing an incomplete opening tag from swallowing the streamed suffix.
  */
 export const stripCitTagsWhileStreaming = (content: string): string => {
-  if (!content.includes('<cit')) return content;
-
-  const withCompletePairsRemoved = content.replace(CIT_ELEMENT_RE, '');
-  const danglingOpenTagIndex = withCompletePairsRemoved.indexOf('<cit');
-  return danglingOpenTagIndex === -1
-    ? withCompletePairsRemoved
-    : withCompletePairsRemoved.slice(0, danglingOpenTagIndex);
+  return escapeUnsupportedCitTags(content).replace(CIT_ELEMENT_RE, '');
 };
 
 /**

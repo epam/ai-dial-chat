@@ -1,4 +1,11 @@
-import { memo, useEffect, useMemo, useState, type FC } from 'react';
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+  type ReactNode,
+} from 'react';
 import ReactMarkdown, { type Components, type Options } from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
@@ -277,15 +284,30 @@ const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
  * Default react-markdown component overrides shared across all consumers.
  * `cit` isn't a known JSX intrinsic element (see the sanitize schema above
  * for why it's allow-listed), so it's added via a cast rather than the
- * `Components` type literal directly. Renders nothing by default — a
- * consumer that cares about `<cit>` elements (`@epam/ai-dial-quotations`'s
+ * `Components` type literal directly. Renders the tag as literal text by
+ * default — a consumer that cares about `<cit>` elements
+ * (`@epam/ai-dial-quotations`'s
  * `useCitationMarkdownComponents`) overrides this via its own `components`
- * prop; every other consumer gets a silent, warning-free hide instead of an
- * unstyled custom element.
+ * prop; every other consumer sees the markup without mounting an unstyled
+ * custom element.
  */
+const renderCitTagAsText = ({
+  children,
+  ...props
+}: {
+  'data-id'?: string;
+  children?: ReactNode;
+}) => (
+  <>
+    {props['data-id'] == null ? '<cit>' : `<cit data-id="${props['data-id']}">`}
+    {children}
+    {'</cit>'}
+  </>
+);
+
 export const defaultMarkdownComponents: Components = {
   li: ({ children }) => <li className="mb-1.5 last:mb-0">{children}</li>,
-  ...({ cit: () => null } as Components),
+  ...({ cit: renderCitTagAsText } as Components),
 };
 
 /** Minimal shape shared by hast text and element nodes, enough to read a cell's plain text. */

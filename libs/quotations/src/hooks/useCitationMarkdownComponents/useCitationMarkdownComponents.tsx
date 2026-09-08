@@ -3,12 +3,13 @@ import {
   type Annotation,
   type HtmlTagSelector,
 } from '@epam/ai-dial-chat-shared';
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import type { Components } from 'react-markdown';
 import type { CitationCardLabels } from '../../components/CitationCard/CitationCard';
 import { CitationDropdown } from '../../components/CitationDropdown/CitationDropdown';
 import type { CitationMarkerLabels } from '../../components/CitationMarker/CitationMarker';
 import {
+  escapeUnsupportedCitTags,
   injectCitationSentinels,
   replaceSentinelsInChildren,
   stripCitTagsWhileStreaming,
@@ -42,6 +43,17 @@ const citTagId = (group: AnnotationGroup): string | undefined => {
     : undefined;
 };
 
+const renderCitTagAsText = (
+  dataId: string | undefined,
+  children: ReactNode,
+) => (
+  <>
+    {dataId == null ? '<cit>' : `<cit data-id="${dataId}">`}
+    {children}
+    {'</cit>'}
+  </>
+);
+
 /**
  * Builds react-markdown component overrides that inject citation markers
  * into rendered assistant message content: a `cit` element override for
@@ -57,14 +69,12 @@ const citTagId = (group: AnnotationGroup): string | undefined => {
  * every interaction.
  *
  * Returns both the pre-processed content string and the `Components` map to
- * pass to the markdown renderer. While `isStreaming` is true, every `<cit>`
- * tag (complete or still arriving) is hidden from `processedContent` — the
- * model always closes a `<cit>` element immediately, but an SSE chunk
- * boundary can still land between the opening and closing tag, and an HTML
- * parser given only the opening tag would otherwise treat all of the
- * message's subsequent (already-streamed) text as that element's content.
- * Citation pills for `<cit>` tags therefore only appear once the message
- * has finished streaming, matching every other citation family.
+ * pass to the markdown renderer. While `isStreaming` is true, complete
+ * supported `<cit data-id="…"></cit>` elements are hidden from
+ * `processedContent`; incomplete or otherwise unsupported `cit` markup is
+ * escaped and remains visible as literal text. Citation pills for supported
+ * `<cit>` elements only appear once the message has finished streaming,
+ * matching every other citation family.
  *
  * `isCompactTypography` drops the paragraph class one type-scale step, matching
  * `COMPACT_MARKDOWN_CLASS_NAMES` so cited and uncited paragraphs stay the same
@@ -81,8 +91,12 @@ export const useCitationMarkdownComponents = (
 
   const processedContent = useMemo(() => {
     if (isStreaming) return stripCitTagsWhileStreaming(content);
-    return groups.length > 0 ? injectCitationSentinels(content, groups) : content;
+    const contentWithSentinels =
+      groups.length > 0 ? injectCitationSentinels(content, groups) : content;
+    return escapeUnsupportedCitTags(contentWithSentinels);
   }, [content, groups, isStreaming]);
+
+  const hasCitElement = processedContent.includes('<cit');
 
   const markdownComponents = useMemo((): Components => {
     const citGroupsByTagId = new Map<string, AnnotationGroup>();
@@ -90,8 +104,6 @@ export const useCitationMarkdownComponents = (
       const tagId = citTagId(group);
       if (tagId != null) citGroupsByTagId.set(tagId, group);
     }
-
-    if (groups.length === 0 && citGroupsByTagId.size === 0) return {};
 
     const renderGroup = (group: AnnotationGroup) => {
       const { cardLabels, markerLabels } = buildLabels(group);
@@ -118,17 +130,24 @@ export const useCitationMarkdownComponents = (
      * (not `id`) is the lookup attribute because `rehype-sanitize`'s default
      * schema prefixes `id`/`name` with `user-content-` to prevent DOM
      * clobbering; `data-*` attributes are exempt. A tag id with no matching
-     * group (annotation never arrived, or doesn't resolve) renders nothing
-     * rather than the raw tag.
+     * group (annotation never arrived, or doesn't resolve) is serialized back
+     * to literal text rather than disappearing.
      */
     const citComponent = {
-      cit: (props: { 'data-id'?: string }) => {
-        const group = props['data-id'] != null
-          ? citGroupsByTagId.get(props['data-id'])
-          : undefined;
-        return group ? renderGroup(group) : null;
+      cit: (props: { 'data-id'?: string; children?: ReactNode }) => {
+        const group =
+          props['data-id'] != null
+            ? citGroupsByTagId.get(props['data-id'])
+            : undefined;
+        return group
+          ? renderGroup(group)
+          : renderCitTagAsText(props['data-id'], props.children);
       },
     } as Components;
+
+    if (groups.length === 0) {
+      return hasCitElement ? citComponent : {};
+    }
 
     return {
       ...citComponent,
@@ -151,7 +170,14 @@ export const useCitationMarkdownComponents = (
         </li>
       ),
     };
-  }, [groups, onPreview, onOpenInBrowser, buildLabels, isCompactTypography]);
+  }, [
+    groups,
+    onPreview,
+    onOpenInBrowser,
+    buildLabels,
+    isCompactTypography,
+    hasCitElement,
+  ]);
 
   return { processedContent, markdownComponents };
 };

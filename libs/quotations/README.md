@@ -103,9 +103,9 @@ Returns the resolved `Annotation[]` for a message, returning an empty array whil
 
 ### `useCitationMarkdownComponents`
 
-Builds `react-markdown` component overrides for rendering citations: a `cit` element override (rendered once the host's `rehype-raw`/`rehype-sanitize` pipeline parses a `<cit data-id="…"></cit>` tag into a real element — see `MarkdownRenderer`'s `baseRehypePlugins`; the override looks the group up by `data-id` and renders nothing for an unmatched id), plus `p`/`li` overrides that inject markers at the character offsets stored in each offset-based annotation group's primary selector. Returns `{ processedContent, markdownComponents }` — pass `processedContent` as the markdown source and spread `markdownComponents` into the renderer's `components` prop.
+Builds `react-markdown` component overrides for rendering citations: a `cit` element override (rendered once the host's `rehype-raw`/`rehype-sanitize` pipeline parses the exact supported `<cit data-id="…"></cit>` shape into a real element — see `MarkdownRenderer`'s `baseRehypePlugins`; the override looks the group up by `data-id` and renders unmatched markup as literal text), plus `p`/`li` overrides that inject markers at the character offsets stored in each offset-based annotation group's primary selector. Unsupported `cit` shapes are escaped and displayed as ordinary text rather than interpreted or dropped. Returns `{ processedContent, markdownComponents }` — pass `processedContent` as the markdown source and spread `markdownComponents` into the renderer's `components` prop.
 
-While `isStreaming` is `true`, `processedContent` has every `<cit>` tag hidden (complete or still arriving) via `stripCitTagsWhileStreaming` — an SSE chunk boundary can land between a tag's open and close, and an HTML parser given only the opening tag would otherwise swallow the rest of the already-streamed message as that element's content.
+While `isStreaming` is `true`, `processedContent` hides only complete supported `<cit data-id="…"></cit>` citation elements via `stripCitTagsWhileStreaming`. Partial or unsupported `cit` markup is escaped and displayed literally, so an HTML parser cannot swallow the streamed suffix.
 
 The hook owns no PDF-detection, attachment-DTO, or canvas-opening logic — that belongs in the host's `onPreview` implementation.
 
@@ -148,7 +148,7 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
 - `normalizeRawAnnotations(raw, attachments)` — normalises raw API wire-format annotations; recognizes both the legacy `attachment_index` + `pdf_region` shape and the `html_tag` + flat `body.source.url` shape, including DOCX/XLSX/PPTX MIME inference
 - `annotationsToPdfHighlights(annotations)` — maps annotations to PDF viewer highlight entries
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown, for offset-based (non-`html_tag`) groups only
-- `stripCitTagsWhileStreaming(content)` — hides every `<cit>` element (complete or still arriving) from `content` while a message is streaming
+- `stripCitTagsWhileStreaming(content)` — hides supported paired citation elements while streaming and escapes every other `cit` shape for literal display
 - `replaceSentinelsInChildren(children, renderMarker)` — replaces sentinels with React nodes in a rendered tree
 - `getReferenceAttachmentGroups(dtos)` — maps reference-only attachments to synthetic annotation groups
 - `isReferenceOnlyAttachment(dto)` — returns true for RAG/grounding chunks without a direct URL

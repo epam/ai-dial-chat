@@ -170,6 +170,51 @@ describe('ConversationMessageItem — reference-only attachments', () => {
 });
 
 describe('ConversationMessageItem — inline citations', () => {
+  it('renders every matching html_tag citation in one message', () => {
+    const citationIds = Array.from(
+      { length: 6 },
+      (_, index) => `citation-${index + 1}`,
+    );
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: citationIds
+        .map(
+          (citationId, index) =>
+            `Fact ${index + 1}<cit data-id="${citationId}"></cit>`,
+        )
+        .join(' '),
+      timestamp: '2026-09-08T10:16:43.739Z',
+      custom_content: {
+        annotations: citationIds.map((citationId) => ({
+          target: {
+            selector: { type: 'html_tag', tag: 'cit', id: citationId },
+          },
+          body: {
+            title: 'shared-source.pdf',
+            source: {
+              type: 'attachment',
+              attachment: {
+                type: 'application/pdf',
+                url: 'files/shared-source.pdf',
+                title: 'shared-source.pdf',
+              },
+            },
+          },
+        })),
+      },
+    };
+
+    render(
+      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+    );
+
+    expect(
+      screen.getAllByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      }),
+    ).toHaveLength(6);
+  });
+
   it('routes a persisted XLSX citation mislabeled as PDF to generic attachment preview', async () => {
     const onAttachmentClick = vi.fn();
     const message: Message = {
