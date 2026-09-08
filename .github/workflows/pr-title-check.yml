@@ -7,8 +7,7 @@ on:
       - edited
       - reopened
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
