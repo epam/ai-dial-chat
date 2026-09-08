@@ -2,6 +2,30 @@
   background: var(--ac-ooxml-bg, var(--bg-layer-raised, #fcfcfc));
 }
 
+.spreadsheetCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.formulaPanel {
+  border-color: var(
+    --ac-ooxml-formula-border,
+    var(--stroke-secondary, #d1dbea)
+  );
+  background: var(--ac-ooxml-bg, var(--bg-layer-raised, #fcfcfc));
+  color: var(--ac-ooxml-formula-text, var(--text-primary, #161b2d));
+}
+
+.formulaValue {
+  border-color: var(
+    --ac-ooxml-formula-border,
+    var(--stroke-secondary, #d1dbea)
+  );
+  background: var(--ac-ooxml-formula-bg, var(--bg-layer-base, #f5f7fa));
+  color: var(--ac-ooxml-formula-text, var(--text-primary, #161b2d));
+}
+
 .statusOverlay {
   background: var(--ac-ooxml-bg, var(--bg-layer-raised, #fcfcfc));
   color: var(--ac-status-text, var(--text-secondary, #57647a));

@@ -1,10 +1,10 @@
 # @epam/ai-dial-attachment-canvas
 
-Canvas/viewer component for rendering attachment content inline — images, audio, PDFs, DOCX/XLSX/PPTX, JSON, markdown, code, HTML, and plain text.
+Canvas/viewer component for rendering attachment content inline — images, audio, PDFs, DOCX/XLSX/PPTX, CSV, JSON, markdown, code, HTML, and plain text.
 
 ## Overview
 
-`@epam/ai-dial-attachment-canvas` solves the problem of rendering heterogeneous attachment content — images, audio, PDFs with text highlighting, DOCX/XLSX/PPTX documents, JSON trees, markdown documents, syntax-highlighted source files, sandboxed HTML, third-party visualizers, and plain text — inside a single unified preview panel. Without this library, each consuming feature would need to independently wire up content-type detection, lazy loading, and document renderers. The library centralises all of that behind a React context, meaning any component in the tree can push new content to the canvas without drilling props through intermediate layers. Use it whenever a conversation view, side panel, or modal needs to display an attachment that the user has opened or clicked. When a MIME type is not natively supported, or a fetch fails, the library provides graceful `UnsupportedCanvasContent` / `ErrorCanvasContent` fallbacks and a download utility so users can still retrieve the file.
+`@epam/ai-dial-attachment-canvas` solves the problem of rendering heterogeneous attachment content — images, audio, PDFs with text highlighting, DOCX/XLSX/PPTX documents, CSV spreadsheets, JSON trees, markdown documents, syntax-highlighted source files, sandboxed HTML, third-party visualizers, and plain text — inside a single unified preview panel. Without this library, each consuming feature would need to independently wire up content-type detection, lazy loading, and document renderers. The library centralises all of that behind a React context, meaning any component in the tree can push new content to the canvas without drilling props through intermediate layers. Use it whenever a conversation view, side panel, or modal needs to display an attachment that the user has opened or clicked. When a MIME type is not natively supported, or a fetch fails, the library provides graceful `UnsupportedCanvasContent` / `ErrorCanvasContent` fallbacks and a download utility so users can still retrieve the file.
 
 ## Installation
 
@@ -48,8 +48,10 @@ host supplies the tested `^5.4.149` version instead of silently relying on a
 transitive dependency.
 
 The library uses `@silurus/ooxml` as a bundled runtime dependency. Its DOCX,
-XLSX, and PPTX entry points are loaded independently on demand, so opening one
-format does not eagerly load the other renderers.
+XLSX/CSV, and PPTX entry points are loaded independently on demand, so opening
+one format does not eagerly load the other renderers. CSV is displayed through
+the Excel-style `XlsxSheetViewer`; every field remains text, including leading
+zeroes, long identifiers, dates, and values beginning with `=`.
 
 The PDF renderer (`PdfContent`, used internally by `AttachmentCanvasBody` for
 `AttachmentContentType.Pdf`) and the syntax-highlighter engine (used by
@@ -272,24 +274,29 @@ const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 
 `AttachmentContentType` is the discriminant on every content descriptor.
 
-| Enum member                         | Content type               | Description                                       |
-| ----------------------------------- | -------------------------- | ------------------------------------------------- |
-| `AttachmentContentType.PlainText`   | `PlainTextCanvasContent`   | Renders plain text                                |
-| `AttachmentContentType.Image`       | `ImageCanvasContent`       | Renders an image from a URL                       |
-| `AttachmentContentType.Audio`       | `AudioCanvasContent`       | Renders an audio player                           |
-| `AttachmentContentType.Markdown`    | `MarkdownCanvasContent`    | Renders markdown text                             |
-| `AttachmentContentType.Json`        | `JsonCanvasContent`        | Renders a JSON tree viewer                        |
-| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support              |
-| `AttachmentContentType.Ooxml`       | `OoxmlCanvasContent`       | Renders DOCX, XLSX, or PPTX with `@silurus/ooxml` |
-| `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                 |
-| `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source  |
-| `AttachmentContentType.Visualizer`  | `VisualizerCanvasContent`  | Renders a registered custom visualizer            |
-| `AttachmentContentType.Unsupported` | `UnsupportedCanvasContent` | Fallback for unsupported MIME types               |
-| `AttachmentContentType.Error`       | `ErrorCanvasContent`       | Load failure or forbidden access                  |
+| Enum member                         | Content type               | Description                                                                                                                             |
+| ----------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `AttachmentContentType.PlainText`   | `PlainTextCanvasContent`   | Renders plain text                                                                                                                      |
+| `AttachmentContentType.Image`       | `ImageCanvasContent`       | Renders an image from a URL                                                                                                             |
+| `AttachmentContentType.Audio`       | `AudioCanvasContent`       | Renders an audio player                                                                                                                 |
+| `AttachmentContentType.Markdown`    | `MarkdownCanvasContent`    | Renders markdown text                                                                                                                   |
+| `AttachmentContentType.Json`        | `JsonCanvasContent`        | Renders a JSON tree viewer                                                                                                              |
+| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support                                                                                                    |
+| `AttachmentContentType.Ooxml`       | `OoxmlCanvasContent`       | Renders DOCX, XLSX, PPTX, or CSV with `@silurus/ooxml`; the persistent XLSX `fx` bar shows the selected cell's formula or display value |
+| `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                                                                                                       |
+| `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source                                                                                        |
+| `AttachmentContentType.Visualizer`  | `VisualizerCanvasContent`  | Renders a registered custom visualizer                                                                                                  |
+| `AttachmentContentType.Unsupported` | `UnsupportedCanvasContent` | Fallback for unsupported MIME types                                                                                                     |
+| `AttachmentContentType.Error`       | `ErrorCanvasContent`       | Load failure or forbidden access                                                                                                        |
 
 `AttachmentErrorType` distinguishes the two failure kinds carried by
 `ErrorCanvasContent`: `LoadFailed` (network error or a non-`403` non-OK
 response) and `Forbidden` (HTTP `403`).
+
+`OoxmlFileType` selects the bundled renderer: `Docx`, `Xlsx`, `Pptx`, or
+`Csv`. The public name is retained for compatibility; `Csv` uses
+`@silurus/ooxml`'s `XlsxSheetViewer` delimited-text mode rather than an OOXML
+workbook parser.
 
 ## Utilities
 
@@ -316,7 +323,7 @@ if (isOoxmlPreviewable(fileName, mimeType)) { ... }
 // Resolve the format needed by OoxmlCanvasContent
 const format = getOoxmlFileType(fileName, mimeType);
 
-// Resolve the canonical MIME type for a recognized OOXML format
+// Resolve the canonical MIME type for a recognized renderer format
 const canonicalMimeType = getOoxmlMimeType(fileName, mimeType);
 
 // Resolve a syntax-highlighting language from a file extension
@@ -341,3 +348,8 @@ Style overrides go through `AttachmentCanvasStyles` (`AttachmentCanvasColors`,
 `AttachmentCanvasLabels`. `AttachmentCanvasProps`,
 `AttachmentCanvasContainerProps`, `CodeContentProps`, `CodeContentLabels`, and
 `AttachmentCanvasContextValue` are exported for hosts building those objects.
+Use `xlsxFormulaLabel` to localize the persistent XLSX `fx` bar's accessible
+label; it defaults to `Formula`. The visual `fx` mark is direction-neutral and
+does not replace that label for assistive technology. Its typography defaults
+to the UI Kit's `dial-italic-text` and can be overridden through
+`styles.typography.xlsxFormulaLabelClassName`.

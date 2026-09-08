@@ -96,8 +96,9 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
 /* Returns true when an external source URL should be opened in the canvas
  * rather than a new browser tab.
  *
- * Image, audio, PDF, and OOXML (docx/xlsx/pptx) content types are trusted
- * directly: web-search grounding APIs do not mislabel images/audio, and a
+ * Image, audio, PDF, and built-in document renderer (docx/xlsx/pptx/csv)
+ * content types are trusted directly. Web-search grounding APIs do not
+ * mislabel images/audio, and a
  * citation annotation's `attachment.type` is the same authoritative PDF/OOXML
  * marker the quotation canvas path (`annotationToPdfCanvasContent`) trusts —
  * such a URL commonly carries no matching extension (a citation/reference id,
@@ -132,7 +133,7 @@ export const getUrlFileName = (url: string): string => {
   }
 };
 
-/** Returns true when `contentType` alone already trustworthily identifies an image, audio, PDF, or OOXML (docx/xlsx/pptx) source. */
+/** Returns true when `contentType` alone already trustworthily identifies an image, audio, PDF, or built-in document-renderer source. */
 const isTrustedSourceContentType = (contentType: string): boolean =>
   contentType.startsWith('image/') ||
   contentType.startsWith('audio/') ||
@@ -141,9 +142,10 @@ const isTrustedSourceContentType = (contentType: string): boolean =>
 
 /**
  * Returns the content type to trust for an external citation source: `contentType`
- * unchanged when it is already an image/audio/PDF/OOXML marker, otherwise the
- * type implied by `url`'s path extension (`MIMEType.PDF` for `.pdf`, the
- * canonical OOXML MIME for `.docx`/`.xlsx`/`.pptx`) when that extension is
+ * unchanged when it is already an image/audio/PDF/document-renderer marker,
+ * otherwise the type implied by `url`'s path extension (`MIMEType.PDF` for
+ * `.pdf`, the
+ * canonical MIME for `.docx`/`.xlsx`/`.pptx`/`.csv`) when that extension is
  * recognized, otherwise `contentType` unchanged.
  *
  * Web-search grounding APIs label every reference — PDFs and Office documents
@@ -528,7 +530,7 @@ export const resolvePdfCanvasContent = async (
     : null;
 };
 
-/** Resolves an OOXML canvas content payload from a DisplayAttachment, or `null` if unavailable. */
+/** Resolves an OOXML or CSV renderer payload from a DisplayAttachment, or `null` if unavailable. */
 export const resolveOoxmlCanvasContent = async (
   attachment: DisplayAttachment,
   resolvers: AttachmentCanvasUrlResolvers,
