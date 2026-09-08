@@ -63,7 +63,16 @@ import {
   IconWorldOff,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { memo, useCallback, useMemo, useRef, useState, type FC } from 'react';
+import {
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import {
@@ -117,9 +126,13 @@ import {
 } from '../../utils/conversation-transfer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
-import PublishConversationPanelContainer from '../PublishConversationPanelContainer/PublishConversationPanelContainer';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
 import ConversationPanelMenu from './ConversationPanelMenu';
+
+const PublishConversationPanelContainer = lazy(
+  () =>
+    import('../PublishConversationPanelContainer/PublishConversationPanelContainer'),
+);
 
 const PANEL_STYLES: ConversationPanelStyles = {
   itemIconBadgeClassName: 'rounded-lg',
@@ -1453,20 +1466,32 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
       {isConversationsPublishingEnabled &&
         pendingPublishConversation !== null && (
-          <PublishConversationPanelContainer
-            isOpen
-            conversationPath={pendingPublishConversation.path}
-            conversationTitle={pendingPublishConversation.title}
-            onClose={handleClosePublishPanel}
-            returnFocusRef={rowActionsTriggerRef}
-            history={publishPanelHistory.entries}
-            isHistoryLoading={
-              publishPanelHistory.status === PublishHistoryStatus.Loading
+          <Suspense
+            fallback={
+              <Popup
+                open
+                header={t(ButtonsI18nKeys.Publish)}
+                onClose={handleClosePublishPanel}
+              >
+                <p role="status">{t(BasicI18nKeys.Loading)}</p>
+              </Popup>
             }
-            hasHistoryError={
-              publishPanelHistory.status === PublishHistoryStatus.Failed
-            }
-          />
+          >
+            <PublishConversationPanelContainer
+              isOpen
+              conversationPath={pendingPublishConversation.path}
+              conversationTitle={pendingPublishConversation.title}
+              onClose={handleClosePublishPanel}
+              returnFocusRef={rowActionsTriggerRef}
+              history={publishPanelHistory.entries}
+              isHistoryLoading={
+                publishPanelHistory.status === PublishHistoryStatus.Loading
+              }
+              hasHistoryError={
+                publishPanelHistory.status === PublishHistoryStatus.Failed
+              }
+            />
+          </Suspense>
         )}
     </>
   );

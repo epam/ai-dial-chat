@@ -11,13 +11,13 @@ import {
   ErrorText,
   GhostButton,
   Input,
-  LazyMarkdownEditor,
   NeutralButton,
   PrimaryButton,
   Spinner,
   Textarea,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
+import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 import { IconPlus, IconTrashX } from '@tabler/icons-react';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing

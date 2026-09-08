@@ -1,5 +1,6 @@
 import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
-import { Grid, mergeClasses } from '@epam/ai-dial-ui-kit';
+import { mergeClasses } from '@epam/ai-dial-ui-kit';
+import { Grid } from '@epam/ai-dial-ui-kit/grid';
 import type { GridApi } from 'ag-grid-community';
 import { type CSSProperties, FC, useEffect, useMemo, useRef } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
