@@ -16,13 +16,18 @@ const wrapper: FC<{ children: ReactNode }> = ({ children }) => (
   <ConversationPanelProvider>{children}</ConversationPanelProvider>
 );
 
-const renderPanelState = (props?: Partial<HookProps>) =>
-  renderHook(
+/* The callbacks are created once per render helper, not per render, so a test
+   can assert on them across re-renders. */
+const renderPanelState = (props?: Partial<HookProps>) => {
+  const onCloseCanvas = vi.fn();
+  const onCloseSourcesPanel = vi.fn();
+
+  const view = renderHook(
     (hookProps: HookProps) =>
       useConversationPanelRouteState({
         ...hookProps,
-        onCloseCanvas: vi.fn(),
-        onCloseSourcesPanel: vi.fn(),
+        onCloseCanvas,
+        onCloseSourcesPanel,
       }),
     {
       wrapper,
@@ -35,6 +40,9 @@ const renderPanelState = (props?: Partial<HookProps>) =>
       },
     },
   );
+
+  return { ...view, onCloseCanvas, onCloseSourcesPanel };
+};
 
 describe('useConversationPanelRouteState', () => {
   it('opens the panel on a conversation route when the default is on', () => {
@@ -169,5 +177,49 @@ describe('useConversationPanelRouteState', () => {
       isOpenByDefault: true,
     });
     expect(result.current.isPanelOpen).toBe(false);
+  });
+
+  it('leaves the panel closed when the canvas is already open on the first render', () => {
+    const { result } = renderPanelState({
+      isCanvasOpen: true,
+      isOpenByDefault: true,
+    });
+
+    expect(result.current.isPanelOpen).toBe(false);
+  });
+
+  it('closes the panel and the sources panel when the canvas opens', () => {
+    const { result, rerender, onCloseCanvas, onCloseSourcesPanel } =
+      renderPanelState({ isOpenByDefault: true });
+
+    expect(result.current.isPanelOpen).toBe(true);
+    onCloseCanvas.mockClear();
+
+    rerender({
+      pathname: ROUTES.Root,
+      isMobile: false,
+      isCanvasOpen: true,
+      isOpenByDefault: true,
+    });
+
+    expect(result.current.isPanelOpen).toBe(false);
+    expect(onCloseSourcesPanel).toHaveBeenCalledOnce();
+    /* The safety net reacts to the canvas opening, so it must not close it. */
+    expect(onCloseCanvas).not.toHaveBeenCalled();
+  });
+
+  it('closes the canvas on every navigation', () => {
+    const { rerender, onCloseCanvas } = renderPanelState();
+
+    expect(onCloseCanvas).toHaveBeenCalledOnce();
+
+    rerender({
+      pathname: `${ROUTES.Conversations}/first`,
+      isMobile: false,
+      isCanvasOpen: false,
+      isOpenByDefault: true,
+    });
+
+    expect(onCloseCanvas).toHaveBeenCalledTimes(2);
   });
 });
