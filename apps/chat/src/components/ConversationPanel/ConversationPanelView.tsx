@@ -29,7 +29,6 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConversationTransferErrorCode,
   FilterTab,
-  mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
@@ -1230,9 +1229,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [onRequestedFilterChange, onActiveFilterChange],
   );
 
-  const panelClassName = isMobile
-    ? mergeClasses('fixed inset-y-0 start-0', isOpen && 'z-50')
-    : undefined;
+  /*
+   * On mobile the panel covers the conversation instead of sitting next to it,
+   * so it is lifted out of the layout row and animated as a drawer. The z-index
+   * is unconditional: dropping it while closing let the conversation paint over
+   * the panel for the length of the transition.
+   */
+  const panelClassName = isMobile ? 'fixed inset-y-0 start-0 z-50' : undefined;
 
   return (
     <>
@@ -1264,6 +1267,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           onActionMenuOpen={handleActionMenuOpen}
           onToggle={isMobile ? onClose : undefined}
           className={panelClassName}
+          isOverlay={isMobile}
           styles={PANEL_STYLES}
           onMoveConversation={handleMoveConversation}
           headerActions={
