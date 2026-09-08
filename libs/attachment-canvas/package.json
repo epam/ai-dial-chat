@@ -1,6 +1,6 @@
 {
   "name": "@epam/ai-dial-attachment-canvas",
-  "description": "Canvas viewer for rendering attachment content — images, PDFs, Office documents, JSON, markdown, and plain text",
+  "description": "Canvas viewer for rendering attachment content — images, PDFs, Office documents, CSV, JSON, markdown, and plain text",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
@@ -35,7 +35,7 @@
     "react-syntax-highlighter": "^16.1.1"
   },
   "dependencies": {
-    "@silurus/ooxml": "^0.80.2"
+    "@silurus/ooxml": "^0.86.1"
   },
   "nx": {
     "tags": [

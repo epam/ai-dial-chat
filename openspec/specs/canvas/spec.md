@@ -110,8 +110,8 @@ For `AttachmentType.File` attachments, `openFileCanvas` (`libs/attachment-canvas
 | `text/markdown` MIME | `resolveMarkdownCanvasContent` | `MarkdownCanvasContent` |
 | `application/json` MIME | `resolveJsonCanvasContent` | `JsonCanvasContent` or `PlainTextCanvasContent` |
 | `application/pdf` MIME | `resolvePdfCanvasContent` | `PdfCanvasContent` |
-| DOCX/XLSX/PPTX MIME (`getOoxmlFileType('', contentType)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
-| `docx`, `xlsx`, `pptx` extension (`getOoxmlFileType(fileName)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
+| DOCX/XLSX/PPTX/CSV MIME (`getOoxmlFileType('', contentType)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
+| `docx`, `xlsx`, `pptx`, `csv` extension (`getOoxmlFileType(fileName)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
 | `md`, `markdown` extension | `resolveMarkdownCanvasContent` | `MarkdownCanvasContent` |
 | `json` extension | `resolveJsonCanvasContent` | `JsonCanvasContent` or `PlainTextCanvasContent` (parse failure) |
 | `pdf` extension | `resolvePdfCanvasContent` | `PdfCanvasContent` |
@@ -122,7 +122,7 @@ For `AttachmentType.File` attachments, `openFileCanvas` (`libs/attachment-canvas
 
 Extension checks for `md`/`markdown` and `json` run *before* the generic `isTextPreviewable` branch. The `html`/`htm` branch runs before the generic `isTextPreviewable` branch. The `isTextPreviewable` branch routes to `resolveCodeCanvasContent` (returning `CodeCanvasContent`) rather than `resolveTextCanvasContent`.
 
-Each Office check sits immediately ahead of the switch keyed on the same signal — the MIME one before the `contentType` switch, the extension one before the `ext` switch — and both return `true` even when their resolver yields nothing, opening `Unsupported` content instead, because the format *was* recognised (see the `attachment-canvas-ooxml-viewer` capability).
+Each document-renderer check sits immediately ahead of the switch keyed on the same signal — the MIME one before the `contentType` switch, the extension one before the `ext` switch — and both return `true` even when their resolver yields nothing, opening `Unsupported` content instead, because the format *was* recognised (see the `attachment-canvas-ooxml-viewer` capability).
 
 ---
 

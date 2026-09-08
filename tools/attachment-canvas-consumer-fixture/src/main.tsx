@@ -11,7 +11,7 @@
  * steers every in-repo consumer toward. That resolution difference is
  * exactly the property this fixture exists to prove (see README.md).
  */
-// eslint-disable-next-line @nx/enforce-module-boundaries
+
 import {
   AttachmentCanvasContainer,
   AttachmentCanvasProvider,

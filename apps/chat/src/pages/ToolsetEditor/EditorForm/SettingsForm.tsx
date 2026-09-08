@@ -21,7 +21,7 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../../models/toolsets';
-import { listMcpToolNames } from '../../../server-api/mcp-apps';
+import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import { isToolsetAuthValid } from '../../../utils/toolsets';
 import AuthSection from './AuthSection';
 
@@ -86,7 +86,10 @@ const SettingsForm: FC<Props> = ({
 
     const loadToolNames = async () => {
       try {
-        const toolNames = await listMcpToolNames(toolsetId, 'toolset');
+        const toolNames = await mcpAppsApiClient.listToolNames(
+          toolsetId,
+          'toolset',
+        );
         if (!isCancelled) {
           setAvailableToolNames(toolNames.length > 0 ? toolNames : null);
         }

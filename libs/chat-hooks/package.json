@@ -100,6 +100,12 @@
       "types": "./dist/utils.d.ts",
       "import": "./dist/utils.js",
       "default": "./dist/utils.js"
+    },
+    "./mcp-apps": {
+      "@epam/source": "./src/entry-points/mcp-apps.ts",
+      "types": "./dist/mcp-apps.d.ts",
+      "import": "./dist/mcp-apps.js",
+      "default": "./dist/mcp-apps.js"
     }
   },
   "peerDependencies": {
@@ -111,6 +117,7 @@
     "@epam/ai-dial-chat-overlay": "*",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-deployment-creation-form": "*",
+    "@epam/ai-dial-mcp-apps": "*",
     "@epam/ai-dial-publish-panel": "*",
     "@epam/ai-dial-quotations": "*",
     "@epam/ai-dial-react-file-manager": "*",
@@ -119,6 +126,7 @@
     "@epam/ai-dial-skill-editor": "*",
     "@epam/ai-dial-source-panel": "*",
     "@epam/ai-dial-ui-kit": "*",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@epam/pdf-highlighter-kit": ">=0.0.14"
   },
   "peerDependenciesMeta": {
@@ -143,6 +151,9 @@
     "@epam/ai-dial-deployment-creation-form": {
       "optional": true
     },
+    "@epam/ai-dial-mcp-apps": {
+      "optional": true
+    },
     "@epam/ai-dial-publish-panel": {
       "optional": true
     },
@@ -165,6 +176,12 @@
       "optional": true
     },
     "@epam/ai-dial-ui-kit": {
+      "optional": true
+    },
+    "@mcp-ui/client": {
+      "optional": true
+    },
+    "@modelcontextprotocol/sdk": {
       "optional": true
     },
     "@epam/pdf-highlighter-kit": {

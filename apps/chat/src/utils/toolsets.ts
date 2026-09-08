@@ -287,7 +287,9 @@ export const isToolsetFormValid = (
   form: ToolsetFormData,
   isEditMode = false,
 ): boolean =>
-  Object.keys(validateDeploymentCreationFields(form)).length === 0 &&
+  Object.keys(
+    validateDeploymentCreationFields(form, { validateVersionPattern: true }),
+  ).length === 0 &&
   isValidEndpointUrl(form.endpoint) &&
   isToolsetAuthValid(form.auth, isEditMode);
 

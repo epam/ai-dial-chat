@@ -72,6 +72,7 @@ export enum ApiI18nKeys {
 
 export enum ButtonsI18nKeys {
   Retry = 'buttons.retry',
+  Reload = 'buttons.reload',
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
   Create = 'buttons.create',
@@ -851,8 +852,8 @@ export enum AttachmentCanvasI18nKeys {
   HtmlOpenInNewTab = 'attachmentCanvas.htmlOpenInNewTab',
   HtmlViewSource = 'attachmentCanvas.htmlViewSource',
   HtmlViewRendered = 'attachmentCanvas.htmlViewRendered',
-  OpenAppLabel = 'attachmentCanvas.openAppLabel',
   OpenedInCanvasLabel = 'attachmentCanvas.openedInCanvasLabel',
+  ExpandAppLabel = 'attachmentCanvas.expandAppLabel',
   McpAppTitle = 'attachmentCanvas.mcpAppTitle',
   McpAppLoadErrorLabel = 'attachmentCanvas.mcpAppLoadErrorLabel',
   McpAppForbiddenErrorLabel = 'attachmentCanvas.mcpAppForbiddenErrorLabel',
@@ -862,6 +863,7 @@ export enum AttachmentCanvasI18nKeys {
   PdfPageNumberLabel = 'attachmentCanvas.pdfPageNumberLabel',
   PdfContentLoadingLabel = 'attachmentCanvas.pdfContentLoadingLabel',
   PdfContentErrorLabel = 'attachmentCanvas.pdfContentErrorLabel',
+  XlsxFormulaLabel = 'attachmentCanvas.xlsxFormulaLabel',
   CodeContentLoadingLabel = 'attachmentCanvas.codeContentLoadingLabel',
   CodeContentErrorLabel = 'attachmentCanvas.codeContentErrorLabel',
 }
@@ -1053,6 +1055,7 @@ export enum ToolsetEditorI18nKeys {
   NamePlaceholder = 'toolsetEditor.general.namePlaceholder',
   DescriptionPlaceholder = 'toolsetEditor.general.descriptionPlaceholder',
   TopicsPlaceholder = 'toolsetEditor.general.topicsPlaceholder',
+  VersionInvalid = 'toolsetEditor.general.versionInvalid',
   // Settings form
   EndpointCaption = 'toolsetEditor.settings.endpointCaption',
   EndpointRequired = 'toolsetEditor.settings.endpointRequired',

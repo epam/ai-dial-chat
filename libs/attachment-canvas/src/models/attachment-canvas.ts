@@ -57,13 +57,13 @@ export interface PdfCanvasContent {
   selectedHighlightId?: string;
 }
 
-/** Content payload for Office Open XML document attachments. */
+/** Content payload for OOXML document and CSV spreadsheet attachments. */
 export interface OoxmlCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
   type: AttachmentContentType.Ooxml;
-  /** Resolved download URL or object URL for the OOXML file. */
+  /** Resolved download URL or object URL for the source file. */
   url: string;
-  /** The document format used to select the format-specific renderer. */
+  /** The document format used to select and configure the format-specific renderer. */
   format: OoxmlFileType;
 }
 
@@ -133,6 +133,8 @@ export interface McpAppCanvasContent {
   hostContext?: McpUiHostContext;
   /** Forwards a `tools/call` request issued by the mounted app to the owning MCP session via the app layer. */
   onToolCall: (name: string, args: unknown) => Promise<CallToolResult>;
+  /** Re-fetches the resource and re-resolves the tool result from scratch, bypassing any cache the app layer keeps. Shows a reload action in the canvas header when provided; omit to hide it. */
+  onReload?: () => void;
 }
 
 /** Content payload for attachments whose format cannot be previewed. */
@@ -203,8 +205,14 @@ export interface AttachmentCanvasColors {
   jsonToggleIcon?: string;
   /** Expand/collapse triangle color on hover. Defaults to `--text-primary`. */
   jsonToggleIconHover?: string;
-  /** Background color of the OOXML (DOCX/XLSX/PPTX) viewer surface and its loading/error overlay. Defaults to `--bg-layer-raised`. */
+  /** Background color of the OOXML/CSV viewer surface and its loading/error overlay. Defaults to `--bg-layer-raised`. */
   ooxmlBackground?: string;
+  /** Border color of the XLSX formula panel and value field. Defaults to `--stroke-secondary`. */
+  ooxmlFormulaBorder?: string;
+  /** Background color of the XLSX formula value field. Defaults to `--bg-layer-base`. */
+  ooxmlFormulaBackground?: string;
+  /** Text color of the XLSX formula panel. Defaults to `--text-primary`. */
+  ooxmlFormulaText?: string;
   /** Text color of the collapsed-content ellipsis. Defaults to `--text-secondary`. */
   jsonCollapsedText?: string;
   /** Background color of the collapsed-content ellipsis. Defaults to `--bg-layer-raised`. */
@@ -230,6 +238,8 @@ export interface AttachmentCanvasTypography {
   fontClassName?: string;
   /** CSS utility class applied to the JSON tree viewer. Defaults to `'dial-code-text'`. */
   jsonClassName?: string;
+  /** CSS utility class applied to the decorative XLSX `fx` label. Defaults to `'dial-italic-text'`. */
+  xlsxFormulaLabelClassName?: string;
 }
 
 /** Style override prop for `AttachmentCanvasBody`'s content-rendering area. */
@@ -291,6 +301,8 @@ export interface AttachmentCanvasLabels {
   htmlViewSourceLabel?: string;
   /** Tooltip and `aria-label` for the toggle button when the source view is active (clicking switches back to rendered). Defaults to `'View rendered'`. */
   htmlViewRenderedLabel?: string;
+  /** Tooltip and accessible label for the MCP App reload button. Only shown when content type is `McpApp` and `content.onReload` is provided. Defaults to `'Reload'`. */
+  mcpAppReloadLabel?: string;
   /** Accessible name for the PDF viewer's floating thumbnails panel region. Defaults to `'Thumbnails'`. */
   pdfThumbnailsLabel?: string;
   /** Accessible label for the FAB button that opens the PDF thumbnails panel. Defaults to `'Show thumbnails'`. */
@@ -305,6 +317,8 @@ export interface AttachmentCanvasLabels {
   pdfContentErrorLabel?: string;
   /** Label and accessible name for the retry control shown alongside `pdfContentErrorLabel`. Defaults to `'Retry'`. */
   pdfContentRetryLabel?: string;
+  /** Accessible label for the active XLSX cell's formula panel. Defaults to `'Formula'`. */
+  xlsxFormulaLabel?: string;
   /** Accessible status text announced while the syntax-highlighter engine's dynamic import is loading. Defaults to `'Loading…'`. */
   codeContentLoadingLabel?: string;
   /** Message shown when the syntax-highlighter engine's dynamic import fails to load. Defaults to `'Failed to load content'`. */
@@ -385,6 +399,7 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'pdfContentLoadingLabel'
   | 'pdfContentErrorLabel'
   | 'pdfContentRetryLabel'
+  | 'xlsxFormulaLabel'
   | 'codeContentLoadingLabel'
   | 'codeContentErrorLabel'
   | 'codeContentRetryLabel'

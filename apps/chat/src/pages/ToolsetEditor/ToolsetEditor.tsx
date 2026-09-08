@@ -271,9 +271,16 @@ const ToolsetEditor: FC = () => {
   const validate = useCallback(
     (data: ToolsetFormData): ToolsetFormErrors => {
       const nextErrors: ToolsetFormErrors = {};
-      const generalCodes = validateDeploymentCreationFields(data);
+      const generalCodes = validateDeploymentCreationFields(data, {
+        validateVersionPattern: true,
+      });
       if (generalCodes.name === DeploymentCreationFieldErrorCode.Required) {
         nextErrors.name = t(EditorI18nKeys.NameRequired);
+      }
+      if (
+        generalCodes.version === DeploymentCreationFieldErrorCode.InvalidFormat
+      ) {
+        nextErrors.version = t(ToolsetEditorI18nKeys.VersionInvalid);
       }
       if (!data.endpoint.trim()) {
         nextErrors.endpoint = t(ToolsetEditorI18nKeys.EndpointRequired);

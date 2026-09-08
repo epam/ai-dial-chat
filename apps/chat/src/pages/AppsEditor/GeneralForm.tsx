@@ -15,6 +15,7 @@ import {
   DeploymentCreationFormFieldErrors,
   DeploymentCreationFormLabels,
   DeploymentCreationFormValues,
+  SEMVER_VERSION_PATTERN,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
 import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
@@ -215,7 +216,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     setErrors({});
     const codes = validateDeploymentCreationFields(values, {
       validateNamePattern: true,
-      validateVersionPattern: true,
+      validateVersionPattern: SEMVER_VERSION_PATTERN,
     });
     if (codes.name || codes.version) {
       let nameError: string | undefined;

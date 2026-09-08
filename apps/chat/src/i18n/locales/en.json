@@ -361,6 +361,7 @@
     "copyUrl": "Copy URL",
     "logIn": "Log in",
     "retry": "Retry",
+    "reload": "Reload",
     "publish": "Publish",
     "unpublish": "Unpublish",
     "manage": "Manage",
@@ -933,8 +934,8 @@
     "htmlOpenInNewTab": "Open in new tab",
     "htmlViewSource": "View source",
     "htmlViewRendered": "View rendered",
-    "openAppLabel": "Open App",
     "openedInCanvasLabel": "Opened in Canvas",
+    "expandAppLabel": "Expand app",
     "mcpAppTitle": "MCP App",
     "mcpAppLoadErrorLabel": "Failed to load MCP App",
     "mcpAppForbiddenErrorLabel": "You don't have permission to access this MCP App",
@@ -944,6 +945,7 @@
     "pdfPageNumberLabel": "Page number",
     "pdfContentLoadingLabel": "Loading the PDF viewer…",
     "pdfContentErrorLabel": "Failed to load the PDF viewer",
+    "xlsxFormulaLabel": "Formula",
     "codeContentLoadingLabel": "Loading syntax highlighting…",
     "codeContentErrorLabel": "Failed to load syntax highlighting"
   },
@@ -1041,7 +1043,7 @@
       "namePlaceholder": "Enter application name",
       "descriptionPlaceholder": "Describe your application",
       "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
-      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
+      "versionInvalid": "Version format is invalid (example: 0.0.1)"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
@@ -1064,7 +1066,8 @@
     "general": {
       "namePlaceholder": "Enter name",
       "descriptionPlaceholder": "Describe what this toolset does",
-      "topicsPlaceholder": "Add tags, comma separated"
+      "topicsPlaceholder": "Add tags, comma separated",
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settings": {
       "endpointCaption": "The HTTPS address where the server accepts MCP requests.",
