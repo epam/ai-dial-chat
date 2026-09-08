@@ -48,6 +48,8 @@ describe('getCatalogSearchPlaceholder', () => {
     ).toBe('Search models, agents, toolsets, skills, prompts…');
   });
 
+  /* An empty catalog — still loading, or everything filtered out — names no
+     entity rather than advertising types the user cannot reach. */
   it('falls back to the generic placeholder when no type is available', () => {
     expect(getCatalogSearchPlaceholder([], t)).toBe('Search...');
   });
