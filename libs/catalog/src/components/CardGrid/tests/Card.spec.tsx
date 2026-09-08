@@ -238,6 +238,16 @@ describe('Card — description rendering', () => {
     expect(screen.getByText(plainText)).toBeTruthy();
   });
 
+  it('triggers the card onClick when clicking plain description text', async () => {
+    const item = makeItem({ description: 'Open details' });
+    const onCardClick = vi.fn();
+    render(<Card item={item} onClick={onCardClick} />);
+
+    await userEvent.click(screen.getByText('Open details'));
+
+    expect(onCardClick).toHaveBeenCalledWith(item);
+  });
+
   it('renders a Markdown link as a real, clickable <a> element', () => {
     render(
       <Card
