@@ -49,6 +49,7 @@ export enum RateI18nKeys {
 }
 
 export enum BasicI18nKeys {
+  Loading = 'basic.loading',
   SearchPlaceholder = 'basic.searchPlaceholder',
   ClearSearch = 'basic.clearSearch',
   NoResults = 'basic.noResults',

@@ -1,5 +1,6 @@
 {
   "basic": {
+    "loading": "Loading…",
     "searchPlaceholder": "Search...",
     "clearSearch": "Clear search",
     "noResults": "No results found",

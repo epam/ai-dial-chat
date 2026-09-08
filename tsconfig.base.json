@@ -23,6 +23,9 @@
       "@epam/ai-dial-conversation-messages/*": [
         "./libs/conversation-messages/*"
       ],
+      "@epam/ai-dial-chat-shared/file-manager": [
+        "./libs/chat-shared/src/entry-points/file-manager.ts"
+      ],
       "@epam/ai-dial-chat-shared/*": ["./libs/chat-shared/*"],
       "@epam/ai-dial-chat-hooks": ["./libs/chat-hooks"],
       "@epam/ai-dial-chat-hooks/*": ["./libs/chat-hooks/*"],

@@ -11,6 +11,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   mergeClasses: (...args: (string | undefined)[]) =>
     args.filter(Boolean).join(' '),
   DialNoDataContent: ({ title }: { title?: string }) => <span>{title}</span>,
+}));
+
+vi.mock('@epam/ai-dial-ui-kit/grid', () => ({
   Grid: ({
     rowData,
     emptyStateTitle,

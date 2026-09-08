@@ -8,6 +8,10 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Installation
 
+The package declares `sideEffects: false`: importing a hook or a data helper does
+not initialize unrelated feature UI. Hooks perform their work when called or in
+effects; hosts should prefer the existing feature subpaths for narrow imports.
+
 ```json
 {
   "dependencies": {

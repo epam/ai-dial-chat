@@ -10,6 +10,12 @@ inventory, backend domains, SSE streaming, theming token flow — see
 [`docs/architecture.md`](../../docs/architecture.md). This file covers what is
 specific to running and developing `apps/chat`.
 
+## Feature loading
+
+The app uses automatic chunk splitting, UI Kit `/grid` and `/editors` imports,
+the shared `/file-manager` entry and a lazy conversation publishing panel.
+Heavy feature engines load when their features are activated.
+
 ## Features
 
 ### Conversations

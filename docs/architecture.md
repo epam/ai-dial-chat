@@ -153,6 +153,15 @@ apps/chat/src/
 
 Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `AppsEditor`, `ToolsetEditor`, `ToolsetAuthCallback`, `PromptEditor`, `DialFileManagerPage`, `ScheduledTasksPage`, `ScheduledTasksRouteGate`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `NotFound`, and `auth/`.
 
+The frontend uses automatic chunk splitting. Catalog Grid imports the UI Kit's
+`/grid` entry; Markdown editor loaders use `/editors`. File-manager UI has a
+dedicated `@epam/ai-dial-chat-shared/file-manager` entry consumed inside lazy
+features, while headless file contracts stay on the shared root. Conversation
+publishing also loads on demand. The shared, catalog and publishing packages
+declare CSS/SCSS side effects, and chat-hooks declares side-effect-free JavaScript,
+so unused feature UI can be removed from root-barrel consumers. See the
+[frontend feature-loading overview](../apps/chat/README.md#feature-loading).
+
 ### State management
 
 > ❓ Open — decision pending. Currently implemented with React Context; may be replaced or augmented.

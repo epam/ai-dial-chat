@@ -27,6 +27,22 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 - `remark-gfm`
 - `react-syntax-highlighter`
 
+## Optional file-manager entry
+
+Import `DialFileManagerShell` and `FileManagerAttachModal` from
+`@epam/ai-dial-chat-shared/file-manager` inside a lazy feature. Their root exports
+remain compatible; headless contracts and utilities still come from the root.
+The package declares only CSS/SCSS side effects so unused UI can be tree-shaken.
+Continue importing `@epam/ai-dial-chat-shared/styles.css` once in the host.
+
+```tsx
+import {
+  DialFileManagerShell,
+  FileManagerAttachModal,
+} from '@epam/ai-dial-chat-shared/file-manager';
+import type { FileManagerController } from '@epam/ai-dial-chat-shared';
+```
+
 ## Domain Models
 
 ```tsx

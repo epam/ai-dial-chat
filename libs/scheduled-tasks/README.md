@@ -8,6 +8,10 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
+Requires UI Kit ^0.14.0-dev.30 or later with the public `/editors` entry.
+The Markdown loader uses that entry, and library builds keep UI Kit subpaths
+external to preserve the editor's dynamic boundary in consuming applications.
+
 ```json
 {
   "dependencies": {
