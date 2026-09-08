@@ -419,18 +419,22 @@ import {
   ENTITY_TYPE_COLOR,
   ENTITY_TYPE_BG_COLOR,
   TAG_INPUT_TAG_CLASS_NAME,
+  RESIZABLE_TEXTAREA_CLASS_NAME,
+  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
 ```
 
-| Constant                                     | Purpose                                                              |
-| -------------------------------------------- | -------------------------------------------------------------------- |
-| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names       |
-| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists     |
-| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types      |
-| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders        |
-| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step    |
-| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                  |
-| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field |
+| Constant                                     | Purpose                                                                 |
+| -------------------------------------------- | ----------------------------------------------------------------------- |
+| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names          |
+| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists        |
+| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types         |
+| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders           |
+| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step       |
+| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                     |
+| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field    |
+| `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh`   |
+| `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` for `MarkdownEditor`, capping its drag-bar height at `70vh` |
 
 ## Stylesheet
 
