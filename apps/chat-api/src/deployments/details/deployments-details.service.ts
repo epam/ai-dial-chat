@@ -25,8 +25,8 @@ import type { DeploymentDetailsDto } from '../dto/deployment-details.dto';
 import { DeploymentItemType } from '../dto/deployment-item.dto';
 import {
   getNumber,
-  getString,
   isRecord,
+  mapCatalogProperties,
   mapDeploymentFeatures,
   mapToolsetAuthSettings,
   redactToolsetAuthSettings,
@@ -291,24 +291,7 @@ export class DeploymentsDetailsService {
           : undefined,
         pricing: raw.pricing,
         features: mapDeploymentFeatures(raw.features),
-        catalogProperties: (() => {
-          if (!isRecord(raw.catalog_properties)) return undefined;
-
-          const properties = {
-            provider: getString(raw.catalog_properties, 'provider'),
-            vendor: getString(raw.catalog_properties, 'vendor'),
-            license: getString(raw.catalog_properties, 'license'),
-            knowledgeCutoffDate: getString(
-              raw.catalog_properties,
-              'knowledgeCutoffDate',
-            ),
-            parameters: getString(raw.catalog_properties, 'parameters'),
-          };
-
-          return Object.values(properties).some((value) => value != null)
-            ? properties
-            : undefined;
-        })(),
+        catalogProperties: mapCatalogProperties(raw.catalog_properties),
         owner: raw.owner,
         inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
           ? raw.input_attachment_types
@@ -404,6 +387,7 @@ export class DeploymentsDetailsService {
         inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
           ? raw.input_attachment_types
           : undefined,
+        catalogProperties: mapCatalogProperties(raw.catalog_properties),
         applicationTypeSchemaId: raw.application_type_schema_id,
         endpoint:
           typeof customAppRaw?.endpoint === 'string'
@@ -472,6 +456,7 @@ export class DeploymentsDetailsService {
         authSettings: mapToolsetAuthSettings(raw.auth_settings),
         owner: raw.owner,
         features: mapDeploymentFeatures(raw.features),
+        catalogProperties: mapCatalogProperties(raw.catalog_properties),
         createdAt: raw.created_at,
       },
     };

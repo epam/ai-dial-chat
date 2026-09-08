@@ -60,7 +60,8 @@ export const buildLocaleFieldLabels = (
   t: TFunction,
 ): DeploymentCreationFormLocaleLabels => ({
   summaryLabel: t(EditorI18nKeys.LocalesSummaryLabel),
-  editLabel: t(ButtonsI18nKeys.Edit),
+  addLabel: t(EditorI18nKeys.LocalesAddLabel),
+  editLabel: t(EditorI18nKeys.LocalesEditLabel),
   popupTitle: t(EditorI18nKeys.LocalesPopupTitle),
   addLocaleLabel: t(EditorI18nKeys.LocalesAddLocaleLabel),
   localeRowLabel: t(EditorI18nKeys.LocalesRowLabel),

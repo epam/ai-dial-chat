@@ -1,0 +1,33 @@
+.scrollContainer {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cm-math-scrollbar, var(--stroke-primary, #57647a))
+    transparent;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--cm-math-scrollbar, var(--stroke-primary, #57647a));
+    border-radius: 4px;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--cm-math-focus, var(--stroke-focus-black, #161b2d));
+    outline-offset: 2px;
+  }
+}
+
+/* KaTeX emits display math as an inline `span.katex` wrapping a block-level
+   `<math display="block">`. Sizing that span to `max-content` gives the scroll
+   container a real overflow width to scroll through, while `min-width: 100%`
+   keeps a short formula filling the row. */
+.mathContent {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+}

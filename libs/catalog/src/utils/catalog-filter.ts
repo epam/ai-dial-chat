@@ -35,8 +35,14 @@ export const getTopicOptions = (items: CatalogItem[]): Set<string> =>
   new Set(items.flatMap((item) => item.topics));
 
 /**
- * Returns a filtered array of items whose name, description, or type includes the query.
+ * Returns a filtered array of items whose name includes the query.
  * Case-insensitive and ignores leading/trailing whitespace.
+ *
+ * Only `name` is matched, because the name is the only text the card and the
+ * list row highlight. Matching `description` or `type` as well kept rows whose
+ * visible name had nothing in common with the query — a word that is common in
+ * tool descriptions, or any substring of an entity type such as `TOOLSET`,
+ * returned the whole category.
  */
 export const filterCatalogItems = (
   items: CatalogItem[],
@@ -44,16 +50,7 @@ export const filterCatalogItems = (
 ): CatalogItem[] => {
   const queryLower = query.trim().toLowerCase();
 
-  let result = items;
+  if (!queryLower) return items;
 
-  if (queryLower) {
-    result = result.filter(
-      (item) =>
-        item.name.toLowerCase().includes(queryLower) ||
-        item.description.toLowerCase().includes(queryLower) ||
-        item.type.toLowerCase().includes(queryLower),
-    );
-  }
-
-  return result;
+  return items.filter((item) => item.name.toLowerCase().includes(queryLower));
 };

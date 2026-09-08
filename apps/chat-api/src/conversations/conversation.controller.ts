@@ -13,6 +13,7 @@ import {
   Query,
   Req,
   Res,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
@@ -66,6 +67,21 @@ export class ConversationController {
     private readonly conversationService: ConversationService,
     private readonly generationService: ConversationGenerationService,
   ) {}
+
+  /**
+   * The generation registry is keyed by session id, so every endpoint that
+   * registers, attaches to, or aborts a generation requires a
+   * cookie-authenticated session — `SessionUser.sid` is only absent for
+   * header-authenticated callers, which have no session to key on.
+   */
+  private requireSessionId(user: SessionUser): string {
+    if (!user.sid) {
+      throw new UnauthorizedException(
+        'This endpoint requires a cookie-authenticated session',
+      );
+    }
+    return user.sid;
+  }
 
   @Post()
   @HttpCode(201)
@@ -237,7 +253,9 @@ export class ConversationController {
     @Body() dto: SendCompletionDto,
     @Headers(TIMEZONE_HEADER) timezoneHeader: string | string[] | undefined,
   ): Promise<void> {
-    const { at, bucket, sid, sub } = req.user as SessionUser;
+    const user = req.user as SessionUser;
+    const { at, bucket, sub } = user;
+    const sid = this.requireSessionId(user);
     const timezone = assertValidOptionalTimezone(timezoneHeader);
     const stream = this.conversationService.streamCompletion(
       dto.path,
@@ -256,11 +274,22 @@ export class ConversationController {
       timezone,
     );
 
-    for await (const chunk of stream) {
-      res.write(chunk);
-    }
+    let isClientAborted = false;
+    const handleClose = () => {
+      isClientAborted = true;
+      this.generationService.abortSignal(sid, dto.path, dto.generationId);
+    };
+    res.on('close', handleClose);
 
-    if (!res.writableEnded) res.end();
+    try {
+      for await (const chunk of stream) {
+        if (isClientAborted) break;
+        res.write(chunk);
+      }
+    } finally {
+      res.off('close', handleClose);
+      if (!res.writableEnded) res.end();
+    }
   }
 
   @Post('completions/stop')
@@ -277,7 +306,7 @@ export class ConversationController {
     @Res() res: Response,
     @Body() dto: StopCompletionDto,
   ): Promise<void> {
-    const { sid } = req.user as SessionUser;
+    const sid = this.requireSessionId(req.user as SessionUser);
     const aborted = this.generationService.abort(
       sid,
       dto.path,
@@ -316,7 +345,7 @@ export class ConversationController {
     @Res() res: Response,
     @Body() dto: AttachGenerationDto,
   ): Promise<void> {
-    const { sid } = req.user as SessionUser;
+    const sid = this.requireSessionId(req.user as SessionUser);
     const attachment = this.generationService.attach(sid, dto.path);
     if (!attachment) {
       throw new NotFoundException(

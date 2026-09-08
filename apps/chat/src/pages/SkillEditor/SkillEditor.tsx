@@ -13,7 +13,6 @@ import {
   type SkillEditorSubmitMessages,
   type SkillFileActionsMessages,
 } from '@epam/ai-dial-chat-hooks';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
   type SkillEditorLabels,
@@ -21,13 +20,10 @@ import {
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
-  DIAL_KIT_ICON_STROKE,
   EditorThemes,
   ErrorText,
-  GhostIconButton,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconArrowLeft } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -318,66 +314,43 @@ const SkillEditorPage: FC = () => {
     );
   }
 
-  const headerRow = (
-    <>
-      <GhostIconButton
-        icon={
-          <IconArrowLeft
-            size={20}
-            className="rtl:scale-x-[-1]"
-            aria-hidden
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        }
-        aria-label={t(SkillEditorI18nKeys.BackAriaLabel)}
-        onClick={handleCancel}
-      />
-      <h1 className={mergeClasses('dial-h2-text')}>
-        {isEditMode
-          ? t(SkillEditorI18nKeys.EditTitle)
-          : t(SkillEditorI18nKeys.Title)}
-      </h1>
-    </>
-  );
-
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center gap-2 border-b border-tertiary p-4 desktop:hidden">
-        {headerRow}
-      </div>
-      <div className="min-h-0 flex-1">
-        <SkillEditorForm
-          initialValues={loadedValues}
-          files={files}
-          selectedPath={selectedPath}
-          onSelectedPathChange={setSelectedPath}
-          isLoading={loadState === SkillEditorLoadState.Loading}
-          hasLoadError={
-            loadState === SkillEditorLoadState.Error ||
-            loadState === SkillEditorLoadState.Forbidden ||
-            loadState === SkillEditorLoadState.NotFound
-          }
-          isSubmitting={phase === 'submitting'}
-          errors={errors}
-          submitError={submitError}
-          conflict={conflict}
-          onReloadLatest={handleReloadLatestClick}
-          isNameReadOnly={isEditMode}
-          onDirtyChange={setIsDirty}
-          fileActions={fileActions}
-          headerContent={headerRow}
-          supportingFileContent={<SkillFilePreview path={selectedPath} />}
-          labels={labels}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          onRetry={retryLoad}
-          instructionsEditorTheme={
-            currentTheme === ThemeId.Dark
-              ? EditorThemes.dark
-              : EditorThemes.light
-          }
-        />
-      </div>
+      <SkillEditorForm
+        initialValues={loadedValues}
+        files={files}
+        selectedPath={selectedPath}
+        onSelectedPathChange={setSelectedPath}
+        isLoading={loadState === SkillEditorLoadState.Loading}
+        hasLoadError={
+          loadState === SkillEditorLoadState.Error ||
+          loadState === SkillEditorLoadState.Forbidden ||
+          loadState === SkillEditorLoadState.NotFound
+        }
+        isSubmitting={phase === 'submitting'}
+        errors={errors}
+        submitError={submitError}
+        conflict={conflict}
+        onReloadLatest={handleReloadLatestClick}
+        isNameReadOnly={isEditMode}
+        onDirtyChange={setIsDirty}
+        fileActions={fileActions}
+        supportingFileContent={<SkillFilePreview path={selectedPath} />}
+        labels={labels}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        onBack={handleCancel}
+        onRetry={retryLoad}
+        backAriaLabel={t(SkillEditorI18nKeys.BackAriaLabel)}
+        title={
+          isEditMode
+            ? t(SkillEditorI18nKeys.EditTitle)
+            : t(SkillEditorI18nKeys.Title)
+        }
+        instructionsEditorTheme={
+          currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light
+        }
+      />
 
       <ConfirmationPopup
         open={pendingCancel}

@@ -21,7 +21,6 @@ import {
   calculateStagesDurationSeconds,
   formatTotalDuration,
 } from '../../utils/stage-name';
-import { findLiveStage } from '../../utils/stage-progress';
 import { StageIcon } from '../StageIcon/StageIcon';
 import { StageItem } from '../StageItem/StageItem';
 import styles from './StagesPanel.module.scss';
@@ -51,7 +50,13 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   } = labels ?? {};
   const [isOpen, setIsOpen] = useState(false);
 
+  const hasUnresolved = row.attempts?.some((a) => a.status == null) ?? false;
   const hasFailed = row.attempts?.some((a) => a.status === StageStatus.Failed);
+  const groupStatus = hasUnresolved
+    ? null
+    : hasFailed
+      ? StageStatus.Failed
+      : StageStatus.Completed;
   const totalSeconds = calculateStagesDurationSeconds(
     (row.attempts || []).map((attempt) => attempt.name),
   );
@@ -72,7 +77,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
       >
         <span className="flex flex-none items-center">
           <StageIcon
-            status={hasFailed ? StageStatus.Failed : StageStatus.Completed}
+            status={groupStatus}
             isLive={isLive}
             runningLabel={runningAriaLabel}
             failedLabel={failedAriaLabel}
@@ -138,11 +143,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
                 <StageItem
                   stage={attempt}
                   nameOverride={attemptLabel(i + 1)}
-                  isLive={
-                    isLive &&
-                    attempt.index ===
-                      row.attempts?.[row.attempts.length - 1]?.index
-                  }
+                  isLive={isLive && attempt.status == null}
                   typography={typography}
                   labels={labels}
                 />
@@ -183,7 +184,6 @@ export const StagesPanel: FC<StagesPanelProps> = ({
     '--cs-border': colors?.borderColor,
   });
 
-  const liveStage = isStreaming ? findLiveStage(stages) : undefined;
   const rows = groupStagesByName(stages);
 
   return (
@@ -197,7 +197,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
             <li key={row.key} role="listitem">
               <StageItem
                 stage={row.stage}
-                isLive={liveStage?.index === row.stage.index}
+                isLive={isStreaming && row.stage.status == null}
                 typography={typography}
                 labels={labels}
               />
@@ -207,8 +207,9 @@ export const StagesPanel: FC<StagesPanelProps> = ({
               <StageGroupRow
                 row={row}
                 isLive={
-                  liveStage?.index ===
-                  row.attempts?.[row.attempts.length - 1].index
+                  isStreaming &&
+                  (row.attempts?.some((attempt) => attempt.status == null) ??
+                    false)
                 }
                 typography={typography}
                 labels={labels}

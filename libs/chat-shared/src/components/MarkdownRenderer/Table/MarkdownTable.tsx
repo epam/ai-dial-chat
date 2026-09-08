@@ -1,5 +1,5 @@
 import { type FC, type ReactNode, memo } from 'react';
-import { useTableScroll } from '../../../hooks/useTableScroll';
+import { useHorizontalOverflow } from '../../../hooks/useHorizontalOverflow';
 import { buildCssVars } from '../../../utils/build-css-vars';
 import { mergeClasses } from '../../../utils/merge-class';
 import styles from './MarkdownTable.module.scss';
@@ -50,11 +50,11 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
   }) => {
     const {
       scrollContainerRef,
-      tableRef,
+      contentRef,
       hasContentBeyondStart,
       hasContentBeyondEnd,
       handleScroll,
-    } = useTableScroll();
+    } = useHorizontalOverflow<HTMLTableElement>();
     const cssVars = buildCssVars({
       '--cm-markdown-border': colors?.border,
       '--cm-table-scrollbar': colors?.scrollbar,
@@ -95,7 +95,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
           tabIndex={isScrollable ? 0 : undefined}
         >
           <table
-            ref={tableRef}
+            ref={contentRef}
             className={mergeClasses(
               'w-max min-w-full border-collapse',
               classNames.tableFont ?? 'dial-small-text',

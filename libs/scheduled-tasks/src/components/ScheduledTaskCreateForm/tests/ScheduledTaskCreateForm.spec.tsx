@@ -198,11 +198,17 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       MarkdownEditor: ({
         value,
         onChange,
+        id,
       }: {
         value: string;
         onChange: (value: string) => void;
+        id?: string;
       }) => (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} />
+        <textarea
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
       ),
     }),
 }));
@@ -420,6 +426,12 @@ describe('ScheduledTaskCreateForm', () => {
     expect(save.disabled).toBe(true);
     expect(save.getAttribute('aria-busy')).toBe('false');
     expect(screen.getByRole('status').textContent).toBe('');
+  });
+
+  it('names the Instructions editor through a real label association', async () => {
+    await renderForm();
+
+    expect(screen.getByRole('textbox', { name: 'Instructions' })).toBeTruthy();
   });
 
   it('renders Details and Configuration as two distinct regions', async () => {

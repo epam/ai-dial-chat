@@ -178,6 +178,19 @@ export class ConversationGenerationService {
     return true;
   }
 
+  /**
+   * Aborts the upstream relay for a client disconnect (e.g. the browser tab
+   * closed mid-stream), without marking the entry `Stopped` — unlike `abort`,
+   * this is not a user-initiated stop, so `ConversationStreamingService`'s own
+   * abandonment cleanup must still finalize it as `Error`, not `Stopped`.
+   */
+  abortSignal(sessionId: string, path: string, generationId: string): void {
+    const entry = this.registry.get(this.buildKey(sessionId, path));
+    if (entry?.generationId === generationId) {
+      entry.abortController.abort();
+    }
+  }
+
   getStatus(sessionId: string, path: string): GenerationStatus | undefined {
     const key = this.buildKey(sessionId, path);
     return this.registry.get(key)?.status;

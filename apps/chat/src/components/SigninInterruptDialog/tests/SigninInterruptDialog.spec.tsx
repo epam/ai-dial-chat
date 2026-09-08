@@ -130,6 +130,7 @@ describe('SigninInterruptDialog', () => {
       reportEvent: vi.fn(),
       ensureConnected: vi.fn(),
       waitForChannel: vi.fn().mockResolvedValue('channel-1'),
+      notifyGenerationSettled: vi.fn(),
     });
     mockUseDeployments.mockReturnValue(makeDeploymentsValue() as never);
     mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
@@ -145,6 +146,7 @@ describe('SigninInterruptDialog', () => {
       reportEvent: vi.fn(),
       ensureConnected: vi.fn(),
       waitForChannel: vi.fn().mockResolvedValue('channel-1'),
+      notifyGenerationSettled: vi.fn(),
     });
     mockUseDeployments.mockReturnValue(
       makeDeploymentsValue([apiKeyToolset]) as never,
@@ -168,6 +170,7 @@ describe('SigninInterruptDialog', () => {
       reportEvent,
       ensureConnected: vi.fn(),
       waitForChannel: vi.fn().mockResolvedValue('channel-1'),
+      notifyGenerationSettled: vi.fn(),
     });
     mockUseDeployments.mockReturnValue(
       makeDeploymentsValue([apiKeyToolset]) as never,
@@ -221,6 +224,7 @@ describe('SigninInterruptDialog', () => {
       reportEvent,
       ensureConnected: vi.fn(),
       waitForChannel: vi.fn().mockResolvedValue('channel-1'),
+      notifyGenerationSettled: vi.fn(),
     });
     mockUseDeployments.mockReturnValue(
       makeDeploymentsValue([apiKeyToolset]) as never,
@@ -253,6 +257,7 @@ describe('SigninInterruptDialog', () => {
         reportEvent: vi.fn(),
         ensureConnected: vi.fn(),
         waitForChannel: vi.fn().mockResolvedValue('channel-1'),
+        notifyGenerationSettled: vi.fn(),
       });
       mockUseDeployments.mockReturnValue(makeDeploymentsValue([]) as never);
       mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
@@ -271,6 +276,7 @@ describe('SigninInterruptDialog', () => {
         reportEvent: vi.fn(),
         ensureConnected: vi.fn(),
         waitForChannel: vi.fn().mockResolvedValue('channel-1'),
+        notifyGenerationSettled: vi.fn(),
       });
       mockUseDeployments.mockReturnValue(makeDeploymentsValue([]) as never);
       mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
@@ -294,6 +300,7 @@ describe('SigninInterruptDialog', () => {
         reportEvent,
         ensureConnected: vi.fn(),
         waitForChannel: vi.fn().mockResolvedValue('channel-1'),
+        notifyGenerationSettled: vi.fn(),
       });
       mockUseDeployments.mockReturnValue(makeDeploymentsValue([]) as never);
       mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
@@ -340,6 +347,7 @@ describe('SigninInterruptDialog', () => {
         reportEvent,
         ensureConnected: vi.fn(),
         waitForChannel: vi.fn().mockResolvedValue('channel-1'),
+        notifyGenerationSettled: vi.fn(),
       });
       mockUseDeployments.mockReturnValue(makeDeploymentsValue([]) as never);
       mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
@@ -364,6 +372,7 @@ describe('SigninInterruptDialog', () => {
         reportEvent,
         ensureConnected: vi.fn(),
         waitForChannel: vi.fn().mockResolvedValue('channel-1'),
+        notifyGenerationSettled: vi.fn(),
       });
       mockUseDeployments.mockReturnValue(
         makeDeploymentsValue([apiKeyToolset]) as never,

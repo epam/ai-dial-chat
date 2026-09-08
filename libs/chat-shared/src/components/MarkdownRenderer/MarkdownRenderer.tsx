@@ -1,7 +1,5 @@
-import 'katex/dist/katex.min.css';
-import { memo, useMemo, type FC } from 'react';
+import { memo, useEffect, useMemo, useState, type FC } from 'react';
 import ReactMarkdown, { type Components, type Options } from 'react-markdown';
-import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkBreaks from 'remark-breaks';
@@ -14,6 +12,7 @@ import { preprocessLaTeX } from '../../utils/latex';
 import { mergeClasses } from '../../utils/merge-class';
 import { MarkdownCodeBlock } from './CodeBlock/CodeBlock';
 import styles from './MarkdownRenderer.module.scss';
+import { MarkdownMathBlock } from './Math/MarkdownMathBlock';
 import {
   MarkdownTable,
   type MarkdownTableClassNames,
@@ -76,6 +75,8 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   tableHeader?: string;
   /** Typography class for `<th>` cells. Defaults to `'dial-tiny-lead-semi-text'`. Text color is set separately via `colors.tableHeaderText`. */
   tableHeaderFont?: string;
+  /** Extra classes on the scrollable wrapper around block (display) LaTeX formulas. */
+  mathBlock?: string;
 }
 
 /** Props for {@link MarkdownRenderer}. */
@@ -110,6 +111,8 @@ export interface MarkdownRendererProps {
   colors?: MarkdownRendererColors;
   /** Accessible label for a table's horizontally scrollable region. Defaults to `'Scrollable table'`. */
   tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's horizontally scrollable region. Defaults to `'Scrollable formula'`. */
+  mathScrollRegionAriaLabel?: string;
 }
 
 /** CSS custom-property overrides for the `MarkdownRenderer` component. */
@@ -190,32 +193,74 @@ const mathMLTags = [
 ];
 
 /**
- * KaTeX rehype plugin list, shared across all markdown instances.
+ * Presentation attributes carried by `rehypeKatex`'s MathML output, per tag.
+ * `rehype-sanitize` drops every attribute its schema does not list, and the
+ * default schema knows no MathML: without these, `display="block"` is stripped
+ * from `<math>` and every display formula silently renders as inline math.
+ * All of them are layout-only — nothing here can carry script or a URL.
+ */
+const mathMLAttributes: Record<string, string[]> = {
+  math: ['display', 'xmlns'],
+  annotation: ['encoding'],
+  mfrac: ['linethickness'],
+  mi: ['mathvariant'],
+  mo: ['fence', 'minsize', 'stretchy'],
+  mover: ['accent'],
+  mpadded: ['height', 'lspace', 'width'],
+  mspace: ['width'],
+  mstyle: ['displaystyle', 'mathcolor', 'scriptlevel'],
+  mtable: ['columnalign', 'columnspacing', 'rowspacing', 'width'],
+  mtd: ['width'],
+};
+
+/**
+ * Rehype steps that run before the on-demand KaTeX plugin.
  *
  * `rehypeRaw` re-parses raw HTML left as literal text by `remark` (e.g. a
- * model emitting `<br>` for a line break) into real hast elements, so it
- * must run before both `rehypeKatex` and `rehypeSanitize`. `rehypeSanitize`
- * strips anything dangerous that raw HTML pass could have introduced —
- * required whenever raw HTML is allowed through.
+ * model emitting `<br>` for a line break) into real hast elements, so it must
+ * run before both `rehypeKatex` and `rehypeSanitize`.
  */
-const baseRehypePlugins: NonNullable<Options['rehypePlugins']> = [
+const preKatexRehypePlugins: NonNullable<Options['rehypePlugins']> = [
   rehypeRaw,
-  [rehypeKatex, { output: 'mathml', strict: false }],
-  [
-    rehypeSanitize,
-    {
-      ...defaultSchema,
-      tagNames: [...(defaultSchema.tagNames ?? []), ...mathMLTags],
-      attributes: {
-        ...defaultSchema.attributes,
-        code: [...(defaultSchema.attributes?.code ?? []), ['className']],
-      },
+];
+
+/**
+ * Sanitization step, always the last built-in plugin: it strips anything
+ * dangerous the raw HTML pass could have introduced — required whenever raw
+ * HTML is allowed through — while letting through the MathML that
+ * `rehypeKatex` emits once it has been loaded on demand.
+ */
+const sanitizeRehypePlugin: NonNullable<Options['rehypePlugins']>[number] = [
+  rehypeSanitize,
+  {
+    ...defaultSchema,
+    tagNames: [...(defaultSchema.tagNames ?? []), ...mathMLTags],
+    attributes: {
+      ...defaultSchema.attributes,
+      ...mathMLAttributes,
+      code: [...(defaultSchema.attributes?.code ?? []), ['className']],
+      /* Only KaTeX's own wrapper classes — a class from raw model HTML is
+           still dropped. `katex` is what marks a formula for MarkdownMathBlock. */
+      span: [
+        ...(defaultSchema.attributes?.span ?? []),
+        ['className', 'katex', 'katex-error'],
+      ],
     },
-  ],
+  },
 ];
 
 /** Stable empty plugin list used as the default when no extra plugins are passed. */
 const EMPTY_REHYPE_PLUGINS: NonNullable<Options['rehypePlugins']> = [];
+
+/**
+ * Cheap heuristic for "this content contains KaTeX math", checked before the heavy
+ * KaTeX engine is loaded rather than by parsing the full markdown AST: a literal
+ * `$$...$$` block (the form `preprocessLaTeX` normalizes single-dollar math into)
+ * or one of the `\(...\)`/`\[...\]` delimiters LLMs commonly emit.
+ */
+const MATH_DELIMITER_REGEX = /\$\$|\\\(|\\\[/;
+const hasMathContent = (text: string): boolean =>
+  MATH_DELIMITER_REGEX.test(text);
 
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
@@ -232,6 +277,32 @@ interface HastTextLike {
   children?: HastTextLike[];
 }
 
+/** Shape of a hast element node, enough to recognise KaTeX's display-math output. */
+interface HastElementLike extends HastTextLike {
+  tagName?: string;
+  properties?: Record<string, unknown>;
+}
+
+/**
+ * Recognises the markup `rehype-katex` emits for block math. With MathML output
+ * KaTeX wraps both inline and display formulas in `<span class="katex">`; only
+ * the `display="block"` attribute on the inner `<math>` tells them apart.
+ */
+const isDisplayMathElement = (node: HastElementLike | undefined): boolean => {
+  const className = node?.properties?.className;
+
+  if (!Array.isArray(className) || !className.includes('katex')) return false;
+
+  const children = (node?.children ?? []) as HastElementLike[];
+
+  return children.some(
+    (child) =>
+      child.type === 'element' &&
+      child.tagName === 'math' &&
+      child.properties?.display === 'block',
+  );
+};
+
 /** Recursively concatenates the text content of a hast node. */
 const getNodeText = (node: HastTextLike | undefined): string => {
   if (!node) return '';
@@ -239,13 +310,26 @@ const getNodeText = (node: HastTextLike | undefined): string => {
   return (node.children ?? []).map(getNodeText).join('');
 };
 
+/** Everything `buildMarkdownComponents` needs beyond the className overrides. */
+interface MarkdownComponentOptions {
+  isStreaming?: boolean;
+  codeBlockCopyLabel?: string;
+  codeBlockCopiedLabel?: string;
+  codeBlockTheme?: CodeBlockTheme;
+  tableScrollRegionAriaLabel?: string;
+  mathScrollRegionAriaLabel?: string;
+}
+
 const buildMarkdownComponents = (
   cn: MarkdownRendererClassNames,
-  isStreaming?: boolean,
-  codeBlockCopyLabel?: string,
-  codeBlockCopiedLabel?: string,
-  codeBlockTheme?: CodeBlockTheme,
-  tableScrollRegionAriaLabel?: string,
+  {
+    isStreaming,
+    codeBlockCopyLabel,
+    codeBlockCopiedLabel,
+    codeBlockTheme,
+    tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
+  }: MarkdownComponentOptions,
 ): Components => ({
   h1: ({ children }) => <h1 className={cn.h1}>{children}</h1>,
   h2: ({ children }) => <h2 className={cn.h2}>{children}</h2>,
@@ -345,6 +429,17 @@ const buildMarkdownComponents = (
     type === 'checkbox' ? (
       <MarkdownTaskCheckbox checked={checked ?? false} />
     ) : null,
+  span: ({ children, node, ...props }) =>
+    isDisplayMathElement(node) ? (
+      <MarkdownMathBlock
+        className={cn.mathBlock}
+        scrollRegionAriaLabel={mathScrollRegionAriaLabel}
+      >
+        {children}
+      </MarkdownMathBlock>
+    ) : (
+      <span {...props}>{children}</span>
+    ),
   table: ({ children }) => (
     <MarkdownTable
       classNames={cn}
@@ -418,6 +513,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     codeBlockTheme,
     colors,
     tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
   }) => {
     const displayedContent = useStreamedMarkdownContent(
       content,
@@ -427,6 +523,58 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     const processedContent = useMemo(
       () => preprocessLaTeX(displayedContent),
       [displayedContent],
+    );
+
+    const needsMath = useMemo(
+      () => hasMathContent(processedContent),
+      [processedContent],
+    );
+
+    const [katexPlugin, setKatexPlugin] = useState<
+      NonNullable<Options['rehypePlugins']>[number] | null
+    >(null);
+
+    /*
+     * KaTeX and its stylesheet are loaded on demand, the first time a message
+     * actually contains a math block, so plain-text/code-only conversations
+     * never pull the ~150 KB engine into the initial bundle.
+     */
+    useEffect(() => {
+      if (!needsMath || katexPlugin) return;
+
+      let cancelled = false;
+      const loadKatex = async () => {
+        const [katexModule] = await Promise.all([
+          import('rehype-katex'),
+          import('katex/dist/katex.min.css'),
+        ]);
+        if (!cancelled) {
+          setKatexPlugin([
+            katexModule.default,
+            { output: 'mathml', strict: false },
+          ]);
+        }
+      };
+      void loadKatex();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [needsMath, katexPlugin]);
+
+    /*
+     * Pipeline order matters: raw HTML is re-parsed first, KaTeX (once loaded)
+     * turns math spans into MathML, and sanitization runs last over everything
+     * both passes produced.
+     */
+    const effectiveRehypePlugins = useMemo(
+      () => [
+        ...preKatexRehypePlugins,
+        ...(katexPlugin ? [katexPlugin] : []),
+        sanitizeRehypePlugin,
+        ...rehypePlugins,
+      ],
+      [katexPlugin, rehypePlugins],
     );
 
     const cssVars = buildCssVars({
@@ -445,14 +593,14 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
 
     const mergedComponents = useMemo(
       () => ({
-        ...buildMarkdownComponents(
-          classNames,
+        ...buildMarkdownComponents(classNames, {
           isStreaming,
           codeBlockCopyLabel,
           codeBlockCopiedLabel,
           codeBlockTheme,
           tableScrollRegionAriaLabel,
-        ),
+          mathScrollRegionAriaLabel,
+        }),
         ...defaultMarkdownComponents,
         ...components,
       }),
@@ -463,6 +611,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
         codeBlockCopiedLabel,
         codeBlockTheme,
         tableScrollRegionAriaLabel,
+        mathScrollRegionAriaLabel,
         components,
       ],
     );
@@ -479,7 +628,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       <div style={cssVars}>
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
-          rehypePlugins={[...baseRehypePlugins, ...rehypePlugins]}
+          rehypePlugins={effectiveRehypePlugins}
           components={mergedComponents}
         >
           {processedContent}
