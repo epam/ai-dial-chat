@@ -1,18 +1,38 @@
-**Description:**
+## Description of changes
 
-<SHORT_DESCRIPTION>
+<!-- Please explain the changes you made right below this line. -->
 
-Issues:
+## Applicable issues
 
-- Issue #<TICKET_ID>
+<!-- Please link the GitHub issues related to this PR (You can reference an issue using # then number, e.g. #123) -->
+- fixes #<ISSUE_ID>
 
-**UI changes**
+## UI changes
 
 <Please, provide Screenshots or Figma links>
 
-**Checklist:**
+## Checklist
 
-- [ ] the pull request name complies with [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
-- [ ] the pull request name starts with `fix(<scope>):`, `feat(<scope>):`, `feature(<scope>):`, `chore(<scope>):`, `hotfix(<scope>):` or `e2e(<scope>):`. If contains breaking changes then the pull request name must start with `fix(<scope>)!:`, `feat(<scope>)!:`, `feature(<scope>)!:`, `chore(<scope>)!:`, `hotfix(<scope>)!:` or `e2e(<scope>)!:` where `<scope>` is name of affected project: `chat`, `chat-e2e`, `overlay`, `shared`, `sandbox-overlay`, etc.
-- [ ] the pull request name ends with `(Issue #<TICKET_ID>)` (comma-separated list of issues)
-- [ ] I confirm that do not share any confidential information like API keys or any other secrets and private URLs
+- [ ] the pull request name ends with `(Issue #<ISSUE_ID>)` (comma-separated list of issues)
+- [ ] I confirm that I don't share any confidential information like API keys or any other secrets and private URLs
+
+<details>
+  <summary>PR title cheatsheet</summary>
+
+`<type>[optional scope]: <description>`
+
+1. type (required)
+    - `feat` - A new feature
+    - `fix` - A bug fix
+    - `docs` - Documentation only changes
+    - `test` - Adding missing tests or correcting existing tests
+    - `ci` - Changes to our CI configuration files and scripts
+    - `chore` - Other changes that are minor and/or not user-facing
+2. scope (optional, current repo suggestions below)
+    - `chat`
+    - `overlay`
+    - `shared`
+    - `sandbox-overlay`
+    - `visualizer-connector`
+
+</details>
