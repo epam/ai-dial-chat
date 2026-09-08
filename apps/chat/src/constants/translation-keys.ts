@@ -1052,6 +1052,7 @@ export enum ToolsetEditorI18nKeys {
   NamePlaceholder = 'toolsetEditor.general.namePlaceholder',
   DescriptionPlaceholder = 'toolsetEditor.general.descriptionPlaceholder',
   TopicsPlaceholder = 'toolsetEditor.general.topicsPlaceholder',
+  VersionInvalid = 'toolsetEditor.general.versionInvalid',
   // Settings form
   EndpointCaption = 'toolsetEditor.settings.endpointCaption',
   EndpointRequired = 'toolsetEditor.settings.endpointRequired',

@@ -1040,7 +1040,7 @@
       "namePlaceholder": "Enter application name",
       "descriptionPlaceholder": "Describe your application",
       "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
-      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
+      "versionInvalid": "Version format is invalid (example: 0.0.1)"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
@@ -1063,7 +1063,8 @@
     "general": {
       "namePlaceholder": "Enter name",
       "descriptionPlaceholder": "Describe what this toolset does",
-      "topicsPlaceholder": "Add tags, comma separated"
+      "topicsPlaceholder": "Add tags, comma separated",
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settings": {
       "endpointCaption": "The HTTPS address where the server accepts MCP requests.",
