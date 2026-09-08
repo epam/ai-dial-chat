@@ -144,7 +144,7 @@ Raw wire-format annotations arriving via `delta.custom_fields.annotations` are n
 `libs/quotations/src/utils/annotation.ts` SHALL export `normalizeRawAnnotations(rawAnnotations: unknown[], attachments: MessageAttachment[]): Annotation[]` that recognizes two raw wire shapes and normalizes both into the same internal `Annotation` shape:
 
 - **Attachment-index shape** (unchanged): `target.source.attachment_index` (number) resolved against `attachments`, with `target.selector.type === 'pdf_region'` (`{ page, bbox: { left, top, width, height } }`) converted to `PdfBBoxSelector`.
-- **html_tag shape**: `target.selector.type === 'html_tag'` with `target.selector.tag` and `target.selector.id` both strings, and `body.source` present as a flat `{ type: 'attachment', url: string }` (no `attachment_index` lookup, no `pdf_region`). Normalized to `body.source.attachment = { type: <guessed from url or defaulted>, url, title: body.title }`; `target.selector` is preserved as the `html_tag` selector; `index` is left `undefined`.
+- **html_tag shape**: `target.selector.type === 'html_tag'` with `target.selector.tag` and `target.selector.id` both strings, and `body.source` present as a flat `{ type: 'attachment', url: string }` (no `attachment_index` lookup, no `pdf_region`). Normalized to `body.source.attachment = { type: <inferred from the recognized URL extension, including DOCX/XLSX/PPTX, or defaulted to PDF>, url, title: body.title }`; `target.selector` is preserved as the `html_tag` selector; `index` is left `undefined`. When already-normalized `custom_content.annotations` are loaded, `resolveMessageAnnotations` also reconciles an `html_tag` attachment's stored type with any recognized URL extension so conversations persisted by the older all-PDF fallback remain previewable.
 
 A raw entry that matches neither shape (no resolvable attachment index and no `html_tag` selector with a flat `body.source.url`) is omitted from the result, same as today.
 
@@ -160,6 +160,12 @@ A raw entry that matches neither shape (no resolvable attachment index and no `h
 
 - **WHEN** `normalizeRawAnnotations` receives two raw `html_tag` entries with different `target.selector.id` values but the same `body.source.url`
 - **THEN** the result contains two `Annotation` objects, one per `id`, both with the same `body.source.attachment.url`
+
+#### Scenario: XLSX html_tag source is not normalized as PDF
+
+- **WHEN** an `html_tag` annotation references `files/.../budget.xlsx`
+- **THEN** its normalized `body.source.attachment.type` is `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+- **AND** the same correction is applied when a persisted internal annotation carries `application/pdf` for that `.xlsx` URL
 
 #### Scenario: attachment_index shape still normalizes unchanged
 

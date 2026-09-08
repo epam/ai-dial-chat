@@ -186,6 +186,7 @@ Existing inline-citation call sites (`CitationDropdown` used from `useCitationMa
 - When `isStreaming` is `false`, resolves annotations in priority order:
   1. `message.custom_content?.annotations` — the internal normalised format accumulated by `apply-chunk.ts` as streaming deltas arrive, or persisted by the backend on reload.
   2. `message['custom_fields']?.annotations` — the raw DIAL API wire format present on messages loaded without a normalised `custom_content.annotations`. These are normalised via `normalizeRawAnnotations(raw, message.custom_content?.attachments ?? [])`, which recognizes both the legacy `attachment_index` + `pdf_region` shape and the `html_tag` + flat `body.source.url` shape.
+- Reconciles each resolved `html_tag` source attachment's MIME type with a recognized URL extension. This repairs conversations persisted by the historical fallback that labelled every non-HTML `html_tag` source as PDF; an opaque URL keeps its stored type.
 - When `isStreaming` is `true`, returns `[]` unconditionally — every selector family, including `html_tag`, is suppressed until the message finishes streaming. A `<cit>` tag renders as a real HTML element once `rehype-raw` parses it (see "Citation markers injected into rendered assistant message text" below); showing its pill mid-stream would require revealing that element before its closing tag has necessarily arrived, which risks the HTML parser swallowing subsequently-streamed text as the element's content.
 - Filters the resolved list to exclude annotations without `body.source.attachment.url`. This also excludes attachments that carry only inline data (no `url`): some grounding providers stream attachments whose content is embedded as base64 or text in the `data` field rather than a resolvable URL, and those cannot be linked or previewed.
 - Handles `null`/`undefined` annotation items gracefully (skips them without throwing).
@@ -203,7 +204,12 @@ Existing inline-citation call sites (`CitationDropdown` used from `useCitationMa
 #### Scenario: Returns internal normalised annotations for a completed streamed message
 
 - **WHEN** `message.custom_content.annotations` has entries and `isStreaming` is `false`
-- **THEN** those annotations (filtered to those with `body.source.attachment.url`) are returned without normalisation
+- **THEN** those annotations (filtered to those with `body.source.attachment.url`) are returned with recognized `html_tag` URL extensions reconciled against the stored MIME type
+
+#### Scenario: Persisted XLSX citation with the old PDF fallback is repaired
+
+- **WHEN** a completed message contains an `html_tag` annotation whose source type is `application/pdf` and whose URL ends in `.xlsx`
+- **THEN** `useAnnotations` returns that source with `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
 
 #### Scenario: Falls back to raw `custom_fields.annotations` for server-loaded messages
 

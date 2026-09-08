@@ -80,18 +80,28 @@ const normalizeAttachmentIndexAnnotation = (
 /**
  * Infers the attachment MIME type from its URL extension for the `html_tag`
  * wire shape, which carries no `attachment_index`/`type` to resolve against.
- * Mirrors the extension set `inferMimeTypeFromPath` in
- * `libs/chat-shared/src/utils/mime-type.ts` covers that matters for
- * `CitationCard`'s Preview/"Open in browser" vs "Download" label choice
- * (only HTML/XHTML change that choice); duplicated locally rather than
- * importing `chat-shared` into the backend for one narrow lookup.
+ * Covers the document extensions rendered by the citation canvas. Kept
+ * server-local so streaming persistence does not depend on a frontend/shared
+ * package at runtime.
  */
 const inferAttachmentTypeFromUrl = (url: string): string => {
   const clean = url.split(/[?#]/)[0];
   const ext = clean.slice(clean.lastIndexOf('.') + 1).toLowerCase();
-  if (ext === 'html' || ext === 'htm') return 'text/html';
-  if (ext === 'xhtml') return 'application/xhtml+xml';
-  return 'application/pdf';
+  switch (ext) {
+    case 'html':
+    case 'htm':
+      return 'text/html';
+    case 'xhtml':
+      return 'application/xhtml+xml';
+    case 'docx':
+      return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    case 'xlsx':
+      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    case 'pptx':
+      return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    default:
+      return 'application/pdf';
+  }
 };
 
 /** Normalizes the `html_tag` + flat `body.source.url` wire shape (no attachment-list lookup, no `index`). */

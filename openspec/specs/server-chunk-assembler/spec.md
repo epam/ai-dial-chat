@@ -12,6 +12,8 @@ It SHALL handle: `delta.content` (string concatenation), `delta.custom_content.a
 
 `normalizeRawAnnotationsServer(raw: unknown[], attachments: MessageAttachment[]): AnnotationDto[]` is a server-local pure function (no shared import with `libs/quotations`) that recognizes both the attachment-index + `pdf_region` wire shape and the `html_tag` + flat `body.source.url` wire shape, mirroring `normalizeRawAnnotations` in `libs/quotations/src/utils/annotation.ts`. It is called with the union of the message's already-accumulated attachments and this chunk's incoming attachments, so an `attachment_index` reference can resolve even when the referenced attachment arrived in an earlier chunk.
 
+For the `html_tag` shape, the server infers recognized document MIME types from the URL extension, including PDF, HTML/XHTML, DOCX, XLSX, and PPTX, and falls back to PDF only when the extension is not recognized.
+
 #### Scenario: Text deltas concatenate
 
 - **WHEN** successive chunks carry `delta.content` fragments
@@ -36,6 +38,11 @@ It SHALL handle: `delta.content` (string concatenation), `delta.custom_content.a
 
 - **WHEN** a chunk carries `delta.custom_fields.annotations` with two `html_tag`-selector entries (ids `"e43864"` and `"e52dc2"`), each with a flat `body.source.url`, and no `delta.custom_content.annotations`
 - **THEN** the assembled message's `custom_content.annotations` contains two normalized `Annotation` entries, one per `id`, each with `body.source.attachment.url` set from the raw entry's `body.source.url`
+
+#### Scenario: Raw XLSX html_tag citation is persisted with its spreadsheet MIME type
+
+- **WHEN** a raw `html_tag` annotation's `body.source.url` ends in `.xlsx`
+- **THEN** the persisted `body.source.attachment.type` is `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, not `application/pdf`
 
 #### Scenario: Two html_tag annotations in the same raw chunk do not collapse
 

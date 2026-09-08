@@ -19,6 +19,23 @@ const CITATION_HIGHLIGHT_STYLE: HighlightStyle = {
   hoverOpacity: 0.5,
 };
 
+const OOXML_MIME_BY_EXTENSION: Record<string, string> = {
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+};
+
+/** Infers a citation source MIME type from every extension the canvas can render. */
+const inferCitationMimeTypeFromPath = (path: string): string | undefined => {
+  const inferredType = inferMimeTypeFromPath(path);
+  if (inferredType != null) return inferredType;
+
+  const clean = path.split(/[?#]/)[0];
+  const dotIndex = clean.lastIndexOf('.');
+  if (dotIndex === -1) return undefined;
+  return OOXML_MIME_BY_EXTENSION[clean.slice(dotIndex + 1).toLowerCase()];
+};
+
 /**
  * Maps a list of annotations to `InputHighlightData` entries for the PDF viewer.
  * Annotations whose `body.selector` contains no `pdf_bbox` selectors are skipped.
@@ -181,10 +198,42 @@ const normalizeHtmlTagAnnotation = (
       source: {
         type: 'attachment',
         attachment: {
-          type: inferMimeTypeFromPath(url) ?? MIMEType.PDF,
+          type: inferCitationMimeTypeFromPath(url) ?? MIMEType.PDF,
           url,
           title,
         },
+      },
+    },
+  };
+};
+
+/**
+ * Repairs persisted `html_tag` annotations created by older normalizers that
+ * defaulted every non-HTML source to PDF. An explicit, recognized file
+ * extension is more reliable than that historical fallback; opaque URLs keep
+ * their stored type so genuine PDF citations without an extension still work.
+ */
+const normalizePersistedHtmlTagAttachmentType = (
+  annotation: Annotation,
+): Annotation => {
+  if (annotation.target?.selector?.type !== 'html_tag') return annotation;
+
+  const attachment = annotation.body?.source?.attachment;
+  if (attachment?.url == null) return annotation;
+
+  const inferredType = inferCitationMimeTypeFromPath(attachment.url);
+  if (inferredType == null || inferredType === attachment.type) {
+    return annotation;
+  }
+
+  return {
+    ...annotation,
+    body: {
+      ...annotation.body,
+      source: {
+        ...annotation.body?.source,
+        type: 'attachment',
+        attachment: { ...attachment, type: inferredType },
       },
     },
   };
@@ -236,10 +285,12 @@ export const normalizeRawAnnotations = (
 export const resolveMessageAnnotations = (message: Message): Annotation[] => {
   const contentAnnotations = message.custom_content?.annotations;
   if (contentAnnotations?.length) {
-    return contentAnnotations.filter(
-      (a): a is Annotation =>
-        a != null && a.body?.source?.attachment?.url != null,
-    );
+    return contentAnnotations
+      .filter(
+        (a): a is Annotation =>
+          a != null && a.body?.source?.attachment?.url != null,
+      )
+      .map(normalizePersistedHtmlTagAttachmentType);
   }
 
   const customFields = (message as Record<string, unknown>)['custom_fields'];
@@ -250,5 +301,5 @@ export const resolveMessageAnnotations = (message: Message): Annotation[] => {
   return normalizeRawAnnotations(
     raw,
     message.custom_content?.attachments ?? [],
-  );
+  ).map(normalizePersistedHtmlTagAttachmentType);
 };

@@ -189,9 +189,7 @@ describe('applyChunkToMessage', () => {
       'e43864',
       'e52dc2',
     ]);
-    expect(annotations[0].body.source.attachment.type).toBe(
-      'application/pdf',
-    );
+    expect(annotations[0].body.source.attachment.type).toBe('application/pdf');
   });
 
   it('infers text/html for an html_tag annotation citing an .html URL', () => {
@@ -204,7 +202,10 @@ describe('applyChunkToMessage', () => {
               target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
               body: {
                 title: 'page.html',
-                source: { type: 'attachment', url: 'https://example.com/page.html' },
+                source: {
+                  type: 'attachment',
+                  url: 'https://example.com/page.html',
+                },
               },
             },
           ],
@@ -219,13 +220,48 @@ describe('applyChunkToMessage', () => {
     expect(annotations[0].body.source.attachment.type).toBe('text/html');
   });
 
+  it('infers the XLSX MIME type for an html_tag annotation citing an .xlsx URL', () => {
+    const msg = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+              body: {
+                title: 'budget.xlsx',
+                source: {
+                  type: 'attachment',
+                  url: 'files/account/uploads/budget.xlsx',
+                },
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const annotations = (
+      msg.custom_content as {
+        annotations: { body: { source: { attachment: { type: string } } } }[];
+      }
+    ).annotations;
+    expect(annotations[0].body.source.attachment.type).toBe(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+  });
+
   it('still normalizes the legacy attachment_index raw annotation shape', () => {
     const msg1 = applyChunkToMessage(
       baseMessage(),
       makeChunk({
         custom_content: {
           attachments: [
-            { index: 0, type: 'application/pdf', title: 'report.pdf', url: 'files/report.pdf' },
+            {
+              index: 0,
+              type: 'application/pdf',
+              title: 'report.pdf',
+              url: 'files/report.pdf',
+            },
           ],
         },
       }),
@@ -259,9 +295,7 @@ describe('applyChunkToMessage', () => {
       }
     ).annotations;
     expect(annotations).toHaveLength(1);
-    expect(annotations[0].body.source.attachment.url).toBe(
-      'files/report.pdf',
-    );
+    expect(annotations[0].body.source.attachment.url).toBe('files/report.pdf');
   });
 
   it('merges a later chunk for the same cit id into the existing entry', () => {

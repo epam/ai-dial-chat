@@ -1,6 +1,14 @@
-import type { MessageAttachment } from '@epam/ai-dial-chat-shared';
+import {
+  MessageRole,
+  MIMEType,
+  type Message,
+  type MessageAttachment,
+} from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { normalizeRawAnnotations } from '../annotation';
+import {
+  normalizeRawAnnotations,
+  resolveMessageAnnotations,
+} from '../annotation';
 
 const sampleHtmlTagRaw = (id: string, quote: string) => ({
   target: {
@@ -85,6 +93,63 @@ describe('normalizeRawAnnotations', () => {
       x2: 4,
       y2: 6,
     });
+  });
+
+  it('infers the XLSX MIME type for a raw html_tag annotation', () => {
+    const raw = [
+      {
+        target: { selector: { type: 'html_tag', tag: 'cit', id: 'xlsx-1' } },
+        body: {
+          title: 'budget.xlsx',
+          source: {
+            type: 'attachment',
+            url: 'files/account/uploads/budget.xlsx',
+          },
+        },
+      },
+    ];
+
+    const result = normalizeRawAnnotations(raw, []);
+
+    expect(result[0].body?.source?.attachment.type).toBe(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+  });
+
+  it('repairs a persisted html_tag XLSX annotation previously mislabeled as PDF', () => {
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: 'Budget<cit data-id="xlsx-1"></cit>',
+      timestamp: '2026-09-08T10:16:43.739Z',
+      custom_content: {
+        annotations: [
+          {
+            target: {
+              selector: { type: 'html_tag', tag: 'cit', id: 'xlsx-1' },
+            },
+            body: {
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: MIMEType.PDF,
+                  url: 'files/account/uploads/budget.xlsx',
+                  title: 'budget.xlsx',
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    const result = resolveMessageAnnotations(message);
+
+    expect(result[0].body?.source?.attachment.type).toBe(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    expect(
+      message.custom_content?.annotations?.[0].body?.source?.attachment.type,
+    ).toBe(MIMEType.PDF);
   });
 
   it('drops an entry matching neither wire shape', () => {
