@@ -38,7 +38,10 @@ export default defineConfig({
     baseURL: process.env.E2E_HOST ?? 'http://localhost:3000',
     video: 'retry-with-video',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'retry-with-trace',
+    trace: {
+      mode: 'on-all-retries',
+      snapshots: { dom: true, aria: true, screen: true },
+    },
     screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
   },
@@ -59,6 +62,7 @@ export default defineConfig({
       name: 'cleanup',
       testMatch: /cleanup\.ts/,
       dependencies: ['auth'],
+      timeout: 120000,
     },
     {
       name: 'api listing',
