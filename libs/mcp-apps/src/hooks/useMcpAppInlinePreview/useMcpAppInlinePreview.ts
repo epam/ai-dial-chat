@@ -1,6 +1,7 @@
 import {
   AttachmentContentType,
   type McpAppCanvasContent,
+  type McpAppDisplayMode,
 } from '@epam/ai-dial-attachment-canvas';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { useCallback, useEffect, useState } from 'react';
@@ -40,6 +41,10 @@ export interface McpAppInlinePreviewState {
  * fetching — switching from this preview to the full canvas (or back) for
  * the same message reuses the same fetch/live-tool-re-call instead of
  * repeating it. Call the returned `reload` to bypass and refresh it.
+ *
+ * `onRequestDisplayMode`, when passed, is forwarded to the mounted app's
+ * `ui/request-display-mode` handler — this hook has no opinion on surface
+ * switching, so the host decides what a mode request does.
  */
 export const useMcpAppInlinePreview = (
   match: McpAppToolRef | undefined,
@@ -47,6 +52,7 @@ export const useMcpAppInlinePreview = (
   cache: McpAppResponseCache,
   cacheKey: string,
   hostAdapter: McpAppHostAdapter,
+  onRequestDisplayMode?: (mode: McpAppDisplayMode) => McpAppDisplayMode | void,
 ): McpAppInlinePreviewState => {
   const { hostContext, sandboxUrl, fetchResourceHtml, callTool } = hostAdapter;
   const [html, setHtml] = useState<string>();
@@ -136,11 +142,11 @@ export const useMcpAppInlinePreview = (
       type: AttachmentContentType.McpApp,
       html,
       sandboxUrl,
-      toolName: match.mcpToolName,
       toolInput: toolCall?.toolInput,
       toolResult,
       hostContext,
       onToolCall,
+      onRequestDisplayMode,
     },
   };
 };

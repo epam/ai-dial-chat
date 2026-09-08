@@ -42,7 +42,7 @@ const cache = useMcpAppResponseCache(conversationId);
 
 ### `useMcpAppInlinePreview`
 
-Fetches an MCP App's `ui://` resource and resolves its seeded tool result for a compact inline preview.
+Fetches an MCP App's `ui://` resource and resolves its seeded tool result for a compact inline preview. The optional sixth argument is forwarded to the mounted app's `ui/request-display-mode` handler — this hook has no opinion on surface switching, so the host decides what a mode request does.
 
 ```tsx
 import { useMcpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
@@ -53,6 +53,7 @@ const { status, content, reload } = useMcpAppInlinePreview(
   cache,
   cacheKey,
   hostAdapter,
+  onRequestDisplayMode,
 );
 ```
 
@@ -60,7 +61,7 @@ const { status, content, reload } = useMcpAppInlinePreview(
 
 ### `McpAppInlinePreview`
 
-Renders a compact, always-visible preview of a message's matched MCP App, with a reload button and an expand-to-canvas button.
+Renders a compact, always-visible preview of a message's matched MCP App, with a header strip above the preview frame (styled like the code block header in `@epam/ai-dial-chat-shared`'s Markdown renderer — small ghost icon buttons in a bordered `min-h-10` header) carrying a reload button and an expand-to-canvas button. An app's `ui/request-display-mode` request for `'fullscreen'` expands into the canvas via `onExpand` — the same surface the expand button opens; any other requested mode keeps the preview, and the app is answered with `'inline'`.
 
 ```tsx
 import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
@@ -74,6 +75,7 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
   onExpand={handleExpand}
   expandAriaLabel="Open in full view"
   reloadAriaLabel="Reload"
+  actionsGroupAriaLabel="MCP app actions"
   loadErrorLabel="Failed to load app"
 />;
 ```

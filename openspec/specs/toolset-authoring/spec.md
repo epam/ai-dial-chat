@@ -1,7 +1,7 @@
 # toolset-authoring Specification
 
 ## Purpose
-The toolset create/edit screen: a flat, single-page `EditorLayout`-based editor for MCP toolsets (no wizard/step navigation), covering the route and load behavior, the Metadata and Setup sections, the Connect toolset section, and save behavior.
+The toolset create/edit screen: a flat, single-page `EditorLayout`-based editor for MCP toolsets (no wizard/step navigation), covering the route and load behavior, the Metadata and Setup sections, the Connect toolset section, and save behavior. The editor surface is owned by the host-agnostic `ToolsetEditor` component from `@epam/ai-dial-toolset-editor` (see the `toolset-editor-library` spec); the `/toolset-editor` app page is a thin adapter that loads the entity, builds labels, and wires the server callbacks.
 ## Requirements
 ### Requirement: Toolset editor route and entry modes
 The system SHALL provide a `/toolset-editor` route that opens the toolset editor in either create mode (no `id` search param) or edit mode (`id` search param present). In edit mode the system SHALL load the toolset by id before rendering the form; if the toolset cannot be found the system SHALL redirect away from the editor rather than render an empty form.
@@ -19,9 +19,9 @@ The system SHALL provide a `/toolset-editor` route that opens the toolset editor
 - **THEN** the system redirects the user out of the editor instead of rendering the form
 
 ### Requirement: Metadata section fields
-The Metadata section SHALL allow editing the toolset avatar, name, version, description, and topics. The avatar SHALL be picked via the shared `AddAvatar` control (preview box plus "Add avatar" button), which opens the `AvatarPickerModal` file manager restricted to a single image up to a host-configured size, rather than a plain URL text field. The name and description fields SHALL also allow editing translations for additional locales through the shared `DeploymentLocalesField` popup. These fields SHALL be rendered and validated through the shared `deployment-creation-form` library component. The Metadata section SHALL NOT contain any connection or authentication fields.
+The Metadata section SHALL allow editing the toolset avatar, name, version, description, and topics. The avatar SHALL be picked via the shared `AddAvatar` control (preview box plus "Add avatar" button), which opens the `AvatarPickerModal` file manager restricted to a single image up to a host-configured size, rather than a plain URL text field. The name and description fields SHALL also allow editing translations for additional locales through the shared `DeploymentLocalesField` popup. These fields SHALL be rendered through the toolset-editor lib's `GeneralForm` component, which wraps the shared `DeploymentCreationForm` component from `@epam/ai-dial-builder-form`. The Metadata section SHALL NOT contain any connection or authentication fields.
 
-The Version field SHALL be validated against the shared `deployment-creation-form` library's default `VERSION_PATTERN` (via `validateDeploymentCreationFields` with `validateVersionPattern: true`) — letters, digits, dots, underscores, and dashes are all allowed, unlike the stricter dot-separated-numeric-only pattern the Quick App and Custom App editors use. A non-empty version that contains any other character SHALL surface a version-invalid error (`toolsetEditor.general.versionInvalid`, "Version may only contain letters, digits, dots, underscores, and dashes") under the Version field and SHALL keep the Save button disabled.
+The Version field SHALL be validated against the shared `builder-form` library's default `VERSION_PATTERN` (via `validateDeploymentCreationFields` with `validateVersionPattern: true`) — letters, digits, dots, underscores, and dashes are all allowed, unlike the stricter dot-separated-numeric-only pattern the Quick App and Custom App editors use. A non-empty version that contains any other character SHALL surface a version-invalid error (`toolsetEditor.general.versionInvalid`, "Version may only contain letters, digits, dots, underscores, and dashes") under the Version field and SHALL keep the Save button disabled.
 
 #### Scenario: Version format error
 - **WHEN** a user types a version containing a character outside letters, digits, dots, underscores, and dashes (e.g. a space or `/`)
@@ -79,9 +79,9 @@ since the candidate name itself is always primary-locale content.
   name resolved for the viewer's UI language
 
 ### Requirement: Form-only editor layout
-The editor SHALL use `EditorLayout` from `@epam/ai-dial-editor-builder` to render a header row and a two-column body. The left column SHALL contain a Metadata `EditorSection` (Avatar, Name, Version, Description, Locales, Tags fields). The right column SHALL contain a Setup `EditorSection` (Endpoint, Protocol, Allowed tools, Authentication fields). On mobile, the two sections SHALL stack vertically (Metadata on top, Setup below). The editor SHALL NOT render a footer button bar, a wizard step indicator, or a separate live preview pane.
+The editor SHALL use `EditorLayout` from `@epam/ai-dial-builder-form` (composed by the toolset-editor lib's `ToolsetEditor`) to render a header row and a two-column body. The left column SHALL contain a Metadata `EditorSection` (Avatar, Name, Version, Description, Locales, Tags fields). The right column SHALL contain a Setup `EditorSection` (Endpoint, Protocol, Allowed tools, Authentication fields). On mobile, the two sections SHALL stack vertically (Metadata on top, Setup below). The editor SHALL NOT render a footer button bar, a wizard step indicator, or a separate live preview pane.
 
-`ToolsetEditor`'s page root SHALL use `className="flex min-h-0 flex-1 flex-col"` (`flex-1` growth, not `size-full`), matching `AppsEditor` and `CustomAppEditor`.
+The `EditorLayout` root SHALL use `className="flex min-h-0 flex-1 flex-col"` (`flex-1` growth, not `size-full`) — the app page renders `ToolsetEditor` (and thereby `EditorLayout`) directly as its root, with no extra wrapper element, matching `AppsEditor` and `CustomAppEditor`.
 
 #### Scenario: Both sections visible simultaneously
 - **WHEN** a user opens the toolset editor (create or edit mode) at desktop width
@@ -107,7 +107,7 @@ The Setup section SHALL allow editing the endpoint URL, the transport protocol (
 - **THEN** the system shows a URL validation error and blocks the save
 
 ### Requirement: Settings step connection fields
-The Connect toolset section SHALL render inside the Setup `EditorSection` at the bottom of the Setup content, below the authentication block, when the toolset being edited has a persisted id (edit mode) and `config.dialCoreExternalUrl` is configured. In create mode the section SHALL NOT render (no persisted id exists until Save). The section SHALL contain a title "Connect toolset", a description, and a "Copy URL" button that copies the toolset's MCP endpoint URL to the clipboard and shows transient "Copied!" feedback announced via `aria-live="polite"`.
+The Connect toolset section SHALL render inside the Setup `EditorSection` at the bottom of the Setup content, below the authentication block, when the toolset being edited has a persisted id (edit mode, or the draft id created by a create-session Log In/Save) and the host supplies a `buildMcpUrl` resolver (the app builds it from `config.dialCoreExternalUrl`). In fresh create mode the section SHALL NOT render (no persisted id exists until Log In or Save). The section SHALL contain a title "Connect toolset", a description, and a "Copy URL" button that copies the toolset's MCP endpoint URL to the clipboard and shows transient "Copied!" feedback announced via `aria-live="polite"`.
 
 #### Scenario: Connect section renders in edit mode with external URL configured
 - **WHEN** the user opens the editor in edit mode and `config.dialCoreExternalUrl` is set

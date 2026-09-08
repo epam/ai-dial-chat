@@ -1,6 +1,9 @@
 import { McpAppCanvasRenderer } from '@epam/ai-dial-attachment-canvas';
+import type { McpAppDisplayMode } from '@epam/ai-dial-attachment-canvas';
 import {
+  DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ElementSize,
   GhostIconButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
@@ -9,7 +12,7 @@ import {
   IconArrowsMaximize,
   IconRefresh,
 } from '@tabler/icons-react';
-import { FC, memo } from 'react';
+import { FC, memo, useCallback } from 'react';
 import { useMcpAppInlinePreview } from '../../hooks/useMcpAppInlinePreview/useMcpAppInlinePreview';
 import {
   McpAppInlinePreviewStatus,
@@ -37,6 +40,8 @@ export interface McpAppInlinePreviewProps {
   expandAriaLabel: string;
   /** Accessible label for the reload button. */
   reloadAriaLabel: string;
+  /** Accessible name for the header's actions group. Defaults to `'MCP app actions'`. */
+  actionsGroupAriaLabel?: string;
   /** Message shown when the resource fails to load or the app fails to initialize. */
   loadErrorLabel: string;
 }
@@ -45,10 +50,12 @@ export interface McpAppInlinePreviewProps {
  * Renders a compact, always-visible preview of a message's matched MCP App
  * directly under the message body, spanning the full available width and
  * sized to the mounted app's actual content height. A header strip above the
- * app — outside its rendered content, so it never overlaps whatever the app
- * draws — carries a reload button (re-fetches from scratch, bypassing
- * `cache`) and the expand-to-canvas button (`onExpand`). Renders nothing
- * while `hostAdapter.sandboxUrl` isn't configured.
+ * app — styled like the code block's header in `@epam/ai-dial-chat-shared`'s
+ * Markdown renderer, with small ghost icon buttons — carries a reload button
+ * (re-fetches from scratch, bypassing `cache`) and the expand-to-canvas
+ * button (`onExpand`). It sits outside the app's rendered content, so it
+ * never overlaps whatever the app draws. Renders nothing while
+ * `hostAdapter.sandboxUrl` isn't configured.
  */
 const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   match,
@@ -59,14 +66,33 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   onExpand,
   expandAriaLabel,
   reloadAriaLabel,
+  actionsGroupAriaLabel = 'MCP app actions',
   loadErrorLabel,
 }) => {
+  /*
+   * An app mounted in the compact preview can ask to go fullscreen via
+   * `ui/request-display-mode` — answered by expanding into the full-width
+   * canvas, the same surface the expand button opens. Any other mode request
+   * (including `pip`, which no surface here provides) keeps the preview.
+   */
+  const handleRequestDisplayMode = useCallback(
+    (mode: McpAppDisplayMode): McpAppDisplayMode => {
+      if (mode === 'fullscreen') {
+        onExpand();
+        return 'fullscreen';
+      }
+      return 'inline';
+    },
+    [onExpand],
+  );
+
   const { status, content, reload } = useMcpAppInlinePreview(
     match,
     toolCall,
     cache,
     cacheKey,
     hostAdapter,
+    handleRequestDisplayMode,
   );
 
   if (status === McpAppInlinePreviewStatus.Unavailable) {
@@ -74,26 +100,43 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   }
 
   return (
-    <div className="bg-layer-2 flex w-full flex-col overflow-hidden rounded border border-tertiary">
-      <div className="flex items-center justify-end gap-1 border-b border-tertiary px-3 py-1.5">
-        <GhostIconButton
-          icon={
-            <IconRefresh size={16} stroke={DIAL_KIT_ICON_STROKE} aria-hidden />
-          }
-          aria-label={reloadAriaLabel}
-          onClick={reload}
-        />
-        <GhostIconButton
-          icon={
-            <IconArrowsMaximize
-              size={16}
-              stroke={DIAL_KIT_ICON_STROKE}
-              aria-hidden
-            />
-          }
-          aria-label={expandAriaLabel}
-          onClick={onExpand}
-        />
+    <div className="bg-layer-2 flex w-full min-w-0 flex-col overflow-hidden rounded-xl border border-tertiary">
+      {/*
+       * Header strip styled after the code block header in chat-shared's
+       * Markdown renderer: same min-height, padding, bottom border, and
+       * small ghost icon button group.
+       */}
+      <div className="flex min-h-10 items-center justify-end border-b border-tertiary px-4 py-2">
+        <div
+          role="toolbar"
+          aria-label={actionsGroupAriaLabel}
+          className="flex items-center gap-1"
+        >
+          <GhostIconButton
+            icon={
+              <IconRefresh
+                size={DIAL_ICON_SIZE.SM}
+                stroke={DIAL_KIT_ICON_STROKE}
+                aria-hidden
+              />
+            }
+            aria-label={reloadAriaLabel}
+            size={ElementSize.Small}
+            onClick={reload}
+          />
+          <GhostIconButton
+            icon={
+              <IconArrowsMaximize
+                size={DIAL_ICON_SIZE.SM}
+                stroke={DIAL_KIT_ICON_STROKE}
+                aria-hidden
+              />
+            }
+            aria-label={expandAriaLabel}
+            size={ElementSize.Small}
+            onClick={onExpand}
+          />
+        </div>
       </div>
       <div className="relative min-h-[200px] w-full">
         {status === McpAppInlinePreviewStatus.Loading && (

@@ -1,0 +1,123 @@
+import {
+  mergeClasses,
+  TAG_INPUT_TAG_CLASS_NAME,
+} from '@epam/ai-dial-chat-shared';
+import { AddAvatar } from '../AddAvatar/AddAvatar';
+import {
+  Input,
+  TagInput,
+  Textarea,
+  TextareaResize,
+} from '@epam/ai-dial-ui-kit';
+import { useEffect, useRef, type FC } from 'react';
+import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
+import { DeploymentLocalesField } from '../DeploymentLocalesField/DeploymentLocalesField';
+
+/** Controlled field set for deployment creation: avatar, name, description, version, and topics. */
+export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
+  values,
+  errors,
+  onChange,
+  onNameBlur,
+  onVersionBlur,
+  iconPreviewUrl,
+  onAddAvatarClick,
+  labels,
+  styles,
+  availableLocaleOptions = [],
+}) => {
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const versionInputRef = useRef<HTMLInputElement>(null);
+  const hadErrorsRef = useRef(false);
+
+  const hasErrors = !!(errors.name || errors.version);
+
+  /*
+   * Only steal focus on the transition from no errors to some errors (a
+   * submit attempt), not on every keystroke that adds/removes one field's
+   * error while the user is still typing.
+   */
+  useEffect(() => {
+    if (hasErrors && !hadErrorsRef.current) {
+      const firstInvalidRef = errors.name ? nameInputRef : versionInputRef;
+
+      firstInvalidRef.current?.focus();
+    }
+
+    hadErrorsRef.current = hasErrors;
+  }, [hasErrors, errors.name, errors.version]);
+
+  return (
+    <div
+      role={labels.ariaLabel ? 'group' : undefined}
+      aria-label={labels.ariaLabel}
+      className={mergeClasses('flex flex-col gap-4', styles?.root)}
+    >
+      <AddAvatar
+        label={labels.iconUrl.label}
+        avatarUrl={iconPreviewUrl}
+        addAvatarLabel={labels.iconUrl.addAvatarLabel}
+        captionText={labels.iconUrl.captionText}
+        onAddAvatarClick={onAddAvatarClick}
+        className={styles?.field}
+      />
+
+      <div className={mergeClasses('flex items-start gap-4', styles?.field)}>
+        <Input
+          id="deployment-creation-form-name"
+          inputRef={nameInputRef}
+          value={values.name}
+          onChange={(value) => onChange({ name: value ?? '' })}
+          onBlur={onNameBlur}
+          labelProps={{ label: labels.name.label, required: true }}
+          placeholder={labels.name.placeholder}
+          error={errors.name || undefined}
+          invalid={!!errors.name}
+          containerClassName="min-w-0 basis-0 grow-[2]"
+        />
+
+        <Input
+          id="deployment-creation-form-version"
+          inputRef={versionInputRef}
+          value={values.version}
+          onChange={(value) => onChange({ version: value ?? '' })}
+          onBlur={onVersionBlur}
+          labelProps={{ label: labels.version.label }}
+          placeholder={labels.version.placeholder}
+          error={errors.version || undefined}
+          invalid={!!errors.version}
+          containerClassName="min-w-0 basis-0 grow-[1]"
+        />
+      </div>
+
+      <Textarea
+        id="deployment-creation-form-description"
+        value={values.description}
+        onChange={(value) => onChange({ description: value })}
+        labelProps={{ label: labels.description.label }}
+        placeholder={labels.description.placeholder}
+        containerClassName={styles?.field}
+        resize={TextareaResize.Vertical}
+      />
+
+      <DeploymentLocalesField
+        value={values.otherLocales}
+        onChange={(otherLocales) => onChange({ otherLocales })}
+        availableLocaleOptions={availableLocaleOptions}
+        labels={labels.otherLocales}
+        className={styles?.field}
+      />
+
+      <div className={styles?.field}>
+        <TagInput
+          id="deployment-creation-form-topics"
+          labelProps={{ label: labels.topics.label }}
+          placeholder={labels.topics.placeholder}
+          value={values.topics}
+          onChange={(topics) => onChange({ topics })}
+          tagClassName={TAG_INPUT_TAG_CLASS_NAME}
+        />
+      </div>
+    </div>
+  );
+};

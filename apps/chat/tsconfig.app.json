@@ -45,16 +45,13 @@
   ],
   "references": [
     {
-      "path": "../../libs/editor-builder/tsconfig.lib.json"
+      "path": "../../libs/builder-form/tsconfig.lib.json"
     },
     {
       "path": "../../libs/usage-dashboard/tsconfig.lib.json"
     },
     {
       "path": "../../libs/prompt-editor/tsconfig.lib.json"
-    },
-    {
-      "path": "../../libs/deployment-creation-form/tsconfig.lib.json"
     },
     {
       "path": "../../libs/settings-panel/tsconfig.lib.json"
@@ -97,6 +94,9 @@
     },
     {
       "path": "../../libs/skill-editor/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/toolset-editor/tsconfig.lib.json"
     },
     {
       "path": "../../libs/publish-panel/tsconfig.lib.json"

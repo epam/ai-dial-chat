@@ -1,3 +1,4 @@
+import type { McpAppDisplayMode } from '@epam/ai-dial-attachment-canvas';
 import type { McpUiHostContext } from '@mcp-ui/client';
 import { useMemo } from 'react';
 
@@ -105,6 +106,12 @@ export interface McpAppHostContextParams {
   locale: string;
   /** Operator-configured MCP App user-agent override. Defaults to `'ai-dial-chat'`. */
   mcpAppUserAgent?: string;
+  /**
+   * Display modes the host can switch an app between via
+   * `ui/request-display-mode`. Defaults to `['inline', 'fullscreen']` — the
+   * compact inline preview and the full-width canvas.
+   */
+  availableDisplayModes?: McpAppDisplayMode[];
 }
 
 /**
@@ -112,11 +119,12 @@ export interface McpAppHostContextParams {
  * `ui/initialize` handshake, shared by every place that mounts an app —
  * a full-width attachment canvas (`displayMode: 'fullscreen'`) and a compact
  * inline preview under a message (`displayMode: 'inline'`) — so the app can
- * size/style itself differently for each.
+ * size/style itself differently for each, and knows (via
+ * `availableDisplayModes`) which surfaces it may ask the host to switch to.
  */
 export const useMcpAppHostContext = (
   displayMode: 'inline' | 'fullscreen',
-  { theme, mcpAppTheme, locale, mcpAppUserAgent }: McpAppHostContextParams,
+  { theme, mcpAppTheme, locale, mcpAppUserAgent, availableDisplayModes }: McpAppHostContextParams,
 ): McpUiHostContext =>
   useMemo(
     () => ({
@@ -126,7 +134,15 @@ export const useMcpAppHostContext = (
       userAgent: mcpAppUserAgent ?? 'ai-dial-chat',
       platform: 'web',
       displayMode,
+      availableDisplayModes: availableDisplayModes ?? ['inline', 'fullscreen'],
       styles: { variables: readMcpStyleVariables() },
     }),
-    [mcpAppTheme, theme, locale, mcpAppUserAgent, displayMode],
+    [
+      mcpAppTheme,
+      theme,
+      locale,
+      mcpAppUserAgent,
+      displayMode,
+      availableDisplayModes,
+    ],
   );

@@ -185,9 +185,13 @@ import {
 
 ### McpAppCanvasRenderer
 
-Mounts an MCP tool's `ui://` resource via `@mcp-ui/client`'s `AppRenderer`, inside the isolated-origin sandbox proxy named by `content.sandboxUrl`, seeded with the original invocation's `content.toolInput`/`content.toolResult`. Handles its own loading/error overlay while the app initializes. Exported so a host can also mount a compact preview outside the full canvas — e.g. inline under a chat message — using the same `McpAppCanvasContent` payload it builds for `AttachmentCanvas`.
+Mounts an MCP tool's `ui://` resource via `@mcp-ui/client`'s `AppFrame` and a host-owned `AppBridge`, inside the isolated-origin sandbox proxy named by `content.sandboxUrl`, seeded with the original invocation's `content.toolInput`/`content.toolResult`. Handles its own loading/error overlay while the app initializes. Exported so a host can also mount a compact preview outside the full canvas — e.g. inline under a chat message — using the same `McpAppCanvasContent` payload it builds for `AttachmentCanvas`.
 
 Watches its own container with a `ResizeObserver` and reports the live pixel size to the mounted app via `hostContext.containerDimensions`, so a resize (the host dragging a resizable panel, a window resize) reaches a well-behaved app after mount, not just once. When `content.hostContext.displayMode` is `'fullscreen'` (the value `AttachmentCanvas`'s own usage sets), the mounted iframe is also forced to fill 100% of that container — overriding the mounted app's own reported content size, which is otherwise what drives the iframe's dimensions and is a better default for a compact inline preview.
+
+The bridge serves the app's `ui/open-link` and `ui/request-display-mode` requests. `content.onOpenLink` decides whether a requested URL is opened — when omitted, the renderer itself opens `http`/`https` URLs in a new browser tab (`noopener`/`noreferrer`) and rejects every other scheme. `content.onRequestDisplayMode` answers a mode request with the mode actually applied; when omitted (or when it returns `undefined`), the app is answered with the current mode from `content.hostContext.displayMode`.
+
+Some apps request the container size they need by sending `ui/notifications/host-context-changed` upstream with `containerDimensions` (fixed `width`/`height`, or `maxWidth`/`maxHeight` clamps) instead of the standard `size-changed` notification. The renderer applies such a request to its sandbox iframe the same way `AppFrame` applies `size-changed` — a fixed size replaces the iframe's defaults, a `max*` value only clamps — so those apps are sized correctly too. This is renderer-internal (no content callback) and never shrinks the fullscreen canvas, whose 100% fill is enforced by a stylesheet rule with `!important`.
 
 ```tsx
 import {
@@ -200,11 +204,11 @@ const content: McpAppCanvasContent = {
   type: AttachmentContentType.McpApp,
   html,
   sandboxUrl,
-  toolName: 'get_weather',
   toolInput,
   toolResult,
   hostContext,
   onToolCall: (name, args) => callTool(name, args),
+  onRequestDisplayMode: (mode) => (mode === 'fullscreen' ? expand() : 'inline'),
 };
 
 <McpAppCanvasRenderer content={content} errorLabel="Failed to load app" />;
@@ -312,6 +316,7 @@ const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 | `AttachmentContentType.Ooxml`       | `OoxmlCanvasContent`       | Renders DOCX, XLSX, PPTX, or CSV with `@silurus/ooxml`; the persistent XLSX `fx` bar shows the selected cell's formula or display value |
 | `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                                                                                                       |
 | `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source                                                                                        |
+| `AttachmentContentType.McpApp`     | `McpAppCanvasContent`      | Mounts a sandboxed MCP App `ui://` resource through `McpAppCanvasRenderer`                                                              |
 | `AttachmentContentType.Visualizer`  | `VisualizerCanvasContent`  | Renders a registered custom visualizer                                                                                                  |
 | `AttachmentContentType.Unsupported` | `UnsupportedCanvasContent` | Fallback for unsupported MIME types                                                                                                     |
 | `AttachmentContentType.Error`       | `ErrorCanvasContent`       | Load failure or forbidden access                                                                                                        |
@@ -380,3 +385,7 @@ label; it defaults to `Formula`. The visual `fx` mark is direction-neutral and
 does not replace that label for assistive technology. Its typography defaults
 to the UI Kit's `dial-italic-text` and can be overridden through
 `styles.typography.xlsxFormulaLabelClassName`.
+
+`McpAppDisplayMode` is the display-mode union of the MCP UI protocol
+(`'inline'` | `'fullscreen'` | `'pip'`) — the accepted values for
+`hostContext.displayMode` and for `onRequestDisplayMode` requests and replies.

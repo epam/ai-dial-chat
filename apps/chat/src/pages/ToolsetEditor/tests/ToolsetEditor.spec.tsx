@@ -1,230 +1,234 @@
 import { ResponseError } from '@epam/ai-dial-chat-api-client';
-import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import {
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  WithLogin,
+} from '@epam/ai-dial-chat-hooks';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
+import { useAppConfig } from '../../../context/AppConfigContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import type {
-  ToolsetAuthFormData,
-  ToolsetFormData,
-} from '../../../models/toolsets';
+import { useUser } from '../../../context/auth/UserContext';
+import { useOperationNotification } from '../../../hooks/useOperationNotification';
+import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import * as toolsetsApi from '../../../server-api/toolsets';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
-import ToolsetEditor from '../ToolsetEditor';
+import ToolsetEditorPage from '../ToolsetEditor';
 
 vi.mock('../../../server-api/toolsets', () => ({
   createToolset: vi.fn(),
   getToolset: vi.fn(),
   listToolsets: vi.fn(),
   loginToolset: vi.fn(),
+  logoutToolset: vi.fn(),
   updateToolset: vi.fn(),
 }));
 
-vi.mock('../../../context/NotificationContext');
-vi.mock('../../../context/DeploymentsContext');
+vi.mock('../../../server-api/mcp-apps', () => ({
+  mcpAppsApiClient: { listToolNames: vi.fn() },
+}));
 
-const mockShowNotification = vi.fn();
-const mockRefetchToolsets = vi.fn();
+vi.mock('../../../context/NotificationContext');
+vi.mock('../../../context/DeploymentsContext', () => ({
+  useDeployments: () => ({ refetchToolsets: mockRefetchToolsets }),
+}));
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => ({ user: { bucket: 'b' } }),
+}));
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ config: mockAppConfig }),
+}));
+vi.mock('../../../hooks/useOperationNotification', () => ({
+  useOperationNotification: () => ({
+    notifyOperationSuccess: mockNotifyOperationSuccess,
+  }),
+}));
 
 vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
   default: () => <div>Loading</div>,
 }));
 
-vi.mock('@epam/ai-dial-editor-builder', () => ({
-  EditorLayout: ({
-    actions,
-    leftContent,
-    rightContent,
-  }: {
-    title?: string;
-    actions?: unknown;
-    leftContent?: unknown;
-    rightContent?: unknown;
-  }) => (
-    <div>
-      <div>{actions as never}</div>
-      <div>{leftContent as never}</div>
-      <div>{rightContent as never}</div>
-    </div>
-  ),
-  EditorSection: ({ children }: { children?: unknown }) => (
-    <div>{children as never}</div>
-  ),
-}));
+/*
+ * Swaps the composed lib editor for a stub that exposes every host-injected
+ * callback as a button, so the adapter test can drive each wiring directly.
+ */
+vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-toolset-editor')>();
+  const { useState } = await import('react');
+  const { ToolsetAuthTypes, ToolsetCredentialsLevel, WithLogin } =
+    await import('@epam/ai-dial-chat-hooks');
 
-vi.mock('../EditorForm/GeneralForm', () => ({
-  default: () => <div />,
-}));
-
-vi.mock('../EditorForm/SettingsForm', () => ({
-  default: ({
-    errors,
-    onChange,
-    onAuthChange,
-    onEnsureSaved,
-  }: {
-    form?: ToolsetFormData;
-    errors?: {
-      endpoint?: string;
-      authorizationEndpoint?: string;
-      tokenEndpoint?: string;
+  interface StubProps {
+    initialForm: { name: string };
+    toolsetId: string;
+    oauthCallbackPath: string;
+    labels?: { layout?: { createLabel?: string } };
+    buildMcpUrl?: (toolsetId: string) => string;
+    listToolNames?: (toolsetId: string) => Promise<string[]>;
+    onPersist: (
+      form: { name: string },
+      toolsetId: string,
+    ) => Promise<string | null>;
+    onPostSaveLogin: (toolsetId: string, auth: unknown) => Promise<void>;
+    onSaveSuccess: (form: { name: string }) => void;
+    onSaveComplete: () => void;
+    onBack: () => void;
+    authActions: {
+      login: (toolsetId: string, body: unknown) => Promise<unknown>;
+      logout: (toolsetId: string, body: unknown) => Promise<unknown>;
     };
-    isSaving?: boolean;
-    toolsetId?: string;
-    isEditMode?: boolean;
-    onChange: (patch: Partial<ToolsetFormData>) => void;
-    onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
-    onEnsureSaved: () => Promise<string | false>;
-  }) => {
-    const [ensureSavedResult, setEnsureSavedResult] = useState<string | null>(
-      null,
-    );
+  }
+
+  const apiKeyLoginAuth = {
+    authenticationType: ToolsetAuthTypes.ApiKey,
+    withLogin: WithLogin.WithLogin,
+    isLoggedIn: false,
+    apiKey: ' secret ',
+  };
+
+  const ToolsetEditorStub = (props: StubProps) => {
+    const [persistResult, setPersistResult] = useState<string | null>(null);
     return (
       <div>
+        <span>{props.initialForm.name}</span>
+        <span>{props.toolsetId}</span>
+        <span>{props.oauthCallbackPath}</span>
+        <span>{props.labels?.layout?.createLabel}</span>
+        <span>
+          {props.buildMcpUrl
+            ? props.buildMcpUrl('toolsets/b/my__1.0.0')
+            : 'no-mcp-url'}
+        </span>
+        {persistResult != null && (
+          <span>{`persist-result-${persistResult}`}</span>
+        )}
         <button
           type="button"
           onClick={async () => {
-            const result = await onEnsureSaved();
-            setEnsureSavedResult(result === false ? 'false' : result);
+            const id = await props.onPersist(props.initialForm, props.toolsetId);
+            setPersistResult(id ?? 'null');
           }}
         >
-          invoke-ensure-saved
-        </button>
-        {ensureSavedResult != null && (
-          <span>{`ensure-saved-result-${ensureSavedResult}`}</span>
-        )}
-        {errors?.endpoint && <p role="alert">{errors.endpoint}</p>}
-        {errors?.authorizationEndpoint && (
-          <p role="alert">{errors.authorizationEndpoint}</p>
-        )}
-        {errors?.tokenEndpoint && <p role="alert">{errors.tokenEndpoint}</p>}
-        <button type="button" onClick={() => onChange({ endpoint: '' })}>
-          touch-empty-endpoint
+          adapter-persist
         </button>
         <button
           type="button"
-          onClick={() => {
-            onChange({ endpoint: 'https://example.com/mcp' });
-            onAuthChange({
-              authenticationType: ToolsetAuthTypes.ApiKey,
+          onClick={() =>
+            void props.onPostSaveLogin('toolsets/b/my__1.0.0', apiKeyLoginAuth)
+          }
+        >
+          adapter-post-save-login
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void props.onPostSaveLogin('toolsets/b/my__1.0.0', {
+              authenticationType: ToolsetAuthTypes.OAuth,
               withLogin: WithLogin.WithLogin,
-              keyHeader: 'X-API-Key',
+              isLoggedIn: false,
+            })
+          }
+        >
+          adapter-post-save-login-oauth
+        </button>
+        <button
+          type="button"
+          onClick={() => props.onSaveSuccess(props.initialForm)}
+        >
+          adapter-save-success
+        </button>
+        <button type="button" onClick={props.onSaveComplete}>
+          adapter-save-complete
+        </button>
+        <button type="button" onClick={props.onBack}>
+          adapter-back
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void props.listToolNames?.('toolsets/b/my__1.0.0')
+          }
+        >
+          adapter-list-tool-names
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void props.authActions.login('toolsets/b/my__1.0.0', {
+              url: 'toolsets/b/my__1.0.0',
+              credentialsLevel: ToolsetCredentialsLevel.User,
+              authenticationType: ToolsetAuthTypes.ApiKey,
               apiKey: 'secret',
-            });
-          }}
+            })
+          }
         >
-          fill-api-key-toolset
+          adapter-auth-login
         </button>
         <button
           type="button"
-          onClick={() => {
-            onChange({ endpoint: 'https://example.com/mcp' });
-            onAuthChange({
+          onClick={() =>
+            void props.authActions.logout('toolsets/b/my__1.0.0', {
+              url: 'toolsets/b/my__1.0.0',
+              credentialsLevel: ToolsetCredentialsLevel.User,
               authenticationType: ToolsetAuthTypes.ApiKey,
-              withLogin: WithLogin.WithoutLogin,
-              keyHeader: 'X-API-Key',
-              apiKey: '',
-            });
-          }}
+            })
+          }
         >
-          fill-api-key-without-login-toolset
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            onChange({ endpoint: 'https://example.com/mcp' });
-            onAuthChange({
-              authenticationType: ToolsetAuthTypes.OAuth,
-              withLogin: WithLogin.WithConfig,
-              clientId: 'client-id',
-              clientSecret: 'client-secret',
-              authorizationEndpoint: 'https://auth.example.com/oauth/authorize',
-              tokenEndpoint: 'https://auth.example.com/oauth/token',
-            });
-          }}
-        >
-          fill-oauth-toolset
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            onChange({ endpoint: 'https://example.com/mcp' });
-            onAuthChange({
-              authenticationType: ToolsetAuthTypes.OAuth,
-              withLogin: WithLogin.WithLogin,
-            });
-          }}
-        >
-          fill-oauth-with-login-toolset
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            onChange({ endpoint: 'https://example.com/mcp' });
-            onAuthChange({
-              authenticationType: ToolsetAuthTypes.OAuth,
-              withLogin: WithLogin.WithConfig,
-              clientId: 'client-id',
-              clientSecret: 'client-secret',
-            });
-          }}
-        >
-          fill-oauth-toolset-without-endpoints
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            onChange({ endpoint: 'https://example.com/mcp' });
-            onAuthChange({
-              authenticationType: ToolsetAuthTypes.OAuth,
-              withLogin: WithLogin.WithConfig,
-              clientId: 'client-id',
-              clientSecret: 'client-secret',
-              authorizationEndpoint: 'not a url',
-              tokenEndpoint: 'https://auth.example.com/oauth/token',
-            });
-          }}
-        >
-          fill-invalid-oauth-toolset
-        </button>
-        <button
-          type="button"
-          onClick={() => onAuthChange({ isLoggedIn: true })}
-        >
-          report-login-success
-        </button>
-        <button
-          type="button"
-          onClick={() => onAuthChange({ isLoggedIn: false })}
-        >
-          report-logout-success
+          adapter-auth-logout
         </button>
       </div>
     );
-  },
-}));
+  };
 
-const renderEditor = (initialEntry: string = ROUTES.ToolsetEditor) =>
+  return { ...actual, ToolsetEditor: ToolsetEditorStub };
+});
+
+const mockShowNotification = vi.fn();
+const mockRefetchToolsets = vi.fn();
+const mockNotifyOperationSuccess = vi.fn();
+const mockAppConfig = { dialCoreExternalUrl: 'https://dial-core.example.com' };
+
+const NEW_TOOLSET_ID = 'toolsets/b/my__0.0.1';
+const EDIT_TOOLSET_ID = 'toolsets/b/my__1.0.0';
+
+const editDto = (): DialToolsetDto => ({
+  id: EDIT_TOOLSET_ID,
+  toolset: EDIT_TOOLSET_ID,
+  displayName: 'My toolset',
+  displayVersion: '1.2.3',
+  endpoint: 'https://my-toolset.example.com/mcp',
+  authSettings: { authenticationType: 'NONE' },
+});
+
+const renderPage = (initialEntry: string = ROUTES.ToolsetEditor) =>
   render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
-        <Route path={ROUTES.ToolsetEditor} element={<ToolsetEditor />} />
+        <Route
+          path={ROUTES.ToolsetEditor}
+          element={<ToolsetEditorPage />}
+        />
         <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
         <Route path="/previous" element={<div>Previous screen</div>} />
       </Routes>
     </MemoryRouter>,
   );
 
-describe('ToolsetEditor', () => {
+describe('ToolsetEditorPage', () => {
   const user = userEvent.setup({ delay: null });
 
   beforeEach(() => {
@@ -232,330 +236,122 @@ describe('ToolsetEditor', () => {
     sessionStorage.clear();
     vi.mocked(toolsetsApi.listToolsets).mockResolvedValue({ data: [] });
     vi.mocked(toolsetsApi.createToolset).mockResolvedValue({
-      id: 'toolsets/b/my__0.0.1',
+      id: NEW_TOOLSET_ID,
+    });
+    vi.mocked(toolsetsApi.updateToolset).mockResolvedValue({
+      id: EDIT_TOOLSET_ID,
     });
     vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+    vi.mocked(toolsetsApi.logoutToolset).mockResolvedValue({ success: true });
+    mockRefetchToolsets.mockResolvedValue(undefined);
+    vi.mocked(mcpAppsApiClient.listToolNames).mockResolvedValue(['echo']);
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
     );
-    mockRefetchToolsets.mockResolvedValue(undefined);
-    vi.mocked(useDeployments).mockReturnValue({
-      refetchToolsets: mockRefetchToolsets,
-    } as unknown as ReturnType<typeof useDeployments>);
+    mockAppConfig.dialCoreExternalUrl = 'https://dial-core.example.com';
   });
 
-  it('disables Save & Exit until required Settings fields are valid', async () => {
-    renderEditor();
-
-    const saveButton = await screen.findByRole('button', {
-      name: ButtonsI18nKeys.Create,
+  it('seeds create mode with a collision-free default name derived from existing toolsets', async () => {
+    vi.mocked(toolsetsApi.listToolsets).mockResolvedValue({
+      data: [{ ...editDto(), displayName: 'New toolset' }],
     });
+    renderPage();
 
-    expect((saveButton as HTMLButtonElement).disabled).toBe(true);
-    await user.click(saveButton);
-    expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'fill-api-key-toolset',
-      }),
-    );
-
-    await waitFor(() =>
-      expect((saveButton as HTMLButtonElement).disabled).toBe(false),
-    );
-    expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
+    expect(await screen.findByText('New toolset 1')).toBeTruthy();
+    expect(toolsetsApi.getToolset).not.toHaveBeenCalled();
   });
 
-  it('shows validation errors after an invalid field becomes dirty', async () => {
-    renderEditor();
+  it('falls back to the plain default form when listing toolsets fails', async () => {
+    vi.mocked(toolsetsApi.listToolsets).mockRejectedValue(new Error('fail'));
+    renderPage();
 
-    await screen.findByRole('button', {
-      name: ButtonsI18nKeys.Create,
-    });
-
-    expect(screen.queryByRole('alert')).toBeNull();
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'touch-empty-endpoint',
-      }),
-    );
-
-    expect(screen.getByRole('alert').textContent).toContain(
-      ToolsetEditorI18nKeys.EndpointRequired,
-    );
+    expect(await screen.findByText('New toolset')).toBeTruthy();
   });
 
-  it('keeps Save & Exit disabled when OAuth endpoint URLs are invalid', async () => {
-    renderEditor();
-
-    const saveButton = await screen.findByRole('button', {
-      name: ButtonsI18nKeys.Create,
-    });
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'fill-invalid-oauth-toolset',
-      }),
+  it('shows the route fallback while the edit target is still loading', () => {
+    vi.mocked(toolsetsApi.getToolset).mockImplementation(
+      () => new Promise(() => {}),
     );
+    renderPage(`${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`);
 
-    expect((saveButton as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByRole('alert').textContent).toContain(
-      ToolsetEditorI18nKeys.EndpointInvalid,
-    );
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'fill-oauth-toolset',
-      }),
-    );
-
-    await waitFor(() =>
-      expect((saveButton as HTMLButtonElement).disabled).toBe(false),
-    );
+    expect(screen.getByText('Loading')).toBeTruthy();
   });
 
-  it('enables Save & Exit for configured OAuth without authorization/token endpoints', async () => {
-    renderEditor();
+  it('loads the persisted toolset into the editor in edit mode', async () => {
+    vi.mocked(toolsetsApi.getToolset).mockResolvedValue(editDto());
+    renderPage(`${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`);
 
-    const saveButton = await screen.findByRole('button', {
-      name: ButtonsI18nKeys.Create,
-    });
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'fill-oauth-toolset-without-endpoints',
-      }),
-    );
-
-    await waitFor(() =>
-      expect((saveButton as HTMLButtonElement).disabled).toBe(false),
-    );
+    expect(await screen.findByText('My toolset')).toBeTruthy();
+    expect(screen.getByText(EDIT_TOOLSET_ID)).toBeTruthy();
+    expect(toolsetsApi.getToolset).toHaveBeenCalledWith(EDIT_TOOLSET_ID);
   });
 
-  it('logs in a newly created API-key toolset using the returned id', async () => {
-    renderEditor();
-
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'fill-api-key-toolset',
-      }),
-    );
-    await user.click(
-      screen.getByRole('button', {
-        name: ButtonsI18nKeys.Create,
-      }),
-    );
-
-    await waitFor(() =>
-      expect(toolsetsApi.loginToolset).toHaveBeenCalledWith(
-        'toolsets/b/my__0.0.1',
-        expect.objectContaining({
-          url: 'toolsets/b/my__0.0.1',
-          authenticationType: ToolsetAuthTypes.ApiKey,
-          apiKey: 'secret',
-        }),
-      ),
-    );
-  });
-
-  it('resolves onEnsureSaved to the freshly created toolset id for a brand-new toolset', async () => {
-    renderEditor();
-
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'fill-api-key-toolset',
-      }),
-    );
-    await user.click(
-      screen.getByRole('button', {
-        name: 'invoke-ensure-saved',
-      }),
-    );
-
-    expect(
-      await screen.findByText('ensure-saved-result-toolsets/b/my__0.0.1'),
-    ).toBeTruthy();
-    expect(toolsetsApi.createToolset).toHaveBeenCalledOnce();
-    /* Persisting does not show a success notification. */
-    expect(mockShowNotification).not.toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'success' }),
-    );
-  });
-
-  it('resolves onEnsureSaved to the already-persisted id without another request when nothing changed', async () => {
-    renderEditor();
-
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'fill-api-key-toolset',
-      }),
-    );
-    await user.click(
-      screen.getByRole('button', { name: 'invoke-ensure-saved' }),
-    );
-    await screen.findByText('ensure-saved-result-toolsets/b/my__0.0.1');
-
-    await user.click(
-      screen.getByRole('button', { name: 'invoke-ensure-saved' }),
-    );
-
-    await waitFor(() =>
-      expect(toolsetsApi.createToolset).toHaveBeenCalledOnce(),
-    );
-    expect(
-      screen.getByText('ensure-saved-result-toolsets/b/my__0.0.1'),
-    ).toBeTruthy();
-  });
-
-  it('saves a newly created API-key toolset without login using only the key header', async () => {
-    renderEditor();
-
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'fill-api-key-without-login-toolset',
-      }),
-    );
-    await user.click(
-      screen.getByRole('button', {
-        name: ButtonsI18nKeys.Create,
-      }),
-    );
-
-    await waitFor(() =>
-      expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
-        expect.objectContaining({
-          authSettings: expect.objectContaining({
-            authenticationType: ToolsetAuthTypes.ApiKey,
-            apiKeyHeader: 'X-API-Key',
-          }),
-        }),
-      ),
-    );
-    expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
-    expect(mockShowNotification).toHaveBeenCalledWith({
-      variant: 'success',
-      title: 'entityNotifications.toolset.createdTitle',
-      message: 'entityNotifications.toolset.created',
-    });
-  });
-
-  it('returns to the requested screen after saving a new OAuth toolset without starting login', async () => {
-    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
-    renderEditor(`${ROUTES.ToolsetEditor}?returnUrl=%2Fprevious`);
-
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'fill-oauth-toolset',
-      }),
-    );
-    await user.click(
-      screen.getByRole('button', {
-        name: ButtonsI18nKeys.Create,
-      }),
+  it('leaves the editor when the edit target cannot be loaded', async () => {
+    vi.mocked(toolsetsApi.getToolset).mockRejectedValue(new Error('missing'));
+    renderPage(
+      `${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}&returnUrl=%2Fprevious`,
     );
 
     expect(await screen.findByText('Previous screen')).toBeTruthy();
-    expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
-      expect.objectContaining({
-        authSettings: expect.objectContaining({
-          redirectUri: expect.stringContaining('/auth/toolset-signin'),
-        }),
-      }),
-    );
-    expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
-    expect(openSpy).not.toHaveBeenCalled();
   });
 
-  it('saves a new OAuth with-login toolset with a redirect URI', async () => {
-    renderEditor();
+  it('threads the translated labels and the OAuth callback route into the lib editor', async () => {
+    renderPage();
+
+    expect(await screen.findByText(ButtonsI18nKeys.Create)).toBeTruthy();
+    expect(screen.getByText(ROUTES.ToolsetSignIn)).toBeTruthy();
+  });
+
+  it('persists a new toolset through createToolset and resolves the created id', async () => {
+    renderPage();
+
+    await user.click(await screen.findByRole('button', {
+      name: 'adapter-persist',
+    }));
+
+    expect(
+      await screen.findByText(`persist-result-${NEW_TOOLSET_ID}`),
+    ).toBeTruthy();
+    expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'New toolset' }),
+    );
+  });
+
+  it('persists an existing toolset through updateToolset', async () => {
+    vi.mocked(toolsetsApi.getToolset).mockResolvedValue(editDto());
+    renderPage(`${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`);
 
     await user.click(
-      await screen.findByRole('button', {
-        name: 'fill-oauth-with-login-toolset',
-      }),
-    );
-    await user.click(
-      screen.getByRole('button', {
-        name: ButtonsI18nKeys.Create,
-      }),
+      await screen.findByRole('button', { name: 'adapter-persist' }),
     );
 
     await waitFor(() =>
-      expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
-        expect.objectContaining({
-          authSettings: {
-            authenticationType: ToolsetAuthTypes.OAuth,
-            redirectUri: expect.stringContaining('/auth/toolset-signin'),
-          },
-        }),
+      expect(toolsetsApi.updateToolset).toHaveBeenCalledWith(
+        EDIT_TOOLSET_ID,
+        expect.objectContaining({ name: 'My toolset' }),
       ),
     );
-  });
-
-  it('refetches toolsets after a successful create so the catalog list stays in sync', async () => {
-    renderEditor();
-
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'fill-api-key-toolset',
-      }),
-    );
-    await user.click(
-      screen.getByRole('button', {
-        name: ButtonsI18nKeys.Create,
-      }),
-    );
-
-    await waitFor(() => expect(mockRefetchToolsets).toHaveBeenCalledOnce());
-  });
-
-  it('refetches toolsets after the auth section reports a successful login', async () => {
-    renderEditor();
-
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'report-login-success',
-      }),
-    );
-
-    await waitFor(() => expect(mockRefetchToolsets).toHaveBeenCalledOnce());
-  });
-
-  it('refetches toolsets after the auth section reports a successful logout', async () => {
-    renderEditor();
-
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'report-logout-success',
-      }),
-    );
-
-    await waitFor(() => expect(mockRefetchToolsets).toHaveBeenCalledOnce());
+    expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
   });
 
   it('shows an error notification when create fails', async () => {
     vi.mocked(toolsetsApi.createToolset).mockRejectedValue(new Error('fail'));
-    renderEditor();
+    renderPage();
 
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'fill-api-key-toolset',
-      }),
-    );
-    await user.click(
-      screen.getByRole('button', {
-        name: ButtonsI18nKeys.Create,
-      }),
-    );
+    await user.click(await screen.findByRole('button', {
+      name: 'adapter-persist',
+    }));
 
     await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith({
-        variant: NotificationVariant.Error,
-        message: ToolsetEditorI18nKeys.ErrorCreateFailed,
-      }),
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: ToolsetEditorI18nKeys.ErrorCreateFailed,
+        }),
+      ),
     );
+    expect(
+      await screen.findByText('persist-result-null'),
+    ).toBeTruthy();
   });
 
   it('shows the DIAL Core error reason instead of a generic message when create fails', async () => {
@@ -569,25 +365,152 @@ describe('ToolsetEditor', () => {
     vi.mocked(toolsetsApi.createToolset).mockRejectedValue(
       new ResponseError(response),
     );
-    renderEditor();
+    renderPage();
 
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'fill-api-key-toolset',
-      }),
-    );
-    await user.click(
-      screen.getByRole('button', {
-        name: ButtonsI18nKeys.Create,
-      }),
-    );
+    await user.click(await screen.findByRole('button', {
+      name: 'adapter-persist',
+    }));
 
     await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith({
-        variant: NotificationVariant.Error,
-        message:
-          "The specified endpoint 'https://test.com' is invalid or unreachable.",
-      }),
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message:
+            "The specified endpoint 'https://test.com' is invalid or unreachable.",
+        }),
+      ),
+    );
+  });
+
+  it('logs in a saved API-key toolset with a trimmed key through the post-save login', async () => {
+    renderPage();
+
+    await user.click(await screen.findByRole('button', {
+      name: 'adapter-post-save-login',
+    }));
+
+    await waitFor(() =>
+      expect(toolsetsApi.loginToolset).toHaveBeenCalledWith(
+        EDIT_TOOLSET_ID,
+        expect.objectContaining({
+          url: EDIT_TOOLSET_ID,
+          credentialsLevel: ToolsetCredentialsLevel.User,
+          authenticationType: ToolsetAuthTypes.ApiKey,
+          apiKey: 'secret',
+        }),
+      ),
+    );
+  });
+
+  it('does not start a post-save login for non-API-key auth', async () => {
+    renderPage();
+
+    await user.click(await screen.findByRole('button', {
+      name: 'adapter-post-save-login-oauth',
+    }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', {
+        name: 'adapter-post-save-login-oauth',
+      })).toBeTruthy(),
+    );
+    expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
+  });
+
+  it('forwards authActions.login to loginToolset with the DTO body', async () => {
+    renderPage();
+
+    await user.click(await screen.findByRole('button', {
+      name: 'adapter-auth-login',
+    }));
+
+    await waitFor(() =>
+      expect(toolsetsApi.loginToolset).toHaveBeenCalledWith(
+        EDIT_TOOLSET_ID,
+        expect.objectContaining({
+          url: EDIT_TOOLSET_ID,
+          apiKey: 'secret',
+        }),
+      ),
+    );
+  });
+
+  it('forwards authActions.logout to logoutToolset with the DTO body', async () => {
+    renderPage();
+
+    await user.click(await screen.findByRole('button', {
+      name: 'adapter-auth-logout',
+    }));
+
+    await waitFor(() =>
+      expect(toolsetsApi.logoutToolset).toHaveBeenCalledWith(
+        EDIT_TOOLSET_ID,
+        expect.objectContaining({ url: EDIT_TOOLSET_ID }),
+      ),
+    );
+  });
+
+  it('raises the operation success toast through the operation notification hook', async () => {
+    renderPage();
+
+    await user.click(await screen.findByRole('button', {
+      name: 'adapter-save-success',
+    }));
+
+    expect(mockNotifyOperationSuccess).toHaveBeenCalledWith(
+      NotifiableEntity.Toolset,
+      EntityOperation.Created,
+      { name: 'New toolset' },
+    );
+  });
+
+  it('returns to the requested screen when the save completes', async () => {
+    renderPage(`${ROUTES.ToolsetEditor}?returnUrl=%2Fprevious`);
+
+    await user.click(await screen.findByRole('button', {
+      name: 'adapter-save-complete',
+    }));
+
+    expect(await screen.findByText('Previous screen')).toBeTruthy();
+  });
+
+  it('falls back to the catalog route from an unsafe returnUrl when going back', async () => {
+    renderPage(`${ROUTES.ToolsetEditor}?returnUrl=//evil`);
+
+    await user.click(await screen.findByRole('button', {
+      name: 'adapter-back',
+    }));
+
+    expect(await screen.findByText('Catalog')).toBeTruthy();
+  });
+
+  it('resolves the MCP URL against the configured DIAL Core external URL', async () => {
+    renderPage();
+
+    await screen.findByRole('button', { name: 'adapter-persist' });
+    expect(
+      screen.getByText(
+        'https://dial-core.example.com/v1/toolset/toolsets/b/my__1.0.0/mcp',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('omits the MCP URL resolver when no DIAL Core external URL is configured', async () => {
+    mockAppConfig.dialCoreExternalUrl = '';
+    renderPage();
+
+    expect(await screen.findByText('no-mcp-url')).toBeTruthy();
+  });
+
+  it('lists tool names through the MCP Apps client for toolset deployments', async () => {
+    renderPage();
+
+    await user.click(await screen.findByRole('button', {
+      name: 'adapter-list-tool-names',
+    }));
+
+    expect(mcpAppsApiClient.listToolNames).toHaveBeenCalledWith(
+      EDIT_TOOLSET_ID,
+      'toolset',
     );
   });
 });

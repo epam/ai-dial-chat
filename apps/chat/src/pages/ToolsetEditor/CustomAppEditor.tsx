@@ -15,7 +15,7 @@ import {
   DeploymentCreationFieldErrorCode,
   SEMVER_VERSION_PATTERN,
   validateDeploymentCreationFields,
-} from '@epam/ai-dial-deployment-creation-form';
+} from '@epam/ai-dial-builder-form';
 import { ConfirmationPopup, Spinner, StepStatus } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';

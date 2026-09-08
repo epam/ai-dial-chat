@@ -1,5 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { EditorLayout } from '@epam/ai-dial-editor-builder';
+import { EditorLayout } from '@epam/ai-dial-builder-form';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { DialFoldersTree } from '@epam/ai-dial-react-file-manager';
 import {

@@ -2,7 +2,7 @@ import type { LocaleTextEntryDto } from '@epam/ai-dial-chat-api-client';
 import type {
   DeploymentCreationFormLocaleEntry,
   DeploymentCreationFormLocaleOption,
-} from '@epam/ai-dial-deployment-creation-form';
+} from '@epam/ai-dial-builder-form';
 
 /** Lowercased base language of a BCP-47 tag, e.g. `'en-US'` -> `'en'`. */
 export const toBaseLocale = (locale: string): string =>

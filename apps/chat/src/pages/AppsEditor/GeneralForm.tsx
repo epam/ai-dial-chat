@@ -17,7 +17,7 @@ import {
   DeploymentCreationFormValues,
   SEMVER_VERSION_PATTERN,
   validateDeploymentCreationFields,
-} from '@epam/ai-dial-deployment-creation-form';
+} from '@epam/ai-dial-builder-form';
 import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,

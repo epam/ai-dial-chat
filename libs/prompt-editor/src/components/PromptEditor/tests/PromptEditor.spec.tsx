@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PromptEditor } from '../PromptEditor';
 
-vi.mock('@epam/ai-dial-editor-builder', () => ({
+vi.mock('@epam/ai-dial-builder-form', () => ({
   EditorLayout: ({
     title,
     onBack,

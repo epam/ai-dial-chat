@@ -38,6 +38,7 @@ export type {
   JsonCanvasContent,
   MarkdownCanvasContent,
   McpAppCanvasContent,
+  McpAppDisplayMode,
   OoxmlCanvasContent,
   PdfCanvasContent,
   PlainTextCanvasContent,

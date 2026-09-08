@@ -52,9 +52,6 @@
       "path": "./libs/attachment-input"
     },
     {
-      "path": "./libs/deployment-creation-form"
-    },
-    {
       "path": "./libs/share"
     },
     {
@@ -85,6 +82,9 @@
       "path": "./libs/skill-editor"
     },
     {
+      "path": "./libs/toolset-editor"
+    },
+    {
       "path": "./libs/prompts"
     },
     {
@@ -95,9 +95,6 @@
     },
     {
       "path": "./libs/usage-dashboard"
-    },
-    {
-      "path": "./libs/editor-builder"
     }
   ]
 }

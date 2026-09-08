@@ -3,6 +3,7 @@ import {
   AttachmentErrorType,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import type { McpAppDisplayMode } from '@epam/ai-dial-attachment-canvas';
 import {
   computeMcpAppSeedKey,
   resolveMcpAppToolResult,
@@ -55,8 +56,27 @@ export const useOpenMcpAppCanvas = (
   labels: UseOpenMcpAppCanvasLabels,
   onBeforeOpen?: () => void,
 ) => {
-  const { openCanvas, openCanvasLoading } = useAttachmentCanvas();
+  const { openCanvas, openCanvasLoading, closeCanvas } = useAttachmentCanvas();
   const { hostContext, sandboxUrl, fetchResourceHtml, callTool } = hostAdapter;
+
+  /*
+   * An app mounted in the full-width canvas can ask to go back inline via
+   * `ui/request-display-mode` — answered by closing the canvas, which
+   * restores the message's inline preview (both surfaces share `cache`, so
+   * the app remounts without re-fetching). Any other mode request keeps the
+   * canvas. Declared before `openMcpAppCanvas` so its closure can reference
+   * it without a ref.
+   */
+  const handleRequestDisplayMode = useCallback(
+    (mode: McpAppDisplayMode): McpAppDisplayMode => {
+      if (mode === 'inline') {
+        closeCanvas();
+        return 'inline';
+      }
+      return 'fullscreen';
+    },
+    [closeCanvas],
+  );
 
   /*
    * `onReload` below needs to re-invoke `openMcpAppCanvas` recursively, but
@@ -129,12 +149,12 @@ export const useOpenMcpAppCanvas = (
             type: AttachmentContentType.McpApp,
             html,
             sandboxUrl,
-            toolName: match.mcpToolName,
             toolInput: toolCall?.toolInput,
             toolResult,
             hostContext,
             onToolCall: (name, args) =>
               callTool(match.toolsetId, name, args, match.kind),
+            onRequestDisplayMode: handleRequestDisplayMode,
             onReload: () => {
               if (canvasKey != null) cache.invalidate(canvasKey);
               void openMcpAppCanvasRef.current?.(
@@ -178,6 +198,7 @@ export const useOpenMcpAppCanvas = (
       callTool,
       cache,
       labels,
+      handleRequestDisplayMode,
     ],
   );
 
