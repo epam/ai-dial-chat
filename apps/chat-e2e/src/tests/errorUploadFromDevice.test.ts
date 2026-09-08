@@ -87,16 +87,20 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await sendMessage.attachmentMenuTrigger.click();
-        await dialHomePage.uploadData(
-          { path: Attachment.restrictedCharsFilename, dataType: 'upload' },
+        await dialHomePage.waitForExpectedResponses(
           () =>
-            attachmentDropdownMenu.selectMenuOption(
-              UploadMenuOptions.uploadFromDevice,
-              {
-                isHttpMethodTriggered: true,
-                triggeredHttpMethod: 'GET',
-              },
+            dialHomePage.uploadData(
+              { path: Attachment.restrictedCharsFilename, dataType: 'upload' },
+              () =>
+                attachmentDropdownMenu.selectMenuOption(
+                  UploadMenuOptions.uploadFromDevice,
+                  {
+                    isHttpMethodTriggered: true,
+                    triggeredHttpMethod: 'GET',
+                  },
+                ),
             ),
+          [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
       },
     );
@@ -260,16 +264,20 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await sendMessage.attachmentMenuTrigger.click();
-        await dialHomePage.uploadData(
-          { path: Attachment.fileWithoutExtension, dataType: 'upload' },
+        await dialHomePage.waitForExpectedResponses(
           () =>
-            attachmentDropdownMenu.selectMenuOption(
-              UploadMenuOptions.uploadFromDevice,
-              {
-                isHttpMethodTriggered: true,
-                triggeredHttpMethod: 'GET',
-              },
+            dialHomePage.uploadData(
+              { path: Attachment.fileWithoutExtension, dataType: 'upload' },
+              () =>
+                attachmentDropdownMenu.selectMenuOption(
+                  UploadMenuOptions.uploadFromDevice,
+                  {
+                    isHttpMethodTriggered: true,
+                    triggeredHttpMethod: 'GET',
+                  },
+                ),
             ),
+          [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
       },
     );

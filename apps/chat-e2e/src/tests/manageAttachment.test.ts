@@ -1259,14 +1259,18 @@ dialTest(
     await dialTest.step(
       'Upload file with restricted symbols via New > Upload Files',
       async () => {
-        await dialHomePage.uploadData(
-          { path: Attachment.restrictedCharsFilename, dataType: 'upload' },
-          async () => {
-            await fileManagerToolbar.getNewButton().click();
-            await fileManagerToolbar
-              .getNewButtonDropdownMenu()
-              .selectItem(UploadMenuOptions.uploadFiles);
-          },
+        await dialHomePage.waitForExpectedResponses(
+          () =>
+            dialHomePage.uploadData(
+              { path: Attachment.restrictedCharsFilename, dataType: 'upload' },
+              async () => {
+                await fileManagerToolbar.getNewButton().click();
+                await fileManagerToolbar
+                  .getNewButtonDropdownMenu()
+                  .selectItem(UploadMenuOptions.uploadFiles);
+              },
+            ),
+          [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
       },
     );

@@ -11,7 +11,7 @@ import {
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Attachment as AttachmentInterface } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
@@ -82,16 +82,23 @@ dialTest(
 
     await dialTest.step('Upload file from device to the request', async () => {
       await chatMessages.getChatMessageClipIcon(1).click();
-      await dialHomePage.uploadData(
-        { path: Attachment.sunImageName, dataType: 'upload' },
+      await dialHomePage.waitForExpectedResponses(
         () =>
-          attachmentDropdownMenu.selectMenuOption(
-            UploadMenuOptions.uploadFromDevice,
-            {
-              isHttpMethodTriggered: true,
-              triggeredHttpMethod: 'GET',
-            },
+          dialHomePage.uploadData(
+            { path: Attachment.sunImageName, dataType: 'upload' },
+            () =>
+              attachmentDropdownMenu.selectMenuOption(
+                UploadMenuOptions.uploadFromDevice,
+                {
+                  isHttpMethodTriggered: true,
+                  triggeredHttpMethod: 'GET',
+                },
+              ),
           ),
+        [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
+      );
+      await dialHomePage.waitForFolderListingToSettle(
+        DateUtil.getCurrentYearMonth(),
       );
       await fileManagerModal.getAttachButton().click();
     });

@@ -1,5 +1,6 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   Attachment,
   ExpectedMessages,
   MenuOptions,
@@ -54,14 +55,18 @@ dialTest(
         await fileManagerGrid.setFolderName(childFolderName);
         await fileManagerGrid.openFolder(childFolderName, false);
 
-        await fileManagerPage.uploadData(
-          { path: Attachment.sunImageName, dataType: 'upload' },
-          async () => {
-            await fileManagerToolbar.getNewButton().click();
-            await fileManagerToolbar
-              .getNewButtonDropdownMenu()
-              .selectItem(UploadMenuOptions.uploadFiles);
-          },
+        await fileManagerPage.waitForExpectedResponses(
+          () =>
+            fileManagerPage.uploadData(
+              { path: Attachment.sunImageName, dataType: 'upload' },
+              async () => {
+                await fileManagerToolbar.getNewButton().click();
+                await fileManagerToolbar
+                  .getNewButtonDropdownMenu()
+                  .selectItem(UploadMenuOptions.uploadFiles);
+              },
+            ),
+          [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
       },
     );
@@ -170,14 +175,18 @@ dialTest(
     await dialTest.step(
       'Upload a new file via New toolbar dropdown menu',
       async () => {
-        await fileManagerPage.uploadData(
-          { path: Attachment.sunImageName, dataType: 'upload' },
-          async () => {
-            await fileManagerToolbar.getNewButton().click();
-            await fileManagerToolbar
-              .getNewButtonDropdownMenu()
-              .selectItem(UploadMenuOptions.uploadFiles);
-          },
+        await fileManagerPage.waitForExpectedResponses(
+          () =>
+            fileManagerPage.uploadData(
+              { path: Attachment.sunImageName, dataType: 'upload' },
+              async () => {
+                await fileManagerToolbar.getNewButton().click();
+                await fileManagerToolbar
+                  .getNewButtonDropdownMenu()
+                  .selectItem(UploadMenuOptions.uploadFiles);
+              },
+            ),
+          [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
       },
     );
