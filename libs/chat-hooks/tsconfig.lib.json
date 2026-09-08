@@ -52,6 +52,9 @@
     },
     {
       "path": "../attachment-canvas/tsconfig.lib.json"
+    },
+    {
+      "path": "../mcp-apps/tsconfig.lib.json"
     }
   ],
   "exclude": [
