@@ -11,12 +11,12 @@ import {
   useDialFileManagerTabConfig,
 } from '@epam/ai-dial-chat-hooks';
 import {
-  FileManagerAttachModal,
   formatFileSize,
   isHiddenPath,
   type AttachResult,
   type FileManagerAttachModalLabels,
 } from '@epam/ai-dial-chat-shared';
+import { FileManagerAttachModal } from '@epam/ai-dial-chat-shared/file-manager';
 import {
   DialFileNodeType,
   type DialFile,

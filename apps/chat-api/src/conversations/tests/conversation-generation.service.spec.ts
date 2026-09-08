@@ -1,5 +1,7 @@
 import { ConflictException } from '@nestjs/common';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ConfigService } from '@nestjs/config';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import {
   ConversationGenerationService,
   GenerationStatus,
@@ -19,11 +21,18 @@ const makeMessage = (content: string): ConversationMessageDto => ({
   timestamp: '2026-01-01T00:00:00.000Z',
 });
 
+const makeConfigService = (
+  maxGenerationDurationMs?: number,
+): ConfigService<EnvironmentVariables> =>
+  ({
+    get: vi.fn().mockReturnValue(maxGenerationDurationMs),
+  }) as unknown as ConfigService<EnvironmentVariables>;
+
 describe('ConversationGenerationService', () => {
   let service: ConversationGenerationService;
 
   beforeEach(() => {
-    service = new ConversationGenerationService();
+    service = new ConversationGenerationService(makeConfigService());
   });
 
   describe('register', () => {
@@ -158,28 +167,73 @@ describe('ConversationGenerationService', () => {
     });
   });
 
-  describe('abortSignal', () => {
-    it('aborts the entry AbortController without marking it Stopped', () => {
-      const abortController = service.register(SESSION, PATH, GENERATION_ID);
-
-      service.abortSignal(SESSION, PATH, GENERATION_ID);
-
-      expect(abortController.signal.aborted).toBe(true);
-      expect(service.getStatus(SESSION, PATH)).toBe(GenerationStatus.Active);
+  describe('max-duration timeout', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
     });
 
-    it('is a no-op for a generationId that does not match the active one', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    /*
+     * No client action — no disconnect, no explicit Stop — is simulated
+     * anywhere in this test: the bound fires purely from elapsed time,
+     * which is the point. Disconnecting a completion's response no longer
+     * has any effect on the generation (see
+     * backend-owned-generation-persistence), so this timer is what now
+     * bounds a stalled upstream stream that nothing else terminates.
+     */
+    it('aborts the entry AbortController once MAX_GENERATION_DURATION_MS elapses while still Active', () => {
+      service = new ConversationGenerationService(makeConfigService(1000));
       const abortController = service.register(SESSION, PATH, GENERATION_ID);
 
-      service.abortSignal(SESSION, PATH, 'other-gen');
+      vi.advanceTimersByTime(999);
+      expect(abortController.signal.aborted).toBe(false);
+
+      vi.advanceTimersByTime(1);
+      expect(abortController.signal.aborted).toBe(true);
+    });
+
+    it('falls back to the default duration (30 minutes) when MAX_GENERATION_DURATION_MS is not configured', () => {
+      service = new ConversationGenerationService(makeConfigService(undefined));
+      const abortController = service.register(SESSION, PATH, GENERATION_ID);
+
+      vi.advanceTimersByTime(30 * 60 * 1000 - 1);
+      expect(abortController.signal.aborted).toBe(false);
+
+      vi.advanceTimersByTime(1);
+      expect(abortController.signal.aborted).toBe(true);
+    });
+
+    it('never fires once the generation completes normally', () => {
+      service = new ConversationGenerationService(makeConfigService(1000));
+      const abortController = service.register(SESSION, PATH, GENERATION_ID);
+
+      service.complete(SESSION, PATH, GENERATION_ID);
+      vi.advanceTimersByTime(1000);
 
       expect(abortController.signal.aborted).toBe(false);
     });
 
-    it('is a no-op when no matching generation exists', () => {
-      expect(() =>
-        service.abortSignal(SESSION, PATH, GENERATION_ID),
-      ).not.toThrow();
+    it('never fires once the generation errors', () => {
+      service = new ConversationGenerationService(makeConfigService(1000));
+      const abortController = service.register(SESSION, PATH, GENERATION_ID);
+
+      service.error(SESSION, PATH, GENERATION_ID, 'boom');
+      vi.advanceTimersByTime(1000);
+
+      expect(abortController.signal.aborted).toBe(false);
+    });
+
+    it('never fires once the generation is stopped by the user', () => {
+      service = new ConversationGenerationService(makeConfigService(1000));
+      service.register(SESSION, PATH, GENERATION_ID);
+
+      service.abort(SESSION, PATH, GENERATION_ID);
+      // abort() already aborts synchronously; advancing time must not
+      // trigger a second, redundant abort attempt on a cleared timer.
+      expect(() => vi.advanceTimersByTime(1000)).not.toThrow();
     });
   });
 

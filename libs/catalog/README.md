@@ -19,12 +19,16 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit`
+- `@epam/ai-dial-ui-kit` ^0.14.0-dev.30 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 - `@tabler/icons-react`
 - `ag-grid-community@35.3.0`
 
 ## Components
+
+The list view imports Grid through `@epam/ai-dial-ui-kit/grid`. Library builds
+keep UI Kit root and subpath imports external. JavaScript is tree-shakeable;
+CSS/SCSS imports remain side effects. Load catalog UI through a host lazy boundary.
 
 ### Catalog
 
