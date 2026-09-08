@@ -24,6 +24,7 @@ import {
   buildExportEnvelope,
   buildExportFileName,
   serializeExportEnvelope,
+  stripConversationAttachments,
 } from '../conversation-transfer/export-conversation';
 import {
   buildTransferProgress,
@@ -340,7 +341,17 @@ export const useConversationExport = ({
 
       try {
         if (mode === ConversationExportMode.WithoutAttachments) {
-          const envelope = buildExportEnvelope([conversation], []);
+          /*
+           * This mode ships no attachment bytes, so the references have to go
+           * too: they stay valid `files/{bucket}/{path}` ids pointing at the
+           * exporting user's own bucket, and the import writes them back
+           * verbatim, which restores for that user the very attachments the
+           * mode excluded (issue #8663).
+           */
+          const envelope = buildExportEnvelope(
+            [stripConversationAttachments(conversation)],
+            [],
+          );
           const blob = serializeExportEnvelope(envelope);
           triggerBlobDownload(blob, fileName);
           onSuccess?.({ jobId, titles: [title] });
