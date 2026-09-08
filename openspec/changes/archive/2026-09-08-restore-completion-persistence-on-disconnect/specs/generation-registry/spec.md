@@ -1,40 +1,12 @@
-## Purpose
+## REMOVED Requirements
 
-In-memory tracking of active generations per session+path, enforcing one active generation per conversation and supporting stop, complete, and error transitions.
+### Requirement: Registry entries are released promptly on client disconnect, not only by the stale sweep
 
-## Requirements
+**Reason**: This requirement, introduced by PR #8640, made `ConversationController.streamCompletion` abort the generation's `AbortController` and made `ConversationStreamingService.streamCompletion` finalize the generation as `Error`/`Stopped` whenever the downstream HTTP response closed. That contradicts the documented contract that a completion's backend-owned generation is independent of the originating browser connection (see `backend-owned-generation-persistence`'s "A closed downstream response does not alter generation persistence or outcome" and `app-level-generation-manager`). The original motivation — bounding how long a registry entry can occupy the registry without depending on the lazy 30-minute stale sweep — is still valid and is addressed by the new max-duration requirement below, without tying cleanup to client connection state.
 
-### Requirement: In-memory generation registry keyed by session and path
+**Migration**: Replaced by "Active generations are bounded by a server-owned max-duration timeout, independent of client connection state" below. `ConversationGenerationService.abortSignal()` (the method this requirement introduced) is removed; no other caller depended on it. `ConversationController.streamCompletion` no longer registers a disconnect handler that aborts the generation.
 
-`ConversationGenerationService` (`apps/chat-api/src/conversations/conversation-generation.service.ts`) SHALL track active generations in an in-memory map keyed by `` `${sessionId}::${path}` ``. Each entry stores the `generationId`, an `AbortController`, a status (`active | stopped | done | error`), and `startedAt`. The registry is not persisted; a pod restart clears it.
-
-#### Scenario: Concurrent generation for the same path is rejected
-
-- **WHEN** `register` is called for a `sessionId + path` that already has an `active` entry
-- **THEN** it throws `ConflictException` (HTTP 409)
-
-#### Scenario: Completed generation frees the path
-
-- **WHEN** `complete` is called for an entry
-- **THEN** the entry is removed, so a later `register` for the same `sessionId + path` succeeds
-
-### Requirement: Stop validates the generation id
-
-`abort(sessionId, path, generationId)` SHALL only abort when the stored entry is `active` and its `generationId` matches the supplied id; otherwise it returns `false`.
-
-#### Scenario: Abort with a stale generation id is a no-op
-
-- **WHEN** `abort` is called with a `generationId` that does not match the active entry
-- **THEN** it returns `false` and does not abort the running generation
-
-### Requirement: Stale entries are evicted
-
-On each `register`, entries older than 30 minutes SHALL be evicted to prevent unbounded growth if a terminal handler was never reached.
-
-#### Scenario: Old entry evicted on next registration
-
-- **WHEN** `register` runs and an existing entry is older than the stale threshold
-- **THEN** the stale entry is removed before the new one is created
+## ADDED Requirements
 
 ### Requirement: Active generations are bounded by a server-owned max-duration timeout, independent of client connection state
 
