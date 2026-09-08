@@ -1,53 +1,34 @@
-import { buildToolsetMcpUrl } from '@epam/ai-dial-chat-hooks';
-import {
-  CatalogEntityType,
-  TAG_INPUT_TAG_CLASS_NAME,
-} from '@epam/ai-dial-chat-shared';
+import { TAG_INPUT_TAG_CLASS_NAME } from '@epam/ai-dial-chat-shared';
 import { Input, RadioGroup, Select, TagInput } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import ConnectMcpUrlContent from '../../../components/ConnectMcpUrlContent/ConnectMcpUrlContent';
-import { ToolsetTransportType } from '../../../constants/toolsets';
-import {
-  ApiI18nKeys,
-  BasicI18nKeys,
-  ButtonsI18nKeys,
-  ToolsetEditorI18nKeys,
-} from '../../../constants/translation-keys';
-import { useAppConfig } from '../../../context/AppConfigContext';
+import { useEffect, useMemo, useState } from 'react';
+import { ToolsetTransportType } from '../../constants/toolsets';
 import type {
-  ToolsetAuthFormData,
-  ToolsetFormData,
-  ToolsetFormErrors,
-} from '../../../models/toolsets';
-import { listMcpToolNames } from '../../../server-api/mcp-apps';
-import { isToolsetAuthValid } from '../../../utils/toolsets';
-import AuthSection from './AuthSection';
+  SettingsFormLabels,
+  SettingsFormProps,
+} from '../../models/settings-form-props';
+import { isToolsetAuthValid } from '../../utils/toolsets';
+import { AuthSection } from '../AuthSection/AuthSection';
+import { ConnectMcpUrlContent } from '../ConnectMcpUrlContent/ConnectMcpUrlContent';
 
-interface Props {
-  form: ToolsetFormData;
-  errors: ToolsetFormErrors;
-  isSaving: boolean;
-  toolsetId: string;
-  isEditMode: boolean;
-  onChange: (patch: Partial<ToolsetFormData>) => void;
-  onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
-  onEnsureSaved: () => Promise<string | false>;
-}
-
-const SettingsForm: FC<Props> = ({
+/** Setup section form: endpoint, protocol, allowed tools, authentication block, and the Connect section. */
+export const SettingsForm: FC<SettingsFormProps> = ({
   form,
   errors,
   isSaving,
   toolsetId,
   isEditMode,
+  connectUrl,
+  listToolNames,
+  authActions,
+  oauthCallbackPath,
+  onNotifySuccess,
+  onNotifyError,
   onChange,
   onAuthChange,
   onEnsureSaved,
+  labels,
 }) => {
-  const { t } = useTranslation();
-  const { config } = useAppConfig();
   /**
    * Discovered tool names for the "Allowed tools" picker, fetched from the
    * toolset's own MCP `tools/list` once it's saved and its auth is usable.
@@ -58,11 +39,7 @@ const SettingsForm: FC<Props> = ({
     null,
   );
 
-  const dialCoreExternalUrl = config.dialCoreExternalUrl;
-  const isConnectVisible = Boolean(dialCoreExternalUrl) && Boolean(toolsetId);
-  const mcpUrl = isConnectVisible
-    ? buildToolsetMcpUrl(dialCoreExternalUrl ?? '', toolsetId)
-    : '';
+  const isConnectVisible = Boolean(connectUrl) && Boolean(toolsetId);
 
   const protocolOptions = useMemo(
     () => [
@@ -77,7 +54,11 @@ const SettingsForm: FC<Props> = ({
   };
 
   useEffect(() => {
-    if (!toolsetId || !isToolsetAuthValid(form.auth, isEditMode)) {
+    if (
+      !toolsetId ||
+      !listToolNames ||
+      !isToolsetAuthValid(form.auth, isEditMode)
+    ) {
       setAvailableToolNames(null);
       return;
     }
@@ -86,7 +67,7 @@ const SettingsForm: FC<Props> = ({
 
     const loadToolNames = async () => {
       try {
-        const toolNames = await listMcpToolNames(toolsetId, 'toolset');
+        const toolNames = await listToolNames(toolsetId);
         if (!isCancelled) {
           setAvailableToolNames(toolNames.length > 0 ? toolNames : null);
         }
@@ -99,7 +80,7 @@ const SettingsForm: FC<Props> = ({
     return () => {
       isCancelled = true;
     };
-  }, [toolsetId, isEditMode, form.auth, form.endpoint]);
+  }, [toolsetId, isEditMode, form.auth, form.endpoint, listToolNames]);
 
   return (
     <div className="flex max-w-[1060px] flex-col gap-4">
@@ -108,18 +89,21 @@ const SettingsForm: FC<Props> = ({
         value={form.endpoint}
         onChange={(value) => onChange({ endpoint: value ?? '' })}
         labelProps={{
-          label: t(ApiI18nKeys.EndpointLabel),
+          label: labels?.endpointLabel ?? 'Endpoint',
           required: true,
         }}
-        placeholder={t(BasicI18nKeys.UrlPlaceholder)}
-        caption={t(ToolsetEditorI18nKeys.EndpointCaption)}
+        placeholder={labels?.endpointPlaceholder ?? 'https://...'}
+        caption={
+          labels?.endpointCaption ??
+          'The HTTPS address where the server accepts MCP requests.'
+        }
         error={errors.endpoint || undefined}
         invalid={!!errors.endpoint}
       />
 
       <RadioGroup
         labelProps={{
-          label: t(ToolsetEditorI18nKeys.ProtocolLabel),
+          label: labels?.protocolLabel ?? 'Protocol',
           required: true,
         }}
         id="toolset-protocol"
@@ -135,9 +119,11 @@ const SettingsForm: FC<Props> = ({
           searchable
           selectAll
           labelProps={{
-            label: t(ToolsetEditorI18nKeys.AllowedToolsLabel),
+            label: labels?.allowedToolsLabel ?? 'Allowed tools',
           }}
-          placeholder={t(ToolsetEditorI18nKeys.AllowedToolsSelectPlaceholder)}
+          placeholder={
+            labels?.allowedToolsSelectPlaceholder ?? 'Select allowed tools'
+          }
           options={availableToolNames.map((toolName) => ({
             value: toolName,
             label: toolName,
@@ -151,9 +137,11 @@ const SettingsForm: FC<Props> = ({
         <TagInput
           id="toolset-allowed-tools"
           labelProps={{
-            label: t(ToolsetEditorI18nKeys.AllowedToolsLabel),
+            label: labels?.allowedToolsLabel ?? 'Allowed tools',
           }}
-          placeholder={t(ToolsetEditorI18nKeys.AllowedToolsPlaceholder)}
+          placeholder={
+            labels?.allowedToolsPlaceholder ?? 'Add tools, comma separated'
+          }
           value={form.allowedTools}
           onChange={(allowedTools) => onChange({ allowedTools })}
           tagClassName={TAG_INPUT_TAG_CLASS_NAME}
@@ -167,20 +155,22 @@ const SettingsForm: FC<Props> = ({
         toolsetId={toolsetId}
         isEditMode={isEditMode}
         endpoint={form.endpoint}
+        authActions={authActions}
+        oauthCallbackPath={oauthCallbackPath}
+        onNotifySuccess={onNotifySuccess}
+        onNotifyError={onNotifyError}
         onAuthChange={onAuthChange}
         onEnsureSaved={onEnsureSaved}
+        labels={labels?.auth}
       />
 
       {isConnectVisible && (
         <ConnectMcpUrlContent
-          entityType={CatalogEntityType.Toolset}
-          url={mcpUrl}
-          copyLabelKey={ButtonsI18nKeys.CopyUrl}
+          url={connectUrl ?? ''}
+          labels={labels?.connect}
           className="border-t border-tertiary pt-4"
         />
       )}
     </div>
   );
 };
-
-export default memo(SettingsForm);

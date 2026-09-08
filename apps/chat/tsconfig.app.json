@@ -96,6 +96,9 @@
       "path": "../../libs/skill-editor/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/toolset-editor/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/publish-panel/tsconfig.lib.json"
     },
     {

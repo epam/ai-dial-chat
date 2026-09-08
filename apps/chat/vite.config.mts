@@ -176,6 +176,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/skill-editor/src/index.ts',
       ),
+      '@epam/ai-dial-toolset-editor': path.resolve(
+        import.meta.dirname,
+        '../../libs/toolset-editor/src/index.ts',
+      ),
       '@epam/ai-dial-prompt-editor': path.resolve(
         import.meta.dirname,
         '../../libs/prompt-editor/src/index.ts',

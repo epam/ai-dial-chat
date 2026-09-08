@@ -42,6 +42,9 @@
     },
     {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/toolset-editor/tsconfig.lib.json"
     }
   ]
 }

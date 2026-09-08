@@ -1,7 +1,3 @@
-import type {
-  ToolsetLoginBodyDto,
-  ToolsetLogoutBodyDto,
-} from '@epam/ai-dial-chat-api-client';
 import {
   getApiErrorDetails,
   initiateOAuthLogin,
@@ -29,38 +25,18 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconLogin, IconLogout } from '@tabler/icons-react';
 import type { FC } from 'react';
-import { memo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { AUTH_TYPE_OPTIONS } from '../../../constants/toolsets';
-import {
-  ApiI18nKeys,
-  AuthI18nKeys,
-  ButtonsI18nKeys,
-  ToolsetEditorI18nKeys,
-} from '../../../constants/translation-keys';
-import { useNotification } from '../../../context/NotificationContext';
+import { useState } from 'react';
+import { AUTH_TYPE_ICONS } from '../../constants/toolsets';
 import type {
-  ToolsetAuthFormData,
-  ToolsetFormErrors,
-} from '../../../models/toolsets';
-import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
-import { ROUTES } from '../../../types/routes';
-import {
-  fetchToolsetAuthSettings,
-  isToolsetAuthValid,
-  isValidEndpointUrl,
-} from '../../../utils/toolsets';
-
-interface Props {
-  auth: ToolsetAuthFormData;
-  errors: ToolsetFormErrors;
-  isSaving: boolean;
-  toolsetId: string;
-  isEditMode: boolean;
-  endpoint: string;
-  onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
-  onEnsureSaved: () => Promise<string | false>;
-}
+  AuthSectionLabels,
+  AuthSectionProps,
+} from '../../models/auth-section-props';
+import type { ToolsetAuthFormData } from '../../models/toolset-form';
+import type {
+  ToolsetLoginRequest,
+  ToolsetLogoutRequest,
+} from '../../models/toolset-form';
+import { isToolsetAuthValid, isValidEndpointUrl } from '../../utils/toolsets';
 
 /*
  * OAuth defaults to WithConfig when no client is configured yet, so a
@@ -80,18 +56,35 @@ const defaultWithLoginFor = (
   return WithLogin.WithLogin;
 };
 
-const AuthSection: FC<Props> = ({
+const segmentLabelFor = (
+  type: ToolsetAuthTypes,
+  labels?: AuthSectionLabels,
+): string => {
+  if (type === ToolsetAuthTypes.None) {
+    return labels?.typeNone ?? 'Open access';
+  }
+  if (type === ToolsetAuthTypes.OAuth) {
+    return labels?.typeOAuth ?? 'OAuth';
+  }
+  return labels?.typeApiKey ?? 'API Key';
+};
+
+/** Authentication block of the Setup section: auth type selection, per-type fields, login/logout actions, and the OAuth popup flow. */
+export const AuthSection: FC<AuthSectionProps> = ({
   auth,
   errors,
   isSaving,
   toolsetId,
   isEditMode,
   endpoint,
+  authActions,
+  oauthCallbackPath,
+  onNotifySuccess,
+  onNotifyError,
   onAuthChange,
   onEnsureSaved,
+  labels,
 }) => {
-  const { t } = useTranslation();
-  const { showSuccessNotification, showErrorNotification } = useNotification();
   const [isAuthBusy, setIsAuthBusy] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -132,13 +125,13 @@ const AuthSection: FC<Props> = ({
        * browser-blocked popup, and from a generic post-redirect login
        * failure, so it gets its own actionable message.
        */
-      const errorKey =
+      const message =
         initiation.type === ToolsetOAuthInitiationResultType.Blocked
-          ? ToolsetEditorI18nKeys.ErrorPopupBlocked
-          : ToolsetEditorI18nKeys.ErrorOAuthConfigMissing;
-      showErrorNotification({
-        message: t(errorKey),
-      });
+          ? (labels?.errorPopupBlocked ??
+            'The login popup was blocked by your browser. Please allow popups for this site and try again.')
+          : (labels?.errorOAuthConfigMissing ??
+            'The OAuth provider did not return a valid client configuration. Please check the endpoint or contact your administrator.');
+      onNotifyError(message);
       return;
     }
 
@@ -149,20 +142,19 @@ const AuthSection: FC<Props> = ({
       {
         toolsetId: savedToolsetId,
         credentialsLevel: ToolsetCredentialsLevel.User,
-        callbackPath: ROUTES.ToolsetSignIn,
+        callbackPath: oauthCallbackPath,
       },
     );
     setIsAuthBusy(false);
 
     if (result.type === ToolsetOAuthResultType.Success) {
       onAuthChange({ isLoggedIn: true });
-      showSuccessNotification({
-        message: t(ToolsetEditorI18nKeys.LoginSuccess),
-      });
+      onNotifySuccess(labels?.loginSuccessMessage ?? 'Successfully logged in.');
     } else if (result.type === ToolsetOAuthResultType.Failure) {
-      showErrorNotification({
-        message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
-      });
+      onNotifyError(
+        labels?.errorLoginFailed ??
+          'Failed to log in. Please check your credentials and try again.',
+      );
     } else if (result.type === ToolsetOAuthResultType.Cancelled) {
       /*
        * Treat the backend as the final authority if popup tracking or
@@ -171,12 +163,14 @@ const AuthSection: FC<Props> = ({
        * actually completed server-side.
        */
       try {
-        const refreshedAuth = await fetchToolsetAuthSettings(savedToolsetId);
+        const refreshedAuth = await authActions.fetchAuthSettings(
+          savedToolsetId,
+        );
         if (refreshedAuth.isLoggedIn) {
           onAuthChange({ isLoggedIn: true });
-          showSuccessNotification({
-            message: t(ToolsetEditorI18nKeys.LoginSuccess),
-          });
+          onNotifySuccess(
+            labels?.loginSuccessMessage ?? 'Successfully logged in.',
+          );
         }
       } catch {
         // Best-effort verification only — a genuine cancel stays silent.
@@ -203,9 +197,10 @@ const AuthSection: FC<Props> = ({
       if (needsDynamicRegistration) {
         const popup = openToolsetOAuthPopup();
         if (!popup) {
-          showErrorNotification({
-            message: t(ToolsetEditorI18nKeys.ErrorPopupBlocked),
-          });
+          onNotifyError(
+            labels?.errorPopupBlocked ??
+              'The login popup was blocked by your browser. Please allow popups for this site and try again.',
+          );
           return;
         }
 
@@ -231,14 +226,15 @@ const AuthSection: FC<Props> = ({
 
           let resolvedAuth: ToolsetAuthFormData;
           try {
-            resolvedAuth = await fetchToolsetAuthSettings(savedToolsetId);
+            resolvedAuth = await authActions.fetchAuthSettings(savedToolsetId);
           } catch (error) {
             popup.close();
             const { traceId } = await getApiErrorDetails(error);
-            showErrorNotification({
-              message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
-              requestId: traceId,
-            });
+            onNotifyError(
+              labels?.errorLoginFailed ??
+                'Failed to log in. Please check your credentials and try again.',
+              traceId,
+            );
             return;
           }
           onAuthChange(resolvedAuth);
@@ -247,7 +243,7 @@ const AuthSection: FC<Props> = ({
             popup,
             resolvedAuth,
             savedToolsetId,
-            ROUTES.ToolsetSignIn,
+            oauthCallbackPath,
             ToolsetCredentialsLevel.User,
           );
           await handleOAuthInitiation(initiation, savedToolsetId);
@@ -263,7 +259,7 @@ const AuthSection: FC<Props> = ({
       const initiation = initiateOAuthLogin(
         auth,
         savedToolsetId,
-        ROUTES.ToolsetSignIn,
+        oauthCallbackPath,
       );
       await handleOAuthInitiation(initiation, savedToolsetId);
       return;
@@ -274,25 +270,22 @@ const AuthSection: FC<Props> = ({
 
     setIsAuthBusy(true);
     try {
-      const body: ToolsetLoginBodyDto = {
+      const body: ToolsetLoginRequest = {
         url: savedToolsetId,
-        credentialsLevel:
-          ToolsetCredentialsLevel.User as ToolsetLoginBodyDto['credentialsLevel'],
-        authenticationType:
-          auth.authenticationType as ToolsetLoginBodyDto['authenticationType'],
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: auth.authenticationType,
         apiKey: auth.apiKey?.trim(),
       };
-      await loginToolset(savedToolsetId, body);
+      await authActions.login(savedToolsetId, body);
       onAuthChange({ isLoggedIn: true });
-      showSuccessNotification({
-        message: t(ToolsetEditorI18nKeys.LoginSuccess),
-      });
+      onNotifySuccess(labels?.loginSuccessMessage ?? 'Successfully logged in.');
     } catch (error) {
       const { traceId } = await getApiErrorDetails(error);
-      showErrorNotification({
-        message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
-        requestId: traceId,
-      });
+      onNotifyError(
+        labels?.errorLoginFailed ??
+          'Failed to log in. Please check your credentials and try again.',
+        traceId,
+      );
     } finally {
       setIsAuthBusy(false);
     }
@@ -301,25 +294,23 @@ const AuthSection: FC<Props> = ({
   const handleConfirmLogout = async () => {
     setIsAuthBusy(true);
     try {
-      const body: ToolsetLogoutBodyDto = {
+      const body: ToolsetLogoutRequest = {
         url: toolsetId,
-        credentialsLevel:
-          ToolsetCredentialsLevel.User as ToolsetLogoutBodyDto['credentialsLevel'],
-        authenticationType:
-          auth.authenticationType as ToolsetLogoutBodyDto['authenticationType'],
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: auth.authenticationType,
       };
-      await logoutToolset(toolsetId, body);
+      await authActions.logout(toolsetId, body);
       onAuthChange({ isLoggedIn: false });
       setShowLogoutConfirm(false);
-      showSuccessNotification({
-        message: t(ToolsetEditorI18nKeys.LogoutSuccess),
-      });
+      onNotifySuccess(
+        labels?.logoutSuccessMessage ?? 'Successfully logged out.',
+      );
     } catch (error) {
       const { traceId } = await getApiErrorDetails(error);
-      showErrorNotification({
-        message: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
-        requestId: traceId,
-      });
+      onNotifyError(
+        labels?.errorLogoutFailed ?? 'Failed to log out. Please try again.',
+        traceId,
+      );
     } finally {
       setIsAuthBusy(false);
     }
@@ -330,7 +321,7 @@ const AuthSection: FC<Props> = ({
       return (
         <div className="flex">
           <NeutralButton
-            label={t(ButtonsI18nKeys.LogOut)}
+            label={labels?.logOutLabel ?? 'Log out'}
             iconBefore={
               <IconLogout
                 size={DIAL_ICON_SIZE.MD}
@@ -346,7 +337,7 @@ const AuthSection: FC<Props> = ({
     return (
       <div className="flex">
         <NeutralButton
-          label={t(ButtonsI18nKeys.LogIn)}
+          label={labels?.logInLabel ?? 'Log in'}
           iconBefore={
             <IconLogin size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />
           }
@@ -364,7 +355,9 @@ const AuthSection: FC<Props> = ({
           name="oauth-login-mode"
           id="oauth-with-login"
           value={WithLogin.WithLogin}
-          labelProps={{ label: t(ToolsetEditorI18nKeys.WithLoginOAuthLabel) }}
+          labelProps={{
+            label: labels?.withLoginOAuthLabel ?? 'Standard login',
+          }}
           isSelected={auth.withLogin === WithLogin.WithLogin}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
@@ -373,7 +366,7 @@ const AuthSection: FC<Props> = ({
           name="oauth-login-mode"
           id="oauth-with-config"
           value={WithLogin.WithConfig}
-          labelProps={{ label: t(ToolsetEditorI18nKeys.WithConfigOAuthLabel) }}
+          labelProps={{ label: labels?.withConfigOAuthLabel ?? 'Custom login' }}
           isSelected={auth.withLogin === WithLogin.WithConfig}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
@@ -387,10 +380,10 @@ const AuthSection: FC<Props> = ({
             value={auth.clientId ?? ''}
             onChange={(value) => onAuthChange({ clientId: value ?? '' })}
             labelProps={{
-              label: t(ToolsetEditorI18nKeys.ClientIdLabel),
+              label: labels?.clientIdLabel ?? 'Client ID',
               required: true,
             }}
-            placeholder={t(ToolsetEditorI18nKeys.ClientIdPlaceholder)}
+            placeholder={labels?.clientIdPlaceholder ?? 'Enter client ID'}
             error={errors.clientId || undefined}
             invalid={!!errors.clientId}
             disabled={isControlsDisabled}
@@ -400,10 +393,12 @@ const AuthSection: FC<Props> = ({
             value={auth.clientSecret ?? ''}
             onChange={(value) => onAuthChange({ clientSecret: value ?? '' })}
             labelProps={{
-              label: t(ToolsetEditorI18nKeys.ClientSecretLabel),
+              label: labels?.clientSecretLabel ?? 'Client secret',
               required: !isEditMode,
             }}
-            placeholder={t(ToolsetEditorI18nKeys.ClientSecretPlaceholder)}
+            placeholder={
+              labels?.clientSecretPlaceholder ?? 'Enter client secret'
+            }
             error={errors.clientSecret || undefined}
             invalid={!!errors.clientSecret}
             disabled={isControlsDisabled}
@@ -415,11 +410,13 @@ const AuthSection: FC<Props> = ({
               onAuthChange({ authorizationEndpoint: value ?? '' })
             }
             labelProps={{
-              label: t(ToolsetEditorI18nKeys.AuthorizationEndpointLabel),
+              label:
+                labels?.authorizationEndpointLabel ?? 'Authorization endpoint',
             }}
-            placeholder={t(
-              ToolsetEditorI18nKeys.AuthorizationEndpointPlaceholder,
-            )}
+            placeholder={
+              labels?.authorizationEndpointPlaceholder ??
+              'Enter authorization endpoint'
+            }
             error={errors.authorizationEndpoint || undefined}
             invalid={!!errors.authorizationEndpoint}
             disabled={isControlsDisabled}
@@ -429,9 +426,11 @@ const AuthSection: FC<Props> = ({
             value={auth.tokenEndpoint ?? ''}
             onChange={(value) => onAuthChange({ tokenEndpoint: value ?? '' })}
             labelProps={{
-              label: t(ToolsetEditorI18nKeys.TokenEndpointLabel),
+              label: labels?.tokenEndpointLabel ?? 'Token endpoint',
             }}
-            placeholder={t(ToolsetEditorI18nKeys.TokenEndpointPlaceholder)}
+            placeholder={
+              labels?.tokenEndpointPlaceholder ?? 'Enter token endpoint'
+            }
             error={errors.tokenEndpoint || undefined}
             invalid={!!errors.tokenEndpoint}
             disabled={isControlsDisabled}
@@ -439,9 +438,9 @@ const AuthSection: FC<Props> = ({
           <TagInput
             id="toolset-scopes"
             labelProps={{
-              label: t(ToolsetEditorI18nKeys.ScopesLabel),
+              label: labels?.scopesLabel ?? 'Scopes',
             }}
-            placeholder={t(ToolsetEditorI18nKeys.ScopesPlaceholder)}
+            placeholder={labels?.scopesPlaceholder ?? 'Enter scopes'}
             value={auth.scopes ?? []}
             onChange={(scopes) => onAuthChange({ scopes })}
             disabled={isControlsDisabled}
@@ -456,7 +455,7 @@ const AuthSection: FC<Props> = ({
 
   const renderNoneContent = () => (
     <p className="dial-small-text pt-2 text-secondary">
-      {t(ToolsetEditorI18nKeys.OpenAccessDescription)}
+      {labels?.openAccessDescription ?? 'Open endpoint, no credentials'}
     </p>
   );
 
@@ -467,7 +466,7 @@ const AuthSection: FC<Props> = ({
           name="apikey-login-mode"
           id="apikey-with-login"
           value={WithLogin.WithLogin}
-          labelProps={{ label: t(ToolsetEditorI18nKeys.WithLoginLabel) }}
+          labelProps={{ label: labels?.withLoginLabel ?? 'With login' }}
           isSelected={auth.withLogin === WithLogin.WithLogin}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
@@ -476,7 +475,7 @@ const AuthSection: FC<Props> = ({
           name="apikey-login-mode"
           id="apikey-without-login"
           value={WithLogin.WithoutLogin}
-          labelProps={{ label: t(ToolsetEditorI18nKeys.WithoutLoginLabel) }}
+          labelProps={{ label: labels?.withoutLoginLabel ?? 'Without login' }}
           isSelected={auth.withLogin === WithLogin.WithoutLogin}
           disabled={isControlsDisabled}
           onChange={handleWithLoginChange}
@@ -489,10 +488,12 @@ const AuthSection: FC<Props> = ({
           value={auth.keyHeader ?? ''}
           onChange={(value) => onAuthChange({ keyHeader: value ?? '' })}
           labelProps={{
-            label: t(ToolsetEditorI18nKeys.KeyHeaderLabel),
+            label: labels?.keyHeaderLabel ?? 'API Key parameter name',
             required: true,
           }}
-          placeholder={t(ToolsetEditorI18nKeys.KeyHeaderPlaceholder)}
+          placeholder={
+            labels?.keyHeaderPlaceholder ?? 'Enter API key parameter name'
+          }
           error={errors.keyHeader || undefined}
           invalid={!!errors.keyHeader}
           disabled={isControlsDisabled}
@@ -504,10 +505,10 @@ const AuthSection: FC<Props> = ({
             value={auth.apiKey ?? ''}
             onChange={(value) => onAuthChange({ apiKey: value ?? '' })}
             labelProps={{
-              label: t(ApiI18nKeys.ApiKey),
+              label: labels?.apiKeyLabel ?? 'API key',
               required: true,
             }}
-            placeholder={t(ToolsetEditorI18nKeys.ApiKeyPlaceholder)}
+            placeholder={labels?.apiKeyPlaceholder ?? 'Enter API key'}
             error={errors.apiKey || undefined}
             invalid={!!errors.apiKey}
             disabled={isControlsDisabled}
@@ -522,11 +523,11 @@ const AuthSection: FC<Props> = ({
   return (
     <section className="flex flex-col gap-2">
       <h3 className="dial-h3-text">
-        {t(ToolsetEditorI18nKeys.AuthSectionTitle)}
+        {labels?.sectionTitle ?? 'Authentication'}
       </h3>
 
       <SegmentedControl
-        aria-label={t(ToolsetEditorI18nKeys.AuthSectionTitle)}
+        aria-label={labels?.sectionTitle ?? 'Authentication'}
         value={auth.authenticationType}
         onChange={(type) => handleSelectType(type as ToolsetAuthTypes)}
         segmentClassName="px-2"
@@ -535,7 +536,7 @@ const AuthSection: FC<Props> = ({
           ToolsetAuthTypes.OAuth,
           ToolsetAuthTypes.ApiKey,
         ].map((type) => {
-          const { labelKey, Icon } = AUTH_TYPE_OPTIONS[type];
+          const Icon = AUTH_TYPE_ICONS[type];
           return {
             value: type,
             label: (
@@ -547,7 +548,7 @@ const AuthSection: FC<Props> = ({
                   aria-hidden
                 />
                 <span className="sr-only desktop:not-sr-only">
-                  {t(labelKey)}
+                  {segmentLabelFor(type, labels)}
                 </span>
               </div>
             ),
@@ -565,10 +566,13 @@ const AuthSection: FC<Props> = ({
       {showLogoutConfirm && (
         <ConfirmationPopup
           open={showLogoutConfirm}
-          header={t(AuthI18nKeys.LogOutConfirmTitle)}
-          description={t(ToolsetEditorI18nKeys.LogoutConfirmDescription)}
-          confirmLabel={t(ButtonsI18nKeys.LogOut)}
-          cancelLabel={t(ButtonsI18nKeys.Cancel)}
+          header={labels?.logoutConfirmTitle ?? 'Log out?'}
+          description={
+            labels?.logoutConfirmDescription ??
+            'Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again.'
+          }
+          confirmLabel={labels?.logOutLabel ?? 'Log out'}
+          cancelLabel={labels?.cancelLabel ?? 'Cancel'}
           variant={ConfirmationPopupVariant.Danger}
           isLoading={isAuthBusy}
           disableConfirmButton={isAuthBusy}
@@ -580,5 +584,3 @@ const AuthSection: FC<Props> = ({
     </section>
   );
 };
-
-export default memo(AuthSection);

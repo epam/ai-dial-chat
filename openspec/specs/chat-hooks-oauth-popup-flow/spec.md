@@ -215,12 +215,13 @@ type-check against a lib signature.
 - **THEN** it type-checks, because the enum is the single shared declaration rather than a
   structurally identical copy
 
-#### Scenario: App constants keep only their editor-only members
+#### Scenario: App constants keep only their routing members
 
-- **WHEN** `apps/chat/src/constants/toolsets.ts` is migrated
-- **THEN** it retains exactly the members the lib does not own — `ToolsetTransportType`,
-  `ToolsetEditorSteps`, `ToolsetEditorQuery`, `AUTH_TYPE_OPTIONS`, and the default-toolset
-  constants — and re-exports none of the moved declarations
+- **WHEN** `apps/chat/src/constants/toolsets.ts` is inspected
+- **THEN** it retains exactly its routing-owned members — `ToolsetEditorSteps` and
+  `ToolsetEditorQuery` — and re-exports none of the declarations owned elsewhere;
+  `ToolsetTransportType` and the default-toolset constants live in
+  `@epam/ai-dial-toolset-editor`
 
 #### Scenario: Call sites import the moved declarations from the package
 
@@ -228,8 +229,11 @@ type-check against a lib signature.
 - **THEN** it imports it directly from `@epam/ai-dial-chat-hooks`, so no host module stands between
   the declaration and its consumers
 
-#### Scenario: i18n and icon mapping stay in the app
+#### Scenario: Icon mapping lives in the toolset-editor lib, labels arrive via props
 
-- **WHEN** `AUTH_TYPE_OPTIONS` is considered for extraction
-- **THEN** it stays app-owned, because it maps enum members to translation keys and
-  `@tabler/icons-react` components, both forbidden in the lib
+- **WHEN** the toolset editor's authentication-type segment control is rendered
+- **THEN** its icon mapping (`AUTH_TYPE_ICONS` in `@epam/ai-dial-toolset-editor`) maps
+  `@epam/ai-dial-chat-hooks` enum members to `@tabler/icons-react` components, and the
+  segment labels are host-supplied strings threaded through the lib's `labels` props —
+  the lib maps icons only, never translation keys, keeping the chat-hooks lib free of
+  both i18n and icon dependencies

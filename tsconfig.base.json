@@ -44,6 +44,7 @@
       "@epam/ai-dial-quotations/*": ["./libs/quotations/*"],
       "@epam/ai-dial-builder-form/*": ["./libs/builder-form/*"],
       "@epam/ai-dial-skill-editor/*": ["./libs/skill-editor/*"],
+      "@epam/ai-dial-toolset-editor/*": ["./libs/toolset-editor/*"],
       "@epam/ai-dial-settings-panel/*": ["./libs/settings-panel/*"]
     }
   }
