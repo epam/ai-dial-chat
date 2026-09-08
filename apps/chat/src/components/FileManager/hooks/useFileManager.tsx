@@ -190,6 +190,7 @@ interface UseFileManagerOptions {
   };
   gridEditingOptions?: UseGridEditingScrollOptions;
   folderDepthOffset?: number;
+  allowDotAtStart?: boolean;
 }
 
 export const useFileManager = ({
@@ -202,6 +203,7 @@ export const useFileManager = ({
   additionalFilesAndFolders,
   gridEditingOptions: gridEditingOptionsConfig,
   folderDepthOffset = 0,
+  allowDotAtStart = false,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -1689,7 +1691,7 @@ export const useFileManager = ({
             ? t(SideBarI18nKeys.FolderNameLabel)
             : t(SideBarI18nKeys.FileNameLabel),
         checkDotsInTheEnd: true,
-        checkDotsInTheStart: true,
+        checkDotsInTheStart: !allowDotAtStart,
       });
 
       const validationResult = schema.safeParse(storageName);
@@ -1700,7 +1702,7 @@ export const useFileManager = ({
         return validationResult.error.issues[0].message;
       }
     },
-    [router.locale, t],
+    [allowDotAtStart, router.locale, t],
   );
 
   const handleCreateFolderValidate = useCallback(
