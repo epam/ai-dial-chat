@@ -1038,9 +1038,14 @@ describe('ConversationPanelView — rename', () => {
     render(<ConversationPanelView {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: 'buttons.duplicate' }));
 
+    /* getConversationRoute is mocked in this file as a plain `/conversations/`
+     * prefix, so the duplicate's id shows up verbatim after it. */
     await waitFor(() => {
-      expect(mockDuplicateConversation).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/conversations/conversations/bucket/conv1-copy',
+      );
     });
+    expect(mockDuplicateConversation).toHaveBeenCalledOnce();
     expect(mockShowNotification).toHaveBeenCalledWith({
       variant: 'success',
       title: 'entityNotifications.conversation.duplicatedTitle',
@@ -1894,13 +1899,11 @@ describe('ConversationPanelView — unshare (Remove from My List)', () => {
 
     expect(discardSharedCatalogItem).toHaveBeenCalledWith('conv1');
     await waitFor(() => {
-      expect(mockRefresh).toHaveBeenCalledOnce();
-    });
-    expect(mockShowNotification).toHaveBeenCalledOnce();
-    expect(mockNavigate).not.toHaveBeenCalled();
-    await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
+    expect(mockRefresh).toHaveBeenCalledOnce();
+    expect(mockShowNotification).toHaveBeenCalledOnce();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('successful discard of the active conversation navigates to root', async () => {
@@ -2182,12 +2185,15 @@ describe('ConversationPanelView — revoke access', () => {
       within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
     );
 
+    /* The dialog closes last — after the refresh settles and the notification
+     * is raised — so waiting on it is what makes the rest of the chain, the
+     * negative navigate assertion included, observable. */
     await waitFor(() => {
-      expect(mockRefresh).toHaveBeenCalledOnce();
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
+    expect(mockRefresh).toHaveBeenCalledOnce();
     expect(mockShowNotification).toHaveBeenCalledOnce();
     expect(mockNavigate).not.toHaveBeenCalled();
-    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('a refresh failure after a successful revoke still notifies success', async () => {
@@ -2205,9 +2211,9 @@ describe('ConversationPanelView — revoke access', () => {
     );
 
     await waitFor(() => {
-      expect(mockShowNotification).toHaveBeenCalledOnce();
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(mockShowNotification).toHaveBeenCalledOnce();
   });
 
   it('failed revoke keeps the popup open with an inline error and does not refresh', async () => {
@@ -2470,7 +2476,15 @@ describe('ConversationPanelView — unpublish confirmation', () => {
 
     await userEvent.click(confirmButton());
 
-    await waitFor(() => expect(unpublishConversation).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: 'error',
+          title: 'publish.unpublishFailedTitle',
+        }),
+      ),
+    );
+    expect(unpublishConversation).toHaveBeenCalledOnce();
     expect(
       mockShowNotification.mock.calls.some(
         ([notification]) => notification.variant === 'success',

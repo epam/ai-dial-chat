@@ -294,8 +294,8 @@ describe('useConversationHandlers', () => {
           { role: 'assistant' as never, content: 'W', timestamp: 't' },
         ],
       });
-      const { result } = renderHook(
-        () => useHarness({ conversation }, { keepRefInSync: false }),
+      const { result } = renderHook(() =>
+        useHarness({ conversation }, { keepRefInSync: false }),
       );
       result.current.conversationRef.current = staleRefConversation;
 
@@ -303,8 +303,8 @@ describe('useConversationHandlers', () => {
       act(() => result.current.handlers.handleConfirmDelete());
 
       expect(result.current.saveConversation).toHaveBeenCalledOnce();
-      const savedConversation = result.current.saveConversation.mock
-        .calls[0][0].saveConversationBodyDto.conversation as Conversation;
+      const savedConversation = result.current.saveConversation.mock.calls[0][0]
+        .saveConversationBodyDto.conversation as Conversation;
       expect(savedConversation.messages).toEqual([
         { role: 'user', content: 'X', timestamp: 't' },
         { role: 'assistant', content: 'Y', timestamp: 't' },
