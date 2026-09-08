@@ -43,9 +43,9 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   h6?: string;
   /** Classes on `<p>` elements. */
   p?: string;
-  /** Extra classes on `<ul>` (base: `list-disc ps-5`). */
+  /** Extra classes on `<ul>` (base: `list-disc ps-[2em]`). */
   ul?: string;
-  /** Extra classes on `<ol>` (base: `list-decimal ps-5`). */
+  /** Extra classes on `<ol>` (base: `list-decimal ps-[2em]`). */
   ol?: string;
   /** Typography class for `<strong>`. Defaults to `'dial-body-paragraph-semi-text'` — the semibold step matching the default `p` class. */
   strong?: string;
@@ -406,11 +406,16 @@ const buildMarkdownComponents = (
   p: ({ children }) => (
     <p className={mergeClasses('break-words', cn.p)}>{children}</p>
   ),
+  /* An `outside` marker is painted in the list's start padding, so that padding
+     has to be wide enough for the widest marker or the marker overflows and is
+     cut off by whichever ancestor scrolls or hides overflow — at 14px a
+     two-digit `17.` already did. `2em` tracks the element's own font size and
+     holds a three-digit marker; `ul` matches it so mixed lists stay aligned. */
   ul: ({ children }) => (
-    <ul className={mergeClasses('list-disc ps-5', cn.ul)}>{children}</ul>
+    <ul className={mergeClasses('list-disc ps-[2em]', cn.ul)}>{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className={mergeClasses('list-decimal ps-5', cn.ol)}>{children}</ol>
+    <ol className={mergeClasses('list-decimal ps-[2em]', cn.ol)}>{children}</ol>
   ),
   strong: ({ children }) => (
     <strong className={cn.strong ?? 'dial-body-paragraph-semi-text'}>

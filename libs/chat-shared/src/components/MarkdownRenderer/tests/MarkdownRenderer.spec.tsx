@@ -49,6 +49,13 @@ const TWO_PARAGRAPHS_MARKDOWN = 'Paragraph one.\n\nParagraph two.';
 
 const LIST_MARKDOWN = '- Item one\n- Item two\n- Item three';
 
+/* Runs past nine so the markers that overflowed a too-narrow start padding
+   (issue #8655) are the ones under test. */
+const ORDERED_LIST_MARKDOWN = Array.from(
+  { length: 17 },
+  (_, index) => `${index + 1}. Item ${index + 1}`,
+).join('\n');
+
 const DISPLAY_MATH_MARKDOWN = `Einstein's field equations:
 
 $$
@@ -337,6 +344,33 @@ describe('MarkdownRenderer', () => {
     expect(firstParagraph.querySelectorAll('br').length).toBe(0);
     // eslint-disable-next-line testing-library/no-node-access
     expect(secondParagraph.querySelectorAll('br').length).toBe(0);
+  });
+
+  it('gives lists start padding wide enough for a multi-digit marker', () => {
+    const { rerender } = render(<MarkdownRenderer content={LIST_MARKDOWN} />);
+
+    /* An `outside` marker is painted in this padding — too little and a
+       two-digit `17.` is clipped by whichever ancestor scrolls. The value is
+       in `em` so it tracks the font size the host sets. */
+    expect(screen.getByRole('list').className).toContain('ps-[2em]');
+
+    rerender(<MarkdownRenderer content={ORDERED_LIST_MARKDOWN} />);
+
+    const orderedList = screen.getByRole('list');
+    expect(orderedList.className).toContain('ps-[2em]');
+    expect(orderedList.className).toContain('list-decimal');
+    // Both list kinds share the indent, so a document mixing them stays aligned.
+    expect(orderedList.className).not.toContain('ps-5');
+  });
+
+  it('lets a caller override the list start padding', () => {
+    render(
+      <MarkdownRenderer content={LIST_MARKDOWN} classNames={{ ul: 'ps-10' }} />,
+    );
+
+    const list = screen.getByRole('list');
+    expect(list.className).toContain('ps-10');
+    expect(list.className).not.toContain('ps-[2em]');
   });
 
   it('renders a list as list items rather than line-broken plain text', () => {
