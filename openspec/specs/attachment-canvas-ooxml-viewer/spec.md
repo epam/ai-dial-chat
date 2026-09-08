@@ -321,7 +321,7 @@ Because `createViewer` is itself awaited, the effect can be torn down **before a
 
 **Markup.** A relatively-positioned flex-column wrapper filling the available width and height, containing:
 
-- the optional XLSX-only formula panel;
+- the persistent XLSX-only formula bar;
 - the viewer container `<div ref>` — `role="document"`, `aria-label={fileName}`, `aria-busy={isLoading}`, filling the remaining wrapper space;
 - the status overlay, rendered only while `isLoading || hasError`, absolutely positioned over the container and centered.
 
@@ -334,9 +334,9 @@ Because `createViewer` is itself awaited, the effect can be torn down **before a
 - The overlay SHALL carry `aria-live="polite"`, and `role="alert"` **only** when `hasError` is `true`, so a failure is announced without the loading state raising an alert.
 - Keyboard navigation inside the rendered document is the viewer's own DOM and is outside this component's control. Per the scope boundary in `.claude/rules/a11y.md`, vendor-rendered output is noted, not patched; the panel's download button remains the accessible fallback.
 
-**i18n:** `loadErrorLabel` remains the shared translated load error. The XLSX formula panel receives `formulaLabel` from `AttachmentCanvasLabels.xlsxFormulaLabel`, defaulting to `Formula`; the app supplies the translated `attachmentCanvas.xlsxFormulaLabel` value.
+**i18n:** `loadErrorLabel` remains the shared translated load error. The XLSX formula bar receives its accessible `formulaLabel` from `AttachmentCanvasLabels.xlsxFormulaLabel`, defaulting to `Formula`; the app supplies the translated `attachmentCanvas.xlsxFormulaLabel` value. Its visible, italic `fx` mark is universal spreadsheet notation, carries `aria-hidden="true"`, and is not localized.
 
-**RTL / direction impact:** the layout uses direction-neutral spacing and fills the inherited panel direction. The formula expression itself carries `dir="ltr"` because spreadsheet formulas and cell references are LTR syntax; the surrounding label follows the active locale. The rendered document's own text direction is otherwise the viewer's concern.
+**RTL / direction impact:** the layout uses direction-neutral spacing and fills the inherited panel direction. The formula/value field carries `dir="ltr"` because spreadsheet formulas and cell references are LTR syntax; the `fx` mark is direction-neutral. The rendered document's own text direction is otherwise the viewer's concern.
 
 **Styling.** `OoxmlContent.module.scss` SHALL size the CSV canvas to its container and set the viewer, formula panel, overlay, and error colors. Every color declaration SHALL use this library's three-level chain `var(--ac-<name>, var(--<design-token>, #hex))` so each color is overridable through `AttachmentCanvasColors`, falls back to the shared design token, and finally to a literal:
 
@@ -350,6 +350,7 @@ Because `createViewer` is itself awaited, the effect can be torn down **before a
 `--ac-status-text` and `--ac-error-icon` are the canvas's existing variables, already set on the `AttachmentCanvasBody` root and inherited through the cascade. The OOXML background and formula variables require matching optional fields on `AttachmentCanvasColors` and `buildCssVars` mappings. A color painted from a bare global token with no `--ac-*` level would prevent hosts from theming it.
 
 Layout stays in Tailwind. The stylesheet SHALL contain no `font-size`, `line-height`, `font-weight`, or `!important` declaration.
+The formula/value field SHALL have a fixed height whether its content is empty or populated, preventing the spreadsheet viewport from shifting when the active cell changes.
 
 #### Scenario: every color is host-overridable
 
@@ -361,7 +362,7 @@ Layout stays in Tailwind. The stylesheet SHALL contain no `font-size`, `line-hei
 - **WHEN** no `ooxmlBackground` is supplied
 - **THEN** the viewer background resolves through `--bg-layer-raised`
 
-**Memoisation:** none required. The component holds loading, error, and active-formula state plus one ref, and the effect's dependency array is narrowed to the two fields that require a fresh viewer — `content.format` and `content.url`, not the `content` object.
+**Memoisation:** none required. The component holds loading, error, and active-cell-content state plus one ref, and the effect's dependency array is narrowed to the two fields that require a fresh viewer — `content.format` and `content.url`, not the `content` object.
 
 #### Scenario: spinner shows while parsing
 
@@ -380,11 +381,12 @@ Layout stays in Tailwind. The stylesheet SHALL contain no `font-size`, `line-hei
 - **WHEN** `OoxmlContent` is rendered with `fileName: 'Q3 Report.docx'`
 - **THEN** the container element has `role="document"` and `aria-label="Q3 Report.docx"`
 
-#### Scenario: active XLSX formula is shown above the sheet
+#### Scenario: persistent XLSX formula bar shows active cell content
 
 - **WHEN** the XLSX selection context identifies an active cell with formula `SUM(A1:A2)`
-- **THEN** the formula panel displays `=SUM(A1:A2)` under the accessible `formulaLabel`
-- **AND** selecting a cell without a formula removes the panel
+- **THEN** the formula bar displays `=SUM(A1:A2)` after an italic, decorative `fx` mark and under the accessible `formulaLabel`
+- **AND** selecting a cell without a formula displays that cell's `displayText`
+- **AND** before a cell is selected, the empty formula bar remains visible and reserves its layout space
 - **AND** CSV content never renders the formula panel
 
 #### Scenario: viewer onError shows the error panel

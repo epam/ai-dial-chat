@@ -131,6 +131,15 @@ describe('OoxmlContent', () => {
     expect(screen.queryByRole('region', { name: 'Formula' })).toBeNull();
   });
 
+  it('keeps an empty formula panel visible before an XLSX cell is selected', async () => {
+    renderContent(OoxmlFileType.Xlsx);
+
+    await waitFor(() => expect(mockXlsxConstructor).toHaveBeenCalledOnce());
+    const panel = screen.getByRole('region', { name: 'Formula' });
+    expect(panel.textContent).toBe('fx');
+    expect(screen.getByText('fx').getAttribute('aria-hidden')).toBe('true');
+  });
+
   it.each([
     [OoxmlFileType.Docx, mockDocxConstructor],
     [OoxmlFileType.Xlsx, mockXlsxConstructor],
@@ -203,6 +212,7 @@ describe('OoxmlContent', () => {
         selection: { activeCell: { row: number; col: number } };
         cells: Array<{
           address: { row: number; col: number };
+          displayText: string;
           formula?: string;
         }>;
       }) => void;
@@ -214,6 +224,7 @@ describe('OoxmlContent', () => {
         cells: [
           {
             address: { row: 2, col: 3 },
+            displayText: '3',
             formula: 'SUM(A1:A2)',
           },
         ],
@@ -221,11 +232,11 @@ describe('OoxmlContent', () => {
     );
 
     expect(screen.getByRole('region', { name: 'Formula' }).textContent).toBe(
-      'Formula=SUM(A1:A2)',
+      'fx=SUM(A1:A2)',
     );
   });
 
-  it('hides the formula panel when the active XLSX cell has no formula', async () => {
+  it('shows the active XLSX cell display value when it has no formula', async () => {
     renderContent(OoxmlFileType.Xlsx);
     await waitFor(() => expect(mockXlsxConstructor).toHaveBeenCalledOnce());
 
@@ -235,6 +246,7 @@ describe('OoxmlContent', () => {
         selection: { activeCell: { row: number; col: number } };
         cells: Array<{
           address: { row: number; col: number };
+          displayText: string;
           formula?: string;
         }>;
       }) => void;
@@ -246,6 +258,7 @@ describe('OoxmlContent', () => {
         cells: [
           {
             address: { row: 2, col: 3 },
+            displayText: '3',
             formula: 'SUM(A1:A2)',
           },
         ],
@@ -259,14 +272,16 @@ describe('OoxmlContent', () => {
         selection: { activeCell: { row: 2, col: 3 } },
         cells: [
           {
-            address: { row: 2, col: 4 },
-            formula: 'SUM(A1:A2)',
+            address: { row: 2, col: 3 },
+            displayText: '1,234.50',
           },
         ],
       }),
     );
 
-    expect(screen.queryByRole('region', { name: 'Formula' })).toBeNull();
+    expect(screen.getByRole('region', { name: 'Formula' }).textContent).toBe(
+      'fx1,234.50',
+    );
   });
 
   it('removes the status overlay after a successful load', async () => {

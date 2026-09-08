@@ -19,21 +19,24 @@ interface OoxmlContentProps {
   fileName?: string;
   /** Message shown when the document parser or renderer fails. */
   loadErrorLabel: string;
-  /** Label for the panel that shows the active XLSX cell formula. */
+  /** Accessible label for the panel that shows the active XLSX cell content. */
   formulaLabel: string;
 }
 
-const getActiveCellFormula = (
-  context: XlsxSelectionContext | null,
-): string | null => {
-  if (context?.kind !== 'range') return null;
+const getActiveCellContent = (context: XlsxSelectionContext | null): string => {
+  if (context?.kind !== 'range') return '';
 
   const { activeCell } = context.selection;
-  const formula = context.cells.find(
+  const cell = context.cells.find(
     ({ address }) =>
       address.row === activeCell.row && address.col === activeCell.col,
-  )?.formula;
-  if (formula == null || formula.trim().length === 0) return null;
+  );
+  if (cell == null) return '';
+
+  const formula = cell.formula;
+  if (formula == null || formula.trim().length === 0) {
+    return cell.displayText;
+  }
 
   return formula.startsWith('=') ? formula : `=${formula}`;
 };
@@ -108,7 +111,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [formula, setFormula] = useState<string | null>(null);
+  const [activeCellContent, setActiveCellContent] = useState('');
 
   useEffect(() => {
     const container = containerRef.current;
@@ -118,7 +121,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
     let disposed = false;
     setIsLoading(true);
     setHasError(false);
-    setFormula(null);
+    setActiveCellContent('');
 
     const loadDocument = async (): Promise<void> => {
       try {
@@ -134,7 +137,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
           handleViewerError,
           (selectionContext) => {
             if (!disposed) {
-              setFormula(getActiveCellFormula(selectionContext));
+              setActiveCellContent(getActiveCellContent(selectionContext));
             }
           },
         );
@@ -167,7 +170,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
 
   return (
     <div className="relative flex h-full w-full min-w-0 flex-col overflow-hidden">
-      {content.format === OoxmlFileType.Xlsx && formula != null && (
+      {content.format === OoxmlFileType.Xlsx && (
         <div
           role="region"
           aria-label={formulaLabel}
@@ -176,16 +179,22 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
             styles.formulaPanel,
           )}
         >
-          <span className="shrink-0 text-sm font-semibold">{formulaLabel}</span>
+          <span
+            aria-hidden="true"
+            className="shrink-0 font-serif text-lg italic"
+          >
+            fx
+          </span>
           <code
             dir="ltr"
             tabIndex={0}
+            aria-live="polite"
             className={mergeClasses(
-              'min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded border px-2 py-1 text-sm focus-visible:outline focus-visible:outline-focus',
+              'h-8 min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded border px-2 py-1 text-sm focus-visible:outline focus-visible:outline-focus',
               styles.formulaValue,
             )}
           >
-            {formula}
+            {activeCellContent}
           </code>
         </div>
       )}

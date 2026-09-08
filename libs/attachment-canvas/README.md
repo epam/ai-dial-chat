@@ -274,20 +274,20 @@ const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 
 `AttachmentContentType` is the discriminant on every content descriptor.
 
-| Enum member                         | Content type               | Description                                                                                                              |
-| ----------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `AttachmentContentType.PlainText`   | `PlainTextCanvasContent`   | Renders plain text                                                                                                       |
-| `AttachmentContentType.Image`       | `ImageCanvasContent`       | Renders an image from a URL                                                                                              |
-| `AttachmentContentType.Audio`       | `AudioCanvasContent`       | Renders an audio player                                                                                                  |
-| `AttachmentContentType.Markdown`    | `MarkdownCanvasContent`    | Renders markdown text                                                                                                    |
-| `AttachmentContentType.Json`        | `JsonCanvasContent`        | Renders a JSON tree viewer                                                                                               |
-| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support                                                                                     |
-| `AttachmentContentType.Ooxml`       | `OoxmlCanvasContent`       | Renders DOCX, XLSX, PPTX, or CSV with `@silurus/ooxml`; selecting an XLSX formula cell shows its formula above the sheet |
-| `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                                                                                        |
-| `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source                                                                         |
-| `AttachmentContentType.Visualizer`  | `VisualizerCanvasContent`  | Renders a registered custom visualizer                                                                                   |
-| `AttachmentContentType.Unsupported` | `UnsupportedCanvasContent` | Fallback for unsupported MIME types                                                                                      |
-| `AttachmentContentType.Error`       | `ErrorCanvasContent`       | Load failure or forbidden access                                                                                         |
+| Enum member                         | Content type               | Description                                                                                                                             |
+| ----------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `AttachmentContentType.PlainText`   | `PlainTextCanvasContent`   | Renders plain text                                                                                                                      |
+| `AttachmentContentType.Image`       | `ImageCanvasContent`       | Renders an image from a URL                                                                                                             |
+| `AttachmentContentType.Audio`       | `AudioCanvasContent`       | Renders an audio player                                                                                                                 |
+| `AttachmentContentType.Markdown`    | `MarkdownCanvasContent`    | Renders markdown text                                                                                                                   |
+| `AttachmentContentType.Json`        | `JsonCanvasContent`        | Renders a JSON tree viewer                                                                                                              |
+| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support                                                                                                    |
+| `AttachmentContentType.Ooxml`       | `OoxmlCanvasContent`       | Renders DOCX, XLSX, PPTX, or CSV with `@silurus/ooxml`; the persistent XLSX `fx` bar shows the selected cell's formula or display value |
+| `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                                                                                                       |
+| `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source                                                                                        |
+| `AttachmentContentType.Visualizer`  | `VisualizerCanvasContent`  | Renders a registered custom visualizer                                                                                                  |
+| `AttachmentContentType.Unsupported` | `UnsupportedCanvasContent` | Fallback for unsupported MIME types                                                                                                     |
+| `AttachmentContentType.Error`       | `ErrorCanvasContent`       | Load failure or forbidden access                                                                                                        |
 
 `AttachmentErrorType` distinguishes the two failure kinds carried by
 `ErrorCanvasContent`: `LoadFailed` (network error or a non-`403` non-OK
@@ -348,5 +348,6 @@ Style overrides go through `AttachmentCanvasStyles` (`AttachmentCanvasColors`,
 `AttachmentCanvasLabels`. `AttachmentCanvasProps`,
 `AttachmentCanvasContainerProps`, `CodeContentProps`, `CodeContentLabels`, and
 `AttachmentCanvasContextValue` are exported for hosts building those objects.
-Use `xlsxFormulaLabel` to localize the XLSX formula panel's visible and
-accessible label; it defaults to `Formula`.
+Use `xlsxFormulaLabel` to localize the persistent XLSX `fx` bar's accessible
+label; it defaults to `Formula`. The visual `fx` mark is direction-neutral and
+does not replace that label for assistive technology.
