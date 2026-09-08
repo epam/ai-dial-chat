@@ -90,7 +90,14 @@
     "removeFromFavoritesLabel": "Remove from favorites"
   },
   "catalog": {
-    "searchPlaceholder": "Search models, tools, agents…",
+    "searchPlaceholder": "Search {{entities}}…",
+    "searchEntity": {
+      "models": "models",
+      "applications": "agents",
+      "toolsets": "toolsets",
+      "prompts": "prompts",
+      "skills": "skills"
+    },
     "noResultsTitle": "No results for \"{{query}}\"",
     "sorts": {
       "recentlyUpdated": "Recently Updated",
@@ -360,6 +367,7 @@
     "copyUrl": "Copy URL",
     "logIn": "Log in",
     "retry": "Retry",
+    "reload": "Reload",
     "publish": "Publish",
     "unpublish": "Unpublish",
     "manage": "Manage",
@@ -932,8 +940,8 @@
     "htmlOpenInNewTab": "Open in new tab",
     "htmlViewSource": "View source",
     "htmlViewRendered": "View rendered",
-    "openAppLabel": "Open App",
     "openedInCanvasLabel": "Opened in Canvas",
+    "expandAppLabel": "Expand app",
     "mcpAppTitle": "MCP App",
     "mcpAppLoadErrorLabel": "Failed to load MCP App",
     "mcpAppForbiddenErrorLabel": "You don't have permission to access this MCP App",
@@ -943,6 +951,7 @@
     "pdfPageNumberLabel": "Page number",
     "pdfContentLoadingLabel": "Loading the PDF viewer…",
     "pdfContentErrorLabel": "Failed to load the PDF viewer",
+    "xlsxFormulaLabel": "Formula",
     "codeContentLoadingLabel": "Loading syntax highlighting…",
     "codeContentErrorLabel": "Failed to load syntax highlighting"
   },

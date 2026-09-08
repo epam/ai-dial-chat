@@ -287,6 +287,7 @@ const NewConversationComposer: FC<Props> = ({
     OverlayFeature.SkipFocusChatInputOnload,
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
+  const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
   const { displayName } = useUserProfile();
   const firstName = displayName.split(' ')[0];
   const { resolvers, options } = useAttachmentCanvasResolvers();
@@ -472,6 +473,7 @@ const NewConversationComposer: FC<Props> = ({
           promptsMenuTitle={promptsMenuTitle}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
+          canRemoveTools={isRemovableToolsEnabled}
           toolsMenuTitle={toolsMenuTitle}
           toolsChipLabels={toolsChipLabels}
           usageLimitsSlot={

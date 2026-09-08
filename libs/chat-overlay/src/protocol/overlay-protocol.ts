@@ -77,6 +77,13 @@ export enum OverlayFeature {
    * `EmptyChatSettings`.
    */
   ChatSettings = 'chat-settings',
+  /**
+   * Enables removing a deployment tool from the conversation input: each tool
+   * chip gets a × that drops it from the row, and the "+" menu gets a "Tools"
+   * entry that brings a dropped chip back. Disabling it makes every chip a
+   * persistent on/off toggle that the user cannot add or remove.
+   */
+  RemovableTools = 'removable-tools',
   /** Enables the comment field in the negative-feedback (dislike) modal. */
   DislikeComment = 'dislike-comment',
   /** Enables attaching files to a message via the conversation input. */

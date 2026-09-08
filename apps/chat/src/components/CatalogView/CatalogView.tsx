@@ -64,6 +64,7 @@ import { CatalogQuery } from '../../types/catalog';
 import { EditorQuery } from '../../types/editor-query';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
+import { getCatalogSearchPlaceholder } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { getAccessRulesLabels } from '../../utils/publish';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
@@ -255,6 +256,15 @@ const CatalogView: FC<Props> = ({
 
   const { activeTab, setActiveTab } =
     useCatalogActiveTabPreference(availableTabIds);
+
+  /*
+   * Names only the entity types actually on offer, so a picker restricted to
+   * agents doesn't advertise models and toolsets the user cannot reach.
+   */
+  const searchPlaceholder = useMemo(
+    () => getCatalogSearchPlaceholder(availableTabIds, t),
+    [availableTabIds, t],
+  );
 
   const {
     folderItems: publishFolderItems,
@@ -586,7 +596,7 @@ const CatalogView: FC<Props> = ({
           createLabel: t(ButtonsI18nKeys.Create),
           favoritesTitle: t(FavoritesI18nKeys.Title),
           browseTitle: t(ButtonsI18nKeys.Browse),
-          searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
+          searchPlaceholder,
           noResultsTitle: (query) =>
             t(CatalogI18nKeys.NoResultsTitle, { query }),
           sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),

@@ -14,13 +14,14 @@ import {
 /* `content.url` for `Ooxml` is a blob URL created while resolving the preview
  * (see `resolveOoxmlCanvasContent`), so it never carries the original file's
  * extension. Fall back to the MIME type implied by `content.format`. */
-const OOXML_MIME_TYPES: Record<OoxmlFileType, string> = {
+const RENDERER_MIME_TYPES: Record<OoxmlFileType, string> = {
   [OoxmlFileType.Docx]:
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   [OoxmlFileType.Xlsx]:
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   [OoxmlFileType.Pptx]:
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  [OoxmlFileType.Csv]: MIMEType.CSV,
 };
 
 /** Returns true if the given canvas content can be downloaded. */
@@ -72,7 +73,10 @@ const getContentUrlAndMimeType = (
     case AttachmentContentType.Pdf:
       return { url: content.url, mimeType: MIMEType.PDF };
     case AttachmentContentType.Ooxml:
-      return { url: content.url, mimeType: OOXML_MIME_TYPES[content.format] };
+      return {
+        url: content.url,
+        mimeType: RENDERER_MIME_TYPES[content.format],
+      };
     case AttachmentContentType.Html:
       return { url: content.url, mimeType: MIMEType.HTML };
     case AttachmentContentType.Unsupported:

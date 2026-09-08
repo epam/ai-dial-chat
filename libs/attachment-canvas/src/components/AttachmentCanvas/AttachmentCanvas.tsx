@@ -12,6 +12,7 @@ import {
   IconDownload,
   IconEye,
   IconMarkdown,
+  IconRefresh,
 } from '@tabler/icons-react';
 import { type FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import type { AttachmentCanvasProps } from '../../models/attachment-canvas';
@@ -45,6 +46,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     htmlOpenInNewTabLabel = 'Open in new tab',
     htmlViewSourceLabel = 'View source',
     htmlViewRenderedLabel = 'View rendered',
+    mcpAppReloadLabel = 'Reload',
     pdfThumbnailsLabel,
     pdfShowThumbnailsLabel,
     pdfHideThumbnailsLabel,
@@ -52,6 +54,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     pdfContentLoadingLabel,
     pdfContentErrorLabel,
     pdfContentRetryLabel,
+    xlsxFormulaLabel,
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,
@@ -154,6 +157,10 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     content.type === AttachmentContentType.Json;
   const showDownload =
     !isLoading && onDownload != null && isDownloadable(content);
+  const showReload =
+    !isLoading &&
+    content.type === AttachmentContentType.McpApp &&
+    content.onReload != null;
 
   return (
     <SidebarPanel
@@ -185,8 +192,27 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         showCopyText ||
         showCopyMarkdown ||
         showCopyJson ||
-        showDownload ? (
+        showDownload ||
+        showReload ? (
           <>
+            {showReload && (
+              <GhostIconButton
+                icon={
+                  <IconRefresh
+                    size={DIAL_ICON_SIZE.LG}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
+                  />
+                }
+                aria-label={mcpAppReloadLabel}
+                tooltipProps={{ tooltip: mcpAppReloadLabel }}
+                onClick={
+                  content.type === AttachmentContentType.McpApp
+                    ? content.onReload
+                    : undefined
+                }
+              />
+            )}
             {showHtmlToggle && (
               <GhostIconButton
                 icon={
@@ -328,6 +354,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           pdfContentLoadingLabel,
           pdfContentErrorLabel,
           pdfContentRetryLabel,
+          xlsxFormulaLabel,
           codeContentLoadingLabel,
           codeContentErrorLabel,
           codeContentRetryLabel,

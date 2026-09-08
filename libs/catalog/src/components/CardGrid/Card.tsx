@@ -31,6 +31,11 @@ import styles from './CardGrid.module.scss';
 
 const DESCRIPTION_MARKDOWN_COMPONENTS = { img: () => null };
 
+const isLinkEvent = (
+  event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
+): boolean =>
+  event.target instanceof Element && event.target.closest('a') !== null;
+
 /** Browse grid card: AppIdentity header + description + topic chips + breadcrumbs + star. */
 export const Card: FC<CardProps> = ({
   item,
@@ -82,11 +87,15 @@ export const Card: FC<CardProps> = ({
    * thing left in it without the star — has nothing to render. */
   const isFooterVisible = !isReadonly || item.folder.length > 0;
 
-  const handleClick = onClick ? () => onClick(item) : undefined;
+  const handleClick = onClick
+    ? (e: MouseEvent<HTMLElement>) => {
+        if (!isLinkEvent(e)) onClick(item);
+      }
+    : undefined;
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLElement>) => {
-      if (!onClick) return;
+      if (!onClick || isLinkEvent(e)) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         onClick(item);
@@ -174,8 +183,6 @@ export const Card: FC<CardProps> = ({
           'line-clamp-2 min-h-[2lh] break-words',
           styles.description,
         )}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
       >
         {item.description && (
           <MarkdownRenderer

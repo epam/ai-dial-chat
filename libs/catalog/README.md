@@ -107,6 +107,11 @@ also yields more card columns (4 instead of 3 once the grid area passes
 
 #### Controlling tabs and Topics options independently of `items`
 
+The entity-type tab row appears only when `items` span **two or more** types: a
+single tab is not a choice, so a catalog restricted to one entity type (an
+agent picker, a prompt picker) renders no tab row at all. The active tab still
+resolves to that one type, so the grid is unaffected.
+
 By default the entity-type tabs and the Topics filter's option list are both
 derived from `items` — the same list the grid renders. A host that narrows
 `items` for the grid (e.g. filtering by a selected category-tree node) would
@@ -189,7 +194,7 @@ import { Card } from '@epam/ai-dial-catalog';
 />
 ```
 
-The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's fixed 2-line clamp; they appear normally in the About tab. Links render as real `<a>` elements and do not trigger the card's own `onClick` handler due to event stopPropagation on the description wrapper.
+The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's fixed 2-line clamp; they appear normally in the About tab. Links render as real `<a>` elements and activate independently without triggering the card's own `onClick` handler; clicks on other description content still open the card details.
 
 ### ListView
 
