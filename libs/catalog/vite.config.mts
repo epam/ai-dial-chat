@@ -40,7 +40,7 @@ export default defineConfig(() => ({
         'react',
         'react-dom',
         'react/jsx-runtime',
-        '@epam/ai-dial-ui-kit',
+        /^@epam\/ai-dial-ui-kit(?:\/|$)/,
         '@tabler/icons-react',
       ],
     },

@@ -95,6 +95,7 @@ export const Input: FC<InputProps> = ({
   chatSettings,
   toolsMenuItems,
   onToolToggle,
+  canRemoveTools = true,
   toolsMenuTitle,
   toolsBackLabel,
   toolsChipLabels,
@@ -280,13 +281,13 @@ export const Input: FC<InputProps> = ({
     setDismissedToolIds([]);
   }, [toolIdsSignature]);
 
-  const visibleTools = useMemo(
-    () =>
-      (toolsMenuItems ?? []).filter(
-        (tool) => tool.isSelected || !dismissedToolIds.includes(tool.id),
-      ),
-    [toolsMenuItems, dismissedToolIds],
-  );
+  const visibleTools = useMemo(() => {
+    const tools = toolsMenuItems ?? [];
+    if (!canRemoveTools) return tools;
+    return tools.filter(
+      (tool) => tool.isSelected || !dismissedToolIds.includes(tool.id),
+    );
+  }, [toolsMenuItems, dismissedToolIds, canRemoveTools]);
 
   const handleToolDismiss = useCallback(
     (toolId: string) => {
@@ -483,7 +484,13 @@ export const Input: FC<InputProps> = ({
                 isDisabled={isInputDisabled}
                 chatSettings={chatSettings}
                 extraMenuItems={dialFileSystemMenuItem}
-                toolsMenuItems={toolsMenuItems}
+                /*
+                 * The "Tools" submenu exists only to bring a dismissed chip
+                 * back. With removal off every chip is always on screen, so the
+                 * entry would be dead weight — and where tools are the menu's
+                 * only content, withholding them drops the `+` button entirely.
+                 */
+                toolsMenuItems={canRemoveTools ? toolsMenuItems : undefined}
                 onToolToggle={onToolToggle}
                 toolsMenuTitle={toolsMenuTitle}
                 toolsBackLabel={toolsBackLabel}
@@ -499,6 +506,7 @@ export const Input: FC<InputProps> = ({
                 items={visibleTools}
                 onToolToggle={onToolToggle}
                 onToolDismiss={handleToolDismiss}
+                canRemove={canRemoveTools}
                 removeLabel={toolsChipLabels?.removeLabel}
               />
             </div>

@@ -40,36 +40,29 @@ vi.mock('@epam/ai-dial-builder-form', () => ({
   ),
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', async () => {
-  const actual = await vi.importActual<typeof import('@epam/ai-dial-ui-kit')>(
-    '@epam/ai-dial-ui-kit',
-  );
-
-  return {
-    ...actual,
-    LazyMarkdownEditor: () =>
-      Promise.resolve({
-        MarkdownEditor: ({
-          value,
-          onChange,
-          placeholder,
-          id,
-        }: {
-          value?: string;
-          onChange?: (value: string) => void;
-          placeholder?: string;
-          id?: string;
-        }) => (
-          <textarea
-            id={id}
-            value={value}
-            placeholder={placeholder}
-            onChange={(event) => onChange?.(event.target.value)}
-          />
-        ),
-      }),
-  };
-});
+vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
+  LazyMarkdownEditor: () =>
+    Promise.resolve({
+      MarkdownEditor: ({
+        value,
+        onChange,
+        placeholder,
+        id,
+      }: {
+        value?: string;
+        onChange?: (value: string) => void;
+        placeholder?: string;
+        id?: string;
+      }) => (
+        <textarea
+          id={id}
+          value={value}
+          placeholder={placeholder}
+          onChange={(event) => onChange?.(event.target.value)}
+        />
+      ),
+    }),
+}));
 
 const renderEditor = (props?: Partial<ComponentProps<typeof PromptEditor>>) =>
   render(<PromptEditor onSubmit={vi.fn()} onCancel={vi.fn()} {...props} />);

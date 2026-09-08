@@ -45,6 +45,9 @@
     },
     {
       "path": "../../libs/toolset-editor/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/mcp-apps/tsconfig.lib.json"
     }
   ]
 }

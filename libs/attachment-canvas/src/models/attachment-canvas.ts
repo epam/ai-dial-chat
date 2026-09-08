@@ -115,6 +115,9 @@ export interface VisualizerCanvasContent {
   requestTimeout?: number;
 }
 
+/** Display mode an MCP App can ask the host to switch to via `ui/request-display-mode` — the MCP UI protocol's `inline`/`fullscreen`/`pip` union. */
+export type McpAppDisplayMode = NonNullable<McpUiHostContext['displayMode']>;
+
 /** Content payload for an MCP App's `ui://` resource, rendered in a sandboxed iframe via an isolated-origin sandbox proxy. */
 export interface McpAppCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
@@ -123,8 +126,6 @@ export interface McpAppCanvasContent {
   html: string;
   /** Isolated-origin URL of the MCP Apps sandbox-proxy page, resolved by the app layer from its own config. */
   sandboxUrl: string;
-  /** Name of the tool call that produced this resource, forwarded on every `onToolCall`. */
-  toolName: string;
   /** Arguments of the original tool call that produced this resource, passed to the mounted app so it renders that invocation immediately instead of an empty initial state. */
   toolInput?: Record<string, unknown>;
   /** Result of the original tool call that produced this resource, passed to the mounted app so it renders that invocation immediately instead of an empty initial state. */
@@ -133,6 +134,12 @@ export interface McpAppCanvasContent {
   hostContext?: McpUiHostContext;
   /** Forwards a `tools/call` request issued by the mounted app to the owning MCP session via the app layer. */
   onToolCall: (name: string, args: unknown) => Promise<CallToolResult>;
+  /** Handles the mounted app's `ui/open-link` request. Return `false` when the URL must not be opened — the app then receives an error result. When omitted, the renderer itself opens http(s) URLs in a new browser tab (other schemes are rejected). */
+  onOpenLink?: (url: string) => boolean | void;
+  /** Handles the mounted app's `ui/request-display-mode` request. Returns the mode actually applied, which may differ from the requested one; returning `undefined` (or omitting the callback) answers the app with the current mode. */
+  onRequestDisplayMode?: (mode: McpAppDisplayMode) => McpAppDisplayMode | void;
+  /** Re-fetches the resource and re-resolves the tool result from scratch, bypassing any cache the app layer keeps. Shows a reload action in the canvas header when provided; omit to hide it. */
+  onReload?: () => void;
 }
 
 /** Content payload for attachments whose format cannot be previewed. */
@@ -299,6 +306,8 @@ export interface AttachmentCanvasLabels {
   htmlViewSourceLabel?: string;
   /** Tooltip and `aria-label` for the toggle button when the source view is active (clicking switches back to rendered). Defaults to `'View rendered'`. */
   htmlViewRenderedLabel?: string;
+  /** Tooltip and accessible label for the MCP App reload button. Only shown when content type is `McpApp` and `content.onReload` is provided. Defaults to `'Reload'`. */
+  mcpAppReloadLabel?: string;
   /** Accessible name for the PDF viewer's floating thumbnails panel region. Defaults to `'Thumbnails'`. */
   pdfThumbnailsLabel?: string;
   /** Accessible label for the FAB button that opens the PDF thumbnails panel. Defaults to `'Show thumbnails'`. */

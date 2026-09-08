@@ -1415,7 +1415,7 @@ describe('ConversationStreamingService', () => {
       );
     });
 
-    it('finalizes as an error and releases the registry entry when the consumer abandons the stream mid-generation (e.g. client disconnect)', async () => {
+    it('finalizes as an error and releases the registry entry when the consumer is abandoned for a reason other than a relay terminal outcome (defensive backstop)', async () => {
       vi.spyOn(
         service['dialClient'].client,
         'getConversation',
@@ -1466,10 +1466,15 @@ describe('ConversationStreamingService', () => {
       );
 
       /*
-       * Mirrors ConversationController.streamCompletion abandoning its
-       * `for await` on client disconnect: `break` here triggers the JS
-       * runtime to call `.return()` on `stream`, the same way an early exit
-       * from the controller's consuming loop would.
+       * `ConversationController.streamCompletion` no longer abandons its
+       * consuming loop merely because the downstream response closed (see
+       * backend-owned-generation-persistence) — it keeps calling `.next()`
+       * to the generator's natural end regardless of disconnect. This test
+       * instead exercises the `finally` block's remaining, genuinely
+       * defensive purpose: some other caller (or an unexpected failure)
+       * abandons the generator before the relay reaches a terminal
+       * outcome. `break` here triggers the JS runtime to call `.return()`
+       * on `stream`, the same way any such abandonment would.
        */
       for await (const _chunk of stream) {
         break;
@@ -1491,7 +1496,7 @@ describe('ConversationStreamingService', () => {
       expect(partialSave.messages.at(-1)?.streamErrorMessage).toBe('');
     });
 
-    it('does not finalize twice when the relay reaches a normal terminal outcome', async () => {
+    it("reaches Done and finalizes exactly once when the consumer drains to the relay's natural terminal outcome — the same unconditional-drain path the controller now uses after the downstream response has detached (e.g. a client disconnect)", async () => {
       vi.spyOn(
         service['dialClient'].client,
         'getConversation',

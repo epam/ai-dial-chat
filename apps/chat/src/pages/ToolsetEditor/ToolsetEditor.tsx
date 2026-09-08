@@ -9,12 +9,15 @@ import {
   ToolsetCredentialsLevel,
   WithLogin,
 } from '@epam/ai-dial-chat-hooks';
-import { getDefaultToolsetForm, ToolsetEditor } from '@epam/ai-dial-toolset-editor';
 import type {
   ToolsetAuthActions,
   ToolsetAuthFormData,
   ToolsetEditorLabels,
   ToolsetFormData,
+} from '@epam/ai-dial-toolset-editor';
+import {
+  getDefaultToolsetForm,
+  ToolsetEditor,
 } from '@epam/ai-dial-toolset-editor';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -38,11 +41,11 @@ import {
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
+import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useUser } from '../../context/auth/UserContext';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
-import { listMcpToolNames } from '../../server-api/mcp-apps';
+import { mcpAppsApiClient } from '../../server-api/mcp-apps';
 import {
   createToolset,
   getToolset,
@@ -242,7 +245,7 @@ const ToolsetEditorPage: FC = () => {
   }, [config.dialCoreExternalUrl]);
 
   const listToolNames = useCallback(
-    (toolsetId: string) => listMcpToolNames(toolsetId, 'toolset'),
+    (toolsetId: string) => mcpAppsApiClient.listToolNames(toolsetId, 'toolset'),
     [],
   );
 
@@ -353,7 +356,9 @@ const ToolsetEditorPage: FC = () => {
         endpointPlaceholder: t(BasicI18nKeys.UrlPlaceholder),
         protocolLabel: t(ToolsetEditorI18nKeys.ProtocolLabel),
         allowedToolsLabel: t(ToolsetEditorI18nKeys.AllowedToolsLabel),
-        allowedToolsPlaceholder: t(ToolsetEditorI18nKeys.AllowedToolsPlaceholder),
+        allowedToolsPlaceholder: t(
+          ToolsetEditorI18nKeys.AllowedToolsPlaceholder,
+        ),
         allowedToolsSelectPlaceholder: t(
           ToolsetEditorI18nKeys.AllowedToolsSelectPlaceholder,
         ),

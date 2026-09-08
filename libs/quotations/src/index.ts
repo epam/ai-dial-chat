@@ -29,7 +29,11 @@ export { useCitationMarkdownComponents } from './hooks/useCitationMarkdownCompon
 export type { UseCitationMarkdownComponentsCallbacks } from './hooks/useCitationMarkdownComponents/useCitationMarkdownComponents';
 
 // Utils
-export { groupAnnotationsBySource } from './utils/group-annotations-by-source';
+export {
+  groupAnnotations,
+  groupAnnotationsByCitId,
+  groupAnnotationsBySource,
+} from './utils/group-annotations-by-source';
 export type { AnnotationGroup } from './utils/group-annotations-by-source';
 
 export {
@@ -42,6 +46,7 @@ export {
 export {
   injectCitationSentinels,
   replaceSentinelsInChildren,
+  stripCitTagsWhileStreaming,
 } from './utils/citation-injection';
 
 export {

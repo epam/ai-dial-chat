@@ -8,7 +8,7 @@ The backend owns conversation persistence across the generation lifecycle — sa
 
 ### Requirement: Backend persists the conversation across the generation lifecycle
 
-`ConversationStreamingService.streamCompletion` (`apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`, invoked via the `ConversationService` facade) SHALL own conversation persistence for a completion. The frontend MUST NOT call `saveConversation` during streaming. The backend SHALL save at the start of generation (user message + empty assistant placeholder), on successful completion (full assembled assistant message), and on stop/error/client-disconnect (the partial assistant message accumulated so far).
+`ConversationStreamingService.streamCompletion` (`apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`, invoked via the `ConversationService` facade) SHALL own conversation persistence for a completion. The frontend MUST NOT call `saveConversation` during streaming. The backend SHALL save at the start of generation (user message + empty assistant placeholder), on successful completion (full assembled assistant message), and on stop/error (the partial assistant message accumulated so far).
 
 A failure of the **start-state** save SHALL be logged as a warning and SHALL NOT abort the request: the stream still opens, and the terminal save that follows writes the conversation anyway. Losing the placeholder costs a resumable mid-flight view; refusing to stream because of it would cost the answer itself.
 
@@ -19,13 +19,12 @@ The terminal save SHALL distinguish how the generation ended:
 | Upstream reached `[DONE]` | assembled message, no marker | `Done` |
 | Upstream rejected the request | `streamErrorMessage` = DIAL Core text, or `''` when it gave none | `Error` |
 | The user pressed Stop | `wasStoppedByUser: true`, **no** `streamErrorMessage` | `Stopped` |
-| The client disconnected before the request handler finished consuming the stream (not a user Stop) | `streamErrorMessage: ''` | `Error` |
-| Aborted for any other reason | `streamErrorMessage: ''` | `Error` |
+| Aborted for any other reason (e.g. the relay itself threw before producing a result) | `streamErrorMessage: ''` | `Error` |
 | The relay itself threw | `streamErrorMessage` = the thrown error's message | `Error` |
 
 A user stop is deliberately not an error state: the frontend renders an empty stopped message with its "Stopped generating" label, which it can only do when no `streamErrorMessage` is present.
 
-The terminal save and registry release MUST run exactly once per generation regardless of *why* the generator stops iterating — including when the HTTP response consuming the stream closes early (client disconnect) and the controller's consuming loop is abandoned before the relay reaches `[DONE]`/error/stop. The generator SHALL guarantee this via its own cleanup (e.g. a `finally` around its relay loop), since an abandoned consumer cannot itself invoke the generator's terminal logic.
+The downstream HTTP connection closing (browser tab closed, page navigated away, refresh) is explicitly **not** one of the outcomes in this table — see "A closed downstream response does not alter generation persistence or outcome" below. The terminal save and registry release MUST still run exactly once per generation regardless of *why* the generator stops iterating, but the only ways the generator's consuming loop legitimately stops iterating are the relay reaching a terminal outcome (`[DONE]`/error/stop) or an unexpected exception; a closed downstream response is not, by itself, a reason for the consuming loop to stop. The generator SHALL guarantee the exactly-once terminal save/release via its own cleanup (e.g. a `finally` around its relay loop) for the exception case, since an abandoned consumer cannot itself invoke the generator's terminal logic.
 
 #### Scenario: Start state saved before streaming
 
@@ -52,11 +51,36 @@ The terminal save and registry release MUST run exactly once per generation rega
 - **WHEN** the start-state `saveConversation` rejects
 - **THEN** the failure is logged as a warning and the completion request proceeds to stream normally
 
-#### Scenario: Client disconnect mid-stream still finalizes and persists
+### Requirement: A closed downstream response does not alter generation persistence or outcome
 
-- **GIVEN** a generation is actively streaming and has not yet reached `[DONE]`, stop, or error
-- **WHEN** the client's HTTP connection closes (e.g. the browser tab is closed or navigates away) before the controller's consuming loop reaches the end of the stream
-- **THEN** the backend saves the partial assistant message accumulated so far with `streamErrorMessage: ''` (or `wasStoppedByUser: true` if the user had already pressed Stop), marks the generation `Error` (or `Stopped`), and releases the registry entry — exactly once, with no dependency on the 30-minute stale-entry sweep
+Closing, refreshing, or navigating away from the browser connection that opened `POST /api/v1/conversations/completions` SHALL have no effect on the generation's outcome or persistence. `ConversationController.streamCompletion` SHALL continue consuming `ConversationStreamingService.streamCompletion`'s async generator to its natural terminal outcome after the downstream HTTP response closes; it MUST NOT abort the generation's `AbortController` and MUST NOT stop iterating merely because the response closed. It SHALL stop writing to the closed response (and MUST NOT attempt any further `res.write`/`res.end` calls against it) but otherwise treats the generation exactly as if the original client were still connected.
+
+When the upstream stream subsequently reaches a normal terminal event (`[DONE]`, a provider error, or an explicit Stop received before the disconnect), the backend persists the outcome per the existing outcome table in "Backend persists the conversation across the generation lifecycle" — a disconnect never substitutes a different, disconnect-specific outcome. Reopening the conversation (in the same or a different browser tab/session) after the generation finishes SHALL show the complete persisted response, not a truncated or error-marked one caused by the earlier disconnect.
+
+This requirement applies only to `POST /api/v1/conversations/completions`. It does not apply to `POST /api/v1/client-channel/subscribe` (an ephemeral client subscription with no independent backend-owned lifecycle — see `client-channel-protocol`) or to `POST /api/v1/conversations/completions/attach` (an observer of an existing generation — see `generation-live-replay`), both of which correctly abort their own upstream work on disconnect because nothing else depends on that work continuing.
+
+#### Scenario: Browser tab closes before the upstream reaches a terminal event
+
+- **GIVEN** a generation is actively streaming and has received at least one chunk
+- **WHEN** the client's HTTP connection to `POST /conversations/completions` closes (tab closed, navigation to another page, refresh) before the upstream reaches `[DONE]`, an error, or an explicit Stop
+- **THEN** the backend keeps consuming the upstream stream unaffected, and no `AbortController` tied to the generation is aborted because of the closed response
+
+#### Scenario: No writes are attempted against a closed response
+
+- **GIVEN** the downstream response has closed while the generation is still streaming
+- **WHEN** further chunks are produced by the upstream relay
+- **THEN** the backend does not call `res.write` or `res.end` against the closed response for those chunks
+
+#### Scenario: The complete response is persisted and visible after disconnect
+
+- **GIVEN** the browser disconnected mid-stream as in the scenario above
+- **WHEN** the upstream subsequently reaches `[DONE]`
+- **THEN** the backend persists the full assembled assistant message (no `streamErrorMessage`, no `wasStoppedByUser`), releases the registry entry as `Done`, and reopening the conversation shows the complete response
+
+#### Scenario: Navigating between conversations does not stop a completion
+
+- **WHEN** a generation is active for conversation A and the user navigates to conversation B and back, or to an unrelated page in the SPA, before the generation finishes
+- **THEN** the generation for conversation A continues unaffected and completes normally
 
 ### Requirement: Generation finalizes on `[DONE]`, not on socket close
 

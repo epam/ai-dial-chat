@@ -3,12 +3,12 @@ import { EditorLayout } from '@epam/ai-dial-builder-form';
 import {
   Input,
   Label,
-  LazyMarkdownEditor,
   NeutralButton,
   PrimaryButton,
   Spinner,
   Textarea,
 } from '@epam/ai-dial-ui-kit';
+import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
  * it here, rather than eagerly from the host app's entry point, keeps this

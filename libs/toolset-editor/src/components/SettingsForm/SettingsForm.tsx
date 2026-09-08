@@ -3,13 +3,10 @@ import { Input, RadioGroup, Select, TagInput } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ToolsetTransportType } from '../../constants/toolsets';
-import type {
-  SettingsFormLabels,
-  SettingsFormProps,
-} from '../../models/settings-form-props';
+import type { SettingsFormProps } from '../../models/settings-form-props';
 import { isToolsetAuthValid } from '../../utils/toolsets';
 import { AuthSection } from '../AuthSection/AuthSection';
-import { ConnectMcpUrlContent } from '../ConnectMcpUrlContent/ConnectMcpUrlContent';
+import ConnectMcpUrlContent from '../ConnectMcpUrlContent/ConnectMcpUrlContent';
 
 /** Setup section form: endpoint, protocol, allowed tools, authentication block, and the Connect section. */
 export const SettingsForm: FC<SettingsFormProps> = ({
