@@ -917,4 +917,17 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1)
   SKILL_ARCHIVE_UPLOAD_MAX_BYTES?: number = 20_971_520;
+
+  /*
+   * Server-owned bound on how long an active generation may occupy the
+   * in-memory registry (see openspec/specs/generation-registry/spec.md),
+   * independent of the originating browser connection — a disconnect no
+   * longer aborts a generation, so this timer is what protects against a
+   * stalled upstream stream that never reaches a terminal event.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  MAX_GENERATION_DURATION_MS?: number = 1_800_000;
 }
