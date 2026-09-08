@@ -5,6 +5,7 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import {
   getConversationPath,
+  isConversationNotFoundError,
   safeDecodeURIComponent,
 } from '@epam/ai-dial-chat-hooks';
 import { generateUUID } from '@epam/ai-dial-chat-shared';
@@ -70,7 +71,10 @@ interface ConversationsContextType {
   generateConversationTitle: (id: string) => Promise<string>;
   /** Duplicate a conversation into the user's own bucket; returns the new conversation id. */
   duplicateConversation: (id: string) => Promise<string>;
-  /** Re-fetch the full conversation list from the server. */
+  /**
+   * Re-fetch the full conversation list in the background without hiding
+   * loaded items.
+   */
   refreshConversations: () => Promise<void>;
   /** Updates the sidebar title for a conversation without changing its id. */
   updateConversationTitle: (id: string, title: string) => void;
@@ -123,15 +127,12 @@ export const ConversationsProvider = ({
   }, [conversations]);
 
   const refreshConversations = useCallback(async () => {
-    setIsLoading(true);
     setError(null);
     try {
       const response = await listConversations();
       setConversations(response.items);
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
@@ -318,12 +319,23 @@ export const ConversationsProvider = ({
     let snapshot: ConversationListItemDto[] | undefined;
     setConversations((prev) => {
       snapshot = prev;
-      return prev.filter((c) => c.id !== id);
+      /*
+       * Matched the same way as removeConversationFromList: a caller passing a
+       * differently-encoded id would otherwise keep its stale row on a 404 —
+       * the exact staleness this path exists to clear.
+       */
+      return prev.filter((c) => !conversationIdsMatch(c.id, id));
     });
     const conversationPath = getConversationPath(normalizeConversationId(id));
     try {
       await apiDeleteConversation(conversationPath);
     } catch (err) {
+      /*
+       * Already gone upstream: the row was stale, so removing it is the
+       * intended outcome. Restoring it would leave the user with an entry
+       * that neither opens nor deletes.
+       */
+      if (isConversationNotFoundError(err)) return;
       if (snapshot) setConversations(snapshot);
       throw err;
     }

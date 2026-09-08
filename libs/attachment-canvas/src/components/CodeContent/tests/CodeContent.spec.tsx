@@ -61,4 +61,25 @@ describe('CodeContent', () => {
       expect(highlighted).toBeTruthy();
     });
   });
+
+  it('announces the pending state via role="status" while keeping the plain-text fallback visible', async () => {
+    render(
+      <CodeContent
+        content={{
+          type: AttachmentContentType.Code,
+          text: 'const x = 1;',
+          language: 'typescript',
+        }}
+        labels={{ loadingLabel: 'Loading syntax highlighting…' }}
+      />,
+    );
+
+    expect(screen.getByRole('status')).toBeTruthy();
+    expect(screen.getByText('const x = 1;')).toBeTruthy();
+    expect(screen.getByText('Loading syntax highlighting…')).toBeTruthy();
+
+    await waitFor(() => {
+      expect(screen.queryByRole('status')).toBeNull();
+    });
+  });
 });

@@ -13,12 +13,17 @@ let configurePdfWorkerPromise: Promise<void> | null = null;
 export const configurePdfWorker = (): Promise<void> => {
   if (!configurePdfWorkerPromise) {
     configurePdfWorkerPromise = (async () => {
-      const [{ GlobalWorkerOptions }, { default: pdfWorkerUrl }] =
-        await Promise.all([
-          import('pdfjs-dist'),
-          import('pdfjs-dist/build/pdf.worker.min.mjs?url'),
-        ]);
-      GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+      try {
+        const [{ GlobalWorkerOptions }, { default: pdfWorkerUrl }] =
+          await Promise.all([
+            import('pdfjs-dist'),
+            import('pdfjs-dist/build/pdf.worker.min.mjs?url'),
+          ]);
+        GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+      } catch (error) {
+        configurePdfWorkerPromise = null;
+        throw error;
+      }
     })();
   }
   return configurePdfWorkerPromise;
