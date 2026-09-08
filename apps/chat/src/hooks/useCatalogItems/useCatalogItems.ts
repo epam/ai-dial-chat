@@ -69,7 +69,7 @@ interface UseCatalogItemsResult {
   catalogItems: CatalogItem[];
   visibleCatalogItems: CatalogItem[];
   reconciledFilterTopics: Set<string>;
-  availableTabIds: string[];
+  availableTabIds: CatalogEntityType[];
   favorites: CatalogItem[];
   onFetchDetails: ReturnType<typeof useCatalogItemDetails>['onFetchDetails'];
   onLoadContentFile: ReturnType<

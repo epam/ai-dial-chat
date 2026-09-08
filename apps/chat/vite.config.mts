@@ -96,6 +96,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/chat-hooks/src/entry-points/utils.ts',
       ),
+      '@epam/ai-dial-chat-hooks/mcp-apps': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/mcp-apps.ts',
+      ),
       '@epam/ai-dial-chat-hooks': path.resolve(
         import.meta.dirname,
         '../../libs/chat-hooks/src/index.ts',
@@ -155,6 +159,10 @@ export default defineConfig(() => ({
       '@epam/ai-dial-attachment-input': path.resolve(
         import.meta.dirname,
         '../../libs/attachment-input/src/index.ts',
+      ),
+      '@epam/ai-dial-mcp-apps': path.resolve(
+        import.meta.dirname,
+        '../../libs/mcp-apps/src/index.ts',
       ),
       '@epam/ai-dial-share': path.resolve(
         import.meta.dirname,

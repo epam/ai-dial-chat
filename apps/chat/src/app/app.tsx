@@ -595,6 +595,7 @@ const App: FC = () => {
               pdfPageNumberLabel: t(
                 AttachmentCanvasI18nKeys.PdfPageNumberLabel,
               ),
+              mcpAppReloadLabel: t(ButtonsI18nKeys.Reload),
               pdfContentLoadingLabel: t(
                 AttachmentCanvasI18nKeys.PdfContentLoadingLabel,
               ),
