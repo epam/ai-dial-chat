@@ -690,13 +690,11 @@ describe('MarkdownRenderer', () => {
       url.startsWith('files/') ? `/dl/${url.slice('files/'.length)}` : url;
 
     it('leaves markdown image src unchanged when urlTransform is omitted', () => {
-      render(
-        <MarkdownRenderer content="![chart](files/bucket/chart.png)" />,
-      );
+      render(<MarkdownRenderer content="![chart](files/bucket/chart.png)" />);
 
-      expect(screen.getByRole('img', { name: 'chart' }).getAttribute('src')).toBe(
-        'files/bucket/chart.png',
-      );
+      expect(
+        screen.getByRole('img', { name: 'chart' }).getAttribute('src'),
+      ).toBe('files/bucket/chart.png');
     });
 
     it('rewrites markdown image src through urlTransform', () => {
@@ -707,9 +705,9 @@ describe('MarkdownRenderer', () => {
         />,
       );
 
-      expect(screen.getByRole('img', { name: 'chart' }).getAttribute('src')).toBe(
-        '/dl/bucket/chart.png',
-      );
+      expect(
+        screen.getByRole('img', { name: 'chart' }).getAttribute('src'),
+      ).toBe('/dl/bucket/chart.png');
     });
 
     it('rewrites markdown link href through urlTransform', () => {
@@ -720,9 +718,9 @@ describe('MarkdownRenderer', () => {
         />,
       );
 
-      expect(screen.getByRole('link', { name: 'report' }).getAttribute('href')).toBe(
-        '/dl/bucket/report.pdf',
-      );
+      expect(
+        screen.getByRole('link', { name: 'report' }).getAttribute('href'),
+      ).toBe('/dl/bucket/report.pdf');
     });
 
     it('rewrites raw HTML img src through urlTransform', () => {
@@ -733,9 +731,9 @@ describe('MarkdownRenderer', () => {
         />,
       );
 
-      expect(screen.getByRole('img', { name: 'chart' }).getAttribute('src')).toBe(
-        '/dl/bucket/chart.png',
-      );
+      expect(
+        screen.getByRole('img', { name: 'chart' }).getAttribute('src'),
+      ).toBe('/dl/bucket/chart.png');
     });
 
     it('leaves non-file URLs unchanged', () => {
@@ -746,9 +744,9 @@ describe('MarkdownRenderer', () => {
         />,
       );
 
-      expect(screen.getByRole('img', { name: 'logo' }).getAttribute('src')).toBe(
-        'https://example.com/logo.png',
-      );
+      expect(
+        screen.getByRole('img', { name: 'logo' }).getAttribute('src'),
+      ).toBe('https://example.com/logo.png');
     });
 
     it('still strips javascript: URLs after the host rewrite', () => {
@@ -759,7 +757,9 @@ describe('MarkdownRenderer', () => {
         />,
       );
 
-      expect(screen.getByText('x').closest('a')?.getAttribute('href')).toBe('');
+      expect(
+        screen.getByText('x', { selector: 'a' }).getAttribute('href'),
+      ).toBe('');
     });
   });
 });
