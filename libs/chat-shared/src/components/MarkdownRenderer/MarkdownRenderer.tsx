@@ -22,6 +22,7 @@ import styles from './MarkdownRenderer.module.scss';
 import { MarkdownMathBlock } from './Math/MarkdownMathBlock';
 import {
   MarkdownTable,
+  type MarkdownTableActionLabels,
   type MarkdownTableClassNames,
 } from './Table/MarkdownTable';
 import tableStyles from './Table/MarkdownTable.module.scss';
@@ -90,6 +91,8 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
 export interface MarkdownRendererProps {
   /** Raw markdown string to render. */
   content: string;
+  /** Classes applied to the renderer root. */
+  containerClassName?: string;
   /** When true, appended content is revealed gradually for smoother streaming updates. */
   isStreaming?: boolean;
   /** Reveal speed used while `isStreaming` is true. Defaults to 120 characters per second. */
@@ -116,6 +119,11 @@ export interface MarkdownRendererProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Color overrides applied as CSS custom properties. */
   colors?: MarkdownRendererColors;
+  /** Localized labels for Markdown table actions. Supplying them enables the action bar. */
+  tableActionLabels?: MarkdownTableActionLabels;
+  /** Filename used when downloading a Markdown table as CSV. Defaults to `'table.csv'`. */
+  tableDownloadFilename?: string;
+  tableOnOpenInCanvas?: (markdown: string) => void;
   /** Accessible label for a table's horizontally scrollable region. Defaults to `'Scrollable table'`. */
   tableScrollRegionAriaLabel?: string;
   /** Accessible label for a block formula's horizontally scrollable region. Defaults to `'Scrollable formula'`. */
@@ -377,6 +385,9 @@ interface MarkdownComponentOptions {
   codeBlockCopyLabel?: string;
   codeBlockCopiedLabel?: string;
   codeBlockTheme?: CodeBlockTheme;
+  tableActionLabels?: MarkdownTableActionLabels;
+  tableDownloadFilename?: string;
+  tableOnOpenInCanvas?: (markdown: string) => void;
   tableScrollRegionAriaLabel?: string;
   mathScrollRegionAriaLabel?: string;
 }
@@ -388,6 +399,9 @@ const buildMarkdownComponents = (
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
     codeBlockTheme,
+    tableActionLabels,
+    tableDownloadFilename,
+    tableOnOpenInCanvas,
     tableScrollRegionAriaLabel,
     mathScrollRegionAriaLabel,
   }: MarkdownComponentOptions,
@@ -509,6 +523,10 @@ const buildMarkdownComponents = (
   table: ({ children }) => (
     <MarkdownTable
       classNames={cn}
+      actionLabels={tableActionLabels}
+      downloadFilename={tableDownloadFilename}
+      onOpenInCanvas={tableOnOpenInCanvas}
+      isStreaming={isStreaming}
       scrollRegionAriaLabel={tableScrollRegionAriaLabel}
     >
       {children}
@@ -570,6 +588,7 @@ const buildMarkdownComponents = (
 export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
   ({
     content,
+    containerClassName,
     isStreaming,
     streamCharactersPerSecond,
     classNames = EMPTY_CLASS_NAMES,
@@ -580,6 +599,9 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     codeBlockCopiedLabel,
     codeBlockTheme,
     colors,
+    tableActionLabels,
+    tableDownloadFilename,
+    tableOnOpenInCanvas,
     tableScrollRegionAriaLabel,
     mathScrollRegionAriaLabel,
   }) => {
@@ -666,6 +688,9 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
           codeBlockCopyLabel,
           codeBlockCopiedLabel,
           codeBlockTheme,
+          tableActionLabels,
+          tableDownloadFilename,
+          tableOnOpenInCanvas,
           tableScrollRegionAriaLabel,
           mathScrollRegionAriaLabel,
         }),
@@ -678,6 +703,9 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
         codeBlockCopyLabel,
         codeBlockCopiedLabel,
         codeBlockTheme,
+        tableActionLabels,
+        tableDownloadFilename,
+        tableOnOpenInCanvas,
         tableScrollRegionAriaLabel,
         mathScrollRegionAriaLabel,
         components,
@@ -693,7 +721,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     }
 
     return (
-      <div style={cssVars}>
+      <div style={cssVars} className={containerClassName}>
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
           rehypePlugins={effectiveRehypePlugins}

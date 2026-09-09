@@ -8,10 +8,9 @@ import { Injectable, Logger, PayloadTooLargeException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import archiver from 'archiver';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
-import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
-import { toRelativePath } from '../dial-resource-path.util';
+import { encodeDialFilePath, toRelativePath } from '../dial-resource-path.util';
 import type { ArchiveItemDto } from '../dto/download-archive.dto';
 import { ArchiveItemNodeType } from '../dto/download-archive.dto';
 import type { ExpandedFile } from '../listing/files-listing.service';
@@ -417,7 +416,7 @@ export class FilesArchiveDownloadService {
         response,
       } = (await this.dialClient.client.downloadFile(
         file.bucket,
-        encodeDialResourcePath(file.path),
+        encodeDialFilePath(file.path),
         {
           headers: getBearerAuthHeaders(at),
           parseAs: 'stream',

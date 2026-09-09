@@ -123,9 +123,15 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,
+    tableCopyCsvLabel,
+    tableCopyTxtLabel,
+    tableCopyMarkdownLabel,
+    tableCopiedLabel,
+    tableDownloadCsvLabel,
   } = {},
   styles: stylesProp,
   codeBlockTheme,
+  tableDownloadFilename,
   loadPdf,
   hidePdfToolbar = false,
   configurePdfWorker,
@@ -212,6 +218,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
       case AttachmentContentType.Code:
       case AttachmentContentType.Html:
         return 'h-full overflow-hidden';
+      case AttachmentContentType.Markdown:
+      case AttachmentContentType.MarkdownTable:
+        return 'flex h-full min-h-0 flex-col overflow-hidden p-4';
       default:
         return 'h-full overflow-auto p-4';
     }
@@ -259,7 +268,34 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             content={content.text}
             isStreaming={false}
             codeBlockTheme={codeBlockTheme}
-            classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
+            containerClassName="flex h-full min-h-0 flex-col"
+            classNames={{
+              ...DEFAULT_MARKDOWN_CLASS_NAMES,
+              tableWrapper: 'my-0 max-h-full',
+              tableScrollContainer: 'max-h-full',
+            }}
+          />
+        );
+      case AttachmentContentType.MarkdownTable:
+        return (
+          <MarkdownRenderer
+            content={content.text}
+            isStreaming={false}
+            codeBlockTheme={codeBlockTheme}
+            containerClassName="flex h-full min-h-0 flex-col"
+            classNames={{
+              ...DEFAULT_MARKDOWN_CLASS_NAMES,
+              tableWrapper: 'my-0 max-h-full',
+              tableScrollContainer: 'max-h-full',
+            }}
+            tableActionLabels={{
+              copyCsvLabel: tableCopyCsvLabel,
+              copyTxtLabel: tableCopyTxtLabel,
+              copyMarkdownLabel: tableCopyMarkdownLabel,
+              copiedLabel: tableCopiedLabel,
+              downloadCsvLabel: tableDownloadCsvLabel,
+            }}
+            tableDownloadFilename={tableDownloadFilename}
           />
         );
       case AttachmentContentType.Json:
@@ -432,6 +468,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     htmlFrameBlockedLabel,
     htmlOpenInNewTabLabel,
     isHtmlSourceView,
+    tableDownloadFilename,
     loadPdf,
     hidePdfToolbar,
     configurePdfWorker,
@@ -449,6 +486,11 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     PdfContent,
     pdfRetryKey,
     handleRetryPdf,
+    tableCopyCsvLabel,
+    tableCopyTxtLabel,
+    tableCopyMarkdownLabel,
+    tableCopiedLabel,
+    tableDownloadCsvLabel,
   ]);
 
   return (

@@ -42,7 +42,9 @@ import { AvatarPickerModal } from '@epam/ai-dial-deployment-creation-form';
   onAttach={(result) => {
     const [file] = result.files;
     const attachment = file
-      ? dialFileToAttachment(file, bucket, { resolvePreviewUrl: resolveCatalogIconUrl })
+      ? dialFileToAttachment(file, bucket, {
+          resolvePreviewUrl: resolveCatalogIconUrl,
+        })
       : null;
     if (attachment?.url) handleChange({ iconUrl: attachment.url });
     setIsAvatarPickerOpen(false);

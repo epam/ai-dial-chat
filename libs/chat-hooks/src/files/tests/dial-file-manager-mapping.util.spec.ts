@@ -176,6 +176,61 @@ describe('buildFromCache', () => {
       buildFromCache(new Map(), new Map(), 'missing/', '/My files', 'root'),
     ).toEqual([]);
   });
+
+  it('keeps percent escapes that are part of the name from DIAL Core', () => {
+    const cache = new Map<string, ListFilesItemDto[]>([
+      [
+        '',
+        [
+          {
+            name: 'a%20b.pdf',
+            path: 'files/user-bucket/a%2520b.pdf',
+            folderId: 'user-bucket',
+            nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+            bucket: 'user-bucket',
+          },
+        ],
+      ],
+    ]);
+
+    const [file] = buildFromCache(cache, new Map(), '', '/My files', 'root');
+    expect(file.name).toBe('a%20b.pdf');
+    expect(file.path).toBe('/My files/a%20b.pdf');
+  });
+
+  it('derives the child cache key from the undecoded folder name', () => {
+    const cache = new Map<string, ListFilesItemDto[]>([
+      [
+        '',
+        [
+          {
+            name: 'a%2Fb',
+            path: 'files/user-bucket/a%252Fb/',
+            folderId: 'user-bucket',
+            nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+            bucket: 'user-bucket',
+          },
+        ],
+      ],
+      [
+        'a%2Fb/',
+        [
+          {
+            name: 'q1.pdf',
+            path: 'files/user-bucket/a%252Fb/q1.pdf',
+            folderId: 'user-bucket',
+            nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+            bucket: 'user-bucket',
+          },
+        ],
+      ],
+    ]);
+
+    const [folder] = buildFromCache(cache, new Map(), '', '/My files', 'root');
+    expect(folder.name).toBe('a%2Fb');
+    expect(folder.items).toHaveLength(1);
+    expect(folder.items?.[0].path).toBe('/My files/a%2Fb/q1.pdf');
+  });
 });
 
 describe('mergeCreatedFolderIntoCache', () => {
@@ -286,6 +341,20 @@ describe('mapSearchItem', () => {
     const result = mapSearchItem(item, 'user-bucket', 'My files');
     expect(result.parentPath).toBe('/My files');
     expect(result.path).toBe('/My files/report.pdf');
+  });
+
+  it('decodes the url-derived parent path while keeping the name verbatim', () => {
+    const item: ListFilesItemDto = {
+      name: 'a%20b.pdf',
+      path: 'files/user-bucket/New%20folder/a%2520b.pdf',
+      folderId: 'user-bucket',
+      nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+      bucket: 'user-bucket',
+      url: 'files/user-bucket/New%20folder/a%2520b.pdf',
+    };
+    const result = mapSearchItem(item, 'user-bucket', 'My files');
+    expect(result.parentPath).toBe('/My files/New folder');
+    expect(result.path).toBe('/My files/New folder/a%20b.pdf');
   });
 });
 

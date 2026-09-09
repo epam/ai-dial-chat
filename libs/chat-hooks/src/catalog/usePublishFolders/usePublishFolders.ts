@@ -10,7 +10,6 @@ import {
   type PublishFolderNode,
 } from '@epam/ai-dial-publish-panel';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { safeDecodeURI } from '../../shared/string-utils';
 
 /**
  * Folder paths that deny publish write access under the current heuristic.
@@ -37,7 +36,8 @@ const buildFolderNodes = (
   return items
     .filter((item) => item.nodeType === ListFilesItemDtoNodeTypeEnum.Folder)
     .map((item): PublishFolderNode => {
-      const name = safeDecodeURI(item.name);
+      // DIAL Core returns `name` already decoded; only `url` is percent-encoded.
+      const name = item.name;
       const path = [...parentPath, name];
       const childApiPath = `${apiPath}${item.name}/`;
       const children = cache.has(childApiPath)
