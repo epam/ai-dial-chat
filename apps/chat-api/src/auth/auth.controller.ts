@@ -45,9 +45,17 @@ import { AuthCallbackQueryDto } from './dto/auth-callback.query.dto';
 import { LoginQueryDto } from './dto/login-query.dto';
 import { ProviderIdParamDto } from './dto/provider-id-param.dto';
 import { ProviderRegistryService } from './providers/provider-registry.service';
-import type { ProviderConfig } from './providers/provider.types';
+import {
+  AuthProviderId,
+  type ProviderConfig,
+} from './providers/provider.types';
 import { SessionService } from './session/session.service';
-import type { SessionPayload, SessionUser } from './session/session.types';
+import {
+  getJobTitleClaim,
+  JOB_TITLE_CLAIM,
+  type SessionPayload,
+  type SessionUser,
+} from './session/session.types';
 import { resolveCallbackUrl } from './utils/callback-url.util';
 
 @ApiTags('auth')
@@ -345,6 +353,38 @@ export class AuthController {
     this.logger.debug(
       `callback() rolesClaim="${rolesClaim}" resolved=${rolesClaimValue !== undefined}`,
     );
+
+    /*
+     * The legacy Keycloak provider read job_title from UserInfo. Some realms
+     * expose it there without including it in either token. Copy only this
+     * optional claim, and only when the profile belongs to the ID-token user.
+     */
+    if (
+      providerConfig.id === AuthProviderId.Keycloak &&
+      !getJobTitleClaim(filteredClaims) &&
+      tokenSet.access_token &&
+      client.issuer.metadata.userinfo_endpoint
+    ) {
+      try {
+        const userInfo = await client.userinfo(tokenSet.access_token);
+        const subjectMatches = userInfo.sub === claims.sub;
+        const jobTitle = subjectMatches
+          ? getJobTitleClaim(userInfo)
+          : undefined;
+        if (jobTitle) {
+          filteredClaims[JOB_TITLE_CLAIM] = jobTitle;
+        }
+        if (!subjectMatches) {
+          this.logger.warn(
+            'job-title: userinfo subject mismatch; ignoring job title',
+          );
+        }
+      } catch {
+        this.logger.warn(
+          'job-title: userinfo lookup failed; continuing without job title',
+        );
+      }
+    }
 
     const accessToken = tokenSet.access_token ?? '';
     let bucket = '';

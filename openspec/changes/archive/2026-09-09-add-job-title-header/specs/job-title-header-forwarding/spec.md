@@ -11,8 +11,37 @@
 
 #### Scenario: Provider's ID token omits job title
 
-- **WHEN** a user completes login and the ID token has no `job_title` claim
+- **WHEN** a user completes login and neither the ID token nor an applicable Keycloak UserInfo fallback supplies a usable `job_title` claim
 - **THEN** the session's `claims` does not include a `job_title` key, and reading it from `SessionUser.claims` yields no value
+
+### Requirement: Keycloak can supply job title through UserInfo
+
+When a Keycloak ID token has no non-empty string `job_title`, the callback SHALL
+request UserInfo through the existing OIDC client if an access token and a
+discovered UserInfo endpoint are available. It SHALL copy only a non-empty
+string `job_title`, and only after matching UserInfo's `sub` to the validated
+ID-token subject. This SHALL NOT add UserInfo requests for other providers.
+
+#### Scenario: Job title is available only in UserInfo
+
+- **WHEN** Keycloak UserInfo returns a matching `sub` and string `job_title`
+  while both tokens omit the claim
+- **THEN** the job title is stored in the session and exposed through
+  `GET /api/v1/auth/me` and existing outbound header forwarding
+- **AND** roles and unrelated profile fields are not copied from UserInfo
+
+#### Scenario: An ID-token job title already exists
+
+- **WHEN** the ID token contains a non-empty string `job_title`
+- **THEN** that value is preserved and UserInfo is not requested
+
+#### Scenario: UserInfo cannot supply a trusted usable value
+
+- **WHEN** the endpoint or access token is absent, lookup fails, the subject
+  differs or is missing, or the returned job title is missing, empty, or not a string
+- **THEN** no job title is copied from UserInfo and login still succeeds
+- **AND** lookup errors and subject mismatches are logged without response
+  payloads, claim values, or credentials
 
 ### Requirement: Header-token authenticated callers forward job title from unfiltered claims
 
@@ -81,7 +110,7 @@ The `GET /api/v1/deployments` endpoint's single underlying DIAL Core `listDeploy
 
 ### Requirement: No cross-cutting behavior change beyond the new header
 
-This capability SHALL NOT change any REST endpoint path, HTTP method, request/response DTO, OpenAPI operation, generated SDK client shape, status code, per-route rate limit, authorization/role requirement, cache key or TTL, log content, or user-visible UI/i18n surface. It affects only: (1) which OIDC claims the session stores, and (2) one additional outbound header on the five DIAL Core request types listed above.
+This capability SHALL NOT change any REST endpoint path, HTTP method, request/response DTO, OpenAPI operation, generated SDK client shape, status code, per-route rate limit, authorization/role requirement, cache key or TTL, or user-visible UI/i18n surface. It affects only: (1) which OIDC claims the session stores, including the Keycloak UserInfo fallback, and (2) one additional outbound header on the five DIAL Core request types listed above. UserInfo failures and subject mismatches produce warnings without exposing claim values or credentials.
 
 #### Scenario: OpenAPI contract is unchanged
 

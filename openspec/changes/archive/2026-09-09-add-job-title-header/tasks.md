@@ -38,3 +38,25 @@
 - [x] 7.4 Run `npm exec nx run chat-api:lint`
 - [x] 7.5 Run `npm exec nx run chat-api:test` (full suite)
 - [x] 7.6 Run `npm run validate:docs` and confirm no new failures are introduced by this change (pre-existing unrelated failure noted, not caused by this change)
+
+## 8. Restore the Keycloak UserInfo source
+
+- [x] 8.1 Reproduce UserInfo-only job title loss in
+  `apps/chat-api/src/auth/auth.controller.spec.ts` with callback → cookie → `/auth/me`
+- [x] 8.2 Add a Keycloak-only UserInfo fallback in `auth.controller.ts`, matching
+  subjects and copying only `job_title`; preserve login on optional lookup failure
+- [x] 8.3 Cover ID-token precedence, invalid/missing titles, mismatched/missing
+  subjects, lookup failure, absent endpoint, and other-provider behavior
+- [x] 8.4 Update backend/auth docs and the login diagram; run auth regression
+  tests, the backend suite and lint, and `npm run validate:docs`
+  - Verification: regression reproduced before the fix; all 50 auth tests and
+    all 169 backend test files / 2887 tests passed after it; lint passed.
+    Regenerated the login SVG with Mermaid CLI. Docs validation retains the
+    pre-existing unexported `useGridEditingScroll` import in
+    `libs/chat-hooks/README.md:1161`.
+    `chat-api:typecheck` fails on existing source/declaration errors; a
+    TypeScript compiler comparison of app sources with the modified files
+    overlaid from `HEAD` produces identical diagnostics and no auth-controller
+    errors. These unrelated typecheck/docs failures remain outside this fix.
+- [x] 8.5 Remove temporary job-title debug logging and its documentation after
+  confirming UserInfo capture and outbound header presence.

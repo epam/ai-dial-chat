@@ -6,6 +6,9 @@ The previous Next.js chat (`development-old`) sent the caller's job title to DIA
 
 - Add `job_title` to the OIDC claims allowlist captured on login (`AuthController.callback()`), so it is stored on the encrypted session (`SessionPayload.claims` / `SessionUser.claims`) alongside the existing allowlisted claims.
 - Add a `getJobTitleClaim(claims)` helper that safely reads a string `job_title` value out of `SessionUser.claims`.
+- Restore the legacy Keycloak UserInfo source when the ID token lacks a usable
+  job title; copy only that claim after matching the UserInfo and ID-token
+  subjects. Lookup failures leave this optional value unset without blocking login.
 - Add a `buildJobTitleHeaders(jobTitle)` helper (`X-JOB-TITLE`, percent-encoded via the existing `encodeHeaderValue`) alongside the existing `buildConversationIdHeaders`, for spreading into a DIAL Core call's headers.
 - Forward the caller's job title as `X-JOB-TITLE` on the same five DIAL Core request types the old chat sent it on:
   - chat completion (both the Chat Completions and Responses API generation paths)
