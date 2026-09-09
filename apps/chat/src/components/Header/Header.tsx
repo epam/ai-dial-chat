@@ -65,6 +65,18 @@ const Header: FC<Props> = ({
       )}
     >
       <div className="flex items-center gap-1 ps-3">
+        {!isNavigationMenuHidden && (
+          <GhostIconButton
+            icon={
+              <IconMenu2
+                size={DIAL_ICON_SIZE.LG}
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
+            aria-label={t(NavigationI18nKeys.OpenMenu)}
+            onClick={onMenuToggle}
+          />
+        )}
         {onConversationPanelToggle != null &&
           isConversationPanel &&
           isConversationsPanelToggleEnabled && (
@@ -87,7 +99,7 @@ const Header: FC<Props> = ({
             />
           )}
         {onNewChat != null &&
-          isConversationPanel &&
+          isConversationRoute &&
           !isNewConversationHidden && (
             <div
               className={mergeClasses(
@@ -115,18 +127,6 @@ const Header: FC<Props> = ({
               />
             </div>
           )}
-        {!isNavigationMenuHidden && (
-          <GhostIconButton
-            icon={
-              <IconMenu2
-                size={DIAL_ICON_SIZE.LG}
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
-            }
-            aria-label={t(NavigationI18nKeys.OpenMenu)}
-            onClick={onMenuToggle}
-          />
-        )}
       </div>
       <Logo />
       <div className="flex justify-end pe-3">
