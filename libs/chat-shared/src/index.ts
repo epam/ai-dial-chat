@@ -36,6 +36,7 @@ export * from './constants/mime-types';
 export * from './constants/icon';
 export * from './constants/dial';
 export * from './constants/tag-input';
+export * from './constants/resizable-fields';
 
 export * from './components/DeploymentIcon/DeploymentIcon';
 export * from './components/InitialsAvatar/InitialsAvatar';

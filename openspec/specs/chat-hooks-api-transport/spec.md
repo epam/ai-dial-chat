@@ -56,7 +56,7 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 - **THEN** it returns the raw `Response` obtained via the generated client's `Raw` method, unconsumed
 
 #### Scenario: `apps/chat` composes the factory with its own singleton
-- **WHEN** `apps/chat/src/server-api/files.api.ts` is inspected after this change
+- **WHEN** `apps/chat/src/server-api/files.api.ts` is inspected
 - **THEN** it calls `createFilesApiClient` with the app's configured `filesApi` singleton and its own `uploadFileWithProgress`, and re-exports the returned functions under their existing names so `dial-files-api.adapter.ts` and `usePublishFolders.ts` require no changes
 
 ### Requirement: Upload-with-progress is a factory over an injected XHR factory and host capabilities
@@ -132,7 +132,7 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 - **THEN** the returned promise rejects, allowing the caller (`resumeIfAwaitingGeneration`) to fall back to `watchConversation`
 
 #### Scenario: `apps/chat` composes the concrete transport
-- **WHEN** `apps/chat/src/utils/conversation-stream-transport.ts` is inspected after this change
+- **WHEN** `apps/chat/src/utils/conversation-stream-transport.ts` is inspected
 - **THEN** it supplies `attachToGeneration` backed by `apps/chat/src/server-api/chat-stream.api.ts`'s implementation, which issues a raw `fetch POST` against the app's configured completions-attach endpoint with `credentials: 'include'` and the current CSRF token, matching the existing `streamCompletion`/`watchConversation` implementation pattern in that module
 
 ### Requirement: API error and trace parsing are host-agnostic public exports

@@ -32,6 +32,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   children,
   styles: panelStyles,
   resizable,
+  isOverlay = false,
   defaultWidth = 360,
   minWidth = 280,
   maxWidth = 600,
@@ -121,6 +122,43 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   const hasFullWidthClass = className?.includes('w-full');
 
   /*
+   * An overlay panel keeps its full size in both states and only moves, so no
+   * inline width may be applied - a width animating towards 0 would reflow the
+   * header actions and the list rows on every frame of the transition.
+   */
+  const shouldSetInlineWidth = !isOverlay && !hasFullWidthClass;
+
+  /*
+   * Resting positions of an overlay panel. A closed one leaves through the edge
+   * it is anchored to, which flips with the writing direction; the open state
+   * declares translate-x-0 explicitly so a transform is present in both states
+   * and the browser has two transform lists to interpolate between.
+   */
+  const getOverlayTransformClass = () => {
+    if (isOpen) {
+      return 'translate-x-0';
+    }
+    return orientation === SidebarOrientation.Left
+      ? 'ltr:-translate-x-full rtl:translate-x-full'
+      : 'ltr:translate-x-full rtl:-translate-x-full';
+  };
+
+  /*
+   * Only one property animates per mode, so the transition-property utility
+   * is never left unset - the CSS default (`all`) would otherwise animate
+   * every computed change, including the ones a resize drag makes per frame.
+   */
+  const getTransitionClass = () => {
+    if (isOverlay) {
+      return 'transition-transform duration-200 ease-in-out motion-reduce:transition-none';
+    }
+    if (isResizing) {
+      return undefined;
+    }
+    return 'transition-[width] duration-200 ease-in-out motion-reduce:transition-none';
+  };
+
+  /*
    * A Left-anchored panel sits next to the navigation rail with no divider
    * of its own on that edge; add one (reusing the same --sb-border /
    * --stroke-tertiary token the wrapper's border-color already resolves to)
@@ -151,20 +189,25 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
 
   return (
     <div
-      style={
-        hasFullWidthClass
-          ? undefined
-          : {
-              width: panelWidth,
-            }
-      }
+      style={shouldSetInlineWidth ? { width: panelWidth } : undefined}
       className={mergeClasses(
         'h-full flex-shrink-0 gap-3 overflow-hidden shadow-sm',
         orientation === SidebarOrientation.Left &&
           '[clip-path:inset(-24px_-24px_-24px_0)] rtl:[clip-path:inset(-24px_0_-24px_-24px)]',
-        !isResizing && 'transition-[width] duration-200 ease-in-out',
-        isOpen && 'relative z-50',
+        getTransitionClass(),
+        /*
+         * The stacking context has to outlive the close transition. Tying it to
+         * isOpen dropped the panel a layer the moment the animation started, so
+         * the main content painted over the still-visible panel for its whole
+         * duration.
+         */
+        'relative z-50',
         className,
+        /*
+         * Applied after className so an overlay panel keeps its full width in
+         * both states: it slides out of view instead of collapsing in place.
+         */
+        isOverlay && mergeClasses('w-full', getOverlayTransformClass()),
         styles.panel,
       )}
     >
@@ -189,7 +232,6 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
           className={mergeClasses(
             styles.wrapper,
             'flex h-full w-full flex-col gap-3',
-            isOpen && styles.appear,
             navDividerClass,
             typography?.fontClassName,
           )}
@@ -198,14 +240,12 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
             title={title}
             className={headerClassName}
             titleClassName={titleClassName}
-            leftActions={isOpen && leftActions}
+            leftActions={leftActions}
             rightActions={
-              isOpen && (
-                <>
-                  {rightActions}
-                  {closeButton}
-                </>
-              )
+              <>
+                {rightActions}
+                {closeButton}
+              </>
             }
           />
           <div

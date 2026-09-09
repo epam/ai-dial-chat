@@ -32,6 +32,10 @@ const TABLE_ACTION_LABELS = {
   downloadCsvLabel: 'Download as CSV',
 };
 
+const ALIGNED_TABLE_MARKDOWN = `| Right | Plain | Left | Center |
+| ---: | --- | :--- | :---: |
+| 1 | 2 | 3 | 4 |`;
+
 const FENCED_TS_MARKDOWN = `\`\`\`typescript
 const x = 1;
 \`\`\``;
@@ -53,6 +57,13 @@ const POEM_MARKDOWN = 'Line one\nLine two\nLine three';
 const TWO_PARAGRAPHS_MARKDOWN = 'Paragraph one.\n\nParagraph two.';
 
 const LIST_MARKDOWN = '- Item one\n- Item two\n- Item three';
+
+/* Runs past nine so the markers that overflowed a too-narrow start padding
+   (issue #8655) are the ones under test. */
+const ORDERED_LIST_MARKDOWN = Array.from(
+  { length: 17 },
+  (_, index) => `${index + 1}. Item ${index + 1}`,
+).join('\n');
 
 const DISPLAY_MATH_MARKDOWN = `Einstein's field equations:
 
@@ -201,6 +212,36 @@ describe('MarkdownRenderer', () => {
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeTruthy();
     // Only the header row exists — no body rows were rendered.
     expect(screen.getAllByRole('row')).toHaveLength(1);
+  });
+
+  it('applies GFM column alignment to header and body cells', () => {
+    render(<MarkdownRenderer content={ALIGNED_TABLE_MARKDOWN} />);
+
+    const alignmentByColumn = [
+      { header: 'Right', cell: '1', expected: 'text-end' },
+      { header: 'Left', cell: '3', expected: 'text-start' },
+      { header: 'Center', cell: '4', expected: 'text-center' },
+    ];
+
+    alignmentByColumn.forEach(({ header, cell, expected }) => {
+      const columnHeader = screen.getByRole('columnheader', { name: header });
+      const bodyCell = screen.getByRole('cell', { name: cell });
+
+      expect(columnHeader.className).toContain(expected);
+      expect(bodyCell.className).toContain(expected);
+    });
+
+    /* An explicit alignment replaces the header default rather than stacking
+       on it, and an unaligned column keeps the inherited start alignment. */
+    expect(
+      screen.getByRole('columnheader', { name: 'Center' }).className,
+    ).not.toContain('text-start');
+    expect(
+      screen.getByRole('columnheader', { name: 'Plain' }).className,
+    ).toContain('text-start');
+    expect(screen.getByRole('cell', { name: '2' }).className).not.toMatch(
+      /text-(start|center|end)/,
+    );
   });
 
   it('merges table class overrides with the scrolling defaults', () => {
@@ -393,6 +434,33 @@ describe('MarkdownRenderer', () => {
     expect(firstParagraph.querySelectorAll('br').length).toBe(0);
     // eslint-disable-next-line testing-library/no-node-access
     expect(secondParagraph.querySelectorAll('br').length).toBe(0);
+  });
+
+  it('gives lists start padding wide enough for a multi-digit marker', () => {
+    const { rerender } = render(<MarkdownRenderer content={LIST_MARKDOWN} />);
+
+    /* An `outside` marker is painted in this padding — too little and a
+       two-digit `17.` is clipped by whichever ancestor scrolls. The value is
+       in `em` so it tracks the font size the host sets. */
+    expect(screen.getByRole('list').className).toContain('ps-[2em]');
+
+    rerender(<MarkdownRenderer content={ORDERED_LIST_MARKDOWN} />);
+
+    const orderedList = screen.getByRole('list');
+    expect(orderedList.className).toContain('ps-[2em]');
+    expect(orderedList.className).toContain('list-decimal');
+    // Both list kinds share the indent, so a document mixing them stays aligned.
+    expect(orderedList.className).not.toContain('ps-5');
+  });
+
+  it('lets a caller override the list start padding', () => {
+    render(
+      <MarkdownRenderer content={LIST_MARKDOWN} classNames={{ ul: 'ps-10' }} />,
+    );
+
+    const list = screen.getByRole('list');
+    expect(list.className).toContain('ps-10');
+    expect(list.className).not.toContain('ps-[2em]');
   });
 
   it('renders a list as list items rather than line-broken plain text', () => {
