@@ -4,6 +4,7 @@ export enum AttachmentContentType {
   Image = 'image',
   Audio = 'audio',
   Markdown = 'markdown',
+  MarkdownTable = 'markdown_table',
   Json = 'json',
   Pdf = 'pdf',
   Ooxml = 'ooxml',

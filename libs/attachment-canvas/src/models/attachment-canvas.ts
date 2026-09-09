@@ -37,6 +37,14 @@ export interface MarkdownCanvasContent {
   text: string;
 }
 
+/** Content payload for a Markdown table opened standalone (e.g. via a table's "open in canvas" action). */
+export interface MarkdownTableCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.MarkdownTable;
+  /** The table serialized back to Markdown syntax. */
+  text: string;
+}
+
 /** Content payload for JSON file attachments. */
 export interface JsonCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
@@ -163,6 +171,7 @@ export type AttachmentCanvasContent =
   | ImageCanvasContent
   | AudioCanvasContent
   | MarkdownCanvasContent
+  | MarkdownTableCanvasContent
   | JsonCanvasContent
   | PdfCanvasContent
   | OoxmlCanvasContent
@@ -325,6 +334,16 @@ export interface AttachmentCanvasLabels {
   codeContentErrorLabel?: string;
   /** Label and accessible name for the retry control shown alongside `codeContentErrorLabel`. Defaults to `'Retry'`. */
   codeContentRetryLabel?: string;
+  /** Label for copying a Markdown table as CSV. */
+  tableCopyCsvLabel?: string;
+  /** Label for copying a Markdown table as text. */
+  tableCopyTxtLabel?: string;
+  /** Label for copying a Markdown table as Markdown. */
+  tableCopyMarkdownLabel?: string;
+  /** Status announced after a Markdown table has been copied. */
+  tableCopiedLabel?: string;
+  /** Label for downloading a Markdown table as CSV. */
+  tableDownloadCsvLabel?: string;
 }
 
 /** Props for the AttachmentCanvas component. */
@@ -349,6 +368,8 @@ export interface AttachmentCanvasProps {
   onCopyMarkdown?: () => void;
   /** Called when the user activates the copy-JSON button. When omitted the button is hidden. Only relevant when content type is `Json`. */
   onCopyJson?: () => void;
+  /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. */
+  tableDownloadFilename?: string;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. */
   isMobile?: boolean;
   /** Initial panel width in pixels (when resizable). Defaults to `min(maxWidth, 2/3 of viewport width)`. */
@@ -403,6 +424,11 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'codeContentLoadingLabel'
   | 'codeContentErrorLabel'
   | 'codeContentRetryLabel'
+  | 'tableCopyCsvLabel'
+  | 'tableCopyTxtLabel'
+  | 'tableCopyMarkdownLabel'
+  | 'tableCopiedLabel'
+  | 'tableDownloadCsvLabel'
 >;
 
 /** Props for the `AttachmentCanvasBody` component. */
@@ -426,6 +452,8 @@ export interface AttachmentCanvasBodyProps {
   styles?: AttachmentCanvasBodyStyles;
   /** Syntax highlight color theme forwarded to MarkdownRenderer/CodeContent code blocks. */
   codeBlockTheme?: CodeBlockTheme;
+  /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. Only relevant when content type is `MarkdownTable`. */
+  tableDownloadFilename?: string;
   /**
    * Fetches a PDF file by URL and returns its bytes as a `Blob`. Used when
    * content type is `Pdf` to load the file before rendering. Defaults to a

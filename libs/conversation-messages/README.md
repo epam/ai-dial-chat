@@ -50,6 +50,16 @@ import {
 
 Renders an assistant message as markdown. Set `isStreaming` while the response is still arriving so newly appended text reveals smoothly. Use `markdownComponents` to inject custom renderers (for example citation markers from `@epam/ai-dial-quotations`), `markdownClassNames` to pick the markdown type scale (`COMPACT_MARKDOWN_CLASS_NAMES` from `@epam/ai-dial-chat-shared` drops the body copy one step for narrow viewports), and `afterContent` to place a stages panel between the text and the actions bar.
 
+Assistant tables receive the matching copy/download controls when their table
+action labels (`tableCopyCsvLabel`, `tableCopyTxtLabel`,
+`tableCopyMarkdownLabel`, `tableCopiedLabel`, and `tableDownloadCsvLabel`) are
+supplied; each control has a UI-kit tooltip with its localized label. The bubble forwards
+`labels.tableDownloadFilename` and `labels.tableScrollRegionAriaLabel` to the
+markdown viewer, and hides the table action bar while `isStreaming` is true.
+Set `tableOnOpenInCanvas` together with `labels.tableOpenInCanvasLabel` to add
+a fifth "Open in Canvas" action that receives the table serialized as Markdown
+when activated — omitting either one hides the action.
+
 ```tsx
 import { COMPACT_MARKDOWN_CLASS_NAMES } from '@epam/ai-dial-chat-shared';
 import { AssistantMessageBubble } from '@epam/ai-dial-conversation-messages';
@@ -64,6 +74,19 @@ import { AssistantMessageBubble } from '@epam/ai-dial-conversation-messages';
   onSelectStarter={handleSelectStarter}
   deploymentIconUrl={deployment.iconUrl}
   deploymentDisplayName={deployment.displayName}
+  labels={{
+    codeBlockCopyLabel: 'Copy code',
+    codeBlockCopiedLabel: 'Copied!',
+    tableCopyCsvLabel: 'Copy as CSV',
+    tableCopyTxtLabel: 'Copy as TXT',
+    tableCopyMarkdownLabel: 'Copy as Markdown',
+    tableCopiedLabel: 'Copied!',
+    tableDownloadCsvLabel: 'Download as CSV',
+    tableOpenInCanvasLabel: 'Open in canvas',
+    tableDownloadFilename: 'table.csv',
+    tableScrollRegionAriaLabel: 'Scrollable table',
+  }}
+  tableOnOpenInCanvas={handleTableOpenInCanvas}
   actions={{
     role: MessageRole.Assistant,
     onRegenerate: handleRegenerate,

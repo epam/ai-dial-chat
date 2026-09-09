@@ -1,13 +1,19 @@
+import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
-import type { MessageActionsProps } from '@epam/ai-dial-conversation-messages';
-import { render, screen } from '@testing-library/react';
+import {
+  MessageBubble,
+  type MessageActionsProps,
+} from '@epam/ai-dial-conversation-messages';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
+  ButtonsI18nKeys,
+  ChatI18nKeys,
   CitationsI18nKeys,
 } from '../../../constants/translation-keys';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
@@ -38,6 +44,7 @@ vi.mock('../../../hooks/attachment/useMcpAppHostAdapter', () => ({
 }));
 
 let capturedActions: MessageActionsProps | undefined;
+let capturedLabels: ComponentProps<typeof MessageBubble>['labels'] | undefined;
 
 vi.mock('@epam/ai-dial-conversation-messages', async (importOriginal) => {
   const actual =
@@ -48,6 +55,7 @@ vi.mock('@epam/ai-dial-conversation-messages', async (importOriginal) => {
     ...actual,
     MessageBubble: (props: ComponentProps<typeof actual.MessageBubble>) => {
       capturedActions = props.actions;
+      capturedLabels = props.labels;
       return <actual.MessageBubble {...props} />;
     },
   };
@@ -128,6 +136,8 @@ const defaultProps = {
 };
 
 beforeEach(() => {
+  capturedActions = undefined;
+  capturedLabels = undefined;
   vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
     (feature) =>
       feature !== OverlayFeature.HideEditUserMessage &&
@@ -409,5 +419,91 @@ describe('ConversationMessageItem — message action gates', () => {
     );
     expect(capturedActions?.onLike).toBeUndefined();
     expect(capturedActions?.onDislike).toBeUndefined();
+  });
+});
+
+describe('ConversationMessageItem — Markdown table actions', () => {
+  const TABLE_MARKDOWN = '| Name | Value |\n| --- | --- |\n| Alpha | 1 |';
+
+  it('passes localized table action labels to assistant tables', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          role: MessageRole.Assistant,
+          content: TABLE_MARKDOWN,
+          timestamp: '2024-01-01T00:00:04Z',
+        }}
+        index={1}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.CopyAsCsv }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.CopyAsTxt }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.CopyAsMarkdown }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.DownloadAsCsv }),
+    ).toBeTruthy();
+    expect(capturedLabels).toMatchObject({
+      tableCopyCsvLabel: ButtonsI18nKeys.CopyAsCsv,
+      tableCopyTxtLabel: ButtonsI18nKeys.CopyAsTxt,
+      tableCopyMarkdownLabel: ButtonsI18nKeys.CopyAsMarkdown,
+      tableCopiedLabel: ButtonsI18nKeys.Copied,
+      tableDownloadCsvLabel: ButtonsI18nKeys.DownloadAsCsv,
+      tableOpenInCanvasLabel: ButtonsI18nKeys.OpenInCanvas,
+    });
+    expect(capturedLabels?.tableScrollRegionAriaLabel).toBe(
+      ChatI18nKeys.ScrollableTable,
+    );
+  });
+
+  it('opens the canvas with only the selected table and a localized title when Open in Canvas is activated', () => {
+    /* The action button's Tooltip mounts via floating-ui, which requires
+     * IntersectionObserver — absent by default in jsdom. */
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe() {
+          // No-op in JSDOM.
+        }
+        unobserve() {
+          // No-op in JSDOM.
+        }
+        disconnect() {
+          // No-op in JSDOM.
+        }
+      },
+    );
+
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          role: MessageRole.Assistant,
+          content: TABLE_MARKDOWN,
+          timestamp: '2024-01-01T00:00:04Z',
+        }}
+        index={1}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.OpenInCanvas }),
+    );
+
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      {
+        type: AttachmentContentType.MarkdownTable,
+        text: '| Name | Value |\n| :-- | :-- |\n| Alpha | 1 |',
+      },
+      ChatI18nKeys.MarkdownTableTitle,
+    );
+    vi.unstubAllGlobals();
   });
 });
