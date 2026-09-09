@@ -74,6 +74,7 @@ describe('RateController (integration)', () => {
           rate: VALID_BODY.rate,
         }),
         TEST_USER.at,
+        undefined,
       );
     });
 

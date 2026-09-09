@@ -103,6 +103,7 @@ describe('DeploymentsController (integration)', () => {
         TEST_USER.bucket,
         undefined,
         undefined,
+        undefined,
       );
     });
 
@@ -193,6 +194,7 @@ describe('DeploymentsController (integration)', () => {
         TEST_USER.bucket,
         ['chat'],
         undefined,
+        undefined,
       );
     });
 
@@ -208,6 +210,7 @@ describe('DeploymentsController (integration)', () => {
         TEST_USER.bucket,
         undefined,
         true,
+        undefined,
       );
     });
 
@@ -246,6 +249,7 @@ describe('DeploymentsController (integration)', () => {
         TEST_USER.at,
         TEST_USER.bucket,
         ['embedding'],
+        undefined,
         undefined,
       );
     });
