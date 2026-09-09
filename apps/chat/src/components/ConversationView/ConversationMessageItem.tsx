@@ -72,7 +72,10 @@ import {
   attachmentCanvasUrlResolvers,
   attachmentDisplayResolvers,
 } from '../../utils/attachment-display-resolvers';
-import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
+import {
+  resolveDialFileDownloadUrl,
+  resolveMarkdownUrl,
+} from '../../utils/dial-file';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
@@ -524,6 +527,9 @@ const ConversationMessageItem: FC<Props> = ({
         }}
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
+        }
+        markdownUrlTransform={
+          msg.role === MessageRole.Assistant ? resolveMarkdownUrl : undefined
         }
         markdownClassNames={markdownClassNames}
         attachments={nonReferenceDisplayAttachments}

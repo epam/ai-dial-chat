@@ -411,3 +411,115 @@ describe('ConversationMessageItem — message action gates', () => {
     expect(capturedActions?.onDislike).toBeUndefined();
   });
 });
+<<<<<<< Updated upstream
+=======
+
+describe('ConversationMessageItem — Markdown table actions', () => {
+  const TABLE_MARKDOWN = '| Name | Value |\n| --- | --- |\n| Alpha | 1 |';
+
+  it('passes localized table action labels to assistant tables', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          role: MessageRole.Assistant,
+          content: TABLE_MARKDOWN,
+          timestamp: '2024-01-01T00:00:04Z',
+        }}
+        index={1}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.CopyAsCsv }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.CopyAsTxt }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.CopyAsMarkdown }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.DownloadAsCsv }),
+    ).toBeTruthy();
+    expect(capturedLabels).toMatchObject({
+      tableCopyCsvLabel: ButtonsI18nKeys.CopyAsCsv,
+      tableCopyTxtLabel: ButtonsI18nKeys.CopyAsTxt,
+      tableCopyMarkdownLabel: ButtonsI18nKeys.CopyAsMarkdown,
+      tableCopiedLabel: ButtonsI18nKeys.Copied,
+      tableDownloadCsvLabel: ButtonsI18nKeys.DownloadAsCsv,
+      tableOpenInCanvasLabel: ButtonsI18nKeys.OpenInCanvas,
+    });
+    expect(capturedLabels?.tableScrollRegionAriaLabel).toBe(
+      ChatI18nKeys.ScrollableTable,
+    );
+  });
+
+  it('opens the canvas with only the selected table and a localized title when Open in Canvas is activated', () => {
+    /* The action button's Tooltip mounts via floating-ui, which requires
+     * IntersectionObserver — absent by default in jsdom. */
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe() {
+          // No-op in JSDOM.
+        }
+        unobserve() {
+          // No-op in JSDOM.
+        }
+        disconnect() {
+          // No-op in JSDOM.
+        }
+      },
+    );
+
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          role: MessageRole.Assistant,
+          content: TABLE_MARKDOWN,
+          timestamp: '2024-01-01T00:00:04Z',
+        }}
+        index={1}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.OpenInCanvas }),
+    );
+
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      {
+        type: AttachmentContentType.MarkdownTable,
+        text: '| Name | Value |\n| :-- | :-- |\n| Alpha | 1 |',
+      },
+      ChatI18nKeys.MarkdownTableTitle,
+    );
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('ConversationMessageItem — markdown file URLs', () => {
+  it('rewrites DIAL file ids in assistant markdown images to download URLs', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          role: MessageRole.Assistant,
+          content:
+            '![Silver Lake chart](files/9gRuhxHb/appdata/applications/public/pg/chart.png)',
+          timestamp: '2024-01-01T00:00:02Z',
+        }}
+        index={1}
+      />,
+    );
+
+    expect(
+      screen.getByRole('img', { name: 'Silver Lake chart' }).getAttribute('src'),
+    ).toBe(
+      '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fpg%2Fchart.png',
+    );
+  });
+});
+>>>>>>> Stashed changes

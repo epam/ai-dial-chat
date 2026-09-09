@@ -6,6 +6,7 @@ import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
 import { toRelativePath } from '../dial-resource-path.util';
+import { headersForEmbeddedImage } from './download-headers';
 
 export const SAFE_DOWNLOAD_HEADERS = [
   'content-type',
@@ -56,11 +57,14 @@ export class FilesDownloadService {
         );
       }
 
-      const headers = Object.fromEntries(
-        SAFE_DOWNLOAD_HEADERS.map(
-          (h) => [h, response.headers.get(h)] as const,
-        ).filter(([, v]) => v !== null),
-      ) as Record<string, string>;
+      const headers = headersForEmbeddedImage(
+        Object.fromEntries(
+          SAFE_DOWNLOAD_HEADERS.map(
+            (h) => [h, response.headers.get(h)] as const,
+          ).filter(([, v]) => v !== null),
+        ) as Record<string, string>,
+        relativePath,
+      );
 
       return { stream: response.body as ReadableStream, headers };
     } catch (err) {

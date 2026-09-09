@@ -24,6 +24,11 @@ interface MDMessageViewerProps {
    * into specific markdown elements without modifying the viewer directly.
    */
   components?: Components;
+  /**
+   * Rewrites `href` and `src` values before they are rendered. Forwarded to
+   * {@link MarkdownRenderer}. Defaults to no extra rewrite.
+   */
+  urlTransform?: (url: string) => string;
   /** Accessible label for the copy button in code blocks. Forwarded to {@link MarkdownRenderer}. */
   codeBlockCopyLabel?: string;
   /** Accessible label for the copy button after copying. Forwarded to {@link MarkdownRenderer}. */
@@ -45,6 +50,7 @@ export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
     isStreaming,
     thinkingLabel,
     components,
+    urlTransform,
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
     codeBlockTheme,
@@ -55,6 +61,7 @@ export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
       isStreaming={isStreaming}
       thinkingLabel={thinkingLabel}
       components={components}
+      urlTransform={urlTransform}
       codeBlockCopyLabel={codeBlockCopyLabel}
       codeBlockCopiedLabel={codeBlockCopiedLabel}
       codeBlockTheme={codeBlockTheme}

@@ -29,6 +29,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   deploymentDisplayName,
   markdownComponents,
   markdownClassNames,
+  markdownUrlTransform,
   onAttachmentClick,
   onDownloadAll,
   onAttachmentRetry,
@@ -99,6 +100,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                 thinkingLabel={thinkingLabel}
                 components={markdownComponents}
                 classNames={markdownClassNames}
+                urlTransform={markdownUrlTransform}
                 codeBlockCopyLabel={codeBlockCopyLabel}
                 codeBlockCopiedLabel={codeBlockCopiedLabel}
                 codeBlockTheme={codeBlockTheme}

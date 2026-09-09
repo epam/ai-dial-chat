@@ -6,7 +6,12 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
-import ReactMarkdown, { type Components, type Options } from 'react-markdown';
+import ReactMarkdown, {
+  defaultUrlTransform,
+  type Components,
+  type Options,
+  type UrlTransform,
+} from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkBreaks from 'remark-breaks';
@@ -101,6 +106,13 @@ export interface MarkdownRendererProps {
    * Use for elements not covered by `classNames`.
    */
   components?: Components;
+  /**
+   * Rewrites `href` and `src` values before they are rendered. The result is
+   * still passed through react-markdown's protocol allowlist. Hosts use this
+   * to map DIAL file ids (`files/{bucket}/{path}`) to download URLs. Defaults
+   * to no extra rewrite.
+   */
+  urlTransform?: (url: string) => string;
   /** Extra rehype plugins, applied after the built-in KaTeX pass. Defaults to none. */
   rehypePlugins?: NonNullable<Options['rehypePlugins']>;
   /**
@@ -279,6 +291,18 @@ const hasMathContent = (text: string): boolean =>
 
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
+
+/**
+ * Applies an optional host rewrite, then react-markdown's protocol allowlist.
+ * Hosts map DIAL `files/{bucket}/{path}` ids to download URLs without the
+ * renderer constructing `/api` paths itself.
+ */
+const composeUrlTransform = (
+  hostTransform: ((url: string) => string) | undefined,
+): UrlTransform => {
+  if (hostTransform == null) return defaultUrlTransform;
+  return (url) => defaultUrlTransform(hostTransform(url));
+};
 
 /**
  * Default react-markdown component overrides shared across all consumers.
@@ -546,6 +570,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     streamCharactersPerSecond,
     classNames = EMPTY_CLASS_NAMES,
     components,
+    urlTransform,
     rehypePlugins = EMPTY_REHYPE_PLUGINS,
     thinkingLabel = 'Thinking',
     codeBlockCopyLabel,
@@ -631,6 +656,11 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       '--cm-code-inline-text': colors?.inlineCodeText,
     });
 
+    const effectiveUrlTransform = useMemo(
+      () => composeUrlTransform(urlTransform),
+      [urlTransform],
+    );
+
     const mergedComponents = useMemo(
       () => ({
         ...buildMarkdownComponents(classNames, {
@@ -670,6 +700,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
           remarkPlugins={remarkPlugins}
           rehypePlugins={effectiveRehypePlugins}
           components={mergedComponents}
+          urlTransform={effectiveUrlTransform}
         >
           {processedContent}
         </ReactMarkdown>

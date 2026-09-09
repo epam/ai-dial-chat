@@ -18,6 +18,13 @@ export const resolveDialFileDownloadUrl = (
   return `/api/v1/files/download?${params.toString()}`;
 };
 
+/**
+ * Rewrites a markdown `href`/`src` when it is a DIAL file id
+ * (`files/{bucket}/{path}`); otherwise returns the URL unchanged.
+ */
+export const resolveMarkdownUrl = (url: string): string =>
+  resolveDialFileDownloadUrl(url) ?? url;
+
 /** Strips a trailing `#...` fragment (e.g. a PDF `#page=N` anchor) from a DIAL file id. */
 const stripFragment = (fileId: string): string => fileId.split('#')[0];
 

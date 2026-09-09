@@ -89,6 +89,30 @@ describe('FilesDownloadService', () => {
       expect(result.headers).not.toHaveProperty('x-internal');
     });
 
+    it('inlines image downloads so they can render in img src', async () => {
+      const { service, sdkClient } = makeService();
+      const webStream = new ReadableStream();
+      sdkClient.downloadFile.mockResolvedValue(
+        okDownload(webStream, {
+          'content-type': 'application/octet-stream',
+          'content-disposition':
+            'attachment; filename="silver_lake_investments_net_income.png"',
+        }),
+      );
+
+      const result = await service.downloadFile(
+        '9gRuhxHb',
+        'appdata/applications/public/pg/pg-agent__1.0.0/silver_lake_investments_net_income.png',
+        'token',
+      );
+
+      expect(result.headers).toEqual({
+        'content-type': 'image/png',
+        'content-disposition':
+          'inline; filename="silver_lake_investments_net_income.png"',
+      });
+    });
+
     it('strips files/{bucket}/ prefix before calling SDK download', async () => {
       const { service, sdkClient } = makeService();
       const webStream = new ReadableStream();
