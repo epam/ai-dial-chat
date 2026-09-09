@@ -38,6 +38,11 @@ export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
       return true;
     case AttachmentContentType.Html:
       return content.url != null;
+    /*
+     * A standalone table's download action lives in its own inline header
+     * (CSV, via its localized table labels), not the generic download button.
+     */
+    case AttachmentContentType.MarkdownTable:
     case AttachmentContentType.Visualizer:
     case AttachmentContentType.McpApp:
       return false;
@@ -86,6 +91,7 @@ const getContentUrlAndMimeType = (
     case AttachmentContentType.Code:
       return { url: undefined, mimeType: MIMEType.Plain };
     case AttachmentContentType.Markdown:
+    case AttachmentContentType.MarkdownTable:
       return { url: undefined, mimeType: MIMEType.Markdown };
     case AttachmentContentType.Json:
       return { url: undefined, mimeType: MIMEType.JSON };
@@ -146,6 +152,8 @@ export const downloadAttachmentContent = (
       if (content.url == null) return;
       triggerAnchorDownload(content.url, name);
       return;
+    /* Not downloadable — see `isDownloadable`. */
+    case AttachmentContentType.MarkdownTable:
     case AttachmentContentType.Visualizer:
     case AttachmentContentType.McpApp:
       return;

@@ -58,11 +58,17 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,
+    tableCopyCsvLabel,
+    tableCopyTxtLabel,
+    tableCopyMarkdownLabel,
+    tableCopiedLabel,
+    tableDownloadCsvLabel,
   },
   onDownload,
   onCopyText,
   onCopyMarkdown,
   onCopyJson,
+  tableDownloadFilename,
   isMobile = false,
   defaultWidth,
   minWidth = 600,
@@ -358,9 +364,15 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           codeContentLoadingLabel,
           codeContentErrorLabel,
           codeContentRetryLabel,
+          tableCopyCsvLabel,
+          tableCopyTxtLabel,
+          tableCopyMarkdownLabel,
+          tableCopiedLabel,
+          tableDownloadCsvLabel,
         }}
         styles={bodyStylesProp}
         codeBlockTheme={codeBlockTheme}
+        tableDownloadFilename={tableDownloadFilename}
         loadPdf={loadPdf}
         configurePdfWorker={configurePdfWorker}
       />
