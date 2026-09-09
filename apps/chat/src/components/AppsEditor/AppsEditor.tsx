@@ -56,6 +56,13 @@ import {
 import { FeatureType } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+const PRESENTATION_ONLY_FIELDS = new Set<keyof AppsEditorFormType>([
+  'iconUrl',
+  'description',
+  'topics',
+  'locales',
+]);
+
 const checkShouldRevokeAccess = ({
   newApp,
   oldApp,
@@ -171,9 +178,14 @@ export const AppsEditor = () => {
   const isQuickAppJsonDirty = (
     formMethods.formState.dirtyFields as Record<keyof QuickApp2Form, boolean>
   )['agentsAndToolsetsJson'];
+  const dirtyFieldNames = Object.keys(
+    formMethods.formState.dirtyFields,
+  ) as (keyof AppsEditorFormType)[];
   const onlyQuickAppJsonChanged =
-    Object.keys(formMethods.formState.dirtyFields).length === 1 &&
-    isQuickAppJsonDirty;
+    dirtyFieldNames.length === 1 && isQuickAppJsonDirty;
+  const onlyPresentationChanged =
+    !!dirtyFieldNames.length &&
+    dirtyFieldNames.every((field) => PRESENTATION_ONLY_FIELDS.has(field));
 
   const marketplaceEntities = useMemo(
     () =>
@@ -222,7 +234,7 @@ export const AppsEditor = () => {
             }),
           );
         }
-        if (isAppDeployed) {
+        if (isAppDeployed && !onlyPresentationChanged) {
           dispatch(
             UIActions.showWarningToast(
               t(MarketplaceI18nKeys.SavedChangesWillBeApplied),
@@ -303,6 +315,7 @@ export const AppsEditor = () => {
       isSchemaApplicationType,
       isShared,
       isAppDeployed,
+      onlyPresentationChanged,
       publicationUrl,
       isCreatingApp,
       t,
