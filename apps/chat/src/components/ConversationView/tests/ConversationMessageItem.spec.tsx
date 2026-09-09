@@ -194,6 +194,94 @@ describe('ConversationMessageItem — reference-only attachments', () => {
 });
 
 describe('ConversationMessageItem — inline citations', () => {
+  it.each([false, true])(
+    'opens the selected cit document and page after reload (raw format: %s)',
+    async (rawFormat) => {
+      const entries = [
+        { id: 'first', page: 1, file: 'report.pdf' },
+        { id: 'grouped', page: 2, file: 'other.pdf' },
+        { id: 'grouped', page: 3, file: 'report.pdf' },
+      ];
+      const annotations = entries.map(({ id, page, file }, index) => ({
+        index,
+        target: { selector: { type: 'html_tag', tag: 'cit', id } },
+        body: {
+          selector: { type: 'pdf_bbox', page, x1: 0, y1: 0, x2: 0, y2: 0 },
+          source: {
+            type: 'attachment',
+            attachment: {
+              type: 'application/pdf',
+              url: `https://example.com/${file}`,
+            },
+          },
+        },
+      }));
+      const payload = {
+        role: MessageRole.Assistant,
+        content:
+          'First<cit data-id="first"></cit> Group<cit data-id="grouped"></cit>',
+        timestamp: '2026-09-09T07:00:00Z',
+        ...(rawFormat
+          ? {
+              custom_fields: {
+                annotations: annotations.map((a) => ({
+                  ...a,
+                  body: {
+                    ...a.body,
+                    source: {
+                      type: 'attachment',
+                      url: a.body.source.attachment.url,
+                    },
+                  },
+                })),
+              },
+            }
+          : { custom_content: { annotations } }),
+      };
+      const message: Message = JSON.parse(JSON.stringify(payload));
+      render(
+        <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+      );
+      const markers = () =>
+        screen.getAllByRole('button', {
+          name: CitationsI18nKeys.MarkerAriaLabel,
+        });
+      await userEvent.click(markers()[0]);
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+      expect(mockOpenCanvas).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          url: 'https://example.com/report.pdf',
+          page: 1,
+        }),
+        expect.any(String),
+      );
+      await userEvent.click(markers()[1]);
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: CitationsI18nKeys.PopupNextCitation,
+        }),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+      expect(mockOpenCanvas).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          url: 'https://example.com/report.pdf',
+          page: 3,
+          selectedHighlightId: '2',
+          highlights: [
+            expect.objectContaining({
+              id: '2',
+              bboxes: [expect.objectContaining({ page: 3 })],
+            }),
+          ],
+        }),
+        expect.any(String),
+      );
+    },
+  );
   it('renders every matching html_tag citation in one message', () => {
     const citationIds = Array.from(
       { length: 6 },

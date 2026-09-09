@@ -387,6 +387,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
               url={content.url}
               highlights={content.highlights ?? []}
               selectedHighlightId={content.selectedHighlightId}
+              selectedPageNumber={content.page}
               loadPdf={loadPdf}
               hideHeader={hidePdfToolbar}
               configurePdfWorker={configurePdfWorker}

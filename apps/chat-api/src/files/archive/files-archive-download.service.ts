@@ -58,10 +58,6 @@ export class FilesArchiveDownloadService {
     private readonly filesListingService: FilesListingService,
   ) {}
 
-  private getTimeoutMs(): number {
-    return this.configService.get<number>('FILE_TRANSFER_TIMEOUT_MS') ?? 30_000;
-  }
-
   async downloadArchive(
     items: ArchiveItemDto[],
     at: string,

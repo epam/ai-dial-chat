@@ -12,12 +12,18 @@ import {
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
 import type {
+  Annotation,
   CustomVisualizer,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
+import {
+  groupAnnotations,
+  type AnnotationGroup,
+} from '@epam/ai-dial-quotations';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AttachmentCanvasUrlResolvers } from '../attachment-canvas';
 import {
+  annotationToPdfCanvasContent,
   clearAttachmentCache,
   getUrlFileName,
   hasAttachmentTextSource,
@@ -448,6 +454,7 @@ describe('referenceAttachmentToPdfCanvasContent', () => {
         },
       ],
       selectedHighlightId: 'reference-page-81',
+      page: 81,
     });
   });
 
@@ -463,6 +470,7 @@ describe('referenceAttachmentToPdfCanvasContent', () => {
     expect(result).toEqual({
       type: AttachmentContentType.Pdf,
       url: '/download?path=report.pdf',
+      page: undefined,
     });
   });
 
@@ -483,6 +491,118 @@ describe('referenceAttachmentToPdfCanvasContent', () => {
     );
 
     expect(page5?.selectedHighlightId).not.toBe(page19?.selectedHighlightId);
+  });
+});
+
+describe('annotationToPdfCanvasContent', () => {
+  it('selects highlights from the clicked cit group and only its PDF', () => {
+    const annotation = (
+      id: string,
+      page: number,
+      url = 'files/bucket/report.pdf',
+    ): Annotation => ({
+      target: { selector: { type: 'html_tag', tag: 'cit', id } },
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: { type: 'application/pdf', url },
+        },
+        selector: { type: 'pdf_bbox', page, x1: 0, y1: 0, x2: 0, y2: 0 },
+      },
+    });
+    const first = annotation('first', 1);
+    const otherPdf = annotation('second', 2, 'files/bucket/other.pdf');
+    const clicked = annotation('second', 3);
+    const groups = groupAnnotations([first, otherPdf, clicked]);
+    const result = annotationToPdfCanvasContent(clicked, groups, resolvers);
+    expect(result?.page).toBe(3);
+    expect(result?.url).toBe('/download?path=report.pdf');
+    expect(result?.highlights).toHaveLength(1);
+    expect(result?.highlights?.[0].bboxes[0].page).toBe(3);
+    expect(result?.selectedHighlightId).toBe(result?.highlights?.[0].id);
+  });
+  const makeAnnotation = (index: number, page: number): Annotation => ({
+    index,
+    body: {
+      source: {
+        type: 'attachment',
+        attachment: { type: 'application/pdf', url: 'files/bucket/report.pdf' },
+      },
+      selector: { type: 'pdf_bbox', page, x1: 10, y1: 10, x2: 20, y2: 20 },
+    },
+  });
+
+  it('returns null when the annotation source is not a PDF', () => {
+    const annotation: Annotation = {
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: { type: 'text/html', url: 'https://example.com/a' },
+        },
+      },
+    };
+    expect(annotationToPdfCanvasContent(annotation, [], resolvers)).toBeNull();
+  });
+
+  it('sets page from a single annotation pdf_bbox selector', () => {
+    const annotation = makeAnnotation(0, 3);
+    const result = annotationToPdfCanvasContent(annotation, [], resolvers);
+    expect(result?.page).toBe(3);
+  });
+
+  it('sets page from the clicked annotation in a two-page group, not the group primary', () => {
+    const page2 = makeAnnotation(0, 2);
+    const page7 = makeAnnotation(1, 7);
+    const group: AnnotationGroup = {
+      groupKey: 'files/bucket/report.pdf',
+      sourceUrl: 'files/bucket/report.pdf',
+      sourceName: 'report.pdf',
+      annotations: [page2, page7],
+      primaryAnnotation: page2,
+    };
+
+    expect(annotationToPdfCanvasContent(page7, [group], resolvers)?.page).toBe(
+      7,
+    );
+    expect(annotationToPdfCanvasContent(page2, [group], resolvers)?.page).toBe(
+      2,
+    );
+  });
+
+  it('sets page to undefined when the annotation has no pdf_bbox selector', () => {
+    const annotation: Annotation = {
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+      },
+    };
+    expect(
+      annotationToPdfCanvasContent(annotation, [], resolvers)?.page,
+    ).toBeUndefined();
+  });
+
+  it('sets page correctly even when the bounding box is all zero', () => {
+    const annotation: Annotation = {
+      index: 0,
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: { type: 'pdf_bbox', page: 5, x1: 0, y1: 0, x2: 0, y2: 0 },
+      },
+    };
+    expect(annotationToPdfCanvasContent(annotation, [], resolvers)?.page).toBe(
+      5,
+    );
   });
 });
 

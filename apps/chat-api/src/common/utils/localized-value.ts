@@ -14,5 +14,6 @@ export const resolveLocalizedValue = (
   if (value == null) return undefined;
   if (typeof value === 'string') return value;
 
-  return Object.values(value)[0];
+  const firstValue = Object.values(value)[0];
+  return typeof firstValue === 'string' ? firstValue : undefined;
 };

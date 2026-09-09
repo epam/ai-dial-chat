@@ -63,6 +63,8 @@ export interface PdfCanvasContent {
   highlights?: InputHighlightData[];
   /** ID of the highlight to scroll to and select on initial load. */
   selectedHighlightId?: string;
+  /** 1-based page to navigate to on initial load, independent of highlight geometry. */
+  page?: number;
 }
 
 /** Content payload for OOXML document and CSV spreadsheet attachments. */
