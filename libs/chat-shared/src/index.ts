@@ -49,14 +49,7 @@ export * from './components/EntityTypeLabel/EntityTypeLabel';
 export * from './components/FeaturedChip/FeaturedChip';
 export * from './components/EntityHeader/EntityHeader';
 export * from './components/ResourceSummary/ResourceSummary';
-export * from './components/MarkdownRenderer/MarkdownRenderer';
-export * from './components/MarkdownRenderer/MDMessageViewer';
-export * from './components/MarkdownRenderer/markdown-class-names';
-export * from './components/MarkdownRenderer/CodeBlock/CodeBlock';
-export { restrainedSyntaxTheme } from './components/MarkdownRenderer/CodeBlock/syntax-theme';
-export * from './components/MarkdownRenderer/Table/MarkdownTable';
 export * from './components/MarkdownRenderer/Table/TableHeader';
-export * from './components/MarkdownWithPlaceholders/MarkdownWithPlaceholders';
 export * from './entry-points/markdown';
 export * from './hooks/useIsMobile';
 
