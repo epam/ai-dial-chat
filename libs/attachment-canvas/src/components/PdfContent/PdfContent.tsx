@@ -146,6 +146,13 @@ export interface PdfContentProps {
   highlights: InputHighlightData[];
   /** ID of the highlight that should be scrolled into view on mount. */
   selectedHighlightId?: string;
+  /**
+   * 1-based page to navigate to on initial load and whenever it changes,
+   * independent of highlight geometry — forwarded directly to the underlying
+   * `DocumentPreview`'s own `selectedPageNumber` prop. Takes precedence over
+   * the highlight-bbox-derived page when both are present.
+   */
+  selectedPageNumber?: number;
   /** Custom fetcher for the PDF blob; falls back to a plain `fetch` wrapper. */
   loadPdf?: (url: string) => Promise<Blob>;
   /** File name shown in the canvas header. */
@@ -182,6 +189,7 @@ export const PdfContent: FC<PdfContentProps> = ({
   url,
   highlights,
   selectedHighlightId,
+  selectedPageNumber,
   loadPdf,
   configurePdfWorker,
   hideHeader = false,
@@ -235,6 +243,7 @@ export const PdfContent: FC<PdfContentProps> = ({
   const [thumbnails, setThumbnails] = useState<Map<number, string>>(new Map());
   const [isThumbnailsOpen, setIsThumbnailsOpen] = useState(false);
   const [selectedPage, setSelectedPage] = useState(() => {
+    if (selectedPageNumber != null) return selectedPageNumber;
     if (!selectedHighlightId) return 1;
     const match = highlights.find((h) => h.id === selectedHighlightId);
     return match?.bboxes[0]?.page ?? 1;
@@ -256,11 +265,15 @@ export const PdfContent: FC<PdfContentProps> = ({
   const scrollRafRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (selectedPageNumber != null) {
+      setSelectedPage(selectedPageNumber);
+      return;
+    }
     if (!selectedHighlightId) return;
     const match = highlights.find((h) => h.id === selectedHighlightId);
     const page = match?.bboxes[0]?.page;
     if (page != null) setSelectedPage(page);
-  }, [selectedHighlightId, highlights]);
+  }, [selectedPageNumber, selectedHighlightId, highlights]);
 
   /* Keep the scrollable panel's height in sync with its actual rendered size (it's capped by `max-h-[70vh]`, so viewport size matters). */
   useEffect(() => {
@@ -602,6 +615,7 @@ export const PdfContent: FC<PdfContentProps> = ({
           loadFileCb={loadPdf ?? fetchBlobFromUrl}
           highlights={highlights}
           selectedHighlightId={selectedHighlightId}
+          selectedPageNumber={selectedPageNumber}
           showOccurrences={false}
           onTotalPagesChange={setTotalPages}
           thumbnailPageNumbers={requestedThumbnailPages}

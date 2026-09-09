@@ -36,6 +36,7 @@ import {
 import {
   annotationHighlightId,
   annotationsToPdfHighlights,
+  getAnnotationPdfPage,
   parsePdfPageReference,
   type AnnotationGroup,
 } from '@epam/ai-dial-quotations';
@@ -435,6 +436,7 @@ export const annotationToPdfCanvasContent = (
     url,
     highlights: annotationsToPdfHighlights(allAnnotations),
     selectedHighlightId: annotationHighlightId(annotation, selectedIndex),
+    page: getAnnotationPdfPage(annotation),
   };
 };
 
@@ -473,6 +475,7 @@ export const referenceAttachmentToPdfCanvasContent = (
       },
     ],
     selectedHighlightId,
+    page: parsed.page,
   };
 };
 

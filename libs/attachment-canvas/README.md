@@ -281,7 +281,7 @@ const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 | `AttachmentContentType.Audio`       | `AudioCanvasContent`       | Renders an audio player                                                                                                                 |
 | `AttachmentContentType.Markdown`    | `MarkdownCanvasContent`    | Renders markdown text                                                                                                                   |
 | `AttachmentContentType.Json`        | `JsonCanvasContent`        | Renders a JSON tree viewer                                                                                                              |
-| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support                                                                                                    |
+| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support and page-accurate navigation via an optional `page` field                                        |
 | `AttachmentContentType.Ooxml`       | `OoxmlCanvasContent`       | Renders DOCX, XLSX, PPTX, or CSV with `@silurus/ooxml`; the persistent XLSX `fx` bar shows the selected cell's formula or display value |
 | `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                                                                                                       |
 | `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source                                                                                        |

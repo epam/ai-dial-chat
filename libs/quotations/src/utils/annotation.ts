@@ -54,6 +54,27 @@ export const annotationHighlightId = (
   fallbackIndex: number,
 ): string => String(annotation.index ?? fallbackIndex);
 
+/**
+ * Returns the 1-based PDF page from an annotation's first `pdf_bbox` selector,
+ * or `undefined` when the annotation has no such selector or its `page` is not
+ * a positive integer. Independent of bounding-box coordinates.
+ */
+export const getAnnotationPdfPage = (
+  annotation: Annotation,
+): number | undefined => {
+  const selector = annotation.body?.selector;
+  if (selector == null) return undefined;
+
+  const selectors = Array.isArray(selector) ? selector : [selector];
+  const bbox = selectors.find(
+    (s): s is PdfBBoxSelector => s.type === 'pdf_bbox',
+  );
+  const page = bbox?.page;
+  return typeof page === 'number' && Number.isInteger(page) && page >= 1
+    ? page
+    : undefined;
+};
+
 const toNumber = (v: unknown): number | null =>
   typeof v === 'number' ? v : null;
 

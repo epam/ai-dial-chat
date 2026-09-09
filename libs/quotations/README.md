@@ -142,6 +142,7 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
 - `resolveMessageAnnotations(message)` — resolves annotations from either internal or raw wire format
 - `normalizeRawAnnotations(raw, attachments)` — normalises raw API wire-format annotations
 - `annotationsToPdfHighlights(annotations)` — maps annotations to PDF viewer highlight entries
+- `getAnnotationPdfPage(annotation)` — returns the 1-based PDF page from an annotation's first `pdf_bbox` selector, or `undefined` when absent or invalid
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown
 - `replaceSentinelsInChildren(children, renderMarker)` — replaces sentinels with React nodes in a rendered tree
 - `getReferenceAttachmentGroups(dtos)` — maps reference-only attachments to synthetic annotation groups

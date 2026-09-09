@@ -35,6 +35,7 @@ export type { AnnotationGroup } from './utils/group-annotations-by-source';
 export {
   annotationsToPdfHighlights,
   annotationHighlightId,
+  getAnnotationPdfPage,
   normalizeRawAnnotations,
   resolveMessageAnnotations,
 } from './utils/annotation';
