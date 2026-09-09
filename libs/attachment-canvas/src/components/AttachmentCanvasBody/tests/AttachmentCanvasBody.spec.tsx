@@ -40,6 +40,7 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
 interface PdfContentMockProps {
   url: string;
   configurePdfWorker?: () => void | Promise<void>;
+  selectedPageNumber?: number;
 }
 
 vi.mock('../../PdfContent/PdfContent', () => ({
@@ -181,6 +182,27 @@ describe('AttachmentCanvasBody', () => {
     await screen.findByRole('region', { name: 'pdf-content' });
     const [props] = vi.mocked(PdfContent).mock.calls[0];
     expect(props.configurePdfWorker).toBe(configurePdfWorker);
+  });
+
+  it('forwards content.page as selectedPageNumber to PdfContent', async () => {
+    renderBody({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:pdf-url',
+      page: 7,
+    });
+    await screen.findByRole('region', { name: 'pdf-content' });
+    const [props] = vi.mocked(PdfContent).mock.calls[0];
+    expect(props.selectedPageNumber).toBe(7);
+  });
+
+  it('leaves selectedPageNumber undefined when content.page is absent', async () => {
+    renderBody({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:pdf-url',
+    });
+    await screen.findByRole('region', { name: 'pdf-content' });
+    const [props] = vi.mocked(PdfContent).mock.calls[0];
+    expect(props.selectedPageNumber).toBeUndefined();
   });
 
   it("announces the pdfContentLoadingLabel while PdfContent's dynamic import is pending", async () => {

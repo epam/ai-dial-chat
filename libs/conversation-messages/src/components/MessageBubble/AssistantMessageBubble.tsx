@@ -34,6 +34,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   onDownloadAll,
   onAttachmentRetry,
   codeBlockTheme,
+  tableOnOpenInCanvas,
   labels,
   selectedAttachmentId,
 }) => {
@@ -46,6 +47,14 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
     thinkingLabel,
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
+    tableCopyCsvLabel,
+    tableCopyTxtLabel,
+    tableCopyMarkdownLabel,
+    tableCopiedLabel,
+    tableDownloadCsvLabel,
+    tableOpenInCanvasLabel,
+    tableDownloadFilename,
+    tableScrollRegionAriaLabel,
     assistantMessageAriaLabel = 'Assistant message',
     deploymentIconFallbackLabel = 'AI',
   } = labels ?? {};
@@ -104,6 +113,17 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                 codeBlockCopyLabel={codeBlockCopyLabel}
                 codeBlockCopiedLabel={codeBlockCopiedLabel}
                 codeBlockTheme={codeBlockTheme}
+                tableActionLabels={{
+                  copyCsvLabel: tableCopyCsvLabel,
+                  copyTxtLabel: tableCopyTxtLabel,
+                  copyMarkdownLabel: tableCopyMarkdownLabel,
+                  copiedLabel: tableCopiedLabel,
+                  downloadCsvLabel: tableDownloadCsvLabel,
+                  openInCanvasLabel: tableOpenInCanvasLabel,
+                }}
+                tableDownloadFilename={tableDownloadFilename}
+                tableOnOpenInCanvas={tableOnOpenInCanvas}
+                tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
               />
             </div>
           )}

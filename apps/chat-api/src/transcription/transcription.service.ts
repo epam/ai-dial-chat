@@ -6,6 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { buildJobTitleHeaders } from '../common/utils/header-value';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { DialClientService } from '../dial/dial-client.service';
 import { TranscribeAudioDto } from './dto/transcribe-audio.dto';
@@ -26,6 +27,7 @@ export class TranscriptionService {
   async transcribeAudio(
     dto: TranscribeAudioDto,
     token: string,
+    jobTitle?: string,
   ): Promise<string> {
     const asrModelId = this.configService.get('ASR_MODEL', { infer: true });
     if (!asrModelId) {
@@ -55,7 +57,10 @@ export class TranscriptionService {
           } as Parameters<
             typeof this.dialClient.client.sendChatCompletionRequest
           >[1]['body'],
-          headers: getBearerAuthHeaders(token),
+          headers: {
+            ...getBearerAuthHeaders(token),
+            ...buildJobTitleHeaders(jobTitle),
+          },
           params: {
             query: { 'api-version': this.dialClient.dialApiVersion },
           },

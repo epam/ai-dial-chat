@@ -47,7 +47,7 @@ export interface SidebarPanelStyles {
 
 /** Props accepted by the `SidebarPanel` component. */
 export interface SidebarPanelProps {
-  /** Whether the panel is open; drives the slide-in animation and sets `aria-hidden` when closed. */
+  /** Whether the panel is open; drives the open/close animation and sets `inert` on the panel region when closed. */
   isOpen: boolean;
   /** Edge the panel anchors to; drives the divider side and close-button placement. */
   orientation: SidebarOrientation;
@@ -68,6 +68,15 @@ export interface SidebarPanelProps {
   styles?: SidebarPanelStyles;
   /** Enables drag-to-resize on the panel edge opposite to `orientation`. Defaults to `false`. */
   resizable?: boolean;
+  /**
+   * Renders the panel as a drawer that keeps its full width in both states and
+   * slides in and out of the `orientation` edge, instead of animating its
+   * layout width. Set it when the host positions the panel over the content
+   * (rather than beside it) so the panel content does not reflow mid-animation
+   * and the content underneath never shows through a half-open panel. The host
+   * still owns the positioning itself. Defaults to `false`.
+   */
+  isOverlay?: boolean;
   /** Initial panel width in px used when `resizable` is true. Defaults to `360`. */
   defaultWidth?: number;
   /** Minimum panel width in px used when `resizable` is true. Defaults to `280`. */

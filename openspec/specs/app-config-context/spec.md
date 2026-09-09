@@ -166,8 +166,8 @@ Callers currently access `useAppConfig().asrModelId` and `useAppConfig().transcr
 
 #### Scenario: No callers of the old flat shape remain
 
-- **WHEN** `grep -r 'useAppConfig()\.asrModelId\|useAppConfig()\.transcribeSizeLimitBytes' apps/chat/src` is run
-- **THEN** it returns no results
+- **WHEN** `apps/chat/src` is inspected
+- **THEN** no caller accesses the flat `useAppConfig().asrModelId` or `useAppConfig().transcribeSizeLimitBytes` shape
 
 ---
 

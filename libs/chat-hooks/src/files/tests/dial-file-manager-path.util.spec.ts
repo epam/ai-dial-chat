@@ -10,6 +10,7 @@ import {
   findDialFileByPath,
   findFolderByVirtualPath,
   formatOperationFolderName,
+  getVirtualPathName,
   hasDialFileWritePermission,
   hasForbiddenNameSymbols,
   isCopyMoveDuplicateAllowed,
@@ -223,6 +224,24 @@ describe('dialCorePathToRelative', () => {
         'user-bucket',
       ),
     ).toBe('files/other-bucket/reports/q1.pdf');
+  });
+});
+
+describe('getVirtualPathName', () => {
+  it('returns the last segment of a virtual path', () => {
+    expect(getVirtualPathName('/My files/reports/q1.pdf', 'fallback')).toBe(
+      'q1.pdf',
+    );
+  });
+
+  it('keeps a percent escape that is part of the name', () => {
+    expect(getVirtualPathName('/My files/reports/a%20b.pdf', 'fallback')).toBe(
+      'a%20b.pdf',
+    );
+  });
+
+  it('falls back when the path has no segments', () => {
+    expect(getVirtualPathName('', 'fallback')).toBe('fallback');
   });
 });
 

@@ -93,8 +93,8 @@ Unknown top-level fields from DIAL Core SHALL be preserved (index signature) so 
 
 #### Scenario: Type is importable from both backend and frontend
 
-- **WHEN** `apps/chat-api` and `apps/chat/src/server-api/models.ts` import `DialModel` from `@epam/ai-dial-chat-shared`
-- **THEN** TypeScript compilation succeeds with no type errors
+- **WHEN** `apps/chat-api` and `apps/chat` are type-checked
+- **THEN** `DialModel` imported from `@epam/ai-dial-chat-shared` resolves with no type errors
 
 ---
 

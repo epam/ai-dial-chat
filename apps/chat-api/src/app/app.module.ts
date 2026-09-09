@@ -32,6 +32,7 @@ import { ToolsetsModule } from '../toolsets/toolsets.module';
 import { TranscriptionModule } from '../transcription/transcription.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { AppController } from './app.controller';
+import { createAppCacheOptions } from './cache.config';
 import { createServeStaticOptions } from './static-assets';
 
 @Module({
@@ -42,10 +43,9 @@ import { createServeStaticOptions } from './static-assets';
       envFilePath: ['.env.local', '.env'],
       validate,
     }),
-    CacheModule.register({
+    CacheModule.registerAsync({
       isGlobal: true,
-      ttl: 5 * 60 * 1000, // 5 minutes in milliseconds
-      max: 100, // Maximum number of items in cache
+      useFactory: createAppCacheOptions,
     }),
     ServeStaticModule.forRootAsync({
       inject: [ConfigService],

@@ -8972,6 +8972,20 @@
       "AnnotationBodyDto": {
         "type": "object",
         "properties": {
+          "selector": {
+            "description": "Location in the cited document; PDF page numbers are 1-based",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AnnotationSelectorDto"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AnnotationSelectorDto"
+                }
+              }
+            ]
+          },
           "title": {
             "type": "string",
             "description": "Title of the cited source"
