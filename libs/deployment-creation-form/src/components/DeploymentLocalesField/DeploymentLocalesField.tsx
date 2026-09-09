@@ -1,4 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  RESIZABLE_TEXTAREA_CLASS_NAME,
+} from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   ButtonVariant,
@@ -11,6 +14,7 @@ import {
   Popup,
   Select,
   Textarea,
+  TextareaResize,
 } from '@epam/ai-dial-ui-kit';
 import { IconPlus, IconTrashX } from '@tabler/icons-react';
 import { useEffect, useRef, useState, type FC } from 'react';
@@ -258,7 +262,8 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
 
                   <Textarea
                     id={`${entry.id}-description`}
-                    resize
+                    className={RESIZABLE_TEXTAREA_CLASS_NAME}
+                    resize={TextareaResize.Vertical}
                     value={entry.description}
                     onChange={(next) =>
                       handleRowChange(entry.id, { description: next })

@@ -1,14 +1,94 @@
 import {
-  MessageRole,
-  MIMEType,
+  type Annotation,
+  type AnnotationSelector,
   type Message,
   type MessageAttachment,
+  MessageRole,
+  MIMEType,
+  type PdfBBoxSelector,
 } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
+  getAnnotationPdfPage,
   normalizeRawAnnotations,
   resolveMessageAnnotations,
 } from '../annotation';
+
+const bbox = (overrides: Partial<PdfBBoxSelector> = {}): PdfBBoxSelector => ({
+  type: 'pdf_bbox',
+  page: 3,
+  x1: 0,
+  y1: 0,
+  x2: 0,
+  y2: 0,
+  ...overrides,
+});
+
+const makeAnnotation = (
+  selector?: AnnotationSelector | AnnotationSelector[],
+): Annotation => ({ body: { selector } });
+
+describe('getAnnotationPdfPage', () => {
+  it('skips malformed selectors and invalid pages before a valid PDF page', () => {
+    const selector = [
+      null,
+      4,
+      { type: 'pdf_bbox', page: 0 },
+      bbox({ page: 7 }),
+    ];
+    expect(
+      getAnnotationPdfPage(makeAnnotation(selector as AnnotationSelector[])),
+    ).toBe(7);
+  });
+  it('returns the page from a single pdf_bbox selector', () => {
+    expect(getAnnotationPdfPage(makeAnnotation(bbox({ page: 5 })))).toBe(5);
+  });
+
+  it('returns the page from an array of selectors where the pdf_bbox entry is not first', () => {
+    const selector = [
+      { type: 'text_character_range', start: 0, end: 1 },
+      bbox({ page: 7 }),
+    ];
+    expect(getAnnotationPdfPage(makeAnnotation(selector))).toBe(7);
+  });
+
+  it('returns undefined when the selector array has no pdf_bbox entry', () => {
+    const selector = [{ type: 'text_character_range', start: 0, end: 1 }];
+    expect(getAnnotationPdfPage(makeAnnotation(selector))).toBeUndefined();
+  });
+
+  it('returns undefined when the annotation has no body.selector', () => {
+    expect(getAnnotationPdfPage(makeAnnotation(undefined))).toBeUndefined();
+  });
+
+  it('returns undefined when page is missing', () => {
+    const selector = { type: 'pdf_bbox', x1: 0, y1: 0, x2: 0, y2: 0 };
+    expect(getAnnotationPdfPage(makeAnnotation(selector))).toBeUndefined();
+  });
+
+  it('returns undefined when page is 0', () => {
+    expect(
+      getAnnotationPdfPage(makeAnnotation(bbox({ page: 0 }))),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when page is negative', () => {
+    expect(
+      getAnnotationPdfPage(makeAnnotation(bbox({ page: -1 }))),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when page is not an integer', () => {
+    expect(
+      getAnnotationPdfPage(makeAnnotation(bbox({ page: 1.5 }))),
+    ).toBeUndefined();
+  });
+
+  it('returns the page even when all bounding-box coordinates are zero', () => {
+    const selector = bbox({ page: 5, x1: 0, y1: 0, x2: 0, y2: 0 });
+    expect(getAnnotationPdfPage(makeAnnotation(selector))).toBe(5);
+  });
+});
 
 const sampleHtmlTagRaw = (id: string, quote: string) => ({
   target: {
@@ -25,6 +105,21 @@ const sampleHtmlTagRaw = (id: string, quote: string) => ({
 });
 
 describe('normalizeRawAnnotations', () => {
+  it.each([false, true])(
+    'retains PDF body selectors and annotation index for an html_tag citation (array: %s)',
+    (asArray) => {
+      const selector = asArray ? [bbox(), bbox({ page: 7 })] : bbox();
+      const raw = sampleHtmlTagRaw('page-citation', 'Quote');
+      const [annotation] = normalizeRawAnnotations(
+        [{ ...raw, index: 4, body: { ...raw.body, selector } }],
+        [],
+      );
+      expect(annotation.index).toBe(4);
+      expect(annotation.target?.selector).toEqual(raw.target.selector);
+      expect(annotation.body?.selector).toEqual(selector);
+      expect(getAnnotationPdfPage(annotation)).toBe(3);
+    },
+  );
   it('normalizes two html_tag annotations citing the same source URL into two entries', () => {
     const raw = [
       sampleHtmlTagRaw(

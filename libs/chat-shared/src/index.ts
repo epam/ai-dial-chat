@@ -36,6 +36,7 @@ export * from './constants/mime-types';
 export * from './constants/icon';
 export * from './constants/dial';
 export * from './constants/tag-input';
+export * from './constants/resizable-fields';
 
 export * from './components/DeploymentIcon/DeploymentIcon';
 export * from './components/InitialsAvatar/InitialsAvatar';
@@ -54,6 +55,7 @@ export * from './components/MarkdownRenderer/markdown-class-names';
 export * from './components/MarkdownRenderer/CodeBlock/CodeBlock';
 export { restrainedSyntaxTheme } from './components/MarkdownRenderer/CodeBlock/syntax-theme';
 export * from './components/MarkdownRenderer/Table/MarkdownTable';
+export * from './components/MarkdownRenderer/Table/TableHeader';
 export * from './components/MarkdownWithPlaceholders/MarkdownWithPlaceholders';
 export * from './hooks/useIsMobile';
 export * from './hooks/useCodeCopy';

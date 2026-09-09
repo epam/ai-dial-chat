@@ -59,6 +59,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     onNewChat,
     styles: panelStyles,
     className,
+    isOverlay = false,
     getActions,
     onActionMenuOpen,
     onToggle,
@@ -374,6 +375,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     return (
       <SidebarPanel
         isOpen={isOpen}
+        isOverlay={isOverlay}
         orientation={SidebarOrientation.Left}
         title={title}
         labels={{ ariaLabel: title, closeLabel: closeAriaLabel }}

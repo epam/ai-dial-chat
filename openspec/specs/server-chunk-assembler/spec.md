@@ -58,3 +58,17 @@ For the `html_tag` shape, the server infers recognized document MIME types from 
 
 - **WHEN** the assembled message already has a `custom_content.annotations` entry with `target.selector.id: "e43864"` and `body.quote: "Patient"`, and a later chunk's `delta.custom_fields.annotations` carries an entry with the same `id` and `body.quote: " meets criteria"`
 - **THEN** the merged entry has `body.quote: "Patient meets criteria"` and there is still exactly one entry for that `id`
+
+### Requirement: PDF citation selectors survive server assembly and serialization
+
+The server SHALL preserve optional `body.selector` and supplied annotation indexes when normalizing raw `html_tag` citations. Quote-only updates SHALL preserve prior selector data. Legacy `pdf_region` normalization SHALL place its PDF location in `body.selector`, consistent with the frontend. The conversation message DTO and generated OpenAPI client SHALL support object-or-array body selectors and nested validation without adding an endpoint or changing authorization.
+
+#### Scenario: Streamed PDF citation followed by a quote-only delta
+
+- **WHEN** an indexed citation with page 3 in its body selector is assembled and later receives a quote-only delta for that index
+- **THEN** serialization and reload retain page 3, the index and the html-tag marker target
+
+#### Scenario: Validated message carries an object or array selector
+
+- **WHEN** a conversation message passes through the production-style transforming, whitelisting validation pipe with either selector shape
+- **THEN** the PDF location survives serialization; a string-valued nested page fails numeric validation

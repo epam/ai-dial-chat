@@ -59,6 +59,26 @@ const INLINE_STYLES: Record<string, string> = {
 /** Background of every second body row, matching the rendered table's zebra rule. */
 const ZEBRA_ROW_STYLE = 'background:#f5f7fa';
 
+/*
+ * GFM column alignment arrives as the hast `align` property, which paste
+ * targets read as the obsolete presentational attribute — and the `text-align`
+ * the cell styles above already set would win over it anyway. So it is
+ * re-emitted as an inline declaration, appended after the base cell style, and
+ * mapped to the same logical values the rendered table uses.
+ */
+const CELL_ALIGN_STYLES: Record<string, string> = {
+  left: 'text-align:start',
+  center: 'text-align:center',
+  right: 'text-align:end',
+};
+
+/** Returns the inline `text-align` declaration for a cell's GFM column alignment, or `undefined` when the column is unaligned. */
+const getCellAlignStyle = (node: HastNode): string | undefined => {
+  const align = node.properties?.align;
+
+  return typeof align === 'string' ? CELL_ALIGN_STYLES[align] : undefined;
+};
+
 /** Inside a `<pre>` the box and its background are already drawn, so the inline-code chip is dropped. */
 const CODE_IN_PRE_STYLE =
   'font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px';
@@ -76,6 +96,11 @@ const styleNode = (node: HastNode, isInsidePre = false): void => {
   } else if (node.tagName) {
     const style = INLINE_STYLES[node.tagName];
     if (style) appendStyle(node, style);
+
+    if (node.tagName === 'th' || node.tagName === 'td') {
+      const alignStyle = getCellAlignStyle(node);
+      if (alignStyle) appendStyle(node, alignStyle);
+    }
   }
 
   const children = node.children ?? [];

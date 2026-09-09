@@ -403,5 +403,5 @@ This internal transport change SHALL NOT alter `POST /api/v1/conversations/compl
 
 #### Scenario: Browser completion contract is unchanged
 
-- **WHEN** the frontend starts a completion after this change
+- **WHEN** the frontend starts a completion
 - **THEN** it continues to send the existing completion DTO without a new conversation header or identifier field, and the BFF derives the outbound header from the loaded conversation

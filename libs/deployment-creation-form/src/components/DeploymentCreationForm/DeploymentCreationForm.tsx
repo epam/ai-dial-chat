@@ -1,5 +1,6 @@
 import {
   mergeClasses,
+  RESIZABLE_TEXTAREA_CLASS_NAME,
   TAG_INPUT_TAG_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
 import { AddAvatar } from '@epam/ai-dial-editor-builder';
@@ -97,6 +98,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         labelProps={{ label: labels.description.label }}
         placeholder={labels.description.placeholder}
         containerClassName={styles?.field}
+        className={RESIZABLE_TEXTAREA_CLASS_NAME}
         resize={TextareaResize.Vertical}
       />
 

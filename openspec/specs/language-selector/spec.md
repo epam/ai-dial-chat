@@ -14,7 +14,7 @@ The language selector allows users to switch the application UI language at runt
 
 ### Requirement: The selector exists only when more than one locale is registered
 
-`useNavigationMenuGroups` builds the Language group **only when `SUPPORTED_LANGUAGES.length > 1`** (and `OverlayFeature.HideUserSettings` is off). With a single registered locale there is no Language item in the User Menu and no submenu to open — see `user-menu`.
+`useNavigationMenuGroups` SHALL build the Language group **only when `SUPPORTED_LANGUAGES.length > 1`** (and `OverlayFeature.HideUserSettings` is off). With a single registered locale there is no Language item in the User Menu and no submenu to open — see `user-menu`.
 
 `SUPPORTED_LANGUAGES` (`apps/chat/src/hooks/language/useLanguage.ts`) currently holds exactly one entry, `{ code: 'en', nativeName: 'English' }`. **Every requirement below therefore describes behaviour that no shipping build can currently exercise through the UI.** They are not stale — the persistence, indication and direction-switching machinery all exist and are wired — but they become reachable only once a second locale is registered per the "Adding a new locale" steps in `AGENTS.md`.
 

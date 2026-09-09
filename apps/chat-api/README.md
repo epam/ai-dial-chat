@@ -31,6 +31,17 @@ the endpoints `apps/chat` consumes.
 - 📊 Request metrics logging
 - 🔭 OpenTelemetry traces, logs, and Prometheus-compatible metrics (opt-in, see [Observability](#observability))
 
+## PDF citation metadata
+
+Citation messages retain two independent selectors: `target.selector` associates
+an inline `<cit data-id="...">` marker, while optional `body.selector` identifies
+a PDF location. The body selector accepts an object or an array, including
+`{ type: 'pdf_bbox', page: 3, x1: 0, y1: 0, x2: 0, y2: 0 }` with 1-based pages.
+Raw annotation normalization preserves this field and supplied annotation indexes
+through stream assembly and persistence. Later quote-only deltas retain the
+earlier selector. The same optional field is part of the validated conversation
+message DTO and generated OpenAPI client.
+
 ## Prerequisites
 
 - Node.js 24+
@@ -568,7 +579,7 @@ property so a client failure can be correlated with server traces and logs.
 
 ### Performance
 
-- **Caching**: In-memory caching for theme configuration and icons (5-minute TTL)
+- **Caching**: One in-memory LRU cache per backend process, limited to 100 entries across services. The default TTL is 5 minutes; service-specific TTLs override it. Expired entries are removed on access and swept every 60 seconds even if never accessed again. The sweep timer and cached values are released when the application closes. Values retain their original types and references, including binary theme icons; the limit counts entries, not bytes.
 - **Cache-Control Headers**: HTTP caching directives for browser/CDN caching
 - **Request Timeouts**: Configurable timeouts for external service calls with AbortController
 - **Metrics Logging**: Request duration and status tracking for monitoring

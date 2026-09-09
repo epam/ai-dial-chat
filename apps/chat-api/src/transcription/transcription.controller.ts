@@ -1,7 +1,10 @@
 import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
-import type { SessionUser } from '../auth/session/session.types';
+import {
+  getJobTitleClaim,
+  type SessionUser,
+} from '../auth/session/session.types';
 import { TranscribeAudioDto } from './dto/transcribe-audio.dto';
 import { TranscriptionUnavailableException } from './transcription-unavailable.exception';
 import { TranscriptionService } from './transcription.service';
@@ -39,11 +42,12 @@ export class TranscriptionController {
     @Body() dto: TranscribeAudioDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ transcript: string }> {
-    const { at } = req.user as SessionUser;
+    const { at, claims } = req.user as SessionUser;
     try {
       const transcript = await this.transcriptionService.transcribeAudio(
         dto,
         at,
+        getJobTitleClaim(claims),
       );
       return { transcript };
     } catch (error) {
