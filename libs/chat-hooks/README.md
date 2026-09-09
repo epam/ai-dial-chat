@@ -615,6 +615,79 @@ const Composer = ({
 
 **Returns** (`UseAttachmentUploadResult`): `{ handleUploadAttachment: (attachment: Attachment) => Promise<string> }` — resolves to the uploaded file's DIAL Core URL; rejects with an `Error` tagged `errorReason: AttachmentErrorReason.Network` when offline.
 
+### useTranscribeAudio
+
+Uploads a complete voice recording to DIAL Core storage and recognizes it, preferring a configured ASR model and falling back to the selected deployment, retrying transient upstream failures (429/502/503/504, honoring `Retry-After`, capped at two retries and a 90-second total wait). Error text is not this library's concern: failures reject with an `AudioTranscriptionError` carrying a translation-free `AudioTranscriptionErrorReason` — the host maps it to copy at the call site, the same pattern `useAttachmentValidation` uses for rejected files.
+
+```tsx
+import {
+  AudioTranscriptionError,
+  useTranscribeAudio,
+} from '@epam/ai-dial-chat-hooks';
+
+const VoiceComposer = ({
+  transcriptionApi,
+  filesApi,
+  transcribeWithDeployment,
+  bucket,
+  asrModelId,
+  selectedDeploymentId,
+}: {
+  transcriptionApi?: Pick<TranscriptionApi, 'transcribeAudio'>;
+  filesApi: Pick<FilesApi, 'uploadFile'>;
+  transcribeWithDeployment?: (params: {
+    audioUrl: string;
+    mimeType: string;
+    deployment: string;
+    signal: AbortSignal;
+  }) => Promise<string>;
+  bucket: string | undefined;
+  asrModelId?: string;
+  selectedDeploymentId?: string | null;
+}) => {
+  const { transcribeAudio } = useTranscribeAudio({
+    transcriptionApi,
+    filesApi,
+    transcribeWithDeployment,
+    bucket,
+    asrModelId,
+    selectedDeploymentId,
+    maxSizeBytes: 5 * 1024 * 1024,
+  });
+
+  const handleTranscribeAudio = async (file: File, signal: AbortSignal) => {
+    try {
+      return await transcribeAudio(file, signal);
+    } catch (error) {
+      if (error instanceof AudioTranscriptionError) {
+        throw new Error(translateReason(error.reason, error.limitBytes));
+      }
+      throw error;
+    }
+  };
+
+  // pass handleTranscribeAudio to a recording UI, e.g. Input's `onTranscribeAudio`
+};
+```
+
+#### API
+
+**Parameters** (`UseTranscribeAudioParams`):
+
+| Name                      | Type                                                                                                 | Description                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `transcriptionApi`        | `Pick<TranscriptionApi, 'transcribeAudio'>`                                                              | Already-configured generated-client instance used for the ASR-model path.                                          |
+| `filesApi`                | `Pick<FilesApi, 'uploadFile'>`                                                                            | Already-configured generated-client instance used to upload the recording.                                         |
+| `transcribeWithDeployment` | `(params: { audioUrl: string; mimeType: string; deployment: string; signal: AbortSignal }) => Promise<string>` | Host-configured call for the selected-deployment path — the generated chat-completions client cannot express that endpoint's request shape, so the host supplies its own raw request. |
+| `bucket`                  | `string \| undefined \| null`                                                                             | DIAL Core bucket the recording is uploaded into.                                                                    |
+| `asrModelId`              | `string`                                                                                                  | Recognizes via `transcriptionApi` when set; otherwise `selectedDeploymentId` is used.                               |
+| `selectedDeploymentId`    | `string \| undefined \| null`                                                                             | Deployment id used for recognition when `asrModelId` is not set.                                                    |
+| `maxSizeBytes`            | `number`                                                                                                  | Recordings larger than this are rejected with `TooLarge` before upload.                                             |
+
+**Returns** (`UseTranscribeAudioResult`): `{ transcribeAudio: (file: File, signal: AbortSignal) => Promise<string> }`.
+
+`AudioTranscriptionErrorReason` is `Unavailable` (no usable ASR model or deployment configured for the current bucket), `TooLarge` (checked before upload; `AudioTranscriptionError.limitBytes` carries the limit that was exceeded), `Busy` (the upstream ASR provider stayed rate-limited or unavailable after retrying), or `Failed` (recognition failed for any other reason).
+
 ### useConversationExport / useConversationImport
 
 A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Both share the same job-queue semantics — `jobs`, `cancelJob`, `dismissJob`, `retryJob`, `dismissAll` — and report determinate per-job progress plus outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. A transfer that delivers its file but skips some attachments settles at `Warning` carrying a `warningCode`, so a partial result is distinguishable from a clean one without reading the event stream. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text. `cancelJob` and `dismissJob` differ: both abort the job's in-flight requests, but `cancelJob` leaves the job in `jobs` with status `Canceled` so the UI can keep showing it, while `dismissJob` removes it.

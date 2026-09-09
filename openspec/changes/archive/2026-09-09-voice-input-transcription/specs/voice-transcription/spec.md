@@ -1,43 +1,24 @@
-# voice-transcription Specification
+## REMOVED Requirements
 
-## Purpose
+### Requirement: onUploadAudio and onTranscribeAudio callbacks on ConversationInput
 
-Uploading recorded audio and transcribing it into the conversation input.
+**Reason**: The library no longer manages storage URLs or separate upload and recognition steps. Stop replaces the old checkmark confirmation.
 
-## Requirements
+**Migration**: Supply the host-owned `onTranscribeAudio(file, signal): Promise<string>` callback described below. Move upload into the app adapter. Use the existing attachment pipeline for Record voice.
 
-### Requirement: isAudioTranscriptionSupported utility
+### Requirement: App-layer onUploadAudio implementation
 
-`libs/chat-shared` SHALL export a pure utility function:
+**Reason**: Dictation upload belongs inside the single app-level transcription callback, rather than a separate public library prop.
 
-```ts
-export const isAudioTranscriptionSupported = (types?: string[]): boolean =>
-  types?.some(t => t === '*/*' || t.startsWith('audio/')) ?? false;
-```
+**Migration**: Use `useAudioTranscription.handleTranscribeAudio`, which validates and uploads the completed file with the session AbortSignal before recognition.
 
-It returns `true` when the array contains `"*/*"` or any `"audio/..."` MIME type, and `false` for `undefined`, empty, or non-matching arrays.
+### Requirement: App-layer onTranscribeAudio implementation via collectStream
 
-#### Scenario: Wildcard type returns true
+**Reason**: The current app consumes complete transcription responses through its ASR or selected-deployment adapter. It does not accumulate speech results through collectStream or the historical conversations endpoint.
 
-- **WHEN** `isAudioTranscriptionSupported(['*/*'])` is called
-- **THEN** it returns `true`
+**Migration**: Use configured ASR through TranscriptionApi or the existing selected-deployment chat wrapper. Append the completed result to the draft through the input callback.
 
-#### Scenario: Audio MIME type returns true
-
-- **WHEN** `isAudioTranscriptionSupported(['image/png', 'audio/webm'])` is called
-- **THEN** it returns `true`
-
-#### Scenario: No audio type returns false
-
-- **WHEN** `isAudioTranscriptionSupported(['image/png', 'application/pdf'])` is called
-- **THEN** it returns `false`
-
-#### Scenario: Undefined input returns false
-
-- **WHEN** `isAudioTranscriptionSupported(undefined)` is called
-- **THEN** it returns `false`
-
----
+## MODIFIED Requirements
 
 ### Requirement: Audio format detection
 
@@ -53,7 +34,7 @@ The `useVoiceRecorder` hook SHALL choose a supported MediaRecorder format in thi
 - **WHEN** none of the preferred types is supported and the browser records `audio/mp4`
 - **THEN** the complete File has MIME type `audio/mp4` and an `.mp4` extension
 
----
+## ADDED Requirements
 
 ### Requirement: Host-owned file-to-text callback
 

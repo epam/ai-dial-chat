@@ -1,9 +1,5 @@
-# voice-recording-ui Specification
+## MODIFIED Requirements
 
-## Purpose
-
-The mic button and the voice bar that replaces the conversation input while a recording is in progress.
-## Requirements
 ### Requirement: Mic button in ConversationInput
 
 `Input` and `ConversationInput` SHALL render the microphone GhostIconButton in the action bar when `isAudioMessageSupported` is true and assistant streaming is inactive, except during the existing send-button exit transition. The default accessible label and tooltip SHALL be `Dictate`, overridable with `micLabel`. It SHALL start dictation, remain available with existing draft text/attachments or active attachment uploads, and respect `isInputDisabled`. The button SHALL use a 24 px icon in a 40 px desktop control and at least a 44 px mobile touch target. When the library caller omits the transcription callback, the legacy audio attachment fallback SHALL remain available.
@@ -25,8 +21,6 @@ The mic button and the voice bar that replaces the conversation input while a re
 
 - **WHEN** text, attachments or an attachment upload already exists
 - **THEN** these alone do not disable or hide Dictate
-
----
 
 ### Requirement: Voice bar replaces conversation input during recording
 
@@ -54,8 +48,6 @@ The voice bar SHALL replace the textarea inside the existing input border for bo
 - **WHEN** the user presses Stop for Record voice
 - **THEN** the complete recording enters the existing attachment validation/upload pipeline and the textarea returns with unchanged draft text
 
----
-
 ### Requirement: Recording state — live scrolling waveform and red controls
 
 During recording the voice bar SHALL display a pulsing recording dot, animated bar-histogram canvas, filled stop-square button and discard button, without an elapsed-time counter. The dot SHALL use the existing voice accent token and the waveform the existing voice waveform token. Stop SHALL finalize the selected mode: attach the file for Record voice or await recognition for Dictate. Discard SHALL abort the session without delivering a new file or transcript.
@@ -78,27 +70,6 @@ The waveform SHALL use the existing 200-slot ring buffer, 3 px bars and 1 px gap
 - **WHEN** the discard control is activated
 - **THEN** capture and animation stop, no new attachment/transcript is delivered, and the original input returns
 
----
-
-### Requirement: Canvas sizing
-
-The waveform `<canvas>` element SHALL be:
-- `h-8` (32 px) on mobile breakpoints.
-- `h-6` (24 px) on desktop breakpoints, to fit alongside the voice bar's controls on one row.
-
-A `ResizeObserver` SHALL be attached to the canvas so that the histogram redraws at the correct pixel width whenever the flex layout changes (e.g. on breakpoint change). Resizing SHALL NOT reset the ring buffer; it only redraws the existing buffer content at the new width.
-
-#### Scenario: Canvas height follows the breakpoint
-
-- **WHEN** the voice bar is rendered at a mobile viewport and then at a desktop viewport
-- **THEN** the canvas is `h-8` on mobile and `h-6` on desktop
-
-#### Scenario: A resize redraws without losing history
-
-- **WHEN** the flex layout changes width while recording
-- **THEN** the `ResizeObserver` triggers a redraw at the new pixel width
-- **AND** the already-captured waveform history remains in the ring buffer
-
 ### Requirement: Mobile layout — waveform full-width, buttons on separate line
 
 At the project's mobile breakpoint (up to 768 px), the first voice-bar row SHALL contain the dot and waveform, and the second row SHALL contain the controls aligned to the inline end. The discard control SHALL precede the filled stop-square control during recording; only discard SHALL remain during processing or error. These controls SHALL have at least 44 px touch targets. At desktop widths (from 769 px), waveform and controls SHALL share a row. Layout SHALL inherit document direction and use logical alignment; the waveform's time animation SHALL retain its existing direction.
@@ -113,8 +84,6 @@ At the project's mobile breakpoint (up to 768 px), the first voice-bar row SHALL
 - **WHEN** either mode records at a desktop width
 - **THEN** the waveform and controls share the first content row in place of the textarea
 
----
-
 ### Requirement: Microphone permission error
 
 `useVoiceRecorder` SHALL catch microphone access failures, release acquired media resources, and enter Error. The voice bar SHALL display an error alert and discard control; dismissing it SHALL restore the saved draft. Browser-supplied error messages may be retained; the host SHALL provide translated fallback recording-error text.
@@ -123,6 +92,8 @@ At the project's mobile breakpoint (up to 768 px), the first voice-bar row SHALL
 
 - **WHEN** the browser rejects microphone permission
 - **THEN** an error is displayed with `role="alert"`, no upload or recognition begins, and discard restores the original input
+
+## ADDED Requirements
 
 ### Requirement: Record voice menu action
 

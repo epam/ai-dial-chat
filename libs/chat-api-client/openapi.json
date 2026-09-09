@@ -4249,7 +4249,15 @@
             "description": "Unexpected response from DIAL Core"
           },
           "503": {
-            "description": "DIAL Core is unreachable"
+            "description": "DIAL Core is unreachable or ASR is temporarily unavailable",
+            "headers": {
+              "Retry-After": {
+                "description": "Upstream retry delay, when provided by DIAL Core",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "summary": "Transcribe audio using the configured ASR model",

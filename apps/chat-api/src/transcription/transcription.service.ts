@@ -9,6 +9,7 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { DialClientService } from '../dial/dial-client.service';
 import { TranscribeAudioDto } from './dto/transcribe-audio.dto';
+import { TranscriptionUnavailableException } from './transcription-unavailable.exception';
 
 interface CompletionResponse {
   choices?: Array<{ message?: { content?: string } }>;
@@ -63,6 +64,13 @@ export class TranscriptionService {
       )) as { data?: unknown; error?: unknown; response: Response };
 
       if (!result.response.ok || result.error != null) {
+        if ([429, 503].includes(result.response.status)) {
+          const retryAfter = result.response.headers.get('retry-after');
+          this.logger.warn(
+            `ASR temporarily unavailable: DIAL Core status=${result.response.status}, retryAfter=${retryAfter ?? 'unspecified'}`,
+          );
+          throw new TranscriptionUnavailableException(retryAfter);
+        }
         this.logger.error(
           'DIAL Core rejected transcription request',
           result.error,
