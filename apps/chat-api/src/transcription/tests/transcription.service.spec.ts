@@ -50,4 +50,36 @@ describe('TranscriptionService', () => {
       NotFoundException,
     );
   });
+
+  it('forwards the job title in the X-JOB-TITLE header when provided', async () => {
+    sendChatCompletionRequest.mockResolvedValue({
+      data: { choices: [{ message: { content: 'hello' } }] },
+      error: undefined,
+      response: { ok: true },
+    });
+
+    await service.transcribeAudio(dto, TOKEN, 'Lead Software Engineer');
+
+    const [, options] = sendChatCompletionRequest.mock.calls[0] as [
+      string,
+      { headers: Record<string, string> },
+    ];
+    expect(options.headers['X-JOB-TITLE']).toBe('Lead Software Engineer');
+  });
+
+  it('omits the X-JOB-TITLE header when no job title is provided', async () => {
+    sendChatCompletionRequest.mockResolvedValue({
+      data: { choices: [{ message: { content: 'hello' } }] },
+      error: undefined,
+      response: { ok: true },
+    });
+
+    await service.transcribeAudio(dto, TOKEN);
+
+    const [, options] = sendChatCompletionRequest.mock.calls[0] as [
+      string,
+      { headers: Record<string, string> },
+    ];
+    expect(options.headers).not.toHaveProperty('X-JOB-TITLE');
+  });
 });

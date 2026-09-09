@@ -566,7 +566,7 @@ property so a client failure can be correlated with server traces and logs.
 
 ### Performance
 
-- **Caching**: In-memory caching for theme configuration and icons (5-minute TTL)
+- **Caching**: One in-memory LRU cache per backend process, limited to 100 entries across services. The default TTL is 5 minutes; service-specific TTLs override it. Expired entries are removed on access and swept every 60 seconds even if never accessed again. The sweep timer and cached values are released when the application closes. Values retain their original types and references, including binary theme icons; the limit counts entries, not bytes.
 - **Cache-Control Headers**: HTTP caching directives for browser/CDN caching
 - **Request Timeouts**: Configurable timeouts for external service calls with AbortController
 - **Metrics Logging**: Request duration and status tracking for monitoring

@@ -536,6 +536,23 @@ describe('AssistantMessageBubble — attachments', () => {
   });
 });
 
+describe('AssistantMessageBubble — markdown URLs', () => {
+  it('rewrites markdown image src through markdownUrlTransform', () => {
+    render(
+      <AssistantMessageBubble
+        text="![chart](files/bucket/chart.png)"
+        markdownUrlTransform={(url) =>
+          url.startsWith('files/') ? `/dl/${url.slice('files/'.length)}` : url
+        }
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'chart' }).getAttribute('src')).toBe(
+      '/dl/bucket/chart.png',
+    );
+  });
+});
+
 describe('AssistantMessageBubble — deployment icon', () => {
   it('renders an img when deploymentIconUrl is provided', () => {
     render(

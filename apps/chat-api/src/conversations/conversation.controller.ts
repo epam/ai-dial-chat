@@ -17,7 +17,10 @@ import {
 } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
-import type { SessionUser } from '../auth/session/session.types';
+import {
+  getJobTitleClaim,
+  type SessionUser,
+} from '../auth/session/session.types';
 import { SSE_KEEPALIVE_PAYLOAD, startSseResponse } from '../common/utils/sse';
 import {
   ConversationMetadataDto,
@@ -254,7 +257,7 @@ export class ConversationController {
     @Headers(TIMEZONE_HEADER) timezoneHeader: string | string[] | undefined,
   ): Promise<void> {
     const user = req.user as SessionUser;
-    const { at, bucket, sub } = user;
+    const { at, bucket, claims, sub } = user;
     const sid = this.requireSessionId(user);
     const timezone = assertValidOptionalTimezone(timezoneHeader);
     const stream = this.conversationService.streamCompletion(
@@ -272,6 +275,7 @@ export class ConversationController {
       sub,
       dto.clientChannelId,
       timezone,
+      getJobTitleClaim(claims),
     );
 
     /*

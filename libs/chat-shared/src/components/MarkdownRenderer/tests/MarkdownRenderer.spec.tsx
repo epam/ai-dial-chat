@@ -684,4 +684,82 @@ describe('MarkdownRenderer', () => {
       });
     });
   });
+
+  describe('urlTransform', () => {
+    const rewriteFilesUrl = (url: string) =>
+      url.startsWith('files/') ? `/dl/${url.slice('files/'.length)}` : url;
+
+    it('leaves markdown image src unchanged when urlTransform is omitted', () => {
+      render(<MarkdownRenderer content="![chart](files/bucket/chart.png)" />);
+
+      expect(
+        screen.getByRole('img', { name: 'chart' }).getAttribute('src'),
+      ).toBe('files/bucket/chart.png');
+    });
+
+    it('rewrites markdown image src through urlTransform', () => {
+      render(
+        <MarkdownRenderer
+          content="![chart](files/bucket/chart.png)"
+          urlTransform={rewriteFilesUrl}
+        />,
+      );
+
+      expect(
+        screen.getByRole('img', { name: 'chart' }).getAttribute('src'),
+      ).toBe('/dl/bucket/chart.png');
+    });
+
+    it('rewrites markdown link href through urlTransform', () => {
+      render(
+        <MarkdownRenderer
+          content="[report](files/bucket/report.pdf)"
+          urlTransform={rewriteFilesUrl}
+        />,
+      );
+
+      expect(
+        screen.getByRole('link', { name: 'report' }).getAttribute('href'),
+      ).toBe('/dl/bucket/report.pdf');
+    });
+
+    it('rewrites raw HTML img src through urlTransform', () => {
+      render(
+        <MarkdownRenderer
+          content='<img src="files/bucket/chart.png" alt="chart">'
+          urlTransform={rewriteFilesUrl}
+        />,
+      );
+
+      expect(
+        screen.getByRole('img', { name: 'chart' }).getAttribute('src'),
+      ).toBe('/dl/bucket/chart.png');
+    });
+
+    it('leaves non-file URLs unchanged', () => {
+      render(
+        <MarkdownRenderer
+          content="![logo](https://example.com/logo.png)"
+          urlTransform={rewriteFilesUrl}
+        />,
+      );
+
+      expect(
+        screen.getByRole('img', { name: 'logo' }).getAttribute('src'),
+      ).toBe('https://example.com/logo.png');
+    });
+
+    it('still strips javascript: URLs after the host rewrite', () => {
+      render(
+        <MarkdownRenderer
+          content="[x](files/bucket/a)"
+          urlTransform={() => 'javascript:alert(1)'}
+        />,
+      );
+
+      expect(
+        screen.getByText('x', { selector: 'a' }).getAttribute('href'),
+      ).toBe('');
+    });
+  });
 });
