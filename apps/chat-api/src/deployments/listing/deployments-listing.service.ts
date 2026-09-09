@@ -8,6 +8,7 @@ import {
   mapDialHttpStatus,
 } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { buildJobTitleHeaders } from '../../common/utils/header-value';
 import {
   computeItemOwnershipFlags,
   splitResourcesByPermission,
@@ -122,6 +123,7 @@ export class DeploymentsListingService {
     bucket: string,
     interfaceType?: DeploymentInterfaceType[],
     refresh = false,
+    jobTitle?: string,
   ): Promise<DeploymentsResponseDto> {
     this.logger.debug(
       `listDeployments requested interfaceType=${JSON.stringify(interfaceType)} (sub: ${userSub})`,
@@ -158,7 +160,10 @@ export class DeploymentsListingService {
           `Requesting deployments from DIAL Core with interface_type=${JSON.stringify(interfaceFilter)} (sub: ${userSub})`,
         );
         const result = await this.dialClient.client.listDeployments({
-          headers: getBearerAuthHeaders(accessToken),
+          headers: {
+            ...getBearerAuthHeaders(accessToken),
+            ...buildJobTitleHeaders(jobTitle),
+          },
           params: interfaceFilter
             ? { query: { interface_type: interfaceFilter } }
             : undefined,

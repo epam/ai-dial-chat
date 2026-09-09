@@ -123,6 +123,16 @@ _Source: [`auth-diagrams/03-login-flow.mmd`](./auth-diagrams/03-login-flow.mmd)_
 
 The transient `tx` cookie holds only `{ state, nonce, code_verifier, providerId }`, lives 5–10 minutes, and is deleted immediately after callback.
 
+The callback allowlists `job_title` from the ID token for forwarding as
+`X-JOB-TITLE` on Core completion, deployments-list, rating, and transcription
+requests. If Keycloak's ID token has no non-empty string value, the callback
+queries the discovered UserInfo endpoint with the access token, when available.
+It copies only a non-empty string `job_title`, and only when UserInfo's `sub`
+matches the validated ID-token subject. This restores the legacy Keycloak
+profile source; other providers keep their ID-token path. A failed lookup or
+subject mismatch leaves the optional value unset and does not block login.
+Claims are captured at login; transparent token refresh does not reload them.
+
 #### 5.1.1 Overlay External Login
 
 When Chat runs inside an overlay iframe and the session bootstrap resolves as unauthenticated, the SPA does not start the normal automatic redirect inside the iframe. While app config is still loading in a framed window, the protected route tree is not rendered yet, so the normal redirect cannot race ahead before overlay eligibility is known. External IdP pages can block iframe rendering with `X-Frame-Options` or `frame-ancestors`, so the overlay instead renders a login gate with a user-triggered "Log in" action.
