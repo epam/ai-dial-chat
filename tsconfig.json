@@ -46,6 +46,9 @@
       "path": "./libs/attachment-canvas"
     },
     {
+      "path": "./libs/mcp-apps"
+    },
+    {
       "path": "./libs/attachment-input"
     },
     {
@@ -92,6 +95,9 @@
     },
     {
       "path": "./libs/usage-dashboard"
+    },
+    {
+      "path": "./libs/editor-builder"
     }
   ]
 }

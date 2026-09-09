@@ -9,6 +9,7 @@ import {
   DialFileManagerTabs,
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
+  NotificationVariant,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
@@ -118,6 +119,15 @@ const DialFileManagerPage: FC = () => {
     () => ({
       emptyName: t(DialFileManagerI18nKeys.RenameNameEmpty),
       duplicateName: t(DialFileManagerI18nKeys.RenameDuplicateName),
+      /*
+       * The leading-dot notice is rendered as a soft warning by the file
+       * manager, which recognizes it by this prefix; the message itself
+       * still has to come from the host so it is translated.
+       */
+      hiddenItemWarning: `${NotificationVariant.Warning}__${t(
+        DialFileManagerI18nKeys.RenameHiddenItemWarning,
+      )}`,
+      consecutiveDotsError: t(DialFileManagerI18nKeys.NameConsecutiveDots),
     }),
     [t],
   );

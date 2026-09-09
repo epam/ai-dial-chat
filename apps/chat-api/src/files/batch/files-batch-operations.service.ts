@@ -2,10 +2,12 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
-import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
-import { buildDialFileResourceUrl } from '../dial-resource-path.util';
+import {
+  buildDialFileResourceUrl,
+  encodeDialFilePath,
+} from '../dial-resource-path.util';
 import type { CopyItemDto } from '../dto/copy-files.dto';
 import { CopyFilesResponseDto, CopyItemResultDto } from '../dto/copy-files.dto';
 import type { DeleteItemDto } from '../dto/delete-files.dto';
@@ -21,6 +23,7 @@ import {
   RenameFilesResponseDto,
   RenameItemResultDto,
 } from '../dto/rename-files.dto';
+import { fileMetadataMatchesPath } from '../file-metadata-match';
 import { MARKER_NAME } from '../files.constants';
 import type { ExpandedFile } from '../listing/files-listing.service';
 import { FilesListingService } from '../listing/files-listing.service';
@@ -29,9 +32,10 @@ const getResourceOperationErrorMessage = (
   error: unknown,
   operationTag: string,
   fallback: string,
+  response?: { status: number },
 ): string => {
   try {
-    handleDialSdkError(error, operationTag);
+    handleDialSdkError(error, operationTag, undefined, response);
   } catch (err) {
     if (err instanceof HttpException) {
       if (err.getStatus() === HttpStatus.CONFLICT) return 'Conflict';
@@ -43,14 +47,49 @@ const getResourceOperationErrorMessage = (
   return fallback;
 };
 
-const getRenameErrorMessage = (error: unknown): string =>
-  getResourceOperationErrorMessage(error, 'files.renameItem', 'Rename failed');
+const getRenameErrorMessage = (
+  error: unknown,
+  response?: { status: number },
+): string =>
+  getResourceOperationErrorMessage(
+    error,
+    'files.renameItem',
+    'Rename failed',
+    response,
+  );
 
-const getCopyErrorMessage = (error: unknown): string =>
-  getResourceOperationErrorMessage(error, 'files.copyItem', 'Copy failed');
+const getCopyErrorMessage = (
+  error: unknown,
+  response?: { status: number },
+): string =>
+  getResourceOperationErrorMessage(
+    error,
+    'files.copyItem',
+    'Copy failed',
+    response,
+  );
 
-const getMoveErrorMessage = (error: unknown): string =>
-  getResourceOperationErrorMessage(error, 'files.moveItem', 'Move failed');
+const getMoveErrorMessage = (
+  error: unknown,
+  response?: { status: number },
+): string =>
+  getResourceOperationErrorMessage(
+    error,
+    'files.moveItem',
+    'Move failed',
+    response,
+  );
+
+interface TransferFailure {
+  error: unknown;
+  status: number;
+  bucket: string;
+  destPath: string;
+  overwrite: boolean;
+  at: string;
+  mapStatus: (error: unknown, response: { status: number }) => string;
+  fallback: string;
+}
 
 interface FolderFanOutSuccess<TChildResult> {
   success: true;
@@ -121,6 +160,65 @@ export class FilesBatchOperationsService {
     return { success: true, childResults };
   }
 
+  /**
+   * Turns a failed rename/copy/move into the per-item `error` string.
+   *
+   * DIAL Core's transfer contract has no 409: `POST /v1/ops/resource/copy` and
+   * `/move` declare 200/400/401/403/404/500 only, so a destination that is
+   * already taken while `overwrite` is false comes back as a plain 400 and
+   * would otherwise land in the generic "<operation> failed" fallback. When a
+   * non-overwriting transfer fails with a 400, the destination is probed once —
+   * if a resource is really sitting there, the item is reported as `Conflict`
+   * so the UI can offer rename/overwrite instead of a dead-end error. The
+   * probe only ever runs on the failure path, so the happy path stays at one
+   * upstream call per item.
+   */
+  private async resolveTransferErrorMessage(
+    failure: TransferFailure,
+  ): Promise<string> {
+    const { error, status, bucket, destPath, overwrite, at, mapStatus } =
+      failure;
+
+    const mapped = mapStatus(error, { status });
+    if (mapped !== failure.fallback) return mapped;
+
+    if (overwrite || status !== HttpStatus.BAD_REQUEST) return mapped;
+
+    return (await this.resourceExists(bucket, destPath, at))
+      ? 'Conflict'
+      : mapped;
+  }
+
+  private async resourceExists(
+    bucket: string,
+    path: string,
+    at: string,
+  ): Promise<boolean> {
+    try {
+      const { data, error, response } =
+        await this.dialClient.client.getFileMetadata(
+          bucket,
+          encodeDialFilePath(path),
+          {
+            headers: getBearerAuthHeaders(at),
+            signal: AbortSignal.timeout(this.getTimeoutMs()),
+          },
+        );
+
+      const status = (response as { status: number }).status;
+      return (
+        error == null &&
+        status === HttpStatus.OK &&
+        fileMetadataMatchesPath(data, bucket, path)
+      );
+    } catch (err) {
+      this.logger.warn(
+        `resourceExists probe failed: bucket=${bucket}, path=${path}, err=${err instanceof Error ? err.message : String(err)}`,
+      );
+      return false;
+    }
+  }
+
   // ---- Delete ----
 
   async deleteFiles(
@@ -161,7 +259,7 @@ export class FilesBatchOperationsService {
     try {
       const { error, response } = (await this.dialClient.client.deleteFile(
         bucket,
-        encodeDialResourcePath(relPath),
+        encodeDialFilePath(relPath),
         {
           headers: getBearerAuthHeaders(at),
           signal: AbortSignal.timeout(this.getTimeoutMs()),
@@ -300,7 +398,16 @@ export class FilesBatchOperationsService {
         sourcePath,
         destinationPath: destPath,
         success: false,
-        error: getRenameErrorMessage({ status }),
+        error: await this.resolveTransferErrorMessage({
+          error,
+          status,
+          bucket,
+          destPath,
+          overwrite: false,
+          at,
+          mapStatus: getRenameErrorMessage,
+          fallback: 'Rename failed',
+        }),
       };
     } catch (err) {
       this.logger.error(
@@ -439,7 +546,16 @@ export class FilesBatchOperationsService {
         sourcePath,
         destinationPath: destPath,
         success: false,
-        error: getCopyErrorMessage({ status }),
+        error: await this.resolveTransferErrorMessage({
+          error,
+          status,
+          bucket,
+          destPath,
+          overwrite,
+          at,
+          mapStatus: getCopyErrorMessage,
+          fallback: 'Copy failed',
+        }),
       };
     } catch (err) {
       this.logger.error(
@@ -580,7 +696,16 @@ export class FilesBatchOperationsService {
         sourcePath,
         destinationPath: destPath,
         success: false,
-        error: getMoveErrorMessage({ status }),
+        error: await this.resolveTransferErrorMessage({
+          error,
+          status,
+          bucket,
+          destPath,
+          overwrite,
+          at,
+          mapStatus: getMoveErrorMessage,
+          fallback: 'Move failed',
+        }),
       };
     } catch (err) {
       this.logger.error(

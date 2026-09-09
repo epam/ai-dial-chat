@@ -24,6 +24,11 @@ vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => useDeploymentsMock(),
 }));
 
+const useConversationsMock = vi.fn();
+vi.mock('../../../context/ConversationsContext', () => ({
+  useConversations: () => useConversationsMock(),
+}));
+
 const getScheduledTaskMock = vi.fn();
 const pauseScheduledTaskMock = vi.fn();
 const resumeScheduledTaskMock = vi.fn();
@@ -93,6 +98,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     runsError,
     onRunsRetry,
     onRunsLoadMore,
+    onRunClick,
   }: {
     labels: {
       errorLabel: string;
@@ -123,10 +129,15 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     repeatsLabel?: string;
     activeWindowLabel?: string;
     nextRunLabel?: string;
-    runs: { id: string }[];
+    runs: { id: string; conversationId?: string; isUnread?: boolean }[];
     runsError?: Error | null;
     onRunsRetry?: () => void;
     onRunsLoadMore?: () => void;
+    onRunClick?: (run: {
+      id: string;
+      conversationId?: string;
+      isUnread?: boolean;
+    }) => void;
   }) => (
     <div>
       <span>displayName:{displayName}</span>
@@ -140,6 +151,11 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <span>activeWindowLabel:{activeWindowLabel}</span>
       <span>nextRunLabel:{nextRunLabel}</span>
       <span>runs:{runs.length}</span>
+      {runs.map((run) => (
+        <button key={run.id} onClick={() => onRunClick?.(run)}>
+          run:{run.id}:{run.isUnread ? 'unread' : 'read'}
+        </button>
+      ))}
       {error && <button onClick={onRetry}>{labels.retryLabel}</button>}
       {runsError && (
         <button onClick={onRunsRetry}>{labels.historyRetryLabel}</button>
@@ -259,6 +275,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 
 const BackTargetStub = () => <div>scheduled tasks list</div>;
 const EditTargetStub = () => <div>scheduled task edit page</div>;
+const ConversationTargetStub = () => <div>conversation view</div>;
 
 const renderDetailPage = (scheduleId = 'sched_123') =>
   render(
@@ -273,6 +290,7 @@ const renderDetailPage = (scheduleId = 'sched_123') =>
           path="/scheduled-tasks/:scheduleId/edit"
           element={<EditTargetStub />}
         />
+        <Route path="/conversations/*" element={<ConversationTargetStub />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -282,6 +300,7 @@ describe('ScheduledTaskDetailPage', () => {
     vi.clearAllMocks();
     useAppConfigMock.mockReturnValue({ status: 'ready' });
     useDeploymentsMock.mockReturnValue({ items: [] });
+    useConversationsMock.mockReturnValue({ conversations: [] });
     useScheduledTaskRunsMock.mockReturnValue({
       items: [],
       isLoading: false,
@@ -1014,6 +1033,130 @@ describe('ScheduledTaskDetailPage', () => {
       );
       expect(screen.getByText('isDeleting:false')).toBeTruthy();
       expect(screen.getByRole('dialog')).toBeTruthy();
+    });
+  });
+
+  describe('History run navigation', () => {
+    const loadedTask = {
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {},
+    };
+
+    it('navigates to the conversation route when a run with a conversationId is activated', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [
+          {
+            id: 'run_1',
+            status: 'Success',
+            startTime: '2026-07-24T09:00:00.000Z',
+            conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
+          },
+        ],
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: vi.fn(),
+        refetch: vi.fn(),
+      });
+      renderDetailPage();
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: /^run:run_1:/ }),
+      );
+
+      expect(await screen.findByText('conversation view')).toBeTruthy();
+    });
+
+    it('does not navigate when a run has no conversationId', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [
+          {
+            id: 'run_1',
+            status: 'Success',
+            startTime: '2026-07-24T09:00:00.000Z',
+          },
+        ],
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: vi.fn(),
+        refetch: vi.fn(),
+      });
+      renderDetailPage();
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: /^run:run_1:/ }),
+      );
+
+      expect(screen.queryByText('conversation view')).toBeNull();
+      expect(screen.getByText('displayName:Daily summary')).toBeTruthy();
+    });
+
+    it('resolves isUnread true when the matched conversation carries a differently-prefixed id', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      useConversationsMock.mockReturnValue({
+        conversations: [
+          { id: 'bucket/.scheduler/sched_123/run_1', isUnread: true },
+        ],
+      });
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [
+          {
+            id: 'run_1',
+            status: 'Success',
+            startTime: '2026-07-24T09:00:00.000Z',
+            conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
+          },
+        ],
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: vi.fn(),
+        refetch: vi.fn(),
+      });
+      renderDetailPage();
+
+      expect(
+        await screen.findByRole('button', { name: 'run:run_1:unread' }),
+      ).toBeTruthy();
+    });
+
+    it('resolves isUnread false when no conversation matches the run', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      useConversationsMock.mockReturnValue({
+        conversations: [{ id: 'bucket/other-conversation', isUnread: true }],
+      });
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [
+          {
+            id: 'run_1',
+            status: 'Success',
+            startTime: '2026-07-24T09:00:00.000Z',
+            conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
+          },
+        ],
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: vi.fn(),
+        refetch: vi.fn(),
+      });
+      renderDetailPage();
+
+      expect(
+        await screen.findByRole('button', { name: 'run:run_1:read' }),
+      ).toBeTruthy();
     });
   });
 

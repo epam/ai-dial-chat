@@ -10,7 +10,6 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import {
@@ -32,7 +31,6 @@ export class ToolsetsController {
   constructor(private readonly toolsetsService: ToolsetsService) {}
 
   @Get()
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     summary: 'List available toolsets',
     description:
@@ -55,7 +53,6 @@ export class ToolsetsController {
     status: 403,
     description: 'Caller lacks permission to list toolsets',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   @ApiResponse({
     status: 502,
@@ -71,7 +68,6 @@ export class ToolsetsController {
   }
 
   @Get(':toolsetName')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     summary: 'Get toolset by name',
     description:
@@ -100,7 +96,6 @@ export class ToolsetsController {
     description: 'Caller lacks permission to access this toolset',
   })
   @ApiResponse({ status: 404, description: 'Toolset not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   @ApiResponse({
     status: 502,
@@ -116,7 +111,6 @@ export class ToolsetsController {
   }
 
   @Post()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'createToolset',
     summary: 'Create a new toolset',
@@ -140,7 +134,6 @@ export class ToolsetsController {
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
   @ApiResponse({ status: 409, description: 'Toolset name already taken' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -158,7 +151,6 @@ export class ToolsetsController {
   }
 
   @Patch(':toolsetName')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'updateToolset',
     summary: 'Update a toolset',
@@ -182,7 +174,6 @@ export class ToolsetsController {
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
   @ApiResponse({ status: 404, description: 'Toolset not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -207,7 +198,6 @@ export class ToolsetsController {
 
   @Delete(':toolsetName')
   @HttpCode(204)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'deleteToolset',
     summary: 'Delete a toolset',
@@ -223,7 +213,6 @@ export class ToolsetsController {
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
   @ApiResponse({ status: 404, description: 'Toolset not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -242,7 +231,6 @@ export class ToolsetsController {
 
   @Post(':toolsetName/login')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'loginToolset',
     summary: 'Submit toolset credentials',
@@ -262,7 +250,6 @@ export class ToolsetsController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -283,7 +270,6 @@ export class ToolsetsController {
 
   @Post(':toolsetName/logout')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'logoutToolset',
     summary: 'Revoke toolset credentials',
@@ -309,7 +295,6 @@ export class ToolsetsController {
     description:
       'Toolset not found (only reachable when `authenticationType` is omitted and the lookup fails)',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

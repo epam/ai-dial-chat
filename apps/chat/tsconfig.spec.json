@@ -38,7 +38,13 @@
   ],
   "references": [
     {
+      "path": "../../libs/editor-builder/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/mcp-apps/tsconfig.lib.json"
     }
   ]
 }

@@ -32,6 +32,14 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   return { ...actual, triggerBlobDownload: vi.fn() };
 });
 
+const readBlobAsText = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(blob);
+  });
+
 const makeConversation = (
   overrides: Partial<Conversation> = {},
 ): Conversation => ({
@@ -120,6 +128,37 @@ describe('useConversationExport', () => {
     expect(result.current.jobs[0].status).toBe(
       ConversationTransferJobStatus.Success,
     );
+  });
+
+  it('strips attachment references from a without-attachments export', async () => {
+    const { result } = renderExport();
+    getConversation.mockResolvedValue(
+      makeConversation({
+        messages: [
+          {
+            role: 'user' as Conversation['messages'][number]['role'],
+            content: 'Take a look',
+            timestamp: '2026-07-10T00:00:00.000Z',
+            custom_content: {
+              attachments: [{ title: 'q1.pdf', url: 'files/bucket-a/q1.pdf' }],
+            },
+          },
+        ],
+      }),
+    );
+
+    await act(() =>
+      result.current.exportSingle(
+        'bucket-a/gpt-4o__My Chat',
+        'My Chat',
+        ConversationExportMode.WithoutAttachments,
+      ),
+    );
+
+    const [blob] = vi.mocked(triggerBlobDownload).mock.calls[0];
+    const envelope = JSON.parse(await readBlobAsText(blob as Blob));
+    expect(envelope.history[0].messages[0].content).toBe('Take a look');
+    expect(envelope.history[0].messages[0].custom_content).toBeUndefined();
   });
 
   it('supports multiple concurrent jobs with independent status', async () => {

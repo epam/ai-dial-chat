@@ -217,6 +217,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {icon}
     </button>
   ),
+}));
+
+vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
   LazyMarkdownEditor: () =>
     Promise.resolve({
       MarkdownEditor: ({
@@ -236,6 +239,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
+  IconArrowNarrowLeft: () => <svg />,
   IconPlus: () => <svg />,
   IconTrashX: () => <svg />,
   IconUpload: () => <svg />,
@@ -269,6 +273,8 @@ const renderEditor = (
 ) =>
   render(
     <SkillEditor
+      title="Test Skill"
+      onBack={vi.fn()}
       files={[]}
       fileActions={fileActions ?? buildFileActions()}
       onSubmit={vi.fn()}

@@ -8,7 +8,6 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import {
   getJobTitleClaim,
@@ -28,7 +27,6 @@ export class DeploymentsController {
   constructor(private readonly deploymentsService: DeploymentsService) {}
 
   @Get()
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'listDeployments',
     summary: 'List deployments by interface type',
@@ -55,7 +53,6 @@ export class DeploymentsController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -117,7 +114,6 @@ export class DeploymentsController {
   }
 
   @Get(':deployment/limits')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({
     operationId: 'getDeploymentLimits',
@@ -145,7 +141,6 @@ export class DeploymentsController {
     status: 404,
     description: 'Deployment limits not found',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   @ApiResponse({
     status: 502,
@@ -161,7 +156,6 @@ export class DeploymentsController {
   }
 
   @Get(':deployment/details')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({
     operationId: 'getDeploymentDetails',
@@ -181,7 +175,6 @@ export class DeploymentsController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 404, description: 'Deployment not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

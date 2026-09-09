@@ -2,10 +2,8 @@ import {
   AttachmentCanvasContainer,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import {
-  clearAttachmentCache,
-  usePanelMaxWidth,
-} from '@epam/ai-dial-chat-hooks';
+import { clearAttachmentCache } from '@epam/ai-dial-chat-hooks/file-manager';
+import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CodeBlockTheme, FilterTab } from '@epam/ai-dial-chat-shared';
 import {
@@ -48,7 +46,6 @@ import {
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
 import { useFeatureFlag } from '../context/AppConfigContext';
-import { useConversationPanel } from '../context/ConversationPanelContext';
 import { useDeployments } from '../context/DeploymentsContext';
 import { useIsolatedModelView } from '../context/IsolatedModelViewContext';
 import { useOptionalOverlay } from '../context/overlay/OverlayContext';
@@ -56,11 +53,13 @@ import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
+import { useConversationPanelRouteState } from '../hooks/conversation-panel/useConversationPanelRouteState';
 import { useAppVersionCheck } from '../hooks/useAppVersionCheck/useAppVersionCheck';
 import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
+import { configurePdfWorker } from '../utils/pdf';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
@@ -186,54 +185,20 @@ const App: FC = () => {
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
-  const { isPanelOpen, openPanel, closePanel } = useConversationPanel();
 
-  /* Tracks whether the user has explicitly closed the panel. When true, prevents
-     automatic panel opening on navigation (new chat, starter send). Reset on route
-     changes that leave the conversation section. */
-  const userClosedPanelRef = useRef(false);
-
-  const togglePanel = useCallback(() => {
-    if (!isPanelOpen) {
-      closeCanvas();
-      userClosedPanelRef.current = false;
-    } else {
-      userClosedPanelRef.current = true;
-    }
-    isPanelOpen ? closePanel() : openPanel();
-  }, [isPanelOpen, closeCanvas, openPanel, closePanel]);
-
-  // Always close the panel when switching to mobile so a stored desktop `true` doesn't bleed through
-  useEffect(() => {
-    if (isMobile) {
-      closePanel();
-      userClosedPanelRef.current = false;
-    }
-  }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { isPanelOpen, closePanel, togglePanel } =
+    useConversationPanelRouteState({
+      pathname,
+      isMobile,
+      isCanvasOpen,
+      isOpenByDefault: isConversationsSectionOpenByDefault,
+      onCloseCanvas: closeCanvas,
+      onCloseSourcesPanel: closeSourcesPanel,
+    });
 
   useEffect(() => {
-    closeCanvas();
     clearAttachmentCache();
-    if (
-      pathname !== ROUTES.Root &&
-      pathname !== ROUTES.Conversations &&
-      !pathname.startsWith(ROUTES.Conversations)
-    ) {
-      closePanel();
-      userClosedPanelRef.current = false;
-    } else if (!isMobile && !isCanvasOpen && !userClosedPanelRef.current) {
-      isConversationsSectionOpenByDefault ? openPanel() : closePanel();
-    }
-  }, [pathname, isConversationsSectionOpenByDefault]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /* Safety net for openCanvas call sites that bypass useOpenAttachmentCanvas
-     (e.g. citation preview, collapsed stage attachments). */
-  useEffect(() => {
-    if (isCanvasOpen) {
-      closePanel();
-      closeSourcesPanel();
-    }
-  }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const matchRoot = useMatch(ROUTES.Root);
   const matchConversation = useMatch(`${ROUTES.Conversations}/*`);
@@ -596,11 +561,33 @@ const App: FC = () => {
               pdfPageNumberLabel: t(
                 AttachmentCanvasI18nKeys.PdfPageNumberLabel,
               ),
+              mcpAppReloadLabel: t(ButtonsI18nKeys.Reload),
+              pdfContentLoadingLabel: t(
+                AttachmentCanvasI18nKeys.PdfContentLoadingLabel,
+              ),
+              pdfContentErrorLabel: t(
+                AttachmentCanvasI18nKeys.PdfContentErrorLabel,
+              ),
+              pdfContentRetryLabel: t(ButtonsI18nKeys.Retry),
+              xlsxFormulaLabel: t(AttachmentCanvasI18nKeys.XlsxFormulaLabel),
+              codeContentLoadingLabel: t(
+                AttachmentCanvasI18nKeys.CodeContentLoadingLabel,
+              ),
+              codeContentErrorLabel: t(
+                AttachmentCanvasI18nKeys.CodeContentErrorLabel,
+              ),
+              codeContentRetryLabel: t(ButtonsI18nKeys.Retry),
+              tableCopyCsvLabel: t(ButtonsI18nKeys.CopyAsCsv),
+              tableCopyTxtLabel: t(ButtonsI18nKeys.CopyAsTxt),
+              tableCopyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
+              tableCopiedLabel: t(ButtonsI18nKeys.Copied),
+              tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
             }}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}
             maxWidth={canvasMaxWidth}
             codeBlockTheme={codeBlockTheme}
+            configurePdfWorker={configurePdfWorker}
           />
         )}
       </div>

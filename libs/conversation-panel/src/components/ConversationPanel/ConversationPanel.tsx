@@ -59,6 +59,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     onNewChat,
     styles: panelStyles,
     className,
+    isOverlay = false,
     getActions,
     onActionMenuOpen,
     onToggle,
@@ -72,6 +73,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       colors,
       typography,
       newChatButton: newChatButtonColors,
+      searchWrapperClassName,
     } = panelStyles ?? {};
 
     const {
@@ -373,6 +375,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     return (
       <SidebarPanel
         isOpen={isOpen}
+        isOverlay={isOverlay}
         orientation={SidebarOrientation.Left}
         title={title}
         labels={{ ariaLabel: title, closeLabel: closeAriaLabel }}
@@ -405,7 +408,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
 
         <div role="search" className="px-3 py-2">
           <Search
-            wrapperClassName="rounded-full"
+            wrapperClassName={mergeClasses(
+              styles.search,
+              searchWrapperClassName,
+            )}
             value={searchQuery}
             onChange={handleSearchChange}
             placeholder={searchPlaceholder}

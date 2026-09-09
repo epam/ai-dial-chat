@@ -100,6 +100,22 @@ describe('ClientChannelController (integration)', () => {
       expect(res.text).toContain('data: {"id":"1"}');
     });
 
+    /* Firefox keeps the fetch() promise pending until the first body byte
+     * arrives, which stalls `waitForChannel` (and with it the completion
+     * request) until an upstream event happens to show up — see issue #8587. */
+    it('writes the init comment before any upstream event arrives', async () => {
+      service.subscribe.mockResolvedValue({
+        stream: streamOf([]),
+        channelId: 'channel-1',
+      });
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/client-channel/subscribe')
+        .expect(200);
+
+      expect(res.text).toBe(': init\n\n');
+    });
+
     it('forwards an inbound reconnect channel id to the service', async () => {
       service.subscribe.mockResolvedValue({
         stream: streamOf([]),

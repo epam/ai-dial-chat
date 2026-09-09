@@ -4,10 +4,18 @@ import type { DialClientService } from '../../dial/dial-client.service';
 import { PublishRulesService } from '../publish-rules.service';
 
 const okResponse = (data: unknown) =>
-  ({ data, response: {} as Response }) as never;
+  ({ data, response: { ok: true, status: 200 } as Response }) as never;
 
 const errResponse = (status: number) =>
-  ({ error: {}, response: { status } as Response }) as never;
+  ({ error: {}, response: { ok: false, status } as Response }) as never;
+
+/*
+ * `openapi-fetch` short-circuits on an empty response body and returns
+ * `{ error: undefined }` without reading it, even for a non-2xx status — see
+ * the matching guard comment in `publish.service.ts`.
+ */
+const emptyBodyErrResponse = (status: number) =>
+  ({ response: { ok: false, status } as Response }) as never;
 
 const makeService = () => {
   const dialClient = {
@@ -114,6 +122,17 @@ describe('PublishRulesService', () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'getPublicationRules').mockRejectedValue(
         new Error('boom'),
+      );
+
+      await expect(
+        service.getRules('token-abc', 'Organization/Data Science'),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+    });
+
+    it('maps a Core 500 with an empty response body to BadGatewayException instead of reporting success', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getPublicationRules').mockResolvedValue(
+        emptyBodyErrResponse(500),
       );
 
       await expect(

@@ -126,7 +126,7 @@ export const TitleRow: FC<TitleRowProps> = ({
           />
         )}
 
-        <div className="ms-auto flex items-center gap-2">
+        <div className="ms-auto flex shrink-0 items-center gap-2">
           <SegmentedControl
             aria-label={viewToggleLabel}
             value={viewMode}

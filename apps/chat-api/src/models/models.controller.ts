@@ -1,6 +1,5 @@
 import { Controller, Get, Header, Param, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import {
@@ -16,7 +15,6 @@ export class ModelsController {
   constructor(private readonly modelsService: ModelsService) {}
 
   @Get()
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Header('Cache-Control', 'private, max-age=30')
   @ApiOperation({
     summary: 'List available models',
@@ -38,7 +36,6 @@ export class ModelsController {
     status: 403,
     description: 'Caller lacks permission to list models',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   @ApiResponse({
     status: 502,
@@ -54,7 +51,6 @@ export class ModelsController {
   }
 
   @Get(':modelName')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Header('Cache-Control', 'private, max-age=60')
   @ApiOperation({
     summary: 'Get model by name',
@@ -81,7 +77,6 @@ export class ModelsController {
     description: 'Caller lacks permission to access this model',
   })
   @ApiResponse({ status: 404, description: 'Model not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   @ApiResponse({
     status: 502,

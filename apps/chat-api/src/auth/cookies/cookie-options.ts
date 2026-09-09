@@ -1,5 +1,5 @@
 import type { ConfigService } from '@nestjs/config';
-import type { CookieOptions, Response } from 'express';
+import type { CookieOptions, Request, Response } from 'express';
 import type { EnvironmentVariables } from '../../config/environment.config';
 
 const HOST_PREFIX = '__Host-';
@@ -183,5 +183,30 @@ export const clearCookieValue = (
 ): void => {
   for (const name of getCookieNamesToClear(existingCookies, cookieName)) {
     res.cookie(name, '', { ...options, maxAge: 0 });
+  }
+};
+
+/*
+ * Expires cookies left over from a previously deployed auth stack
+ * (`AUTH_LEGACY_COOKIE_NAMES`). Only clears names actually present on the
+ * incoming request, so a deployment with nothing configured — or a browser
+ * that never carried them — never gets an extra `Set-Cookie` header.
+ */
+export const clearLegacyCookies = (
+  req: Request,
+  res: Response,
+  config: ConfigService<EnvironmentVariables, true>,
+): void => {
+  const legacyNames = config.get('AUTH_LEGACY_COOKIE_NAMES', { infer: true });
+  if (!legacyNames?.length) {
+    return;
+  }
+
+  const cookies = req.cookies as Record<string, string> | undefined;
+  const options = getCookieOptions(config);
+  for (const name of legacyNames) {
+    if (cookies && name in cookies) {
+      res.cookie(name, '', { ...options, maxAge: 0 });
+    }
   }
 };

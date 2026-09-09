@@ -185,6 +185,10 @@ export class ResponsesAdapter {
     timezone?: string,
     timing?: GenerationRelayTiming,
     conversationId?: string,
+    onChunkApplied?: (
+      rawChunk: NormalizedStreamChunk,
+      message: ConversationMessageDto,
+    ) => void,
     jobTitle?: string,
   ): AsyncGenerator<string, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
@@ -273,6 +277,7 @@ export class ResponsesAdapter {
       const writeChunk = (chunk: NormalizedStreamChunk): void => {
         pendingChunks.push(`data: ${JSON.stringify(chunk)}\n\n`);
         assembledMessage = applyChunkToMessage(assembledMessage, chunk);
+        onChunkApplied?.(chunk, assembledMessage);
       };
 
       const handleEvent = (event: ResponsesSseEvent): void => {

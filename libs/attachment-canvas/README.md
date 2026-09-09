@@ -1,10 +1,10 @@
 # @epam/ai-dial-attachment-canvas
 
-Canvas/viewer component for rendering attachment content inline — images, audio, PDFs, DOCX/XLSX/PPTX, JSON, markdown, code, HTML, and plain text.
+Canvas/viewer component for rendering attachment content inline — images, audio, PDFs, DOCX/XLSX/PPTX, CSV, JSON, markdown, code, HTML, and plain text.
 
 ## Overview
 
-`@epam/ai-dial-attachment-canvas` solves the problem of rendering heterogeneous attachment content — images, audio, PDFs with text highlighting, DOCX/XLSX/PPTX documents, JSON trees, markdown documents, syntax-highlighted source files, sandboxed HTML, third-party visualizers, and plain text — inside a single unified preview panel. Without this library, each consuming feature would need to independently wire up content-type detection, lazy loading, and document renderers. The library centralises all of that behind a React context, meaning any component in the tree can push new content to the canvas without drilling props through intermediate layers. Use it whenever a conversation view, side panel, or modal needs to display an attachment that the user has opened or clicked. When a MIME type is not natively supported, or a fetch fails, the library provides graceful `UnsupportedCanvasContent` / `ErrorCanvasContent` fallbacks and a download utility so users can still retrieve the file.
+`@epam/ai-dial-attachment-canvas` solves the problem of rendering heterogeneous attachment content — images, audio, PDFs with text highlighting, DOCX/XLSX/PPTX documents, CSV spreadsheets, JSON trees, markdown documents, syntax-highlighted source files, sandboxed HTML, third-party visualizers, and plain text — inside a single unified preview panel. Without this library, each consuming feature would need to independently wire up content-type detection, lazy loading, and document renderers. The library centralises all of that behind a React context, meaning any component in the tree can push new content to the canvas without drilling props through intermediate layers. Use it whenever a conversation view, side panel, or modal needs to display an attachment that the user has opened or clicked. When a MIME type is not natively supported, or a fetch fails, the library provides graceful `UnsupportedCanvasContent` / `ErrorCanvasContent` fallbacks and a download utility so users can still retrieve the file.
 
 ## Installation
 
@@ -24,21 +24,97 @@ Canvas/viewer component for rendering attachment content inline — images, audi
 - `@epam/ai-dial-sidebar`
 - `@epam/ai-dial-visualizer-connector`
 - `@epam/ai-dial-ui-kit`
-- `@epam/pdf-highlighter-kit`
-- `@epam/ai-dial-react-pdf-highlighter`
+- `@epam/pdf-highlighter-kit` (`^0.0.18`)
+- `@epam/ai-dial-react-pdf-highlighter` (`^0.2.0-dev.28`)
+- `pdfjs-dist` (`^5.4.149`)
 - `@tabler/icons-react`
 - `react-json-view-lite`
 - `react-syntax-highlighter`
+- `@mcp-ui/client`
+- `@modelcontextprotocol/sdk`
+
+Every peer above — including their deep JS subpaths (e.g.
+`react-syntax-highlighter/dist/esm/...`) — is externalized in the build: the
+built package never bundles its own copy, and always defers to whatever
+version the host app itself resolves. The two PDF-related peers' vendor CSS
+subpaths (`@epam/ai-dial-react-pdf-highlighter/styles.css`,
+`@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css`) are the one
+exception — they stay locally resolved so they can be built and split per
+[Styling](#styling) below, rather than left as unresolvable raw imports.
+Although this library does not import `pdfjs-dist` directly,
+`@epam/pdf-highlighter-kit` exposes it as part of the shared PDF runtime. It is
+therefore declared here as a peer too, so package managers validate that the
+host supplies the tested `^5.4.149` version instead of silently relying on a
+transitive dependency.
 
 The library uses `@silurus/ooxml` as a bundled runtime dependency. Its DOCX,
-XLSX, and PPTX entry points are loaded independently on demand, so opening one
-format does not eagerly load the other renderers.
+XLSX/CSV, and PPTX entry points are loaded independently on demand, so opening
+one format does not eagerly load the other renderers. CSV is displayed through
+the Excel-style `XlsxSheetViewer`; every field remains text, including leading
+zeroes, long identifiers, dates, and values beginning with `=`.
+
+The PDF renderer (`PdfContent`, used internally by `AttachmentCanvasBody` for
+`AttachmentContentType.Pdf`) and the syntax-highlighter engine (used by
+`CodeContent` for non-plaintext languages) are each loaded through a dynamic
+import the first time they're actually needed, not eagerly with the rest of
+the library — `pdfjs-dist`, `@epam/ai-dial-react-pdf-highlighter`, and
+`react-syntax-highlighter`, including their CSS, only enter a host bundle once
+a user opens a PDF or a syntax-highlighted code file. While that import is
+pending, `AttachmentCanvasBody`/`CodeContent` render an accessible
+`role="status"` loading state (a `Spinner` for PDF; the plain-text fallback
+for code, which stays visible instead of being replaced by a spinner). If the
+import fails, a `role="alert"` message and a retry control are shown instead;
+activating retry genuinely re-attempts the import (recreating the underlying
+`lazy()` reference), not just re-rendering the cached failure — see
+`pdfContentLoadingLabel`/`pdfContentErrorLabel`/`pdfContentRetryLabel` and
+`codeContentLoadingLabel`/`codeContentErrorLabel`/`codeContentRetryLabel` on
+`AttachmentCanvasLabels`/`AttachmentCanvasBodyLabels`, and the `labels` prop
+on `CodeContent` itself, to customize those strings. Opening a non-PDF
+attachment never triggers the PDF import, and a plaintext code attachment
+never triggers the syntax-highlighter import.
+
+The library never configures `pdfjs-dist`'s worker itself —
+`GlobalWorkerOptions.workerSrc` is a global shared by every `pdfjs-dist`
+consumer in the host app, so deciding it is the host's responsibility, not
+this library's. Pass `configurePdfWorker` (on `AttachmentCanvasContainer`,
+`AttachmentCanvas`, or `AttachmentCanvasBody`) to supply it; it's called once,
+the first time a PDF is opened, and the PDF viewer waits for it to resolve
+before mounting. Two PDFs opened concurrently share that one in-flight call
+rather than each triggering their own; once it resolves, later opens reuse
+the same resolved result and never call it again. A rejection is not cached —
+the next PDF open (or an explicit retry) invokes `configurePdfWorker` again
+instead of being stuck on the first failure. When omitted,
+`@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used instead.
+
+### PDF page navigation
+
+`PdfCanvasContent.page` is an optional 1-based navigation target, independent of
+highlight geometry. An explicit page suppresses the wrapper's default-page-1
+fallback. It does not synchronize the vendor engine's asynchronous zoom/render
+operations; a later vendor scroll reset remains under investigation.
+
+## Styling
+
+Import the package's base stylesheet once, alongside the component tree:
+
+```ts
+import '@epam/ai-dial-attachment-canvas/styles.css';
+```
+
+This base stylesheet covers every content type except the PDF preview's
+vendor styling (the CSS `@epam/ai-dial-react-pdf-highlighter` and
+`@epam/pdf-highlighter-kit` ship). That vendor CSS is split into its own
+build output file, kept out of the base stylesheet, and loads automatically
+the first time a PDF attachment opens — the built `PdfContent` chunk imports
+its own stylesheet as a side effect, allowing the consuming bundler to preload
+the CSS before resolving the dynamic JS import. No separate PDF CSS import is
+needed from the host.
 
 ## Components
 
 ### AttachmentCanvas
 
-Renders the active attachment content based on its type, inside a resizable side panel. `isOpen`, `onClose`, `content`, and `labels` are required.
+Renders the active attachment content based on its type, inside a resizable side panel. `isOpen`, `onClose`, `content`, and `labels` are required. When `content.type` is `McpApp` and `content.onReload` is set, the header shows a reload action (labelled by `labels.mcpAppReloadLabel`, default `'Reload'`) that lets the host re-fetch the resource and re-resolve the tool result from scratch — the lib has no cache of its own, so this is purely a signal for the app layer to bypass whatever cache it keeps. When content type is `MarkdownTable`, supply the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own copy-as-CSV/TXT/Markdown and download-as-CSV actions in an inline header above the table — the same header a Markdown table renders inline in chat. The panel's own header only ever shows its close button for this content type.
 
 ```tsx
 import {
@@ -62,7 +138,7 @@ import {
 
 ### AttachmentCanvasBody
 
-Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render.
+Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render. For content type `MarkdownTable`, pass the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own inline copy/download header, same as `AttachmentCanvas`.
 
 ```tsx
 import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
@@ -76,7 +152,7 @@ import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
 
 ### AttachmentCanvasContainer
 
-Context-connected container that reads state from `AttachmentCanvasProvider` and renders `AttachmentCanvas` with download support wired up. Every prop is optional — `labels` fields all have English defaults.
+Context-connected container that reads state from `AttachmentCanvasProvider` and renders `AttachmentCanvas` with download support wired up. Every prop is optional — `labels` fields all have English defaults. Forwards the table copy/download labels and `tableDownloadFilename` to `AttachmentCanvas` for the `MarkdownTable` content type.
 
 ```tsx
 import {
@@ -85,13 +161,17 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 
 <AttachmentCanvasProvider>
-  <AttachmentCanvasContainer isMobile={isMobile} maxWidth={1200} />
+  <AttachmentCanvasContainer
+    isMobile={isMobile}
+    maxWidth={1200}
+    configurePdfWorker={configurePdfWorker}
+  />
 </AttachmentCanvasProvider>;
 ```
 
 ### CodeContent
 
-Standalone syntax-highlighted code view used by the canvas for `CodeCanvasContent`. Exported for hosts that need the same rendering outside the panel.
+Standalone syntax-highlighted code view used by the canvas for `CodeCanvasContent`. Exported for hosts that need the same rendering outside the panel. `labels` customizes the loading/error/retry strings shown while the syntax-highlighter engine's dynamic import is pending or fails — see [Styling](#styling) above.
 
 ```tsx
 import {
@@ -106,7 +186,35 @@ import {
     language: 'typescript',
   }}
   codeBlockTheme={codeBlockTheme}
+  labels={{ errorLabel: 'Could not load syntax highlighting' }}
 />;
+```
+
+### McpAppCanvasRenderer
+
+Mounts an MCP tool's `ui://` resource via `@mcp-ui/client`'s `AppRenderer`, inside the isolated-origin sandbox proxy named by `content.sandboxUrl`, seeded with the original invocation's `content.toolInput`/`content.toolResult`. Handles its own loading/error overlay while the app initializes. Exported so a host can also mount a compact preview outside the full canvas — e.g. inline under a chat message — using the same `McpAppCanvasContent` payload it builds for `AttachmentCanvas`.
+
+Watches its own container with a `ResizeObserver` and reports the live pixel size to the mounted app via `hostContext.containerDimensions`, so a resize (the host dragging a resizable panel, a window resize) reaches a well-behaved app after mount, not just once. When `content.hostContext.displayMode` is `'fullscreen'` (the value `AttachmentCanvas`'s own usage sets), the mounted iframe is also forced to fill 100% of that container — overriding the mounted app's own reported content size, which is otherwise what drives the iframe's dimensions and is a better default for a compact inline preview.
+
+```tsx
+import {
+  McpAppCanvasRenderer,
+  AttachmentContentType,
+  type McpAppCanvasContent,
+} from '@epam/ai-dial-attachment-canvas';
+
+const content: McpAppCanvasContent = {
+  type: AttachmentContentType.McpApp,
+  html,
+  sandboxUrl,
+  toolName: 'get_weather',
+  toolInput,
+  toolResult,
+  hostContext,
+  onToolCall: (name, args) => callTool(name, args),
+};
+
+<McpAppCanvasRenderer content={content} errorLabel="Failed to load app" />;
 ```
 
 ## Context
@@ -200,24 +308,30 @@ const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 
 `AttachmentContentType` is the discriminant on every content descriptor.
 
-| Enum member                         | Content type               | Description                                       |
-| ----------------------------------- | -------------------------- | ------------------------------------------------- |
-| `AttachmentContentType.PlainText`   | `PlainTextCanvasContent`   | Renders plain text                                |
-| `AttachmentContentType.Image`       | `ImageCanvasContent`       | Renders an image from a URL                       |
-| `AttachmentContentType.Audio`       | `AudioCanvasContent`       | Renders an audio player                           |
-| `AttachmentContentType.Markdown`    | `MarkdownCanvasContent`    | Renders markdown text                             |
-| `AttachmentContentType.Json`        | `JsonCanvasContent`        | Renders a JSON tree viewer                        |
-| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support              |
-| `AttachmentContentType.Ooxml`       | `OoxmlCanvasContent`       | Renders DOCX, XLSX, or PPTX with `@silurus/ooxml` |
-| `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                 |
-| `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source  |
-| `AttachmentContentType.Visualizer`  | `VisualizerCanvasContent`  | Renders a registered custom visualizer            |
-| `AttachmentContentType.Unsupported` | `UnsupportedCanvasContent` | Fallback for unsupported MIME types               |
-| `AttachmentContentType.Error`       | `ErrorCanvasContent`       | Load failure or forbidden access                  |
+| Enum member                           | Content type                 | Description                                                                                                                             |
+| ------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `AttachmentContentType.PlainText`     | `PlainTextCanvasContent`     | Renders plain text                                                                                                                      |
+| `AttachmentContentType.Image`         | `ImageCanvasContent`         | Renders an image from a URL                                                                                                             |
+| `AttachmentContentType.Audio`         | `AudioCanvasContent`         | Renders an audio player                                                                                                                 |
+| `AttachmentContentType.Markdown`      | `MarkdownCanvasContent`      | Renders markdown text                                                                                                                   |
+| `AttachmentContentType.MarkdownTable` | `MarkdownTableCanvasContent` | Renders a Markdown table opened standalone (e.g. via a table's "open in canvas" action), with its own inline copy/download header       |
+| `AttachmentContentType.Json`          | `JsonCanvasContent`          | Renders a JSON tree viewer                                                                                                              |
+| `AttachmentContentType.Pdf`           | `PdfCanvasContent`           | Renders a PDF with highlight support and page-accurate navigation via an optional `page` field                                          |
+| `AttachmentContentType.Ooxml`         | `OoxmlCanvasContent`         | Renders DOCX, XLSX, PPTX, or CSV with `@silurus/ooxml`; the persistent XLSX `fx` bar shows the selected cell's formula or display value |
+| `AttachmentContentType.Code`          | `CodeCanvasContent`          | Renders syntax-highlighted source                                                                                                       |
+| `AttachmentContentType.Html`          | `HtmlCanvasContent`          | Renders HTML in a sandboxed frame, or its source                                                                                        |
+| `AttachmentContentType.Visualizer`    | `VisualizerCanvasContent`    | Renders a registered custom visualizer                                                                                                  |
+| `AttachmentContentType.Unsupported`   | `UnsupportedCanvasContent`   | Fallback for unsupported MIME types                                                                                                     |
+| `AttachmentContentType.Error`         | `ErrorCanvasContent`         | Load failure or forbidden access                                                                                                        |
 
 `AttachmentErrorType` distinguishes the two failure kinds carried by
 `ErrorCanvasContent`: `LoadFailed` (network error or a non-`403` non-OK
 response) and `Forbidden` (HTTP `403`).
+
+`OoxmlFileType` selects the bundled renderer: `Docx`, `Xlsx`, `Pptx`, or
+`Csv`. The public name is retained for compatibility; `Csv` uses
+`@silurus/ooxml`'s `XlsxSheetViewer` delimited-text mode rather than an OOXML
+workbook parser.
 
 ## Utilities
 
@@ -229,6 +343,7 @@ import {
   isHtmlPreviewable,
   isOoxmlPreviewable,
   getOoxmlFileType,
+  getOoxmlMimeType,
   extensionToLanguage,
   createUnsupportedCanvasContent,
   createLoadErrorCanvasContent,
@@ -242,6 +357,9 @@ if (isOoxmlPreviewable(fileName, mimeType)) { ... }
 
 // Resolve the format needed by OoxmlCanvasContent
 const format = getOoxmlFileType(fileName, mimeType);
+
+// Resolve the canonical MIME type for a recognized renderer format
+const canonicalMimeType = getOoxmlMimeType(fileName, mimeType);
 
 // Resolve a syntax-highlighting language from a file extension
 const language = extensionToLanguage('ts');
@@ -263,5 +381,10 @@ Style overrides go through `AttachmentCanvasStyles` (`AttachmentCanvasColors`,
 `AttachmentCanvasTypography`, plus a `panelStyles` passthrough to the underlying
 `SidebarPanel`), and every user-visible string lives on
 `AttachmentCanvasLabels`. `AttachmentCanvasProps`,
-`AttachmentCanvasContainerProps`, `CodeContentProps`, and
+`AttachmentCanvasContainerProps`, `CodeContentProps`, `CodeContentLabels`, and
 `AttachmentCanvasContextValue` are exported for hosts building those objects.
+Use `xlsxFormulaLabel` to localize the persistent XLSX `fx` bar's accessible
+label; it defaults to `Formula`. The visual `fx` mark is direction-neutral and
+does not replace that label for assistive technology. Its typography defaults
+to the UI Kit's `dial-italic-text` and can be overridden through
+`styles.typography.xlsxFormulaLabelClassName`.

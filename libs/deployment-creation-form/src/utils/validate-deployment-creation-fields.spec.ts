@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { DeploymentCreationFormValues } from '../models/deployment-creation-form';
 import { DeploymentCreationFieldErrorCode } from '../models/validation';
-import { validateDeploymentCreationFields } from './validate-deployment-creation-fields';
+import {
+  SEMVER_VERSION_PATTERN,
+  validateDeploymentCreationFields,
+} from './validate-deployment-creation-fields';
 
 const baseValues: DeploymentCreationFormValues = {
   name: 'My Entity',
@@ -47,6 +50,30 @@ describe('validateDeploymentCreationFields', () => {
       { validateVersionPattern: true },
     );
     expect(errors.version).toBe(DeploymentCreationFieldErrorCode.InvalidFormat);
+  });
+
+  it('accepts a letters-only version when the default pattern check is enabled', () => {
+    const errors = validateDeploymentCreationFields(
+      { ...baseValues, version: 'abc' },
+      { validateVersionPattern: true },
+    );
+    expect(errors.version).toBeUndefined();
+  });
+
+  it('returns an invalid-format error for a non-numeric version when a stricter pattern is passed', () => {
+    const errors = validateDeploymentCreationFields(
+      { ...baseValues, version: 'abc' },
+      { validateVersionPattern: SEMVER_VERSION_PATTERN },
+    );
+    expect(errors.version).toBe(DeploymentCreationFieldErrorCode.InvalidFormat);
+  });
+
+  it('accepts a dot-separated numeric version when a stricter pattern is passed', () => {
+    const errors = validateDeploymentCreationFields(
+      { ...baseValues, version: '0.0.1' },
+      { validateVersionPattern: SEMVER_VERSION_PATTERN },
+    );
+    expect(errors.version).toBeUndefined();
   });
 
   it('does not flag an empty version even when the pattern check is enabled', () => {

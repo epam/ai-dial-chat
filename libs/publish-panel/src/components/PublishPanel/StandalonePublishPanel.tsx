@@ -8,6 +8,7 @@ import {
   PublishResourceSummary,
 } from '../../models/publish';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
+import { getFocusableElements } from '../../utils/focus';
 import { derivePublishState } from '../../utils/publish-state';
 import { PublishFooter, PublishFooterLabels } from './PublishFooter';
 import { PublishPanel, PublishPanelLabels } from './PublishPanel';
@@ -233,6 +234,42 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const panel = panelRef.current;
+      if (!panel) return;
+
+      /*
+       * Only wrap while focus is genuinely inside the panel. The panel renders
+       * folder-row menus and the rule source picker through portals that live
+       * outside this subtree; pulling focus back from those would make them
+       * unusable by keyboard.
+       */
+      const active = document.activeElement;
+      if (!(active instanceof HTMLElement) || !panel.contains(active)) return;
+
+      const focusable = getFocusableElements(panel);
+      if (focusable.length === 0) {
+        /* Nothing to cycle through — hold focus on the dialog itself rather
+         * than letting Tab walk out into the page behind the modal. */
+        event.preventDefault();
+        panel.focus({ preventScroll: true });
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+        return;
+      }
+      if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
 

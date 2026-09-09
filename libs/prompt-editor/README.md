@@ -18,6 +18,10 @@ folder sub-form's own state and delegates mutations through `folderActions`.
 
 ## Installation
 
+Requires UI Kit ^0.14.0-dev.30 or later with the public `/editors` entry.
+The Markdown loader uses that entry, and library builds keep UI Kit subpaths
+external to preserve the editor's dynamic boundary in consuming applications.
+
 ```json
 {
   "dependencies": {
@@ -29,10 +33,12 @@ folder sub-form's own state and delegates mutations through `folderActions`.
 ## Peer Dependencies
 
 - `react` `^19.0.0`
-- `@epam/ai-dial-builder-form` `*`
-- `@epam/ai-dial-ui-kit` `^0.13.0-dev.26`
+- `@epam/ai-dial-editor-builder` `*`
+- `@epam/ai-dial-ui-kit` `*`
 - `@epam/ai-dial-chat-shared` `*`
 - `@tabler/icons-react` `^3.0.0`
+- `@uiw/react-markdown-preview` — CSS only, required by `LazyMarkdownEditor`
+- `@uiw/react-md-editor` — CSS only, required by `LazyMarkdownEditor`
 
 ## Components
 

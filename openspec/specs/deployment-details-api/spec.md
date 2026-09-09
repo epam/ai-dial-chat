@@ -28,6 +28,7 @@ The endpoint:
 - SHALL apply `@Throttle({ default: { limit: 60, ttl: 60000 } })`, matching `GET /api/v1/deployments`.
 - SHALL cache the mapped `DeploymentDetailsDto` under key `deployments:details:<userSub>:<deployment>` for 60 000 ms, so entries and in-flight request deduplication are isolated by authenticated user and deployment.
 - SHALL invalidate the affected `deployments:details:<userSub>:<deployment>` entry after a successful toolset create, update, delete, login, or logout before the next details fetch is treated as fresh.
+- SHALL ensure an in-flight `getDeploymentDetails` fetch that was dispatched before an invalidation for the same key never repopulates the cache with its (pre-invalidation) result, and is never joined by a request made after that invalidation — see the dedicated requirement below.
 - SHALL set response header `Cache-Control: private, no-store`; client and intermediary caches MUST NOT reuse the response, while the user-scoped BFF cache remains active.
 - SHALL preserve OpenAPI `operationId: getDeploymentDetails`, path parameter `deployment: string`, response `DeploymentDetailsDto`, and normal generated `DeploymentsApi.getDeploymentDetails({ deployment })` usage; no `Raw` generated call is required because frontend callers do not consume the response header.
 - SHOULD log, at debug level, the raw DIAL Core toolset response (redacting `auth_settings.client_secret`/`code_verifier`) and the final mapped `DeploymentDetailsDto` sent to the frontend, to aid diagnosing field-mapping gaps.
@@ -88,6 +89,13 @@ The endpoint:
 
 - **WHEN** a toolset create, update, delete, login, or logout succeeds for a user and toolset
 - **THEN** the affected `deployments:details:<userSub>:<deployment>` entry is deleted before a subsequent details request can reuse it
+
+#### Scenario: A request in flight when a logout invalidates its key does not resurrect stale data
+
+- **WHEN** a `getDeploymentDetails` request for a toolset is still awaiting DIAL Core when a login/logout for that same toolset invalidates its cache key, and a second `getDeploymentDetails` request for the same key arrives after that invalidation
+- **THEN** the second request fires its own upstream call rather than joining the first (still-pending) one, and once the first request resolves it does not overwrite the cache with its pre-invalidation result — the cache ends up holding only the second, post-change result
+
+This closes a race observed as an unstable toolset login/logout indicator: a details fetch dispatched right before a logout could otherwise be joined by the post-logout refetch, or could win the cache write after the invalidation had already run, leaving `authSettings.userLevelAuthStatus` stuck on the pre-logout value for up to the 60 s TTL even though `GET /api/v1/toolsets` already reflected the change. The service tracks a per-cache-key generation counter, bumped by every invalidation; `invalidateDetailsCache` also drops any in-flight request from the pending-request map so a later caller cannot join it, and a fetch only writes its result to cache if the key's generation is unchanged since the fetch started.
 
 #### Scenario: Client-side caching is disabled
 

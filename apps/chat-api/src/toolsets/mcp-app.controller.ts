@@ -9,7 +9,6 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { GetToolsetDto } from './dto/get-toolset.dto';
@@ -17,6 +16,7 @@ import {
   GetMcpAppResourceDto,
   ListMcpAppToolsQueryDto,
   ListMcpAppToolsResponseDto,
+  ListMcpToolNamesResponseDto,
   McpAppToolCallRequestDto,
   McpAppToolCallResponseDto,
 } from './dto/mcp-app.dto';
@@ -28,7 +28,6 @@ export class McpAppController {
   constructor(private readonly mcpAppService: McpAppService) {}
 
   @Get(':toolsetName/mcp-app-resource')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'getToolsetMcpAppResource',
     summary: "Fetch a toolset's MCP Apps ui:// resource",
@@ -47,7 +46,6 @@ export class McpAppController {
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
   @ApiResponse({ status: 404, description: 'Toolset or resource not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -75,7 +73,6 @@ export class McpAppController {
    * `ToolsetsController`'s own `:toolsetName` route (registered first).
    */
   @Get('mcp-apps/tools')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'listMcpAppTools',
     summary: 'List MCP Apps-capable tools for an MCP-enabled deployment',
@@ -91,7 +88,6 @@ export class McpAppController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 404, description: 'Deployment not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: "DIAL Core's proxied tools/list failed",
@@ -109,8 +105,45 @@ export class McpAppController {
     return { tools };
   }
 
+  /**
+   * Shares `deploymentId`/`kind` query params with `listMcpAppTools` for the
+   * same route-collision reason documented on that endpoint above.
+   */
+  @Get('mcp-apps/tool-names')
+  @ApiOperation({
+    operationId: 'listMcpToolNames',
+    summary: 'List every tool name exposed by an MCP-enabled deployment',
+    description:
+      "Calls DIAL Core's generic MCP JSON-RPC proxy's tools/list for the " +
+      'given deployment (toolset or application) and returns every tool ' +
+      "name, unfiltered — used to populate the toolset editor's " +
+      '"Allowed tools" picker.',
+  })
+  @ApiResponse({ status: 200, type: ListMcpToolNamesResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid deploymentId or kind' })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 404, description: 'Deployment not found' })
+  @ApiResponse({
+    status: 502,
+    description: "DIAL Core's proxied tools/list failed",
+  })
+  async listMcpToolNames(
+    @Req() req: Request,
+    @Query() query: ListMcpAppToolsQueryDto,
+  ): Promise<ListMcpToolNamesResponseDto> {
+    const { at } = req.user as SessionUser;
+    const toolNames = await this.mcpAppService.listToolNames(
+      query.deploymentId,
+      query.kind,
+      at,
+    );
+    return { toolNames };
+  }
+
   @Post(':toolsetName/mcp-app-tool-call')
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     operationId: 'callToolsetMcpAppTool',
     summary: "Forward an MCP App's self-initiated tool call",
@@ -135,7 +168,6 @@ export class McpAppController {
       'Caller lacks permission, or toolName is not exposed by this toolset',
   })
   @ApiResponse({ status: 404, description: 'Toolset not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: "DIAL Core's proxied tools/call failed",

@@ -132,13 +132,15 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 | `editor.nameLabel` | `Name` |
 | `editor.nameRequired` | `Name is required` |
 | `editor.descriptionLabel` | `Description` |
-| `editor.iconUrlLabel` | `Icon URL` |
+| `editor.avatarLabel` | `Avatar` |
+| `editor.addAvatarButtonLabel` | `Add avatar` |
+| `editor.avatarCaption` | `PNG, JPG or SVG (max 1 MB)` |
 | `editor.versionLabel` | `Version` |
 | `editor.topicsLabel` | `Topics` |
 | `appsEditor.generalForm.namePlaceholder` | `Enter application name` |
 | `appsEditor.generalForm.descriptionPlaceholder` | `Describe your application` |
 | `appsEditor.generalForm.nameInvalid` | `Name may only contain letters, digits, spaces, underscores, dots, and dashes` |
-| `appsEditor.generalForm.versionInvalid` | `Version may only contain letters, digits, dots, underscores, and dashes` |
+| `appsEditor.generalForm.versionInvalid` | `Version format is invalid (example: 0.0.1)` |
 | `appsEditor.settingsStep.loadingLabel` | `Loading editor…` |
 | `appsEditor.settingsStep.noEditorPlaceholder` | `Editor not available for this application type yet.` |
 | `appsEditor.error.createFailed` | `Failed to create application. Please try again.` |
@@ -178,7 +180,7 @@ The additional-locale field labels the General step renders come from the `edito
 
 #### Scenario: Page content is not clipped below the mobile global header
 
-- **WHEN** the page renders at a mobile viewport (`≤768px`), where the app-wide mobile-only `Header` component (`apps/chat/src/components/Header/Header.tsx`) is also rendered as a sibling above the routed page content
+- **WHEN** the page renders at a mobile viewport (`≤768px`), where the app-wide mobile-only global header is also rendered as a sibling above the routed page content
 - **THEN** the page's content area still reaches the true bottom of the viewport and remains scrollable to its end — it does not get clipped by an amount equal to the global header's height
 
 #### Scenario: Clicking the Settings step before the app exists is a no-op
@@ -325,7 +327,9 @@ export interface GeneralFormHandle {
 **Right column** — live preview (`desktop:w-1/2`, `bg-layer-1`):
 
 - A "Preview" label (`basic.preview`) pinned to the top-left.
-- A `<Card>` from `@epam/ai-dial-catalog` centered vertically and horizontally in the remaining space, `w-full max-w-[280px]` so the card never overflows a narrow mobile viewport, driven by a `useMemo`-derived `CatalogItem` built from the current form state (`name`, `version`, `description`, `topics`, `iconUrl`). Uses `CatalogEntityType.Agent` to match how these applications appear in the catalog.
+- A `<Card>` from `@epam/ai-dial-catalog` centered vertically and horizontally in the remaining space, `w-full max-w-[280px]` so the card never overflows a narrow mobile viewport, driven by a `useMemo`-derived `CatalogItem` built from the current form state (`name`, `version`, `description`, `topics`) plus `iconPreviewUrl` — the host-resolved, directly displayable URL (via `resolveCatalogIconUrl(values.iconUrl)`), not the raw `values.iconUrl` DIAL file id `Card` cannot render as-is. Uses `CatalogEntityType.Agent` to match how these applications appear in the catalog.
+
+The avatar picker (clicking "Add avatar" opens `AvatarPickerModal`, restricted to a single PNG/JPG/SVG file up to 1 MB) lives in the left column alongside the rest of `DeploymentCreationForm`; selecting a file calls `handleChange({ iconUrl })` with the picked file's DIAL file id, which then flows into both `iconPreviewUrl` (for the avatar box and the preview card) and the eventual create/update payload.
 
 The column's surface is `bg-layer-sunken`.
 
@@ -337,7 +341,7 @@ State owned locally via `useState`:
 
 `initialValues`, when supplied, SHALL seed `values` exactly once (guarded by a ref) so later edits are never overwritten by a re-render of the host.
 
-Client-side validation SHALL run through `validateDeploymentCreationFields` with both `validateNamePattern` and `validateVersionPattern` enabled: the Name field is required and must match the allowed-character pattern, and the Version field — when non-empty — must match its own pattern. No URL format validation is performed on the icon URL field; that is enforced server-side only.
+Client-side validation SHALL run through `validateDeploymentCreationFields` with `validateNamePattern` enabled and `validateVersionPattern` set to the library's exported `SEMVER_VERSION_PATTERN`: the Name field is required and must match the allowed-character pattern, and the Version field — when non-empty — must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`), stricter than the shared library's default character-set-only version pattern. No URL format validation is performed on the icon URL field; that is enforced server-side only.
 
 Submitting the form (via the imperative `submit()` handle, or the underlying `<form onSubmit>` if the user presses Enter):
 - Is a no-op while `isSubmitting` is already true.
@@ -607,7 +611,7 @@ Application IDs returned by `POST /api/v1/applications` (`createApplication` in 
 
 `apps/chat/src/pages/AppsEditor/tests/GeneralForm.spec.tsx` SHALL cover:
 
-1. Renders name, description, and icon URL fields.
+1. Renders the avatar picker, name, and description fields.
 2. Empty name — required error shown, API not called.
 3. Name with forbidden characters — invalid-format error shown, API not called.
 4. Version with forbidden characters — invalid-format error shown, API not called.

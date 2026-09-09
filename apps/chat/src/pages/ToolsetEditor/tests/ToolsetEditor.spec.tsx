@@ -6,10 +6,17 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  ToolsetEditorI18nKeys,
+} from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import type {
+  ToolsetAuthFormData,
+  ToolsetFormData,
+} from '../../../models/toolsets';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ROUTES } from '../../../types/routes';
 import ToolsetEditor from '../ToolsetEditor';
@@ -32,40 +39,50 @@ vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
   default: () => <div>Loading</div>,
 }));
 
-vi.mock('../ToolsetEditorHeader', () => ({
-  default: ({
-    isSaveDisabled,
-    onSave,
+vi.mock('@epam/ai-dial-editor-builder', () => ({
+  EditorLayout: ({
+    actions,
+    leftContent,
+    rightContent,
   }: {
-    isSaveDisabled: boolean;
-    onSave: () => void;
+    title?: string;
+    actions?: unknown;
+    leftContent?: unknown;
+    rightContent?: unknown;
   }) => (
-    <button type="button" disabled={isSaveDisabled} onClick={onSave}>
-      save-toolset
-    </button>
+    <div>
+      <div>{actions as never}</div>
+      <div>{leftContent as never}</div>
+      <div>{rightContent as never}</div>
+    </div>
+  ),
+  EditorSection: ({ children }: { children?: unknown }) => (
+    <div>{children as never}</div>
   ),
 }));
 
-vi.mock('../ToolsetEditorView', () => ({
+vi.mock('../EditorForm/GeneralForm', () => ({
+  default: () => <div />,
+}));
+
+vi.mock('../EditorForm/SettingsForm', () => ({
   default: ({
-    step,
-    toolsetId,
     errors,
     onChange,
     onAuthChange,
-    onNext,
     onEnsureSaved,
   }: {
-    step: string;
-    toolsetId: string;
-    errors: {
+    form?: ToolsetFormData;
+    errors?: {
       endpoint?: string;
       authorizationEndpoint?: string;
       tokenEndpoint?: string;
     };
-    onChange: (patch: Record<string, unknown>) => void;
-    onAuthChange: (patch: Record<string, unknown>) => void;
-    onNext: () => void;
+    isSaving?: boolean;
+    toolsetId?: string;
+    isEditMode?: boolean;
+    onChange: (patch: Partial<ToolsetFormData>) => void;
+    onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
     onEnsureSaved: () => Promise<string | false>;
   }) => {
     const [ensureSavedResult, setEnsureSavedResult] = useState<string | null>(
@@ -73,11 +90,6 @@ vi.mock('../ToolsetEditorView', () => ({
     );
     return (
       <div>
-        <span>{`current-step-${step}`}</span>
-        <span>{`toolset-id-${toolsetId}`}</span>
-        <button type="button" onClick={onNext}>
-          go-next
-        </button>
         <button
           type="button"
           onClick={async () => {
@@ -90,26 +102,13 @@ vi.mock('../ToolsetEditorView', () => ({
         {ensureSavedResult != null && (
           <span>{`ensure-saved-result-${ensureSavedResult}`}</span>
         )}
-        {errors.endpoint && <p role="alert">{errors.endpoint}</p>}
-        {errors.authorizationEndpoint && (
+        {errors?.endpoint && <p role="alert">{errors.endpoint}</p>}
+        {errors?.authorizationEndpoint && (
           <p role="alert">{errors.authorizationEndpoint}</p>
         )}
-        {errors.tokenEndpoint && <p role="alert">{errors.tokenEndpoint}</p>}
-        <button
-          type="button"
-          onClick={() => {
-            onChange({ endpoint: '' });
-          }}
-        >
+        {errors?.tokenEndpoint && <p role="alert">{errors.tokenEndpoint}</p>}
+        <button type="button" onClick={() => onChange({ endpoint: '' })}>
           touch-empty-endpoint
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            onChange({ name: 'Updated name' });
-          }}
-        >
-          change-name
         </button>
         <button
           type="button"
@@ -249,7 +248,7 @@ describe('ToolsetEditor', () => {
     renderEditor();
 
     const saveButton = await screen.findByRole('button', {
-      name: 'save-toolset',
+      name: ButtonsI18nKeys.Create,
     });
 
     expect((saveButton as HTMLButtonElement).disabled).toBe(true);
@@ -272,7 +271,7 @@ describe('ToolsetEditor', () => {
     renderEditor();
 
     await screen.findByRole('button', {
-      name: 'save-toolset',
+      name: ButtonsI18nKeys.Create,
     });
 
     expect(screen.queryByRole('alert')).toBeNull();
@@ -292,7 +291,7 @@ describe('ToolsetEditor', () => {
     renderEditor();
 
     const saveButton = await screen.findByRole('button', {
-      name: 'save-toolset',
+      name: ButtonsI18nKeys.Create,
     });
 
     await user.click(
@@ -321,7 +320,7 @@ describe('ToolsetEditor', () => {
     renderEditor();
 
     const saveButton = await screen.findByRole('button', {
-      name: 'save-toolset',
+      name: ButtonsI18nKeys.Create,
     });
 
     await user.click(
@@ -345,7 +344,7 @@ describe('ToolsetEditor', () => {
     );
     await user.click(
       screen.getByRole('button', {
-        name: 'save-toolset',
+        name: ButtonsI18nKeys.Create,
       }),
     );
 
@@ -379,7 +378,7 @@ describe('ToolsetEditor', () => {
       await screen.findByText('ensure-saved-result-toolsets/b/my__0.0.1'),
     ).toBeTruthy();
     expect(toolsetsApi.createToolset).toHaveBeenCalledOnce();
-    /* Persisting the draft to advance a step is not an outcome the user asked about. */
+    /* Persisting does not show a success notification. */
     expect(mockShowNotification).not.toHaveBeenCalledWith(
       expect.objectContaining({ variant: 'success' }),
     );
@@ -420,7 +419,7 @@ describe('ToolsetEditor', () => {
     );
     await user.click(
       screen.getByRole('button', {
-        name: 'save-toolset',
+        name: ButtonsI18nKeys.Create,
       }),
     );
 
@@ -453,7 +452,7 @@ describe('ToolsetEditor', () => {
     );
     await user.click(
       screen.getByRole('button', {
-        name: 'save-toolset',
+        name: ButtonsI18nKeys.Create,
       }),
     );
 
@@ -479,7 +478,7 @@ describe('ToolsetEditor', () => {
     );
     await user.click(
       screen.getByRole('button', {
-        name: 'save-toolset',
+        name: ButtonsI18nKeys.Create,
       }),
     );
 
@@ -505,7 +504,7 @@ describe('ToolsetEditor', () => {
     );
     await user.click(
       screen.getByRole('button', {
-        name: 'save-toolset',
+        name: ButtonsI18nKeys.Create,
       }),
     );
 
@@ -547,7 +546,7 @@ describe('ToolsetEditor', () => {
     );
     await user.click(
       screen.getByRole('button', {
-        name: 'save-toolset',
+        name: ButtonsI18nKeys.Create,
       }),
     );
 
@@ -557,113 +556,6 @@ describe('ToolsetEditor', () => {
         message: ToolsetEditorI18nKeys.ErrorCreateFailed,
       }),
     );
-  });
-
-  it('creates a draft toolset with the General-step fields when Next is clicked, then moves to Settings', async () => {
-    renderEditor();
-
-    await user.click(await screen.findByRole('button', { name: 'go-next' }));
-
-    await waitFor(() =>
-      expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
-        expect.objectContaining({ name: expect.any(String) }),
-      ),
-    );
-    expect(await screen.findByText('current-step-settings')).toBeTruthy();
-    expect(
-      await screen.findByText('toolset-id-toolsets/b/my__0.0.1'),
-    ).toBeTruthy();
-    expect(mockRefetchToolsets).toHaveBeenCalledOnce();
-  });
-
-  it('does not send another request when Next is clicked again with no changes', async () => {
-    renderEditor();
-
-    const nextButton = await screen.findByRole('button', { name: 'go-next' });
-    await user.click(nextButton);
-    await waitFor(() =>
-      expect(toolsetsApi.createToolset).toHaveBeenCalledOnce(),
-    );
-
-    await user.click(nextButton);
-
-    expect(await screen.findByText('current-step-settings')).toBeTruthy();
-    expect(toolsetsApi.createToolset).toHaveBeenCalledOnce();
-    expect(toolsetsApi.updateToolset).not.toHaveBeenCalled();
-  });
-
-  it('does not send an update when Next is clicked in edit mode with no changes', async () => {
-    vi.mocked(toolsetsApi.getToolset).mockResolvedValue({
-      id: 'toolsets/b/my__1.0.0',
-      toolset: 'toolsets/b/my__1.0.0',
-      displayName: 'Existing toolset',
-      endpoint: 'https://example.com/mcp',
-      transport: 'HTTP',
-      authSettings: { authenticationType: 'NONE' },
-    } as never);
-
-    renderEditor(`${ROUTES.ToolsetEditor}?id=toolsets%2Fb%2Fmy__1.0.0`);
-
-    await user.click(await screen.findByRole('button', { name: 'go-next' }));
-
-    expect(await screen.findByText('current-step-settings')).toBeTruthy();
-    expect(toolsetsApi.updateToolset).not.toHaveBeenCalled();
-    expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
-  });
-
-  it('updates the draft toolset with General-step edits when Next is clicked again', async () => {
-    renderEditor();
-
-    await user.click(await screen.findByRole('button', { name: 'go-next' }));
-    await waitFor(() =>
-      expect(toolsetsApi.createToolset).toHaveBeenCalledOnce(),
-    );
-
-    await user.click(screen.getByRole('button', { name: 'change-name' }));
-    await user.click(screen.getByRole('button', { name: 'go-next' }));
-
-    await waitFor(() =>
-      expect(toolsetsApi.updateToolset).toHaveBeenCalledWith(
-        'toolsets/b/my__0.0.1',
-        expect.objectContaining({ name: 'Updated name' }),
-      ),
-    );
-    expect(toolsetsApi.createToolset).toHaveBeenCalledOnce();
-  });
-
-  it('shows an error notification when updating the draft on Next fails', async () => {
-    renderEditor();
-
-    await user.click(await screen.findByRole('button', { name: 'go-next' }));
-    await waitFor(() =>
-      expect(toolsetsApi.createToolset).toHaveBeenCalledOnce(),
-    );
-
-    vi.mocked(toolsetsApi.updateToolset).mockRejectedValue(new Error('fail'));
-    await user.click(screen.getByRole('button', { name: 'change-name' }));
-    await user.click(screen.getByRole('button', { name: 'go-next' }));
-
-    await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith({
-        variant: NotificationVariant.Error,
-        message: ToolsetEditorI18nKeys.ErrorUpdateFailed,
-      }),
-    );
-  });
-
-  it('shows an error notification when the draft creation on Next fails', async () => {
-    vi.mocked(toolsetsApi.createToolset).mockRejectedValue(new Error('fail'));
-    renderEditor();
-
-    await user.click(await screen.findByRole('button', { name: 'go-next' }));
-
-    await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith({
-        variant: NotificationVariant.Error,
-        message: ToolsetEditorI18nKeys.ErrorCreateFailed,
-      }),
-    );
-    expect(screen.getByText('current-step-general')).toBeTruthy();
   });
 
   it('shows the DIAL Core error reason instead of a generic message when create fails', async () => {
@@ -686,7 +578,7 @@ describe('ToolsetEditor', () => {
     );
     await user.click(
       screen.getByRole('button', {
-        name: 'save-toolset',
+        name: ButtonsI18nKeys.Create,
       }),
     );
 

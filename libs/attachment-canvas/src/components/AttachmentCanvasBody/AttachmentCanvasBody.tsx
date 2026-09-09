@@ -6,7 +6,15 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle, IconLock } from '@tabler/icons-react';
-import { type FC, memo, useEffect, useMemo, useState } from 'react';
+import {
+  type FC,
+  lazy,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { defaultStyles, JsonView } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import type { AttachmentCanvasBodyProps } from '../../models/attachment-canvas';
@@ -16,11 +24,27 @@ import {
 } from '../../types/attachment-canvas';
 import { CodeContent } from '../CodeContent/CodeContent';
 import { HtmlContent } from '../HtmlContent/HtmlContent';
+import { LazyContentBoundary } from '../LazyContentBoundary/LazyContentBoundary';
 import { McpAppCanvasRenderer } from '../McpAppCanvasRenderer/McpAppCanvasRenderer';
 import { OoxmlContent } from '../OoxmlContent/OoxmlContent';
-import { PdfContent } from '../PdfContent/PdfContent';
 import { VisualizerCanvasRenderer } from '../VisualizerCanvasRenderer/VisualizerCanvasRenderer';
 import styles from './AttachmentCanvasBody.module.scss';
+
+/*
+ * `PdfContent` pulls in `@epam/ai-dial-react-pdf-highlighter` ->
+ * `@epam/pdf-highlighter-kit` -> `pdfjs-dist`, a multi-hundred-KB dependency
+ * chain. Loading it through a dynamic import keeps that chain out of the
+ * initial bundle — it's only fetched the first time an attachment actually
+ * resolves to the PDF content type. Recreated as a factory (not a
+ * module-scope constant) so a retry after a rejected import can produce a
+ * genuinely new `lazy()` reference — see `LazyContentBoundary`'s `retryKey`
+ * doc for why re-mounting the same one wouldn't re-attempt the import.
+ */
+const createPdfContent = () =>
+  lazy(async () => {
+    const module = await import('../PdfContent/PdfContent');
+    return { default: module.PdfContent };
+  });
 
 interface ImageContentProps {
   url: string;
@@ -92,11 +116,25 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     pdfShowThumbnailsLabel,
     pdfHideThumbnailsLabel,
     pdfPageNumberLabel,
+    pdfContentLoadingLabel,
+    pdfContentErrorLabel,
+    pdfContentRetryLabel,
+    xlsxFormulaLabel = 'Formula',
+    codeContentLoadingLabel,
+    codeContentErrorLabel,
+    codeContentRetryLabel,
+    tableCopyCsvLabel,
+    tableCopyTxtLabel,
+    tableCopyMarkdownLabel,
+    tableCopiedLabel,
+    tableDownloadCsvLabel,
   } = {},
   styles: stylesProp,
   codeBlockTheme,
+  tableDownloadFilename,
   loadPdf,
   hidePdfToolbar = false,
+  configurePdfWorker,
 }) => {
   const {
     colors,
@@ -104,6 +142,17 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     bodyClassName,
     cssVars: extraCssVars,
   } = stylesProp ?? {};
+
+  /*
+   * Recreating `PdfContent` (not reusing the module-scope `lazy()`) on every
+   * retry is what makes the retry control genuinely re-attempt the dynamic
+   * import — see `createPdfContent`'s doc.
+   */
+  const [pdfRetryKey, setPdfRetryKey] = useState(0);
+  const PdfContent = useMemo(createPdfContent, [pdfRetryKey]);
+  const handleRetryPdf = useCallback(() => {
+    setPdfRetryKey((key) => key + 1);
+  }, []);
 
   /* A `fontClassName` replaces the individual typography fields, so their vars
    * are skipped entirely when one is supplied. */
@@ -128,6 +177,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         '--ac-json-toggle-icon': colors?.jsonToggleIcon,
         '--ac-json-toggle-icon-hover': colors?.jsonToggleIconHover,
         '--ac-ooxml-bg': colors?.ooxmlBackground,
+        '--ac-ooxml-formula-border': colors?.ooxmlFormulaBorder,
+        '--ac-ooxml-formula-bg': colors?.ooxmlFormulaBackground,
+        '--ac-ooxml-formula-text': colors?.ooxmlFormulaText,
         '--ac-json-collapsed-text': colors?.jsonCollapsedText,
         '--ac-json-collapsed-bg': colors?.jsonCollapsedBackground,
         '--ac-font-family': hasFontClassName
@@ -166,6 +218,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
       case AttachmentContentType.Code:
       case AttachmentContentType.Html:
         return 'h-full overflow-hidden';
+      case AttachmentContentType.Markdown:
+      case AttachmentContentType.MarkdownTable:
+        return 'flex h-full min-h-0 flex-col overflow-hidden p-4';
       default:
         return 'h-full overflow-auto p-4';
     }
@@ -213,7 +268,34 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             content={content.text}
             isStreaming={false}
             codeBlockTheme={codeBlockTheme}
-            classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
+            containerClassName="flex h-full min-h-0 flex-col"
+            classNames={{
+              ...DEFAULT_MARKDOWN_CLASS_NAMES,
+              tableWrapper: 'my-0 max-h-full',
+              tableScrollContainer: 'max-h-full',
+            }}
+          />
+        );
+      case AttachmentContentType.MarkdownTable:
+        return (
+          <MarkdownRenderer
+            content={content.text}
+            isStreaming={false}
+            codeBlockTheme={codeBlockTheme}
+            containerClassName="flex h-full min-h-0 flex-col"
+            classNames={{
+              ...DEFAULT_MARKDOWN_CLASS_NAMES,
+              tableWrapper: 'my-0 max-h-full',
+              tableScrollContainer: 'max-h-full',
+            }}
+            tableActionLabels={{
+              copyCsvLabel: tableCopyCsvLabel,
+              copyTxtLabel: tableCopyTxtLabel,
+              copyMarkdownLabel: tableCopyMarkdownLabel,
+              copiedLabel: tableCopiedLabel,
+              downloadCsvLabel: tableDownloadCsvLabel,
+            }}
+            tableDownloadFilename={tableDownloadFilename}
           />
         );
       case AttachmentContentType.Json:
@@ -265,7 +347,15 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         );
       case AttachmentContentType.Code:
         return (
-          <CodeContent content={content} codeBlockTheme={codeBlockTheme} />
+          <CodeContent
+            content={content}
+            codeBlockTheme={codeBlockTheme}
+            labels={{
+              loadingLabel: codeContentLoadingLabel,
+              errorLabel: codeContentErrorLabel,
+              retryLabel: codeContentRetryLabel,
+            }}
+          />
         );
       case AttachmentContentType.Html:
         return (
@@ -282,21 +372,36 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         );
       case AttachmentContentType.Pdf:
         return (
-          <PdfContent
+          <LazyContentBoundary
             key={content.url}
-            fileName={fileName}
-            url={content.url}
-            highlights={content.highlights ?? []}
-            selectedHighlightId={content.selectedHighlightId}
-            loadPdf={loadPdf}
-            hideHeader={hidePdfToolbar}
+            retryKey={pdfRetryKey}
+            onRetry={handleRetryPdf}
             labels={{
-              thumbnailsLabel: pdfThumbnailsLabel,
-              showThumbnailsLabel: pdfShowThumbnailsLabel,
-              hideThumbnailsLabel: pdfHideThumbnailsLabel,
-              pageNumberLabel: pdfPageNumberLabel,
+              loadingLabel: pdfContentLoadingLabel,
+              errorLabel: pdfContentErrorLabel,
+              retryLabel: pdfContentRetryLabel,
             }}
-          />
+          >
+            <PdfContent
+              fileName={fileName}
+              url={content.url}
+              highlights={content.highlights ?? []}
+              selectedHighlightId={content.selectedHighlightId}
+              selectedPageNumber={content.page}
+              loadPdf={loadPdf}
+              hideHeader={hidePdfToolbar}
+              configurePdfWorker={configurePdfWorker}
+              labels={{
+                thumbnailsLabel: pdfThumbnailsLabel,
+                showThumbnailsLabel: pdfShowThumbnailsLabel,
+                hideThumbnailsLabel: pdfHideThumbnailsLabel,
+                pageNumberLabel: pdfPageNumberLabel,
+                loadingLabel: pdfContentLoadingLabel,
+                errorLabel: pdfContentErrorLabel,
+                retryLabel: pdfContentRetryLabel,
+              }}
+            />
+          </LazyContentBoundary>
         );
       case AttachmentContentType.Ooxml:
         return (
@@ -304,6 +409,10 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             content={content}
             fileName={fileName}
             loadErrorLabel={loadErrorLabel}
+            formulaLabel={xlsxFormulaLabel}
+            formulaLabelClassName={
+              typography?.xlsxFormulaLabelClassName ?? 'dial-italic-text'
+            }
           />
         );
       case AttachmentContentType.Visualizer:
@@ -349,6 +458,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     content,
     typography?.fontClassName,
     typography?.jsonClassName,
+    typography?.xlsxFormulaLabelClassName,
     fileName,
     codeBlockTheme,
     unsupportedLabel,
@@ -358,12 +468,29 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     htmlFrameBlockedLabel,
     htmlOpenInNewTabLabel,
     isHtmlSourceView,
+    tableDownloadFilename,
     loadPdf,
     hidePdfToolbar,
+    configurePdfWorker,
     pdfThumbnailsLabel,
     pdfShowThumbnailsLabel,
     pdfHideThumbnailsLabel,
     pdfPageNumberLabel,
+    pdfContentLoadingLabel,
+    pdfContentErrorLabel,
+    pdfContentRetryLabel,
+    xlsxFormulaLabel,
+    codeContentLoadingLabel,
+    codeContentErrorLabel,
+    codeContentRetryLabel,
+    PdfContent,
+    pdfRetryKey,
+    handleRetryPdf,
+    tableCopyCsvLabel,
+    tableCopyTxtLabel,
+    tableCopyMarkdownLabel,
+    tableCopiedLabel,
+    tableDownloadCsvLabel,
   ]);
 
   return (

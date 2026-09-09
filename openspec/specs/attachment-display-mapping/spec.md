@@ -41,7 +41,7 @@ Alongside the single-DTO mapper, `chat-shared` SHALL export `messageAttachmentsT
 - **THEN** the shared mapper (used with default resolvers) produces a `DisplayAttachment` with a `playUrl`, and the audio attachment is displayed — unlike the pre-consolidation local mapper, which had no audio handling
 
 #### Scenario: conversation-stages no longer has a local duplicate mapper
-- **WHEN** `libs/conversation-stages/src/utils/to-display-attachment.ts` is checked after this change
+- **WHEN** `libs/conversation-stages/src/utils/to-display-attachment.ts` is checked
 - **THEN** the file no longer exists, and all its former call sites import the mapper from `libs/chat-shared` instead
 
 #### Scenario: contentType is inferred from a PDF-page reference_url when the chunk type is generic

@@ -1,8 +1,36 @@
-import { type FC, type ReactNode, memo } from 'react';
-import { useTableScroll } from '../../../hooks/useTableScroll';
+import {
+  type FC,
+  type ReactNode,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useHorizontalOverflow } from '../../../hooks/useHorizontalOverflow';
 import { buildCssVars } from '../../../utils/build-css-vars';
+import { copyToClipboard } from '../../../utils/copy-to-clipboard';
+import { downloadTextFile } from '../../../utils/file-download';
 import { mergeClasses } from '../../../utils/merge-class';
 import styles from './MarkdownTable.module.scss';
+import {
+  DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME,
+  MARKDOWN_TABLE_CSV_MIME_TYPE,
+  MarkdownTableCopyFormat,
+  serializeMarkdownTableRows,
+  type MarkdownTableActionLabels,
+} from './table-serialization';
+import { TableHeader } from './TableHeader';
+import { useMarkdownTableActions } from './useMarkdownTableActions/useMarkdownTableActions';
+
+export {
+  DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME,
+  MARKDOWN_TABLE_CSV_MIME_TYPE,
+  MarkdownTableCopyFormat,
+  serializeMarkdownTableRows,
+  type MarkdownTableActionLabels,
+} from './table-serialization';
+export type { MarkdownTableHeaderAction } from './useMarkdownTableActions/useMarkdownTableActions';
 
 /** Per-element className overrides for {@link MarkdownTable}. */
 export interface MarkdownTableClassNames {
@@ -10,6 +38,8 @@ export interface MarkdownTableClassNames {
   tableWrapper?: string;
   /** Typography class for the table. Defaults to `'dial-small-text'`. */
   tableFont?: string;
+  /** Extra classes on the scrollable table region. */
+  tableScrollContainer?: string;
 }
 
 /** CSS custom-property overrides for the `MarkdownTable` component. */
@@ -36,9 +66,18 @@ export interface MarkdownTableProps {
   classNames: MarkdownTableClassNames;
   /** Color overrides applied as CSS custom properties. */
   colors?: MarkdownTableColors;
+  /** Localized labels for table actions. Supplying them enables the action bar. */
+  actionLabels?: MarkdownTableActionLabels;
+  /** Filename used when downloading the table as CSV. Defaults to `'table.csv'`. */
+  downloadFilename?: string;
+  /** When true, table actions are hidden while content is still arriving. */
+  isStreaming?: boolean;
+  onOpenInCanvas?: (markdown: string) => void;
   /** Accessible label for the horizontally scrollable region. Defaults to `'Scrollable table'`. */
   scrollRegionAriaLabel?: string;
 }
+
+const COPY_RESET_DELAY_MS = 2000;
 
 /** Renders a responsive Markdown table with an end fade while more columns are available. */
 export const MarkdownTable: FC<MarkdownTableProps> = memo(
@@ -46,15 +85,23 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
     children,
     classNames,
     colors,
+    actionLabels,
+    downloadFilename,
+    isStreaming,
+    onOpenInCanvas,
     scrollRegionAriaLabel = 'Scrollable table',
   }) => {
+    const [copiedFormat, setCopiedFormat] = useState<
+      MarkdownTableCopyFormat | undefined
+    >(undefined);
+    const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const {
       scrollContainerRef,
-      tableRef,
+      contentRef,
       hasContentBeyondStart,
       hasContentBeyondEnd,
       handleScroll,
-    } = useTableScroll();
+    } = useHorizontalOverflow<HTMLTableElement>();
     const cssVars = buildCssVars({
       '--cm-markdown-border': colors?.border,
       '--cm-table-scrollbar': colors?.scrollbar,
@@ -64,6 +111,69 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       '--cm-table-row-hover-bg': colors?.rowHoverBackground,
     });
     const isScrollable = hasContentBeyondStart || hasContentBeyondEnd;
+
+    useEffect(() => {
+      return () => {
+        if (copiedTimeoutRef.current != null) {
+          clearTimeout(copiedTimeoutRef.current);
+        }
+      };
+    }, []);
+
+    const handleCopy = useCallback(
+      (format: MarkdownTableCopyFormat) => {
+        const table = contentRef.current;
+        if (table == null) return;
+
+        const text = serializeMarkdownTableRows(Array.from(table.rows), format);
+        void copyToClipboard(text).then((success) => {
+          if (!success) return;
+          if (copiedTimeoutRef.current != null) {
+            clearTimeout(copiedTimeoutRef.current);
+          }
+          setCopiedFormat(format);
+          copiedTimeoutRef.current = setTimeout(() => {
+            setCopiedFormat(undefined);
+          }, COPY_RESET_DELAY_MS);
+        });
+      },
+      [contentRef],
+    );
+
+    const handleDownloadCsv = useCallback(() => {
+      const table = contentRef.current;
+      if (table == null) return;
+
+      const csv = serializeMarkdownTableRows(
+        Array.from(table.rows),
+        MarkdownTableCopyFormat.Csv,
+      );
+      downloadTextFile(
+        `\uFEFF${csv}`,
+        downloadFilename ?? DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME,
+        MARKDOWN_TABLE_CSV_MIME_TYPE,
+      );
+    }, [contentRef, downloadFilename]);
+
+    const handleOpenInCanvas = useCallback(() => {
+      const table = contentRef.current;
+      if (table == null || onOpenInCanvas == null) return;
+      onOpenInCanvas(
+        serializeMarkdownTableRows(
+          Array.from(table.rows),
+          MarkdownTableCopyFormat.Markdown,
+        ),
+      );
+    }, [contentRef, onOpenInCanvas]);
+
+    const tableActions = useMarkdownTableActions({
+      actionLabels,
+      copiedFormat,
+      onCopy: handleCopy,
+      onDownloadCsv: handleDownloadCsv,
+      onOpenInCanvas: onOpenInCanvas != null ? handleOpenInCanvas : undefined,
+    });
+    const showHeader = tableActions.length > 0 && !isStreaming;
 
     return (
       <div
@@ -75,11 +185,13 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
           classNames.tableWrapper,
         )}
       >
+        {showHeader && <TableHeader actions={tableActions} />}
         <div
           ref={scrollContainerRef}
           className={mergeClasses(
             'w-full min-w-0 max-w-full overflow-x-auto',
             styles.scrollContainer,
+            classNames.tableScrollContainer,
             {
               [styles.tableScrollFadeBoth]:
                 hasContentBeyondStart && hasContentBeyondEnd,
@@ -95,7 +207,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
           tabIndex={isScrollable ? 0 : undefined}
         >
           <table
-            ref={tableRef}
+            ref={contentRef}
             className={mergeClasses(
               'w-max min-w-full border-collapse',
               classNames.tableFont ?? 'dial-small-text',
@@ -104,6 +216,11 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
             {children}
           </table>
         </div>
+        {actionLabels?.copiedLabel && (
+          <span aria-live="polite" className="sr-only" role="status">
+            {copiedFormat ? actionLabels.copiedLabel : ''}
+          </span>
+        )}
       </div>
     );
   },

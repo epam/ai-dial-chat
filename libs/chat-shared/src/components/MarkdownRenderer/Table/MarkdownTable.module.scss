@@ -10,12 +10,17 @@
   background: var(--cm-code-block-bg, var(--bg-layer-base, #f5f7fa));
 }
 
+.copiedIcon {
+  color: var(--cm-code-block-copied, var(--text-success, #007274));
+}
+
 .scrollContainer {
   scrollbar-width: thin;
   scrollbar-color: var(--cm-table-scrollbar, var(--stroke-primary, #57647a))
     transparent;
 
   &::-webkit-scrollbar {
+    width: 4px;
     height: 4px;
   }
 

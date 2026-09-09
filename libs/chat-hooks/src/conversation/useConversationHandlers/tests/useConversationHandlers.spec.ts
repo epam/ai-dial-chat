@@ -56,14 +56,20 @@ const useStableMocks = () => {
   return ref.current;
 };
 
-const useHarness = (overrides: Partial<UseConversationHandlersParams> = {}) => {
+const useHarness = (
+  overrides: Partial<UseConversationHandlersParams> = {},
+  options: { keepRefInSync?: boolean } = {},
+) => {
+  const { keepRefInSync = true } = options;
   const [conversation, setConversation] = useState<Conversation | null>(
     overrides.conversation !== undefined
       ? overrides.conversation
       : makeConversation(),
   );
   const conversationRef = useRef<Conversation | null>(conversation);
-  conversationRef.current = conversation;
+  if (keepRefInSync) {
+    conversationRef.current = conversation;
+  }
 
   const {
     startStream,
@@ -92,6 +98,7 @@ const useHarness = (overrides: Partial<UseConversationHandlersParams> = {}) => {
 
   return {
     conversation,
+    conversationRef,
     handlers,
     startStream,
     uploadFile,
@@ -239,6 +246,69 @@ describe('useConversationHandlers', () => {
       expect(result.current.deleteConversation).toHaveBeenCalledOnce();
       expect(result.current.onConversationDeleted).toHaveBeenCalledOnce();
       expect(result.current.saveConversation).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Regression coverage for a code-review finding: handleConfirmDelete
+     * reads `state.conversationRef.current` as its source of truth (moved
+     * out of the `setConversation` updater so the delete side effects stay
+     * outside React's render phase). The hook has no way to verify that ref
+     * is actually kept in sync with `conversationId` — that contract is the
+     * caller's responsibility (see `Conversation.tsx`'s ref sync fix). These
+     * tests pin the hook's own behavior at each end of that contract.
+     */
+    it('is a safe no-op when conversationRef.current was never synced (null)', () => {
+      const conversation = makeConversation({
+        messages: [
+          { role: 'user' as never, content: 'a', timestamp: 't' },
+          { role: 'assistant' as never, content: 'b', timestamp: 't' },
+        ],
+      });
+      const { result } = renderHook(() =>
+        useHarness({ conversation }, { keepRefInSync: false }),
+      );
+      result.current.conversationRef.current = null;
+
+      act(() => result.current.handlers.handleDeleteMessage(0));
+      act(() => result.current.handlers.handleConfirmDelete());
+
+      expect(result.current.deleteConversation).not.toHaveBeenCalled();
+      expect(result.current.saveConversation).not.toHaveBeenCalled();
+      expect(result.current.onConversationDeleted).not.toHaveBeenCalled();
+    });
+
+    it('computes the deletion from conversationRef.current, not the conversation prop', () => {
+      const conversation = makeConversation({
+        messages: [
+          { role: 'user' as never, content: 'a', timestamp: 't' },
+          { role: 'assistant' as never, content: 'b', timestamp: 't' },
+          { role: 'user' as never, content: 'c', timestamp: 't' },
+          { role: 'assistant' as never, content: 'd', timestamp: 't' },
+        ],
+      });
+      const staleRefConversation = makeConversation({
+        messages: [
+          { role: 'user' as never, content: 'X', timestamp: 't' },
+          { role: 'assistant' as never, content: 'Y', timestamp: 't' },
+          { role: 'user' as never, content: 'Z', timestamp: 't' },
+          { role: 'assistant' as never, content: 'W', timestamp: 't' },
+        ],
+      });
+      const { result } = renderHook(() =>
+        useHarness({ conversation }, { keepRefInSync: false }),
+      );
+      result.current.conversationRef.current = staleRefConversation;
+
+      act(() => result.current.handlers.handleDeleteMessage(2));
+      act(() => result.current.handlers.handleConfirmDelete());
+
+      expect(result.current.saveConversation).toHaveBeenCalledOnce();
+      const savedConversation = result.current.saveConversation.mock.calls[0][0]
+        .saveConversationBodyDto.conversation as Conversation;
+      expect(savedConversation.messages).toEqual([
+        { role: 'user', content: 'X', timestamp: 't' },
+        { role: 'assistant', content: 'Y', timestamp: 't' },
+      ]);
     });
   });
 

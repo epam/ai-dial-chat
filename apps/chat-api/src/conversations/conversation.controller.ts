@@ -13,20 +13,25 @@ import {
   Query,
   Req,
   Res,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import {
   getJobTitleClaim,
   type SessionUser,
 } from '../auth/session/session.types';
+import { SSE_KEEPALIVE_PAYLOAD, startSseResponse } from '../common/utils/sse';
 import {
   ConversationMetadataDto,
   ConversationResponseDto,
 } from '../openapi/openapi-response.dto';
-import { ConversationGenerationService } from './conversation-generation.service';
+import {
+  ConversationGenerationService,
+  type GenerationTerminalEvent,
+} from './conversation-generation.service';
 import { ConversationService } from './conversation.service';
+import { AttachGenerationDto } from './dto/attach-generation.dto';
 import { ConversationListResponseDto } from './dto/conversation-list.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
@@ -55,7 +60,6 @@ import {
 } from './utils/timezone-header';
 
 const SSE_KEEPALIVE_INTERVAL_MS = 15_000;
-const SSE_KEEPALIVE_PAYLOAD = ': keepalive\n\n';
 
 @ApiTags('conversations')
 @Controller({ path: 'conversations', version: '1' })
@@ -67,9 +71,23 @@ export class ConversationController {
     private readonly generationService: ConversationGenerationService,
   ) {}
 
+  /**
+   * The generation registry is keyed by session id, so every endpoint that
+   * registers, attaches to, or aborts a generation requires a
+   * cookie-authenticated session — `SessionUser.sid` is only absent for
+   * header-authenticated callers, which have no session to key on.
+   */
+  private requireSessionId(user: SessionUser): string {
+    if (!user.sid) {
+      throw new UnauthorizedException(
+        'This endpoint requires a cookie-authenticated session',
+      );
+    }
+    return user.sid;
+  }
+
   @Post()
   @HttpCode(201)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     summary: 'Create a new conversation',
     description:
@@ -101,7 +119,6 @@ export class ConversationController {
   }
 
   @Get('list')
-  @Throttle({ default: { limit: 300, ttl: 60000 } })
   @ApiOperation({
     summary: 'List conversations',
     description:
@@ -130,7 +147,6 @@ export class ConversationController {
   }
 
   @Get('metadata')
-  @Throttle({ default: { limit: 300, ttl: 60000 } })
   @ApiOperation({ summary: 'Get metadata for a conversation' })
   @ApiResponse({
     status: 200,
@@ -156,7 +172,6 @@ export class ConversationController {
   }
 
   @Get()
-  @Throttle({ default: { limit: 600, ttl: 60000 } })
   @ApiOperation({ summary: 'Get a conversation by path' })
   @ApiResponse({
     status: 200,
@@ -201,7 +216,6 @@ export class ConversationController {
 
   @Post('completions')
   @HttpCode(200)
-  @Throttle({ default: { limit: 100, ttl: 60000 } })
   @ApiOperation({
     summary: 'Stream a chat completion',
     description:
@@ -234,7 +248,6 @@ export class ConversationController {
     status: 409,
     description: 'Another generation is already active for this conversation',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
   async streamCompletion(
@@ -243,7 +256,9 @@ export class ConversationController {
     @Body() dto: SendCompletionDto,
     @Headers(TIMEZONE_HEADER) timezoneHeader: string | string[] | undefined,
   ): Promise<void> {
-    const { at, bucket, sid, sub, claims } = req.user as SessionUser;
+    const user = req.user as SessionUser;
+    const { at, bucket, claims, sub } = user;
+    const sid = this.requireSessionId(user);
     const timezone = assertValidOptionalTimezone(timezoneHeader);
     const stream = this.conversationService.streamCompletion(
       dto.path,
@@ -256,27 +271,42 @@ export class ConversationController {
       dto.model,
       dto.custom_content,
       sid,
-      () => {
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders();
-      },
+      () => startSseResponse(res),
       sub,
       dto.clientChannelId,
       timezone,
       getJobTitleClaim(claims),
     );
 
-    for await (const chunk of stream) {
-      res.write(chunk);
-    }
+    /*
+     * This generation is backend-owned and independent of the originating
+     * browser connection (see backend-owned-generation-persistence): closing,
+     * refreshing, or navigating away from this response must not abort the
+     * generation or stop the consuming loop below. `isResponseDetached` only
+     * suppresses further writes to the now-closed `res`.
+     */
+    let isResponseDetached = false;
+    const handleClose = () => {
+      isResponseDetached = true;
+    };
+    res.on('close', handleClose);
 
-    if (!res.writableEnded) res.end();
+    try {
+      for await (const chunk of stream) {
+        if (isResponseDetached) continue;
+        try {
+          res.write(chunk);
+        } catch {
+          isResponseDetached = true;
+        }
+      }
+    } finally {
+      res.off('close', handleClose);
+      if (!isResponseDetached && !res.writableEnded) res.end();
+    }
   }
 
   @Post('completions/stop')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Stop an active generation' })
   @ApiResponse({ status: 204, description: 'Generation stopped successfully' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -290,7 +320,7 @@ export class ConversationController {
     @Res() res: Response,
     @Body() dto: StopCompletionDto,
   ): Promise<void> {
-    const { sid } = req.user as SessionUser;
+    const sid = this.requireSessionId(req.user as SessionUser);
     const aborted = this.generationService.abort(
       sid,
       dto.path,
@@ -304,9 +334,86 @@ export class ConversationController {
     res.status(204).end();
   }
 
+  @Post('completions/attach')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'attachToGeneration',
+    summary: 'Attach to an active generation and replay it live',
+    description:
+      'Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Session-scoped — only the session that could stop the generation can attach to it.',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'SSE stream: one snapshot event, live chunk events, then one terminal event',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid or missing path' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 404,
+    description:
+      'No active generation found for the given path in this session — including one that already finished',
+  })
+  async attachToGeneration(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() dto: AttachGenerationDto,
+  ): Promise<void> {
+    const sid = this.requireSessionId(req.user as SessionUser);
+    const attachment = this.generationService.attach(sid, dto.path);
+    if (!attachment) {
+      throw new NotFoundException(
+        'No active generation found for the given path',
+      );
+    }
+
+    startSseResponse(res);
+
+    const writeEvent = (payload: unknown): void => {
+      if (res.writableEnded) return;
+      res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    };
+
+    writeEvent({ type: 'snapshot', message: attachment.assembledMessage });
+
+    const keepaliveTimer = setInterval(() => {
+      if (!res.writableEnded) res.write(SSE_KEEPALIVE_PAYLOAD);
+    }, SSE_KEEPALIVE_INTERVAL_MS);
+
+    let isCleanedUp = false;
+    const onChunk = (rawChunk: unknown): void => {
+      writeEvent({ type: 'chunk', chunk: rawChunk });
+    };
+    const onTerminal = (event: GenerationTerminalEvent): void => {
+      writeEvent(event);
+      cleanup();
+    };
+    const handleClose = (): void => {
+      cleanup();
+    };
+    const cleanup = (): void => {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
+      clearInterval(keepaliveTimer);
+      attachment.emitter.off('chunk', onChunk);
+      attachment.emitter.off('terminal', onTerminal);
+      res.off('close', handleClose);
+      if (!res.writableEnded) res.end();
+    };
+
+    /*
+     * Subscribing here — synchronously, right after `attach()` read the
+     * snapshot above, with no `await` in between — is what guarantees no
+     * concurrently-emitted chunk is lost between the snapshot and the first
+     * live event (see ConversationGenerationService.attach).
+     */
+    attachment.emitter.on('chunk', onChunk);
+    attachment.emitter.on('terminal', onTerminal);
+    res.on('close', handleClose);
+  }
+
   @Post('watch')
   @HttpCode(200)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     operationId: 'watchConversation',
     summary: 'Subscribe to conversation resource updates via SSE',
@@ -329,10 +436,7 @@ export class ConversationController {
       bucket,
     );
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
+    startSseResponse(res);
 
     const reader = stream.getReader();
 
@@ -384,7 +488,6 @@ export class ConversationController {
   }
 
   @Patch()
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({ summary: 'Rename a conversation by path' })
   @ApiResponse({
     status: 200,
@@ -415,7 +518,6 @@ export class ConversationController {
 
   @Post('generate-title')
   @HttpCode(200)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({
     operationId: 'generateConversationTitle',
     summary: 'Generate an LLM-based title suggestion for a conversation',
@@ -441,7 +543,6 @@ export class ConversationController {
     description: 'Not authorized to use the configured utility model',
   })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'LLM title generation failed' })
   @ApiResponse({
     status: 503,
@@ -461,7 +562,6 @@ export class ConversationController {
   }
 
   @Post('duplicate')
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     summary: "Duplicate a conversation into the user's own bucket",
   })
@@ -489,7 +589,6 @@ export class ConversationController {
 
   @Post('deletions')
   @HttpCode(200)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({
     operationId: 'deleteConversations',
     summary: 'Delete selected conversations',
@@ -507,7 +606,6 @@ export class ConversationController {
       'ids is empty, exceeds 100, contains non-strings, or body is missing',
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 500, description: 'Unexpected internal error' })
   deleteConversations(
     @Req() req: Request,
@@ -519,7 +617,6 @@ export class ConversationController {
 
   @Post('deletions/all')
   @HttpCode(200)
-  @Throttle({ default: { limit: 2, ttl: 60000 } })
   @ApiOperation({
     operationId: 'deleteAllConversations',
     summary: 'Delete all conversations in the user bucket',
@@ -536,7 +633,6 @@ export class ConversationController {
     description: 'confirm is missing, false, or non-boolean',
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core metadata listing failed (bucket unreadable)',

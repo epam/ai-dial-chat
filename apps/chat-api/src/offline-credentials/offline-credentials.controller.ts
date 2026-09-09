@@ -9,7 +9,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
@@ -45,7 +44,6 @@ export class OfflineCredentialsController {
   @Get()
   @UseGuards(FeatureGuard)
   @RequireFeature(FeatureKey.ScheduledTasksEnabled)
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({
     operationId: 'getOfflineCredentials',
@@ -68,7 +66,6 @@ export class OfflineCredentialsController {
     description:
       'Caller lacks permission, or the scheduledTasksEnabled feature is not enabled',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -85,7 +82,6 @@ export class OfflineCredentialsController {
   @UseGuards(FeatureGuard)
   @RequireFeature(FeatureKey.ScheduledTasksEnabled)
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'signInOfflineCredentials',
     summary: 'Submit offline-credentials OAuth authorization code',
@@ -114,7 +110,6 @@ export class OfflineCredentialsController {
     description:
       'Caller lacks permission, or the scheduledTasksEnabled feature is not enabled',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response or rejected sign-in',

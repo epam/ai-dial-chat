@@ -779,7 +779,7 @@ describe('useDialFileManager', () => {
 
     expect(mockCreateFolder).toHaveBeenCalledWith({
       bucket: BUCKET,
-      parentPath: undefined,
+      parentPath: '',
       name: '2026',
     });
   });

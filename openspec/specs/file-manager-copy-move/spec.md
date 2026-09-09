@@ -33,7 +33,7 @@ Folder = 'folder'
 | `bucket` | `string` | `@IsString @IsNotEmpty @Matches(BUCKET_NAME_PATTERN) @MaxLength(256)` | DIAL Core bucket |
 | `sourcePath` | `string` | `@IsString @IsNotEmpty @IsValidFilePath() @MaxLength(1024)` | Relative source path within bucket |
 | `destinationPath` | `string` | `@IsString @IsNotEmpty @IsValidFilePath() @MaxLength(1024)` | Relative destination path within bucket |
-| `overwrite` | `boolean?` | `@IsOptional @IsBoolean` | When `true`, replace an existing destination resource. Omitted or `false` preserves the conflict behavior and DIAL Core can return 409. |
+| `overwrite` | `boolean?` | `@IsOptional @IsBoolean` | When `true`, replace an existing destination resource. Omitted or `false` keeps the conflict behavior — DIAL Core rejects the transfer and the BFF reports `"Conflict"` (see **Upstream error mapping**). |
 | `nodeType` | `CopyItemNodeType` | `@IsEnum(CopyItemNodeType)` | `'item'` or `'folder'` |
 | `name` | `string` | `@IsString @IsNotEmpty @MaxLength(255)` | Display name (last segment) for error messages |
 
@@ -81,6 +81,21 @@ async copyFiles(
 - **Request DTO**: `CopyFilesDto` with `CopyItemDto.overwrite?: boolean`. **Response DTO**: `CopyFilesResponseDto`.
 - **Frontend caller**: `apps/chat/src/server-api/files.api.ts` exposes `copyFiles(items: CopyItemDto[]): Promise<CopyFilesResponseDto>` using the normal (non-`Raw`) generated method.
 
+#### Upstream error mapping
+
+`FilesBatchOperationsService.resolveTransferErrorMessage` maps a failed `copyResource` / `moveResource` call to the per-item `error` string:
+
+| DIAL Core response | `results[].error` |
+|--------------------|--------------------|
+| `403` | `"Forbidden"` |
+| `404` | `"Not found"` |
+| `400`, `overwrite` not requested, and the destination path exists | `"Conflict"` |
+| `400` in any other case | `"Copy failed"` / `"Move failed"` |
+| `409` (not part of the current DIAL Core contract; mapped defensively) | `"Conflict"` |
+| anything else, including timeouts and an unreachable Core | `"Copy failed"` / `"Move failed"` |
+
+**Destination-taken detection**: DIAL Core's transfer contract (`POST /v1/ops/resource/copy` and `/move`) declares `200`/`400`/`401`/`403`/`404`/`500` and **never** `409`, so a destination that is already taken while `overwrite` is `false` arrives as a plain `400`. The service SHALL probe the destination with `getFileMetadata` after — and only after — a non-overwriting transfer has already failed with `400`, and SHALL report `"Conflict"` when that probe returns `200` with metadata whose `url` matches the requested destination. When `overwrite: true` was requested, no probe is issued and the generic fallback stands, because an existing destination is not an error in that mode. The probe never runs on the success path. This mapping is shared with `/api/v1/files/rename` — see the `file-manager-rename-api` spec.
+
 **Example request**:
 ```json
 POST /api/v1/files/copy
@@ -114,8 +129,13 @@ POST /api/v1/files/copy
 
 #### Scenario: Single file copy returns conflict
 
-- **WHEN** DIAL Core returns 409 for `copyResource` because the destination already exists
-- **THEN** `results[0].success = false` and `results[0].error = "Conflict"`
+- **WHEN** DIAL Core returns 400 for `copyResource` without `overwrite` because the destination already exists
+- **THEN** the BFF probes `getFileMetadata` for that destination, and `results[0].success = false` with `results[0].error = "Conflict"`
+
+#### Scenario: Single file copy with overwrite does not probe the destination
+
+- **WHEN** DIAL Core returns 400 for `copyResource` on a request carrying `overwrite: true`
+- **THEN** no `getFileMetadata` probe is issued and `results[0].error = "Copy failed"`
 
 #### Scenario: Single file copy can overwrite an existing destination
 
@@ -243,8 +263,13 @@ POST /api/v1/files/move
 
 #### Scenario: Single file move returns conflict
 
-- **WHEN** DIAL Core returns 409 for `moveResource`
-- **THEN** `results[0].success = false` and `results[0].error = "Conflict"`
+- **WHEN** DIAL Core returns 400 for `moveResource` without `overwrite` because the destination already exists
+- **THEN** the BFF probes `getFileMetadata` for that destination, and `results[0].success = false` with `results[0].error = "Conflict"`
+
+#### Scenario: Single file move with overwrite does not probe the destination
+
+- **WHEN** DIAL Core returns 400 for `moveResource` on a request carrying `overwrite: true`
+- **THEN** no `getFileMetadata` probe is issued and `results[0].error = "Move failed"`
 
 #### Scenario: Single file move can overwrite an existing destination
 

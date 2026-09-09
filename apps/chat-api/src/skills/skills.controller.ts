@@ -27,7 +27,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { CreateSkillDto } from './dto/create-skill.dto';
@@ -74,7 +73,6 @@ export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
 
   @Get('catalog')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'listCatalogSkills',
     summary: 'List personal, shared, and organisation skills',
@@ -84,7 +82,6 @@ export class SkillsController {
   @ApiResponse({ status: 200, type: SkillCatalogListResponseDto })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({ status: 503, description: 'DIAL Core is unavailable' })
   listCatalogSkills(@Req() req: Request): Promise<SkillCatalogListResponseDto> {
@@ -93,7 +90,6 @@ export class SkillsController {
   }
 
   @Get()
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'listSkills',
     summary: 'List skills and grouping folders',
@@ -108,7 +104,6 @@ export class SkillsController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Grouping folder not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -131,7 +126,6 @@ export class SkillsController {
   }
 
   @Get('files')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'listSkillFiles',
     summary: 'List files inside a skill',
@@ -145,7 +139,6 @@ export class SkillsController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Skill not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -169,7 +162,6 @@ export class SkillsController {
   }
 
   @Get('download')
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiProduces('application/zip')
   @ApiOperation({
     operationId: 'downloadSkill',
@@ -194,7 +186,6 @@ export class SkillsController {
   @ApiResponse({ status: 404, description: 'Skill not found' })
   @ApiResponse({ status: 405, description: 'Method not allowed' })
   @ApiResponse({ status: 422, description: 'Unprocessable entity' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -246,7 +237,6 @@ export class SkillsController {
   }
 
   @Get('files/download')
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiProduces('application/octet-stream')
   @ApiOperation({
     operationId: 'downloadSkillFile',
@@ -265,7 +255,6 @@ export class SkillsController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'File or skill not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -322,7 +311,6 @@ export class SkillsController {
 
   @Post()
   @HttpCode(201)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @UseInterceptors(AnyFilesInterceptor())
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -373,7 +361,6 @@ export class SkillsController {
     status: 413,
     description: 'A file or the total content is too large',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -403,7 +390,6 @@ export class SkillsController {
 
   @Post('import')
   @HttpCode(201)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @UseInterceptors(SkillArchiveUploadInterceptor)
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -447,7 +433,6 @@ export class SkillsController {
     description:
       'Archive is structurally invalid: too many entries, more than one skill, duplicate paths, or an encrypted/symlink/unsupported entry (standalone SKILL.md uploads never produce this status)',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -477,7 +462,6 @@ export class SkillsController {
 
   @Put()
   @HttpCode(200)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @UseInterceptors(AnyFilesInterceptor())
   @ApiConsumes('multipart/form-data')
   @ApiIfMatchHeader({ required: true })
@@ -534,7 +518,6 @@ export class SkillsController {
     status: 428,
     description: 'If-Match header is required for update',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -572,7 +555,6 @@ export class SkillsController {
 
   @Put('files')
   @HttpCode(200)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiIfMatchHeader()
@@ -608,7 +590,6 @@ export class SkillsController {
   @ApiResponse({ status: 412, description: 'If-Match precondition failed' })
   @ApiResponse({ status: 413, description: 'Upload payload too large' })
   @ApiResponse({ status: 422, description: 'Core resource validation failure' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -641,7 +622,6 @@ export class SkillsController {
   }
 
   @Delete()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiIfMatchHeader()
   @ApiOperation({
     operationId: 'deleteSkill',
@@ -657,7 +637,6 @@ export class SkillsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Skill not found' })
   @ApiResponse({ status: 412, description: 'If-Match precondition failed' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -681,7 +660,6 @@ export class SkillsController {
   }
 
   @Delete('files')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiIfMatchHeader()
   @ApiOperation({
     operationId: 'deleteSkillFile',
@@ -701,7 +679,6 @@ export class SkillsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'File or skill not found' })
   @ApiResponse({ status: 412, description: 'If-Match precondition failed' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -727,7 +704,6 @@ export class SkillsController {
 
   @Post('grouping-folders')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'createSkillGroupingFolder',
     summary: 'Create a grouping folder',
@@ -746,7 +722,6 @@ export class SkillsController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Parent path not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -768,7 +743,6 @@ export class SkillsController {
   }
 
   @Delete('grouping-folders')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiIfMatchHeader()
   @ApiOperation({
     operationId: 'deleteSkillGroupingFolder',
@@ -785,7 +759,6 @@ export class SkillsController {
   @ApiResponse({ status: 404, description: 'Grouping folder not found' })
   @ApiResponse({ status: 409, description: 'Grouping folder is not empty' })
   @ApiResponse({ status: 412, description: 'If-Match precondition failed' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

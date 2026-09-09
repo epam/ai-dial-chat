@@ -169,5 +169,5 @@ This capability SHALL NOT implement client-side or BFF-side filtering of individ
 
 #### Scenario: No per-file provenance field is introduced
 
-- **WHEN** the file listing endpoints (`/list`, `/shared`, `/shared-by-me`, organization listing) are inspected after this change
+- **WHEN** the file listing endpoints (`/list`, `/shared`, `/shared-by-me`, organization listing) are inspected
 - **THEN** none of their response DTOs carry a `sharedWithMe` or `publishedWithMe` field on individual file items

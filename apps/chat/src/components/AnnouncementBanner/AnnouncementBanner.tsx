@@ -117,9 +117,14 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
           {sanitizedDescription && (
             /* Links must read as links: both sanitizers strip `style` and
                `class`, so nothing an operator writes in ANNOUNCEMENT_DESCRIPTION
-               can colour them — the wrapper has to. */
+               can colour them — the wrapper has to.
+
+               `flex-1` (basis 0) makes the description yield the shared line to
+               the title rather than shrinking alongside it: with an auto basis
+               both spans shrink in proportion, leaving the description a sliver
+               of ellipsis instead of collapsing out of view. */
             <span
-              className="min-w-0 truncate [&_a:hover]:opacity-75 [&_a]:text-accent [&_a]:underline"
+              className="min-w-0 flex-1 truncate [&_a:hover]:opacity-75 [&_a]:text-accent [&_a]:underline"
               // eslint-disable-next-line react/no-danger
               dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
             />

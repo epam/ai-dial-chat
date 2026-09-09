@@ -19,12 +19,16 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit`
+- `@epam/ai-dial-ui-kit` ^0.14.0-dev.30 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 - `@tabler/icons-react`
 - `ag-grid-community@35.3.0`
 
 ## Components
+
+The list view imports Grid through `@epam/ai-dial-ui-kit/grid`. Library builds
+keep UI Kit root and subpath imports external. JavaScript is tree-shakeable;
+CSS/SCSS imports remain side effects. Load catalog UI through a host lazy boundary.
 
 ### Catalog
 
@@ -107,6 +111,11 @@ also yields more card columns (4 instead of 3 once the grid area passes
 
 #### Controlling tabs and Topics options independently of `items`
 
+The entity-type tab row appears only when `items` span **two or more** types: a
+single tab is not a choice, so a catalog restricted to one entity type (an
+agent picker, a prompt picker) renders no tab row at all. The active tab still
+resolves to that one type, so the grid is unaffected.
+
 By default the entity-type tabs and the Topics filter's option list are both
 derived from `items` — the same list the grid renders. A host that narrows
 `items` for the grid (e.g. filtering by a selected category-tree node) would
@@ -147,7 +156,7 @@ navigation (a category tree, etc.).
   browseHeaderRenderer={
     <Breadcrumb segments={selectedPath} onSegmentClick={handleJumpToSegment} />
   }
-/>;
+/>
 ```
 
 ### CardGrid
@@ -172,6 +181,24 @@ Pass `query` so each card highlights the matched text — the grid forwards it t
 Set `isFullWidth` when the grid is rendered without the 1180 px content cap. It
 only sharpens the column-count guess used for the first paint; the measured
 container width always wins afterwards.
+
+### Card
+
+Single catalog item card, exported for hosts composing their own grid or list.
+
+```tsx
+import { Card } from '@epam/ai-dial-catalog';
+
+<Card
+  item={item}
+  query={searchQuery}
+  onClick={handleItemClick}
+  onToggle={handleToggleFavorite}
+  initialIsStarred={isFavorited}
+/>
+```
+
+The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's fixed 2-line clamp; they appear normally in the About tab. Links render as real `<a>` elements and activate independently without triggering the card's own `onClick` handler; clicks on other description content still open the card details.
 
 ### ListView
 
@@ -658,9 +685,9 @@ import {
 } from '@epam/ai-dial-catalog';
 
 /*
- * Matches an item's `name`, `description`, or `type` — case-insensitive.
- * Note that a prompt's body is not searched: `details.promptContent` is
- * resolved lazily and is not part of the search index.
+ * Matches an item's `name` only — case-insensitive, whitespace-trimmed. An
+ * item's `description`, `type`, and a prompt's body are not searched: the name
+ * is the only text the card and list row highlight.
  */
 const filtered = filterCatalogItems(items, 'gpt');
 const sorted = sortCatalogItems(filtered, CatalogSortKey.NameAZ);

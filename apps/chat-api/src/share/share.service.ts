@@ -13,6 +13,10 @@ import {
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import {
+  APPLICATION_RESOURCE_PREFIX,
+  parseDialApplicationResource,
+} from '../common/utils/dial-application-resource';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import {
   countRecipientsByUrl,
@@ -20,10 +24,12 @@ import {
 } from '../common/utils/resource-ownership';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { EnvironmentVariables } from '../config/environment.config';
+import { PUBLIC_BUCKET } from '../conversations/constants/conversation.constants';
 import { resolveConversationLocation } from '../conversations/utils/conversation.utils';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
 import { isPromptResourceUrl } from '../prompts/utils/prompt-mapper.util';
+import { getResourceBucket } from '../publish/publish-target.util';
 import { SkillsLookupService } from '../skills/lookup/skills-lookup.service';
 import { ToolsetsService } from '../toolsets/toolsets.service';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
@@ -118,6 +124,23 @@ const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';
 const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
 const FILE_RESOURCE_PREFIX = 'files/';
 
+/*
+ * The only `application_properties.skills[]` entry shape that references a
+ * separate DIAL resource this repo must grant access to. A quick app's
+ * `application_properties` is authored by the embedded Quick Apps editor and
+ * treated as opaque here — so this is a defensive literal match against
+ * `type === 'dial-prompt'`, not an import of the editor's `QuickApp2Config`
+ * type (which lives in the editor package, not this repo). Every other skill
+ * entry shape (`type: 'custom'`, future kinds) carries inline content or no
+ * resource url and is left alone.
+ */
+const DIAL_PROMPT_SKILL_TYPE = 'dial-prompt';
+
+interface DialPromptSkillEntry {
+  type?: unknown;
+  url?: unknown;
+}
+
 interface AnnotationWithAttachment {
   body?: {
     source?: {
@@ -186,6 +209,54 @@ const collectConversationResourceUrls = (conversation: unknown): string[] => {
   return [...resourceUrls];
 };
 
+/*
+ * Collects unique prompt resource urls referenced by a quick app's
+ * `application_properties.skills[]`. Only `type: 'dial-prompt'` entries carry
+ * a separate DIAL prompt resource (`prompts/{bucket}/...`) that must be
+ * granted alongside the app; other skill kinds and the `custom` system prompt
+ * hold content inline and share nothing. `application_properties` is opaque
+ * (authored by the embedded Quick Apps editor), so the walk is defensive — a
+ * missing/malformed `skills` array yields no urls rather than throwing. Each
+ * url is stripped of `#`-fragments, rejected if it contains a `..` traversal
+ * segment, and normalized through `toShareResourceUrl` before deduping so
+ * encoded/decoded variants of the same prompt collapse to one entry.
+ */
+export const collectApplicationPromptResourceUrls = (
+  application: unknown,
+): string[] => {
+  if (!isRecord(application)) return [];
+  const properties = application.application_properties;
+  if (!isRecord(properties)) return [];
+
+  const skills = properties.skills;
+  if (!Array.isArray(skills)) return [];
+
+  const resourceUrls = new Set<string>();
+  for (const entry of skills as DialPromptSkillEntry[]) {
+    if (!isRecord(entry)) continue;
+    if (entry.type !== DIAL_PROMPT_SKILL_TYPE) continue;
+    if (typeof entry.url !== 'string') continue;
+
+    // Strip `#`-fragments — a fragment identifies a view, not a distinct resource.
+    const resourceUrl = entry.url.split('#', 1)[0];
+    if (!isPromptResourceUrl(resourceUrl)) continue;
+
+    // Normalize before dedup so encoded/decoded variants collapse to one entry.
+    const normalizedUrl = toShareResourceUrl(resourceUrl);
+
+    // Drop `..` traversal segments. Decode the full url before splitting so a
+    // `%2F`-encoded slash (e.g. `..%2F..%2Fother`) can't hide a `..` segment
+    // from the check — `encodeDialResourcePath` decodes each segment but splits
+    // on `/` first, so `%2F` inside a segment survives as a literal.
+    if (safeDecodeURIComponent(normalizedUrl).split('/').includes('..'))
+      continue;
+
+    resourceUrls.add(normalizedUrl);
+  }
+
+  return [...resourceUrls];
+};
+
 const getInvitationRoutePath = (itemId: string): string =>
   itemId.startsWith(CONVERSATION_RESOURCE_PREFIX)
     ? CONVERSATION_SHARE_INVITATION_ROUTE_PATH
@@ -213,7 +284,7 @@ export class ShareService {
 
   constructor(
     private readonly dialClient: DialClientService,
-    private readonly configService: ConfigService<EnvironmentVariables>,
+    private readonly configService: ConfigService<EnvironmentVariables, true>,
     private readonly deploymentsService: DeploymentsService,
     private readonly toolsetsService: ToolsetsService,
     private readonly skillsLookupService: SkillsLookupService,
@@ -247,8 +318,26 @@ export class ShareService {
     sessionBucket: string,
     resourceUrl: string,
   ): Promise<string[]> {
-    if (!resourceUrl.startsWith(CONVERSATION_RESOURCE_PREFIX)) return [];
+    if (resourceUrl.startsWith(CONVERSATION_RESOURCE_PREFIX)) {
+      return this.getConversationRelatedResourceUrls(
+        accessToken,
+        sessionBucket,
+        resourceUrl,
+      );
+    }
 
+    if (resourceUrl.startsWith(APPLICATION_RESOURCE_PREFIX)) {
+      return this.getApplicationRelatedResourceUrls(accessToken, resourceUrl);
+    }
+
+    return [];
+  }
+
+  private async getConversationRelatedResourceUrls(
+    accessToken: string,
+    sessionBucket: string,
+    resourceUrl: string,
+  ): Promise<string[]> {
     const conversationPath = resourceUrl.slice(
       CONVERSATION_RESOURCE_PREFIX.length,
     );
@@ -287,7 +376,84 @@ export class ShareService {
       throw new BadGatewayException('DIAL Core returned an empty conversation');
     }
 
-    return collectConversationResourceUrls(result.data);
+    /* See openspec/specs/conversation-share/spec.md — "Related file resources outside the conversation's own bucket are dropped". */
+    return collectConversationResourceUrls(result.data).filter((url) => {
+      const fileBucket = getResourceBucket(url);
+      return fileBucket === bucket || fileBucket === PUBLIC_BUCKET;
+    });
+  }
+
+  /*
+   * Loads a quick app's `application_properties` and returns the prompt
+   * resource urls it references via `skills[]` (`type: 'dial-prompt'`), so the
+   * attached prompts are granted alongside the app itself — otherwise the
+   * recipient hits "Access denied to the prompt" when they open the shared
+   * app (issue #8529). Reuses the same `applications/{bucket}/{path}` →
+   * `getCustomApplication` resolution `buildApplicationDetails` uses.
+   *
+   * Best-effort: the pre-read MUST NOT block sharing the application itself.
+   * Before this related-resource lookup existed, an `applications/...` itemId
+   * could be shared as long as `shareResource` succeeded — the app itself was
+   * never gated on a prior read. Any failure here (network error, upstream
+   * error, empty body, malformed `application_properties`) is logged as a
+   * warning and degrades to sharing the application alone, so a transient
+   * DIAL Core hiccup or token issue on the pre-read never regresses the
+   * baseline "share the app" path. The attached prompts are an enhancement
+   * on top of that baseline, not a precondition for it.
+   *
+   * Same cross-bucket rule as conversations: DIAL Core rejects a single share
+   * request mixing more than one owning bucket, and the caller cannot grant
+   * access to a prompt in another user's private bucket, so a referenced
+   * prompt whose bucket is neither the app's own nor the public/organization
+   * bucket is silently dropped rather than failing the whole share.
+   */
+  private async getApplicationRelatedResourceUrls(
+    accessToken: string,
+    resourceUrl: string,
+  ): Promise<string[]> {
+    const resource = parseDialApplicationResource(resourceUrl);
+    if (resource == null) return [];
+
+    let result;
+    try {
+      result = await this.dialClient.client.getCustomApplication(
+        resource.bucket,
+        resource.path,
+        { headers: getBearerAuthHeaders(accessToken) },
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Failed to load application resources before sharing resourceUrl=${resourceUrl}; sharing without related prompts`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      return [];
+    }
+
+    if (result.error != null || result.data == null) {
+      this.logger.warn(
+        `DIAL Core returned ${
+          result.error != null
+            ? `an error (status ${result.response?.status})`
+            : 'an empty body'
+        } for resourceUrl=${resourceUrl}; sharing without related prompts`,
+      );
+      return [];
+    }
+
+    return collectApplicationPromptResourceUrls(result.data).filter((url) => {
+      /*
+       * `collectApplicationPromptResourceUrls` normalizes each url through
+       * `toShareResourceUrl`, so the bucket segment read here is the encoded
+       * form (e.g. `My%20Bucket`). `resource.bucket` is the raw bucket
+       * segment from the application's itemId, which may itself be encoded or
+       * unencoded depending on the caller. Decode both before comparing so a
+       * percent-encoded bucket name (S3-style) matches regardless of which
+       * side carries the encoding.
+       */
+      const promptBucket = safeDecodeURIComponent(getResourceBucket(url));
+      const appBucket = safeDecodeURIComponent(resource.bucket);
+      return promptBucket === appBucket || promptBucket === PUBLIC_BUCKET;
+    });
   }
 
   /**
@@ -310,9 +476,21 @@ export class ShareService {
       bucket,
       resourceUrl,
     );
+    /*
+     * Each related url is normalized through `toShareResourceUrl` for the same
+     * reason the primary `itemId` is: a prompt resource url may be stored in
+     * `application_properties.skills[].url` in the raw, human-readable form
+     * (e.g. `prompts/owner-bucket/My prompt`) that DIAL Core rejects with 400
+     * when sent unencoded. `toShareResourceUrl` encodes prompt urls and passes
+     * every other kind through unchanged; `encodeDialResourcePath` is
+     * idempotent, so already-encoded urls are not double-encoded.
+     */
     const requestBody = {
       invitationType: 'LINK' as const,
-      resources: [resourceUrl, ...relatedResourceUrls].map((url) => ({
+      resources: [
+        resourceUrl,
+        ...relatedResourceUrls.map(toShareResourceUrl),
+      ].map((url) => ({
         url,
         permissions,
       })),

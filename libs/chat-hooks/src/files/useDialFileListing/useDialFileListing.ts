@@ -10,7 +10,7 @@ import {
 } from '@epam/ai-dial-react-file-manager';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { safeDecodeURI } from '../../shared/string-utils';
+import { getApiErrorStatus } from '../../api-error/api-error';
 import {
   buildFromCache,
   fetchByTab,
@@ -31,7 +31,10 @@ import {
   type FileManagerNotification,
 } from '../dial-file-manager.types';
 import type { DialFilesApi } from '../dial-files-api';
-import { virtualPathToApiPath } from '../resolve-dial-file-api-path';
+import {
+  getParentFolderPath,
+  virtualPathToApiPath,
+} from '../resolve-dial-file-api-path';
 
 /** Options accepted by `useDialFileListing`. */
 export interface UseDialFileListingOptions {
@@ -234,14 +237,22 @@ export const useDialFileListing = ({
           );
           sharedRootMetaRef.current = new Map(
             flat.map((item) => [
-              safeDecodeURI(item.name),
+              item.name,
               { bucket: item.bucket ?? '', dialCorePath: item.path },
             ]),
           );
         }
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (cancelled) return;
+        /* The folder just browsed into can vanish (e.g. its last file was
+         * deleted, dropping the now-empty folder from DIAL Core) — DIAL Core
+         * then 404s the listing. Fall back to the parent folder instead of
+         * surfacing a dead-end error. */
+        if (folderPath !== '' && getApiErrorStatus(err) === 404) {
+          setFolderPath(getParentFolderPath(folderPath));
+          return;
+        }
         setError('dialFileManager.error');
       })
       .finally(() => {
@@ -638,7 +649,7 @@ export const useDialFileListing = ({
           setIsSearching(true);
           const rootItems = cache.get('') ?? [];
           const matched = rootItems.filter((item) =>
-            safeDecodeURI(item.name).toLowerCase().includes(lowerQuery),
+            item.name.toLowerCase().includes(lowerQuery),
           );
           setSearchResults(
             matched.map((item) =>
@@ -665,7 +676,7 @@ export const useDialFileListing = ({
             );
             if (cancelled) return;
             const matched = searchItems.filter((item) =>
-              safeDecodeURI(item.name).toLowerCase().includes(lowerQuery),
+              item.name.toLowerCase().includes(lowerQuery),
             );
             setSearchResults(
               matched.map((item) =>

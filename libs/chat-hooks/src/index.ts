@@ -23,7 +23,9 @@ export * from './catalog/mcp-endpoint-url';
 export * from './catalog/publish';
 export * from './catalog/catalog-derivations';
 export * from './catalog/catalog-primary-action';
+export * from './catalog/useCatalogEditNavigation/useCatalogEditNavigation';
 export * from './catalog/useCatalogItemDetails';
+export * from './catalog/useCatalogToolsetCredentials/useCatalogToolsetCredentials';
 export * from './catalog/useFavoriteEntitiesState/useFavoriteEntitiesState';
 export * from './catalog/usePublishFolders/usePublishFolders';
 export * from './conversation/announcement-message';
@@ -140,3 +142,30 @@ export * from './useShareRecipientsCount/useShareRecipientsCount';
 export * from './useToolsMenu/useToolsMenu';
 export * from './usage/useUsageData/useUsageData';
 export * from './useViewportWidth/useViewportWidth';
+export {
+  createMcpAppsApiClient,
+  McpAppResourceFetchError,
+  type McpAppsApiClient,
+  type McpAppToolSummary,
+} from './mcp-apps/mcp-apps-api-client';
+export { useMcpAppTools } from './mcp-apps/useMcpAppTools/useMcpAppTools';
+export {
+  useMcpAppHostContext,
+  type McpAppHostContextParams,
+} from './mcp-apps/useMcpAppHostContext/useMcpAppHostContext';
+export { useMcpAppHostAdapter } from './mcp-apps/useMcpAppHostAdapter/useMcpAppHostAdapter';
+export {
+  useOpenMcpAppCanvas,
+  type UseOpenMcpAppCanvasLabels,
+} from './mcp-apps/useOpenMcpAppCanvas/useOpenMcpAppCanvas';
+
+/*
+ * The canonical hook lives in `@epam/ai-dial-chat-shared`, co-located with the
+ * `DialFileManagerShell` that invokes it. This re-export keeps the older
+ * `@epam/ai-dial-chat-hooks` import path working for existing callers.
+ */
+export type {
+  UseGridEditingScrollOptions,
+  UseGridEditingScrollResult,
+} from '@epam/ai-dial-chat-shared';
+export { useGridEditingScroll } from '@epam/ai-dial-chat-shared';

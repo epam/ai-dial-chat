@@ -1,3 +1,4 @@
+import { MIMEType } from '@epam/ai-dial-chat-shared';
 import {
   HTML_EXTENSIONS,
   OOXML_MIME_TYPES,
@@ -13,37 +14,55 @@ import {
   OoxmlFileType,
 } from '../types/attachment-canvas';
 
-const OOXML_EXTENSION_TO_FILE_TYPE: Record<string, OoxmlFileType> = {
+const RENDERER_EXTENSION_TO_FILE_TYPE: Record<string, OoxmlFileType> = {
   docx: OoxmlFileType.Docx,
   xlsx: OoxmlFileType.Xlsx,
   pptx: OoxmlFileType.Pptx,
+  csv: OoxmlFileType.Csv,
 };
 
-const OOXML_MIME_TO_FILE_TYPE: Record<string, OoxmlFileType> = {
+const RENDERER_MIME_TO_FILE_TYPE: Record<string, OoxmlFileType> = {
   [OOXML_MIME_TYPES.docx]: OoxmlFileType.Docx,
   [OOXML_MIME_TYPES.xlsx]: OoxmlFileType.Xlsx,
   [OOXML_MIME_TYPES.pptx]: OoxmlFileType.Pptx,
+  [MIMEType.CSV]: OoxmlFileType.Csv,
 };
 
-/** Resolves a supported OOXML format from a MIME type or file extension. */
+const RENDERER_FILE_TYPE_TO_MIME: Record<OoxmlFileType, string> = {
+  [OoxmlFileType.Docx]: OOXML_MIME_TYPES.docx,
+  [OoxmlFileType.Xlsx]: OOXML_MIME_TYPES.xlsx,
+  [OoxmlFileType.Pptx]: OOXML_MIME_TYPES.pptx,
+  [OoxmlFileType.Csv]: MIMEType.CSV,
+};
+
+/** Resolves a format supported by the bundled `@silurus/ooxml` renderer from a MIME type or file extension. */
 export const getOoxmlFileType = (
   name: string,
   mimeType?: string,
 ): OoxmlFileType | undefined => {
   const normalizedMimeType = mimeType?.split(';', 1)[0].trim().toLowerCase();
   if (normalizedMimeType != null) {
-    const mimeMatch = OOXML_MIME_TO_FILE_TYPE[normalizedMimeType];
+    const mimeMatch = RENDERER_MIME_TO_FILE_TYPE[normalizedMimeType];
     if (mimeMatch != null) return mimeMatch;
   }
 
   const dot = name.lastIndexOf('.');
   if (dot === -1) return undefined;
-  return OOXML_EXTENSION_TO_FILE_TYPE[name.slice(dot + 1).toLowerCase()];
+  return RENDERER_EXTENSION_TO_FILE_TYPE[name.slice(dot + 1).toLowerCase()];
 };
 
-/** Returns true when a file can be rendered by the built-in OOXML viewer. */
+/** Returns true when a file can be rendered by the built-in `@silurus/ooxml` viewer. */
 export const isOoxmlPreviewable = (name: string, mimeType?: string): boolean =>
   getOoxmlFileType(name, mimeType) != null;
+
+/** Returns the canonical MIME type recognized from `name`'s extension or `mimeType`, or `undefined` if neither matches a supported renderer format. */
+export const getOoxmlMimeType = (
+  name: string,
+  mimeType?: string,
+): string | undefined => {
+  const fileType = getOoxmlFileType(name, mimeType);
+  return fileType != null ? RENDERER_FILE_TYPE_TO_MIME[fileType] : undefined;
+};
 
 /** Returns true if the file name has an extension known to be text-previewable. */
 export const isTextPreviewable = (name: string): boolean => {

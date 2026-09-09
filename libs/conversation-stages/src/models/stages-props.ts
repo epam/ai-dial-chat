@@ -78,7 +78,7 @@ export interface StagesPanelLabels {
 export interface StagesPanelProps {
   /** Ordered list of stages to display. */
   stages: Stage[];
-  /** When `true` the last stage with `status: null` shows a live spinner. */
+  /** When `true`, every stage with `status: null` shows a live spinner. */
   isStreaming: boolean;
   /** Extra class name(s) merged onto the outer wrapper. */
   className?: string;

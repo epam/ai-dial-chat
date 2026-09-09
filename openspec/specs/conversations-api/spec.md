@@ -89,8 +89,8 @@ The `Conversation` and `Message` interfaces SHALL be declared in `libs/chat-shar
 
 #### Scenario: Shared types are importable in chat-api
 
-- **WHEN** `apps/chat-api` imports `Conversation` from `@epam/ai-dial-chat-shared`
-- **THEN** TypeScript resolves the type without error
+- **WHEN** `apps/chat-api` is type-checked
+- **THEN** `Conversation` imported from `@epam/ai-dial-chat-shared` resolves without error
 
 ---
 

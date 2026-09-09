@@ -3,13 +3,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
-import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
-import { toRelativePath } from '../dial-resource-path.util';
+import { encodeDialFilePath, toRelativePath } from '../dial-resource-path.util';
 import type { FileMetadataResponseDto } from '../dto/file-metadata-response.dto';
 import type { ListFilesResponseDto } from '../dto/list-files.dto';
+import { RESERVED_ROOT_FOLDER_NAMES } from '../files.constants';
 import type { DialFileItem } from '../normalize-file-item';
 import { normalizeFileItem } from '../normalize-file-item';
 import { resolveListingPermissions } from '../resolve-listing-permissions';
@@ -24,8 +24,27 @@ export interface ExpandedFile {
 
 const FULL_FILE_LIST_PAGE_LIMIT = 1000;
 
-const safeDecodePathForCompare = (path: string): string =>
-  path.split('/').map(safeDecodeURIComponent).join('/');
+/**
+ * Decodes a percent-encoded DIAL Core `url` into the plain path space every
+ * other path in the files domain uses. Only `url` is encoded — `name` and
+ * `parentPath` already come back decoded — so this must never be applied to a
+ * path that is already plain.
+ */
+const decodeDialResourceUrl = (path: string): string =>
+  path
+    .split('/')
+    .map((segment) => safeDecodeURIComponent(segment))
+    .join('/');
+
+const isReservedRootFolder = (item: DialFileItem): boolean => {
+  const nodeType = (item.nodeType ?? '').toLowerCase();
+  if (nodeType !== 'folder') return false;
+
+  const parentPath = (item.parentPath ?? '').replace(/\/+$/, '');
+  if (parentPath !== '') return false;
+
+  return RESERVED_ROOT_FOLDER_NAMES.includes(item.name ?? '');
+};
 
 @Injectable()
 export class FilesListingService {
@@ -58,7 +77,7 @@ export class FilesListingService {
     const { data, error, response } =
       await this.dialClient.client.getFileMetadata(
         bucket,
-        encodeDialResourcePath(normalizedPath),
+        encodeDialFilePath(normalizedPath),
         {
           headers: getBearerAuthHeaders(at),
           params: {
@@ -73,7 +92,8 @@ export class FilesListingService {
         },
       );
 
-    if (error != null || (data == null && response.status >= 300)) {
+    const responseStatus = response.status;
+    if (error != null || (data == null && responseStatus >= 300)) {
       this.logger.warn(
         `DIAL Core listFiles returned error: status=${response.status}, bucket=${bucket}`,
       );
@@ -147,9 +167,12 @@ export class FilesListingService {
           `listFiles DIAL page: bucket=${bucket}, path=${normalizedPath}, page=${page}, count=${pageData.items.length}, hasNextPage=${nextToken != null}`,
         );
       } while (shouldAggregateAllPages && token != null);
-      const items = rawItems.map((item) => normalizeFileItem(item, bucket));
+      const visibleItems = rawItems.filter(
+        (item) => !isReservedRootFolder(item),
+      );
+      const items = visibleItems.map((item) => normalizeFileItem(item, bucket));
       const resolvedPermissions = resolveListingPermissions(
-        rawItems,
+        visibleItems,
         normalizedPath,
       );
 
@@ -213,6 +236,7 @@ export class FilesListingService {
       const rawItems = sharedData.resources ?? [];
 
       const allItems = rawItems
+        .filter((item) => !isReservedRootFolder(item))
         .map((item) => normalizeFileItem(item, item.bucket ?? ''))
         .filter((item) => {
           if (!query.path) return true;
@@ -266,6 +290,7 @@ export class FilesListingService {
 
       const items = rawItems
         .filter((item) => (item.bucket ?? '') === bucket)
+        .filter((item) => !isReservedRootFolder(item))
         .map((item) => normalizeFileItem(item, bucket));
 
       this.logger.debug(
@@ -292,7 +317,7 @@ export class FilesListingService {
       const { data, error, response } =
         await this.dialClient.client.getFileMetadata(
           bucket,
-          encodeDialResourcePath(path),
+          encodeDialFilePath(path),
           {
             headers: getBearerAuthHeaders(token),
             signal: AbortSignal.timeout(this.getTimeoutMs()),
@@ -365,7 +390,7 @@ export class FilesListingService {
       const { data, error, response } =
         await this.dialClient.client.getFileMetadata(
           bucket,
-          encodeDialResourcePath(relFolderPath),
+          encodeDialFilePath(relFolderPath),
           {
             headers: getBearerAuthHeaders(at),
             params: {
@@ -375,7 +400,8 @@ export class FilesListingService {
           },
         );
 
-      if (error != null || (data == null && response.status >= 300)) {
+      const responseStatus = response.status;
+      if (error != null || (data == null && responseStatus >= 300)) {
         this.logger.warn(
           `Archive folder metadata failed: bucket=${bucket}, path=${relFolderPath}, page=${page}, status=${response.status}`,
         );
@@ -410,9 +436,17 @@ export class FilesListingService {
           continue;
         }
 
-        // item.url may be a full resource path or already relative — normalise to relative
-        const rawUrl = item.url ?? item.name ?? '';
-        const relItemPath = toRelativePath(rawUrl, bucket);
+        /*
+         * item.url may be a full resource path or already relative — normalise
+         * to relative, then decode it: `url` is the one percent-encoded field
+         * DIAL Core returns, while `name` and the paths this service is called
+         * with are plain.
+         */
+        const rawUrl = item.url;
+        const relItemPath =
+          rawUrl != null
+            ? decodeDialResourceUrl(toRelativePath(rawUrl, bucket))
+            : toRelativePath(item.name ?? '', bucket);
 
         const relative = this.getRelativeChildPath(
           relItemPath,
@@ -468,14 +502,13 @@ export class FilesListingService {
     const folderPrefix = folderPath.endsWith('/')
       ? folderPath
       : `${folderPath}/`;
+    /*
+     * Both sides are plain paths — `childPath` was decoded from the DIAL Core
+     * url by the caller — so a direct prefix comparison is exact. Decoding
+     * either side again here would make `a%20b` and `a b` compare equal.
+     */
     if (childPath.startsWith(folderPrefix)) {
       return childPath.slice(folderPrefix.length);
-    }
-
-    const comparableChildPath = safeDecodePathForCompare(childPath);
-    const comparableFolderPrefix = safeDecodePathForCompare(folderPrefix);
-    if (comparableChildPath.startsWith(comparableFolderPrefix)) {
-      return comparableChildPath.slice(comparableFolderPrefix.length);
     }
 
     return fallback;

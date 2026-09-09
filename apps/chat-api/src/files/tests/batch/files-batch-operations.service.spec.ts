@@ -269,6 +269,18 @@ describe('FilesBatchOperationsService', () => {
       ...overrides,
     });
 
+    const metadataFor = (path: string) => ({
+      data: { name: path.split('/').pop(), url: `files/user-files/${path}` },
+      error: undefined,
+      response: { status: 200 },
+    });
+
+    const metadataMissing = () => ({
+      data: undefined,
+      error: new Error('Not found'),
+      response: { status: 404 },
+    });
+
     it('returns success when DIAL Core moveResource returns 200', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.moveResource.mockResolvedValue(okMove());
@@ -292,7 +304,56 @@ describe('FilesBatchOperationsService', () => {
       );
     });
 
-    it('returns success=false with "Conflict" for DIAL Core 409', async () => {
+    it('returns success=false with "Conflict" when DIAL Core rejects the move with 400 and the destination is taken', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue(errMove(400));
+      sdkClient.getFileMetadata.mockResolvedValue(
+        metadataFor('reports/q1-final.pdf'),
+      );
+
+      const result = await service.renameFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'reports/q1-final.pdf',
+        success: false,
+        error: 'Conflict',
+      });
+      expect(sdkClient.getFileMetadata).toHaveBeenCalledWith(
+        'user-files',
+        'reports/q1-final.pdf',
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+        }),
+      );
+    });
+
+    it('returns success=false with "Rename failed" for a 400 that is not a destination conflict', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue(errMove(400));
+      sdkClient.getFileMetadata.mockResolvedValue(metadataMissing());
+
+      const result = await service.renameFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'reports/q1-final.pdf',
+        success: false,
+        error: 'Rename failed',
+      });
+    });
+
+    it('does not report a conflict when the destination probe resolves to another resource', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue(errMove(400));
+      sdkClient.getFileMetadata.mockResolvedValue(metadataFor('reports/'));
+
+      const result = await service.renameFiles([singleFileItem()], 'token');
+
+      expect(result.results[0].error).toBe('Rename failed');
+    });
+
+    it('still maps a 409 to "Conflict" should DIAL Core ever send one', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.moveResource.mockResolvedValue(errMove(409));
 
@@ -304,6 +365,7 @@ describe('FilesBatchOperationsService', () => {
         success: false,
         error: 'Conflict',
       });
+      expect(sdkClient.getFileMetadata).not.toHaveBeenCalled();
     });
 
     it('returns success=false with "Forbidden" for DIAL Core 403', async () => {
@@ -580,6 +642,18 @@ describe('FilesBatchOperationsService', () => {
       ...overrides,
     });
 
+    const metadataFor = (path: string) => ({
+      data: { name: path.split('/').pop(), url: `files/user-files/${path}` },
+      error: undefined,
+      response: { status: 200 },
+    });
+
+    const metadataMissing = () => ({
+      data: undefined,
+      error: new Error('Not found'),
+      response: { status: 404 },
+    });
+
     it('returns success when DIAL Core copyResource returns 200', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.copyResource.mockResolvedValue(okCopy());
@@ -616,7 +690,54 @@ describe('FilesBatchOperationsService', () => {
       );
     });
 
-    it('returns success=false with "Conflict" for DIAL Core 409', async () => {
+    it('returns success=false with "Conflict" when DIAL Core rejects the copy with 400 and the destination is taken', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.copyResource.mockResolvedValue(errCopy(400));
+      sdkClient.getFileMetadata.mockResolvedValue(
+        metadataFor('archive/q1.pdf'),
+      );
+
+      const result = await service.copyFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'archive/q1.pdf',
+        success: false,
+        error: 'Conflict',
+      });
+      expect(sdkClient.getFileMetadata).toHaveBeenCalledWith(
+        'user-files',
+        'archive/q1.pdf',
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+        }),
+      );
+    });
+
+    it('returns success=false with "Copy failed" for a 400 that is not a destination conflict', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.copyResource.mockResolvedValue(errCopy(400));
+      sdkClient.getFileMetadata.mockResolvedValue(metadataMissing());
+
+      const result = await service.copyFiles([singleFileItem()], 'token');
+
+      expect(result.results[0].error).toBe('Copy failed');
+    });
+
+    it('does not probe the destination for a 400 when overwrite is requested', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.copyResource.mockResolvedValue(errCopy(400));
+
+      const result = await service.copyFiles(
+        [singleFileItem({ overwrite: true })],
+        'token',
+      );
+
+      expect(result.results[0].error).toBe('Copy failed');
+      expect(sdkClient.getFileMetadata).not.toHaveBeenCalled();
+    });
+
+    it('still maps a 409 to "Conflict" should DIAL Core ever send one', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.copyResource.mockResolvedValue(errCopy(409));
 
@@ -848,6 +969,18 @@ describe('FilesBatchOperationsService', () => {
       ...overrides,
     });
 
+    const metadataFor = (path: string) => ({
+      data: { name: path.split('/').pop(), url: `files/user-files/${path}` },
+      error: undefined,
+      response: { status: 200 },
+    });
+
+    const metadataMissing = () => ({
+      data: undefined,
+      error: new Error('Not found'),
+      response: { status: 404 },
+    });
+
     it('returns success when DIAL Core moveResource returns 200', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.moveResource.mockResolvedValue(okMove());
@@ -884,7 +1017,54 @@ describe('FilesBatchOperationsService', () => {
       );
     });
 
-    it('returns success=false with "Conflict" for DIAL Core 409', async () => {
+    it('returns success=false with "Conflict" when DIAL Core rejects the move with 400 and the destination is taken', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue(errMove(400));
+      sdkClient.getFileMetadata.mockResolvedValue(
+        metadataFor('reports/draft.pdf'),
+      );
+
+      const result = await service.moveFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'inbox/draft.pdf',
+        destinationPath: 'reports/draft.pdf',
+        success: false,
+        error: 'Conflict',
+      });
+      expect(sdkClient.getFileMetadata).toHaveBeenCalledWith(
+        'user-files',
+        'reports/draft.pdf',
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+        }),
+      );
+    });
+
+    it('returns success=false with "Move failed" for a 400 that is not a destination conflict', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue(errMove(400));
+      sdkClient.getFileMetadata.mockResolvedValue(metadataMissing());
+
+      const result = await service.moveFiles([singleFileItem()], 'token');
+
+      expect(result.results[0].error).toBe('Move failed');
+    });
+
+    it('does not probe the destination for a 400 when overwrite is requested', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue(errMove(400));
+
+      const result = await service.moveFiles(
+        [singleFileItem({ overwrite: true })],
+        'token',
+      );
+
+      expect(result.results[0].error).toBe('Move failed');
+      expect(sdkClient.getFileMetadata).not.toHaveBeenCalled();
+    });
+
+    it('still maps a 409 to "Conflict" should DIAL Core ever send one', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.moveResource.mockResolvedValue(errMove(409));
 

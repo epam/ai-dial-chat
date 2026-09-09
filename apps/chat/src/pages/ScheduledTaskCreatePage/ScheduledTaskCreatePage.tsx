@@ -1,7 +1,5 @@
-import {
-  getApiErrorDetails,
-  mapFormValuesToCreateBody,
-} from '@epam/ai-dial-chat-hooks';
+import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
+import { mapFormValuesToCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import {
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
@@ -145,6 +143,7 @@ const ScheduledTaskCreatePage: FC = () => {
       instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
       cancelButtonLabel: t(ButtonsI18nKeys.Cancel),
       createButtonLabel: t(ButtonsI18nKeys.Save),
+      submittingLabel: t(ButtonsI18nKeys.Saving),
     }),
     [t],
   );

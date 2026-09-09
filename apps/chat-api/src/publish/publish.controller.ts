@@ -8,7 +8,6 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { getUserDisplayName } from '../common/utils/user-display-name';
@@ -28,7 +27,6 @@ export class PublishController {
 
   @Post(':entityType/:entityId/publish')
   @HttpCode(201)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'publishCatalogEntity',
     summary: 'Publish a catalog entity to an Organization folder',
@@ -56,7 +54,6 @@ export class PublishController {
     status: 403,
     description: 'Caller lacks write access to the target folder',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -85,7 +82,6 @@ export class PublishController {
 
   @Post(':entityType/:entityId/unpublish')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'unpublishCatalogEntity',
     summary: 'Request removal of a published catalog entity from a folder',
@@ -120,7 +116,6 @@ export class PublishController {
     status: 404,
     description: 'DIAL Core reports the entity or target folder as unknown',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -148,7 +143,6 @@ export class PublishController {
 
   @Get(':entityType/:entityId/publish-history')
   @HttpCode(200)
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'getCatalogPublishHistory',
     summary: 'Get publish history for a catalog entity',
@@ -170,7 +164,6 @@ export class PublishController {
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

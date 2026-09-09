@@ -19,6 +19,7 @@ import {
 } from '../../common/validators/bucket-name.pattern';
 import { DialFileNodeType } from './dial-file-node-type';
 import { IsValidFilePath } from './file-path.validator';
+import { IsNotReservedMarkerPath } from './marker-name.validator';
 
 export const CopyItemNodeType = DialFileNodeType;
 export type CopyItemNodeType = DialFileNodeType;
@@ -44,6 +45,7 @@ export class CopyItemDto {
   @IsString()
   @IsNotEmpty()
   @IsValidFilePath()
+  @IsNotReservedMarkerPath()
   @MaxLength(1024)
   @ApiProperty({
     description: 'Relative destination path within bucket',

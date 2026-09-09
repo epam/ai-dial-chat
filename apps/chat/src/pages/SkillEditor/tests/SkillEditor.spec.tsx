@@ -106,30 +106,26 @@ vi.mock('../../../server-api/skills.api', () => ({
  * own `SkillEditor.spec.tsx` uses for the same reason. Every other ui-kit
  * component (`Input`, `Textarea`, `ErrorText`, buttons, …) stays real.
  */
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
-  return {
-    ...actual,
-    LazyMarkdownEditor: () =>
-      Promise.resolve({
-        MarkdownEditor: ({
-          value,
-          onChange,
-          placeholder,
-        }: {
-          value: string;
-          onChange: (value: string) => void;
-          placeholder?: string;
-        }) => (
-          <textarea
-            placeholder={placeholder}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-          />
-        ),
-      }),
-  };
-});
+vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
+  LazyMarkdownEditor: () =>
+    Promise.resolve({
+      MarkdownEditor: ({
+        value,
+        onChange,
+        placeholder,
+      }: {
+        value: string;
+        onChange: (value: string) => void;
+        placeholder?: string;
+      }) => (
+        <textarea
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ),
+    }),
+}));
 
 const showNotification = vi.fn();
 const refetchSkills = vi.fn<() => Promise<void>>();

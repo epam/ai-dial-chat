@@ -10,13 +10,13 @@ How the catalog details panel fetches an item's tab data on open: the lib's host
 
 `CatalogItemDetailsFetchResult` (`libs/catalog/src/models/item-details-data.ts`, exported from the lib's entry point) is the fetch-shaped counterpart of `CatalogItemTabData` — the type a host returns, distinct from the type the panel renders.
 
-Note: this is the only async fetch-on-open mechanism in `Catalog.tsx`. An earlier `onFetchAboutContent`/`aboutContent`/`isAboutLoading` prop existed for the Summary section but was removed as dead code (`CatalogView`'s implementation always resolved `undefined`); the Summary section now reads the static `item.description` synchronously, with no fetch or loading state of its own.
+Note: this is the only async fetch-on-open mechanism in `Catalog.tsx`. An earlier `onFetchAboutContent`/`aboutContent`/`isAboutLoading` prop existed for the since-removed Summary section but was dropped as dead code (`CatalogView`'s implementation always resolved `undefined`); the `About` tab reads the static `item.description` synchronously, with no fetch or loading state of its own.
 
 The lib MUST remain host-agnostic: `onFetchDetails` accepts only a `CatalogItem` and returns only the lib's own result type — it MUST NOT know about DIAL Core endpoint paths, `@epam/ai-dial-chat-api-client`, or any backend DTO shape. All of that knowledge lives in the app-level adapter (`apps/chat/src/components/CatalogView/CatalogView.tsx`) and in the host-agnostic mappers it calls.
 
 When `onFetchDetails` resolves data, it SHALL **replace** any statically-provided `item.details` for the currently open item wholesale — fetched data is considered more current, and the panel does not merge the two. A host whose fetch covers only part of the panel must therefore rebuild the rest of the sections it still wants shown; the prompt branch below is the worked example. When `onFetchDetails` is not provided, or resolves `undefined`, behavior is unchanged from today: the panel falls back to `item.details` if present, otherwise hides the corresponding tabs.
 
-`CatalogItemTabData` SHALL support an optional `limits?: CatalogItemLimits` field. When present, `DetailsPanel` SHALL add a `Limits` tab after `Pricing` and before `API`; when absent, the tab is hidden. `CatalogItemLimits` SHALL contain app-resolved progress rows only (`label`, `used`, `total`, optional `isUnlimited`, `valueLabel`, `ariaLabel`) so `libs/catalog` remains host-agnostic and never imports generated API clients, server-api wrappers, DIAL Core DTOs, auth/session state, route knowledge, or endpoint paths.
+`CatalogItemTabData` SHALL support an optional `limits?: CatalogItemLimits` field. When present, `DetailsPanel` SHALL add a `Limits` tab after `Pricing` and before `API`; when absent, the tab is hidden. `CatalogItemLimits` SHALL contain app-resolved progress rows only (`label`, `used`, `total`, optional `isUnlimited`, `valueLabel`, `usedLabel`, `totalLabel`, `noteLabel`, `captionLabel`, `ariaLabel`) so `libs/catalog` remains host-agnostic and never imports generated API clients, server-api wrappers, DIAL Core DTOs, auth/session state, route knowledge, or endpoint paths. Every visible string on a row is preformatted by the app; the lib formats nothing itself.
 
 #### Scenario: Details panel fetches on open
 
@@ -91,8 +91,26 @@ If a details server-api call rejects (network error or a mapped HTTP exception s
 
 #### Scenario: Unlimited limit stats
 
-- **WHEN** DIAL Core returns an effectively-unlimited `total` value (for example Java `Long.MAX_VALUE` rounded in JSON/JavaScript)
-- **THEN** the app-level mapper marks the row as unlimited, formats the visible value as `Unlimited`, preserves the numeric `used`/`total` for progress rendering, and still includes the row in the `Limits` tab
+A row counts as unlimited when `total >= Number.MAX_SAFE_INTEGER`
+(`UNLIMITED_TOTAL_THRESHOLD` in `map-deployment-limits-to-catalog.ts`), which is
+how DIAL Core's Java `Long.MAX_VALUE` arrives once JSON has rounded it.
+
+- **WHEN** DIAL Core returns an effectively-unlimited `total` for a limit stat
+- **THEN** the app-level mapper sets `isUnlimited: true`, preserves the numeric `used`/`total` on the row, and still includes the row in the `Limits` tab
+- **AND** the row's `valueLabel` is the formatted **`used`** amount alone — the visible value never reads `Unlimited`, and there is no `unlimitedValue` i18n key
+- **AND** `noteLabel` is `catalog.details.limits.followsCostLimit` ("Follows cost limit"), rendered under the value, and `ariaLabel` reads "{label}: {used} used. Follows cost limit."
+- **AND** `captionLabel` carries the attributed spend ("$20.00 spent") under the row's label whenever cost stats are usable, since per-deployment cost is attributed spend rather than a cap
+- **AND** the row renders as a plain value with no progress bar, since a bar drawn against an effectively-infinite total carries no information
+
+So a Limits tab whose rows are all unlimited reads as "$0.29 spent / 0 / Follows
+cost limit" per row, with zero `role="progressbar"` nodes and the word
+`Unlimited` nowhere on screen. That is the correct rendering, not a fixture in
+an unexpected shape.
+
+#### Scenario: Limit stat with no usable total
+
+- **WHEN** a limit stat's `total` is zero, negative, or not finite
+- **THEN** `isUsableLimitStats` rejects it and no row is emitted for it — an uncapped stat is not rendered as a zero-capacity bar
 
 #### Scenario: Toolset detail fetch renders the Tools tab
 
@@ -172,7 +190,7 @@ The `getDeploymentDetails` endpoint SHALL satisfy the following generated-client
 - **RTL / direction impact**: the Limits tab UI MUST use logical/flexible layout utilities only; it MUST NOT introduce physical left/right classes or directional icons. Progress rows contain text and a progress bar, so no icon mirroring is required.
 - **Feature flag**: not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — this is a data-completeness fix for an existing, already-shipped catalog details panel, not a new feature surface.
 - **Memoisation**: `onFetchDetails` in `CatalogView.tsx` MUST be wrapped in `useCallback`; the DTO-to-`EntitySpecificDetails` mapping functions and deployment-limits mapper MUST remain pure functions (no new memoisation needed beyond the callback itself, consistent with `mapEntityDetailsToCatalogDetails` today).
-- **Accessibility**: `isDetailsLoading` renders its own `role="status"` indicator next to the tab row (`texts.detailsLoadingAriaLabel`, default `'Loading details'`). It is the panel's only loading indicator — the Summary section (`item.description`) is always available synchronously and has no loading state. Every limits row progress bar MUST receive an accessible label naming the limit and the used/total value; rows formatted as `Unlimited` still render a progress bar and MUST keep an accessible label.
+- **Accessibility**: `isDetailsLoading` renders its own `role="status"` indicator next to the tab row (`texts.detailsLoadingAriaLabel`, default `'Loading details'`). It is the panel's only loading indicator — the `About` tab's `item.description` is always available synchronously and has no loading state. Every capped limits row's progress bar MUST receive an accessible label naming the limit and the used/total value. An unlimited row renders no progress bar at all, so there is no bar to label: its `ariaLabel` ("{label}: {used} used. Follows cost limit.") carries the whole meaning, and a panel whose rows are all unlimited legitimately mounts zero `role="progressbar"` nodes.
 - **Observability**: no new metrics/telemetry are required; failures are absorbed into `onFetchDetails` resolving `undefined` (per the Non-Goals in design.md, no new logging beyond what `apps/chat/src/server-api`'s shared client already emits on error). On the backend, `deployments.service.ts` logs raw-toolset and mapped-response payloads at debug level (secrets redacted) to aid diagnosing field-mapping gaps — this is diagnostic logging, not user-facing observability.
 
 #### Scenario: No new context or global state
@@ -182,31 +200,36 @@ The `getDeploymentDetails` endpoint SHALL satisfy the following generated-client
 
 ### Requirement: Model catalog properties are exposed in Overview Specification
 
-The BFF SHALL support DIAL Core model details that contain `catalog_properties`. The installed
-`@epam/ai-dial-typescript-sdk` represents this field as
-`ModelData.catalog_properties?: MapStringObject`, where `MapStringObject` is
-`Record<string, unknown>`; the meaning of its keys is schema-specific and is identified by
-`catalog_schema_id`. The BFF MUST therefore treat this object as untrusted, open-ended input
-and allow-list only the following string-valued model properties:
+The BFF SHALL support DIAL Core model, application, and toolset details that contain
+`catalog_properties`. The installed `@epam/ai-dial-typescript-sdk` represents this field
+identically as `catalog_properties?: MapStringObject` on the model, application, and toolset
+response schemas, where `MapStringObject` is `Record<string, unknown>`; the meaning of its keys
+is schema-specific and is identified by `catalogSchemaId`/`catalog_schema_id`, not by entity
+type. The BFF MUST therefore treat this object as untrusted, open-ended input for all three
+entity types and allow-list only the following string-valued properties, using one shared
+mapping helper so the allow-list and omit-when-empty behavior cannot drift between entity types:
 
 - `provider`
 - `vendor`
 - `license`
 - `knowledgeCutoffDate`
-- `parameters` — the model's parameter count for catalog display (e.g. `"100B"`); a free-form
+- `parameters` — the entity's parameter count for catalog display (e.g. `"100B"`); a free-form
   string, not parsed or validated as a number/unit pair
 
-`GET /api/v1/deployments/:deployment/details` SHALL expose the recognized values as the
-optional `modelDetails.catalogProperties` object in `DeploymentDetailsDto`, using
-`ModelCatalogPropertiesDto` with the same five optional camelCase string fields. Unknown keys
-and recognized keys with non-string values MUST be omitted. When no recognized string value
-remains, `catalogProperties` MUST be omitted rather than returned as an empty object.
+`GET /api/v1/deployments/:deployment/details` SHALL expose the recognized values as the optional
+`catalogProperties` object in `DeploymentDetailsDto`, using `ModelCatalogPropertiesDto` with the
+same five optional camelCase string fields, on all three per-type branches:
+`modelDetails.catalogProperties`, `applicationDetails.catalogProperties`, and
+`toolsetDetails.catalogProperties`. Unknown keys and recognized keys with non-string values MUST
+be omitted. When no recognized string value remains, `catalogProperties` MUST be omitted from
+that branch rather than returned as an empty object.
 
 This is an additive response change. OpenAPI `operationId: getDeploymentDetails`, its path
 parameter, authentication, status codes, rate limit, and the normal (non-`Raw`) generated
 `DeploymentsApi.getDeploymentDetails({ deployment })` call remain unchanged. Regenerating
-`@epam/chat-api-client` SHALL add `ModelCatalogPropertiesDto` and the optional
-`ModelDetailsDto.catalogProperties` property. A representative successful response fragment is:
+`@epam/ai-dial-chat-api-client` SHALL add the optional `catalogProperties` property to
+`ApplicationDetailsDto` and `ToolsetDetailsDto` (it already exists on `ModelDetailsDto`).
+Representative successful response fragments:
 
 ```json
 {
@@ -224,54 +247,104 @@ parameter, authentication, status codes, rate limit, and the normal (non-`Raw`) 
 }
 ```
 
-The app-level DTO mapper in `apps/chat/src/utils/map-entity-details-to-catalog.ts` SHALL copy
-these values into `ModelSpecification`. `mapEntityDetailsToCatalogDetails` SHALL render every
-present value as a separate row in the model details panel under `Overview` → `Specification`,
-in this order: Provider, Vendor, License, Knowledge cutoff date, Parameters. Missing values
-SHALL NOT create empty rows.
+```json
+{
+  "id": "applications/als-test-catalog",
+  "type": "application",
+  "applicationDetails": {
+    "catalogProperties": {
+      "provider": "Provider",
+      "vendor": "Vendor",
+      "license": "License",
+      "knowledgeCutoffDate": "2026-08-17",
+      "parameters": "100B"
+    }
+  }
+}
+```
 
-The five labels MUST use these i18n keys through `CatalogI18nKeys`:
+```json
+{
+  "id": "toolsets/ALS-OauthToolset-copy",
+  "type": "toolset",
+  "toolsetDetails": {
+    "catalogProperties": {
+      "provider": "Provider",
+      "vendor": "Vendor",
+      "license": "License",
+      "knowledgeCutoffDate": "2026-08-17",
+      "parameters": "100B"
+    }
+  }
+}
+```
 
-- `catalog.details.modelSpecification.provider`
-- `catalog.details.modelSpecification.vendor`
-- `catalog.details.modelSpecification.license`
-- `catalog.details.modelSpecification.knowledgeCutoffDate`
-- `catalog.details.modelSpecification.parameters`
+The frontend DTO mapper in `libs/chat-hooks/src/catalog/map-entity-details-to-catalog.ts` SHALL
+copy these values into `ModelSpecification`, `AgentSpecification`, and `ToolsetSpecification`
+respectively (all three gain the same five optional fields). The domain-to-section mapping SHALL
+render every present value as a separate row in the corresponding details panel under `Overview`
+→ `Specification`, in this order: Provider, Vendor, License, Knowledge cutoff date, Parameters —
+for Model (`mapModelDetails`), Application (`mapAgentDetails`), and Toolset (`mapToolsetDetails`)
+alike. Missing values SHALL NOT create empty rows.
+
+The five rows reuse the same label strings already used for the Model row order ("Provider",
+"Vendor", "License", "Knowledge cutoff date", "Parameters"); no new i18n keys are introduced, and
+the existing app-level `CatalogI18nKeys` lookup (`catalog.details.modelSpecification.*`) that
+translates those label strings continues to apply unchanged to the Application and Toolset rows.
 
 A valid date-only `knowledgeCutoffDate` in `YYYY-MM-DD` form SHALL be parsed as a local calendar
 date and formatted with the same locale-sensitive `toLocaleDateString()` path as the existing
-Release date row. It MUST NOT be parsed as UTC, which could shift the displayed calendar day in
-negative-offset time zones. A non-date or invalid date string SHALL remain visible verbatim
-rather than being dropped or normalized to an invalid date.
+Release date row, for all three entity types. It MUST NOT be parsed as UTC, which could shift the
+displayed calendar day in negative-offset time zones. A non-date or invalid date string SHALL
+remain visible verbatim rather than being dropped or normalized to an invalid date.
 
 This metadata is not gated by `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. It uses the existing
 user-scoped deployment-details cache (`deployments:details:<userSub>:<deployment>`, 60-second TTL)
-and existing invalidation behavior. It introduces no new metrics, analytics, or targeted raw
-deployment-payload debug logging. The rows are non-interactive and reuse the existing Overview
-semantics and responsive layout; they add no keyboard interaction or ARIA contract. The content
-is direction-agnostic, requires no directional icons, and MUST inherit the existing LTR/RTL
-layout without physical-direction overrides. No new React state or memoisation is required.
+and existing invalidation behavior, unchanged for all three entity types. It introduces no new
+metrics, analytics, or targeted raw deployment-payload debug logging. The rows are non-interactive
+and reuse the existing Overview semantics and responsive layout; they add no keyboard interaction
+or ARIA contract. The content is direction-agnostic, requires no directional icons, and MUST
+inherit the existing LTR/RTL layout without physical-direction overrides. No new React state or
+memoisation is required.
 
-#### Scenario: All supported properties render in Specification
+#### Scenario: All supported properties render in Specification for a model
 
 - **WHEN** DIAL Core returns the five recognized string values shown in the example above for a model
 - **THEN** the BFF returns them under `modelDetails.catalogProperties`
 - **AND** the model details panel renders Provider, Vendor, License, Knowledge cutoff date, and Parameters as five rows under `Overview` → `Specification`
 
+#### Scenario: All supported properties render in Specification for an application
+
+- **WHEN** DIAL Core returns the five recognized string values shown in the example above for an application with `catalogSchemaId: "https://dial.epam.com/catalog-schemas/agent"`
+- **THEN** the BFF returns them under `applicationDetails.catalogProperties`
+- **AND** the application's Overview tab renders Provider, Vendor, License, Knowledge cutoff date, and Parameters as five rows under `Overview` → `Specification`
+
+#### Scenario: All supported properties render in Specification for a toolset
+
+- **WHEN** DIAL Core returns the five recognized string values shown in the example above for a toolset with `catalogSchemaId: "https://dial.epam.com/catalog-schemas/toolset"`
+- **THEN** the BFF returns them under `toolsetDetails.catalogProperties`
+- **AND** the toolset's Overview tab renders Provider, Vendor, License, Knowledge cutoff date, and Parameters as five rows under `Overview` → `Specification`
+
 #### Scenario: Knowledge cutoff date uses the Release date display format
 
-- **WHEN** `knowledgeCutoffDate` is `2026-08-17`
+- **WHEN** `knowledgeCutoffDate` is `2026-08-17` on a model, application, or toolset
 - **THEN** it is displayed through the same locale-sensitive date formatter as Release date, without changing the calendar day because of timezone conversion
 
 #### Scenario: Unknown and non-string properties are ignored
 
-- **WHEN** `catalog_properties` contains `provider: "Provider"`, `schemaSpecificExtra: true`, and `license: { "name": "License" }`
-- **THEN** `modelDetails.catalogProperties` contains only `provider: "Provider"`
+- **WHEN** `catalog_properties` contains `provider: "Provider"`, `schemaSpecificExtra: true`, and `license: { "name": "License" }` on any of the three entity types
+- **THEN** the corresponding `catalogProperties` field contains only `provider: "Provider"`
 - **AND** no rows are rendered for `schemaSpecificExtra` or the non-string `license`
+
+#### Scenario: Application or toolset with no catalog properties omits the field entirely
+
+- **WHEN** DIAL Core returns an application or toolset whose response has no `catalog_properties`, or one where none of the five keys are present as strings
+- **THEN** `applicationDetails.catalogProperties` / `toolsetDetails.catalogProperties` is omitted rather than returned as an empty object
+- **AND** the Overview tab renders no Specification rows for provider/vendor/license/knowledge cutoff date/parameters
 
 #### Scenario: Existing clients remain compatible
 
-- **WHEN** a client ignores the optional `modelDetails.catalogProperties` field
+- **WHEN** a client ignores the optional `catalogProperties` field on any of the three branches
 - **THEN** all pre-existing deployment-details response fields and behavior remain unchanged
 
 ### Requirement: Input/Output modalities render as friendly labels, and internal-only capability flags are hidden
@@ -344,7 +417,7 @@ tool calls`, `Reasoning efforts` (model only), and `Configuration schema` (appli
 - **THEN** the model's `Capabilities` section renders only `Tools` and `Parallel tool calls`
   (plus `Reasoning efforts` when present), with no rows for the seven hidden flags
 
-### Requirement: Only the About tab reads `item.description`; the Summary section shows topics and usage limits
+### Requirement: The About tab is the only surface that reads `item.description`
 
 `CatalogItem` (`libs/catalog/src/models/catalog-item.ts`) SHALL NOT define an `intro` field.
 The dedicated `About` tab (`CatalogDetailsTab.About`, `libs/catalog/src/types/detail-tab.ts`)
@@ -353,6 +426,21 @@ SHALL display `item.description` via the shared `AboutTab` component
 `content: string` prop rather than deriving its own fallback. The `About` tab is the only
 `DetailsPanel` surface that renders `item.description`; it uses no async fetch, callback prop,
 or loading state for this content.
+
+`DetailsPanel` SHALL NOT render an always-visible summary section. The `Summary` component
+(`libs/catalog/src/components/Details/Summary/`) and the `CatalogItem.summary` and
+`CatalogItem.intro` fields it read were removed in the 1.0 redesign; nothing in
+`libs/catalog` renders them today, and they MUST NOT be reintroduced as a second surface
+for the same text. `AboutTab` SHALL carry what that section used to show that is still
+in the model — it renders `content` followed by `item.topics` as `TopicTag`s — so the
+description and the topic tags live on exactly one surface. Usage limits live in their own
+`Limits` tab (see above), not in a summary strip.
+
+The panel does still render `item.description` in the `Content` tab for long-form entities,
+but only as the `CatalogItemPromptContent.description` fallback (`promptContent?.description ??
+item.description`), which is a different tab and never visible at the same time as `About`.
+The catalog grid card (`libs/catalog/src/components/CardGrid/Card.tsx`) also shows the
+description; the "only surface" rule is scoped to `DetailsPanel`, not to the whole catalog.
 
 `AboutTab` SHALL render `content` as Markdown via the shared `MarkdownRenderer`
 (`@epam/ai-dial-chat-shared`) — the same renderer used for chat message content — rather than
@@ -364,11 +452,6 @@ uniformly to every entity type that supplies a description (models, applications
 prompts, skills) since `content` is the same `item.description` string regardless
 of type.
 
-The details panel's always-visible Summary section (rendered by `Summary`) SHALL NOT render
-`item.description` or any `AboutTab` content. `Summary` SHALL render only the item's topics
-(when `item.topics.length > 0`) and usage-limit summary (when `item.summary` is non-null);
-when both are absent, `Summary` SHALL render nothing.
-
 The `About` tab SHALL always be present in the tab row, as the first entry, regardless of
 whether `item.details` is populated — unlike `Overview`/`Pricing`/`Api`/`Tools`, which only
 appear when their corresponding `item.details` field is non-null.
@@ -379,8 +462,8 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
 
 #### Scenario: Only the About tab renders the description
 - **WHEN** the details panel opens for any `CatalogItem`
-- **THEN** the About tab renders `item.description`, and the Summary section does not render
-  `item.description` anywhere
+- **THEN** the About tab renders `item.description`, and no other visible region of the
+  panel repeats it
 
 #### Scenario: Description renders as Markdown, not plain text
 - **WHEN** `item.description` contains Markdown syntax (e.g. `**bold**`, a `-`/`*` bullet list,
@@ -389,16 +472,14 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
   a real `<ul>`/`<ol>` list, a syntax-highlighted code block, a clickable link) rather than the
   raw Markdown source or a heuristic bullet-only parse
 
-#### Scenario: Summary section renders topics and usage limits only
-- **WHEN** the details panel opens for a `CatalogItem` with a non-empty `topics` array and a
-  non-null `summary`
-- **THEN** the Summary section renders the topic tags and the usage-limit summary, and
-  nothing else
+#### Scenario: Topics render inside the About tab
+- **WHEN** the details panel opens for a `CatalogItem` with a non-empty `topics` array
+- **THEN** the About tab renders the description followed by the topic tags, and no separate
+  summary strip renders above the tab row
 
-#### Scenario: Summary section renders nothing when topics and summary are both absent
-- **WHEN** the details panel opens for a `CatalogItem` with an empty `topics` array and no
-  `summary`
-- **THEN** the Summary section renders no content
+#### Scenario: About tab renders topics only when present
+- **WHEN** the details panel opens for a `CatalogItem` with an empty `topics` array
+- **THEN** the About tab renders the description alone, with no empty tag row
 
 #### Scenario: About tab is always first
 - **WHEN** the details panel opens for any `CatalogItem`, regardless of which of
@@ -407,7 +488,7 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
 
 #### Scenario: Limits tab is shown only when usage limits are present
 - **WHEN** `item.details.limits` is populated with one or more progress rows
-- **THEN** the details panel includes a `Limits` tab after `Pricing` and renders those rows with progress bars
+- **THEN** the details panel includes a `Limits` tab after `Pricing` and renders each row, with a progress bar on the capped rows and a plain value on the unlimited ones
 
 #### Scenario: Limits tab is hidden when usage limits are absent
 - **WHEN** `item.details.limits` is `undefined`
@@ -475,8 +556,9 @@ configured client's existing behavior.
 #### Scenario: Unlimited limits remain accessible
 
 - **WHEN** DIAL Core returns its effectively unlimited total
-- **THEN** the existing mapper preserves numeric progress and resolved unlimited
-  visible/accessibility labels
+- **THEN** the existing mapper preserves the numeric values and emits the
+  used-only `valueLabel`, the "Follows cost limit" `noteLabel` and the
+  matching `ariaLabel`, which the row renders without a progress bar
 
 #### Scenario: Toolset details preserve credentials
 

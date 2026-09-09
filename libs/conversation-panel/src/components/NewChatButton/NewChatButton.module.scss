@@ -1,6 +1,13 @@
 .button {
   background: var(--cp-new-chat-bg, var(--bg-control-neutral, #fcfcfc));
   color: var(--cp-new-chat-text, var(--text-accent, #1d4ed8));
+  /*
+   * This is a hand-rolled button rather than the ui-kit `Button`, so it does
+   * not inherit the kit's control radius on its own. Reading the same token
+   * keeps it in step with every other labelled button in a host app; the
+   * fallback is the fully rounded pill it has always been.
+   */
+  border-radius: var(--radius-control, 9999px);
 
   &:focus-visible {
     outline: 1px solid

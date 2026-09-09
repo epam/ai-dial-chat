@@ -1,6 +1,5 @@
 import { Controller, Get, Param, Req } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApplicationSchemasService } from './application-schemas.service';
@@ -17,7 +16,6 @@ export class ApplicationSchemasController {
   ) {}
 
   @Get()
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'listApplicationSchemas',
     summary: 'List application type schemas',
@@ -38,7 +36,6 @@ export class ApplicationSchemasController {
     status: 403,
     description: 'Caller lacks permission to list application schemas',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -53,7 +50,6 @@ export class ApplicationSchemasController {
   }
 
   @Get(':id')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'getApplicationSchema',
     summary: 'Get application type schema by id',
@@ -81,7 +77,6 @@ export class ApplicationSchemasController {
     description: 'Caller lacks permission to access this schema',
   })
   @ApiResponse({ status: 404, description: 'Schema not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

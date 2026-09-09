@@ -138,7 +138,7 @@ package (see the `usage-dashboard-lib` capability), which SHALL NOT import any `
 wrapper or app context/hook/feature-flag/env/routing/storage/analytics module.
 
 #### Scenario: Static analysis passes module boundary lint
-- **WHEN** `npm exec nx lint chat`, `npm exec nx lint chat-hooks`, and `npm exec nx lint usage-dashboard` run after this change
+- **WHEN** `npm exec nx lint chat`, `npm exec nx lint chat-hooks`, and `npm exec nx lint usage-dashboard` run
 - **THEN** `@nx/enforce-module-boundaries` reports no violations introduced by `useUsageData`, the
   `Usage` tab component, or the transform utilities in `libs/usage-dashboard`
 

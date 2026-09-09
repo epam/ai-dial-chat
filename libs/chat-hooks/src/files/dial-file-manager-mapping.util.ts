@@ -14,8 +14,10 @@ import {
   DialFileManagerTabs,
   DialFileNodeType,
 } from '@epam/ai-dial-react-file-manager';
-import { safeDecodeURI } from '../shared/string-utils';
-import { dialCorePathToRelative } from './dial-file-manager-path.util';
+import {
+  buildSharedItemVirtualPath,
+  dialCorePathToRelative,
+} from './dial-file-manager-path.util';
 import {
   CORE_PERMISSION_MAP,
   type PreparedCopyMoveItem,
@@ -81,7 +83,13 @@ export const buildFromCache = (
 
   return flat.map((item): DialFile => {
     const isFolder = item.nodeType === ListFilesItemDtoNodeTypeEnum.Folder;
-    const name = safeDecodeURI(item.name);
+    /*
+     * DIAL Core returns `name` already decoded (only `url` is percent-encoded).
+     * Decoding it again corrupts names that legitimately contain percent
+     * escapes — `a%2Fb.txt` would split into a phantom folder and the row would
+     * vanish, `a%20b.pdf` would resolve to a path DIAL Core does not have.
+     */
+    const name = item.name;
     const virtualPath = isFolder
       ? `${parentPathBase}/${name}/`
       : `${parentPathBase}/${name}`;
@@ -273,7 +281,8 @@ export const mapSearchItem = (
   rootLabel: string,
 ): DialFile => {
   const isFolder = item.nodeType === ListFilesItemDtoNodeTypeEnum.Folder;
-  const name = safeDecodeURI(item.name);
+  // `name` arrives decoded from DIAL Core — see the note in `buildFromCache`.
+  const name = item.name;
   const itemBucket = item.bucket ?? fallbackBucket;
   const dialCorePath = item.url ?? item.path ?? '';
   const relativePath = dialCorePathToRelative(dialCorePath, itemBucket);
@@ -281,9 +290,16 @@ export const mapSearchItem = (
   const lastSlash = relativeStripped.lastIndexOf('/');
   const parentRelative =
     lastSlash > 0 ? relativeStripped.slice(0, lastSlash) : '';
-  const virtualParentPath = parentRelative
-    ? `/${rootLabel}/${parentRelative}`
-    : `/${rootLabel}`;
+  /*
+   * The parent path is derived from the percent-encoded DIAL Core url, so its
+   * segments have to be decoded to land in the same virtual-path space as the
+   * rows `buildFromCache` produces.
+   */
+  const virtualParentPath = buildSharedItemVirtualPath(
+    parentRelative,
+    rootLabel,
+    false,
+  );
   const virtualPath = isFolder
     ? `${virtualParentPath}/${name}/`
     : `${virtualParentPath}/${name}`;

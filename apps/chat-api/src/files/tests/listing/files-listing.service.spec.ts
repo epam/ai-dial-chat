@@ -470,6 +470,64 @@ describe('FilesListingService', () => {
         'report.pdf',
       ]);
     });
+
+    it('filters out reserved root-level config folders (.client_data, clientdata)', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(
+        okList([
+          {
+            nodeType: 'FOLDER',
+            url: '.client_data/',
+            name: '.client_data',
+            parentPath: '',
+          },
+          {
+            nodeType: 'FOLDER',
+            url: 'clientdata/',
+            name: 'clientdata',
+            parentPath: '',
+          },
+          {
+            nodeType: 'ITEM',
+            url: 'report.pdf',
+            name: 'report.pdf',
+            parentPath: '',
+          },
+        ]),
+      );
+
+      const result = await service.listFiles(
+        'my-bucket',
+        undefined,
+        {},
+        'token',
+      );
+
+      expect(result.items.map((item) => item.name)).toEqual(['report.pdf']);
+    });
+
+    it('keeps a non-root folder literally named clientdata', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(
+        okList([
+          {
+            nodeType: 'FOLDER',
+            url: 'nested/clientdata/',
+            name: 'clientdata',
+            parentPath: 'nested/',
+          },
+        ]),
+      );
+
+      const result = await service.listFiles(
+        'my-bucket',
+        'nested/',
+        {},
+        'token',
+      );
+
+      expect(result.items.map((item) => item.name)).toEqual(['clientdata']);
+    });
   });
 
   describe('listPublicFiles', () => {

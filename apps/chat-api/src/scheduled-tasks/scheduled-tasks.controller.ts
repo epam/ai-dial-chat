@@ -20,7 +20,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
@@ -50,7 +49,6 @@ export class ScheduledTasksController {
   constructor(private readonly scheduledTasksService: ScheduledTasksService) {}
 
   @Get()
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({
     operationId: 'listScheduledTasks',
@@ -94,7 +92,6 @@ export class ScheduledTasksController {
     description:
       'The scheduledTasksEnabled feature is not enabled for this user',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -114,7 +111,6 @@ export class ScheduledTasksController {
 
   @Post()
   @HttpCode(201)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'createScheduledTask',
     summary: 'Create a scheduled task',
@@ -139,7 +135,6 @@ export class ScheduledTasksController {
     description:
       'The scheduledTasksEnabled feature is not enabled for this user',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -158,7 +153,6 @@ export class ScheduledTasksController {
   }
 
   @Get(':scheduleId')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'getScheduledTask',
     summary: 'Get a scheduled task by id',
@@ -179,7 +173,6 @@ export class ScheduledTasksController {
       'The scheduledTasksEnabled feature is not enabled for this user',
   })
   @ApiResponse({ status: 404, description: 'Scheduled task not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -198,7 +191,6 @@ export class ScheduledTasksController {
   }
 
   @Get(':scheduleId/runs')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({
     operationId: 'listScheduledTaskRuns',
@@ -236,7 +228,6 @@ export class ScheduledTasksController {
       'The scheduledTasksEnabled feature is not enabled for this user',
   })
   @ApiResponse({ status: 404, description: 'Scheduled task not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -261,7 +252,6 @@ export class ScheduledTasksController {
 
   @Post(':scheduleId/pause')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'pauseScheduledTask',
     summary: 'Pause a scheduled task',
@@ -282,7 +272,6 @@ export class ScheduledTasksController {
       'The scheduledTasksEnabled feature is not enabled for this user',
   })
   @ApiResponse({ status: 404, description: 'Scheduled task not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -306,7 +295,6 @@ export class ScheduledTasksController {
 
   @Post(':scheduleId/resume')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'resumeScheduledTask',
     summary: 'Resume a scheduled task',
@@ -327,7 +315,6 @@ export class ScheduledTasksController {
       'The scheduledTasksEnabled feature is not enabled for this user',
   })
   @ApiResponse({ status: 404, description: 'Scheduled task not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -351,7 +338,6 @@ export class ScheduledTasksController {
 
   @Put(':scheduleId')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'updateScheduledTask',
     summary: 'Update a scheduled task',
@@ -376,7 +362,6 @@ export class ScheduledTasksController {
       'The scheduledTasksEnabled feature is not enabled for this user',
   })
   @ApiResponse({ status: 404, description: 'Scheduled task not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -402,7 +387,6 @@ export class ScheduledTasksController {
 
   @Delete(':scheduleId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({
     operationId: 'deleteScheduledTask',
@@ -434,7 +418,6 @@ export class ScheduledTasksController {
     status: 409,
     description: 'Scheduled task is already soft-deleted',
   })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description:

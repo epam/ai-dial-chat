@@ -1,6 +1,5 @@
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { OptionalSessionGuard } from '../auth/session/optional-session.guard';
 import type { SessionUser } from '../auth/session/session.types';
@@ -23,13 +22,11 @@ export class AppConfigController {
   @Get()
   @Public()
   @UseGuards(OptionalSessionGuard)
-  @Throttle({ default: { limit: 60, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Get client-safe application configuration and feature flags',
   })
   @ApiResponse({ status: 200, type: ClientConfigResponseDtoClass })
   @ApiResponse({ status: 400, description: 'Missing or invalid appId' })
-  @ApiResponse({ status: 429, description: 'Too Many Requests' })
   async getClientConfig(
     @Query() query: GetClientConfigDto,
     @Req() req: Request,

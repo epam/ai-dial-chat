@@ -9,10 +9,18 @@ import { PublishService } from '../publish.service';
 const TEST_BUCKET = 'bucket-123';
 
 const okResponse = (data: unknown) =>
-  ({ data, response: {} as Response }) as never;
+  ({ data, response: { ok: true, status: 200 } as Response }) as never;
 
 const errResponse = (status: number) =>
-  ({ error: {}, response: { status } as Response }) as never;
+  ({ error: {}, response: { ok: false, status } as Response }) as never;
+
+/*
+ * `openapi-fetch` short-circuits on an empty response body and returns
+ * `{ error: undefined }` without reading it, even for a non-2xx status — see
+ * the matching guard comment in `publish.service.ts`.
+ */
+const emptyBodyErrResponse = (status: number) =>
+  ({ response: { ok: false, status } as Response }) as never;
 
 const makeCacheManager = () => ({
   get: vi.fn(),
@@ -233,9 +241,9 @@ describe('PublishService', () => {
           resources: [
             {
               action: 'ADD',
-              sourceUrl: 'applications/bucket-123/My App Name__0.0.1',
+              sourceUrl: 'applications/bucket-123/My%20App%20Name__0.0.1',
               targetUrl:
-                'applications/public/DK%20Test%20with%20nested/Level%201/My App Name__0.0.1',
+                'applications/public/DK%20Test%20with%20nested/Level%201/My%20App%20Name__0.0.1',
             },
           ],
           displayAuthor: 'Test User',
@@ -266,7 +274,7 @@ describe('PublishService', () => {
             targetFolder: 'public/',
             resources: [
               expect.objectContaining({
-                targetUrl: 'applications/public/My App Name__0.0.1',
+                targetUrl: 'applications/public/My%20App%20Name__0.0.1',
               }),
             ],
           }),
@@ -357,6 +365,36 @@ describe('PublishService', () => {
       );
     });
 
+    it('percent-encodes a raw space in a versionless prompt name in both sourceUrl and targetUrl', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({}),
+      );
+
+      await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Prompt,
+        'prompts/bucket-123/test space',
+        '01folder',
+        undefined,
+        'Test User',
+      );
+
+      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            resources: [
+              expect.objectContaining({
+                sourceUrl: 'prompts/bucket-123/test%20space',
+                targetUrl: 'prompts/public/01folder/test%20space',
+              }),
+            ],
+          }),
+        }),
+      );
+    });
+
     it('maps a Core 403 to ForbiddenException', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
@@ -393,6 +431,26 @@ describe('PublishService', () => {
           'Test User',
         ),
       ).rejects.toBeInstanceOf(BadGatewayException);
+    });
+
+    it('maps a Core 500 with an empty response body to BadGatewayException instead of reporting success', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        emptyBodyErrResponse(500),
+      );
+
+      await expect(
+        service.publish(
+          'token-abc',
+          TEST_BUCKET,
+          CatalogEntityType.Toolset,
+          'toolsets/bucket-123/tool-abc123__1.2.0',
+          'Organization/Data Science',
+          '1.2.0',
+          'Test User',
+        ),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+      expect(cacheManager.del).not.toHaveBeenCalled();
     });
   });
 

@@ -85,8 +85,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* .code is in the list on purpose: pinning background-position alone does not
+     stop the gradient sweep, which keeps overwriting it every frame. */
   .content,
-  .digit {
+  .digit,
+  .code {
     animation: none;
   }
 

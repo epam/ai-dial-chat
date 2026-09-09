@@ -38,6 +38,12 @@ export interface AcceptInvitationResponseDto {
  */
 export interface AnnotationBodyDto {
   /**
+   *
+   * @type {AnnotationBodyDtoSelector}
+   * @memberof AnnotationBodyDto
+   */
+  selector?: AnnotationBodyDtoSelector;
+  /**
    * Title of the cited source
    * @type {string}
    * @memberof AnnotationBodyDto
@@ -49,7 +55,21 @@ export interface AnnotationBodyDto {
    * @memberof AnnotationBodyDto
    */
   quote?: string;
+  /**
+   *
+   * @type {AnnotationSourceDto}
+   * @memberof AnnotationBodyDto
+   */
+  source?: AnnotationSourceDto;
 }
+/**
+ * @type AnnotationBodyDtoSelector
+ * Location in the cited document; PDF page numbers are 1-based
+ * @export
+ */
+export type AnnotationBodyDtoSelector =
+  | AnnotationSelectorDto
+  | Array<AnnotationSelectorDto>;
 /**
  *
  * @export
@@ -64,10 +84,115 @@ export interface AnnotationDto {
   index?: number;
   /**
    *
+   * @type {AnnotationTargetDto}
+   * @memberof AnnotationDto
+   */
+  target?: AnnotationTargetDto;
+  /**
+   *
    * @type {AnnotationBodyDto}
    * @memberof AnnotationDto
    */
   body?: AnnotationBodyDto;
+}
+/**
+ *
+ * @export
+ * @interface AnnotationSelectorDto
+ */
+export interface AnnotationSelectorDto {
+  /**
+   * Selector discriminator, e.g. 'text_character_range', 'pdf_bbox', 'html_tag'
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  type?: string;
+  /**
+   * Character range start (inclusive)
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  start?: number;
+  /**
+   * Character range end (inclusive)
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  end?: number;
+  /**
+   * 1-based PDF page number
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  page?: number;
+  /**
+   * PDF bounding box left edge
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  x1?: number;
+  /**
+   * PDF bounding box top edge
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  y1?: number;
+  /**
+   * PDF bounding box right edge
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  x2?: number;
+  /**
+   * PDF bounding box bottom edge
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  y2?: number;
+  /**
+   * Inline tag name, e.g. 'cit'
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  tag?: string;
+  /**
+   * Inline tag's id attribute value
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  id?: string;
+}
+/**
+ *
+ * @export
+ * @interface AnnotationSourceDto
+ */
+export interface AnnotationSourceDto {
+  /**
+   * Always 'attachment' for file-based sources
+   * @type {string}
+   * @memberof AnnotationSourceDto
+   */
+  type?: string;
+  /**
+   *
+   * @type {AttachmentResourceDto}
+   * @memberof AnnotationSourceDto
+   */
+  attachment?: AttachmentResourceDto;
+}
+/**
+ *
+ * @export
+ * @interface AnnotationTargetDto
+ */
+export interface AnnotationTargetDto {
+  /**
+   *
+   * @type {AnnotationSelectorDto}
+   * @memberof AnnotationTargetDto
+   */
+  selector?: AnnotationSelectorDto;
 }
 /**
  *
@@ -167,6 +292,12 @@ export interface ApplicationDetailsDto {
    * @memberof ApplicationDetailsDto
    */
   inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ApplicationDetailsDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
   /**
    * URI of the custom application type schema, when present
    * @type {string}
@@ -361,6 +492,19 @@ export type ArchiveItemDtoNodeTypeEnum =
 /**
  *
  * @export
+ * @interface AttachGenerationDto
+ */
+export interface AttachGenerationDto {
+  /**
+   * Conversation sub-path (bucket-stripped), e.g. "gpt-4o__My Chat".
+   * @type {string}
+   * @memberof AttachGenerationDto
+   */
+  path: string;
+}
+/**
+ *
+ * @export
  * @interface AttachmentDto
  */
 export interface AttachmentDto {
@@ -406,6 +550,31 @@ export interface AttachmentDto {
    * @memberof AttachmentDto
    */
   referenceUrl?: string;
+}
+/**
+ *
+ * @export
+ * @interface AttachmentResourceDto
+ */
+export interface AttachmentResourceDto {
+  /**
+   * MIME type of the attached file
+   * @type {string}
+   * @memberof AttachmentResourceDto
+   */
+  type?: string;
+  /**
+   * Remote URL pointing to the file content
+   * @type {string}
+   * @memberof AttachmentResourceDto
+   */
+  url?: string;
+  /**
+   * Human-readable display name for the file
+   * @type {string}
+   * @memberof AttachmentResourceDto
+   */
+  title?: string;
 }
 /**
  *
@@ -1400,7 +1569,7 @@ export interface CreateApplicationBodyDto {
    */
   description?: string;
   /**
-   *
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
    * @type {string}
    * @memberof CreateApplicationBodyDto
    */
@@ -3567,6 +3736,12 @@ export interface ExternalServiceSigninBodyDto {
    * @memberof ExternalServiceSigninBodyDto
    */
   redirectUri?: string;
+  /**
+   * Whether the user consents to the application using this credential while they are offline. Required for on-behalf-of use (e.g. scheduled runs).
+   * @type {boolean}
+   * @memberof ExternalServiceSigninBodyDto
+   */
+  offlineUsageConsent?: boolean;
 }
 
 /**
@@ -3970,6 +4145,19 @@ export interface ListMcpAppToolsResponseDto {
    * @memberof ListMcpAppToolsResponseDto
    */
   tools: Array<McpAppToolSummaryDto>;
+}
+/**
+ *
+ * @export
+ * @interface ListMcpToolNamesResponseDto
+ */
+export interface ListMcpToolNamesResponseDto {
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ListMcpToolNamesResponseDto
+   */
+  toolNames: Array<string>;
 }
 /**
  *
@@ -5539,6 +5727,12 @@ export interface ScheduledTaskRunDto {
    * @memberof ScheduledTaskRunDto
    */
   durationSeconds?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  conversationId?: string;
 }
 
 /**
@@ -6392,7 +6586,7 @@ export interface ToolsetBodyDto {
    */
   description?: string;
   /**
-   *
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
    * @type {string}
    * @memberof ToolsetBodyDto
    */
@@ -6499,6 +6693,12 @@ export interface ToolsetDetailsDto {
    * @memberof ToolsetDetailsDto
    */
   features?: DeploymentFeaturesDetailsDto;
+  /**
+   *
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ToolsetDetailsDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
   /**
    * Timestamp of creation time from DIAL Core (e.g. 1714768496000)
    * @type {number}
@@ -6810,7 +7010,7 @@ export interface UpdateApplicationBodyDto {
    */
   description?: string;
   /**
-   *
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
    * @type {string}
    * @memberof UpdateApplicationBodyDto
    */

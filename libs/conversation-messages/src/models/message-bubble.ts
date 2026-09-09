@@ -78,6 +78,22 @@ export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
   codeBlockCopyLabel?: string;
   /** aria-label for the code block copy button after copying. */
   codeBlockCopiedLabel?: string;
+  /** Label for copying a Markdown table as CSV. */
+  tableCopyCsvLabel?: string;
+  /** Label for copying a Markdown table as text. */
+  tableCopyTxtLabel?: string;
+  /** Label for copying a Markdown table as Markdown. */
+  tableCopyMarkdownLabel?: string;
+  /** Status announced after a Markdown table has been copied. */
+  tableCopiedLabel?: string;
+  /** Label for downloading a Markdown table as CSV. */
+  tableDownloadCsvLabel?: string;
+  /** Label for opening a Markdown table in the canvas. */
+  tableOpenInCanvasLabel?: string;
+  /** Filename used when downloading a Markdown table as CSV. */
+  tableDownloadFilename?: string;
+  /** Accessible label for a Markdown table's scrollable region. */
+  tableScrollRegionAriaLabel?: string;
   /** Fallback aria-label for the deployment icon. Defaults to `'AI'`. */
   deploymentIconFallbackLabel?: string;
 }
@@ -134,6 +150,8 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   deploymentDisplayName?: string;
   /** Syntax highlight theme for code blocks. Defaults to `'dark'`. */
   codeBlockTheme?: CodeBlockTheme;
+  /** Opens serialized Markdown table content in the host canvas. */
+  tableOnOpenInCanvas?: (markdown: string) => void;
   /** Localised labels for quick replies, the thinking indicator, and code block copy actions. */
   labels?: AssistantMessageBubbleLabels;
 }

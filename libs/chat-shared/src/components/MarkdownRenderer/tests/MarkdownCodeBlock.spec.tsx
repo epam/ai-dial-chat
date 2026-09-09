@@ -35,7 +35,7 @@ describe('MarkdownCodeBlock', () => {
     expect(label.className).not.toContain('opacity-60');
   });
 
-  it('renders title in place of language in the header, keeping language for highlighting', () => {
+  it('renders title in place of language in the header, keeping language for highlighting', async () => {
     render(
       <MarkdownCodeBlock
         language="bash"
@@ -49,10 +49,14 @@ describe('MarkdownCodeBlock', () => {
     /*
      * The `language` prop is forwarded to the syntax highlighter for
      * highlighting only — it renders as a `data-language` attribute (mocked
-     * here), never as visible text, so no semantic query can reach it.
+     * here), never as visible text, so no semantic query can reach it. The
+     * highlighter itself loads behind a Suspense boundary, so the attribute
+     * only appears once that async load resolves.
      */
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(document.querySelector('[data-language="bash"]')).toBeTruthy();
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(document.querySelector('[data-language="bash"]')).toBeTruthy();
+    });
   });
 
   it('renders no label text when language is empty', () => {
@@ -244,6 +248,25 @@ describe('MarkdownCodeBlock', () => {
   it('renders the code value', () => {
     render(<MarkdownCodeBlock language="typescript" value="const x = 1;" />);
 
+    expect(screen.getByText('const x = 1;')).toBeTruthy();
+  });
+
+  it('shows the code value via the syntax-highlighted output once the engine loads', async () => {
+    render(<MarkdownCodeBlock language="typescript" value="const x = 1;" />);
+
+    /*
+     * The engine (mocked here) loads behind a Suspense boundary; a plain
+     * `<pre><code>` fallback with the same value covers the moment before it
+     * resolves (see the language-less test above), so the observable
+     * contract to assert here is the eventual highlighted output.
+     */
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- mocked Prism output has no accessible role
+      const highlighted = document.querySelector(
+        '[data-language="typescript"]',
+      );
+      expect(highlighted).toBeTruthy();
+    });
     expect(screen.getByText('const x = 1;')).toBeTruthy();
   });
 

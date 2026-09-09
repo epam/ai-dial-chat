@@ -37,6 +37,13 @@ makes the close button appear — omit it to hide the button. With `resizable`, 
 handle sits on the edge opposite `orientation`, and width defaults to `360` px
 (min `280`, max `600`).
 
+By default the panel opens and closes by animating its layout width, so it pushes
+the content it sits beside. Pass `isOverlay` when the host positions the panel
+_over_ the content instead (a mobile drawer, for example): the panel then keeps
+its full width in both states and slides in and out of the `orientation` edge,
+which keeps its content from reflowing mid-animation. Positioning stays the
+host's job — `isOverlay` only changes how the panel animates.
+
 ```tsx
 import { SidebarPanel, SidebarOrientation } from '@epam/ai-dial-sidebar';
 

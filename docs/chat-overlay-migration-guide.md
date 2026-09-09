@@ -632,7 +632,7 @@ integrations from typos and removed keys.
 
 ### Supported flags and defaults
 
-The new chat supports 41 flags.
+The new chat supports 42 flags.
 
 Enabled by default:
 
@@ -648,6 +648,7 @@ input-files
 live-chat-interaction
 empty-chat-settings
 chat-settings
+removable-tools
 conversations-sharing
 applications-sharing
 toolsets-sharing
@@ -670,6 +671,15 @@ on every screen. `empty-chat-settings` only narrows it to the empty-chat screen,
 which renders the entry when both keys are on. To take these settings away from
 users entirely, drop `chat-settings`; naming `empty-chat-settings` as well is not
 required.
+
+`removable-tools` controls whether the deployment tools shown in the chat input
+can be taken off the input. With it on (the default) each tool chip carries a ×
+that drops it from the row, and the "+" menu gains a "Tools" entry that brings a
+dropped chip back. Drop the key and every chip becomes a persistent on/off
+toggle: no ×, no "Tools" entry — and where tools are the only thing that menu
+would hold, the "+" button disappears with it. The tools themselves are still
+derived from the deployment's configuration schema either way; the key governs
+only whether the user can add and remove their chips.
 
 Disabled by default and enabled explicitly:
 

@@ -35,12 +35,13 @@ describe('resolveLocalizedText', () => {
 });
 
 describe('buildLocaleFieldLabels', () => {
-  it('sources cancel, save, and edit labels from the shared button strings', () => {
+  it('sources cancel and save labels from the shared button strings', () => {
     const t = vi.fn((key: string) => key) as unknown as TFunction;
     const labels = buildLocaleFieldLabels(t);
     expect(labels.cancelLabel).toBe('buttons.cancel');
     expect(labels.saveLabel).toBe('buttons.save');
-    expect(labels.editLabel).toBe('buttons.edit');
+    expect(labels.addLabel).toBe('editor.locales.addLabel');
+    expect(labels.editLabel).toBe('editor.locales.editLabel');
     expect(labels.localeRowLabel).toBe('editor.locales.rowLabel');
   });
 });

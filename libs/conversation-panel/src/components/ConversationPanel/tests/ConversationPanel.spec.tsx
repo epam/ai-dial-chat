@@ -61,13 +61,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     placeholder,
     value,
     clearLabel,
+    wrapperClassName,
   }: {
     onChange?: (v?: string) => void;
     placeholder?: string;
     value?: string;
     clearLabel?: string;
+    wrapperClassName?: string;
   }) => (
-    <>
+    <div data-testid="search-wrapper" className={wrapperClassName}>
       <input
         type="search"
         placeholder={placeholder}
@@ -75,7 +77,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         onChange={(e) => onChange?.(e.target.value)}
       />
       <button aria-label={clearLabel} onClick={() => onChange?.(undefined)} />
-    </>
+    </div>
   ),
 
   Button: ({
@@ -380,5 +382,32 @@ describe('ConversationPanel', () => {
     expect(
       screen.queryByRole('group', { name: 'panel header actions' }),
     ).toBeNull();
+  });
+
+  /*
+   * The corner radius itself is a CSS custom property read by the stylesheet
+   * (--cp-search-radius), so what a DOM test can pin is that the panel no
+   * longer hardcodes a radius utility on the wrapper.
+   */
+  it('sets no radius utility on the search field by default', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
+
+    expect(screen.getByTestId('search-wrapper').className).not.toMatch(
+      /rounded-/,
+    );
+  });
+
+  it('still forwards styles.searchWrapperClassName to the search field', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        styles={{ searchWrapperClassName: 'rounded-xl' }}
+      />,
+    );
+
+    expect(
+      screen.getByTestId('search-wrapper').classList.contains('rounded-xl'),
+    ).toBe(true);
   });
 });

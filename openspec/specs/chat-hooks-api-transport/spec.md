@@ -56,7 +56,7 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 - **THEN** it returns the raw `Response` obtained via the generated client's `Raw` method, unconsumed
 
 #### Scenario: `apps/chat` composes the factory with its own singleton
-- **WHEN** `apps/chat/src/server-api/files.api.ts` is inspected after this change
+- **WHEN** `apps/chat/src/server-api/files.api.ts` is inspected
 - **THEN** it calls `createFilesApiClient` with the app's configured `filesApi` singleton and its own `uploadFileWithProgress`, and re-exports the returned functions under their existing names so `dial-files-api.adapter.ts` and `usePublishFolders.ts` require no changes
 
 ### Requirement: Upload-with-progress is a factory over an injected XHR factory and host capabilities
@@ -114,6 +114,26 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 #### Scenario: `stopCompletion` posts to the configured base path
 - **WHEN** `stopCompletion({ generationId, path })` is called
 - **THEN** it sends a request to `${deps.completionsBasePath}/completions/stop` with the same body shape as the pre-move implementation, and throws when the response is not OK
+
+### Requirement: Generation attach/replay transport is a factory-provided capability
+
+`@epam/ai-dial-chat-hooks`'s chat-stream transport factory SHALL additionally expose `attachToGeneration(path: string, signal: AbortSignal): Promise<ReadableStream<Uint8Array>>`, mirroring the existing `watchConversation` shape (a raw stream the hook itself parses) rather than a callback-based API, and SHALL NOT hardcode an `/api` path, CSRF handling, or import an app `server-api` module — the concrete REST wiring is supplied by the host app's transport implementation, consistent with every other transport capability.
+
+#### Scenario: Attach delegates to the injected transport
+- **WHEN** `attachToGeneration(path, signal)` is called
+- **THEN** the only network-shaped call made is the transport's own request against the host-configured attach endpoint, with the caller-supplied path and abort signal
+
+#### Scenario: Abort signal aborts the underlying request
+- **WHEN** the caller's `AbortSignal` is aborted while the attach stream is open
+- **THEN** the underlying request/reader is aborted and no further events are delivered to the caller
+
+#### Scenario: Non-2xx response surfaces as a rejected promise
+- **WHEN** the attach request resolves with a non-2xx status (including `404` for "no active generation")
+- **THEN** the returned promise rejects, allowing the caller (`resumeIfAwaitingGeneration`) to fall back to `watchConversation`
+
+#### Scenario: `apps/chat` composes the concrete transport
+- **WHEN** `apps/chat/src/utils/conversation-stream-transport.ts` is inspected
+- **THEN** it supplies `attachToGeneration` backed by `apps/chat/src/server-api/chat-stream.api.ts`'s implementation, which issues a raw `fetch POST` against the app's configured completions-attach endpoint with `credentials: 'include'` and the current CSRF token, matching the existing `streamCompletion`/`watchConversation` implementation pattern in that module
 
 ### Requirement: API error and trace parsing are host-agnostic public exports
 

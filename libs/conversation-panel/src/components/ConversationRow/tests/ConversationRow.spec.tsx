@@ -35,15 +35,17 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     iconAfter,
     'aria-current': ariaCurrent,
     onClick,
+    className,
   }: {
     iconBefore?: React.ReactNode;
     label?: React.ReactNode;
     iconAfter?: React.ReactNode;
     'aria-current'?: React.AriaAttributes['aria-current'];
     onClick?: () => void;
+    className?: string;
     [key: string]: unknown;
   }) => (
-    <button aria-current={ariaCurrent} onClick={onClick}>
+    <button aria-current={ariaCurrent} onClick={onClick} className={className}>
       {iconBefore}
       {label}
       {iconAfter}
@@ -330,5 +332,25 @@ describe('ConversationRow', () => {
 
       expect(onSelectConversation).toHaveBeenCalledWith(baseItem.id);
     });
+  });
+
+  /*
+   * The row's corner radius is a CSS custom property read by the stylesheet
+   * (--cp-row-radius), so what a DOM test can pin is that the row no longer
+   * hardcodes a radius utility while keeping its layout utilities.
+   */
+  it('sets no radius utility on the row button', () => {
+    render(
+      <ConversationRow
+        item={baseItem}
+        isActive={false}
+        onSelectConversation={vi.fn()}
+      />,
+    );
+
+    const button = screen.getByRole('button');
+    expect(button.className).not.toMatch(/rounded-/);
+    expect(button.classList.contains('h-8')).toBe(true);
+    expect(button.classList.contains('w-full')).toBe(true);
   });
 });

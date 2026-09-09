@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { ConversationMessageRole } from '../dto/conversation-message.dto';
 import { applyChunkToMessage } from './apply-chunk.server';
 
@@ -14,6 +15,45 @@ const makeChunk = (delta: Record<string, unknown>, id = 'chunk-id') => ({
 });
 
 describe('applyChunkToMessage', () => {
+  it.each([false, true])(
+    'preserves PDF body selectors through raw cit assembly and JSON reload (array: %s)',
+    (array) => {
+      const bbox = { type: 'pdf_bbox', page: 3, x1: 0, y1: 0, x2: 0, y2: 0 };
+      const selector = array ? [bbox] : bbox;
+      const raw = {
+        index: 4,
+        target: { selector: { type: 'html_tag', tag: 'cit', id: 'page-3' } },
+        body: {
+          selector,
+          source: { type: 'attachment', url: 'files/bucket/report.pdf' },
+        },
+      };
+      const first = applyChunkToMessage(
+        baseMessage(),
+        makeChunk({
+          content: '<cit data-id="page-3"></cit>',
+          custom_fields: { annotations: [raw] },
+        }),
+      );
+      const updated = applyChunkToMessage(
+        first,
+        makeChunk({
+          custom_fields: {
+            annotations: [
+              { ...raw, body: { source: raw.body.source, quote: 'More text' } },
+            ],
+          },
+        }),
+      );
+      const reloaded = JSON.parse(JSON.stringify(updated));
+      expect(reloaded.custom_content.annotations).toHaveLength(1);
+      expect(reloaded.custom_content.annotations[0]).toMatchObject({
+        index: 4,
+        target: raw.target,
+        body: { selector, quote: 'More text' },
+      });
+    },
+  );
   it('concatenates text content across chunks', () => {
     const msg1 = applyChunkToMessage(
       baseMessage(),
@@ -138,6 +178,215 @@ describe('applyChunkToMessage', () => {
     ).annotations;
     expect(annotations[0].body.title).toBe('Title');
     expect(annotations[0].body.quote).toBe('Quote');
+  });
+
+  it('normalizes and persists raw custom_fields.annotations with two distinct html_tag entries', () => {
+    const msg = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'e43864' },
+              },
+              body: {
+                title: 'MT_14dayTrialNote (2).pdf',
+                quote: 'Patient meets ALL criteria',
+                source: {
+                  type: 'attachment',
+                  url: 'files/acc/uploads/MT_14dayTrialNote%20(2).pdf',
+                },
+              },
+            },
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'e52dc2' },
+              },
+              body: {
+                title: 'MT_14dayTrialNote (2).pdf',
+                quote: 'Recommend proceeding with Stage 2',
+                source: {
+                  type: 'attachment',
+                  url: 'files/acc/uploads/MT_14dayTrialNote%20(2).pdf',
+                },
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const annotations = (
+      msg.custom_content as {
+        annotations: {
+          target: { selector: { id: string } };
+          body: { source: { attachment: { type: string } } };
+        }[];
+      }
+    ).annotations;
+    expect(annotations).toHaveLength(2);
+    expect(annotations.map((a) => a.target.selector.id)).toEqual([
+      'e43864',
+      'e52dc2',
+    ]);
+    expect(annotations[0].body.source.attachment.type).toBe('application/pdf');
+  });
+
+  it('infers text/html for an html_tag annotation citing an .html URL', () => {
+    const msg = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+              body: {
+                title: 'page.html',
+                source: {
+                  type: 'attachment',
+                  url: 'https://example.com/page.html',
+                },
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const annotations = (
+      msg.custom_content as {
+        annotations: { body: { source: { attachment: { type: string } } } }[];
+      }
+    ).annotations;
+    expect(annotations[0].body.source.attachment.type).toBe('text/html');
+  });
+
+  it('infers the XLSX MIME type for an html_tag annotation citing an .xlsx URL', () => {
+    const msg = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+              body: {
+                title: 'budget.xlsx',
+                source: {
+                  type: 'attachment',
+                  url: 'files/account/uploads/budget.xlsx',
+                },
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const annotations = (
+      msg.custom_content as {
+        annotations: { body: { source: { attachment: { type: string } } } }[];
+      }
+    ).annotations;
+    expect(annotations[0].body.source.attachment.type).toBe(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+  });
+
+  it('still normalizes the legacy attachment_index raw annotation shape', () => {
+    const msg1 = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_content: {
+          attachments: [
+            {
+              index: 0,
+              type: 'application/pdf',
+              title: 'report.pdf',
+              url: 'files/report.pdf',
+            },
+          ],
+        },
+      }),
+    );
+    const msg2 = applyChunkToMessage(
+      msg1,
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              index: 0,
+              target: {
+                source: { attachment_index: 0 },
+                selector: {
+                  type: 'pdf_region',
+                  page: 1,
+                  bbox: { left: 1, top: 2, width: 3, height: 4 },
+                },
+              },
+              body: { title: 'Section 1' },
+            },
+          ],
+        },
+      }),
+    );
+    const annotations = (
+      msg2.custom_content as {
+        annotations: {
+          body: { source: { attachment: { url: string } } };
+        }[];
+      }
+    ).annotations;
+    expect(annotations).toHaveLength(1);
+    expect(annotations[0].body.source.attachment.url).toBe('files/report.pdf');
+    expect(annotations[0]).toMatchObject({
+      body: {
+        selector: { type: 'pdf_bbox', page: 1, x1: 1, y1: 2, x2: 4, y2: 6 },
+      },
+    });
+  });
+
+  it('merges a later chunk for the same cit id into the existing entry', () => {
+    const msg1 = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'e1' },
+              },
+              body: {
+                quote: 'Patient',
+                source: { type: 'attachment', url: 'files/doc.pdf' },
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const msg2 = applyChunkToMessage(
+      msg1,
+      makeChunk({
+        custom_fields: {
+          annotations: [
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'e1' },
+              },
+              body: {
+                quote: ' meets criteria',
+                source: { type: 'attachment', url: 'files/doc.pdf' },
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const annotations = (
+      msg2.custom_content as {
+        annotations: { body: { quote: string } }[];
+      }
+    ).annotations;
+    expect(annotations).toHaveLength(1);
+    expect(annotations[0].body.quote).toBe('Patient meets criteria');
   });
 
   it('replaces form_schema (last wins)', () => {

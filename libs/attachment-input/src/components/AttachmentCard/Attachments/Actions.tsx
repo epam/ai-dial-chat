@@ -19,15 +19,15 @@ interface ActionProps {
   icon: ReactNode;
   /** Optional additional class name for the button. */
   className?: string;
-  /** Localised accessible label for the retry button. */
+  /** Localised accessible label for this button. */
   ariaLabel?: string;
   /** Localised accessible title for the error state. */
   errorTitle?: string;
   /** ID of the element that describes the error state. */
   errorDescId?: string;
-  /** Called when the user clicks the retry button. */
+  /** Called when the user clicks the button. */
   onClick: (id: string) => void;
-  /** ID of the attachment to retry. */
+  /** ID of the attachment the action applies to. */
   id?: string;
 }
 
@@ -46,7 +46,7 @@ const ActionButton: FC<ActionProps> = ({
       icon={icon}
       size={ElementSize.Small}
       className={mergeClasses(
-        'absolute end-1 top-1 opacity-0 focus-visible:opacity-100 group-focus-within/attachment-tile:opacity-100 group-hover/attachment-tile:opacity-100',
+        'opacity-0 focus-visible:opacity-100 group-focus-within/attachment-tile:opacity-100 group-hover/attachment-tile:opacity-100',
         styles.actionButton,
         className,
       )}

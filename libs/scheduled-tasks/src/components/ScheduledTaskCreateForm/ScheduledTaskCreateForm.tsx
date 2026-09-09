@@ -1,5 +1,9 @@
 import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   Input,
   Textarea,
@@ -8,10 +12,18 @@ import {
   Label,
   NumberInput,
   Spinner,
-  LazyMarkdownEditor,
   Select,
 } from '@epam/ai-dial-ui-kit';
-import { lazy, Suspense, type FC } from 'react';
+import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
+/*
+ * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
+ * it here, rather than eagerly from the host app's entry point, keeps this
+ * vendor CSS out of the initial page load — it loads only when this module
+ * does, i.e. when the (already route-lazy) scheduled-task pages mount.
+ */
+import '@uiw/react-markdown-preview/markdown.css';
+import '@uiw/react-md-editor/markdown-editor.css';
+import { lazy, Suspense, useId, type FC } from 'react';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
@@ -54,6 +66,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   markdownEditorTheme,
   styles: formStyles,
 }) => {
+  const instructionsEditorId = useId();
   const { colors, typography } = formStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const sectionTitleClassName =
@@ -83,12 +96,14 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
         backButtonLabel: labels.backButtonLabel,
         cancelButtonLabel: labels.cancelButtonLabel,
         submitButtonLabel: labels.createButtonLabel,
+        submittingLabel: labels.submittingLabel ?? 'Saving',
       }}
       onBack={onBack}
       onCancel={onCancel}
       onSubmit={onSubmit}
       isCancelDisabled={isSubmitting}
       isSubmitDisabled={isCreateDisabled}
+      isSubmitting={isSubmitting}
       styles={{
         colors: { background: colors?.background },
         header: {
@@ -380,19 +395,25 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           </p>
         </div>
 
-        <div
-          role="group"
-          aria-label={labels.instructionsLabel}
-          className="flex flex-1 flex-col gap-1"
-        >
-          <span className={instructionsLabelClassName}>
+        <div className="flex flex-1 flex-col gap-1">
+          {/*
+           * A real <label for>, not a span: the markdown editor renders a plain
+           * textarea, and text sitting next to it names nothing the browser
+           * associates with the control.
+           */}
+          <label
+            htmlFor={instructionsEditorId}
+            className={instructionsLabelClassName}
+          >
             {labels.instructionsLabel}
-          </span>
+          </label>
           <Suspense fallback={<Spinner />}>
             <MarkdownEditor
+              id={instructionsEditorId}
               value={values.prompt}
               onChange={(value) => onFieldChange('prompt', value)}
               height={480}
+              className={MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME}
               theme={markdownEditorTheme}
             />
           </Suspense>

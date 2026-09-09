@@ -15,6 +15,7 @@ export const DEFAULT_MARKDOWN_CLASS_NAMES: MarkdownRendererClassNames = {
   blockquote: 'my-4',
   link: 'break-words [overflow-wrap:anywhere]',
   tableWrapper: 'my-4',
+  mathBlock: 'my-4',
 };
 
 /**

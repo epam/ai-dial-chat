@@ -504,6 +504,57 @@ After `deleteConversation` resolves successfully, `ConversationPanelView` SHALL 
 
 ---
 
+### Requirement: A conversation the backend no longer has leaves the panel
+
+A conversation can disappear upstream while the panel still lists it — most commonly because deleting its last message deleted the conversation itself (see `chat-hooks-conversation-handlers`), but also when another tab or session removed it. Such a row is unusable: opening it fails and deleting it fails, so it SHALL NOT be left in the list.
+
+`ConversationsContext` SHALL therefore expose `removeConversationFromList(id)`,
+which drops a conversation from the local list without issuing a delete
+request, matching ids with the same encoding-safe comparison the panel uses.
+The conversation view SHALL call it both from `useConversationHandlers`'
+`onConversationDeleted` and when loading a conversation fails with a
+not-found error.
+
+`deleteConversation` SHALL treat a not-found response as success: the row
+stays removed and no error is raised, mirroring the bulk deletion endpoint's
+already-absent accounting. Any other failure SHALL still restore the row and
+rethrow. Both removal paths SHALL match ids with `conversationIdsMatch`, so a
+differently-encoded id clears the same row either way.
+
+Reporting an already-absent deletion as success is deliberate: every consumer
+of a resolved `deleteConversation` — the panel's and header menu's
+`notifyOperationSuccess`, `useConversationListBridge`, the overlay bridge —
+then reports the deletion as done. From the user's side that is accurate: the
+conversation they asked to delete is gone. Distinguishing "was already gone"
+would raise a failure or a caveat for an outcome the user asked for and got.
+
+#### Scenario: Deleting the last message removes the row
+
+- **WHEN** the user deletes the only message pair of the open conversation, which deletes the conversation itself
+- **THEN** the conversation is removed from the panel list and the view navigates to `ROUTES.Root`
+
+#### Scenario: Opening a conversation the backend no longer has removes the row
+
+- **WHEN** loading a conversation fails with a not-found error
+- **THEN** the conversation is removed from the panel list in addition to the existing error notification and navigation to `ROUTES.Root`
+
+#### Scenario: Deleting an already-absent conversation succeeds
+
+- **WHEN** the user confirms deletion of a row whose conversation the backend no longer has
+- **THEN** the delete resolves successfully, the row stays removed, no inline delete error is shown, and the caller's usual deletion-success notification is raised
+
+#### Scenario: A differently-encoded id clears the same row
+
+- **WHEN** `deleteConversation` is called with an id whose encoding differs from the listed id (e.g. `folder%2Fchat%20one` for `folder/chat one`)
+- **THEN** that row is the one removed from the list
+
+#### Scenario: Any other delete failure still restores the row
+
+- **WHEN** the delete request fails with anything other than a not-found response
+- **THEN** the row is restored to the list and the error is rethrown for the inline error state
+
+---
+
 ### Requirement: Deleting the active conversation from the panel row navigates to root
 
 When the user confirms single-row deletion of the conversation currently open in the conversation view, `ConversationPanelView` SHALL navigate to `ROUTES.Root` after the deletion succeeds.

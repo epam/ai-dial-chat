@@ -1,3 +1,4 @@
+import http from 'node:http';
 import {
   ConflictException,
   INestApplication,
@@ -133,6 +134,28 @@ describe('POST /conversations/completions (integration)', () => {
     expect(mockService.streamCompletion.mock.calls[0][13]).toBeUndefined();
   });
 
+  /* Firefox keeps the fetch() promise pending until the first body byte
+   * arrives, so the stream has to open with a comment rather than waiting for
+   * the model's first token — see issue #8587. */
+  it('opens the stream with the init comment before the first model chunk', async () => {
+    mockService.streamCompletion.mockImplementation(async function* (
+      ...args: unknown[]
+    ) {
+      (args[10] as () => void)();
+      yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send(VALID_COMPLETION_BODY)
+      .expect(200);
+
+    expect(res.headers['content-type']).toContain('text/event-stream');
+    expect(res.text).toBe(
+      ': init\n\ndata: {"choices":[{"delta":{"content":"Hi"}}]}\n\n',
+    );
+  });
+
   it('passes a valid timezone header to the completion service', async () => {
     await request(app.getHttpServer())
       .post('/conversations/completions')
@@ -224,6 +247,67 @@ describe('POST /conversations/completions (integration)', () => {
     const [, , , , mode, , msgIdx] = mockService.streamCompletion.mock.calls[0];
     expect(mode).toBe('regenerate');
     expect(msgIdx).toBe(2);
+  });
+
+  it('keeps draining the generator to completion after the client disconnects mid-stream, without touching the generation registry', async () => {
+    let releaseSecondChunk: () => void = () => undefined;
+    const secondChunkGate = new Promise<void>((resolve) => {
+      releaseSecondChunk = resolve;
+    });
+    let reachedNaturalEnd = false;
+    mockService.streamCompletion.mockImplementation(async function* (
+      ...args: unknown[]
+    ) {
+      (args[10] as () => void)();
+      yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
+      // Holds the generator open past the first chunk so the client can
+      // disconnect before the stream would otherwise finish on its own.
+      await secondChunkGate;
+      yield Buffer.from('data: [DONE]\n\n');
+      // Only reached if the controller keeps calling `.next()` after the
+      // response closed — i.e. it did not `break`/`return` its consuming
+      // loop early because of the disconnect.
+      reachedNaturalEnd = true;
+    });
+
+    const address = app.getHttpServer().address();
+    const port =
+      typeof address === 'object' && address !== null ? address.port : 0;
+
+    await new Promise<void>((resolve) => {
+      const req = http.request(
+        {
+          host: '127.0.0.1',
+          port,
+          path: '/conversations/completions',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        },
+        (res) => {
+          res.once('data', () => {
+            // First chunk arrived — simulate the browser tab closing.
+            req.destroy();
+          });
+        },
+      );
+      req.on('error', () => resolve());
+      req.on('close', () => resolve());
+      req.write(JSON.stringify(VALID_COMPLETION_BODY));
+      req.end();
+    });
+
+    releaseSecondChunk();
+
+    await vi.waitFor(() => expect(reachedNaturalEnd).toBe(true));
+
+    // The controller never calls back into the generation registry as part
+    // of handling `streamCompletion`'s own disconnect — that is the whole
+    // point of this regression test. `abort`/`error`/`complete` remain the
+    // exclusive province of an explicit Stop or the upstream relay's own
+    // terminal outcome, neither of which happened here.
+    expect(mockGenerationService.abort).not.toHaveBeenCalled();
+    expect(mockGenerationService.error).not.toHaveBeenCalled();
+    expect(mockGenerationService.complete).not.toHaveBeenCalled();
   });
 });
 

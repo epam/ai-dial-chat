@@ -1,19 +1,28 @@
 import {
   mergeClasses,
+  RESIZABLE_TEXTAREA_CLASS_NAME,
   TAG_INPUT_TAG_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
-import { Input, TagInput, Textarea } from '@epam/ai-dial-ui-kit';
+import { AddAvatar } from '@epam/ai-dial-editor-builder';
+import {
+  Input,
+  TagInput,
+  Textarea,
+  TextareaResize,
+} from '@epam/ai-dial-ui-kit';
 import { useEffect, useRef, type FC } from 'react';
 import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
 import { DeploymentLocalesField } from '../DeploymentLocalesField/DeploymentLocalesField';
 
-/** Controlled field set for deployment creation: name, description, icon URL, version, and topics. */
+/** Controlled field set for deployment creation: avatar, name, description, version, and topics. */
 export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   values,
   errors,
   onChange,
   onNameBlur,
   onVersionBlur,
+  iconPreviewUrl,
+  onAddAvatarClick,
   labels,
   styles,
   availableLocaleOptions = [],
@@ -45,18 +54,42 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
       aria-label={labels.ariaLabel}
       className={mergeClasses('flex flex-col gap-4', styles?.root)}
     >
-      <Input
-        id="deployment-creation-form-name"
-        inputRef={nameInputRef}
-        value={values.name}
-        onChange={(value) => onChange({ name: value ?? '' })}
-        onBlur={onNameBlur}
-        labelProps={{ label: labels.name.label, required: true }}
-        placeholder={labels.name.placeholder}
-        error={errors.name || undefined}
-        invalid={!!errors.name}
-        containerClassName={styles?.field}
+      <AddAvatar
+        label={labels.iconUrl.label}
+        avatarUrl={iconPreviewUrl}
+        addAvatarLabel={labels.iconUrl.addAvatarLabel}
+        captionText={labels.iconUrl.captionText}
+        onAddAvatarClick={onAddAvatarClick}
+        className={styles?.field}
       />
+
+      <div className={mergeClasses('flex items-start gap-4', styles?.field)}>
+        <Input
+          id="deployment-creation-form-name"
+          inputRef={nameInputRef}
+          value={values.name}
+          onChange={(value) => onChange({ name: value ?? '' })}
+          onBlur={onNameBlur}
+          labelProps={{ label: labels.name.label, required: true }}
+          placeholder={labels.name.placeholder}
+          error={errors.name || undefined}
+          invalid={!!errors.name}
+          containerClassName="min-w-0 basis-0 grow-[2]"
+        />
+
+        <Input
+          id="deployment-creation-form-version"
+          inputRef={versionInputRef}
+          value={values.version}
+          onChange={(value) => onChange({ version: value ?? '' })}
+          onBlur={onVersionBlur}
+          labelProps={{ label: labels.version.label }}
+          placeholder={labels.version.placeholder}
+          error={errors.version || undefined}
+          invalid={!!errors.version}
+          containerClassName="min-w-0 basis-0 grow-[1]"
+        />
+      </div>
 
       <Textarea
         id="deployment-creation-form-description"
@@ -65,6 +98,8 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         labelProps={{ label: labels.description.label }}
         placeholder={labels.description.placeholder}
         containerClassName={styles?.field}
+        className={RESIZABLE_TEXTAREA_CLASS_NAME}
+        resize={TextareaResize.Vertical}
       />
 
       <DeploymentLocalesField
@@ -73,28 +108,6 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         availableLocaleOptions={availableLocaleOptions}
         labels={labels.otherLocales}
         className={styles?.field}
-      />
-
-      <Input
-        id="deployment-creation-form-icon-url"
-        value={values.iconUrl}
-        onChange={(value) => onChange({ iconUrl: value ?? '' })}
-        labelProps={{ label: labels.iconUrl.label }}
-        placeholder={labels.iconUrl.placeholder}
-        containerClassName={styles?.field}
-      />
-
-      <Input
-        id="deployment-creation-form-version"
-        inputRef={versionInputRef}
-        value={values.version}
-        onChange={(value) => onChange({ version: value ?? '' })}
-        onBlur={onVersionBlur}
-        labelProps={{ label: labels.version.label }}
-        placeholder={labels.version.placeholder}
-        error={errors.version || undefined}
-        invalid={!!errors.version}
-        containerClassName={styles?.field}
       />
 
       <div className={styles?.field}>

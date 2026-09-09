@@ -25,7 +25,80 @@ import {
   useState,
 } from 'react';
 import { fetchBlobFromUrl } from '../../utils/download';
+import {
+  LazyContentError,
+  LazyContentPending,
+} from '../LazyContentBoundary/LazyContentBoundary';
 import styles from './PdfContent.module.scss';
+/*
+ * These stylesheets are only needed once a PDF is actually being rendered.
+ * `PdfContent` is itself only ever reached through a `lazy()` dynamic import
+ * (see AttachmentCanvasBody), so importing them here — rather than eagerly
+ * from the host app's entry point — keeps this ~20 KB of vendor CSS out of
+ * the initial page load.
+ */
+import '@epam/ai-dial-react-pdf-highlighter/styles.css';
+import '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css';
+
+/*
+ * `pdfjs-dist`'s `GlobalWorkerOptions.workerSrc` is a global, shared by every
+ * consumer of the package in the host app — this library must not decide it
+ * unilaterally (library-isolation: a host-owned third-party runtime setting,
+ * and a different `pdfjs-dist` version/consumer elsewhere in the app could
+ * disagree with a value hardcoded here). The host supplies `configurePdfWorker`
+ * instead; it's called once, the first time a PDF is actually opened, since
+ * this module is only ever reached through the dynamic import above.
+ */
+
+/** Lifecycle of the host-supplied `configurePdfWorker` preparation step. */
+enum PdfWorkerPreparationState {
+  /** Waiting for `configurePdfWorker` to resolve; `DocumentPreview` must not mount yet. */
+  Preparing = 'preparing',
+  /** Preparation resolved (or was never needed); safe to mount `DocumentPreview`. */
+  Ready = 'ready',
+  /** Preparation rejected; a later call re-invokes `configurePdfWorker`. */
+  Error = 'error',
+}
+
+/*
+ * Module-scope, not React state: concurrent `PdfContent` mounts must share
+ * one in-flight preparation instead of each triggering their own call to
+ * `configurePdfWorker`. Memoized on success (the fulfilled promise itself is
+ * the cache); cleared back to `null` on rejection so the *next* attempt —
+ * an explicit retry, or a later independent PDF open — invokes
+ * `configurePdfWorker` again rather than being permanently stuck on the
+ * first failure.
+ */
+let preparationPromise: Promise<void> | null = null;
+
+/**
+ * Runs `configurePdfWorker` at most once per successful resolution, sharing
+ * one in-flight/resolved promise across every caller until it rejects.
+ */
+const preparePdfWorker = (
+  configurePdfWorker: () => void | Promise<void>,
+): Promise<void> => {
+  if (!preparationPromise) {
+    /*
+     * `configurePdfWorker()` is invoked synchronously, right here — not
+     * deferred behind a `Promise.resolve().then(...)` microtask — so it
+     * still runs before `DocumentPreview` could start its own document
+     * fetch, matching the timing guarantee the original fire-and-forget
+     * call made.
+     */
+    preparationPromise = new Promise<void>((resolve, reject) => {
+      try {
+        resolve(configurePdfWorker());
+      } catch (error) {
+        reject(error);
+      }
+    }).catch((error: unknown) => {
+      preparationPromise = null;
+      throw error;
+    });
+  }
+  return preparationPromise;
+};
 
 /** Number of pages eagerly requested as soon as the document loads, before the user opens the panel. */
 const THUMBNAIL_EAGER_BATCH_SIZE = 15;
@@ -57,6 +130,12 @@ export interface PdfContentLabels {
   hideThumbnailsLabel?: string;
   /** Accessible label for the current-page number input at the top of the thumbnails panel. Defaults to `'Page number'`. */
   pageNumberLabel?: string;
+  /** Accessible status text announced while the host prepares the PDF runtime. Defaults to `'Loading…'`. */
+  loadingLabel?: string;
+  /** Message shown when the host fails to prepare the PDF runtime. Defaults to `'Failed to load content'`. */
+  errorLabel?: string;
+  /** Label and accessible name for retrying PDF runtime preparation. Defaults to `'Retry'`. */
+  retryLabel?: string;
 }
 
 /** Props for the `PdfContent` component. */
@@ -67,10 +146,29 @@ export interface PdfContentProps {
   highlights: InputHighlightData[];
   /** ID of the highlight that should be scrolled into view on mount. */
   selectedHighlightId?: string;
+  /**
+   * 1-based page to navigate to on initial load and whenever it changes,
+   * independent of highlight geometry — forwarded directly to the underlying
+   * `DocumentPreview`'s own `selectedPageNumber` prop. Takes precedence over
+   * the highlight-bbox-derived page when both are present.
+   */
+  selectedPageNumber?: number;
   /** Custom fetcher for the PDF blob; falls back to a plain `fetch` wrapper. */
   loadPdf?: (url: string) => Promise<Blob>;
   /** File name shown in the canvas header. */
   fileName?: string;
+  /**
+   * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
+   * host app. Called once, the first time a PDF attachment is opened, and
+   * awaited before the viewer mounts. Concurrent PDF opens share one
+   * in-flight call; a successful call is memoized so later opens never
+   * repeat it. A rejected call is not cached — the next PDF open (or a
+   * subsequent retry) invokes it again. When omitted,
+   * `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used
+   * instead, so PDF rendering still works, just without the host's own
+   * bundled worker asset.
+   */
+  configurePdfWorker?: () => void | Promise<void>;
   /**
    * Hides the underlying `DocumentPreview`'s own title/zoom toolbar row —
    * for hosts that render their own header and don't want it duplicated.
@@ -91,20 +189,61 @@ export const PdfContent: FC<PdfContentProps> = ({
   url,
   highlights,
   selectedHighlightId,
+  selectedPageNumber,
   loadPdf,
+  configurePdfWorker,
   hideHeader = false,
   labels: {
     thumbnailsLabel = 'Thumbnails',
     showThumbnailsLabel = 'Show thumbnails',
     hideThumbnailsLabel = 'Hide thumbnails',
     pageNumberLabel = 'Page number',
+    loadingLabel = 'Loading…',
+    errorLabel = 'Failed to load content',
+    retryLabel = 'Retry',
   } = {},
 }) => {
+  const [preparationState, setPreparationState] = useState(() =>
+    configurePdfWorker
+      ? PdfWorkerPreparationState.Preparing
+      : PdfWorkerPreparationState.Ready,
+  );
+  const [preparationRetryKey, setPreparationRetryKey] = useState(0);
+
+  /*
+   * `DocumentPreview` below only mounts once this resolves — see the
+   * `preparationState === Ready` check below — so the worker is always
+   * configured before the document fetch/parse it triggers, without racing
+   * `DocumentPreview`'s own mount effect.
+   */
+  useEffect(() => {
+    if (!configurePdfWorker) return;
+    setPreparationState(PdfWorkerPreparationState.Preparing);
+    let isCancelled = false;
+    preparePdfWorker(configurePdfWorker)
+      .then(() => {
+        if (!isCancelled) {
+          setPreparationState(PdfWorkerPreparationState.Ready);
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) setPreparationState(PdfWorkerPreparationState.Error);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, [configurePdfWorker, preparationRetryKey]);
+
+  const handleRetryPreparation = useCallback(() => {
+    setPreparationRetryKey((key) => key + 1);
+  }, []);
+
   const thumbnailsRegionId = useId();
   const [totalPages, setTotalPages] = useState(0);
   const [thumbnails, setThumbnails] = useState<Map<number, string>>(new Map());
   const [isThumbnailsOpen, setIsThumbnailsOpen] = useState(false);
   const [selectedPage, setSelectedPage] = useState(() => {
+    if (selectedPageNumber != null) return selectedPageNumber;
     if (!selectedHighlightId) return 1;
     const match = highlights.find((h) => h.id === selectedHighlightId);
     return match?.bboxes[0]?.page ?? 1;
@@ -126,11 +265,15 @@ export const PdfContent: FC<PdfContentProps> = ({
   const scrollRafRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (selectedPageNumber != null) {
+      setSelectedPage(selectedPageNumber);
+      return;
+    }
     if (!selectedHighlightId) return;
     const match = highlights.find((h) => h.id === selectedHighlightId);
     const page = match?.bboxes[0]?.page;
     if (page != null) setSelectedPage(page);
-  }, [selectedHighlightId, highlights]);
+  }, [selectedPageNumber, selectedHighlightId, highlights]);
 
   /* Keep the scrollable panel's height in sync with its actual rendered size (it's capped by `max-h-[70vh]`, so viewport size matters). */
   useEffect(() => {
@@ -319,12 +462,13 @@ export const PdfContent: FC<PdfContentProps> = ({
    * rather than racing it.
    */
   useEffect(() => {
-    if (!isViewerReady || selectedHighlightId) return;
+    if (!isViewerReady || selectedHighlightId || selectedPageNumber != null)
+      return;
     const raf = requestAnimationFrame(() => {
       viewerApiRef.current?.navigateToPage(1);
     });
     return () => cancelAnimationFrame(raf);
-  }, [isViewerReady, selectedHighlightId]);
+  }, [isViewerReady, selectedHighlightId, selectedPageNumber]);
 
   const handleSelectPage = useCallback((pageNum: number) => {
     setSelectedPage(pageNum);
@@ -354,6 +498,20 @@ export const PdfContent: FC<PdfContentProps> = ({
   );
 
   if (!url) return null;
+
+  if (preparationState === PdfWorkerPreparationState.Preparing) {
+    return <LazyContentPending loadingLabel={loadingLabel} />;
+  }
+
+  if (preparationState === PdfWorkerPreparationState.Error) {
+    return (
+      <LazyContentError
+        errorLabel={errorLabel}
+        retryLabel={retryLabel}
+        onRetry={handleRetryPreparation}
+      />
+    );
+  }
 
   const thumbnailItems: ReactElement[] = [];
   for (
@@ -458,6 +616,7 @@ export const PdfContent: FC<PdfContentProps> = ({
           loadFileCb={loadPdf ?? fetchBlobFromUrl}
           highlights={highlights}
           selectedHighlightId={selectedHighlightId}
+          selectedPageNumber={selectedPageNumber}
           showOccurrences={false}
           onTotalPagesChange={setTotalPages}
           thumbnailPageNumbers={requestedThumbnailPages}

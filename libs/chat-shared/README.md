@@ -27,6 +27,22 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 - `remark-gfm`
 - `react-syntax-highlighter`
 
+## Optional file-manager entry
+
+Import `DialFileManagerShell` and `FileManagerAttachModal` from
+`@epam/ai-dial-chat-shared/file-manager` inside a lazy feature. Their root exports
+remain compatible; headless contracts and utilities still come from the root.
+The package declares only CSS/SCSS side effects so unused UI can be tree-shaken.
+Continue importing `@epam/ai-dial-chat-shared/styles.css` once in the host.
+
+```tsx
+import {
+  DialFileManagerShell,
+  FileManagerAttachModal,
+} from '@epam/ai-dial-chat-shared/file-manager';
+import type { FileManagerController } from '@epam/ai-dial-chat-shared';
+```
+
 ## Domain Models
 
 ```tsx
@@ -115,12 +131,38 @@ FilterTab.Organization; // 'organization'
 
 ### MarkdownRenderer
 
-Renders markdown content with GFM support (tables, task lists, strikethrough).
+Renders markdown content with GFM support (tables, task lists, strikethrough)
+and LaTeX math through KaTeX. Tables and block formulas each get their own
+scroll container, so content wider or taller than the available space stays
+reachable instead of being clipped; each container becomes a labelled,
+focusable `role="region"` only while it actually overflows. Pass
+`tableScrollRegionAriaLabel` and `mathScrollRegionAriaLabel` to translate those
+labels — they default to `'Scrollable table'` and `'Scrollable formula'`.
+Supplying `tableActionLabels` opts a table into copy/download actions,
+rendered through the built-in `TableHeader`. Each icon-only action has a
+UI-kit tooltip using its localized label and a stable accessible name;
+actions are hidden while `isStreaming` is true. Pass `tableOnOpenInCanvas` to
+add a fifth "Open in Canvas" action (shown only when
+`tableActionLabels.openInCanvasLabel` is also set) — it receives the table
+serialized as Markdown when activated.
+
+Plain text and unformatted messages render immediately. The KaTeX math engine
+and its stylesheet load asynchronously, and only the first time `content`
+actually contains a math block (`$$...$$`, or `\(...\)`/`\[...\]`) — a
+conversation with no math never pulls KaTeX into the bundle, and a formula
+appears once that load resolves. Fenced code blocks render through
+`MarkdownCodeBlock` (below), which defers its own syntax-highlighting engine
+the same way. The sanitizer allows the citation-specific `cit` element, but
+the default component renders its markup literally; a citation-aware consumer
+must explicitly override `components.cit` to turn it into interactive UI.
 
 ```tsx
 import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
 
-<MarkdownRenderer content={markdownText} />;
+<MarkdownRenderer
+  content={markdownText}
+  mathScrollRegionAriaLabel={t('Scrollable formula')}
+/>;
 ```
 
 ### MDMessageViewer
@@ -129,7 +171,8 @@ Renders a chat message body as markdown. `classNames` selects the type scale and
 defaults to `DEFAULT_MARKDOWN_CLASS_NAMES`; pass `COMPACT_MARKDOWN_CLASS_NAMES`
 to drop the body copy (`p`, `strong`) one step while leaving headings, code, and
 tables untouched. The component is memoised, so pass a stable reference rather
-than an inline object.
+than an inline object. It forwards the code-block and table action labels to
+`MarkdownRenderer`.
 
 ```tsx
 import {
@@ -150,7 +193,11 @@ Syntax-highlighted code block with copy and download buttons. `language` and
 `value` are required; pass `isStreaming` to hide the copy button while content is
 still arriving. The copy button keeps `copyLabel` as its accessible name at all
 times; `copiedLabel` is announced through the block's own
-`role="status" aria-live="polite"` region once the copy succeeds.
+`role="status" aria-live="polite"` region once the copy succeeds. When
+`language` is set, the `react-syntax-highlighter` engine loads asynchronously
+behind a `Suspense` boundary — `value` is shown immediately as plain,
+unhighlighted text via the fallback, then swapped for the highlighted output
+once the engine resolves. A language-less block never loads the engine at all.
 
 ```tsx
 import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
@@ -166,10 +213,78 @@ import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
 
 ### MarkdownTable
 
-Standalone table renderer for structured markdown tables.
+Standalone table renderer for structured markdown tables. The table scrolls
+horizontally when it overflows its container; it is never height-bounded and
+grows to its natural height instead of scrolling vertically.
+Supplying `actionLabels` enables copy-as-CSV, copy-as-TXT,
+copy-as-Markdown, and download-as-CSV actions. Copy formats flatten rendered
+cell text, and CSV download includes a UTF-8 byte-order mark. Each action
+shows a UI-kit tooltip with its localized label, and actions are hidden while
+`isStreaming` is true.
+The built-in header container is `TableHeader` (see below); it renders
+automatically whenever `actionLabels` is supplied, and stays hidden otherwise.
+When `actionLabels.openInCanvasLabel` and `onOpenInCanvas` are both supplied,
+a fifth "Open in Canvas" action appears; activating it serializes the table
+with the same Markdown format `copyMarkdownLabel` uses and passes that string
+to `onOpenInCanvas`. Omitting either one hides the action — the host decides
+whether expanding a table into a canvas is meaningful for it.
 
 ```tsx
-import { MarkdownTable } from '@epam/ai-dial-chat-shared';
+import {
+  MarkdownTable,
+  type MarkdownTableActionLabels,
+} from '@epam/ai-dial-chat-shared';
+
+const tableActionLabels: MarkdownTableActionLabels = {
+  copyCsvLabel: 'Copy as CSV',
+  copyTxtLabel: 'Copy as TXT',
+  copyMarkdownLabel: 'Copy as Markdown',
+  copiedLabel: 'Copied!',
+  downloadCsvLabel: 'Download as CSV',
+};
+
+<MarkdownTable
+  classNames={{}}
+  actionLabels={tableActionLabels}
+  downloadFilename="table.csv"
+  isStreaming={false}
+  scrollRegionAriaLabel="Scrollable table"
+>
+  <thead>
+    <tr>
+      <th>Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Alpha</td>
+    </tr>
+  </tbody>
+</MarkdownTable>;
+```
+
+### TableHeader
+
+Reusable table header with optional leading content and caller-supplied
+`{ label, icon, onClick }` action descriptors. `TableHeader` renders each
+descriptor as an accessible UI-kit tooltip button; actions align to the inline
+end, so the header follows RTL direction automatically. `MarkdownTable` uses
+`TableHeader` as its built-in header whenever `actionLabels` is supplied.
+
+```tsx
+import { TableHeader } from '@epam/ai-dial-chat-shared';
+
+<TableHeader
+  actions={[
+    {
+      label: 'Export',
+      icon: <IconDownload />,
+      onClick: handleExport,
+    },
+  ]}
+>
+  Results
+</TableHeader>;
 ```
 
 ### DeploymentIcon
@@ -316,6 +431,10 @@ import {
   ensureDownloadFilename,
   downloadTextFile,
   triggerBlobDownload,
+  serializeMarkdownTableRows,
+  MarkdownTableCopyFormat,
+  DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME,
+  MARKDOWN_TABLE_CSV_MIME_TYPE,
   getUtf8ByteLength,
   truncateToUtf8Bytes,
   sanitizeConversationName,
@@ -328,6 +447,17 @@ const className = mergeClasses('base-class', isActive && 'active');
 
 // Map a *Colors object to CSS custom property declarations; undefined values are dropped
 const cssVars = buildCssVars({ '--cs-text': colors?.text });
+
+// Serialize a rendered <table>'s rows to CSV/TSV/Markdown, the format MarkdownTable's own copy actions use
+const csv = serializeMarkdownTableRows(
+  Array.from(tableElement.rows),
+  MarkdownTableCopyFormat.Csv,
+);
+downloadTextFile(
+  csv,
+  DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME,
+  MARKDOWN_TABLE_CSV_MIME_TYPE,
+);
 
 // Copy markdown as both flavours: rich text for Word/Gmail/Slack, raw markdown for plain-text targets.
 // Styling travels inline, so a pasted table keeps its border, header band, dividers, and zebra rows.
@@ -380,18 +510,22 @@ import {
   ENTITY_TYPE_COLOR,
   ENTITY_TYPE_BG_COLOR,
   TAG_INPUT_TAG_CLASS_NAME,
+  RESIZABLE_TEXTAREA_CLASS_NAME,
+  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
 ```
 
-| Constant                                     | Purpose                                                              |
-| -------------------------------------------- | -------------------------------------------------------------------- |
-| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names       |
-| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists     |
-| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types      |
-| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders        |
-| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step    |
-| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                  |
-| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field |
+| Constant                                     | Purpose                                                                 |
+| -------------------------------------------- | ----------------------------------------------------------------------- |
+| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names          |
+| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists        |
+| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types         |
+| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders           |
+| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step       |
+| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                     |
+| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field    |
+| `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh`   |
+| `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` for `MarkdownEditor`, capping its drag-bar height at `70vh` |
 
 ## Stylesheet
 

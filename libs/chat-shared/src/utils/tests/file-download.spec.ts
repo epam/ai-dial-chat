@@ -50,6 +50,34 @@ describe('ensureDownloadFilename', () => {
       ),
     ).toBe('Report.pdf');
   });
+
+  it('appends the MIME-type extension when the title contains a dot that is not a real extension', () => {
+    expect(
+      ensureDownloadFilename(
+        'Blackstone vs. KKR Comparative Intelligence Briefing (Word Document)',
+        'files/bucket/appdata/applications/public/pg/pg-agent__1.0.0/Blackstone_KKR_Detailed_Report.docx',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ),
+    ).toBe(
+      'Blackstone vs. KKR Comparative Intelligence Briefing (Word Document).docx',
+    );
+  });
+
+  it('falls back to the url extension when the title has no real extension and no contentType is given', () => {
+    expect(
+      ensureDownloadFilename(
+        'Report v2. Final (draft)',
+        'files/bucket/report.pdf',
+        undefined,
+      ),
+    ).toBe('Report v2. Final (draft).pdf');
+  });
+
+  it('does not mistake a name ending in "vs." followed by more text for an extension', () => {
+    expect(
+      ensureDownloadFilename('Blackstone vs. KKR Report', undefined, undefined),
+    ).toBe('Blackstone vs. KKR Report');
+  });
 });
 
 describe('getFileExtensionForLanguage', () => {
@@ -137,6 +165,22 @@ describe('downloadTextFile', () => {
     vi.runAllTimers();
 
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+  });
+
+  it('uses the supplied MIME type for the downloaded blob', () => {
+    vi.useFakeTimers();
+    const createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(
+      () => undefined,
+    );
+
+    downloadTextFile('Name,Value', 'table.csv', 'text/csv;charset=utf-8');
+
+    const blob = createObjectURL.mock.calls[0]?.[0] as Blob;
+    expect(blob.type).toBe('text/csv;charset=utf-8');
   });
 });
 

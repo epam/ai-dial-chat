@@ -1,5 +1,6 @@
 {
   "basic": {
+    "loading": "Loading…",
     "searchPlaceholder": "Search...",
     "clearSearch": "Clear search",
     "noResults": "No results found",
@@ -48,6 +49,8 @@
     "quickReplyButtons": "Quick reply buttons",
     "stoppedGenerating": "You stopped generating the response",
     "thinking": "Thinking",
+    "scrollableTable": "Scrollable table",
+    "markdownTableTitle": "Table",
     "showMoreUserMessage": "Show full user message",
     "showLessUserMessage": "Collapse user message"
   },
@@ -90,7 +93,14 @@
     "removeFromFavoritesLabel": "Remove from favorites"
   },
   "catalog": {
-    "searchPlaceholder": "Search models, tools, agents…",
+    "searchPlaceholder": "Search {{entities}}…",
+    "searchEntity": {
+      "models": "models",
+      "applications": "agents",
+      "toolsets": "toolsets",
+      "prompts": "prompts",
+      "skills": "skills"
+    },
     "noResultsTitle": "No results for \"{{query}}\"",
     "sorts": {
       "recentlyUpdated": "Recently Updated",
@@ -327,6 +337,7 @@
     "cancel": "Cancel",
     "add": "Add",
     "save": "Save",
+    "saving": "Saving",
     "select": "Select",
     "close": "Close",
     "apply": "Apply",
@@ -347,6 +358,9 @@
     "regenerateResponse": "Regenerate response",
     "copyResponse": "Copy response",
     "copyAsMarkdown": "Copy markdown",
+    "copyAsCsv": "Copy as CSV",
+    "openInCanvas": "Open in canvas",
+    "copyAsTxt": "Copy as TXT",
     "copyAsJson": "Copy JSON",
     "copyText": "Copy text",
     "likeResponse": "Like response",
@@ -354,11 +368,13 @@
     "useInChat": "Use in chat",
     "newChat": "New chat",
     "download": "Download",
+    "downloadAsCsv": "Download as CSV",
     "logOut": "Log out",
     "copyLink": "Copy link",
     "copyUrl": "Copy URL",
     "logIn": "Log in",
     "retry": "Retry",
+    "reload": "Reload",
     "publish": "Publish",
     "unpublish": "Unpublish",
     "manage": "Manage",
@@ -549,6 +565,9 @@
     "failedTitle": "Error",
     "failed": "{{names}} was not imported. Please try again.",
     "warningAttachmentSkipped": "{{names}} could not be uploaded and were skipped.",
+    "jobWarningAttachmentSkipped": "Some attachments could not be uploaded and were skipped.",
+    "nameListWithRest_one": "{{names}} and {{count}} other",
+    "nameListWithRest_other": "{{names}} and {{count}} others",
     "unsupportedFormat": "This file could not be imported. Please choose a valid export file.",
     "cancelJobAriaLabel": "Cancel importing \"{{fileName}}\"",
     "jobProgressAriaLabel": "Importing \"{{fileName}}\"",
@@ -588,6 +607,9 @@
   "attachments": {
     "downloadFile": "Download file",
     "openInNewTab": "Open in new tab",
+    "removeLabel": "Remove attachment",
+    "retryLabel": "Retry upload",
+    "uploadingLabel": "Uploading",
     "unsupportedType": {
       "title": "File extension not supported",
       "message": "This model can only process {{formats}}. Please upload a file in a supported format."
@@ -844,6 +866,8 @@
     "renameReservedName": "This name is reserved",
     "renameInvalidChars": "Name contains invalid characters",
     "renameNameTooLong": "Name must be 255 characters or fewer",
+    "renameHiddenItemWarning": "A dot at the start of the name will make the item hidden",
+    "nameConsecutiveDots": "Name cannot contain consecutive dots",
     "copyAction": "Copy to",
     "moveAction": "Move to",
     "copyingLabel": "Copying...",
@@ -926,15 +950,20 @@
     "htmlOpenInNewTab": "Open in new tab",
     "htmlViewSource": "View source",
     "htmlViewRendered": "View rendered",
-    "openAppLabel": "Open App",
     "openedInCanvasLabel": "Opened in Canvas",
+    "expandAppLabel": "Expand app",
     "mcpAppTitle": "MCP App",
     "mcpAppLoadErrorLabel": "Failed to load MCP App",
     "mcpAppForbiddenErrorLabel": "You don't have permission to access this MCP App",
     "pdfThumbnailsLabel": "Thumbnails",
     "pdfShowThumbnailsLabel": "Show thumbnails",
     "pdfHideThumbnailsLabel": "Hide thumbnails",
-    "pdfPageNumberLabel": "Page number"
+    "pdfPageNumberLabel": "Page number",
+    "pdfContentLoadingLabel": "Loading the PDF viewer…",
+    "pdfContentErrorLabel": "Failed to load the PDF viewer",
+    "xlsxFormulaLabel": "Formula",
+    "codeContentLoadingLabel": "Loading syntax highlighting…",
+    "codeContentErrorLabel": "Failed to load syntax highlighting"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
@@ -997,15 +1026,19 @@
     "nameLabel": "Name",
     "nameRequired": "Name is required",
     "descriptionLabel": "Description",
-    "iconUrlLabel": "Icon URL",
+    "avatarLabel": "Avatar",
+    "addAvatarButtonLabel": "Add avatar",
+    "avatarCaption": "PNG, JPG or SVG (max 1 MB)",
     "versionLabel": "Version",
     "versionPlaceholder": "e.g. 1.0.0",
-    "topicsLabel": "Topics",
+    "topicsLabel": "Tags",
     "topicsPlaceholder": "Add a topic",
     "locales": {
       "summaryLabel": "Locales",
       "rowLabel": "Locale",
       "popupTitle": "Add locale",
+      "addLabel": "Add locales",
+      "editLabel": "Edit locales",
       "addLocaleLabel": "Add locale",
       "languageLabel": "Language",
       "nameLabel": "Name",
@@ -1026,7 +1059,7 @@
       "namePlaceholder": "Enter application name",
       "descriptionPlaceholder": "Describe your application",
       "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
-      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
+      "versionInvalid": "Version format is invalid (example: 0.0.1)"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
@@ -1040,39 +1073,54 @@
     }
   },
   "toolsetEditor": {
+    "createTitle": "Create toolset",
+    "editTitle": "Edit toolset",
+    "backAriaLabel": "Back to catalog",
+    "metadataSectionTitle": "Metadata",
+    "setupSectionTitle": "Setup",
+    "savingStatus": "Saving",
     "general": {
-      "namePlaceholder": "Enter toolset name",
-      "descriptionPlaceholder": "Describe your toolset"
+      "namePlaceholder": "Enter name",
+      "descriptionPlaceholder": "Describe what this toolset does",
+      "topicsPlaceholder": "Add tags, comma separated",
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settings": {
+      "endpointCaption": "The HTTPS address where the server accepts MCP requests.",
       "endpointRequired": "Endpoint is required",
       "endpointInvalid": "Enter a valid http(s) or sse URL",
       "protocolLabel": "Protocol",
-      "protocolSseDeprecatedLabel": "Deprecated",
       "allowedToolsLabel": "Allowed tools",
-      "allowedToolsPlaceholder": "Add a tool",
-      "copyUrlLabel": "Copy endpoint URL"
+      "allowedToolsPlaceholder": "Add tools, comma separated",
+      "allowedToolsSelectPlaceholder": "Select allowed tools"
     },
     "auth": {
       "sectionTitle": "Authentication",
       "typeOAuth": "OAuth",
       "typeApiKey": "API Key",
-      "typeNone": "Without authentication",
+      "typeNone": "Open access",
+      "openAccessDescription": "Open endpoint, no credentials",
       "withLoginLabel": "With login",
       "withoutLoginLabel": "Without login",
-      "withConfigLabel": "With login & config",
+      "withLoginOAuthLabel": "Standard login",
+      "withConfigOAuthLabel": "Custom login",
       "keyHeaderLabel": "API Key parameter name",
+      "keyHeaderPlaceholder": "Enter API key parameter name",
       "keyHeaderRequired": "Key name is required",
+      "apiKeyPlaceholder": "Enter API key",
       "apiKeyRequired": "API key is required",
       "clientIdLabel": "Client ID",
+      "clientIdPlaceholder": "Enter client ID",
       "clientIdRequired": "Client ID is required",
       "clientSecretLabel": "Client secret",
+      "clientSecretPlaceholder": "Enter client secret",
       "clientSecretRequired": "Client secret is required",
       "authorizationEndpointLabel": "Authorization endpoint",
+      "authorizationEndpointPlaceholder": "Enter authorization endpoint",
       "tokenEndpointLabel": "Token endpoint",
+      "tokenEndpointPlaceholder": "Enter token endpoint",
       "scopesLabel": "Scopes",
-      "scopesPlaceholder": "Add a scope",
-      "loggedInLabel": "Logged in",
+      "scopesPlaceholder": "Enter scopes",
       "logoutConfirmDescription": "Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again."
     },
     "error": {

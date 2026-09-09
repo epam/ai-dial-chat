@@ -42,7 +42,7 @@ interface McpTool {
 }
 
 const RESOURCE_CACHE_TTL_MS = 30_000;
-const TOOL_CALL_TIMEOUT_MS = 30_000;
+const TOOL_CALL_TIMEOUT_MS = 60_000;
 
 /**
  * Extracts the JSON-RPC message from an MCP Streamable HTTP SSE response
@@ -134,6 +134,20 @@ export class McpAppService {
         return { body: await response.text(), headers };
       },
     });
+  }
+
+  /**
+   * Lists every tool name exposed by an MCP-capable deployment's
+   * `tools/list`, unfiltered — used to populate the toolset editor's
+   * "Allowed tools" picker.
+   */
+  async listToolNames(
+    deploymentId: string,
+    kind: McpDeploymentKindDto,
+    token: string,
+  ): Promise<string[]> {
+    const tools = await this.listTools(deploymentId, kind, token);
+    return tools.map((tool) => tool.name);
   }
 
   private async listTools(

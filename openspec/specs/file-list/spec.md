@@ -116,6 +116,20 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 
 ---
 
+#### Scenario: Reserved root-level config folders are excluded from listing
+
+- **GIVEN** DIAL Core's response for a bucket root includes folder items
+  named `.client_data` or `clientdata` (the folders `UserConfigService`
+  itself writes user config and legacy migration data into) with an empty
+  `parentPath`
+- **WHEN** the service normalizes `items`
+- **THEN** those root-level folder items are excluded from the returned
+  `items`, for every caller of `listFiles` (`GET /api/v1/files/list`,
+  `GET /api/v1/files/public`) as well as `listSharedFiles` and
+  `listSharedByMe`
+- **AND** a folder with the same name nested below the root (non-empty
+  `parentPath`) is NOT excluded
+
 #### Scenario: Bucket without physical folder objects (virtual folders)
 
 - **GIVEN** a bucket whose storage has only object keys such as `reports/q1.pdf` and `reports/q2.pdf` but no physical object at `reports/`

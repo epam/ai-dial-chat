@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 
 vi.mock('react-syntax-highlighter', () => ({
@@ -23,6 +24,18 @@ const SECTION_ROW_MARKDOWN = `| Name | Description |
 const EMPTY_TABLE_MARKDOWN = `| Name | Description |
 | --- | --- |`;
 
+const TABLE_ACTION_LABELS = {
+  copyCsvLabel: 'Copy as CSV',
+  copyTxtLabel: 'Copy as TXT',
+  copyMarkdownLabel: 'Copy as Markdown',
+  copiedLabel: 'Copied!',
+  downloadCsvLabel: 'Download as CSV',
+};
+
+const ALIGNED_TABLE_MARKDOWN = `| Right | Plain | Left | Center |
+| ---: | --- | :--- | :---: |
+| 1 | 2 | 3 | 4 |`;
+
 const FENCED_TS_MARKDOWN = `\`\`\`typescript
 const x = 1;
 \`\`\``;
@@ -45,7 +58,24 @@ const TWO_PARAGRAPHS_MARKDOWN = 'Paragraph one.\n\nParagraph two.';
 
 const LIST_MARKDOWN = '- Item one\n- Item two\n- Item three';
 
+/* Runs past nine so the markers that overflowed a too-narrow start padding
+   (issue #8655) are the ones under test. */
+const ORDERED_LIST_MARKDOWN = Array.from(
+  { length: 17 },
+  (_, index) => `${index + 1}. Item ${index + 1}`,
+).join('\n');
+
+const DISPLAY_MATH_MARKDOWN = `Einstein's field equations:
+
+$$
+R_{\\mu\\nu} - \\frac{1}{2}g_{\\mu\\nu}R + \\Lambda g_{\\mu\\nu} = \\frac{8\\pi G}{c^4}T_{\\mu\\nu}
+$$`;
+
 describe('MarkdownRenderer', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('renders GFM tables in a horizontally scrollable container', () => {
     render(<MarkdownRenderer content={TABLE_MARKDOWN} />);
 
@@ -68,6 +98,83 @@ describe('MarkdownRenderer', () => {
     expect(tableWrapper?.className).toContain('rounded-xl');
     expect(tableWrapper?.className).toContain('border');
     expect(scrollContainer?.className).toContain('overflow-x-auto');
+  });
+
+  it('renders table actions when table action labels are supplied', () => {
+    render(
+      <MarkdownRenderer
+        content={TABLE_MARKDOWN}
+        tableActionLabels={TABLE_ACTION_LABELS}
+        tableDownloadFilename="report.csv"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Copy as CSV' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy as TXT' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Copy as Markdown' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Download as CSV' }),
+    ).toBeTruthy();
+  });
+
+  it('renders tables without actions when table action labels are absent', () => {
+    render(<MarkdownRenderer content={TABLE_MARKDOWN} />);
+
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('forwards tableOnOpenInCanvas to the table, calling it with the serialized Markdown', async () => {
+    /* The action button's Tooltip mounts via floating-ui, which requires
+     * IntersectionObserver — absent by default in jsdom. */
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe() {
+          // No-op in JSDOM.
+        }
+        unobserve() {
+          // No-op in JSDOM.
+        }
+        disconnect() {
+          // No-op in JSDOM.
+        }
+      },
+    );
+
+    const user = userEvent.setup({ delay: null });
+    const tableOnOpenInCanvas = vi.fn();
+    render(
+      <MarkdownRenderer
+        content={TABLE_MARKDOWN}
+        tableActionLabels={{
+          ...TABLE_ACTION_LABELS,
+          openInCanvasLabel: 'Open in canvas',
+        }}
+        tableOnOpenInCanvas={tableOnOpenInCanvas}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Open in canvas' }));
+
+    expect(tableOnOpenInCanvas).toHaveBeenCalledWith(
+      '| Name | Description |\n| :-- | :-- |\n| Alpha | A long table value |',
+    );
+  });
+
+  it('does not render Open in Canvas when tableOnOpenInCanvas is absent', () => {
+    render(
+      <MarkdownRenderer
+        content={TABLE_MARKDOWN}
+        tableActionLabels={{
+          ...TABLE_ACTION_LABELS,
+          openInCanvasLabel: 'Open in canvas',
+        }}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Open in canvas' })).toBeNull();
   });
 
   it('marks column headers with scope="col" and sticky uppercase styling', () => {
@@ -105,6 +212,36 @@ describe('MarkdownRenderer', () => {
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeTruthy();
     // Only the header row exists — no body rows were rendered.
     expect(screen.getAllByRole('row')).toHaveLength(1);
+  });
+
+  it('applies GFM column alignment to header and body cells', () => {
+    render(<MarkdownRenderer content={ALIGNED_TABLE_MARKDOWN} />);
+
+    const alignmentByColumn = [
+      { header: 'Right', cell: '1', expected: 'text-end' },
+      { header: 'Left', cell: '3', expected: 'text-start' },
+      { header: 'Center', cell: '4', expected: 'text-center' },
+    ];
+
+    alignmentByColumn.forEach(({ header, cell, expected }) => {
+      const columnHeader = screen.getByRole('columnheader', { name: header });
+      const bodyCell = screen.getByRole('cell', { name: cell });
+
+      expect(columnHeader.className).toContain(expected);
+      expect(bodyCell.className).toContain(expected);
+    });
+
+    /* An explicit alignment replaces the header default rather than stacking
+       on it, and an unaligned column keeps the inherited start alignment. */
+    expect(
+      screen.getByRole('columnheader', { name: 'Center' }).className,
+    ).not.toContain('text-start');
+    expect(
+      screen.getByRole('columnheader', { name: 'Plain' }).className,
+    ).toContain('text-start');
+    expect(screen.getByRole('cell', { name: '2' }).className).not.toMatch(
+      /text-(start|center|end)/,
+    );
   });
 
   it('merges table class overrides with the scrolling defaults', () => {
@@ -249,6 +386,41 @@ describe('MarkdownRenderer', () => {
     expect(document.querySelectorAll('br').length).toBe(2);
   });
 
+  it('renders a literal <br> tag in the source as a real line break', () => {
+    render(<MarkdownRenderer content="Line one <br>Line two" />);
+
+    // <br> has no accessible role, so this needs direct DOM access.
+    // eslint-disable-next-line testing-library/no-node-access
+    const paragraph = document.querySelector('p');
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(paragraph?.querySelectorAll('br').length).toBe(1);
+    expect(paragraph?.textContent).not.toContain('<br>');
+  });
+
+  it('renders a <cit data-id> element as literal text by default', () => {
+    render(
+      <MarkdownRenderer content='Patient meets criteria<cit data-id="e1"></cit>.' />,
+    );
+
+    expect(
+      screen.getByText('Patient meets criteria<cit data-id="e1"></cit>.'),
+    ).toBeTruthy();
+  });
+
+  it('lets a host-supplied components.cit override render the element', () => {
+    render(
+      <MarkdownRenderer
+        content='Patient meets criteria<cit data-id="e1"></cit>.'
+        components={{
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...({ cit: () => <span>[1]</span> } as any),
+        }}
+      />,
+    );
+
+    expect(screen.getByText('[1]')).toBeTruthy();
+  });
+
   it('keeps blank-line-separated paragraphs as two distinct <p> elements with no extra break inside either', () => {
     render(<MarkdownRenderer content={TWO_PARAGRAPHS_MARKDOWN} />);
 
@@ -262,6 +434,33 @@ describe('MarkdownRenderer', () => {
     expect(firstParagraph.querySelectorAll('br').length).toBe(0);
     // eslint-disable-next-line testing-library/no-node-access
     expect(secondParagraph.querySelectorAll('br').length).toBe(0);
+  });
+
+  it('gives lists start padding wide enough for a multi-digit marker', () => {
+    const { rerender } = render(<MarkdownRenderer content={LIST_MARKDOWN} />);
+
+    /* An `outside` marker is painted in this padding — too little and a
+       two-digit `17.` is clipped by whichever ancestor scrolls. The value is
+       in `em` so it tracks the font size the host sets. */
+    expect(screen.getByRole('list').className).toContain('ps-[2em]');
+
+    rerender(<MarkdownRenderer content={ORDERED_LIST_MARKDOWN} />);
+
+    const orderedList = screen.getByRole('list');
+    expect(orderedList.className).toContain('ps-[2em]');
+    expect(orderedList.className).toContain('list-decimal');
+    // Both list kinds share the indent, so a document mixing them stays aligned.
+    expect(orderedList.className).not.toContain('ps-5');
+  });
+
+  it('lets a caller override the list start padding', () => {
+    render(
+      <MarkdownRenderer content={LIST_MARKDOWN} classNames={{ ul: 'ps-10' }} />,
+    );
+
+    const list = screen.getByRole('list');
+    expect(list.className).toContain('ps-10');
+    expect(list.className).not.toContain('ps-[2em]');
   });
 
   it('renders a list as list items rather than line-broken plain text', () => {
@@ -299,23 +498,90 @@ describe('MarkdownRenderer', () => {
     expect(codeEl.querySelectorAll('br').length).toBe(0);
   });
 
-  it('renders double-dollar LaTeX as a KaTeX math element', () => {
+  it('renders double-dollar LaTeX as a KaTeX math element once the engine loads', async () => {
     render(<MarkdownRenderer content="Equation: $$x^2 + y^2 = z^2$$" />);
 
     /*
-     * MathML's `<math>` element crashes `getByRole` under jsdom (jsdom
+     * KaTeX loads on demand (see the "math path" describe block below), so
+     * the <math> element only appears after that async load resolves.
+     * MathML's `<math>` element also crashes `getByRole` under jsdom (jsdom
      * cannot compute styles for MathML elements), so a plain selector is
      * the only reliable way to assert its presence here.
      */
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(document.querySelector('math')).toBeTruthy();
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(document.querySelector('math')).toBeTruthy();
+    });
   });
 
-  it('renders single-dollar inline LaTeX as a KaTeX math element', () => {
+  it('wraps block LaTeX in a horizontally scrollable container so a wide formula stays reachable', async () => {
+    render(<MarkdownRenderer content={DISPLAY_MATH_MARKDOWN} />);
+
+    /*
+     * MathML elements have no accessible role under jsdom, so the scroll
+     * container is reached by walking up from the <math> element itself —
+     * which only exists once the on-demand KaTeX load has resolved.
+     */
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(document.querySelector('math[display="block"]')).toBeTruthy();
+    });
+
+    // eslint-disable-next-line testing-library/no-node-access
+    const math = document.querySelector('math[display="block"]');
+    // eslint-disable-next-line testing-library/no-node-access
+    const katexSpan = math?.parentElement;
+    // eslint-disable-next-line testing-library/no-node-access
+    const scrollContainer = katexSpan?.parentElement;
+
+    expect(katexSpan?.className).toContain('katex');
+    expect(scrollContainer?.className).toContain('overflow-x-auto');
+    expect(scrollContainer?.className).toContain('max-w-full');
+    expect(scrollContainer?.className).toContain('min-w-0');
+  });
+
+  it('keeps KaTeX wrapper classes through sanitization but drops classes from raw HTML', async () => {
+    render(
+      <MarkdownRenderer
+        content={`${DISPLAY_MATH_MARKDOWN}\n\n<span class="injected">text</span><script>alert(1)</script>`}
+      />,
+    );
+
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- class-level assertions have no semantic query
+      expect(document.querySelector('span.katex')).toBeTruthy();
+    });
+
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('span.injected')).toBeNull();
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('script')).toBeNull();
+  });
+
+  it('leaves inline LaTeX inside its paragraph rather than in a scroll container', async () => {
+    render(<MarkdownRenderer content="Cost: $x + y$ per unit" />);
+
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- see note above: MathML has no role under jsdom
+      expect(document.querySelector('math')).toBeTruthy();
+    });
+
+    // eslint-disable-next-line testing-library/no-node-access
+    const math = document.querySelector('math');
+    // eslint-disable-next-line testing-library/no-node-access
+    const katexSpan = math?.parentElement;
+
+    expect(math?.getAttribute('display')).toBeNull();
+    expect(katexSpan?.parentElement?.tagName).toBe('P');
+  });
+
+  it('renders single-dollar inline LaTeX as a KaTeX math element once the engine loads', async () => {
     render(<MarkdownRenderer content="Cost: $x + y$" />);
 
-    // eslint-disable-next-line testing-library/no-node-access -- see note above: getByRole('math') crashes under jsdom
-    expect(document.querySelector('math')).toBeTruthy();
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- see note above: getByRole('math') crashes under jsdom
+      expect(document.querySelector('math')).toBeTruthy();
+    });
   });
 
   it('lets a long unbreakable URL wrap so a clipped ancestor cannot cut it off', () => {
@@ -348,4 +614,74 @@ describe('MarkdownRenderer', () => {
    * npm package (remark-math's own import of micromark-extension-math), so this can't be
    * asserted through this component test even though a real `vite build` picks up the alias
    * correctly (verified manually: the built dist bundle contains the aliased extension). */
+
+  describe('deferred heavy dependencies', () => {
+    it('renders plain text immediately with no math element and no highlighted-code marker (fast path)', () => {
+      render(
+        <MarkdownRenderer content="Just a plain sentence, nothing fancy." />,
+      );
+
+      expect(
+        screen.getByText('Just a plain sentence, nothing fancy.'),
+      ).toBeTruthy();
+      // eslint-disable-next-line testing-library/no-node-access -- no accessible role for either check; see the math-test notes above
+      expect(document.querySelector('math')).toBeNull();
+      // eslint-disable-next-line testing-library/no-node-access -- the mocked Prism output carries this attribute; its absence confirms the highlighter never loaded
+      expect(document.querySelector('[data-language]')).toBeNull();
+    });
+
+    it('highlights a fenced code block once the syntax-highlighting engine loads (code-block path)', async () => {
+      render(<MarkdownRenderer content={FENCED_TS_MARKDOWN} />);
+
+      await waitFor(() => {
+        // eslint-disable-next-line testing-library/no-node-access -- the mocked Prism output has no accessible role
+        const highlighted = document.querySelector(
+          '[data-language="typescript"]',
+        );
+        expect(highlighted).toBeTruthy();
+      });
+    });
+
+    it('renders a plain-text message, then gains a code fence mid-stream and highlights it once loaded', async () => {
+      const { rerender } = render(
+        <MarkdownRenderer content="Let me think about that..." />,
+      );
+
+      expect(screen.getByText('Let me think about that...')).toBeTruthy();
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(document.querySelector('[data-language]')).toBeNull();
+
+      rerender(
+        <MarkdownRenderer
+          content={`Let me think about that...\n\n${FENCED_TS_MARKDOWN}`}
+        />,
+      );
+
+      await waitFor(() => {
+        // eslint-disable-next-line testing-library/no-node-access
+        const highlighted = document.querySelector(
+          '[data-language="typescript"]',
+        );
+        expect(highlighted).toBeTruthy();
+      });
+    });
+
+    it('renders a plain-text message, then gains a math block mid-stream and renders it once loaded', async () => {
+      const { rerender } = render(
+        <MarkdownRenderer content="Let me think about that..." />,
+      );
+
+      // eslint-disable-next-line testing-library/no-node-access -- see math-test notes above
+      expect(document.querySelector('math')).toBeNull();
+
+      rerender(
+        <MarkdownRenderer content="Let me think about that... $$x^2 = 4$$" />,
+      );
+
+      await waitFor(() => {
+        // eslint-disable-next-line testing-library/no-node-access
+        expect(document.querySelector('math')).toBeTruthy();
+      });
+    });
+  });
 });

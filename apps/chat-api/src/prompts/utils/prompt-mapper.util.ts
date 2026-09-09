@@ -144,7 +144,7 @@ export const mapPromptToResponse = (
   name: prompt.name ?? nameFromId(path),
   description: prompt.description,
   content: prompt.content ?? '',
-  folderId: prompt.folderId ?? folderIdFromId(path),
+  folderId: folderIdFromId(path),
   author: metadata.author,
   createdAt: metadata.createdAt ?? 0,
   updatedAt: metadata.updatedAt ?? 0,

@@ -1,7 +1,9 @@
 import type { ConfigService } from '@nestjs/config';
+import type { Request, Response } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import {
+  clearLegacyCookies,
   getCookieOptions,
   getCookieSameSite,
   getSessionCookieName,
@@ -46,5 +48,53 @@ describe('cookie options', () => {
       sameSite: 'lax',
     });
     expect(getSessionCookieName(config)).toBe('chat.sess');
+  });
+});
+
+describe('clearLegacyCookies', () => {
+  const makeRes = (): Response => ({ cookie: vi.fn() }) as unknown as Response;
+
+  it('does nothing when AUTH_LEGACY_COOKIE_NAMES is unset', () => {
+    const config = makeConfig();
+    const res = makeRes();
+    const req = { cookies: { 'next-auth.session-token': 'value' } } as Request;
+
+    clearLegacyCookies(req, res, config);
+
+    expect(res.cookie).not.toHaveBeenCalled();
+  });
+
+  it('expires only legacy cookies actually present on the request', () => {
+    const config = makeConfig({
+      AUTH_LEGACY_COOKIE_NAMES: [
+        '__Secure-next-auth.session-token',
+        '__Host-next-auth.csrf-token',
+      ],
+    });
+    const res = makeRes();
+    const req = {
+      cookies: { '__Secure-next-auth.session-token': 'stale' },
+    } as Request;
+
+    clearLegacyCookies(req, res, config);
+
+    expect(res.cookie).toHaveBeenCalledOnce();
+    expect(res.cookie).toHaveBeenCalledWith(
+      '__Secure-next-auth.session-token',
+      '',
+      expect.objectContaining({ maxAge: 0 }),
+    );
+  });
+
+  it('does nothing when the request has no cookies at all', () => {
+    const config = makeConfig({
+      AUTH_LEGACY_COOKIE_NAMES: ['__Secure-next-auth.session-token'],
+    });
+    const res = makeRes();
+    const req = {} as Request;
+
+    clearLegacyCookies(req, res, config);
+
+    expect(res.cookie).not.toHaveBeenCalled();
   });
 });

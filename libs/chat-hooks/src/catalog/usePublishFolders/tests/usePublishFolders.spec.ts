@@ -162,6 +162,47 @@ describe('usePublishFolders', () => {
     expect(vi.mocked(listPublicFiles).mock.calls).toHaveLength(callsBefore);
   });
 
+  /*
+   * Issue #8568: "Add child" on a folder the user had not expanded yet also
+   * expands it, which starts that folder's listing. The created folder used
+   * to live in the same listing cache, so the listing landing afterwards
+   * replaced it and the new folder vanished — while folders higher up in the
+   * hierarchy, already listed during navigation, kept theirs.
+   */
+  it('keeps a folder created under a not-yet-listed folder when that listing lands', async () => {
+    let releaseChildListing: (() => void) | undefined;
+    const { result } = render({
+      listPublicFiles: async ({ path }: { path?: string }) => {
+        if (path == null) return response([makeFolder('Org')]);
+        if (path === 'Org/') {
+          await new Promise<void>((resolve) => {
+            releaseChildListing = resolve;
+          });
+        }
+        return response([]);
+      },
+    });
+    await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
+
+    act(() => {
+      result.current.onExpandedPathsChange(new Set(['Org']));
+    });
+    await act(async () => {
+      await result.current.onCreatePublishFolder(['Org'], 'Drafts');
+    });
+    expect(
+      result.current.folderItems[0].children?.map((child) => child.name),
+    ).toEqual(['Drafts']);
+
+    await act(async () => {
+      releaseChildListing?.();
+    });
+
+    expect(
+      result.current.folderItems[0].children?.map((child) => child.name),
+    ).toEqual(['Drafts']);
+  });
+
   it('denies write access under a restricted folder segment', async () => {
     const { result } = render();
     await waitFor(() => expect(result.current.folderItems).toHaveLength(1));

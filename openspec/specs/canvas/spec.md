@@ -110,8 +110,8 @@ For `AttachmentType.File` attachments, `openFileCanvas` (`libs/attachment-canvas
 | `text/markdown` MIME | `resolveMarkdownCanvasContent` | `MarkdownCanvasContent` |
 | `application/json` MIME | `resolveJsonCanvasContent` | `JsonCanvasContent` or `PlainTextCanvasContent` |
 | `application/pdf` MIME | `resolvePdfCanvasContent` | `PdfCanvasContent` |
-| DOCX/XLSX/PPTX MIME (`getOoxmlFileType('', contentType)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
-| `docx`, `xlsx`, `pptx` extension (`getOoxmlFileType(fileName)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
+| DOCX/XLSX/PPTX/CSV MIME (`getOoxmlFileType('', contentType)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
+| `docx`, `xlsx`, `pptx`, `csv` extension (`getOoxmlFileType(fileName)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
 | `md`, `markdown` extension | `resolveMarkdownCanvasContent` | `MarkdownCanvasContent` |
 | `json` extension | `resolveJsonCanvasContent` | `JsonCanvasContent` or `PlainTextCanvasContent` (parse failure) |
 | `pdf` extension | `resolvePdfCanvasContent` | `PdfCanvasContent` |
@@ -122,7 +122,7 @@ For `AttachmentType.File` attachments, `openFileCanvas` (`libs/attachment-canvas
 
 Extension checks for `md`/`markdown` and `json` run *before* the generic `isTextPreviewable` branch. The `html`/`htm` branch runs before the generic `isTextPreviewable` branch. The `isTextPreviewable` branch routes to `resolveCodeCanvasContent` (returning `CodeCanvasContent`) rather than `resolveTextCanvasContent`.
 
-Each Office check sits immediately ahead of the switch keyed on the same signal — the MIME one before the `contentType` switch, the extension one before the `ext` switch — and both return `true` even when their resolver yields nothing, opening `Unsupported` content instead, because the format *was* recognised (see the `attachment-canvas-ooxml-viewer` capability).
+Each document-renderer check sits immediately ahead of the switch keyed on the same signal — the MIME one before the `contentType` switch, the extension one before the `ext` switch — and both return `true` even when their resolver yields nothing, opening `Unsupported` content instead, because the format *was* recognised (see the `attachment-canvas-ooxml-viewer` capability).
 
 ---
 
@@ -335,9 +335,9 @@ Images are rendered by the `ImageContent` sub-component, defined inside `libs/at
 
 #### Content resolution
 
-`resolvePdfCanvasContent` in `libs/chat-hooks/src/files/attachment-canvas.ts` is `async` and resolves `url` via the shared `resolveAttachmentBlobUrl` helper (see "Shared content resolution helpers" below). A resolved `ErrorCanvasContent` is returned as-is; a resolved string is wrapped as `{ type: AttachmentContentType.Pdf, url }`; `undefined` returns `null`.
+`resolvePdfCanvasContent` in `libs/chat-hooks/src/files/attachment-canvas.ts` is `async` and resolves `url` via the shared `resolveAttachmentBlobUrl` helper (see "Shared content resolution helpers" below). A resolved `ErrorCanvasContent` is returned as-is; a resolved string is wrapped as `{ type: AttachmentContentType.Pdf, url }`. When `resolveAttachmentBlobUrl` returns `undefined` (no local file, DIAL URL, preview URL, or inline data), `attachment.url` is set, is not a DIAL `files/` id, and is a fetchable absolute URL (`isFetchableExternalUrl`: `http:`, `https:`, or `blob:` scheme — a relative or opaque string, e.g. a bare citation/reference id, fails this check and is rejected rather than handed to the viewer as an unfetchable `url`), that raw external URL is used directly as `{ type: AttachmentContentType.Pdf, url: attachment.url }` instead of failing — the same fallback `annotationToPdfCanvasContent`/`referenceAttachmentToPdfCanvasContent` use for a citation whose source is an external PDF, since the PDF canvas viewer fetches and renders the URL itself. Otherwise `undefined` returns `null`.
 
-Precedence (via `resolveAttachmentBlobUrl`): local `attachment.file` (`URL.createObjectURL`) → `resolveDialUrl(attachment)` fetched via `fetchDialBlob` (LRU-cached; a non-OK response or network error yields `ErrorCanvasContent` instead) → `attachment.previewUrl` → inline base64 `attachment.data` decoded into a `Blob` (`type: attachment.contentType`) and turned into an object URL via `URL.createObjectURL`.
+Precedence (via `resolveAttachmentBlobUrl`): local `attachment.file` (`URL.createObjectURL`) → `resolveDialUrl(attachment)` fetched via `fetchDialBlob` (LRU-cached; a non-OK response or network error yields `ErrorCanvasContent` instead) → `attachment.previewUrl` → inline base64 `attachment.data` decoded into a `Blob` (`type: attachment.contentType`) and turned into an object URL via `URL.createObjectURL` → (PDF only) the raw `attachment.url` when it is a non-DIAL, fetchable (`http:`/`https:`/`blob:`) external URL.
 
 This covers stage attachments (e.g. from the DIAL Annotation API) that carry the PDF as inline base64 `data` with no `url` — `DocumentPreview` receives a `blob:` object URL and loads it the same way it would a remote URL. A DIAL-hosted PDF is fetched once at resolution time (to classify load/permission failures before rendering); `DocumentPreview`'s own `loadFileCb` then resolves that `blob:` URL from the in-memory blob store, so this does not add a second network round-trip.
 
@@ -732,3 +732,136 @@ When the registry is empty or no entry matches, `openFileCanvas` behaves exactly
 - **GIVEN** `fileName` is `'attachment'`, the content has no URL, and the MIME type is absent or not present in `MIME_TYPE_EXT_MAP`
 - **WHEN** `downloadAttachmentContent` is called
 - **THEN** the downloaded file is named `'attachment'` — no extension is appended and the download still completes
+
+### Requirement: PDF worker preparation is awaited, shared, and retryable
+
+`PdfContent` SHALL NOT mount its underlying `DocumentPreview` viewer until the host-supplied `configurePdfWorker` callback's returned promise (when the prop is supplied) has resolved. Concurrent PDF opens that trigger preparation while it is already in flight SHALL share the same pending preparation rather than invoking `configurePdfWorker` again. A successful preparation SHALL be memoized so later PDF opens do not re-invoke `configurePdfWorker`. A rejected preparation SHALL clear its retryable state so a later attempt invokes `configurePdfWorker` again instead of the rejection being cached permanently. When `configurePdfWorker` is omitted, `DocumentPreview` mounts immediately, preserving the existing CDN-hosted worker fallback.
+
+#### Scenario: Viewer waits for preparation to resolve
+
+- **WHEN** a PDF attachment is opened and `configurePdfWorker` is supplied
+- **THEN** `DocumentPreview` does not mount until the callback's returned promise resolves
+
+#### Scenario: Concurrent opens share one in-flight preparation
+
+- **WHEN** a second PDF attachment is opened while an earlier preparation triggered by `configurePdfWorker` is still pending
+- **THEN** `configurePdfWorker` is not invoked a second time, and both opens proceed once the single pending preparation resolves
+
+#### Scenario: A later PDF open reuses a successful preparation
+
+- **WHEN** a PDF attachment is opened after `configurePdfWorker` has already resolved successfully in the same session
+- **THEN** `configurePdfWorker` is not invoked again and the viewer mounts immediately
+
+#### Scenario: A failed preparation can be retried
+
+- **WHEN** `configurePdfWorker`'s returned promise rejects, and the user retries (or opens another PDF) afterward
+- **THEN** `configurePdfWorker` is invoked again rather than the earlier rejection being reused
+
+#### Scenario: Omitted adapter skips the preparation gate
+
+- **WHEN** `configurePdfWorker` is not supplied
+- **THEN** `DocumentPreview` mounts immediately using the existing CDN-hosted worker fallback, unchanged from current behavior
+
+### Requirement: PDF citation preview navigates to the annotation's referenced page independent of highlight geometry
+
+When opening a PDF citation or a reference-only PDF-page chip in the attachment canvas, the panel SHALL navigate to the page specified by the triggering annotation's/reference's page number, whether or not that page's bounding box is renderable as a visible highlight.
+
+`PdfCanvasContent` (`libs/attachment-canvas/src/models/attachment-canvas.ts`) SHALL include an optional `page?: number` field — a 1-based page to navigate to on initial load, independent of `highlights`/`selectedHighlightId`.
+
+`annotationToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL set `page` from the clicked annotation's own `body.selector` (single object or array), taking the first `pdf_bbox` entry with an integer `page >= 1`, skipping malformed entries and invalid pages; otherwise `page` is `undefined`. This selection SHALL use the exact annotation the caller passes in (the annotation the user clicked/selected within a grouped citation), never the group's `primaryAnnotation`, and SHALL NOT derive the page from `body.title` or any other display text.
+
+`referenceAttachmentToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL likewise set `page` to the parsed page fragment when a reference-only PDF URL carries one (e.g. `files/{bucket}/report.pdf#page=81`).
+
+`PdfContent` (`libs/attachment-canvas/src/components/PdfContent/PdfContent.tsx`) SHALL accept a `selectedPageNumber?: number` prop, forward it directly to the vendor `DocumentPreview`'s own `selectedPageNumber` prop, and prefer it over the highlight-bbox lookup when initialising and syncing its internal `selectedPage` state (which also drives the thumbnails panel's scroll position). `AttachmentCanvasBody` SHALL pass `content.page` as this prop when rendering `PdfCanvasContent`.
+
+The mapper SHALL find the group by exact annotation membership, not source URL alone, and include highlights only from that group's annotations for the selected PDF. It SHALL omit a selected highlight ID when no generated highlight matches. Highlight generation SHALL ignore malformed selectors, invalid pages, and non-finite coordinates, while retaining valid zero-area boxes. Download behavior and non-PDF routing SHALL remain unchanged.
+
+The wrapper SHALL NOT schedule its default-page-1 fallback when an explicit page or selected highlight is present. This prevents wrapper-originated resets; asynchronous vendor auto-zoom resets remain a diagnostic investigation, not a verified fix in this change.
+
+**i18n**: none — no new user-visible strings.
+**RTL**: none — no new UI; page navigation is an internal viewer scroll operation.
+**Feature flag**: none.
+
+#### Scenario: Citation with page 1 opens page 1
+
+- **WHEN** the user clicks Preview for a PDF citation whose annotation has a `pdf_bbox` selector with `page: 1`
+- **THEN** the canvas opens with `PdfCanvasContent.page === 1` and the viewer navigates to page 1
+
+#### Scenario: Citation with page 3 opens page 3
+
+- **WHEN** the user clicks Preview for a PDF citation whose annotation has a `pdf_bbox` selector with `page: 3`
+- **THEN** the canvas opens with `PdfCanvasContent.page === 3` and the viewer navigates to page 3
+
+#### Scenario: Navigation succeeds with an all-zero bounding box
+
+- **WHEN** the clicked annotation's `pdf_bbox` selector has `x1: 0, y1: 0, x2: 0, y2: 0` and `page: 5`
+- **THEN** `PdfCanvasContent.page` is `5` and the viewer navigates to page 5, even though no visible highlight rectangle is rendered for that annotation
+
+#### Scenario: Valid non-zero bounding boxes still render as highlights
+
+- **WHEN** the clicked annotation's `pdf_bbox` selector has non-zero coordinates
+- **THEN** `PdfCanvasContent.highlights`/`selectedHighlightId` are populated exactly as before, and the highlight renders at its bounding box in addition to the viewer navigating to `page`
+
+#### Scenario: Two citations for the same PDF at different pages open their respective pages
+
+- **WHEN** the user previews one citation with `page: 2` and then, in the same canvas session, a second citation for the same source PDF with `page: 9`
+- **THEN** each preview's `PdfCanvasContent.page` matches its own annotation's page, and the viewer navigates to page 2 then page 9 respectively
+
+#### Scenario: A grouped citation opens the page of the currently selected annotation, not the group's primary annotation
+
+- **WHEN** a citation group contains annotations for pages 2 and 7 of the same PDF, the group's `primaryAnnotation` is the page-2 entry, and the user has switched the popup to the page-7 annotation before clicking Preview
+- **THEN** `annotationToPdfCanvasContent` is called with the page-7 annotation and returns `PdfCanvasContent.page === 7`
+
+#### Scenario: Missing or invalid page data falls back to the existing default
+
+- **WHEN** the clicked annotation has no `pdf_bbox` selector, or its `page` is missing, non-integer, or less than 1
+- **THEN** `getAnnotationPdfPage` returns `undefined`, `PdfCanvasContent.page` is `undefined`, and the canvas falls back to the existing default behavior (page 1) without throwing
+
+#### Scenario: Reference-only PDF-page reference also navigates independent of highlight geometry
+
+- **WHEN** a reference-only attachment's `reference_url` is `files/{bucket}/report.pdf#page=81`
+- **THEN** `referenceAttachmentToPdfCanvasContent` returns `PdfCanvasContent.page === 81` in addition to its existing zero-area invisible highlight, and the viewer navigates to page 81
+
+#### Scenario: Non-PDF citations and plain PDF previews are unaffected
+
+- **WHEN** an annotation's source attachment is not `application/pdf`, or a PDF is opened directly (not through a citation) with no page data
+- **THEN** `PdfCanvasContent.page` is not set by this requirement's logic, and the existing preview/open behavior for that content type is unchanged
+
+#### Scenario: Malformed entries precede a valid page
+
+- **WHEN** body selectors contain null, a non-positive page, and then a valid `pdf_bbox` with page 7
+- **THEN** page 7 is selected without throwing
+
+#### Scenario: Separate markers share a PDF and a group includes another PDF
+
+- **WHEN** a selected annotation belongs to the second cit group, both groups cite the same PDF, and its group also cites a different PDF
+- **THEN** preview highlights come only from the selected group's matching PDF annotations, and the selected highlight exists when valid geometry is available
+
+#### Scenario: Explicit page without a highlight survives wrapper readiness
+
+- **WHEN** the viewer reports readiness for page 3 with no selected highlight
+- **THEN** the wrapper does not schedule or invoke its page-1 fallback
+
+### Requirement: PDF and code content surfaces provide accessible loading, error, and retry states
+
+The `PdfContent` and `CodeContent` dynamic-import and runtime-preparation paths SHALL each provide a local loading state exposed as `role="status"` with polite live-region behavior, and a local failure state exposed as `role="alert"` distinct from the unrelated `AttachmentContentType.Error` content-fetch failure state. A failure SHALL NOT strand a permanent loading indicator and SHALL NOT propagate to replace the entire canvas or application shell. The failure state SHALL offer a keyboard-accessible, labeled retry control with an approximately 44×44 CSS-pixel touch target on mobile that re-attempts the failed dynamic import or runtime preparation — including re-issuing the underlying module fetch rather than reusing an already-rejected import.
+
+#### Scenario: PDF dynamic import failure shows a retryable error
+
+- **WHEN** the dynamic import backing the PDF preview feature rejects
+- **THEN** the canvas shows a `role="alert"` message with a labeled retry control instead of an indefinite spinner or an uncaught error reaching an ancestor error boundary
+
+#### Scenario: Code syntax-highlighting failure shows a retryable error
+
+- **WHEN** the dynamic import backing syntax highlighting rejects for a non-plaintext language
+- **THEN** the code panel shows a `role="alert"` message with a labeled retry control, without discarding the already-available plain-text content
+
+#### Scenario: Retry re-attempts the failed import
+
+- **WHEN** the user activates the retry control after a dynamic-import or preparation failure
+- **THEN** a new import/preparation attempt is issued, and a subsequent success renders the real PDF or syntax-highlighted content
+
+#### Scenario: Loading state is announced without stealing focus
+
+- **WHEN** the PDF or syntax-highlighting dynamic import is pending
+- **THEN** an accessible polite status announcement reflects the pending state without moving keyboard focus

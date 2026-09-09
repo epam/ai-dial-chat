@@ -512,6 +512,55 @@ describe('DeploymentsDetailsService', () => {
       expect(JSON.stringify(result)).not.toContain('editor.example.com');
     });
 
+    it('maps catalog_properties for an application, ignoring unknown/non-string keys', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/als-test-catalog',
+          catalog_properties: {
+            provider: 'Provider',
+            vendor: 'Vendor',
+            license: 'License',
+            knowledgeCutoffDate: '2026-08-17',
+            parameters: '100B',
+            schemaSpecificExtra: 'not exposed',
+          },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'applications/als-test-catalog',
+        'token',
+      );
+
+      expect(result.applicationDetails?.catalogProperties).toEqual({
+        provider: 'Provider',
+        vendor: 'Vendor',
+        license: 'License',
+        knowledgeCutoffDate: '2026-08-17',
+        parameters: '100B',
+      });
+    });
+
+    it('omits catalogProperties for an application when no recognized string value is present', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/als-test-catalog',
+          catalog_properties: { schemaSpecificExtra: 'not exposed' },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'applications/als-test-catalog',
+        'token',
+      );
+
+      expect(result.applicationDetails?.catalogProperties).toBeUndefined();
+    });
+
     it('maps display_name for an application', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getApplication.mockResolvedValue(
@@ -637,6 +686,55 @@ describe('DeploymentsDetailsService', () => {
       });
       expect(JSON.stringify(result)).not.toContain('super-secret');
       expect(JSON.stringify(result)).toContain('public-client-id');
+    });
+
+    it('maps catalog_properties for a toolset, ignoring unknown/non-string keys', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getToolset.mockResolvedValue(
+        okResponse({
+          id: 'toolsets/ALS-OauthToolset-copy',
+          catalog_properties: {
+            provider: 'Provider',
+            vendor: 'Vendor',
+            license: 'License',
+            knowledgeCutoffDate: '2026-08-17',
+            parameters: '100B',
+            schemaSpecificExtra: 'not exposed',
+          },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'toolsets/ALS-OauthToolset-copy',
+        'token',
+      );
+
+      expect(result.toolsetDetails?.catalogProperties).toEqual({
+        provider: 'Provider',
+        vendor: 'Vendor',
+        license: 'License',
+        knowledgeCutoffDate: '2026-08-17',
+        parameters: '100B',
+      });
+    });
+
+    it('omits catalogProperties for a toolset when no recognized string value is present', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getToolset.mockResolvedValue(
+        okResponse({
+          id: 'toolsets/ALS-OauthToolset-copy',
+          catalog_properties: { schemaSpecificExtra: 'not exposed' },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'toolsets/ALS-OauthToolset-copy',
+        'token',
+      );
+
+      expect(result.toolsetDetails?.catalogProperties).toBeUndefined();
     });
 
     it('logs the raw DIAL Core toolset response and the mapped response, redacting client_secret/code_verifier from the raw-response log', async () => {
@@ -828,6 +926,66 @@ describe('DeploymentsDetailsService', () => {
       await expect(
         service.getDeploymentDetails('user1', 'gpt-4o', 'token'),
       ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('does not cache a fetch that was invalidated (e.g. by a logout) while still in flight', async () => {
+      const { service, sdkClient, cacheManager } = makeService();
+      let resolveToolset: (value: unknown) => void = () => undefined;
+      sdkClient.getToolset.mockReturnValue(
+        new Promise((resolve) => {
+          resolveToolset = resolve;
+        }),
+      );
+      sdkClient.getToolSetTools.mockResolvedValue(okResponse({ tools: [] }));
+
+      /* Details fetch starts (e.g. panel opened) but DIAL Core hasn't replied yet. */
+      const staleRequest = service.getDeploymentDetails(
+        'user1',
+        'toolsets/search-tool',
+        'token',
+      );
+
+      /* Logout completes and invalidates the (not-yet-populated) cache entry. */
+      await service.invalidateDetailsCache('user1', 'toolsets/search-tool');
+
+      /* The post-logout refetch must not join the stale in-flight promise. */
+      sdkClient.getToolset.mockResolvedValueOnce(
+        okResponse({
+          id: 'toolsets/search-tool',
+          auth_settings: { user_level_auth_status: 'SIGNED_OUT' },
+        }),
+      );
+      const freshRequest = service.getDeploymentDetails(
+        'user1',
+        'toolsets/search-tool',
+        'token',
+      );
+
+      /* The stale upstream call finally resolves with the pre-logout state. */
+      resolveToolset(
+        okResponse({
+          id: 'toolsets/search-tool',
+          auth_settings: { user_level_auth_status: 'SIGNED_IN' },
+        }),
+      );
+
+      const [staleResult, freshResult] = await Promise.all([
+        staleRequest,
+        freshRequest,
+      ]);
+
+      expect(
+        staleResult.toolsetDetails?.authSettings?.userLevelAuthStatus,
+      ).toBe('SIGNED_IN');
+      expect(
+        freshResult.toolsetDetails?.authSettings?.userLevelAuthStatus,
+      ).toBe('SIGNED_OUT');
+      expect(sdkClient.getToolset).toHaveBeenCalledTimes(2);
+
+      const cached = await cacheManager.get(
+        'deployments:details:user1:toolsets/search-tool',
+      );
+      expect(cached).toEqual(freshResult);
     });
   });
 });

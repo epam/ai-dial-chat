@@ -114,6 +114,23 @@ export class EnvironmentVariables {
   @IsString()
   AUTH_TRANSACTION_COOKIE_NAME?: string = '__Host-chat.tx';
 
+  /*
+   * Names of cookies set by a previously deployed auth stack (e.g. NextAuth's
+   * `next-auth.session-token`) that must be actively expired on this
+   * deployment. The old service is gone, so only this one can ever issue the
+   * `Max-Age=0` response that removes them from the browser.
+   */
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return undefined;
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  AUTH_LEGACY_COOKIE_NAMES?: string[];
+
   @IsOptional()
   @Transform(({ obj, key }) => {
     const raw = (obj as Record<string, unknown>)[key];
@@ -900,4 +917,17 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1)
   SKILL_ARCHIVE_UPLOAD_MAX_BYTES?: number = 20_971_520;
+
+  /*
+   * Server-owned bound on how long an active generation may occupy the
+   * in-memory registry (see openspec/specs/generation-registry/spec.md),
+   * independent of the originating browser connection — a disconnect no
+   * longer aborts a generation, so this timer is what protects against a
+   * stalled upstream stream that never reaches a terminal event.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  MAX_GENERATION_DURATION_MS?: number = 1_800_000;
 }

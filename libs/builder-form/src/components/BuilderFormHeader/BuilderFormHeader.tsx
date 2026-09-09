@@ -5,6 +5,7 @@ import {
   GhostIconButton,
   NeutralButton,
   PrimaryButton,
+  Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { FC } from 'react';
@@ -19,6 +20,7 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
   onSubmit,
   isCancelDisabled = false,
   isSubmitDisabled = false,
+  isSubmitting = false,
   styles: headerStyles,
 }) => {
   const { colors, typography } = headerStyles ?? {};
@@ -62,12 +64,34 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
           onClick={onCancel}
           disabled={isCancelDisabled}
         />
+        {/*
+         * The submit button is disabled both while a submit is in flight and
+         * while the form is simply incomplete, so `disabled` alone cannot tell
+         * the two apart. The spinner, `aria-busy` and the live region below
+         * are what distinguish "working" from "not ready yet".
+         *
+         * The spinner is hidden from assistive tech so the button keeps
+         * `submitButtonLabel` as its accessible name — a name that changed
+         * mid-submit would be read as a different control.
+         */}
         <PrimaryButton
           label={labels.submitButtonLabel}
           onClick={onSubmit}
           disabled={isSubmitDisabled}
+          aria-busy={isSubmitting}
+          iconBefore={
+            isSubmitting ? (
+              <span aria-hidden>
+                <Spinner size={DIAL_ICON_SIZE.SM} />
+              </span>
+            ) : undefined
+          }
         />
       </div>
+
+      <span role="status" aria-live="polite" className="sr-only">
+        {isSubmitting ? (labels.submittingLabel ?? 'Submitting') : ''}
+      </span>
     </div>
   );
 };

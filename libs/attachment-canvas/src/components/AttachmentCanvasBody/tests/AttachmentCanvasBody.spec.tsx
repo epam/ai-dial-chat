@@ -6,6 +6,7 @@ import {
   AttachmentErrorType,
   OoxmlFileType,
 } from '../../../types/attachment-canvas';
+import { PdfContent } from '../../PdfContent/PdfContent';
 import { AttachmentCanvasBody } from '../AttachmentCanvasBody';
 
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
@@ -36,15 +37,34 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
   }),
 }));
 
+interface PdfContentMockProps {
+  url: string;
+  configurePdfWorker?: () => void | Promise<void>;
+  selectedPageNumber?: number;
+}
+
 vi.mock('../../PdfContent/PdfContent', () => ({
-  PdfContent: ({ url }: { url: string }) => (
+  PdfContent: vi.fn(({ url }: PdfContentMockProps) => (
     <section aria-label="pdf-content">{url}</section>
-  ),
+  )),
 }));
 
 vi.mock('../../OoxmlContent/OoxmlContent', () => ({
-  OoxmlContent: ({ content }: { content: { format: string } }) => (
-    <section aria-label="ooxml-content">{content.format}</section>
+  OoxmlContent: ({
+    content,
+    formulaLabel,
+    formulaLabelClassName,
+  }: {
+    content: { format: string };
+    formulaLabel: string;
+    formulaLabelClassName: string;
+  }) => (
+    <section
+      aria-label="ooxml-content"
+      data-formula-label-class-name={formulaLabelClassName}
+    >
+      {content.format}:{formulaLabel}
+    </section>
   ),
 }));
 
@@ -132,12 +152,76 @@ describe('AttachmentCanvasBody', () => {
     expect(screen.getByTitle('page.html')).toBeTruthy();
   });
 
-  it('renders PdfContent for Pdf content', () => {
+  it('renders PdfContent for Pdf content, loaded lazily behind a Suspense boundary', async () => {
     renderBody({
       type: AttachmentContentType.Pdf,
       url: 'blob:pdf-url',
     });
-    expect(screen.getByRole('region', { name: 'pdf-content' })).toBeTruthy();
+    /* `PdfContent` is behind `lazy()`, so it resolves asynchronously even
+     * though the mocked module itself is synchronous — `findByRole` waits
+     * for the Suspense fallback to be replaced by the real content. */
+    expect(
+      await screen.findByRole('region', { name: 'pdf-content' }),
+    ).toBeTruthy();
+  });
+
+  it('never loads the PdfContent module for non-Pdf content', () => {
+    renderBody({
+      type: AttachmentContentType.PlainText,
+      text: 'no pdf here',
+    });
+    expect(PdfContent).not.toHaveBeenCalled();
+  });
+
+  it('forwards configurePdfWorker to PdfContent', async () => {
+    const configurePdfWorker = vi.fn();
+    renderBody(
+      { type: AttachmentContentType.Pdf, url: 'blob:pdf-url' },
+      { configurePdfWorker },
+    );
+    await screen.findByRole('region', { name: 'pdf-content' });
+    const [props] = vi.mocked(PdfContent).mock.calls[0];
+    expect(props.configurePdfWorker).toBe(configurePdfWorker);
+  });
+
+  it('forwards content.page as selectedPageNumber to PdfContent', async () => {
+    renderBody({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:pdf-url',
+      page: 7,
+    });
+    await screen.findByRole('region', { name: 'pdf-content' });
+    const [props] = vi.mocked(PdfContent).mock.calls[0];
+    expect(props.selectedPageNumber).toBe(7);
+  });
+
+  it('leaves selectedPageNumber undefined when content.page is absent', async () => {
+    renderBody({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:pdf-url',
+    });
+    await screen.findByRole('region', { name: 'pdf-content' });
+    const [props] = vi.mocked(PdfContent).mock.calls[0];
+    expect(props.selectedPageNumber).toBeUndefined();
+  });
+
+  it("announces the pdfContentLoadingLabel while PdfContent's dynamic import is pending", async () => {
+    /*
+     * `PdfContent` is behind `lazy()`, so even a synchronously-resolving
+     * mocked module still suspends for the first render — the
+     * `LazyContentBoundary` pending state (asserted here) is what's on
+     * screen before that microtask settles.
+     */
+    renderBody(
+      { type: AttachmentContentType.Pdf, url: 'blob:pdf-url' },
+      { labels: { pdfContentLoadingLabel: 'Loading the PDF viewer…' } },
+    );
+
+    expect(screen.getByText('Loading the PDF viewer…')).toBeTruthy();
+
+    // Let the mocked dynamic import settle before the test ends, so its
+    // resolution doesn't land as an unwrapped `act(...)` update afterward.
+    await screen.findByRole('region', { name: 'pdf-content' });
   });
 
   it('renders OoxmlContent for OOXML content', () => {
@@ -149,20 +233,75 @@ describe('AttachmentCanvasBody', () => {
     expect(screen.getByRole('region', { name: 'ooxml-content' })).toBeTruthy();
   });
 
-  it('exposes the OOXML background as a host-overridable CSS variable', () => {
+  it('forwards the XLSX formula label to OoxmlContent', () => {
+    renderBody(
+      {
+        type: AttachmentContentType.Ooxml,
+        url: 'blob:office-url',
+        format: OoxmlFileType.Xlsx,
+      },
+      { labels: { xlsxFormulaLabel: 'Cell formula' } },
+    );
+
+    expect(screen.getByText('xlsx:Cell formula')).toBeTruthy();
+  });
+
+  it('forwards the default and overridden XLSX formula typography', () => {
+    const content = {
+      type: AttachmentContentType.Ooxml as const,
+      url: 'blob:office-url',
+      format: OoxmlFileType.Xlsx,
+    };
+    const view = renderBody(content);
+    expect(
+      screen
+        .getByRole('region', { name: 'ooxml-content' })
+        .getAttribute('data-formula-label-class-name'),
+    ).toBe('dial-italic-text');
+
+    view.unmount();
+    renderBody(content, {
+      styles: {
+        typography: { xlsxFormulaLabelClassName: 'custom-formula-text' },
+      },
+    });
+    expect(
+      screen
+        .getByRole('region', { name: 'ooxml-content' })
+        .getAttribute('data-formula-label-class-name'),
+    ).toBe('custom-formula-text');
+  });
+
+  it('exposes the OOXML colors as host-overridable CSS variables', () => {
     const { container } = renderBody(
       {
         type: AttachmentContentType.Ooxml,
         url: 'blob:office-url',
         format: OoxmlFileType.Docx,
       },
-      { styles: { colors: { ooxmlBackground: 'rebeccapurple' } } },
+      {
+        styles: {
+          colors: {
+            ooxmlBackground: 'rebeccapurple',
+            ooxmlFormulaBorder: 'gold',
+            ooxmlFormulaBackground: 'navy',
+            ooxmlFormulaText: 'white',
+          },
+        },
+      },
     );
 
     /* Set on the body root and inherited by OoxmlContent through the cascade. */
     // eslint-disable-next-line testing-library/no-node-access -- reading an inline CSS custom property, which has no accessible representation to query
     const root = container.firstElementChild as HTMLElement;
     expect(root.style.getPropertyValue('--ac-ooxml-bg')).toBe('rebeccapurple');
+    expect(root.style.getPropertyValue('--ac-ooxml-formula-border')).toBe(
+      'gold',
+    );
+    expect(root.style.getPropertyValue('--ac-ooxml-formula-bg')).toBe('navy');
+    expect(root.style.getPropertyValue('--ac-ooxml-formula-text')).toBe(
+      'white',
+    );
   });
 
   it('does not add its own scroll container for OOXML content', () => {

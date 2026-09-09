@@ -87,15 +87,15 @@ On save in creation mode, `CustomAppEditor` SHALL NOT send `type` in the create 
 - **THEN** the create request body carries no `type` field and no `application_type_schema_id`
 
 ### Requirement: General step validation — name and version
-`CustomAppEditor` SHALL validate the `name` field as required and the `version` field against the shared `DeploymentCreationForm` version pattern (via `validateDeploymentCreationFields` from `@epam/ai-dial-deployment-creation-form`). Each field SHALL be re-validated on blur, independently of the other, so an error shown for one field does not get cleared by fixing the other. The Next button SHALL stay disabled while either field is invalid.
+`CustomAppEditor` SHALL validate the `name` field as required and the `version` field against the shared `DeploymentCreationForm`'s exported `SEMVER_VERSION_PATTERN` (via `validateDeploymentCreationFields` from `@epam/ai-dial-deployment-creation-form`, passing `validateVersionPattern: SEMVER_VERSION_PATTERN`), stricter than that library's default character-set-only version pattern: a non-empty version must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`). Each field SHALL be re-validated on blur, independently of the other, so an error shown for one field does not get cleared by fixing the other. The Next button SHALL stay disabled while either field is invalid. The version-invalid error message SHALL be `"Version format is invalid (example: 0.0.1)"` (`appsEditor.generalForm.versionInvalid`).
 
 #### Scenario: Name required error on blur
 - **WHEN** the Name field is blank and loses focus
 - **THEN** a name-required error is shown under the Name field
 
 #### Scenario: Version format error on blur
-- **WHEN** the Version field contains a value that does not match the allowed version pattern and loses focus
-- **THEN** a version-invalid error is shown under the Version field
+- **WHEN** the Version field contains a value that is not entirely dot-separated numeric segments (e.g. contains letters) and loses focus
+- **THEN** a version-invalid error ("Version format is invalid (example: 0.0.1)") is shown under the Version field
 
 #### Scenario: Next disabled while General step invalid
 - **WHEN** the Name or Version field currently holds an invalid value

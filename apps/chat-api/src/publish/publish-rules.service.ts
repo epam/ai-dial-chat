@@ -54,7 +54,12 @@ export class PublishRulesService {
       throw new BadGatewayException('Failed to reach DIAL Core');
     }
 
-    if (result.error) {
+    /*
+     * `openapi-fetch` short-circuits on an empty response body and returns
+     * `{ error: undefined }` without reading it, even for a non-2xx status —
+     * see the matching guard comment in `publish.service.ts`.
+     */
+    if (!result.response.ok || result.error != null) {
       return mapDialHttpStatus(
         result.response.status,
         `get publish rules for "${folderPath}"`,

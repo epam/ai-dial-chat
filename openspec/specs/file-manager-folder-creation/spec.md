@@ -164,13 +164,21 @@ Called by `DialFileManager` during name input (before `onCreateFolder`):
 onCreateFolderValidate: (name: string, parentFolder: DialFile): string | null
 ```
 
-Rules (synchronous — no BFF call):
-- Empty name → error key `dialFileManager.folderNameEmpty`
-- Contains `/`, `\`, or a forbidden symbol from `forbiddenSymbolsRegExp` → error key `dialFileManager.folderNameInvalidChars`
-- Starts with `.` → error key `dialFileManager.folderNameHidden`
-- Equals `.dial_folder` → error key `dialFileManager.folderNameReserved`
-- Exceeds 255 characters → error key `dialFileManager.folderNameTooLong`
-- Duplicate sibling name (case-insensitive check against `parentFolder.items`) → error key `dialFileManager.folderConflict`
+Rules, evaluated **in this order** by `@epam/ai-dial-react-file-manager`, which returns on
+the first match (synchronous — no BFF call):
+1. Empty name → error key `dialFileManager.folderNameEmpty`
+2. Contains `..` anywhere → error key `dialFileManager.nameConsecutiveDots`
+3. Starts with `.` → error key `dialFileManager.folderNameHidden`
+4. Duplicate sibling name (case-insensitive check against `parentFolder.items`) → error key `dialFileManager.folderConflict`
+5. Contains a path separator or a forbidden symbol from `forbiddenSymbolsRegExp` → error key `dialFileManager.folderNameInvalidChars`
+6. Equals `.dial_folder` → error key `dialFileManager.folderNameReserved`
+7. Exceeds 255 characters → error key `dialFileManager.folderNameTooLong`
+
+The order matters for names that break several rules at once, and it is owned by the
+third-party package, not by this repository: a name is rejected with the message of the
+**first** rule it trips, not the most specific one. `../secret` breaks rules 2 and 5 and
+therefore reports the consecutive-dots message. A test that asserts a specific message for
+a multi-fault name MUST assert the message of the earliest matching rule.
 
 Forbidden-symbol validation SHALL use the same effective symbol set as rename validation: path separators (`/` and `\`) are always rejected, and all other forbidden characters come from the `forbiddenSymbolsRegExp` option passed to `useDialFileManager`. Production File Manager hosts pass `NOT_ALLOWED_SYMBOLS_REGEXP` from `@epam/ai-dial-ui-kit`, so names such as `reports:2026` are rejected before `onCreateFolder` is called.
 
@@ -205,6 +213,7 @@ setRetryCounter((c) => c + 1);
 | `dialFileManager.folderNameEmpty` | `"Folder name cannot be empty"` |
 | `dialFileManager.folderNameInvalidChars` | `"Folder name should not contain special symbols {{notAllowedSymbols}}"` |
 | `dialFileManager.folderNameHidden` | `"Folder name cannot start with a dot"` |
+| `dialFileManager.nameConsecutiveDots` | `"Name cannot contain consecutive dots"` — shared with rename validation |
 | `dialFileManager.folderNameReserved` | `"This folder name is reserved"` |
 | `dialFileManager.folderNameTooLong` | `"Folder name is too long"` |
 
@@ -303,7 +312,10 @@ No new metrics or analytics events beyond `MetricsInterceptor` (request duration
 
 - **GIVEN** the user types `../secret`
 - **WHEN** `onCreateFolderValidate` runs
-- **THEN** the slash in the name triggers the `folderNameInvalidChars` error inline
+- **THEN** the name is rejected inline before `onCreateFolder` is called
+- **AND** the inline message is `nameConsecutiveDots` ("Name cannot contain consecutive
+  dots"), because the `..` rule is evaluated before the forbidden-character rule — the name
+  breaks both, and the earlier rule wins
 - **AND** if a crafted request bypasses the frontend and hits the BFF directly
 - **THEN** `CreateFolderDto` `@Matches` validation rejects the name with `400 Bad Request`
 

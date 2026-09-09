@@ -21,7 +21,6 @@ import {
   ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { decodeJwt } from 'jose';
 import { generators, type AuthorizationParameters } from 'openid-client';
@@ -92,7 +91,6 @@ export class AuthController {
 
   @Get('providers')
   @Public()
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'List configured identity providers' })
   @ApiResponse({
     status: 200,
@@ -105,7 +103,6 @@ export class AuthController {
 
   @Get('login/:providerId')
   @Public()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Start OIDC login flow' })
   @ApiParam({
     name: 'providerId',
@@ -189,7 +186,6 @@ export class AuthController {
 
   @Get('callback/:providerId')
   @Public()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'OIDC authorization callback' })
   @ApiParam({
     name: 'providerId',
@@ -445,7 +441,6 @@ export class AuthController {
 
   @Post('logout')
   @Public()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Log out and clear session cookie' })
   @ApiResponse({ status: 302, description: 'Redirect after logout' })
   @ApiResponse({
@@ -544,7 +539,6 @@ export class AuthController {
   @Get('me')
   @ApiCookieAuth('session')
   @ApiSecurity('bearer')
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: 200,

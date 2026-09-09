@@ -4,6 +4,7 @@ export enum AttachmentContentType {
   Image = 'image',
   Audio = 'audio',
   Markdown = 'markdown',
+  MarkdownTable = 'markdown_table',
   Json = 'json',
   Pdf = 'pdf',
   Ooxml = 'ooxml',
@@ -15,11 +16,12 @@ export enum AttachmentContentType {
   Error = 'error',
 }
 
-/** Supported Office Open XML document formats. */
+/** Supported document formats rendered by the bundled `@silurus/ooxml` runtime. */
 export enum OoxmlFileType {
   Docx = 'docx',
   Xlsx = 'xlsx',
   Pptx = 'pptx',
+  Csv = 'csv',
 }
 
 /** The kind of failure that produced an `ErrorCanvasContent`. */

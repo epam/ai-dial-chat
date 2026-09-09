@@ -91,6 +91,8 @@ export interface AttachmentCardLabels extends AttachmentTypeLabels {
   expandLabel?: string;
   /** Accessible label for the loading spinner shown while the attachment is uploading. Defaults to `'Loading attachment'`. */
   loadingLabel?: string;
+  /** Accessible label for the file card's in-progress upload progress bar. Defaults to `'Uploading'`. */
+  uploadingLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download attachment'`. */
   downloadLabel?: string;
   /** Accessible label for the open-in-new-tab button. Defaults to `'Open in new tab'`. */

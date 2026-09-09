@@ -4,30 +4,30 @@ import {
   type DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
-  ConversationExportMode,
-  type ConversationTransferErrorEvent,
-  type ConversationTransferSuccessEvent,
-  ConversationTransferWarningCode,
-  type ConversationTransferWarningEvent,
   deriveConversationRowActionState,
-  formatQuotedNameList,
   getApiErrorDetails,
   getConversationPath,
   safeDecodeURIComponent,
   useActiveConversationSync,
   useAsyncConfirmDialog,
-  useConversationExport,
-  useConversationImport,
   useConversationLookupMaps,
   useConversationPanelItems,
   useImportFilePicker,
-  useShareRecipientsCount,
 } from '@epam/ai-dial-chat-hooks';
+import {
+  ConversationExportMode,
+  type ConversationTransferErrorEvent,
+  type ConversationTransferSuccessEvent,
+  ConversationTransferWarningCode,
+  type ConversationTransferWarningEvent,
+  useConversationExport,
+  useConversationImport,
+} from '@epam/ai-dial-chat-hooks/conversation-transfer';
+import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConversationTransferErrorCode,
   FilterTab,
-  mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
@@ -61,7 +61,16 @@ import {
   IconWorldOff,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { memo, useCallback, useMemo, useRef, useState, type FC } from 'react';
+import {
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import {
@@ -109,15 +118,20 @@ import {
   toPanelConversationId,
 } from '../../utils/conversation-id-match';
 import {
+  formatTransferNameList,
   getExportErrorKey,
   getExportFailureToastKey,
   getImportErrorKey,
 } from '../../utils/conversation-transfer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
-import PublishConversationPanelContainer from '../PublishConversationPanelContainer/PublishConversationPanelContainer';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
 import ConversationPanelMenu from './ConversationPanelMenu';
+
+const PublishConversationPanelContainer = lazy(
+  () =>
+    import('../PublishConversationPanelContainer/PublishConversationPanelContainer'),
+);
 
 const PANEL_STYLES: ConversationPanelStyles = {
   itemIconBadgeClassName: 'rounded-lg',
@@ -268,7 +282,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       showSuccessNotification({
         title: t(ConversationImportI18nKeys.SuccessTitle),
         message: t(ConversationImportI18nKeys.Success, {
-          names: formatQuotedNameList(event.titles ?? []),
+          names: formatTransferNameList(event.titles ?? [], t),
         }),
       });
     },
@@ -281,7 +295,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       }
       showWarningNotification({
         message: t(ConversationImportI18nKeys.WarningAttachmentSkipped, {
-          names: formatQuotedNameList(event.names ?? []),
+          names: formatTransferNameList(event.names ?? [], t),
         }),
       });
     },
@@ -305,7 +319,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       showErrorNotification({
         title: t(ConversationImportI18nKeys.FailedTitle),
         message: t(ConversationImportI18nKeys.Failed, {
-          names: formatQuotedNameList(event.titles ?? []),
+          names: formatTransferNameList(event.titles ?? [], t),
         }),
         requestId: event.traceId,
       });
@@ -402,7 +416,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     path: string;
     title: string;
   } | null>(null);
-  const publishReturnFocusRef = useRef<HTMLButtonElement | null>(null);
+  /*
+   * The row's kebab trigger, captured whenever its menu opens. Every overlay
+   * launched from that menu returns focus here on close: the menu item that
+   * was actually clicked unmounts with the menu, so it is not a target a
+   * closing dialog can restore focus to.
+   */
+  const rowActionsTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const {
     requestRecipientsCount,
@@ -500,8 +520,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       jobProgressAriaLabel: (fileName) =>
         t(ConversationImportI18nKeys.JobProgressAriaLabel, { fileName }),
       jobErrorMessage: (code) => t(getImportErrorKey(code)),
+      /*
+       * `jobWarningMessage` is handed only a warning code, never the skipped
+       * names, so it needs the name-free variant — the `{{names}}` one belongs
+       * to the notification, which does have them.
+       */
       jobWarningMessage: () =>
-        t(ConversationImportI18nKeys.WarningAttachmentSkipped),
+        t(ConversationImportI18nKeys.JobWarningAttachmentSkipped),
       queueProgressAriaLabel: t(
         ConversationImportI18nKeys.QueueProgressAriaLabel,
       ),
@@ -617,7 +642,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
    */
   const handleActionMenuOpen = useCallback(
     (item: ConversationItem, trigger: HTMLButtonElement) => {
-      publishReturnFocusRef.current = trigger;
+      rowActionsTriggerRef.current = trigger;
 
       const contextId = toContextId(item.id);
       if (!contextId) return;
@@ -780,7 +805,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 stroke={DIAL_KIT_ICON_STROKE}
               />
             ),
-            onClick: () => openUnshareDialog(contextId),
+            onClick: () =>
+              openUnshareDialog(contextId, rowActionsTriggerRef.current),
           });
         }
         return readonlyActions;
@@ -799,7 +825,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             />
           ),
           onClick: () =>
-            openRenameDialog({ id: contextId, title: panelItem.title }),
+            openRenameDialog(
+              { id: contextId, title: panelItem.title },
+              rowActionsTriggerRef.current,
+            ),
         },
         duplicateAction,
         exportAction,
@@ -878,11 +907,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 ),
                 onClick: () => {
                   setSelectedUnpublishFolder(null);
-                  openUnpublishDialog({
-                    path: conversationPath,
-                    title: panelItem.title,
-                    folders: publishedFolders,
-                  });
+                  openUnpublishDialog(
+                    {
+                      path: conversationPath,
+                      title: panelItem.title,
+                      folders: publishedFolders,
+                    },
+                    rowActionsTriggerRef.current,
+                  );
                 },
               },
             ]
@@ -915,7 +947,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                     stroke={DIAL_KIT_ICON_STROKE}
                   />
                 ),
-                onClick: () => openRevokeDialog(contextId),
+                onClick: () =>
+                  openRevokeDialog(contextId, rowActionsTriggerRef.current),
               },
             ]
           : []),
@@ -930,7 +963,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             />
           ),
           className: 'text-error',
-          onClick: () => openDeleteDialog(contextId),
+          onClick: () =>
+            openDeleteDialog(contextId, rowActionsTriggerRef.current),
         },
       ];
     },
@@ -1200,9 +1234,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [onRequestedFilterChange, onActiveFilterChange],
   );
 
-  const panelClassName = isMobile
-    ? mergeClasses('fixed inset-y-0 start-0', isOpen && 'z-50')
-    : undefined;
+  /*
+   * On mobile the panel covers the conversation instead of sitting next to it,
+   * so it is lifted out of the layout row and animated as a drawer. The z-index
+   * is unconditional: dropping it while closing let the conversation paint over
+   * the panel for the length of the transition.
+   */
+  const panelClassName = isMobile ? 'fixed inset-y-0 start-0 z-50' : undefined;
 
   return (
     <>
@@ -1234,6 +1272,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           onActionMenuOpen={handleActionMenuOpen}
           onToggle={isMobile ? onClose : undefined}
           className={panelClassName}
+          isOverlay={isMobile}
           styles={PANEL_STYLES}
           onMoveConversation={handleMoveConversation}
           headerActions={
@@ -1436,20 +1475,32 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
       {isConversationsPublishingEnabled &&
         pendingPublishConversation !== null && (
-          <PublishConversationPanelContainer
-            isOpen
-            conversationPath={pendingPublishConversation.path}
-            conversationTitle={pendingPublishConversation.title}
-            onClose={handleClosePublishPanel}
-            returnFocusRef={publishReturnFocusRef}
-            history={publishPanelHistory.entries}
-            isHistoryLoading={
-              publishPanelHistory.status === PublishHistoryStatus.Loading
+          <Suspense
+            fallback={
+              <Popup
+                open
+                header={t(ButtonsI18nKeys.Publish)}
+                onClose={handleClosePublishPanel}
+              >
+                <p role="status">{t(BasicI18nKeys.Loading)}</p>
+              </Popup>
             }
-            hasHistoryError={
-              publishPanelHistory.status === PublishHistoryStatus.Failed
-            }
-          />
+          >
+            <PublishConversationPanelContainer
+              isOpen
+              conversationPath={pendingPublishConversation.path}
+              conversationTitle={pendingPublishConversation.title}
+              onClose={handleClosePublishPanel}
+              returnFocusRef={rowActionsTriggerRef}
+              history={publishPanelHistory.entries}
+              isHistoryLoading={
+                publishPanelHistory.status === PublishHistoryStatus.Loading
+              }
+              hasHistoryError={
+                publishPanelHistory.status === PublishHistoryStatus.Failed
+              }
+            />
+          </Suspense>
         )}
     </>
   );

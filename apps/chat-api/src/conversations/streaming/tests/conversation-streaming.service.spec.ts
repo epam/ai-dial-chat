@@ -153,6 +153,9 @@ describe('ConversationStreamingService', () => {
       complete: vi.fn(),
       error: vi.fn(),
       getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
+      seedAssembledMessage: vi.fn(),
+      applyChunk: vi.fn(),
+      attach: vi.fn(),
     } as unknown as ConversationGenerationService;
     mockDeploymentsService = {
       getDeploymentDetails: vi.fn().mockResolvedValue({
@@ -1512,7 +1515,132 @@ describe('ConversationStreamingService', () => {
         'test-session-id',
         'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
         'test-gen-id',
+        undefined,
       );
+    });
+
+    it('finalizes as an error and releases the registry entry when the consumer is abandoned for a reason other than a relay terminal outcome (defensive backstop)', async () => {
+      vi.spyOn(
+        service['dialClient'].client,
+        'getConversation',
+      ).mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(service['dialClient'].client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      const generationAbortController = new AbortController();
+      vi.mocked(mockGenerationService.register).mockReturnValue(
+        generationAbortController,
+      );
+
+      const encoder = new TextEncoder();
+      const cancel = vi.fn();
+      const neverEndingStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n',
+            ),
+          );
+          // never close — the consumer abandons before any more data arrives
+        },
+        cancel,
+      });
+      vi.spyOn(
+        service['dialClient'].client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(neverEndingStream, { status: 200 }),
+      } as never);
+
+      const stream = service.streamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        () => undefined,
+        'user1',
+      );
+
+      /*
+       * `ConversationController.streamCompletion` no longer abandons its
+       * consuming loop merely because the downstream response closed (see
+       * backend-owned-generation-persistence) — it keeps calling `.next()`
+       * to the generator's natural end regardless of disconnect. This test
+       * instead exercises the `finally` block's remaining, genuinely
+       * defensive purpose: some other caller (or an unexpected failure)
+       * abandons the generator before the relay reaches a terminal
+       * outcome. `break` here triggers the JS runtime to call `.return()`
+       * on `stream`, the same way any such abandonment would.
+       */
+      for await (const _chunk of stream) {
+        break;
+      }
+
+      expect(generationAbortController.signal.aborted).toBe(true);
+      expect(mockGenerationService.complete).not.toHaveBeenCalled();
+      expect(mockGenerationService.error).toHaveBeenCalledOnce();
+      expect(mockGenerationService.error).toHaveBeenCalledWith(
+        'test-session-id',
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-gen-id',
+        '',
+      );
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const partialSave = saveConversationSpy.mock.calls[1][2].body as {
+        messages: { streamErrorMessage?: string }[];
+      };
+      expect(partialSave.messages.at(-1)?.streamErrorMessage).toBe('');
+    });
+
+    it("reaches Done and finalizes exactly once when the consumer drains to the relay's natural terminal outcome — the same unconditional-drain path the controller now uses after the downstream response has detached (e.g. a client disconnect)", async () => {
+      vi.spyOn(
+        service['dialClient'].client,
+        'getConversation',
+      ).mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      vi.spyOn(
+        service['dialClient'].client,
+        'saveConversation',
+      ).mockResolvedValue({ data: {} } as never);
+      vi.spyOn(
+        service['dialClient'].client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([
+            'data: {"id":"resp-1","choices":[{"delta":{"content":"Hello"}}]}\n\n',
+            'data: [DONE]\n\n',
+          ]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      await runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res,
+      );
+
+      expect(mockGenerationService.complete).toHaveBeenCalledOnce();
+      expect(mockGenerationService.error).not.toHaveBeenCalled();
     });
   });
 });

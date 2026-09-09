@@ -14,9 +14,13 @@ import {
   referenceAttachmentToPdfCanvasContent,
   useAttachmentValidation,
   useChatSettingsFormConfig,
-  useConversationScroll,
-  usePageFileDrag,
 } from '@epam/ai-dial-chat-hooks';
+import {
+  useMcpAppTools,
+  useOpenMcpAppCanvas,
+} from '@epam/ai-dial-chat-hooks/mcp-apps';
+import { useConversationScroll } from '@epam/ai-dial-chat-hooks/scroll-anchoring';
+import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DisplayAttachment,
@@ -36,6 +40,7 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
+import { useMcpAppResponseCache } from '@epam/ai-dial-mcp-apps';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -71,18 +76,19 @@ import {
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
+import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useAutoOpenMcpAppCanvas } from '../../hooks/attachment/useAutoOpenMcpAppCanvas';
-import { useOpenMcpAppCanvas } from '../../hooks/attachment/useOpenMcpAppCanvas';
+import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
-import { useMcpAppTools } from '../../hooks/conversation/useMcpAppTools';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { mcpAppsApiClient } from '../../server-api/mcp-apps';
 import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -231,6 +237,7 @@ const ConversationView: FC<Props> = ({
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
+  const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -240,7 +247,30 @@ const ConversationView: FC<Props> = ({
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
-  const { openMcpAppCanvas } = useOpenMcpAppCanvas();
+  const mcpAppCache = useMcpAppResponseCache(conversation.id);
+  const mcpAppHostAdapter = useMcpAppHostAdapter('fullscreen');
+  const { closePanel } = useConversationPanel();
+  const { handleClose: closeSourcesPanel } = useSourcesSidebar();
+  const closeMcpAppCanvasBlockers = useCallback(() => {
+    closePanel();
+    closeSourcesPanel();
+  }, [closePanel, closeSourcesPanel]);
+  const mcpAppCanvasLabels = useMemo(
+    () => ({
+      title: t(AttachmentCanvasI18nKeys.McpAppTitle),
+      forbiddenErrorLabel: t(
+        AttachmentCanvasI18nKeys.McpAppForbiddenErrorLabel,
+      ),
+      loadErrorLabel: t(AttachmentCanvasI18nKeys.McpAppLoadErrorLabel),
+    }),
+    [t],
+  );
+  const { openMcpAppCanvas } = useOpenMcpAppCanvas(
+    mcpAppCache,
+    mcpAppHostAdapter,
+    mcpAppCanvasLabels,
+    closeMcpAppCanvasBlockers,
+  );
   const { openCanvas, attachmentId: selectedAttachmentKey } =
     useAttachmentCanvas();
 
@@ -285,8 +315,12 @@ const ConversationView: FC<Props> = ({
       : undefined;
   }, [items, activeDeploymentId, language]);
 
-  const mcpAppTools = useMcpAppTools(selectedDeployment, messages, toolsets);
-  useAutoOpenMcpAppCanvas(messages, mcpAppTools);
+  const mcpAppTools = useMcpAppTools(
+    mcpAppsApiClient,
+    selectedDeployment,
+    messages,
+    toolsets,
+  );
 
   const handleAttachmentValidationError = useCallback(
     ({
@@ -336,6 +370,7 @@ const ConversationView: FC<Props> = ({
         ({
           id,
           displayName,
+          displayVersion,
           iconUrl,
           type,
           inputAttachmentTypes,
@@ -343,6 +378,7 @@ const ConversationView: FC<Props> = ({
         }) => ({
           id,
           displayName: resolveLocalizedText(displayName, language),
+          displayVersion,
           iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
           type,
           inputAttachmentTypes,
@@ -734,7 +770,7 @@ const ConversationView: FC<Props> = ({
                     stepsLabel={stepsLabel}
                     onOpenApp={openMcpAppCanvas}
                     mcpAppTools={mcpAppTools}
-                    openCanvasLabel={t(AttachmentCanvasI18nKeys.OpenAppLabel)}
+                    mcpAppCache={mcpAppCache}
                     openedInCanvasLabel={t(
                       AttachmentCanvasI18nKeys.OpenedInCanvasLabel,
                     )}
@@ -845,6 +881,9 @@ const ConversationView: FC<Props> = ({
                 isStreaming={isAssistantTyping}
                 onAttachmentsChange={handleAttachmentsChange}
                 placeholder={placeholder}
+                removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
+                retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
+                uploadingLabel={t(AttachmentsI18nKeys.UploadingLabel)}
                 deployments={
                   isAgentSelectorHidden ? undefined : agentSelectorItems
                 }
@@ -873,6 +912,7 @@ const ConversationView: FC<Props> = ({
                 chatSettings={isChatSettingsEnabled ? chatSettings : undefined}
                 toolsMenuItems={toolsMenuItems}
                 onToolToggle={onToolToggle}
+                canRemoveTools={isRemovableToolsEnabled}
                 toolsMenuTitle={toolsMenuTitle}
                 toolsChipLabels={toolsChipLabels}
                 pendingDropFiles={!isEditActive ? pendingFiles : undefined}

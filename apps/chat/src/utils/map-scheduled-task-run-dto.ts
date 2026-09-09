@@ -1,10 +1,14 @@
-import type { ScheduledTaskRunDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ConversationListItemDto,
+  ScheduledTaskRunDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   ScheduledTaskRunStatus,
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
 import type { TFunction } from 'i18next';
 import { ScheduledTasksI18nKeys } from '../constants/translation-keys';
+import { conversationIdsMatch } from './conversation-id-match';
 
 const UPSTREAM_STATUS_MAP: Record<string, ScheduledTaskRunStatus> = {
   Success: ScheduledTaskRunStatus.Success,
@@ -48,19 +52,39 @@ export const formatRunTimestamp = (
   return `${dateLabel} ${t(ScheduledTasksI18nKeys.DetailHistoryDurationSuffix, { seconds: durationSeconds })}`;
 };
 
-/** Maps a `GET /api/v1/scheduled-tasks/:scheduleId/runs` DTO item to the lib-facing `ScheduledTaskRunItem`. */
+/**
+ * Finds the loaded conversation-list item matching a run's `conversationId`,
+ * tolerating id-format differences (e.g. a `conversations/` resource-path
+ * prefix) via `conversationIdsMatch`. Returns `undefined` when the run has no
+ * conversation id or no match is loaded yet.
+ */
+export const findMatchingConversation = (
+  conversationId: string | undefined,
+  conversations: ConversationListItemDto[],
+): ConversationListItemDto | undefined =>
+  conversationId
+    ? conversations.find((c) => conversationIdsMatch(c.id, conversationId))
+    : undefined;
+
+/** Maps a `GET /api/v1/scheduled-tasks/:scheduleId/runs` DTO item to the lib-facing `ScheduledTaskRunItem`, resolving `isUnread` from the already-loaded conversation list. */
 export const mapScheduledTaskRunDtoToItem = (
   run: ScheduledTaskRunDto,
   t: TFunction,
+  conversations: ConversationListItemDto[],
 ): ScheduledTaskRunItem => ({
   id: run.id,
   status: UPSTREAM_STATUS_MAP[run.status] ?? ScheduledTaskRunStatus.Missed,
   timestampLabel: formatRunTimestamp(run.startTime, run.durationSeconds, t),
+  conversationId: run.conversationId,
+  isUnread:
+    findMatchingConversation(run.conversationId, conversations)?.isUnread ===
+    true,
 });
 
 /** Maps a list of `ScheduledTaskRunDto` to lib-facing run items, preserving order. */
 export const mapScheduledTaskRunDtosToItems = (
   runs: ScheduledTaskRunDto[],
   t: TFunction,
+  conversations: ConversationListItemDto[],
 ): ScheduledTaskRunItem[] =>
-  runs.map((run) => mapScheduledTaskRunDtoToItem(run, t));
+  runs.map((run) => mapScheduledTaskRunDtoToItem(run, t, conversations));

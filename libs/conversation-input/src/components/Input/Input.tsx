@@ -61,6 +61,7 @@ export const Input: FC<InputProps> = ({
   menuCloseLabel = 'Close',
   removeLabel,
   retryLabel,
+  uploadingLabel,
   sendLabel,
   stopLabel,
   micLabel = 'Record voice message',
@@ -94,6 +95,7 @@ export const Input: FC<InputProps> = ({
   chatSettings,
   toolsMenuItems,
   onToolToggle,
+  canRemoveTools = true,
   toolsMenuTitle,
   toolsBackLabel,
   toolsChipLabels,
@@ -129,6 +131,8 @@ export const Input: FC<InputProps> = ({
         '--ci-model-selector-caret-color': colors?.modelSelectorCaret,
         '--ci-model-selector-hover-bg': colors?.modelSelectorHoverBg,
         '--ci-model-selector-disabled-color': colors?.modelSelectorDisabled,
+        '--ci-model-selector-name-color': colors?.modelSelectorName,
+        '--ci-model-selector-version-color': colors?.modelSelectorVersion,
         '--ci-voice-error': colors?.voiceError,
         '--ci-voice-waveform': colors?.voiceWaveform,
         '--ci-voice-accent': colors?.voiceAccent,
@@ -220,6 +224,15 @@ export const Input: FC<InputProps> = ({
 
   const handlePaste = useCallback(
     (e: ClipboardEvent<HTMLTextAreaElement>) => {
+      /*
+       * Deliberately narrower than the send gate above. With attachments
+       * enabled an over-threshold paste is converted to an attachment and
+       * never reaches the textarea, so warning here would be about text the
+       * user did not paste inline; an under-threshold paste is at most
+       * pasteTextThreshold characters and cannot reach the cap on its own.
+       * Existing text plus a small paste crossing the cap is not visible from
+       * the pasted string's length at all — the send gate catches that.
+       */
       if (!isAttachmentsEnabled) {
         const text = e.clipboardData.getData('text/plain');
         if (text.length >= maxMessageLength) {
@@ -268,13 +281,13 @@ export const Input: FC<InputProps> = ({
     setDismissedToolIds([]);
   }, [toolIdsSignature]);
 
-  const visibleTools = useMemo(
-    () =>
-      (toolsMenuItems ?? []).filter(
-        (tool) => tool.isSelected || !dismissedToolIds.includes(tool.id),
-      ),
-    [toolsMenuItems, dismissedToolIds],
-  );
+  const visibleTools = useMemo(() => {
+    const tools = toolsMenuItems ?? [];
+    if (!canRemoveTools) return tools;
+    return tools.filter(
+      (tool) => tool.isSelected || !dismissedToolIds.includes(tool.id),
+    );
+  }, [toolsMenuItems, dismissedToolIds, canRemoveTools]);
 
   const handleToolDismiss = useCallback(
     (toolId: string) => {
@@ -296,7 +309,7 @@ export const Input: FC<InputProps> = ({
 
   const handleSend = async () => {
     if (isSendDisabled) return;
-    if (!isAttachmentsEnabled && message.length >= maxMessageLength) {
+    if (message.length >= maxMessageLength) {
       onMessageTooLong?.(message.length, maxMessageLength);
       return;
     }
@@ -425,7 +438,7 @@ export const Input: FC<InputProps> = ({
           }}
           onRetry={handleRetry}
           onExpand={handleExpand}
-          labels={{ removeLabel, retryLabel }}
+          labels={{ removeLabel, retryLabel, uploadingLabel }}
           onAttachmentClick={
             onAttachmentClick != null
               ? (id) => {
@@ -471,7 +484,13 @@ export const Input: FC<InputProps> = ({
                 isDisabled={isInputDisabled}
                 chatSettings={chatSettings}
                 extraMenuItems={dialFileSystemMenuItem}
-                toolsMenuItems={toolsMenuItems}
+                /*
+                 * The "Tools" submenu exists only to bring a dismissed chip
+                 * back. With removal off every chip is always on screen, so the
+                 * entry would be dead weight — and where tools are the menu's
+                 * only content, withholding them drops the `+` button entirely.
+                 */
+                toolsMenuItems={canRemoveTools ? toolsMenuItems : undefined}
                 onToolToggle={onToolToggle}
                 toolsMenuTitle={toolsMenuTitle}
                 toolsBackLabel={toolsBackLabel}
@@ -487,6 +506,7 @@ export const Input: FC<InputProps> = ({
                 items={visibleTools}
                 onToolToggle={onToolToggle}
                 onToolDismiss={handleToolDismiss}
+                canRemove={canRemoveTools}
                 removeLabel={toolsChipLabels?.removeLabel}
               />
             </div>

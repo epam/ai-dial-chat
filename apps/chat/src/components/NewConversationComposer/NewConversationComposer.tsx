@@ -9,8 +9,8 @@ import {
   useAttachmentUpload,
   useAttachmentValidation,
   useChatSettingsFormConfig,
-  usePageFileDrag,
 } from '@epam/ai-dial-chat-hooks';
+import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ResponseFormat,
@@ -287,6 +287,7 @@ const NewConversationComposer: FC<Props> = ({
     OverlayFeature.SkipFocusChatInputOnload,
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
+  const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
   const { displayName } = useUserProfile();
   const firstName = displayName.split(' ')[0];
   const { resolvers, options } = useAttachmentCanvasResolvers();
@@ -352,6 +353,7 @@ const NewConversationComposer: FC<Props> = ({
           message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
           requestId: traceId,
         });
+        throw err;
       } finally {
         setIsSending(false);
       }
@@ -418,6 +420,9 @@ const NewConversationComposer: FC<Props> = ({
             firstName || undefined,
           )}
           placeholder={placeholder}
+          removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
+          retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
+          uploadingLabel={t(AttachmentsI18nKeys.UploadingLabel)}
           styles={inputStyles}
           deployments={
             isHideEmptyChatChangeAgentEnabled ? undefined : deployments
@@ -468,6 +473,7 @@ const NewConversationComposer: FC<Props> = ({
           promptsMenuTitle={promptsMenuTitle}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
+          canRemoveTools={isRemovableToolsEnabled}
           toolsMenuTitle={toolsMenuTitle}
           toolsChipLabels={toolsChipLabels}
           usageLimitsSlot={

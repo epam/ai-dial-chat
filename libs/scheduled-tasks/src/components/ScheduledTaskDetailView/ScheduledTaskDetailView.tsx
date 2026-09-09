@@ -355,6 +355,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
                     errorLabel: labels.historyErrorLabel,
                     retryLabel: labels.historyRetryLabel,
                     runStatusLabels: labels.runStatusLabels,
+                    unreadIndicatorLabel: labels.unreadIndicatorLabel,
                   }}
                   footer={historyFooter}
                   styles={{
@@ -363,6 +364,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
                       successIconColor: colors?.successIconColor,
                       errorIconColor: colors?.errorIconColor,
                       missedIconColor: colors?.missedIconColor,
+                      unreadDotColor: colors?.unreadDotColor,
                     },
                   }}
                 />

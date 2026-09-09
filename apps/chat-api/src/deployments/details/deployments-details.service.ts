@@ -25,8 +25,8 @@ import type { DeploymentDetailsDto } from '../dto/deployment-details.dto';
 import { DeploymentItemType } from '../dto/deployment-item.dto';
 import {
   getNumber,
-  getString,
   isRecord,
+  mapCatalogProperties,
   mapDeploymentFeatures,
   mapToolsetAuthSettings,
   redactToolsetAuthSettings,
@@ -45,6 +45,8 @@ export class DeploymentsDetailsService {
     string,
     Promise<DeploymentDetailsDto>
   >();
+  /** Per-cache-key generation, bumped on invalidation — see `deployment-details-api` spec, "in flight when a logout invalidates its key" scenario. */
+  private readonly cacheGenerations = new Map<string, number>();
 
   constructor(
     private readonly dialClient: DialClientService,
@@ -55,13 +57,20 @@ export class DeploymentsDetailsService {
    * Evicts a user's cached details for one deployment — e.g. right after a
    * toolset login/logout, so the details panel's next `getDeploymentDetails`
    * call re-reads the updated `userLevelAuthStatus` instead of the snapshot
-   * cached before the credentials changed.
+   * cached before the credentials changed. Also bumps the key's generation
+   * and drops any in-flight request for it (see `deployment-details-api` spec).
    */
   async invalidateDetailsCache(
     userSub: string,
     deployment: string,
   ): Promise<void> {
-    await this.cacheManager.del(`deployments:details:${userSub}:${deployment}`);
+    const cacheKey = `deployments:details:${userSub}:${deployment}`;
+    await this.cacheManager.del(cacheKey);
+    this.cacheGenerations.set(
+      cacheKey,
+      (this.cacheGenerations.get(cacheKey) ?? 0) + 1,
+    );
+    this.pendingDetailsRequests.delete(cacheKey);
   }
 
   async getDeploymentConfiguration(
@@ -149,7 +158,10 @@ export class DeploymentsDetailsService {
     try {
       return await request;
     } finally {
-      this.pendingDetailsRequests.delete(cacheKey);
+      /* Only clear this request's own slot — see `deployment-details-api` spec. */
+      if (this.pendingDetailsRequests.get(cacheKey) === request) {
+        this.pendingDetailsRequests.delete(cacheKey);
+      }
     }
   }
 
@@ -168,6 +180,7 @@ export class DeploymentsDetailsService {
     accessToken: string,
     cacheKey: string,
   ): Promise<DeploymentDetailsDto> {
+    const generationAtStart = this.cacheGenerations.get(cacheKey) ?? 0;
     let data: DeploymentDetailsDto;
     try {
       if (deployment.startsWith('toolsets/')) {
@@ -189,7 +202,10 @@ export class DeploymentsDetailsService {
       );
     }
 
-    await this.cacheManager.set(cacheKey, data, 60 * 1000);
+    /* Skip a stale write — see `deployment-details-api` spec. */
+    if ((this.cacheGenerations.get(cacheKey) ?? 0) === generationAtStart) {
+      await this.cacheManager.set(cacheKey, data, 60 * 1000);
+    }
     return data;
   }
 
@@ -275,24 +291,7 @@ export class DeploymentsDetailsService {
           : undefined,
         pricing: raw.pricing,
         features: mapDeploymentFeatures(raw.features),
-        catalogProperties: (() => {
-          if (!isRecord(raw.catalog_properties)) return undefined;
-
-          const properties = {
-            provider: getString(raw.catalog_properties, 'provider'),
-            vendor: getString(raw.catalog_properties, 'vendor'),
-            license: getString(raw.catalog_properties, 'license'),
-            knowledgeCutoffDate: getString(
-              raw.catalog_properties,
-              'knowledgeCutoffDate',
-            ),
-            parameters: getString(raw.catalog_properties, 'parameters'),
-          };
-
-          return Object.values(properties).some((value) => value != null)
-            ? properties
-            : undefined;
-        })(),
+        catalogProperties: mapCatalogProperties(raw.catalog_properties),
         owner: raw.owner,
         inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
           ? raw.input_attachment_types
@@ -388,6 +387,7 @@ export class DeploymentsDetailsService {
         inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
           ? raw.input_attachment_types
           : undefined,
+        catalogProperties: mapCatalogProperties(raw.catalog_properties),
         applicationTypeSchemaId: raw.application_type_schema_id,
         endpoint:
           typeof customAppRaw?.endpoint === 'string'
@@ -456,6 +456,7 @@ export class DeploymentsDetailsService {
         authSettings: mapToolsetAuthSettings(raw.auth_settings),
         owner: raw.owner,
         features: mapDeploymentFeatures(raw.features),
+        catalogProperties: mapCatalogProperties(raw.catalog_properties),
         createdAt: raw.created_at,
       },
     };

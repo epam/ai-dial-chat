@@ -37,6 +37,10 @@ export interface InputColors {
   modelSelectorHoverBg?: string;
   /** Model-selector chip caret color when disabled. Defaults to `--text-control-disable-primary`. */
   modelSelectorDisabled?: string;
+  /** Model-selector chip name text color (desktop only). Defaults to `--text-primary`. */
+  modelSelectorName?: string;
+  /** Model-selector chip version text color (desktop only). Defaults to `--text-secondary`. */
+  modelSelectorVersion?: string;
   /** Voice bar error border/icon color. Defaults to `--stroke-error`/`--text-error`. */
   voiceError?: string;
   /** Voice bar waveform and timer text color. Defaults to `--text-primary`. */
@@ -123,6 +127,8 @@ export interface InputProps {
   removeLabel?: string;
   /** Accessible label for each attachment card's retry button (error state only). */
   retryLabel?: string;
+  /** Accessible label for each attachment card's in-progress upload progress bar. Defaults to `'Uploading'`. */
+  uploadingLabel?: string;
   /** Accessible label for the send button. */
   sendLabel?: string;
   /** Tooltip shown on hover over the send button. */
@@ -142,9 +148,11 @@ export interface InputProps {
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
   /**
-   * Maximum character count for the message text. When `isAttachmentsEnabled`
-   * is `false`, pasting or sending text at or above this length triggers
-   * `onMessageTooLong` instead of being accepted. Defaults to `50000`.
+   * Maximum character count for the message text. Sending text at or above this
+   * length triggers `onMessageTooLong` instead of being accepted, on every model.
+   * Pasting text that long additionally triggers it when `isAttachmentsEnabled`
+   * is `false`. Separate from `pasteTextThreshold`, which only decides when a
+   * paste becomes an attachment. Defaults to `50000`.
    */
   maxMessageLength?: number;
   /**
@@ -248,6 +256,12 @@ export interface InputProps {
   toolsMenuItems?: ToolMenuItem[];
   /** Called when a tool row is toggled. Receives the tool id. */
   onToolToggle?: (toolId: string) => void;
+  /**
+   * When `false`, every tool chip is a persistent on/off toggle: chips render
+   * without a ×, and the `+` menu carries no "Tools" item, since there is
+   * nothing to bring back. Defaults to `true`.
+   */
+  canRemoveTools?: boolean;
   /** Label for the "Tools" menu item and mobile sheet title. Defaults to `'Tools'`. */
   toolsMenuTitle?: string;
   /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
@@ -310,9 +324,10 @@ export interface InputProps {
   /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
   usageLimitsSlot?: ReactNode;
   /**
-   * Called when the user pastes or sends text whose length is ≥ `maxMessageLength`
-   * while `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
-   * host is responsible for surfacing the error to the user.
+   * Called when the user sends text whose length is ≥ `maxMessageLength`, and when
+   * they paste text that long while `isAttachmentsEnabled` is `false`. A blocked
+   * send leaves the textarea's content in place; a paste is still inserted inline.
+   * The host is responsible for surfacing the error to the user.
    */
   onMessageTooLong?: (length: number, max: number) => void;
 }

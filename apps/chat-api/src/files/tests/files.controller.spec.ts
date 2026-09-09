@@ -1353,6 +1353,24 @@ describe('FilesController — renameFiles', () => {
     expect(service.renameFiles).not.toHaveBeenCalled();
   });
 
+  it('returns 400 when the destination is the reserved marker name', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'reports/notes',
+            destinationPath: 'reports/.dial_folder',
+            nodeType: 'item',
+            name: '.dial_folder',
+          },
+        ],
+      })
+      .expect(400);
+    expect(service.renameFiles).not.toHaveBeenCalled();
+  });
+
   it('returns 401 when service throws UnauthorizedException', async () => {
     service.renameFiles.mockRejectedValue(new UnauthorizedException());
     await request(app.getHttpServer())
@@ -1482,6 +1500,25 @@ describe('FilesController — copyFiles', () => {
     expect(service.copyFiles).not.toHaveBeenCalled();
   });
 
+  it('returns 400 when the destination is the reserved marker name', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/copy')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'reports/notes',
+            destinationPath: 'reports/.dial_folder',
+            overwrite: false,
+            nodeType: 'item',
+            name: '.dial_folder',
+          },
+        ],
+      })
+      .expect(400);
+    expect(service.copyFiles).not.toHaveBeenCalled();
+  });
+
   it('returns 401 when service throws UnauthorizedException', async () => {
     service.copyFiles.mockRejectedValue(new UnauthorizedException());
     await request(app.getHttpServer())
@@ -1607,6 +1644,25 @@ describe('FilesController — moveFiles', () => {
     await request(app.getHttpServer())
       .post('/api/v1/files/move')
       .send({ items })
+      .expect(400);
+    expect(service.moveFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the destination is the reserved marker name', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/move')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'reports/notes',
+            destinationPath: 'reports/.dial_folder',
+            overwrite: false,
+            nodeType: 'item',
+            name: '.dial_folder',
+          },
+        ],
+      })
       .expect(400);
     expect(service.moveFiles).not.toHaveBeenCalled();
   });

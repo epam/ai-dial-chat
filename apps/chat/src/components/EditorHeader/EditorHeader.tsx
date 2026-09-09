@@ -230,7 +230,7 @@ const EditorHeader: FC<Props> = ({
     <header className="flex items-center justify-between gap-3 border-b border-tertiary bg-layer-sunken px-6 py-3">
       <div className="flex min-w-0 items-center gap-4">
         {title && (
-          <h1 className="dial-caption-text truncate text-primary">{title}</h1>
+          <h1 className="dial-tiny-semi-text truncate text-primary">{title}</h1>
         )}
         <nav
           aria-label={navAriaLabel}

@@ -93,7 +93,9 @@ describe('Toolbar', () => {
     renderToolbar({
       title: 'Browse',
       totalCount: 5,
-      browseHeaderRenderer: <nav aria-label="breadcrumb">All entities &gt; Org</nav>,
+      browseHeaderRenderer: (
+        <nav aria-label="breadcrumb">All entities &gt; Org</nav>
+      ),
     });
 
     expect(screen.getByLabelText('breadcrumb')).toBeTruthy();

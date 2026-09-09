@@ -61,9 +61,12 @@ export default defineConfig(() => ({
       transformMixedEsModules: true,
     },
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+        'file-manager': 'src/entry-points/file-manager.ts',
+      },
       name: '@epam/ai-dial-chat-shared',
-      fileName: 'index',
+      cssFileName: 'index',
       formats: ['es' as const],
     },
     rollupOptions: {
@@ -71,7 +74,7 @@ export default defineConfig(() => ({
         'react',
         'react-dom',
         'react/jsx-runtime',
-        '@epam/ai-dial-ui-kit',
+        /^@epam\/ai-dial-ui-kit(?:\/|$)/,
         '@epam/ai-dial-react-file-manager',
         'ag-grid-community',
         /*

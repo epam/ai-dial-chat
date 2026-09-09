@@ -13,6 +13,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
   onSubmit,
   isCancelDisabled = false,
   isSubmitDisabled = false,
+  isSubmitting = false,
   left,
   children,
   metadata,
@@ -38,6 +39,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
         onSubmit={onSubmit}
         isCancelDisabled={isCancelDisabled}
         isSubmitDisabled={isSubmitDisabled}
+        isSubmitting={isSubmitting}
         styles={header}
       />
       <BuilderFormBody left={left} metadata={metadata}>

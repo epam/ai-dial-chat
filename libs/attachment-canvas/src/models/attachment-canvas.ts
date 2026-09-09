@@ -37,6 +37,14 @@ export interface MarkdownCanvasContent {
   text: string;
 }
 
+/** Content payload for a Markdown table opened standalone (e.g. via a table's "open in canvas" action). */
+export interface MarkdownTableCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.MarkdownTable;
+  /** The table serialized back to Markdown syntax. */
+  text: string;
+}
+
 /** Content payload for JSON file attachments. */
 export interface JsonCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
@@ -55,15 +63,17 @@ export interface PdfCanvasContent {
   highlights?: InputHighlightData[];
   /** ID of the highlight to scroll to and select on initial load. */
   selectedHighlightId?: string;
+  /** 1-based page to navigate to on initial load, independent of highlight geometry. */
+  page?: number;
 }
 
-/** Content payload for Office Open XML document attachments. */
+/** Content payload for OOXML document and CSV spreadsheet attachments. */
 export interface OoxmlCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
   type: AttachmentContentType.Ooxml;
-  /** Resolved download URL or object URL for the OOXML file. */
+  /** Resolved download URL or object URL for the source file. */
   url: string;
-  /** The document format used to select the format-specific renderer. */
+  /** The document format used to select and configure the format-specific renderer. */
   format: OoxmlFileType;
 }
 
@@ -133,6 +143,8 @@ export interface McpAppCanvasContent {
   hostContext?: McpUiHostContext;
   /** Forwards a `tools/call` request issued by the mounted app to the owning MCP session via the app layer. */
   onToolCall: (name: string, args: unknown) => Promise<CallToolResult>;
+  /** Re-fetches the resource and re-resolves the tool result from scratch, bypassing any cache the app layer keeps. Shows a reload action in the canvas header when provided; omit to hide it. */
+  onReload?: () => void;
 }
 
 /** Content payload for attachments whose format cannot be previewed. */
@@ -161,6 +173,7 @@ export type AttachmentCanvasContent =
   | ImageCanvasContent
   | AudioCanvasContent
   | MarkdownCanvasContent
+  | MarkdownTableCanvasContent
   | JsonCanvasContent
   | PdfCanvasContent
   | OoxmlCanvasContent
@@ -203,8 +216,14 @@ export interface AttachmentCanvasColors {
   jsonToggleIcon?: string;
   /** Expand/collapse triangle color on hover. Defaults to `--text-primary`. */
   jsonToggleIconHover?: string;
-  /** Background color of the OOXML (DOCX/XLSX/PPTX) viewer surface and its loading/error overlay. Defaults to `--bg-layer-raised`. */
+  /** Background color of the OOXML/CSV viewer surface and its loading/error overlay. Defaults to `--bg-layer-raised`. */
   ooxmlBackground?: string;
+  /** Border color of the XLSX formula panel and value field. Defaults to `--stroke-secondary`. */
+  ooxmlFormulaBorder?: string;
+  /** Background color of the XLSX formula value field. Defaults to `--bg-layer-base`. */
+  ooxmlFormulaBackground?: string;
+  /** Text color of the XLSX formula panel. Defaults to `--text-primary`. */
+  ooxmlFormulaText?: string;
   /** Text color of the collapsed-content ellipsis. Defaults to `--text-secondary`. */
   jsonCollapsedText?: string;
   /** Background color of the collapsed-content ellipsis. Defaults to `--bg-layer-raised`. */
@@ -230,6 +249,8 @@ export interface AttachmentCanvasTypography {
   fontClassName?: string;
   /** CSS utility class applied to the JSON tree viewer. Defaults to `'dial-code-text'`. */
   jsonClassName?: string;
+  /** CSS utility class applied to the decorative XLSX `fx` label. Defaults to `'dial-italic-text'`. */
+  xlsxFormulaLabelClassName?: string;
 }
 
 /** Style override prop for `AttachmentCanvasBody`'s content-rendering area. */
@@ -291,6 +312,8 @@ export interface AttachmentCanvasLabels {
   htmlViewSourceLabel?: string;
   /** Tooltip and `aria-label` for the toggle button when the source view is active (clicking switches back to rendered). Defaults to `'View rendered'`. */
   htmlViewRenderedLabel?: string;
+  /** Tooltip and accessible label for the MCP App reload button. Only shown when content type is `McpApp` and `content.onReload` is provided. Defaults to `'Reload'`. */
+  mcpAppReloadLabel?: string;
   /** Accessible name for the PDF viewer's floating thumbnails panel region. Defaults to `'Thumbnails'`. */
   pdfThumbnailsLabel?: string;
   /** Accessible label for the FAB button that opens the PDF thumbnails panel. Defaults to `'Show thumbnails'`. */
@@ -299,6 +322,30 @@ export interface AttachmentCanvasLabels {
   pdfHideThumbnailsLabel?: string;
   /** Accessible label for the current-page number input at the top of the PDF thumbnails panel. Defaults to `'Page number'`. */
   pdfPageNumberLabel?: string;
+  /** Accessible status text announced while the PDF viewer's dynamic import is loading. Defaults to `'Loading…'`. */
+  pdfContentLoadingLabel?: string;
+  /** Message shown when the PDF viewer's dynamic import fails to load. Defaults to `'Failed to load content'`. */
+  pdfContentErrorLabel?: string;
+  /** Label and accessible name for the retry control shown alongside `pdfContentErrorLabel`. Defaults to `'Retry'`. */
+  pdfContentRetryLabel?: string;
+  /** Accessible label for the active XLSX cell's formula panel. Defaults to `'Formula'`. */
+  xlsxFormulaLabel?: string;
+  /** Accessible status text announced while the syntax-highlighter engine's dynamic import is loading. Defaults to `'Loading…'`. */
+  codeContentLoadingLabel?: string;
+  /** Message shown when the syntax-highlighter engine's dynamic import fails to load. Defaults to `'Failed to load content'`. */
+  codeContentErrorLabel?: string;
+  /** Label and accessible name for the retry control shown alongside `codeContentErrorLabel`. Defaults to `'Retry'`. */
+  codeContentRetryLabel?: string;
+  /** Label for copying a Markdown table as CSV. */
+  tableCopyCsvLabel?: string;
+  /** Label for copying a Markdown table as text. */
+  tableCopyTxtLabel?: string;
+  /** Label for copying a Markdown table as Markdown. */
+  tableCopyMarkdownLabel?: string;
+  /** Status announced after a Markdown table has been copied. */
+  tableCopiedLabel?: string;
+  /** Label for downloading a Markdown table as CSV. */
+  tableDownloadCsvLabel?: string;
 }
 
 /** Props for the AttachmentCanvas component. */
@@ -323,6 +370,8 @@ export interface AttachmentCanvasProps {
   onCopyMarkdown?: () => void;
   /** Called when the user activates the copy-JSON button. When omitted the button is hidden. Only relevant when content type is `Json`. */
   onCopyJson?: () => void;
+  /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. */
+  tableDownloadFilename?: string;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. */
   isMobile?: boolean;
   /** Initial panel width in pixels (when resizable). Defaults to `min(maxWidth, 2/3 of viewport width)`. */
@@ -343,6 +392,18 @@ export interface AttachmentCanvasProps {
    * plain `fetch` if not provided.
    */
   loadPdf?: (url: string) => Promise<Blob>;
+  /**
+   * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
+   * host app. Called once, the first time a PDF attachment is opened, and
+   * awaited before the viewer mounts. Concurrent PDF opens share one
+   * in-flight call; a successful call is memoized so later opens never
+   * repeat it. A rejected call is not cached — the next PDF open (or a
+   * subsequent retry) invokes it again. When omitted,
+   * `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used
+   * instead, so PDF rendering still works, just without the host's own
+   * bundled worker asset.
+   */
+  configurePdfWorker?: () => void | Promise<void>;
 }
 
 /** User-visible strings for `AttachmentCanvasBody`'s content states. */
@@ -358,6 +419,18 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'pdfShowThumbnailsLabel'
   | 'pdfHideThumbnailsLabel'
   | 'pdfPageNumberLabel'
+  | 'pdfContentLoadingLabel'
+  | 'pdfContentErrorLabel'
+  | 'pdfContentRetryLabel'
+  | 'xlsxFormulaLabel'
+  | 'codeContentLoadingLabel'
+  | 'codeContentErrorLabel'
+  | 'codeContentRetryLabel'
+  | 'tableCopyCsvLabel'
+  | 'tableCopyTxtLabel'
+  | 'tableCopyMarkdownLabel'
+  | 'tableCopiedLabel'
+  | 'tableDownloadCsvLabel'
 >;
 
 /** Props for the `AttachmentCanvasBody` component. */
@@ -381,6 +454,8 @@ export interface AttachmentCanvasBodyProps {
   styles?: AttachmentCanvasBodyStyles;
   /** Syntax highlight color theme forwarded to MarkdownRenderer/CodeContent code blocks. */
   codeBlockTheme?: CodeBlockTheme;
+  /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. Only relevant when content type is `MarkdownTable`. */
+  tableDownloadFilename?: string;
   /**
    * Fetches a PDF file by URL and returns its bytes as a `Blob`. Used when
    * content type is `Pdf` to load the file before rendering. Defaults to a
@@ -393,4 +468,16 @@ export interface AttachmentCanvasBodyProps {
    * Ignored for every other content type. Defaults to `false`.
    */
   hidePdfToolbar?: boolean;
+  /**
+   * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
+   * host app. Called once, the first time a PDF attachment is opened, and
+   * awaited before the viewer mounts. Concurrent PDF opens share one
+   * in-flight call; a successful call is memoized so later opens never
+   * repeat it. A rejected call is not cached — the next PDF open (or a
+   * subsequent retry) invokes it again. When omitted,
+   * `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used
+   * instead, so PDF rendering still works, just without the host's own
+   * bundled worker asset.
+   */
+  configurePdfWorker?: () => void | Promise<void>;
 }
