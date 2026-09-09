@@ -243,6 +243,10 @@ Behaviour applied automatically:
 
 ### SSE streaming
 
+Citation normalization preserves the inline marker's `target.selector` separately
+from the PDF location in `body.selector` through stream assembly and persistence;
+see [PDF citation metadata](../apps/chat-api/README.md#pdf-citation-metadata).
+
 `chat-stream.api.ts` handles streaming completions:
 
 - Uses `ReadableStream.getReader()` + line-by-line SSE parsing (`data: {json}`)
@@ -271,6 +275,7 @@ Configured at startup:
 - Swagger at `/api/docs` (non-production)
 - Static React SPA serving from `apps/chat/dist` for non-`/api/*` routes
 - Global prefix: `api`
+- Global in-memory cache: an explicit Keyv memory adapter with a 100-entry LRU limit and periodic expiration cleanup; see [backend caching behavior](../apps/chat-api/README.md#performance).
 - OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)
   — off by default (`OTEL_SDK_DISABLED=true`); when enabled, adds a `traceparent` response header
   on traced routes and an optional dedicated Prometheus scrape listener (default `:9464/metrics`,
@@ -462,8 +467,14 @@ Browser                apps/chat-api                OIDC Provider
   │  GET /auth/callback/:id  │                            │
   │─────────────────────────▶│                            │
   │                         │◀──── token exchange ───────│
+  │                         │◀── optional UserInfo ─────▶│
   │◀────────────────────────│ Set-Cookie: session=<enc>  │
 ```
+
+For Keycloak, a missing ID-token `job_title` can be read from UserInfo after
+checking the subject. The [auth design](auth/auth-bff-encrypted-cookie.md#51-login-flow-authorization-code--pkce)
+describes claim capture and failure handling; other providers keep their
+existing ID-token path.
 
 ### Session
 

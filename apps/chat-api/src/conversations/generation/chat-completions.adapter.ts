@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { Response } from 'express';
 import { extractDialErrorMessage } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
-import { buildConversationIdHeaders } from '../../common/utils/header-value';
+import {
+  buildConversationIdHeaders,
+  buildJobTitleHeaders,
+} from '../../common/utils/header-value';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
@@ -109,6 +112,7 @@ export class ChatCompletionsAdapter {
     clientChannelId?: string,
     timing?: GenerationRelayTiming,
     conversationId?: string,
+    jobTitle?: string,
   ): AsyncGenerator<Uint8Array, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -127,6 +131,7 @@ export class ChatCompletionsAdapter {
               ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
               : {}),
             ...buildConversationIdHeaders(conversationId),
+            ...buildJobTitleHeaders(jobTitle),
           },
           params: { query: { 'api-version': this.dialClient.dialApiVersion } },
           parseAs: 'stream',
@@ -311,6 +316,7 @@ export class ChatCompletionsAdapter {
     clientChannelId?: string,
     timing?: GenerationRelayTiming,
     conversationId?: string,
+    jobTitle?: string,
   ): Promise<GenerationRelayOutcome> {
     const iterator = this.stream(
       model,
@@ -321,6 +327,7 @@ export class ChatCompletionsAdapter {
       clientChannelId,
       timing,
       conversationId,
+      jobTitle,
     );
     let next = await iterator.next();
     while (!next.done) {

@@ -115,7 +115,7 @@
     "vite": "^8.0.0",
     "vite-plugin-dts": "~4.5.0",
     "vite-plugin-svgr": "^5.2.0",
-    "vitest": "~4.1.0",
+    "vitest": "~4.1.11",
     "webpack-cli": "^5.1.4",
     "webpack-node-externals": "^3.0.0"
   },
@@ -190,7 +190,8 @@
     "brace-expansion@1.1.15": "1.1.16",
     "brace-expansion@2.1.1": "2.1.4",
     "brace-expansion@5.0.6": "5.0.9",
-    "js-yaml": "4.3.1"
+    "js-yaml": "4.3.2",
+    "multer": "2.3.0"
   },
   "workspaces": [
     "packages/*",

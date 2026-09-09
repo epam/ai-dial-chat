@@ -1,4 +1,7 @@
-import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  AttachmentContentType,
+  useAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   annotationToDisplayAttachment,
   annotationToPdfCanvasContent,
@@ -72,7 +75,10 @@ import {
   attachmentCanvasUrlResolvers,
   attachmentDisplayResolvers,
 } from '../../utils/attachment-display-resolvers';
-import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
+import {
+  resolveDialFileDownloadUrl,
+  resolveMarkdownUrl,
+} from '../../utils/dial-file';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
@@ -261,6 +267,14 @@ const ConversationMessageItem: FC<Props> = ({
   );
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
+  const handleTableOpenInCanvas = useCallback(
+    (text: string) =>
+      openCanvas(
+        { type: AttachmentContentType.MarkdownTable, text },
+        t(ChatI18nKeys.MarkdownTableTitle),
+      ),
+    [openCanvas, t],
+  );
   const { handleAttachmentClick: handleDownload } = useAttachmentAction({
     resolveDownloadUrl: resolveDialFileDownloadUrl,
   });
@@ -525,6 +539,9 @@ const ConversationMessageItem: FC<Props> = ({
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }
+        markdownUrlTransform={
+          msg.role === MessageRole.Assistant ? resolveMarkdownUrl : undefined
+        }
         markdownClassNames={markdownClassNames}
         attachments={nonReferenceDisplayAttachments}
         isStreaming={isStreaming}
@@ -682,11 +699,19 @@ const ConversationMessageItem: FC<Props> = ({
           thinkingLabel,
           codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
           codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+          tableCopyCsvLabel: t(ButtonsI18nKeys.CopyAsCsv),
+          tableCopyTxtLabel: t(ButtonsI18nKeys.CopyAsTxt),
+          tableCopyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
+          tableCopiedLabel: t(ButtonsI18nKeys.Copied),
+          tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
+          tableOpenInCanvasLabel: t(ButtonsI18nKeys.OpenInCanvas),
+          tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
           ...statusProps,
         }}
         deploymentIconUrl={deploymentEntry?.iconUrl}
         deploymentDisplayName={deploymentEntry?.displayName}
         codeBlockTheme={codeBlockTheme}
+        tableOnOpenInCanvas={handleTableOpenInCanvas}
         onAttachmentClick={handleAttachmentClick}
         onDownloadAll={handleDownloadAll}
         selectedAttachmentId={selectedAttachmentId}

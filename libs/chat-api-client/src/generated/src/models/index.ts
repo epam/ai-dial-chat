@@ -38,6 +38,12 @@ export interface AcceptInvitationResponseDto {
  */
 export interface AnnotationBodyDto {
   /**
+   *
+   * @type {AnnotationBodyDtoSelector}
+   * @memberof AnnotationBodyDto
+   */
+  selector?: AnnotationBodyDtoSelector;
+  /**
    * Title of the cited source
    * @type {string}
    * @memberof AnnotationBodyDto
@@ -56,6 +62,14 @@ export interface AnnotationBodyDto {
    */
   source?: AnnotationSourceDto;
 }
+/**
+ * @type AnnotationBodyDtoSelector
+ * Location in the cited document; PDF page numbers are 1-based
+ * @export
+ */
+export type AnnotationBodyDtoSelector =
+  | AnnotationSelectorDto
+  | Array<AnnotationSelectorDto>;
 /**
  *
  * @export
@@ -1555,7 +1569,7 @@ export interface CreateApplicationBodyDto {
    */
   description?: string;
   /**
-   *
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
    * @type {string}
    * @memberof CreateApplicationBodyDto
    */
@@ -6572,7 +6586,7 @@ export interface ToolsetBodyDto {
    */
   description?: string;
   /**
-   *
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
    * @type {string}
    * @memberof ToolsetBodyDto
    */
@@ -6996,7 +7010,7 @@ export interface UpdateApplicationBodyDto {
    */
   description?: string;
   /**
-   *
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
    * @type {string}
    * @memberof UpdateApplicationBodyDto
    */

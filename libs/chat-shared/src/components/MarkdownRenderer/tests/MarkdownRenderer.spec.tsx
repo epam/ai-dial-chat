@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 
 vi.mock('react-syntax-highlighter', () => ({
@@ -22,6 +23,14 @@ const SECTION_ROW_MARKDOWN = `| Name | Description |
 
 const EMPTY_TABLE_MARKDOWN = `| Name | Description |
 | --- | --- |`;
+
+const TABLE_ACTION_LABELS = {
+  copyCsvLabel: 'Copy as CSV',
+  copyTxtLabel: 'Copy as TXT',
+  copyMarkdownLabel: 'Copy as Markdown',
+  copiedLabel: 'Copied!',
+  downloadCsvLabel: 'Download as CSV',
+};
 
 const ALIGNED_TABLE_MARKDOWN = `| Right | Plain | Left | Center |
 | ---: | --- | :--- | :---: |
@@ -63,6 +72,10 @@ R_{\\mu\\nu} - \\frac{1}{2}g_{\\mu\\nu}R + \\Lambda g_{\\mu\\nu} = \\frac{8\\pi 
 $$`;
 
 describe('MarkdownRenderer', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('renders GFM tables in a horizontally scrollable container', () => {
     render(<MarkdownRenderer content={TABLE_MARKDOWN} />);
 
@@ -85,6 +98,83 @@ describe('MarkdownRenderer', () => {
     expect(tableWrapper?.className).toContain('rounded-xl');
     expect(tableWrapper?.className).toContain('border');
     expect(scrollContainer?.className).toContain('overflow-x-auto');
+  });
+
+  it('renders table actions when table action labels are supplied', () => {
+    render(
+      <MarkdownRenderer
+        content={TABLE_MARKDOWN}
+        tableActionLabels={TABLE_ACTION_LABELS}
+        tableDownloadFilename="report.csv"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Copy as CSV' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy as TXT' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Copy as Markdown' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Download as CSV' }),
+    ).toBeTruthy();
+  });
+
+  it('renders tables without actions when table action labels are absent', () => {
+    render(<MarkdownRenderer content={TABLE_MARKDOWN} />);
+
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('forwards tableOnOpenInCanvas to the table, calling it with the serialized Markdown', async () => {
+    /* The action button's Tooltip mounts via floating-ui, which requires
+     * IntersectionObserver — absent by default in jsdom. */
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe() {
+          // No-op in JSDOM.
+        }
+        unobserve() {
+          // No-op in JSDOM.
+        }
+        disconnect() {
+          // No-op in JSDOM.
+        }
+      },
+    );
+
+    const user = userEvent.setup({ delay: null });
+    const tableOnOpenInCanvas = vi.fn();
+    render(
+      <MarkdownRenderer
+        content={TABLE_MARKDOWN}
+        tableActionLabels={{
+          ...TABLE_ACTION_LABELS,
+          openInCanvasLabel: 'Open in canvas',
+        }}
+        tableOnOpenInCanvas={tableOnOpenInCanvas}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Open in canvas' }));
+
+    expect(tableOnOpenInCanvas).toHaveBeenCalledWith(
+      '| Name | Description |\n| :-- | :-- |\n| Alpha | A long table value |',
+    );
+  });
+
+  it('does not render Open in Canvas when tableOnOpenInCanvas is absent', () => {
+    render(
+      <MarkdownRenderer
+        content={TABLE_MARKDOWN}
+        tableActionLabels={{
+          ...TABLE_ACTION_LABELS,
+          openInCanvasLabel: 'Open in canvas',
+        }}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Open in canvas' })).toBeNull();
   });
 
   it('marks column headers with scope="col" and sticky uppercase styling', () => {
@@ -592,6 +682,84 @@ describe('MarkdownRenderer', () => {
         // eslint-disable-next-line testing-library/no-node-access
         expect(document.querySelector('math')).toBeTruthy();
       });
+    });
+  });
+
+  describe('urlTransform', () => {
+    const rewriteFilesUrl = (url: string) =>
+      url.startsWith('files/') ? `/dl/${url.slice('files/'.length)}` : url;
+
+    it('leaves markdown image src unchanged when urlTransform is omitted', () => {
+      render(<MarkdownRenderer content="![chart](files/bucket/chart.png)" />);
+
+      expect(
+        screen.getByRole('img', { name: 'chart' }).getAttribute('src'),
+      ).toBe('files/bucket/chart.png');
+    });
+
+    it('rewrites markdown image src through urlTransform', () => {
+      render(
+        <MarkdownRenderer
+          content="![chart](files/bucket/chart.png)"
+          urlTransform={rewriteFilesUrl}
+        />,
+      );
+
+      expect(
+        screen.getByRole('img', { name: 'chart' }).getAttribute('src'),
+      ).toBe('/dl/bucket/chart.png');
+    });
+
+    it('rewrites markdown link href through urlTransform', () => {
+      render(
+        <MarkdownRenderer
+          content="[report](files/bucket/report.pdf)"
+          urlTransform={rewriteFilesUrl}
+        />,
+      );
+
+      expect(
+        screen.getByRole('link', { name: 'report' }).getAttribute('href'),
+      ).toBe('/dl/bucket/report.pdf');
+    });
+
+    it('rewrites raw HTML img src through urlTransform', () => {
+      render(
+        <MarkdownRenderer
+          content='<img src="files/bucket/chart.png" alt="chart">'
+          urlTransform={rewriteFilesUrl}
+        />,
+      );
+
+      expect(
+        screen.getByRole('img', { name: 'chart' }).getAttribute('src'),
+      ).toBe('/dl/bucket/chart.png');
+    });
+
+    it('leaves non-file URLs unchanged', () => {
+      render(
+        <MarkdownRenderer
+          content="![logo](https://example.com/logo.png)"
+          urlTransform={rewriteFilesUrl}
+        />,
+      );
+
+      expect(
+        screen.getByRole('img', { name: 'logo' }).getAttribute('src'),
+      ).toBe('https://example.com/logo.png');
+    });
+
+    it('still strips javascript: URLs after the host rewrite', () => {
+      render(
+        <MarkdownRenderer
+          content="[x](files/bucket/a)"
+          urlTransform={() => 'javascript:alert(1)'}
+        />,
+      );
+
+      expect(
+        screen.getByText('x', { selector: 'a' }).getAttribute('href'),
+      ).toBe('');
     });
   });
 });

@@ -2975,6 +2975,12 @@ clearAttachmentCache();
 
 Also exports `resolveImageCanvasContent`, `resolveTextCanvasContent`, `resolveCodeCanvasContent`, `resolveHtmlCanvasContent`, `resolveOoxmlCanvasContent`, `resolveJsonCanvasContent`, `resolveVisualizerCanvasContent`, `annotationToPdfCanvasContent`, `referenceAttachmentToPdfCanvasContent`, `hasAttachmentTextSource`, `getUrlFileName`, `isExternalSourcePreviewable`, and `resolveExternalSourceContentType` (corrects a content type that mislabels an external citation — e.g. a web-search grounding API reporting `text/markdown` for every reference — against a `.pdf`/`.docx`/`.xlsx`/`.pptx`/`.csv` URL extension).
 
+PDF citation previews use `annotationToPdfCanvasContent(annotation, groups, resolvers)`.
+Pass the exact annotation object selected in the citation popup. The mapper finds
+its group by membership (cit groups can share a URL), filters highlights to that
+annotation's PDF, and sets `page` from its first valid `pdf_bbox` body selector.
+Missing/invalid pages leave `page` unset; nonexistent highlight IDs are omitted.
+
 ### attachmentDtoToDisplayAttachment / attachmentDtosToDisplayAttachments / annotationToDisplayAttachment
 
 Maps Chat API message-attachment DTOs (and an annotation's source attachment) to the display-only `DisplayAttachment` model UI components consume.

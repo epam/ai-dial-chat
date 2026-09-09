@@ -1,5 +1,6 @@
 import type {
   Annotation,
+  AnnotationSelector,
   HtmlTagSelector,
   Message,
   MessageAttachment,
@@ -36,6 +37,20 @@ const inferCitationMimeTypeFromPath = (path: string): string | undefined => {
   return OOXML_MIME_BY_EXTENSION[clean.slice(dotIndex + 1).toLowerCase()];
 };
 
+const isAnnotationSelector = (value: unknown): value is AnnotationSelector =>
+  typeof value === 'object' &&
+  value !== null &&
+  !Array.isArray(value) &&
+  'type' in value &&
+  typeof value.type === 'string';
+
+const normalizeBodySelector = (
+  value: unknown,
+): AnnotationSelector | AnnotationSelector[] | undefined => {
+  if (Array.isArray(value)) return value.filter(isAnnotationSelector);
+  return isAnnotationSelector(value) ? value : undefined;
+};
+
 /**
  * Maps a list of annotations to `InputHighlightData` entries for the PDF viewer.
  * Annotations whose `body.selector` contains no `pdf_bbox` selectors are skipped.
@@ -51,8 +66,14 @@ export const annotationsToPdfHighlights = (
 
     const selectors = Array.isArray(selector) ? selector : [selector];
     const bboxes = selectors.flatMap((s) => {
-      if (s.type !== 'pdf_bbox') return [];
+      if (!isAnnotationSelector(s) || s.type !== 'pdf_bbox') return [];
       const { page, x1, y1, x2, y2 } = s as PdfBBoxSelector;
+      if (
+        !Number.isInteger(page) ||
+        page < 1 ||
+        ![x1, y1, x2, y2].every(Number.isFinite)
+      )
+        return [];
       return [{ page, x1, y1, x2, y2 }];
     });
 
@@ -71,6 +92,28 @@ export const annotationHighlightId = (
   annotation: Annotation,
   fallbackIndex: number,
 ): string => String(annotation.index ?? fallbackIndex);
+
+/**
+ * Returns the first positive integer PDF page in the annotation's body selectors,
+ * or `undefined` when none exists. Independent of bounding-box coordinates.
+ */
+export const getAnnotationPdfPage = (
+  annotation: Annotation,
+): number | undefined => {
+  const selector = annotation.body?.selector;
+  if (selector == null) return undefined;
+
+  const selectors = Array.isArray(selector) ? selector : [selector];
+  const bbox = selectors.find(
+    (s): s is PdfBBoxSelector =>
+      isAnnotationSelector(s) &&
+      s.type === 'pdf_bbox' &&
+      typeof s.page === 'number' &&
+      Number.isInteger(s.page) &&
+      s.page >= 1,
+  );
+  return bbox?.page;
+};
 
 const toNumber = (v: unknown): number | null =>
   typeof v === 'number' ? v : null;
@@ -189,12 +232,15 @@ const normalizeHtmlTagAnnotation = (
     typeof bodyObj['title'] === 'string' ? bodyObj['title'] : undefined;
   const quote =
     typeof bodyObj['quote'] === 'string' ? bodyObj['quote'] : undefined;
+  const bodySelector = normalizeBodySelector(bodyObj['selector']);
 
   return {
+    index: toNumber(r['index']) ?? undefined,
     target: { selector: htmlTagSelector },
     body: {
       title,
       quote,
+      ...(bodySelector !== undefined ? { selector: bodySelector } : {}),
       source: {
         type: 'attachment',
         attachment: {
@@ -251,7 +297,7 @@ const normalizePersistedHtmlTagAttachmentType = (
  * - `target.selector` of type `html_tag` (`{ tag, id }`) with a flat
  *   `body.source = { type: 'attachment', url }` — normalized to
  *   `body.source.attachment.url`/`.title` directly, with no attachment-list
- *   lookup and no `index`.
+ *   lookup, preserving optional indexes and document selectors.
  *
  * Annotations matching neither shape are omitted from the result.
  */

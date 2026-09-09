@@ -8,7 +8,10 @@ import {
 } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
-import { buildConversationIdHeaders } from '../../common/utils/header-value';
+import {
+  buildConversationIdHeaders,
+  buildJobTitleHeaders,
+} from '../../common/utils/header-value';
 import { StringUtils } from '../../common/utils/string-utils';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -204,6 +207,7 @@ export class ConversationStreamingService {
       rawChunk: unknown,
       message: ConversationMessageDto,
     ) => void,
+    jobTitle?: string,
   ): AsyncGenerator<Uint8Array, RelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -223,6 +227,7 @@ export class ConversationStreamingService {
               : {}),
             ...(timezone ? { 'X-Timezone': timezone } : {}),
             ...buildConversationIdHeaders(conversationId),
+            ...buildJobTitleHeaders(jobTitle),
           },
           params: { query: { 'api-version': this.dialClient.dialApiVersion } },
           parseAs: 'stream',
@@ -421,6 +426,7 @@ export class ConversationStreamingService {
     sub: string,
     clientChannelId?: string,
     timezone?: string,
+    jobTitle?: string,
   ): AsyncGenerator<Uint8Array | string, void, void> {
     this.logger.debug(
       `streamCompletion start — model: ${model}, bucket: ${bucket}, path: ${conversationPath}, mode: ${mode}`,
@@ -635,6 +641,7 @@ export class ConversationStreamingService {
             timing,
             startConversation.id,
             publishChunk,
+            jobTitle,
           )
         : this.relayModelCompletion(
             model,
@@ -647,6 +654,7 @@ export class ConversationStreamingService {
             timing,
             startConversation.id,
             publishChunk,
+            jobTitle,
           );
     let relayCompletedNormally = false;
     try {

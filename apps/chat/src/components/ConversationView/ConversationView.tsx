@@ -258,7 +258,9 @@ const ConversationView: FC<Props> = ({
   const mcpAppCanvasLabels = useMemo(
     () => ({
       title: t(AttachmentCanvasI18nKeys.McpAppTitle),
-      forbiddenErrorLabel: t(AttachmentCanvasI18nKeys.McpAppForbiddenErrorLabel),
+      forbiddenErrorLabel: t(
+        AttachmentCanvasI18nKeys.McpAppForbiddenErrorLabel,
+      ),
       loadErrorLabel: t(AttachmentCanvasI18nKeys.McpAppLoadErrorLabel),
     }),
     [t],
