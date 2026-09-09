@@ -5,11 +5,12 @@ const stripTrailingSlash = (path: string): string =>
 
 /*
  * DIAL Core echoes `url` percent-encoded (`New%20folder/a.pdf`) while the paths
- * this app carries around are plain, so both sides are decoded before being
- * compared. A url that is not valid percent-encoding is compared raw rather
- * than throwing.
+ * this app carries around are plain, so only the url side is decoded before
+ * being compared. Decoding the plain side too would make a resource named
+ * `a%20b.pdf` match one named `a b.pdf`. A url that is not valid
+ * percent-encoding is compared raw rather than throwing.
  */
-const normalizeResourcePath = (value: string): string => {
+const decodeResourceUrl = (value: string): string => {
   try {
     return stripTrailingSlash(decodeURIComponent(value));
   } catch {
@@ -34,7 +35,6 @@ export const fileMetadataMatchesPath = (
   if (url == null) return false;
 
   return (
-    normalizeResourcePath(toRelativePath(url, bucket)) ===
-    normalizeResourcePath(path)
+    decodeResourceUrl(toRelativePath(url, bucket)) === stripTrailingSlash(path)
   );
 };
