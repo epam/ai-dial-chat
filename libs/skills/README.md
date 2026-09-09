@@ -108,6 +108,28 @@ are deliberately absent — `DetailsPanel` hides those actions when they are not
 supplied, so no catalog page chrome comes along. The host owns the open state
 and the details fetch; the panel itself never fetches.
 
+## Utilities
+
+### `buildFavoriteSkillItem`
+
+```tsx
+import { buildFavoriteSkillItem } from '@epam/ai-dial-skills';
+import type { FavoriteSkillItem } from '@epam/ai-dial-skills';
+
+const favorites: FavoriteSkillItem[] = listedSkills
+  .filter((skill) => favoriteIds.has(skill.url))
+  .map((skill) =>
+    buildFavoriteSkillItem(skill, descriptions, pendingDescriptionIds),
+  );
+```
+
+Builds a `FavoriteSkillItem` from a listing entry and the host's resolved
+description cache. The entry needs only `{ url, name }` — the host's skill
+listing DTO satisfies it directly. A cached `null` (no description or a
+failed fetch) and a not-yet-fetched id both produce no description
+paragraph; ids in the pending set mark the row as loading, so its tooltip
+shows a spinner.
+
 ## Types
 
 ```tsx
@@ -117,5 +139,6 @@ import type {
   FavoriteSkillsPanelLabels,
   FavoriteSkillsPanelProps,
   SkillDetailsSidePanelProps,
+  SkillListingEntry,
 } from '@epam/ai-dial-skills';
 ```

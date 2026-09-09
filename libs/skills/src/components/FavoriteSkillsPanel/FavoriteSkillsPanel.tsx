@@ -106,7 +106,9 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
    * dropdown rows with native interactive tooltips.
    */
   const [openTooltipId, setOpenTooltipId] = useState<string | null>(null);
-  const tooltipCloseTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const tooltipCloseTimeoutRef = useRef<
+    ReturnType<typeof setTimeout> | undefined
+  >(undefined);
 
   const cancelTooltipClose = () => {
     clearTimeout(tooltipCloseTimeoutRef.current);

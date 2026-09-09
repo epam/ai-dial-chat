@@ -1,4 +1,3 @@
-import type { SkillMetadataItemDto } from '@epam/ai-dial-chat-api-client';
 import {
   FavoriteEntityType,
   fetchSkillDescription,
@@ -8,7 +7,10 @@ import type {
   MenuOverlayConfig,
   SelectedEntityChip,
 } from '@epam/ai-dial-conversation-input';
-import type { FavoriteSkillItem } from '@epam/ai-dial-skills';
+import {
+  buildFavoriteSkillItem,
+  type FavoriteSkillItem,
+} from '@epam/ai-dial-skills';
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
@@ -44,23 +46,6 @@ const SkillCatalogModal = lazy(async () => {
 const SkillDetailsPanelContainer = lazy(() =>
   import('./SkillDetailsPanelContainer'),
 );
-
-/*
- * Skill metadata carries no description — the manifest does, and it is read
- * lazily on the row tooltip's first open — so the description is threaded in
- * from the host's resolved cache, not the listing.
- */
-const buildFavoriteSkillItem = (
-  skill: SkillMetadataItemDto,
-  descriptions: ReadonlyMap<string, string | null>,
-  pendingIds: ReadonlySet<string>,
-): FavoriteSkillItem => ({
-  id: skill.url,
-  name: skill.name,
-  /* `null` (fetch failed / manifest has none) reads the same as not-yet-resolved: no tooltip paragraph. */
-  description: descriptions.get(skill.url) ?? undefined,
-  isDescriptionLoading: pendingIds.has(skill.url),
-});
 
 interface UseSkillSelectorOverlayResult {
   /**

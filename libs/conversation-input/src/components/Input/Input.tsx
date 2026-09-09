@@ -499,7 +499,7 @@ export const Input: FC<InputProps> = ({
               />
             </div>
           )}
-          {(selectedEntities?.length ?? 0) > 0 && (
+          {selectedEntities != null && selectedEntities.length > 0 && (
             <div className="min-w-0 flex-1">
               <SelectedEntityChips
                 items={selectedEntities}

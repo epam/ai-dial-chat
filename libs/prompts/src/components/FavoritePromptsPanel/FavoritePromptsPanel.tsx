@@ -81,7 +81,9 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
    * `TOOLTIP_CLOSE_DELAY_MS`, and entering either side cancels it.
    */
   const [openTooltipId, setOpenTooltipId] = useState<string | null>(null);
-  const tooltipCloseTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const tooltipCloseTimeoutRef = useRef<
+    ReturnType<typeof setTimeout> | undefined
+  >(undefined);
 
   const cancelTooltipClose = () => {
     clearTimeout(tooltipCloseTimeoutRef.current);

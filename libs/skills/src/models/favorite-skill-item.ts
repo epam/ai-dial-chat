@@ -15,3 +15,31 @@ export interface FavoriteSkillItem {
    */
   isDescriptionLoading?: boolean;
 }
+
+/**
+ * The listing-entry fields needed to build a favorite row — satisfied by the
+ * host's skill listing DTO or any `{ url, name }` object.
+ */
+export interface SkillListingEntry {
+  /** Stable identifier for the skill: the `skills/{bucket}/{path}` resource URL. */
+  url: string;
+  /** Display name. */
+  name: string;
+}
+
+/**
+ * Builds a {@link FavoriteSkillItem} from a listing entry and the host's
+ * resolved description cache. A cached `null` (no description or a failed
+ * fetch) and a not-yet-fetched id both yield no description paragraph; ids
+ * in `pendingIds` are marked as loading so the row's tooltip shows a spinner.
+ */
+export const buildFavoriteSkillItem = (
+  skill: SkillListingEntry,
+  descriptions: ReadonlyMap<string, string | null>,
+  pendingIds: ReadonlySet<string>,
+): FavoriteSkillItem => ({
+  id: skill.url,
+  name: skill.name,
+  description: descriptions.get(skill.url) ?? undefined,
+  isDescriptionLoading: pendingIds.has(skill.url),
+});

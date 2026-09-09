@@ -20,13 +20,21 @@ const baseProps = {
   menuCloseLabel: 'Close',
 };
 
+const promptsOverlay = {
+  key: 'prompts',
+  title: 'Prompts',
+  icon: <span aria-hidden />,
+  renderOverlay: () => <div>Prompts overlay content</div>,
+  backLabel: 'Back',
+};
+
 describe('AddAttachmentButton — prompts submenu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseIsMobile.mockReturnValue(false);
   });
 
-  it('does not render a Prompts item when promptsMenuOverlay is absent', async () => {
+  it('does not render a Prompts item when no menu overlay is provided', async () => {
     render(<AddAttachmentButton {...baseProps} onAttachClick={vi.fn()} />);
     fireEvent.click(screen.getByLabelText('Add'));
 
@@ -34,12 +42,12 @@ describe('AddAttachmentButton — prompts submenu', () => {
     expect(screen.queryByText('Prompts')).toBeNull();
   });
 
-  it('renders a Prompts item when promptsMenuOverlay is provided', async () => {
+  it('renders a Prompts item when a menu overlay is provided', async () => {
     render(
       <AddAttachmentButton
         {...baseProps}
         onAttachClick={vi.fn()}
-        promptsMenuOverlay={() => <div>Prompts overlay content</div>}
+        menuOverlays={[promptsOverlay]}
       />,
     );
     fireEvent.click(screen.getByLabelText('Add'));
@@ -47,13 +55,13 @@ describe('AddAttachmentButton — prompts submenu', () => {
     expect(await screen.findByText('Prompts')).toBeTruthy();
   });
 
-  it('renders the overlay content in the desktop flyout on hover', async () => {
+  it('renders the overlay content in the desktop flyout on keyboard open', async () => {
     const user = userEvent.setup();
     render(
       <AddAttachmentButton
         {...baseProps}
         onAttachClick={vi.fn()}
-        promptsMenuOverlay={() => <div>Prompts overlay content</div>}
+        menuOverlays={[promptsOverlay]}
       />,
     );
 
@@ -77,8 +85,7 @@ describe('AddAttachmentButton — prompts submenu', () => {
         <AddAttachmentButton
           {...baseProps}
           onAttachClick={vi.fn()}
-          promptsMenuOverlay={() => <div>Prompts overlay content</div>}
-          promptsMenuTitle="Prompts"
+          menuOverlays={[promptsOverlay]}
         />,
       );
 
@@ -94,9 +101,7 @@ describe('AddAttachmentButton — prompts submenu', () => {
         <AddAttachmentButton
           {...baseProps}
           onAttachClick={vi.fn()}
-          promptsMenuOverlay={() => <div>Prompts overlay content</div>}
-          promptsMenuTitle="Prompts"
-          promptsBackLabel="Back"
+          menuOverlays={[promptsOverlay]}
         />,
       );
 
