@@ -1,15 +1,13 @@
 import { ItemHeader, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  ButtonAppearance,
-  ButtonDropdown,
-  ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  DropdownItem,
   ElementSize,
   Search,
   SegmentedControl,
   SegmentedControlItem,
+  Select,
+  SelectOption,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 import { FC, ReactNode, useMemo } from 'react';
@@ -32,7 +30,9 @@ interface TitleRowProps {
   listViewLabel?: string;
   viewToggleLabel?: string;
   sortKey?: string;
-  sortOptions?: DropdownItem[];
+  sortOptions?: SelectOption[];
+  onSortChange?: (sortKey: string) => void;
+  sortLabel?: string;
   filters?: Set<string>;
   onFiltersChange?: (filters: Set<string>) => void;
   filterValues?: Set<string>;
@@ -59,6 +59,8 @@ export const TitleRow: FC<TitleRowProps> = ({
   viewToggleLabel = 'View mode',
   sortKey,
   sortOptions,
+  onSortChange,
+  sortLabel = 'Sort',
   filters,
   onFiltersChange,
   filterValues,
@@ -101,10 +103,13 @@ export const TitleRow: FC<TitleRowProps> = ({
     [gridViewLabel, listViewLabel],
   );
 
-  const activeLabel = sortOptions?.find((o) => o.key === sortKey)?.label ?? '';
-
   const handleChange = (nextValue?: string) => {
     onQueryChange(nextValue ?? '');
+  };
+
+  const handleSortChange = (next: string | string[]) => {
+    if (typeof next !== 'string') return;
+    onSortChange?.(next);
   };
 
   return (
@@ -140,11 +145,13 @@ export const TitleRow: FC<TitleRowProps> = ({
                 className={mergeClasses('h-4 w-px shrink-0', styles.divider)}
               />
 
-              <ButtonDropdown
-                label={activeLabel}
-                variant={ButtonVariant.Primary}
-                appearance={ButtonAppearance.Ghost}
-                items={sortOptions}
+              <Select
+                options={sortOptions}
+                value={sortKey}
+                onChange={handleSortChange}
+                prefix={sortLabel}
+                ariaLabel={sortLabel}
+                className="shrink-0"
               />
             </>
           )}

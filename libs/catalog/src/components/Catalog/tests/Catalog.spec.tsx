@@ -71,6 +71,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     onViewModeChange,
     sortKey,
     sortOptions = [],
+    onSortChange,
   }: {
     title?: string;
     query: string;
@@ -82,7 +83,8 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     onMyAppsChange?: (isActive: boolean) => void;
     onViewModeChange?: (mode: CatalogViewMode) => void;
     sortKey?: string;
-    sortOptions?: { key: string; label: string; onClick?: () => void }[];
+    sortOptions?: { value: string; label: string }[];
+    onSortChange?: (sortKey: string) => void;
   }) => (
     <div>
       <span>{title ?? 'Browse'}</span>
@@ -113,7 +115,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
         List view
       </button>
       {sortOptions.map((option) => (
-        <button key={option.key} onClick={option.onClick}>
+        <button key={option.value} onClick={() => onSortChange?.(option.value)}>
           Sort {option.label}
         </button>
       ))}

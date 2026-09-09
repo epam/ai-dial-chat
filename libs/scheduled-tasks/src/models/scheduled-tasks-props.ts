@@ -1,4 +1,4 @@
-import { DropdownItem } from '@epam/ai-dial-ui-kit';
+import { SelectOption } from '@epam/ai-dial-ui-kit';
 import type { ScheduledTasksSortKey } from '../types/scheduled-tasks-sort-key';
 import type { ScheduledTaskCardGridLabels } from './scheduled-task-card-grid-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
@@ -17,10 +17,10 @@ export interface ScheduledTasksLabels {
   searchAriaLabel: string;
   /** Accessible label for the toolbar search input's clear action. */
   clearSearchLabel: string;
-  /** Accessible label for the toolbar sort control. */
+  /** Accessible label for the toolbar sort control, also shown as the field's prefix. */
   sortLabel: string;
-  /** Options rendered in the sort control's dropdown. */
-  sortOptions: DropdownItem[];
+  /** Options listed by the sort control; each `value` is a `ScheduledTasksSortKey`. */
+  sortOptions: SelectOption[];
   /** Message shown when the fetched task list is empty. */
   emptyStateLabel: string;
   /** Message shown when `searchQuery` filters every task out. */
@@ -44,7 +44,7 @@ export interface ScheduledTasksColors {
   background?: string;
   /** Subtitle and status-message (empty/no-results/error) text color. Fallback: `--text-secondary`. */
   subtitleText?: string;
-  /** Sort control label/icon color. Fallback: `--text-accent`. */
+  /** Text color of the sort select's field. Fallback: `--text-primary`. */
   sortButtonText?: string;
   /** Background color of the load-more placeholder skeleton bars. Fallback: `--bg-control-disable-primary`. */
   skeletonColor?: string;

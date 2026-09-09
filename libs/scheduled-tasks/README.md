@@ -55,8 +55,8 @@ import {
     clearSearchLabel: 'Clear scheduled tasks search',
     sortLabel: 'Sort',
     sortOptions: [
-      { key: ScheduledTasksSortKey.FirstToRun, label: 'First to run' },
-      { key: ScheduledTasksSortKey.LastToRun, label: 'Last to run' },
+      { value: ScheduledTasksSortKey.FirstToRun, label: 'First to run' },
+      { value: ScheduledTasksSortKey.LastToRun, label: 'Last to run' },
     ],
     emptyStateLabel: 'No scheduled tasks yet',
     noResultsLabel: 'No results',

@@ -1,10 +1,11 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  CheckboxBox,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
   GhostButton,
+  MenuItem,
+  MenuItemMark,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconFilter } from '@tabler/icons-react';
@@ -46,12 +47,6 @@ export interface FilterColors {
   overlayBackground?: string;
   /** Dropdown overlay border color. Fallback: `--stroke-tertiary`. */
   overlayBorder?: string;
-  /** Row background on hover. Fallback: `--bg-control-accent-alpha-hover`. */
-  rowHoverBackground?: string;
-  /** Background of a checked row. Fallback: `--bg-control-accent-alpha-active`. */
-  rowCheckedBackground?: string;
-  /** Focus ring color of a keyboard-focused row. Fallback: `--stroke-accent-focus`. */
-  rowFocusRing?: string;
   /** Row label text color. Fallback: `--text-primary`. */
   rowLabel?: string;
   /** Section heading ("Topics") text color. Fallback: `--text-tertiary`. */
@@ -145,9 +140,6 @@ export const Filter: FC<FilterProps> = ({
     '--cat-filter-btn-chevron': colors?.buttonChevron,
     '--cat-filter-overlay-bg': colors?.overlayBackground,
     '--cat-filter-overlay-border': colors?.overlayBorder,
-    '--cat-filter-row-hover-bg': colors?.rowHoverBackground,
-    '--cat-filter-row-checked-bg': colors?.rowCheckedBackground,
-    '--cat-filter-row-focus-ring': colors?.rowFocusRing,
     '--cat-filter-row-label': colors?.rowLabel,
     '--cat-filter-section-label': colors?.sectionLabel,
     '--cat-filter-divider': colors?.divider,
@@ -186,7 +178,7 @@ export const Filter: FC<FilterProps> = ({
    */
   const totalItems = topics.length + 1;
   const [focusedIndex, setFocusedIndex] = useState(-1);
-  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const rowRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const focusRow = useCallback(
@@ -238,14 +230,6 @@ export const Filter: FC<FilterProps> = ({
     }
   };
 
-  const makeRowKeyDown =
-    (toggle: () => void) => (e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault();
-        toggle();
-      }
-    };
-
   const handleApply = () => {
     onChange(pendingChecked);
     onMyAppsChange?.(pendingMyApps);
@@ -277,32 +261,24 @@ export const Filter: FC<FilterProps> = ({
           )}
           onKeyDown={handleMenuKeyDown}
         >
-          {/* My Apps row */}
-          <div
+          {/* My Apps row — the kit's own multiselect menu row, so its rest,
+              hover, focus and checked states come from the Menu-item spec. */}
+          <MenuItem
             role="menuitemcheckbox"
             aria-checked={pendingMyApps}
+            mark={MenuItemMark.Checkbox}
+            selected={pendingMyApps}
+            label={myAppsLabel}
+            labelClassName={mergeClasses(
+              styles.rowLabel,
+              typography?.filterButtonClassName ?? 'dial-small-semi-text',
+            )}
             tabIndex={focusedIndex === 0 ? 0 : -1}
             ref={(el) => {
               rowRefs.current[0] = el;
             }}
-            className={mergeClasses(
-              'flex cursor-pointer select-none items-center gap-3 rounded-lg px-[10px] py-[9px] outline-none',
-              styles.row,
-              pendingMyApps && styles.rowChecked,
-            )}
             onClick={() => setPendingMyApps(!pendingMyApps)}
-            onKeyDown={makeRowKeyDown(() => setPendingMyApps(!pendingMyApps))}
-          >
-            <CheckboxBox isSelected={pendingMyApps} className="shrink-0" />
-            <span
-              className={mergeClasses(
-                styles.rowLabel,
-                typography?.filterButtonClassName ?? 'dial-small-semi-text',
-              )}
-            >
-              {myAppsLabel}
-            </span>
-          </div>
+          />
 
           {topics.length > 0 && (
             <>
@@ -329,28 +305,20 @@ export const Filter: FC<FilterProps> = ({
                   const toggle = () =>
                     setPendingChecked(toggleTopic(topic, pendingChecked));
                   return (
-                    <div
+                    <MenuItem
                       key={topic}
                       role="menuitemcheckbox"
                       aria-checked={isChecked}
+                      mark={MenuItemMark.Checkbox}
+                      selected={isChecked}
+                      label={topic}
+                      labelClassName={styles.rowLabel}
                       tabIndex={focusedIndex === idx ? 0 : -1}
                       ref={(el) => {
                         rowRefs.current[idx] = el;
                       }}
-                      className={mergeClasses(
-                        'flex cursor-pointer select-none items-center gap-3 rounded-lg px-[10px] py-[9px] outline-none',
-                        styles.row,
-                        isChecked && styles.rowChecked,
-                      )}
                       onClick={toggle}
-                      onKeyDown={makeRowKeyDown(toggle)}
-                    >
-                      <CheckboxBox
-                        isSelected={isChecked}
-                        className="shrink-0"
-                      />
-                      <span className={styles.rowLabel}>{topic}</span>
-                    </div>
+                    />
                   );
                 })}
               </div>

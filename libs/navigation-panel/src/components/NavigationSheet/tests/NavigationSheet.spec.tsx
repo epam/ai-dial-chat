@@ -76,6 +76,26 @@ describe('NavigationSheet', () => {
     expect(screen.getByRole('button', { name: 'Catalog' })).toBeTruthy();
   });
 
+  it('marks the open destination as the current page', () => {
+    renderSheet({
+      items: [
+        { id: '/', label: 'Home', icon: HomeIcon },
+        {
+          id: '/catalog',
+          label: 'Catalog',
+          icon: CatalogIcon,
+          isActive: true,
+        },
+      ],
+    });
+
+    const activeRow = screen.getByRole('button', { name: 'Catalog' });
+    const inactiveRow = screen.getByRole('button', { name: 'Home' });
+
+    expect(activeRow.getAttribute('aria-current')).toBe('true');
+    expect(inactiveRow.hasAttribute('aria-current')).toBe(false);
+  });
+
   it('closes the sheet and reports the picked destination', async () => {
     const onClose = vi.fn();
     const onSelectItem = vi.fn();

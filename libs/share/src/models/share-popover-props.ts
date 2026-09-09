@@ -64,16 +64,8 @@ export interface SharePopoverColors {
   anyoneSubtitle?: string;
   /** Access-trigger chevron icon color. */
   accessChevron?: string;
-  /** Access menu item background color on hover. */
-  menuItemHover?: string;
-  /** Access menu item focus-visible ring color. */
-  menuItemFocusShadow?: string;
-  /** Access menu item background color when checked. */
-  menuItemCheckedBackground?: string;
   /** Access menu item label text color. */
   menuItemLabel?: string;
-  /** Access menu item checkmark icon color. */
-  menuItemCheck?: string;
   /** Background color of the link pill row. */
   linkRowBackground?: string;
   /** Share-URL text color inside the link pill row. */

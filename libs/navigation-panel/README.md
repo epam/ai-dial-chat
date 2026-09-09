@@ -119,9 +119,13 @@ The page-stack shell `NavigationSheet` is built on, exported for hosts that need
 
 `NavigationMenuPage`, `ProfilePage`, `OptionListPage`, and `SheetRow` are the sheet's internals, exported so a host can assemble a different page order or add its own rows.
 
+A `SheetRow` marks state through two props: `isCurrent` sets `aria-current="true"`, and `isHighlighted` draws the accent in-navigation tint. `NavigationMenuPage` passes each destination's `isActive` to both, so the sheet marks the open section the way the desktop rail does; `OptionListPage` passes only `isCurrent`, since a value list marks its choice with the trailing check rather than a tint.
+
 ### Shared primitives
 
-`UserAvatar` (image with initials fallback), `AvatarInitials` (circular initials badge), and `MenuItemLabel` (dropdown row label with an active check mark).
+`UserAvatar` (image with initials fallback) and `AvatarInitials` (circular initials badge).
+
+`UserMenu`'s submenu rows mark the applied option through the UI kit's own `MenuItemMark.Check`, so the trailing check and the `menuitemradio` role come from `Dropdown` rather than from this library.
 
 ## Hooks
 

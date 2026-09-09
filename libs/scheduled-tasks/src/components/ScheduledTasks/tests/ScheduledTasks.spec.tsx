@@ -64,7 +64,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     <div data-skeleton data-color={color} />
   ),
   SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
-  /* Dropdown is deliberately NOT mocked: the sort menu's checked-state
+  /* Select is deliberately NOT mocked: the sort list's selected-state
      semantics are the thing under test, and a stub would assert nothing. */
   IconButton: ({
     icon,
@@ -125,8 +125,8 @@ const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
         clearSearchLabel: 'Clear scheduled tasks search',
         sortLabel: 'Sort',
         sortOptions: [
-          { key: ScheduledTasksSortKey.FirstToRun, label: 'First to run' },
-          { key: ScheduledTasksSortKey.LastToRun, label: 'Last to run' },
+          { value: ScheduledTasksSortKey.FirstToRun, label: 'First to run' },
+          { value: ScheduledTasksSortKey.LastToRun, label: 'Last to run' },
         ],
         emptyStateLabel: 'No scheduled tasks yet',
         noResultsLabel: 'No results',
@@ -456,24 +456,20 @@ describe('ScheduledTasks', () => {
     });
   });
   describe('sort control', () => {
-    const openSortMenu = async () => {
-      await userEvent.click(
-        screen.getByRole('button', { name: /First to run/ }),
-      );
+    const openSortList = async () => {
+      await userEvent.click(screen.getByRole('combobox', { name: 'Sort' }));
     };
 
-    it('marks the active sort option as checked and leaves the others unchecked', async () => {
+    it('marks the active sort option as selected and leaves the others unselected', async () => {
       renderScheduledTasks({ sortKey: ScheduledTasksSortKey.LastToRun });
-      await userEvent.click(
-        screen.getByRole('button', { name: /Last to run/ }),
-      );
+      await openSortList();
 
-      const options = screen.getAllByRole('menuitemcheckbox');
+      const options = screen.getAllByRole('option');
 
       expect(
         options.map((option) => [
           option.textContent,
-          option.getAttribute('aria-checked'),
+          option.getAttribute('aria-selected'),
         ]),
       ).toEqual([
         ['First to run', 'false'],
@@ -481,27 +477,27 @@ describe('ScheduledTasks', () => {
       ]);
     });
 
-    it('reports the chosen sort key and closes the menu', async () => {
+    it('reports the chosen sort key and closes the list', async () => {
       const onSortChange = vi.fn();
       renderScheduledTasks({ onSortChange });
-      await openSortMenu();
+      await openSortList();
 
       await userEvent.click(
-        screen.getByRole('menuitemcheckbox', { name: 'Last to run' }),
+        screen.getByRole('option', { name: 'Last to run' }),
       );
 
       expect(onSortChange).toHaveBeenCalledWith(
         ScheduledTasksSortKey.LastToRun,
       );
-      expect(screen.queryByRole('menuitemcheckbox')).toBeNull();
+      expect(screen.queryByRole('option')).toBeNull();
     });
 
-    it('names the sort trigger after the control when the sort key matches no option', () => {
+    it('names the sort control even when the sort key matches no option', () => {
       renderScheduledTasks({
         sortKey: 'unknown-key' as ScheduledTasksSortKey,
       });
 
-      expect(screen.getByRole('button', { name: 'Sort' })).toBeTruthy();
+      expect(screen.getByRole('combobox', { name: 'Sort' })).toBeTruthy();
     });
   });
 });

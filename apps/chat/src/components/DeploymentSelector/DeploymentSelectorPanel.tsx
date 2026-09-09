@@ -10,10 +10,12 @@ import {
   EllipsisTooltip,
   GhostButton,
   Highlight,
+  MenuItem,
+  MenuItemMark,
   Search,
   ToggleIconButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconStar, IconStarFilled } from '@tabler/icons-react';
+import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import {
   memo,
   useEffect,
@@ -22,7 +24,6 @@ import {
   useRef,
   useState,
   type FC,
-  type KeyboardEvent,
   type ReactNode,
 } from 'react';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -46,6 +47,8 @@ export interface DeploymentSelectorLabels {
   currentlySelectedLabel?: string;
   /** Accessible label for the add-to-favorites button on the currently-selected row. Default: `'Add to favorites'`. */
   addToFavoritesLabel?: string;
+  /** Accessible label for the list of selectable deployments. Default: `'Select model'`. */
+  listAriaLabel?: string;
 }
 
 interface Props {
@@ -111,6 +114,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
     removeFromFavoritesLabel = 'Remove from favorites',
     currentlySelectedLabel = 'Currently selected',
     addToFavoritesLabel = 'Add to favorites',
+    listAriaLabel = 'Select model',
   } = labels;
 
   const [query, setQuery] = useState('');
@@ -212,16 +216,6 @@ const DeploymentSelectorPanel: FC<Props> = ({
     onClose();
   };
 
-  const handleItemKeyDown = (
-    e: KeyboardEvent<HTMLDivElement>,
-    item: CatalogItem,
-  ) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleSelect(item);
-    }
-  };
-
   const handleBrowse = () => {
     onBrowseCatalog?.();
     onClose();
@@ -252,82 +246,82 @@ const DeploymentSelectorPanel: FC<Props> = ({
     return (
       <li
         key={item.id}
+        role="none"
         ref={isSelected ? selectedRowRef : undefined}
         className={isLeaving ? styles.rowLeaving : styles.rowEnter}
       >
-        <div
-          role="button"
-          tabIndex={0}
-          className={mergeClasses(
-            'flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5',
-            'transition-colors hover:bg-layer-sunken',
-            isSelected
-              ? 'border-info bg-control-accent-alpha-active'
-              : 'border-transparent',
-          )}
-          onClick={() => handleSelect(item)}
-          onKeyDown={(e) => handleItemKeyDown(e, item)}
-        >
-          <DeploymentIcon
-            src={item.iconUrl}
-            size={DIAL_ICON_SIZE.MD}
-            initialsName={item.name}
-          />
-          <div className="flex min-w-0 flex-1 items-start gap-1.5">
-            {query.trim() ? (
-              <Highlight
-                text={item.name}
-                query={query}
-                className="dial-small-text min-w-0 !flex-initial"
-              />
-            ) : (
-              <EllipsisTooltip
-                text={item.name}
-                className="dial-small-text min-w-0 !flex-initial"
-              />
-            )}
-            {item.version && (
-              /* Capped at 30% of the row so a long version truncates instead of
-                 squeezing the name out of the option. */
-              <EllipsisTooltip
-                text={item.version}
-                className="dial-tiny-text max-w-[30%] shrink-0 text-secondary"
-              />
-            )}
-          </div>
-          {isSelected && (
-            <IconCheck
-              size={DIAL_ICON_SIZE.SM}
-              className="shrink-0 text-accent"
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
+        {/*
+          Picking a deployment is choosing a value, so the design tints the
+          chosen row instead of checking it. The favourite toggle goes through
+          `rightControl`: it is a button, and a button nested inside the row's
+          own button would be invalid markup, swallow the row's click, and land
+          inside the row's accessible name.
+        */}
+        <MenuItem
+          role="menuitemradio"
+          aria-checked={isSelected}
+          mark={MenuItemMark.Tint}
+          selected={isSelected}
+          className="h-auto py-1.5"
+          icon={
+            <DeploymentIcon
+              src={item.iconUrl}
+              size={DIAL_ICON_SIZE.MD}
+              initialsName={item.name}
             />
-          )}
-          <ToggleIconButton
-            icon={
-              <IconStar
-                size={DIAL_ICON_SIZE.SM}
-                aria-hidden
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
-            }
-            selectedIcon={
-              <IconStarFilled
-                size={DIAL_ICON_SIZE.SM}
-                className="text-warning-icon"
-                aria-hidden
-              />
-            }
-            isSelected={isFavoriteRow}
-            aria-label={
-              isFavoriteRow ? removeFromFavoritesLabel : addToFavoritesLabel
-            }
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleFavorite(item.id, !isFavoriteRow);
-            }}
-          />
-        </div>
+          }
+          label={
+            <span className="flex min-w-0 flex-1 items-start gap-1.5">
+              {query.trim() ? (
+                <Highlight
+                  text={item.name}
+                  query={query}
+                  className="dial-small-text min-w-0 !flex-initial"
+                />
+              ) : (
+                <EllipsisTooltip
+                  text={item.name}
+                  className="dial-small-text min-w-0 !flex-initial"
+                />
+              )}
+              {item.version && (
+                /* Capped at 30% of the row so a long version truncates instead
+                   of squeezing the name out of the option. */
+                <EllipsisTooltip
+                  text={item.version}
+                  className="dial-tiny-text max-w-[30%] shrink-0 text-secondary"
+                />
+              )}
+            </span>
+          }
+          onClick={() => handleSelect(item)}
+          rightControl={
+            <ToggleIconButton
+              icon={
+                <IconStar
+                  size={DIAL_ICON_SIZE.SM}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
+              selectedIcon={
+                <IconStarFilled
+                  size={DIAL_ICON_SIZE.SM}
+                  className="text-warning-icon"
+                  aria-hidden
+                />
+              }
+              isSelected={isFavoriteRow}
+              aria-label={
+                isFavoriteRow ? removeFromFavoritesLabel : addToFavoritesLabel
+              }
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleFavorite(item.id, !isFavoriteRow);
+              }}
+            />
+          }
+        />
       </li>
     );
   };
@@ -368,13 +362,15 @@ const DeploymentSelectorPanel: FC<Props> = ({
         )}
         style={{ maxHeight: listHeight }}
       >
-        <div ref={listContentRef}>
+        {/* The radio rows below are grouped per section, so the scroll body is
+            the menu that owns them. */}
+        <div role="menu" aria-label={listAriaLabel} ref={listContentRef}>
           {showCurrentlySelected && selectedItem && (
             <>
               <p className={SECTION_HEADING_CLASS_NAME}>
                 {currentlySelectedLabel}
               </p>
-              <ul className="flex flex-col gap-1 px-1 pb-1">
+              <ul role="group" className="flex flex-col gap-1 px-1 pb-1">
                 {renderRow(selectedItem, false)}
               </ul>
             </>
@@ -393,7 +389,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
           )}
 
           {filteredFavorites.length > 0 ? (
-            <ul className="flex flex-col gap-1 px-1 pb-1">
+            <ul role="group" className="flex flex-col gap-1 px-1 pb-1">
               {filteredFavorites.map((item) =>
                 renderRow(item, favoriteIds.has(item.id)),
               )}

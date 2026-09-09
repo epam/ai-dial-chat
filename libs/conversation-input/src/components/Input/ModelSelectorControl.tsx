@@ -2,9 +2,7 @@ import { DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  DialDropdownIcon,
   Dropdown,
-  ElementSize,
   GhostIconButton,
   Tooltip,
 } from '@epam/ai-dial-ui-kit';
@@ -212,26 +210,31 @@ export const ModelSelectorControl: FC<Props> = ({
       className={mergeClasses(isDisabled && disabledIconClassName)}
       aria-disabled={isDisabled || undefined}
     >
-      <Tooltip tooltip={selectedLabel}>
-        <DialDropdownIcon
-          icon={selectorIcon}
-          ariaLabel={selectorAriaLabel}
-          items={menuItems}
-          menuHeader={menuHeader}
-          placement="bottom-end"
-          matchReferenceWidth={false}
-          listClassName="!w-[240px] !max-h-80"
-          onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
-          size={ElementSize.Standard}
-          caretIcon={caretIcon}
-          iconClassName={isDisabled ? disabledIconClassName : undefined}
-          buttonClassName={mergeClasses(
-            'bg-transparent',
-            styles.modelSelectorButton,
-            isDisabled && styles.modelSelectorButtonDisabled,
-          )}
-        />
-      </Tooltip>
+      <Dropdown
+        items={menuItems}
+        menuHeader={menuHeader}
+        placement="bottom-end"
+        matchReferenceWidth={false}
+        listClassName="!w-[240px] !max-h-80"
+        disabled={isDisabled}
+        onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
+      >
+        <Tooltip tooltip={selectedLabel}>
+          <button
+            type="button"
+            aria-label={selectorAriaLabel}
+            aria-disabled={isDisabled || undefined}
+            className={mergeClasses(
+              'flex items-center gap-1 rounded-full p-1.5',
+              styles.modelSelectorButton,
+              isDisabled && styles.modelSelectorButtonDisabled,
+            )}
+          >
+            {selectorIcon}
+            {caretIcon}
+          </button>
+        </Tooltip>
+      </Dropdown>
     </div>
   );
 };

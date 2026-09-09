@@ -9,8 +9,6 @@ vi.mock('../Filter.module.scss', () => ({
     filterBtn: 'filterBtn',
     filterBtnActive: 'filterBtnActive',
     overlay: 'overlay',
-    row: 'row',
-    rowChecked: 'rowChecked',
     rowLabel: 'rowLabel',
     divider: 'divider',
     sectionLabel: 'sectionLabel',
@@ -27,13 +25,27 @@ vi.mock('../Filter.module.scss', () => ({
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16 },
-  /* Without htmlFor the real CheckboxBox is a decorative span hidden from AT. */
-  CheckboxBox: ({
-    className,
+  MenuItemMark: { None: 'none', Check: 'check', Checkbox: 'checkbox' },
+  /* Mirrors the kit row's contract: the row is the button that carries the
+     role and aria-checked, and the checkbox box is decorative. */
+  MenuItem: ({
+    label,
+    labelClassName,
+    selected,
+    ...rest
   }: {
-    isSelected?: boolean;
-    className?: string;
-  }) => <span className={className} aria-hidden="true" />,
+    label?: React.ReactNode;
+    labelClassName?: string;
+    mark?: string;
+    selected?: boolean;
+  } & React.ButtonHTMLAttributes<HTMLButtonElement> & {
+      ref?: React.Ref<HTMLButtonElement>;
+    }) => (
+    <button type="button" {...rest}>
+      <span aria-hidden="true" data-selected={selected} />
+      <span className={labelClassName}>{label}</span>
+    </button>
+  ),
   Dropdown: ({
     children,
     renderOverlay,
@@ -59,27 +71,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <button className={className} onClick={onClick}>
       {label}
     </button>
-  ),
-  DialCheckbox: ({
-    id,
-    label,
-    checked,
-    onChange,
-  }: {
-    id: string;
-    label: string;
-    checked: boolean;
-    onChange: (v: boolean | undefined) => void;
-  }) => (
-    <label htmlFor={id}>
-      <input
-        type="checkbox"
-        id={id}
-        checked={checked}
-        onChange={() => onChange(!checked)}
-      />
-      {label}
-    </label>
   ),
   GhostButton: ({
     label,

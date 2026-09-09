@@ -74,6 +74,8 @@ export const NavigationMenuPage: FC<NavigationMenuPageProps> = memo(
               key={item.id}
               label={item.label}
               textClassName={textClassName}
+              isCurrent={item.isActive}
+              isHighlighted={item.isActive}
               icon={
                 <item.icon
                   size={BASE_ICON_SIZE}

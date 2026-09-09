@@ -44,6 +44,7 @@ const DeploymentSelectorOverlay: FC<Props> = ({
       DeploymentSelectorI18nKeys.CurrentlySelectedLabel,
     ),
     addToFavoritesLabel: t(FavoritesI18nKeys.AddToFavorites),
+    listAriaLabel: t(DeploymentSelectorI18nKeys.AriaLabel),
   };
 
   return (

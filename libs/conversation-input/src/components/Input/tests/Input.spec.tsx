@@ -41,32 +41,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
             onClick={item.onClick}
             disabled={item.disabled}
           >
-            {item.label}
-          </button>
-        ))}
-      </div>
-    ),
-    DialDropdownIcon: ({
-      ariaLabel,
-      icon,
-      items,
-    }: {
-      ariaLabel: string;
-      icon: ReactNode;
-      items?: MenuItems;
-    }) => (
-      <div>
-        <button type="button" aria-label={ariaLabel}>
-          {items?.[0]?.key.startsWith('__loading-') ? icon : null}
-        </button>
-        {items?.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            onClick={item.onClick}
-            disabled={item.disabled}
-          >
-            {item.key.startsWith('__loading-') ? item.icon : null}
+            {item.icon}
             {item.label}
           </button>
         ))}
@@ -501,7 +476,7 @@ describe('Input — model selector', () => {
   });
 
   it('shows seven skeleton rows and a circular trigger skeleton while deployments load', () => {
-    const { container } = render(
+    render(
       <Input
         deployments={[]}
         selectedDeploymentId={null}
@@ -511,8 +486,10 @@ describe('Input — model selector', () => {
     );
     const loadingItem = screen.getByText('Loading models…');
     expect(loadingItem).toBeTruthy();
-    expect(getSkeletonsByVariant(container, 'circular')).toHaveLength(8);
-    expect(getSkeletonsByVariant(container, 'text')).toHaveLength(7);
+    /* The menu overlay is portaled out of the render container, so both it and
+       the trigger are only counted together from the document body. */
+    expect(getSkeletonsByVariant(document.body, 'circular')).toHaveLength(8);
+    expect(getSkeletonsByVariant(document.body, 'text')).toHaveLength(7);
     expect(
       screen
         .getAllByRole('button')

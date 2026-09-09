@@ -1,4 +1,4 @@
-import { DropdownItem } from '@epam/ai-dial-ui-kit';
+import { SelectOption } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import { CatalogViewMode } from '../types/view-mode';
 
@@ -80,6 +80,10 @@ export interface ToolbarProps {
   filterTopicsLabel?: string;
   /** Currently active sort key. */
   sortKey?: string;
-  /** Available sort options shown in the dropdown. */
-  sortOptions?: DropdownItem[];
+  /** Available sort options listed by the sort select. */
+  sortOptions?: SelectOption[];
+  /** Called with the picked option's `value` when the sort order changes. */
+  onSortChange?: (sortKey: string) => void;
+  /** Accessible name of the sort control, also shown as its field prefix. Default: 'Sort'. */
+  sortLabel?: string;
 }
