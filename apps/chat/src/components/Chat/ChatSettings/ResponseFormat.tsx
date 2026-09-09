@@ -21,16 +21,20 @@ import {
   RadioGroupOrientation,
 } from '@epam/ai-dial-ui-kit';
 
+const RESPONSE_FORMAT_TOGGLER_ID = 'response-format-toggler';
+
 interface ResponseFormatProps {
   value: ConversationResponseFormat;
   onChange: (value: ConversationResponseFormat) => void;
   disabled?: boolean;
+  elementId?: string;
 }
 
 export const ResponseFormat: FC<ResponseFormatProps> = ({
   value,
   onChange,
   disabled,
+  elementId = RESPONSE_FORMAT_TOGGLER_ID,
 }) => {
   const router = useRouter();
   const { t } = useTranslation(Translation.Chat);
@@ -75,7 +79,7 @@ export const ResponseFormat: FC<ResponseFormatProps> = ({
       {disabled && <DisableOverlay />}
 
       <DialRadioGroup
-        elementId="response-format-toggler"
+        elementId={elementId}
         radioButtons={radioButtons}
         activeRadioButton={value}
         orientation={RadioGroupOrientation.Column}
