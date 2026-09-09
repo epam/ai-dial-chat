@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -298,7 +302,15 @@ export const Filter: FC<FilterProps> = ({
               >
                 {topicsLabel}
               </div>
-              <div className="flex max-h-[220px] flex-col gap-1 overflow-y-auto">
+              {/* The options are their own scroll box at the design's maximum
+                  list length, so the My Apps row, the section heading and the
+                  Clear/Apply footer stay put as the topics scroll. */}
+              <div
+                className={mergeClasses(
+                  SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
+                  'flex flex-col gap-1 overflow-y-auto',
+                )}
+              >
                 {topics.map((topic, i) => {
                   const isChecked = pendingChecked.has(topic);
                   const idx = i + 1;

@@ -3,6 +3,8 @@ import {
   CatalogEntityType,
   DeploymentIcon,
   mergeClasses,
+  SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
+  SELECT_LIST_MAX_HEIGHT_PX,
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
@@ -81,9 +83,6 @@ const SECTION_HEADING_CLASS_NAME =
 
 // Must match the .rowLeaving exit-animation duration in DeploymentSelectorPanel.module.scss.
 const ROW_LEAVE_ANIMATION_MS = 180;
-
-// Matches the previous max-h-72 cap on the scrollable list.
-const LIST_MAX_HEIGHT_PX = 288;
 
 const matchesQuery = (item: CatalogItem, query: string): boolean => {
   const q = query.toLowerCase();
@@ -179,7 +178,10 @@ const DeploymentSelectorPanel: FC<Props> = ({
   useLayoutEffect(() => {
     if (listContentRef.current) {
       setListHeight(
-        Math.min(listContentRef.current.scrollHeight, LIST_MAX_HEIGHT_PX),
+        Math.min(
+          listContentRef.current.scrollHeight,
+          SELECT_LIST_MAX_HEIGHT_PX,
+        ),
       );
     }
   }, [filteredFavorites, showCurrentlySelected]);
@@ -357,7 +359,8 @@ const DeploymentSelectorPanel: FC<Props> = ({
 
       <div
         className={mergeClasses(
-          'max-h-72 min-h-0 flex-1 overflow-y-auto',
+          SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
+          'min-h-0 flex-1 overflow-y-auto',
           styles.listContent,
         )}
         style={{ maxHeight: listHeight }}

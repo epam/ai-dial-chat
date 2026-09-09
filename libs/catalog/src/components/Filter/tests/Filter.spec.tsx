@@ -88,6 +88,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconFilter: () => null,
 }));
 vi.mock('@epam/ai-dial-chat-shared', () => ({
+  SELECT_LIST_MAX_HEIGHT_CLASS_NAME: 'max-h-[344px]',
   mergeClasses: (...args: (string | undefined)[]) =>
     args.filter(Boolean).join(' '),
   buildCssVars: (vars: Record<string, string | undefined>) =>

@@ -1,4 +1,8 @@
-import { DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  DeploymentItem,
+  mergeClasses,
+  SELECT_LIST_MAX_HEIGHT_PX,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -215,7 +219,12 @@ export const ModelSelectorControl: FC<Props> = ({
         menuHeader={menuHeader}
         placement="bottom-end"
         matchReferenceWidth={false}
-        listClassName="!w-[240px] !max-h-80"
+        /* The design's maximum list length. `Dropdown` caps the whole panel
+           rather than the options alone, so the sticky search row eats into
+           it — unlike the kit's own `Select`, which scrolls the options
+           inside a header that stays put. */
+        maxDropdownHeight={SELECT_LIST_MAX_HEIGHT_PX}
+        listClassName="!w-[240px]"
         disabled={isDisabled}
         onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
       >
