@@ -20,7 +20,6 @@ import {
   type ConversationTransferSuccessEvent,
   ConversationTransferWarningCode,
   type ConversationTransferWarningEvent,
-  formatQuotedNameList,
   useConversationExport,
   useConversationImport,
 } from '@epam/ai-dial-chat-hooks/conversation-transfer';
@@ -119,6 +118,7 @@ import {
   toPanelConversationId,
 } from '../../utils/conversation-id-match';
 import {
+  formatTransferNameList,
   getExportErrorKey,
   getExportFailureToastKey,
   getImportErrorKey,
@@ -282,7 +282,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       showSuccessNotification({
         title: t(ConversationImportI18nKeys.SuccessTitle),
         message: t(ConversationImportI18nKeys.Success, {
-          names: formatQuotedNameList(event.titles ?? []),
+          names: formatTransferNameList(event.titles ?? [], t),
         }),
       });
     },
@@ -295,7 +295,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       }
       showWarningNotification({
         message: t(ConversationImportI18nKeys.WarningAttachmentSkipped, {
-          names: formatQuotedNameList(event.names ?? []),
+          names: formatTransferNameList(event.names ?? [], t),
         }),
       });
     },
@@ -319,7 +319,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       showErrorNotification({
         title: t(ConversationImportI18nKeys.FailedTitle),
         message: t(ConversationImportI18nKeys.Failed, {
-          names: formatQuotedNameList(event.titles ?? []),
+          names: formatTransferNameList(event.titles ?? [], t),
         }),
         requestId: event.traceId,
       });
@@ -520,8 +520,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       jobProgressAriaLabel: (fileName) =>
         t(ConversationImportI18nKeys.JobProgressAriaLabel, { fileName }),
       jobErrorMessage: (code) => t(getImportErrorKey(code)),
+      /*
+       * `jobWarningMessage` is handed only a warning code, never the skipped
+       * names, so it needs the name-free variant — the `{{names}}` one belongs
+       * to the notification, which does have them.
+       */
       jobWarningMessage: () =>
-        t(ConversationImportI18nKeys.WarningAttachmentSkipped),
+        t(ConversationImportI18nKeys.JobWarningAttachmentSkipped),
       queueProgressAriaLabel: t(
         ConversationImportI18nKeys.QueueProgressAriaLabel,
       ),
