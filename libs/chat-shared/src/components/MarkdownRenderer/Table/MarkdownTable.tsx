@@ -1,12 +1,3 @@
-import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
-import {
-  IconCheck,
-  IconCsv,
-  IconDownload,
-  IconMaximize,
-  IconMarkdown,
-  IconTxt,
-} from '@tabler/icons-react';
 import {
   type FC,
   type ReactNode,
@@ -30,6 +21,7 @@ import {
   type MarkdownTableActionLabels,
 } from './table-serialization';
 import { TableHeader } from './TableHeader';
+import { useMarkdownTableActions } from './useMarkdownTableActions/useMarkdownTableActions';
 
 export {
   DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME,
@@ -38,6 +30,7 @@ export {
   serializeMarkdownTableRows,
   type MarkdownTableActionLabels,
 } from './table-serialization';
+export type { MarkdownTableHeaderAction } from './useMarkdownTableActions/useMarkdownTableActions';
 
 /** Per-element className overrides for {@link MarkdownTable}. */
 export interface MarkdownTableClassNames {
@@ -63,16 +56,6 @@ export interface MarkdownTableColors {
   rowZebraBackground?: string;
   /** Background of a body row on hover. Defaults to `--bg-control-accent-alpha-hover`. */
   rowHoverBackground?: string;
-}
-
-/** A table header action rendered as an icon button. */
-export interface MarkdownTableHeaderAction {
-  /** Stable accessible name and tooltip text. */
-  label: string;
-  /** Decorative icon content. */
-  icon: ReactNode;
-  /** Called when the action is activated. */
-  onClick: () => void;
 }
 
 /** Props for {@link MarkdownTable}. */
@@ -183,101 +166,13 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       );
     }, [contentRef, onOpenInCanvas]);
 
-    const tableActions: MarkdownTableHeaderAction[] = actionLabels
-      ? [
-          ...(actionLabels.copyCsvLabel != null
-            ? [
-                {
-                  label: actionLabels.copyCsvLabel,
-                  icon:
-                    copiedFormat === MarkdownTableCopyFormat.Csv ? (
-                      <IconCheck
-                        className={styles.copiedIcon}
-                        size={DIAL_ICON_SIZE.SM}
-                        stroke={DIAL_KIT_ICON_STROKE}
-                      />
-                    ) : (
-                      <IconCsv
-                        size={DIAL_ICON_SIZE.SM}
-                        stroke={DIAL_KIT_ICON_STROKE}
-                      />
-                    ),
-                  onClick: () => handleCopy(MarkdownTableCopyFormat.Csv),
-                },
-              ]
-            : []),
-          ...(actionLabels.copyTxtLabel != null
-            ? [
-                {
-                  label: actionLabels.copyTxtLabel,
-                  icon:
-                    copiedFormat === MarkdownTableCopyFormat.Txt ? (
-                      <IconCheck
-                        className={styles.copiedIcon}
-                        size={DIAL_ICON_SIZE.SM}
-                        stroke={DIAL_KIT_ICON_STROKE}
-                      />
-                    ) : (
-                      <IconTxt
-                        size={DIAL_ICON_SIZE.SM}
-                        stroke={DIAL_KIT_ICON_STROKE}
-                      />
-                    ),
-                  onClick: () => handleCopy(MarkdownTableCopyFormat.Txt),
-                },
-              ]
-            : []),
-          ...(actionLabels.copyMarkdownLabel != null
-            ? [
-                {
-                  label: actionLabels.copyMarkdownLabel,
-                  icon:
-                    copiedFormat === MarkdownTableCopyFormat.Markdown ? (
-                      <IconCheck
-                        className={styles.copiedIcon}
-                        size={DIAL_ICON_SIZE.SM}
-                        stroke={DIAL_KIT_ICON_STROKE}
-                      />
-                    ) : (
-                      <IconMarkdown
-                        size={DIAL_ICON_SIZE.SM}
-                        stroke={DIAL_KIT_ICON_STROKE}
-                      />
-                    ),
-                  onClick: () => handleCopy(MarkdownTableCopyFormat.Markdown),
-                },
-              ]
-            : []),
-          ...(actionLabels.downloadCsvLabel != null
-            ? [
-                {
-                  label: actionLabels.downloadCsvLabel,
-                  icon: (
-                    <IconDownload
-                      size={DIAL_ICON_SIZE.SM}
-                      stroke={DIAL_KIT_ICON_STROKE}
-                    />
-                  ),
-                  onClick: handleDownloadCsv,
-                },
-              ]
-            : []),
-          ...(actionLabels.openInCanvasLabel != null && onOpenInCanvas != null
-            ? [
-                {
-                  label: actionLabels.openInCanvasLabel,
-                  icon: (
-                    <IconMaximize
-                      size={DIAL_ICON_SIZE.SM}
-                      stroke={DIAL_KIT_ICON_STROKE}
-                    />
-                  ),
-                  onClick: handleOpenInCanvas,
-                },
-              ]
-            : []),
-        ]
-      : [];
+    const tableActions = useMarkdownTableActions({
+      actionLabels,
+      copiedFormat,
+      onCopy: handleCopy,
+      onDownloadCsv: handleDownloadCsv,
+      onOpenInCanvas: onOpenInCanvas != null ? handleOpenInCanvas : undefined,
+    });
     const showHeader = tableActions.length > 0 && !isStreaming;
 
     return (
