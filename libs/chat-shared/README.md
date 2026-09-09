@@ -155,6 +155,9 @@ appears once that load resolves. Fenced code blocks render through
 the same way. The sanitizer allows the citation-specific `cit` element, but
 the default component renders its markup literally; a citation-aware consumer
 must explicitly override `components.cit` to turn it into interactive UI.
+Pass `urlTransform` to rewrite `href`/`src` values (for example mapping DIAL
+`files/{bucket}/{path}` ids to host download URLs) before they are rendered;
+the result still goes through react-markdown's protocol allowlist.
 
 ```tsx
 import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
@@ -162,6 +165,7 @@ import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
 <MarkdownRenderer
   content={markdownText}
   mathScrollRegionAriaLabel={t('Scrollable formula')}
+  urlTransform={resolveMarkdownUrl}
 />;
 ```
 
@@ -172,7 +176,8 @@ defaults to `DEFAULT_MARKDOWN_CLASS_NAMES`; pass `COMPACT_MARKDOWN_CLASS_NAMES`
 to drop the body copy (`p`, `strong`) one step while leaving headings, code, and
 tables untouched. The component is memoised, so pass a stable reference rather
 than an inline object. It forwards the code-block and table action labels to
-`MarkdownRenderer`.
+`MarkdownRenderer`. Pass `urlTransform` to rewrite markdown `href`/`src` values
+the same way as `MarkdownRenderer`.
 
 ```tsx
 import {
@@ -184,6 +189,7 @@ import {
   content={message.content}
   isStreaming={isStreaming}
   classNames={isMobile ? COMPACT_MARKDOWN_CLASS_NAMES : undefined}
+  urlTransform={resolveMarkdownUrl}
 />;
 ```
 

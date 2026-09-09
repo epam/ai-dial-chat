@@ -138,6 +138,12 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   markdownComponents?: Components;
   /** Per-element markdown typography classes. Defaults to the renderer's full-size scale; pass `COMPACT_MARKDOWN_CLASS_NAMES` for the smaller body scale. */
   markdownClassNames?: MarkdownRendererClassNames;
+  /**
+   * Rewrites markdown `href`/`src` values before they are rendered. Forwarded
+   * to `MDMessageViewer`. Hosts use this to map DIAL file ids to download URLs.
+   * Defaults to no extra rewrite.
+   */
+  markdownUrlTransform?: (url: string) => string;
   /** Quick-reply buttons rendered below the message text when non-empty. */
   starters?: StarterOption[];
   /** Fires with the clicked `StarterOption`. */
