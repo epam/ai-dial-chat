@@ -42,13 +42,14 @@ import type {
 } from '@epam/ai-dial-conversation-messages';
 import { useMcpAppResponseCache } from '@epam/ai-dial-mcp-apps';
 import {
+  BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconCopy } from '@tabler/icons-react';
+import { IconCopy, IconPrompt } from '@tabler/icons-react';
 import {
   FC,
   lazy,
@@ -73,6 +74,7 @@ import {
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
   PromptSelectorI18nKeys,
+  ToolsI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -96,6 +98,7 @@ import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymen
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
+import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
 
@@ -222,6 +225,44 @@ const ConversationView: FC<Props> = ({
     onInsertText: onInsertText ?? (() => undefined),
   });
   const { t } = useTranslation();
+  const promptsMenuOverlays = useMemo(
+    () =>
+      onInsertText && renderPromptsOverlay
+        ? [
+            {
+              key: 'prompts',
+              title: t(PromptSelectorI18nKeys.AddMenuLabel),
+              icon: (
+                <IconPrompt
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
+              renderOverlay: renderPromptsOverlay,
+            },
+          ]
+        : undefined,
+    [onInsertText, renderPromptsOverlay, t],
+  );
+  const {
+    skillMenuOverlay,
+    skillCatalogModal,
+    skillDetailsPanel,
+    selectedSkillChips,
+  } = useSkillSelectorOverlay();
+  /*
+   * The Skills entry joins the Prompts entry in array order, so it renders
+   * below Prompts in the `+` menu; `undefined` when both are absent keeps
+   * the `+` button's empty-menu rule intact.
+   */
+  const menuOverlays = useMemo(() => {
+    const entries = [
+      ...(promptsMenuOverlays ?? []),
+      ...(skillMenuOverlay ? [skillMenuOverlay] : []),
+    ];
+    return entries.length > 0 ? entries : undefined;
+  }, [promptsMenuOverlays, skillMenuOverlay]);
   const { language } = useLanguage();
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const isMobile = useIsMobile();
@@ -948,10 +989,11 @@ const ConversationView: FC<Props> = ({
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
-                promptsMenuOverlay={
-                  onInsertText ? renderPromptsOverlay : undefined
-                }
-                promptsMenuTitle={t(PromptSelectorI18nKeys.AddMenuLabel)}
+                menuOverlays={menuOverlays}
+                selectedEntities={selectedSkillChips}
+                selectedEntityChipLabels={{
+                  removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
+                }}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
                   <UsageLimitsControl
@@ -1057,6 +1099,8 @@ const ConversationView: FC<Props> = ({
       {catalogModal}
       {promptCatalogModal}
       {promptParametersPopup}
+      {skillCatalogModal}
+      {skillDetailsPanel}
     </>
   );
 };

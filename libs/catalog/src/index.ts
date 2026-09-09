@@ -151,6 +151,8 @@ export type {
 export { ContentTab } from './components/Details/TabsContent/Content';
 export type { ContentTabProps } from './components/Details/TabsContent/Content';
 
+export { DetailsPanel } from './components/Details/DetailsPanel';
+
 export { AppIdentity } from './components/AppIdentity/AppIdentity';
 export type { AppIdentityProps } from './components/AppIdentity/AppIdentity';
 export type {

@@ -21,6 +21,9 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import type {
   ConversationInputStyles,
+  MenuOverlayConfig,
+  SelectedEntityChip,
+  SelectedEntityChipsLabels,
   ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import type { FC, ReactNode } from 'react';
@@ -95,12 +98,17 @@ interface Props {
   /** Token that forces `message` to re-apply even if its string is unchanged. */
   messageRevision?: number;
   /**
-   * When provided, adds a "Prompts" item to the `+` menu whose submenu
-   * renders this host-owned overlay, mirroring `modelPickerOverlay`.
+   * Host-injected overlay entries for the `+` menu (e.g. the Prompts
+   * selector), passed through to `ConversationInput`.
    */
-  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
-  /** Label for the "Prompts" menu item and mobile sheet title. */
-  promptsMenuTitle?: string;
+  menuOverlays?: MenuOverlayConfig[];
+  /**
+   * Selected entities rendered as removable chips where the tool chips
+   * render (e.g. the picked skill), passed through to `ConversationInput`.
+   */
+  selectedEntities?: SelectedEntityChip[];
+  /** Labels for the selected-entity chips, passed through to `ConversationInput`. */
+  selectedEntityChipLabels?: SelectedEntityChipsLabels;
   inputStyles?: ConversationInputStyles;
   /** Called on first send. Rejecting shows the standard create-conversation error notification. */
   onCreateConversation: (
@@ -130,8 +138,9 @@ const NewConversationComposer: FC<Props> = ({
   introText,
   message,
   messageRevision,
-  promptsMenuOverlay,
-  promptsMenuTitle,
+  menuOverlays,
+  selectedEntities,
+  selectedEntityChipLabels,
   inputStyles,
   onCreateConversation,
   toolsMenuItems,
@@ -469,8 +478,9 @@ const NewConversationComposer: FC<Props> = ({
           onAttachmentClick={handleAttachmentClick}
           onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
-          promptsMenuOverlay={promptsMenuOverlay}
-          promptsMenuTitle={promptsMenuTitle}
+          menuOverlays={menuOverlays}
+          selectedEntities={selectedEntities}
+          selectedEntityChipLabels={selectedEntityChipLabels}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           canRemoveTools={isRemovableToolsEnabled}

@@ -2398,6 +2398,51 @@ const { bytes, mimeType } = await onLoadSkillDetailsFile(fileId);
 | `onLoadContentFile`      | `(fileId: string) => Promise<string \| undefined>`                           | Loads text content for a file within the open skill package. |
 | `onLoadSkillDetailsFile` | `(fileId: string) => Promise<SkillFileContent>`                              | Downloads preview bytes; throws on HTTP error.               |
 
+The skill branch (manifest download + parse, package file listing, in-package
+file loads) is delegated to `useSkillItemDetails` below — `CatalogDetailsApi`
+extends that hook's `SkillDetailsApi` port with the deployment and prompt
+methods.
+
+### useSkillItemDetails / fetchSkillDescription
+
+The skill-scoped half of the details pipeline, for hosts that only surface
+skill details and therefore have no deployment/prompt ports to inject.
+`useCatalogItemDetails` composes it internally; consuming it directly avoids
+supplying the four unused adapter methods the full pipeline requires.
+
+```ts
+import {
+  fetchSkillDescription,
+  useSkillItemDetails,
+} from '@epam/ai-dial-chat-hooks';
+
+const { onFetchSkillDetails, onLoadContentFile, onLoadSkillDetailsFile } =
+  useSkillItemDetails({
+    api, // SkillDetailsApi — downloadSkillFile + listSkillFiles
+    skills, // SkillMetadataItemDto[] — all skills visible to the user
+    skillOverviewLabels, // SkillOverviewLabels
+  });
+
+// Fetch full details for a skill catalog item (returns undefined on failure)
+const details = await onFetchSkillDetails(skillCatalogItem);
+
+// One-shot manifest description for a listing tooltip. Returns null on an
+// unparseable id, an unreadable manifest, or a failed request — never throws.
+const description = await fetchSkillDescription(api, skill.url);
+```
+
+**Options** (`UseSkillItemDetailsOptions`): `api`
+(`SkillDetailsApi`), `skills` (`SkillMetadataItemDto[]`), and
+`skillOverviewLabels` (`SkillOverviewLabels`).
+
+**Returns** (`UseSkillItemDetailsResult`): `onFetchSkillDetails`,
+`onLoadContentFile`, and `onLoadSkillDetailsFile`, with the same shapes as
+the `useCatalogItemDetails` returns above.
+
+`fetchSkillDescription(api, skillId)` reuses the same manifest-download path
+as the full pipeline and resolves every failure to `null` so a listing
+tooltip can treat "no description" and "could not fetch" identically.
+
 ### resolveCatalogPrimaryAction
 
 Pure async resolver for the catalog's "Use" primary action. Returns a discriminated `CatalogPrimaryActionResult` — either a deployment selection or a resolved prompt with optional parameter placeholders. Does not navigate, select, or show notifications — those remain the caller's responsibility.

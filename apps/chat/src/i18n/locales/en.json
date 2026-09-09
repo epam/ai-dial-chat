@@ -320,6 +320,12 @@
     "detailsLabel": "Details",
     "enterValuePlaceholder": "Enter value"
   },
+  "skillSelector": {
+    "addMenuLabel": "Skills",
+    "emptyHint": "Star a skill to pin it here",
+    "modalTitle": "Use skill",
+    "viewDetailsLabel": "View details"
+  },
   "notFound": {
     "eyebrow": "404",
     "title": "Page not found",

@@ -18,7 +18,6 @@ import {
   IconChevronRight,
   IconPaperclip,
   IconPlus,
-  IconPrompt,
   IconSettings,
   IconTool,
 } from '@tabler/icons-react';
@@ -29,7 +28,10 @@ import {
   useMemo,
   useState,
 } from 'react';
-import type { ChatSettingsConfig } from '../../models/Input';
+import type {
+  ChatSettingsConfig,
+  MenuOverlayConfig,
+} from '../../models/Input';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import { ChatSettingsBottomSheet } from '../ChatSettingsBottomSheet/ChatSettingsBottomSheet';
@@ -80,18 +82,16 @@ interface AddAttachmentButtonProps {
   /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
   toolsBackLabel?: string;
   /**
-   * When provided, adds a "Prompts" item above "Chat settings" whose submenu
-   * (desktop flyout / mobile bottom sheet) renders this host-owned overlay.
-   * On desktop this is a real nested `Dropdown` submenu (via `renderSubMenu`)
-   * that stays open alongside the main attachment menu, mirroring how the
-   * "Tools" item's submenu behaves. Receives a callback the overlay calls to
-   * close the whole menu once selection is complete.
+   * Host-injected overlay entries, rendered as menu items between the
+   * "Tools" item and "Chat settings", in array order. Each item's submenu
+   * (desktop flyout / mobile stacked bottom sheet) renders the entry's
+   * host-owned overlay. On desktop this is a real nested `Dropdown` submenu
+   * (via `renderSubMenu`) that stays open alongside the main attachment
+   * menu, mirroring how the "Tools" item's submenu behaves. Each overlay's
+   * `renderOverlay` receives a callback to close the whole menu once
+   * selection is complete.
    */
-  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
-  /** Label for the "Prompts" menu item and mobile sheet title. Defaults to `'Prompts'`. */
-  promptsMenuTitle?: string;
-  /** Accessible label for the back arrow in the mobile prompts bottom sheet. Defaults to `'Back'`. */
-  promptsBackLabel?: string;
+  menuOverlays?: MenuOverlayConfig[];
   /** Color overrides. */
   colors?: AddAttachmentButtonColors;
 }
@@ -122,16 +122,16 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   onToolToggle,
   toolsMenuTitle = 'Tools',
   toolsBackLabel = 'Back',
-  promptsMenuOverlay,
-  promptsMenuTitle = 'Prompts',
-  promptsBackLabel = 'Back',
+  menuOverlays,
   colors,
 }) => {
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
   const [isToolsSheetOpen, setIsToolsSheetOpen] = useState(false);
-  const [isPromptsSheetOpen, setIsPromptsSheetOpen] = useState(false);
+  const [openMenuOverlayKey, setOpenMenuOverlayKey] = useState<string | null>(
+    null,
+  );
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
 
   const cssVars = useMemo(
@@ -145,6 +145,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   );
 
   const hasTools = toolsMenuItems.length > 0 && onToolToggle != null;
+  const hasMenuOverlays = menuOverlays != null && menuOverlays.length > 0;
 
   const toolsSubmenuChildren = useMemo(
     () =>
@@ -235,55 +236,45 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             },
           ]
         : []),
-      ...(promptsMenuOverlay != null
-        ? [
-            {
-              key: 'prompts',
-              label: promptsMenuTitle,
-              icon: (
-                <IconPrompt
+      ...(menuOverlays ?? []).map((overlay) => ({
+        key: overlay.key,
+        label: overlay.title,
+        icon: overlay.icon,
+        onClick: isMobile
+          ? () => {
+              setOpenMenuOverlayKey(overlay.key);
+              setIsSheetOpen(false);
+            }
+          : () => undefined,
+        ...(isMobile
+          ? {
+              iconAfter: (
+                <IconChevronRight
                   size={BASE_ICON_SIZE}
-                  aria-hidden
                   stroke={DIAL_KIT_ICON_STROKE}
+                  style={cssVars}
+                  className={mergeClasses(
+                    'rtl:scale-x-[-1]',
+                    styles.chevronIcon,
+                  )}
+                  aria-hidden
                 />
               ),
-              onClick: isMobile
-                ? () => {
-                    setIsPromptsSheetOpen(true);
-                    setIsSheetOpen(false);
-                  }
-                : () => undefined,
-              ...(isMobile
-                ? {
-                    iconAfter: (
-                      <IconChevronRight
-                        size={BASE_ICON_SIZE}
-                        stroke={DIAL_KIT_ICON_STROKE}
-                        style={cssVars}
-                        className={mergeClasses(
-                          'rtl:scale-x-[-1]',
-                          styles.chevronIcon,
-                        )}
-                        aria-hidden
-                      />
-                    ),
-                  }
-                : {
-                    /*
-                     * The ui-kit only treats an item as submenu-capable (caret,
-                     * hover/keyboard open, floating panel) when `children` is a
-                     * non-empty array; `renderSubMenu` alone does not open a
-                     * submenu, it only overrides what's rendered *inside* one
-                     * once that gate passes. This placeholder is never rendered
-                     * (renderSubMenu fully replaces the submenu content).
-                     */
-                    children: [{ key: 'prompts-panel', label: '' }],
-                    renderSubMenu: () =>
-                      promptsMenuOverlay(() => setIsDesktopMenuOpen(false)),
-                  }),
-            },
-          ]
-        : []),
+            }
+          : {
+              /*
+               * The ui-kit only treats an item as submenu-capable (caret,
+               * hover/keyboard open, floating panel) when `children` is a
+               * non-empty array; `renderSubMenu` alone does not open a
+               * submenu, it only overrides what's rendered *inside* one
+               * once that gate passes. This placeholder is never rendered
+               * (renderSubMenu fully replaces the submenu content).
+               */
+              children: [{ key: `${overlay.key}-panel`, label: '' }],
+              renderSubMenu: () =>
+                overlay.renderOverlay(() => setIsDesktopMenuOpen(false)),
+            }),
+      })),
       ...(chatSettings != null
         ? [
             {
@@ -322,8 +313,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       hasTools,
       toolsMenuTitle,
       toolsSubmenuChildren,
-      promptsMenuOverlay,
-      promptsMenuTitle,
+      menuOverlays,
       cssVars,
     ],
   );
@@ -336,10 +326,8 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       placement="bottom-start"
       listClassName={listClassName}
       items={menuItems}
-      open={promptsMenuOverlay != null ? isDesktopMenuOpen : undefined}
-      onOpenChange={
-        promptsMenuOverlay != null ? setIsDesktopMenuOpen : undefined
-      }
+      open={hasMenuOverlays ? isDesktopMenuOpen : undefined}
+      onOpenChange={hasMenuOverlays ? setIsDesktopMenuOpen : undefined}
     >
       <GhostIconButton
         icon={
@@ -400,22 +388,23 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               onToolToggle={onToolToggle}
             />
           )}
-          {promptsMenuOverlay != null && (
+          {menuOverlays?.map((overlay) => (
             <BottomSheetShell
-              isOpen={isPromptsSheetOpen}
-              title={promptsMenuTitle}
+              key={overlay.key}
+              isOpen={openMenuOverlayKey === overlay.key}
+              title={overlay.title}
               closeLabel={menuCloseLabel}
               onBack={() => {
-                setIsPromptsSheetOpen(false);
+                setOpenMenuOverlayKey(null);
                 setIsSheetOpen(true);
               }}
-              backLabel={promptsBackLabel}
-              onClose={() => setIsPromptsSheetOpen(false)}
+              backLabel={overlay.backLabel ?? 'Back'}
+              onClose={() => setOpenMenuOverlayKey(null)}
               style={style}
             >
-              {promptsMenuOverlay(() => setIsPromptsSheetOpen(false))}
+              {overlay.renderOverlay(() => setOpenMenuOverlayKey(null))}
             </BottomSheetShell>
-          )}
+          ))}
           {chatSettings != null && (
             <ChatSettingsBottomSheet
               isOpen={isChatSettingsOpen}

@@ -79,6 +79,38 @@ export interface ToolsChipLabels {
   removeLabel?: (toolLabel: string) => string;
 }
 
+/** A host-injected overlay entry for the `+` menu: a menu item whose submenu renders host-owned content. */
+export interface MenuOverlayConfig {
+  /** Unique key identifying the entry; also keys the mobile sheet's open state. */
+  key: string;
+  /** Menu-item label and mobile sheet title. */
+  title: string;
+  /** Icon node rendered to the left of the menu-item label. */
+  icon: ReactNode;
+  /** Renders the overlay panel content. Receives a callback the panel calls to close the whole menu once selection is complete. */
+  renderOverlay: (onClose: () => void) => ReactNode;
+  /** Accessible label for the back arrow in the mobile stacked bottom sheet. Defaults to `'Back'`. */
+  backLabel?: string;
+}
+
+/** A host-selected entity rendered as a removable chip in the input's action row (e.g. a picked skill). */
+export interface SelectedEntityChip {
+  /** Unique key identifying the chip. */
+  id: string;
+  /** Chip label text. */
+  label: string;
+  /** Optional leading icon node. */
+  icon?: ReactNode;
+  /** Called when the chip's × is activated, removing the entity from the row. */
+  onRemove: () => void;
+}
+
+/** Labels for the selected-entity chips rendered in the conversation input. */
+export interface SelectedEntityChipsLabels {
+  /** Returns the accessible label for a chip's × button, which removes the entity. Receives the chip label. Defaults to `"Remove {label}"`. */
+  removeLabel?: (entityLabel: string) => string;
+}
+
 /** Props accepted by the `Input` component. */
 export interface InputProps {
   /**
@@ -269,15 +301,20 @@ export interface InputProps {
   /** Labels for the tool chips rendered in the input. */
   toolsChipLabels?: ToolsChipLabels;
   /**
-   * When provided, a "Prompts" item is added to the `+` menu above "Chat
-   * settings". Its submenu (desktop flyout / mobile bottom sheet) renders
-   * this host-owned overlay, mirroring `modelPickerOverlay`.
+   * Host-injected overlay entries, rendered as `+`-menu items between the
+   * "Tools" item and "Chat settings", in array order. Each item's submenu
+   * (desktop flyout / mobile stacked bottom sheet) renders the entry's
+   * host-owned overlay, mirroring `modelPickerOverlay`.
    */
-  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
-  /** Label for the "Prompts" menu item and mobile sheet title. Defaults to `'Prompts'`. */
-  promptsMenuTitle?: string;
-  /** Accessible label for the back arrow in the mobile prompts bottom sheet. Defaults to `'Back'`. */
-  promptsBackLabel?: string;
+  menuOverlays?: MenuOverlayConfig[];
+  /**
+   * Selected entities rendered as removable chips where the tool chips
+   * render. The host owns the selection semantics; each chip's × calls that
+   * chip's own `onRemove`. Empty or absent renders no row.
+   */
+  selectedEntities?: SelectedEntityChip[];
+  /** Labels for the selected-entity chips rendered in the input. */
+  selectedEntityChipLabels?: SelectedEntityChipsLabels;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */
   autoFocus?: boolean;
   /**

@@ -26,6 +26,7 @@ export * from './catalog/catalog-primary-action';
 export * from './catalog/useCatalogEditNavigation/useCatalogEditNavigation';
 export * from './catalog/useCatalogItemDetails';
 export * from './catalog/useCatalogToolsetCredentials/useCatalogToolsetCredentials';
+export * from './catalog/useSkillItemDetails';
 export * from './catalog/useFavoriteEntitiesState/useFavoriteEntitiesState';
 export * from './catalog/usePublishFolders/usePublishFolders';
 export * from './conversation/announcement-message';

@@ -16,11 +16,12 @@ import type {
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
+  BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   NoDataContent,
 } from '@epam/ai-dial-ui-kit';
-import { IconTelescope } from '@tabler/icons-react';
+import { IconPrompt, IconTelescope } from '@tabler/icons-react';
 import {
   FC,
   memo,
@@ -42,6 +43,7 @@ import {
   usePromptSelectorOverlay,
 } from '../../components/PromptSelector/usePromptSelectorOverlay';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import { useSkillSelectorOverlay } from '../../components/SkillSelector/useSkillSelectorOverlay';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { getConversationRoute } from '../../constants/routes';
 import {
@@ -81,6 +83,7 @@ const ConversationRoute: FC = () => {
   const routePendingPrompt = (
     state as { pendingPrompt?: PendingParametersPrompt } | null
   )?.pendingPrompt;
+  const routeSkillId = (state as { skillId?: string } | null)?.skillId;
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const [inputMessageRevision, setInputMessageRevision] = useState(0);
 
@@ -94,6 +97,45 @@ const ConversationRoute: FC = () => {
     parametersPopup: promptParametersPopup,
     openParametersPopup,
   } = usePromptSelectorOverlay({ onInsertText: handleInsertText });
+  const promptsMenuOverlays = useMemo(
+    () =>
+      renderPromptsOverlay
+        ? [
+            {
+              key: 'prompts',
+              title: t(PromptSelectorI18nKeys.AddMenuLabel),
+              icon: (
+                <IconPrompt
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
+              renderOverlay: renderPromptsOverlay,
+            },
+          ]
+        : undefined,
+    [renderPromptsOverlay, t],
+  );
+  const {
+    skillMenuOverlay,
+    skillCatalogModal,
+    skillDetailsPanel,
+    selectedSkillChips,
+    selectSkill,
+  } = useSkillSelectorOverlay();
+  /*
+   * The Skills entry joins the Prompts entry in array order, so it renders
+   * below Prompts in the `+` menu; `undefined` when both are flag-disabled
+   * keeps the `+` button's empty-menu rule intact.
+   */
+  const menuOverlays = useMemo(() => {
+    const entries = [
+      ...(promptsMenuOverlays ?? []),
+      ...(skillMenuOverlay ? [skillMenuOverlay] : []),
+    ];
+    return entries.length > 0 ? entries : undefined;
+  }, [promptsMenuOverlays, skillMenuOverlay]);
   const { showErrorNotification } = useNotification();
   const overlay = useOptionalOverlay();
   const {
@@ -197,6 +239,19 @@ const ConversationRoute: FC = () => {
     openParametersPopup(routePendingPrompt);
     navigate(pathname, { replace: true, state: null });
   }, [routePendingPrompt, openParametersPopup, navigate, pathname]);
+
+  /*
+   * Seeds the composer's selected skill from a skill the user picked via the
+   * catalog's "Use in chat" action. Same one-shot state clearing as the
+   * prompt cases above, so a later back-navigation to `/` cannot re-apply a
+   * stale pick — and `history.state` surviving a reload cannot keep
+   * re-selecting it.
+   */
+  useEffect(() => {
+    if (routeSkillId == null) return;
+    selectSkill(routeSkillId);
+    navigate(pathname, { replace: true, state: null });
+  }, [routeSkillId, selectSkill, navigate, pathname]);
 
   /*
    * This is the "no conversation selected" empty state. Overlay mode must
@@ -427,8 +482,11 @@ const ConversationRoute: FC = () => {
         messageRevision={inputMessageRevision}
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
-        promptsMenuOverlay={renderPromptsOverlay}
-        promptsMenuTitle={t(PromptSelectorI18nKeys.AddMenuLabel)}
+        menuOverlays={menuOverlays}
+        selectedEntities={selectedSkillChips}
+        selectedEntityChipLabels={{
+          removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
+        }}
         toolsMenuItems={toolsMenuItems}
         onToolToggle={onToolToggle}
         toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
@@ -444,6 +502,8 @@ const ConversationRoute: FC = () => {
       {catalogModal}
       {promptCatalogModal}
       {promptParametersPopup}
+      {skillCatalogModal}
+      {skillDetailsPanel}
     </Suspense>
   );
 };

@@ -351,6 +351,13 @@ export enum PromptSelectorI18nKeys {
   EnterValuePlaceholder = 'promptSelector.enterValuePlaceholder',
 }
 
+export enum SkillSelectorI18nKeys {
+  AddMenuLabel = 'skillSelector.addMenuLabel',
+  EmptyHint = 'skillSelector.emptyHint',
+  ModalTitle = 'skillSelector.modalTitle',
+  ViewDetailsLabel = 'skillSelector.viewDetailsLabel',
+}
+
 export enum NotFoundI18nKeys {
   Eyebrow = 'notFound.eyebrow',
   Title = 'notFound.title',

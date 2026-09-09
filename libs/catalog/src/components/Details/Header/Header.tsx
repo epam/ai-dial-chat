@@ -122,8 +122,10 @@ interface HeaderProps {
   isDownloadVisible?: (item: CatalogItem) => boolean;
   /**
    * Resolves whether Download renders as the primary action instead of a
-   * Manage-menu entry. Defaults to `item.type === CatalogEntityType.Skill`.
-   * An item whose Download is primary never also shows it in the Manage menu.
+   * Manage-menu entry. Defaults to a Skill whose "Use in chat" primary action
+   * is not shown (`item.type === CatalogEntityType.Skill` and no primary
+   * action). An item whose Download is primary never also shows it in the
+   * Manage menu.
    */
   isDownloadPrimary?: (item: CatalogItem) => boolean;
   /** Called when "Delete" is clicked in the Manage menu. The details panel owns the confirmation step, so this only requests it. */
@@ -515,7 +517,8 @@ export const Header: FC<HeaderProps> = ({
   const isDownloadActionPrimary =
     isDownloadActionEnabled &&
     !isCredentialsActionPrimary &&
-    (isDownloadPrimary?.(item) ?? item.type === CatalogEntityType.Skill);
+    (isDownloadPrimary?.(item) ??
+      (item.type === CatalogEntityType.Skill && !shouldShowPrimaryAction));
   /* A promoted Download renders in the primary slot only — never duplicated in the Manage menu. */
   const shouldShowDownloadAction =
     isDownloadActionEnabled && !isDownloadActionPrimary;

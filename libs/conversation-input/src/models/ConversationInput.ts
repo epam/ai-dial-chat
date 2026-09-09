@@ -10,7 +10,10 @@ import type {
   ChatSettingsConfig,
   InputColors,
   InputTypography,
+  MenuOverlayConfig,
   ModelSelectorLabels,
+  SelectedEntityChip,
+  SelectedEntityChipsLabels,
   SendOnEnter,
   ToolsChipLabels,
 } from './Input';
@@ -340,15 +343,19 @@ export interface ConversationInputProps {
   /** Labels for the tool chips rendered in the input. */
   toolsChipLabels?: ToolsChipLabels;
   /**
-   * When provided, a "Prompts" item is added to the `+` menu above "Chat
-   * settings". Its submenu (desktop flyout / mobile bottom sheet) renders
-   * this host-owned overlay, mirroring `modelPickerOverlay`.
+   * Host-injected overlay entries, rendered as `+`-menu items between the
+   * "Tools" item and "Chat settings", in array order. Each item's submenu
+   * (desktop flyout / mobile stacked bottom sheet) renders the entry's
+   * host-owned overlay, mirroring `modelPickerOverlay`.
    */
-  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
-  /** Label for the "Prompts" menu item and mobile sheet title. Defaults to `'Prompts'`. */
-  promptsMenuTitle?: string;
-  /** Accessible label for the back arrow in the mobile prompts bottom sheet. Defaults to `'Back'`. */
-  promptsBackLabel?: string;
+  menuOverlays?: MenuOverlayConfig[];
+  /**
+   * Selected entities rendered as removable chips where the tool chips
+   * render. Forwarded to the inner `Input`. Empty or absent renders no row.
+   */
+  selectedEntities?: SelectedEntityChip[];
+  /** Labels for the selected-entity chips rendered in the input. Forwarded to the inner `Input`. */
+  selectedEntityChipLabels?: SelectedEntityChipsLabels;
   /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
   usageLimitsSlot?: ReactNode;
   /**
