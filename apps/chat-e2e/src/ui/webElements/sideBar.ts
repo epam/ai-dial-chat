@@ -92,12 +92,11 @@ export class SideBar extends BaseElement {
   }
 
   public async deleteAllEntities() {
-    const isButtonVisible = await this.deleteEntitiesButton.isVisible();
-    if (!isButtonVisible) {
+    try {
+      await this.deleteEntitiesButton.click({ force: true });
+    } catch {
       await this.bottomDotsMenuIcon.click();
       await this.getBottomDropdownMenu().selectMenuOption(MenuOptions.delete);
-    } else {
-      await this.deleteEntitiesButton.click();
     }
   }
 

@@ -156,6 +156,7 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
         }
         warningMessage={confirmDialogValues?.description}
         disallowSelectRootFolder
+        showHiddenFolders
       />
 
       {confirmDialogValues && confirmDialogOpen && (

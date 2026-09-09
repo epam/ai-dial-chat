@@ -26,6 +26,7 @@ export default defineConfig({
   outputDir: `../${ResultFolder.testResults}`,
   timeout: 60000,
   retries: 1,
+  retryStrategy: 'isolated',
   maxFailures: 10,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -37,7 +38,10 @@ export default defineConfig({
     baseURL: process.env.E2E_HOST ?? 'http://localhost:3000',
     video: 'retry-with-video',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'retry-with-trace',
+    trace: {
+      mode: 'on-all-retries',
+      snapshots: { dom: true, aria: true, screen: true },
+    },
     screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
   },
@@ -58,6 +62,7 @@ export default defineConfig({
       name: 'cleanup',
       testMatch: /cleanup\.ts/,
       dependencies: ['auth'],
+      timeout: 120000,
     },
     {
       name: 'api listing',
@@ -70,6 +75,7 @@ export default defineConfig({
       testMatch: /\/chatApi\/.*\.test\.ts/,
       dependencies: ['cleanup'],
       fullyParallel: true,
+      timeout: 120000,
     },
     {
       name: 'chat e2e',

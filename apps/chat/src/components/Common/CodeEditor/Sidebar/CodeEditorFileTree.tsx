@@ -2,13 +2,15 @@ import { IconCheck, IconFile } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { truncateToUtf8Bytes } from '@/src/utils/app/common';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import {
+  notAllowedSymbolsRegex,
+  withoutFileManagerPlaceholderByName,
+} from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
-import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -70,14 +72,14 @@ export const CodeEditorFileTree = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
 
   const files = useMemo(
-    () => allFiles.filter((file) => !isHiddenEntity(file)),
+    () => withoutFileManagerPlaceholderByName(allFiles),
     [allFiles],
   );
 
   const { rootFiles, rootFolders } = useMemo(
     () => ({
       rootFiles: files.filter((file) => file.folderId === sourcesFolderId),
-      rootFolders: folders.filter(
+      rootFolders: withoutFileManagerPlaceholderByName(folders).filter(
         (folder) => folder.folderId === sourcesFolderId,
       ),
     }),
@@ -154,6 +156,8 @@ export const CodeEditorFileTree = ({
           onFileUpload={handleFileUpload}
           currentFolder={folder}
           allFolders={folders}
+          showTechnicalFolders
+          allowDotAtStart
           isInitialRenameEnabled
           loadingFolderIds={loadingFolderIds}
           openedFoldersIds={openedFoldersIds}

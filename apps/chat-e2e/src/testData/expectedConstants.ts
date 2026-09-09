@@ -640,8 +640,7 @@ export const API = {
   moveFilesHost: '/api/files/move',
   copyFilesHost: '/api/files/copy',
   importFileRootPath: (bucket: string) => `${API.filesHostSegment}/${bucket}`,
-  modelFilePath: (modelId: string) =>
-    `appdata/${ItemUtil.getEncodedItemId(modelId)}/images`,
+  modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
   importFilePath: (bucket: string, modelId: string) =>
     `${API.importFileRootPath(bucket)}/${API.modelFilePath(modelId)}`,
   shareInviteAcceptanceHost: '/api/share/accept',

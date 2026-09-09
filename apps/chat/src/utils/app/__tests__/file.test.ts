@@ -97,6 +97,30 @@ describe('File utility methods', () => {
       ]);
     });
 
+    it('keeps dot-prefixed code app sources, dropping only the placeholder', () => {
+      const items = [
+        { id: 'b/app/.hidden folder', name: '.hidden folder' },
+        { id: 'b/app/.hidden file.txt', name: '.hidden file.txt' },
+        { id: 'b/app/.gitignore', name: '.gitignore' },
+        { id: 'b/app/.env', name: '.env' },
+        { id: 'b/app/requirements.txt', name: 'requirements.txt' },
+        {
+          id: `b/app/${TEMP_FILE_NAME_IN_FILE_MANAGER}`,
+          name: TEMP_FILE_NAME_IN_FILE_MANAGER,
+        },
+      ];
+
+      expect(
+        withoutFileManagerPlaceholderByName(items).map((i) => i.name),
+      ).toEqual([
+        '.hidden folder',
+        '.hidden file.txt',
+        '.gitignore',
+        '.env',
+        'requirements.txt',
+      ]);
+    });
+
     it('removes application-like rows when last path segment is .dial_folder or variant', () => {
       const marker = `${TEMP_FILE_NAME_IN_FILE_MANAGER}__`;
       const items = [
