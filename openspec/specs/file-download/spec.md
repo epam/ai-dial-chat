@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Downloading a file from DIAL Core through the BFF, with query DTO validation, image-aware response headers, a generated-client frontend wrapper, and resolving DIAL file ids embedded in assistant markdown to download URLs.
+Downloading a file from DIAL Core through the BFF, with query DTO validation, a generated-client frontend wrapper, and resolving DIAL file ids embedded in assistant markdown to download URLs.
 
 ## Requirements
 
@@ -11,13 +11,11 @@ The system SHALL expose `GET /api/v1/files/download` accepting `bucket` and `pat
 
 The handler SHALL forward an explicit allowlist of safe response headers from the DIAL Core response: `content-type`, `content-disposition`, `content-length`. All other headers SHALL be stripped. The endpoint SHALL not buffer the response body — it SHALL pipe the DIAL Core `fetch` response body stream directly to the NestJS `Response` object.
 
-For responses identified as images (by a known image file extension on `path`, or an already-image `Content-Type`), the handler SHALL adjust the allowlisted headers before forwarding them, via `headersForEmbeddedImage` (`apps/chat-api/src/files/download/download-headers.ts`): a generic `Content-Type` (`application/octet-stream`, `binary/octet-stream`) SHALL be replaced with the specific `image/*` MIME type inferred from the file extension, and a `Content-Disposition: attachment` SHALL be rewritten to `inline` (adding `inline; filename="..."` when DIAL Core omitted the header). This exists because Helmet's `X-Content-Type-Options: nosniff` makes browsers refuse to render an `<img>` whose response is `application/octet-stream` with `Content-Disposition: attachment` — DIAL Core sends exactly that combination for code-interpreter-generated images. Non-image responses SHALL be forwarded unchanged.
-
 - **Rate limit**: `@Throttle({ default: { limit: 60, ttl: 60000 } })`.
 - **HTTP method**: `GET`
 - **Route**: `/api/v1/files/download` (query-param shape chosen over path params; see design.md Decision 3)
 - **operationId**: `downloadFile` → generated SDK method `filesApi.downloadFile(...)` / `filesApi.downloadFileRaw(...)`.
-- **Response content-type**: `application/octet-stream` (or whatever DIAL Core returns, forwarded verbatim from the allowlist for non-image files; corrected to `image/*` for images per above).
+- **Response content-type**: `application/octet-stream` (or whatever DIAL Core returns, forwarded verbatim from the allowlist).
 
 **Query parameters:**
 | Parameter | Type   | Validation |
@@ -37,15 +35,7 @@ For responses identified as images (by a known image file extension on `path`, o
 
 #### Scenario: Downloaded file headers forwarded correctly
 - **WHEN** DIAL Core responds with `Content-Type: application/pdf`, `Content-Disposition: attachment; filename="report.pdf"`, and `Content-Length: 204800`
-- **THEN** the BFF response includes exactly those three headers, unchanged, and no additional DIAL Core headers
-
-#### Scenario: Generic-MIME image response is corrected to inline image/*
-- **WHEN** DIAL Core responds for `path` `appdata/applications/public/pg/silver_lake_investments_net_income.png` with `Content-Type: application/octet-stream` and `Content-Disposition: attachment; filename="silver_lake_investments_net_income.png"`
-- **THEN** the BFF response has `Content-Type: image/png` and `Content-Disposition: inline; filename="silver_lake_investments_net_income.png"`
-
-#### Scenario: Image response with a proper image Content-Type is only switched to inline
-- **WHEN** DIAL Core responds for `path` `uploads/photo.jpg` with `Content-Type: image/jpeg` and `Content-Disposition: attachment; filename="photo.jpg"`
-- **THEN** the BFF response keeps `Content-Type: image/jpeg` and changes `Content-Disposition` to `inline; filename="photo.jpg"`
+- **THEN** the BFF response includes exactly those three headers and no additional DIAL Core headers
 
 #### Scenario: Unauthenticated download attempt
 - **WHEN** the request carries no valid session cookie
