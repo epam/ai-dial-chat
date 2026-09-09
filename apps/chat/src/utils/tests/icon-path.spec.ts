@@ -102,4 +102,10 @@ describe('resolveMarkdownUrl', () => {
   it('leaves an incomplete files/ id unchanged', () => {
     expect(resolveMarkdownUrl('files/only-bucket')).toBe('files/only-bucket');
   });
+
+  it('strips a #page=N anchor before resolving so it is not percent-encoded into path', () => {
+    expect(resolveMarkdownUrl('files/bucket/report.pdf#page=3')).toBe(
+      '/api/v1/files/download?bucket=bucket&path=report.pdf',
+    );
+  });
 });

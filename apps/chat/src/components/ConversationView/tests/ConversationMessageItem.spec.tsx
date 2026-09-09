@@ -612,7 +612,9 @@ describe('ConversationMessageItem — markdown file URLs', () => {
     );
 
     expect(
-      screen.getByRole('img', { name: 'Silver Lake chart' }).getAttribute('src'),
+      screen
+        .getByRole('img', { name: 'Silver Lake chart' })
+        .getAttribute('src'),
     ).toBe(
       '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fpg%2Fchart.png',
     );

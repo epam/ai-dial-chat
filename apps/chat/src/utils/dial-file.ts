@@ -18,15 +18,18 @@ export const resolveDialFileDownloadUrl = (
   return `/api/v1/files/download?${params.toString()}`;
 };
 
-/**
- * Rewrites a markdown `href`/`src` when it is a DIAL file id
- * (`files/{bucket}/{path}`); otherwise returns the URL unchanged.
- */
-export const resolveMarkdownUrl = (url: string): string =>
-  resolveDialFileDownloadUrl(url) ?? url;
-
 /** Strips a trailing `#...` fragment (e.g. a PDF `#page=N` anchor) from a DIAL file id. */
 const stripFragment = (fileId: string): string => fileId.split('#')[0];
+
+/**
+ * Rewrites a markdown `href`/`src` when it is a DIAL file id
+ * (`files/{bucket}/{path}`); otherwise returns the URL unchanged. A trailing
+ * `#page=N`-style anchor is stripped before resolving, the same as
+ * {@link resolveDialUrl} does, so it is not percent-encoded into the `path`
+ * query parameter (which would 404 the download).
+ */
+export const resolveMarkdownUrl = (url: string): string =>
+  resolveDialFileDownloadUrl(stripFragment(url)) ?? url;
 
 /**
  * Returns the best downloadable DIAL-file URL from an attachment's `url` or
