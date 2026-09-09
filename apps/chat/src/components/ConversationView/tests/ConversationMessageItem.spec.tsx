@@ -61,8 +61,6 @@ vi.mock('@epam/ai-dial-conversation-messages', async (importOriginal) => {
   };
 });
 
-const mockOpenCanvas = vi.fn();
-
 vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
