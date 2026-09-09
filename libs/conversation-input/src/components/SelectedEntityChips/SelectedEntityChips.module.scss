@@ -27,6 +27,9 @@
 
   &:hover,
   &:focus-visible {
-    color: var(--text-control-accent-hover, var(--text-control-blue-hover, #5976e9));
+    color: var(
+      --text-control-accent-hover,
+      var(--text-control-blue-hover, #5976e9)
+    );
   }
 }

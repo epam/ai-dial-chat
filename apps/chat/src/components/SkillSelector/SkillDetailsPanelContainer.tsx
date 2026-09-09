@@ -12,9 +12,15 @@ import {
   useSkillItemDetails,
 } from '@epam/ai-dial-chat-hooks';
 import { SkillDetailsSidePanel } from '@epam/ai-dial-skills';
-import { memo, useCallback, useEffect, useMemo, useState, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
-import { SkillDetailsFilePreview } from '../CatalogView/SkillDetailsFilePreview';
 import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
@@ -25,6 +31,7 @@ import { useSkills } from '../../context/SkillsContext';
 import { downloadSkillFile, listSkillFiles } from '../../server-api/skills.api';
 import { buildSkillOverviewLabels } from '../../utils/catalog';
 import { buildDeploymentFolderLabels } from '../../utils/map-deployment-to-catalog-item';
+import { SkillDetailsFilePreview } from '../CatalogView/SkillDetailsFilePreview';
 
 interface Props {
   /** Resource URL (`skills/{bucket}/{path}`) of the skill whose details are shown; `null` renders nothing. */
@@ -96,9 +103,8 @@ const SkillDetailsPanelContainer: FC<Props> = ({
     });
   }, [skill, skillSource, t, favoriteIds]);
 
-  const [fetchedDetails, setFetchedDetails] = useState<
-    CatalogItemDetailsFetchResult | null
-  >(null);
+  const [fetchedDetails, setFetchedDetails] =
+    useState<CatalogItemDetailsFetchResult | null>(null);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
 
   useEffect(() => {
@@ -110,7 +116,7 @@ const SkillDetailsPanelContainer: FC<Props> = ({
      * `onFetchSkillDetails` depends on the skills listing, and re-running on
      * listing refreshes would refetch details the panel already holds.
      */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     setIsDetailsLoading(true);
     setFetchedDetails(null);
     let isCancelled = false;
@@ -124,6 +130,7 @@ const SkillDetailsPanelContainer: FC<Props> = ({
     return () => {
       isCancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the item's id only, so a rebuilt CatalogItem does not refetch
   }, [catalogItem?.id]);
 
   /*

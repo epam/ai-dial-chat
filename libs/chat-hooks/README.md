@@ -3281,12 +3281,12 @@ export const mcpAppsApiClient = createMcpAppsApiClient(toolsetsApi);
 
 #### API
 
-| Name                | Type                                                                                     | Description                                                             |
-| ------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `fetchResourceHtml` | `(toolsetId: string, resourceUri: string) => Promise<string>`                             | Fetches a toolset's MCP Apps `ui://` resource HTML. Throws `McpAppResourceFetchError` on a non-OK response. |
-| `callTool`          | `(toolsetId: string, toolName: string, args: unknown, kind: McpDeploymentKind) => Promise<CallToolResult>` | Forwards a tool call through chat-api.                                   |
-| `listAppTools`      | `(deploymentId: string, kind: McpDeploymentKind) => Promise<McpAppToolSummary[]>`          | Lists a deployment's tools that declare an MCP Apps UI resource.        |
-| `listToolNames`     | `(deploymentId: string, kind: McpDeploymentKind) => Promise<string[]>`                    | Lists every tool name a deployment's `tools/list` exposes, unfiltered.  |
+| Name                | Type                                                                                                       | Description                                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `fetchResourceHtml` | `(toolsetId: string, resourceUri: string) => Promise<string>`                                              | Fetches a toolset's MCP Apps `ui://` resource HTML. Throws `McpAppResourceFetchError` on a non-OK response. |
+| `callTool`          | `(toolsetId: string, toolName: string, args: unknown, kind: McpDeploymentKind) => Promise<CallToolResult>` | Forwards a tool call through chat-api.                                                                      |
+| `listAppTools`      | `(deploymentId: string, kind: McpDeploymentKind) => Promise<McpAppToolSummary[]>`                          | Lists a deployment's tools that declare an MCP Apps UI resource.                                            |
+| `listToolNames`     | `(deploymentId: string, kind: McpDeploymentKind) => Promise<string[]>`                                     | Lists every tool name a deployment's `tools/list` exposes, unfiltered.                                      |
 
 ### useMcpAppTools
 
@@ -3310,10 +3310,15 @@ Builds the `McpAppHostAdapter` (`@epam/ai-dial-mcp-apps`) a host injects into th
 ```tsx
 import { useMcpAppHostAdapter } from '@epam/ai-dial-chat-hooks/mcp-apps';
 
-const hostAdapter = useMcpAppHostAdapter('inline', mcpAppsApiClient, sandboxUrl, {
-  theme: currentTheme,
-  locale: i18n.language,
-});
+const hostAdapter = useMcpAppHostAdapter(
+  'inline',
+  mcpAppsApiClient,
+  sandboxUrl,
+  {
+    theme: currentTheme,
+    locale: i18n.language,
+  },
+);
 ```
 
 ### useOpenMcpAppCanvas

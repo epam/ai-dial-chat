@@ -5,6 +5,7 @@
 ## Applicable issues
 
 <!-- Please link the GitHub issues related to this PR (You can reference an issue using # then number, e.g. #123) -->
+
 - fixes #<ISSUE_ID>
 
 ## UI changes
@@ -22,17 +23,17 @@
 `<type>[optional scope]: <description>`
 
 1. type (required)
-    - `feat` - A new feature
-    - `fix` - A bug fix
-    - `docs` - Documentation only changes
-    - `test` - Adding missing tests or correcting existing tests
-    - `ci` - Changes to our CI configuration files and scripts
-    - `chore` - Other changes that are minor and/or not user-facing
+   - `feat` - A new feature
+   - `fix` - A bug fix
+   - `docs` - Documentation only changes
+   - `test` - Adding missing tests or correcting existing tests
+   - `ci` - Changes to our CI configuration files and scripts
+   - `chore` - Other changes that are minor and/or not user-facing
 2. scope (optional, current repo suggestions below)
-    - `chat`
-    - `overlay`
-    - `shared`
-    - `sandbox-overlay`
-    - `visualizer-connector`
+   - `chat`
+   - `overlay`
+   - `shared`
+   - `sandbox-overlay`
+   - `visualizer-connector`
 
 </details>

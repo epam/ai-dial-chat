@@ -43,8 +43,8 @@ const SkillCatalogModal = lazy(async () => {
   return { default: module.default };
 });
 
-const SkillDetailsPanelContainer = lazy(() =>
-  import('./SkillDetailsPanelContainer'),
+const SkillDetailsPanelContainer = lazy(
+  () => import('./SkillDetailsPanelContainer'),
 );
 
 interface UseSkillSelectorOverlayResult {
@@ -123,7 +123,11 @@ export function useSkillSelectorOverlay(): UseSkillSelectorOverlayResult {
       allSkills
         .filter((skill) => favoriteIds.has(skill.url))
         .map((skill) =>
-          buildFavoriteSkillItem(skill, skillDescriptions, pendingDescriptionIds),
+          buildFavoriteSkillItem(
+            skill,
+            skillDescriptions,
+            pendingDescriptionIds,
+          ),
         ),
     [allSkills, favoriteIds, skillDescriptions, pendingDescriptionIds],
   );

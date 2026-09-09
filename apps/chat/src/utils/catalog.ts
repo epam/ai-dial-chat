@@ -1,5 +1,5 @@
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { SkillOverviewLabels } from '@epam/ai-dial-chat-hooks';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { BasicI18nKeys, CatalogI18nKeys } from '../constants/translation-keys';
 
@@ -38,11 +38,15 @@ export const getCatalogSearchPlaceholder = (
  * Returns the skill Overview tab's translated section labels, shared by the
  * Catalog page's details pipeline and the chat route's skill details side panel.
  */
-export const buildSkillOverviewLabels = (t: TFunction): SkillOverviewLabels => ({
+export const buildSkillOverviewLabels = (
+  t: TFunction,
+): SkillOverviewLabels => ({
   whenToUseLabel: t(CatalogI18nKeys.DetailsSkillWhenToUse),
   allowedToolsLabel: t(CatalogI18nKeys.DetailsSkillAllowedTools),
   bundledResourcesLabel: t(CatalogI18nKeys.DetailsSkillBundledResources),
-  specificationSectionTitle: t(CatalogI18nKeys.DetailsSkillSpecificationSection),
+  specificationSectionTitle: t(
+    CatalogI18nKeys.DetailsSkillSpecificationSection,
+  ),
   authorLabel: t(CatalogI18nKeys.DetailsSkillAuthor),
   updatedLabel: t(CatalogI18nKeys.DetailsSkillUpdated),
   fileCountLabel: t(CatalogI18nKeys.DetailsSkillFileCount),

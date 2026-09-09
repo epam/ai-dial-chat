@@ -10,9 +10,7 @@ const CatalogView = lazy(async () => {
 });
 
 /* Stable identity so CatalogView's selector-mode filter doesn't rebuild every render. */
-const SKILL_ONLY_TYPES = new Set<CatalogEntityType>([
-  CatalogEntityType.Skill,
-]);
+const SKILL_ONLY_TYPES = new Set<CatalogEntityType>([CatalogEntityType.Skill]);
 
 interface Props {
   isOpen: boolean;

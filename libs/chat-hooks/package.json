@@ -127,7 +127,8 @@
     "@epam/ai-dial-source-panel": "*",
     "@epam/ai-dial-ui-kit": "*",
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "@epam/pdf-highlighter-kit": ">=0.0.14"
+    "@epam/pdf-highlighter-kit": ">=0.0.14",
+    "@mcp-ui/client": "^7.1.1"
   },
   "peerDependenciesMeta": {
     "@epam/ai-dial-attachment-canvas": {

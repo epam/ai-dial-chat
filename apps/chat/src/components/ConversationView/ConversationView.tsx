@@ -994,7 +994,8 @@ const ConversationView: FC<Props> = ({
                 menuOverlays={menuOverlays}
                 selectedEntities={selectedSkillChips}
                 selectedEntityChipLabels={{
-                  removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
+                  removeLabel: (label) =>
+                    t(ToolsI18nKeys.RemoveTool, { label }),
                 }}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={

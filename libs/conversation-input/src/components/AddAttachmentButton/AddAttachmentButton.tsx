@@ -28,10 +28,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import type {
-  ChatSettingsConfig,
-  MenuOverlayConfig,
-} from '../../models/Input';
+import type { ChatSettingsConfig, MenuOverlayConfig } from '../../models/Input';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import { ChatSettingsBottomSheet } from '../ChatSettingsBottomSheet/ChatSettingsBottomSheet';

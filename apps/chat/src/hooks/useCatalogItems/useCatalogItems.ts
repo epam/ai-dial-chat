@@ -136,10 +136,7 @@ export const useCatalogItems = ({
     [t],
   );
 
-  const skillOverviewLabels = useMemo(
-    () => buildSkillOverviewLabels(t),
-    [t],
-  );
+  const skillOverviewLabels = useMemo(() => buildSkillOverviewLabels(t), [t]);
 
   const deploymentLimitsLabels: DeploymentLimitsLabels = useMemo(
     () => ({

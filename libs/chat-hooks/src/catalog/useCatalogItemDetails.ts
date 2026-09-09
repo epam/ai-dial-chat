@@ -27,7 +27,10 @@ import {
 import type { PromptOverviewLabels } from './map-prompt-to-catalog-item';
 import type { SkillOverviewLabels } from './map-skill-to-catalog-item';
 import { buildConnectApi, resolveMcpResourceKind } from './mcp-endpoint-url';
-import { useSkillItemDetails, type SkillDetailsApi } from './useSkillItemDetails';
+import {
+  useSkillItemDetails,
+  type SkillDetailsApi,
+} from './useSkillItemDetails';
 
 /** Injected API port for catalog item detail fetching. Mirrors exact server-api wrapper signatures. */
 export interface CatalogDetailsApi extends SkillDetailsApi {
