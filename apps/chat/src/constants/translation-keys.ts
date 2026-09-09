@@ -49,6 +49,7 @@ export enum RateI18nKeys {
 }
 
 export enum BasicI18nKeys {
+  Loading = 'basic.loading',
   SearchPlaceholder = 'basic.searchPlaceholder',
   ClearSearch = 'basic.clearSearch',
   NoResults = 'basic.noResults',
@@ -71,6 +72,7 @@ export enum ApiI18nKeys {
 
 export enum ButtonsI18nKeys {
   Retry = 'buttons.retry',
+  Reload = 'buttons.reload',
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
   Create = 'buttons.create',
@@ -150,6 +152,11 @@ export enum FavoritesI18nKeys {
 
 export enum CatalogI18nKeys {
   SearchPlaceholder = 'catalog.searchPlaceholder',
+  SearchEntityModels = 'catalog.searchEntity.models',
+  SearchEntityApplications = 'catalog.searchEntity.applications',
+  SearchEntityToolsets = 'catalog.searchEntity.toolsets',
+  SearchEntityPrompts = 'catalog.searchEntity.prompts',
+  SearchEntitySkills = 'catalog.searchEntity.skills',
   NoResultsTitle = 'catalog.noResultsTitle',
   SortRecentlyUpdated = 'catalog.sorts.recentlyUpdated',
   SortNewest = 'catalog.sorts.newest',
@@ -850,8 +857,8 @@ export enum AttachmentCanvasI18nKeys {
   HtmlOpenInNewTab = 'attachmentCanvas.htmlOpenInNewTab',
   HtmlViewSource = 'attachmentCanvas.htmlViewSource',
   HtmlViewRendered = 'attachmentCanvas.htmlViewRendered',
-  OpenAppLabel = 'attachmentCanvas.openAppLabel',
   OpenedInCanvasLabel = 'attachmentCanvas.openedInCanvasLabel',
+  ExpandAppLabel = 'attachmentCanvas.expandAppLabel',
   McpAppTitle = 'attachmentCanvas.mcpAppTitle',
   McpAppLoadErrorLabel = 'attachmentCanvas.mcpAppLoadErrorLabel',
   McpAppForbiddenErrorLabel = 'attachmentCanvas.mcpAppForbiddenErrorLabel',

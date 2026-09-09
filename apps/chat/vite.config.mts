@@ -28,6 +28,10 @@ export default defineConfig(() => ({
        * recognizes `$...$`/`$$...$$`. This fork additionally recognizes the `\(...\)`/`\[...\]`
        * delimiters that LLMs commonly emit. */
       'micromark-extension-math': 'micromark-extension-llm-math',
+      '@epam/ai-dial-chat-shared/file-manager': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-shared/src/entry-points/file-manager.ts',
+      ),
       '@epam/ai-dial-chat-shared': path.resolve(
         import.meta.dirname,
         '../../libs/chat-shared/src/index.ts',
@@ -96,6 +100,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/chat-hooks/src/entry-points/utils.ts',
       ),
+      '@epam/ai-dial-chat-hooks/mcp-apps': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/mcp-apps.ts',
+      ),
       '@epam/ai-dial-chat-hooks': path.resolve(
         import.meta.dirname,
         '../../libs/chat-hooks/src/index.ts',
@@ -155,6 +163,10 @@ export default defineConfig(() => ({
       '@epam/ai-dial-attachment-input': path.resolve(
         import.meta.dirname,
         '../../libs/attachment-input/src/index.ts',
+      ),
+      '@epam/ai-dial-mcp-apps': path.resolve(
+        import.meta.dirname,
+        '../../libs/mcp-apps/src/index.ts',
       ),
       '@epam/ai-dial-share': path.resolve(
         import.meta.dirname,
@@ -216,27 +228,6 @@ export default defineConfig(() => ({
     reportCompressedSize: true,
     commonjsOptions: {
       transformMixedEsModules: true,
-    },
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          if (id.includes('classnames') || id.includes('tailwind-merge'))
-            return 'vendor-utils';
-          if (id.includes('@tabler/icons-react')) return 'tabler-icons';
-          /* `@epam/ai-dial-ui-kit` already splits Monaco behind its own dynamic-import
-           * boundary (`LazyDialJsonEditor` -> `JsonEditor-*.js` -> `MarkdownEditor-*.js`).
-           * A bare substring match on the package name would re-merge those already-lazy
-           * chunks (they physically live under the package's `dist/` folder too) back into
-           * this eager chunk, defeating the library's own split. Exclude them explicitly. */
-          if (
-            id.includes('@epam/ai-dial-ui-kit') &&
-            !id.includes('JsonEditor') &&
-            !id.includes('MarkdownEditor')
-          )
-            return 'ui-kit';
-          return undefined;
-        },
-      },
     },
   },
   test: {

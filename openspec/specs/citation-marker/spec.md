@@ -10,18 +10,20 @@ Inline citation markers injected after cited text spans in assistant messages, g
 
 ### Requirement: Annotations grouped by source attachment URL
 
-`apps/chat/src/utils/group-annotations-by-source.ts` SHALL export `groupAnnotationsBySource(annotations: Annotation[]): AnnotationGroup[]` where `AnnotationGroup` is:
+`libs/quotations/src/utils/group-annotations-by-source.ts` SHALL export `groupAnnotationsBySource(annotations: Annotation[]): AnnotationGroup[]` where `AnnotationGroup` is:
 ```ts
 interface AnnotationGroup {
-  sourceUrl: string;
+  groupKey: string;      // this group's identity — used for open/active-index state and React keys
+  sourceUrl: string;      // the cited attachment's URL — used for Preview/Download
   sourceName: string;   // filename from URL path, fallback to hostname
   annotations: Annotation[];
   primaryAnnotation: Annotation;  // first in the group
 }
 ```
 
-Grouping rules:
+`groupAnnotationsBySource` groups only annotations whose `target?.selector?.type !== 'html_tag'` (`html_tag` annotations are grouped separately — see "Annotations grouped by cit tag id" below). Grouping rules:
 - Annotations are grouped by `body.source.attachment.url`.
+- `groupKey` SHALL equal `sourceUrl` for every group produced by this function (unchanged value/behavior from before `groupKey` existed).
 - `sourceName` SHALL be resolved in priority order:
   1. `body.source.attachment.title` when present and non-empty.
   2. Otherwise, extract the last non-empty decoded path segment of the URL (without query params); for absolute URLs use `new URL()` to parse; for relative paths split on `/` directly.
@@ -35,8 +37,8 @@ Grouping rules:
 
 #### Scenario: Two annotations citing the same URL form one group
 
-- **WHEN** `groupAnnotationsBySource` is called with two annotations sharing the same `body.source.attachment.url`
-- **THEN** the result contains one `AnnotationGroup` with both annotations
+- **WHEN** `groupAnnotationsBySource` is called with two `text_character_range` annotations sharing the same `body.source.attachment.url`
+- **THEN** the result contains one `AnnotationGroup` with both annotations and `groupKey === sourceUrl`
 
 #### Scenario: Two annotations with different URLs form two groups
 
@@ -62,6 +64,66 @@ Grouping rules:
 
 - **WHEN** the attachment URL is `https://wikipedia.org/`
 - **THEN** `sourceName` is `"wikipedia.org"`
+
+#### Scenario: html_tag annotations are excluded from source-URL grouping
+
+- **WHEN** `groupAnnotationsBySource` is called with an annotation whose `target.selector.type === 'html_tag'`
+- **THEN** that annotation is excluded from every returned group
+
+---
+
+### Requirement: Annotations grouped by cit tag id
+
+`libs/quotations/src/utils/group-annotations-by-source.ts` SHALL export `groupAnnotationsByCitId(annotations: Annotation[]): AnnotationGroup[]` that groups only annotations whose `target?.selector?.type === 'html_tag'`, one group per distinct `target.selector.id` — never collapsing two different `id`s that happen to cite the same source document into one group.
+
+For each group:
+- `groupKey` SHALL equal `` `cit:${id}` `` (prefixed so it can never collide with a `groupAnnotationsBySource` group's `groupKey`, which equals a raw URL).
+- `sourceUrl` SHALL equal the group's first annotation's `body.source.attachment.url` (used for Preview/Download — identical in meaning to `groupAnnotationsBySource`'s `sourceUrl`).
+- `sourceName` SHALL be resolved using the same priority order as `groupAnnotationsBySource` (attachment title, then URL filename, then hostname).
+- `annotations` and `primaryAnnotation` follow the same semantics as `groupAnnotationsBySource` (original order preserved; first annotation is primary).
+
+Annotations without `target.selector.id` or without `body.source.attachment.url` are excluded.
+
+**i18n**: none.
+**RTL**: none — pure data transformation.
+**Feature flag**: none.
+
+#### Scenario: Two cit ids citing the same document form two groups
+
+- **WHEN** `groupAnnotationsByCitId` is called with two `html_tag` annotations that share the same `body.source.attachment.url` but have `target.selector.id` values `"e43864"` and `"e52dc2"`
+- **THEN** the result contains two `AnnotationGroup` objects, with `groupKey` values `"cit:e43864"` and `"cit:e52dc2"`, each `sourceUrl` equal to the shared document URL
+
+#### Scenario: Two annotations sharing the same cit id form one group
+
+- **WHEN** two `html_tag` annotations both have `target.selector.id === "e43864"` (e.g. a partial chunk followed by a completion chunk for the same tag)
+- **THEN** the result contains one `AnnotationGroup` for `"e43864"` containing both annotations
+
+#### Scenario: Non-html_tag annotations are excluded from cit-id grouping
+
+- **WHEN** `groupAnnotationsByCitId` is called with a `text_character_range` annotation
+- **THEN** that annotation is excluded from every returned group
+
+---
+
+### Requirement: Combined annotation grouping dispatcher
+
+`libs/quotations` SHALL export `groupAnnotations(annotations: Annotation[]): AnnotationGroup[]` that partitions its input by `target?.selector?.type` and returns the concatenation of `groupAnnotationsByCitId` (for `html_tag` annotations) and `groupAnnotationsBySource` (for every other annotation), so a host application never branches on selector type itself.
+
+The frontend host's citation-rendering call site SHALL call `groupAnnotations` instead of calling `groupAnnotationsBySource` directly.
+
+**i18n**: none.
+**RTL**: none — pure data transformation.
+**Feature flag**: none.
+
+#### Scenario: Mixed annotation list groups each family separately
+
+- **WHEN** `groupAnnotations` is called with one `text_character_range` annotation and two `html_tag` annotations with distinct ids citing the same document
+- **THEN** the result contains one URL-keyed group (from `groupAnnotationsBySource`) and two cit-id-keyed groups (from `groupAnnotationsByCitId`)
+
+#### Scenario: Empty input returns empty output
+
+- **WHEN** `groupAnnotations` is called with `[]`
+- **THEN** it returns `[]`
 
 ---
 
@@ -119,31 +181,35 @@ Existing inline-citation call sites (`CitationDropdown` used from `useCitationMa
 
 ### Requirement: `useAnnotations` resolves the annotation list for a message
 
-`apps/chat/src/hooks/annotations/useAnnotations.ts` SHALL export `useAnnotations(message: Message, isStreaming: boolean): Annotation[]` that:
+`libs/quotations/src/utils/useAnnotations.ts` SHALL export `useAnnotations(message: Message, isStreaming: boolean): Annotation[]` that:
 
-- Returns `[]` immediately when `isStreaming` is `true` (markers are suppressed while streaming is active).
-- When not streaming, resolves annotations in priority order:
-  1. `message.custom_content?.annotations` — the internal normalised format accumulated by `apply-chunk.ts` as streaming deltas arrive.
-  2. `message['custom_fields']?.annotations` — the raw DIAL API wire format present on messages loaded from the server rather than streamed in the current session. These are normalised via `normalizeRawAnnotations(raw, message.custom_content?.attachments ?? [])` from `apps/chat/src/utils/annotation.ts`. Note: the DIAL backend does not currently persist annotations in conversation storage, so this branch is exercised only if a future backend change adds persistence. Until then, annotations are available only in the current streaming session and disappear after a page reload.
+- When `isStreaming` is `false`, resolves annotations in priority order:
+  1. `message.custom_content?.annotations` — the internal normalised format accumulated by `apply-chunk.ts` as streaming deltas arrive, or persisted by the backend on reload.
+  2. `message['custom_fields']?.annotations` — the raw DIAL API wire format present on messages loaded without a normalised `custom_content.annotations`. These are normalised via `normalizeRawAnnotations(raw, message.custom_content?.attachments ?? [])`, which recognizes both the legacy `attachment_index` + `pdf_region` shape and the `html_tag` + flat `body.source.url` shape.
+- Reconciles each resolved `html_tag` source attachment's MIME type with a recognized URL extension. This repairs conversations persisted by the historical fallback that labelled every non-HTML `html_tag` source as PDF; an opaque URL keeps its stored type.
+- When `isStreaming` is `true`, returns `[]` unconditionally — every selector family, including `html_tag`, is suppressed until the message finishes streaming. A `<cit>` tag renders as a real HTML element once `rehype-raw` parses it (see "Citation markers injected into rendered assistant message text" below); showing its pill mid-stream would require revealing that element before its closing tag has necessarily arrived, which risks the HTML parser swallowing subsequently-streamed text as the element's content.
 - Filters the resolved list to exclude annotations without `body.source.attachment.url`. This also excludes attachments that carry only inline data (no `url`): some grounding providers stream attachments whose content is embedded as base64 or text in the `data` field rather than a resolvable URL, and those cannot be linked or previewed.
 - Handles `null`/`undefined` annotation items gracefully (skips them without throwing).
-- Wraps the result in `useMemo` keyed on `[isStreaming, contentAnnotations, attachments, customFields]`.
-
-`normalizeRawAnnotations` converts raw DIAL `pdf_region` selectors (`{ left, top, width, height }`) to internal `PdfBBoxSelector` (`{ x1, y1, x2, y2, page }`) and resolves `attachment_index` references against the message's attachment list.
+- Wraps the result in `useMemo` keyed on `[isStreaming, message]`.
 
 **i18n**: none.
 **RTL**: none — hook returns data only.
 **Feature flag**: none.
 
-#### Scenario: Returns empty array during streaming
+#### Scenario: Returns empty array while streaming, even with html_tag annotations present
 
-- **WHEN** `useAnnotations` is called with `isStreaming: true`
-- **THEN** it returns `[]` regardless of what `message.custom_content?.annotations` contains
+- **WHEN** `useAnnotations` is called with `isStreaming: true` and the message's resolved annotations include one `html_tag` annotation and one `text_character_range` annotation
+- **THEN** it returns `[]`
 
 #### Scenario: Returns internal normalised annotations for a completed streamed message
 
 - **WHEN** `message.custom_content.annotations` has entries and `isStreaming` is `false`
-- **THEN** those annotations (filtered to those with `body.source.attachment.url`) are returned without normalisation
+- **THEN** those annotations (filtered to those with `body.source.attachment.url`) are returned with recognized `html_tag` URL extensions reconciled against the stored MIME type
+
+#### Scenario: Persisted XLSX citation with the old PDF fallback is repaired
+
+- **WHEN** a completed message contains an `html_tag` annotation whose source type is `application/pdf` and whose URL ends in `.xlsx`
+- **THEN** `useAnnotations` returns that source with `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
 
 #### Scenario: Falls back to raw `custom_fields.annotations` for server-loaded messages
 
@@ -159,15 +225,23 @@ Existing inline-citation call sites (`CitationDropdown` used from `useCitationMa
 
 ### Requirement: Citation markers injected into rendered assistant message text
 
-The assistant message markdown renderer in `apps/chat` SHALL inject `<CitationMarker>` components after the character offset indicated by each `AnnotationGroup`'s `primaryAnnotation.target.selector` (type `text_character_range`, using the `end` index as the insertion point).
+The citation-aware markdown hook in `libs/quotations` (`useCitationMarkdownComponents`) SHALL support two distinct citation families, differing in *how* a marker reaches the screen, depending on each `AnnotationGroup`'s `primaryAnnotation.target?.selector?.type`:
 
-Injection rules:
-- Sentinel strings (`⟦C{idx}⟧`) are injected into the raw markdown at character offsets (descending order to avoid offset shift) before passing to the markdown renderer.
-- React component overrides for `p` and `li` split string children on the sentinel pattern and replace them with `<CitationDropdown>` components.
-- If `target` or `target.selector` is absent, the marker SHALL be appended after the last character of the message text.
+- **Offset-based** (`text_character_range`, or any non-`html_tag` selector, including missing/unknown selectors): a sentinel string is injected into the pre-processed markdown at the character offset indicated by `target.selector.end`, and a `p`/`li` component override splits string children on that sentinel to render a `<CitationDropdown>` in its place. Unchanged from before the `html_tag` family existed.
+- **Tag-based** (`html_tag`): the exact supported element `<cit data-id="…"></cit>` is parsed by the host's `rehype-raw` pipeline and allow-listed through its `rehype-sanitize` schema (tag name `cit`, attribute `dataId`; see the `libs/chat-shared` `MarkdownRenderer`'s `baseRehypePlugins`). The hook registers a `cit` react-markdown component override that looks up the group by `data-id` and renders `<CitationDropdown>` for a match. Unmatched supported elements and every unsupported `cit` shape are displayed as literal text.
+
+The hook accepts an `isStreaming: boolean` parameter (added before `isCompactTypography` in its parameter list). Its `processedContent` computation:
+
+- When `isStreaming` is `true`: applies `stripCitTagsWhileStreaming(content)`, which removes only complete supported citation elements and escapes unsupported or partial `cit` markup for literal display. No offset-based sentinel injection runs while streaming (`groups` is always `[]` in this state per the `useAnnotations` requirement above).
+- When `isStreaming` is `false`: runs `injectCitationSentinels(content, groups)` when groups are present, then escapes unsupported `cit` markup. `html_tag` groups are skipped by sentinel injection because matched supported elements render through the native `cit` component path. Sentinel indices for the remaining groups SHALL still refer to the original, unfiltered `groups` array.
+
+Other injection rules, unchanged:
+- Sentinel strings (`⟦C{idx}⟧`) are injected in descending character-offset order to avoid offset shift from earlier insertions.
+- If an offset-based `target`/`target.selector` is absent, the marker SHALL be appended after the last character of the message text.
 - If the `end` offset exceeds the message text length, the marker SHALL be clamped to the end of the text.
-- Markers SHALL NOT be rendered while the message is still streaming (`isStreaming: true`).
 - Multiple markers at the same position SHALL be rendered in the order of their `AnnotationGroup` array.
+
+A supported `<cit data-id="…"></cit>` element with no matching `html_tag` group is rendered as literal text. Every other `cit` shape is escaped before Markdown parsing and likewise displayed literally. The shared `MarkdownRenderer` default `cit` component also serializes supported elements as text unless a citation-aware consumer supplies its override.
 
 **i18n**: see `CitationMarker` component above.
 **RTL**: the injected markers use `ms-1` logical margin; no additional RTL handling needed.
@@ -178,10 +252,10 @@ Injection rules:
 - **WHEN** an assistant message has text "The revenue was $1B." and an annotation with `target.selector.end = 19`
 - **THEN** the `CitationMarker` is rendered immediately after the character at position 19 in the rendered output
 
-#### Scenario: No markers during streaming
+#### Scenario: No markers of any family during streaming
 
-- **WHEN** `isStreaming` is `true`
-- **THEN** `useAnnotations` returns `[]`, `groups` is empty, `markdownComponents` returns `{}`, and no `CitationMarker` components are rendered in the message bubble
+- **WHEN** `isStreaming` is `true`, regardless of whether the message has `text_character_range` or `html_tag` annotations
+- **THEN** `useAnnotations` returns `[]`, `groups` is empty, and no `CitationMarker`/`CitationDropdown` components are rendered in the message bubble
 
 #### Scenario: Missing selector appends marker at end of text
 
@@ -192,3 +266,24 @@ Injection rules:
 
 - **WHEN** an annotation has `target.selector.end` greater than the text length
 - **THEN** the `CitationMarker` is rendered at the end of the text without throwing
+
+#### Scenario: A matched cit element renders its marker once streaming finishes
+
+- **WHEN** the message content is `...implantation<cit data-id="e43864"></cit>, and the plan...`, `isStreaming` is `false`, and `groups` contains an `html_tag` group with `target.selector.id === "e43864"`
+- **THEN** the rendered output shows the citation marker in place of the `<cit>` element, with no literal `<cit>` markup visible
+
+#### Scenario: An unmatched cit element renders as literal text
+
+- **WHEN** the message content contains a `<cit data-id="e52dc2"></cit>` element, `isStreaming` is `false`, and no group's `target.selector.id` equals `"e52dc2"`
+- **THEN** no marker is rendered and the original `<cit data-id="e52dc2"></cit>` markup remains visible as text
+
+#### Scenario: Every cit tag is hidden while streaming, even a well-formed matched pair
+
+- **WHEN** the message content is `Patient meets criteria<cit data-id="e1"></cit>.`, `isStreaming` is `true`, and `groups` contains a matching `html_tag` group for `"e1"`
+- **THEN** `processedContent` has the entire `<cit>` element removed and no marker is rendered — the pill only appears once `isStreaming` becomes `false`
+
+#### Scenario: A dangling open cit tag remains visible as text
+
+- **WHEN** the message content is `Patient meets criteria<cit data-id="e438">and more streaming text` (opening tag complete, no closing tag yet) and `isStreaming` is `true`
+- **THEN** the unsupported dangling tag is escaped, and its markup plus the following text remain visible without being parsed as a custom element
+</content>

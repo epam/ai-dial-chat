@@ -23,6 +23,9 @@
       "@epam/ai-dial-conversation-messages/*": [
         "./libs/conversation-messages/*"
       ],
+      "@epam/ai-dial-chat-shared/file-manager": [
+        "./libs/chat-shared/src/entry-points/file-manager.ts"
+      ],
       "@epam/ai-dial-chat-shared/*": ["./libs/chat-shared/*"],
       "@epam/ai-dial-chat-hooks": ["./libs/chat-hooks"],
       "@epam/ai-dial-chat-hooks/*": ["./libs/chat-hooks/*"],
@@ -39,6 +42,7 @@
       "@epam/ai-dial-source-panel/*": ["./libs/source-panel/*"],
       "@epam/ai-dial-attachment-canvas/*": ["./libs/attachment-canvas/*"],
       "@epam/ai-dial-attachment-input/*": ["./libs/attachment-input/*"],
+      "@epam/ai-dial-mcp-apps/*": ["./libs/mcp-apps/*"],
       "@epam/ai-dial-deployment-creation-form/*": [
         "./libs/deployment-creation-form/*"
       ],

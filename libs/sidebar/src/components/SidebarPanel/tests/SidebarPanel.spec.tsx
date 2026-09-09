@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import type { SidebarPanelProps } from '../../../models/panel-props';
 import { SidebarOrientation } from '../../../types/orientation';
 import { SidebarPanel } from '../SidebarPanel';
 
@@ -212,5 +213,100 @@ describe('SidebarPanel', () => {
     // eslint-disable-next-line testing-library/no-node-access -- the outermost width/style wrapper is a plain div with no accessible role or text
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper.style.width).toBe('360px');
+  });
+});
+
+describe('SidebarPanel — open/close animation', () => {
+  const getPanelWrapper = (props?: Partial<SidebarPanelProps>) => {
+    const { container } = render(
+      <SidebarPanel {...defaultProps} {...props}>
+        <span />
+      </SidebarPanel>,
+    );
+
+    // eslint-disable-next-line testing-library/no-node-access -- the outermost width/transition wrapper is a plain div with no accessible role or text
+    return container.firstChild as HTMLElement;
+  };
+
+  it('keeps the stacking context while closed so the closing panel is not painted over', () => {
+    expect(getPanelWrapper({ isOpen: false }).classList.contains('z-50')).toBe(
+      true,
+    );
+  });
+
+  it('does not fade the panel region in, which would show the content behind a half-open panel', () => {
+    getPanelWrapper();
+    expect(screen.getByRole('complementary').getAttribute('class')).not.toMatch(
+      /appear/,
+    );
+  });
+
+  it('overlay mode: keeps full width and sets no inline width, so the content does not reflow', () => {
+    const wrapper = getPanelWrapper({
+      isOpen: false,
+      isOverlay: true,
+      defaultWidth: 360,
+    });
+    expect(wrapper.style.width).toBe('');
+    expect(wrapper.classList.contains('w-full')).toBe(true);
+  });
+
+  it('overlay mode: animates the transform instead of the layout width', () => {
+    const wrapper = getPanelWrapper({ isOverlay: true });
+    expect(wrapper.classList.contains('transition-transform')).toBe(true);
+    expect(wrapper.classList.contains('transition-[width]')).toBe(false);
+  });
+
+  it('overlay mode, left orientation, closed: slides out through the start edge in both directions', () => {
+    const wrapper = getPanelWrapper({
+      isOpen: false,
+      isOverlay: true,
+      orientation: SidebarOrientation.Left,
+    });
+    expect(wrapper.classList.contains('ltr:-translate-x-full')).toBe(true);
+    expect(wrapper.classList.contains('rtl:translate-x-full')).toBe(true);
+  });
+
+  it('overlay mode, right orientation, closed: slides out through the end edge in both directions', () => {
+    const wrapper = getPanelWrapper({
+      isOpen: false,
+      isOverlay: true,
+      orientation: SidebarOrientation.Right,
+    });
+    expect(wrapper.classList.contains('ltr:translate-x-full')).toBe(true);
+    expect(wrapper.classList.contains('rtl:-translate-x-full')).toBe(true);
+  });
+
+  it('overlay mode, open: rests at translate-x-0 so both states declare a transform', () => {
+    expect(
+      getPanelWrapper({ isOverlay: true }).classList.contains('translate-x-0'),
+    ).toBe(true);
+  });
+
+  it('non-overlay mode: still animates the layout width', () => {
+    const wrapper = getPanelWrapper();
+    expect(wrapper.classList.contains('transition-[width]')).toBe(true);
+    expect(wrapper.classList.contains('transition-transform')).toBe(false);
+  });
+
+  it('honours a reduced-motion preference', () => {
+    expect(
+      getPanelWrapper().classList.contains('motion-reduce:transition-none'),
+    ).toBe(true);
+  });
+
+  it('keeps the header actions mounted while closed so they do not pop in mid-animation', () => {
+    getPanelWrapper({
+      isOpen: false,
+      leftActions: <button aria-label="search" />,
+      rightActions: <button aria-label="download" />,
+    });
+    expect(screen.getByRole('button', { name: 'search' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'download' })).toBeTruthy();
+  });
+
+  it('marks the closed panel region inert so the mounted actions stay out of the tab order', () => {
+    getPanelWrapper({ isOpen: false });
+    expect(screen.getByRole('complementary').hasAttribute('inert')).toBe(true);
   });
 });

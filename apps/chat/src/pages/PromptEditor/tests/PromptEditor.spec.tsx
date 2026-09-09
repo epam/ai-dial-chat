@@ -50,33 +50,26 @@ vi.mock('@epam/ai-dial-editor-builder', () => ({
   ),
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', async () => {
-  const actual = await vi.importActual<typeof import('@epam/ai-dial-ui-kit')>(
-    '@epam/ai-dial-ui-kit',
-  );
-
-  return {
-    ...actual,
-    LazyMarkdownEditor: () =>
-      Promise.resolve({
-        MarkdownEditor: ({
-          value,
-          onChange,
-          placeholder,
-        }: {
-          value?: string;
-          onChange?: (value: string) => void;
-          placeholder?: string;
-        }) => (
-          <textarea
-            value={value}
-            placeholder={placeholder}
-            onChange={(event) => onChange?.(event.target.value)}
-          />
-        ),
-      }),
-  };
-});
+vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
+  LazyMarkdownEditor: () =>
+    Promise.resolve({
+      MarkdownEditor: ({
+        value,
+        onChange,
+        placeholder,
+      }: {
+        value?: string;
+        onChange?: (value: string) => void;
+        placeholder?: string;
+      }) => (
+        <textarea
+          value={value}
+          placeholder={placeholder}
+          onChange={(event) => onChange?.(event.target.value)}
+        />
+      ),
+    }),
+}));
 
 const mockNavigate = vi.fn();
 let mockSearchParams = new URLSearchParams();

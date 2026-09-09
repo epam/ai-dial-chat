@@ -19,7 +19,7 @@ Specifies `ThemesModule`, the NestJS module wrapper around the existing `ThemeCo
 
 #### Scenario: ThemeService is still injectable where currently used
 
-- **WHEN** any code that previously depended on `ThemeService` via `AppModule`'s direct provider registration is instantiated after this change
+- **WHEN** any code that previously depended on `ThemeService` via `AppModule`'s direct provider registration is instantiated
 - **THEN** Nest's DI container resolves `ThemeService` through `ThemesModule` without requiring `AppModule` to declare it directly
 
 #### Scenario: No export unless a consumer exists

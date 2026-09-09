@@ -1,5 +1,9 @@
 import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   Input,
   Textarea,
@@ -8,9 +12,9 @@ import {
   Label,
   NumberInput,
   Spinner,
-  LazyMarkdownEditor,
   Select,
 } from '@epam/ai-dial-ui-kit';
+import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
  * it here, rather than eagerly from the host app's entry point, keeps this
@@ -409,6 +413,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               value={values.prompt}
               onChange={(value) => onFieldChange('prompt', value)}
               height={480}
+              className={MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME}
               theme={markdownEditorTheme}
             />
           </Suspense>

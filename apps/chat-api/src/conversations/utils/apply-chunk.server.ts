@@ -1,9 +1,12 @@
 import { AnnotationDto as Annotation } from '../dto/annotation.dto';
+import { AttachmentDto as Attachment } from '../dto/attachment.dto';
 import { ConversationMessageDto } from '../dto/conversation-message.dto';
+import { StageDto as Stage } from '../dto/stage.dto';
 import {
-  StageAttachmentDto as StageAttachment,
-  StageDto as Stage,
-} from '../dto/stage.dto';
+  mergeAnnotations,
+  normalizeRawAnnotationsServer,
+} from './apply-chunk-annotations.server';
+import { mergeStages } from './apply-chunk-stages.server';
 
 /** Minimal types matching the DIAL Core SSE delta payload. */
 
@@ -12,10 +15,13 @@ interface SseDelta {
   responseId?: string;
   custom_content?: {
     form_schema?: unknown;
-    attachments?: unknown[];
+    attachments?: Attachment[];
     stages?: Stage[];
     annotations?: Annotation[];
     state?: Record<string, unknown>;
+  };
+  custom_fields?: {
+    annotations?: unknown[];
   };
 }
 
@@ -61,100 +67,6 @@ export const extractDialStreamError = (
   };
 };
 
-const mergeStageAttachments = (
-  existing: StageAttachment[],
-  incoming: StageAttachment[],
-): StageAttachment[] => {
-  const result = [...existing];
-  for (const att of incoming) {
-    const idx =
-      att.index != null ? result.findIndex((a) => a.index === att.index) : -1;
-    if (idx >= 0) {
-      result[idx] = {
-        ...result[idx],
-        ...att,
-        title: (result[idx].title ?? '') + (att.title ?? ''),
-        data:
-          att.data != null
-            ? (result[idx].data ?? '') + att.data
-            : result[idx].data,
-      };
-    } else {
-      result.push(att);
-    }
-  }
-  return result;
-};
-
-const mergeOptionalText = (
-  existing: string | undefined,
-  incoming: string | undefined,
-): string | undefined =>
-  existing !== undefined || incoming !== undefined
-    ? (existing ?? '') + (incoming ?? '')
-    : undefined;
-
-const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
-  const result = [...existing];
-  for (const stage of incoming) {
-    const idx = result.findIndex((s) => s.index === stage.index);
-    if (idx >= 0) {
-      result[idx] = {
-        ...result[idx],
-        ...stage,
-        name: (result[idx].name ?? '') + (stage.name ?? ''),
-        content: mergeOptionalText(result[idx].content, stage.content),
-        attachments: stage.attachments?.length
-          ? mergeStageAttachments(
-              result[idx].attachments ?? [],
-              stage.attachments,
-            )
-          : result[idx].attachments,
-      };
-    } else {
-      /*
-       * A brand-new stage's first chunk can carry `name: null` (DIAL Core's
-       * "stage opened, name pending" signal, before the name text streams
-       * in) — normalize it the same way the merge branch above already
-       * coalesces `null` to `''`, so a persisted stage never carries a
-       * `null` name if the frontend renders it directly after reload.
-       */
-      result.push({ ...stage, name: stage.name ?? '' });
-    }
-  }
-  return result;
-};
-
-const mergeAnnotations = (
-  existing: Annotation[],
-  incoming: Annotation[],
-): Annotation[] => {
-  const result = [...existing];
-  for (const annotation of incoming) {
-    const idx = result.findIndex((a) => a.index === annotation.index);
-    if (idx >= 0) {
-      const prev = result[idx];
-      result[idx] = {
-        ...prev,
-        ...annotation,
-        body: {
-          ...prev.body,
-          ...annotation.body,
-          title:
-            (prev.body?.title ?? '') + (annotation.body?.title ?? '') ||
-            undefined,
-          quote:
-            (prev.body?.quote ?? '') + (annotation.body?.quote ?? '') ||
-            undefined,
-        },
-      };
-    } else {
-      result.push(annotation);
-    }
-  }
-  return result;
-};
-
 /**
  * Applies a single parsed DIAL Core SSE chunk to an assistant message,
  * accumulating text content, attachments, stages, annotations, form_schema,
@@ -175,6 +87,7 @@ export const applyChunkToMessage = (
   const attachments = delta.custom_content?.attachments;
   const stages = delta.custom_content?.stages;
   const annotations = delta.custom_content?.annotations;
+  const rawAnnotations = delta.custom_fields?.annotations;
   const state = delta.custom_content?.state;
 
   const hasContentUpdate =
@@ -183,6 +96,7 @@ export const applyChunkToMessage = (
     !!attachments?.length ||
     !!stages?.length ||
     !!annotations?.length ||
+    !!rawAnnotations?.length ||
     !!state;
 
   const responseId =
@@ -191,11 +105,22 @@ export const applyChunkToMessage = (
   if (!hasContentUpdate && !responseId) return message;
 
   const existing = message.custom_content ?? {};
+  const allAttachments = [
+    ...(existing.attachments ?? []),
+    ...(attachments ?? []),
+  ];
+  const normalizedRawAnnotations = rawAnnotations?.length
+    ? normalizeRawAnnotationsServer(rawAnnotations, allAttachments)
+    : [];
+  const incomingAnnotations = [
+    ...(annotations ?? []),
+    ...normalizedRawAnnotations,
+  ];
   const hasCustomUpdate =
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
-    !!annotations?.length ||
+    !!incomingAnnotations.length ||
     !!state;
 
   return {
@@ -207,18 +132,15 @@ export const applyChunkToMessage = (
         ...existing,
         ...(formSchema && { form_schema: formSchema }),
         ...(attachments?.length && {
-          attachments: [
-            ...(existing.attachments ?? []),
-            ...attachments,
-          ] as never,
+          attachments: allAttachments as never,
         }),
         ...(stages?.length && {
           stages: mergeStages(existing.stages ?? [], stages),
         }),
-        ...(annotations?.length && {
+        ...(incomingAnnotations.length && {
           annotations: mergeAnnotations(
             existing.annotations ?? [],
-            annotations,
+            incomingAnnotations,
           ),
         }),
         ...(state && { state }),

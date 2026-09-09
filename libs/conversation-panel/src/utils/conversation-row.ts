@@ -12,14 +12,21 @@ export const SKELETON_ROW_COUNT = 15;
 /** Returns a pseudo-randomised width percentage for the skeleton title bar at index `i`. */
 export const getSkeletonWidth = (i: number) => `${60 + ((i * 23) % 35)}%`;
 
-/** Returns the inline-end padding Tailwind class for the row's ghost button based on action state. */
+/**
+ * Returns the inline-end padding Tailwind class for the row's ghost button based
+ * on action state. The reserved gutter has to cover every state in which the
+ * actions trigger is actually visible — hover *and* focus-within (see the
+ * trigger's own visibility classes in `ConversationRow`). A row keeps focus
+ * after it is clicked or dragged, so reserving on hover alone left the trigger
+ * painted on top of the title's ellipsis once the pointer moved away.
+ */
 export const getButtonPaddingEnd = (
   hasActions: boolean,
   isMenuOpen: boolean,
 ): string => {
   if (!hasActions) return 'pe-3';
   if (isMenuOpen) return 'pe-9';
-  return 'pe-2 group-hover/conversation:pe-9';
+  return 'pe-2 group-focus-within/conversation:pe-9 group-hover/conversation:pe-9';
 };
 
 /** Returns the pixel height for a virtual list row (item, first group header, or subsequent group header). */

@@ -1,4 +1,11 @@
-import { memo, useEffect, useMemo, useState, type FC } from 'react';
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+  type ReactNode,
+} from 'react';
 import ReactMarkdown, { type Components, type Options } from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
@@ -36,9 +43,9 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   h6?: string;
   /** Classes on `<p>` elements. */
   p?: string;
-  /** Extra classes on `<ul>` (base: `list-disc ps-5`). */
+  /** Extra classes on `<ul>` (base: `list-disc ps-[2em]`). */
   ul?: string;
-  /** Extra classes on `<ol>` (base: `list-decimal ps-5`). */
+  /** Extra classes on `<ol>` (base: `list-decimal ps-[2em]`). */
   ol?: string;
   /** Typography class for `<strong>`. Defaults to `'dial-body-paragraph-semi-text'` — the semibold step matching the default `p` class. */
   strong?: string;
@@ -234,11 +241,19 @@ const sanitizeRehypePlugin: NonNullable<Options['rehypePlugins']>[number] = [
   rehypeSanitize,
   {
     ...defaultSchema,
-    tagNames: [...(defaultSchema.tagNames ?? []), ...mathMLTags],
+    tagNames: [...(defaultSchema.tagNames ?? []), ...mathMLTags, 'cit'],
     attributes: {
       ...defaultSchema.attributes,
       ...mathMLAttributes,
       code: [...(defaultSchema.attributes?.code ?? []), ['className']],
+      /*
+       * `dataId`, not `id` — the inline citation tag (`@epam/ai-dial-quotations`'s
+       * `useCitationMarkdownComponents`) carries its lookup key as
+       * `data-id="…"` specifically because `hast-util-sanitize`'s default
+       * `clobber` list rewrites `id`/`name` to `user-content-…` to prevent
+       * DOM clobbering — `data-*` attributes are exempt.
+       */
+      cit: ['dataId'],
       /* Only KaTeX's own wrapper classes — a class from raw model HTML is
            still dropped. `katex` is what marks a formula for MarkdownMathBlock. */
       span: [
@@ -265,9 +280,34 @@ const hasMathContent = (text: string): boolean =>
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
 
-/** Default react-markdown component overrides shared across all consumers. */
+/**
+ * Default react-markdown component overrides shared across all consumers.
+ * `cit` isn't a known JSX intrinsic element (see the sanitize schema above
+ * for why it's allow-listed), so it's added via a cast rather than the
+ * `Components` type literal directly. Renders the tag as literal text by
+ * default — a consumer that cares about `<cit>` elements
+ * (`@epam/ai-dial-quotations`'s
+ * `useCitationMarkdownComponents`) overrides this via its own `components`
+ * prop; every other consumer sees the markup without mounting an unstyled
+ * custom element.
+ */
+const renderCitTagAsText = ({
+  children,
+  ...props
+}: {
+  'data-id'?: string;
+  children?: ReactNode;
+}) => (
+  <>
+    {props['data-id'] == null ? '<cit>' : `<cit data-id="${props['data-id']}">`}
+    {children}
+    {'</cit>'}
+  </>
+);
+
 export const defaultMarkdownComponents: Components = {
   li: ({ children }) => <li className="mb-1.5 last:mb-0">{children}</li>,
+  ...({ cit: renderCitTagAsText } as Components),
 };
 
 /** Minimal shape shared by hast text and element nodes, enough to read a cell's plain text. */
@@ -301,6 +341,27 @@ const isDisplayMathElement = (node: HastElementLike | undefined): boolean => {
       child.tagName === 'math' &&
       child.properties?.display === 'block',
   );
+};
+
+/*
+ * GFM column alignment (`:---`, `---:`, `:---:`) survives the pipeline as the
+ * hast `align` property on each cell. It maps to logical text-align utilities
+ * rather than physical ones so an aligned table still flips with the document
+ * direction, like the rest of the renderer.
+ */
+const TABLE_ALIGN_CLASSES: Record<string, string> = {
+  left: 'text-start',
+  center: 'text-center',
+  right: 'text-end',
+};
+
+/** Returns the text-align class for a table cell's GFM column alignment, or `undefined` when the column is unaligned. */
+const getTableCellAlignClass = (
+  node: HastElementLike | undefined,
+): string | undefined => {
+  const align = node?.properties?.align;
+
+  return typeof align === 'string' ? TABLE_ALIGN_CLASSES[align] : undefined;
 };
 
 /** Recursively concatenates the text content of a hast node. */
@@ -345,11 +406,16 @@ const buildMarkdownComponents = (
   p: ({ children }) => (
     <p className={mergeClasses('break-words', cn.p)}>{children}</p>
   ),
+  /* An `outside` marker is painted in the list's start padding, so that padding
+     has to be wide enough for the widest marker or the marker overflows and is
+     cut off by whichever ancestor scrolls or hides overflow — at 14px a
+     two-digit `17.` already did. `2em` tracks the element's own font size and
+     holds a three-digit marker; `ul` matches it so mixed lists stay aligned. */
   ul: ({ children }) => (
-    <ul className={mergeClasses('list-disc ps-5', cn.ul)}>{children}</ul>
+    <ul className={mergeClasses('list-disc ps-[2em]', cn.ul)}>{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className={mergeClasses('list-decimal ps-5', cn.ol)}>{children}</ol>
+    <ol className={mergeClasses('list-decimal ps-[2em]', cn.ol)}>{children}</ol>
   ),
   strong: ({ children }) => (
     <strong className={cn.strong ?? 'dial-body-paragraph-semi-text'}>
@@ -469,11 +535,12 @@ const buildMarkdownComponents = (
       </tr>
     );
   },
-  th: ({ children }) => (
+  th: ({ children, node }) => (
     <th
       scope="col"
       className={mergeClasses(
         'sticky top-0 z-[2] max-w-96 whitespace-normal break-words px-3 py-2.5 text-start',
+        getTableCellAlignClass(node),
         tableStyles.rowDivider,
         tableStyles.tableHeaderCell,
         cn.tableHeaderFont ?? 'dial-tiny-lead-semi-text',
@@ -484,10 +551,11 @@ const buildMarkdownComponents = (
       {children}
     </th>
   ),
-  td: ({ children }) => (
+  td: ({ children, node }) => (
     <td
       className={mergeClasses(
         'max-w-96 whitespace-normal px-3 py-2.5 align-top [overflow-wrap:anywhere]',
+        getTableCellAlignClass(node),
         tableStyles.rowDivider,
         cn.tableBodyCell,
         cn.tableCell,

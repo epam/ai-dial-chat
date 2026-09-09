@@ -722,14 +722,22 @@ export class ConversationStreamingService {
       }
     } finally {
       /*
-       * Reached when the consuming `for await` (the controller's) is
-       * abandoned before the relay loop above reaches a terminal outcome —
-       * e.g. the client disconnected mid-stream. `.return()` injected by the
-       * abandoned consumer unwinds this generator at its current `yield`,
-       * skipping the `switch` above entirely, so without this branch the
-       * registry entry would never be released outside the 30-minute stale
-       * sweep. Abort defensively (idempotent) so the upstream relay notices
-       * and stops even if the caller's own disconnect handling didn't.
+       * Reached only when the consuming `for await` (the controller's) is
+       * abandoned for a reason other than the relay loop above reaching a
+       * terminal outcome — e.g. an unexpected exception unwinding this
+       * generator between a `yield` and the next `relayIterator.next()`
+       * call. This is NOT reached merely because the downstream HTTP
+       * response closed: `ConversationController.streamCompletion` keeps
+       * consuming this generator after disconnect (see
+       * backend-owned-generation-persistence — a completion's generation is
+       * independent of the originating browser connection), so a closed
+       * response alone never abandons this loop. `.return()` injected by a
+       * genuinely abandoned consumer unwinds this generator at its current
+       * `yield`, skipping the `switch` above entirely, so without this
+       * branch the registry entry would never be released outside the
+       * 30-minute stale sweep. Abort defensively (idempotent) so the
+       * upstream relay notices and stops even if the caller's own
+       * abandonment didn't.
        */
       if (!relayCompletedNormally) {
         abortController.abort();

@@ -19,12 +19,16 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit`
+- `@epam/ai-dial-ui-kit` ^0.14.0-dev.30 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 - `@tabler/icons-react`
 - `ag-grid-community@35.3.0`
 
 ## Components
+
+The list view imports Grid through `@epam/ai-dial-ui-kit/grid`. Library builds
+keep UI Kit root and subpath imports external. JavaScript is tree-shakeable;
+CSS/SCSS imports remain side effects. Load catalog UI through a host lazy boundary.
 
 ### Catalog
 
@@ -106,6 +110,11 @@ also yields more card columns (4 instead of 3 once the grid area passes
 1280 px).
 
 #### Controlling tabs and Topics options independently of `items`
+
+The entity-type tab row appears only when `items` span **two or more** types: a
+single tab is not a choice, so a catalog restricted to one entity type (an
+agent picker, a prompt picker) renders no tab row at all. The active tab still
+resolves to that one type, so the grid is unaffected.
 
 By default the entity-type tabs and the Topics filter's option list are both
 derived from `items` — the same list the grid renders. A host that narrows

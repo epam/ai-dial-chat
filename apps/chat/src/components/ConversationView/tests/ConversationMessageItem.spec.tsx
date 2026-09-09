@@ -2,16 +2,19 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
 import type { MessageActionsProps } from '@epam/ai-dial-conversation-messages';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AttachmentsI18nKeys,
+  BasicI18nKeys,
   CitationsI18nKeys,
 } from '../../../constants/translation-keys';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import ConversationMessageItem from '../ConversationMessageItem';
 
 const mockHandleAttachmentClick = vi.fn();
+const mockOpenCanvas = vi.fn();
 
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   const actual =
@@ -25,6 +28,14 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
 });
 
 vi.mock('../../../hooks/useUiFeature');
+
+vi.mock('../../../hooks/attachment/useMcpAppHostAdapter', () => ({
+  useMcpAppHostAdapter: () => ({
+    apiClient: {},
+    theme: 'dark',
+    locale: 'en',
+  }),
+}));
 
 let capturedActions: MessageActionsProps | undefined;
 
@@ -47,7 +58,10 @@ vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
     await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
   return {
     ...actual,
-    useAttachmentCanvas: () => ({ openCanvas: vi.fn(), closeCanvas: vi.fn() }),
+    useAttachmentCanvas: () => ({
+      openCanvas: mockOpenCanvas,
+      closeCanvas: vi.fn(),
+    }),
   };
 });
 
@@ -105,6 +119,12 @@ const defaultProps = {
   executedLabel: 'Executed',
   stepsLabel: (count: number) => `${count} Steps`,
   mcpAppTools: [],
+  mcpAppCache: {
+    get: vi.fn(),
+    set: vi.fn(),
+    invalidate: vi.fn(),
+    getOrFetch: vi.fn(),
+  },
 };
 
 beforeEach(() => {
@@ -160,6 +180,110 @@ describe('ConversationMessageItem — reference-only attachments', () => {
     expect(
       screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
     ).toBeTruthy();
+  });
+});
+
+describe('ConversationMessageItem — inline citations', () => {
+  it('renders every matching html_tag citation in one message', () => {
+    const citationIds = Array.from(
+      { length: 6 },
+      (_, index) => `citation-${index + 1}`,
+    );
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: citationIds
+        .map(
+          (citationId, index) =>
+            `Fact ${index + 1}<cit data-id="${citationId}"></cit>`,
+        )
+        .join(' '),
+      timestamp: '2026-09-08T10:16:43.739Z',
+      custom_content: {
+        annotations: citationIds.map((citationId) => ({
+          target: {
+            selector: { type: 'html_tag', tag: 'cit', id: citationId },
+          },
+          body: {
+            title: 'shared-source.pdf',
+            source: {
+              type: 'attachment',
+              attachment: {
+                type: 'application/pdf',
+                url: 'files/shared-source.pdf',
+                title: 'shared-source.pdf',
+              },
+            },
+          },
+        })),
+      },
+    };
+
+    render(
+      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+    );
+
+    expect(
+      screen.getAllByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      }),
+    ).toHaveLength(6);
+  });
+
+  it('routes a persisted XLSX citation mislabeled as PDF to generic attachment preview', async () => {
+    const onAttachmentClick = vi.fn();
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: 'Budget<cit data-id="xlsx-1"></cit>',
+      timestamp: '2026-09-08T10:16:43.739Z',
+      custom_content: {
+        annotations: [
+          {
+            target: {
+              selector: { type: 'html_tag', tag: 'cit', id: 'xlsx-1' },
+            },
+            body: {
+              title: 'budget.xlsx',
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/pdf',
+                  url: 'files/account/uploads/budget.xlsx',
+                  title: 'budget.xlsx',
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+
+    expect(mockOpenCanvas).not.toHaveBeenCalled();
+    expect(onAttachmentClick).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'budget.xlsx',
+        contentType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        url: 'files/account/uploads/budget.xlsx',
+      }),
+    );
   });
 });
 

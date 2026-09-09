@@ -10,6 +10,10 @@ Use this library whenever a host application needs the "publish to a folder, opt
 
 ## Installation
 
+Publishing UI includes the external file-manager folder tree. Hosts should load
+the publishing panel lazily when it opens. Only CSS/SCSS imports are declared as
+side effects, allowing unused publishing UI to be removed from eager consumers.
+
 ```json
 {
   "dependencies": {

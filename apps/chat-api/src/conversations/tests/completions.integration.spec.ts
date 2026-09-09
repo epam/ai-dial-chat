@@ -45,7 +45,6 @@ describe('POST /conversations/completions (integration)', () => {
   let mockGenerationService: {
     register: ReturnType<typeof vi.fn>;
     abort: ReturnType<typeof vi.fn>;
-    abortSignal: ReturnType<typeof vi.fn>;
     complete: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
     getStatus: ReturnType<typeof vi.fn>;
@@ -75,7 +74,6 @@ describe('POST /conversations/completions (integration)', () => {
     mockGenerationService = {
       register: vi.fn().mockReturnValue(new AbortController()),
       abort: vi.fn().mockReturnValue(true),
-      abortSignal: vi.fn(),
       complete: vi.fn(),
       error: vi.fn(),
       getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
@@ -251,11 +249,12 @@ describe('POST /conversations/completions (integration)', () => {
     expect(msgIdx).toBe(2);
   });
 
-  it('aborts the generation signal when the client disconnects mid-stream', async () => {
+  it('keeps draining the generator to completion after the client disconnects mid-stream, without touching the generation registry', async () => {
     let releaseSecondChunk: () => void = () => undefined;
     const secondChunkGate = new Promise<void>((resolve) => {
       releaseSecondChunk = resolve;
     });
+    let reachedNaturalEnd = false;
     mockService.streamCompletion.mockImplementation(async function* (
       ...args: unknown[]
     ) {
@@ -265,6 +264,10 @@ describe('POST /conversations/completions (integration)', () => {
       // disconnect before the stream would otherwise finish on its own.
       await secondChunkGate;
       yield Buffer.from('data: [DONE]\n\n');
+      // Only reached if the controller keeps calling `.next()` after the
+      // response closed — i.e. it did not `break`/`return` its consuming
+      // loop early because of the disconnect.
+      reachedNaturalEnd = true;
     });
 
     const address = app.getHttpServer().address();
@@ -293,15 +296,18 @@ describe('POST /conversations/completions (integration)', () => {
       req.end();
     });
 
-    await vi.waitFor(() =>
-      expect(mockGenerationService.abortSignal).toHaveBeenCalledWith(
-        TEST_USER.sid,
-        VALID_COMPLETION_BODY.path,
-        VALID_COMPLETION_BODY.generationId,
-      ),
-    );
-
     releaseSecondChunk();
+
+    await vi.waitFor(() => expect(reachedNaturalEnd).toBe(true));
+
+    // The controller never calls back into the generation registry as part
+    // of handling `streamCompletion`'s own disconnect — that is the whole
+    // point of this regression test. `abort`/`error`/`complete` remain the
+    // exclusive province of an explicit Stop or the upstream relay's own
+    // terminal outcome, neither of which happened here.
+    expect(mockGenerationService.abort).not.toHaveBeenCalled();
+    expect(mockGenerationService.error).not.toHaveBeenCalled();
+    expect(mockGenerationService.complete).not.toHaveBeenCalled();
   });
 });
 

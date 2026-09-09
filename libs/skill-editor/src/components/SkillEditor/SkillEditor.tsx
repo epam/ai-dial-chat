@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { EditorLayout } from '@epam/ai-dial-editor-builder';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { DialFoldersTree } from '@epam/ai-dial-react-file-manager';
@@ -11,13 +15,13 @@ import {
   ErrorText,
   GhostButton,
   Input,
-  LazyMarkdownEditor,
   NeutralButton,
   PrimaryButton,
   Spinner,
   Textarea,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
+import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 import { IconPlus, IconTrashX } from '@tabler/icons-react';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
@@ -55,6 +59,7 @@ type MarkdownEditorComponent = ComponentType<{
   value: string;
   onChange: (value: string) => void;
   height?: number;
+  className?: string;
   placeholder?: string;
   theme?: EditorThemes;
 }>;
@@ -506,6 +511,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                           instructions: value,
                         }))
                       }
+                      className={MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME}
                       theme={instructionsEditorTheme}
                       placeholder={
                         t.instructionsPlaceholder ??

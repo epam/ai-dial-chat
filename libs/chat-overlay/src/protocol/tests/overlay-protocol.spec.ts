@@ -116,10 +116,10 @@ describe('isOverlayMessageResponse', () => {
 });
 
 describe('OverlayFeature', () => {
-  it('has exactly 41 unique members', () => {
+  it('has exactly 42 unique members', () => {
     const values = Object.values(OverlayFeature);
-    expect(values).toHaveLength(41);
-    expect(new Set(values).size).toBe(41);
+    expect(values).toHaveLength(42);
+    expect(new Set(values).size).toBe(42);
   });
 
   it('includes the hide-keyboard-shortcuts feature key', () => {
@@ -146,6 +146,10 @@ describe('OverlayFeature', () => {
 
   it('includes the file-manager feature key', () => {
     expect(Object.values(OverlayFeature)).toContain('file-manager');
+  });
+
+  it('includes the removable-tools feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('removable-tools');
   });
 
   it('includes the schema-apps feature key, not its renamed predecessor', () => {

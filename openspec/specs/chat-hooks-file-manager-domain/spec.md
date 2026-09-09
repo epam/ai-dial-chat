@@ -107,7 +107,7 @@ a `chat-hooks` compatibility proxy.
 
 #### Scenario: `apps/chat`'s file-manager shell consumes the published export
 
-- **WHEN** `DialFileManagerShell.tsx` is inspected after this change
+- **WHEN** `DialFileManagerShell.tsx` is inspected
 - **THEN** its `getParentFolderPath` call resolves from `@epam/ai-dial-chat-shared`,
   and `apps/chat/src/utils/resolve-dial-file-api-path.ts` no longer exists
 
@@ -184,7 +184,7 @@ own package (`@epam/ai-dial-chat-shared`), not from
 
 #### Scenario: `DialFileManagerShell` imports `getParentFolderPath` from `chat-shared`
 
-- **WHEN** `DialFileManagerShell.tsx` (in `libs/chat-shared`) is inspected after this change
+- **WHEN** `DialFileManagerShell.tsx` (in `libs/chat-shared`) is inspected
 - **THEN** its `getParentFolderPath` call resolves from `@epam/ai-dial-chat-shared`,
   and `apps/chat/src/utils/resolve-dial-file-api-path.ts` no longer exists
 

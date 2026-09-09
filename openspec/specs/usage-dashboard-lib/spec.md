@@ -404,7 +404,7 @@ target where it is shown on mobile.
 
 ---
 
-## Utilities
+**Utilities**
 
 The library exports three pure transform functions in
 `libs/usage-dashboard/src/utils/` that map raw `UserLimitStatsResponseDto` data into the props

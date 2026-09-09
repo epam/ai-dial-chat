@@ -29,7 +29,6 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConversationTransferErrorCode,
   FilterTab,
-  mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
@@ -63,7 +62,16 @@ import {
   IconWorldOff,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { memo, useCallback, useMemo, useRef, useState, type FC } from 'react';
+import {
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import {
@@ -117,9 +125,13 @@ import {
 } from '../../utils/conversation-transfer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
-import PublishConversationPanelContainer from '../PublishConversationPanelContainer/PublishConversationPanelContainer';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
 import ConversationPanelMenu from './ConversationPanelMenu';
+
+const PublishConversationPanelContainer = lazy(
+  () =>
+    import('../PublishConversationPanelContainer/PublishConversationPanelContainer'),
+);
 
 const PANEL_STYLES: ConversationPanelStyles = {
   itemIconBadgeClassName: 'rounded-lg',
@@ -1217,9 +1229,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [onRequestedFilterChange, onActiveFilterChange],
   );
 
-  const panelClassName = isMobile
-    ? mergeClasses('fixed inset-y-0 start-0', isOpen && 'z-50')
-    : undefined;
+  /*
+   * On mobile the panel covers the conversation instead of sitting next to it,
+   * so it is lifted out of the layout row and animated as a drawer. The z-index
+   * is unconditional: dropping it while closing let the conversation paint over
+   * the panel for the length of the transition.
+   */
+  const panelClassName = isMobile ? 'fixed inset-y-0 start-0 z-50' : undefined;
 
   return (
     <>
@@ -1251,6 +1267,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           onActionMenuOpen={handleActionMenuOpen}
           onToggle={isMobile ? onClose : undefined}
           className={panelClassName}
+          isOverlay={isMobile}
           styles={PANEL_STYLES}
           onMoveConversation={handleMoveConversation}
           headerActions={
@@ -1453,20 +1470,32 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
       {isConversationsPublishingEnabled &&
         pendingPublishConversation !== null && (
-          <PublishConversationPanelContainer
-            isOpen
-            conversationPath={pendingPublishConversation.path}
-            conversationTitle={pendingPublishConversation.title}
-            onClose={handleClosePublishPanel}
-            returnFocusRef={rowActionsTriggerRef}
-            history={publishPanelHistory.entries}
-            isHistoryLoading={
-              publishPanelHistory.status === PublishHistoryStatus.Loading
+          <Suspense
+            fallback={
+              <Popup
+                open
+                header={t(ButtonsI18nKeys.Publish)}
+                onClose={handleClosePublishPanel}
+              >
+                <p role="status">{t(BasicI18nKeys.Loading)}</p>
+              </Popup>
             }
-            hasHistoryError={
-              publishPanelHistory.status === PublishHistoryStatus.Failed
-            }
-          />
+          >
+            <PublishConversationPanelContainer
+              isOpen
+              conversationPath={pendingPublishConversation.path}
+              conversationTitle={pendingPublishConversation.title}
+              onClose={handleClosePublishPanel}
+              returnFocusRef={rowActionsTriggerRef}
+              history={publishPanelHistory.entries}
+              isHistoryLoading={
+                publishPanelHistory.status === PublishHistoryStatus.Loading
+              }
+              hasHistoryError={
+                publishPanelHistory.status === PublishHistoryStatus.Failed
+              }
+            />
+          </Suspense>
         )}
     </>
   );

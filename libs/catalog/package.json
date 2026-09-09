@@ -5,6 +5,10 @@
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,7 +28,7 @@
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-publish-panel": "*",
     "ag-grid-community": "35.3.0",
-    "@epam/ai-dial-ui-kit": "^0.14.0-dev.15"
+    "@epam/ai-dial-ui-kit": "^0.14.0-dev.30"
   },
   "nx": {
     "tags": [

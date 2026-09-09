@@ -8,6 +8,10 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Installation
 
+The package declares `sideEffects: false`: importing a hook or a data helper does
+not initialize unrelated feature UI. Hooks perform their work when called or in
+effects; hosts should prefer the existing feature subpaths for narrow imports.
+
 ```json
 {
   "dependencies": {
@@ -36,6 +40,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-chat-overlay` \*
 - `@epam/ai-dial-chat-shared` \*
 - `@epam/ai-dial-deployment-creation-form` \*
+- `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
 - `@epam/ai-dial-react-file-manager` \*
@@ -44,6 +49,8 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
 - `@epam/ai-dial-ui-kit` \*
+- `@mcp-ui/client` ^7.1.1
+- `@modelcontextprotocol/sdk` ^1.27.1
 - `@epam/pdf-highlighter-kit` >=0.0.14
 
 `ag-grid-community` is not a peer of this package — no file under `src/` imports it, and it has
@@ -77,6 +84,7 @@ whether you need to `npm install` it.
 | `./sharing`               | `@epam/ai-dial-share`, `@epam/ai-dial-chat-api-client`                                                                                                                                  | —                                                                                                                                 |
 | `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                                                            | —                                                                                                                                 |
 | `./utils`                 | —                                                                                                                                                                                       | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-deployment-creation-form`                            |
+| `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`                | —                                                                                                                                 |
 
 Six of the peers above (`@epam/ai-dial-catalog`, `@epam/ai-dial-chat-overlay`,
 `@epam/ai-dial-deployment-creation-form`, `@epam/ai-dial-publish-panel`,
@@ -214,6 +222,13 @@ import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks/utils';
 const timezone = getBrowserTimezone();
 ```
 
+```tsx
+// ./mcp-apps
+import { createMcpAppsApiClient } from '@epam/ai-dial-chat-hooks/mcp-apps';
+
+const mcpAppsApiClient = createMcpAppsApiClient(toolsetsApi);
+```
+
 ## Missing a peer
 
 If you import a subpath without installing the peer(s) its row names in the matrix above, `npm
@@ -237,15 +252,15 @@ This is a module-resolution error naming the exact missing specifier, scoped to 
 you imported — not an install-time warning, and not a sign that this package or your build setup
 is broken. To recognize it: the error names the peer package that you have not installed, and
 it appears only after you added an import from one specific subpath. The fix is to install the
-peer(s) that subpath's row lists in the matrix above — you do not need any of the other 16 peers
+peer(s) that subpath's row lists in the matrix above — you do not need any of the other 18 peers
 unless another subpath you also import needs them.
 
 ## Legacy root compatibility
 
 The root (`.`) entry — imported as `@epam/ai-dial-chat-hooks` with no subpath, used throughout
 the "Hooks" section below — is unchanged in behavior and public surface by the introduction of
-subpaths. It re-exports everything it always did and requires the full current 17-peer set
-(`react` plus the 16 optional feature peers listed above), including the type-only
+subpaths. It re-exports everything it always did and requires the full current 20-peer set
+(`react` plus the 19 optional feature peers listed above), including the type-only
 `@epam/pdf-highlighter-kit` reference exposed by its declarations. Every existing import from
 `@epam/ai-dial-chat-hooks` keeps working exactly as before. No consumer is required to migrate
 to a subpath: subpaths are an additional, narrower way to reach a subset of the same exports, not
@@ -3191,6 +3206,86 @@ const {
 | `isRevokeVisible`       | `boolean`  | `true` when a revoke-access menu item should be shown.                               |
 | `isPublishApplicable`   | `boolean`  | `true` when a publish menu item should be offered.                                   |
 | `isUnpublishApplicable` | `boolean`  | `true` when an unpublish menu item should be offered.                                |
+
+## MCP Apps
+
+`./mcp-apps` wraps the generated `ToolsetsApi` (`@epam/ai-dial-chat-api-client`) and the host-agnostic
+building blocks from `@epam/ai-dial-mcp-apps` into the surface a host injects into that library's
+`useMcpAppInlinePreview`/`McpAppInlinePreview`, plus the full-width canvas equivalent
+(`useOpenMcpAppCanvas`) and tool discovery (`useMcpAppTools`). None of these hooks read app
+context, i18n, or construct a client — every DIAL Core call goes through a `McpAppsApiClient`
+the host builds once via `createMcpAppsApiClient`, and every user-visible string (canvas title,
+error labels) is passed in as a parameter.
+
+### createMcpAppsApiClient
+
+Wraps a configured `ToolsetsApi` instance in the `McpAppsApiClient` surface every hook below accepts.
+
+```tsx
+import { createMcpAppsApiClient } from '@epam/ai-dial-chat-hooks/mcp-apps';
+import { toolsetsApi } from './server-api/api-client'; // your configured ToolsetsApi
+
+export const mcpAppsApiClient = createMcpAppsApiClient(toolsetsApi);
+```
+
+#### API
+
+| Name                | Type                                                                                     | Description                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `fetchResourceHtml` | `(toolsetId: string, resourceUri: string) => Promise<string>`                             | Fetches a toolset's MCP Apps `ui://` resource HTML. Throws `McpAppResourceFetchError` on a non-OK response. |
+| `callTool`          | `(toolsetId: string, toolName: string, args: unknown, kind: McpDeploymentKind) => Promise<CallToolResult>` | Forwards a tool call through chat-api.                                   |
+| `listAppTools`      | `(deploymentId: string, kind: McpDeploymentKind) => Promise<McpAppToolSummary[]>`          | Lists a deployment's tools that declare an MCP Apps UI resource.        |
+| `listToolNames`     | `(deploymentId: string, kind: McpDeploymentKind) => Promise<string[]>`                    | Lists every tool name a deployment's `tools/list` exposes, unfiltered.  |
+
+### useMcpAppTools
+
+Discovers the active conversation's MCP-Apps-capable tools (direct deployment capability, plus indirect discovery through a toolset an application delegates to internally).
+
+```tsx
+import { useMcpAppTools } from '@epam/ai-dial-chat-hooks/mcp-apps';
+
+const mcpAppTools = useMcpAppTools(
+  mcpAppsApiClient,
+  selectedDeployment,
+  messages,
+  toolsets,
+);
+```
+
+### useMcpAppHostAdapter
+
+Builds the `McpAppHostAdapter` (`@epam/ai-dial-mcp-apps`) a host injects into that library's hooks/components, from a `McpAppsApiClient`, a sandbox-proxy URL, and the host's theme/locale values.
+
+```tsx
+import { useMcpAppHostAdapter } from '@epam/ai-dial-chat-hooks/mcp-apps';
+
+const hostAdapter = useMcpAppHostAdapter('inline', mcpAppsApiClient, sandboxUrl, {
+  theme: currentTheme,
+  locale: i18n.language,
+});
+```
+
+### useOpenMcpAppCanvas
+
+Opens a full-width attachment-canvas panel for a discovered MCP App tool, sharing `@epam/ai-dial-mcp-apps`'s response cache with an inline preview mounted for the same message.
+
+```tsx
+import { useOpenMcpAppCanvas } from '@epam/ai-dial-chat-hooks/mcp-apps';
+
+const { openMcpAppCanvas } = useOpenMcpAppCanvas(
+  mcpAppCache,
+  hostAdapter,
+  {
+    title: t('mcpApp.title'),
+    forbiddenErrorLabel: t('mcpApp.forbidden'),
+    loadErrorLabel: t('mcpApp.loadError'),
+  },
+  () => {
+    closeConversationPanel();
+    closeSourcesPanel();
+  },
+);
+```
 
 ## Building
 

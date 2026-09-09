@@ -1,14 +1,18 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { EditorLayout } from '@epam/ai-dial-editor-builder';
 import {
   Input,
   Label,
-  LazyMarkdownEditor,
   NeutralButton,
   PrimaryButton,
   Spinner,
   Textarea,
 } from '@epam/ai-dial-ui-kit';
+import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
  * it here, rather than eagerly from the host app's entry point, keeps this
@@ -260,6 +264,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
                 value={values.content}
                 onChange={(value) => setField('content', value)}
                 height={480}
+                className={MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME}
                 placeholder={
                   labels?.contentPlaceholder ?? 'Write the prompt instructions'
                 }
