@@ -17,9 +17,13 @@ export interface ScheduledTasksLabels {
   searchAriaLabel: string;
   /** Accessible label for the toolbar search input's clear action. */
   clearSearchLabel: string;
-  /** Accessible label for the toolbar sort control, also shown as the field's prefix. */
+  /** The sort control's own name, prepended to its accessible name. */
   sortLabel: string;
-  /** Options listed by the sort control; each `value` is a `ScheduledTasksSortKey`. */
+  /**
+   * Values the sort menu lists; each `value` is a `ScheduledTasksSortKey`.
+   * Only the values — the component owns which one is marked as applied and
+   * what a click does.
+   */
   sortOptions: SelectOption[];
   /** Message shown when the fetched task list is empty. */
   emptyStateLabel: string;
@@ -44,7 +48,7 @@ export interface ScheduledTasksColors {
   background?: string;
   /** Subtitle and status-message (empty/no-results/error) text color. Fallback: `--text-secondary`. */
   subtitleText?: string;
-  /** Text color of the sort select's field. Fallback: `--text-primary`. */
+  /** Sort control label/icon color. Fallback: `--text-accent`. */
   sortButtonText?: string;
   /** Background color of the load-more placeholder skeleton bars. Fallback: `--bg-control-disable-primary`. */
   skeletonColor?: string;

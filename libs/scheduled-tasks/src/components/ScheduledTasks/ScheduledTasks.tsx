@@ -4,17 +4,21 @@ import {
   PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonAppearance,
+  ButtonDropdown,
+  ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  DropdownItem,
   ElementSize,
   GhostButton,
+  MenuItemMark,
   PrimaryButton,
   Search,
-  Select,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconCalendarTime, IconPlus } from '@tabler/icons-react';
-import { FC, useEffect, useRef } from 'react';
+import { FC, useEffect, useMemo, useRef } from 'react';
 import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../types/scheduled-tasks-sort-key';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
@@ -96,10 +100,29 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     onSearchQueryChange(value ?? '');
   };
 
-  const handleSortChange = (next: string | string[]) => {
-    if (typeof next !== 'string') return;
-    onSortChange(next as ScheduledTasksSortKey);
-  };
+  /* Falls back to the control's own name so the trigger is never a button with
+   * no accessible name, which is what an unrecognised sortKey would produce —
+   * the kit's `Button` derives its `aria-label` from `label` and overrides any
+   * the caller passes, so the visible label is the only name available. */
+  const activeSortLabel =
+    labels.sortOptions.find((option) => option.value === sortKey)?.label ??
+    labels.sortLabel;
+
+  /*
+   * The host passes the values alone; the marking and the click belong here,
+   * so the trigger and the menu cannot disagree about which order is applied.
+   */
+  const sortItems = useMemo<DropdownItem[]>(
+    () =>
+      labels.sortOptions.map((option) => ({
+        key: option.value,
+        label: option.label,
+        mark: MenuItemMark.Check,
+        checked: option.value === sortKey,
+        onClick: () => onSortChange(option.value as ScheduledTasksSortKey),
+      })),
+    [labels.sortOptions, sortKey, onSortChange],
+  );
 
   const statusMessage = getStatusMessage(
     isLoading,
@@ -247,18 +270,14 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           />
         </div>
         {labels.sortOptions.length > 0 && (
-          /* Picking a sort order is choosing a value, which the design gives a
-             select list rather than a menu: the chosen row is tinted, not
-             checked, and the field itself reports the order in effect. */
-          <Select
-            options={labels.sortOptions}
-            value={sortKey}
-            onChange={handleSortChange}
-            prefix={labels.sortLabel}
-            ariaLabel={labels.sortLabel}
-            size={ElementSize.Large}
-            className="shrink-0"
-            fieldClassName={styles.sortSelect}
+          /* The trigger shows the applied order and the menu marks it with the
+             design's trailing check. */
+          <ButtonDropdown
+            items={sortItems}
+            label={activeSortLabel}
+            variant={ButtonVariant.Primary}
+            appearance={ButtonAppearance.Ghost}
+            className={styles.sortButton}
           />
         )}
       </div>

@@ -258,9 +258,21 @@ export const Filter: FC<FilterProps> = ({
           role="menu"
           aria-label={defaultLabel}
           tabIndex={-1}
-          style={cssVars}
+          /*
+           * Bound to the kit Dropdown's own live available-height var (set by
+           * floating-ui) so the topics list, not the floating panel, absorbs
+           * any height constraint. Without it both scroll: the panel keeps its
+           * default overflow and the list keeps its full 344px, so a viewport
+           * too short for the two of them plus the header and footer leaves
+           * the user with two scrollbars. The -8px accounts for this overlay's
+           * own p-[6px] plus the panel's border.
+           */
+          style={{
+            ...cssVars,
+            maxHeight: 'calc(var(--fui-available-height, 9999px) - 8px)',
+          }}
           className={mergeClasses(
-            'min-w-[360px] rounded-xl p-[6px]',
+            'flex min-w-[360px] flex-col rounded-xl p-[6px]',
             styles.overlay,
           )}
           onKeyDown={handleMenuKeyDown}
@@ -277,6 +289,9 @@ export const Filter: FC<FilterProps> = ({
               styles.rowLabel,
               typography?.filterButtonClassName ?? 'dial-small-semi-text',
             )}
+            /* Its height is a `height`, so as a flex child of the panel it
+               would shrink instead of leaving the topics list to scroll. */
+            className="shrink-0"
             tabIndex={focusedIndex === 0 ? 0 : -1}
             ref={(el) => {
               rowRefs.current[0] = el;
@@ -304,11 +319,13 @@ export const Filter: FC<FilterProps> = ({
               </div>
               {/* The options are their own scroll box at the design's maximum
                   list length, so the My Apps row, the section heading and the
-                  Clear/Apply footer stay put as the topics scroll. */}
+                  Clear/Apply footer stay put as the topics scroll. `min-h-0`
+                  lets it give way when the panel's available height is under
+                  that maximum, keeping it the only thing that scrolls. */}
               <div
                 className={mergeClasses(
                   SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
-                  'flex flex-col gap-1 overflow-y-auto',
+                  'flex min-h-0 flex-col gap-1 overflow-y-auto',
                 )}
               >
                 {topics.map((topic, i) => {
@@ -325,6 +342,7 @@ export const Filter: FC<FilterProps> = ({
                       selected={isChecked}
                       label={topic}
                       labelClassName={styles.rowLabel}
+                      className="shrink-0"
                       tabIndex={focusedIndex === idx ? 0 : -1}
                       ref={(el) => {
                         rowRefs.current[idx] = el;
@@ -339,7 +357,7 @@ export const Filter: FC<FilterProps> = ({
 
           <div
             className={mergeClasses(
-              'mt-1 flex items-center px-1 py-3',
+              'mt-1 flex shrink-0 items-center px-1 py-3',
               styles.footer,
             )}
             onKeyDown={(e) => {

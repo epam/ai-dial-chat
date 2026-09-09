@@ -1,12 +1,16 @@
 import { ItemHeader, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonAppearance,
+  ButtonDropdown,
+  ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  DropdownItem,
   ElementSize,
+  MenuItemMark,
   Search,
   SegmentedControl,
   SegmentedControlItem,
-  Select,
   SelectOption,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
@@ -107,10 +111,28 @@ export const TitleRow: FC<TitleRowProps> = ({
     onQueryChange(nextValue ?? '');
   };
 
-  const handleSortChange = (next: string | string[]) => {
-    if (typeof next !== 'string') return;
-    onSortChange?.(next);
-  };
+  /* Falls back to the control's own name so the trigger is never a button with
+   * no accessible name, which is what an unrecognised sortKey would produce —
+   * the kit's `Button` derives its `aria-label` from `label` and overrides any
+   * the caller passes, so the visible label is the only name available. */
+  const activeSortLabel =
+    sortOptions?.find((option) => option.value === sortKey)?.label ?? sortLabel;
+
+  /*
+   * The host passes the values alone; the marking and the click belong here,
+   * so the trigger and the menu cannot disagree about which order is applied.
+   */
+  const sortItems = useMemo<DropdownItem[]>(
+    () =>
+      (sortOptions ?? []).map((option) => ({
+        key: option.value,
+        label: option.label,
+        mark: MenuItemMark.Check,
+        checked: option.value === sortKey,
+        onClick: () => onSortChange?.(option.value),
+      })),
+    [sortOptions, sortKey, onSortChange],
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -145,13 +167,13 @@ export const TitleRow: FC<TitleRowProps> = ({
                 className={mergeClasses('h-4 w-px shrink-0', styles.divider)}
               />
 
-              <Select
-                options={sortOptions}
-                value={sortKey}
-                onChange={handleSortChange}
-                prefix={sortLabel}
-                ariaLabel={sortLabel}
-                className="shrink-0"
+              {/* The trigger shows the applied order and the menu marks it
+                  with the design's trailing check. */}
+              <ButtonDropdown
+                items={sortItems}
+                label={activeSortLabel}
+                variant={ButtonVariant.Primary}
+                appearance={ButtonAppearance.Ghost}
               />
             </>
           )}
