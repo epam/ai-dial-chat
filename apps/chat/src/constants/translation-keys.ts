@@ -782,6 +782,8 @@ export enum ConversationImportI18nKeys {
   FailedTitle = 'conversationImport.failedTitle',
   Failed = 'conversationImport.failed',
   WarningAttachmentSkipped = 'conversationImport.warningAttachmentSkipped',
+  JobWarningAttachmentSkipped = 'conversationImport.jobWarningAttachmentSkipped',
+  NameListWithRest = 'conversationImport.nameListWithRest',
   UnsupportedFormat = 'conversationImport.unsupportedFormat',
   CancelJobAriaLabel = 'conversationImport.cancelJobAriaLabel',
   JobProgressAriaLabel = 'conversationImport.jobProgressAriaLabel',

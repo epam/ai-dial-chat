@@ -329,7 +329,12 @@ export const useConversationImport = ({
 
       const successNames: string[] = [];
       const failedNames: string[] = [];
-      const skippedAttachmentNames: string[] = [];
+      /*
+       * A set, not an array: the upload loop runs per conversation, so one
+       * attachment referenced by several of them would otherwise be reported
+       * once per referencing conversation.
+       */
+      const skippedAttachmentNames = new Set<string>();
       let isUnauthorized = false;
       /* Only the first failing conversation's trace ID is surfaced in the batch-failure event. */
       let firstFailureTraceId: string | undefined;
@@ -417,8 +422,8 @@ export const useConversationImport = ({
               isUnauthorized = true;
               break;
             }
-            if (result.skippedNames.length > 0) {
-              skippedAttachmentNames.push(...result.skippedNames);
+            for (const skippedName of result.skippedNames) {
+              skippedAttachmentNames.add(skippedName);
             }
             targetMap = result.targetMap;
           }
@@ -489,16 +494,16 @@ export const useConversationImport = ({
           traceId: firstFailureTraceId,
         });
       }
-      if (skippedAttachmentNames.length > 0) {
+      if (skippedAttachmentNames.size > 0) {
         onWarning?.({
           jobId,
           code: ConversationTransferWarningCode.AttachmentSkipped,
-          names: skippedAttachmentNames,
+          names: [...skippedAttachmentNames],
         });
       }
       if (failedNames.length > 0) {
         queue.failJob(jobId, ConversationTransferErrorCode.Unknown);
-      } else if (skippedAttachmentNames.length > 0) {
+      } else if (skippedAttachmentNames.size > 0) {
         /*
          * Every conversation imported, but some of their attachments did not
          * come across — delivered, yet not what the user asked for.
