@@ -49,15 +49,17 @@ export * from './components/EntityTypeLabel/EntityTypeLabel';
 export * from './components/FeaturedChip/FeaturedChip';
 export * from './components/EntityHeader/EntityHeader';
 export * from './components/ResourceSummary/ResourceSummary';
-export * from './components/MarkdownRenderer/MarkdownRenderer';
-export * from './components/MarkdownRenderer/MDMessageViewer';
-export * from './components/MarkdownRenderer/markdown-class-names';
-export * from './components/MarkdownRenderer/CodeBlock/CodeBlock';
-export { restrainedSyntaxTheme } from './components/MarkdownRenderer/CodeBlock/syntax-theme';
-export * from './components/MarkdownRenderer/Table/MarkdownTable';
-export * from './components/MarkdownWithPlaceholders/MarkdownWithPlaceholders';
+export * from './entry-points/markdown';
 export * from './hooks/useIsMobile';
-export * from './hooks/useCodeCopy';
-export * from './hooks/useCollapsedText';
 
-export * from './file-manager';
+/*
+ * Explicit `/index` avoids a declaration-resolution collision with this
+ * package's own compiled `dist/file-manager.js` (the published `./file-manager`
+ * subpath entry, from `entry-points/file-manager.ts`): a bare `./file-manager`
+ * specifier resolves to that sibling file first (no adjacent `.d.ts`, so
+ * TypeScript treats it as implicit `any` under strict mode) and never falls
+ * back to this folder's own `index.d.ts`, silently dropping every name here
+ * (`useGridEditingScroll` included) from a real npm consumer's rolled-up
+ * public API.
+ */
+export * from './file-manager/index';

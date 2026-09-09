@@ -1,3 +1,10 @@
+import './styles.css';
+
+// Headless catalog enums and catalog-item-mapping functions — see
+// `./entry-points/mapping.ts`; import `@epam/ai-dial-catalog/mapping`
+// directly to avoid resolving the catalog/publish-panel UI.
+export * from './entry-points/mapping';
+
 // Types
 export { CodeLanguage } from './types/code-language';
 export { CatalogDetailsTab } from './types/detail-tab';
@@ -7,23 +14,13 @@ export {
   DetailsConfirmationVariant,
 } from './types/details-confirmation';
 export { DeploymentSize } from './types/deployment-icon-size';
-export {
-  CredentialsBadgeState,
-  CredentialsLevel,
-  CredentialStatus,
-  CredentialsUiState,
-  ToolsetAuthenticationType,
-} from './types/toolset-auth';
 export { CatalogViewMode } from './types/view-mode';
-export { CatalogSortKey } from './types/sort';
 export {
   CatalogContentNodeType,
   CatalogContentPreviewType,
 } from './types/catalog-content-type';
 
 // Models
-export type { CatalogItem } from './models/catalog-item';
-export type { CatalogItemCredentials } from './models/catalog-item-credentials';
 export type { CatalogProps, CatalogTitles } from './models/catalog-props';
 export type {
   CatalogColors,
@@ -70,15 +67,7 @@ export type {
   OverviewSpec,
 } from './models/item-overview';
 // Utils
-export { filterCatalogItems, getTopicOptions } from './utils/catalog-filter';
-export { sortCatalogItems } from './utils/catalog-sort';
-export { buildCatalogTabs } from './utils/catalog-tabs';
 export { useFavColumns } from './utils/use-fav-columns';
-export {
-  getCredentialsBadgeState,
-  getCredentialsUiState,
-  getSignedInLevel,
-} from './utils/toolset-credentials';
 
 // Components
 export { Catalog } from './components/Catalog/Catalog';

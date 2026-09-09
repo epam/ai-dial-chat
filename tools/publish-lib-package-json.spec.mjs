@@ -9,6 +9,7 @@ import {
   stripDistPrefix,
   rewriteExportsObj,
   preparePublishPackageJson,
+  countRawJsonKeyOccurrences,
 } from './publish-lib-package-json.mjs';
 
 test('stripDistPrefix rewrites a "./dist/..." path to "./..."', () => {
@@ -50,7 +51,11 @@ test('rewriteExportsObj strips "./dist/" prefixes and drops "@epam/source" at an
 test('preparePublishPackageJson rewrites a top-level sideEffects array', () => {
   const json = {
     name: '@epam/ai-dial-chat-hooks',
-    sideEffects: ['./dist/index.js', './dist/oauth.js', './dist/file-manager.js'],
+    sideEffects: [
+      './dist/index.js',
+      './dist/oauth.js',
+      './dist/file-manager.js',
+    ],
   };
 
   preparePublishPackageJson(json, {
@@ -59,7 +64,11 @@ test('preparePublishPackageJson rewrites a top-level sideEffects array', () => {
     isWorkspaceLib: () => false,
   });
 
-  assert.deepEqual(json.sideEffects, ['./index.js', './oauth.js', './file-manager.js']);
+  assert.deepEqual(json.sideEffects, [
+    './index.js',
+    './oauth.js',
+    './file-manager.js',
+  ]);
 });
 
 test('preparePublishPackageJson leaves an absent sideEffects field untouched', () => {
@@ -75,7 +84,11 @@ test('preparePublishPackageJson leaves an absent sideEffects field untouched', (
 });
 
 test('preparePublishPackageJson sets version, drops "private", and sets "repository"', () => {
-  const json = { name: '@epam/ai-dial-chat-hooks', version: '0.0.1', private: true };
+  const json = {
+    name: '@epam/ai-dial-chat-hooks',
+    version: '0.0.1',
+    private: true,
+  };
 
   preparePublishPackageJson(json, {
     version: '1.2.3',
@@ -105,8 +118,61 @@ test('preparePublishPackageJson resolves workspace-lib dependency placeholders t
   assert.equal(json.peerDependencies['@epam/ai-dial-chat-shared'], '1.2.3');
 });
 
+test('countRawJsonKeyOccurrences counts a top-level key literal in raw JSON text', () => {
+  assert.equal(
+    countRawJsonKeyOccurrences(
+      '{"sideEffects": false, "sideEffects": ["a"]}',
+      'sideEffects',
+    ),
+    2,
+  );
+  assert.equal(
+    countRawJsonKeyOccurrences('{"sideEffects": ["a"]}', 'sideEffects'),
+    1,
+  );
+  assert.equal(
+    countRawJsonKeyOccurrences('{"main": "./index.js"}', 'sideEffects'),
+    0,
+  );
+});
+
+test('preparePublishPackageJson errors on a manifest with more than one "sideEffects" key, rather than silently picking one', () => {
+  const rawSource =
+    '{"name":"@epam/ai-dial-chat-hooks","sideEffects":false,"sideEffects":["./dist/index.js"]}';
+  const json = JSON.parse(rawSource);
+
+  assert.throws(
+    () =>
+      preparePublishPackageJson(json, {
+        version: '1.2.3',
+        projectRoot: 'libs/chat-hooks',
+        isWorkspaceLib: () => false,
+        rawSource,
+      }),
+    /"sideEffects"/,
+  );
+});
+
+test('preparePublishPackageJson accepts a manifest with exactly one "sideEffects" key when rawSource is provided', () => {
+  const rawSource =
+    '{"name":"@epam/ai-dial-chat-hooks","sideEffects":["./dist/index.js"]}';
+  const json = JSON.parse(rawSource);
+
+  preparePublishPackageJson(json, {
+    version: '1.2.3',
+    projectRoot: 'libs/chat-hooks',
+    isWorkspaceLib: () => false,
+    rawSource,
+  });
+
+  assert.deepEqual(json.sideEffects, ['./index.js']);
+});
+
 test('preparePublishPackageJson removes the dev-only "nx" configuration block', () => {
-  const json = { name: '@epam/ai-dial-chat-hooks', nx: { tags: ['publishable'] } };
+  const json = {
+    name: '@epam/ai-dial-chat-hooks',
+    nx: { tags: ['publishable'] },
+  };
 
   preparePublishPackageJson(json, {
     version: '1.2.3',
@@ -115,4 +181,16 @@ test('preparePublishPackageJson removes the dev-only "nx" configuration block', 
   });
 
   assert.equal('nx' in json, false);
+});
+
+test('nested sideEffects metadata is not a duplicate root key', () => {
+  const rawSource = '{"sideEffects":false,"metadata":{"sideEffects":true}}';
+  assert.doesNotThrow(() =>
+    preparePublishPackageJson(JSON.parse(rawSource), {
+      version: '1.0.0',
+      projectRoot: 'libs/example',
+      isWorkspaceLib: () => false,
+      rawSource,
+    }),
+  );
 });

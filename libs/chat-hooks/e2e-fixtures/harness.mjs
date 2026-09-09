@@ -38,7 +38,8 @@ const npmCliPath =
     'bin',
     'npm-cli.js',
   );
-const execNpmSync = (args, options) =>
+/** Shared npm runner for packed fixture operations. */
+export const execNpmSync = (args, options) =>
   execFileSync(process.execPath, [npmCliPath, ...args], options);
 
 /**
@@ -341,7 +342,7 @@ export const verifySideEffectManifest = (
  * really does have every peer installed, for `apps/chat`) instead of
  * failing the way an external consumer's install actually would. This isn't
  * hypothetical: it's exactly what made an early version of the negative
- * fixture (task 6.5) pass without the peer ever being installed.
+ * fixture pass without the peer ever being installed.
  */
 export const createFixtureDir = (tmpRoot, name) => {
   const dir = path.join(tmpRoot, 'fixtures', name);
@@ -541,6 +542,34 @@ export const createFixtureDependencyResolver = ({
         readRequiredPeerDependencies,
       }),
     getPackedWorkspacePeerNames: () => [...packedWorkspacePeers.keys()].sort(),
+    /**
+     * Pins every *external* (non-workspace) name in `peerNames` to its exact
+     * package-lock.json-resolved version, as an npm `overrides` map.
+     *
+     * Without this, a fixture that never lists an optional external peer as
+     * one of its own explicit dependencies can still hit an `ERESOLVE` from
+     * npm's own opportunistic optional-peer resolution: when two installed
+     * packages each declare the same external package as an *optional* peer
+     * with incompatible ranges (e.g. `@epam/ai-dial-chat-shared` wants
+     * `@epam/ai-dial-ui-kit@^0.14.x` while the public registry's latest
+     * `@epam/ai-dial-react-file-manager` — itself only an optional peer too
+     * — wants `^0.13.x`), npm tries to satisfy both from the public registry
+     * and fails, even though neither peer is actually required by the
+     * fixture under test. Pinning both names to this workspace's own
+     * lockfile-resolved versions (a set already proven mutually compatible,
+     * since this repo builds against it) resolves the conflict; it does not
+     * force either package to be installed — untouched fixtures still end up
+     * with neither in `node_modules`.
+     */
+    resolveExternalPeerOverrides: (peerNames) =>
+      Object.fromEntries(
+        peerNames
+          .filter(
+            (name) =>
+              !workspacePackages.has(name) && lockedExternalVersions.has(name),
+          )
+          .map((name) => [name, lockedExternalVersions.get(name)]),
+      ),
   };
 };
 
@@ -560,6 +589,7 @@ export const writeFixturePackageJson = (
     reactTypesVersion,
     peers,
     dependencyResolver,
+    externalPeerOverrides,
   },
 ) => {
   const dependencies = {
@@ -569,13 +599,14 @@ export const writeFixturePackageJson = (
   };
   dependencies['@epam/ai-dial-chat-hooks'] = pathToFileURL(tarballPath).href;
 
+  const manifest = { name, private: true, type: 'module', dependencies };
+  if (externalPeerOverrides && Object.keys(externalPeerOverrides).length > 0) {
+    manifest.overrides = externalPeerOverrides;
+  }
+
   writeFileSync(
     path.join(dir, 'package.json'),
-    JSON.stringify(
-      { name, private: true, type: 'module', dependencies },
-      null,
-      2,
-    ) + '\n',
+    JSON.stringify(manifest, null, 2) + '\n',
   );
 };
 
@@ -588,7 +619,11 @@ export const writeFixturePackageJson = (
  * The install intentionally uses npm's normal peer-dependency handling. A
  * `--legacy-peer-deps` escape hatch would make the fixture pass even if a
  * feature peer accidentally stopped being optional, defeating the contract
- * this suite exists to verify.
+ * this suite exists to verify. `writeFixturePackageJson`'s `overrides`
+ * (see `resolveExternalPeerOverrides`) resolve the one real conflict this
+ * normal handling can hit — two installed packages each declaring the same
+ * external package as an optional peer with incompatible ranges — without
+ * weakening what a missing *required* peer's own failure looks like.
  */
 const npmInstallOnce = (dir) => {
   const output = execNpmSync(
@@ -881,7 +916,7 @@ export const bundleFixture = (
   }
 };
 
-/** Reads the emitted production bundle's source, for content assertions (task 6.6). */
+/** Reads the emitted production bundle's source, for content assertions. */
 export const readBundle = (bundlePath) => readFileSync(bundlePath, 'utf8');
 
 /** Best-effort recursive delete — Windows can transiently lock files a just-exited child held open. */

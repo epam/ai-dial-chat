@@ -14,10 +14,6 @@ import type {
 import {
   AttachmentContentType,
   AttachmentErrorType,
-  getOoxmlMimeType,
-  isHtmlPreviewable,
-  isOoxmlPreviewable,
-  isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
 import type {
   Annotation,
@@ -28,9 +24,7 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import {
   base64ToBlob,
-  FileExtension,
   MIMEType,
-  stripUrlQueryAndFragment,
   tryBase64ToBytes,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -93,94 +87,17 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
   url,
 });
 
-/* Returns true when an external source URL should be opened in the canvas
- * rather than a new browser tab.
- *
- * Image, audio, PDF, and built-in document renderer (docx/xlsx/pptx/csv)
- * content types are trusted directly. Web-search grounding APIs do not
- * mislabel images/audio, and a
- * citation annotation's `attachment.type` is the same authoritative PDF/OOXML
- * marker the quotation canvas path (`annotationToPdfCanvasContent`) trusts —
- * such a URL commonly carries no matching extension (a citation/reference id,
- * not a file name). For other document types we rely on the URL path
- * extension — Google's grounding API labels every web reference (YouTube,
- * Forbes, etc.) as 'text/markdown', so content-type alone is unreliable
- * there. */
-/**
- * Returns the last path segment of `url` — its file name — for both absolute
- * URLs and DIAL-relative resource paths such as
- * `files/<bucket>/qa-routed-source.html`. Any query string or hash is dropped
- * and percent escapes are decoded. Returns an empty string when no segment can
- * be extracted. Used to classify a resource by extension when its display name
- * is a citation title rather than a file name.
+/*
+ * getUrlFileName, resolveExternalSourceContentType and
+ * isExternalSourcePreviewable live in `./source-content` so
+ * a consumer of only the `/source-content` entry point never resolves
+ * fetching, LRU cache initialization, or the
+ * `@epam/ai-dial-attachment-canvas`/`@epam/ai-dial-chat-shared` packages.
+ * `index.ts` and `entry-points/file-manager.ts` re-export `./source-content`
+ * directly for backward compatibility, rather than this module re-exporting
+ * it — that keeps each name owned by exactly one star-export target, since
+ * two `export *` declarations for the same name in one file silently drop it.
  */
-export const getUrlFileName = (url: string): string => {
-  let path: string;
-  try {
-    path = new URL(url).pathname;
-  } catch {
-    /* A relative DIAL resource path has no base to resolve against, so the
-     * query and hash are stripped by hand instead. */
-    path = stripUrlQueryAndFragment(url);
-  }
-  const segment = path.split('/').filter(Boolean).pop() ?? '';
-  try {
-    return decodeURIComponent(segment);
-  } catch {
-    /* Malformed percent escape — the raw segment still works for extension
-     * matching. */
-    return segment;
-  }
-};
-
-/** Returns true when `contentType` alone already trustworthily identifies an image, audio, PDF, or built-in document-renderer source. */
-const isTrustedSourceContentType = (contentType: string): boolean =>
-  contentType.startsWith('image/') ||
-  contentType.startsWith('audio/') ||
-  contentType === MIMEType.PDF ||
-  isOoxmlPreviewable('', contentType);
-
-/**
- * Returns the content type to trust for an external citation source: `contentType`
- * unchanged when it is already an image/audio/PDF/document-renderer marker,
- * otherwise the type implied by `url`'s path extension (`MIMEType.PDF` for
- * `.pdf`, the
- * canonical MIME for `.docx`/`.xlsx`/`.pptx`/`.csv`) when that extension is
- * recognized, otherwise `contentType` unchanged.
- *
- * Web-search grounding APIs label every reference — PDFs and Office documents
- * included — as `text/markdown`, so a mislabeled `contentType` must not win
- * over a recognized URL extension: doing so previously sent a PDF's raw bytes
- * into the markdown/text canvas viewer, rendering garbled text instead of
- * opening the PDF/OOXML viewer.
- */
-export const resolveExternalSourceContentType = (
-  contentType: string,
-  url: string,
-): string => {
-  if (isTrustedSourceContentType(contentType)) {
-    return contentType;
-  }
-  const fileName = getUrlFileName(url);
-  const dot = fileName.lastIndexOf('.');
-  const ext = dot === -1 ? '' : fileName.slice(dot + 1).toLowerCase();
-  if (ext === FileExtension.PDF) return MIMEType.PDF;
-  return getOoxmlMimeType(fileName) ?? contentType;
-};
-
-/** Returns true when an external (non-DIAL) source URL should be opened in the canvas rather than a new browser tab. */
-export const isExternalSourcePreviewable = (
-  contentType: string,
-  url: string,
-): boolean => {
-  const resolvedType = resolveExternalSourceContentType(contentType, url);
-  if (isTrustedSourceContentType(resolvedType)) {
-    return true;
-  }
-  const fileName = getUrlFileName(url);
-  /* 'html'/'htm' are not in TEXT_EXTENSIONS (they use HtmlContent), so both must be checked explicitly. */
-  return isTextPreviewable(fileName) || isHtmlPreviewable(fileName);
-};
 
 /*
  * Session-scoped LRU caches keyed by DIAL download URL.

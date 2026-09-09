@@ -18,20 +18,57 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
+`react` (`^19.2.6`) is the only mandatory peer, required by every entry point below. Every
+other peer is **optional** (`package.json#peerDependenciesMeta` marks all of them
+`optional: true`) — `npm install` succeeds with none of them present. Which ones you actually
+need to install depends on which entry point(s) you import; see the matrix below. Importing an
+entry without its documented peer installed does not fail at `npm install` — it fails later, at
+build time, when a bundler or `tsc` tries to resolve that entry's own imports.
+
+Full peer set (the root `.` entry needs all of them; `./markdown` and `./file-manager` need
+only their own row below):
+
 - `react` ^19.2.6
-- `@epam/ai-dial-ui-kit`
+- `@tabler/icons-react` \*
+- `react-syntax-highlighter` \*
+- `react-markdown` \*
+- `remark-breaks` \*
+- `remark-gfm` \*
+- `remark-math` \*
+- `rehype-katex` \*
+- `rehype-raw` \*
+- `rehype-sanitize` \*
+- `katex` \*
+- `@epam/ai-dial-ui-kit` \*
 - `@epam/ai-dial-react-file-manager` \*
-- `ag-grid-community` ^35.3.0
-- `@tabler/icons-react`
-- `react-markdown`
-- `remark-gfm`
-- `react-syntax-highlighter`
+- `ag-grid-community` \*
+
+`vitest` is used only by this package's own test files; it is not a runtime dependency of the
+published package and is intentionally absent from `peerDependencies` (excluded from
+`@nx/dependency-checks` via `ignoredDependencies` in `eslint.config.mjs`, since every consumer
+of this package already has its own test tooling, not this library's).
+
+### Entry-point-to-peer matrix
+
+| Entry point           | Runtime peers beyond `react`                                                                                                                                                                        |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.` (root, unchanged) | every runtime peer appearing in the rows below                                                                                                                                                      |
+| `./markdown`          | `react-syntax-highlighter`, `react-markdown`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`, `rehype-raw`, `rehype-sanitize`, `katex`, `@epam/ai-dial-ui-kit`, `@tabler/icons-react` |
+| `./file-manager`      | `@epam/ai-dial-react-file-manager`, `ag-grid-community`, `@epam/ai-dial-ui-kit`                                                                                                                     |
+
+The build preserves source-module boundaries so consumers can remove unused features.
+The FilterTab and CodeBlockTheme packed probes verify small root-import bundles without
+markdown or file-manager implementation. Root re-exports still require the documented
+peer closure to resolve before tree-shaking. Scoped feature entries limit resolution to
+their own peer sets; they do not remove peers required by that feature.
 
 ## Optional file-manager entry
 
 Import `DialFileManagerShell` and `FileManagerAttachModal` from
-`@epam/ai-dial-chat-shared/file-manager` inside a lazy feature. Their root exports
-remain compatible; headless contracts and utilities still come from the root.
+`@epam/ai-dial-chat-shared/file-manager` inside a lazy feature — or straight from root, per the
+tree-shaking behavior above; the dedicated subpath's advantage is avoiding the _install_
+requirement for peers your bundle would otherwise never resolve. Their root exports remain
+compatible; headless contracts and utilities still come from the root.
 The package declares only CSS/SCSS side effects so unused UI can be tree-shaken.
 Continue importing `@epam/ai-dial-chat-shared/styles.css` once in the host.
 
@@ -41,6 +78,23 @@ import {
   FileManagerAttachModal,
 } from '@epam/ai-dial-chat-shared/file-manager';
 import type { FileManagerController } from '@epam/ai-dial-chat-shared';
+```
+
+## Optional markdown entry
+
+Import `MarkdownRenderer` and its supporting exports from
+`@epam/ai-dial-chat-shared/markdown` when you want to avoid installing the file-manager peer stack
+at all (see the tree-shaking note above — this subpath is about the _install_ requirement, not
+bundle size, since a root import of the same names now produces the same output once peers are
+installed). The root entry continues to re-export the same names for backward compatibility, so
+existing root imports do not need to change.
+
+```tsx
+import {
+  MarkdownRenderer,
+  MarkdownCodeBlock,
+  restrainedSyntaxTheme,
+} from '@epam/ai-dial-chat-shared/markdown';
 ```
 
 ## Domain Models
@@ -617,3 +671,21 @@ npm exec nx build chat-shared
 ```sh
 npm exec nx test chat-shared
 ```
+
+## Rollback
+
+`chat-shared` is published by `tools/publish-lib.mjs`, which reads the version straight from
+this package's `package.json` and writes it into `dist/package.json` before `npm publish`. To
+roll a consuming host back to a previous `@epam/ai-dial-chat-shared` release:
+
+1. Pin the host's dependency back to the previous version (e.g.
+   `"@epam/ai-dial-chat-shared": "1.1.0-dev.410"` instead of `"1.1.0-dev.412"`).
+2. Because `catalog`, `publish-panel`, and `chat-hooks` all declare `@epam/ai-dial-chat-shared`
+   as a peer and are published from the same repository revision, revert those packages to
+   their own matching previous versions in the same host update — do not leave a newer sibling
+   package installed against an older `chat-shared`, since a mismatched pair can resolve to a
+   peer range one of them no longer satisfies (e.g. the pre-`./markdown`-split `chat-shared`
+   mandated all 15 peers, while the current one only mandates `react`).
+3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
+   resolved version and integrity hash, rather than a partial mix of pre- and post-change
+   versions.

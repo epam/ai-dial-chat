@@ -22,15 +22,20 @@
     },
     "./file-manager": {
       "@epam/source": "./src/entry-points/file-manager.ts",
-      "types": "./dist/entry-points/file-manager.d.ts",
+      "types": "./dist/file-manager.d.ts",
       "import": "./dist/file-manager.js",
       "default": "./dist/file-manager.js"
+    },
+    "./markdown": {
+      "@epam/source": "./src/entry-points/markdown.ts",
+      "types": "./dist/markdown.d.ts",
+      "import": "./dist/markdown.js",
+      "default": "./dist/markdown.js"
     },
     "./styles.css": "./dist/index.css"
   },
   "peerDependencies": {
     "react": "^19.2.6",
-    "vitest": "~4.1.0",
     "@tabler/icons-react": "^3.44.0",
     "react-syntax-highlighter": "^16.1.1",
     "react-markdown": "^10.1.0",
@@ -44,6 +49,47 @@
     "@epam/ai-dial-ui-kit": "^0.14.0-dev.15",
     "@epam/ai-dial-react-file-manager": "*",
     "ag-grid-community": "^35.3.0"
+  },
+  "peerDependenciesMeta": {
+    "@tabler/icons-react": {
+      "optional": true
+    },
+    "react-syntax-highlighter": {
+      "optional": true
+    },
+    "react-markdown": {
+      "optional": true
+    },
+    "remark-breaks": {
+      "optional": true
+    },
+    "remark-gfm": {
+      "optional": true
+    },
+    "remark-math": {
+      "optional": true
+    },
+    "rehype-katex": {
+      "optional": true
+    },
+    "rehype-raw": {
+      "optional": true
+    },
+    "rehype-sanitize": {
+      "optional": true
+    },
+    "katex": {
+      "optional": true
+    },
+    "@epam/ai-dial-ui-kit": {
+      "optional": true
+    },
+    "@epam/ai-dial-react-file-manager": {
+      "optional": true
+    },
+    "ag-grid-community": {
+      "optional": true
+    }
   },
   "dependencies": {
     "classnames": "2.5.1",
