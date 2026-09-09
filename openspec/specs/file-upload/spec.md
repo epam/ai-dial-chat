@@ -22,7 +22,7 @@ The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffe
 |-------|------|------------|
 | `file` | binary | Required; max size enforced by multer |
 | `bucket` | string | Required; `@Matches(/^[\w.-]+$/)` |
-| `path` | string | Required; `@IsValidFilePath()` |
+| `path` | string | Required; `@IsValidFilePath()`, up to 1024 characters |
 | `uploadMode` | `'overwrite' \| 'create-only'` | Optional; `@IsOptional()`, `@IsIn(['overwrite', 'create-only'])`; defaults to `'overwrite'` |
 
 **Upload mode → DIAL Core header mapping:**
@@ -30,6 +30,13 @@ The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffe
 |---|---|
 | `'overwrite'` or absent | No conditional header (existing behavior — overwrites any existing file) |
 | `'create-only'` | `If-None-Match: *` (fails with 412 if file already exists at path) |
+
+`path` is a bucket-relative URL path. Clients may percent-encode each file-name
+segment (for example, `uploads/2026-09/my%20report%20%23%201.pdf`). Before
+calling DIAL Core, the BFF SHALL decode every segment once and encode it once
+again. The returned `url` SHALL preserve this canonical single-encoded path.
+Malformed percent escapes, encoded separators or dots (`%2E`, `%2F`, `%5C`),
+raw backslashes, leading slashes, and traversal segments remain invalid.
 
 **DIAL Core 412 handling for `create-only`:** When DIAL Core returns `412 Precondition Failed` in response to `If-None-Match: *`, the BFF SHALL map this to `409 Conflict` with body `{ "message": "File already exists at this path" }`. This indicates a race condition (file was created by another request after the client checked) and SHALL be surfaced as an upload failure for that file.
 
@@ -49,6 +56,13 @@ The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffe
 - **THEN** the BFF forwards to DIAL Core without `If-None-Match`
 - **AND** DIAL Core overwrites any existing file at that path
 - **AND** the BFF returns `201 Created`
+
+#### Scenario: Upload a percent-encoded file name
+- **WHEN** an authenticated user uploads a file with the path
+  `uploads/2026-09/my%20report%20%23%201.pdf`
+- **THEN** the BFF forwards exactly
+  `uploads/2026-09/my%20report%20%23%201.pdf` to DIAL Core
+- **AND** the success response has a `url` containing that same single-encoded path
 
 #### Scenario: Successful create-only upload (path free)
 - **WHEN** an authenticated user sends `POST /api/v1/files` with `uploadMode: 'create-only'`
@@ -100,7 +114,7 @@ The system SHALL parse and validate the `bucket` and `path` form fields through 
 The `UploadFileDto` SHALL be defined at `apps/chat-api/src/files/dto/upload-file.dto.ts`.
 
 - `bucket`: `@IsString()`, `@IsNotEmpty()`, `@Matches(/^[\w.\-]+$/)`, `@MaxLength(256)`
-- `path`: `@IsString()`, `@IsNotEmpty()`, `@Matches(/^[\w.\-/]+$/)`, `@MaxLength(1024)`, and a custom validator or transform that rejects values starting with `/` or containing `..`
+- `path`: `@IsString()`, `@IsNotEmpty()`, `@MaxLength(1024)`, and `@IsValidFilePath()`; percent-encoded filename characters are valid, while a leading `/`, `..`, malformed percent escapes, encoded separators/dots, and raw forbidden path characters are rejected
 
 #### Scenario: Valid DTO passes validation
 - **WHEN** `bucket` is `my-bucket` and `path` is `folder/file.txt`
