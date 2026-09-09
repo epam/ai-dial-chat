@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { ConversationMessageRole } from '../dto/conversation-message.dto';
 import { applyChunkToMessage } from './apply-chunk.server';
 
@@ -14,6 +15,45 @@ const makeChunk = (delta: Record<string, unknown>, id = 'chunk-id') => ({
 });
 
 describe('applyChunkToMessage', () => {
+  it.each([false, true])(
+    'preserves PDF body selectors through raw cit assembly and JSON reload (array: %s)',
+    (array) => {
+      const bbox = { type: 'pdf_bbox', page: 3, x1: 0, y1: 0, x2: 0, y2: 0 };
+      const selector = array ? [bbox] : bbox;
+      const raw = {
+        index: 4,
+        target: { selector: { type: 'html_tag', tag: 'cit', id: 'page-3' } },
+        body: {
+          selector,
+          source: { type: 'attachment', url: 'files/bucket/report.pdf' },
+        },
+      };
+      const first = applyChunkToMessage(
+        baseMessage(),
+        makeChunk({
+          content: '<cit data-id="page-3"></cit>',
+          custom_fields: { annotations: [raw] },
+        }),
+      );
+      const updated = applyChunkToMessage(
+        first,
+        makeChunk({
+          custom_fields: {
+            annotations: [
+              { ...raw, body: { source: raw.body.source, quote: 'More text' } },
+            ],
+          },
+        }),
+      );
+      const reloaded = JSON.parse(JSON.stringify(updated));
+      expect(reloaded.custom_content.annotations).toHaveLength(1);
+      expect(reloaded.custom_content.annotations[0]).toMatchObject({
+        index: 4,
+        target: raw.target,
+        body: { selector, quote: 'More text' },
+      });
+    },
+  );
   it('concatenates text content across chunks', () => {
     const msg1 = applyChunkToMessage(
       baseMessage(),
@@ -296,6 +336,11 @@ describe('applyChunkToMessage', () => {
     ).annotations;
     expect(annotations).toHaveLength(1);
     expect(annotations[0].body.source.attachment.url).toBe('files/report.pdf');
+    expect(annotations[0]).toMatchObject({
+      body: {
+        selector: { type: 'pdf_bbox', page: 1, x1: 1, y1: 2, x2: 4, y2: 6 },
+      },
+    });
   });
 
   it('merges a later chunk for the same cit id into the existing entry', () => {

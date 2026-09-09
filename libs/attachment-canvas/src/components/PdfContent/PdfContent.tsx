@@ -462,12 +462,13 @@ export const PdfContent: FC<PdfContentProps> = ({
    * rather than racing it.
    */
   useEffect(() => {
-    if (!isViewerReady || selectedHighlightId) return;
+    if (!isViewerReady || selectedHighlightId || selectedPageNumber != null)
+      return;
     const raf = requestAnimationFrame(() => {
       viewerApiRef.current?.navigateToPage(1);
     });
     return () => cancelAnimationFrame(raf);
-  }, [isViewerReady, selectedHighlightId]);
+  }, [isViewerReady, selectedHighlightId, selectedPageNumber]);
 
   const handleSelectPage = useCallback((pageNum: number) => {
     setSelectedPage(pageNum);

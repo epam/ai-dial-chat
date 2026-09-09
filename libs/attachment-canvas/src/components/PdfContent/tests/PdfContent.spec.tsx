@@ -325,6 +325,14 @@ describe('PdfContent', () => {
   });
 
   describe('selectedPageNumber', () => {
+    it('does not reset an explicit page to page 1 when the viewer becomes ready', () => {
+      const navigateToPage = vi.fn();
+      render(
+        <PdfContent url="doc.pdf" highlights={[]} selectedPageNumber={3} />,
+      );
+      act(() => documentPreviewState.props?.onViewerReady({ navigateToPage }));
+      expect(navigateToPage).not.toHaveBeenCalled();
+    });
     it('forwards selectedPageNumber to DocumentPreview unchanged', () => {
       render(
         <PdfContent url="doc.pdf" highlights={[]} selectedPageNumber={7} />,

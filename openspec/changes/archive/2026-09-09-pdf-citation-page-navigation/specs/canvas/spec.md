@@ -6,13 +6,15 @@ When opening a PDF citation or a reference-only PDF-page chip in the attachment 
 
 `PdfCanvasContent` (`libs/attachment-canvas/src/models/attachment-canvas.ts`) SHALL include an optional `page?: number` field — a 1-based page to navigate to on initial load, independent of `highlights`/`selectedHighlightId`.
 
-`annotationToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL set `page` from the clicked annotation's own `body.selector` (single object or array) by taking the first entry whose `type === 'pdf_bbox'` and returning its `page` only when it is an integer `>= 1`; otherwise `page` is `undefined`. This selection SHALL use the exact annotation the caller passes in (the annotation the user clicked/selected within a grouped citation), never the group's `primaryAnnotation`, and SHALL NOT derive the page from `body.title` or any other display text.
+`annotationToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL set `page` from the clicked annotation's own `body.selector` (single object or array), taking the first `pdf_bbox` entry with an integer `page >= 1`, skipping malformed entries and invalid pages; otherwise `page` is `undefined`. This selection SHALL use the exact annotation the caller passes in (the annotation the user clicked/selected within a grouped citation), never the group's `primaryAnnotation`, and SHALL NOT derive the page from `body.title` or any other display text.
 
 `referenceAttachmentToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL likewise set `page` to the parsed page fragment when a reference-only PDF URL carries one (e.g. `files/{bucket}/report.pdf#page=81`).
 
 `PdfContent` (`libs/attachment-canvas/src/components/PdfContent/PdfContent.tsx`) SHALL accept a `selectedPageNumber?: number` prop, forward it directly to the vendor `DocumentPreview`'s own `selectedPageNumber` prop, and prefer it over the highlight-bbox lookup when initialising and syncing its internal `selectedPage` state (which also drives the thumbnails panel's scroll position). `AttachmentCanvasBody` SHALL pass `content.page` as this prop when rendering `PdfCanvasContent`.
 
-This requirement changes nothing about existing highlight rendering, download behavior, or non-PDF content-type routing — `highlights`/`selectedHighlightId` continue to be passed and rendered exactly as before; `page` only adds a page-navigation path that does not depend on them succeeding.
+The mapper SHALL find the group by exact annotation membership, not source URL alone, and include highlights only from that group's annotations for the selected PDF. It SHALL omit a selected highlight ID when no generated highlight matches. Highlight generation SHALL ignore malformed selectors, invalid pages, and non-finite coordinates, while retaining valid zero-area boxes. Download behavior and non-PDF routing SHALL remain unchanged.
+
+The wrapper SHALL NOT schedule its default-page-1 fallback when an explicit page or selected highlight is present. This prevents wrapper-originated resets; asynchronous vendor auto-zoom resets remain a diagnostic investigation, not a verified fix in this change.
 
 **i18n**: none — no new user-visible strings.
 **RTL**: none — no new UI; page navigation is an internal viewer scroll operation.
@@ -62,3 +64,18 @@ This requirement changes nothing about existing highlight rendering, download be
 
 - **WHEN** an annotation's source attachment is not `application/pdf`, or a PDF is opened directly (not through a citation) with no page data
 - **THEN** `PdfCanvasContent.page` is not set by this requirement's logic, and the existing preview/open behavior for that content type is unchanged
+
+#### Scenario: Malformed entries precede a valid page
+
+- **WHEN** body selectors contain null, a non-positive page, and then a valid `pdf_bbox` with page 7
+- **THEN** page 7 is selected without throwing
+
+#### Scenario: Separate markers share a PDF and a group includes another PDF
+
+- **WHEN** a selected annotation belongs to the second cit group, both groups cite the same PDF, and its group also cites a different PDF
+- **THEN** preview highlights come only from the selected group's matching PDF annotations, and the selected highlight exists when valid geometry is available
+
+#### Scenario: Explicit page without a highlight survives wrapper readiness
+
+- **WHEN** the viewer reports readiness for page 3 with no selected highlight
+- **THEN** the wrapper does not schedule or invoke its page-1 fallback

@@ -411,7 +411,7 @@ export const resolveHtmlCanvasContent = async (
 
 /**
  * Builds a `PdfCanvasContent` for a PDF citation annotation, including highlights
- * for all annotations in the same source group and scroll target for the clicked one.
+ * for the clicked annotation's document within its citation group.
  * Returns `null` if the annotation has no PDF source attachment.
  */
 export const annotationToPdfCanvasContent = (
@@ -427,15 +427,23 @@ export const annotationToPdfCanvasContent = (
     : source.url;
   if (url == null) return null;
 
-  const group = groups.find((g) => g.sourceUrl === source.url);
-  const allAnnotations = group?.annotations ?? [annotation];
-  const selectedIndex = group ? group.annotations.indexOf(annotation) : 0;
+  const group = groups.find((g) => g.annotations.includes(annotation));
+  const allAnnotations = (group?.annotations ?? [annotation]).filter(
+    (entry) => entry.body?.source?.attachment?.url === source.url,
+  );
+  const selectedIndex = allAnnotations.indexOf(annotation);
+  const highlights = annotationsToPdfHighlights(allAnnotations);
+  const highlightId = annotationHighlightId(annotation, selectedIndex);
 
   return {
     type: AttachmentContentType.Pdf,
     url,
-    highlights: annotationsToPdfHighlights(allAnnotations),
-    selectedHighlightId: annotationHighlightId(annotation, selectedIndex),
+    highlights,
+    selectedHighlightId: highlights.some(
+      (highlight) => highlight.id === highlightId,
+    )
+      ? highlightId
+      : undefined,
     page: getAnnotationPdfPage(annotation),
   };
 };

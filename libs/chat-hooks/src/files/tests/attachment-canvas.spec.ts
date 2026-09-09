@@ -16,7 +16,10 @@ import type {
   CustomVisualizer,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
-import type { AnnotationGroup } from '@epam/ai-dial-quotations';
+import {
+  groupAnnotations,
+  type AnnotationGroup,
+} from '@epam/ai-dial-quotations';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AttachmentCanvasUrlResolvers } from '../attachment-canvas';
 import {
@@ -492,6 +495,32 @@ describe('referenceAttachmentToPdfCanvasContent', () => {
 });
 
 describe('annotationToPdfCanvasContent', () => {
+  it('selects highlights from the clicked cit group and only its PDF', () => {
+    const annotation = (
+      id: string,
+      page: number,
+      url = 'files/bucket/report.pdf',
+    ): Annotation => ({
+      target: { selector: { type: 'html_tag', tag: 'cit', id } },
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: { type: 'application/pdf', url },
+        },
+        selector: { type: 'pdf_bbox', page, x1: 0, y1: 0, x2: 0, y2: 0 },
+      },
+    });
+    const first = annotation('first', 1);
+    const otherPdf = annotation('second', 2, 'files/bucket/other.pdf');
+    const clicked = annotation('second', 3);
+    const groups = groupAnnotations([first, otherPdf, clicked]);
+    const result = annotationToPdfCanvasContent(clicked, groups, resolvers);
+    expect(result?.page).toBe(3);
+    expect(result?.url).toBe('/download?path=report.pdf');
+    expect(result?.highlights).toHaveLength(1);
+    expect(result?.highlights?.[0].bboxes[0].page).toBe(3);
+    expect(result?.selectedHighlightId).toBe(result?.highlights?.[0].id);
+  });
   const makeAnnotation = (index: number, page: number): Annotation => ({
     index,
     body: {
@@ -525,6 +554,7 @@ describe('annotationToPdfCanvasContent', () => {
     const page2 = makeAnnotation(0, 2);
     const page7 = makeAnnotation(1, 7);
     const group: AnnotationGroup = {
+      groupKey: 'files/bucket/report.pdf',
       sourceUrl: 'files/bucket/report.pdf',
       sourceName: 'report.pdf',
       annotations: [page2, page7],

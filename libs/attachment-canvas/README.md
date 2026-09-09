@@ -86,6 +86,13 @@ the next PDF open (or an explicit retry) invokes `configurePdfWorker` again
 instead of being stuck on the first failure. When omitted,
 `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used instead.
 
+### PDF page navigation
+
+`PdfCanvasContent.page` is an optional 1-based navigation target, independent of
+highlight geometry. An explicit page suppresses the wrapper's default-page-1
+fallback. It does not synchronize the vendor engine's asynchronous zoom/render
+operations; a later vendor scroll reset remains under investigation.
+
 ## Styling
 
 Import the package's base stylesheet once, alongside the component tree:
@@ -308,7 +315,7 @@ const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 | `AttachmentContentType.Audio`       | `AudioCanvasContent`       | Renders an audio player                                                                                                                 |
 | `AttachmentContentType.Markdown`    | `MarkdownCanvasContent`    | Renders markdown text                                                                                                                   |
 | `AttachmentContentType.Json`        | `JsonCanvasContent`        | Renders a JSON tree viewer                                                                                                              |
-| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support and page-accurate navigation via an optional `page` field                                        |
+| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support and page-accurate navigation via an optional `page` field                                          |
 | `AttachmentContentType.Ooxml`       | `OoxmlCanvasContent`       | Renders DOCX, XLSX, PPTX, or CSV with `@silurus/ooxml`; the persistent XLSX `fx` bar shows the selected cell's formula or display value |
 | `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                                                                                                       |
 | `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source                                                                                        |

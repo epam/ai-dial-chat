@@ -29,6 +29,17 @@ const makeAnnotation = (
 ): Annotation => ({ body: { selector } });
 
 describe('getAnnotationPdfPage', () => {
+  it('skips malformed selectors and invalid pages before a valid PDF page', () => {
+    const selector = [
+      null,
+      4,
+      { type: 'pdf_bbox', page: 0 },
+      bbox({ page: 7 }),
+    ];
+    expect(
+      getAnnotationPdfPage(makeAnnotation(selector as AnnotationSelector[])),
+    ).toBe(7);
+  });
   it('returns the page from a single pdf_bbox selector', () => {
     expect(getAnnotationPdfPage(makeAnnotation(bbox({ page: 5 })))).toBe(5);
   });
@@ -94,6 +105,21 @@ const sampleHtmlTagRaw = (id: string, quote: string) => ({
 });
 
 describe('normalizeRawAnnotations', () => {
+  it.each([false, true])(
+    'retains PDF body selectors and annotation index for an html_tag citation (array: %s)',
+    (asArray) => {
+      const selector = asArray ? [bbox(), bbox({ page: 7 })] : bbox();
+      const raw = sampleHtmlTagRaw('page-citation', 'Quote');
+      const [annotation] = normalizeRawAnnotations(
+        [{ ...raw, index: 4, body: { ...raw.body, selector } }],
+        [],
+      );
+      expect(annotation.index).toBe(4);
+      expect(annotation.target?.selector).toEqual(raw.target.selector);
+      expect(annotation.body?.selector).toEqual(selector);
+      expect(getAnnotationPdfPage(annotation)).toBe(3);
+    },
+  );
   it('normalizes two html_tag annotations citing the same source URL into two entries', () => {
     const raw = [
       sampleHtmlTagRaw(

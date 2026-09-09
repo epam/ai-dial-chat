@@ -141,13 +141,18 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
 
 ## Utilities
 
+Raw `html_tag` normalization preserves an optional `body.selector` (object or array)
+and a supplied annotation `index`. The target selector identifies the chat marker;
+the body selector identifies the location in the document. Missing selector fields
+are omitted so quote-only streaming deltas preserve an earlier page.
+
 - `groupAnnotations(annotations)` — dispatches by selector type and returns the concatenation of `groupAnnotationsByCitId` (for `html_tag` annotations) and `groupAnnotationsBySource` (for every other annotation); prefer this over calling either grouping function directly
 - `groupAnnotationsBySource(annotations)` — groups non-`html_tag` annotations by their source URL into `AnnotationGroup[]`
 - `groupAnnotationsByCitId(annotations)` — groups `html_tag`-selector annotations by `target.selector.id`, one group per distinct tag id (never collapsing two ids that cite the same document)
 - `resolveMessageAnnotations(message)` — resolves annotations from either internal or raw wire format and repairs persisted `html_tag` sources whose historical PDF fallback conflicts with a recognized URL extension
 - `normalizeRawAnnotations(raw, attachments)` — normalises raw API wire-format annotations; recognizes both the legacy `attachment_index` + `pdf_region` shape and the `html_tag` + flat `body.source.url` shape, including DOCX/XLSX/PPTX MIME inference
-- `annotationsToPdfHighlights(annotations)` — maps annotations to PDF viewer highlight entries
-- `getAnnotationPdfPage(annotation)` — returns the 1-based PDF page from an annotation's first `pdf_bbox` selector, or `undefined` when absent or invalid
+- `annotationsToPdfHighlights(annotations)` — maps annotations with positive integer pages and finite coordinates to PDF viewer highlight entries; zero-area boxes are supported
+- `getAnnotationPdfPage(annotation)` — returns the first positive integer page from its `pdf_bbox` body selectors, skipping malformed entries and invalid pages; returns `undefined` when no valid page exists
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown, for offset-based (non-`html_tag`) groups only
 - `stripCitTagsWhileStreaming(content)` — hides supported paired citation elements while streaming and escapes every other `cit` shape for literal display
 - `replaceSentinelsInChildren(children, renderMarker)` — replaces sentinels with React nodes in a rendered tree

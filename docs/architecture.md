@@ -233,6 +233,10 @@ Behaviour applied automatically:
 
 ### SSE streaming
 
+Citation normalization preserves the inline marker's `target.selector` separately
+from the PDF location in `body.selector` through stream assembly and persistence;
+see [PDF citation metadata](../apps/chat-api/README.md#pdf-citation-metadata).
+
 `chat-stream.api.ts` handles streaming completions:
 
 - Uses `ReadableStream.getReader()` + line-by-line SSE parsing (`data: {json}`)
