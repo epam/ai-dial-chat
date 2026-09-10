@@ -102,23 +102,23 @@ export interface AnnotationDto {
  */
 export interface AnnotationSelectorDto {
   /**
-   * Selector discriminator, e.g. 'text_character_range', 'pdf_bbox', 'html_tag'
+   * Selector discriminator, e.g. 'text_character_range', 'pdf_bbox', 'html_tag', 'excel_rc_range'
    * @type {string}
    * @memberof AnnotationSelectorDto
    */
   type?: string;
   /**
-   * Character range start (inclusive)
-   * @type {number}
+   *
+   * @type {AnnotationSelectorDtoStart}
    * @memberof AnnotationSelectorDto
    */
-  start?: number;
+  start?: AnnotationSelectorDtoStart;
   /**
-   * Character range end (inclusive)
-   * @type {number}
+   *
+   * @type {AnnotationSelectorDtoEnd}
    * @memberof AnnotationSelectorDto
    */
-  end?: number;
+  end?: AnnotationSelectorDtoEnd | null;
   /**
    * 1-based PDF page number
    * @type {number}
@@ -161,7 +161,55 @@ export interface AnnotationSelectorDto {
    * @memberof AnnotationSelectorDto
    */
   id?: string;
+  /**
+   * DOCX story name a character range lives in, e.g. 'body' (opaque — no closed set is confirmed)
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  story?: string;
+  /**
+   * DOCX source-tree element indices identifying the paragraph, matched element-wise
+   * @type {Array<number>}
+   * @memberof AnnotationSelectorDto
+   */
+  path?: Array<number>;
+  /**
+   * 1-based PPTX slide number
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  slide?: number;
+  /**
+   * PPTX shape identifier, compared as a string
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  shapeId?: string;
+  /**
+   * XLSX sheet name, matched exactly
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  sheet?: string;
+  /**
+   * Cited text for a DOCX/PPTX range, compared against the text resolved over `start`/`end`
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  text?: string;
 }
+/**
+ * @type AnnotationSelectorDtoEnd
+ * Range end. For `text_character_range`/`pdf_bbox`, an inclusive character offset. For `docx_text_range`/`pptx_text_range`, an already-exclusive character offset (confirmed against captured DIAL Core responses). For `excel_rc_range`, a 1-based cell address naming the range's last (inclusive) cell. `null` and omitted are equivalent
+ * @export
+ */
+export type AnnotationSelectorDtoEnd = CellAddressDto | number;
+/**
+ * @type AnnotationSelectorDtoStart
+ * Range start: a character offset (inclusive), or a 1-based cell address for an `excel_rc_range` selector
+ * @export
+ */
+export type AnnotationSelectorDtoStart = CellAddressDto | number;
 /**
  *
  * @export
@@ -575,6 +623,25 @@ export interface AttachmentResourceDto {
    * @memberof AttachmentResourceDto
    */
   title?: string;
+}
+/**
+ *
+ * @export
+ * @interface CellAddressDto
+ */
+export interface CellAddressDto {
+  /**
+   * 1-based row number
+   * @type {number}
+   * @memberof CellAddressDto
+   */
+  row?: number;
+  /**
+   * 1-based column number
+   * @type {number}
+   * @memberof CellAddressDto
+   */
+  col?: number;
 }
 /**
  *

@@ -39,6 +39,12 @@ export type {
   MarkdownCanvasContent,
   McpAppCanvasContent,
   OoxmlCanvasContent,
+  OoxmlCellAddress,
+  OoxmlDocxHighlightLocation,
+  OoxmlHighlight,
+  OoxmlHighlightLocation,
+  OoxmlPptxHighlightLocation,
+  OoxmlXlsxHighlightLocation,
   PdfCanvasContent,
   PlainTextCanvasContent,
   UnsupportedCanvasContent,
@@ -48,6 +54,7 @@ export {
   AttachmentContentType,
   AttachmentErrorType,
   OoxmlFileType,
+  OoxmlHighlightKind,
 } from './types/attachment-canvas';
 export {
   createForbiddenCanvasContent,

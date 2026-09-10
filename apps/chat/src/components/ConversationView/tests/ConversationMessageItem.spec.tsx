@@ -327,7 +327,15 @@ describe('ConversationMessageItem — inline citations', () => {
     ).toHaveLength(6);
   });
 
-  it('routes a persisted XLSX citation mislabeled as PDF to generic attachment preview', async () => {
+  it('opens a persisted XLSX citation mislabeled as PDF in the OOXML canvas with no highlight, rather than falling through to generic attachment preview', async () => {
+    /*
+     * Before Office citation highlighting existed, every non-PDF citation
+     * fell through to the plain-attachment path. This citation carries no
+     * selector at all (a legacy annotation, or one the backend previously
+     * stripped) — per design.md's acceptance criteria, a missing selector
+     * still opens the Office document, just with no highlight, rather than
+     * falling through.
+     */
     const onAttachmentClick = vi.fn();
     const message: Message = {
       role: MessageRole.Assistant,
@@ -373,14 +381,256 @@ describe('ConversationMessageItem — inline citations', () => {
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
 
+    expect(onAttachmentClick).not.toHaveBeenCalled();
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: AttachmentContentType.Ooxml,
+        format: 'xlsx',
+      }),
+      'budget.xlsx',
+    );
+    expect(mockOpenCanvas.mock.calls[0][0]).not.toHaveProperty('highlights');
+  });
+
+  it('opens a DOCX citation in the OOXML canvas with the right format and the clicked annotation selected', async () => {
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: 'Fact<cit data-id="docx-1"></cit>',
+      timestamp: '2026-09-10T10:00:00Z',
+      custom_content: {
+        annotations: [
+          {
+            target: {
+              selector: { type: 'html_tag', tag: 'cit', id: 'docx-1' },
+            },
+            body: {
+              title: 'report.docx',
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  url: 'files/account/uploads/report.docx',
+                  title: 'report.docx',
+                },
+              },
+              selector: [
+                {
+                  type: 'docx_text_range',
+                  story: 'body',
+                  path: [3, 1],
+                  start: 0,
+                  end: 5,
+                  text: 'Hello',
+                },
+              ],
+            },
+          },
+        ],
+      },
+    };
+
+    render(
+      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: AttachmentContentType.Ooxml,
+        format: 'docx',
+        highlights: [expect.objectContaining({ id: '0' })],
+        selectedHighlightId: '0',
+      }),
+      'report.docx',
+    );
+  });
+
+  it('previews the second annotation of a grouped Office citation, not the group primary', async () => {
+    const url = 'files/account/uploads/report.docx';
+    const makeDocxSelector = (start: number, text: string) => [
+      {
+        type: 'docx_text_range',
+        story: 'body',
+        path: [start],
+        start: 0,
+        end: text.length,
+        text,
+      },
+    ];
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: 'Group<cit data-id="grouped"></cit>',
+      timestamp: '2026-09-10T10:00:00Z',
+      custom_content: {
+        annotations: [
+          {
+            index: 0,
+            target: {
+              selector: { type: 'html_tag', tag: 'cit', id: 'grouped' },
+            },
+            body: {
+              title: 'report.docx',
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  url,
+                  title: 'report.docx',
+                },
+              },
+              selector: makeDocxSelector(3, 'First'),
+            },
+          },
+          {
+            index: 1,
+            target: {
+              selector: { type: 'html_tag', tag: 'cit', id: 'grouped' },
+            },
+            body: {
+              title: 'report.docx',
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  url,
+                  title: 'report.docx',
+                },
+              },
+              selector: makeDocxSelector(7, 'Second'),
+            },
+          },
+        ],
+      },
+    };
+
+    render(
+      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: CitationsI18nKeys.PopupNextCitation }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+
+    expect(mockOpenCanvas).toHaveBeenLastCalledWith(
+      expect.objectContaining({ selectedHighlightId: '1' }),
+      'report.docx',
+    );
+  });
+
+  it('opens an Office citation with an unresolvable selector rather than falling through to the plain-attachment path', async () => {
+    const onAttachmentClick = vi.fn();
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: 'Fact<cit data-id="docx-bad"></cit>',
+      timestamp: '2026-09-10T10:00:00Z',
+      custom_content: {
+        annotations: [
+          {
+            target: {
+              selector: { type: 'html_tag', tag: 'cit', id: 'docx-bad' },
+            },
+            body: {
+              title: 'report.docx',
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  url: 'files/account/uploads/report.docx',
+                  title: 'report.docx',
+                },
+              },
+              selector: [
+                {
+                  type: 'docx_text_range',
+                  story: 'body',
+                  path: [3, 1],
+                  start: 5,
+                  end: 3,
+                  text: 'Hello',
+                },
+              ],
+            },
+          },
+        ],
+      },
+    };
+
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+
+    expect(onAttachmentClick).not.toHaveBeenCalled();
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({ type: AttachmentContentType.Ooxml }),
+      'report.docx',
+    );
+  });
+
+  it('falls through a CSV citation to generic attachment preview, unchanged', async () => {
+    const onAttachmentClick = vi.fn();
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: 'Data<cit data-id="csv-1"></cit>',
+      timestamp: '2026-09-10T10:00:00Z',
+      custom_content: {
+        annotations: [
+          {
+            target: { selector: { type: 'html_tag', tag: 'cit', id: 'csv-1' } },
+            body: {
+              title: 'export.csv',
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'text/csv',
+                  url: 'files/account/uploads/export.csv',
+                  title: 'export.csv',
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+
     expect(mockOpenCanvas).not.toHaveBeenCalled();
     expect(onAttachmentClick).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: 'budget.xlsx',
-        contentType:
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        url: 'files/account/uploads/budget.xlsx',
-      }),
+      expect.objectContaining({ url: 'files/account/uploads/export.csv' }),
     );
   });
 });

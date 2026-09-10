@@ -30,6 +30,7 @@ export type { UseCitationMarkdownComponentsCallbacks } from './hooks/useCitation
 
 // Utils
 export {
+  gatherSameSourceAnnotations,
   groupAnnotations,
   groupAnnotationsByCitId,
   groupAnnotationsBySource,
@@ -37,12 +38,22 @@ export {
 export type { AnnotationGroup } from './utils/group-annotations-by-source';
 
 export {
-  annotationsToPdfHighlights,
   annotationHighlightId,
+  annotationsToPdfHighlights,
+  annotationToOfficeHighlightLocations,
   getAnnotationPdfPage,
+  isDocxRangeSelector,
+  isExcelRcRangeSelector,
+  isPptxRangeSelector,
   normalizeRawAnnotations,
   resolveMessageAnnotations,
 } from './utils/annotation';
+export type {
+  DocxOfficeHighlightLocation,
+  ExcelOfficeHighlightLocation,
+  OfficeHighlightLocation,
+  PptxOfficeHighlightLocation,
+} from './models/office-highlight';
 
 export {
   injectCitationSentinels,

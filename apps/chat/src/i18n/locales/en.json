@@ -961,7 +961,9 @@
     "pdfContentErrorLabel": "Failed to load the PDF viewer",
     "xlsxFormulaLabel": "Formula",
     "codeContentLoadingLabel": "Loading syntax highlighting…",
-    "codeContentErrorLabel": "Failed to load syntax highlighting"
+    "codeContentErrorLabel": "Failed to load syntax highlighting",
+    "ooxmlHighlightsLabel": "Cited locations",
+    "ooxmlHighlightNavigatedLabel": "Scrolled to the cited location"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",

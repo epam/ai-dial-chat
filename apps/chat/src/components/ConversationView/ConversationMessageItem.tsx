@@ -4,6 +4,7 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import {
   annotationToDisplayAttachment,
+  annotationToOoxmlCanvasContent,
   annotationToPdfCanvasContent,
   attachmentDtosToDisplayAttachments,
   messageHasStages,
@@ -320,10 +321,22 @@ const ConversationMessageItem: FC<Props> = ({
         openCanvas(pdfContent, fileName);
         return;
       }
+      const ooxmlContent = annotationToOoxmlCanvasContent(
+        annotation,
+        annotations,
+        attachmentCanvasUrlResolvers,
+      );
+      if (ooxmlContent != null) {
+        const attachment = annotation.body?.source?.attachment;
+        const rawSegment = attachment?.url?.split('/').pop() ?? '';
+        const fileName = attachment?.title ?? decodeURIComponent(rawSegment);
+        openCanvas(ooxmlContent, fileName);
+        return;
+      }
       const display = annotationToDisplayAttachment(annotation);
       if (display) handleAttachmentClick(display);
     },
-    [citationGroups, openCanvas, handleAttachmentClick],
+    [citationGroups, annotations, openCanvas, handleAttachmentClick],
   );
   const handleCitationOpenInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
