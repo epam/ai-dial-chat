@@ -4,13 +4,13 @@ import type {
 } from '@epam/ai-dial-catalog';
 import type { SkillMetadataItemDto } from '@epam/ai-dial-chat-api-client';
 import { useEffect, useMemo, useState } from 'react';
-import { SkillSource } from '../../skill/skill-types';
 import type { SkillFileContent } from '../../skill/skill-file-preview';
-import { useSkillItemDetails } from '../useSkillItemDetails';
+import { SkillSource } from '../../skill/skill-types';
+import type { DeploymentFolderLabels } from '../map-deployment-to-catalog-item';
+import type { SkillOverviewLabels } from '../map-skill-to-catalog-item';
+import { mapSkillToCatalogItem } from '../map-skill-to-catalog-item';
 import type { SkillDetailsApi } from '../useSkillItemDetails';
-import type { DeploymentFolderLabels } from './map-deployment-to-catalog-item';
-import { mapSkillToCatalogItem } from './map-skill-to-catalog-item';
-import type { SkillOverviewLabels } from './map-skill-to-catalog-item';
+import { useSkillItemDetails } from '../useSkillItemDetails';
 
 /** Options accepted by `useSkillDetailsPanelData`. */
 export interface UseSkillDetailsPanelDataOptions {
