@@ -413,6 +413,14 @@ folder offers `Unpublish`, so publishing an already-published item a second
 time means unpublishing it first. Because the history lookup is lazy, the entry
 may start as `Publish` and swap once the response lands.
 
+Supplying `isUnpublishVisible` does one more thing: for an item it returns
+`true` for, the Manage trigger renders while the history lookup is still
+outstanding, even when that leaves the menu momentarily empty. Without this an
+item whose only entry would be `Unpublish` could never show one, because the
+lookup that produces it is started by hovering, focusing or opening that same
+trigger. A host that supplies no rule keeps the plain "hidden while empty"
+behaviour.
+
 Its body depends on how many folders history resolved to: one folder is named in static copy with confirm enabled
 immediately, while several render as a single-select radio group with confirm
 disabled until the user picks one. Confirming calls
