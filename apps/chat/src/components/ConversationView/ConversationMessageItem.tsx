@@ -540,28 +540,34 @@ const ConversationMessageItem: FC<Props> = ({
         attachments={nonReferenceDisplayAttachments}
         isStreaming={isStreaming}
         hasAlwaysVisibleActions={!isStreaming}
-        actions={buildMessageActions(
-          msg,
-          index,
-          {
-            onEdit:
-              !isAssistantTyping && !isEditUserMessageHidden
-                ? onStartEdit
-                : undefined,
-            onHoverEdit: preloadEditInput,
-            onDelete:
-              !isAssistantTyping && !isDeleteUserMessageHidden
-                ? onDeleteMessage
-                : undefined,
-            onRegenerate: isRegenerateAssistantMessageHidden
-              ? undefined
-              : onRegenerateMessage,
-            onRate: isLikesEnabled ? onRateMessage : undefined,
-            onDislike: isLikesEnabled ? onDislikeMessage : undefined,
-          },
-          tooltips,
-          ariaLabels,
-        )}
+        actions={{
+          ...buildMessageActions(
+            msg,
+            index,
+            {
+              onEdit:
+                !isAssistantTyping && !isEditUserMessageHidden
+                  ? onStartEdit
+                  : undefined,
+              onHoverEdit: preloadEditInput,
+              onDelete:
+                !isAssistantTyping && !isDeleteUserMessageHidden
+                  ? onDeleteMessage
+                  : undefined,
+              onRegenerate: isRegenerateAssistantMessageHidden
+                ? undefined
+                : onRegenerateMessage,
+              onRate: isLikesEnabled ? onRateMessage : undefined,
+              onDislike: isLikesEnabled ? onDislikeMessage : undefined,
+            },
+            tooltips,
+            ariaLabels,
+          ),
+          /* Regenerate/copy/like/dislike stay mounted while a response streams,
+             so they have to be disabled — otherwise a second generation or a
+             rating can be triggered mid-stream. */
+          isDisabled: isAssistantTyping,
+        }}
         afterContent={
           referenceGroups.length > 0 ||
           hasStages ||
