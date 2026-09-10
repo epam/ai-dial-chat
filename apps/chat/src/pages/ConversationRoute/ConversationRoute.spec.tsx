@@ -85,11 +85,6 @@ vi.mock(
   '../../context/AppConfigContext',
   async () => import('../../context/tests/app-config-context-mock'),
 );
-mockUseAppConfig.mockReturnValue({
-  status: 'ready',
-  features: {},
-  config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
-});
 vi.mock('../../context/DeploymentsContext');
 vi.mock('../../context/IsolatedModelViewContext', async (importOriginal) => {
   const actual =
@@ -294,6 +289,13 @@ describe('ConversationRoute', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    /* Re-armed here because one test's `vi.restoreAllMocks()` wipes the
+       implementation set on the shared spy. */
+    mockUseAppConfig.mockReturnValue({
+      status: 'ready',
+      features: {},
+      config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
+    });
     mockUseIsolatedModelView.mockReturnValue({
       isActive: false,
       isNotFound: false,
