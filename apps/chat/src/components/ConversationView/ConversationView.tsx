@@ -74,7 +74,6 @@ import {
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
   PromptSelectorI18nKeys,
-  ToolsI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -251,9 +250,11 @@ const ConversationView: FC<Props> = ({
   );
   const {
     skillMenuOverlay,
+    commandMenu,
     skillCatalogModal,
     skillDetailsPanel,
-    selectedSkillChips,
+    selectedSkillElement,
+    removeSelectedSkill,
   } = useSkillSelectorOverlay();
   /*
    * The Skills entry joins the Prompts entry in array order, so it renders
@@ -1001,11 +1002,9 @@ const ConversationView: FC<Props> = ({
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
                 menuOverlays={menuOverlays}
-                selectedEntities={selectedSkillChips}
-                selectedEntityChipLabels={{
-                  removeLabel: (label) =>
-                    t(ToolsI18nKeys.RemoveTool, { label }),
-                }}
+                inlineStartSlot={selectedSkillElement}
+                onInlineStartRemove={removeSelectedSkill}
+                commandMenu={commandMenu}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
                   <UsageLimitsControl

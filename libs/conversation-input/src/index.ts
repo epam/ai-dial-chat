@@ -14,12 +14,12 @@ export { SendOnEnter } from './models/Input';
 export type { TranscribeAudio } from './models/Voice';
 export type {
   ChatSettingsValues,
+  CommandMenuConfig,
+  CommandMenuContext,
   InputColors,
   InputProps,
   InputTypography,
   MenuOverlayConfig,
-  SelectedEntityChip,
-  SelectedEntityChipsLabels,
   ToolsChipLabels,
 } from './models/Input';
 

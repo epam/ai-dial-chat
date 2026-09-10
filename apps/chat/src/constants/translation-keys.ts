@@ -355,7 +355,9 @@ export enum PromptSelectorI18nKeys {
 export enum SkillSelectorI18nKeys {
   AddMenuLabel = 'skillSelector.addMenuLabel',
   EmptyHint = 'skillSelector.emptyHint',
+  EmptyQueryHint = 'skillSelector.emptyQueryHint',
   ModalTitle = 'skillSelector.modalTitle',
+  NoMatchingSkillsLabel = 'skillSelector.noMatchingSkillsLabel',
   ViewDetailsLabel = 'skillSelector.viewDetailsLabel',
 }
 

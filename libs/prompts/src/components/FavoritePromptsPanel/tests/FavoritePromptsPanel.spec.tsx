@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -103,11 +103,23 @@ describe('FavoritePromptsPanel', () => {
     expect(onBrowse).toHaveBeenCalledOnce();
   });
 
-  it('shows the description in a tooltip trigger when present', () => {
+  it('renders the description in the row tooltip when a described row is hovered', async () => {
     renderPanel({
       favorites: [makeItem({ description: 'Summarizes long text' })],
     });
 
-    expect(screen.getByText('Summarizer')).toBeTruthy();
+    /*
+     * The kit's hover listener is a native `mouseenter` listener on the row
+     * wrapper that `asChild` creates, and `mouseenter` does not bubble, so
+     * user-event's hover on the inner row button never reaches it — dispatch
+     * the enter event directly instead.
+     */
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Summarizer' }));
+
+    /* The kit opens the tooltip after its 400 ms hover-open delay. */
+    await waitFor(
+      () => expect(screen.getByText('Summarizes long text')).toBeTruthy(),
+      { timeout: 2000 },
+    );
   });
 });
