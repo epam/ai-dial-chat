@@ -781,11 +781,17 @@ describe('Input — isInputDisabled', () => {
     expect(screen.queryByText('model picker')).toBeNull();
   });
 
-  it('shows a Prompts item in the Add menu when promptsMenuOverlay is provided', () => {
+  it('shows a Prompts item in the Add menu when a menu overlay is provided', () => {
     render(
       <Input
-        promptsMenuOverlay={() => <div>prompts overlay</div>}
-        promptsMenuTitle="Prompts"
+        menuOverlays={[
+          {
+            key: 'prompts',
+            title: 'Prompts',
+            icon: <span aria-hidden />,
+            renderOverlay: () => <div>prompts overlay</div>,
+          },
+        ]}
       />,
     );
 
@@ -794,7 +800,7 @@ describe('Input — isInputDisabled', () => {
     expect(screen.getByText('Prompts')).toBeTruthy();
   });
 
-  it('does not show a Prompts item in the Add menu when promptsMenuOverlay is absent', () => {
+  it('does not show a Prompts item in the Add menu when no menu overlay is provided', () => {
     render(<Input />);
 
     fireEvent.click(screen.getByLabelText('Add'));

@@ -21,9 +21,10 @@ import {
 } from '../ClientChannelContext';
 import { GenerationProvider, useGeneration } from '../GenerationContext';
 
-vi.mock('../AppConfigContext', () => ({
-  useFeatureFlag: vi.fn(),
-}));
+vi.mock(
+  '../AppConfigContext',
+  async () => import('./app-config-context-mock'),
+);
 
 vi.mock('../../server-api/client-channel', () => ({
   ClientChannelReportResult: { Success: 'success', Denied: 'denied' },

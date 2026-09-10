@@ -16,6 +16,7 @@ import * as DeploymentsContextModule from '../../context/DeploymentsContext';
 import * as IsolatedModelViewContextModule from '../../context/IsolatedModelViewContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
 import * as OverlayContextMock from '../../context/overlay/OverlayContext';
+import { useAppConfig as mockUseAppConfig } from '../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as apiClient from '../../server-api/api-client';
@@ -68,15 +69,22 @@ vi.mock('../../components/PromptSelector/usePromptSelectorOverlay', () => ({
     openParametersPopup: mockOpenParametersPopup,
   }),
 }));
-vi.mock('../../context/AppConfigContext', () => ({
-  default: ({ children }: { children: ReactNode }) => children,
-  useAppConfig: () => ({
-    status: 'ready',
-    features: {},
-    config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
+/* The real hook needs SkillsProvider/FavoriteApplicationsContext, which this
+ * harness does not mount; the stub mirrors its flag-off shape
+ * (`useFeatureFlag` is mocked to `false` above). */
+vi.mock('../../components/SkillSelector/useSkillSelectorOverlay', () => ({
+  useSkillSelectorOverlay: () => ({
+    skillMenuOverlay: undefined,
+    skillCatalogModal: null,
+    skillDetailsPanel: null,
+    selectedSkillChips: [],
+    selectSkill: vi.fn(),
   }),
-  useFeatureFlag: () => false,
 }));
+vi.mock(
+  '../../context/AppConfigContext',
+  async () => import('../../context/tests/app-config-context-mock'),
+);
 vi.mock('../../context/DeploymentsContext');
 vi.mock('../../context/IsolatedModelViewContext', async (importOriginal) => {
   const actual =
@@ -281,6 +289,13 @@ describe('ConversationRoute', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    /* Re-armed here because one test's `vi.restoreAllMocks()` wipes the
+       implementation set on the shared spy. */
+    mockUseAppConfig.mockReturnValue({
+      status: 'ready',
+      features: {},
+      config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
+    });
     mockUseIsolatedModelView.mockReturnValue({
       isActive: false,
       isNotFound: false,

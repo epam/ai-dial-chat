@@ -98,6 +98,9 @@
     },
     {
       "path": "./libs/editor-builder"
+    },
+    {
+      "path": "./libs/skills"
     }
   ]
 }

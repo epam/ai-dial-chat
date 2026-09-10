@@ -323,6 +323,34 @@ import {
 <InfoCard item={item} variant={DetailsConfirmationVariant.Danger} />
 ```
 
+### DetailsPanel
+
+The right-anchored details panel `Catalog` opens internally, exported for
+hosts composing it into other surfaces (e.g. a chat route's skill details side
+panel). Only `item`, `isOpen`, and `onClose` are required; every action is
+opt-in and hidden when its prop is absent, and mounting it never mounts the
+catalog page chrome — the host owns the item, the details fetch, and the
+action handlers. Skills open on the content-first tab; prompts and deployments
+open on their usual first tab.
+
+```tsx
+import { DetailsPanel } from '@epam/ai-dial-catalog';
+import type { CatalogItem } from '@epam/ai-dial-catalog';
+
+<DetailsPanel
+  item={item}
+  isOpen={isDetailsOpen}
+  onClose={closeDetails}
+  isStarred={item.isUserFavorite}
+  onToggleFavorite={(id, isStarred) => toggleFavorite(id, isStarred)}
+  onUseInChat={(item: CatalogItem) => attachToChat(item)}
+  texts={{ primaryActionLabel: 'Use in chat' }}
+/>;
+```
+
+See `DetailsPanelProps` (and its `texts` / `styles` overrides) in the Types
+section below; a skills-scoped wrapper lives in `@epam/ai-dial-skills`.
+
 ## Enums
 
 ```tsx
@@ -709,6 +737,9 @@ import type {
   ApiResource,
   CatalogItemApiDetails,
   CatalogItemPromptContent,
+  DetailsPanelProps,
+  ItemDetailsStyles,
+  ItemDetailsTexts,
   ToolDefinition,
   PricingRow,
   UsageLimitRow,

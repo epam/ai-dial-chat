@@ -20,9 +20,10 @@ const { modelLimitsSectionSpy } = vi.hoisted(() => ({
   modelLimitsSectionSpy: vi.fn(),
 }));
 
-vi.mock('../../../../context/AppConfigContext', () => ({
-  useFeatureFlag: vi.fn(),
-}));
+vi.mock(
+  '../../../../context/AppConfigContext',
+  async () => import('../../../../context/tests/app-config-context-mock'),
+);
 
 vi.mock('../../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),

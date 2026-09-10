@@ -7,6 +7,7 @@ import { AttachmentType } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VoiceRecordingI18nKeys } from '../../../constants/translation-keys';
+import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { useUiFeature } from '../../useUiFeature';
 import { useAudioTranscription } from '../useAudioTranscription';
 
@@ -20,9 +21,11 @@ const config = {
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ config }),
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
+mockUseAppConfig.mockImplementation(() => ({ config }));
 vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({ user: { bucket: 'bucket' } }),
 }));

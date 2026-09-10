@@ -37,6 +37,7 @@ import {
 import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
+import { SelectedEntityChips } from '../SelectedEntityChips/SelectedEntityChips';
 import { ToolsChips } from '../ToolsChips/ToolsChips';
 import { VoiceBar } from '../VoiceBar/VoiceBar';
 import { SendButton } from './Buttons/SendButton';
@@ -108,9 +109,9 @@ export const Input: FC<InputProps> = ({
   toolsMenuTitle,
   toolsBackLabel,
   toolsChipLabels,
-  promptsMenuOverlay,
-  promptsMenuTitle,
-  promptsBackLabel,
+  menuOverlays,
+  selectedEntities,
+  selectedEntityChipLabels,
   autoFocus = false,
   messageHistory,
   onDialFileSystemClick,
@@ -553,9 +554,15 @@ export const Input: FC<InputProps> = ({
                 onToolToggle={onToolToggle}
                 toolsMenuTitle={toolsMenuTitle}
                 toolsBackLabel={toolsBackLabel}
-                promptsMenuOverlay={promptsMenuOverlay}
-                promptsMenuTitle={promptsMenuTitle}
-                promptsBackLabel={promptsBackLabel}
+                menuOverlays={menuOverlays}
+              />
+            </div>
+          )}
+          {selectedEntities != null && selectedEntities.length > 0 && (
+            <div className="min-w-0 flex-1">
+              <SelectedEntityChips
+                items={selectedEntities}
+                removeLabel={selectedEntityChipLabels?.removeLabel}
               />
             </div>
           )}

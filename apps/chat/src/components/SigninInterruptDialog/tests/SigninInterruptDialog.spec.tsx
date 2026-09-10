@@ -23,9 +23,10 @@ import { getToolset } from '../../../server-api/toolsets';
 import { PendingSigninEventKind } from '../../../types/client-channel';
 import SigninInterruptDialog from '../SigninInterruptDialog';
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useFeatureFlag: vi.fn(),
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 vi.mock('../../../context/ClientChannelContext', () => ({
   useClientChannel: vi.fn(),
 }));

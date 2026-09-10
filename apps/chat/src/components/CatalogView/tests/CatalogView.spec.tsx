@@ -472,9 +472,10 @@ vi.mock('../../../context/auth/UserContext', () => ({
   useUser: vi.fn(),
 }));
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: vi.fn(),
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),

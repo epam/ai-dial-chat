@@ -2530,6 +2530,95 @@ const { bytes, mimeType } = await onLoadSkillDetailsFile(fileId);
 | `onLoadContentFile`      | `(fileId: string) => Promise<string \| undefined>`                           | Loads text content for a file within the open skill package. |
 | `onLoadSkillDetailsFile` | `(fileId: string) => Promise<SkillFileContent>`                              | Downloads preview bytes; throws on HTTP error.               |
 
+The skill branch (manifest download + parse, package file listing, in-package
+file loads) is delegated to `useSkillItemDetails` below — `CatalogDetailsApi`
+extends that hook's `SkillDetailsApi` port with the deployment and prompt
+methods.
+
+### useSkillItemDetails / fetchSkillDescription
+
+The skill-scoped half of the details pipeline, for hosts that only surface
+skill details and therefore have no deployment/prompt ports to inject.
+`useCatalogItemDetails` composes it internally; consuming it directly avoids
+supplying the four unused adapter methods the full pipeline requires.
+
+```ts
+import {
+  fetchSkillDescription,
+  useSkillItemDetails,
+} from '@epam/ai-dial-chat-hooks';
+
+const { onFetchSkillDetails, onLoadContentFile, onLoadSkillDetailsFile } =
+  useSkillItemDetails({
+    api, // SkillDetailsApi — downloadSkillFile + listSkillFiles
+    skills, // SkillMetadataItemDto[] — all skills visible to the user
+    skillOverviewLabels, // SkillOverviewLabels
+  });
+
+// Fetch full details for a skill catalog item (returns undefined on failure)
+const details = await onFetchSkillDetails(skillCatalogItem);
+
+// One-shot manifest description for a listing tooltip. Returns null on an
+// unparseable id, an unreadable manifest, or a failed request — never throws.
+const description = await fetchSkillDescription(api, skill.url);
+```
+
+**Options** (`UseSkillItemDetailsOptions`): `api`
+(`SkillDetailsApi`), `skills` (`SkillMetadataItemDto[]`), and
+`skillOverviewLabels` (`SkillOverviewLabels`).
+
+**Returns** (`UseSkillItemDetailsResult`): `onFetchSkillDetails`,
+`onLoadContentFile`, and `onLoadSkillDetailsFile`, with the same shapes as
+the `useCatalogItemDetails` returns above.
+
+`fetchSkillDescription(api, skillId)` reuses the same manifest-download path
+as the full pipeline and resolves every failure to `null` so a listing
+tooltip can treat "no description" and "could not fetch" identically.
+
+### useSkillDetailsPanelData
+
+The data pipeline behind a skill details side panel, for hosts that render
+details from the skill listings directly. Resolves the selected skill across
+the personal/shared/public arrays, maps it to a `CatalogItem` with its
+ownership flags and folder prefix, fetches its details with cancellation, and
+merges the fetch result into the item. It renders nothing — pairing it with a
+details panel component (e.g. `@epam/ai-dial-skills`'s `SkillDetailsSidePanel`)
+is the host's job.
+
+```ts
+import { useSkillDetailsPanelData } from '@epam/ai-dial-chat-hooks';
+
+const {
+  detailsPanelItem,
+  isDetailsLoading,
+  isStarred,
+  onLoadSkillDetailsFile,
+} = useSkillDetailsPanelData({
+  api, // SkillDetailsApi — downloadSkillFile + listSkillFiles
+  skills, // SkillMetadataItemDto[] — the user's own skills
+  sharedWithMe, // SkillMetadataItemDto[] | undefined
+  publicSkills, // SkillMetadataItemDto[] | undefined
+  skillId, // string | null — null resolves no item
+  folderLabels, // DeploymentFolderLabels — personal/shared/public
+  skillOverviewLabels, // SkillOverviewLabels
+  favoriteIds, // ReadonlySet<string> — keyed by skill resource URL
+});
+```
+
+**Options** (`UseSkillDetailsPanelDataOptions`): `api` (`SkillDetailsApi`),
+`skills`/`sharedWithMe`/`publicSkills` (`SkillMetadataItemDto[]`, the latter
+two optional), `skillId` (`string | null`), `folderLabels`
+(`DeploymentFolderLabels`), `skillOverviewLabels` (`SkillOverviewLabels`),
+and `favoriteIds` (`ReadonlySet<string>`).
+
+**Returns** (`UseSkillDetailsPanelDataResult`): `detailsPanelItem`
+(`CatalogItem | null` — the mapped item with fetched details merged in, `null`
+while unselected or unresolved), `isDetailsLoading` (`boolean`),
+`isStarred` (`boolean`), and `onLoadSkillDetailsFile` — the same loader
+`useSkillItemDetails` returns, for previewing a file picked in the item's
+Content tab. The details fetch is keyed on the item's id and cancelled on
+change, so a favorite toggle that rebuilds the item does not refetch.
+
 ### resolveCatalogPrimaryAction
 
 Pure async resolver for the catalog's "Use" primary action. Returns a discriminated `CatalogPrimaryActionResult` — either a deployment selection or a resolved prompt with optional parameter placeholders. Does not navigate, select, or show notifications — those remain the caller's responsibility.

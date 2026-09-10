@@ -204,6 +204,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/prompts/src/index.ts',
       ),
+      '@epam/ai-dial-skills': path.resolve(
+        import.meta.dirname,
+        '../../libs/skills/src/index.ts',
+      ),
       '@epam/ai-dial-settings-panel': path.resolve(
         import.meta.dirname,
         '../../libs/settings-panel/src/index.ts',

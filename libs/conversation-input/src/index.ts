@@ -17,6 +17,9 @@ export type {
   InputColors,
   InputProps,
   InputTypography,
+  MenuOverlayConfig,
+  SelectedEntityChip,
+  SelectedEntityChipsLabels,
   ToolsChipLabels,
 } from './models/Input';
 
