@@ -1,4 +1,5 @@
 import { SelectOption } from '@epam/ai-dial-ui-kit';
+import type { ReactNode } from 'react';
 import type { ScheduledTasksSortKey } from '../types/scheduled-tasks-sort-key';
 import type { ScheduledTaskCardGridLabels } from './scheduled-task-card-grid-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
@@ -104,6 +105,8 @@ export interface ScheduledTasksProps {
   onLoadMore?: () => void;
   /** Called with a task id when the user activates a card's body. Omit to render cards with no added interactive root semantics. */
   onCardClick?: (id: string) => void;
+  /** Content rendered between the search/sort toolbar and the content region (e.g. a status banner). Renders nothing when omitted. */
+  banner?: ReactNode;
   /** Style overrides. */
   styles?: ScheduledTasksStyles;
 }

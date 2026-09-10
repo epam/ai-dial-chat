@@ -8,6 +8,7 @@ import type {
   ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
+import type { TranscribeAudio } from './Voice';
 
 /** Controls which key combination submits the message in the `Input` component. */
 export enum SendOnEnter {
@@ -226,11 +227,21 @@ export interface InputProps {
   isSendDisabled?: boolean;
   /**
    * When `true`, the mic button is rendered and voice recording is enabled.
-   * Derived by the host app from the selected deployment's `inputAttachmentTypes`.
-   * When `false` or absent, the mic button is hidden and the voice bar is never shown.
+   * Derived by the host app from its recording/recognition capabilities.
+   * When `false` or absent, the dictation button is hidden.
    */
   isAudioMessageSupported?: boolean;
-  /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
+  /** Enables Record voice in the add menu when attachments are enabled. Defaults to isAudioMessageSupported. */
+  isVoiceRecordingSupported?: boolean;
+  /** Label for the audio attachment recording menu item. Defaults to 'Record voice'. */
+  recordVoiceLabel?: string;
+  /** Host-owned recognition. When supplied, the microphone button inserts draft text; Record voice always attaches audio. */
+  onTranscribeAudio?: TranscribeAudio;
+  /** Status announced while recognizing speech. Defaults to 'Transcribing audio…'. */
+  transcribingLabel?: string;
+  /** Fallback recording/recognition error. Defaults to 'Voice input failed'. */
+  voiceErrorLabel?: string;
+  /** Accessible label for the mic button. Defaults to `'Dictate'`. */
   micLabel?: string;
   /** Accessible label for the stop-recording button inside the voice bar. Defaults to `'Stop recording'`. */
   stopRecordingLabel?: string;

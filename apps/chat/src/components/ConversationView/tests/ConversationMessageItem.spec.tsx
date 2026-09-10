@@ -595,3 +595,28 @@ describe('ConversationMessageItem — Markdown table actions', () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe('ConversationMessageItem — markdown file URLs', () => {
+  it('rewrites DIAL file ids in assistant markdown images to download URLs', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          role: MessageRole.Assistant,
+          content:
+            '![Silver Lake chart](files/9gRuhxHb/appdata/applications/public/pg/chart.png)',
+          timestamp: '2024-01-01T00:00:02Z',
+        }}
+        index={1}
+      />,
+    );
+
+    expect(
+      screen
+        .getByRole('img', { name: 'Silver Lake chart' })
+        .getAttribute('src'),
+    ).toBe(
+      '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fpg%2Fchart.png',
+    );
+  });
+});

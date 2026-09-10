@@ -155,7 +155,11 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     [showErrorNotification, t],
   );
 
-  const { isAudioMessageSupported } = useAudioTranscription({
+  const {
+    isAudioMessageSupported,
+    isVoiceRecordingSupported,
+    handleTranscribeAudio,
+  } = useAudioTranscription({
     selectedDeploymentId: appId,
   });
 
@@ -396,6 +400,8 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
         stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
         isAudioMessageSupported={isAudioMessageSupported}
+        isVoiceRecordingSupported={isVoiceRecordingSupported}
+        onTranscribeAudio={handleTranscribeAudio}
         conversation={conversation}
         onConversationChange={handleConversationChange}
       />

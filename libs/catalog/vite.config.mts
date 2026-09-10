@@ -3,7 +3,18 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import * as path from 'path';
-
+import { createIsExternalPeerImport } from '../../tools/vite-external-matcher.mjs';
+import { createVerifyPublishedStyles } from '../../tools/vite-verify-published-styles.mjs';
+const REQUIRED_PUBLISHED_STYLE_MARKERS = [
+  '.desktop\\:w-\\[540px\\]',
+  '.rtl\\:flex-row-reverse',
+  '.text-start',
+] as const;
+const EXTERNAL_PEER_NAMES = [
+  '@epam/ai-dial-chat-shared',
+  '@epam/ai-dial-publish-panel',
+];
+const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/catalog',
@@ -13,15 +24,12 @@ export default defineConfig(() => ({
       entryRoot: 'src',
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
     }),
+    createVerifyPublishedStyles({
+      root: import.meta.dirname,
+      requiredMarkers: REQUIRED_PUBLISHED_STYLE_MARKERS,
+      forbidEmbeddedFonts: true,
+    }),
   ],
-  resolve: {
-    alias: {
-      '@epam/ai-dial-publish-panel': path.resolve(
-        import.meta.dirname,
-        '../publish-panel/src/index.ts',
-      ),
-    },
-  },
   build: {
     outDir: './dist',
     emptyOutDir: true,
@@ -30,19 +38,24 @@ export default defineConfig(() => ({
       transformMixedEsModules: true,
     },
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+        mapping: 'src/entry-points/mapping.ts',
+      },
       name: '@epam/ai-dial-catalog',
-      fileName: 'index',
+      cssFileName: 'index',
       formats: ['es' as const],
     },
     rollupOptions: {
-      external: [
-        'react',
-        'react-dom',
-        'react/jsx-runtime',
-        /^@epam\/ai-dial-ui-kit(?:\/|$)/,
-        '@tabler/icons-react',
-      ],
+      external: (id) =>
+        [
+          'react',
+          'react-dom',
+          'react/jsx-runtime',
+          '@tabler/icons-react',
+        ].includes(id) ||
+        /^@epam\/ai-dial-ui-kit(?:\/|$)/.test(id) ||
+        isExternalPeerImport(id),
     },
   },
   test: {

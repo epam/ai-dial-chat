@@ -1,10 +1,22 @@
 /// <reference types='vitest' />
+import { readFileSync } from 'fs';
 import react from '@vitejs/plugin-react';
-import { readFileSync } from 'node:fs';
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import * as path from 'path';
-
+import { createIsExternalPeerImport } from '../../tools/vite-external-matcher.mjs';
+import { createVerifyPublishedStyles } from '../../tools/vite-verify-published-styles.mjs';
+const ownPackageJson = JSON.parse(
+  readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf8'),
+) as {
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+};
+const EXTERNAL_PEER_NAMES = [
+  ...Object.keys(ownPackageJson.dependencies ?? {}),
+  ...Object.keys(ownPackageJson.peerDependencies ?? {}),
+];
+const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
 const REQUIRED_PUBLISHED_STYLE_MARKERS = [
   '.mobile\\:\\!w-full',
   '.desktop\\:p-4',
@@ -12,36 +24,11 @@ const REQUIRED_PUBLISHED_STYLE_MARKERS = [
   '.text-start',
   ':disabled',
 ] as const;
-
-const verifyPublishedStyles = (): Plugin => ({
-  name: 'verify-published-styles',
-  apply: 'build',
-  closeBundle: () => {
-    const css = readFileSync(
-      new URL('./dist/index.css', import.meta.url),
-      'utf8',
-    );
-
-    for (const marker of REQUIRED_PUBLISHED_STYLE_MARKERS) {
-      if (!css.includes(marker)) {
-        throw new Error(`Published stylesheet is missing ${marker}`);
-      }
-    }
-
-    if (/data:font\/[^;]+;base64,/.test(css)) {
-      throw new Error('Published stylesheet must not embed font data');
-    }
-  },
-});
-
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/chat-shared',
   resolve: {
     alias: {
-      /* remark-math resolves math delimiters through micromark-extension-math, which only
-       * recognizes `$...$`/`$$...$$`. This fork additionally recognizes the `\(...\)`/`\[...\]`
-       * delimiters that LLMs commonly emit. */
       'micromark-extension-math': 'micromark-extension-llm-math',
     },
   },
@@ -50,8 +37,12 @@ export default defineConfig(() => ({
     dts({
       entryRoot: 'src',
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
+      rollupTypes: true,
     }),
-    verifyPublishedStyles(),
+    createVerifyPublishedStyles({
+      root: import.meta.dirname,
+      requiredMarkers: REQUIRED_PUBLISHED_STYLE_MARKERS,
+    }),
   ],
   build: {
     outDir: './dist',
@@ -64,27 +55,22 @@ export default defineConfig(() => ({
       entry: {
         index: 'src/index.ts',
         'file-manager': 'src/entry-points/file-manager.ts',
+        markdown: 'src/entry-points/markdown.ts',
       },
       name: '@epam/ai-dial-chat-shared',
       cssFileName: 'index',
       formats: ['es' as const],
     },
     rollupOptions: {
-      external: [
-        'react',
-        'react-dom',
-        'react/jsx-runtime',
-        /^@epam\/ai-dial-ui-kit(?:\/|$)/,
-        '@epam/ai-dial-react-file-manager',
-        'ag-grid-community',
-        /*
-         * Vite library mode inlines imported font assets into emitted CSS.
-         * Keep KaTeX's stylesheet external so the shared File Manager stylesheet
-         * does not embed every math font; the peer package remains responsible
-         * for resolving its own font assets when MarkdownRenderer is consumed.
-         */
-        'katex/dist/katex.min.css',
-      ],
+      external: (id: string) =>
+        id === 'react-dom' ||
+        id === 'react/jsx-runtime' ||
+        id === 'katex/dist/katex.min.css' ||
+        isExternalPeerImport(id),
+      output: {
+        preserveModules: true,
+        preserveModulesRoot: path.join(import.meta.dirname, 'src'),
+      },
     },
   },
   test: {

@@ -142,6 +142,8 @@ interface Props {
   onDuplicateConversation?: () => void;
   duplicateError?: string;
   isAudioMessageSupported?: boolean;
+  isVoiceRecordingSupported?: boolean;
+  onTranscribeAudio?: (file: File, signal: AbortSignal) => Promise<string>;
   conversation: Conversation;
   onConversationChange: (conv: Conversation) => void;
   /**
@@ -200,6 +202,8 @@ const ConversationView: FC<Props> = ({
   onDuplicateConversation,
   duplicateError,
   isAudioMessageSupported = false,
+  isVoiceRecordingSupported = false,
+  onTranscribeAudio,
   conversation,
   onConversationChange,
   fixedModel,
@@ -900,7 +904,12 @@ const ConversationView: FC<Props> = ({
                 sendTitle={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
                 isAudioMessageSupported={isAudioMessageSupported}
+                isVoiceRecordingSupported={isVoiceRecordingSupported}
+                onTranscribeAudio={onTranscribeAudio}
+                transcribingLabel={t(VoiceRecordingI18nKeys.Transcribing)}
+                voiceErrorLabel={t(VoiceRecordingI18nKeys.Failed)}
                 micLabel={t(VoiceRecordingI18nKeys.MicLabel)}
+                recordVoiceLabel={t(VoiceRecordingI18nKeys.RecordVoiceLabel)}
                 stopRecordingLabel={t(
                   VoiceRecordingI18nKeys.StopRecordingLabel,
                 )}

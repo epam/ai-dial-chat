@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ApiEndpoints } from '../../server-api/base';
-import { resolveDialFileDownloadUrl } from '../dial-file';
+import { resolveDialFileDownloadUrl, resolveMarkdownUrl } from '../dial-file';
 import { getIconPath } from '../icon-path';
 
 describe('getIconPath', () => {
@@ -79,5 +79,33 @@ describe('resolveDialFileDownloadUrl', () => {
 
   it('returns undefined when there is no path segment after the bucket', () => {
     expect(resolveDialFileDownloadUrl('files/only-bucket')).toBeUndefined();
+  });
+});
+
+describe('resolveMarkdownUrl', () => {
+  it('rewrites a DIAL file ID to the BFF download URL', () => {
+    expect(
+      resolveMarkdownUrl(
+        'files/9gRuhxHb/appdata/applications/public/pg/chart.png',
+      ),
+    ).toBe(
+      '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fpg%2Fchart.png',
+    );
+  });
+
+  it('leaves http(s) URLs unchanged', () => {
+    expect(resolveMarkdownUrl('https://example.com/chart.png')).toBe(
+      'https://example.com/chart.png',
+    );
+  });
+
+  it('leaves an incomplete files/ id unchanged', () => {
+    expect(resolveMarkdownUrl('files/only-bucket')).toBe('files/only-bucket');
+  });
+
+  it('strips a #page=N anchor before resolving so it is not percent-encoded into path', () => {
+    expect(resolveMarkdownUrl('files/bucket/report.pdf#page=3')).toBe(
+      '/api/v1/files/download?bucket=bucket&path=report.pdf',
+    );
   });
 });
