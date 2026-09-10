@@ -48,10 +48,7 @@ const SkillDetailsPanelContainer: FC<Props> = ({
   );
 
   const folderLabels = useMemo(() => buildDeploymentFolderLabels(t), [t]);
-  const skillOverviewLabels = useMemo(
-    () => buildSkillOverviewLabels(t),
-    [t],
-  );
+  const skillOverviewLabels = useMemo(() => buildSkillOverviewLabels(t), [t]);
 
   const {
     detailsPanelItem,

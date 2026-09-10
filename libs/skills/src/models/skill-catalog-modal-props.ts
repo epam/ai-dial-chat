@@ -14,5 +14,8 @@ export interface SkillCatalogModalProps {
    * Renders the modal body's picker content, mounted only while the modal is
    * open; receives the selection and close callbacks to wire into it.
    */
-  renderContent: (onSelect: (id: string) => void, onClose: () => void) => ReactNode;
+  renderContent: (
+    onSelect: (id: string) => void,
+    onClose: () => void,
+  ) => ReactNode;
 }

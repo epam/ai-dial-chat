@@ -18,7 +18,9 @@ export const SkillCatalogModal: FC<SkillCatalogModalProps> = ({
     onClose={onClose}
   >
     <div className="h-[min(80vh,840px)] overflow-auto">
-      <Suspense fallback={null}>{isOpen && renderContent(onSelect, onClose)}</Suspense>
+      <Suspense fallback={null}>
+        {isOpen && renderContent(onSelect, onClose)}
+      </Suspense>
     </div>
   </Popup>
 );

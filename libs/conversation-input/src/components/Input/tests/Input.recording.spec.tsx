@@ -159,7 +159,6 @@ describe('Input while dictating', () => {
           onTranscribeAudio={onTranscribeAudio}
           onUploadAttachment={onUploadAttachment}
           onChange={onChange}
-          promptsMenuOverlay={() => <div>Prompts content</div>}
           chatSettings={{
             features: { systemPrompt: false, temperature: false },
             systemPrompt: '',

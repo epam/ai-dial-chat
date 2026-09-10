@@ -25,8 +25,6 @@ import {
   type SkillListingEntry,
 } from '../../models/favorite-skill-item';
 import type {
-  SkillDetailsPanelComponentProps,
-  SkillSelectorOverlayLabels,
   UseSkillSelectorOverlayOptions,
   UseSkillSelectorOverlayResult,
 } from '../../models/skill-selector-overlay';
