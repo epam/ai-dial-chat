@@ -1,19 +1,25 @@
 /// <reference types='vitest' />
+import { readFileSync } from 'fs';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import * as path from 'path';
-
+import { createIsExternalPeerImport } from '../../tools/vite-external-matcher.mjs';
+const ownPackageJson = JSON.parse(
+  readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf8'),
+) as {
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+};
+const EXTERNAL_PEER_NAMES = [
+  ...Object.keys(ownPackageJson.dependencies ?? {}),
+  ...Object.keys(ownPackageJson.peerDependencies ?? {}),
+];
+const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/chat-hooks',
   resolve: {
-    /*
-     * Resolves to source for tests only (rollupOptions.external keeps the
-     * production build from bundling it either way) — the built dist eagerly
-     * references browser globals (e.g. DOMMatrix) that jsdom doesn't provide,
-     * while the source only touches them when actually invoked.
-     */
     alias: {
       '@epam/ai-dial-attachment-canvas': path.resolve(
         import.meta.dirname,
@@ -30,14 +36,6 @@ export default defineConfig(() => ({
     dts({
       entryRoot: 'src',
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
-      /*
-       * Multi-entry lib builds emit per-source-file declarations mirroring
-       * src/'s folder structure by default (e.g. dist/entry-points/
-       * viewport-layout.d.ts), which does not match the flat
-       * dist/<entry>.d.ts paths package.json#exports points at. rollupTypes
-       * bundles each entry's declarations (via api-extractor) into one
-       * top-level .d.ts per entry key instead.
-       */
       rollupTypes: true,
     }),
   ],
@@ -57,6 +55,7 @@ export default defineConfig(() => ({
         'conversation-transfer': 'src/entry-points/conversation-transfer.ts',
         'conversation-sources': 'src/entry-points/conversation-sources.ts',
         'file-manager': 'src/entry-points/file-manager.ts',
+        'source-content': 'src/entry-points/source-content.ts',
         catalog: 'src/entry-points/catalog.ts',
         'skills-state': 'src/entry-points/skills-state.ts',
         'skill-editor': 'src/entry-points/skill-editor.ts',
@@ -71,29 +70,14 @@ export default defineConfig(() => ({
       formats: ['es' as const],
     },
     rollupOptions: {
-      external: [
-        'react',
-        'react-dom',
-        'react/jsx-runtime',
-        '@epam/ai-dial-attachment-canvas',
-        '@epam/ai-dial-attachment-input',
-        '@epam/ai-dial-catalog',
-        '@epam/ai-dial-chat-api-client',
-        '@epam/ai-dial-chat-overlay',
-        '@epam/ai-dial-chat-shared',
-        '@epam/ai-dial-deployment-creation-form',
-        '@epam/ai-dial-publish-panel',
-        '@epam/ai-dial-quotations',
-        '@epam/ai-dial-mcp-apps',
-        '@epam/ai-dial-react-file-manager',
-        '@epam/ai-dial-scheduled-tasks',
-        '@epam/ai-dial-share',
-        '@epam/ai-dial-skill-editor',
-        '@epam/ai-dial-source-panel',
-        '@epam/ai-dial-ui-kit',
-        '@mcp-ui/client',
-        '@modelcontextprotocol/sdk',
-      ],
+      external: (id: string) =>
+        id === 'react-dom' ||
+        id === 'react/jsx-runtime' ||
+        isExternalPeerImport(id),
+      output: {
+        preserveModules: true,
+        preserveModulesRoot: path.join(import.meta.dirname, 'src'),
+      },
     },
   },
   test: {

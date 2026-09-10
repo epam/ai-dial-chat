@@ -159,9 +159,19 @@ The frontend uses automatic chunk splitting. Catalog Grid imports the UI Kit's
 `/grid` entry; Markdown editor loaders use `/editors`. File-manager UI has a
 dedicated `@epam/ai-dial-chat-shared/file-manager` entry consumed inside lazy
 features, while headless file contracts stay on the shared root. Conversation
-publishing also loads on demand. The shared, catalog and publishing packages
-declare CSS/SCSS side effects, and chat-hooks declares side-effect-free JavaScript,
-so unused feature UI can be removed from root-barrel consumers. See the
+publishing also loads on demand. `chat-shared`'s markdown/KaTeX/syntax-highlighter
+stack is isolated behind a dedicated `@epam/ai-dial-chat-shared/markdown` entry
+(root keeps re-exporting it for backward compatibility); `chat-hooks`'s
+content-type-correction helpers are isolated behind `@epam/ai-dial-chat-hooks/source-content`
+(also re-exported from `./file-manager`); `catalog`'s headless item-mapping enums
+and pure functions are isolated behind `@epam/ai-dial-catalog/mapping`, separate
+from the publish-panel-attached UI on catalog's root. The shared, catalog and
+publishing packages declare CSS/SCSS side effects; `chat-hooks` declares its
+compiled JavaScript side-effect-free except for a single audited
+`package.json#sideEffects` array naming the `./oauth`/`./file-manager`
+facades and the stable preserved modules that retain module-scope `EventTarget`/`LRUCache`
+singletons — so unused feature UI can still be removed from root-barrel
+consumers. See the
 [frontend feature-loading overview](../apps/chat/README.md#feature-loading).
 
 ### State management

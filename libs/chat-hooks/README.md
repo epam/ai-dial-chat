@@ -8,9 +8,27 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Installation
 
-The package declares `sideEffects: false`: importing a hook or a data helper does
-not initialize unrelated feature UI. Hooks perform their work when called or in
-effects; hosts should prefer the existing feature subpaths for narrow imports.
+The package declares a single, audited `sideEffects` array — not `sideEffects: false` —
+covering exactly four compiled files: the two that actually retain observable module-scope
+state, `./dist/shared/toolset-login-events.js` (`./oauth`'s module-scope `EventTarget`
+singleton) and `./dist/files/attachment-canvas.js` (`./file-manager`'s DIAL-file blob/text LRU
+fetch caches), plus their own two subpath **entry facades**, `./dist/oauth.js` and
+`./dist/file-manager.js`. The entry facades are listed because a bare `import
+'@epam/ai-dial-chat-hooks/oauth'` (no named binding used) is otherwise eligible for whole-file
+elimination once the entry file itself carries no side-effect marking — dropping the deeper
+effect-owning file it re-exports regardless of that file's own marking. The **root** barrel
+(`./dist/index.js`) is deliberately **not** listed: no real consumer bare-imports the root with
+no named binding, and marking it forced Rollup to retain the entire root `export *` closure for
+_any_ root import (a real regression this repo's own `chat-hooks-root-safedecodeuricomponent`
+cold-load probe catches). Every other compiled file — including the root barrel and every other
+subpath — is tree-shakeable: importing a hook or a data helper from one of them does not
+initialize unrelated feature UI. The build emits one file per source module
+(`rollupOptions.output.preserveModules`) rather than merging unrelated modules into shared
+hashed chunks, so a downstream bundler can drop exactly the files a given import doesn't reach.
+`./source-content`'s classifiers (`resolveExternalSourceContentType`,
+`isExternalSourcePreviewable`, `getUrlFileName`) are pure — they do not reach `./file-manager`'s
+fetch/cache module at all. Hooks perform their work when called or in effects; hosts should
+prefer the existing feature subpaths for narrow imports.
 
 ```json
 {
@@ -76,6 +94,7 @@ whether you need to `npm install` it.
 | `./conversation-transfer` | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`                                                                                                                            | —                                                                                                                                 |
 | `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                                                                 | `@epam/ai-dial-source-panel`                                                                                                      |
 | `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations` | `@epam/pdf-highlighter-kit`                                                                                                       |
+| `./source-content`        | —                                                                                                                                                                                       | —                                                                                                                                 |
 | `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor`    | —                                                                                                                                 |
 | `./skills-state`          | —                                                                                                                                                                                       | `@epam/ai-dial-chat-api-client`                                                                                                   |
 | `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                                                       | `@epam/ai-dial-chat-api-client`                                                                                                   |
@@ -153,6 +172,24 @@ import { sanitizeFileName } from '@epam/ai-dial-chat-hooks/file-manager';
 
 const safeName = sanitizeFileName(uploadedFile.name);
 ```
+
+`./file-manager`'s `@epam/ai-dial-attachment-canvas`/`@epam/ai-dial-quotations` peers above come
+from its own canvas-content resolvers (`resolveTextCanvasContent`, `annotationToPdfCanvasContent`,
+…) and their fetch/LRU-cache implementation — not from `./source-content`, whose classifiers
+below need neither peer.
+
+```tsx
+// ./source-content — content-type correction, no @epam/ai-dial-attachment-canvas,
+// @epam/ai-dial-chat-shared, @epam/ai-dial-react-file-manager or ag-grid-community
+import { resolveExternalSourceContentType } from '@epam/ai-dial-chat-hooks/source-content';
+
+const contentType = resolveExternalSourceContentType(rawContentType, sourceUrl);
+```
+
+`resolveExternalSourceContentType` (and `./source-content`'s other classifiers,
+`isExternalSourcePreviewable` and `getUrlFileName`) remain reachable from `./file-manager` too,
+exactly as before this split — `./file-manager` re-exports `./source-content` for backward
+compatibility, alongside the heavier canvas-content resolvers above.
 
 ```tsx
 // ./catalog
@@ -3236,12 +3273,12 @@ export const mcpAppsApiClient = createMcpAppsApiClient(toolsetsApi);
 
 #### API
 
-| Name                | Type                                                                                     | Description                                                             |
-| ------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `fetchResourceHtml` | `(toolsetId: string, resourceUri: string) => Promise<string>`                             | Fetches a toolset's MCP Apps `ui://` resource HTML. Throws `McpAppResourceFetchError` on a non-OK response. |
-| `callTool`          | `(toolsetId: string, toolName: string, args: unknown, kind: McpDeploymentKind) => Promise<CallToolResult>` | Forwards a tool call through chat-api.                                   |
-| `listAppTools`      | `(deploymentId: string, kind: McpDeploymentKind) => Promise<McpAppToolSummary[]>`          | Lists a deployment's tools that declare an MCP Apps UI resource.        |
-| `listToolNames`     | `(deploymentId: string, kind: McpDeploymentKind) => Promise<string[]>`                    | Lists every tool name a deployment's `tools/list` exposes, unfiltered.  |
+| Name                | Type                                                                                                       | Description                                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `fetchResourceHtml` | `(toolsetId: string, resourceUri: string) => Promise<string>`                                              | Fetches a toolset's MCP Apps `ui://` resource HTML. Throws `McpAppResourceFetchError` on a non-OK response. |
+| `callTool`          | `(toolsetId: string, toolName: string, args: unknown, kind: McpDeploymentKind) => Promise<CallToolResult>` | Forwards a tool call through chat-api.                                                                      |
+| `listAppTools`      | `(deploymentId: string, kind: McpDeploymentKind) => Promise<McpAppToolSummary[]>`                          | Lists a deployment's tools that declare an MCP Apps UI resource.                                            |
+| `listToolNames`     | `(deploymentId: string, kind: McpDeploymentKind) => Promise<string[]>`                                     | Lists every tool name a deployment's `tools/list` exposes, unfiltered.                                      |
 
 ### useMcpAppTools
 
@@ -3265,10 +3302,15 @@ Builds the `McpAppHostAdapter` (`@epam/ai-dial-mcp-apps`) a host injects into th
 ```tsx
 import { useMcpAppHostAdapter } from '@epam/ai-dial-chat-hooks/mcp-apps';
 
-const hostAdapter = useMcpAppHostAdapter('inline', mcpAppsApiClient, sandboxUrl, {
-  theme: currentTheme,
-  locale: i18n.language,
-});
+const hostAdapter = useMcpAppHostAdapter(
+  'inline',
+  mcpAppsApiClient,
+  sandboxUrl,
+  {
+    theme: currentTheme,
+    locale: i18n.language,
+  },
+);
 ```
 
 ### useOpenMcpAppCanvas
@@ -3304,3 +3346,32 @@ npm exec nx build ai-dial-chat-hooks
 ```sh
 npm exec nx test ai-dial-chat-hooks
 ```
+
+## Packed-package fixtures and source-vs-packed parity
+
+`e2e-fixtures/` proves the published `exports`/`peerDependenciesMeta`/`sideEffects`
+contract from the outside (packed-tarball installs into an isolated
+`node_modules`), and — since `fix-published-library-cold-load` — additionally
+compares a representative host entry's initial JS/CSS built from `libs/*/src`
+aliases against the same entry built from packed tarballs. See
+[`e2e-fixtures/README.md`](e2e-fixtures/README.md) for what each fixture
+proves and how to run the full comparison locally
+(`node libs/chat-hooks/e2e-fixtures/parity.mjs` or
+`npm exec nx run @epam/ai-dial-chat-hooks:test-packed-parity`).
+
+## Rollback
+
+`chat-hooks` is published by `tools/publish-lib.mjs`, which reads the version from this
+package's `package.json` and writes it into `dist/package.json` before `npm publish`. To roll a
+consuming host back to a previous `@epam/ai-dial-chat-hooks` release:
+
+1. Pin the host's dependency back to the previous version (e.g.
+   `"@epam/ai-dial-chat-hooks": "1.1.0-dev.410"` instead of `"1.1.0-dev.412"`).
+2. `chat-hooks` declares 17 `@epam/ai-dial-*` packages as optional peers, several of which
+   (`@epam/ai-dial-chat-shared`, `@epam/ai-dial-catalog`, `@epam/ai-dial-attachment-canvas`)
+   are themselves published from this same repository revision — revert every package from
+   this change's release set to its own matching previous version in the same host update,
+   rather than leaving a newer sibling installed against an older `chat-hooks` (or vice versa).
+3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
+   resolved version and integrity hash, rather than a partial mix of pre- and post-change
+   versions.

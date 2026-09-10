@@ -30,6 +30,10 @@ side effects, allowing unused publishing UI to be removed from eager consumers.
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-react-file-manager`
 
+`@epam/ai-dial-chat-shared` is kept external by the library build — a
+consumer's own bundler resolves it, so installing it is required rather than
+optional.
+
 ## Components
 
 ### PublishPanel
@@ -210,3 +214,20 @@ npm exec nx build publish-panel
 ```sh
 npm exec nx test publish-panel
 ```
+
+## Rollback
+
+`publish-panel` is published by `tools/publish-lib.mjs`, which reads the version from this
+package's `package.json` and writes it into `dist/package.json` before `npm publish`. To roll a
+consuming host back to a previous `@epam/ai-dial-publish-panel` release:
+
+1. Pin the host's dependency back to the previous version (e.g.
+   `"@epam/ai-dial-publish-panel": "1.1.0-dev.410"` instead of `"1.1.0-dev.412"`).
+2. `publish-panel` declares `@epam/ai-dial-chat-shared` as a peer and `@epam/ai-dial-catalog`
+   depends on `publish-panel` in turn — both are published from the same repository revision;
+   revert every package from this change's release set to its own matching previous version in
+   the same host update, rather than leaving a newer sibling installed against an older
+   `publish-panel` (or vice versa).
+3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
+   resolved version and integrity hash, rather than a partial mix of pre- and post-change
+   versions.
