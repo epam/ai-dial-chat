@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import {
   cloneElement,
   useState,
+  type ComponentProps,
   type ReactElement,
   type ReactNode,
 } from 'react';
@@ -360,6 +361,75 @@ describe('Header', () => {
     await openManage();
     expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Unpublish' })).toBeNull();
+  });
+
+  /*
+   * GH #8691: a published copy under `public/` has no owner-side entries at
+   * all, so its Manage menu is empty until the publish-history lookup that
+   * produces Unpublish resolves — and that lookup is started by reaching for
+   * this very trigger. A hidden trigger left the copy permanently unactionable.
+   */
+  describe('Manage trigger while the unpublish lookup is outstanding', () => {
+    const renderPublishedCopy = (
+      props?: Partial<ComponentProps<typeof Header>>,
+    ) =>
+      render(
+        <Header
+          item={{ ...makeItem(CatalogEntityType.Agent), isMyApp: false }}
+          isPublishVisible={() => false}
+          isUnpublishVisible={() => true}
+          onOpenUnpublish={vi.fn()}
+          isPublishHistoryResolved={false}
+          {...props}
+        />,
+      );
+
+    it('renders the trigger for an item the host says is unpublishable', () => {
+      renderPublishedCopy();
+      expect(screen.getByRole('button', { name: 'Manage' })).toBeTruthy();
+    });
+
+    it('starts the lookup when the trigger is hovered', async () => {
+      const onRequestPublishHistory = vi.fn();
+      renderPublishedCopy({ onRequestPublishHistory });
+
+      await userEvent.hover(screen.getByRole('button', { name: 'Manage' }));
+
+      expect(onRequestPublishHistory).toHaveBeenCalled();
+    });
+
+    it('shows Unpublish once the lookup resolves to a folder', async () => {
+      renderPublishedCopy({
+        isPublishHistoryResolved: true,
+        hasPublishedFolders: true,
+      });
+
+      await openManage();
+
+      expect(screen.getByRole('button', { name: 'Unpublish' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    });
+
+    it('drops the trigger again when the lookup resolves to no folder', () => {
+      renderPublishedCopy({
+        isPublishHistoryResolved: true,
+        hasPublishedFolders: false,
+      });
+
+      expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
+    });
+
+    it('leaves the trigger hidden for a host that supplies no unpublish rule', () => {
+      renderPublishedCopy({ isUnpublishVisible: undefined });
+
+      expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
+    });
+
+    it('leaves the trigger hidden when the host rejects the item', () => {
+      renderPublishedCopy({ isUnpublishVisible: () => false });
+
+      expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
+    });
   });
 
   it('shows neither entry when the publish predicate rejects an item with no published folder', async () => {

@@ -1268,6 +1268,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onOpenPublish={handleOpenPublish}
                 isUnpublishVisible={isUnpublishVisible}
                 hasPublishedFolders={hasPublishedFolders}
+                isPublishHistoryResolved={
+                  getPublishHistory == null || isPublishHistoryResolved
+                }
                 onRequestPublishHistory={requestPublishHistory}
                 onOpenUnpublish={
                   onUnpublish ? handleRequestUnpublish : undefined

@@ -367,11 +367,14 @@ const CatalogView: FC<Props> = ({
     handlePublishError,
     handleFetchExistingRules,
     isPublishVisible,
+    isUnpublishVisible,
   } = useCatalogPublishing({
     deployments,
     rememberPublishFolder,
     notifyOperationSuccess,
     showPublishError,
+    isAdmin,
+    hasPublishWriteAccess,
   });
 
   const {
@@ -565,7 +568,7 @@ const CatalogView: FC<Props> = ({
         onPublish={handlePublish}
         onPublishSuccess={handlePublishSuccess}
         onUnpublish={handleUnpublish}
-        isUnpublishVisible={isPublishVisible}
+        isUnpublishVisible={isUnpublishVisible}
         onPublishError={handlePublishError}
         ruleSourceOptions={config.publicationFilterSources}
         onFetchExistingRules={handleFetchExistingRules}
