@@ -6,10 +6,14 @@ The lib knows nothing about where skills come from or what a selected skill
 means at send time. `FavoriteSkillsPanel` renders a plain list of
 `FavoriteSkillItem` objects the host has already resolved (from its own
 skills/favorites data), and hands every interaction back through callbacks —
-it never fetches, navigates, or modifies the composer itself. The host decides
-what "select", "browse", and "view details" mean; the browse modal, the lazy
-description fetch behind a row's tooltip, and the send-time semantics of a
-selected skill are app-owned concerns outside this lib.
+it never fetches, navigates, or modifies the composer itself.
+
+`useSkillSelectorOverlay` owns the selection flow's state — the favorites
+overlay, the browse-modal and details-panel open state, the per-session
+description cache, and the single selected skill — while the host injects the
+listing data, the favorites state, the description fetch, labels, the browse
+modal's picker content, and the app-owned details-panel component. The
+send-time semantics of a selected skill stay app-owned.
 
 `SkillDetailsSidePanel` composes `@epam/ai-dial-catalog`'s exported
 `DetailsPanel` into a right-anchored skill details panel. It adds no chrome of
@@ -32,6 +36,7 @@ action.
 - `@epam/ai-dial-ui-kit` `^0.14.0-dev.37`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-catalog` `*`
+- `@epam/ai-dial-conversation-input` `*`
 - `@tabler/icons-react` `^3.0.0`
 
 ## Components
@@ -108,6 +113,84 @@ are deliberately absent — `DetailsPanel` hides those actions when they are not
 supplied, so no catalog page chrome comes along. The host owns the open state
 and the details fetch; the panel itself never fetches.
 
+### `SkillCatalogModal`
+
+```tsx
+import { SkillCatalogModal } from '@epam/ai-dial-skills';
+
+<SkillCatalogModal
+  isOpen={isCatalogOpen}
+  onClose={closeCatalog}
+  onSelect={(id) => handleSkillPicked(id)}
+  title="Use skill"
+  renderContent={(onSelect, onClose) => (
+    <CatalogView onSelect={onSelect} onClose={onClose} />
+  )}
+/>;
+```
+
+The "Use skill" browse-modal shell: a large ui-kit `Popup` whose body hosts
+host-rendered picker content. The content is mounted only while the modal is
+open, wrapped in a `Suspense` with a `null` fallback, so a lazily loaded
+picker (e.g. a catalog view chunk) loads in place on first open. The shell
+never selects or navigates itself — it hands `onSelect` and `onClose` to
+`renderContent` and forwards a selection to `onSelect`.
+
+## Hooks
+
+### `useSkillSelectorOverlay`
+
+```tsx
+import {
+  useSkillSelectorOverlay,
+  type UseSkillSelectorOverlayResult,
+} from '@epam/ai-dial-skills';
+
+const CatalogView = lazy(() => import('./CatalogView'));
+const SkillDetailsPanel = lazy(() => import('./SkillDetailsPanel'));
+
+const {
+  skillMenuOverlay,
+  skillCatalogModal,
+  skillDetailsPanel,
+  selectedSkillChips,
+  selectSkill,
+}: UseSkillSelectorOverlayResult = useSkillSelectorOverlay({
+  isEnabled: isSkillUsageEnabled,
+  skills,
+  sharedWithMe,
+  publicSkills,
+  favoriteIds,
+  onToggleFavorite: (id) => unfavoriteSkill(id),
+  fetchSkillDescription: (skillId) => fetchManifestDescription(skillId),
+  labels: { addMenuLabel: 'Skills', backLabel: 'Back' },
+  renderCatalogContent: (onSelect, onClose) => (
+    <CatalogView onSelect={onSelect} onClose={onClose} />
+  ),
+  detailsPanelComponent: SkillDetailsPanel,
+});
+```
+
+Owns the Skills Add-menu flow's state. `skillMenuOverlay` is the entry for
+the `menuOverlays` prop of `ConversationInput`/`Input` (`undefined` while
+`isEnabled` is `false`, so the host omits the menu item entirely); the hook
+renders `FavoriteSkillsPanel` as its overlay content, forwarding
+`labels.panelLabels`. `skillCatalogModal` renders the lib's `SkillCatalogModal`
+shell with `labels.catalogModalTitleLabel` as its title and
+`renderCatalogContent` as its body — both elements the host renders at a
+stable level outside the popover. `skillDetailsPanel` renders the injected
+`detailsPanelComponent` (wrapped in `Suspense`, so a lazily loaded component
+is fine); the open state of the modal and the panel, and the wiring of "View
+details" and "Use in chat" back to selection, are the hook's.
+`selectedSkillChips` is the selected skill as input chip data — at most one
+entry, replaced on every selection — and `selectSkill` selects by resource
+URL (`skills/{bucket}/{path}`).
+
+Row descriptions are resolved lazily: the first time a row's tooltip opens,
+`fetchSkillDescription` runs for that skill, and the result (including a
+`null` for "no description") is cached for the session; a fetch already in
+flight is never re-triggered.
+
 ## Utilities
 
 ### `buildFavoriteSkillItem`
@@ -138,7 +221,12 @@ import type {
   FavoriteSkillsPanelColors,
   FavoriteSkillsPanelLabels,
   FavoriteSkillsPanelProps,
+  SkillCatalogModalProps,
+  SkillDetailsPanelComponentProps,
   SkillDetailsSidePanelProps,
   SkillListingEntry,
+  SkillSelectorOverlayLabels,
+  UseSkillSelectorOverlayOptions,
+  UseSkillSelectorOverlayResult,
 } from '@epam/ai-dial-skills';
 ```

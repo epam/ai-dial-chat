@@ -1,25 +1,10 @@
-import type {
-  CatalogItem,
-  CatalogItemDetailsFetchResult,
-  ItemDetailsTexts,
-} from '@epam/ai-dial-catalog';
-import type { SkillMetadataItemDto } from '@epam/ai-dial-chat-api-client';
+import type { CatalogItem, ItemDetailsTexts } from '@epam/ai-dial-catalog';
 import {
   FavoriteEntityType,
-  mapSkillToCatalogItem,
-  type SkillDetailsApi,
-  SkillSource,
-  useSkillItemDetails,
+  useSkillDetailsPanelData,
 } from '@epam/ai-dial-chat-hooks';
 import { SkillDetailsSidePanel } from '@epam/ai-dial-skills';
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FC,
-} from 'react';
+import { memo, useCallback, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
@@ -43,10 +28,10 @@ interface Props {
 }
 
 /**
- * Chat-route container for the skill details side panel: resolves the
- * selected skill from the skills context into a catalog item, fetches its
- * details through the shared skill pipeline, and wires favorites and
- * "Use in chat" into `SkillDetailsSidePanel`.
+ * Chat-route container for the skill details side panel: feeds the skills and
+ * favorites contexts plus the server API into the shared details pipeline,
+ * and wires i18n texts and the app's file preview into
+ * `SkillDetailsSidePanel`.
  */
 const SkillDetailsPanelContainer: FC<Props> = ({
   skillId,
@@ -57,96 +42,32 @@ const SkillDetailsPanelContainer: FC<Props> = ({
   const { skills, sharedWithMe, publicSkills } = useSkills();
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
 
-  const skillDetailsApi: SkillDetailsApi = useMemo(
+  const skillDetailsApi = useMemo(
     () => ({ downloadSkillFile, listSkillFiles }),
     [],
   );
 
-  const allSkills = useMemo<SkillMetadataItemDto[]>(
-    () => [...skills, ...(sharedWithMe ?? []), ...publicSkills],
-    [skills, sharedWithMe, publicSkills],
+  const folderLabels = useMemo(() => buildDeploymentFolderLabels(t), [t]);
+  const skillOverviewLabels = useMemo(
+    () => buildSkillOverviewLabels(t),
+    [t],
   );
 
-  const skillOverviewLabels = useMemo(() => buildSkillOverviewLabels(t), [t]);
-
-  const { onFetchSkillDetails, onLoadSkillDetailsFile } = useSkillItemDetails({
+  const {
+    detailsPanelItem,
+    isDetailsLoading,
+    isStarred,
+    onLoadSkillDetailsFile,
+  } = useSkillDetailsPanelData({
     api: skillDetailsApi,
-    skills: allSkills,
+    skills,
+    sharedWithMe,
+    publicSkills,
+    skillId,
+    folderLabels,
     skillOverviewLabels,
+    favoriteIds,
   });
-
-  const skill = useMemo(
-    () => allSkills.find((candidate) => candidate.url === skillId) ?? null,
-    [allSkills, skillId],
-  );
-
-  /*
-   * The source decides the item's folder prefix and ownership flags; the
-   * three context arrays are disjoint, so the first match wins.
-   */
-  const skillSource = useMemo(() => {
-    if (skills.some((candidate) => candidate.url === skillId)) {
-      return SkillSource.Personal;
-    }
-    if (sharedWithMe?.some((candidate) => candidate.url === skillId)) {
-      return SkillSource.SharedWithMe;
-    }
-    return SkillSource.Public;
-  }, [skills, sharedWithMe, skillId]);
-
-  const catalogItem = useMemo(() => {
-    if (skill == null) return null;
-    return mapSkillToCatalogItem(skill, {
-      folderLabels: buildDeploymentFolderLabels(t),
-      source: skillSource,
-      favoriteIds,
-    });
-  }, [skill, skillSource, t, favoriteIds]);
-
-  const [fetchedDetails, setFetchedDetails] =
-    useState<CatalogItemDetailsFetchResult | null>(null);
-  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
-
-  useEffect(() => {
-    if (catalogItem == null) return;
-
-    /*
-     * Keyed on the item's id rather than its identity: a favorite toggle
-     * rebuilds the `CatalogItem` without changing what should load.
-     * `onFetchSkillDetails` depends on the skills listing, and re-running on
-     * listing refreshes would refetch details the panel already holds.
-     */
-
-    setIsDetailsLoading(true);
-    setFetchedDetails(null);
-    let isCancelled = false;
-
-    onFetchSkillDetails(catalogItem).then((details) => {
-      if (isCancelled) return;
-      setFetchedDetails(details ?? null);
-      setIsDetailsLoading(false);
-    });
-
-    return () => {
-      isCancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the item's id only, so a rebuilt CatalogItem does not refetch
-  }, [catalogItem?.id]);
-
-  /*
-   * Mirrors the Catalog page's merge: the fetch result's tab data lands on
-   * the item; skills carry no credentials, so that channel stays empty.
-   */
-  const detailsPanelItem = useMemo(() => {
-    if (catalogItem == null) return null;
-    if (fetchedDetails == null) return catalogItem;
-    const { credentials, ...tabData } = fetchedDetails;
-    return {
-      ...catalogItem,
-      details: tabData,
-      credentials: credentials ?? catalogItem.credentials,
-    };
-  }, [catalogItem, fetchedDetails]);
 
   const texts = useMemo<ItemDetailsTexts>(
     () => ({
@@ -178,9 +99,9 @@ const SkillDetailsPanelContainer: FC<Props> = ({
   const isPrimaryActionVisible = useCallback(() => true, []);
 
   const handleToggleFavorite = useCallback(
-    (id: string, isStarred: boolean) => {
+    (id: string, isFavorite: boolean) => {
       /* Silent by design, matching the favorites panel's non-notifying toggle. */
-      void toggleFavorite(id, isStarred, FavoriteEntityType.Skill);
+      void toggleFavorite(id, isFavorite, FavoriteEntityType.Skill);
     },
     [toggleFavorite],
   );
@@ -203,13 +124,13 @@ const SkillDetailsPanelContainer: FC<Props> = ({
     [onLoadSkillDetailsFile],
   );
 
-  if (catalogItem == null || detailsPanelItem == null) return null;
+  if (detailsPanelItem == null) return null;
 
   return (
     <SkillDetailsSidePanel
       item={detailsPanelItem}
       isOpen={skillId != null}
-      isStarred={favoriteIds.has(catalogItem.id)}
+      isStarred={isStarred}
       isDetailsLoading={isDetailsLoading}
       onClose={onClose}
       onToggleFavorite={handleToggleFavorite}
