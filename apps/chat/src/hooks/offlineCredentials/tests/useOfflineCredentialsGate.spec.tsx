@@ -73,7 +73,7 @@ describe('useOfflineCredentialsGate', () => {
     );
   });
 
-  it('reports Hidden when not available', async () => {
+  it('reports Unavailable when disconnected and Core cannot offer login', async () => {
     vi.mocked(getOfflineCredentials).mockResolvedValue({
       available: false,
       connected: false,
@@ -84,7 +84,9 @@ describe('useOfflineCredentialsGate', () => {
     });
 
     await waitFor(() =>
-      expect(result.current.status).toBe(OfflineCredentialsGateStatus.Hidden),
+      expect(result.current.status).toBe(
+        OfflineCredentialsGateStatus.Unavailable,
+      ),
     );
   });
 

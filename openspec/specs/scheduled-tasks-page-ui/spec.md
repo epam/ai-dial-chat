@@ -126,6 +126,25 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** the `libs/scheduled-tasks` source is statically analyzed
 - **THEN** it contains no imports of `apps/chat/*`, `@epam/chat-api-client`, routing, feature-flag, auth, env, or analytics modules
 
+### Requirement: ScheduledTasks lib component renders an optional banner slot
+
+`libs/scheduled-tasks`'s `ScheduledTasks` component SHALL accept an optional `banner?: ReactNode` prop. When provided, the component SHALL render it between the search/sort toolbar row and the content region (the status message and card grid/spinner/error/empty states) in the resulting layout. When omitted, nothing renders in that position. The component SHALL treat `banner` as opaque content — it MUST NOT interpret, style beyond layout placement, or attach any auth/BFF/routing/feature-flag behavior to it, and MUST NOT import any type describing what the banner represents.
+
+#### Scenario: Banner renders between toolbar and content
+
+- **WHEN** `ScheduledTasks` renders with `banner={<div>Example</div>}` and a non-empty `items` array
+- **THEN** the rendered "Example" content appears after the search/sort toolbar and before the task card grid in document order
+
+#### Scenario: No banner prop renders nothing extra
+
+- **WHEN** `ScheduledTasks` renders without a `banner` prop
+- **THEN** no additional element appears between the toolbar and the content region, and the rendered output is unchanged from before this requirement was added
+
+#### Scenario: Banner renders across every content-region state
+
+- **WHEN** `ScheduledTasks` renders with a `banner` prop while `isLoading` is `true`, while `error` is set, and while `items` is empty
+- **THEN** the banner renders in each of these states — its visibility does not depend on the content region's loading/error/empty/populated state
+
 ### Requirement: ScheduledTaskCard renders a single task with highlighted search matches
 
 `libs/scheduled-tasks` SHALL export a `ScheduledTaskCard` component rendering: a title (highlighting the current search match via the shared `Highlight` component from `@epam/ai-dial-chat-shared`, per `.claude/rules/search-results-highlight.md`), an optional "N NEW"-style badge when `isNew`/a new-count is set, an optional description/prompt-preview line, a schedule/status pill, and an optional location breadcrumb built from `locationSegments` (outermost segment first, chevron separator between segments). The card exposes an overflow-menu trigger only when at least one action callback is supplied; the menu renders only the actions for which a corresponding callback prop (`onEdit`, `onRunNow`, `onDelete`) was provided by the caller.

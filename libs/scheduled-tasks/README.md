@@ -34,9 +34,11 @@ external to preserve the editor's dynamic boundary in consuming applications.
 
 ### ScheduledTasks
 
-Page shell: header with title/subtitle/create action, a search + sort toolbar, and a content region that shows a loading spinner, an error with retry, the empty state, a no-results state, or a section-grouped card grid, depending on `isLoading`/`error`/`items`.
+Page shell: header with title/subtitle/create action, a search + sort toolbar, an optional `banner` slot, and a content region that shows a loading spinner, an error with retry, the empty state, a no-results state, or a section-grouped card grid, depending on `isLoading`/`error`/`items`.
 
 The sort control's trigger shows the active option's label, falling back to `labels.sortLabel` when `sortKey` matches no option. Inside the menu each option is a `menuitemcheckbox` whose `aria-checked` marks the sort currently in effect, with a check icon carrying the same meaning visually; picking one reports through `onSortChange` and closes the menu. The lib never sorts `items` — it renders them in the order it receives them.
+
+`banner` renders between the toolbar and the content region, in every content-region state (loading, error, empty, populated). It is opaque `ReactNode` content — the host app decides what it contains (e.g. a status notice); the lib attaches no behavior or styling to it beyond layout placement.
 
 ```tsx
 import {
@@ -69,6 +71,7 @@ import {
   sortKey={ScheduledTasksSortKey.FirstToRun}
   onSortChange={() => {}}
   items={[]}
+  banner={<div>Log in required to run scheduled tasks offline.</div>}
 />;
 ```
 

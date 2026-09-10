@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ReactNode } from 'react';
 import {
   MemoryRouter,
   Route,
@@ -27,6 +28,32 @@ vi.mock('../../../hooks/scheduled-tasks/useScheduledTasks', () => ({
   useScheduledTasks: (enabled: boolean) => useScheduledTasksMock(enabled),
 }));
 
+const refetchCredentialsMock = vi.fn();
+const useOfflineCredentialsGateMock = vi.fn();
+vi.mock('../../../hooks/offlineCredentials/useOfflineCredentialsGate', () => ({
+  OfflineCredentialsGateStatus: {
+    Checking: 'checking',
+    Hidden: 'hidden',
+    Available: 'available',
+    Unavailable: 'unavailable',
+    Error: 'error',
+  },
+  useOfflineCredentialsGate: () => useOfflineCredentialsGateMock(),
+}));
+
+const loginMock = vi.fn();
+const useOfflineCredentialsLoginMock = vi.fn();
+vi.mock('../../../hooks/offlineCredentials/useOfflineCredentialsLogin', () => ({
+  OfflineCredentialsLoginOutcomeType: {
+    Success: 'success',
+    Failure: 'failure',
+    PopupBlocked: 'popup-blocked',
+    Cancelled: 'cancelled',
+    TimedOut: 'timed-out',
+  },
+  useOfflineCredentialsLogin: () => useOfflineCredentialsLoginMock(),
+}));
+
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
   ScheduledTasksSortKey: {
     FirstToRun: 'firstToRun',
@@ -47,6 +74,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     isLoadingMore,
     onLoadMore,
     onCardClick,
+    banner,
   }: {
     labels: { title: string; createButtonLabel: string; retryLabel: string };
     onCreateClick: () => void;
@@ -60,6 +88,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     isLoadingMore?: boolean;
     onLoadMore?: () => void;
     onCardClick?: (id: string) => void;
+    banner?: ReactNode;
   }) => (
     <div>
       {labels.title}
@@ -77,6 +106,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
           card:{item.id}
         </button>
       ))}
+      {banner}
     </div>
   ),
 }));
@@ -121,6 +151,12 @@ const renderScheduledTasksPage = () =>
     </MemoryRouter>,
   );
 
+const CONNECT_SETTINGS = {
+  clientId: 'dial-chat',
+  authorizationEndpoint: 'https://idp.example.com/authorize',
+  scopes: ['openid', 'offline_access'],
+};
+
 describe('ScheduledTasksPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -138,6 +174,12 @@ describe('ScheduledTasksPage', () => {
       refetch: refetchMock,
     });
     useAppConfigMock.mockReturnValue({ status: 'ready' });
+    useOfflineCredentialsGateMock.mockReturnValue({
+      status: 'hidden',
+      connect: undefined,
+      refetch: refetchCredentialsMock,
+    });
+    useOfflineCredentialsLoginMock.mockReturnValue({ login: loginMock });
   });
 
   it('renders a fallback instead of NotFound while app config is still loading', () => {
@@ -314,5 +356,167 @@ describe('ScheduledTasksPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'submit' }));
 
     expect(refetchMock).toHaveBeenCalledOnce();
+  });
+
+  describe('offline-credentials login banner', () => {
+    it('does not render the banner while status is checking', () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'checking',
+        connect: undefined,
+        refetch: refetchCredentialsMock,
+      });
+      renderScheduledTasksPage();
+
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('renders the banner without a login action when credentials are unavailable', () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'unavailable',
+        connect: undefined,
+        refetch: refetchCredentialsMock,
+      });
+      renderScheduledTasksPage();
+
+      expect(screen.getByRole('alert')).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: 'buttons.logIn' }),
+      ).toBeNull();
+    });
+
+    it('renders the banner with "Log in required." and a Log in button when available', () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'available',
+        connect: CONNECT_SETTINGS,
+        refetch: refetchCredentialsMock,
+      });
+      renderScheduledTasksPage();
+
+      const alert = screen.getByRole('alert');
+      expect(alert.textContent).toContain(
+        'scheduledTasks.offlineCredentialsBanner.title',
+      );
+      expect(
+        screen.getByRole('button', { name: 'buttons.logIn' }),
+      ).toBeTruthy();
+    });
+
+    it('keeps the list usable while the banner is shown', () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'available',
+        connect: CONNECT_SETTINGS,
+        refetch: refetchCredentialsMock,
+      });
+      useScheduledTasksMock.mockReturnValue({
+        items: [{ id: 'sched_1', displayName: 'Daily summary', trigger: {} }],
+        searchQuery: '',
+        setSearchQuery: setSearchQueryMock,
+        sortKey: 'firstToRun',
+        setSortKey: setSortKeyMock,
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: loadMoreMock,
+        refetch: refetchMock,
+      });
+      renderScheduledTasksPage();
+
+      expect(screen.getByRole('alert')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'card:sched_1' })).toBeTruthy();
+      expect(
+        screen.getByRole('button', {
+          name: 'scheduledTasks.toolbar.createButtonLabel',
+        }),
+      ).toBeTruthy();
+    });
+
+    it('calls the login hook with the connect settings and refetch when Log in is clicked', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'available',
+        connect: CONNECT_SETTINGS,
+        refetch: refetchCredentialsMock,
+      });
+      loginMock.mockResolvedValue({ type: 'success' });
+      renderScheduledTasksPage();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.logIn' }),
+      );
+
+      expect(loginMock).toHaveBeenCalledWith(
+        CONNECT_SETTINGS,
+        refetchCredentialsMock,
+      );
+    });
+
+    it.each([
+      [
+        'popup-blocked',
+        'scheduledTasks.offlineCredentialsBanner.popupBlockedMessage',
+      ],
+      ['cancelled', 'scheduledTasks.offlineCredentialsBanner.cancelledMessage'],
+      ['timed-out', 'scheduledTasks.offlineCredentialsBanner.timeoutMessage'],
+      ['failure', 'scheduledTasks.offlineCredentialsBanner.failedMessage'],
+    ])(
+      'keeps the banner visible with a Retry action after a %s outcome',
+      async (outcomeType, message) => {
+        useFeatureFlagMock.mockReturnValue(true);
+        useOfflineCredentialsGateMock.mockReturnValue({
+          status: 'available',
+          connect: CONNECT_SETTINGS,
+          refetch: refetchCredentialsMock,
+        });
+        loginMock.mockResolvedValue({ type: outcomeType });
+        renderScheduledTasksPage();
+
+        await userEvent.click(
+          screen.getByRole('button', { name: 'buttons.logIn' }),
+        );
+
+        expect(
+          await screen.findByRole('button', { name: 'buttons.retry' }),
+        ).toBeTruthy();
+        expect(screen.getByText(message)).toBeTruthy();
+
+        await userEvent.click(
+          screen.getByRole('button', { name: 'buttons.retry' }),
+        );
+        expect(loginMock).toHaveBeenCalledTimes(2);
+      },
+    );
+
+    it('hides the banner once a successful login is confirmed', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      useOfflineCredentialsGateMock
+        .mockReturnValueOnce({
+          status: 'available',
+          connect: CONNECT_SETTINGS,
+          refetch: refetchCredentialsMock,
+        })
+        .mockReturnValue({
+          status: 'hidden',
+          connect: undefined,
+          refetch: refetchCredentialsMock,
+        });
+      loginMock.mockResolvedValue({ type: 'success' });
+      renderScheduledTasksPage();
+
+      expect(screen.getByRole('alert')).toBeTruthy();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.logIn' }),
+      );
+
+      await screen.findByText(
+        'scheduledTasks.offlineCredentialsBanner.successAnnouncement',
+      );
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
   });
 });

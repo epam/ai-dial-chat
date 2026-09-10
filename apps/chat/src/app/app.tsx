@@ -78,9 +78,6 @@ const ScheduledTaskDetailPage = lazy(
 const ScheduledTaskEditPage = lazy(
   () => import('../pages/ScheduledTaskEditPage/ScheduledTaskEditPage'),
 );
-const ScheduledTasksRouteGate = lazy(
-  () => import('../pages/ScheduledTasksRouteGate/ScheduledTasksRouteGate'),
-);
 const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditor'),
@@ -389,55 +386,45 @@ const App: FC = () => {
                 }
               />
               <Route
+                path={ROUTES.ScheduledTasks}
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <ScheduledTasksRouteGate />
+                      <ScheduledTasksPage />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
-              >
-                <Route
-                  path={ROUTES.ScheduledTasks}
-                  element={
-                    <RouteErrorBoundary>
-                      <Suspense fallback={<RouteFallback />}>
-                        <ScheduledTasksPage />
-                      </Suspense>
-                    </RouteErrorBoundary>
-                  }
-                />
-                <Route
-                  path={ROUTES.ScheduledTaskCreate}
-                  element={
-                    <RouteErrorBoundary>
-                      <Suspense fallback={<RouteFallback />}>
-                        <ScheduledTaskCreatePage />
-                      </Suspense>
-                    </RouteErrorBoundary>
-                  }
-                />
-                <Route
-                  path={ROUTES.ScheduledTaskDetail}
-                  element={
-                    <RouteErrorBoundary>
-                      <Suspense fallback={<RouteFallback />}>
-                        <ScheduledTaskDetailPage />
-                      </Suspense>
-                    </RouteErrorBoundary>
-                  }
-                />
-                <Route
-                  path={ROUTES.ScheduledTaskEdit}
-                  element={
-                    <RouteErrorBoundary>
-                      <Suspense fallback={<RouteFallback />}>
-                        <ScheduledTaskEditPage />
-                      </Suspense>
-                    </RouteErrorBoundary>
-                  }
-                />
-              </Route>
+              />
+              <Route
+                path={ROUTES.ScheduledTaskCreate}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ScheduledTaskCreatePage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ScheduledTaskDetail}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ScheduledTaskDetailPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ScheduledTaskEdit}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ScheduledTaskEditPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
               <Route
                 path={ROUTES.AppsEditor}
                 element={
