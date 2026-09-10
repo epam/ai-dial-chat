@@ -1156,9 +1156,15 @@
     "offlineUsageConsentHint": "Required for scheduled and background runs."
   },
   "voiceRecording": {
-    "micLabel": "Record voice message",
+    "micLabel": "Dictate",
+    "recordVoiceLabel": "Record voice",
+    "transcribing": "Transcribing audio…",
+    "failed": "Could not transcribe audio. Please try recording again.",
+    "busy": "Speech recognition is temporarily unavailable. Please try again later. Your draft has been kept.",
+    "unavailable": "Voice input is not available.",
+    "tooLarge": "Audio exceeds the {{limit}} byte limit.",
     "stopRecordingLabel": "Stop recording",
-    "discardRecordingLabel": "Discard recording"
+    "discardRecordingLabel": "Cancel pending recording"
   },
   "tools": {
     "menuTitle": "Tools",

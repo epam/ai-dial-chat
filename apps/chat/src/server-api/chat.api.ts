@@ -4,24 +4,22 @@ interface TranscribeAudioParams {
   audioUrl: string;
   mimeType: string;
   deployment: string;
-}
-
-interface TranscribeAudioWithAsrModelParams {
-  audioUrl: string;
-  mimeType: string;
-}
-
-interface ChatCompletionResponse {
-  choices?: Array<{ message: { content?: string } }>;
-  error?: string;
+  signal?: AbortSignal;
 }
 
 export const transcribeAudio = async ({
   audioUrl,
   mimeType,
   deployment,
+  signal,
 }: TranscribeAudioParams): Promise<string> => {
-  const response = await post<ChatCompletionResponse>(
+  /* The generated MessageDto exposes customContent, but this endpoint accepts
+   * custom_content and its generated runtime performs no name conversion.
+   * Keep this existing raw wrapper until that OpenAPI schema collision is fixed. */
+  const response = await post<{
+    choices?: Array<{ message: { content?: string } }>;
+    error?: string;
+  }>(
     ApiEndpoints.CHAT_COMPLETIONS,
     {
       deployment,
@@ -37,20 +35,8 @@ export const transcribeAudio = async ({
         },
       ],
     },
+    { signal },
   );
-  if (response.error) {
-    throw new Error(response.error);
-  }
+  if (response.error) throw new Error(response.error);
   return response.choices?.[0]?.message?.content ?? '';
-};
-
-export const transcribeAudioWithAsrModel = async ({
-  audioUrl,
-  mimeType,
-}: TranscribeAudioWithAsrModelParams): Promise<string> => {
-  const response = await post<{ transcript: string }>(
-    ApiEndpoints.TRANSCRIPTION,
-    { audioUrl, mimeType },
-  );
-  return response.transcript;
 };

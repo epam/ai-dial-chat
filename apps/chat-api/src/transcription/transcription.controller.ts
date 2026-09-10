@@ -1,11 +1,12 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import {
   getJobTitleClaim,
   type SessionUser,
 } from '../auth/session/session.types';
 import { TranscribeAudioDto } from './dto/transcribe-audio.dto';
+import { TranscriptionUnavailableException } from './transcription-unavailable.exception';
 import { TranscriptionService } from './transcription.service';
 
 @ApiTags('transcription')
@@ -26,17 +27,37 @@ export class TranscriptionController {
     status: 502,
     description: 'Unexpected response from DIAL Core',
   })
-  @ApiResponse({ status: 503, description: 'DIAL Core is unreachable' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unreachable or ASR is temporarily unavailable',
+    headers: {
+      'Retry-After': {
+        description: 'Upstream retry delay, when provided by DIAL Core',
+        schema: { type: 'string' },
+      },
+    },
+  })
   async transcribeAudio(
     @Req() req: Request,
     @Body() dto: TranscribeAudioDto,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<{ transcript: string }> {
     const { at, claims } = req.user as SessionUser;
-    const transcript = await this.transcriptionService.transcribeAudio(
-      dto,
-      at,
-      getJobTitleClaim(claims),
-    );
-    return { transcript };
+    try {
+      const transcript = await this.transcriptionService.transcribeAudio(
+        dto,
+        at,
+        getJobTitleClaim(claims),
+      );
+      return { transcript };
+    } catch (error) {
+      if (
+        error instanceof TranscriptionUnavailableException &&
+        error.retryAfter
+      ) {
+        res.setHeader('Retry-After', error.retryAfter);
+      }
+      throw error;
+    }
   }
 }

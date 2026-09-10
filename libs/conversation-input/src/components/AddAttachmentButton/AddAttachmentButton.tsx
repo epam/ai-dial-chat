@@ -15,6 +15,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import {
   IconCheck,
+  IconMicrophone,
   IconChevronRight,
   IconPaperclip,
   IconPlus,
@@ -53,6 +54,10 @@ export interface ExtraMenuItem {
 interface AddAttachmentButtonProps {
   /** Callback invoked when the user picks "Attach file". When absent, the "Attach file" item is not rendered. */
   onAttachClick?: () => void;
+  /** Starts recording an audio attachment immediately, before the settings item. */
+  onRecordVoice?: () => void;
+  /** Label for the audio recording item. Defaults to 'Record voice'. */
+  recordVoiceLabel?: string;
   /** Label for the "Attach file" menu item. */
   attachLabel: string;
   /** Aria-label for the + trigger button. */
@@ -109,6 +114,8 @@ export interface AddAttachmentButtonColors {
 /** "+" trigger button that opens an attachment/settings menu (desktop dropdown or mobile bottom sheet). */
 export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   onAttachClick,
+  onRecordVoice,
+  recordVoiceLabel = 'Record voice',
   attachLabel,
   addMenuTitle,
   menuTitle,
@@ -284,6 +291,26 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             },
           ]
         : []),
+      ...(onRecordVoice != null
+        ? [
+            {
+              key: 'record-voice',
+              label: recordVoiceLabel,
+              icon: (
+                <IconMicrophone
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
+              onClick: () => {
+                setIsSheetOpen(false);
+                setIsDesktopMenuOpen(false);
+                onRecordVoice();
+              },
+            },
+          ]
+        : []),
       ...(chatSettings != null
         ? [
             {
@@ -316,6 +343,8 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
     [
       attachLabel,
       onAttachClick,
+      onRecordVoice,
+      recordVoiceLabel,
       chatSettings,
       extraMenuItems,
       isMobile,
