@@ -1322,6 +1322,12 @@
   },
   "skillArchiveImport": {
     "fileInputAriaLabel": "Upload a skill ZIP archive or a SKILL.md file",
+    "dialog": {
+      "title": "Upload skill",
+      "dropZoneLabel": "Drag and drop it or click here to upload",
+      "dropZoneMobileLabel": "Click here to upload",
+      "formats": "File formats .zip and SKILL.md"
+    },
     "status": {
       "uploading": "Uploading skill…",
       "success": "Skill uploaded successfully.",
