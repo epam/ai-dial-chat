@@ -153,7 +153,7 @@ apps/chat/src/
 └── i18n/                  # i18next config + locale JSON files
 ```
 
-Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `AppsEditor`, `ToolsetEditor`, `ToolsetAuthCallback`, `PromptEditor`, `DialFileManagerPage`, `ScheduledTasksPage`, `ScheduledTasksRouteGate`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `NotFound`, and `auth/`.
+Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `AppsEditor`, `ToolsetEditor`, `ToolsetAuthCallback`, `PromptEditor`, `DialFileManagerPage`, `ScheduledTasksPage`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `NotFound`, and `auth/`.
 
 The frontend uses automatic chunk splitting. Catalog Grid imports the UI Kit's
 `/grid` entry; Markdown editor loaders use `/editors`. File-manager UI has a

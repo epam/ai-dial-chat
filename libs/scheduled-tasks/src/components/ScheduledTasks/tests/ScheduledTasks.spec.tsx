@@ -504,4 +504,57 @@ describe('ScheduledTasks', () => {
       expect(screen.getByRole('button', { name: 'Sort' })).toBeTruthy();
     });
   });
+
+  describe('banner slot', () => {
+    it('renders the banner between the toolbar and the content region when provided', () => {
+      renderScheduledTasks({
+        items: [buildItem({ displayName: 'Daily summary' })],
+        banner: <div>Example banner</div>,
+      });
+
+      const banner = screen.getByText('Example banner');
+      const searchInput = screen.getByPlaceholderText(
+        'Search scheduled tasks...',
+      );
+      const card = screen.getByText('Daily summary');
+
+      expect(
+        searchInput.compareDocumentPosition(banner) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        banner.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('renders nothing extra when banner is omitted', () => {
+      renderScheduledTasks({ items: [buildItem()] });
+
+      expect(screen.queryByText('Example banner')).toBeNull();
+    });
+
+    it('renders the banner during the loading state', () => {
+      renderScheduledTasks({
+        isLoading: true,
+        banner: <div>Example banner</div>,
+      });
+
+      expect(screen.getByText('Example banner')).toBeTruthy();
+    });
+
+    it('renders the banner during the error state', () => {
+      renderScheduledTasks({
+        error: new Error('boom'),
+        banner: <div>Example banner</div>,
+      });
+
+      expect(screen.getByText('Example banner')).toBeTruthy();
+    });
+
+    it('renders the banner during the empty state', () => {
+      renderScheduledTasks({ items: [], banner: <div>Example banner</div> });
+
+      expect(screen.getByText('Example banner')).toBeTruthy();
+    });
+  });
 });
