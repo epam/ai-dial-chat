@@ -31,6 +31,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   labels: {
     ariaLabel,
     closeLabel = 'Close',
+    resizeLabel = 'Resize panel',
     downloadLabel = 'Download',
     copyTextLabel = 'Copy text',
     copiedTextLabel = 'Copied!',
@@ -173,7 +174,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       isOpen={isOpen}
       orientation={SidebarOrientation.Right}
       title={fileName}
-      labels={{ ariaLabel, closeLabel }}
+      labels={{ ariaLabel, closeLabel, resizeLabel }}
       onClose={onClose}
       resizable={!isMobile}
       defaultWidth={defaultWidth}
