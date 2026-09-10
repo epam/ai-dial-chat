@@ -22,3 +22,11 @@ CVE-2026-12151 exp:2026-09-20
 
 CVE-2026-45623 exp:2026-09-20
 GHSA-r28c-9q8g-f849 exp:2026-09-20
+
+# maplibre-gl
+# Transitive via plotly.js. Fixed in maplibre-gl 6.4.1, but no plotly.js
+# release is compatible with 6.x yet (4.1.0, the latest, requires ^5.24.0),
+# and 6.x is ESM-only while plotly.js does
+# require('maplibre-gl/dist/maplibre-gl-unminified').
+
+CVE-2026-85061 exp:2026-10-10
