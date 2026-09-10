@@ -9,6 +9,7 @@ import {
   CatalogI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../../../constants/translation-keys';
+import { useAppConfig as mockUseAppConfig } from '../../../../context/tests/app-config-context-mock';
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
@@ -16,11 +17,13 @@ import type {
 import SettingsForm from '../SettingsForm';
 vi.mock('../AuthSection', () => ({ default: () => null }));
 
-vi.mock('../../../../context/AppConfigContext', () => ({
-  useAppConfig: vi.fn(() => ({
-    config: { dialCoreExternalUrl: 'https://dial-core.example.com' },
-  })),
-}));
+vi.mock(
+  '../../../../context/AppConfigContext',
+  async () => import('../../../../context/tests/app-config-context-mock'),
+);
+mockUseAppConfig.mockReturnValue({
+  config: { dialCoreExternalUrl: 'https://dial-core.example.com' },
+});
 
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),

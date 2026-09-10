@@ -4,6 +4,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
 import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import NewConversationComposer from '../NewConversationComposer';
@@ -56,12 +57,13 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
   FileDndOverlay: () => null,
 }));
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({
-    config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
-  }),
-  useFeatureFlag: () => false,
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
+mockUseAppConfig.mockReturnValue({
+  config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
+});
 
 vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({

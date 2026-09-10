@@ -11,9 +11,10 @@ const makeEntry = (contentType: string): CustomVisualizer => ({
   title: 'my-viz',
 });
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: vi.fn(),
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 
 describe('useCustomVisualizers', () => {
   it('returns [] while config is loading', () => {

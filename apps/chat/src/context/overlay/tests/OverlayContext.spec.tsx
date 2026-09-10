@@ -8,6 +8,7 @@ import { createElement, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthStatus } from '../../../types/auth-status';
 import { UserConfigStatus } from '../../../types/user-config-status';
+import { useAppConfig as mockUseAppConfig } from '../../tests/app-config-context-mock';
 import {
   type ConversationListBridge,
   OverlayProvider,
@@ -26,11 +27,10 @@ vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock('../../AppConfigContext', () => ({
-  useAppConfig: () => ({
-    config: { overlayAllowedOrigins: mockOverlayAllowedOrigins },
-  }),
-}));
+vi.mock(
+  '../../AppConfigContext',
+  async () => import('../../tests/app-config-context-mock'),
+);
 
 vi.mock('../../auth/UserContext', () => ({
   useUser: () => ({ status: mockAuthStatus }),
@@ -66,6 +66,11 @@ describe('OverlayContext', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     mockAuthStatus = AuthStatus.Authenticated;
     mockOverlayAllowedOrigins = ['https://partner.example.com'];
+    /* Re-armed here because `restoreAllMocks` in `afterEach` wipes the
+       implementation set on the shared spy. */
+    mockUseAppConfig.mockImplementation(() => ({
+      config: { overlayAllowedOrigins: mockOverlayAllowedOrigins },
+    }));
   });
 
   afterEach(() => {

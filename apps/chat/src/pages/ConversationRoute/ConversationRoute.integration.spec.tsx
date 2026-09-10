@@ -1,7 +1,7 @@
 import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
@@ -10,6 +10,7 @@ import {
   useDeployments,
 } from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
+import { useAppConfig as mockUseAppConfig } from '../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as apiClient from '../../server-api/api-client';
@@ -75,18 +76,18 @@ vi.mock('../../components/SkillSelector/useSkillSelectorOverlay', () => ({
     selectSkill: vi.fn(),
   }),
 }));
-vi.mock('../../context/AppConfigContext', () => ({
-  default: ({ children }: { children: ReactNode }) => children,
-  useAppConfig: () => ({
-    status: 'ready',
-    features: {},
-    config: {
-      asrModelId: null,
-      transcribeSizeLimitBytes: 5 * 1024 * 1024,
-      defaultDeploymentId: contextMocks.defaultDeploymentId,
-    },
-  }),
-  useFeatureFlag: () => false,
+vi.mock(
+  '../../context/AppConfigContext',
+  async () => import('../../context/tests/app-config-context-mock'),
+);
+mockUseAppConfig.mockImplementation(() => ({
+  status: 'ready',
+  features: {},
+  config: {
+    asrModelId: null,
+    transcribeSizeLimitBytes: 5 * 1024 * 1024,
+    defaultDeploymentId: contextMocks.defaultDeploymentId,
+  },
 }));
 vi.mock('../../context/UserConfigContext', () => ({
   useUserConfig: () => ({

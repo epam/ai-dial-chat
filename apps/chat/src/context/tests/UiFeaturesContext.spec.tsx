@@ -7,9 +7,10 @@ import { UserConfigStatus } from '../../types/user-config-status';
 import { AppConfigState, useAppConfig } from '../AppConfigContext';
 import { UiFeaturesProvider, useUiFeatures } from '../UiFeaturesContext';
 
-vi.mock('../AppConfigContext', () => ({
-  useAppConfig: vi.fn(),
-}));
+vi.mock(
+  '../AppConfigContext',
+  async () => import('./app-config-context-mock'),
+);
 
 const mockUseAppConfig = vi.mocked(useAppConfig);
 

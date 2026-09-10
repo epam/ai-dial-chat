@@ -3,15 +3,18 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
+import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as conversationsApi from '../../../server-api/conversations.api';
 import AppPreviewChat from '../AppPreviewChat';
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({
-    config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
-  }),
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
+mockUseAppConfig.mockReturnValue({
+  config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
+});
 
 vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({
