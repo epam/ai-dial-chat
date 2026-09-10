@@ -137,7 +137,7 @@ describe('ConversationNamingService', () => {
       }),
     );
     expect(mockConversationPersistence.getConversation).toHaveBeenCalledWith(
-      'gpt-4o__Hello',
+      'test-bucket/gpt-4o__Hello',
       'test-token',
       'test-bucket',
     );
@@ -149,6 +149,29 @@ describe('ConversationNamingService', () => {
         name: 'Docker networking basics',
         llmNamingDone: true,
       }),
+    );
+  });
+
+  it('qualifies an application conversation path with the session bucket before reading it back', async () => {
+    await service['runMaybeRenameAfterFirstReply'](
+      'applications/public/pg/pg-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
+      'test-token',
+      'test-bucket',
+      makeConversation({
+        id: 'test-bucket/applications/public/pg/pg-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
+      }),
+    );
+
+    expect(mockConversationPersistence.getConversation).toHaveBeenCalledWith(
+      'test-bucket/applications/public/pg/pg-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
+      'test-token',
+      'test-bucket',
+    );
+    expect(mockConversationPersistence.saveConversation).toHaveBeenCalledWith(
+      'applications/public/pg/pg-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
+      'test-token',
+      'test-bucket',
+      expect.objectContaining({ llmNamingDone: true }),
     );
   });
 
