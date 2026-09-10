@@ -1,6 +1,10 @@
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import { render, renderHook, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  useAppConfig as mockUseAppConfig,
+  useFeatureFlag as mockUseFeatureFlag,
+} from '../../../context/tests/app-config-context-mock';
 import { useDeploymentSelectorOverlay } from '../useDeploymentSelectorOverlay';
 
 const mocks = vi.hoisted(() => ({
@@ -14,12 +18,14 @@ const mocks = vi.hoisted(() => ({
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({
-    config: { defaultDeploymentId: mocks.defaultDeploymentId },
-  }),
-  useFeatureFlag: () => mocks.isDefaultDeploymentPinned,
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
+mockUseAppConfig.mockImplementation(() => ({
+  config: { defaultDeploymentId: mocks.defaultDeploymentId },
 }));
+mockUseFeatureFlag.mockImplementation(() => mocks.isDefaultDeploymentPinned);
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({
     items: mocks.items,

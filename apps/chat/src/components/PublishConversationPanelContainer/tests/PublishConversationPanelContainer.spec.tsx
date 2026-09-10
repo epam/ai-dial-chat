@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
+import { useAppConfig as useAppConfigMock } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { publishConversation } from '../../../server-api/conversation-publish.api';
@@ -95,10 +96,10 @@ vi.mock('../../../hooks/publish/usePublishErrorNotification', () => ({
   usePublishErrorNotification: () => mockShowPublishError,
 }));
 
-const useAppConfigMock = vi.fn();
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => useAppConfigMock(),
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),

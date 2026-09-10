@@ -17,6 +17,7 @@ import {
   useConversations,
 } from '../ConversationsContext';
 import { OverlayProvider } from '../overlay/OverlayContext';
+import { useAppConfig as mockUseAppConfig } from './app-config-context-mock';
 
 const contextMocks = vi.hoisted(() => ({
   userSub: 'user-1' as string | undefined,
@@ -33,11 +34,10 @@ vi.mock('../UserConfigContext', () => ({
 vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
 }));
-vi.mock('../AppConfigContext', () => ({
-  useAppConfig: () => ({
-    config: { overlayAllowedOrigins: ['https://partner.example.com'] },
-  }),
-}));
+vi.mock(
+  '../AppConfigContext',
+  async () => import('./app-config-context-mock'),
+);
 vi.mock('../auth/UserContext', () => ({
   useUser: () => ({
     status: AuthStatus.Authenticated,
@@ -101,6 +101,9 @@ const seedConversations = [
 beforeEach(() => {
   vi.clearAllMocks();
   contextMocks.userSub = 'user-1';
+  mockUseAppConfig.mockReturnValue({
+    config: { overlayAllowedOrigins: ['https://partner.example.com'] },
+  });
   vi.mocked(userConfigApi.pinConversation).mockResolvedValue(undefined);
   mockListConversations.mockResolvedValue({ items: seedConversations });
 });

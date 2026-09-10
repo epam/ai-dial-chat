@@ -1,0 +1,35 @@
+/* The selected-entity chip is always "active" (the entity is selected), so it
+   uses the accent-active control token family rather than the neutral chip
+   palette the tool chips use for their off state. */
+.chip {
+  background: var(--bg-control-accent-alpha, #2764d90f);
+  border-color: var(--stroke-accent, #1d4ed8);
+
+  &:hover,
+  &:focus-within {
+    background: var(--bg-control-accent-alpha-hover, #2764d924);
+  }
+}
+
+.chipIcon,
+.chipText {
+  color: var(
+    --text-control-accent-active,
+    var(--text-control-blue-active, #6785fb)
+  );
+}
+
+.chipClose {
+  color: var(
+    --text-control-accent-active,
+    var(--text-control-blue-active, #6785fb)
+  );
+
+  &:hover,
+  &:focus-visible {
+    color: var(
+      --text-control-accent-hover,
+      var(--text-control-blue-hover, #5976e9)
+    );
+  }
+}

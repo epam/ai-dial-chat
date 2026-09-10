@@ -44,12 +44,18 @@ const renderPublishing = (
   const rememberPublishFolder = vi.fn();
   const notifyOperationSuccess = vi.fn();
   const showPublishError = vi.fn();
+  /* Mirrors `usePublishFolders`: every folder is writable except `Production`. */
+  const hasPublishWriteAccess = vi.fn(
+    (folderPath: string[]) => !folderPath.includes('Production'),
+  );
   const view = renderHook(() =>
     useCatalogPublishing({
       deployments: [] as DeploymentItemDto[],
       rememberPublishFolder,
       notifyOperationSuccess,
       showPublishError,
+      isAdmin: false,
+      hasPublishWriteAccess,
       ...overrides,
     }),
   );
@@ -58,8 +64,11 @@ const renderPublishing = (
     rememberPublishFolder,
     notifyOperationSuccess,
     showPublishError,
+    hasPublishWriteAccess,
   };
 };
+
+const PUBLIC_AGENT_ID = 'applications/public/Data Science/Revenue bot';
 
 describe('useCatalogPublishing', () => {
   beforeEach(() => {
@@ -242,6 +251,44 @@ describe('useCatalogPublishing', () => {
         result.current.isPublishVisible(makeCatalogItem({ isMyApp: false })),
       ).toBe(false);
     });
+
+    /*
+     * GH #8691: Publish used to be withheld from an item that had already been
+     * published, leaving Unpublish as the owner's only action even on a brand
+     * new version. The predicate must not consult publish state at all.
+     */
+    it('still shows Publish for an owned item that has already been published', async () => {
+      vi.mocked(getCatalogPublishHistory).mockResolvedValue([
+        {
+          entityId: 'tool-abc123',
+          entityType: CatalogPublishEntityType.Toolset,
+          folderPath: 'Organization/Data Science',
+          version: '1.0',
+          publishedAt: '2026-07-13T10:00:00.000Z',
+          publishedBy: 'user@example.com',
+        },
+      ]);
+      const { result } = renderPublishing();
+      const item = makeCatalogItem();
+
+      await result.current.getPublishHistory(item);
+
+      expect(result.current.isPublishVisible(item)).toBe(true);
+    });
+
+    it('hides Publish on the public copy, which is not the author’s source item', () => {
+      const { result } = renderPublishing();
+
+      expect(
+        result.current.isPublishVisible(
+          makeCatalogItem({
+            id: PUBLIC_AGENT_ID,
+            type: CatalogEntityType.Agent,
+            isMyApp: false,
+          }),
+        ),
+      ).toBe(false);
+    });
   });
 
   describe('unpublish', () => {
@@ -324,13 +371,135 @@ describe('useCatalogPublishing', () => {
       expect(notifyOperationSuccess).not.toHaveBeenCalled();
     });
 
-    it('offers Unpublish (isPublishVisible) exactly where Publish is offered', () => {
-      const { result } = renderPublishing();
+    /*
+     * GH #8691: Unpublish used to ride the same predicate as Publish, which
+     * put it on the author's private item — where it could target a folder
+     * that item was never published to — and kept it off the published copy,
+     * the only thing an unpublish request actually removes.
+     */
+    describe('isUnpublishVisible', () => {
+      const makePublicAgent = (overrides?: Partial<CatalogItem>) =>
+        makeCatalogItem({
+          id: PUBLIC_AGENT_ID,
+          type: CatalogEntityType.Agent,
+          isMyApp: false,
+          ...overrides,
+        });
 
-      expect(result.current.isPublishVisible(makeCatalogItem())).toBe(true);
-      expect(
-        result.current.isPublishVisible(makeCatalogItem({ isMyApp: false })),
-      ).toBe(false);
+      it('offers Unpublish on a public copy in a folder the user may write to', () => {
+        const { result } = renderPublishing();
+
+        expect(result.current.isUnpublishVisible(makePublicAgent())).toBe(true);
+      });
+
+      it('withholds Unpublish from the author’s own private item', () => {
+        const { result } = renderPublishing();
+
+        expect(
+          result.current.isUnpublishVisible(
+            makeCatalogItem({ id: 'applications/my-bucket/Revenue bot' }),
+          ),
+        ).toBe(false);
+      });
+
+      it('withholds Unpublish from a non-admin without write access to the folder', () => {
+        const { result } = renderPublishing();
+
+        expect(
+          result.current.isUnpublishVisible(
+            makePublicAgent({
+              id: 'applications/public/Production/Revenue bot',
+            }),
+          ),
+        ).toBe(false);
+      });
+
+      it('offers Unpublish to an admin even in a folder they cannot write to', () => {
+        const { result } = renderPublishing({ isAdmin: true });
+
+        expect(
+          result.current.isUnpublishVisible(
+            makePublicAgent({
+              id: 'applications/public/Production/Revenue bot',
+            }),
+          ),
+        ).toBe(true);
+      });
+    });
+
+    /*
+     * Core matches publications by *source* url and lists them from the
+     * caller's own bucket, so a public id matches nothing — an empty history
+     * is what left the copy with no folder to unpublish, and so no action.
+     */
+    describe('publish history for a public copy', () => {
+      it('derives the folder from the id instead of calling the endpoint', async () => {
+        const { result } = renderPublishing();
+
+        const history = await result.current.getPublishHistory(
+          makeCatalogItem({
+            id: PUBLIC_AGENT_ID,
+            type: CatalogEntityType.Agent,
+            isMyApp: false,
+            updatedAt: 1_760_000_000_000,
+          }),
+        );
+
+        expect(getCatalogPublishHistory).not.toHaveBeenCalled();
+        expect(history).toEqual([
+          {
+            version: '1.2.0',
+            publishedAt: 1_760_000_000_000,
+            folderPath: ['Data Science'],
+          },
+        ]);
+      });
+
+      it('decodes percent-encoded folder segments the id carries', async () => {
+        const { result } = renderPublishing();
+
+        const history = await result.current.getPublishHistory(
+          makeCatalogItem({
+            id: 'applications/public/Data%20Science/Revenue%20bot',
+            type: CatalogEntityType.Agent,
+            isMyApp: false,
+          }),
+        );
+
+        expect(history[0].folderPath).toEqual(['Data Science']);
+      });
+
+      it('reports the public root as an empty folder path', async () => {
+        const { result } = renderPublishing();
+
+        const history = await result.current.getPublishHistory(
+          makeCatalogItem({
+            id: 'applications/public/Revenue bot',
+            type: CatalogEntityType.Agent,
+            isMyApp: false,
+          }),
+        );
+
+        expect(history[0].folderPath).toEqual([]);
+      });
+
+      it('unpublishes the public copy by its own id and derived folder', async () => {
+        const { result } = renderPublishing();
+        const item = makeCatalogItem({
+          id: PUBLIC_AGENT_ID,
+          type: CatalogEntityType.Agent,
+          isMyApp: false,
+        });
+
+        const [entry] = await result.current.getPublishHistory(item);
+        await result.current.handleUnpublish(item, entry.folderPath);
+
+        expect(unpublishCatalogEntity).toHaveBeenCalledWith(
+          CatalogPublishEntityType.Application,
+          PUBLIC_AGENT_ID,
+          { folderPath: 'Data Science', version: '1.2.0' },
+        );
+      });
     });
   });
 });

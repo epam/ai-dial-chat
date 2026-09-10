@@ -8,9 +8,9 @@ import {
 import {
   DIAL_ICON_SIZE,
   GhostButton,
+  InteractiveTooltip,
   MenuItem,
   ToggleIconButton,
-  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconStarFilled } from '@tabler/icons-react';
 import { useEffect, useLayoutEffect, useRef, useState, type FC } from 'react';
@@ -22,6 +22,14 @@ const SECTION_HEADING_CLASS_NAME = 'px-3 pb-0.5 pt-2';
 
 /* Must match the .rowLeaving exit-animation duration in FavoritePromptsPanel.module.scss. */
 const ROW_LEAVE_ANIMATION_MS = 180;
+
+/*
+ * Grace period before an unhovered tooltip panel closes, giving the pointer
+ * time to cross from the row onto the panel (and back) without the panel
+ * vanishing under it. Any hover or focus re-entry cancels the pending close.
+ * Mirrors `FavoriteSkillsPanel` so prompts and skills behave identically.
+ */
+const TOOLTIP_CLOSE_DELAY_MS = 300;
 
 /**
  * Second-level "My Collection" panel: the user's favorite prompts, or an
@@ -57,11 +65,42 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
     new Map<string, ReturnType<typeof setTimeout>>(),
   );
 
+  /*
+   * The row tooltip's open state is panel-controlled rather than left to the
+   * kit's internal hover logic: the kit closes the instant the pointer leaves
+   * the row-or-panel pair, which eats the panel when the pointer crosses the
+   * gap. Here, leaving either side only *schedules* a close after
+   * `TOOLTIP_CLOSE_DELAY_MS`, and entering either side cancels it.
+   */
+  const [openTooltipId, setOpenTooltipId] = useState<string | null>(null);
+  const tooltipCloseTimeoutRef = useRef<
+    ReturnType<typeof setTimeout> | undefined
+  >(undefined);
+
+  const cancelTooltipClose = () => {
+    clearTimeout(tooltipCloseTimeoutRef.current);
+    tooltipCloseTimeoutRef.current = undefined;
+  };
+
+  const handleTooltipOpen = (id: string) => {
+    cancelTooltipClose();
+    setOpenTooltipId(id);
+  };
+
+  const scheduleTooltipClose = () => {
+    cancelTooltipClose();
+    tooltipCloseTimeoutRef.current = setTimeout(() => {
+      setOpenTooltipId(null);
+      tooltipCloseTimeoutRef.current = undefined;
+    }, TOOLTIP_CLOSE_DELAY_MS);
+  };
+
   useEffect(() => {
     const timeouts = leaveTimeoutsRef.current;
     return () => {
       timeouts.forEach((timeout) => clearTimeout(timeout));
       timeouts.clear();
+      clearTimeout(tooltipCloseTimeoutRef.current);
     };
   }, []);
 
@@ -119,6 +158,15 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
         label={item.name}
         labelClassName={nameClassName}
         onClick={() => onSelect(item)}
+        /*
+          The tooltip open state is panel-controlled (see openTooltipId above),
+          so these handlers drive it directly; `MenuItem` is a real button, so
+          it needs no custom keydown handling for Enter/Space.
+        */
+        onMouseEnter={() => handleTooltipOpen(item.id)}
+        onMouseLeave={scheduleTooltipClose}
+        onFocus={() => handleTooltipOpen(item.id)}
+        onBlur={scheduleTooltipClose}
         rightControl={
           <ToggleIconButton
             icon={
@@ -147,9 +195,30 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
         }
       >
         {hasDescription ? (
-          <Tooltip tooltip={item.description} triggerClassName="block">
+          /*
+           * The row stays the focus/click target (`asChild`); the tooltip only
+           * opens on hover or keyboard focus and renders nothing on touch-only
+           * devices, where tapping the row still inserts the prompt. Rows
+           * without a description are not wrapped at all.
+           */
+          <InteractiveTooltip
+            asChild
+            open={openTooltipId === item.id}
+            contentClassName="max-w-[550px]"
+            content={
+              <div
+                /* Hover or focus reaching the panel cancels the close the row's leave scheduled, and vice versa. */
+                onMouseEnter={cancelTooltipClose}
+                onMouseLeave={scheduleTooltipClose}
+                onFocus={cancelTooltipClose}
+                onBlur={scheduleTooltipClose}
+              >
+                <p className="text-start">{item.description}</p>
+              </div>
+            }
+          >
             {row}
-          </Tooltip>
+          </InteractiveTooltip>
         ) : (
           row
         )}

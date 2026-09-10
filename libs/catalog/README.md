@@ -323,6 +323,34 @@ import {
 <InfoCard item={item} variant={DetailsConfirmationVariant.Danger} />
 ```
 
+### DetailsPanel
+
+The right-anchored details panel `Catalog` opens internally, exported for
+hosts composing it into other surfaces (e.g. a chat route's skill details side
+panel). Only `item`, `isOpen`, and `onClose` are required; every action is
+opt-in and hidden when its prop is absent, and mounting it never mounts the
+catalog page chrome — the host owns the item, the details fetch, and the
+action handlers. Skills open on the content-first tab; prompts and deployments
+open on their usual first tab.
+
+```tsx
+import { DetailsPanel } from '@epam/ai-dial-catalog';
+import type { CatalogItem } from '@epam/ai-dial-catalog';
+
+<DetailsPanel
+  item={item}
+  isOpen={isDetailsOpen}
+  onClose={closeDetails}
+  isStarred={item.isUserFavorite}
+  onToggleFavorite={(id, isStarred) => toggleFavorite(id, isStarred)}
+  onUseInChat={(item: CatalogItem) => attachToChat(item)}
+  texts={{ primaryActionLabel: 'Use in chat' }}
+/>;
+```
+
+See `DetailsPanelProps` (and its `texts` / `styles` overrides) in the Types
+section below; a skills-scoped wrapper lives in `@epam/ai-dial-skills`.
+
 ## Enums
 
 ```tsx
@@ -384,6 +412,14 @@ two: an item with no published copy offers `Publish`, an item with a published
 folder offers `Unpublish`, so publishing an already-published item a second
 time means unpublishing it first. Because the history lookup is lazy, the entry
 may start as `Publish` and swap once the response lands.
+
+Supplying `isUnpublishVisible` does one more thing: for an item it returns
+`true` for, the Manage trigger renders while the history lookup is still
+outstanding, even when that leaves the menu momentarily empty. Without this an
+item whose only entry would be `Unpublish` could never show one, because the
+lookup that produces it is started by hovering, focusing or opening that same
+trigger. A host that supplies no rule keeps the plain "hidden while empty"
+behaviour.
 
 Its body depends on how many folders history resolved to: one folder is named in static copy with confirm enabled
 immediately, while several render as a single-select radio group with confirm
@@ -701,6 +737,9 @@ import type {
   ApiResource,
   CatalogItemApiDetails,
   CatalogItemPromptContent,
+  DetailsPanelProps,
+  ItemDetailsStyles,
+  ItemDetailsTexts,
   ToolDefinition,
   PricingRow,
   UsageLimitRow,

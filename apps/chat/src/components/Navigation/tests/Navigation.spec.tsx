@@ -11,6 +11,10 @@ import {
   NavigationI18nKeys,
   SettingsI18nKeys,
 } from '../../../constants/translation-keys';
+import {
+  useAppConfig as useAppConfigMock,
+  useFeatureFlag as useFeatureFlagMock,
+} from '../../../context/tests/app-config-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import { AuthStatus } from '../../../types/auth-status';
 import { UserConfigStatus } from '../../../types/user-config-status';
@@ -119,12 +123,10 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentThemeFavicon: undefined }),
 }));
 
-const useAppConfigMock = vi.fn();
-const useFeatureFlagMock = vi.fn();
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => useAppConfigMock(),
-  useFeatureFlag: (key: string) => useFeatureFlagMock(key),
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 
 const useUserMock = vi.fn();
 vi.mock('../../../context/auth/UserContext', () => ({
