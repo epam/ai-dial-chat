@@ -22,14 +22,27 @@ function replaceContentInNodeModule(
   );
   const targetFilePath = join(modulePath, relativeFilePath);
 
+  let fileContent;
   let updatedContent;
   try {
-    const fileContent = readFileSync(targetFilePath, 'utf-8');
+    fileContent = readFileSync(targetFilePath, 'utf-8');
     updatedContent = fileContent.replaceAll(searchPattern, replacement);
   } catch (e) {
     console.error(`Error reading file: ${targetFilePath}`, e);
     throw e;
   }
+
+  // A silent no-op means the upstream source drifted (e.g. after a Next.js
+  // upgrade) and the behaviour this patch provides is gone. Fail loudly unless
+  // the replacement is already in place from a previous run.
+  if (updatedContent === fileContent && !fileContent.includes(replacement)) {
+    throw new Error(
+      `Patch target not found in ${targetFilePath}\n` +
+        `  searched for: ${searchPattern}\n` +
+        `  This usually means the dependency was upgraded and the patch needs to be updated.`,
+    );
+  }
+
   try {
     writeFileSync(targetFilePath, updatedContent, 'utf-8');
   } catch (e) {
@@ -120,24 +133,8 @@ replaceContentInNodeModule(
   `if (!!input && (input instanceof Observable_1.Observable || (typeof input.lift === 'function' && typeof input.subscribe === 'function'))) {`,
 );
 
-// Enable server-side debugging in Next.js, enable to set 0.0.0.0 as host
-replaceContentInNodeModule(
-  'next',
-  'dist/server/lib/utils.js',
-  'return debugPortStr ? parseInt(debugPortStr, 10) : 9229;',
-  'return debugPortStr ? debugPortStr : 9229;',
-);
-
-replaceContentInNodeModule(
-  'next',
-  'dist/esm/server/lib/utils.js',
-  'return debugPortStr ? parseInt(debugPortStr, 10) : 9229;',
-  'return debugPortStr ? debugPortStr : 9229;',
-);
-
-replaceContentInNodeModule(
-  'next',
-  'dist/cli/next-dev.js',
-  'NODE_OPTIONS = `${NODE_OPTIONS} --${nodeDebugType}=${(0, _utils.getDebugPort)() + 1}`;',
-  "NODE_OPTIONS = `${NODE_OPTIONS} --${nodeDebugType}=${((str) => str.includes(':') ? str.replace(/(\\d+)$/, num => ++num) : ++str)(String((0, _utils.getDebugPort)()))}`;",
-);
+// NOTE: The patches that enabled server-side debugging on a custom host (e.g.
+// 0.0.0.0) were removed in the Next.js 16.3.4 upgrade. Next.js now supports a
+// `[host:]port` debug address natively via `getParsedDebugAddress` /
+// `formatDebugAddress` in `dist/server/lib/utils.js`, which preserves the host
+// and increments the port, so the patches were no longer needed.
