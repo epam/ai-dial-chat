@@ -22,7 +22,7 @@ import { vi } from 'vitest';
  */
 export const useAppConfig = vi.fn();
 
-export const useFeatureFlag = vi.fn((): boolean => false);
+export const useFeatureFlag = vi.fn((key?: string): boolean => false);
 
 /* Renders children through, the way specs that mount the (mocked) provider
  * in their harness expect; specs that never render it are unaffected. */

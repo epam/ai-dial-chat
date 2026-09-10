@@ -41,7 +41,7 @@ mockUseAppConfig.mockImplementation(() => ({
     defaultDeploymentId: contextMocks.defaultDeploymentId,
   },
 }));
-mockUseFeatureFlag.mockImplementation((key: string) => {
+mockUseFeatureFlag.mockImplementation((key?: string) => {
   if (key === 'defaultDeploymentPinned') {
     return contextMocks.isDefaultDeploymentPinned;
   }
