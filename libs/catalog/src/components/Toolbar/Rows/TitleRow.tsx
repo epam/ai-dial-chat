@@ -7,9 +7,11 @@ import {
   DIAL_KIT_ICON_STROKE,
   DropdownItem,
   ElementSize,
+  MenuItemMark,
   Search,
   SegmentedControl,
   SegmentedControlItem,
+  SelectOption,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 import { FC, ReactNode, useMemo } from 'react';
@@ -32,7 +34,9 @@ interface TitleRowProps {
   listViewLabel?: string;
   viewToggleLabel?: string;
   sortKey?: string;
-  sortOptions?: DropdownItem[];
+  sortOptions?: SelectOption[];
+  onSortChange?: (sortKey: string) => void;
+  sortLabel?: string;
   filters?: Set<string>;
   onFiltersChange?: (filters: Set<string>) => void;
   filterValues?: Set<string>;
@@ -59,6 +63,8 @@ export const TitleRow: FC<TitleRowProps> = ({
   viewToggleLabel = 'View mode',
   sortKey,
   sortOptions,
+  onSortChange,
+  sortLabel = 'Sort',
   filters,
   onFiltersChange,
   filterValues,
@@ -101,11 +107,32 @@ export const TitleRow: FC<TitleRowProps> = ({
     [gridViewLabel, listViewLabel],
   );
 
-  const activeLabel = sortOptions?.find((o) => o.key === sortKey)?.label ?? '';
-
   const handleChange = (nextValue?: string) => {
     onQueryChange(nextValue ?? '');
   };
+
+  /* Falls back to the control's own name so the trigger is never a button with
+   * no accessible name, which is what an unrecognised sortKey would produce —
+   * the kit's `Button` derives its `aria-label` from `label` and overrides any
+   * the caller passes, so the visible label is the only name available. */
+  const activeSortLabel =
+    sortOptions?.find((option) => option.value === sortKey)?.label ?? sortLabel;
+
+  /*
+   * The host passes the values alone; the marking and the click belong here,
+   * so the trigger and the menu cannot disagree about which order is applied.
+   */
+  const sortItems = useMemo<DropdownItem[]>(
+    () =>
+      (sortOptions ?? []).map((option) => ({
+        key: option.value,
+        label: option.label,
+        mark: MenuItemMark.Check,
+        checked: option.value === sortKey,
+        onClick: () => onSortChange?.(option.value),
+      })),
+    [sortOptions, sortKey, onSortChange],
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -140,11 +167,13 @@ export const TitleRow: FC<TitleRowProps> = ({
                 className={mergeClasses('h-4 w-px shrink-0', styles.divider)}
               />
 
+              {/* The trigger shows the applied order and the menu marks it
+                  with the design's trailing check. */}
               <ButtonDropdown
-                label={activeLabel}
+                items={sortItems}
+                label={activeSortLabel}
                 variant={ButtonVariant.Primary}
                 appearance={ButtonAppearance.Ghost}
-                items={sortOptions}
               />
             </>
           )}

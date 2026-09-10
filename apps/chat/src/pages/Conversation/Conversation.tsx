@@ -123,6 +123,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     conversations,
     duplicateConversation,
     updateConversationTitle,
+    bumpConversationActivity,
     watchForDisplayNameUpdate,
     removeConversationFromList,
   } = useConversations();
@@ -298,7 +299,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   }, [showErrorNotification, t]);
 
   const {
-    startStream,
+    startStream: startConversationStream,
     handleStop,
     resumeIfAwaitingGeneration,
     restoreBufferedGeneration,
@@ -313,6 +314,20 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     overlay,
     onStopError: handleStopError,
   });
+
+  /*
+   * Every generation this page can launch — send, regenerate, edit and the
+   * auto-continue on load — funnels through startStream, so bumping the
+   * sidebar entry here reorders the list by latest activity right away
+   * instead of leaving it stale until the next full re-fetch.
+   */
+  const startStream = useCallback<typeof startConversationStream>(
+    (streamedConversationId, ...rest) => {
+      bumpConversationActivity(streamedConversationId);
+      startConversationStream(streamedConversationId, ...rest);
+    },
+    [bumpConversationActivity, startConversationStream],
+  );
 
   useEffect(() => {
     return () => {

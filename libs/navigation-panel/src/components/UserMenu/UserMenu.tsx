@@ -5,6 +5,7 @@ import {
   Dropdown,
   DropdownItemType,
   EllipsisTooltip,
+  MenuItemMark,
   Tooltip,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
@@ -12,7 +13,6 @@ import { IconLogout, IconSettings } from '@tabler/icons-react';
 import { memo, useMemo, type FC } from 'react';
 import type { UserMenuProps } from '../../models/user-menu-props';
 import { AvatarInitials } from '../common/AvatarInitials';
-import { MenuItemLabel } from '../common/MenuItemLabel';
 import { UserAvatar } from '../common/UserAvatar';
 import styles from './UserMenu.module.scss';
 
@@ -39,11 +39,15 @@ export const UserMenu: FC<UserMenuProps> = memo(
           '--np-avatar-bg': colors?.avatarBackground,
           '--np-avatar-text': colors?.avatarText,
           '--np-menu-text': colors?.text,
-          '--np-menu-active-icon': colors?.activeIcon,
           '--np-trigger-hover-bg': colors?.triggerHoverBackground,
           '--np-font-family': typography?.fontFamily,
         }),
       [colors, typography?.fontFamily],
+    );
+
+    const menuLabelClassName = useMemo(
+      () => mergeClasses(styles.menuLabel, labelClassName),
+      [labelClassName],
     );
 
     const items = useMemo<DropdownItem[]>(() => {
@@ -51,18 +55,16 @@ export const UserMenu: FC<UserMenuProps> = memo(
         .filter(({ options }) => options.length > 0)
         .map(({ id, label, icon, options }) => ({
           key: id,
-          label: <span className={labelClassName}>{label}</span>,
+          label: <span className={menuLabelClassName}>{label}</span>,
           icon,
           children: options.map((option) => ({
             key: option.id,
-            label: (
-              <MenuItemLabel
-                label={option.label}
-                isActive={option.isActive}
-                icon={option.icon}
-                textClassName={labelClassName}
-              />
-            ),
+            label: <span className={menuLabelClassName}>{option.label}</span>,
+            icon: option.icon,
+            /* The applied value is the menu's single choice, so the kit draws
+               the trailing check and announces the row as a radio item. */
+            mark: MenuItemMark.Check,
+            checked: option.isActive,
             onClick: option.onSelect,
           })),
         }));
@@ -92,7 +94,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
               {
                 key: 'settings',
                 label: (
-                  <span className={labelClassName}>{labels.settings}</span>
+                  <span className={menuLabelClassName}>{labels.settings}</span>
                 ),
                 icon: (
                   <IconSettings
@@ -107,7 +109,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
           : []),
         {
           key: 'logout',
-          label: <span className={labelClassName}>{labels.logOut}</span>,
+          label: <span className={menuLabelClassName}>{labels.logOut}</span>,
           icon: (
             <IconLogout
               size={DIAL_ICON_SIZE.SM}
@@ -121,6 +123,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
     }, [
       groups,
       labelClassName,
+      menuLabelClassName,
       labels.logOut,
       labels.settings,
       onLogout,

@@ -37,6 +37,8 @@ export interface CatalogTitles {
    * Default: (q) => `No results for "${q}"`.
    */
   noResultsTitle?: (query: string) => string;
+  /** The sort control's own name, prepended to its accessible name. Default: 'Sort'. */
+  sortLabel?: string;
   /** Label for the "Recently Updated" sort option. Default: 'Recently Updated'. */
   sortRecentlyUpdatedLabel?: string;
   /** Label for the "Newest" sort option. Default: 'Newest'. */

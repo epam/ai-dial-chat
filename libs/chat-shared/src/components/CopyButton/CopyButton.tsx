@@ -19,6 +19,8 @@ export interface CopyButtonProps {
   ariaLabel?: string;
   iconSize?: number;
   iconCopy?: ReactNode;
+  /** Renders the button in its disabled state and blocks clicks. Defaults to `false`. */
+  isDisabled?: boolean;
 }
 export const CopyIconButton: FC<CopyButtonProps> = ({
   onClick,
@@ -29,6 +31,7 @@ export const CopyIconButton: FC<CopyButtonProps> = ({
   ariaLabel,
   iconSize = DIAL_ICON_SIZE.LG,
   iconCopy,
+  isDisabled = false,
 }) => {
   return (
     <ToggleIconButton
@@ -55,6 +58,7 @@ export const CopyIconButton: FC<CopyButtonProps> = ({
         tooltip: isCopied ? copiedLabel : copyLabel,
       }}
       onClick={onClick}
+      disabled={isDisabled}
     />
   );
 };
@@ -65,6 +69,7 @@ export const CopyButton: FC<CopyButtonProps> = ({
   copyLabel,
   copiedLabel,
   size = ElementSize.Standard,
+  isDisabled = false,
 }) => {
   return (
     <NeutralButton
@@ -86,6 +91,7 @@ export const CopyButton: FC<CopyButtonProps> = ({
         )
       }
       onClick={onClick}
+      disabled={isDisabled}
       className="shrink-0"
     />
   );

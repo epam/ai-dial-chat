@@ -73,19 +73,19 @@ describe('DeploymentSelectorPanel', () => {
   it('shows a favorited Application in the list', () => {
     renderPanel([makeItem('app-1', CatalogEntityType.Agent)]);
 
-    expect(screen.getByRole('button', { name: /app-1/ })).toBeTruthy();
+    expect(screen.getByRole('menuitemradio', { name: /app-1/ })).toBeTruthy();
   });
 
   it('shows a favorited Model in the list', () => {
     renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
 
-    expect(screen.getByRole('button', { name: /model-1/ })).toBeTruthy();
+    expect(screen.getByRole('menuitemradio', { name: /model-1/ })).toBeTruthy();
   });
 
   it('shows a favorited Agent in the list', () => {
     renderPanel([makeItem('agent-1', CatalogEntityType.Agent)]);
 
-    expect(screen.getByRole('button', { name: /agent-1/ })).toBeTruthy();
+    expect(screen.getByRole('menuitemradio', { name: /agent-1/ })).toBeTruthy();
   });
 
   it.each([CatalogEntityType.Toolset, CatalogEntityType.Skill])(
@@ -94,7 +94,7 @@ describe('DeploymentSelectorPanel', () => {
       renderPanel([makeItem('non-talkable-1', type)]);
 
       expect(
-        screen.queryByRole('button', { name: /non-talkable-1/ }),
+        screen.queryByRole('menuitemradio', { name: /non-talkable-1/ }),
       ).toBeNull();
     },
   );
@@ -106,9 +106,11 @@ describe('DeploymentSelectorPanel', () => {
       makeItem('toolset-1', CatalogEntityType.Toolset),
     ]);
 
-    expect(screen.getByRole('button', { name: /model-1/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /app-1/ })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /toolset-1/ })).toBeNull();
+    expect(screen.getByRole('menuitemradio', { name: /model-1/ })).toBeTruthy();
+    expect(screen.getByRole('menuitemradio', { name: /app-1/ })).toBeTruthy();
+    expect(
+      screen.queryByRole('menuitemradio', { name: /toolset-1/ }),
+    ).toBeNull();
   });
 
   describe('currently-selected (not favorited) model', () => {
@@ -121,7 +123,9 @@ describe('DeploymentSelectorPanel', () => {
       });
 
       expect(screen.getByText('Currently selected')).toBeTruthy();
-      expect(screen.getByRole('button', { name: /claude-opus/ })).toBeTruthy();
+      expect(
+        screen.getByRole('menuitemradio', { name: /claude-opus/ }),
+      ).toBeTruthy();
     });
 
     it('does not duplicate the row when the selected model is already a favorite', () => {
@@ -132,7 +136,7 @@ describe('DeploymentSelectorPanel', () => {
 
       expect(screen.queryByText('Currently selected')).toBeNull();
       expect(
-        screen.getAllByRole('button', { name: /claude-opus/ }),
+        screen.getAllByRole('menuitemradio', { name: /claude-opus/ }),
       ).toHaveLength(1);
     });
 
@@ -186,7 +190,9 @@ describe('DeploymentSelectorPanel', () => {
         onClose,
       });
 
-      await user.click(screen.getByRole('button', { name: /claude-opus/ }));
+      await user.click(
+        screen.getByRole('menuitemradio', { name: /claude-opus/ }),
+      );
 
       expect(onSelect).toHaveBeenCalledWith('claude-opus');
       expect(onClose).toHaveBeenCalledOnce();
@@ -209,7 +215,7 @@ describe('DeploymentSelectorPanel', () => {
         selectedItem: makeItem('conversation-model', CatalogEntityType.Model),
       });
 
-      const rows = screen.getAllByRole('button', {
+      const rows = screen.getAllByRole('menuitemradio', {
         name: /default-model|favorite-model/,
       });
       expect(rows[0].textContent).toContain('default-model');
@@ -222,7 +228,7 @@ describe('DeploymentSelectorPanel', () => {
       renderPanel([pinnedItem], { pinnedItem });
 
       expect(
-        screen.getAllByRole('button', { name: /default-model/ }),
+        screen.getAllByRole('menuitemradio', { name: /default-model/ }),
       ).toHaveLength(1);
     });
 
@@ -258,7 +264,9 @@ describe('DeploymentSelectorPanel', () => {
       );
 
       expect(onToggleFavorite).not.toHaveBeenCalled();
-      expect(screen.getByRole('button', { name: /gpt-4o/ })).toBeTruthy();
+      expect(
+        screen.getByRole('menuitemradio', { name: /gpt-4o/ }),
+      ).toBeTruthy();
     });
 
     it('calls onToggleFavorite with false once the exit animation finishes', async () => {

@@ -11,6 +11,12 @@ export interface NavigationSheetColors {
   itemHoverBackground?: string;
   /** Row background while pressed. */
   itemActiveBackground?: string;
+  /** Label and icon color of the row whose destination is open. */
+  activeRowText?: string;
+  /** Background of the row whose destination is open. */
+  activeRowBackground?: string;
+  /** Background of the row whose destination is open, on hover. */
+  activeRowBackgroundHover?: string;
   /** Row leading-icon color. */
   icon?: string;
   /** Divider color between row groups. */

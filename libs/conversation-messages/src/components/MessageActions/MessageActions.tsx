@@ -40,6 +40,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
   onDislike,
   activeRating,
   isAlwaysVisible,
+  isDisabled = false,
   className,
   labels,
   colors,
@@ -99,6 +100,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               onClick={onEdit}
               onMouseEnter={onEditHover}
               onFocus={onEditHover}
+              disabled={isDisabled}
             />
           )}
           {onDelete && (
@@ -114,6 +116,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-label={ariaLabels?.deleteMessage ?? 'Delete message'}
               tooltipProps={{ tooltip: tooltips?.delete ?? 'Delete' }}
               onClick={onDelete}
+              disabled={isDisabled}
             />
           )}
         </>
@@ -134,6 +137,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               }
               tooltipProps={{ tooltip: tooltips?.regenerate ?? 'Regenerate' }}
               onClick={onRegenerate}
+              disabled={isDisabled}
             />
           )}
           {onCopy && (
@@ -145,6 +149,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               copyLabel={tooltips?.copy ?? 'Copy'}
               copiedLabel={tooltips?.copied ?? 'Copied!'}
               ariaLabel={ariaLabels?.copyResponse ?? 'Copy response'}
+              isDisabled={isDisabled}
             />
           )}
           {onCopyMarkdown && (
@@ -163,6 +168,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               copyLabel={tooltips?.copyMarkdown ?? 'Copy as Markdown'}
               copiedLabel={tooltips?.copiedMarkdown ?? 'Copied!'}
               ariaLabel={ariaLabels?.copyAsMarkdown ?? 'Copy as markdown'}
+              isDisabled={isDisabled}
             />
           )}
 
@@ -188,6 +194,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-pressed={activeRating === MessageRating.Like}
               tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
               onClick={onLike}
+              disabled={isDisabled}
             />
           )}
           {onDislike && (
@@ -212,6 +219,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-pressed={activeRating === MessageRating.Dislike}
               tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}
               onClick={onDislike}
+              disabled={isDisabled}
             />
           )}
         </>
