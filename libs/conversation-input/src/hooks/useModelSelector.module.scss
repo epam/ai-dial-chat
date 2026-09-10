@@ -1,14 +1,3 @@
 .searchHeader {
   background: var(--ms-search-header-bg, var(--bg-layer-raised, #fcfcfc));
 }
-
-.selectedItem {
-  background: var(
-    --ms-selected-item-bg,
-    var(--bg-control-accent-alpha-active, #2764d933)
-  );
-}
-
-.selectedItemCheck {
-  color: var(--ms-selected-item-check, var(--text-accent, #1d4ed8));
-}

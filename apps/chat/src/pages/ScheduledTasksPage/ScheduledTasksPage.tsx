@@ -167,22 +167,22 @@ const ScheduledTasksPage: FC = () => {
       searchPlaceholder: t(ScheduledTasksI18nKeys.SearchPlaceholder),
       searchAriaLabel: t(ScheduledTasksI18nKeys.SearchAriaLabel),
       clearSearchLabel: t(ScheduledTasksI18nKeys.ClearSearchLabel),
-      sortLabel: t(ScheduledTasksI18nKeys.SortLabel),
+      sortLabel: t(ButtonsI18nKeys.Sort),
       sortOptions: [
         {
-          key: ScheduledTasksSortKey.FirstToRun,
+          value: ScheduledTasksSortKey.FirstToRun,
           label: t(ScheduledTasksI18nKeys.SortFirstToRun),
         },
         {
-          key: ScheduledTasksSortKey.LastToRun,
+          value: ScheduledTasksSortKey.LastToRun,
           label: t(ScheduledTasksI18nKeys.SortLastToRun),
         },
         {
-          key: ScheduledTasksSortKey.Newest,
+          value: ScheduledTasksSortKey.Newest,
           label: t(ScheduledTasksI18nKeys.SortNewest),
         },
         {
-          key: ScheduledTasksSortKey.NameAZ,
+          value: ScheduledTasksSortKey.NameAZ,
           label: t(ScheduledTasksI18nKeys.SortNameAZ),
         },
       ],

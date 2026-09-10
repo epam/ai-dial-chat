@@ -2,22 +2,18 @@ import {
   buildCssVars,
   DeploymentIcon,
   mergeClasses,
+  SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
+  SELECT_LIST_MAX_HEIGHT_PX,
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   GhostButton,
   InteractiveTooltip,
+  MenuItem,
   ToggleIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconStarFilled } from '@tabler/icons-react';
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type FC,
-  type KeyboardEvent,
-} from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type FC } from 'react';
 import type { FavoritePromptItem } from '../../models/favorite-prompt-item';
 import type { FavoritePromptsPanelProps } from '../../models/favorite-prompts-panel-props';
 import styles from './FavoritePromptsPanel.module.scss';
@@ -26,9 +22,6 @@ const SECTION_HEADING_CLASS_NAME = 'px-3 pb-0.5 pt-2';
 
 /* Must match the .rowLeaving exit-animation duration in FavoritePromptsPanel.module.scss. */
 const ROW_LEAVE_ANIMATION_MS = 180;
-
-/* Matches the max-h-72 cap on the scrollable list. */
-const LIST_MAX_HEIGHT_PX = 288;
 
 /*
  * Grace period before an unhovered tooltip panel closes, giving the pointer
@@ -61,7 +54,6 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
   } = labels;
 
   const cssVars = buildCssVars({
-    '--fp-row-hover-bg': colors?.rowHoverBackground,
     '--fp-header-text': colors?.headerText,
     '--fp-empty-hint-text': colors?.emptyHintText,
     '--fp-star-color': colors?.starColor,
@@ -122,21 +114,13 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
   useLayoutEffect(() => {
     if (listContentRef.current) {
       setListHeight(
-        Math.min(listContentRef.current.scrollHeight, LIST_MAX_HEIGHT_PX),
+        Math.min(
+          listContentRef.current.scrollHeight,
+          SELECT_LIST_MAX_HEIGHT_PX,
+        ),
       );
     }
   }, [favorites]);
-
-  const handleKeyDown = (
-    e: KeyboardEvent<HTMLDivElement>,
-    item: FavoritePromptItem,
-  ) => {
-    if (e.target !== e.currentTarget) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onSelect(item);
-    }
-  };
 
   /*
    * Plays the row's fade-out animation before actually committing the
@@ -159,46 +143,46 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
 
   const renderRow = (item: FavoritePromptItem) => {
     const row = (
-      <div
-        role="button"
-        tabIndex={0}
-        className={mergeClasses(
-          'flex cursor-pointer items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 transition-colors',
-          styles.row,
-        )}
+      /*
+        The kit's own select-list row, so its rest, hover and focus states come
+        from the design's list-item spec. The star goes through `rightControl`:
+        it is a button, and a button nested inside the row's own button would be
+        invalid markup, swallow the row's click, and land inside the row's
+        accessible name.
+      */
+      <MenuItem
+        className="h-auto py-1.5"
+        icon={
+          <DeploymentIcon size={DIAL_ICON_SIZE.MD} initialsName={item.name} />
+        }
+        label={item.name}
+        labelClassName={nameClassName}
         onClick={() => onSelect(item)}
-        onKeyDown={(e) => handleKeyDown(e, item)}
+        /*
+          The tooltip open state is panel-controlled (see openTooltipId above),
+          so these handlers drive it directly; `MenuItem` is a real button, so
+          it needs no custom keydown handling for Enter/Space.
+        */
         onMouseEnter={() => handleTooltipOpen(item.id)}
         onMouseLeave={scheduleTooltipClose}
         onFocus={() => handleTooltipOpen(item.id)}
         onBlur={scheduleTooltipClose}
-      >
-        <DeploymentIcon size={DIAL_ICON_SIZE.MD} initialsName={item.name} />
-        <span
-          className={mergeClasses(
-            nameClassName,
-            'min-w-0 flex-1 truncate text-start',
-          )}
-        >
-          {item.name}
-        </span>
-        <ToggleIconButton
-          icon={
-            <IconStarFilled
-              size={DIAL_ICON_SIZE.SM}
-              className={styles.star}
-              aria-hidden
-            />
-          }
-          aria-label={removeFromFavoritesLabel}
-          /* Every row in this panel is a favorite, so the star is always on. */
-          isSelected
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggleFavorite(item.id);
-          }}
-        />
-      </div>
+        rightControl={
+          <ToggleIconButton
+            icon={
+              <IconStarFilled
+                size={DIAL_ICON_SIZE.SM}
+                className={styles.star}
+                aria-hidden
+              />
+            }
+            aria-label={removeFromFavoritesLabel}
+            /* Every row in this panel is a favorite, so the star is always on. */
+            isSelected
+            onClick={() => handleToggleFavorite(item.id)}
+          />
+        }
+      />
     );
 
     const hasDescription = item.description != null && item.description !== '';
@@ -256,7 +240,8 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
 
       <div
         className={mergeClasses(
-          'max-h-72 min-h-0 flex-1 overflow-y-auto',
+          SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
+          'min-h-0 flex-1 overflow-y-auto',
           styles.listContent,
         )}
         style={{ maxHeight: listHeight }}

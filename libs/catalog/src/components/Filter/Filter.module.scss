@@ -67,39 +67,8 @@
   @apply shadow-lg;
 }
 
-/* Checkbox row ------------------------------------------------ */
-
-.row {
-  @media (hover: hover) {
-    &:hover {
-      background: var(
-        --cat-filter-row-hover-bg,
-        var(--bg-control-accent-alpha-hover, #2764d924)
-      );
-    }
-  }
-
-  &:focus-visible {
-    box-shadow: 0 0 0 2px
-      var(--cat-filter-row-focus-ring, var(--stroke-accent-focus, #6785fb));
-  }
-}
-
-.rowChecked {
-  background: var(
-    --cat-filter-row-checked-bg,
-    var(--bg-control-accent-alpha-active, #2764d933)
-  );
-
-  @media (hover: hover) {
-    &:hover {
-      background: var(
-        --cat-filter-row-checked-bg,
-        var(--bg-control-accent-alpha-active, #2764d933)
-      );
-    }
-  }
-}
+/* Checkbox row — the row itself is the kit's `MenuItem`, which owns the rest,
+   hover, focus and checked treatments; only the label colour is themed here. */
 
 .rowLabel {
   color: var(--cat-filter-row-label, var(--text-primary, #161b2d));

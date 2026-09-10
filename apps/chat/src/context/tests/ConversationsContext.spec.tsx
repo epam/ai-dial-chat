@@ -612,6 +612,101 @@ describe('ConversationsContext — removeConversationFromList', () => {
   });
 });
 
+describe('ConversationsContext — bumpConversationActivity', () => {
+  it('moves the bumped conversation to the top of the list', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    act(() => {
+      result.current.bumpConversationActivity('conv3');
+    });
+
+    expect(result.current.conversations.map((c) => c.id)).toEqual([
+      'conv3',
+      'conv1',
+      'conv2',
+    ]);
+  });
+
+  it('stamps the bumped conversation with the current time, keeping its other fields', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    const bumpedAtLeast = Date.now();
+    act(() => {
+      result.current.bumpConversationActivity('conv2');
+    });
+
+    const [bumped] = result.current.conversations;
+    expect(bumped).toMatchObject({ id: 'conv2', title: 'Chat 2' });
+    expect(bumped.updatedAt).toBeGreaterThanOrEqual(bumpedAtLeast);
+  });
+
+  it('keeps a more recently updated conversation ahead of the bumped one', async () => {
+    mockListConversations.mockResolvedValue({
+      items: [
+        { ...seedConversations[0], updatedAt: Date.now() + 60_000 },
+        seedConversations[1],
+        seedConversations[2],
+      ],
+    });
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    act(() => {
+      result.current.bumpConversationActivity('conv3');
+    });
+
+    expect(result.current.conversations.map((c) => c.id)).toEqual([
+      'conv1',
+      'conv3',
+      'conv2',
+    ]);
+  });
+
+  it('matches ids that differ only by encoding', async () => {
+    mockListConversations.mockResolvedValue({
+      items: [
+        seedConversations[0],
+        { ...seedConversations[1], id: 'folder/my chat' },
+      ],
+    });
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(2));
+
+    act(() => {
+      result.current.bumpConversationActivity('folder/my%20chat');
+    });
+
+    expect(result.current.conversations.map((c) => c.id)).toEqual([
+      'folder/my chat',
+      'conv1',
+    ]);
+  });
+
+  it('is a no-op when the id does not match any conversation', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+    const before = result.current.conversations;
+
+    act(() => {
+      result.current.bumpConversationActivity('does-not-exist');
+    });
+
+    expect(result.current.conversations).toBe(before);
+  });
+});
+
 describe('ConversationsContext — markConversationViewed', () => {
   const unreadTaskConversations = [
     {

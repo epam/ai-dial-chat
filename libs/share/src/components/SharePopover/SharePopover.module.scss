@@ -64,49 +64,11 @@ button.accessTriggerBtn {
   }
 }
 
-.accessMenuItem {
-  @media (hover: hover) {
-    &:hover {
-      background: var(
-        --shp-menu-item-hover,
-        var(--bg-control-accent-alpha-hover, #2764d924)
-      );
-    }
-  }
-
-  /* The item clears its outline via Tailwind, so keyboard focus needs the hover
-   * background plus an inset ring that the dropdown's overflow cannot clip. */
-  &:focus-visible {
-    background: var(
-      --shp-menu-item-hover,
-      var(--bg-control-accent-alpha-hover, #2764d924)
-    );
-    box-shadow: inset 0 0 0 2px
-      var(--shp-menu-item-focus-shadow, var(--stroke-accent, #1d4ed8));
-  }
-}
-
-.accessMenuItemChecked {
-  background: var(
-    --shp-menu-item-checked-bg,
-    var(--bg-control-accent-alpha-hover, #2764d924)
-  );
-
-  @media (hover: hover) {
-    &:hover {
-      background: var(
-        --shp-menu-item-checked-bg,
-        var(--bg-control-accent-alpha-hover, #2764d924)
-      );
-    }
-  }
-}
+/* The access rows are the kit's `MenuItem`, which owns their hover, focus and
+   checked treatments as well as the trailing check; only the label colour is
+   themed here. */
 .accessMenuItemLabel {
   color: var(--shp-menu-item-label, var(--text-primary, #161b2d));
-}
-
-.accessMenuItemCheck {
-  color: var(--shp-menu-item-check, var(--text-accent, #1d4ed8));
 }
 
 .linkRow {

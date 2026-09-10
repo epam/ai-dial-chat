@@ -29,6 +29,9 @@ const handlersMocks = vi.hoisted(() => ({
   lastParams: undefined as undefined | Record<string, unknown>,
 }));
 
+/* Stable across renders so the sidebar-bump wiring can assert it forwards. */
+const streamMocks = vi.hoisted(() => ({ startStream: vi.fn() }));
+
 vi.mock('react-router', () => ({
   useNavigate: () => routerMocks.navigate,
   useParams: () => ({ '*': routerMocks.conversationId }),
@@ -117,7 +120,7 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
       restoreToolConfiguration: vi.fn(),
     }),
     useConversationStream: () => ({
-      startStream: vi.fn(),
+      startStream: streamMocks.startStream,
       handleStop: vi.fn(),
       resumeIfAwaitingGeneration: vi.fn(),
       restoreBufferedGeneration: (_id: string, conversation: Conversation) => ({
@@ -156,6 +159,7 @@ const makeConversation = (): Conversation =>
   }) as Conversation;
 
 const removeConversationFromList = vi.fn();
+const bumpConversationActivity = vi.fn();
 const showNotification = vi.fn();
 
 const notFoundError = { response: { status: 404, json: vi.fn() } };
@@ -170,6 +174,7 @@ beforeEach(() => {
     duplicateConversation: vi.fn(),
     removeConversationFromList,
     updateConversationTitle: vi.fn(),
+    bumpConversationActivity,
     watchForDisplayNameUpdate: vi.fn(() => () => undefined),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);
@@ -261,5 +266,27 @@ describe('ConversationPage — onConversationDeleted', () => {
 
     expect(removeConversationFromList).toHaveBeenCalledWith(CONVERSATION_ID);
     expect(routerMocks.navigate).toHaveBeenCalledWith(ROUTES.Root);
+  });
+});
+
+describe('ConversationPage — sidebar ordering on new activity', () => {
+  it('bumps the conversation to the top of the list and forwards the stream start', async () => {
+    mockGetConversation.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeConversation() as any,
+    );
+
+    render(<ConversationPage />);
+    await waitFor(() => expect(handlersMocks.lastParams).toBeDefined());
+
+    getHandlerParams().startStream(CONVERSATION_ID, 'hello', 1, 'gpt-4o');
+
+    expect(bumpConversationActivity).toHaveBeenCalledWith(CONVERSATION_ID);
+    expect(streamMocks.startStream).toHaveBeenCalledWith(
+      CONVERSATION_ID,
+      'hello',
+      1,
+      'gpt-4o',
+    );
   });
 });

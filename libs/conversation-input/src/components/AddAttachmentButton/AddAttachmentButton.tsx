@@ -12,9 +12,9 @@ import {
   Dropdown,
   ElementSize,
   GhostIconButton,
+  MenuItemMark,
 } from '@epam/ai-dial-ui-kit';
 import {
-  IconCheck,
   IconMicrophone,
   IconChevronRight,
   IconPaperclip,
@@ -100,8 +100,6 @@ interface AddAttachmentButtonProps {
 
 /** Color overrides for `AddAttachmentButton`, applied as CSS custom properties with app theme fallbacks. */
 export interface AddAttachmentButtonColors {
-  /** Checkmark icon color for a selected tool in the Tools submenu. Fallback: `--text-accent`. */
-  selectedToolIcon?: string;
   /** Icon color for each tool row in the Tools submenu. Fallback: `--text-secondary`. */
   toolIcon?: string;
   /** Chevron icon color on the mobile "Tools"/"Chat settings" rows. Fallback: `--text-secondary`. */
@@ -141,11 +139,10 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   const cssVars = useMemo(
     () =>
       buildCssVars({
-        '--aab-selected-tool-icon': colors?.selectedToolIcon,
         '--aab-tool-icon': colors?.toolIcon,
         '--aab-chevron-icon': colors?.chevronIcon,
       }),
-    [colors?.selectedToolIcon, colors?.toolIcon, colors?.chevronIcon],
+    [colors?.toolIcon, colors?.chevronIcon],
   );
 
   const hasTools = toolsMenuItems.length > 0 && onToolToggle != null;
@@ -155,20 +152,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
     () =>
       toolsMenuItems.map((item) => ({
         key: item.id,
-        label: (
-          <span className="flex flex-1 items-center gap-2">
-            <span className="flex-1">{item.label}</span>
-            {item.isSelected && (
-              <IconCheck
-                size={BASE_ICON_SIZE}
-                style={cssVars}
-                className={styles.selectedToolIcon}
-                aria-hidden
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
-            )}
-          </span>
-        ),
+        label: item.label,
         icon: (
           <span
             style={cssVars}
@@ -177,6 +161,9 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             {item.icon}
           </span>
         ),
+        selectable: true,
+        mark: MenuItemMark.Check,
+        checked: item.isSelected,
         onClick: () => onToolToggle?.(item.id),
       })),
     [toolsMenuItems, onToolToggle, cssVars],
