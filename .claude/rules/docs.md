@@ -12,25 +12,28 @@ npm run validate:docs
 ```
 
 It verifies README coverage and H1/package identity, lib `package.json`
-metadata, that every relative markdown link resolves, and that every name a lib
+metadata, that a publishable lib's `./styles.css` export matches what the build
+emits, that every relative markdown link resolves, and that every name a lib
 README imports from its own package is actually exported. `npm run lint:check`
-and CI do not cover any of this.
+covers none of this; the PR workflow's `validate_agent_docs` job runs it, so a
+failure here blocks the merge.
 
 ## Update the doc in the same change
 
 Docs go stale silently — nothing fails when a renamed component leaves its
 README behind. So the obligation is same-change, not follow-up:
 
-| When you                                                   | Update                                                          |
-| ---------------------------------------------------------- | --------------------------------------------------------------- |
-| Rename, remove, or add an export in a lib's `src/index.ts` | That lib's `README.md`                                          |
-| Rename a prop, change its type, or make it required        | Every README example that passes it                             |
-| Add, rename, or remove an enum member                      | Every README that lists the members                             |
-| Add or remove a lib/app, backend domain, context, or route | `docs/architecture.md` (see the Docs section of `AGENTS.md`)    |
-| Add or remove an environment variable                      | `apps/chat-api/README.md` and `apps/chat-api/.env.template`     |
-| Change a build output path, port, or npm script            | The root `README.md` and the affected app README                |
-| Bump a tooling major listed in a version table             | The root `README.md` tech-stack list and `docs/architecture.md` |
-| Delete a doc                                               | Every link to it — `npm run validate:docs` finds them           |
+| When you                                                   | Update                                                                  |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Rename, remove, or add an export in a lib's `src/index.ts` | That lib's `README.md`                                                  |
+| Add the first `.scss`/`.css` to a lib that had none        | Its `./styles.css` export and README import line ([`libs.md`](libs.md)) |
+| Rename a prop, change its type, or make it required        | Every README example that passes it                                     |
+| Add, rename, or remove an enum member                      | Every README that lists the members                                     |
+| Add or remove a lib/app, backend domain, context, or route | `docs/architecture.md` (see the Docs section of `AGENTS.md`)            |
+| Add or remove an environment variable                      | `apps/chat-api/README.md` and `apps/chat-api/.env.template`             |
+| Change a build output path, port, or npm script            | The root `README.md` and the affected app README                        |
+| Bump a tooling major listed in a version table             | The root `README.md` tech-stack list and `docs/architecture.md`         |
+| Delete a doc                                               | Every link to it — `npm run validate:docs` finds them                   |
 
 ## Examples must compile against the current API
 
@@ -77,7 +80,8 @@ silence. Read the implementation before describing behaviour.
 
 1. **H1** — the npm package name, exactly as in `package.json`.
 2. **Overview** — what problem it solves and when to reach for it.
-3. **Installation** — a `package.json` dependency snippet.
+3. **Installation** — a `package.json` dependency snippet, followed by the
+   `import '@epam/<pkg>/styles.css';` line when the lib ships a stylesheet.
 4. **Peer Dependencies** — the required peers.
 5. **Components / Hooks / Utilities / Enums / Types** — one subsection per major
    export with a minimal, correct usage example.

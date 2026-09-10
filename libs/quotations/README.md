@@ -14,6 +14,12 @@ Provides citation and annotation components, hooks, and utilities for AI DIAL co
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-quotations/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react` ^19.0.0

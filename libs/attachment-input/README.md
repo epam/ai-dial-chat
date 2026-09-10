@@ -18,6 +18,12 @@ Like every lib in this workspace, it holds no i18n, no transport, and no state o
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-attachment-input/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`

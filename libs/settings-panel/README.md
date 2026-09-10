@@ -23,6 +23,12 @@ distinguish it from.
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-settings-panel/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react` ^19.2.7

@@ -28,13 +28,87 @@ Every lib under `libs/` must have these three fields in its `package.json`:
 }
 ```
 
+## Every `exports` target must be a file the build emits
+
+Nothing in this workspace resolves a lib through its own `exports` map. Every
+in-repo consumer — `apps/chat`, the lib's own Vitest suite, a sibling lib —
+resolves the bare specifier straight to `src/index.ts` through a
+`resolve.alias` or the `@epam/source` condition. npm then publishes an
+`exports` map without checking that any of it resolves. So a target naming a
+file that does not exist is invisible from inside the repo, green in CI, and
+broken for every downstream host — which is exactly what happened: nine libs
+declared `"./styles.css": "./dist/style.css"` while Vite emits `index.css`,
+and every embedding application had to add a bundler alias per package
+([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)).
+
+**Vite lib builds in this workspace emit `index.*`.** `build.lib.fileName` is
+`'index'` in every `vite.config.mts`, so the outputs are `dist/index.js`,
+`dist/index.d.ts`, and — when the lib has any stylesheet — `dist/index.css`.
+There is no `style.css`. Write the manifest against those names.
+
+### The stylesheet export
+
+A lib with **any** `.scss` or `.css` under `src/` ships a stylesheet and must
+export it as `./styles.css`, placed directly after `./package.json`:
+
+```json
+{
+  "exports": {
+    "./package.json": "./package.json",
+    "./styles.css": "./dist/index.css",
+    ".": {
+      "@epam/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  }
+}
+```
+
+`import '@epam/<pkg>/styles.css'` must work with no bundler alias in the host.
+A lib with no stylesheets must not declare the export at all — an export
+pointing at a file the build never emits is the same defect in the other
+direction.
+
+Document the import in the README, directly under the Installation snippet:
+
+````md
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-example/styles.css';
+```
+````
+
+### When you add the first stylesheet to a lib
+
+A lib that had no CSS starts emitting `dist/index.css` the moment its first
+`.module.scss` lands. Add the `./styles.css` export and the README line in the
+**same change** — nothing else will tell you, since no in-repo consumer imports
+it.
+
+### What catches a mistake, and when
+
+`tools/publish-lib.mjs` verifies that every `exports` target and every
+`main`/`module`/`types` entry exists in `dist/` before it writes the
+publish-ready manifest, and aborts the publish otherwise. That is a **release**
+gate, not a PR gate — it stops a broken package from reaching npm, but it will
+not tell you during review. Get the manifest right when you write it.
+
+`tools/attachment-canvas-consumer-fixture` is the one project that installs a
+packed tarball and builds against the real `exports` map. Reach for that
+pattern when a lib's published boundary carries load beyond entry-point
+existence — lazy chunk splitting, a stylesheet that must stay free of vendor
+selectors — as `libs/attachment-canvas/tests/package-boundary/` does.
+
 ## README.md requirements
 
 Every lib under `libs/` must have a `README.md` at its root. The README must include:
 
 1. **H1 heading** — the npm package name (e.g. `# @epam/ai-dial-example`).
 2. **Overview** — a detailed paragraph explaining the lib's purpose, what problems it solves, and when to use it.
-3. **Installation** — a `package.json` snippet showing how to add the dependency.
+3. **Installation** — a `package.json` snippet showing how to add the dependency, followed by the stylesheet import when the lib ships one (see above).
 4. **Peer Dependencies** — a list of required peer deps.
 5. **Components / Hooks / Utilities** — one subsection per major export with a minimal usage example.
 

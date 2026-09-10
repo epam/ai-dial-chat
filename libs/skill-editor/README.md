@@ -28,6 +28,12 @@ external to preserve the editor's dynamic boundary in consuming applications.
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-skill-editor/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react` `^19.0.0`

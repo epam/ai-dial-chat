@@ -14,6 +14,12 @@ Shared two-column editor layout and bordered section wrapper for DIAL authoring 
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-editor-builder/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react` ^19.0.0

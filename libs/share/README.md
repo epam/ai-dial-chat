@@ -14,6 +14,12 @@ Provides the `SharePopover` UI component, a scannable `QrCode` view, and the ass
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-share/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react` ^19.0.0

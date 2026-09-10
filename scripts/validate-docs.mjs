@@ -12,9 +12,12 @@
 //      package it no longer is (`@epam/chat-api-client` after the rename).
 //   2. Package metadata — the `description` / `license` fields `.claude/rules/libs.md`
 //      requires but nothing enforced.
-//   3. Broken relative links — every link to a file that no longer exists
+//   3. Unresolvable stylesheet exports — nine libs shipped
+//      `"./styles.css": "./dist/style.css"` while Vite emits `index.css`, and
+//      no in-repo consumer noticed because they all alias to `src/index.ts`.
+//   4. Broken relative links — every link to a file that no longer exists
 //      (`docs/environment-variables-migration-guide.md` after its removal).
-//   4. Phantom exports — a name a lib README imports from its own package that
+//   5. Phantom exports — a name a lib README imports from its own package that
 //      the package does not export (`EntityBadge`, `StageType`, `QrPlaceholder`,
 //      `ConversationGroupProps`).
 //
@@ -129,7 +132,87 @@ const checkLibPackageMetadata = () => {
   }
 };
 
-/* ── 3. Relative markdown links resolve ── */
+/* ── 3. A publishable lib's stylesheet export matches what the build emits ── */
+
+/*
+ * Nothing in this workspace resolves a lib through its own exports map — every
+ * in-repo consumer aliases the bare specifier to src/index.ts — and npm
+ * publishes an exports map without checking that any of it resolves. So a
+ * stylesheet export naming a file the build never emits is invisible here and
+ * broken in every downstream host: nine libs shipped
+ * "./styles.css": "./dist/style.css" while Vite emits index.css.
+ *
+ * This runs on source alone (no dist required), so it gates a PR. The
+ * build-output equivalent lives in tools/publish-lib.mjs and gates a release.
+ */
+const STYLES_EXPORT_KEY = './styles.css';
+const STYLES_EXPORT_TARGET = './dist/index.css';
+
+const isPublishable = (pkg) => (pkg?.nx?.tags ?? []).includes('publishable');
+
+const hasStylesheet = (directory) => {
+  if (!existsSync(directory)) return false;
+
+  return readdirSync(directory, { withFileTypes: true }).some((entry) => {
+    if (entry.isDirectory()) {
+      return (
+        !IGNORED_DIRECTORIES.has(entry.name) &&
+        hasStylesheet(`${directory}/${entry.name}`)
+      );
+    }
+    return ['.css', '.scss'].includes(extname(entry.name));
+  });
+};
+
+const checkLibStylesExport = () => {
+  for (const dir of projectDirs('libs')) {
+    const path = `${dir}/package.json`;
+    const pkg = readJson(path);
+    if (!pkg?.name || !isPublishable(pkg)) continue;
+
+    const exports = pkg.exports ?? {};
+    const cssKeys = Object.keys(exports).filter((key) => key.endsWith('.css'));
+    const shipsStyles = hasStylesheet(`${dir}/src`);
+
+    if (!shipsStyles) {
+      /*
+       * Vite emits no stylesheet for a lib without one, so any CSS export it
+       * declares points at a file that will not be there.
+       */
+      for (const key of cssKeys) {
+        fail(
+          path,
+          `exports "${key}" but no .css/.scss exists under src/ — the build emits no stylesheet for this lib`,
+        );
+      }
+      continue;
+    }
+
+    if (cssKeys.length === 0) {
+      fail(
+        path,
+        `ships stylesheets under src/ but declares no "${STYLES_EXPORT_KEY}" export — hosts cannot import its CSS (see .claude/rules/libs.md)`,
+      );
+      continue;
+    }
+
+    for (const key of cssKeys) {
+      if (key !== STYLES_EXPORT_KEY) {
+        fail(
+          path,
+          `exports the stylesheet as "${key}" — every lib must use "${STYLES_EXPORT_KEY}" so hosts have one pattern`,
+        );
+      } else if (exports[key] !== STYLES_EXPORT_TARGET) {
+        fail(
+          path,
+          `"${key}" points at "${exports[key]}" but Vite lib builds emit "${STYLES_EXPORT_TARGET}" (build.lib.fileName is 'index' — there is no style.css)`,
+        );
+      }
+    }
+  }
+};
+
+/* ── 4. Relative markdown links resolve ── */
 
 const isPlaceholderLink = (target) =>
   LINK_PLACEHOLDERS.some((pattern) => pattern.test(target));
@@ -152,7 +235,7 @@ const checkLinks = (src, file) => {
 
 const lineAt = (src, index) => src.slice(0, index).split(/\r?\n/).length;
 
-/* ── 4. A lib README only imports names its package actually exports ── */
+/* ── 5. A lib README only imports names its package actually exports ── */
 
 /*
  * Resolves the names reachable through a lib's public entry point: named
@@ -253,6 +336,7 @@ const files = explicitFiles ? process.argv.slice(2) : allDocFiles();
 if (!explicitFiles) {
   checkReadmeCoverage();
   checkLibPackageMetadata();
+  checkLibStylesExport();
 }
 
 for (const file of files) {
@@ -284,5 +368,5 @@ if (errors.length > 0) {
 
 console.log(`Documentation validation passed (${files.length} markdown files).`);
 console.log(
-  'Checks: README coverage and H1/package identity, lib package metadata, relative links, README imports vs public exports.',
+  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, relative links, README imports vs public exports.',
 );
