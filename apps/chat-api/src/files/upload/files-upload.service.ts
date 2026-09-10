@@ -24,6 +24,7 @@ import {
   mapDialHttpStatus,
 } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { StringUtils } from '../../common/utils/string-utils';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -165,7 +166,7 @@ export class FilesUploadService {
       const { data, error, response } =
         (await this.dialClient.client.uploadFile(
           bucket,
-          encodeDialFilePath(path),
+          encodeDialResourcePath(path),
           {
             headers: {
               ...getBearerAuthHeaders(token),
