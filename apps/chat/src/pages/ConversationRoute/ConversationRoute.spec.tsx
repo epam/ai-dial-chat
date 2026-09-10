@@ -68,6 +68,18 @@ vi.mock('../../components/PromptSelector/usePromptSelectorOverlay', () => ({
     openParametersPopup: mockOpenParametersPopup,
   }),
 }));
+/* The real hook needs SkillsProvider/FavoriteApplicationsContext, which this
+ * harness does not mount; the stub mirrors its flag-off shape
+ * (`useFeatureFlag` is mocked to `false` above). */
+vi.mock('../../components/SkillSelector/useSkillSelectorOverlay', () => ({
+  useSkillSelectorOverlay: () => ({
+    skillMenuOverlay: undefined,
+    skillCatalogModal: null,
+    skillDetailsPanel: null,
+    selectedSkillChips: [],
+    selectSkill: vi.fn(),
+  }),
+}));
 vi.mock('../../context/AppConfigContext', () => ({
   default: ({ children }: { children: ReactNode }) => children,
   useAppConfig: () => ({
