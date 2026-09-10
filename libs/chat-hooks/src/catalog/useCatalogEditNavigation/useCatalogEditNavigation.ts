@@ -85,8 +85,8 @@ export interface UseCatalogEditNavigationParams {
   labels: CatalogEditNavigationLabels;
   /** Called to surface a host notification when a delete fails. */
   onNotify: (notification: CatalogEditNavigationNotification) => void;
-  /** Opens the file picker used to upload a skill archive from the Create menu. */
-  triggerSkillArchivePicker: () => void;
+  /** Called when the Create menu's Skill → Upload option is picked. */
+  onSkillUploadClick: () => void;
 }
 
 /** Return value of {@link useCatalogEditNavigation}. */
@@ -123,7 +123,7 @@ export const useCatalogEditNavigation = ({
   onDeleteSuccess,
   labels,
   onNotify,
-  triggerSkillArchivePicker,
+  onSkillUploadClick,
 }: UseCatalogEditNavigationParams): UseCatalogEditNavigationResult => {
   const handleEdit = useCallback(
     (item: CatalogItem) => {
@@ -248,7 +248,7 @@ export const useCatalogEditNavigation = ({
         {
           key: 'skill-upload',
           label: labels.createSkillUpload,
-          onClick: triggerSkillArchivePicker,
+          onClick: onSkillUploadClick,
         },
       ],
     });
@@ -272,7 +272,7 @@ export const useCatalogEditNavigation = ({
     isHideCustomAppCreationEnabled,
     isToolsetsEnabled,
     isCustomAppsEnabled,
-    triggerSkillArchivePicker,
+    onSkillUploadClick,
   ]);
 
   return {
