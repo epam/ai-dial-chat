@@ -161,11 +161,15 @@ export const ConversationsProvider = ({
   }, []);
 
   const bumpConversationActivity = useCallback((id: string) => {
+    /* Read the clock outside the updater so it stays a pure reducer — React
+       may invoke it more than once for a single call. */
+    const bumpedAt = Date.now();
+
     setConversations((prev) => {
       const index = prev.findIndex((c) => conversationIdsMatch(c.id, id));
       if (index === -1) return prev;
 
-      const bumped = { ...prev[index], updatedAt: Date.now() };
+      const bumped = { ...prev[index], updatedAt: bumpedAt };
       const rest = prev.filter((_, i) => i !== index);
       /*
        * The listing endpoint already returns items sorted by `updatedAt`

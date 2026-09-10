@@ -41,6 +41,8 @@ const Header: FC<Props> = ({
   const { t } = useTranslation();
   const isConversationRoute = !!useMatch(`${ROUTES.Conversations}/*`);
   const isRootRoute = !!useMatch(ROUTES.Root);
+  /* The panel toggle belongs on both the start page and an open conversation;
+     the + button only on the latter — see the new-chat button below. */
   const isConversationPanel = isConversationRoute || isRootRoute;
   const isHeaderEnabled = useUiFeature(OverlayFeature.Header);
   const isConversationsPanelToggleEnabled = useUiFeature(
@@ -98,6 +100,11 @@ const Header: FC<Props> = ({
               onClick={onConversationPanelToggle}
             />
           )}
+        {/* Deliberately gated to a conversation route: the start page renders
+            its own composer with `NewChatInput`, so a + button there would
+            duplicate it. The desktop equivalent lives in `ChatLayout`, which
+            keeps the button on every route because its header row has no
+            composer beneath it — keep the two in sync knowingly. */}
         {onNewChat != null &&
           isConversationRoute &&
           !isNewConversationHidden && (
