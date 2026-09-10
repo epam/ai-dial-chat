@@ -1,10 +1,4 @@
-# backend-owned-generation-persistence Specification
-
-## Purpose
-
-The backend owns conversation persistence across the generation lifecycle — saving the start, final, and partial (stop/error) states — so the frontend never races to save and chunks cannot land in the wrong conversation.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Backend persists the conversation across the generation lifecycle
 
@@ -51,6 +45,8 @@ The downstream HTTP connection closing (browser tab closed, page navigated away,
 - **WHEN** the start-state `saveConversation` rejects
 - **THEN** the failure is logged as a warning and the completion request proceeds to stream normally
 
+## ADDED Requirements
+
 ### Requirement: A closed downstream response does not alter generation persistence or outcome
 
 Closing, refreshing, or navigating away from the browser connection that opened `POST /api/v1/conversations/completions` SHALL have no effect on the generation's outcome or persistence. `ConversationController.streamCompletion` SHALL continue consuming `ConversationStreamingService.streamCompletion`'s async generator to its natural terminal outcome after the downstream HTTP response closes; it MUST NOT abort the generation's `AbortController` and MUST NOT stop iterating merely because the response closed. It SHALL stop writing to the closed response (and MUST NOT attempt any further `res.write`/`res.end` calls against it) but otherwise treats the generation exactly as if the original client were still connected.
@@ -82,22 +78,10 @@ This requirement applies only to `POST /api/v1/conversations/completions`. It do
 - **WHEN** a generation is active for conversation A and the user navigates to conversation B and back, or to an unrelated page in the SPA, before the generation finishes
 - **THEN** the generation for conversation A continues unaffected and completes normally
 
-### Requirement: Generation finalizes on `[DONE]`, not on socket close
+## REMOVED Requirements
 
-The streaming read loop SHALL treat the `[DONE]` SSE payload as the completion signal: it MUST save the final conversation, mark the generation complete in the registry, and close the response. It MUST NOT wait for the upstream socket to close, because providers may keep the connection open after `[DONE]`, which would otherwise leave the generation registered as active and reject the next request with HTTP 409. Stopping at `[DONE]` SHALL cancel the upstream reader rather than merely releasing its lock, so the connection is actually closed instead of left dangling.
+### Requirement: Client disconnect mid-stream still finalizes and persists
 
-An upstream socket that closes **without** ever sending `[DONE]` SHALL be treated as the end of the stream too, and logged as such, so a truncated response still finalizes rather than hanging.
+**Reason**: This requirement was introduced by PR #8640 on the mistaken premise that `POST /conversations/completions` should behave like the client-channel subscription proxy — aborting its backend-owned work when the browser connection closes. It contradicts `app-level-generation-manager` (an in-progress completion must survive navigation) and the archived `generation-live-replay` spec, which documents this exact controller method as deliberately having no disconnect handling. Treating a disconnect as an `Error`/`Stopped` outcome silently truncated answers that would otherwise have completed normally.
 
-#### Scenario: Provider keeps the connection open after `[DONE]`
-
-- **WHEN** the upstream emits `[DONE]` but does not close the connection
-- **THEN** the backend still finalizes the generation, releases the registry entry, and closes its response
-
-### Requirement: A pre-stream failure releases the registry entry
-
-If any step between registering the generation and opening the upstream stream fails — resolving the deployment's generation capability, fetching the conversation, or building its history — the backend SHALL release the registry entry before rethrowing, so a transient failure does not lock the conversation until stale eviction.
-
-#### Scenario: Conversation fetch fails after registration
-
-- **WHEN** registration succeeds but the subsequent `getConversation` throws
-- **THEN** the backend marks the generation errored (releasing the entry) and rethrows, so a retry is not rejected with 409
+**Migration**: Replaced by "A closed downstream response does not alter generation persistence or outcome" above. No data migration is needed; this is a behavior-only change in `ConversationController.streamCompletion` and `ConversationStreamingService.streamCompletion`.

@@ -1,4 +1,5 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import type {
   NextFunction,
@@ -45,6 +46,7 @@ describe('POST /conversations/completions/attach (integration)', () => {
       controllers: [ConversationController],
       providers: [
         { provide: ConversationService, useValue: mockService },
+        { provide: ConfigService, useValue: { get: vi.fn() } },
         ConversationGenerationService,
       ],
     }).compile();

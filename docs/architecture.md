@@ -249,6 +249,7 @@ Configured at startup:
 - Swagger at `/api/docs` (non-production)
 - Static React SPA serving from `apps/chat/dist` for non-`/api/*` routes
 - Global prefix: `api`
+- Global in-memory cache: an explicit Keyv memory adapter with a 100-entry LRU limit and periodic expiration cleanup; see [backend caching behavior](../apps/chat-api/README.md#performance).
 - OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)
   — off by default (`OTEL_SDK_DISABLED=true`); when enabled, adds a `traceparent` response header
   on traced routes and an optional dedicated Prometheus scrape listener (default `:9464/metrics`,

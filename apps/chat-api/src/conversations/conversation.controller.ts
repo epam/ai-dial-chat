@@ -274,21 +274,31 @@ export class ConversationController {
       timezone,
     );
 
-    let isClientAborted = false;
+    /*
+     * This generation is backend-owned and independent of the originating
+     * browser connection (see backend-owned-generation-persistence): closing,
+     * refreshing, or navigating away from this response must not abort the
+     * generation or stop the consuming loop below. `isResponseDetached` only
+     * suppresses further writes to the now-closed `res`.
+     */
+    let isResponseDetached = false;
     const handleClose = () => {
-      isClientAborted = true;
-      this.generationService.abortSignal(sid, dto.path, dto.generationId);
+      isResponseDetached = true;
     };
     res.on('close', handleClose);
 
     try {
       for await (const chunk of stream) {
-        if (isClientAborted) break;
-        res.write(chunk);
+        if (isResponseDetached) continue;
+        try {
+          res.write(chunk);
+        } catch {
+          isResponseDetached = true;
+        }
       }
     } finally {
       res.off('close', handleClose);
-      if (!res.writableEnded) res.end();
+      if (!isResponseDetached && !res.writableEnded) res.end();
     }
   }
 
