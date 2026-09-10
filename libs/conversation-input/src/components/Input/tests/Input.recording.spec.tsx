@@ -159,6 +159,14 @@ describe('Input while dictating', () => {
           onTranscribeAudio={onTranscribeAudio}
           onUploadAttachment={onUploadAttachment}
           onChange={onChange}
+          menuOverlays={[
+            {
+              key: 'prompts',
+              title: 'Prompts',
+              icon: <span aria-hidden />,
+              renderOverlay: () => <div>prompts overlay</div>,
+            },
+          ]}
           chatSettings={{
             features: { systemPrompt: false, temperature: false },
             systemPrompt: '',
