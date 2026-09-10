@@ -6,6 +6,7 @@ import {
   ElementSize,
   GhostButton,
   GhostIconButton,
+  MenuItemMark,
   NeutralButton,
   PrimaryButton,
   ProgressBar,
@@ -14,7 +15,6 @@ import {
   type Step,
 } from '@epam/ai-dial-ui-kit';
 import {
-  IconCheck,
   IconChevronDown,
   IconDotsVertical,
   IconEye,
@@ -135,14 +135,10 @@ const EditorHeader: FC<Props> = ({
       steps.map((step) => ({
         key: step.id,
         label: step.name,
-        icon:
-          step.id === currentStep ? (
-            <IconCheck
-              size={DIAL_ICON_SIZE.SM}
-              className="text-accent"
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          ) : undefined,
+        /* Jumping between steps is navigation, so the step being edited takes
+           the in-navigation highlight rather than a check. */
+        mark: MenuItemMark.Highlight,
+        checked: step.id === currentStep,
         onClick: () => onChangeStep(step.id),
       })),
     [steps, currentStep, onChangeStep],

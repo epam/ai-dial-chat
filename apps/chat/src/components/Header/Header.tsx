@@ -41,6 +41,8 @@ const Header: FC<Props> = ({
   const { t } = useTranslation();
   const isConversationRoute = !!useMatch(`${ROUTES.Conversations}/*`);
   const isRootRoute = !!useMatch(ROUTES.Root);
+  /* The panel toggle belongs on both the start page and an open conversation;
+     the + button only on the latter — see the new-chat button below. */
   const isConversationPanel = isConversationRoute || isRootRoute;
   const isHeaderEnabled = useUiFeature(OverlayFeature.Header);
   const isConversationsPanelToggleEnabled = useUiFeature(
@@ -65,6 +67,18 @@ const Header: FC<Props> = ({
       )}
     >
       <div className="flex items-center gap-1 ps-3">
+        {!isNavigationMenuHidden && (
+          <GhostIconButton
+            icon={
+              <IconMenu2
+                size={DIAL_ICON_SIZE.LG}
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
+            aria-label={t(NavigationI18nKeys.OpenMenu)}
+            onClick={onMenuToggle}
+          />
+        )}
         {onConversationPanelToggle != null &&
           isConversationPanel &&
           isConversationsPanelToggleEnabled && (
@@ -86,8 +100,13 @@ const Header: FC<Props> = ({
               onClick={onConversationPanelToggle}
             />
           )}
+        {/* Deliberately gated to a conversation route: the start page renders
+            its own composer with `NewChatInput`, so a + button there would
+            duplicate it. The desktop equivalent lives in `ChatLayout`, which
+            keeps the button on every route because its header row has no
+            composer beneath it — keep the two in sync knowingly. */}
         {onNewChat != null &&
-          isConversationPanel &&
+          isConversationRoute &&
           !isNewConversationHidden && (
             <div
               className={mergeClasses(
@@ -115,18 +134,6 @@ const Header: FC<Props> = ({
               />
             </div>
           )}
-        {!isNavigationMenuHidden && (
-          <GhostIconButton
-            icon={
-              <IconMenu2
-                size={DIAL_ICON_SIZE.LG}
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
-            }
-            aria-label={t(NavigationI18nKeys.OpenMenu)}
-            onClick={onMenuToggle}
-          />
-        )}
       </div>
       <Logo />
       <div className="flex justify-end pe-3">

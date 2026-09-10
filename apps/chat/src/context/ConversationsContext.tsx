@@ -79,6 +79,13 @@ interface ConversationsContextType {
   /** Updates the sidebar title for a conversation without changing its id. */
   updateConversationTitle: (id: string, title: string) => void;
   /**
+   * Stamps a conversation as just-updated and lifts it to the top of the
+   * list, matching the listing endpoint's `updatedAt`-descending order.
+   * Call it when a generation starts so the chat reorders immediately
+   * instead of only after the next full re-fetch. No-op for unknown ids.
+   */
+  bumpConversationActivity: (id: string) => void;
+  /**
    * Polls GET conversation until the display name changes or LLM naming completes.
    * Returns a cleanup function that cancels polling.
    */
@@ -151,6 +158,28 @@ export const ConversationsProvider = ({
         conversationIdsMatch(item.id, id) ? { ...item, title } : item,
       ),
     );
+  }, []);
+
+  const bumpConversationActivity = useCallback((id: string) => {
+    /* Read the clock outside the updater so it stays a pure reducer — React
+       may invoke it more than once for a single call. */
+    const bumpedAt = Date.now();
+
+    setConversations((prev) => {
+      const index = prev.findIndex((c) => conversationIdsMatch(c.id, id));
+      if (index === -1) return prev;
+
+      const bumped = { ...prev[index], updatedAt: bumpedAt };
+      const rest = prev.filter((_, i) => i !== index);
+      /*
+       * The listing endpoint already returns items sorted by `updatedAt`
+       * descending, so re-sorting locally leaves the rest of the list
+       * untouched (Array#sort is stable) and only lifts the bumped item.
+       * Prepending first keeps it ahead of any entry carrying the very same
+       * timestamp.
+       */
+      return [bumped, ...rest].sort((a, b) => b.updatedAt - a.updatedAt);
+    });
   }, []);
 
   const watchForDisplayNameUpdate = useCallback(
@@ -454,6 +483,7 @@ export const ConversationsProvider = ({
       duplicateConversation,
       refreshConversations,
       updateConversationTitle,
+      bumpConversationActivity,
       watchForDisplayNameUpdate,
       deleteAllConversations,
     }),
@@ -470,6 +500,7 @@ export const ConversationsProvider = ({
       duplicateConversation,
       refreshConversations,
       updateConversationTitle,
+      bumpConversationActivity,
       watchForDisplayNameUpdate,
       deleteAllConversations,
     ],

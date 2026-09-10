@@ -572,6 +572,8 @@ import {
   TAG_INPUT_TAG_CLASS_NAME,
   RESIZABLE_TEXTAREA_CLASS_NAME,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  SELECT_LIST_MAX_HEIGHT_PX,
+  SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
 ```
 
@@ -586,6 +588,8 @@ import {
 | `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field    |
 | `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh`   |
 | `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` for `MarkdownEditor`, capping its drag-bar height at `70vh` |
+| `SELECT_LIST_MAX_HEIGHT_PX`                  | `344`, the design's maximum select-list length, for a measured cap      |
+| `SELECT_LIST_MAX_HEIGHT_CLASS_NAME`          | `max-h-[344px]`, the same cap for an options scroll box                 |
 
 ## Stylesheet
 

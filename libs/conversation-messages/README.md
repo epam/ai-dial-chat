@@ -125,6 +125,8 @@ import { MessageBubble } from '@epam/ai-dial-conversation-messages';
 
 Toolbar with per-message actions. `role` selects the action set: `MessageRole.User` (the default) shows Edit/Delete, any other role shows Regenerate/Copy/Like/Dislike. Usually passed to a bubble through its `actions` prop rather than rendered directly.
 
+`isDisabled` disables every button in the toolbar — pass it while a response is generating so the actions cannot be triggered mid-stream.
+
 ```tsx
 import { MessageActions } from '@epam/ai-dial-conversation-messages';
 
@@ -137,6 +139,7 @@ import { MessageActions } from '@epam/ai-dial-conversation-messages';
   onDislike={handleDislike}
   activeRating={activeRating}
   isAlwaysVisible={isMobile}
+  isDisabled={isStreaming}
 />;
 ```
 

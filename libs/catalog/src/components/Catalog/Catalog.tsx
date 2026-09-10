@@ -1,5 +1,5 @@
 import { CatalogEntityType, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DropdownItem, Spinner, Tabs } from '@epam/ai-dial-ui-kit';
+import { SelectOption, Spinner, Tabs } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
@@ -114,21 +114,20 @@ export const Catalog: FC<CatalogProps> = ({
   const viewToggleLabel = titles?.viewToggleLabel ?? 'View mode';
   const resolvedAriaLabel = titles?.ariaLabel ?? 'Catalog';
 
-  const sortOptions: DropdownItem[] = [
+  const sortLabel = titles?.sortLabel ?? 'Sort';
+
+  const sortOptions: SelectOption[] = [
     {
-      key: CatalogSortKey.RecentlyUpdated,
+      value: CatalogSortKey.RecentlyUpdated,
       label: titles?.sortRecentlyUpdatedLabel ?? 'Recently Updated',
-      onClick: () => handleSortChange?.(CatalogSortKey.RecentlyUpdated),
     },
     {
-      key: CatalogSortKey.Newest,
+      value: CatalogSortKey.Newest,
       label: titles?.sortNewestLabel ?? 'Newest',
-      onClick: () => handleSortChange?.(CatalogSortKey.Newest),
     },
     {
-      key: CatalogSortKey.NameAZ,
+      value: CatalogSortKey.NameAZ,
       label: titles?.sortNameAZLabel ?? 'Name A-Z',
-      onClick: () => handleSortChange?.(CatalogSortKey.NameAZ),
     },
   ];
 
@@ -470,6 +469,8 @@ export const Catalog: FC<CatalogProps> = ({
             listViewLabel={listViewLabel}
             viewToggleLabel={viewToggleLabel}
             sortOptions={sortOptions}
+            onSortChange={handleSortChange}
+            sortLabel={sortLabel}
             filters={filters}
             onFiltersChange={handleFiltersChange}
             filterValues={allFilterValues}

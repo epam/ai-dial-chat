@@ -8,16 +8,21 @@ import { UserMenu } from '../UserMenu';
 interface MockDropdownItem {
   key: string;
   label?: ReactNode;
+  mark?: string;
+  checked?: boolean;
   onClick?: () => void;
   children?: MockDropdownItem[];
 }
 
 /* The real Dropdown renders its items in a floating overlay on open; the mock
-   renders them inline so assertions stay about content, not positioning. */
+   renders them inline so assertions stay about content, not positioning. The
+   submenu rows mirror the role and aria-checked the kit derives from
+   `mark` + `checked`, so the test asserts the marking is delegated to it. */
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16 },
   DropdownItemType: { PlainText: 'plainText', Divider: 'divider' },
+  MenuItemMark: { Check: 'check', Highlight: 'highlight' },
   Tooltip: ({ children }: { children: ReactNode }) => children,
   EllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
   Dropdown: ({
@@ -39,7 +44,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
               <ul>
                 {subItems.map((child) => (
                   <li key={child.key}>
-                    <button type="button" onClick={child.onClick}>
+                    <button
+                      type="button"
+                      role={
+                        child.mark === 'check' ? 'menuitemradio' : 'menuitem'
+                      }
+                      aria-checked={
+                        child.mark === 'check' ? !!child.checked : undefined
+                      }
+                      onClick={child.onClick}
+                    >
                       {child.label}
                     </button>
                   </li>
@@ -128,6 +142,33 @@ describe('UserMenu', () => {
     expect(screen.getByText('Language')).toBeTruthy();
     expect(screen.getByText('English')).toBeTruthy();
     expect(screen.getByText('Deutsch')).toBeTruthy();
+  });
+
+  it('marks the applied option as the checked single choice of the menu', () => {
+    const groups: NavigationMenuGroup[] = [
+      {
+        id: 'language',
+        label: 'Language',
+        options: [
+          { id: 'en', label: 'English', isActive: true, onSelect: vi.fn() },
+          { id: 'de', label: 'Deutsch', isActive: false, onSelect: vi.fn() },
+        ],
+      },
+    ];
+    render(
+      <UserMenu
+        profile={profile}
+        labels={labels}
+        groups={groups}
+        onLogout={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole('menuitemradio', { name: 'English', checked: true }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('menuitemradio', { name: 'Deutsch', checked: false }),
+    ).toBeTruthy();
   });
 
   it('applies an option through its onSelect callback', () => {

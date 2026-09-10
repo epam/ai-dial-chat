@@ -602,6 +602,7 @@ const CatalogView: FC<Props> = ({
           searchPlaceholder,
           noResultsTitle: (query) =>
             t(CatalogI18nKeys.NoResultsTitle, { query }),
+          sortLabel: t(ButtonsI18nKeys.Sort),
           sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),
           sortNewestLabel: t(CatalogI18nKeys.SortNewest),
           sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),

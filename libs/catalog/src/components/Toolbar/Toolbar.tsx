@@ -23,6 +23,8 @@ export const Toolbar: FC<ToolbarProps> = ({
   viewToggleLabel,
   sortKey,
   sortOptions,
+  onSortChange,
+  sortLabel,
   ...innerProps
 }) => {
   const cssVars = {
@@ -44,6 +46,8 @@ export const Toolbar: FC<ToolbarProps> = ({
         viewToggleLabel={viewToggleLabel}
         sortKey={sortKey}
         sortOptions={sortOptions}
+        onSortChange={onSortChange}
+        sortLabel={sortLabel}
         filters={filters}
         onFiltersChange={onFiltersChange}
         filterValues={filterValues}

@@ -54,6 +54,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ElementSize: { Standard: 'standard' },
   DropdownItemType: { PlainText: 'plainText', Divider: 'divider' },
+  MenuItemMark: { Check: 'check', Highlight: 'highlight' },
   mergeClasses: (...classes: (string | undefined)[]) =>
     classes.filter(Boolean).join(' '),
   Tooltip: ({ children }: { children: ReactNode }) => children,
