@@ -467,16 +467,14 @@ export enum ScheduledTasksI18nKeys {
   ConversationBannerTaskDetailsAriaLabel = 'scheduledTasks.conversationBanner.taskDetailsAriaLabel',
   ConversationPanelModelLabel = 'scheduledTasks.conversationPanel.modelLabel',
   ConversationPanelCurrentRunLabel = 'scheduledTasks.conversationPanel.currentRunLabel',
-  OfflineCredentialsModalTitle = 'scheduledTasks.offlineCredentialsModal.title',
-  OfflineCredentialsModalBody = 'scheduledTasks.offlineCredentialsModal.body',
-  OfflineCredentialsModalDismissButtonLabel = 'scheduledTasks.offlineCredentialsModal.dismissButtonLabel',
-  OfflineCredentialsModalCloseAriaLabel = 'scheduledTasks.offlineCredentialsModal.closeAriaLabel',
-  OfflineCredentialsModalPopupBlockedMessage = 'scheduledTasks.offlineCredentialsModal.popupBlockedMessage',
-  OfflineCredentialsModalCancelledMessage = 'scheduledTasks.offlineCredentialsModal.cancelledMessage',
-  OfflineCredentialsModalTimeoutMessage = 'scheduledTasks.offlineCredentialsModal.timeoutMessage',
-  OfflineCredentialsModalFailedMessage = 'scheduledTasks.offlineCredentialsModal.failedMessage',
-  OfflineCredentialsModalSuccessAnnouncement = 'scheduledTasks.offlineCredentialsModal.successAnnouncement',
-  OfflineCredentialsModalLoggingInAriaLabel = 'scheduledTasks.offlineCredentialsModal.loggingInAriaLabel',
+  OfflineCredentialsBannerTitle = 'scheduledTasks.offlineCredentialsBanner.title',
+  OfflineCredentialsBannerBody = 'scheduledTasks.offlineCredentialsBanner.body',
+  OfflineCredentialsBannerPopupBlockedMessage = 'scheduledTasks.offlineCredentialsBanner.popupBlockedMessage',
+  OfflineCredentialsBannerCancelledMessage = 'scheduledTasks.offlineCredentialsBanner.cancelledMessage',
+  OfflineCredentialsBannerTimeoutMessage = 'scheduledTasks.offlineCredentialsBanner.timeoutMessage',
+  OfflineCredentialsBannerFailedMessage = 'scheduledTasks.offlineCredentialsBanner.failedMessage',
+  OfflineCredentialsBannerSuccessAnnouncement = 'scheduledTasks.offlineCredentialsBanner.successAnnouncement',
+  OfflineCredentialsBannerLoggingInLabel = 'scheduledTasks.offlineCredentialsBanner.loggingInLabel',
 }
 
 export enum ConversationI18nKeys {
@@ -1171,6 +1169,12 @@ export enum ShareI18nKeys {
 
 export enum VoiceRecordingI18nKeys {
   MicLabel = 'voiceRecording.micLabel',
+  RecordVoiceLabel = 'voiceRecording.recordVoiceLabel',
+  Transcribing = 'voiceRecording.transcribing',
+  Failed = 'voiceRecording.failed',
+  Busy = 'voiceRecording.busy',
+  Unavailable = 'voiceRecording.unavailable',
+  TooLarge = 'voiceRecording.tooLarge',
   StopRecordingLabel = 'voiceRecording.stopRecordingLabel',
   DiscardRecordingLabel = 'voiceRecording.discardRecordingLabel',
 }

@@ -1,3 +1,5 @@
+import './styles.css';
+
 // Models
 export { PublishCalloutKind, PublicationRuleFunction } from './models/publish';
 export type {

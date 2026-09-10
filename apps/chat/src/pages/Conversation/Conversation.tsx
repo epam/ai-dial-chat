@@ -139,7 +139,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   });
   const notifiedLoadedConversationIdRef = useRef<string | null>(null);
 
-  const { isAudioMessageSupported } = useAudioTranscription({
+  const {
+    isAudioMessageSupported,
+    isVoiceRecordingSupported,
+    handleTranscribeAudio,
+  } = useAudioTranscription({
     selectedDeploymentId: currentSelectedItemId,
   });
 
@@ -667,6 +671,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           onDuplicateConversation={handleDuplicateConversation}
           duplicateError={duplicateError ?? undefined}
           isAudioMessageSupported={isAudioMessageSupported}
+          isVoiceRecordingSupported={isVoiceRecordingSupported}
+          onTranscribeAudio={handleTranscribeAudio}
           conversation={conversation}
           onConversationChange={handleConversationChange}
           inputContent={pendingInputContent.value}

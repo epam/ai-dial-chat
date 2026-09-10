@@ -125,16 +125,22 @@ function getDevelopmentVersion(packageName, baseVersion) {
   let publishedVersions;
 
   try {
-    const stdout = execFileSync('npm', ['view', packageName, 'versions', '--json'], {
-      encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-      shell: process.platform === 'win32',
-    });
+    const stdout = execFileSync(
+      'npm',
+      ['view', packageName, 'versions', '--json'],
+      {
+        encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        shell: process.platform === 'win32',
+      },
+    );
     publishedVersions = JSON.parse(stdout);
   } catch (err) {
     const stderr = String(err.stderr || '');
     if (stderr.includes('E404')) {
-      console.warn(`${packageName} has no published versions yet; using ${baseVersion}-dev.0.`);
+      console.warn(
+        `${packageName} has no published versions yet; using ${baseVersion}-dev.0.`,
+      );
       publishedVersions = [];
     } else {
       throw new Error(`Could not get published versions for ${packageName}.`);
@@ -150,7 +156,9 @@ function getDevelopmentVersion(packageName, baseVersion) {
   // Use a valid semver pre-release identifier (#.#.#-dev.N) — npm rejects a
   // bare 4th numeric segment (#.#.#.N) as an invalid version.
   const lastNumber = versions
-    .filter((publishedVersion) => publishedVersion.startsWith(`${baseVersion}-dev.`))
+    .filter((publishedVersion) =>
+      publishedVersion.startsWith(`${baseVersion}-dev.`),
+    )
     .map((publishedVersion) => publishedVersion.match(/\d+$/)?.[0])
     .filter(Boolean)
     .map((publishedVersion) => parseInt(publishedVersion, 10))
@@ -195,17 +203,26 @@ invariant(
 // ---------------------------------------------------------------------------
 
 const sourcePkgPath = path.join(projectRootAbs, 'package.json');
-invariant(existsSync(sourcePkgPath), `Source package.json not found at:\n  ${sourcePkgPath}`);
+invariant(
+  existsSync(sourcePkgPath),
+  `Source package.json not found at:\n  ${sourcePkgPath}`,
+);
 
 try {
-  const json = JSON.parse(readFileSync(sourcePkgPath, 'utf-8'));
+  const rawSource = readFileSync(sourcePkgPath, 'utf-8');
+  const json = JSON.parse(rawSource);
 
   if (development && !values.version) {
     version = getDevelopmentVersion(json.name, version);
     console.info(`Development version for ${json.name}: ${version}`);
   }
 
-  preparePublishPackageJson(json, { version, projectRoot, isWorkspaceLib });
+  preparePublishPackageJson(json, {
+    version,
+    projectRoot,
+    isWorkspaceLib,
+    rawSource,
+  });
 
   if (!dry) {
     try {
@@ -234,7 +251,9 @@ try {
 // ---------------------------------------------------------------------------
 
 const dryFlag = dry ? '--dry-run' : '';
-const publishCmd = `npm publish --access public --tag ${tag} ${dryFlag}`.replace(/\s+/g, ' ').trim();
+const publishCmd = `npm publish --access public --tag ${tag} ${dryFlag}`
+  .replace(/\s+/g, ' ')
+  .trim();
 
 console.info(`\nRunning: ${publishCmd}\n  cwd: ${outputPath}\n`);
 execSync(publishCmd, { cwd: outputPath, stdio: 'inherit' });

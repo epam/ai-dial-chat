@@ -11,6 +11,7 @@ export type {
   EditMessageInputProps,
 } from './models/ConversationInput';
 export { SendOnEnter } from './models/Input';
+export type { TranscribeAudio } from './models/Voice';
 export type {
   ChatSettingsValues,
   InputColors,

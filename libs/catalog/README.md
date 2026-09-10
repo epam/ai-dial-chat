@@ -21,8 +21,41 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 - `react`
 - `@epam/ai-dial-ui-kit` ^0.14.0-dev.30 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
+- `@epam/ai-dial-publish-panel` (the Publish flow rendered from `DetailsPanel`'s Manage menu)
 - `@tabler/icons-react`
 - `ag-grid-community@35.3.0`
+
+Both `@epam/ai-dial-chat-shared` and `@epam/ai-dial-publish-panel` are kept
+external by the library build — a consumer's own bundler resolves them, so
+installing both is required rather than optional.
+
+## Entry points
+
+`@epam/ai-dial-catalog` publishes a `./mapping` subpath alongside the root
+(`.`) entry: `CredentialsLevel`, `CredentialsBadgeState`, `CredentialStatus`,
+`CredentialsUiState`, `ToolsetAuthenticationType`, `CatalogSortKey`,
+`CatalogItem`, `CatalogItemCredentials`, `filterCatalogItems`,
+`getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`,
+`getCredentialsBadgeState`, `getCredentialsUiState`, and `getSignedInLevel` —
+the headless enums and pure item-mapping functions a host can use (e.g. to
+sort/filter/tab a catalog item list, or read a toolset's credential state)
+without resolving `@epam/ai-dial-publish-panel`, `@epam/ai-dial-react-file-manager`,
+or any catalog editor/publish UI:
+
+```tsx
+import {
+  CredentialsLevel,
+  filterCatalogItems,
+} from '@epam/ai-dial-catalog/mapping';
+```
+
+The root entry keeps re-exporting every one of these names for backward
+compatibility — importing them from `@epam/ai-dial-catalog` directly still
+works exactly as before, and (unlike a monolithic pre-bundled root) a
+production bundler tree-shakes a root import of only these mapping names down
+to the same graph `./mapping` produces, since `package.json#sideEffects` marks
+every JS module side-effect free; importing `Catalog` from the root still
+pulls in the full publish/editor UI as before.
 
 ## Components
 
@@ -732,3 +765,19 @@ const sorted = sortCatalogItems(filtered, CatalogSortKey.NameAZ);
 const tabs = buildCatalogTabs(items);
 const topicOptions = getTopicOptions(items);
 ```
+
+## Rollback
+
+`catalog` is published by `tools/publish-lib.mjs`, which reads the version from this package's
+`package.json` and writes it into `dist/package.json` before `npm publish`. To roll a consuming
+host back to a previous `@epam/ai-dial-catalog` release:
+
+1. Pin the host's dependency back to the previous version (e.g.
+   `"@epam/ai-dial-catalog": "1.1.0-dev.410"` instead of `"1.1.0-dev.412"`).
+2. `catalog` declares `@epam/ai-dial-chat-shared` and `@epam/ai-dial-publish-panel` as peers
+   and is published from the same repository revision as both — revert those packages to their
+   own matching previous versions in the same host update, rather than leaving a newer sibling
+   installed against an older `catalog` (or vice versa).
+3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
+   resolved version and integrity hash, rather than a partial mix of pre- and post-change
+   versions.

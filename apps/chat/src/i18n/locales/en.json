@@ -786,17 +786,15 @@
       "modelLabel": "Model",
       "currentRunLabel": "Current run"
     },
-    "offlineCredentialsModal": {
-      "title": "Log in required for scheduled tasks",
-      "body": "To run your scheduled tasks automatically, you need to log in once so they can keep running without you present.",
-      "dismissButtonLabel": "Not now",
-      "closeAriaLabel": "Close login required dialog",
+    "offlineCredentialsBanner": {
+      "title": "Log in required.",
+      "body": "Scheduled tasks need authorization to run offline.",
       "popupBlockedMessage": "The login popup was blocked by your browser. Please allow popups and try again.",
       "cancelledMessage": "Login was cancelled.",
       "timeoutMessage": "The login attempt timed out. Please try again.",
       "failedMessage": "Login failed. Please try again.",
       "successAnnouncement": "You're logged in. Scheduled tasks can now run automatically.",
-      "loggingInAriaLabel": "Logging in…"
+      "loggingInLabel": "Logging in…"
     }
   },
   "dialFileManager": {
@@ -1162,9 +1160,15 @@
     "offlineUsageConsentHint": "Required for scheduled and background runs."
   },
   "voiceRecording": {
-    "micLabel": "Record voice message",
+    "micLabel": "Dictate",
+    "recordVoiceLabel": "Record voice",
+    "transcribing": "Transcribing audio…",
+    "failed": "Could not transcribe audio. Please try recording again.",
+    "busy": "Speech recognition is temporarily unavailable. Please try again later. Your draft has been kept.",
+    "unavailable": "Voice input is not available.",
+    "tooLarge": "Audio exceeds the {{limit}} byte limit.",
     "stopRecordingLabel": "Stop recording",
-    "discardRecordingLabel": "Discard recording"
+    "discardRecordingLabel": "Cancel pending recording"
   },
   "tools": {
     "menuTitle": "Tools",

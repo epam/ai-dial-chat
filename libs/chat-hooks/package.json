@@ -5,7 +5,6 @@
   "license": "Apache-2.0",
   "private": true,
   "type": "module",
-  "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -52,6 +51,12 @@
       "types": "./dist/file-manager.d.ts",
       "import": "./dist/file-manager.js",
       "default": "./dist/file-manager.js"
+    },
+    "./source-content": {
+      "@epam/source": "./src/entry-points/source-content.ts",
+      "types": "./dist/source-content.d.ts",
+      "import": "./dist/source-content.js",
+      "default": "./dist/source-content.js"
     },
     "./catalog": {
       "@epam/source": "./src/entry-points/catalog.ts",
@@ -107,6 +112,13 @@
       "import": "./dist/mcp-apps.js",
       "default": "./dist/mcp-apps.js"
     }
+  },
+  "dependencies": {
+    "dompurify": "3.4.13",
+    "fflate": "^0.8.3",
+    "lru-cache": "^10.4.3",
+    "mime-types": "^3.0.2",
+    "yaml": "^2.9.0"
   },
   "peerDependencies": {
     "react": "^19.2.6",
@@ -190,11 +202,10 @@
     }
   },
   "sideEffects": [
-    "./dist/index.js",
     "./dist/oauth.js",
     "./dist/file-manager.js",
-    "./dist/useToolsetLogin-*.js",
-    "./dist/useDialFileManagerTabConfig-*.js"
+    "./dist/shared/toolset-login-events.js",
+    "./dist/files/attachment-canvas.js"
   ],
   "nx": {
     "tags": [
@@ -211,7 +222,28 @@
         "command": "node libs/chat-hooks/e2e-fixtures/run.mjs --suite=smoke"
       },
       "test-packed-unit": {
-        "command": "node --test libs/chat-hooks/e2e-fixtures/harness.spec.mjs"
+        "command": "node --test libs/chat-hooks/e2e-fixtures/harness.spec.mjs libs/chat-hooks/e2e-fixtures/module-origin.spec.mjs libs/chat-hooks/e2e-fixtures/application-mode.spec.mjs libs/chat-hooks/e2e-fixtures/cold-load-budget.spec.mjs libs/chat-hooks/e2e-fixtures/startup-requests.spec.mjs"
+      },
+      "test-packed-parity": {
+        "command": "node libs/chat-hooks/e2e-fixtures/parity.mjs",
+        "dependsOn": [
+          "build",
+          "^build"
+        ]
+      },
+      "test-packed-browser-parity": {
+        "command": "node libs/chat-hooks/e2e-fixtures/browser-parity.mjs",
+        "dependsOn": [
+          "build",
+          "^build"
+        ]
+      },
+      "test-packed-cold-load-probes": {
+        "command": "node --test libs/chat-hooks/e2e-fixtures/cold-load-probes.spec.mjs",
+        "dependsOn": [
+          "build",
+          "^build"
+        ]
       }
     }
   }

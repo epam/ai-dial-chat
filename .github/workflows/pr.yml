@@ -38,11 +38,8 @@ jobs:
     secrets: inherit
 
   chat_hooks_packed_smoke:
-    # `npm run test` (the reusable workflow's own code_checks job) runs the
-    # fast `nx run-many -t test` suite only. Keep the PR gate to the three
-    # highest-value packed consumers; the complete network-heavy matrix stays
-    # available as `test-packed` for a future nightly job. See
-    # libs/chat-hooks/e2e-fixtures/README.md.
+    # Checks three representative packed consumers on PRs.
+    # The complete matrix is available through the test-packed target.
     name: chat-hooks packed-package smoke
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -56,3 +53,77 @@ jobs:
         run: npm ci
       - name: Build @epam/ai-dial-chat-hooks and run packed-package smoke
         run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-smoke
+
+  chat_hooks_cold_load_probes:
+    # Checks root and subpath bundle sizes and dependency isolation.
+    # Nx rebuilds each packed library and its workspace dependencies first.
+    name: chat-hooks cold-load probes (root/subpath isolation)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run per-export cold-load probes
+        run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-cold-load-probes
+
+  chat_hooks_application_parity:
+    # Compares source and packed application JS/CSS sizes and audits
+    # module origins to detect unexpected bundled dependencies.
+    name: chat-hooks application-mode packed/source parity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run application-mode packed/source parity
+        run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-parity
+
+  chat_hooks_browser_parity:
+    # Checks browser startup requests, deferred feature mounting and reopening,
+    # OAuth events, markdown reload recovery, styles, and mobile RTL rendering.
+    name: chat-hooks browser-observed startup parity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run browser-observed packed/source parity
+        run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-browser-parity
+
+  publish_lib_coherent_release:
+    # Checks that packed libraries from one release install together and
+    # typecheck, and that the manifest audit rejects mixed internal versions.
+    name: publish-lib coherent release install
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build the four in-scope libraries
+        run: npm exec nx run-many -- -t build -p @epam/ai-dial-chat-shared @epam/ai-dial-chat-hooks @epam/ai-dial-catalog @epam/ai-dial-publish-panel
+      - name: Publish package.json transformation unit tests
+        run: npm run publish:lib:test
+      - name: Coherent-release install / negative mixed-release test
+        run: npm run publish:lib:coherent-release-test

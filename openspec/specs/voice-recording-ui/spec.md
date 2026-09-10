@@ -6,92 +6,77 @@ The mic button and the voice bar that replaces the conversation input while a re
 ## Requirements
 ### Requirement: Mic button in ConversationInput
 
-`ConversationInput` SHALL render a ghost icon button (UI kit `GhostIconButton`, 40 px outer / 24 px icon) on the right side of the action bar when `isAudioMessageSupported` is `true`. The button SHALL be hidden when `isAudioMessageSupported` is `false` or not provided. The button SHALL remain visible regardless of whether there is text in the message field or attachments in the tray.
+`Input` and `ConversationInput` SHALL render the microphone GhostIconButton in the action bar when `isAudioMessageSupported` is true and assistant streaming is inactive, except during the existing send-button exit transition. The default accessible label and tooltip SHALL be `Dictate`, overridable with `micLabel`. It SHALL start dictation, remain available with existing draft text/attachments or active attachment uploads, and respect `isInputDisabled`. The button SHALL use a 24 px icon in a 40 px desktop control and at least a 44 px mobile touch target. When the library caller omits the transcription callback, the legacy audio attachment fallback SHALL remain available.
 
-The mic button SHALL remain visible and interactive regardless of whether other attachment uploads are in progress.
+#### Scenario: Dictation available
 
-#### Scenario: Mic button shown when audio messages are supported
+- **WHEN** dictation is supported and the input is enabled and not streaming
+- **THEN** the microphone has the Dictate accessible label and hover tooltip
+- **AND** activation starts recording for recognition after Stop
 
-- **WHEN** `isAudioMessageSupported` is `true`
-- **THEN** the mic ghost icon button is rendered in the action bar
+#### Scenario: Dictation unavailable or input disabled
 
-#### Scenario: Mic button hidden when audio messages are not supported
+- **WHEN** dictation support is false or absent, or assistant streaming is active
+- **THEN** the microphone is hidden
+- **WHEN** dictation support is true but `isInputDisabled` is true
+- **THEN** the microphone cannot start capture
 
-- **WHEN** `isAudioMessageSupported` is `false` or not provided
-- **THEN** no mic button is rendered
+#### Scenario: Existing content or upload
 
-#### Scenario: Mic button visible during active attachment upload
-
-- **WHEN** an attachment upload is in progress and `isAudioMessageSupported` is `true`
-- **THEN** the mic button remains visible and interactive
+- **WHEN** text, attachments or an attachment upload already exists
+- **THEN** these alone do not disable or hide Dictate
 
 ---
 
 ### Requirement: Voice bar replaces conversation input during recording
 
-When recording starts, the voice bar SHALL replace the conversation input area. The `welcomeText` header SHALL remain visible above the voice bar with the same `gap-y-8` vertical gap used by the normal input.
+The voice bar SHALL replace the textarea inside the existing input border for both dictation and attachment recording, beginning when microphone permission is requested. The draft SHALL remain in `useMessageState` while its textarea is unmounted. Existing attachment cards and any welcome heading SHALL remain present. The waveform SHALL occupy the first input content row below any attachment tray; the add/model/send action row SHALL be unavailable. Processing and error states SHALL continue to withhold the textarea until the voice session closes.
 
-The voice bar SHALL have: height 40 px inner + `py-2` vertical padding (56 px total), `px-3` horizontal padding, `gap-2` between elements, and `Controls/Background/Neutral` background.
+#### Scenario: Recording starts from either entry point
 
-#### Scenario: Voice bar appears on recording start
+- **WHEN** the user chooses Dictate or Record voice
+- **THEN** the waveform and voice controls replace the textarea
+- **AND** keyboard text entry and message sending are unavailable, including while permission is pending
 
-- **WHEN** the user clicks the mic button
-- **THEN** the conversation input is replaced by the voice bar
-- **THEN** the `welcomeText` header remains visible above it
+#### Scenario: Discard restores input
 
-#### Scenario: Normal input restored on discard
+- **WHEN** the user cancels capture or processing
+- **THEN** the normal input returns with its previous draft and attachments
 
-- **WHEN** the user clicks X in the voice bar
-- **THEN** the voice bar is removed and the normal conversation input is restored
+#### Scenario: Stop in dictation mode
 
-#### Scenario: Normal input restored after recording stops
+- **WHEN** the user presses Stop
+- **THEN** the microphone is released after the final recorder events and processing status is displayed while recognition is pending
+- **AND** successful recognition restores the textarea with appended text and focus
 
-- **WHEN** the user clicks the red mic button to stop recording
-- **THEN** the audio blob is immediately added as an attachment to the message input
-- **THEN** the voice bar is removed and the normal conversation input is restored
+#### Scenario: Stop in attachment mode
+
+- **WHEN** the user presses Stop for Record voice
+- **THEN** the complete recording enters the existing attachment validation/upload pipeline and the textarea returns with unchanged draft text
 
 ---
 
 ### Requirement: Recording state — live scrolling waveform and red controls
 
-During recording the voice bar SHALL display:
-- A pulsing red recording dot on the left of the waveform (`--ci-voice-accent`, fallback `--text-error`). No elapsed-time counter is shown.
-- A live animated bar-histogram waveform rendered on a `<canvas>` element. A fixed-length ring buffer (200 slots) holds one RMS amplitude sample per `requestAnimationFrame` tick at ~60 fps. Each tick overwrites the oldest slot, advancing the write index, so the oldest bars scroll off the left edge and new bars appear on the right — giving a smooth scrolling effect. The canvas renders all 200 slots as narrow vertical bars (3 px wide, 1 px gap) spanning the canvas width. Bar heights are scaled by ×6 (clamped to canvas height) with a minimum height of 3 px. Bar colour is `--ci-voice-waveform` (fallback `--text-primary`).
-- A white filled stop square button on the right. Clicking it stops recording, immediately attaches the audio blob as a `File` attachment, and returns to idle.
-- An X (discard) button on the right. Clicking it discards the recording without attaching anything and returns to idle.
+During recording the voice bar SHALL display a pulsing recording dot, animated bar-histogram canvas, filled stop-square button and discard button, without an elapsed-time counter. The dot SHALL use the existing voice accent token and the waveform the existing voice waveform token. Stop SHALL finalize the selected mode: attach the file for Record voice or await recognition for Dictate. Discard SHALL abort the session without delivering a new file or transcript.
 
-The RAF loop runs only while `state === 'recording'` and is cancelled when recording stops or the component unmounts.
+The waveform SHALL use the existing 200-slot ring buffer, 3 px bars and 1 px gaps, minimum 3 px bar height and amplitude scaling capped to the canvas height. Animation SHALL advance by one pixel per RAF tick, sample after a complete bar step, and draw only the bars that fit the canvas. The RAF loop SHALL run only during Recording and be cancelled on state change or unmount. The symmetric microphone/stop/discard icons SHALL NOT be directionally mirrored.
 
-#### Scenario: No elapsed-time counter during recording
+#### Scenario: Live waveform
 
-- **WHEN** recording is active
-- **THEN** no elapsed-time text is rendered
-- **THEN** a pulsing red recording dot is visible to the left of the waveform
+- **WHEN** microphone samples arrive during Recording
+- **THEN** bars animate across the waveform without showing elapsed-time text
+- **AND** the stop-square and discard controls remain available
 
-#### Scenario: Waveform scrolls during recording
+#### Scenario: Stop dispatches the chosen mode
 
-- **WHEN** recording is active and microphone input is received
-- **THEN** the waveform canvas updates at ~60 fps via `requestAnimationFrame`
-- **THEN** each tick appends a new RMS bar on the right; older bars scroll toward the left
-- **THEN** bars are narrow vertical pieces (3 px wide, 1 px gap) coloured using `--ci-voice-waveform`
+- **WHEN** Stop is activated in attachment mode or dictation mode
+- **THEN** capture ends and the complete file is delivered through the corresponding attachment or transcription callback exactly once
 
-#### Scenario: Mic button is red during recording
+#### Scenario: Discard during capture
 
-- **WHEN** recording is active
-- **THEN** the mic button icon is rendered in red
-
-#### Scenario: Clicking red mic button stops recording and attaches audio
-
-- **WHEN** the user clicks the mic button during recording
-- **THEN** recording stops
-- **THEN** the audio blob is immediately added as a file attachment to the message input
-- **THEN** the voice bar is removed and the normal conversation input is restored
-
-#### Scenario: Clicking X discards recording
-
-- **WHEN** the user clicks the X button during recording
-- **THEN** the recording is discarded with no attachment added
-- **THEN** the voice bar is removed and the normal conversation input is restored
+- **WHEN** the discard control is activated
+- **THEN** capture and animation stop, no new attachment/transcript is delivered, and the original input returns
 
 ---
 
@@ -116,27 +101,50 @@ A `ResizeObserver` SHALL be attached to the canvas so that the histogram redraws
 
 ### Requirement: Mobile layout — waveform full-width, buttons on separate line
 
-On mobile breakpoints the voice bar SHALL use a two-row layout:
-- **Row 1**: the recording dot on the left (during recording) followed by the waveform canvas filling the remaining width.
-- **Row 2**: buttons right-aligned. During recording: X button then red mic button.
+At the project's mobile breakpoint (up to 768 px), the first voice-bar row SHALL contain the dot and waveform, and the second row SHALL contain the controls aligned to the inline end. The discard control SHALL precede the filled stop-square control during recording; only discard SHALL remain during processing or error. These controls SHALL have at least 44 px touch targets. At desktop widths (from 769 px), waveform and controls SHALL share a row. Layout SHALL inherit document direction and use logical alignment; the waveform's time animation SHALL retain its existing direction.
 
-This two-row layout SHALL apply in both recording and error states.
+#### Scenario: Mobile recording
 
-#### Scenario: Mobile recording layout
+- **WHEN** either mode records at 360 px width
+- **THEN** the waveform fills the first row, controls occupy the next row, and no textarea or horizontal overflow is present
 
-- **WHEN** the viewport is at mobile breakpoint and recording is active
-- **THEN** the recording dot and waveform occupy the full row width
-- **THEN** the X and red mic buttons appear on a separate row, right-aligned
+#### Scenario: Desktop recording
+
+- **WHEN** either mode records at a desktop width
+- **THEN** the waveform and controls share the first content row in place of the textarea
 
 ---
 
 ### Requirement: Microphone permission error
 
-If the browser denies microphone access, the `useVoiceRecorder` hook SHALL catch the `NotAllowedError` from `getUserMedia` and transition to an error state with an appropriate message. The voice bar SHALL be shown in the error state with a red border and the error text below it.
+`useVoiceRecorder` SHALL catch microphone access failures, release acquired media resources, and enter Error. The voice bar SHALL display an error alert and discard control; dismissing it SHALL restore the saved draft. Browser-supplied error messages may be retained; the host SHALL provide translated fallback recording-error text.
 
-#### Scenario: Microphone permission denied
+#### Scenario: Permission denied
 
-- **WHEN** the user clicks the mic button and the browser denies microphone access
-- **THEN** the voice bar is shown in error state with a permission-denied error message
-- **THEN** the X button is visible to dismiss and return to normal input
+- **WHEN** the browser rejects microphone permission
+- **THEN** an error is displayed with `role="alert"`, no upload or recognition begins, and discard restores the original input
 
+### Requirement: Record voice menu action
+
+The desktop add-menu dropdown and mobile bottom sheet SHALL insert Record voice immediately before Chat settings, after preceding attachment/tools/prompts entries that are present. If settings is absent, Record voice SHALL still be available as the last item. `recordVoiceLabel` SHALL override its default text. Selection SHALL close the menu and request microphone recording immediately in attachment mode, even when a transcription callback is configured. The item SHALL be absent when resolved recording support is false, attachments are disabled, or assistant streaming is active. The add trigger SHALL respect the input-disabled state.
+
+#### Scenario: Menu order and activation
+
+- **WHEN** attachment, prompts, voice and settings entries are available on mobile or desktop
+- **THEN** their order is Attach file, Prompts, Record voice, Settings
+- **WHEN** Record voice is selected
+- **THEN** the menu closes and recording begins without an additional confirmation
+
+### Requirement: Voice labels and accessible feedback
+
+The app SHALL pass translated labels to the library using `voiceRecording.micLabel`, `recordVoiceLabel`, `transcribing`, `failed`, `busy`, `unavailable`, `tooLarge`, `stopRecordingLabel` and `discardRecordingLabel` under the same `voiceRecording` namespace. The library SHALL keep English defaults and SHALL NOT import i18n. Processing and completed transcript feedback SHALL use polite status regions; errors SHALL use alerts. Interactive actions SHALL be keyboard-operable and decorative icons/canvas SHALL be hidden from assistive technology. Stop SHALL receive initial focus in the mounted recording controls, and successful dictation SHALL focus the restored textarea. No keyboard-editable textarea SHALL remain hidden in the DOM during either recording mode.
+
+#### Scenario: Processing feedback
+
+- **WHEN** Dictate is awaiting recognition
+- **THEN** its processing label is announced politely and cancellation remains available
+
+#### Scenario: Transcript delivered
+
+- **WHEN** a nonempty transcript is appended
+- **THEN** a polite status region announces it and the restored draft can be edited

@@ -29,7 +29,11 @@ import { useAttachments } from '../../hooks/useAttachments';
 import { useDelayedUnmount } from '../../hooks/useDelayedUnmount';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useMessageState } from '../../hooks/useMessageState';
-import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
+import {
+  useVoiceRecorder,
+  VoiceRecorderState,
+  VoiceRecordingMode,
+} from '../../hooks/useVoiceRecorder';
 import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
@@ -65,7 +69,8 @@ export const Input: FC<InputProps> = ({
   uploadingLabel,
   sendLabel,
   stopLabel,
-  micLabel = 'Record voice message',
+  micLabel = 'Dictate',
+  recordVoiceLabel = 'Record voice',
   stopRecordingLabel,
   discardRecordingLabel,
   colors,
@@ -90,6 +95,10 @@ export const Input: FC<InputProps> = ({
   isModelSelectorDisabled = false,
   isSendDisabled = false,
   isAudioMessageSupported = false,
+  isVoiceRecordingSupported = isAudioMessageSupported,
+  onTranscribeAudio,
+  transcribingLabel,
+  voiceErrorLabel,
   sendOnEnter = SendOnEnter.Enter,
   prefixAttachments = [],
   onRemovePrefixAttachment,
@@ -205,6 +214,33 @@ export const Input: FC<InputProps> = ({
     [addAttachments, buildAttachments],
   );
 
+  const focusAfterTranscriptRef = useRef(false);
+  const draftRef = useRef(message);
+  draftRef.current = message;
+  const [latestTranscript, setLatestTranscript] = useState({
+    text: '',
+    revision: 0,
+  });
+  const handleTranscript = useCallback(
+    (text: string) => {
+      const transcript = text.trim();
+      if (transcript) {
+        const draft = draftRef.current;
+        const nextMessage = `${draft}${draft && !/\s$/.test(draft) ? ' ' : ''}${transcript}`;
+        draftRef.current = nextMessage;
+        setMessage(nextMessage);
+        setLatestTranscript((previous) => ({
+          text: transcript,
+          revision: previous.revision + 1,
+        }));
+        historyNav.notifyChange();
+        onChange?.(nextMessage);
+      }
+      focusAfterTranscriptRef.current = true;
+    },
+    [setMessage, historyNav, onChange],
+  );
+
   const {
     state: voiceState,
     analyserNodeRef,
@@ -214,7 +250,21 @@ export const Input: FC<InputProps> = ({
     discardRecording,
   } = useVoiceRecorder({
     onAttachAudio: handleAttachAudio,
+    onTranscribeAudio,
+    onTranscript: handleTranscript,
+    errorLabel: voiceErrorLabel,
   });
+  const isVoiceActive = voiceState !== VoiceRecorderState.Idle;
+
+  useEffect(() => {
+    if (
+      voiceState === VoiceRecorderState.Idle &&
+      focusAfterTranscriptRef.current
+    ) {
+      focusAfterTranscriptRef.current = false;
+      textareaRef.current?.focus();
+    }
+  }, [voiceState, textareaRef]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -253,7 +303,10 @@ export const Input: FC<InputProps> = ({
   const hasSendableContent =
     message.trim().length > 0 || attachments.length > 0;
   const canSend =
-    hasSendableContent && !hasBlockedAttachments && !isSendDisabled;
+    hasSendableContent &&
+    !hasBlockedAttachments &&
+    !isSendDisabled &&
+    !isVoiceActive;
   /*
    * Keeps the send button mounted just long enough to play its exit
    * animation (`.sendButtonExiting` in Input.module.scss) after content is
@@ -309,7 +362,7 @@ export const Input: FC<InputProps> = ({
   );
 
   const handleSend = async () => {
-    if (isSendDisabled) return;
+    if (isSendDisabled || isVoiceActive) return;
     if (message.length >= maxMessageLength) {
       onMessageTooLong?.(message.length, maxMessageLength);
       return;
@@ -333,6 +386,7 @@ export const Input: FC<InputProps> = ({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (isVoiceActive) return;
     if (!e.nativeEvent.isComposing && !isInputDisabled && !isStreaming) {
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         const cursorPos = e.currentTarget.selectionStart ?? 0;
@@ -374,22 +428,6 @@ export const Input: FC<InputProps> = ({
     addAttachments(newAttachments);
   };
 
-  if (voiceState !== 'idle') {
-    return (
-      <VoiceBar
-        state={voiceState}
-        analyserNodeRef={analyserNodeRef}
-        errorMessage={voiceError}
-        onStop={stopRecording}
-        onDiscard={discardRecording}
-        stopLabel={stopRecordingLabel}
-        discardLabel={discardRecordingLabel}
-        style={cssVars}
-        className={className}
-      />
-    );
-  }
-
   const textarea = (
     <textarea
       className={mergeClasses(
@@ -410,6 +448,7 @@ export const Input: FC<InputProps> = ({
       placeholder={placeholder}
       aria-label={ariaLabel}
       disabled={isInputDisabled}
+      readOnly={isVoiceActive}
       rows={1}
     />
   );
@@ -452,9 +491,21 @@ export const Input: FC<InputProps> = ({
           }
         />
       )}
-      {hideActionBar ? (
-        textarea
-      ) : (
+      {isVoiceActive && (
+        <VoiceBar
+          embedded
+          state={voiceState}
+          analyserNodeRef={analyserNodeRef}
+          errorMessage={voiceError}
+          onStop={stopRecording}
+          onDiscard={discardRecording}
+          stopLabel={stopRecordingLabel}
+          discardLabel={discardRecordingLabel}
+          processingLabel={transcribingLabel}
+        />
+      )}
+      {!isVoiceActive && hideActionBar && textarea}
+      {!isVoiceActive && !hideActionBar && (
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex w-full min-w-0 items-center self-stretch">
             {textarea}
@@ -485,6 +536,14 @@ export const Input: FC<InputProps> = ({
                 isDisabled={isInputDisabled}
                 chatSettings={chatSettings}
                 extraMenuItems={dialFileSystemMenuItem}
+                onRecordVoice={
+                  isVoiceRecordingSupported &&
+                  isAttachmentsEnabled &&
+                  !isStreaming
+                    ? () => startRecording(VoiceRecordingMode.Attachment)
+                    : undefined
+                }
+                recordVoiceLabel={recordVoiceLabel}
                 /*
                  * The "Tools" submenu exists only to bring a dismissed chip
                  * back. With removal off every chip is always on screen, so the
@@ -569,14 +628,23 @@ export const Input: FC<InputProps> = ({
                   />
                 }
                 aria-label={micLabel}
-                className="size-[40px] flex-shrink-0"
-                onClick={startRecording}
+                tooltipProps={{ tooltip: micLabel }}
+                className="size-[40px] flex-shrink-0 mobile:min-h-11 mobile:min-w-11"
+                onClick={() => startRecording(VoiceRecordingMode.Dictation)}
                 disabled={isInputDisabled || isStreaming}
               />
             )}
           </div>
         </div>
       )}
+      <span
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <span key={latestTranscript.revision}>{latestTranscript.text}</span>
+      </span>
     </div>
   );
 };

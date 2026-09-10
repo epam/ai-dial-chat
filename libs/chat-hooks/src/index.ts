@@ -72,6 +72,8 @@ export * from './conversation/useConversationLookupMaps/useConversationLookupMap
 export * from './conversation/useConversationPanelItems/useConversationPanelItems';
 export * from './conversation/useImportFilePicker/useImportFilePicker';
 export * from './conversation/useAttachmentUpload/useAttachmentUpload';
+export * from './conversation/useTranscribeAudio/audio-transcription-error';
+export * from './conversation/useTranscribeAudio/useTranscribeAudio';
 export * from './conversation/useConversationExport/useConversationExport';
 export {
   attachmentsToDtos,
@@ -107,6 +109,7 @@ export * from './files/create-files-api';
 export * from './files/create-upload-file-with-progress';
 export * from './files/annotation';
 export * from './files/attachment-canvas';
+export * from './files/source-content';
 export * from './files/attachment-dto-to-display';
 export * from './files/dial-file';
 export * from './files/dial-file-to-attachment';

@@ -67,9 +67,10 @@ const findScrollParent = (el: Element | null): Element | null => {
 
 /**
  * Scheduled Tasks page shell: header with title/subtitle/create action, a
- * search + sort toolbar, and a content region that shows a loading spinner,
- * an error with retry, the empty state, a no-results state, or a flat card
- * grid, depending on `isLoading`/`error`/`items`.
+ * search + sort toolbar, an optional `banner` slot, and a content region
+ * that shows a loading spinner, an error with retry, the empty state, a
+ * no-results state, or a flat card grid, depending on
+ * `isLoading`/`error`/`items`.
  */
 export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   labels,
@@ -87,6 +88,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   skeletonCount = 6,
   onLoadMore,
   onCardClick,
+  banner,
   styles: scheduledTasksStyles,
 }) => {
   const {
@@ -323,6 +325,8 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           </Dropdown>
         )}
       </div>
+
+      {banner}
 
       <span role="status" aria-live="polite" className="sr-only">
         {statusMessage}
