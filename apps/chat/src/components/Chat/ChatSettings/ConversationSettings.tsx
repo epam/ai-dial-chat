@@ -88,6 +88,7 @@ export const ConversationSettings = Inversify.register(
 
     const model = modelsMap[conversation.model.id];
     const isPlayback = isPlaybackConversation(conversation);
+    const responseFormatElementId = `response-format-toggler-${conversation.id}`;
 
     if (!model) {
       return renderSettingContainer(
@@ -103,6 +104,7 @@ export const ConversationSettings = Inversify.register(
               value={responseFormat}
               onChange={onChangeResponseFormat}
               disabled={isPlayback}
+              elementId={responseFormatElementId}
             />,
           )}
           {renderFieldContainer(
@@ -123,6 +125,7 @@ export const ConversationSettings = Inversify.register(
             value={responseFormat}
             onChange={onChangeResponseFormat}
             disabled={isPlayback}
+            elementId={responseFormatElementId}
           />,
         )}
         {renderFieldContainer(
