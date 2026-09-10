@@ -119,6 +119,8 @@ export interface Message {
   deploymentId?: string;
   /* Human-readable error text from a failed stream. Present when generation ended in error — absence means generation succeeded or is still in progress. Used for both resume detection and UI error display. */
   streamErrorMessage?: string;
+  /** Set on an assistant message whose generation the user stopped; the content is whatever had streamed by then. */
+  wasStoppedByUser?: boolean;
   /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
   [key: string]: unknown;
 }

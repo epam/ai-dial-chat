@@ -564,6 +564,70 @@ describe('useConversationHandlers', () => {
       expect(result.current.handlers.editingMessageIndexes.has(0)).toBe(false);
     });
 
+    it('re-runs the generation when nothing changed but the answer was stopped', async () => {
+      const conversation = makeConversation({
+        messages: [
+          {
+            role: 'user' as never,
+            content: 'Original question',
+            timestamp: 't',
+          },
+          {
+            role: 'assistant' as never,
+            content: 'Partial answer',
+            timestamp: 't',
+            wasStoppedByUser: true,
+          },
+        ],
+      });
+      const { result } = renderHook(() => useHarness({ conversation }));
+      act(() => result.current.handlers.handleStartEdit(0));
+
+      await act(() =>
+        result.current.handlers.handleEditMessage(
+          0,
+          'Original question',
+          [],
+          [],
+        ),
+      );
+
+      expect(result.current.startStream).toHaveBeenCalledWith(
+        conversation.id,
+        'Original question',
+        1,
+        'selected-model',
+        undefined,
+        expect.any(String),
+        'edit',
+      );
+      expect(result.current.handlers.editingMessageIndexes.has(0)).toBe(false);
+    });
+
+    it('updates conversationRef before starting the stream', async () => {
+      const conversation = editableConversation();
+      const { result } = renderHook(() =>
+        useHarness({ conversation }, { keepRefInSync: false }),
+      );
+      /* startStream seeds its live-message buffer from the ref, so the edit has
+         to be visible there by the time it runs. */
+      const refMessagesAtStreamStart: unknown[] = [];
+      result.current.startStream.mockImplementation(() => {
+        refMessagesAtStreamStart.push(
+          result.current.conversationRef.current?.messages,
+        );
+      });
+
+      await act(() =>
+        result.current.handlers.handleEditMessage(0, 'Edited question', [], []),
+      );
+
+      expect(refMessagesAtStreamStart[0]).toEqual([
+        expect.objectContaining({ content: 'Edited question' }),
+        expect.objectContaining({ role: 'assistant', content: '' }),
+      ]);
+    });
+
     it('does nothing while streaming', async () => {
       const conversation = editableConversation();
       const { result } = renderHook(() =>

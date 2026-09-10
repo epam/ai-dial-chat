@@ -85,6 +85,27 @@ backend's save) fires.
 - **THEN** no reload happens until the transport's own completion signal
   fires afterward
 
+### Requirement: A superseded generation never touches shared state
+Once a newer generation has been started for a path, the terminal callbacks of
+the older generation on that path SHALL NOT clear the path's streaming state,
+report a generation end to the overlay, write a stream error into the
+conversation, or replace conversation state with the reload they fetched. The
+reload is re-checked after its round trip, because the newer generation can
+start while that reload is in flight.
+
+#### Scenario: Stopped generation completes after the user re-submitted
+- **WHEN** the user stops a generation and — while the stopped generation's
+  post-completion reload is still in flight — submits an edit that starts a
+  new generation on the same path
+- **THEN** the stopped generation's completion leaves `isStreaming` true for
+  the path and does not restore the answer it had fetched over the edited
+  messages
+
+#### Scenario: Superseded generation errors
+- **WHEN** a superseded generation's `onError` fires
+- **THEN** no `streamErrorMessage` is written onto the newer generation's
+  answer and the path stays marked as streaming
+
 ### Requirement: Optional client-channel and overlay capabilities
 The hook SHALL accept `channel` and `overlay` as independently optional
 parameters; a consumer that supplies neither SHALL NOT be required to pass
