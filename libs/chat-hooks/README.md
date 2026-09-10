@@ -2389,6 +2389,28 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 toPublishEntityType(CatalogEntityType.Skill); // 'skill'
 ```
 
+### isPublicCatalogEntityId / getPublicCatalogEntityFolderPath
+
+Recognises a catalog entity id that addresses the shared `public` bucket — a
+published copy rather than the author's own source item — and reads the publish
+folder out of it. The bucket is the second path segment, so a personal folder
+named `public` is not matched, and the folder segments are decoded to the plain
+text the publish API takes.
+
+```ts
+import {
+  getPublicCatalogEntityFolderPath,
+  isPublicCatalogEntityId,
+} from '@epam/ai-dial-chat-hooks';
+
+isPublicCatalogEntityId('applications/public/Data%20Science/Revenue bot'); // true
+isPublicCatalogEntityId('applications/my-bucket/Revenue bot'); // false
+
+getPublicCatalogEntityFolderPath(
+  'applications/public/Data%20Science/Revenue bot',
+); // ['Data Science']
+```
+
 ## Prompt Utilities
 
 ### validatePromptName / validatePromptDescription / validatePromptContent / getRemainingCharacters / buildPromptPath
