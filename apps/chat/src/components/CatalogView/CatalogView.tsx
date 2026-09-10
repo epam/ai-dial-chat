@@ -22,6 +22,7 @@ import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
   DialFileManagerI18nKeys,
@@ -582,6 +583,7 @@ const CatalogView: FC<Props> = ({
           historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
           historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
           submitError: t(PublishI18nKeys.SubmitErrorCallout),
+          rootFolderLabel: t(BasicI18nKeys.Organization),
           accessRulesLabels: getAccessRulesLabels(t),
         }}
         shareOverlay={(item, onClose) => (

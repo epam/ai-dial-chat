@@ -4,6 +4,7 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { BasicI18nKeys } from '../../../constants/translation-keys';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
 import {
   CatalogPublishEntityType,
@@ -153,6 +154,22 @@ describe('useCatalogPublishing', () => {
         expect.anything(),
         EntityOperation.PublishRequested,
         { name: 'My toolset', folder: 'Data Science' },
+      );
+    });
+
+    /*
+     * The public root has no path segments, so naming its leaf produced
+     * `folder ""` in the confirmation (GH #8704).
+     */
+    it('names the root label when the target folder is the public root', () => {
+      const { result, notifyOperationSuccess } = renderPublishing();
+
+      result.current.handlePublishSuccess(makeCatalogItem(), []);
+
+      expect(notifyOperationSuccess).toHaveBeenCalledWith(
+        expect.anything(),
+        EntityOperation.PublishRequested,
+        { name: 'My toolset', folder: BasicI18nKeys.Organization },
       );
     });
 
@@ -346,6 +363,18 @@ describe('useCatalogPublishing', () => {
         expect.anything(),
         EntityOperation.UnpublishRequested,
         { name: 'My toolset', folder: 'Data Science' },
+      );
+    });
+
+    it('names the root label when the published copy sits in the public root', async () => {
+      const { result, notifyOperationSuccess } = renderPublishing();
+
+      await result.current.handleUnpublish(makeCatalogItem(), []);
+
+      expect(notifyOperationSuccess).toHaveBeenCalledWith(
+        expect.anything(),
+        EntityOperation.UnpublishRequested,
+        { name: 'My toolset', folder: BasicI18nKeys.Organization },
       );
     });
 
