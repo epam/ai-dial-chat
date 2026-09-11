@@ -145,8 +145,10 @@ const {
 // ./conversation
 import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks/conversation';
 
-/* Returns the model deployment id from the most recent `model_changed`
-   status message, or null if the conversation never switched models. */
+/* Returns the deployment the conversation was last running on — scanning
+   backwards, a `model_changed` status message's `new_deployment_id` or a
+   message's own `deploymentId`, whichever comes later. Null when the
+   conversation records neither. */
 const newDeploymentId = getLastDeploymentId(conversation.messages);
 ```
 
@@ -2131,7 +2133,7 @@ const statusMessage = createDeploymentChangedMessage('gpt-4', 'gpt-4o');
 
 ### isMessageStreaming / getLastDeploymentId / messageHasStages / getLastUserMessageToolConfiguration / normalizeResponseFormat
 
-Pure predicates/lookups over a conversation's `Message[]`: whether a message is the actively-streaming assistant response, the last deployment a `model_changed` status message recorded, whether a message carries any stages, the last user message's persisted tool-configuration value, and normalizing a legacy `responseFormat` string to the current enum.
+Pure predicates/lookups over a conversation's `Message[]`: whether a message is the actively-streaming assistant response, the deployment the conversation was last running on (the later of a `model_changed` status message's `new_deployment_id` and a message's own `deploymentId`), whether a message carries any stages, the last user message's persisted tool-configuration value, and normalizing a legacy `responseFormat` string to the current enum.
 
 ```ts
 import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks';
