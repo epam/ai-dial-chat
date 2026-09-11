@@ -1,32 +1,47 @@
 #!/usr/bin/env node
 /**
- * Packs the built `@epam/ai-dial-attachment-canvas` package the same way
- * `tools/publish-lib.mjs` prepares it for a real `npm publish` — writing a
- * publish-ready `package.json` into `dist/` (`"./dist/"` export prefixes
- * stripped, the `"@epam/source"` condition removed, `"private"`/`"nx"`
- * dropped) — then runs `npm pack` from inside `dist/` and installs the
- * resulting tarball into this fixture's own `node_modules`, isolated from
- * the workspace's own `node_modules/@epam/ai-dial-attachment-canvas`
- * symlink (which npm workspaces points at `libs/attachment-canvas` source,
- * not the published artifact).
+ * Packs the built `@epam/ai-dial-attachment-canvas` package through the very
+ * transform `tools/publish-lib.mjs` uses for a real `npm publish` — writing a
+ * publish-ready `package.json` into `dist/` — then runs `npm pack` from inside
+ * `dist/` and installs the resulting tarball into this fixture's own
+ * `node_modules`, isolated from the workspace's own
+ * `node_modules/@epam/ai-dial-attachment-canvas` symlink (which npm workspaces
+ * points at `libs/attachment-canvas` source, not the published artifact).
  *
  * This is the only way this fixture proves the real npm `exports` map,
- * externalized peers, and split CSS resolve correctly outside the
- * workspace's own alias graph (design.md's Decision 6) — every in-repo
- * consumer resolves `@epam/ai-dial-attachment-canvas` straight to source
- * and never touches the published `exports` map at all.
+ * externalized peers, and split CSS resolve correctly outside the workspace's
+ * own alias graph (design.md's Decision 6) — every in-repo consumer resolves
+ * `@epam/ai-dial-attachment-canvas` straight to source and never touches the
+ * published `exports` map at all.
+ *
+ * The transform is imported, never reimplemented: this script used to carry its
+ * own partial copy, which silently drifted — it stripped `./dist/` prefixes and
+ * dropped `private`/`nx`/`@epam/source`, but never resolved workspace-lib
+ * version specs the way `preparePublishPackageJson` does. That gap is invisible
+ * while siblings are peers (`--legacy-peer-deps` skips them) and becomes an
+ * `ETARGET` the moment one becomes a dependency, because npm then looks for a
+ * placeholder version on the registry.
  *
  * Usage: node scripts/pack-and-install.mjs
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { preparePublishPackageJson } from '../../publish-lib-package-json.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixtureRoot = resolve(__dirname, '..');
 const workspaceRoot = resolve(fixtureRoot, '../..');
-const libRoot = resolve(workspaceRoot, 'libs/attachment-canvas');
+const projectRoot = 'libs/attachment-canvas';
+const libRoot = resolve(workspaceRoot, projectRoot);
 const distDir = resolve(libRoot, 'dist');
 
 if (!existsSync(distDir)) {
@@ -37,41 +52,37 @@ if (!existsSync(distDir)) {
 }
 
 // ---------------------------------------------------------------------------
-// Rewrite dist/package.json into a publish-ready shape (mirrors
-// tools/publish-lib.mjs's transform, without its npm-publish/network step).
+// Rewrite dist/package.json into a publish-ready shape.
 // ---------------------------------------------------------------------------
 
-const stripDistPrefix = (value) =>
-  typeof value === 'string' && value.startsWith('./dist/')
-    ? './' + value.slice('./dist/'.length)
-    : value;
-
-const rewriteExports = (value) => {
-  if (typeof value === 'string') return stripDistPrefix(value);
-  if (Array.isArray(value)) return value.map(rewriteExports);
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value)
-        .filter(([key]) => key !== '@epam/source')
-        .map(([key, entry]) => [key, rewriteExports(entry)]),
-    );
-  }
-  return value;
-};
-
-const sourcePackageJson = JSON.parse(
-  readFileSync(resolve(libRoot, 'package.json'), 'utf-8'),
+/*
+ * `publish-lib.mjs` gets the workspace package names from the cached Nx project
+ * graph; reading the manifests directly keeps this fixture off Nx's API for
+ * what is a one-line question.
+ */
+const workspacePackageNames = new Set(
+  readdirSync(resolve(workspaceRoot, 'libs'), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => resolve(workspaceRoot, 'libs', entry.name, 'package.json'))
+    .filter(existsSync)
+    .map((manifest) => JSON.parse(readFileSync(manifest, 'utf-8')).name)
+    .filter(Boolean),
 );
 
-const publishReadyPackageJson = {
-  ...sourcePackageJson,
-  main: stripDistPrefix(sourcePackageJson.main),
-  module: stripDistPrefix(sourcePackageJson.module),
-  types: stripDistPrefix(sourcePackageJson.types),
-  exports: rewriteExports(sourcePackageJson.exports),
-};
-delete publishReadyPackageJson.private;
-delete publishReadyPackageJson.nx;
+const rawSource = readFileSync(resolve(libRoot, 'package.json'), 'utf-8');
+const sourcePackageJson = JSON.parse(rawSource);
+
+/*
+ * The fixture publishes nothing, so any valid version works — the source
+ * version keeps the packed tarball named as it is today, and is what sibling
+ * tarballs would have to agree on if this fixture ever packs them too.
+ */
+const publishReadyPackageJson = preparePublishPackageJson(sourcePackageJson, {
+  version: sourcePackageJson.version,
+  projectRoot,
+  isWorkspaceLib: (dependency) => workspacePackageNames.has(dependency),
+  rawSource,
+});
 
 writeFileSync(
   resolve(distDir, 'package.json'),
