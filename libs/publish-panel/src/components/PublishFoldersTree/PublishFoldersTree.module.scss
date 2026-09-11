@@ -1,3 +1,21 @@
 .divider {
   background: var(--pft-divider, var(--stroke-tertiary, #e0e6f0));
 }
+
+/*
+ * `DialFoldersTree` renders the inline create/rename editor itself and sizes it
+ * through the kit `Input`'s `containerClassName` (`!h-5 !py-[1px] !pl-[7px]`).
+ * In the installed kit that class lands on the input's outer label/caption
+ * stack, not on the `.dial-kit-input` field, so the field keeps its default
+ * 40px height inside a 20px stack and overflows the tree's 24px row: the folder
+ * icon and the field's own borders get clipped and the row overlaps the one
+ * above it. Apply the geometry the file manager asked for to the field itself,
+ * which is the only `.dial-kit-input` this subtree renders. Remove once
+ * `@epam/ai-dial-react-file-manager` forwards those classes through
+ * `wrapperClassName`.
+ */
+.tree :global(.dial-kit-input) {
+  height: 20px;
+  padding-block: 0;
+  padding-inline: 7px;
+}
