@@ -286,6 +286,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     PublishPanel: ({
       onSelectedFolderPathChange,
       onCreateFolder,
+      author,
+      onAuthorChange,
       rules,
       onRulesChange,
       ruleSourceOptions,
@@ -294,6 +296,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     }: {
       onSelectedFolderPathChange: (path: string[]) => void;
       onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
+      author: string;
+      onAuthorChange: (author: string) => void;
       rules: PublicationRule[];
       onRulesChange: (rules: PublicationRule[]) => void;
       ruleSourceOptions: string[];
@@ -302,6 +306,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     }) => (
       <div>
         <span>Publish panel</span>
+        <span>author:{author}</span>
+        <button onClick={() => onAuthorChange('DIAL Team')}>Set author</button>
         <span>ruleSourceOptions:{ruleSourceOptions.join(',')}</span>
         <span>rules:{rules.map((r) => r.source).join(',')}</span>
         <span>rulesLoading:{String(isRulesLoading)}</span>
@@ -1290,8 +1296,45 @@ describe('DetailsPanel', () => {
       screen.getByRole('button', { name: 'Select Shared' }),
     );
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
-    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], []);
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '');
     expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared']);
+  });
+
+  it('seeds the publish panel author from publishDefaultAuthor', async () => {
+    renderPanel({ publishDefaultAuthor: 'Daniil Pavlov' });
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    expect(screen.getByText('author:Daniil Pavlov')).toBeTruthy();
+  });
+
+  it('forwards an edited author to onPublish', async () => {
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    renderPanel({ onPublish, publishDefaultAuthor: 'Daniil Pavlov' });
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Set author' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], 'DIAL Team');
+  });
+
+  it('forwards the untouched prefill to onPublish', async () => {
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    renderPanel({ onPublish, publishDefaultAuthor: 'Daniil Pavlov' });
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(onPublish).toHaveBeenCalledWith(
+      item,
+      ['Shared'],
+      [],
+      'Daniil Pavlov',
+    );
   });
 
   it('forwards rules added in the publish panel to onPublish', async () => {
@@ -1316,6 +1359,7 @@ describe('DetailsPanel', () => {
           targets: ['engineering'],
         },
       ],
+      '',
     );
   });
 

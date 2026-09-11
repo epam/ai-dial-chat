@@ -278,7 +278,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
         stylesProp.className,
       )}
     >
-      <div className="w-full min-w-0 max-w-full">
+      <div className={mergeClasses('w-full min-w-0 max-w-full', styles.tree)}>
         <DialFoldersTree
           items={dialFiles}
           showFiles={false}

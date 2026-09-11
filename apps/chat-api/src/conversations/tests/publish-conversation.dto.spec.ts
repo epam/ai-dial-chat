@@ -12,6 +12,39 @@ async function validateDto(plain: Record<string, unknown>) {
   return validate(instance, { whitelist: true, forbidNonWhitelisted: true });
 }
 
+describe('PublishConversationDto — author', () => {
+  it('passes when author is omitted', async () => {
+    const errors = await validateDto(BASE_BODY);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts a plain display author', async () => {
+    const errors = await validateDto({ ...BASE_BODY, author: 'DIAL Team' });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects an author longer than 200 characters', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      author: 'a'.repeat(201),
+    });
+    expect(errors.some((e) => e.property === 'author')).toBe(true);
+  });
+
+  it('rejects an author containing a control character', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      author: 'DIAL Team\nInjected log line',
+    });
+    expect(errors.some((e) => e.property === 'author')).toBe(true);
+  });
+
+  it('rejects a non-string author', async () => {
+    const errors = await validateDto({ ...BASE_BODY, author: 42 });
+    expect(errors.some((e) => e.property === 'author')).toBe(true);
+  });
+});
+
 describe('PublishConversationDto — rules', () => {
   it('passes when rules is omitted', async () => {
     const errors = await validateDto(BASE_BODY);

@@ -33,3 +33,21 @@ export const getUserDisplayName = (claims: Record<string, unknown>): string => {
 
   return UNKNOWN_AUTHOR;
 };
+
+/**
+ * The display author to record on a publication: the caller's own submitted
+ * value when they supplied one, otherwise their session-derived name.
+ *
+ * Publish requests may carry an optional `author` so a toolset maintained by a
+ * team can be attributed to the team rather than to whoever clicked Publish
+ * (GH #8727). A missing, blank, or whitespace-only value is not a choice, so it
+ * degrades to exactly the behaviour every caller had before the field existed.
+ *
+ * This is display text only — DIAL Core still derives the publication's real
+ * `author` from the bearer token, so a submitted author changes what is
+ * displayed, never who is recorded as having published or what they may do.
+ */
+export const resolveDisplayAuthor = (
+  author: string | undefined,
+  claims: Record<string, unknown>,
+): string => author?.trim() || getUserDisplayName(claims);

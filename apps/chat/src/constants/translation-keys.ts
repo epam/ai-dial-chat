@@ -714,6 +714,9 @@ export enum PublishI18nKeys {
   UnpublishFailedMessage = 'publish.unpublishFailedMessage',
   UnpublishNetworkErrorMessage = 'publish.unpublishNetworkErrorMessage',
   SubmitErrorCallout = 'publish.submitErrorCallout',
+  AuthorLabel = 'publish.authorLabel',
+  AuthorPlaceholder = 'publish.authorPlaceholder',
+  AuthorHint = 'publish.authorHint',
 }
 
 export enum PublishAccessRulesI18nKeys {

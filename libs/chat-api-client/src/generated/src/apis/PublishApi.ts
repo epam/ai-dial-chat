@@ -165,7 +165,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.
+   * Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication\'s displayed author (the catalog\'s **Hosted by** value); when it is omitted or blank the caller\'s own session display name is used, as it always was.
    * Publish a catalog entity to an Organization folder
    */
   async publishCatalogEntityRaw(
@@ -224,7 +224,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.
+   * Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication\'s displayed author (the catalog\'s **Hosted by** value); when it is omitted or blank the caller\'s own session display name is used, as it always was.
    * Publish a catalog entity to an Organization folder
    */
   async publishCatalogEntity(

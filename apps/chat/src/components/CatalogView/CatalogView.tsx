@@ -49,6 +49,7 @@ import { useCatalogPublishing } from '../../hooks/useCatalogPublishing/useCatalo
 import { useCatalogSharing } from '../../hooks/useCatalogSharing/useCatalogSharing';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
+import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { deleteApplication } from '../../server-api/applications';
 import { deletePrompt } from '../../server-api/prompts.api';
@@ -66,7 +67,10 @@ import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { getCatalogSearchPlaceholder } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
-import { getAccessRulesLabels } from '../../utils/publish';
+import {
+  getAccessRulesLabels,
+  getPublishAuthorLabels,
+} from '../../utils/publish';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';
 
@@ -144,6 +148,8 @@ const CatalogView: FC<Props> = ({
     useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
   const { user } = useUser();
+  /* The publish panel pre-fills its author field with this; the catalog lib cannot read the session itself. */
+  const { displayName } = useUserProfile();
   const isAdmin = user?.isAdmin ?? false;
   const { config } = useAppConfig();
   const dialCoreExternalUrl = config.dialCoreExternalUrl;
@@ -567,6 +573,7 @@ const CatalogView: FC<Props> = ({
         publishLoadingPaths={publishLoadingPaths}
         onCreatePublishFolder={onCreatePublishFolder}
         hasPublishWriteAccess={hasPublishWriteAccess}
+        publishDefaultAuthor={displayName}
         onPublish={handlePublish}
         onPublishSuccess={handlePublishSuccess}
         onUnpublish={handleUnpublish}
@@ -585,6 +592,7 @@ const CatalogView: FC<Props> = ({
           submitError: t(PublishI18nKeys.SubmitErrorCallout),
           rootFolderLabel: t(BasicI18nKeys.Organization),
           accessRulesLabels: getAccessRulesLabels(t),
+          ...getPublishAuthorLabels(t),
         }}
         shareOverlay={(item, onClose) => (
           <SharePopoverContainer

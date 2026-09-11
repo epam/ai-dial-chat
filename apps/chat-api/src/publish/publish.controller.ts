@@ -10,7 +10,10 @@ import {
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
-import { getUserDisplayName } from '../common/utils/user-display-name';
+import {
+  getUserDisplayName,
+  resolveDisplayAuthor,
+} from '../common/utils/user-display-name';
 import { CatalogEntityParamsDto } from './dto/catalog-entity-params.dto';
 import { PublishCatalogEntityDto } from './dto/publish-catalog-entity.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
@@ -33,7 +36,9 @@ export class PublishController {
     description:
       'Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public ' +
       "bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no " +
-      'publish records of its own — DIAL Core is the sole source of truth.',
+      'publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the ' +
+      "publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the " +
+      "caller's own session display name is used, as it always was.",
   })
   @ApiBody({ type: PublishCatalogEntityDto })
   @ApiResponse({
@@ -65,7 +70,7 @@ export class PublishController {
   publish(
     @Req() req: Request,
     @Param() { entityType, entityId }: CatalogEntityParamsDto,
-    @Body() { folderPath, version, rules }: PublishCatalogEntityDto,
+    @Body() { folderPath, version, author, rules }: PublishCatalogEntityDto,
   ): Promise<PublishResultDto> {
     const { at, bucket, claims } = req.user as SessionUser;
     return this.publishService.publish(
@@ -75,7 +80,7 @@ export class PublishController {
       entityId,
       folderPath,
       version,
-      getUserDisplayName(claims),
+      resolveDisplayAuthor(author, claims),
       rules,
     );
   }

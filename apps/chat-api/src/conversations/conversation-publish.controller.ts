@@ -10,7 +10,10 @@ import {
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
-import { getUserDisplayName } from '../common/utils/user-display-name';
+import {
+  getUserDisplayName,
+  resolveDisplayAuthor,
+} from '../common/utils/user-display-name';
 import { ConversationPublishService } from './conversation-publish.service';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { PublishConversationResultDto } from './dto/publish-conversation-result.dto';
@@ -43,7 +46,9 @@ export class ConversationPublishController {
       'Publishes an owned conversation to a folder under the Organization/public bucket by proxying ' +
       "DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of " +
       'its own — DIAL Core is the sole source of truth. The conversation title is re-fetched ' +
-      'server-side and used as the publication name.',
+      'server-side and used as the publication name. The optional `author` sets the publication’s ' +
+      "displayed author; when it is omitted or blank the caller's own session display name is used, " +
+      'as it always was.',
   })
   @ApiBody({ type: PublishConversationDto })
   @ApiResponse({
@@ -75,7 +80,7 @@ export class ConversationPublishController {
   publish(
     @Req() req: Request,
     @Query() { path }: ConversationPathDto,
-    @Body() { folderPath, rules }: PublishConversationDto,
+    @Body() { folderPath, author, rules }: PublishConversationDto,
   ): Promise<PublishConversationResultDto> {
     const { at, bucket, claims } = req.user as SessionUser;
     return this.conversationPublishService.publish(
@@ -83,7 +88,7 @@ export class ConversationPublishController {
       bucket,
       path,
       folderPath,
-      getUserDisplayName(claims),
+      resolveDisplayAuthor(author, claims),
       rules,
     );
   }
