@@ -251,6 +251,12 @@ Every `AUTH_{PROVIDER_TYPE}_HOST` variable (`AUTH_AUTH0_HOST`, `AUTH_GITLAB_HOST
 
 A trailing slash is normalised away. A scheme other than `http` or `https` fails boot with an error naming the variable.
 
+The configured host is used as the OIDC discovery location. After discovery,
+Chat uses the canonical `issuer` returned by the provider metadata for callback
+and token issuer validation. This allows an in-cluster discovery URL to return
+the provider's externally advertised issuer without causing a false issuer
+mismatch; the canonical issuer remains subject to strict validation.
+
 **Auth0** (`id: auth0`)
 
 | Variable                      | Required | Default                               |
