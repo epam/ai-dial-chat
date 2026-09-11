@@ -238,6 +238,42 @@ export class SideBar extends BaseElement {
     });
   }
 
+  /**
+   * Dragging a folder unconditionally collapses it (see Folder.tsx's
+   * onDragStart -> UIActions.closeFolder), which unmounts any of its nested
+   * descendants. A real mouse-based drag (dragTo/dragAndDropEntityToFolder)
+   * resolves the target's screen position once and clicks there later, so
+   * dragging a folder onto its own descendant always races that collapse
+   * and lands on whatever unrelated row slides into the vacated position.
+   * This dispatches the whole HTML5 drag sequence synchronously in one
+   * script instead of simulating real mouse movement, so the target is
+   * still mounted when "drop" fires - before React can commit the
+   * collapse triggered by "dragstart".
+   */
+  public async instantDragAndDropFolder(source: Locator, target: Locator) {
+    const sourceHandle = await source.elementHandle();
+    const targetHandle = await target.elementHandle();
+    await this.page.evaluate(
+      ([src, tgt]) => {
+        const dataTransfer = new DataTransfer();
+        const fire = (el: Element, type: string) =>
+          el.dispatchEvent(
+            new DragEvent(type, {
+              bubbles: true,
+              cancelable: true,
+              dataTransfer,
+            }),
+          );
+        fire(src as Element, 'dragstart');
+        fire(tgt as Element, 'dragenter');
+        fire(tgt as Element, 'dragover');
+        fire(tgt as Element, 'drop');
+        fire(src as Element, 'dragend');
+      },
+      [sourceHandle, targetHandle],
+    );
+  }
+
   public noDataIcon = this.getChildElementBySelector(
     SideBarSelectors.noDataIcon,
   );

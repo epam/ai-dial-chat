@@ -176,24 +176,23 @@ dialTest(
       },
     );
 
-    //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/1927
-    // await dialTest.step(
-    //   'Edit shared folder, confirm and verify folder arrow icon disappears',
-    //   async () => {
-    //     await folderPrompts.openFolderDropdownMenu(
-    //       nestedFolders[sharedFolderIndex].name,
-    //     );
-    //     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    //     await folderPrompts.editFolderNameWithTick(newFolderName, {
-    //       isHttpMethodTriggered: false,
-    //     });
-    //     await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-    //     await promptBarFolderAssertion.assertFolderArrowIconState(
-    //       { name: newFolderName },
-    //       'hidden',
-    //     );
-    //   },
-    // );
+    await dialTest.step(
+      'Edit shared folder, confirm and verify folder arrow icon disappears',
+      async () => {
+        await folderPrompts.openFolderDropdownMenu(
+          nestedFolders[sharedFolderIndex].name,
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await folderPrompts.renameFolderWithContentWithTick(newFolderName, {
+          isHttpMethodTriggered: false,
+        });
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+        await promptBarFolderAssertion.assertFolderArrowIconState(
+          { name: newFolderName },
+          'hidden',
+        );
+      },
+    );
   },
 );
 
