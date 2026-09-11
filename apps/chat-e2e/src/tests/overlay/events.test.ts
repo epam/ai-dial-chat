@@ -1527,7 +1527,6 @@ dialOverlayTest(
     overlayChatHeaderAssertion,
     localStorageManager,
     setTestIds,
-    setIssueIds,
   }) => {
     setTestIds('EPMDIAL-2355');
     const newEmptyConversationName = GeneratorUtil.randomString(7);
