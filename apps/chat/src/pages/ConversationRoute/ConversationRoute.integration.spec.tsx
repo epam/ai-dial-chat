@@ -314,6 +314,8 @@ describe('ConversationRoute — new chat model inheritance (issue #8150 Case 3)'
         opusDeployment.id,
         undefined,
         undefined,
+        undefined,
+        undefined,
       );
     });
     expect(mockCreateConversation).not.toHaveBeenCalledWith(

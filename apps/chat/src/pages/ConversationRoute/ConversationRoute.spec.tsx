@@ -508,6 +508,8 @@ describe('ConversationRoute', () => {
         'gpt-4o',
         undefined,
         undefined,
+        undefined,
+        undefined,
       );
     });
   });
@@ -1157,6 +1159,8 @@ describe('ConversationRoute', () => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
         'Hello',
         'gpt-4o',
+        undefined,
+        undefined,
         undefined,
         undefined,
       );
