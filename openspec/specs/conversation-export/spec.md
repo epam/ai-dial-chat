@@ -57,7 +57,7 @@ The system SHALL let a user export one conversation, without attachments, from t
 
 ### Requirement: Export a single conversation with attachments as a `.dial` ZIP
 
-The system SHALL let a user export one conversation, with attachments, producing a `.dial` ZIP archive (built with `fflate`) that contains the conversation's JSON v5 envelope plus every referenced attachment file. Each attachment SHALL be fetched through the existing file-download BFF endpoint (`GET /api/v1/files/download`), and placed inside the archive under a `res/<relative-path>/<filename>` layout. Attachment fetches SHALL run with a bounded parallelism of at most 5 concurrent requests. This path SHALL create a queue job (see the export-queue requirement) because it is a potentially long operation; the app remains fully usable while it runs. The downloaded file SHALL be named per the file-naming requirement.
+The system SHALL let a user export one conversation, with attachments, producing a `.dial` ZIP archive (built with `fflate`) that contains the conversation's JSON v5 envelope plus every referenced attachment file. The set of referenced files SHALL be collected from every place a message can carry one — `custom_content.attachments`, the attachments of each entry in `custom_content.stages` (how an agent returns a generated file), and the `body.source.attachment` of each entry in `custom_content.annotations` (a citation source document) — reading both `url` and `reference_url`, mirroring the set the backend share flow grants access to. A trailing `#…` display anchor (e.g. a PDF `#page=N`) SHALL be stripped before a reference is resolved to `{bucket, path}`, since it is not part of the stored resource path. Each attachment SHALL be fetched through the existing file-download BFF endpoint (`GET /api/v1/files/download`), and placed inside the archive under a `res/<relative-path>/<filename>` layout. Attachment fetches SHALL run with a bounded parallelism of at most 5 concurrent requests. This path SHALL create a queue job (see the export-queue requirement) because it is a potentially long operation; the app remains fully usable while it runs. The downloaded file SHALL be named per the file-naming requirement.
 
 #### Scenario: ZIP export bundles conversation and attachments
 
@@ -70,6 +70,18 @@ The system SHALL let a user export one conversation, with attachments, producing
 - **GIVEN** a conversation referencing 12 attachments
 - **WHEN** the ZIP export runs
 - **THEN** no more than 5 attachment download requests are in flight at any moment
+
+#### Scenario: Stage and citation files are bundled too
+
+- **GIVEN** a conversation whose assistant turn produced a file inside an execution stage and cites a source document through an annotation
+- **WHEN** the ZIP export runs
+- **THEN** both files are fetched and written under `res/…` alongside the message-level attachments
+
+#### Scenario: A reference carrying a display anchor resolves to the file itself
+
+- **GIVEN** a citation referencing `files/{bucket}/sources/spec.pdf#page=7`
+- **WHEN** the ZIP export runs
+- **THEN** the download is requested for `sources/spec.pdf` (without `#page=7`) and the archive entry is `res/sources/spec.pdf`
 
 #### Scenario: A failed attachment is skipped with a warning
 

@@ -106,7 +106,19 @@ Before uploading, the system SHALL list the destination month folder once per im
 
 ### Requirement: Rewrite attachment references to new upload locations
 
-After re-uploading an archive attachment, the system SHALL rewrite the corresponding `message.custom_content.attachments[].url` (and `reference_url` where present) to the uploaded file's returned `files/{bucket}/{path}` URL, so the imported conversation points at the newly uploaded files. When the upload was suffixed to resolve a name collision, the system SHALL also rewrite the attachment's `title` to the suffixed file name, so the displayed name matches the file actually stored; an attachment uploaded under its original name SHALL keep its original `title` unchanged.
+After re-uploading an archive attachment, the system SHALL rewrite the corresponding reference (`url`, and `reference_url` where present) to the uploaded file's returned `files/{bucket}/{path}` URL, so the imported conversation points at the newly uploaded files. The rewrite SHALL cover every place a message can carry a reference — `custom_content.attachments[]`, `custom_content.stages[].attachments[]`, and `custom_content.annotations[].body.source.attachment` — matching the set the export bundles. A reference is matched to its upload by file id alone, with any trailing `#…` display anchor (e.g. a PDF `#page=N`) stripped for the lookup and re-appended to the rewritten URL, so an imported citation still opens the page it cited. When the upload was suffixed to resolve a name collision, the system SHALL also rewrite the attachment's `title` to the suffixed file name, so the displayed name matches the file actually stored; an attachment uploaded under its original name SHALL keep its original `title` unchanged.
+
+A reference left unrewritten still points into the exporting user's bucket, which the importing user usually cannot read — the preview and the download then both fail, and the browser saves the error response under the attachment's file name (issue #8708). Missing one of the three reference sites is therefore a correctness defect, not a cosmetic one.
+
+#### Scenario: Stage and citation references are rewritten too
+
+- **WHEN** a `.dial` archive conversation carries a file produced inside an execution stage and a citation source document
+- **THEN** both references are rewritten to their new upload locations, not only the message-level attachments
+
+#### Scenario: A rewritten reference keeps its display anchor
+
+- **WHEN** a citation referencing `files/{oldBucket}/sources/spec.pdf#page=7` is uploaded as `spec.pdf`
+- **THEN** the rewritten reference is `files/{userBucket}/uploads/<YYYY-MM>/spec.pdf#page=7`
 
 #### Scenario: Reference rewrite
 
