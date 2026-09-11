@@ -106,7 +106,7 @@ Before uploading, the system SHALL list the destination month folder once per im
 
 ### Requirement: Rewrite attachment references to new upload locations
 
-After re-uploading an archive attachment, the system SHALL rewrite the corresponding reference (`url`, and `reference_url` where present) to the uploaded file's returned `files/{bucket}/{path}` URL, so the imported conversation points at the newly uploaded files. The rewrite SHALL cover every place a message can carry a reference — `custom_content.attachments[]`, `custom_content.stages[].attachments[]`, and `custom_content.annotations[].body.source.attachment` — matching the set the export bundles. A reference is matched to its upload by file id alone, with any trailing `#…` display anchor (e.g. a PDF `#page=N`) stripped for the lookup and re-appended to the rewritten URL, so an imported citation still opens the page it cited. When the upload was suffixed to resolve a name collision, the system SHALL also rewrite the attachment's `title` to the suffixed file name, so the displayed name matches the file actually stored; an attachment uploaded under its original name SHALL keep its original `title` unchanged.
+After re-uploading an archive attachment, the system SHALL rewrite the corresponding reference (`url`, and `reference_url` where present) to the uploaded file's returned `files/{bucket}/{path}` URL, so the imported conversation points at the newly uploaded files. The rewrite SHALL cover every place a message can carry a reference — `custom_content.attachments[]`, `custom_content.stages[].attachments[]`, and `custom_content.annotations[].body.source.attachment` — matching the set the export bundles. A reference is matched to its upload by file id alone, with any trailing `#…` display anchor (e.g. a PDF `#page=N`) stripped for the lookup and re-appended to the rewritten URL, so an imported citation still opens the page it cited. An anchor is re-appended only when it stays within `/^#[\w.=%-]*$/`; an archive is untrusted input and the anchor from one is persisted into the conversation record, while the only anchor any reader parses is `#page=<digits>` — so an anchor outside that shape SHALL be discarded, leaving the rewritten reference unanchored. The file id SHALL still resolve either way, so the attachment itself is transferred regardless of its anchor. When the upload was suffixed to resolve a name collision, the system SHALL also rewrite the attachment's `title` to the suffixed file name, so the displayed name matches the file actually stored; an attachment uploaded under its original name SHALL keep its original `title` unchanged.
 
 A reference left unrewritten still points into the exporting user's bucket, which the importing user usually cannot read — the preview and the download then both fail, and the browser saves the error response under the attachment's file name (issue #8708). Missing one of the three reference sites is therefore a correctness defect, not a cosmetic one.
 
@@ -119,6 +119,11 @@ A reference left unrewritten still points into the exporting user's bucket, whic
 
 - **WHEN** a citation referencing `files/{oldBucket}/sources/spec.pdf#page=7` is uploaded as `spec.pdf`
 - **THEN** the rewritten reference is `files/{userBucket}/uploads/<YYYY-MM>/spec.pdf#page=7`
+
+#### Scenario: An anchor no reader parses is not carried onto the rewritten reference
+
+- **WHEN** an archive attachment references `files/{oldBucket}/reports/q1.pdf#"><script>` and is uploaded as `q1.pdf`
+- **THEN** the attachment is still uploaded and its reference rewritten to `files/{userBucket}/uploads/<YYYY-MM>/q1.pdf`, with no anchor
 
 #### Scenario: Reference rewrite
 
