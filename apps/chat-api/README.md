@@ -590,6 +590,9 @@ property so a client failure can be correlated with server traces and logs.
 - **Cache-Control Headers**: HTTP caching directives for browser/CDN caching
 - **Request Timeouts**: Configurable timeouts for external service calls with AbortController
 - **Metrics Logging**: Request duration and status tracking for monitoring
+- **SSE stream lifecycle**: All four SSE-writing handlers share the backpressure helper in `common/utils/sse.ts` (`writeSseChunk`/`waitForDrain`) instead of ignoring `res.write()`'s return value.
+  - `client-channel/subscribe` and `conversations/watch` relay an upstream DIAL Core stream. Each constructs its `AbortController` and registers `res.on('close', ...)` **before** the first `await` of upstream setup, so a browser disconnect during that await aborts the pending upstream call immediately instead of only being observed once it resolves. While relaying, a `res.write()` that returns `false` pauses further upstream reads until `'drain'`, the response closing, an upstream error, or `SSE_DRAIN_TIMEOUT_MS` (5000ms) elapses — whichever comes first. If the timeout elapses first, the connection is treated as stalled: the upstream reader is cancelled and the response ends, the same as an explicit disconnect.
+  - `conversations/completions` (`streamCompletion`) and `conversations/completions/attach` (`attachToGeneration`) never pause or abort their backend-owned generation for a slow client. After each write, if the response's buffered bytes (`res.writableLength`) exceed `SSE_COMPLETION_MAX_BUFFERED_BYTES` / `SSE_ATTACH_MAX_BUFFERED_BYTES` (1 MiB each), the handler stops writing to that one response (marking it detached / running its existing cleanup) while the generation keeps running and persists normally — see `docs/` for the generation-independent-of-connection guarantee.
 
 ## Testing
 

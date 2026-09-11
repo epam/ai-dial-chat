@@ -95,9 +95,9 @@ vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
 
 vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
   useAudioTranscription: () => ({
-    handleUploadAudio: vi.fn(),
+    isAudioMessageSupported: false,
+    isVoiceRecordingSupported: false,
     handleTranscribeAudio: vi.fn(),
-    isTranscriptionSupported: false,
   }),
 }));
 

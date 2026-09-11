@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import {
   BadGatewayException,
   INestApplication,
@@ -5,11 +6,23 @@ import {
   VersioningType,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import type { Request, Response } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
 import { ClientChannelController } from '../client-channel.controller';
 import { ClientChannelService } from '../client-channel.service';
+
+class TestResponse extends EventEmitter {
+  writableEnded = false;
+  setHeader = vi.fn();
+  flushHeaders = vi.fn();
+  write = vi.fn().mockReturnValue(true);
+  end = vi.fn(() => {
+    this.writableEnded = true;
+    return this;
+  });
+}
 
 const TEST_USER = { at: 'test-access-token' };
 
@@ -150,6 +163,95 @@ describe('ClientChannelController (integration)', () => {
         .set('X-DIAL-CLIENT-CHANNEL-ID', 'bad;channel')
         .expect(400);
       expect(service.subscribe).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('subscribe — early close and backpressure (direct controller)', () => {
+    const request_ = {
+      user: { at: 'test-access-token' },
+    } as unknown as Request;
+    let controller: ClientChannelController;
+    let response: TestResponse;
+    let subscribe: ReturnType<typeof vi.fn>;
+
+    beforeEach(async () => {
+      response = new TestResponse();
+      subscribe = vi.fn();
+      const module: TestingModule = await Test.createTestingModule({
+        controllers: [ClientChannelController],
+        providers: [{ provide: ClientChannelService, useValue: { subscribe } }],
+      })
+        .overrideGuard(FeatureGuard)
+        .useValue({ canActivate: () => true })
+        .compile();
+      controller = module.get(ClientChannelController);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('aborts the pending upstream call and never starts a reader when the client disconnects during setup', async () => {
+      let capturedSignal: AbortSignal | undefined;
+      const cancel = vi.fn();
+      subscribe.mockImplementation(
+        (_at: string, _channelId: string | undefined, signal: AbortSignal) => {
+          capturedSignal = signal;
+          return new Promise((resolve) => {
+            signal.addEventListener('abort', () => {
+              resolve({
+                stream: new ReadableStream({ cancel }),
+                channelId: 'channel-1',
+              });
+            });
+          });
+        },
+      );
+
+      const pending = controller.subscribe(
+        request_,
+        response as unknown as Response,
+        undefined,
+      );
+
+      response.emit('close');
+      await pending;
+
+      expect(capturedSignal?.aborted).toBe(true);
+      expect(response.setHeader).not.toHaveBeenCalled();
+      expect(response.flushHeaders).not.toHaveBeenCalled();
+      expect(cancel).toHaveBeenCalledOnce();
+    });
+
+    it('closes a stalled connection after the drain timeout and cancels the upstream reader', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      response.write = vi.fn().mockReturnValue(false);
+      const cancel = vi.fn().mockResolvedValue(undefined);
+      let pullCount = 0;
+      const stream = new ReadableStream<Uint8Array>({
+        pull(streamController) {
+          pullCount += 1;
+          streamController.enqueue(new TextEncoder().encode('data: x\n\n'));
+        },
+        cancel,
+      });
+      subscribe.mockResolvedValue({ stream, channelId: 'channel-1' });
+
+      const pending = controller.subscribe(
+        request_,
+        response as unknown as Response,
+        undefined,
+      );
+
+      await vi.waitFor(() =>
+        expect(response.write.mock.calls.length).toBeGreaterThanOrEqual(2),
+      );
+      await vi.advanceTimersByTimeAsync(5000);
+      await pending;
+
+      expect(cancel).toHaveBeenCalledOnce();
+      expect(response.end).toHaveBeenCalledOnce();
+      expect(pullCount).toBeGreaterThanOrEqual(1);
     });
   });
 
