@@ -367,7 +367,7 @@
     "deleteMessage": "Delete message",
     "regenerateResponse": "Regenerate response",
     "copyResponse": "Copy response",
-    "copyAsMarkdown": "Copy markdown",
+    "copyAsMarkdown": "Copy as Markdown",
     "copyAsCsv": "Copy as CSV",
     "openInCanvas": "Open in canvas",
     "copyAsTxt": "Copy as TXT",
