@@ -32,6 +32,7 @@ import {
   type Conversation,
   type MessageRating,
   type Message as MessageType,
+  type RequestSkill,
   type StarterOption,
   type ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
@@ -76,6 +77,7 @@ import {
   PromptSelectorI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
+import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -113,7 +115,11 @@ const DialFileManagerModal = lazy(async () => {
 
 interface Props {
   messages: MessageType[];
-  onSend: (message: string, attachments: Attachment[]) => void;
+  onSend: (
+    message: string,
+    attachments: Attachment[],
+    skills?: RequestSkill[],
+  ) => void;
   onUploadAttachment?: (attachment: Attachment) => Promise<string>;
   onStop?: () => void;
   onDeleteMessage?: (messageIndex: number) => void;
@@ -133,6 +139,7 @@ interface Props {
     text: string,
     keptAttachments: DisplayAttachment[],
     newAttachments: Attachment[],
+    skills?: RequestSkill[],
   ) => void;
   editingMessageIndexes?: Set<number>;
   placeholder: string;
@@ -254,8 +261,25 @@ const ConversationView: FC<Props> = ({
     skillCatalogModal,
     skillDetailsPanel,
     selectedSkillElement,
+    selectedSkillPath,
+    selectedSkills,
+    selectSkill,
     removeSelectedSkill,
+    renderHistorySkills,
   } = useSkillSelectorOverlay();
+  const isSkillUsageEnabled = useFeatureFlag('skillUsageEnabled');
+  /*
+   * The skills an edit send writes. While the flag is on, the shared
+   * selection IS the edited message's skill state (seeded on edit start),
+   * so it maps directly — an empty array means the user removed the skill.
+   * While the flag is off, `undefined` tells `handleEditMessage` to
+   * preserve the message's original skills untouched.
+   */
+  const editSkills = useMemo<RequestSkill[] | undefined>(() => {
+    if (!isSkillUsageEnabled) return undefined;
+    if (selectedSkillPath == null) return [];
+    return [{ url: selectedSkillPath }];
+  }, [isSkillUsageEnabled, selectedSkillPath]);
   /*
    * The Skills entry joins the Prompts entry in array order, so it renders
    * below Prompts in the `+` menu; `undefined` when both are absent keeps
@@ -606,9 +630,15 @@ const ConversationView: FC<Props> = ({
       armAnchor(messages.length);
       /* ConversationInput awaits this to know whether to restore the draft
        * on failure — forward onSend's result rather than discarding it. */
-      await onSend(message, attachments);
+      await onSend(message, attachments, selectedSkills);
+      /*
+       * Clear only after a successful send: a rejected onSend restores the
+       * draft, and the skill selection should survive with it for the retry.
+       * No-op while the skill flag is off.
+       */
+      removeSelectedSkill();
     },
-    [onSend, messages.length, armAnchor],
+    [onSend, messages.length, armAnchor, selectedSkills, removeSelectedSkill],
   );
 
   const handleRegenerateMessageWithAnchor = useCallback(
@@ -624,6 +654,38 @@ const ConversationView: FC<Props> = ({
       onRegenerateMessage?.(messageIndex);
     },
     [isAssistantTyping, onRegenerateMessage, armAnchor],
+  );
+
+  /*
+   * Seeds the edit input with the edited message's skill state: the shared
+   * selection renders in `EditMessageInput`'s inline-start slot, so it must
+   * mirror the message being edited — its (first) skill when it carries one,
+   * none otherwise. Both setters are no-ops while the skill flag is off.
+   */
+  const handleStartEdit = useCallback(
+    (messageIndex: number) => {
+      const skillUrl = messages[messageIndex]?.custom_content?.skills?.[0]?.url;
+      if (skillUrl != null) {
+        selectSkill(skillUrl);
+      } else {
+        removeSelectedSkill();
+      }
+      onStartEdit?.(messageIndex);
+    },
+    [messages, onStartEdit, selectSkill, removeSelectedSkill],
+  );
+
+  /*
+   * An edit session's selection never outlives it — otherwise the composer
+   * would silently attach the edited message's skill to the next message.
+   * No-op while the skill flag is off.
+   */
+  const handleCancelEdit = useCallback(
+    (messageIndex: number) => {
+      removeSelectedSkill();
+      onCancelEdit?.(messageIndex);
+    },
+    [onCancelEdit, removeSelectedSkill],
   );
 
   const handleEditMessageWithAnchor = useCallback(
@@ -647,13 +709,29 @@ const ConversationView: FC<Props> = ({
           text,
           keptAttachments,
           newAttachments,
+          editSkills,
         )
       ) {
         armAnchor(messageIndex);
       }
-      onEditMessage?.(messageIndex, text, keptAttachments, newAttachments);
+      onEditMessage?.(
+        messageIndex,
+        text,
+        keptAttachments,
+        newAttachments,
+        editSkills,
+      );
+      /* The edit session consumed the selection; the composer starts fresh. */
+      removeSelectedSkill();
     },
-    [isAssistantTyping, messages, onEditMessage, armAnchor],
+    [
+      isAssistantTyping,
+      messages,
+      onEditMessage,
+      armAnchor,
+      editSkills,
+      removeSelectedSkill,
+    ],
   );
 
   const chatSettingsLabels = useChatSettingsFormLabels();
@@ -783,15 +861,18 @@ const ConversationView: FC<Props> = ({
                     isCompactTypography={isMobile}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
-                    onStartEdit={isReadOnly ? undefined : onStartEdit}
+                    onStartEdit={isReadOnly ? undefined : handleStartEdit}
                     onDeleteMessage={isReadOnly ? undefined : onDeleteMessage}
                     onRegenerateMessage={
                       isReadOnly ? undefined : handleRegenerateMessageWithAnchor
                     }
                     onRateMessage={isReadOnly ? undefined : onRateMessage}
                     onDislikeMessage={isReadOnly ? undefined : onDislikeMessage}
-                    onCancelEdit={onCancelEdit}
+                    onCancelEdit={handleCancelEdit}
                     onEditMessage={handleEditMessageWithAnchor}
+                    editInlineStartSlot={selectedSkillElement}
+                    onEditInlineStartRemove={removeSelectedSkill}
+                    renderHistorySkills={renderHistorySkills}
                     onUploadAttachment={onUploadAttachment}
                     deploymentLookup={deploymentLookup}
                     effectiveDeploymentId={effectiveDeploymentIds[index]}

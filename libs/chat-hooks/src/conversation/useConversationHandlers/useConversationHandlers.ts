@@ -14,6 +14,7 @@ import {
   type MessageCustomContent,
   MessageRating,
   MessageRole,
+  type RequestSkill,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback, useState } from 'react';
@@ -70,7 +71,11 @@ export interface UseConversationHandlersParams {
 
 /** Return value of {@link useConversationHandlers}. */
 export interface UseConversationHandlersResult {
-  handleSend: (message: string, attachments: Attachment[]) => Promise<void>;
+  handleSend: (
+    message: string,
+    attachments: Attachment[],
+    skills?: RequestSkill[],
+  ) => Promise<void>;
   handleUploadAttachment: (attachment: Attachment) => Promise<string>;
   handleRegenerateMessage: (messageIndex: number) => void;
   handleDeleteMessage: (messageIndex: number) => void;
@@ -93,6 +98,7 @@ export interface UseConversationHandlersResult {
     text: string,
     keptDisplayAttachments: DisplayAttachment[],
     newAttachments: Attachment[],
+    skills?: RequestSkill[],
   ) => Promise<void>;
   editingMessageIndexes: Set<number>;
   pendingDeleteIndex: number | null;
@@ -153,13 +159,17 @@ export const useConversationHandlers = ({
   });
 
   const handleSend = useCallback(
-    async (message: string, attachments: Attachment[]) => {
+    async (
+      message: string,
+      attachments: Attachment[],
+      skills?: RequestSkill[],
+    ) => {
       if (!conversationId || !conversation) return;
 
       const attachmentDtos = attachmentsToDtos(attachments);
       const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
       const customContent: MessageCustomContent | undefined =
-        attachmentDtos?.length || hasToolConfig
+        attachmentDtos?.length || hasToolConfig || skills?.length
           ? {
               ...(attachmentDtos?.length
                 ? { attachments: attachmentDtos }
@@ -167,6 +177,7 @@ export const useConversationHandlers = ({
               ...(hasToolConfig
                 ? { configuration_value: toolConfigurationValue }
                 : {}),
+              ...(skills?.length ? { skills } : {}),
             }
           : undefined;
       const modelId = resolveModelId();
@@ -507,6 +518,7 @@ export const useConversationHandlers = ({
       text: string,
       keptDisplayAttachments: DisplayAttachment[],
       newAttachments: Attachment[],
+      skills?: RequestSkill[],
     ) => {
       if (isStreaming || !conversationId || !conversation) return;
 
@@ -523,6 +535,7 @@ export const useConversationHandlers = ({
           text,
           keptDisplayAttachments,
           newAttachments,
+          skills,
         )
       ) {
         setEditingMessageIndexes((prev) => {
@@ -545,14 +558,32 @@ export const useConversationHandlers = ({
 
       const allAttachments = [...keptDtos, ...(newDtos ?? [])];
 
-      const { attachments: _removed, ...restCustomContent } =
-        originalMessage.custom_content ?? {};
-      const updatedCustomContent =
-        allAttachments.length > 0
-          ? { ...restCustomContent, attachments: allAttachments }
-          : Object.keys(restCustomContent).length > 0
-            ? restCustomContent
-            : undefined;
+      const {
+        attachments: _removed,
+        skills: originalSkills,
+        ...restCustomContent
+      } = originalMessage.custom_content ?? {};
+      /*
+       * `skills` semantics: `undefined` preserves the message's original
+       * skills untouched (the host leaves them alone — e.g. an edit made
+       * while the feature flag is off), while an array — including an empty
+       * one — is the skill state the edit UI resolved and replaces them
+       * (empty means the user removed the skill).
+       */
+      const nextSkills = skills ?? originalSkills;
+
+      let updatedCustomContent: MessageCustomContent | undefined;
+      if (allAttachments.length > 0 || nextSkills?.length) {
+        updatedCustomContent = {
+          ...restCustomContent,
+          ...(allAttachments.length > 0 ? { attachments: allAttachments } : {}),
+          ...(nextSkills?.length ? { skills: nextSkills } : {}),
+        };
+      } else if (Object.keys(restCustomContent).length > 0) {
+        updatedCustomContent = restCustomContent;
+      } else {
+        updatedCustomContent = undefined;
+      }
 
       const updatedUserMessage = {
         ...originalMessage,

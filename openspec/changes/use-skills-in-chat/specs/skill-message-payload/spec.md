@@ -2,19 +2,24 @@
 
 ## ADDED Requirements
 
-### Requirement: User message carries the selected skill's path
+### Requirement: User message carries the selected skill
 
-`MessageCustomContent` (`libs/chat-shared/src/models/chat.ts`) SHALL gain an optional `skills?: string[]` field whose entries are skill resource paths in the same URL form the skill listing and `CatalogItem.id` use (`skills/{bucket}/{path}`). Sending a user message while a skill is selected SHALL attach the selected skill's path to that message's `custom_content.skills` (an array holding one entry — the UI selects a single skill; the array shape future-proofs the wire contract) and SHALL clear the selection afterwards, so the next message starts without a skill (per-message semantics, matching how attachments behave). Sending with no skill selected SHALL NOT add the field. The field SHALL flow through the existing message `custom_content` channel — no new endpoint, request shape, or generated-client change is introduced. All skill-usage UI and payload construction SHALL render/execute only when the `features.skillUsageEnabled` flag is enabled for the session.
+`MessageCustomContent` (`libs/chat-shared/src/models/chat.ts`) SHALL gain an optional `skills?: RequestSkill[]` field, where `RequestSkill` is `{ url: string }` — each entry's `url` is the skill's resource path in the same URL form the skill listing and `CatalogItem.id` use (`skills/{bucket}/{path}`). The entry shape SHALL match DIAL Core's merged `RequestSkill` schema (Core PR #1956, 2026-09-11): Core requires each entry to be an object with a non-blank `url` (a bare string is rejected with 400), skips public skills, and auto-shares each referenced non-public skill to the per-request API key with read-only access (the attachment mechanism); a referenced skill the user cannot read fails the request with 403. Sending a user message while a skill is selected SHALL attach a single entry — `{ url: <selected skill's resource path> }` — to that message's `custom_content.skills` (the array shape future-proofs the wire contract) and SHALL clear the selection afterwards, so the next message starts without a skill (per-message semantics, matching how attachments behave). Sending with no skill selected SHALL NOT add the field. The field SHALL flow through the existing message `custom_content` channel — no new endpoint, request shape, or generated-client change is introduced. All skill-usage UI and payload construction SHALL render/execute only when the `features.skillUsageEnabled` flag is enabled for the session.
 
 #### Scenario: Sending with a selected skill
 
 - **WHEN** the user sends a message while a skill is selected
-- **THEN** the constructed user message carries `custom_content.skills` with that skill's path, and the input's selection is cleared
+- **THEN** the constructed user message carries `custom_content.skills` with one `{ url }` entry for that skill's resource path, and the input's selection is cleared
 
 #### Scenario: Sending without a skill
 
 - **WHEN** the user sends a message with no skill selected
 - **THEN** the user message carries no `skills` entry in its `custom_content`
+
+#### Scenario: First message of an AppsEditor preview conversation
+
+- **WHEN** the user selects a skill in the AppsEditor preview chat's composer and sends the first message
+- **THEN** the conversation-creation request carries `custom_content.skills` with the selected skill's `{ url }`, the created conversation's first user message persists it, the continue-last-user completion forwards it unchanged, and the selection is cleared
 
 #### Scenario: No API surface changes
 
@@ -30,18 +35,23 @@ A user message carrying `custom_content.skills` SHALL persist with the conversat
 #### Scenario: Reload round-trip
 
 - **WHEN** a conversation containing a `custom_content.skills`-carrying user message is saved, then reloaded
-- **THEN** the reloaded message carries the same `skills` paths
+- **THEN** the reloaded message carries the same `skills` entries verbatim
 
 ---
 
 ### Requirement: Regenerate and continue forward the payload unchanged
 
-Regenerating an assistant response and resuming a generation after a reload (the continue-last-user flows) SHALL forward the originating user message's `custom_content` — including `skills` — unchanged to the completion request. No flow SHALL strip or reconstruct the skills field.
+Regenerating an assistant response and resuming a generation after a reload (the continue-last-user flows) SHALL forward the originating user message's `custom_content` — including `skills` — unchanged to the completion request. No flow SHALL strip or reconstruct the skills field. Forwarding SHALL remain verbatim even when the current viewer lacks read access to a referenced private skill (e.g. someone else's shared conversation): per Core PR #1956 such a request fails server-side with 403 and SHALL surface as an ordinary stream error — the UI SHALL NOT pre-validate or strip the field.
 
 #### Scenario: Regenerate
 
 - **WHEN** the user regenerates a response to a user message that carries `custom_content.skills`
 - **THEN** the completion request includes that message's `custom_content` with the `skills` field unchanged
+
+#### Scenario: Regenerate without read access to the skill
+
+- **WHEN** a viewer who cannot read a referenced private skill regenerates that message
+- **THEN** the request still carries the `skills` field verbatim and the failure surfaces as a stream error (no silent stripping)
 
 #### Scenario: Continue after reload
 
@@ -52,7 +62,7 @@ Regenerating an assistant response and resuming a generation after a reload (the
 
 ### Requirement: Editing a message restores its skill
 
-Entering edit mode on a user message that carries `custom_content.skills` SHALL seed the corresponding skill into the edit input as the selected skill (rendered as the `ChatSkill` element through the same inline mechanism the conversation input uses). Re-sending the edited message SHALL carry the message's current skill state — unchanged if the user left it selected, absent if the user removed it via the element's ×, replaced if the user selected a different skill. Cancelling the edit SHALL change nothing.
+Entering edit mode on a user message that carries `custom_content.skills` SHALL seed the corresponding skill into the edit input as the selected skill (rendered as the `ChatSkill` element through the same inline mechanism the conversation input uses). Re-sending the edited message SHALL carry the message's current skill state — unchanged if the user left it selected, absent if the user removed it via the input's Backspace-at-start gesture (the `ChatSkill` element carries no remove control of its own), replaced if the user selected a different skill. Cancelling the edit SHALL change nothing.
 
 #### Scenario: Edit restores the skill
 
@@ -62,18 +72,18 @@ Entering edit mode on a user message that carries `custom_content.skills` SHALL 
 #### Scenario: Re-send keeps the skill
 
 - **WHEN** the user re-sends an edited message without touching the restored skill
-- **THEN** the updated message carries the same `skills` path
+- **THEN** the updated message carries the same `skills` entry
 
 #### Scenario: Re-send without the skill
 
-- **WHEN** the user removes the restored skill via its × and re-sends the edited message
+- **WHEN** the user removes the restored skill with Backspace at the start of the edit input and re-sends the edited message
 - **THEN** the updated message carries no `skills` entry
 
 ---
 
 ### Requirement: Conversation history renders the skill
 
-A user message loaded from conversation history that carries `custom_content.skills` SHALL render one `ChatSkill` element per entry (today at most one) at the inline-start of the message's content, inside the user message bubble, using the same `ChatSkill` component the conversation input uses. Hovering/focusing the element SHALL show the same interactive tooltip (description with its loading/absent states above the "View details" button), and activating "View details" SHALL open the same skill details side panel the input flow opens (on the chat route). The bubble slot the element renders in SHALL be a generic `beforeContent` ReactNode prop on `UserMessageBubble` (forwarded by `MessageBubble`) — `libs/conversation-messages` SHALL NOT know about skills. Assistant messages SHALL NOT render skills.
+A user message loaded from conversation history that carries `custom_content.skills` SHALL render one `ChatSkill` element per entry (today at most one) at the inline-start of the message's content, inside the user message bubble, using the same `ChatSkill` component the conversation input uses. Hovering/focusing the element SHALL show the same interactive tooltip (description with its loading/absent states above the "View details" button), and activating "View details" SHALL open the same skill details side panel the input flow opens (on the chat route). The bubble slot the element renders in SHALL be a generic `beforeContent` ReactNode prop on `UserMessageBubble` (forwarded by `MessageBubble`) — `libs/conversation-messages` SHALL NOT know about skills. Assistant messages SHALL NOT render skills — Core's merged contract (PR #1956) defines `skills` on assistant message custom content as well ("skills referenced by the model as part of the response"), but displaying assistant-referenced skills is a recorded follow-up, out of scope here; the shared `MessageCustomContent` type covers both roles.
 
 #### Scenario: History display
 
@@ -92,19 +102,19 @@ A user message loaded from conversation history that carries `custom_content.ski
 
 ---
 
-### Requirement: Skill metadata resolved from the carried path
+### Requirement: Skill metadata resolved from the carried url
 
-The wire payload carries only paths; display metadata SHALL be resolved app-side per path: the skill's name from the loaded skill listing (`skills`, `sharedWithMe`, and `publicSkills` pools, matched on URL); when the path is absent from every pool (a skill the viewer cannot access), the fallback display name SHALL be the path's last non-empty segment. The description SHALL come from the existing per-session lazy description fetch (the same `SKILL.md` download-and-parse pipeline and session cache the favorites tooltip uses — history shares the cache, so a skill already resolved this session does not refetch, and opening history tooltips triggers the fetch with the same first-open callback semantics). A failed fetch or unresolvable path SHALL degrade silently: the element renders with its fallback name and a description-less tooltip, with no error notification and no retry this session.
+The wire payload carries only each skill's `url`; display metadata SHALL be resolved app-side per url: the skill's name from the loaded skill listing (`skills`, `sharedWithMe`, and `publicSkills` pools, matched on the entry's `url`); when the url is absent from every pool (a skill the viewer cannot access), the fallback display name SHALL be the url's last non-empty segment. The description SHALL come from the existing per-session lazy description fetch (the same `SKILL.md` download-and-parse pipeline and session cache the favorites tooltip uses — history shares the cache, so a skill already resolved this session does not refetch, and opening history tooltips triggers the fetch with the same first-open callback semantics). A failed fetch or unresolvable url SHALL degrade silently: the element renders with its fallback name and a description-less tooltip, with no error notification and no retry this session.
 
 #### Scenario: Skill present in the listing
 
-- **WHEN** a history message's skill path matches an entry in the loaded listing
+- **WHEN** a history message's skill url matches an entry in the loaded listing
 - **THEN** the element renders that entry's name, and the tooltip resolves the description via the shared lazy fetch
 
 #### Scenario: Skill absent from the listing
 
-- **WHEN** a history message's skill path matches no loaded listing entry
-- **THEN** the element renders with the last path segment as its name and a description-less tooltip, with no error surfaced
+- **WHEN** a history message's skill url matches no loaded listing entry
+- **THEN** the element renders with the last url segment as its name and a description-less tooltip, with no error surfaced
 
 #### Scenario: Cache reuse
 

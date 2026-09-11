@@ -18,6 +18,32 @@ The Input's Add (`+`) menu SHALL show a "Skills" item (icon `IconBlocks`, i18n k
 
 ---
 
+### Requirement: Skill selection on all chat input surfaces
+
+The skill-selection entry points — the Add-menu "Skills" item, the inline selected-skill chip with its Backspace-at-start removal, the slash command dropdown, the "Use skill" browse modal, and the "View details" details side panel — SHALL be available on every conversation-input surface in `apps/chat` that composes messages, not only the main chat route. This explicitly includes the AppsEditor preview chat (`AppPreviewChat`): its pre-conversation composer (the shared `NewConversationComposer`) SHALL offer the same entry points backed by the same host wiring (`useSkillSelectorOverlay`) and the same `features.skillUsageEnabled` gating, and the details side panel SHALL open on the AppsEditor surface exactly as it opens on the chat route. Once the preview conversation exists, its ongoing-conversation input is the shared `ConversationView` and needs no separate wiring. Message-composition paths that carry no user-composed draft (quick-app starter auto-submit) SHALL NOT attach a skill.
+
+#### Scenario: Preview composer shows the entry points
+
+- **WHEN** `features.skillUsageEnabled` is enabled and the AppsEditor preview chat's empty state is shown
+- **THEN** the Add menu offers the "Skills" item, the slash dropdown and browse modal work, and a selected skill renders as the inline `ChatSkill` chip
+
+#### Scenario: Feature flag disabled in the preview
+
+- **WHEN** `features.skillUsageEnabled` is disabled and the AppsEditor preview chat's empty state is shown
+- **THEN** the preview composer renders identically to before this capability — no "Skills" menu item, no slash dropdown, no inline chip
+
+#### Scenario: Starter auto-submit carries no skill
+
+- **WHEN** a quick-app starter with submit-on-click auto-creates the first preview conversation message
+- **THEN** the created conversation's first user message carries no `skills` entry
+
+#### Scenario: Details panel on the preview surface
+
+- **WHEN** the user activates "View details" from the preview composer's skill flow
+- **THEN** the skill details side panel opens on the AppsEditor surface with the same read-only content as on the chat route
+
+---
+
 ### Requirement: Shared overlay-menu mechanism in `libs/conversation-input`
 
 `libs/conversation-input`'s Add menu (`AddAttachmentButton`, and the `Input`/`ConversationInput` props forwarded to it) SHALL render host-injected overlay submenu entries from a generic configuration list — each entry carrying a `key`, menu-item `title`, `icon`, `renderOverlay(onClose)`, and mobile `backLabel` — rather than entity-type-specific props. The existing prompt-specific `promptsMenuOverlay`/`promptsMenuTitle`/`promptsBackLabel` props SHALL be removed in the same change, with the Prompts flow migrated onto the generic mechanism with no behavior change (same item position, same desktop nested-flyout chrome, same mobile stacked bottom sheet, same Escape/back behavior). The library SHALL NOT reference skills, prompts, or any other catalog entity type by name; icons, labels, and overlay content are host-supplied.
@@ -132,21 +158,16 @@ Because DIAL Core's skill listing carries no `description` (an upstream gap — 
 
 ### Requirement: "View details" opens the skill details side panel
 
-The "View details" action in a row's tooltip SHALL open a right-anchored side panel on the chat route showing the selected skill's details, composed from `DetailsPanel` exported by `@epam/ai-dial-catalog` (see the `skill-details-panel` delta) via a `SkillDetailsSidePanel` wrapper in `libs/skills`. The wrapper SHALL NOT wrap or mount the full `CatalogView` (no tab persistence, sort/filter, or page chrome). The host SHALL own the panel's open state and supply the `CatalogItem` (built with the existing `mapSkillToCatalogItem`), the details fetch (reusing the existing skill details resolution — manifest + file listing — not a duplicate), the favorite toggle, and close handling; the panel's content-first tab behavior for skills SHALL match the Catalog page's skill details. The panel's header SHALL offer "Use in chat" (same action as the Catalog page's skill details, per the `catalog-use-in-chat` delta), which SHALL select the skill into the conversation input (same single-selection path as clicking the row) and close the panel.
+The "View details" action in a row's tooltip SHALL open a right-anchored side panel on the chat route showing the selected skill's details, composed from `DetailsPanel` exported by `@epam/ai-dial-catalog` (see the `skill-details-panel` delta) via a `SkillDetailsSidePanel` wrapper in `libs/skills`. The wrapper SHALL NOT wrap or mount the full `CatalogView` (no tab persistence, sort/filter, or page chrome). The host SHALL own the panel's open state and supply the `CatalogItem` (built with the existing `mapSkillToCatalogItem`), the details fetch (reusing the existing skill details resolution — manifest + file listing — not a duplicate), and close handling; the panel's content-first tab behavior for skills SHALL match the Catalog page's skill details. The panel SHALL render information-only — read-only (`isReadonly`, which withholds the favorite star and every mutating action: Share, Publish/Unpublish, Edit, Delete, "Remove from My List", "Revoke access", and the credentials actions) with the primary "Use in chat" action and Download also hidden. Selecting a skill SHALL stay with the favorites rows, the slash menu, the browse modal, and the Catalog page; favorite toggling SHALL stay with the favorites rows; the Catalog page's own `DetailsPanel` rendering SHALL keep its actions unchanged.
 
 #### Scenario: Opening the side panel
 
 - **WHEN** the user clicks "View details" in a favorite row's tooltip
-- **THEN** the side panel opens anchored to the chat route's end edge, showing that skill's details with the content-first tabs
-
-#### Scenario: "Use in chat" from the side panel
-
-- **WHEN** the user clicks "Use in chat" in the side panel's header
-- **THEN** the skill becomes the input's selected skill (per the selection requirement), and the side panel closes
+- **THEN** the side panel opens anchored to the chat route's end edge, showing that skill's details with the content-first tabs and no action buttons
 
 #### Scenario: Closing the side panel
 
-- **WHEN** the user closes the side panel without clicking "Use in chat"
+- **WHEN** the user closes the side panel
 - **THEN** the panel closes and no skill is selected
 
 ---
@@ -174,7 +195,7 @@ Clicking "Browse" in the Skills panel SHALL open a modal titled "Use skill" (i18
 
 ### Requirement: Selecting a skill adds it to the conversation input
 
-The conversation input SHALL hold at most one selected skill at a time. When a skill is selected — from a favorite row in the Skills panel, from a card in the "Use skill" modal, from the slash command dropdown (below), or via the Catalog page's "Use in chat" on a skill (see the `catalog-use-in-chat` delta) — it SHALL become the selected skill, replacing any previously selected skill, and SHALL be rendered inside the input's text area as a `ChatSkill` element (next requirement). The Skills panel, browse modal, or slash dropdown the selection came from SHALL close. Selecting the skill that is already selected SHALL leave exactly one `ChatSkill` element (no duplicate, no churn). Removing the element via its × control SHALL clear the selection and change nothing else. What the selected skill means at send time (request payload, persistence in conversation history) is specified by the `skill-message-payload` capability.
+The conversation input SHALL hold at most one selected skill at a time. When a skill is selected — from a favorite row in the Skills panel, from a card in the "Use skill" modal, from the slash command dropdown (below), or via the Catalog page's "Use in chat" on a skill (see the `catalog-use-in-chat` delta) — it SHALL become the selected skill, replacing any previously selected skill, and SHALL be rendered inside the input's text area as a `ChatSkill` element (next requirement). The Skills panel, browse modal, or slash dropdown the selection came from SHALL close. Selecting the skill that is already selected SHALL leave exactly one `ChatSkill` element (no duplicate, no churn). Removing the element via the input's Backspace-at-position-0 gesture (the "Selected skill renders inline inside the input" requirement below) SHALL clear the selection and change nothing else. What the selected skill means at send time (request payload, persistence in conversation history) is specified by the `skill-message-payload` capability.
 
 #### Scenario: Selecting from favorites
 
@@ -277,7 +298,9 @@ When the input's text is empty and the user types `/`, a dropdown SHALL open abo
 
 While the dropdown is open with an empty query (the text area holds exactly the `/`), the config's `emptyQueryHint` — the app passes `skillSelector.emptyQueryHint` ("Type to filter") — SHALL render inside the text area immediately after the `/`, in the placeholder style: an `aria-hidden` overlay anchored at the first line's text start (the same offset the first line's indent uses, so it follows an inline-start slot when one is present), with an invisible mirror of the trigger prefix occupying exactly the prefix's rendered width ahead of the hint so no width measurement is needed. The hint SHALL disappear with the first query keystroke. The hint's appearance and disappearance SHALL NOT remount the text area: the overlay wrapper hosting the hint (the same wrapper that hosts the inline-start slot) is driven by the hint's configuration, not by the live menu/query state, so focus and the caret are preserved while typing — the caret stays where the user typed (after the `/` and any query characters), never reset to the text start.
 
-The dropdown SHALL stay open while the message continues to match a `/` followed by a whitespace-free, slash-free query. It SHALL close when the message stops matching (the `/` deleted, a space or second `/` typed), on Escape, and on outside click (a click back into the text area does not count as outside). If the user dismisses it with Escape or an outside click while the message still matches, it SHALL NOT reopen on subsequent keystrokes; it SHALL reopen only after the message stops matching and the user types `/` into the empty input again.
+The dropdown SHALL stay open while the message continues to match a `/` followed by a whitespace-free, slash-free query. It SHALL close when the message stops matching (the `/` deleted, a space or second `/` typed), on Escape, and on outside click (a click back into the text area does not count as outside). If the user dismisses it with Escape or an outside click while the message still matches, it SHALL NOT reopen on subsequent keystrokes; it SHALL reopen only after the message stops matching and the user enters the trigger into the empty input again — by typing `/` or by pasting a trigger-shaped value (below).
+
+Pasting into the text area SHALL trigger the dropdown by the resulting value, not by the keystroke path: a paste made while the text area is empty whose result is exactly the trigger shape — the bare `/`, or `/` followed by a whitespace-free, slash-free query and nothing else — SHALL open the dropdown as if the same text had been typed: same query filter, same "Type to filter" empty-query hint for a bare `/`, same dismissal and selection rules. The paste SHALL insert its text as an ordinary paste; the trigger only opens the dropdown on top of the inserted text and SHALL NOT alter, trim, or consume it. Any paste whose result is not that exact shape — content containing whitespace after the query token (e.g. `/s sdf`), multiple lines, trailing text, or content not starting with `/` — SHALL be a regular paste that opens nothing. The paste trigger applies only when the text area was empty before the paste; pasting `/test` into an input that already holds text never opens the dropdown. A paste that brings the message into the trigger shape from a non-matching value re-enters the trigger for the dismissed-dropdown rule above: a dropdown dismissed earlier SHALL reopen when the user clears the input and pastes a fresh `/query`. This trigger lives in the generic `commandMenu` mechanism on `Input`, so it behaves identically on every input surface where the command menu is mounted — the new-conversation composer (main chat and AppsEditor preview) and the ongoing-conversation input.
 
 Selecting a row from the dropdown SHALL consume the slash text — the entire `/query` string is removed from the input and never sent — select the skill (single-selection rule above), and return focus to the text area (a mouse selection moves focus to the row, which unmounts when the dropdown closes; keyboard selection never left the text area). Activating Browse SHALL likewise consume the slash text and open the "Use skill" browse modal. The Add-menu "Skills" item SHALL remain available unchanged alongside this entry point. The slash dropdown SHALL render only when the `features.skillUsageEnabled` flag is enabled.
 
@@ -323,10 +346,35 @@ Selecting a row from the dropdown SHALL consume the slash text — the entire `/
 - **WHEN** the message is `/my` and the user types a space (or a second `/`)
 - **THEN** the dropdown closes and does not reopen on further typing
 
+#### Scenario: Pasting a slash command into an empty input
+
+- **WHEN** the input text is empty and the user pastes `/test`
+- **THEN** the dropdown opens with "test" as the filter, the pasted text stays in the input as an ordinary paste, and every open-dropdown behavior (filtering, hint, dismissal, selection) applies exactly as if the text had been typed
+
+#### Scenario: Pasting a bare slash
+
+- **WHEN** the input text is empty and the user pastes `/`
+- **THEN** the dropdown opens with an empty query and the "Type to filter" hint renders in the text area after the `/`
+
+#### Scenario: Pasting non-command text is a regular paste
+
+- **WHEN** the input text is empty and the user pastes `/s sdf` (whitespace inside the pasted value) or any content that is not a bare `/` plus a whitespace-free query
+- **THEN** no dropdown opens and the paste lands as a regular paste
+
+#### Scenario: Pasting into a non-empty input
+
+- **WHEN** the input already holds text and the user pastes `/test`
+- **THEN** no dropdown opens — the paste trigger requires an empty text area before the paste
+
+#### Scenario: Re-entry after dismissal via paste
+
+- **WHEN** the user dismissed the open dropdown with Escape while the message still matched, then deletes the text back to empty and pastes `/my`
+- **THEN** the dropdown opens again
+
 #### Scenario: Feature flag disabled
 
 - **WHEN** `features.skillUsageEnabled` is disabled
-- **THEN** typing `/` in an empty input opens nothing
+- **THEN** typing or pasting `/` in an empty input opens nothing
 
 ---
 

@@ -130,6 +130,12 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
   position?: BubblePosition;
   /** Maximum number of text lines shown while a long user message is collapsed. Defaults to `10`. */
   collapsedLineCount?: number;
+  /**
+   * Content rendered at the inline-start of the bubble, above the message text
+   * (e.g. a used-skill chip). The bubble renders for the slot alone even when
+   * `text` is empty.
+   */
+  beforeContent?: ReactNode;
 }
 
 /** Props for `AssistantMessageBubble`. */
@@ -164,7 +170,10 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
 
 /** Props for `MessageBubble` — `AssistantMessageBubbleProps` plus user-only fields and `role`. */
 export type MessageBubbleProps = AssistantMessageBubbleProps &
-  Pick<UserMessageBubbleProps, 'position' | 'collapsedLineCount'> & {
+  Pick<
+    UserMessageBubbleProps,
+    'position' | 'collapsedLineCount' | 'beforeContent'
+  > & {
     /** Message author/type: user, assistant, or status banner. */
     role: MessageRole;
   };

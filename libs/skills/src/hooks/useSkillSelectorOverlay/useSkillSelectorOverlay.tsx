@@ -1,3 +1,4 @@
+import type { RequestSkill } from '@epam/ai-dial-chat-shared';
 import type {
   CommandMenuConfig,
   MenuOverlayConfig,
@@ -24,6 +25,7 @@ import type {
   UseSkillSelectorOverlayOptions,
   UseSkillSelectorOverlayResult,
 } from '../../models/skill-selector-overlay';
+import { getSkillFallbackName } from '../../utils/skill-url';
 
 /**
  * Owns the Skills Add-menu flow: the favorites overlay with lazily resolved
@@ -120,6 +122,22 @@ export const useSkillSelectorOverlay = ({
   }, []);
 
   /*
+   * The selection id is the skill's resource URL, so it is exposed as the
+   * send-time path directly — even while the listing is still loading and
+   * `selectedSkill` has not resolved yet (the id came from a selection entry
+   * point, which always receives resource URLs).
+   */
+  const selectedSkillPath = selectedSkillId;
+
+  /*
+   * The send-time `custom_content.skills` payload: a single `{ url }` entry
+   * while a skill is selected, `undefined` otherwise so the field is omitted
+   * from the message entirely.
+   */
+  const selectedSkills: RequestSkill[] | undefined =
+    selectedSkillId == null ? undefined : [{ url: selectedSkillId }];
+
+  /*
    * Deferred condition: DIAL Core's skill listing metadata carries no
    * description, so the manifest is fetched on a row tooltip's first open —
    * one `SKILL.md` download per hovered skill per session (an N+1 pattern).
@@ -172,6 +190,48 @@ export const useSkillSelectorOverlay = ({
         labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
       />
     );
+
+  /*
+   * History display: one `ChatSkill` per `custom_content.skills` entry,
+   * sharing the rows' description cache, first-open fetch, and "View details"
+   * panel. The name comes from the listing pools matched on the entry's url;
+   * a url no pool carries (e.g. a skill the viewer cannot read) falls back to
+   * its last non-empty segment, and its description fetch degrades silently
+   * per the cache's rules.
+   */
+  const renderHistorySkills = useCallback(
+    (entries: RequestSkill[] | undefined): ReactNode => {
+      if (entries == null || entries.length === 0) {
+        return null;
+      }
+
+      return entries.map((entry) => {
+        const name =
+          allSkills.find((skill) => skill.url === entry.url)?.name ??
+          getSkillFallbackName(entry.url);
+
+        return (
+          <ChatSkill
+            key={entry.url}
+            name={name}
+            path={entry.url}
+            description={skillDescriptions.get(entry.url) ?? undefined}
+            isDescriptionLoading={pendingDescriptionIds.has(entry.url)}
+            onTooltipOpen={handleItemTooltipOpen}
+            onViewDetails={setDetailsSkillId}
+            labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+          />
+        );
+      });
+    },
+    [
+      allSkills,
+      skillDescriptions,
+      pendingDescriptionIds,
+      handleItemTooltipOpen,
+      panelLabels,
+    ],
+  );
 
   const renderOverlay = useCallback(
     (onClose: () => void): ReactNode => (
@@ -283,15 +343,17 @@ export const useSkillSelectorOverlay = ({
     />
   );
 
+  /*
+   * Information-only by design: the panel a "View details" action opens shows
+   * the skill's details and nothing else — selecting a skill belongs to the
+   * rows, the slash menu, and the browse modal, and favorite toggling to the
+   * rows. The host's panel component renders `DetailsPanel` read-only.
+   */
   const skillDetailsPanel = (
     <Suspense fallback={null}>
       <DetailsPanelComponent
         skillId={detailsSkillId}
         onClose={() => setDetailsSkillId(null)}
-        onUseInChat={(skillId) => {
-          selectSkill(skillId);
-          setDetailsSkillId(null);
-        }}
       />
     </Suspense>
   );
@@ -303,8 +365,11 @@ export const useSkillSelectorOverlay = ({
       skillCatalogModal: null,
       skillDetailsPanel: null,
       selectedSkillElement: null,
+      selectedSkillPath: null,
+      selectedSkills: undefined,
       selectSkill: () => undefined,
       removeSelectedSkill: () => undefined,
+      renderHistorySkills: () => null,
     };
   }
 
@@ -314,7 +379,10 @@ export const useSkillSelectorOverlay = ({
     skillCatalogModal,
     skillDetailsPanel,
     selectedSkillElement,
+    selectedSkillPath,
+    selectedSkills,
     selectSkill,
     removeSelectedSkill,
+    renderHistorySkills,
   };
 };

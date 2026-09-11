@@ -26,6 +26,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   attachments,
   collapsedLineCount = DEFAULT_COLLAPSED_LINE_COUNT,
   labels,
+  beforeContent,
   onAttachmentClick,
   onDownloadAll,
   onAttachmentRetry,
@@ -103,7 +104,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           styles={{ className: 'max-w-[640px]' }}
           selectedAttachmentId={selectedAttachmentId}
         />
-        {text && (
+        {(text || beforeContent != null) && (
           <div
             className={mergeClasses(
               styles.userBubble,
@@ -113,25 +114,30 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
             )}
           >
             <div className="flex min-w-0 flex-col items-start">
-              <div
-                id={collapsibleTextId}
-                className={mergeClasses(
-                  'relative overflow-hidden',
-                  isOverflowing && styles.collapsibleText,
-                  isOverflowing && !isCollapsed && styles.expandedText,
-                  isTextCollapsed && styles.collapsedText,
-                )}
-              >
-                <p
-                  ref={textRef}
+              {beforeContent != null && (
+                <div className={text ? 'mb-3' : undefined}>{beforeContent}</div>
+              )}
+              {text && (
+                <div
+                  id={collapsibleTextId}
                   className={mergeClasses(
-                    textClass,
-                    'whitespace-pre-wrap text-start [overflow-wrap:anywhere]',
+                    'relative overflow-hidden',
+                    isOverflowing && styles.collapsibleText,
+                    isOverflowing && !isCollapsed && styles.expandedText,
+                    isTextCollapsed && styles.collapsedText,
                   )}
                 >
-                  {text}
-                </p>
-              </div>
+                  <p
+                    ref={textRef}
+                    className={mergeClasses(
+                      textClass,
+                      'whitespace-pre-wrap text-start [overflow-wrap:anywhere]',
+                    )}
+                  >
+                    {text}
+                  </p>
+                </div>
+              )}
               {isOverflowing && (
                 <LinkButton
                   label={<>{toggleLabel}</>}

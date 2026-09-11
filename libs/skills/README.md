@@ -214,7 +214,11 @@ const {
   skillCatalogModal,
   skillDetailsPanel,
   selectedSkillElement,
+  selectedSkillPath,
+  selectedSkills,
   selectSkill,
+  removeSelectedSkill,
+  renderHistorySkills,
 }: UseSkillSelectorOverlayResult = useSkillSelectorOverlay({
   isEnabled: isSkillUsageEnabled,
   skills,
@@ -226,7 +230,7 @@ const {
   labels: {
     addMenuLabel: 'Skills',
     backLabel: 'Back',
-    removeSkillLabel: (name) => `Remove ${name}`,
+    emptyQueryHintLabel: 'Type to filter',
   },
   renderCatalogContent: (onSelect, onClose) => (
     <CatalogView onSelect={onSelect} onClose={onClose} />
@@ -249,8 +253,22 @@ details" and "Use in chat" back to selection, are the hook's.
 `selectedSkillElement` is the selected skill as a `ChatSkill` element for the
 conversation input's `inlineStartSlot` — at most one, replaced on every
 selection, with the shared tooltip (and the same lazy description fetch as
-the rows) and a × that clears the selection — and `selectSkill` selects by
-resource URL (`skills/{bucket}/{path}`).
+the rows) and no remove control of its own (removal is the input's
+Backspace-at-position-0 gesture, wired through `removeSelectedSkill`).
+`selectedSkillPath` is the selected skill's resource URL
+(`skills/{bucket}/{path}`) — the value the host sends as the `{ url }` entry
+of the outgoing message's `custom_content.skills` (`null` while nothing is
+selected or `isEnabled` is `false`) — and `selectSkill` selects by that same
+resource URL. `selectedSkills` is that send-time payload ready-made —
+`[{ url: <selected path> }]` while a skill is selected, `undefined` otherwise
+(so `custom_content.skills` is omitted from the message entirely).
+`renderHistorySkills` renders a history user message's
+`custom_content.skills` entries as `ChatSkill` elements for the message
+bubble's start slot: each entry's name is resolved from the injected listing
+pools matched on its url (falling back to the url's last non-empty segment),
+its description shares the session cache and first-open fetch below, and
+"View details" opens the same details panel; it returns `null` while
+`isEnabled` is `false` or the array is empty.
 
 Row descriptions are resolved lazily: the first time a row's tooltip opens,
 `fetchSkillDescription` runs for that skill, and the result (including a

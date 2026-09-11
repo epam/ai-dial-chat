@@ -1,3 +1,4 @@
+import type { RequestSkill } from '@epam/ai-dial-chat-shared';
 import type {
   CommandMenuConfig,
   MenuOverlayConfig,
@@ -6,17 +7,17 @@ import type { ComponentType, ReactNode } from 'react';
 import type { SkillListingEntry } from './favorite-skill-item';
 import type { FavoriteSkillsPanelLabels } from './favorite-skills-panel-props';
 
-/** Props accepted by the details-panel component injected into `useSkillSelectorOverlay`. */
+/**
+ * Props accepted by the details-panel component injected into
+ * `useSkillSelectorOverlay`. The rendered panel is the host's composition;
+ * the flow this hook opens it from ("View details") is information-only, so
+ * hosts typically render it read-only.
+ */
 export interface SkillDetailsPanelComponentProps {
   /** Resource URL of the skill whose details are shown; `null` renders nothing. */
   skillId: string | null;
   /** Called when the panel should close (close button or backdrop click). */
   onClose: () => void;
-  /**
-   * Called with the skill's resource URL when the panel's "Use in chat" is
-   * clicked; the hook also closes the panel.
-   */
-  onUseInChat: (skillId: string) => void;
 }
 
 /** Localizable string labels for the skill selector overlay flow. */
@@ -109,6 +110,19 @@ export interface UseSkillSelectorOverlayResult {
    */
   selectedSkillElement: ReactNode;
   /**
+   * The selected skill's resource URL (`skills/{bucket}/{path}`) — the value
+   * the host sends as a `{ url }` entry in the outgoing message's
+   * `custom_content.skills`. `null` while nothing is selected or the flow is
+   * disabled.
+   */
+  selectedSkillPath: string | null;
+  /**
+   * The selected skill as the send-time `custom_content.skills` payload —
+   * `[{ url: selectedSkillPath }]`, or `undefined` while nothing is selected
+   * or the flow is disabled, so `custom_content.skills` is omitted entirely.
+   */
+  selectedSkills: RequestSkill[] | undefined;
+  /**
    * Selects a skill by its resource URL (`skills/{bucket}/{path}`), replacing
    * any prior selection.
    */
@@ -119,4 +133,14 @@ export interface UseSkillSelectorOverlayResult {
    * skill's element is shown.
    */
   removeSelectedSkill: () => void;
+  /**
+   * Renders a user message's `custom_content.skills` entries as `ChatSkill`
+   * elements for a message bubble's start slot — one per entry, sharing the
+   * session description cache, the lazy-fetch first-open trigger, and the
+   * "View details" details panel with the favorite rows and the input chip.
+   * Each entry's name comes from the listing pools matched on its url,
+   * falling back to the url's last non-empty segment. Returns `null` while
+   * `isEnabled` is `false` or the array is empty.
+   */
+  renderHistorySkills: (skills: RequestSkill[] | undefined) => ReactNode;
 }

@@ -29,7 +29,7 @@ Message display components for rendering conversation history — user, assistan
 
 ### UserMessageBubble
 
-Renders a user message with text content and optional attachments. Long messages collapse to `collapsedLineCount` lines (default `10`) behind a toggle.
+Renders a user message with text content and optional attachments. Long messages collapse to `collapsedLineCount` lines (default `10`) behind a toggle. Pass `beforeContent` to render host-supplied content at the inline-start of the bubble, above the message text (e.g. a used-skill chip); the bubble renders for the slot alone even when `text` is empty, and with no slot the rendering is unchanged.
 
 ```tsx
 import {
@@ -41,6 +41,7 @@ import {
   text={message.content}
   position={BubblePosition.Bottom}
   attachments={message.attachments}
+  beforeContent={usedSkillChip}
   onAttachmentClick={handleAttachmentClick}
   actions={{ onEdit: handleEdit, onDelete: handleDelete }}
 />;
@@ -113,7 +114,7 @@ import { StatusMessageBubble } from '@epam/ai-dial-conversation-messages';
 
 ### MessageBubble
 
-Role-dispatching wrapper — `AssistantMessageBubbleProps` plus the user-only fields and a required `role`. Use it when the caller iterates a mixed transcript and does not want to branch itself; reach for the specialised bubbles when the role is already known.
+Role-dispatching wrapper — `AssistantMessageBubbleProps` plus the user-only fields (`position`, `collapsedLineCount`, `beforeContent`) and a required `role`. Use it when the caller iterates a mixed transcript and does not want to branch itself; reach for the specialised bubbles when the role is already known. `beforeContent` is consumed only for `MessageRole.User` messages.
 
 ```tsx
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
