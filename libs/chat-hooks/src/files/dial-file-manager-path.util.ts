@@ -3,7 +3,7 @@ import {
   DialFileNodeType,
   DialFilePermission,
 } from '@epam/ai-dial-react-file-manager';
-import { safeDecodeURI } from '../shared/string-utils';
+import { safeDecodeURI, stripTrailingSlashes } from '../shared/string-utils';
 import {
   PATH_SEPARATOR_REGEXP,
   type SharedRootMeta,
@@ -24,8 +24,7 @@ export const hasForbiddenNameSymbols = (
 };
 
 export const normalizeVirtualPath = (value: string): string => {
-  const trimmed = value.replace(/\/+$/, '');
-  return trimmed || '/';
+  return stripTrailingSlashes(value) || '/';
 };
 
 /*
@@ -144,8 +143,8 @@ export const buildSharedItemVirtualPath = (
   rootLabel: string,
   isFolder: boolean,
 ): string => {
-  const trimmed = relativePath.replace(/\/+$/, '');
-  const joined = trimmed
+  /* `filter(Boolean)` already drops the empty segments any leading, trailing, or repeated slash produces. */
+  const joined = relativePath
     .split('/')
     .filter(Boolean)
     .map(safeDecodeURI)

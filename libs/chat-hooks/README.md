@@ -1734,18 +1734,20 @@ import { apSchedulerDayToJsDay } from '@epam/ai-dial-chat-hooks';
 apSchedulerDayToJsDay(0); // 1 (Monday -> JS Monday)
 ```
 
-### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes
+### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes / stripTrailingSlashes
 
-`safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment.
+`safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment, and `stripTrailingSlashes` strips trailing ones only.
 
 ```ts
 import {
   safeDecodeURI,
   stripSurroundingSlashes,
+  stripTrailingSlashes,
 } from '@epam/ai-dial-chat-hooks';
 
 safeDecodeURI('My%20File.txt'); // 'My File.txt'
 stripSurroundingSlashes('/reports/'); // 'reports'
+stripTrailingSlashes('/reports//'); // '/reports'
 ```
 
 ### isCustomAppSchema / isQuickAppSchema

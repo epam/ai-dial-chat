@@ -14,8 +14,18 @@ const DURATION_INNER_RE = /(\d+(?:\.\d+)?)\s*s\b/;
 const START_TIME_INNER_RE =
   /\bStart:\s*(\d{1,2}):([0-5]\d):([0-5]\d(?:\.\d+)?)\b/i;
 
-/** A colon at the very end of the (already duration-stripped) string. */
-const TRAILING_COLON_RE = /:\s*$/;
+/*
+ * Removes a colon at the very end of the (already duration-stripped) string,
+ * along with any whitespace after it. A `/:\s*$/` regex would be equivalent
+ * but quadratic: `\s*$` has an unanchored start, so the engine retries from
+ * every offset and a long whitespace tail costs O(n²) (CodeQL
+ * js/polynomial-redos). Trimming the end first makes the colon the last
+ * character, so only one comparison is needed.
+ */
+const stripTrailingColon = (value: string): string => {
+  const trimmed = value.trimEnd();
+  return trimmed.endsWith(':') ? trimmed.slice(0, -1) : trimmed;
+};
 
 const SECONDS_PER_DAY = 24 * 60 * 60;
 const SECONDS_PER_HALF_DAY = SECONDS_PER_DAY / 2;
@@ -77,8 +87,7 @@ export const cleanStageName = (rawName: string): CleanedStageName => {
       safeRawName.slice(metadata.groupIndex + metadata.groupLength)
     : safeRawName;
 
-  const name = withoutDuration
-    .replace(TRAILING_COLON_RE, '')
+  const name = stripTrailingColon(withoutDuration)
     .trim()
     .replace(/ {2,}/g, ' ');
 

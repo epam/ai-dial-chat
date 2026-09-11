@@ -5,6 +5,7 @@ import {
   stripTrailingDots,
 } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
+import { stripSurroundingSlashes, stripTrailingSlashes } from '../string-utils';
 
 describe('PROHIBITED_CONVERSATION_NAME_CHARS_RE', () => {
   const prohibited = [
@@ -107,6 +108,71 @@ describe('stripTrailingDots', () => {
 
   it('leaves a name without trailing dots unchanged', () => {
     expect(stripTrailingDots('hello')).toBe('hello');
+  });
+});
+
+describe('stripTrailingSlashes', () => {
+  it('removes a single trailing slash', () => {
+    expect(stripTrailingSlashes('/My files/reports/')).toBe(
+      '/My files/reports',
+    );
+  });
+
+  it('removes repeated trailing slashes', () => {
+    expect(stripTrailingSlashes('reports///')).toBe('reports');
+  });
+
+  it('preserves leading slashes', () => {
+    expect(stripTrailingSlashes('//reports')).toBe('//reports');
+  });
+
+  it('returns an empty string when input is only slashes', () => {
+    expect(stripTrailingSlashes('////')).toBe('');
+  });
+
+  it('returns an empty string for an empty input', () => {
+    expect(stripTrailingSlashes('')).toBe('');
+  });
+
+  it('leaves a path without trailing slashes unchanged', () => {
+    expect(stripTrailingSlashes('reports/q1.pdf')).toBe('reports/q1.pdf');
+  });
+
+  it('handles a long sequence of trailing slashes in linear time', () => {
+    expect(stripTrailingSlashes(`reports${'/'.repeat(100_000)}`)).toBe(
+      'reports',
+    );
+  });
+});
+
+describe('stripSurroundingSlashes', () => {
+  it('removes leading and trailing slashes', () => {
+    expect(stripSurroundingSlashes('/reports/')).toBe('reports');
+  });
+
+  it('removes repeated slashes on both ends', () => {
+    expect(stripSurroundingSlashes('///reports///')).toBe('reports');
+  });
+
+  it('preserves slashes inside the path', () => {
+    expect(stripSurroundingSlashes('/reports/q1/final.pdf/')).toBe(
+      'reports/q1/final.pdf',
+    );
+  });
+
+  it('returns an empty string when input is only slashes', () => {
+    expect(stripSurroundingSlashes('////')).toBe('');
+  });
+
+  it('returns an empty string for an empty input', () => {
+    expect(stripSurroundingSlashes('')).toBe('');
+  });
+
+  it('handles a long sequence of surrounding slashes in linear time', () => {
+    const slashes = '/'.repeat(100_000);
+    expect(stripSurroundingSlashes(`${slashes}reports${slashes}`)).toBe(
+      'reports',
+    );
   });
 });
 

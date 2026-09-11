@@ -1,3 +1,4 @@
+import { StringUtils } from '../../common/utils/string-utils';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { AuthProviderId, ProviderConfig } from './provider.types';
 
@@ -38,9 +39,6 @@ const requireField = (
   return value;
 };
 
-const stripTrailingSlashes = (value: string): string =>
-  value.replace(/\/+$/, '');
-
 const URL_SCHEME_PATTERN = /^([a-z][a-z0-9+.-]*):\/\//i;
 
 /*
@@ -61,7 +59,7 @@ const resolveIssuerFromHost = (
       `${providerLabel} ${envVarName} must be a bare host or an http(s) URL, but uses the "${scheme}" scheme`,
     );
   }
-  return stripTrailingSlashes(scheme ? raw : `https://${raw}`);
+  return StringUtils.stripTrailingSlashes(scheme ? raw : `https://${raw}`);
 };
 
 const resolveAdminRoles = (

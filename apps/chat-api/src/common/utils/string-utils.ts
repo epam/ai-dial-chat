@@ -18,6 +18,40 @@ export class StringUtils {
   }
 
   /**
+   * Strips trailing slashes from a URL or resource path.
+   *
+   * Scans by index instead of using a `/\/+$/` regex: repetition anchored at
+   * `$` with an unanchored start makes the engine retry from every offset, so
+   * a path carrying a long run of slashes costs quadratic time (CodeQL
+   * js/polynomial-redos). This scan is linear regardless of input.
+   */
+  static stripTrailingSlashes(value: string): string {
+    return StringUtils.stripTrailingChar(value, '/');
+  }
+
+  /**
+   * Strips trailing occurrences of a single character. Scans by index for the
+   * reason given on {@link StringUtils.stripTrailingSlashes}.
+   */
+  static stripTrailingChar(value: string, char: string): string {
+    let end = value.length;
+    while (end > 0 && value[end - 1] === char) end -= 1;
+    return value.slice(0, end);
+  }
+
+  /**
+   * Strips leading and trailing occurrences of a single character. Scans by
+   * index for the reason given on {@link StringUtils.stripTrailingSlashes}.
+   */
+  static stripSurroundingChar(value: string, char: string): string {
+    let start = 0;
+    let end = value.length;
+    while (start < end && value[start] === char) start += 1;
+    while (end > start && value[end - 1] === char) end -= 1;
+    return value.slice(start, end);
+  }
+
+  /**
    * Strips control characters (C0 + C1, including newlines/CR and NEL
    * (U+0085), all of which log aggregators can treat as line separators)
    * and Unicode bidi-override/zero-width codepoints (which can spoof log

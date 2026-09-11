@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { StringUtils } from '../common/utils/string-utils';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
 import type {
   ScheduleCronDto,
@@ -128,7 +129,7 @@ const toUpstreamTrigger = (
  * call never ends up with a double slash before /openai.
  */
 export const buildScheduledTaskChatCompletionUrl = (baseUrl: string): string =>
-  `${baseUrl.replace(/\/+$/, '')}/openai`;
+  `${StringUtils.stripTrailingSlashes(baseUrl)}/openai`;
 
 export const toUpstreamSchedulePayload = (
   body: CreateScheduledTaskBodyDto,
