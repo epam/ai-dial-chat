@@ -1,7 +1,13 @@
 import { EventEmitter } from 'node:events';
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { trackGeneration } from '../telemetry/runtime-metrics';
 import {
   ConversationMessageDto,
   ConversationMessageRole,
@@ -68,10 +74,12 @@ interface GenerationEntry {
    * normal-speed generation never triggers it.
    */
   maxDurationTimer: NodeJS.Timeout;
+  /** Released when this entry is no longer retained by the registry. */
+  finishTracking: () => void;
 }
 
 @Injectable()
-export class ConversationGenerationService {
+export class ConversationGenerationService implements OnModuleDestroy {
   private readonly logger = new Logger(ConversationGenerationService.name);
   private readonly registry = new Map<string, GenerationEntry>();
   private readonly maxGenerationDurationMs: number;
@@ -86,13 +94,47 @@ export class ConversationGenerationService {
     return `${sessionId}::${path}`;
   }
 
+  private removeEntry(key: string, entry: GenerationEntry): void {
+    clearTimeout(entry.maxDurationTimer);
+    if (this.registry.get(key) === entry) {
+      this.registry.delete(key);
+    }
+    entry.finishTracking();
+  }
+
+  onModuleDestroy(): void {
+    for (const [key, entry] of this.registry) {
+      clearTimeout(entry.maxDurationTimer);
+      entry.status = GenerationStatus.Stopped;
+      /*
+       * Every attachment must get a terminal event to release its response and
+       * keepalive. Isolate subscribers so one failing callback cannot prevent
+       * the others from closing; raw listeners preserve EventEmitter.once.
+       */
+      for (const listener of entry.emitter.rawListeners('terminal')) {
+        try {
+          listener.call(entry.emitter, {
+            type: 'stopped',
+          } satisfies GenerationTerminalEvent);
+        } catch (error) {
+          this.logger.error(
+            'Failed to notify generation subscriber during shutdown',
+            error instanceof Error ? error.stack : undefined,
+          );
+        }
+      }
+      entry.emitter.removeAllListeners();
+      this.removeEntry(key, entry);
+      entry.abortController.abort();
+    }
+  }
+
   private evictStale(): void {
     const cutoff = Date.now() - STALE_ENTRY_TTL_MS;
     for (const [key, entry] of this.registry) {
       if (entry.startedAt < cutoff) {
         this.logger.warn(`Evicting stale generation entry: ${key}`);
-        clearTimeout(entry.maxDurationTimer);
-        this.registry.delete(key);
+        this.removeEntry(key, entry);
       }
     }
   }
@@ -110,6 +152,9 @@ export class ConversationGenerationService {
       throw new ConflictException(
         `A generation is already active for this conversation. Stop it before starting a new one.`,
       );
+    }
+    if (existing) {
+      this.removeEntry(key, existing);
     }
 
     const abortController = new AbortController();
@@ -137,6 +182,7 @@ export class ConversationGenerationService {
       assembledMessage: createPlaceholderMessage(),
       emitter,
       maxDurationTimer,
+      finishTracking: trackGeneration(),
     });
     return abortController;
   }
@@ -222,7 +268,7 @@ export class ConversationGenerationService {
         type: 'done',
       } satisfies GenerationTerminalEvent);
       entry.emitter.removeAllListeners();
-      this.registry.delete(key);
+      this.removeEntry(key, entry);
     }
   }
 
@@ -251,7 +297,7 @@ export class ConversationGenerationService {
           : { type: 'error', message }) satisfies GenerationTerminalEvent,
       );
       entry.emitter.removeAllListeners();
-      this.registry.delete(key);
+      this.removeEntry(key, entry);
     }
   }
 }

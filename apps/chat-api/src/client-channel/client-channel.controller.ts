@@ -16,6 +16,10 @@ import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
 import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
 import { startSseResponse } from '../common/utils/sse';
+import {
+  SseSubscriptionKind,
+  trackSseSubscription,
+} from '../telemetry/runtime-metrics';
 import { ClientChannelService } from './client-channel.service';
 import {
   assertValidChannelId,
@@ -78,56 +82,63 @@ export class ClientChannelController {
     const validReconnectChannelId =
       assertValidOptionalChannelId(reconnectChannelId);
     const abortController = new AbortController();
-
-    this.logger.debug('[timing] subscribe request received by BFF');
-    const { stream, channelId } = await this.clientChannelService.subscribe(
-      at,
-      validReconnectChannelId,
-      abortController.signal,
+    const finishSubscription = trackSseSubscription(
+      SseSubscriptionKind.ClientChannel,
     );
-    this.logger.debug(
-      `[timing] subscribe request headers about to flush — channelId: ${channelId}`,
-    );
-
-    res.setHeader(CHANNEL_ID_HEADER, channelId);
-    startSseResponse(res);
-
-    const reader = stream.getReader();
-    let isClientAborted = false;
-    let isReaderReleased = false;
-
-    const handleClose = () => {
-      isClientAborted = true;
-      abortController.abort();
-      if (!isReaderReleased) {
-        void reader.cancel().catch(() => undefined);
-      }
-    };
-    res.on('close', handleClose);
 
     try {
-      while (true) {
-        if (isClientAborted) break;
+      this.logger.debug('[timing] subscribe request received by BFF');
+      const { stream, channelId } = await this.clientChannelService.subscribe(
+        at,
+        validReconnectChannelId,
+        abortController.signal,
+      );
+      this.logger.debug(
+        `[timing] subscribe request headers about to flush — channelId: ${channelId}`,
+      );
 
-        const { done, value } = await reader.read();
-        if (done) break;
+      res.setHeader(CHANNEL_ID_HEADER, channelId);
+      startSseResponse(res);
 
-        res.write(value);
-      }
-    } catch (err) {
-      if (!isClientAborted) {
-        this.logger.error(
-          'Error while relaying client-channel events to browser',
-          err,
-        );
+      const reader = stream.getReader();
+      let isClientAborted = false;
+      let isReaderReleased = false;
+
+      const handleClose = () => {
+        isClientAborted = true;
+        abortController.abort();
+        if (!isReaderReleased) {
+          void reader.cancel().catch(() => undefined);
+        }
+      };
+      res.on('close', handleClose);
+
+      try {
+        while (true) {
+          if (isClientAborted) break;
+
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          res.write(value);
+        }
+      } catch (err) {
+        if (!isClientAborted) {
+          this.logger.error(
+            'Error while relaying client-channel events to browser',
+            err,
+          );
+        }
+      } finally {
+        res.off('close', handleClose);
+        isReaderReleased = true;
+        reader.releaseLock();
+        if (!res.writableEnded) {
+          res.end();
+        }
       }
     } finally {
-      res.off('close', handleClose);
-      isReaderReleased = true;
-      reader.releaseLock();
-      if (!res.writableEnded) {
-        res.end();
-      }
+      finishSubscription();
     }
   }
 
