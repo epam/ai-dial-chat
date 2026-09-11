@@ -123,7 +123,7 @@ describe('usePublishFlow', () => {
       await result.current.handleSubmit();
     });
 
-    expect(onPublish).toHaveBeenCalledWith(item, [], []);
+    expect(onPublish).toHaveBeenCalledWith(item, [], [], '');
   });
 
   it('adds a locally created folder and reports it to the host', () => {
@@ -197,7 +197,7 @@ describe('usePublishFlow', () => {
       await result.current.handleSubmit();
     });
 
-    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], []);
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '');
     expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared']);
   });
 
@@ -430,7 +430,7 @@ describe('usePublishFlow', () => {
         await result.current.handleSubmit();
       });
 
-      expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [rule]);
+      expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [rule], '');
     });
 
     it('setRules updates state independent of folder selection', () => {
@@ -600,6 +600,104 @@ describe('usePublishFlow', () => {
 
       expect(result.current.rules).toEqual([rule]);
       expect(result.current.isRulesLoading).toBe(false);
+    });
+  });
+  describe('author', () => {
+    const renderWithAuthor = (defaultAuthor?: string) =>
+      renderHook(
+        ({ author }: { author?: string }) =>
+          usePublishFlow({
+            item,
+            history,
+            folderItems,
+            defaultAuthor: author,
+            onPublish: vi.fn().mockResolvedValue(undefined),
+          }),
+        { initialProps: { author: defaultAuthor } },
+      );
+
+    it('seeds the author from defaultAuthor', () => {
+      const { result } = renderWithAuthor('Daniil Pavlov');
+
+      expect(result.current.author).toBe('Daniil Pavlov');
+    });
+
+    it('leaves the author empty when defaultAuthor is omitted', async () => {
+      const onPublish = vi.fn().mockResolvedValue(undefined);
+      const { result } = renderHook(() =>
+        usePublishFlow({ item, history, folderItems, onPublish }),
+      );
+
+      expect(result.current.author).toBe('');
+
+      act(() => {
+        result.current.setSelectedFolderPath(['Shared']);
+      });
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+
+      expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '');
+    });
+
+    it('replaces an untouched author when defaultAuthor resolves later', () => {
+      const { result, rerender } = renderWithAuthor('');
+
+      rerender({ author: 'Daniil Pavlov' });
+
+      expect(result.current.author).toBe('Daniil Pavlov');
+    });
+
+    it('does not overwrite an edited author when defaultAuthor changes', () => {
+      const { result, rerender } = renderWithAuthor('Daniil Pavlov');
+
+      act(() => {
+        result.current.setAuthor('DIAL Team');
+      });
+      rerender({ author: 'Someone Else' });
+
+      expect(result.current.author).toBe('DIAL Team');
+    });
+
+    it('forwards the trimmed author to onPublish', async () => {
+      const onPublish = vi.fn().mockResolvedValue(undefined);
+      const { result } = renderHook(() =>
+        usePublishFlow({
+          item,
+          history,
+          folderItems,
+          defaultAuthor: 'Daniil Pavlov',
+          onPublish,
+        }),
+      );
+
+      act(() => {
+        result.current.setSelectedFolderPath(['Shared']);
+        result.current.setAuthor('  DIAL Team  ');
+      });
+
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+
+      expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], 'DIAL Team');
+    });
+
+    it('restores the prefill on reset and resumes syncing defaultAuthor', () => {
+      const { result, rerender } = renderWithAuthor('Daniil Pavlov');
+
+      act(() => {
+        result.current.setAuthor('DIAL Team');
+      });
+      act(() => {
+        result.current.reset();
+      });
+
+      expect(result.current.author).toBe('Daniil Pavlov');
+
+      rerender({ author: 'Someone Else' });
+
+      expect(result.current.author).toBe('Someone Else');
     });
   });
 });

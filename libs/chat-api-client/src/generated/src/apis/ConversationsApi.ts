@@ -741,7 +741,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Publishes an owned conversation to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The conversation title is re-fetched server-side and used as the publication name.
+   * Publishes an owned conversation to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The conversation title is re-fetched server-side and used as the publication name. The optional `author` sets the publication’s displayed author; when it is omitted or blank the caller\'s own session display name is used, as it always was.
    * Publish a conversation to an Organization folder
    */
   async publishConversationRaw(
@@ -789,7 +789,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Publishes an owned conversation to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The conversation title is re-fetched server-side and used as the publication name.
+   * Publishes an owned conversation to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The conversation title is re-fetched server-side and used as the publication name. The optional `author` sets the publication’s displayed author; when it is omitted or blank the caller\'s own session display name is used, as it always was.
    * Publish a conversation to an Organization folder
    */
   async publishConversation(

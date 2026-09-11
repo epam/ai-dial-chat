@@ -429,6 +429,15 @@ disabled until the user picks one. Confirming calls
 removal is a request an administrator must approve, so the folder still reads
 as published afterwards.
 
+`onPublish(item, folderPath, rules, author)` receives the publication's display
+author as its fourth argument — the value the publish panel's Author field
+holds, already trimmed. Seed that field with `publishDefaultAuthor`: the
+library has no access to the signed-in user, so the host resolves its own
+display name and passes it in. An empty `author` is a valid state that never
+blocks submit; what it means is the host's decision (`apps/chat` omits the
+field from the request so the backend attributes the publication to the
+caller's own session name).
+
 ```tsx
 <DetailsPanel
   item={item}

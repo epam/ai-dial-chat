@@ -44,6 +44,7 @@ interface UseCatalogPublishingResult {
     item: CatalogItem,
     folderPath: string[],
     rules: PublicationRule[],
+    author: string,
   ) => Promise<void>;
   handleUnpublish: (item: CatalogItem, folderPath: string[]) => Promise<void>;
   handlePublishSuccess: (item: CatalogItem, folderPath: string[]) => void;
@@ -155,14 +156,19 @@ export const useCatalogPublishing = ({
       item: CatalogItem,
       folderPath: string[],
       rules: PublicationRule[],
+      author: string,
     ) => {
       const entityType = toPublishEntityType(item.type);
       if (!entityType) {
         throw new Error(`Entity type "${item.type}" is not publishable`);
       }
+      const trimmedAuthor = author.trim();
       await publishCatalogEntity(entityType, item.id, {
         folderPath: folderPath.join('/'),
         ...(item.version ? { version: item.version } : {}),
+        /* Omitted rather than sent empty, so the backend's own session-derived
+           fallback applies instead of an empty "Hosted by". */
+        ...(trimmedAuthor ? { author: trimmedAuthor } : {}),
         rules: rules.map(toPublishRuleDto),
       });
     },

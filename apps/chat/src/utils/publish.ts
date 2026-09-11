@@ -1,9 +1,13 @@
-import { PublishAccessRulesLabels } from '@epam/ai-dial-publish-panel';
+import {
+  PublishAccessRulesLabels,
+  PublishPanelLabels,
+} from '@epam/ai-dial-publish-panel';
 import type { TFunction } from 'i18next';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   PublishAccessRulesI18nKeys,
+  PublishI18nKeys,
 } from '../constants/translation-keys';
 
 /**
@@ -78,4 +82,16 @@ export const getAccessRulesLabels = (
     cancelLabel: t(ButtonsI18nKeys.Cancel),
     dialogAriaLabel: t(PublishAccessRulesI18nKeys.DialogAriaLabel),
   },
+});
+
+/** Builds the translated author-field label overrides shared by every publish panel host (catalog, conversation). */
+export const getPublishAuthorLabels = (
+  t: TFunction,
+): Pick<
+  PublishPanelLabels,
+  'authorLabel' | 'authorPlaceholder' | 'authorHint'
+> => ({
+  authorLabel: t(PublishI18nKeys.AuthorLabel),
+  authorPlaceholder: t(PublishI18nKeys.AuthorPlaceholder),
+  authorHint: t(PublishI18nKeys.AuthorHint),
 });

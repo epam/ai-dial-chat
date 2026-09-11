@@ -207,6 +207,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onPublishExpandedPathsChange,
   publishLoadingPaths,
   hasPublishWriteAccess,
+  publishDefaultAuthor,
   onPublish,
   onPublishSuccess,
   onPublishError,
@@ -542,6 +543,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     history: publishHistory,
     folderItems: publishFolderItems,
     hasWriteAccess: hasPublishWriteAccess,
+    defaultAuthor: publishDefaultAuthor,
     onCreateFolder: onCreatePublishFolder,
     onPublish: onPublish ?? NO_OP_PUBLISH,
     onPublishSuccess: handlePublishSuccess,
@@ -1235,6 +1237,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 hasWriteAccess={publishFlow.hasWriteAccess}
                 isSubmitting={publishFlow.isSubmitting}
                 hasSubmitError={publishFlow.hasSubmitError}
+                author={publishFlow.author}
+                onAuthorChange={publishFlow.setAuthor}
                 rules={publishFlow.rules}
                 onRulesChange={publishFlow.setRules}
                 ruleSourceOptions={ruleSourceOptions}

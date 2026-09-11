@@ -39,12 +39,14 @@ describe('conversation-publish API', () => {
       'bucket-123/my-conversation',
       'Organization/Data Science',
       rules,
+      'DIAL Team',
     );
 
     expect(conversationsApi.publishConversation).toHaveBeenCalledWith({
       path: 'bucket-123/my-conversation',
       publishConversationDto: {
         folderPath: 'Organization/Data Science',
+        author: 'DIAL Team',
         rules: [
           {
             source: 'role',
@@ -64,7 +66,12 @@ describe('conversation-publish API', () => {
       publishedBy: 'Test User',
     });
 
-    await publishConversation('bucket-123/my-conversation', 'Organization', []);
+    await publishConversation(
+      'bucket-123/my-conversation',
+      'Organization',
+      [],
+      '',
+    );
 
     expect(conversationsApi.publishConversation).toHaveBeenCalledWith({
       path: 'bucket-123/my-conversation',
@@ -124,5 +131,50 @@ describe('unpublishConversation', () => {
 
     expect(result.requestedAt).toBe('2026-08-13T10:00:00.000Z');
     expect(result).not.toHaveProperty('publishedAt');
+  });
+  it('trims the author before sending it', async () => {
+    vi.mocked(conversationsApi.publishConversation).mockResolvedValue({
+      path: 'conversations/bucket-123/my-conversation',
+      folderPath: 'Organization',
+      publishedAt: '2026-07-15T10:00:00.000Z',
+      publishedBy: 'Test User',
+    });
+
+    await publishConversation(
+      'bucket-123/my-conversation',
+      'Organization',
+      [],
+      '  DIAL Team  ',
+    );
+
+    expect(conversationsApi.publishConversation).toHaveBeenCalledWith({
+      path: 'bucket-123/my-conversation',
+      publishConversationDto: {
+        folderPath: 'Organization',
+        author: 'DIAL Team',
+        rules: [],
+      },
+    });
+  });
+
+  it('omits the author key entirely when it is blank, so the backend falls back', async () => {
+    vi.mocked(conversationsApi.publishConversation).mockResolvedValue({
+      path: 'conversations/bucket-123/my-conversation',
+      folderPath: 'Organization',
+      publishedAt: '2026-07-15T10:00:00.000Z',
+      publishedBy: 'Test User',
+    });
+
+    await publishConversation(
+      'bucket-123/my-conversation',
+      'Organization',
+      [],
+      '   ',
+    );
+
+    expect(conversationsApi.publishConversation).toHaveBeenCalledWith({
+      path: 'bucket-123/my-conversation',
+      publishConversationDto: { folderPath: 'Organization', rules: [] },
+    });
   });
 });

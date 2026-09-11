@@ -6,15 +6,27 @@ import { toPublishRuleDto } from '@epam/ai-dial-chat-hooks';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { conversationsApi } from './api-client';
 
+/**
+ * Publishes a conversation into `folderPath`. `author` sets the publication's
+ * displayed author; it is omitted from the request body when empty after
+ * trimming, so the backend falls back to the session's own display name.
+ */
 export const publishConversation = (
   path: string,
   folderPath: string,
   rules: PublicationRule[],
-): Promise<PublishConversationResultDto> =>
-  conversationsApi.publishConversation({
+  author: string,
+): Promise<PublishConversationResultDto> => {
+  const trimmedAuthor = author.trim();
+  return conversationsApi.publishConversation({
     path,
-    publishConversationDto: { folderPath, rules: rules.map(toPublishRuleDto) },
+    publishConversationDto: {
+      folderPath,
+      ...(trimmedAuthor ? { author: trimmedAuthor } : {}),
+      rules: rules.map(toPublishRuleDto),
+    },
   });
+};
 
 /**
  * Submits a removal request for one already-published folder of a

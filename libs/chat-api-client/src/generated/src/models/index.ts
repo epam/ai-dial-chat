@@ -5123,6 +5123,12 @@ export interface PublishCatalogEntityDto {
    */
   version?: string;
   /**
+   * Display author recorded on the publication as `displayAuthor`, surfaced in the catalog as the published entity's "Hosted by" value. Omitted, blank, or whitespace-only falls back to the session's own display name, which is what every caller got before this field existed.
+   * @type {string}
+   * @memberof PublishCatalogEntityDto
+   */
+  author?: string;
+  /**
    * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
    * @type {Array<PublishRuleDto>}
    * @memberof PublishCatalogEntityDto
@@ -5141,6 +5147,12 @@ export interface PublishConversationDto {
    * @memberof PublishConversationDto
    */
   folderPath: string;
+  /**
+   * Display author recorded on the publication as `displayAuthor`. Omitted, blank, or whitespace-only falls back to the session's own display name, which is what every caller got before this field existed.
+   * @type {string}
+   * @memberof PublishConversationDto
+   */
+  author?: string;
   /**
    * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
    * @type {Array<PublishRuleDto>}
