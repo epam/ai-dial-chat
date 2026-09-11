@@ -74,10 +74,19 @@ export const ImportExportQueueRow: FC<ImportExportQueueRowProps> = ({
          * of reach of a keyboard.
          */
         <div className={mergeClasses(STATUS_SLOT_CLASS, 'grid')}>
+          {/*
+           * `pointer-events-none` is what makes cancel clickable at all, not a
+           * tidying touch. Faded out, the spinner's opacity below 1 gives it a
+           * stacking context, and an unpositioned element that forms one paints
+           * in the same layer as positioned content — above the plain in-flow
+           * button it shares the cell with, whatever the DOM order. The
+           * transparent spinner then swallowed every hover and click aimed at
+           * the X, so the control looked live and did nothing (issue #8665).
+           */}
           <Spinner
             size={DIAL_ICON_SIZE.SM}
             ariaLabel={labels.jobProgressAriaLabel(job.fileName)}
-            className="col-start-1 row-start-1 opacity-100 transition-opacity group-focus-within:opacity-0 group-hover:opacity-0"
+            className="pointer-events-none col-start-1 row-start-1 opacity-100 transition-opacity group-focus-within:opacity-0 group-hover:opacity-0"
           />
           <GhostIconButton
             aria-label={labels.cancelJobAriaLabel(job.fileName)}
