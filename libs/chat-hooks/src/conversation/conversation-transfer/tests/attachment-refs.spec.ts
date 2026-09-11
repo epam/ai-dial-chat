@@ -38,6 +38,13 @@ describe('splitFileIdAnchor', () => {
       anchor: '',
     });
   });
+
+  it('drops an anchor carrying characters no reader parses, keeping the file id', () => {
+    expect(splitFileIdAnchor('files/b/doc.pdf#"><script>')).toEqual({
+      fileId: 'files/b/doc.pdf',
+      anchor: '',
+    });
+  });
 });
 
 describe('collectAttachmentRefs', () => {

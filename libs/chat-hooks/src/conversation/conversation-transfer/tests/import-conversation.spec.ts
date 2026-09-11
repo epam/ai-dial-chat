@@ -497,6 +497,29 @@ describe('rewriteAttachmentUrls', () => {
     );
   });
 
+  it('does not carry an unparseable anchor onto the rewritten reference', () => {
+    const conversation = makeConversation({
+      messages: [
+        makeAttachmentMessage(
+          'files/old-bucket/reports/q1.pdf#"><script>',
+          'q1.pdf',
+        ),
+      ],
+    });
+    const targetMap = new Map([
+      [
+        'files/old-bucket/reports/q1.pdf',
+        { url: 'files/new-bucket/uploads/2026-07/q1.pdf' },
+      ],
+    ]);
+
+    const result = rewriteAttachmentUrls(conversation, targetMap);
+
+    expect(result.messages[0].custom_content?.attachments?.[0].url).toBe(
+      'files/new-bucket/uploads/2026-07/q1.pdf',
+    );
+  });
+
   it('leaves unmatched attachment references untouched', () => {
     const conversation = makeConversation({
       messages: [

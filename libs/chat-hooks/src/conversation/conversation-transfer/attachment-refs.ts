@@ -18,8 +18,23 @@ export interface AttachmentReference {
 }
 
 /**
+ * Character set an anchor must stay within to be carried onto a rewritten
+ * reference. The only anchor anything here parses is `#page=<digits>`
+ * (`PDF_PAGE_REFERENCE_REGEX` in `libs/quotations/src/utils/reference-attachment.ts`);
+ * every other reader strips the fragment outright.
+ *
+ * An imported `.dial` archive is attacker-controllable input, and the anchor
+ * from one is re-appended to the upload URL that the import then persists
+ * into the conversation. Nothing downstream needs a character outside this
+ * set, so a fragment carrying one is dropped rather than stored.
+ */
+const SAFE_ANCHOR_PATTERN = /^#[\w.=%-]*$/;
+
+/**
  * Splits a DIAL file reference into the resource id and its trailing `#…`
- * anchor (e.g. the `#page=3` a PDF citation carries).
+ * anchor (e.g. the `#page=3` a PDF citation carries). An anchor outside
+ * {@link SAFE_ANCHOR_PATTERN} is reported as absent; the file id is returned
+ * either way, so the attachment itself is still transferred.
  *
  * The anchor is display metadata, not part of the stored resource path: the
  * download endpoint 404s on it, so it has to be stripped before a reference
@@ -30,9 +45,13 @@ export const splitFileIdAnchor = (
   url: string,
 ): { fileId: string; anchor: string } => {
   const anchorIndex = url.indexOf('#');
-  return anchorIndex < 0
-    ? { fileId: url, anchor: '' }
-    : { fileId: url.slice(0, anchorIndex), anchor: url.slice(anchorIndex) };
+  if (anchorIndex < 0) return { fileId: url, anchor: '' };
+
+  const anchor = url.slice(anchorIndex);
+  return {
+    fileId: url.slice(0, anchorIndex),
+    anchor: SAFE_ANCHOR_PATTERN.test(anchor) ? anchor : '',
+  };
 };
 
 /** A unique DIAL file reference found in a conversation's messages. */
