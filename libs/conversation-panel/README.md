@@ -27,7 +27,6 @@ import '@epam/ai-dial-conversation-panel/styles.css';
 - `react`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
-- `@epam/ai-dial-sidebar`
 
 ## Components
 

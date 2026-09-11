@@ -20,10 +20,10 @@
   },
   "dependencies": {
     "react-window": "^2.2.7",
-    "@tabler/icons-react": "^3.44.0"
+    "@tabler/icons-react": "^3.44.0",
+    "@epam/ai-dial-attachment-input": "*"
   },
   "peerDependencies": {
-    "@epam/ai-dial-attachment-input": "*",
     "@epam/ai-dial-chat-shared": "*",
     "react": "^19.0.0",
     "react-dom": "^19.2.6",

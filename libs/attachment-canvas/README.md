@@ -20,7 +20,6 @@ Canvas/viewer component for rendering attachment content inline — images, audi
 
 - `react`
 - `@epam/ai-dial-chat-shared`
-- `@epam/ai-dial-sidebar`
 - `@epam/ai-dial-ui-kit`
 
 Everything else this package needs it installs itself, as a `dependency`: the

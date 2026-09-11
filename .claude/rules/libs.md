@@ -48,28 +48,26 @@ These are the peers:
 | `@epam/ai-dial-chat-shared`        | the shared types/utils/context layer every host imports directly                                |
 | `@epam/ai-dial-ui-kit`             | the design-system singleton                                                                     |
 | `@epam/ai-dial-react-file-manager` | an AG-Grid-backed component a host renders itself; two AG Grid copies break module registration |
-| sibling libs under `libs/`         | **not settled** — see below                                                                     |
 
-### Sibling workspace libs are still peers, and that is not the end state
+**Everything else goes in `dependencies`** — third-party implementation
+libraries, and sibling libs under `libs/` that a host never names (`sidebar`
+inside `conversation-panel`, `attachment-input` inside `conversation-input`).
+A host installs one package and renders.
 
-A lib that composes a sibling (`sidebar` inside `conversation-panel`,
-`attachment-input` inside `conversation-input`) declares it a peer today, so an
-embedding host must install Dial packages it never imports — which issue #8719
-asks us to stop doing.
+### A sibling lib is a dependency, and the fixture has to pack it
 
-Moving them to `dependencies` is blocked on tooling, not on taste.
-`tools/publish-lib.mjs` rewrites workspace-lib specs to the exact release
-version, so a published package is fine; but
-`tools/attachment-canvas-consumer-fixture` does its own, simpler manifest
-rewrite that does **not** resolve those specs. As a peer, `--legacy-peer-deps`
-skips the sibling; as a dependency, npm tries to fetch
-`@epam/ai-dial-sidebar@0.0.1` from the registry and the fixture fails with
-`ETARGET`. Since that fixture is the only place a published package is exercised
-through its real `exports` map, the move has to wait until it can pack workspace
-siblings too (or share `preparePublishPackageJson`).
+Publishing resolves a sibling spec to the release version, which exists on the
+registry, so a published package is fine either way. The catch is local: a
+tarball packed from `dist/` names a version that was never published, so
+`npm install` on it alone dies with `ETARGET`. While siblings were peers this
+never showed, because `--legacy-peer-deps` skips peers entirely.
 
-Until then: keep declaring siblings as peers, and do not "fix" the
-inconsistency in one lib alone — see _One package, one role_.
+`tools/attachment-canvas-consumer-fixture` therefore packs the transitive
+closure of a lib's workspace `dependencies` and hands every tarball to one
+`npm install`, which lets npm satisfy each spec from the local tree. If you add
+a workspace dependency to a lib the fixture covers, nothing extra is needed —
+the closure is computed from the manifests. If you make the fixture cover
+another lib, keep that behaviour.
 
 ### One package, one role
 

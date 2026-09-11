@@ -19,13 +19,13 @@
     }
   },
   "dependencies": {
-    "@tabler/icons-react": "^3.44.0"
+    "@tabler/icons-react": "^3.44.0",
+    "@epam/ai-dial-attachment-input": "*",
+    "@epam/ai-dial-sidebar": "*"
   },
   "peerDependencies": {
     "react": "^19.0.0",
-    "@epam/ai-dial-attachment-input": "*",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-sidebar": "*",
     "@epam/ai-dial-ui-kit": "*"
   },
   "nx": {

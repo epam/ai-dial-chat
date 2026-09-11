@@ -18,11 +18,11 @@
     }
   },
   "dependencies": {
-    "@tabler/icons-react": "^3.44.0"
+    "@tabler/icons-react": "^3.44.0",
+    "@epam/ai-dial-editor-builder": "*"
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-editor-builder": "*",
     "@epam/ai-dial-ui-kit": "*",
     "react": "^19.0.0"
   },

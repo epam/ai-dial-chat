@@ -40,7 +40,6 @@ import '@epam/ai-dial-skill-editor/styles.css';
 - `@epam/ai-dial-ui-kit` `*`
 - `@epam/ai-dial-react-file-manager` `^0.2.0-dev.9`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-editor-builder` `*`
 
 ## Components
 
