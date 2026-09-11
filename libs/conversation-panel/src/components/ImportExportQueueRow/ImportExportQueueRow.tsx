@@ -67,22 +67,7 @@ export const ImportExportQueueRow: FC<ImportExportQueueRowProps> = ({
         contentClassName="!z-[80]"
       />
       {job.status === ConversationTransferJobStatus.InProgress && (
-        /*
-         * The spinner and the cancel control share one grid cell so revealing
-         * one and hiding the other shifts nothing. The button stays mounted and
-         * focusable at all times — hiding it until hover would put cancel out
-         * of reach of a keyboard.
-         */
         <div className={mergeClasses(STATUS_SLOT_CLASS, 'grid')}>
-          {/*
-           * `pointer-events-none` is what makes cancel clickable at all, not a
-           * tidying touch. Faded out, the spinner's opacity below 1 gives it a
-           * stacking context, and an unpositioned element that forms one paints
-           * in the same layer as positioned content — above the plain in-flow
-           * button it shares the cell with, whatever the DOM order. The
-           * transparent spinner then swallowed every hover and click aimed at
-           * the X, so the control looked live and did nothing (issue #8665).
-           */}
           <Spinner
             size={DIAL_ICON_SIZE.SM}
             ariaLabel={labels.jobProgressAriaLabel(job.fileName)}
