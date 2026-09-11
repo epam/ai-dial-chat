@@ -27,6 +27,7 @@ class TestMetricReader extends MetricReader {
 
 class TestResponse extends EventEmitter {
   writableEnded = false;
+  writableLength = 0;
   setHeader = vi.fn();
   flushHeaders = vi.fn();
   write = vi.fn().mockReturnValue(true);
@@ -35,6 +36,8 @@ class TestResponse extends EventEmitter {
     return this;
   });
 }
+
+const SSE_ATTACH_MAX_BUFFERED_BYTES = 1024 * 1024;
 
 const request = {
   user: { at: 'test-token', bucket: 'test-bucket', sid: 'test-session' },
@@ -187,6 +190,28 @@ describe('SSE subscription metrics', () => {
       await rejected;
       expect(await activeSubscriptions(kind)).toBe(0);
     });
+
+    it('aborts the upstream call signal on an early close during pending setup, and still settles the gauge exactly once', async () => {
+      let capturedSignal: AbortSignal | undefined;
+      let rejectOpening!: (reason: Error) => void;
+      upstream().mockImplementation((...args: unknown[]) => {
+        capturedSignal = args[args.length - 1] as AbortSignal;
+        return new Promise((_resolve, reject) => {
+          rejectOpening = reject;
+        });
+      });
+
+      const pending = invoke();
+      expect(await activeSubscriptions(kind)).toBe(1);
+
+      response.emit('close');
+      expect(capturedSignal?.aborted).toBe(true);
+
+      const rejected = expect(pending).rejects.toThrow('aborted');
+      rejectOpening(new Error('aborted'));
+      await rejected;
+      expect(await activeSubscriptions(kind)).toBe(0);
+    });
   });
 
   describe('generation attachment', () => {
@@ -228,6 +253,47 @@ describe('SSE subscription metrics', () => {
       expect(
         await activeSubscriptions(SseSubscriptionKind.GenerationAttach),
       ).toBe(0);
+      expect(emitter.listenerCount('terminal')).toBe(0);
+    });
+
+    it('releases the count when a subscriber is detached for backpressure, not just on close/terminal', async () => {
+      const emitter = new EventEmitter();
+      attach.mockReturnValue({ emitter, assembledMessage: { content: '' } });
+      await invoke();
+      expect(
+        await activeSubscriptions(SseSubscriptionKind.GenerationAttach),
+      ).toBe(1);
+
+      response.writableLength = SSE_ATTACH_MAX_BUFFERED_BYTES + 1;
+      emitter.emit('chunk', { choices: [{ delta: { content: 'x' } }] });
+
+      expect(
+        await activeSubscriptions(SseSubscriptionKind.GenerationAttach),
+      ).toBe(0);
+      expect(response.writableEnded).toBe(true);
+      expect(emitter.listenerCount('chunk')).toBe(0);
+      expect(emitter.listenerCount('terminal')).toBe(0);
+    });
+
+    it('runs cleanup exactly once when a backpressure-triggered detach races with a terminal event in the same tick', async () => {
+      const emitter = new EventEmitter();
+      attach.mockReturnValue({ emitter, assembledMessage: { content: '' } });
+      await invoke();
+      expect(
+        await activeSubscriptions(SseSubscriptionKind.GenerationAttach),
+      ).toBe(1);
+
+      // The terminal event's own write is what pushes buffered bytes over
+      // the limit, so `writeEvent`'s internal backpressure check and
+      // `onTerminal`'s own explicit cleanup call both fire in this one tick.
+      response.writableLength = SSE_ATTACH_MAX_BUFFERED_BYTES + 1;
+      emitter.emit('terminal', { type: 'done' });
+
+      expect(
+        await activeSubscriptions(SseSubscriptionKind.GenerationAttach),
+      ).toBe(0);
+      expect(response.end).toHaveBeenCalledOnce();
+      expect(emitter.listenerCount('chunk')).toBe(0);
       expect(emitter.listenerCount('terminal')).toBe(0);
     });
 
