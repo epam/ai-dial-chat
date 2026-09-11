@@ -65,15 +65,19 @@ vi.mock('../../components/PromptSelector/usePromptSelectorOverlay', () => ({
   }),
 }));
 /* The real hook needs SkillsProvider/FavoriteApplicationsContext, which this
- * harness does not mount; the stub mirrors its flag-off shape
- * (`useFeatureFlag` is mocked to `false` above). */
+ * harness does not mount; the stub mirrors its flag-off shape. */
 vi.mock('../../components/SkillSelector/useSkillSelectorOverlay', () => ({
   useSkillSelectorOverlay: () => ({
     skillMenuOverlay: undefined,
+    commandMenu: undefined,
     skillCatalogModal: null,
     skillDetailsPanel: null,
-    selectedSkillChips: [],
+    selectedSkillElement: null,
+    selectedSkillPath: null,
+    selectedSkills: undefined,
     selectSkill: vi.fn(),
+    removeSelectedSkill: vi.fn(),
+    renderHistorySkills: () => null,
   }),
 }));
 vi.mock(
