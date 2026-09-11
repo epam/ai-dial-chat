@@ -226,6 +226,63 @@ describe('useConversationExport', () => {
     expect(onWarning).not.toHaveBeenCalled();
   });
 
+  it('fetches the files an agent produced inside a stage and a citation cites', async () => {
+    const { result } = renderExport();
+    getConversation.mockResolvedValue(
+      makeConversation({
+        messages: [
+          {
+            role: 'assistant' as Conversation['messages'][number]['role'],
+            content: '',
+            timestamp: '2026-07-10T00:00:00.000Z',
+            custom_content: {
+              stages: [
+                {
+                  index: 0,
+                  name: 'Generate report',
+                  status: null,
+                  attachments: [
+                    { title: 'chart.png', url: 'files/app-bucket/chart.png' },
+                  ],
+                },
+              ],
+              annotations: [
+                {
+                  body: {
+                    source: {
+                      type: 'attachment' as const,
+                      attachment: {
+                        type: 'application/pdf',
+                        url: 'files/bucket-a/spec.pdf#page=7',
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    );
+    downloadFileRaw.mockResolvedValue({
+      raw: { arrayBuffer: async () => new TextEncoder().encode('bin').buffer },
+    });
+
+    await act(() =>
+      result.current.exportSingle(
+        'bucket-a/gpt-4o__My Chat',
+        'My Chat',
+        ConversationExportMode.WithAttachments,
+      ),
+    );
+
+    expect(downloadFileRaw.mock.calls.map((call) => call[0])).toEqual([
+      { bucket: 'app-bucket', path: 'chart.png' },
+      { bucket: 'bucket-a', path: 'spec.pdf' },
+    ]);
+    expect(onWarning).not.toHaveBeenCalled();
+  });
+
   it('settles at Warning, still delivering the archive, when an attachment cannot be downloaded', async () => {
     const { result } = renderExport();
     getConversation.mockResolvedValue(

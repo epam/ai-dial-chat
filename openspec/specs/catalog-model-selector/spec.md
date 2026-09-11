@@ -188,3 +188,28 @@ This filter SHALL be memoised on the favorites list, and the search query SHALL 
 
 - **WHEN** the user types a query that would also match a favorited toolset
 - **THEN** the toolset is still absent, because filtering by type happens before the query is applied
+
+---
+
+### Requirement: The version label gets the row width the name leaves
+
+A selector row renders the entity name followed by its version label. Because favorited agents routinely repeat a name (`DIAL ChatHub`, `DIAL ChatHub v2`), the version is often the only part of the row that tells two entries apart, so it SHALL NOT be capped at a fixed fraction of the row width.
+
+`DeploymentSelectorPanel.tsx` SHALL lay the pair out in a wrapping flex line: the name keeps its natural width and truncates with its overflow tooltip when it alone exceeds the row, and the version takes the width the name leaves. When the pair no longer fits on one line, the version SHALL move onto a line of its own at full width rather than truncate — the row grows, and nothing is hidden behind a hover.
+
+The version SHALL therefore carry no `max-w-*` cap and no `truncate`. This is a deliberate departure from the shared `ItemHeader`/`AppIdentity` 30% rule, which stands for cards and headers where row height is fixed; a selector row is `h-auto` and can spend a second line.
+
+#### Scenario: A version that fits is shown in full
+
+- **WHEN** a row's name and version together fit the row width
+- **THEN** both render on one line in full, with no ellipsis on the version, whatever fraction of the row the version occupies
+
+#### Scenario: A version that does not fit wraps instead of truncating
+
+- **WHEN** a row's name and version together exceed the row width
+- **THEN** the version wraps onto its own line and stays fully readable without hovering, which is the only behaviour available on a touch device
+
+#### Scenario: An empty version renders no element
+
+- **WHEN** an item's `version` is an empty string
+- **THEN** no version element is rendered, and the row is the name alone

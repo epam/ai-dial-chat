@@ -45,27 +45,48 @@ const renderPanel = (
   );
 
 describe('DeploymentSelectorPanel — long version', () => {
-  it('caps the version at 30% of the row so it cannot overlap the name', () => {
-    renderPanel([
-      {
-        ...makeItem('model-1', CatalogEntityType.Model),
-        version: 'With Google Search Grounding',
-      },
-    ]);
+  const longVersionItem = {
+    ...makeItem('model-1', CatalogEntityType.Model),
+    version: 'With Google Search Grounding',
+  };
+
+  it('gives the version the row width the name leaves instead of a fixed fraction of it', () => {
+    renderPanel([longVersionItem]);
 
     const version = screen.getByText('With Google Search Grounding');
-    expect(version.className).toContain('max-w-[30%]');
-    expect(version.className).toContain('shrink-0');
+    /* Asserting CSS-level layout (not text/role) has no semantic query
+       equivalent — this repo's spec conventions carve out this exact case. */
+    expect(version.className).not.toContain('max-w-');
+    expect(version.className).not.toContain('truncate');
+  });
+
+  it('wraps the version onto its own line rather than truncating it to a hover-only tooltip', () => {
+    renderPanel([longVersionItem]);
+
+    const version = screen.getByText('With Google Search Grounding');
+    expect(version.className).toContain('break-words');
+    /* The wrap rule lives on the name+version wrapper, which the version text
+       node is the only stable handle on. */
+    expect(version.parentElement?.className).toContain('flex-wrap');
+  });
+
+  it('keeps the whole version in the row so it is readable without hovering', () => {
+    renderPanel([longVersionItem]);
+
+    expect(
+      screen.getByRole('menuitemradio', {
+        name: /model-1 With Google Search Grounding/,
+      }),
+    ).toBeTruthy();
   });
 
   it('renders no version element when the item has an empty version', () => {
     renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
 
-    /* Asserting the absence of a CSS-level styling class (not text/role) has
-       no semantic query equivalent — this repo's spec conventions carve out
-       this exact case for container/document.querySelector. */
+    /* Absence of the version element is only observable through the class that
+       styles it, since an empty version has no text to query by. */
     // eslint-disable-next-line testing-library/no-node-access
-    expect(document.querySelector('.max-w-\\[30\\%\\]')).toBeNull();
+    expect(document.querySelector('.dial-tiny-text')).toBeNull();
   });
 });
 

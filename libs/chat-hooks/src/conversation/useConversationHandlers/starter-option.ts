@@ -23,6 +23,10 @@ export const getStarterConversationText = (
 /**
  * Returns submitted text for DIAL starter/form buttons.
  * For submit buttons, `populateText: null` explicitly means "submit no text".
+ * `description` (the schema property's shared intro/question text) is used only
+ * as a fallback when the starter carries no text of its own — it must never
+ * override a starter's own configured prompt, or every button in a group would
+ * submit the same message.
  */
 export const getStarterSubmitText = (
   starter: StarterOption,
@@ -34,5 +38,15 @@ export const getStarterSubmitText = (
     return '';
   }
 
-  return description ?? getStarterPopulateText(starter);
+  return getStarterConversationText(starter, description);
 };
+
+/**
+ * Returns the text shown in the user's message bubble for a selected
+ * starter/form button. Falls back to the button label for submit buttons that
+ * send no text of their own.
+ */
+export const getStarterDisplayText = (
+  starter: StarterOption,
+  description?: string,
+): string => getStarterSubmitText(starter, description) || starter.title;

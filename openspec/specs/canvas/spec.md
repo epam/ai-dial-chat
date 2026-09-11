@@ -65,7 +65,7 @@ All app-level strings are in `AttachmentCanvasI18nKeys` (`apps/chat/src/constant
 | `UnsupportedLabel` | `"Preview is not supported for this file"` |
 | `LoadErrorLabel` | `"Failed to load file"` |
 | `ForbiddenErrorLabel` | `"You don't have permission to access this file"` |
-| `CopyAsMarkdown` | `"Copy markdown"` |
+| `CopyAsMarkdown` | `"Copy as Markdown"` |
 | `Copied` | `"Copied!"` |
 | `HtmlFrameBlocked` | `"This page cannot be displayed in preview"` |
 | `HtmlOpenInNewTab` | `"Open in new tab"` |
@@ -205,7 +205,7 @@ Precedence (via `resolveAttachmentText`): inline base64 `attachment.data` (decod
 - Code blocks use the app's current theme (`codeBlockTheme` prop on `AttachmentCanvasContainer` → forwarded to `MarkdownRenderer`).
 - `MarkdownRenderer` uses logical Tailwind classes (`ps/pe`, `ms/me`, `border-s/e`) internally; no extra RTL handling needed at the canvas layer.
 
-#### Copy markdown button
+#### Copy as Markdown button
 
 - An `IconMarkdown` button is shown to the **left** of the download button in `rightActions` when `content.type === Markdown`.
 - After a successful click the icon switches to `IconCheck` for 2 s, then reverts. The toggle state is managed inside `AttachmentCanvas` (same pattern as `MessageActions`).

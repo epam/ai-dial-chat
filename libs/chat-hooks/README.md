@@ -145,8 +145,10 @@ const {
 // ./conversation
 import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks/conversation';
 
-/* Returns the model deployment id from the most recent `model_changed`
-   status message, or null if the conversation never switched models. */
+/* Returns the deployment the conversation was last running on — scanning
+   backwards, a `model_changed` status message's `new_deployment_id` or a
+   message's own `deploymentId`, whichever comes later. Null when the
+   conversation records neither. */
 const newDeploymentId = getLastDeploymentId(conversation.messages);
 ```
 
@@ -936,7 +938,38 @@ const ChatPage = ({
 state updater, so a host may update its own state from it — for example dropping
 the deleted conversation from a list it renders.
 
-Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`/`isAnswerIncomplete`/`shouldRerunGenerationOnEdit`, and `getStarterConversationText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
+Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`/`isAnswerIncomplete`/`shouldRerunGenerationOnEdit`, and `getStarterConversationText`/`getStarterDisplayText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
+
+The three starter-text helpers share one precedence rule: a starter's own
+`dial:widgetOptions.populateText` always wins, and the schema property's shared
+`description` is only a fallback for a starter that carries no text of its own —
+otherwise every button in a described group would produce the same message.
+`getStarterSubmitText` additionally returns `''` for a submit button whose
+`populateText` is explicitly `null` ("submit no text"), and
+`getStarterDisplayText` falls back to `starter.title` in that case so the user's
+message bubble still shows the button label.
+
+```ts
+import {
+  getStarterDisplayText,
+  getStarterSubmitText,
+} from '@epam/ai-dial-chat-hooks';
+
+const starter = {
+  const: 0,
+  title: 'How does feature X work?',
+  'dial:widgetOptions': {
+    populateText:
+      'How does feature X work, and what are its configuration options?',
+    submit: true,
+    confirmationMessage: null,
+  },
+};
+
+// Both ignore the group description and use the starter's own populateText.
+getStarterSubmitText(starter, 'Follow-Up Questions');
+getStarterDisplayText(starter, 'Follow-Up Questions');
+```
 
 ### useAttachmentValidation
 
@@ -2100,7 +2133,7 @@ const statusMessage = createDeploymentChangedMessage('gpt-4', 'gpt-4o');
 
 ### isMessageStreaming / getLastDeploymentId / messageHasStages / getLastUserMessageToolConfiguration / normalizeResponseFormat
 
-Pure predicates/lookups over a conversation's `Message[]`: whether a message is the actively-streaming assistant response, the last deployment a `model_changed` status message recorded, whether a message carries any stages, the last user message's persisted tool-configuration value, and normalizing a legacy `responseFormat` string to the current enum.
+Pure predicates/lookups over a conversation's `Message[]`: whether a message is the actively-streaming assistant response, the deployment the conversation was last running on (the later of a `model_changed` status message's `new_deployment_id` and a message's own `deploymentId`), whether a message carries any stages, the last user message's persisted tool-configuration value, and normalizing a legacy `responseFormat` string to the current enum.
 
 ```ts
 import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks';
