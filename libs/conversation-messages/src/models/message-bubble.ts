@@ -100,8 +100,8 @@ export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
 
 /** Shared props for user and assistant message bubble components. */
 interface BaseMessageBubbleProps {
-  /** Plain-text (or Markdown) content of the message. */
-  text: string;
+  /** Plain-text (or Markdown) content of the message. When absent, the bubble renders for `beforeContent` alone. */
+  text?: string;
   /** Color and typography overrides applied as CSS custom properties. */
   styles?: MessageBubbleStyles;
   /** Props for the `MessageActions` bar below the bubble. */

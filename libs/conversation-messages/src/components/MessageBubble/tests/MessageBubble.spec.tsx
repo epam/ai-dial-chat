@@ -331,6 +331,7 @@ describe('UserMessageBubble — inline-start slot', () => {
 
     expect(paragraph).toBeTruthy();
     expect(wrapper.className).toContain('me-1');
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
     expect(paragraph.firstChild).toBe(wrapper);
   });
 
@@ -350,6 +351,11 @@ describe('UserMessageBubble — inline-start slot', () => {
     render(<UserMessageBubble text="Hello world" />);
 
     const paragraph = findMessageParagraph('Hello world');
+    /*
+     * The absence of a slot wrapper — a plain span with no ARIA hook — inside
+     * the paragraph cannot be queried semantically, so the check is DOM-level.
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
     expect(paragraph.firstElementChild).toBeNull();
   });
 });

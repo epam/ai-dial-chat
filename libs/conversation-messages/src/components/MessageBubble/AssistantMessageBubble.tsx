@@ -158,7 +158,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                */}
               <div className="cm-bubble-markdown min-w-0 max-w-full">
                 <MDMessageViewer
-                  content={text}
+                  content={text ?? ''}
                   isStreaming={isStreaming}
                   thinkingLabel={thinkingLabel}
                   components={markdownComponents}

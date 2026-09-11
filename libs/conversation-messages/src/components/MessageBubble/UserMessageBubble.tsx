@@ -52,7 +52,10 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     expandedMaxHeight,
     isCollapsed,
     toggleCollapsed,
-  } = useCollapsedText<HTMLParagraphElement>({ text, collapsedLineCount });
+  } = useCollapsedText<HTMLParagraphElement>({
+    text: text ?? '',
+    collapsedLineCount,
+  });
 
   const cssVars = buildCssVars({
     '--cm-bubble-user-bg': colors?.userBackground,
