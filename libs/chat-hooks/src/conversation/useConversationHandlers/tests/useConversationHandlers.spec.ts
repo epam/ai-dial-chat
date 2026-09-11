@@ -415,6 +415,41 @@ describe('useConversationHandlers', () => {
       act(() => result.current.handlers.handleConfirmStarter());
       expect(result.current.startStream).toHaveBeenCalledOnce();
     });
+
+    it("submits the clicked starter's populateText, not the group description", () => {
+      const followUp = {
+        const: 0,
+        title: 'How does feature X work?',
+        'dial:widgetOptions': {
+          populateText:
+            'How does feature X work, and what are its configuration options?',
+          submit: true,
+          confirmationMessage: null,
+        },
+      } as StarterOption;
+      const { result } = renderHook(() => useHarness());
+
+      act(() =>
+        result.current.handlers.handleButtonSelect(
+          followUp,
+          'button',
+          'Follow-Up Questions',
+        ),
+      );
+
+      expect(result.current.startStream).toHaveBeenCalledWith(
+        'bucket/gpt-4o__Hello',
+        'How does feature X work, and what are its configuration options?',
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+      );
+      expect(result.current.conversation?.messages[0].content).toBe(
+        'How does feature X work, and what are its configuration options?',
+      );
+    });
   });
 
   describe('handleUploadAttachment', () => {
