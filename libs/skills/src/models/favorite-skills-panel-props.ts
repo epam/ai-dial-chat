@@ -12,6 +12,8 @@ export interface FavoriteSkillsPanelLabels {
   removeFromFavoritesLabel?: string;
   /** Label for a row tooltip's "View details" action. Defaults to `'View details'`. */
   viewDetailsLabel?: string;
+  /** Hint shown when `searchQuery` filters out every favorite. Defaults to `'No matching skills'`. */
+  noMatchingSkillsLabel?: string;
 }
 
 /** CSS custom-property overrides for the favorites panel. */
@@ -42,6 +44,13 @@ export interface FavoriteSkillsPanelProps {
   onViewDetails: (item: FavoriteSkillItem) => void;
   /** Called with a skill's id each time one of its row's interactive tooltips opens (hover or focus). */
   onItemTooltipOpen?: (id: string) => void;
+  /**
+   * When provided, the panel enters search mode: rows are filtered to names
+   * containing this string case-insensitively and matched names render with a
+   * highlight mark. An empty string shows every row. Omit to show all
+   * favorites unfiltered.
+   */
+  searchQuery?: string;
   /** Localizable string overrides. */
   labels?: FavoriteSkillsPanelLabels;
   /** Color overrides applied as CSS custom properties. */

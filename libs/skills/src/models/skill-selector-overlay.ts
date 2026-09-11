@@ -1,6 +1,6 @@
 import type {
+  CommandMenuConfig,
   MenuOverlayConfig,
-  SelectedEntityChip,
 } from '@epam/ai-dial-conversation-input';
 import type { ComponentType, ReactNode } from 'react';
 import type { SkillListingEntry } from './favorite-skill-item';
@@ -27,6 +27,11 @@ export interface SkillSelectorOverlayLabels {
   backLabel?: string;
   /** Header title of the "Use skill" browse modal. Defaults to `'Use skill'`. */
   catalogModalTitleLabel?: string;
+  /**
+   * Hint rendered in the text area right after the `/` while the slash menu
+   * is open with an empty query. Defaults to `'Type to filter'`.
+   */
+  emptyQueryHintLabel?: string;
   /** Labels forwarded to the favorites panel rendered as the overlay. */
   panelLabels?: FavoriteSkillsPanelLabels;
 }
@@ -78,6 +83,13 @@ export interface UseSkillSelectorOverlayResult {
    */
   skillMenuOverlay?: MenuOverlayConfig;
   /**
+   * The Skills entry for the `commandMenu` prop of
+   * `ConversationInput`/`Input`: typing `/` into an empty textarea opens the
+   * favorites panel in search mode above the input. `undefined` while
+   * `isEnabled` is `false`, disabling the slash menu entirely.
+   */
+  commandMenu?: CommandMenuConfig;
+  /**
    * The browse modal element. Render at a stable level outside the popover
    * (e.g. next to the input); `null` while `isEnabled` is `false`.
    */
@@ -88,13 +100,23 @@ export interface UseSkillSelectorOverlayResult {
    */
   skillDetailsPanel: ReactNode;
   /**
-   * The selected skill as input chip data — at most one entry, replaced on
-   * every selection. Empty while `isEnabled` is `false` or nothing is selected.
+   * The selected skill as a `ChatSkill` element for the conversation input's
+   * `inlineStartSlot` — at most one, replaced on every selection, carrying
+   * the shared tooltip (with the same lazy description fetch as the favorite
+   * rows). The element has no remove control of its own; removal is the
+   * input's Backspace-at-start gesture, wired through `removeSelectedSkill`.
+   * `null` while `isEnabled` is `false` or nothing is selected.
    */
-  selectedSkillChips: SelectedEntityChip[];
+  selectedSkillElement: ReactNode;
   /**
    * Selects a skill by its resource URL (`skills/{bucket}/{path}`), replacing
    * any prior selection.
    */
   selectSkill: (skillId: string) => void;
+  /**
+   * Clears the selected skill. Wire to the input's `onInlineStartRemove` —
+   * Backspace with the caret collapsed at position 0 while the selected
+   * skill's element is shown.
+   */
+  removeSelectedSkill: () => void;
 }

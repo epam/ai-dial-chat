@@ -180,7 +180,7 @@ setting is read at Core startup, so restart DIAL Core after changing it.
 | `SKILL_TRANSFER_TIMEOUT_MS`             | `60000`                        | Timeout for all skills-domain DIAL Core requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `SKILL_ARCHIVE_UPLOAD_MAX_BYTES`        | `20971520`                     | Maximum size (bytes) of the compressed ZIP archive accepted by `POST /api/v1/skills/import` before extraction (default 20 MB); rejected with 413. Distinct from `SKILL_UPLOAD_MAX_TOTAL_BYTES`, which bounds decompressed content                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `ASR_MODEL`                             | —                              | Deployment ID of a dedicated speech-to-text model. When set (together with the `voice-input` feature), the mic button is always shown and recorded audio is transcribed by this model via `POST /api/v1/transcription`. When absent, the mic button is shown only for deployments whose `inputAttachmentTypes` include an audio MIME type, and transcription is handled by the selected chat deployment.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `TRANSCRIBE_SIZE_LIMIT_BYTES`           | `5242880`                      | Maximum audio file size (in bytes) accepted for transcription. The frontend applies this limit to the complete recording before upload. Default is 5 MB.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `TRANSCRIBE_SIZE_LIMIT_BYTES`           | `5242880`                      | Maximum audio file size (in bytes) accepted for transcription. The frontend applies this limit to the complete recording before upload. Default is 5 MB.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `UTILITY_MODEL`                         | —                              | Deployment ID of a utility model for server-side tasks (e.g. LLM conversation naming). Not exposed to the frontend. Required together with `DIAL_API_KEY` and `LLM_CONVERSATION_NAMING_ENABLED=true` to enable automatic title generation after the first assistant reply.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `LLM_CONVERSATION_NAMING_ENABLED`       | `false`                        | When `true` and `UTILITY_MODEL` is set, the backend asynchronously renames conversations after the first assistant reply using the utility model.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `UTILITY_NAMING_TIMEOUT_MS`             | `10000`                        | Timeout in milliseconds for utility-model conversation naming requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -696,6 +696,8 @@ processors, no additional listening port, and no outbound network calls for tele
   response status code. `MetricsInterceptor` records exactly one data point per request, except
   `GET /api/health` (still logged, never recorded) — see `telemetry/excluded-paths.ts`, the same
   exclusion list `otel-sdk.ts` uses for tracing.
+  Runtime gauges report the serving Node.js process's memory, active SSE operations, and
+  generation registry size; see [Runtime memory diagnostics](#runtime-memory-diagnostics).
 - **Prometheus endpoint**: when the `prometheus` metrics exporter is selected, a dedicated,
   unauthenticated HTTP listener starts (default `127.0.0.1:9464`, path `/metrics`), entirely
   independent of the main application port — no new business-API route, no interaction with
@@ -707,7 +709,7 @@ processors, no additional listening port, and no outbound network calls for tele
 - **Shutdown**: `main.ts` calls `app.enableShutdownHooks()`; `TelemetryShutdownService` (a Nest
   `OnApplicationShutdown` provider) flushes and shuts down all telemetry processors, bounded by
   an internal timeout (default 5s) so a hung exporter or unreachable collector can never block
-  container termination.
+  container termination. Runtime metric collection callbacks are removed on shutdown.
 - **Failure mode**: an unreachable OTLP collector never crashes the process, blocks a response,
   or fails a request — it surfaces only as exporter-level warning logs from the OpenTelemetry
   SDK's own retry/backoff logic.
@@ -738,6 +740,83 @@ validator schema only covers application-owned configuration; these are read in
 
 **Not supported**: `OTEL_EXPORTER_OTLP_PROTOCOL` (and per-signal variants) is not read — the
 protocol is fixed to `http/protobuf` in code via the `*-otlp-http` exporter packages.
+
+### Runtime memory diagnostics
+
+To collect memory and active-operation metrics without enabling trace or log export, set these
+existing environment variables on the backend process and restart it:
+
+```dotenv
+OTEL_SDK_DISABLED=false
+OTEL_METRICS_EXPORTER=prometheus
+OTEL_TRACES_EXPORTER=none
+OTEL_LOGS_EXPORTER=none
+```
+
+Scrape the existing `http://127.0.0.1:9464/metrics` listener from the pod's network namespace.
+For a Prometheus scraper outside the pod, also set `OTEL_EXPORTER_PROMETHEUS_HOST=0.0.0.0`,
+configure its scrape target for port `9464`, path `/metrics`, and restrict access with the
+deployment's NetworkPolicy. This unauthenticated listener remains separate from the application
+port. Metrics can also be sent through the existing `otlp` exporter configuration.
+
+| OpenTelemetry instrument              | Prometheus series              | Meaning                                                                                                                                                        |
+| ------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dial.chat.process.memory` (unit `B`) | `dial_chat_process_memory`     | Bytes from one `process.memoryUsage()` call in the Node.js process serving Nest requests, once per metric collection. Each memory `kind` is a separate series. |
+| `dial.chat.sse.active`                | `dial_chat_sse_active`         | Outstanding SSE operations for each `kind`, including setup and cleanup as described below.                                                                    |
+| `dial.chat.generations.active`        | `dial_chat_generations_active` | Number of entries physically retained in the process's generation registry. No application labels.                                                             |
+
+Memory `kind` values are `rss`, `heap_used`, `heap_total`, `external`, and `array_buffers`,
+corresponding to Node.js's `rss`, `heapUsed`, `heapTotal`, `external`, and `arrayBuffers` fields.
+`heap_used` measures used JavaScript heap; `heap_total` measures allocated
+JavaScript heap; `external` includes native memory associated with JavaScript objects;
+`array_buffers` includes `ArrayBuffer`/`SharedArrayBuffer` allocations and Node.js `Buffer`
+storage. **`array_buffers` is already included in `external`**. RSS describes resident memory
+for the whole process, and these series overlap: do not sum them into a total. A pod memory
+panel may also include other containers or memory outside this process.
+
+`client_channel` and `conversation_watch` start counting before the asynchronous subscribe/watch
+setup and stop when the handler settles. If the client has already disconnected but upstream
+work has not finished, the operation remains counted. `generation_attach` counts the attached
+subscription until its cleanup runs, even after its handler returns. These counts are not a
+count of open browser connections. Ordinary completion-response delivery is not part of the
+SSE gauge; registered generations have their own gauge. On application shutdown, registered
+generations emit a stopped terminal event so attached subscriptions can run their cleanup.
+
+The generation gauge includes stopped or aborted entries while persistence is still pending.
+Entries stop contributing when they are removed on completion, error, stale eviction,
+replacement, or shutdown. It measures the registry, not every upstream task that might still
+be running after its entry was removed. Neither operation gauge includes user, conversation,
+or deployment identifiers.
+
+Runtime collection callbacks are registered after SDK startup only when a metrics exporter is
+enabled, and removed on shutdown. They sample during exporter collection rather than starting
+another sampling timer. Disabling the SDK or setting `OTEL_METRICS_EXPORTER=none` disables these
+runtime observations. These metrics help correlate retained memory with active work; adding
+them does not itself fix memory leaks.
+
+For Grafana, the following PromQL keeps each pod and memory kind separate. These examples
+assume the Prometheus scrape configuration adds a `pod` label and the dashboard has a `$pod`
+variable; the application does not add Kubernetes labels. Add your deployment's `job`,
+`namespace`, or `cluster` selectors as needed.
+
+```promql
+dial_chat_process_memory{pod=~"$pod"}
+```
+
+Use the panel's bytes unit and legend `{{pod}} {{kind}}`. Compare it with two count panels:
+
+```promql
+dial_chat_sse_active{pod=~"$pod"}
+```
+
+```promql
+dial_chat_generations_active{pod=~"$pod"}
+```
+
+Use legends `{{pod}} {{kind}}` and `{{pod}}`, respectively. Growing `heap_used` with stable
+operation counts directs investigation toward retained JavaScript objects; growing `external`
+or `array_buffers` directs it toward buffers. A rising RSS alone cannot establish a JavaScript
+heap leak.
 
 ### Local verification
 

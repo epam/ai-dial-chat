@@ -324,7 +324,9 @@
   "skillSelector": {
     "addMenuLabel": "Skills",
     "emptyHint": "Star a skill to pin it here",
+    "emptyQueryHint": "Type to filter",
     "modalTitle": "Use skill",
+    "noMatchingSkillsLabel": "No matching skills",
     "viewDetailsLabel": "View details"
   },
   "notFound": {

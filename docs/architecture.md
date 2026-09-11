@@ -279,8 +279,10 @@ Configured at startup:
 - OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)
   — off by default (`OTEL_SDK_DISABLED=true`); when enabled, adds a `traceparent` response header
   on traced routes and an optional dedicated Prometheus scrape listener (default `:9464/metrics`,
-  independent of the main application port) — see `apps/chat-api/README.md`'s Observability
-  section
+  independent of the main application port). Metrics include process memory, outstanding SSE
+  operations, and generation registry size, collected in the serving process; see
+  [backend observability](../apps/chat-api/README.md#observability) and
+  [runtime memory diagnostics](../apps/chat-api/README.md#runtime-memory-diagnostics).
 
 NestJS conventions (domain structure, thin controllers, Swagger decorators, Logger, ConfigService, DTO validation) are defined in `apps/chat-api/AGENTS.md` — read it before implementing anything in `apps/chat-api/**`.
 

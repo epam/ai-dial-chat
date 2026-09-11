@@ -20,10 +20,9 @@ import {
   type ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
 import type {
+  CommandMenuConfig,
   ConversationInputStyles,
   MenuOverlayConfig,
-  SelectedEntityChip,
-  SelectedEntityChipsLabels,
   ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import type { FC, ReactNode } from 'react';
@@ -103,12 +102,22 @@ interface Props {
    */
   menuOverlays?: MenuOverlayConfig[];
   /**
-   * Selected entities rendered as removable chips where the tool chips
-   * render (e.g. the picked skill), passed through to `ConversationInput`.
+   * Host-supplied content rendered inside the text area at its inline-start
+   * (e.g. the selected skill's `ChatSkill` element), passed through to
+   * `ConversationInput`.
    */
-  selectedEntities?: SelectedEntityChip[];
-  /** Labels for the selected-entity chips, passed through to `ConversationInput`. */
-  selectedEntityChipLabels?: SelectedEntityChipsLabels;
+  inlineStartSlot?: ReactNode;
+  /**
+   * Called when Backspace is pressed with the caret collapsed at position 0
+   * while `inlineStartSlot` is present (the skill element's remove gesture),
+   * passed through to `ConversationInput`.
+   */
+  onInlineStartRemove?: () => void;
+  /**
+   * Host-injected slash-command menu (e.g. the Skills selector), passed
+   * through to `ConversationInput`.
+   */
+  commandMenu?: CommandMenuConfig;
   inputStyles?: ConversationInputStyles;
   /** Called on first send. Rejecting shows the standard create-conversation error notification. */
   onCreateConversation: (
@@ -139,8 +148,9 @@ const NewConversationComposer: FC<Props> = ({
   message,
   messageRevision,
   menuOverlays,
-  selectedEntities,
-  selectedEntityChipLabels,
+  inlineStartSlot,
+  onInlineStartRemove,
+  commandMenu,
   inputStyles,
   onCreateConversation,
   toolsMenuItems,
@@ -488,8 +498,9 @@ const NewConversationComposer: FC<Props> = ({
           onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
           menuOverlays={menuOverlays}
-          selectedEntities={selectedEntities}
-          selectedEntityChipLabels={selectedEntityChipLabels}
+          inlineStartSlot={inlineStartSlot}
+          onInlineStartRemove={onInlineStartRemove}
+          commandMenu={commandMenu}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           canRemoveTools={isRemovableToolsEnabled}
