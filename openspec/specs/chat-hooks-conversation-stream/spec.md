@@ -23,6 +23,28 @@ an `/api` path, CSRF handling, or import an app `server-api` module.
   stoppable
 - **THEN** the only call made is `transport.stopCompletion({ generationId, path })`
 
+### Requirement: A generation conflict is shown as a host-supplied message
+When the transport reports a `GenerationConflictError` — the backend
+rejected the completion because this conversation is already generating,
+typically from another browser tab of the same session — the hook SHALL
+write its `generationConflictMessage` parameter (defaulting to
+`DEFAULT_GENERATION_CONFLICT_MESSAGE`) to the placeholder message's
+`streamErrorMessage` instead of the raw error text, and SHALL otherwise
+settle the generation exactly as any other stream error does. Every other
+error SHALL keep reporting its own `error.message`, so a transport failure
+is never disguised as a conflict.
+
+#### Scenario: Conflict shows the host's message
+- **WHEN** `onError` receives a `GenerationConflictError`
+- **THEN** the assistant placeholder's `streamErrorMessage` is the
+  `generationConflictMessage` the host supplied, and `isStreaming` /
+  `canStopStreaming` return to `false` so the composer is usable again
+
+#### Scenario: A non-conflict error is unaffected
+- **WHEN** `onError` receives any other `Error`
+- **THEN** the assistant placeholder's `streamErrorMessage` is that error's
+  own `message`
+
 ### Requirement: Per-path streaming state with stale-chunk rejection
 The hook SHALL track streaming state per conversation path (not as a
 single boolean) and SHALL reject a chunk whose generation id does not

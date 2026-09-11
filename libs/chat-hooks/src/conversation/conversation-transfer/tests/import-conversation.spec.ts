@@ -224,6 +224,7 @@ describe('rebaseConversationId', () => {
       id: 'conversations/59CAnBu6LZrtfagTrHaP2rJhuMLT3rYQS7UkWevuqKXu1dB4gL6cYw6Msobg7Kqs9j/chathub-claude4__requirements.txt',
       folderId:
         'conversations/59CAnBu6LZrtfagTrHaP2rJhuMLT3rYQS7UkWevuqKXu1dB4gL6cYw6Msobg7Kqs9j',
+      name: 'requirements.txt',
     });
     const { conversation: result, subPath } = rebaseConversationId(
       conversation,
@@ -237,6 +238,152 @@ describe('rebaseConversationId', () => {
     expect(subPath).toMatch(
       /^chathub-claude4__requirements\.txt__[0-9a-f-]{36}$/,
     );
+  });
+
+  /*
+   * Issue #8668: both chats export the *initial*, first-message-derived title
+   * in the filename and keep the current one only in `name`. The list derives
+   * a row's title from the filename for every item it does not read back, so
+   * the filename has to carry the authoritative name.
+   */
+  it("writes the conversation's own name into the filename, replacing the exported first-message title", () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-5__analyze this document and generate a test__10a6e7c8-1896-4d65-89bc-c158e23a304e',
+      folderId: 'old-bucket',
+      name: 'Self-evaluation quiz for chapter 1 on numbers',
+    });
+    const { conversation: result, subPath } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(subPath).toMatch(
+      /^gpt-5__Self-evaluation quiz for chapter 1 on numbers__[0-9a-f-]{36}$/,
+    );
+    expect(result.id).toBe(`new-bucket/${subPath}`);
+    expect(subPath).not.toContain('analyze this document');
+  });
+
+  it('replaces the title of an old-chat filename that carries no trailing uuid', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__hello',
+      folderId: 'old-bucket',
+      name: 'Greeting and assistance inquiry',
+    });
+    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
+
+    expect(subPath).toMatch(
+      /^gpt-4o__Greeting and assistance inquiry__[0-9a-f-]{36}$/,
+    );
+  });
+
+  it('keeps a title containing the __ separator intact', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__a__b__550e8400-e29b-41d4-a716-446655440000',
+      folderId: 'old-bucket',
+      name: 'left__right',
+    });
+    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
+
+    expect(subPath).toMatch(/^gpt-4o__left__right__[0-9a-f-]{36}$/);
+  });
+
+  it('preserves a versioned application deployment id and its version suffix', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/applications/app-bucket/my-app__1.0.0__what can you do?__550e8400-e29b-41d4-a716-446655440000',
+      folderId: 'old-bucket',
+      model: { id: 'applications/app-bucket/my-app__1.0.0' },
+      name: 'Capabilities overview',
+    });
+    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
+
+    expect(subPath).toMatch(
+      /^applications\/app-bucket\/my-app__1\.0\.0__Capabilities overview__[0-9a-f-]{36}$/,
+    );
+  });
+
+  it('treats a numeric title outside an applications path as a title, not a version suffix', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__1.0__550e8400-e29b-41d4-a716-446655440000',
+      folderId: 'old-bucket',
+      name: 'Number sequence inquiry',
+    });
+    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
+
+    expect(subPath).toMatch(/^gpt-4o__Number sequence inquiry__[0-9a-f-]{36}$/);
+  });
+
+  it('strips characters DIAL Core rejects from the name and stores the sanitized one', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__hello',
+      folderId: 'old-bucket',
+      name: 'Q1: revenue/cost {draft}',
+    });
+    const { conversation: result, subPath } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(subPath).toMatch(/^gpt-4o__Q1 revenuecost draft__[0-9a-f-]{36}$/);
+    /* The stored name must equal the filename title, so the list renders the
+     * same string whether or not it read the body back. */
+    expect(result.name).toBe('Q1 revenuecost draft');
+  });
+
+  it('keeps only the first non-empty line of a multi-line name', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__hello',
+      folderId: 'old-bucket',
+      name: '\n  First line  \nSecond line',
+    });
+    const { conversation: result, subPath } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(subPath).toMatch(/^gpt-4o__First line__[0-9a-f-]{36}$/);
+    expect(result.name).toBe('First line');
+  });
+
+  it('truncates a name longer than 255 utf-8 bytes', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__hello',
+      folderId: 'old-bucket',
+      name: 'a'.repeat(300),
+    });
+    const { conversation: result } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(result.name).toBe('a'.repeat(255));
+  });
+
+  it('falls back to the exported filename title when the name sanitizes to nothing', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__hello__550e8400-e29b-41d4-a716-446655440000',
+      folderId: 'old-bucket',
+      name: '///',
+    });
+    const { conversation: result, subPath } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(subPath).toMatch(/^gpt-4o__hello__[0-9a-f-]{36}$/);
+    /* Nothing usable to write back, so the source name is left untouched. */
+    expect(result.name).toBe('///');
+  });
+
+  it('only re-suffixes a filename that has no __ separator at all', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/legacy-name',
+      folderId: 'old-bucket',
+      name: 'Some Name',
+    });
+    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
+
+    expect(subPath).toMatch(/^legacy-name__[0-9a-f-]{36}$/);
   });
 });
 
