@@ -273,16 +273,6 @@ const DeploymentSelectorPanel: FC<Props> = ({
             />
           }
           label={
-            /*
-              The version is what tells same-named agents apart, so it is never
-              capped at a fraction of the row: it takes whatever width the name
-              leaves, and `flex-wrap` moves it onto a line of its own once the
-              pair genuinely stops fitting. Wrapping rather than truncating is
-              what keeps the value readable on touch, where the overflow
-              tooltip the row used to depend on cannot be opened at all.
-              `whitespace-normal` undoes the `truncate` MenuItem puts on the
-              row, which would otherwise keep the version on one nowrap line.
-            */
             <span className="flex min-w-0 flex-1 flex-wrap items-start gap-x-1.5 whitespace-normal">
               {query.trim() ? (
                 <Highlight
