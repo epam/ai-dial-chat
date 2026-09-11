@@ -1483,8 +1483,7 @@ dialOverlayTest(
           status: UploadStatus.LOADED,
           isMessageStreaming: false,
           createdAt: updateRequestResponse.response.createdAt,
-          //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4173
-          // isNameChanged: true,
+          isNameChanged: true,
           bucket: updateRequestResponse.response.bucket,
           parentPath: updateRequestResponse.response.parentPath,
         };
