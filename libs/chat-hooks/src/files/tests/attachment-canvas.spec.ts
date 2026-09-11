@@ -16,6 +16,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AttachmentCanvasUrlResolvers } from '../attachment-canvas';
 import {
+  annotationToOoxmlCanvasContent,
   annotationToPdfCanvasContent,
   clearAttachmentCache,
   hasAttachmentTextSource,
@@ -35,6 +36,22 @@ import {
  * doesn't resolve outside a bundler. Only the enum members this spec (and
  * the module under test) actually reach for are provided here.
  */
+const MOCK_OOXML_MIME_TO_FILE_TYPE: Record<string, string> = {
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    'docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+    'pptx',
+  'text/csv': 'csv',
+};
+
+const MOCK_OOXML_EXTENSION_TO_FILE_TYPE: Record<string, string> = {
+  docx: 'docx',
+  xlsx: 'xlsx',
+  pptx: 'pptx',
+  csv: 'csv',
+};
+
 vi.mock('@epam/ai-dial-attachment-canvas', () => ({
   AttachmentContentType: {
     Error: 'error',
@@ -55,6 +72,20 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
     Docx: 'docx',
     Pptx: 'pptx',
     Xlsx: 'xlsx',
+  },
+  OoxmlHighlightKind: {
+    DocxTextRange: 'docxTextRange',
+    PptxTextRange: 'pptxTextRange',
+    XlsxCellRange: 'xlsxCellRange',
+  },
+  getOoxmlFileType: (name: string, mimeType?: string) => {
+    const normalized = mimeType?.split(';', 1)[0].trim().toLowerCase();
+    if (normalized != null && MOCK_OOXML_MIME_TO_FILE_TYPE[normalized]) {
+      return MOCK_OOXML_MIME_TO_FILE_TYPE[normalized];
+    }
+    const dot = name.lastIndexOf('.');
+    if (dot === -1) return undefined;
+    return MOCK_OOXML_EXTENSION_TO_FILE_TYPE[name.slice(dot + 1).toLowerCase()];
   },
 }));
 
@@ -580,6 +611,173 @@ describe('annotationToPdfCanvasContent', () => {
     expect(annotationToPdfCanvasContent(annotation, [], resolvers)?.page).toBe(
       5,
     );
+  });
+});
+
+describe('annotationToOoxmlCanvasContent', () => {
+  const officeAnnotation = (
+    id: string,
+    selector: unknown,
+    options: { url?: string; mimeType?: string; title?: string } = {},
+  ): Annotation => {
+    const {
+      url = 'files/bucket/report.docx',
+      mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      title = 'report.docx',
+    } = options;
+    return {
+      target: { selector: { type: 'html_tag', tag: 'cit', id } },
+      body: {
+        title,
+        source: {
+          type: 'attachment',
+          attachment: { type: mimeType, url, title },
+        },
+        selector: selector as NonNullable<Annotation['body']>['selector'],
+      },
+    };
+  };
+
+  const docxSelector = (overrides: Record<string, unknown> = {}) => ({
+    type: 'docx_text_range',
+    story: 'body',
+    path: [3, 1],
+    start: 0,
+    end: 5,
+    text: 'Hello',
+    ...overrides,
+  });
+
+  it('returns content with highlights and a selectedHighlightId present in highlights, for a DOCX citation', () => {
+    const clicked = officeAnnotation('a', docxSelector());
+    const result = annotationToOoxmlCanvasContent(
+      clicked,
+      [clicked],
+      resolvers,
+    );
+
+    expect(result?.format).toBe(OoxmlFileType.Docx);
+    expect(result?.highlights).toHaveLength(1);
+    expect(result?.selectedHighlightId).toBe(result?.highlights?.[0].id);
+  });
+
+  it('returns content with the correct format for a PPTX citation and an XLSX citation', () => {
+    const pptx = officeAnnotation(
+      'a',
+      {
+        type: 'pptx_text_range',
+        slide: 1,
+        shape_id: '7',
+        start: 0,
+        end: 5,
+        text: 'Hello',
+      },
+      {
+        url: 'files/bucket/deck.pptx',
+        mimeType:
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      },
+    );
+    const xlsx = officeAnnotation(
+      'b',
+      { type: 'excel_rc_range', sheet: 'Sheet1', start: { row: 1, col: 1 } },
+      {
+        url: 'files/bucket/ledger.xlsx',
+        mimeType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    );
+
+    expect(
+      annotationToOoxmlCanvasContent(pptx, [pptx], resolvers)?.format,
+    ).toBe(OoxmlFileType.Pptx);
+    expect(
+      annotationToOoxmlCanvasContent(xlsx, [xlsx], resolvers)?.format,
+    ).toBe(OoxmlFileType.Xlsx);
+  });
+
+  it('returns null for a CSV source', () => {
+    const csv = officeAnnotation('a', docxSelector(), {
+      url: 'files/bucket/data.csv',
+      mimeType: 'text/csv',
+    });
+
+    expect(annotationToOoxmlCanvasContent(csv, [csv], resolvers)).toBeNull();
+  });
+
+  it('returns null for a non-Office source', () => {
+    const annotation: Annotation = {
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: { type: 'text/plain', url: 'files/bucket/notes.txt' },
+        },
+      },
+    };
+    expect(
+      annotationToOoxmlCanvasContent(annotation, [annotation], resolvers),
+    ).toBeNull();
+  });
+
+  it('returns content with highlights and selectedHighlightId both undefined when the only selector is malformed', () => {
+    const clicked = officeAnnotation(
+      'a',
+      docxSelector({ end: 'not-a-number' }),
+    );
+    const result = annotationToOoxmlCanvasContent(
+      clicked,
+      [clicked],
+      resolvers,
+    );
+
+    expect(result?.highlights).toBeUndefined();
+    expect(result?.selectedHighlightId).toBeUndefined();
+  });
+
+  it('holds the sibling in highlights, with selectedHighlightId undefined, when the clicked annotation resolves to nothing but a sibling resolves', () => {
+    const clicked = officeAnnotation(
+      'a',
+      docxSelector({ end: 'not-a-number' }),
+    );
+    const sibling = officeAnnotation('b', docxSelector());
+    const result = annotationToOoxmlCanvasContent(
+      clicked,
+      [clicked, sibling],
+      resolvers,
+    );
+
+    expect(result?.highlights).toHaveLength(1);
+    expect(result?.selectedHighlightId).toBeUndefined();
+  });
+
+  it('resolves a DIAL files/… id through resolveDialFileDownloadUrl, and returns null when the resolver returns undefined', () => {
+    const resolvable = officeAnnotation('a', docxSelector());
+    expect(
+      annotationToOoxmlCanvasContent(resolvable, [resolvable], resolvers)?.url,
+    ).toBe('/download?path=report.docx');
+
+    const unresolvable = officeAnnotation('a', docxSelector(), {
+      url: 'files/other-bucket/report.docx',
+    });
+    expect(
+      annotationToOoxmlCanvasContent(unresolvable, [unresolvable], resolvers),
+    ).toBeNull();
+  });
+
+  it('omits highlights rather than setting [] when nothing resolves', () => {
+    const clicked = officeAnnotation(
+      'a',
+      docxSelector({ end: 'not-a-number' }),
+    );
+    const result = annotationToOoxmlCanvasContent(
+      clicked,
+      [clicked],
+      resolvers,
+    );
+
+    expect(result).not.toBeNull();
+    expect(result).not.toHaveProperty('highlights');
+    expect(result).not.toHaveProperty('selectedHighlightId');
   });
 });
 

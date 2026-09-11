@@ -9,9 +9,9 @@ import {
   dialFolderPathToAttachment,
   findDeploymentByIdOrReference,
   getQuickAppConversationStarters,
-  isMessageChanged,
   isQuickAppSchema,
   referenceAttachmentToPdfCanvasContent,
+  shouldRerunGenerationOnEdit,
   useAttachmentValidation,
   useChatSettingsFormConfig,
 } from '@epam/ai-dial-chat-hooks';
@@ -634,15 +634,20 @@ const ConversationView: FC<Props> = ({
       newAttachments: Attachment[],
     ) => {
       /*
-       * handleEditMessage no-ops if a generation is in flight or the text is
-       * unchanged (isMessageChanged mirrors that same check) — skip arming
-       * in either case so a later, unrelated update can't consume a stale index.
+       * handleEditMessage no-ops if a generation is in flight, or if nothing
+       * changed and the existing answer is complete (shouldRerunGenerationOnEdit
+       * mirrors that same check) — skip arming in either case so a later,
+       * unrelated update can't consume a stale index.
        */
-      const originalMessage = messages[messageIndex];
       if (
         !isAssistantTyping &&
-        originalMessage != null &&
-        isMessageChanged(originalMessage, text, keptAttachments, newAttachments)
+        shouldRerunGenerationOnEdit(
+          messages,
+          messageIndex,
+          text,
+          keptAttachments,
+          newAttachments,
+        )
       ) {
         armAnchor(messageIndex);
       }

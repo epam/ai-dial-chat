@@ -727,7 +727,7 @@ const VoiceComposer = ({
 
 ### useConversationExport / useConversationImport
 
-A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Both share the same job-queue semantics — `jobs`, `cancelJob`, `dismissJob`, `retryJob`, `dismissAll` — and report determinate per-job progress plus outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. A transfer that delivers its file but skips some attachments settles at `Warning` carrying a `warningCode`, so a partial result is distinguishable from a clean one without reading the event stream. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text. `cancelJob` and `dismissJob` differ: both abort the job's in-flight requests, but `cancelJob` leaves the job in `jobs` with status `Canceled` so the UI can keep showing it, while `dismissJob` removes it.
+A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Each imported conversation is stored under a fresh `{deploymentId}__{title}__{uuid}` path — collision-free, and with the conversation's own `name` (sanitized to what DIAL Core accepts in a resource name, and reported back that way in `onSuccess`) as the title segment rather than the first-message title the export file embedded. Both share the same job-queue semantics — `jobs`, `cancelJob`, `dismissJob`, `retryJob`, `dismissAll` — and report determinate per-job progress plus outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. A transfer that delivers its file but skips some attachments settles at `Warning` carrying a `warningCode`, so a partial result is distinguishable from a clean one without reading the event stream. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text. `cancelJob` and `dismissJob` differ: both abort the job's in-flight requests, but `cancelJob` leaves the job in `jobs` with status `Canceled` so the UI can keep showing it, while `dismissJob` removes it.
 
 ```tsx
 import { ConversationTransferErrorCode } from '@epam/ai-dial-chat-shared';
@@ -935,7 +935,7 @@ const ChatPage = ({
 state updater, so a host may update its own state from it — for example dropping
 the deleted conversation from a list it renders.
 
-Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`, and `getStarterConversationText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
+Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`/`isAnswerIncomplete`/`shouldRerunGenerationOnEdit`, and `getStarterConversationText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
 
 ### useAttachmentValidation
 
@@ -2699,7 +2699,7 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 | `onDeleteSuccess`                                                             | `(item: CatalogItem) => void`                               | Called after a successful delete, so the host can notify with its own entity/operation vocabulary. |
 | `labels`                                                                      | `CatalogEditNavigationLabels`                               | Localized notification and Create-menu copy, resolved by the host.                                 |
 | `onNotify`                                                                    | `(notification: CatalogEditNavigationNotification) => void` | Called to surface a host notification when a delete fails.                                         |
-| `triggerSkillArchivePicker`                                                   | `() => void`                                                | Opens the file picker used to upload a skill archive from the Create menu.                         |
+| `onSkillUploadClick`                                                          | `() => void`                                                | Called when the Create menu's Skill → Upload option is picked.                                     |
 
 `CatalogEditNavigationUrls` has one URL-builder pair per item kind — `buildPromptEditUrl(promptId)` / `buildPromptCreateUrl()`, and the same edit/create pair for `Skill`, `Toolset`, and `CustomApp` — plus `buildQuickAppEditUrl(schemaId, appId)` / `buildQuickAppCreateUrl(schemaId)`.
 
@@ -2757,7 +2757,7 @@ const { handleEdit, handleDelete, createOptions } = useCatalogEditNavigation({
   onDeleteSuccess: (item) => notifyOperationSuccess(item),
   labels,
   onNotify: showErrorNotification,
-  triggerSkillArchivePicker,
+  onSkillUploadClick: openSkillUploadDialog,
 });
 ```
 
@@ -3164,6 +3164,30 @@ Pass the exact annotation object selected in the citation popup. The mapper find
 its group by membership (cit groups can share a URL), filters highlights to that
 annotation's PDF, and sets `page` from its first valid `pdf_bbox` body selector.
 Missing/invalid pages leave `page` unset; nonexistent highlight IDs are omitted.
+
+Office (DOCX/PPTX/XLSX) citation previews use
+`annotationToOoxmlCanvasContent(annotation, annotations, resolvers)` — the sibling
+mapper for `OoxmlCanvasContent`. Unlike the PDF mapper's `groups` parameter, it takes
+the message's full resolved annotation list and gathers same-source annotations
+across it (`gatherSameSourceAnnotations` from `@epam/ai-dial-quotations`), so a
+citation behind a different marker that cites the same document is still included.
+Returns `null` when there is no source attachment, the source is not a format
+`@silurus/ooxml` renders as DOCX/XLSX/PPTX (a CSV source returns `null` too — citation
+highlighting targets Office documents only), or no URL resolves. A missing or
+unresolvable selector still returns content — just with no `highlights` field —
+rather than `null`, so the document opens without a highlight instead of falling
+through to a plain attachment open.
+
+```ts
+import { annotationToOoxmlCanvasContent } from '@epam/ai-dial-chat-hooks';
+
+const content = annotationToOoxmlCanvasContent(
+  clickedAnnotation,
+  messageAnnotations,
+  resolvers,
+);
+if (content != null) openCanvas(content, fileName);
+```
 
 ### attachmentDtoToDisplayAttachment / attachmentDtosToDisplayAttachments / annotationToDisplayAttachment
 

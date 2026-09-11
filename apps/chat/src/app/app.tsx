@@ -569,6 +569,12 @@ const App: FC = () => {
               tableCopyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
               tableCopiedLabel: t(ButtonsI18nKeys.Copied),
               tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
+              ooxmlHighlightsLabel: t(
+                AttachmentCanvasI18nKeys.OoxmlHighlightsLabel,
+              ),
+              ooxmlHighlightNavigatedLabel: t(
+                AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
+              ),
             }}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}

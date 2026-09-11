@@ -11,6 +11,7 @@ import {
   AttachmentContentType,
   AttachmentErrorType,
   OoxmlFileType,
+  OoxmlHighlightKind,
 } from '../types/attachment-canvas';
 
 /** Content payload for plain-text attachments. */
@@ -67,6 +68,72 @@ export interface PdfCanvasContent {
   page?: number;
 }
 
+/** A cited character range inside a DOCX story, addressed by story name and source-tree path. */
+export interface OoxmlDocxHighlightLocation {
+  /** Discriminates this location within `OoxmlHighlightLocation`. */
+  kind: OoxmlHighlightKind.DocxTextRange;
+  /** Name of the DOCX story the range lives in, as an opaque string (only `'body'` is confirmed upstream). */
+  story: string;
+  /** Source-tree element indices identifying the paragraph, matched element-wise. */
+  path: number[];
+  /** Inclusive start character offset within the story's matched text. */
+  start: number;
+  /** Exclusive end character offset, already converted from the wire's inclusive `end`. */
+  endExclusive: number;
+  /** The cited text, compared against the text resolved over `[start, endExclusive)`. */
+  text: string;
+}
+
+/** A cited character range inside a single shape on one PPTX slide. */
+export interface OoxmlPptxHighlightLocation {
+  /** Discriminates this location within `OoxmlHighlightLocation`. */
+  kind: OoxmlHighlightKind.PptxTextRange;
+  /** 1-based slide number. */
+  slide: number;
+  /** Shape identifier, compared as a string against the run's own `shapeId`. */
+  shapeId: string;
+  /** Inclusive start character offset within the shape's matched text. */
+  start: number;
+  /** Exclusive end character offset, already converted from the wire's inclusive `end`. */
+  endExclusive: number;
+  /** The cited text, compared against the text resolved over `[start, endExclusive)`. */
+  text: string;
+}
+
+/** A 1-based cell address, matching `@silurus/ooxml`'s own `CellAddress`. */
+export interface OoxmlCellAddress {
+  /** 1-based row number. */
+  row: number;
+  /** 1-based column number. */
+  col: number;
+}
+
+/** A cited cell, or contiguous same-row cell range, on a named XLSX sheet. */
+export interface OoxmlXlsxHighlightLocation {
+  /** Discriminates this location within `OoxmlHighlightLocation`. */
+  kind: OoxmlHighlightKind.XlsxCellRange;
+  /** Sheet name, matched exactly against the workbook's own sheet names. */
+  sheet: string;
+  /** First cell of the range. 1-based, passed to the viewer unconverted. */
+  start: OoxmlCellAddress;
+  /** Last cell of the range, on the same row as `start`. Omitted for a single cell. */
+  end?: OoxmlCellAddress;
+}
+
+/** A cited location inside an Office document, in document coordinates. */
+export type OoxmlHighlightLocation =
+  | OoxmlDocxHighlightLocation
+  | OoxmlPptxHighlightLocation
+  | OoxmlXlsxHighlightLocation;
+
+/** One citation's highlight: the locations it resolved to, under a stable id. */
+export interface OoxmlHighlight {
+  /** Stable id, used to mark exactly one highlight selected. */
+  id: string;
+  /** One or more locations — a single citation may carry several selectors. */
+  locations: OoxmlHighlightLocation[];
+}
+
 /** Content payload for OOXML document and CSV spreadsheet attachments. */
 export interface OoxmlCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
@@ -75,6 +142,10 @@ export interface OoxmlCanvasContent {
   url: string;
   /** The document format used to select and configure the format-specific renderer. */
   format: OoxmlFileType;
+  /** Cited locations to draw over the document. Omitted, never `[]`, when there is nothing to highlight. */
+  highlights?: OoxmlHighlight[];
+  /** Id of the highlight to navigate to and emphasise. Omitted when the clicked citation resolved to no location. */
+  selectedHighlightId?: string;
 }
 
 /** Content payload for audio file attachments. */
@@ -224,6 +295,10 @@ export interface AttachmentCanvasColors {
   ooxmlFormulaBackground?: string;
   /** Text color of the XLSX formula panel. Defaults to `--text-primary`. */
   ooxmlFormulaText?: string;
+  /** Border color of a cited-location highlight rectangle. Defaults to `--stroke-accent`. */
+  ooxmlHighlightBorder?: string;
+  /** Fill color of a cited-location highlight rectangle. Defaults to `transparent`, so the cited text keeps its own contrast. */
+  ooxmlHighlightBackground?: string;
   /** Text color of the collapsed-content ellipsis. Defaults to `--text-secondary`. */
   jsonCollapsedText?: string;
   /** Background color of the collapsed-content ellipsis. Defaults to `--bg-layer-raised`. */
@@ -282,6 +357,8 @@ export interface AttachmentCanvasLabels {
   ariaLabel: string;
   /** Accessible label for the close button. Defaults to `'Close'`. */
   closeLabel?: string;
+  /** Accessible label for the panel's drag-to-resize handle. Defaults to `'Resize panel'`. */
+  resizeLabel?: string;
   /** Message shown in the canvas body when the content type is `Unsupported`. Defaults to `'Preview is not supported for this file'`. */
   unsupportedLabel?: string;
   /** Message shown in the canvas body when content type is `Error` with `errorType: LoadFailed`. Defaults to `'Failed to load file'`. */
@@ -346,6 +423,10 @@ export interface AttachmentCanvasLabels {
   tableCopiedLabel?: string;
   /** Label for downloading a Markdown table as CSV. */
   tableDownloadCsvLabel?: string;
+  /** Accessible name for the OOXML citation-highlights overlay region. Defaults to `'Cited locations'`. */
+  ooxmlHighlightsLabel?: string;
+  /** Status announced once navigation to the selected OOXML citation highlight completes. Defaults to `'Scrolled to the cited location'`. */
+  ooxmlHighlightNavigatedLabel?: string;
 }
 
 /** Props for the AttachmentCanvas component. */
@@ -431,6 +512,8 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'tableCopyMarkdownLabel'
   | 'tableCopiedLabel'
   | 'tableDownloadCsvLabel'
+  | 'ooxmlHighlightsLabel'
+  | 'ooxmlHighlightNavigatedLabel'
 >;
 
 /** Props for the `AttachmentCanvasBody` component. */

@@ -886,6 +886,8 @@ export enum AttachmentCanvasI18nKeys {
   XlsxFormulaLabel = 'attachmentCanvas.xlsxFormulaLabel',
   CodeContentLoadingLabel = 'attachmentCanvas.codeContentLoadingLabel',
   CodeContentErrorLabel = 'attachmentCanvas.codeContentErrorLabel',
+  OoxmlHighlightsLabel = 'attachmentCanvas.ooxmlHighlightsLabel',
+  OoxmlHighlightNavigatedLabel = 'attachmentCanvas.ooxmlHighlightNavigatedLabel',
 }
 
 export enum AnnouncementBannerI18nKeys {
@@ -1034,6 +1036,10 @@ export enum SkillEditorI18nKeys {
 
 export enum SkillArchiveImportI18nKeys {
   FileInputAriaLabel = 'skillArchiveImport.fileInputAriaLabel',
+  DialogTitle = 'skillArchiveImport.dialog.title',
+  DialogDropZoneLabel = 'skillArchiveImport.dialog.dropZoneLabel',
+  DialogDropZoneMobileLabel = 'skillArchiveImport.dialog.dropZoneMobileLabel',
+  DialogFormats = 'skillArchiveImport.dialog.formats',
   StatusUploading = 'skillArchiveImport.status.uploading',
   StatusSuccess = 'skillArchiveImport.status.success',
   StatusError = 'skillArchiveImport.status.error',

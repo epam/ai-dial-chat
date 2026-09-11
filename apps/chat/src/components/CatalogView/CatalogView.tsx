@@ -22,13 +22,13 @@ import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
   DialFileManagerI18nKeys,
   FavoritesI18nKeys,
   NavigationI18nKeys,
   PublishI18nKeys,
-  SkillArchiveImportI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -68,6 +68,7 @@ import { getCatalogSearchPlaceholder } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { getAccessRulesLabels } from '../../utils/publish';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
+import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
@@ -200,10 +201,13 @@ const CatalogView: FC<Props> = ({
   } = useSkills();
 
   const {
-    fileInputRef: skillArchiveFileInputRef,
+    isDialogOpen: isSkillArchiveDialogOpen,
     statusMessage: skillArchiveStatusMessage,
-    triggerFilePicker: triggerSkillArchivePicker,
-    handleFileChange: handleSkillArchiveFileChange,
+    selectionError: skillArchiveSelectionError,
+    openDialog: openSkillArchiveDialog,
+    closeDialog: closeSkillArchiveDialog,
+    handleFilesSelected: handleSkillArchiveFilesSelected,
+    handleFilesRejected: handleSkillArchiveFilesRejected,
   } = useSkillArchiveImport();
 
   const isLoading =
@@ -498,7 +502,7 @@ const CatalogView: FC<Props> = ({
       ),
     labels: catalogEditNavigationLabels,
     onNotify: showErrorNotification,
-    triggerSkillArchivePicker,
+    onSkillUploadClick: openSkillArchiveDialog,
   });
 
   if (!isCatalogEnabled && !isSelectorMode) {
@@ -507,14 +511,12 @@ const CatalogView: FC<Props> = ({
 
   return (
     <>
-      <input
-        ref={skillArchiveFileInputRef}
-        type="file"
-        accept=".zip,.md"
-        className="sr-only"
-        tabIndex={-1}
-        aria-label={t(SkillArchiveImportI18nKeys.FileInputAriaLabel)}
-        onChange={handleSkillArchiveFileChange}
+      <SkillArchiveUploadDialog
+        isOpen={isSkillArchiveDialogOpen}
+        errorText={skillArchiveSelectionError}
+        onClose={closeSkillArchiveDialog}
+        onFilesSelected={handleSkillArchiveFilesSelected}
+        onFilesRejected={handleSkillArchiveFilesRejected}
       />
       <span role="status" aria-live="polite" className="sr-only">
         {skillArchiveStatusMessage}
@@ -581,6 +583,7 @@ const CatalogView: FC<Props> = ({
           historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
           historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
           submitError: t(PublishI18nKeys.SubmitErrorCallout),
+          rootFolderLabel: t(BasicI18nKeys.Organization),
           accessRulesLabels: getAccessRulesLabels(t),
         }}
         shareOverlay={(item, onClose) => (

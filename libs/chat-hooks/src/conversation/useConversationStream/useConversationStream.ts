@@ -185,6 +185,8 @@ export const useConversationStream = ({
   /* Generation ids stopped by the user — onComplete emits notifyStopGenerating's
    * counterpart (nothing) instead of notifyGenerationEnd for these. */
   const stoppedGenerationIdsRef = useRef<Set<string>>(new Set());
+  /** Newest generation id started for each path — see `isSuperseded` in `startStream`. */
+  const latestGenerationIdsRef = useRef<Map<string, string>>(new Map());
 
   /*
    * The host component isn't necessarily remounted when navigating between
@@ -241,6 +243,7 @@ export const useConversationStream = ({
       const conversationPath = getConversationPath(currentConversationId);
       activeGenerationIdRef.current = genId;
       activeGenerationPathRef.current = conversationPath;
+      latestGenerationIdsRef.current.set(conversationPath, genId);
       setStoppablePath(conversationPath);
 
       /*
@@ -255,6 +258,17 @@ export const useConversationStream = ({
       } else if (mode === SendCompletionDtoModeEnum.Edit) {
         serverMessageIndex = messageIndex - 1;
       }
+
+      /*
+       * True once a newer generation has been started on this path: the user
+       * stopped this one and immediately re-submitted (Stop re-enables
+       * edit/regenerate as soon as the stopped stream closes, while this
+       * generation's conversation reload is still in flight). A superseded
+       * generation must not clear the new one's streaming state, report its
+       * end, or overwrite the conversation with the answer it had fetched.
+       */
+      const isSuperseded = (): boolean =>
+        latestGenerationIdsRef.current.get(conversationPath) !== genId;
 
       const controller = startGeneration(conversationPath, genId);
       const initialMessage = conversationRef.current?.messages[messageIndex];
@@ -320,7 +334,7 @@ export const useConversationStream = ({
           ) {
             bufferedGenerationsRef.current.delete(conversationPath);
           }
-          removeStreamingPath(conversationPath);
+          if (!isSuperseded()) removeStreamingPath(conversationPath);
           if (activeGenerationIdRef.current === genId) {
             activeGenerationIdRef.current = null;
             activeGenerationPathRef.current = null;
@@ -330,9 +344,12 @@ export const useConversationStream = ({
           channel?.notifyGenerationSettled?.();
           if (stoppedGenerationIdsRef.current.has(genId)) {
             stoppedGenerationIdsRef.current.delete(genId);
-          } else {
+          } else if (!isSuperseded()) {
             overlay?.notifyGenerationEnd?.();
           }
+          /* The generation that superseded this one owns the displayed state
+           * and reloads it when it settles. */
+          if (isSuperseded()) return;
           /*
            * Only refresh displayed state if the user is still viewing this
            * conversation; otherwise leave the currently-shown chat untouched.
@@ -352,7 +369,9 @@ export const useConversationStream = ({
             const refreshed = await transport.getConversation(
               safeDecodeURI(currentConversationId),
             );
-            if (!isPathDisplayed(conversationPath)) return;
+            /* Re-checked after the round trip: a re-submit during it makes this
+             * reload stale — it would restore the answer the user just replaced. */
+            if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
             setConversation(refreshed);
             conversationRef.current = refreshed;
           } catch {
@@ -365,7 +384,7 @@ export const useConversationStream = ({
           const buffered =
             currentBuffer?.generationId === genId ? currentBuffer : undefined;
           if (buffered) bufferedGenerationsRef.current.delete(conversationPath);
-          removeStreamingPath(conversationPath);
+          if (!isSuperseded()) removeStreamingPath(conversationPath);
           if (activeGenerationIdRef.current === genId) {
             activeGenerationIdRef.current = null;
             activeGenerationPathRef.current = null;
@@ -373,8 +392,9 @@ export const useConversationStream = ({
           }
           completeGeneration(conversationPath, genId);
           channel?.notifyGenerationSettled?.();
-          // Surface the error only on the conversation the user is viewing.
-          if (!isPathDisplayed(conversationPath)) return;
+          /* Surface the error only on the conversation the user is viewing,
+           * and never over the generation that superseded this one. */
+          if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
           setConversation((prev) => {
             if (!prev) return prev;
             const restored =

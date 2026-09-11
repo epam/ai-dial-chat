@@ -140,7 +140,7 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
   - `lifecycleStatus?: string`
   - `tokenizerModel?: string`
   - `limits?: { maxTotalTokens?: number; maxPromptTokens?: number; maxCompletionTokens?: number }`
-  - `pricing?: { unit?: string; prompt?: string; completion?: string }`
+  - `pricing?: Record<string, string | PricingRate>` — `unit` names the billing unit; scalar prices and recursive conditional pricing trees from DIAL Core are forwarded verbatim
   - `features?: DeploymentFeaturesDetailsDto` (see below)
   - `owner?: string`
   - `inputAttachmentTypes?: string[]`

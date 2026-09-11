@@ -8,6 +8,8 @@ export interface ConversationSourcesPanelLabels {
   ariaLabel: string;
   /** Label for the close button. */
   closeLabel: string;
+  /** Accessible label for the panel's drag-to-resize handle. Defaults to `'Resize panel'`. */
+  resizeLabel?: string;
   /** Placeholder text shown inside the search input. */
   searchPlaceholder: string;
   /** Accessible label for the search input clear button. */

@@ -159,3 +159,26 @@ are omitted so quote-only streaming deltas preserve an earlier page.
 - `getReferenceAttachmentGroups(dtos)` — maps reference-only attachments to synthetic annotation groups
 - `isReferenceOnlyAttachment(dto)` — returns true for RAG/grounding chunks without a direct URL
 - `parsePdfPageReference(url)` — parses a PDF URL with optional `#page=N` fragment
+
+### Office citation selectors
+
+`isDocxRangeSelector`, `isPptxRangeSelector`, and `isExcelRcRangeSelector` narrow an `AnnotationSelector` to its Office range shape, requiring every field the shape needs — a `_range`-suffixed selector missing a field matches no guard. `annotationToOfficeHighlightLocations(annotation)` converts `body.selector` (scalar or array) to validated `OfficeHighlightLocation[]`, skipping invalid entries without throwing.
+
+```tsx
+import {
+  annotationToOfficeHighlightLocations,
+  isDocxRangeSelector,
+  isExcelRcRangeSelector,
+  isPptxRangeSelector,
+} from '@epam/ai-dial-quotations';
+import type { OfficeHighlightLocation } from '@epam/ai-dial-quotations';
+
+const locations: OfficeHighlightLocation[] =
+  annotationToOfficeHighlightLocations(annotation);
+```
+
+`OfficeHighlightLocation` (`DocxOfficeHighlightLocation | PptxOfficeHighlightLocation | ExcelOfficeHighlightLocation`) is discriminated by the wire's own `type` string, not by `@epam/ai-dial-attachment-canvas`'s `OoxmlHighlightKind` — this lib cannot depend on `attachment-canvas` (a real circular dependency: `attachment-canvas` already depends on this lib for the PDF highlight path). `libs/chat-hooks`, which depends on both, maps `OfficeHighlightLocation[]` into `OoxmlHighlight[]`.
+
+For `DocxOfficeHighlightLocation`/`PptxOfficeHighlightLocation`, `endExclusive` is the wire's `end` copied through **unchanged** — confirmed already exclusive against captured DIAL Core responses, not `end + 1`. `ExcelOfficeHighlightLocation.end` stays the inclusive last-cell address, a distinct concept unaffected by that conversion point.
+
+`gatherSameSourceAnnotations(clicked, annotations)` returns every annotation in `annotations` whose `body.source.attachment.url` equals `clicked`'s, in original order, gathering across the whole list (not one `cit`-id group, unlike `groupAnnotationsByCitId`) — keyed on URL only, since two different files can share a display title.

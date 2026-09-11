@@ -510,6 +510,103 @@ describe('useConversationStream', () => {
     );
   });
 
+  it('ignores a superseded generation completing on the same path', async () => {
+    const { result } = renderHook(() =>
+      useHookHarness({
+        transport,
+        conversationId: 'bucket/conv',
+        initialConversation: makeConversation({
+          messages: [
+            { role: MessageRole.User, content: 'edited', timestamp: 't' },
+            { role: MessageRole.Assistant, content: '', timestamp: 't' },
+          ],
+        }),
+      }),
+    );
+
+    await act(async () => {
+      result.current.stream.startStream(
+        'bucket/conv',
+        'hi',
+        1,
+        'gpt-4o',
+        undefined,
+        'gen-1',
+      );
+    });
+    /* The stopped generation's own callbacks, captured before the re-submit
+     * replaces the harness's capturedOptions. */
+    const stoppedOptions = capturedOptions;
+
+    await act(async () => {
+      result.current.stream.startStream(
+        'bucket/conv',
+        'edited',
+        1,
+        'gpt-4o',
+        undefined,
+        'gen-2',
+        SendCompletionDtoModeEnum.Edit,
+      );
+    });
+
+    await act(async () => {
+      await stoppedOptions?.onComplete();
+    });
+
+    expect(result.current.stream.isStreaming).toBe(true);
+    expect(transport.getConversation).not.toHaveBeenCalled();
+    expect(result.current.conversation?.messages[0]?.content).toBe('edited');
+  });
+
+  it('does not write a superseded generation error onto the new answer', async () => {
+    const { result } = renderHook(() =>
+      useHookHarness({
+        transport,
+        conversationId: 'bucket/conv',
+        initialConversation: makeConversation({
+          messages: [
+            { role: MessageRole.User, content: 'edited', timestamp: 't' },
+            { role: MessageRole.Assistant, content: '', timestamp: 't' },
+          ],
+        }),
+      }),
+    );
+
+    await act(async () => {
+      result.current.stream.startStream(
+        'bucket/conv',
+        'hi',
+        1,
+        'gpt-4o',
+        undefined,
+        'gen-1',
+      );
+    });
+    const stoppedOptions = capturedOptions;
+
+    await act(async () => {
+      result.current.stream.startStream(
+        'bucket/conv',
+        'edited',
+        1,
+        'gpt-4o',
+        undefined,
+        'gen-2',
+        SendCompletionDtoModeEnum.Edit,
+      );
+    });
+
+    act(() => {
+      stoppedOptions?.onError(new Error('generation failed'));
+    });
+
+    expect(result.current.stream.isStreaming).toBe(true);
+    expect(result.current.conversation?.messages[1]?.streamErrorMessage).toBe(
+      undefined,
+    );
+  });
+
   it('reports an error only on the currently displayed conversation', () => {
     const { result } = renderHook(() =>
       useHookHarness({ transport, conversationId: 'bucket/conv' }),
