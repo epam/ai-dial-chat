@@ -15,7 +15,12 @@ import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
 import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
-import { startSseResponse } from '../common/utils/sse';
+import {
+  SSE_DRAIN_TIMEOUT_MS,
+  startSseResponse,
+  waitForDrain,
+  writeSseChunk,
+} from '../common/utils/sse';
 import {
   SseSubscriptionKind,
   trackSseSubscription,
@@ -86,6 +91,19 @@ export class ClientChannelController {
       SseSubscriptionKind.ClientChannel,
     );
 
+    let isClientAborted = false;
+    let isReaderReleased = false;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+
+    const handleClose = () => {
+      isClientAborted = true;
+      abortController.abort();
+      if (reader && !isReaderReleased) {
+        void reader.cancel().catch(() => undefined);
+      }
+    };
+    res.on('close', handleClose);
+
     try {
       this.logger.debug('[timing] subscribe request received by BFF');
       const { stream, channelId } = await this.clientChannelService.subscribe(
@@ -97,21 +115,15 @@ export class ClientChannelController {
         `[timing] subscribe request headers about to flush — channelId: ${channelId}`,
       );
 
+      if (isClientAborted) {
+        await stream.cancel().catch(() => undefined);
+        return;
+      }
+
       res.setHeader(CHANNEL_ID_HEADER, channelId);
       startSseResponse(res);
 
-      const reader = stream.getReader();
-      let isClientAborted = false;
-      let isReaderReleased = false;
-
-      const handleClose = () => {
-        isClientAborted = true;
-        abortController.abort();
-        if (!isReaderReleased) {
-          void reader.cancel().catch(() => undefined);
-        }
-      };
-      res.on('close', handleClose);
+      reader = stream.getReader();
 
       try {
         while (true) {
@@ -120,7 +132,20 @@ export class ClientChannelController {
           const { done, value } = await reader.read();
           if (done) break;
 
-          res.write(value);
+          const { needsDrain } = writeSseChunk(res, value);
+          if (needsDrain) {
+            const outcome = await waitForDrain(
+              res,
+              abortController.signal,
+              SSE_DRAIN_TIMEOUT_MS,
+            );
+            if (outcome === 'timeout') {
+              isClientAborted = true;
+              void reader.cancel().catch(() => undefined);
+              break;
+            }
+            if (outcome === 'aborted') break;
+          }
         }
       } catch (err) {
         if (!isClientAborted) {
@@ -130,7 +155,6 @@ export class ClientChannelController {
           );
         }
       } finally {
-        res.off('close', handleClose);
         isReaderReleased = true;
         reader.releaseLock();
         if (!res.writableEnded) {
@@ -138,6 +162,7 @@ export class ClientChannelController {
         }
       }
     } finally {
+      res.off('close', handleClose);
       finishSubscription();
     }
   }

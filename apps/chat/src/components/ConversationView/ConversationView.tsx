@@ -35,6 +35,7 @@ import {
   type RequestSkill,
   type StarterOption,
   type ToolMenuItem,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type { ToolsChipLabels } from '@epam/ai-dial-conversation-input';
 import type {
@@ -120,7 +121,9 @@ interface Props {
     attachments: Attachment[],
     skills?: RequestSkill[],
   ) => void;
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   onStop?: () => void;
   onDeleteMessage?: (messageIndex: number) => void;
   onRegenerateMessage?: (messageIndex: number) => void;

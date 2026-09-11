@@ -27,6 +27,7 @@ import {
   type Message as MessageType,
   type RequestSkill,
   type StarterOption,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import {
   MessageBubble,
@@ -136,7 +137,9 @@ interface Props {
     keptAttachments: DisplayAttachment[],
     newAttachments: Attachment[],
   ) => void;
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   pendingDropFiles?: File[];
   onDropFilesConsumed?: () => void;
   deploymentLookup: Record<

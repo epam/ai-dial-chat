@@ -338,6 +338,14 @@ export interface Attachment extends DisplayAttachment {
   file: File;
 }
 
+/** Result of successfully uploading an {@link Attachment}. */
+export interface UploadedAttachmentResult {
+  /** The DIAL Core file URL the attachment was uploaded to. */
+  url: string;
+  /** The name actually stored on DIAL Core; differs from the attachment's original name when it contained characters the storage path forbids. */
+  name: string;
+}
+
 /**
  * Attachment payload stored in message custom content.
  * Used inside `Message.custom_content.attachments` for both user requests

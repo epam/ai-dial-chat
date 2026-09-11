@@ -16,6 +16,7 @@ import {
   MessageRole,
   type RequestSkill,
   type StarterOption,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback, useState } from 'react';
 import { useAttachmentUpload } from '../useAttachmentUpload/useAttachmentUpload';
@@ -76,7 +77,9 @@ export interface UseConversationHandlersResult {
     attachments: Attachment[],
     skills?: RequestSkill[],
   ) => Promise<void>;
-  handleUploadAttachment: (attachment: Attachment) => Promise<string>;
+  handleUploadAttachment: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   handleRegenerateMessage: (messageIndex: number) => void;
   handleDeleteMessage: (messageIndex: number) => void;
   handleConfirmDelete: () => void;

@@ -6,6 +6,7 @@ import type {
   DisplayAttachment,
   ResponseFormat,
   ToolMenuItem,
+  UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type { TranscribeAudio } from './Voice';
@@ -138,8 +139,10 @@ export interface InputProps {
   onChange?: (message: string) => void;
   /** Called when the user submits a message. */
   onSend?: (message: string, attachments: Attachment[]) => Promise<void> | void;
-  /** Called immediately after an attachment is added. Returns the uploaded attachment URL. */
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  /** Called immediately after an attachment is added. Returns the uploaded attachment URL and stored name. */
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   /** Called when the user clicks the stop button during streaming. */
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button. */
