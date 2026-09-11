@@ -18,16 +18,16 @@
       "default": "./dist/index.js"
     }
   },
+  "dependencies": {
+    "react-window": "^2.2.7",
+    "@tabler/icons-react": "^3.44.0"
+  },
   "peerDependencies": {
     "@epam/ai-dial-attachment-input": "*",
     "@epam/ai-dial-chat-shared": "*",
-    "@tabler/icons-react": "^3.44.0",
     "react": "^19.0.0",
     "react-dom": "^19.2.6",
     "@epam/ai-dial-ui-kit": "^0.14.0-dev.15"
-  },
-  "dependencies": {
-    "react-window": "^2.2.7"
   },
   "nx": {
     "tags": [

@@ -27,16 +27,15 @@ Canvas/viewer component for rendering attachment content inline — images, audi
 - `@epam/pdf-highlighter-kit` (`^0.0.18`)
 - `@epam/ai-dial-react-pdf-highlighter` (`^0.2.0-dev.28`)
 - `pdfjs-dist` (`^5.4.149`)
-- `@tabler/icons-react`
-- `react-json-view-lite`
-- `react-syntax-highlighter`
 - `@mcp-ui/client`
 - `@modelcontextprotocol/sdk`
 
-Every peer above — including their deep JS subpaths (e.g.
-`react-syntax-highlighter/dist/esm/...`) — is externalized in the build: the
-built package never bundles its own copy, and always defers to whatever
-version the host app itself resolves. The two PDF-related peers' vendor CSS
+Every peer above — and the third-party runtime libraries this package installs
+itself as dependencies (`@tabler/icons-react`, `react-json-view-lite`,
+`react-syntax-highlighter`) — is externalized in the build, deep JS subpaths
+(e.g. `react-syntax-highlighter/dist/esm/...`) included: the built package
+never bundles its own copy, and always defers to whatever version the host app
+resolves. The two PDF-related peers' vendor CSS
 subpaths (`@epam/ai-dial-react-pdf-highlighter/styles.css`,
 `@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css`) are the one
 exception — they stay locally resolved so they can be built and split per

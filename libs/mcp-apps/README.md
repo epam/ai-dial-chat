@@ -26,7 +26,6 @@ Everything that requires host context — the current theme/locale, the configur
 - `@epam/ai-dial-ui-kit`
 - `@mcp-ui/client`
 - `@modelcontextprotocol/sdk`
-- `@tabler/icons-react`
 
 ## Hooks
 

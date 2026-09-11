@@ -18,11 +18,13 @@
       "default": "./dist/index.js"
     }
   },
+  "dependencies": {
+    "@tabler/icons-react": "^3.44.0"
+  },
   "peerDependencies": {
     "@epam/ai-dial-builder-form": "*",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-ui-kit": "^0.14.0-dev.30",
-    "@tabler/icons-react": "^3.44.0",
     "@uiw/react-markdown-preview": "*",
     "@uiw/react-md-editor": "*",
     "react": "^19.0.0"

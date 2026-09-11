@@ -30,7 +30,6 @@ import '@epam/ai-dial-navigation-panel/styles.css';
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-conversation-input`
 - `@epam/ai-dial-ui-kit`
-- `@tabler/icons-react`
 
 ## Components
 

@@ -1,7 +1,9 @@
 /**
- * Peer package names that must never be bundled into the built package —
- * every one of them is declared in `package.json#peerDependencies` and is
- * expected to resolve to whatever copy the host app itself already installs.
+ * Package names that must never be bundled into the built package — each is
+ * declared in `package.json` as either a peer (resolved to the copy the host
+ * app already installs) or a dependency (npm installs it alongside this
+ * package), and either way the import stays external so consumers get one
+ * shared copy rather than a second one inlined here.
  */
 export const EXTERNAL_PEER_NAMES = [
   'react',

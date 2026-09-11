@@ -29,7 +29,6 @@ import '@epam/ai-dial-conversation-input/styles.css';
 - `@epam/ai-dial-attachment-input`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
-- `@tabler/icons-react`
 
 ## Components
 

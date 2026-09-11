@@ -43,7 +43,6 @@ import '@epam/ai-dial-skills/styles.css';
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-catalog` `*`
 - `@epam/ai-dial-conversation-input` `*`
-- `@tabler/icons-react` `^3.0.0`
 
 ## Components
 

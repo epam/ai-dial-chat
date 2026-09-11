@@ -18,6 +18,12 @@
       "default": "./dist/index.js"
     }
   },
+  "dependencies": {
+    "@silurus/ooxml": "^0.86.1",
+    "@tabler/icons-react": "^3.44.0",
+    "react-json-view-lite": "^2.5.0",
+    "react-syntax-highlighter": "^16.1.1"
+  },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "0.0.1",
     "@epam/ai-dial-react-pdf-highlighter": "^0.2.0-dev.28",
@@ -28,14 +34,8 @@
     "@epam/pdf-highlighter-kit": "^0.0.18",
     "@mcp-ui/client": "^7.1.1",
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "@tabler/icons-react": "^3.44.0",
     "pdfjs-dist": "^5.4.149",
-    "react": "^19.0.0",
-    "react-json-view-lite": "^2.5.0",
-    "react-syntax-highlighter": "^16.1.1"
-  },
-  "dependencies": {
-    "@silurus/ooxml": "^0.86.1"
+    "react": "^19.0.0"
   },
   "nx": {
     "tags": [

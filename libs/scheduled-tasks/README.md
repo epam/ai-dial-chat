@@ -23,7 +23,6 @@ external to preserve the editor's dynamic boundary in consuming applications.
 ## Peer Dependencies
 
 - `react`
-- `@tabler/icons-react`
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-builder-form`

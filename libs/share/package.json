@@ -18,11 +18,13 @@
       "default": "./dist/index.js"
     }
   },
+  "dependencies": {
+    "@tabler/icons-react": "^3.44.0",
+    "react-qr-code": "^2.2.0"
+  },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@tabler/icons-react": "^3.0.0",
     "react": "^19.0.0",
-    "react-qr-code": "^2.2.0",
     "@epam/ai-dial-ui-kit": "*"
   },
   "nx": {

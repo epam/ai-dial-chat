@@ -21,7 +21,6 @@ Responsive starter prompt buttons that overflow into a dropdown when space is li
 - `react`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
-- `@tabler/icons-react`
 
 ## Components
 

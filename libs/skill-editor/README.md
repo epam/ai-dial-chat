@@ -41,7 +41,6 @@ import '@epam/ai-dial-skill-editor/styles.css';
 - `@epam/ai-dial-react-file-manager` `^0.2.0-dev.9`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-editor-builder` `*`
-- `@tabler/icons-react` `^3.0.0`
 - `@uiw/react-markdown-preview` — CSS only, required by `LazyMarkdownEditor`
 - `@uiw/react-md-editor` — CSS only, required by `LazyMarkdownEditor`
 

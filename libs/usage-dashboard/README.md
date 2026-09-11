@@ -36,7 +36,6 @@ import '@epam/ai-dial-usage-dashboard/styles.css';
 - `@epam/ai-dial-chat-api-client` \*
 - `@epam/ai-dial-chat-shared` \*
 - `@epam/ai-dial-ui-kit`
-- `@tabler/icons-react`
 
 ## Components
 
