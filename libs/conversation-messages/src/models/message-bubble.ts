@@ -129,7 +129,8 @@ interface BaseMessageBubbleProps {
    * the text; the assistant bubble overlays it on the first markdown block's
    * first line, which indents past it. The user bubble renders for the slot
    * alone even when `text` is empty; an assistant message with no text
-   * renders the slot on its own line.
+   * renders the slot on its own line — above the streaming placeholder while
+   * the first token has not arrived yet.
    */
   beforeContent?: ReactNode;
 }

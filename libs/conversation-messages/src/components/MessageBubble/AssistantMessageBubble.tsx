@@ -15,6 +15,14 @@ import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
 import { MessageActions } from '../MessageActions/MessageActions';
 import styles from './MessageBubble.module.scss';
 
+/*
+ * Indents the first markdown block's first line past the overlaid
+ * `beforeContent` slot. Scoped through the `cm-bubble-markdown` wrapper class
+ * (see its use site) so the indent never lands on host-supplied slot content.
+ */
+const FIRST_LINE_INDENT_CLASS_NAME =
+  '[&>.cm-bubble-markdown>div>*:first-child]:indent-[var(--cm-bubble-first-line-indent,0px)]';
+
 /** Assistant-authored message bubble, start-aligned with markdown content and optional quick-reply starters. */
 export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   text,
@@ -109,10 +117,11 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
            * inline-start slot behaviour. Markdown's first block cannot host
            * the slot inline (it is react-markdown output), and this bubble is
            * full-width, so the out-of-flow overlay costs nothing here. In
-           * flow when there is no text: the slot then renders on its own
-           * line, above the streaming placeholder.
+           * flow whenever there is no text: on its own line when the message
+           * is empty, or above the streaming placeholder while the first
+           * token has not arrived yet.
            */}
-          {beforeContent != null && !(text || isStreaming) && (
+          {beforeContent != null && !text && (
             <div className="min-w-0">{beforeContent}</div>
           )}
           {(text || isStreaming) && (
@@ -123,15 +132,19 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                 textClass,
                 'relative min-w-0 max-w-full text-start',
                 /*
-                 * `text-indent` inherits, so the selector targets the
-                 * markdown container's first block child rather than the
-                 * container (a leading list indents its every item's first
-                 * line — accepted edge). The markdown viewer renders one
-                 * container div whose first element child is the first block.
+                 * `text-indent` inherits, so the indent targets the markdown
+                 * container's first block child (a leading list indents its
+                 * every item's first line — accepted edge) rather than the
+                 * text container, where it would reach every block. The
+                 * `cm-bubble-markdown` wrapper class scopes the selector to
+                 * the markdown container alone: the slot's overlay div is
+                 * also a direct child of the text container, and
+                 * host-supplied slot content of any element type must never
+                 * receive the indent.
                  */
                 beforeContent != null &&
                   text &&
-                  '[&>div>*:first-child]:indent-[var(--cm-bubble-first-line-indent,0px)]',
+                  FIRST_LINE_INDENT_CLASS_NAME,
               )}
             >
               {beforeContent != null && text && (
@@ -139,28 +152,34 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                   {beforeContent}
                 </div>
               )}
-              <MDMessageViewer
-                content={text}
-                isStreaming={isStreaming}
-                thinkingLabel={thinkingLabel}
-                components={markdownComponents}
-                classNames={markdownClassNames}
-                urlTransform={markdownUrlTransform}
-                codeBlockCopyLabel={codeBlockCopyLabel}
-                codeBlockCopiedLabel={codeBlockCopiedLabel}
-                codeBlockTheme={codeBlockTheme}
-                tableActionLabels={{
-                  copyCsvLabel: tableCopyCsvLabel,
-                  copyTxtLabel: tableCopyTxtLabel,
-                  copyMarkdownLabel: tableCopyMarkdownLabel,
-                  copiedLabel: tableCopiedLabel,
-                  downloadCsvLabel: tableDownloadCsvLabel,
-                  openInCanvasLabel: tableOpenInCanvasLabel,
-                }}
-                tableDownloadFilename={tableDownloadFilename}
-                tableOnOpenInCanvas={tableOnOpenInCanvas}
-                tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
-              />
+              {/*
+               * The plain marker class (not a CSS-module hash) keeps the
+               * indent selector above a static string Tailwind can generate.
+               */}
+              <div className="cm-bubble-markdown min-w-0 max-w-full">
+                <MDMessageViewer
+                  content={text}
+                  isStreaming={isStreaming}
+                  thinkingLabel={thinkingLabel}
+                  components={markdownComponents}
+                  classNames={markdownClassNames}
+                  urlTransform={markdownUrlTransform}
+                  codeBlockCopyLabel={codeBlockCopyLabel}
+                  codeBlockCopiedLabel={codeBlockCopiedLabel}
+                  codeBlockTheme={codeBlockTheme}
+                  tableActionLabels={{
+                    copyCsvLabel: tableCopyCsvLabel,
+                    copyTxtLabel: tableCopyTxtLabel,
+                    copyMarkdownLabel: tableCopyMarkdownLabel,
+                    copiedLabel: tableCopiedLabel,
+                    downloadCsvLabel: tableDownloadCsvLabel,
+                    openInCanvasLabel: tableOpenInCanvasLabel,
+                  }}
+                  tableDownloadFilename={tableDownloadFilename}
+                  tableOnOpenInCanvas={tableOnOpenInCanvas}
+                  tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
+                />
+              </div>
             </div>
           )}
           <AttachmentGroup

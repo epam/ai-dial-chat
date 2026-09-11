@@ -244,6 +244,9 @@ describe('AppPreviewChat', () => {
         'Write a draft',
         'applications/bucket/My%20App',
         undefined,
+        undefined,
+        undefined,
+        undefined,
       );
     });
   });

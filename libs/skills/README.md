@@ -99,7 +99,9 @@ import type { FavoriteSkillItem } from '@epam/ai-dial-skills';
 
 Renders the header, the favorite rows (initials icon, name, filled star), and
 the "Browse" button. When `favorites` is empty, the list area is replaced with
-an empty-state hint; the header and "Browse" button still render.
+an empty-state hint; the header and "Browse" button still render. The panel is
+280px wide at the desktop breakpoint and fills its container below it, so a
+full-width mobile sheet hosts it edge-to-edge.
 
 Each row is wrapped in the ui-kit `InteractiveTooltip` (`asChild`, so the row
 stays the focus and click target). The tooltip is uncontrolled: the kit opens
