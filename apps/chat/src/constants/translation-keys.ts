@@ -884,6 +884,8 @@ export enum AttachmentCanvasI18nKeys {
   XlsxFormulaLabel = 'attachmentCanvas.xlsxFormulaLabel',
   CodeContentLoadingLabel = 'attachmentCanvas.codeContentLoadingLabel',
   CodeContentErrorLabel = 'attachmentCanvas.codeContentErrorLabel',
+  OoxmlHighlightsLabel = 'attachmentCanvas.ooxmlHighlightsLabel',
+  OoxmlHighlightNavigatedLabel = 'attachmentCanvas.ooxmlHighlightNavigatedLabel',
 }
 
 export enum AnnouncementBannerI18nKeys {

@@ -3165,6 +3165,30 @@ its group by membership (cit groups can share a URL), filters highlights to that
 annotation's PDF, and sets `page` from its first valid `pdf_bbox` body selector.
 Missing/invalid pages leave `page` unset; nonexistent highlight IDs are omitted.
 
+Office (DOCX/PPTX/XLSX) citation previews use
+`annotationToOoxmlCanvasContent(annotation, annotations, resolvers)` — the sibling
+mapper for `OoxmlCanvasContent`. Unlike the PDF mapper's `groups` parameter, it takes
+the message's full resolved annotation list and gathers same-source annotations
+across it (`gatherSameSourceAnnotations` from `@epam/ai-dial-quotations`), so a
+citation behind a different marker that cites the same document is still included.
+Returns `null` when there is no source attachment, the source is not a format
+`@silurus/ooxml` renders as DOCX/XLSX/PPTX (a CSV source returns `null` too — citation
+highlighting targets Office documents only), or no URL resolves. A missing or
+unresolvable selector still returns content — just with no `highlights` field —
+rather than `null`, so the document opens without a highlight instead of falling
+through to a plain attachment open.
+
+```ts
+import { annotationToOoxmlCanvasContent } from '@epam/ai-dial-chat-hooks';
+
+const content = annotationToOoxmlCanvasContent(
+  clickedAnnotation,
+  messageAnnotations,
+  resolvers,
+);
+if (content != null) openCanvas(content, fileName);
+```
+
 ### attachmentDtoToDisplayAttachment / attachmentDtosToDisplayAttachments / annotationToDisplayAttachment
 
 Maps Chat API message-attachment DTOs (and an annotation's source attachment) to the display-only `DisplayAttachment` model UI components consume.

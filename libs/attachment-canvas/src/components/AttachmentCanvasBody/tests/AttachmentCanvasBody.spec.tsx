@@ -54,14 +54,20 @@ vi.mock('../../OoxmlContent/OoxmlContent', () => ({
     content,
     formulaLabel,
     formulaLabelClassName,
+    highlightsLabel,
+    highlightNavigatedLabel,
   }: {
     content: { format: string };
     formulaLabel: string;
     formulaLabelClassName: string;
+    highlightsLabel?: string;
+    highlightNavigatedLabel?: string;
   }) => (
     <section
       aria-label="ooxml-content"
       data-formula-label-class-name={formulaLabelClassName}
+      data-highlights-label={highlightsLabel}
+      data-highlight-navigated-label={highlightNavigatedLabel}
     >
       {content.format}:{formulaLabel}
     </section>
@@ -231,6 +237,42 @@ describe('AttachmentCanvasBody', () => {
       format: OoxmlFileType.Docx,
     });
     expect(screen.getByRole('region', { name: 'ooxml-content' })).toBeTruthy();
+  });
+
+  it('forwards ooxmlHighlightsLabel and ooxmlHighlightNavigatedLabel to OoxmlContent', () => {
+    renderBody(
+      {
+        type: AttachmentContentType.Ooxml,
+        url: 'blob:office-url',
+        format: OoxmlFileType.Docx,
+      },
+      {
+        labels: {
+          ooxmlHighlightsLabel: 'Cited locations',
+          ooxmlHighlightNavigatedLabel: 'Scrolled to the cited location',
+        },
+      },
+    );
+
+    const region = screen.getByRole('region', { name: 'ooxml-content' });
+    expect(region.getAttribute('data-highlights-label')).toBe(
+      'Cited locations',
+    );
+    expect(region.getAttribute('data-highlight-navigated-label')).toBe(
+      'Scrolled to the cited location',
+    );
+  });
+
+  it('leaves the highlight labels undefined on OoxmlContent when omitted, so it falls back to its own defaults', () => {
+    renderBody({
+      type: AttachmentContentType.Ooxml,
+      url: 'blob:office-url',
+      format: OoxmlFileType.Docx,
+    });
+
+    const region = screen.getByRole('region', { name: 'ooxml-content' });
+    expect(region.getAttribute('data-highlights-label')).toBeNull();
+    expect(region.getAttribute('data-highlight-navigated-label')).toBeNull();
   });
 
   it('forwards the XLSX formula label to OoxmlContent', () => {

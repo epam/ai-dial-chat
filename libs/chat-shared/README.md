@@ -120,6 +120,31 @@ import {
 } from '@epam/ai-dial-chat-shared';
 ```
 
+### Annotation selectors
+
+`Annotation.body.selector` is an `AnnotationSelector | AnnotationSelector[]`, a discriminated union with an open forward-compatible branch. `TextCharacterRangeSelector`, `PdfBBoxSelector`, and `HtmlTagSelector` target text ranges, PDF regions, and inline `<cit>` markers respectively. `DocxRangeSelector`, `PptxRangeSelector`, and `ExcelRcRangeSelector` target Office document citations.
+
+```tsx
+import type {
+  AnnotationSelector,
+  DocxRangeSelector,
+  ExcelRcRangeSelector,
+  PptxRangeSelector,
+  TextCharacterRangeSelector,
+} from '@epam/ai-dial-chat-shared';
+
+const docx: DocxRangeSelector = {
+  type: 'docx_text_range',
+  story: 'body',
+  path: [3, 1],
+  start: 0,
+  end: 5,
+  text: 'Hello',
+};
+```
+
+**`end` convention differs by selector kind.** `TextCharacterRangeSelector.end` is inclusive. `DocxRangeSelector.end` and `PptxRangeSelector.end` are already **exclusive** on the wire — confirmed against captured DIAL Core responses, not assumed — so consumers must not add 1 before slicing. `ExcelRcRangeSelector.end` is a distinct concept: a 1-based `{ row, col }` address naming the range's last (inclusive) cell, `null`-or-omitted meaning a single cell. `DocxRangeSelector.story` is typed as an opaque `string` — only `'body'` is confirmed upstream, no closed enum exists.
+
 ### ConversationTransfer
 
 Types for the queued export/import job model. Consumed by `@epam/ai-dial-conversation-panel`'s `ImportExportQueue` component.

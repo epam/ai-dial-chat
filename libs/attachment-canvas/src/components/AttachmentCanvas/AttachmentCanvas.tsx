@@ -63,6 +63,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     tableCopyMarkdownLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
+    ooxmlHighlightsLabel,
+    ooxmlHighlightNavigatedLabel,
   },
   onDownload,
   onCopyText,
@@ -369,6 +371,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           tableCopyMarkdownLabel,
           tableCopiedLabel,
           tableDownloadCsvLabel,
+          ooxmlHighlightsLabel,
+          ooxmlHighlightNavigatedLabel,
         }}
         styles={bodyStylesProp}
         codeBlockTheme={codeBlockTheme}
