@@ -1,6 +1,6 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
 
-const FORBIDDEN_PATH_CHARS = /[:;,={}&\\"]/;
+const FORBIDDEN_PATH_CHARS = /[:;,={}\\"]/;
 const INVALID_PERCENT_ENCODING = /%(?![0-9a-fA-F]{2})/;
 const ENCODED_PATH_SEPARATOR_OR_DOT = /%(?:2e|2f|5c)/i;
 
