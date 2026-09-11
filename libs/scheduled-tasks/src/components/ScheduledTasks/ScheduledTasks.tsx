@@ -18,7 +18,15 @@ import {
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconCalendarTime, IconPlus } from '@tabler/icons-react';
-import { FC, useEffect, useMemo, useRef } from 'react';
+import {
+  FC,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../types/scheduled-tasks-sort-key';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
@@ -101,6 +109,38 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   const handleSearchChange = (value?: string) => {
     onSearchQueryChange(value ?? '');
   };
+
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const sortControlRef = useRef<HTMLDivElement | null>(null);
+
+  const handleSearchFocus = useCallback(() => {
+    setIsSearchFocused(true);
+  }, []);
+
+  const handleSearchBlur = useCallback(() => {
+    setIsSearchFocused(false);
+  }, []);
+
+  /*
+   * When the search is focused at phone widths (`.sortControlHidden` in the
+   * SCSS), the sort trigger is display:none'd while its portaled popup can
+   * stay open — the kit's Dropdown closes on outside pointer press only, not
+   * on keyboard focus. Close the menu exactly in that case, detected from the
+   * DOM rather than a second copy of the px cutoff, so from 768px up — where
+   * the control never hides — search focus leaves an open sort menu alone.
+   */
+  useLayoutEffect(() => {
+    const sortControl = sortControlRef.current;
+    if (
+      isSearchFocused &&
+      isSortMenuOpen &&
+      sortControl != null &&
+      sortControl.offsetParent == null
+    ) {
+      setIsSortMenuOpen(false);
+    }
+  }, [isSearchFocused, isSortMenuOpen]);
 
   /* Falls back to the control's own name so the trigger is never a button with
    * no accessible name, which is what an unrecognised sortKey would produce —
@@ -247,7 +287,15 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
         </div>
 
         <PrimaryButton
+          /* The kit wraps `label` in its own span (carrying `textClassName`)
+           * that stays a flex item even when its content is hidden — the gap
+           * then pushes the icon off-center. Hiding the wrapper span itself
+           * below the desktop breakpoint removes the flex item entirely, so
+           * the plus icon alone carries the action, centered. `aria-label`
+           * keeps the accessible name stable at every width. */
           label={labels.createButtonLabel}
+          textClassName="hidden desktop:inline"
+          aria-label={labels.createButtonLabel}
           iconBefore={
             <IconPlus
               size={DIAL_ICON_SIZE.SM}
@@ -256,7 +304,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
             />
           }
           onClick={onCreateClick}
-          className="shrink-0"
+          className={mergeClasses('shrink-0', styles.createButton)}
         />
       </div>
 
@@ -269,18 +317,32 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
             clearLabel={labels.clearSearchLabel}
             aria-label={labels.searchAriaLabel}
             size={ElementSize.Large}
+            onFocus={handleSearchFocus}
+            onBlur={handleSearchBlur}
           />
         </div>
         {labels.sortOptions.length > 0 && (
           /* The trigger shows the applied order and the menu marks it with the
              design's trailing check. */
-          <ButtonDropdown
-            items={sortItems}
-            label={activeSortLabel}
-            variant={ButtonVariant.Primary}
-            appearance={ButtonAppearance.Ghost}
-            className={styles.sortButton}
-          />
+
+          /* While the search is focused at phone widths (<768px, see
+           * `.sortControlHidden`) the sort control is hidden and the search
+           * (flex-1) expands to the full row; from 768px up both controls
+           * stay visible regardless of focus. */
+          <div
+            ref={sortControlRef}
+            className={mergeClasses(
+              isSearchFocused && styles.sortControlHidden,
+            )}
+          >
+            <ButtonDropdown
+              items={sortItems}
+              label={activeSortLabel}
+              variant={ButtonVariant.Primary}
+              appearance={ButtonAppearance.Ghost}
+              className={styles.sortButton}
+            />
+          </div>
         )}
       </div>
 

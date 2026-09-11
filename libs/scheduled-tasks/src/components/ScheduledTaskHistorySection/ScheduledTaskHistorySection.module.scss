@@ -1,0 +1,10 @@
+/* Reads the `--stdv-*` vars the parent ScheduledTaskDetailView sets on its
+ * root, so the card background and text color stay overridable through the
+ * view's `styles.colors` without this section taking matching color props. */
+.historyCard {
+  background: var(--stdv-history-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
+.subtitleText {
+  color: var(--stdv-subtitle-text, var(--text-secondary, #57647a));
+}

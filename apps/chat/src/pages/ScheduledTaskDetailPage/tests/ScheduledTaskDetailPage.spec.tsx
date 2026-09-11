@@ -6,6 +6,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
@@ -687,6 +688,53 @@ describe('ScheduledTaskDetailPage', () => {
       );
       // The rest of the page remains visible after a failed toggle.
       expect(screen.getByText('displayName:Daily summary')).toBeTruthy();
+    });
+
+    it('re-enables the switch after a pause settles when rendered under StrictMode', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(activeTask);
+      pauseScheduledTaskMock.mockResolvedValue({
+        ...activeTask,
+        isActive: false,
+        nextRunTime: null,
+      });
+
+      /*
+       * Regression: StrictMode's simulated remount (mount → cleanup → mount,
+       * local dev) used to leave the page's mount-tracking permanently
+       * "unmounted", so every pause/resume resolution resolved as stale —
+       * the switch never re-enabled and the updated task never landed.
+       */
+      render(
+        <StrictMode>
+          <MemoryRouter initialEntries={['/scheduled-tasks/sched_123']}>
+            <Routes>
+              <Route
+                path="/scheduled-tasks/:scheduleId"
+                element={<ScheduledTaskDetailPage />}
+              />
+              <Route path="/scheduled-tasks" element={<BackTargetStub />} />
+              <Route
+                path="/scheduled-tasks/:scheduleId/edit"
+                element={<EditTargetStub />}
+              />
+              <Route
+                path="/conversations/*"
+                element={<ConversationTargetStub />}
+              />
+            </Routes>
+          </MemoryRouter>
+        </StrictMode>,
+      );
+
+      const switchEl = await screen.findByRole('switch');
+      await userEvent.click(switchEl);
+
+      expect(pauseScheduledTaskMock).toHaveBeenCalled();
+      await waitFor(() =>
+        expect(screen.getByRole('switch')).toHaveProperty('disabled', false),
+      );
+      expect(screen.getByRole('switch')).toHaveProperty('checked', false);
     });
 
     it('does not update state when the response resolves after the page has unmounted', async () => {

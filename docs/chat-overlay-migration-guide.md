@@ -815,7 +815,7 @@ The chrome is no longer assembled by the host. `createOverlayToggle()`,
 `createFullscreenButton()`, `createCloseButton()`, and `updateOverlay()` are
 gone; `createOverlay()` builds the panel, the toggle, the close button, and —
 when `allowFullscreen` is set — the fullscreen button, and re-lays them out on
-`resize` and `orientationchange`. Below a 768px viewport the panel ignores
+`resize` and `orientationchange`. Below a 1280px viewport the panel ignores
 `position`, `width`, and `height` and covers the full screen.
 
 One asymmetry to plan around: `ChatOverlayManager.setOverlayOptions()`

@@ -1,13 +1,11 @@
+import type { BuilderFormActionsLabels } from './builder-form-actions-props';
+
 /** Localized labels used by the {@link BuilderFormHeader} component. */
-export interface BuilderFormHeaderLabels {
+export interface BuilderFormHeaderLabels extends BuilderFormActionsLabels {
   /** Title shown next to the back control. */
   title: string;
   /** Accessible label for the back control. */
   backButtonLabel: string;
-  /** Label for the cancel action. */
-  cancelButtonLabel: string;
-  /** Label for the submit action. */
-  submitButtonLabel: string;
   /** Accessible name for the submit action's busy indicator, announced while `isSubmitting` is `true`. Defaults to `'Submitting'`. */
   submittingLabel?: string;
 }

@@ -1,3 +1,4 @@
+import { DESKTOP_BREAKPOINT_PX } from '@epam/ai-dial-chat-shared';
 import { type RefObject, useEffect, useRef, useState } from 'react';
 import { CARD_ROW_HEIGHT, CONTENT_MAX_WIDTH } from '../constants/virtual-grid';
 import { getColumnCount } from './card-grid';
@@ -54,7 +55,12 @@ export const useScrollVirtualizer = (
      * (60 px on desktop) and 64 px horizontal padding (px-8 × 2), capped at
      * CONTENT_MAX_WIDTH unless the grid spans the full width.
      */
-    const sidebarWidth = w > 768 ? 60 : 0;
+    /*
+     * The sidebar renders only from the desktop boundary up — the width is
+     * single-sourced from chat-shared's breakpoint constants so the grid
+     * math and the layout branches agree on the band.
+     */
+    const sidebarWidth = w >= DESKTOP_BREAKPOINT_PX ? 60 : 0;
     const available = Math.max(0, w - sidebarWidth);
     const approxContainer =
       (isFullWidth ? available : Math.min(CONTENT_MAX_WIDTH, available)) - 64;

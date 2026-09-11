@@ -9,3 +9,34 @@
 .sortButton {
   color: var(--st-sort-text, var(--text-accent, #1d4ed8));
 }
+
+/* At mobile widths the create button's label span is hidden and the plus icon
+ * alone carries the action; these rules turn the pill into a 40px circle.
+ * The self-chained selector doubles the specificity above every single-class
+ * rule competing for the same slots: Tailwind v3 emits utilities unlayered
+ * (`.px-4` from the kit's `Button`) and the utilities stylesheet is injected
+ * after this module's CSS, so a plain `.createButton` loses the cascade to it.
+ * Breakpoint matches the `desktop:` variant in tailwind.config.js — the
+ * 1279px literal mirrors MOBILE_MAX_WIDTH_PX from @epam/ai-dial-chat-shared's
+ * breakpoint constants (SCSS cannot import it;
+ * apps/chat/src/hooks/breakpoint/breakpoint-sync.spec.ts pins it). */
+.createButton.createButton {
+  @media (max-width: 1279px) {
+    inline-size: 40px;
+    padding-inline: 0;
+    border-radius: 9999px;
+  }
+}
+
+/* The search-focus expansion is a phone-width affordance: below 768px the
+ * sort control hides while the search is focused, letting the field take
+ * the full row. From 768px up — the tablet band included, which keeps the
+ * mobile presentation for everything else — both controls stay visible,
+ * so no width change on focus. This cutoff is deliberately finer than the
+ * mobile band (≤1279px) and lives here for the same cascade reason as
+ * `.createButton` above. */
+.sortControlHidden {
+  @media (max-width: 767px) {
+    display: none;
+  }
+}

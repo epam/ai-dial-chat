@@ -50,6 +50,8 @@ export interface ScheduledTaskDetailViewLabels {
   runStatusLabels: Record<ScheduledTaskRunStatus, string>;
   /** `sr-only` label announced alongside the unread-dot indicator on a run row whose `isUnread` is `true`. Defaults to `'Unread'`. */
   unreadIndicatorLabel?: string;
+  /** Accessible name for the mobile/tablet body's tab row. Defaults to `'Scheduled task sections'`. */
+  tabsAriaLabel?: string;
 }
 
 /**
@@ -59,7 +61,7 @@ export interface ScheduledTaskDetailViewLabels {
 export interface ScheduledTaskDetailViewColors {
   /** Root container background. Fallback: `--bg-layer-base`. */
   background?: string;
-  /** Header bottom border. Fallback: `--stroke-tertiary`. */
+  /** Header divider: below the header at desktop, above it at mobile/tablet. Fallback: `--stroke-tertiary`. */
   headerBorder?: string;
   /** Details/Configuration column end border. Fallback: `--stroke-tertiary`. */
   detailsColumnBorder?: string;

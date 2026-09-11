@@ -39,6 +39,7 @@ export * from './constants/tag-input';
 export * from './constants/resizable-fields';
 export * from './constants/markdown-editor';
 export * from './constants/select-list';
+export * from './constants/breakpoint';
 
 export * from './components/DeploymentIcon/DeploymentIcon';
 export * from './components/InitialsAvatar/InitialsAvatar';

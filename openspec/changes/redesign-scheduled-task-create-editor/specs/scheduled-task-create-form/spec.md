@@ -9,7 +9,7 @@ It SHALL render a full-width header followed by a responsive two-column body:
 **Header**
 
 - Start side: a back control (chevron icon, mirrored in RTL via `rtl:scale-x-[-1]`) that calls `onBack` when activated, followed by the page title (`labels.pageTitle`).
-- End side: Cancel (`labels.cancelButtonLabel`, calls `onCancel`) and Save (`labels.createButtonLabel`, calls `onSubmit`) actions, in that order.
+- End side: Cancel (`labels.cancelButtonLabel`, calls `onCancel`) and Save (`labels.createButtonLabel`, calls `onSubmit`) actions, in that order — shown at the `desktop` breakpoint; at `mobile` the pair moves to the form's sticky footer (see the adaptive requirement below).
 
 **Details column** (left on desktop, first in DOM order on mobile)
 
@@ -88,7 +88,7 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 ### Requirement: Create-task strings flow through react-i18next
 
-Every user-visible string on the create-task page (page title, section headings/subtitles, schedule-section labels, frequency option labels, model/instructions/description/stream labels, validation messages, success/error notifications) MUST be resolved via `useTranslation().t()` in `ScheduledTaskCreatePage` and passed into the lib as plain strings. Feature-specific keys live under `scheduledTasks.create.*` in `apps/chat/src/i18n/locales/en.json`, referenced through `ScheduledTasksI18nKeys`. The display name label/required message MUST reuse `EditorI18nKeys.NameLabel` and `EditorI18nKeys.NameRequired`. Cancel MUST reuse `ButtonsI18nKeys.Cancel`; the Save action (previously labeled Create) MUST reuse `ButtonsI18nKeys.Save`.
+Every user-visible string on the create-task page (page title, section headings/subtitles, schedule-section labels, frequency option labels, model/instructions/description/stream labels, validation messages, success/error notifications) MUST be resolved via `useTranslation().t()` in `ScheduledTaskCreatePage` and passed into the lib as plain strings. Feature-specific keys live under `scheduledTasks.create.*` in `apps/chat/src/i18n/locales/en.json`, referenced through `ScheduledTasksI18nKeys`. The display name label/required message MUST reuse `EditorI18nKeys.NameLabel` and `EditorI18nKeys.NameRequired`. Cancel MUST reuse `ButtonsI18nKeys.Cancel`; the submit action MUST reuse `ButtonsI18nKeys.Create` (labeled "Create" — the create page creates a task; the edit page keeps `ButtonsI18nKeys.Save`).
 
 #### Scenario: New keys exist for section headings and instructions
 
@@ -98,7 +98,7 @@ Every user-visible string on the create-task page (page title, section headings/
 #### Scenario: Generic labels are reused, not duplicated
 
 - **WHEN** `ScheduledTaskCreatePage` renders `<ScheduledTaskCreateForm />`
-- **THEN** display name text props resolve from `EditorI18nKeys`, Cancel from `ButtonsI18nKeys.Cancel`, and Save from `ButtonsI18nKeys.Save`, not duplicated feature-scoped strings
+- **THEN** display name text props resolve from `EditorI18nKeys`, Cancel from `ButtonsI18nKeys.Cancel`, and the submit action from `ButtonsI18nKeys.Create`, not duplicated feature-scoped strings
 
 ### Requirement: Create-task page supports RTL and meets AAA accessibility defaults
 
@@ -123,3 +123,32 @@ All directional layout in the create-task header and two-column form MUST use Ta
 
 - **WHEN** the user tabs to the back control and activates it with Enter or Space
 - **THEN** `onBack` is called
+
+### Requirement: Create-task form chrome adapts to mobile
+
+The create/edit form's action placement, header chrome, and pickers SHALL adapt at the `mobile` breakpoint; the `desktop` presentation is unchanged:
+
+- The cancel/submit pair SHALL render in the header at `desktop`. At `mobile` it SHALL render in a sticky footer pinned over the bottom of the scrolling form, the two buttons splitting the row equally, separated from the content by an elevation shadow (`--shadow-xs-1`/`--shadow-xs-2`) instead of the header's border.
+- At `mobile` the header row (back control + title) SHALL sit below its divider (drawn above the row rather than below it) and use 16px horizontal gutters across the header, body columns, and footer; `desktop` keeps the divider below the header and 32px gutters.
+- At `mobile` the Model or Agent trigger SHALL open the deployment selector as a bottom sheet (the same selector content as the chat page's picker, capped at 90% of the viewport height, otherwise content-sized), and its Catalog action SHALL open the "Talk to" catalog modal covering the full viewport. At `desktop` the trigger keeps the dropdown popover and the centered modal.
+- The schedule's start/end date fields SHALL pair on one row at the `mobile` breakpoint, each taking half the row; from the `desktop` breakpoint up each field SHALL take its own full-width row, which suits the narrow Details column.
+
+#### Scenario: Mobile renders the actions in a sticky footer
+
+- **WHEN** the viewport matches the `mobile` breakpoint and the form content scrolls
+- **THEN** Cancel and Create pin to the bottom of the visible form, each taking half the action row, with a shadow separating the footer from the scrolled content
+
+#### Scenario: Mobile opens the model selector as a bottom sheet
+
+- **WHEN** the user activates the Model or Agent field at the `mobile` breakpoint
+- **THEN** the deployment selector slides up from the bottom (height capped at 90% of the viewport), and activating its Catalog action opens the "Talk to" modal covering the full viewport
+
+#### Scenario: Mobile pairs the schedule date fields on one row
+
+- **WHEN** the viewport matches the `mobile` breakpoint and a recurring schedule's start/end date fields render
+- **THEN** the two date fields share one row side by side, while at the `desktop` breakpoint each renders on its own full-width row
+
+#### Scenario: Desktop presentation is unchanged
+
+- **WHEN** the viewport matches the `desktop` breakpoint
+- **THEN** the actions render in the header above the border divider, and the model field opens the dropdown popover and centered catalog modal as before the mobile adaptation

@@ -1,0 +1,6 @@
+/* Reads the `--stdv-subtitle-text` var the parent ScheduledTaskDetailView
+ * sets on its root, so the label color stays overridable through the view's
+ * `styles.colors.subtitleText` without this section taking a color prop. */
+.subtitleText {
+  color: var(--stdv-subtitle-text, var(--text-secondary, #57647a));
+}

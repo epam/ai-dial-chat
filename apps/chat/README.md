@@ -234,10 +234,10 @@ shape — is in
 
 `tailwind.config.js` defines exactly two named screens:
 
-| Screen    | Query              |
-| --------- | ------------------ |
-| `mobile`  | `max-width: 768px` |
-| `desktop` | `min-width: 769px` |
+| Screen    | Query               |
+| --------- | ------------------- |
+| `mobile`  | `max-width: 1279px` |
+| `desktop` | `min-width: 1280px` |
 
 Do not introduce `sm:`/`md:`/`lg:`/`xl:` or tablet variants. When a component
 must branch in JavaScript, use `useBreakpoint` / `useIsMobile` from

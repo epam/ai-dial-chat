@@ -2520,9 +2520,7 @@
           }
         },
         "summary": "Attach to an active generation and replay it live",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/watch": {
@@ -10525,9 +10523,7 @@
             "example": "gpt-4o__My Chat"
           }
         },
-        "required": [
-          "path"
-        ]
+        "required": ["path"]
       },
       "WatchConversationBodyDto": {
         "type": "object",

@@ -7,7 +7,7 @@ import {
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
-import type { CSSProperties, FC, ReactNode } from 'react';
+import { type CSSProperties, type FC, type ReactNode, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useBottomSheet } from '../../hooks/useBottomSheet';
 import styles from './BottomSheetShell.module.scss';
@@ -52,7 +52,7 @@ export interface BottomSheetShellProps {
   children: ReactNode;
 }
 
-/** Generic mobile bottom-sheet shell: backdrop, bottom-anchored panel, optional header, Escape-to-close, and body-scroll lock. */
+/** Generic mobile bottom-sheet shell: backdrop, bottom-anchored panel, optional header, Escape-to-close, body-scroll lock, and dialog focus management (initial focus, Tab trapping, focus restoration). */
 export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   isOpen,
   title,
@@ -67,7 +67,14 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   colors,
   children,
 }) => {
-  useBottomSheet(isOpen, onClose);
+  /*
+   * Focus management (initial focus into the sheet, Tab trapping, and
+   * restoration to the trigger on close) lives in the hook and keys off this
+   * ref; `tabIndex={-1}` below makes the dialog itself the focus fallback
+   * when a sheet hosts no focusable content.
+   */
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  useBottomSheet(isOpen, onClose, sheetRef);
 
   if (!isOpen || typeof document === 'undefined') return null;
 
@@ -90,9 +97,11 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
 
       {/* Sheet */}
       <div
+        ref={sheetRef}
         role="dialog"
         aria-modal
         aria-label={title ?? ariaLabel}
+        tabIndex={-1}
         style={{ ...cssVars, ...style }}
         className={mergeClasses(
           styles.sheet,

@@ -50,7 +50,6 @@ export const useOverlayExternalLogin = (): {
   const [status, setStatus] = useState(OverlayExternalLoginStatus.Idle);
   const attemptResourcesRef = useRef<AuthWindowAttemptResources | null>(null);
   const attemptIdRef = useRef(0);
-  const isMountedRef = useRef(true);
 
   const teardownCurrentAttempt = useCallback((closeAuthWindow = false) => {
     const resources = attemptResourcesRef.current;
@@ -75,9 +74,7 @@ export const useOverlayExternalLogin = (): {
       if (attemptResourcesRef.current?.attemptId !== attemptId) return;
 
       teardownCurrentAttempt(true);
-      if (isMountedRef.current) {
-        setStatus(OverlayExternalLoginStatus.Idle);
-      }
+      setStatus(OverlayExternalLoginStatus.Idle);
     },
     [teardownCurrentAttempt],
   );
@@ -118,9 +115,7 @@ export const useOverlayExternalLogin = (): {
         if (attemptResourcesRef.current?.attemptId !== attemptId) return;
 
         resources.isTakingLonger = true;
-        if (isMountedRef.current) {
-          setStatus(OverlayExternalLoginStatus.TakingLonger);
-        }
+        setStatus(OverlayExternalLoginStatus.TakingLonger);
       }, AUTH_WINDOW_LONG_WAIT_MS);
       attemptResourcesRef.current = resources;
 
@@ -162,14 +157,19 @@ export const useOverlayExternalLogin = (): {
   const cancelLogin = useCallback(() => {
     attemptIdRef.current += 1;
     teardownCurrentAttempt(true);
-    if (isMountedRef.current) {
-      setStatus(OverlayExternalLoginStatus.Idle);
-    }
+    setStatus(OverlayExternalLoginStatus.Idle);
   }, [teardownCurrentAttempt]);
 
+  /*
+   * On unmount the timers are cleared and the attempt ref nulled, so no
+   * attempt callback runs afterwards; the auth window itself is deliberately
+   * left open (the user may be mid-login in it). A stray `setStatus` after
+   * unmount would be a React 18+ no-op anyway, so it needs no mounted-guard —
+   * the attemptId checks below are the real post-unmount protection, not
+   * window teardown.
+   */
   useEffect(() => {
     return () => {
-      isMountedRef.current = false;
       attemptIdRef.current += 1;
       teardownCurrentAttempt();
     };
