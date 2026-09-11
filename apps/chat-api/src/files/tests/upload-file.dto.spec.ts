@@ -83,11 +83,11 @@ describe('UploadFileDto', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('accepts a path containing &', async () => {
+  it('rejects a path containing &', async () => {
     const errors = await validateDto({
       bucket: 'my-bucket',
       path: 'Metrology&UnitConversionPresentation(1).pptx',
     });
-    expect(errors).toHaveLength(0);
+    expect(errors.some((e) => e.property === 'path')).toBe(true);
   });
 });
