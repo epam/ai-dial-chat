@@ -34,8 +34,7 @@ const OverlayTestCtx = (
 
 const overlayMocks = vi.hoisted(() => ({
   current: undefined as
-    | { notifyConversationLoaded: ReturnType<typeof vi.fn> }
-    | undefined,
+    { notifyConversationLoaded: ReturnType<typeof vi.fn> } | undefined,
   notifyConversationLoaded: vi.fn(),
 }));
 

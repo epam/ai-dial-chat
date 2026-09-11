@@ -30,9 +30,7 @@ export enum GenerationStatus {
  * generation for persistence purposes.
  */
 export type GenerationTerminalEvent =
-  | { type: 'done' }
-  | { type: 'error'; message?: string }
-  | { type: 'stopped' };
+  { type: 'done' } | { type: 'error'; message?: string } | { type: 'stopped' };
 
 /** Snapshot-then-live-subscription handle returned by `attach`. */
 export interface GenerationAttachment {

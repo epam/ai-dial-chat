@@ -9,7 +9,8 @@
     "moduleResolution": "bundler",
     "lib": ["es2022", "dom"],
     "forceConsistentCasingInFileNames": true,
-    "types": ["node", "vite/client"]
+    "types": ["node", "vite/client"],
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*.ts"],
   "exclude": [

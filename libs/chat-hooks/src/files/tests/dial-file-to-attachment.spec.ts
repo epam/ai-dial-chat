@@ -89,8 +89,8 @@ describe('dialFileToAttachment', () => {
     const batch = dialFilesToAttachments(files, 'my-bucket', {
       resolvePreviewUrl,
     });
-    const individual = files.map(
-      (file) => dialFileToAttachment(file, 'my-bucket', { resolvePreviewUrl })!,
+    const individual = files.map((file) =>
+      dialFileToAttachment(file, 'my-bucket', { resolvePreviewUrl })!,
     );
 
     expect(batch).toEqual(individual);

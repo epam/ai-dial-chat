@@ -9,7 +9,8 @@
     "lib": ["es2022", "dom"],
     "noImplicitOverride": false,
     "noUnusedLocals": false,
-    "types": ["node"]
+    "types": ["node"],
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*.ts"],
   "references": []

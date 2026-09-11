@@ -34,10 +34,7 @@ vi.mock('../UserConfigContext', () => ({
 vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
 }));
-vi.mock(
-  '../AppConfigContext',
-  async () => import('./app-config-context-mock'),
-);
+vi.mock('../AppConfigContext', async () => import('./app-config-context-mock'));
 vi.mock('../auth/UserContext', () => ({
   useUser: () => ({
     status: AuthStatus.Authenticated,

@@ -19,10 +19,7 @@ vi.mock('react-router', () => ({
   useLocation: () => ({ pathname: contextMocks.pathname }),
 }));
 
-vi.mock(
-  '../AppConfigContext',
-  async () => import('./app-config-context-mock'),
-);
+vi.mock('../AppConfigContext', async () => import('./app-config-context-mock'));
 
 vi.mock('../ConversationsContext', () => ({
   useConversations: () => ({
