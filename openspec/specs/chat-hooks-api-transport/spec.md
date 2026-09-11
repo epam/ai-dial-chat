@@ -107,6 +107,10 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 - **WHEN** the completion `fetch` resolves with a non-2xx status, or resolves with no readable body
 - **THEN** `onError` is invoked and no chunk callbacks fire
 
+#### Scenario: A 409 is reported as a distinguishable generation conflict
+- **WHEN** the completion `fetch` resolves with `409` — the conversation already has an active generation, typically started by another browser tab of the same session
+- **THEN** `onError` is invoked with a `GenerationConflictError` (defaulting to `DEFAULT_GENERATION_CONFLICT_MESSAGE`) rather than the generic `Stream request failed with status …` error, so callers can present it as an expected state
+
 #### Scenario: Timezone header is present only when a timezone resolves
 - **WHEN** `deps.getTimezone` is omitted or returns an empty value
 - **THEN** the completion request omits the `X-Timezone` header entirely, matching the pre-move behavior

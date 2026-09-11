@@ -194,6 +194,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       generation: { startGeneration, completeGeneration },
       channel,
       onStopError: handleStopError,
+      generationConflictMessage: t(ChatI18nKeys.GenerationConflict),
     });
 
   const handleCreateConversation = useCallback(

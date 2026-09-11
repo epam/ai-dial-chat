@@ -313,6 +313,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     channel,
     overlay,
     onStopError: handleStopError,
+    generationConflictMessage: t(ChatI18nKeys.GenerationConflict),
   });
 
   /*

@@ -9,6 +9,7 @@ export enum ChatI18nKeys {
   GreetingNight = 'chat.greetingNight',
   GreetingNightNoName = 'chat.greetingNightNoName',
   StreamError = 'chat.streamError',
+  GenerationConflict = 'chat.generationConflict',
   CreateConversationError = 'chat.createConversationError',
   ConversationNotFound = 'chat.conversationNotFound',
   /** TODO: remove in next release */

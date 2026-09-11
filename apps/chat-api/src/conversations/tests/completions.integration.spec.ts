@@ -195,6 +195,52 @@ describe('POST /conversations/completions (integration)', () => {
       .expect(409);
   });
 
+  /*
+   * `streamCompletion` is an async generator: its body — including the
+   * `generationService.register()` call that rejects a duplicate active
+   * generation — does not run until the controller's `for await` pulls the
+   * first chunk. The rejection therefore surfaces from inside the consuming
+   * loop, after SSE headers may or may not have been sent. Before issue #8688
+   * the controller's `finally` ended the response unconditionally, flushing an
+   * empty 200 and leaving the exception filter nothing to write: a second
+   * browser tab submitting into the same conversation saw an empty LLM answer
+   * instead of a conflict.
+   */
+  it('returns 409 when the generator rejects before the stream opens', async () => {
+    mockService.streamCompletion.mockImplementation(
+      // eslint-disable-next-line require-yield
+      async function* () {
+        throw new ConflictException(
+          'A generation is already active for this conversation. Stop it before starting a new one.',
+        );
+      },
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send(VALID_COMPLETION_BODY)
+      .expect(409);
+
+    expect(res.body.message).toContain('already active');
+  });
+
+  it('ends the SSE stream without a status rewrite when the generator rejects mid-stream', async () => {
+    mockService.streamCompletion.mockImplementation(async function* (
+      ...args: unknown[]
+    ) {
+      (args[10] as () => void)();
+      yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
+      throw new Error('upstream exploded');
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send(VALID_COMPLETION_BODY)
+      .expect(200);
+
+    expect(res.text).toContain('"content":"Hi"');
+  });
+
   it('returns 400 when generationId is missing', async () => {
     const { generationId: _, ...bodyWithout } = VALID_COMPLETION_BODY;
     await request(app.getHttpServer())
