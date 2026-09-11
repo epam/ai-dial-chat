@@ -10,7 +10,9 @@ import type { ReactNode } from 'react';
  * Props for {@link SkillDetailsSidePanel} — the skill-scoped surface of
  * `@epam/ai-dial-catalog`'s `DetailsPanelProps`, narrowed to the actions a
  * skill details surface offers. Publish, share, credentials, and download
- * stay with the Catalog page: omitting them hides those actions.
+ * stay with the Catalog page: omitting them hides those actions. A surface
+ * that shows the skill's information only passes `isReadonly` with the
+ * primary action and Download hidden.
  */
 export interface SkillDetailsSidePanelProps {
   /** The skill catalog item to display in the panel. */
@@ -24,6 +26,12 @@ export interface SkillDetailsSidePanelProps {
    * panel shows a small loading indicator next to the tab row.
    */
   isDetailsLoading?: boolean;
+  /**
+   * Renders the panel read-only: the favorite star and every mutating action
+   * are withheld. The primary action and Download still render unless their
+   * own visibility rules hide them. Default: `false`.
+   */
+  isReadonly?: boolean;
   /** Called when the panel should close (close button or backdrop click). */
   onClose: () => void;
   /** Called when the star/favorite button is toggled. */
@@ -32,6 +40,8 @@ export interface SkillDetailsSidePanelProps {
   onUseInChat?: (item: CatalogItem) => void;
   /** Controls whether the header's primary action button is shown for the skill. */
   isPrimaryActionVisible?: (item: CatalogItem) => boolean;
+  /** Narrows which items offer the "Download" action. */
+  isDownloadVisible?: (item: CatalogItem) => boolean;
   /**
    * Resolves the text of a file picked in the Content tab, given its opaque
    * `id`. Superseded by `onLoadContentFilePreview` and

@@ -17,6 +17,7 @@ import {
   type Attachment,
   type Conversation,
   type Message,
+  type RequestSkill,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -38,6 +39,7 @@ import ConversationView from '../../components/ConversationView/ConversationView
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
+import { useSkillSelectorOverlay } from '../../components/SkillSelector/useSkillSelectorOverlay';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import {
   AppsEditorI18nKeys,
@@ -197,17 +199,38 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       generationConflictMessage: t(ChatI18nKeys.GenerationConflict),
     });
 
+  /*
+   * Skills in the preview's pre-conversation composer: the same host wiring
+   * the main chat uses (flag, listing/favorites contexts, lazy description
+   * fetch, catalog picker, details panel). Once the conversation exists, the
+   * shared ConversationView below wires its own instance for the ongoing
+   * input and history display — this one serves only the composer phase.
+   */
+  const {
+    skillMenuOverlay,
+    commandMenu,
+    skillCatalogModal,
+    skillDetailsPanel,
+    selectedSkillElement,
+    selectedSkills,
+    removeSelectedSkill,
+  } = useSkillSelectorOverlay();
+
   const handleCreateConversation = useCallback(
     async (
       message: string,
       attachments: Attachment[],
       chatSettingsValues: NewConversationChatSettings,
+      skills?: RequestSkill[],
     ) => {
       const attachmentDtos = attachmentsToDtos(attachments || []);
       const created = await apiCreateConversation(
         message,
         normalizeDeploymentId(appId),
         attachmentDtos,
+        undefined,
+        undefined,
+        skills,
       );
       const savedConversation = {
         ...created,
@@ -239,12 +262,46 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         message,
         withPlaceholder.messages.length - 1,
         appId,
-        attachmentDtos?.length ? { attachments: attachmentDtos } : undefined,
+        attachmentDtos?.length || skills?.length
+          ? {
+              ...(attachmentDtos?.length
+                ? { attachments: attachmentDtos }
+                : {}),
+              ...(skills?.length ? { skills } : {}),
+            }
+          : undefined,
         generateUUID(),
         CompletionMode.ContinueLastUser,
       );
+      /*
+       * The selection is consumed by the created conversation's first
+       * message (or discarded on the starter path below, which carries no
+       * skill); a no-op while nothing is selected or the skill flag is off.
+       * On failure the awaits above reject first, so the selection survives
+       * for the retry.
+       */
+      removeSelectedSkill();
     },
-    [appId, startStream],
+    [appId, startStream, removeSelectedSkill],
+  );
+
+  /*
+   * The composer's send carries the selected skill; the starter path below
+   * creates without one, mirroring the main chat's starter flow.
+   */
+  const handleCreateFromComposer = useCallback(
+    (
+      message: string,
+      attachments: Attachment[],
+      chatSettingsValues: NewConversationChatSettings,
+    ) =>
+      handleCreateConversation(
+        message,
+        attachments,
+        chatSettingsValues,
+        selectedSkills,
+      ),
+    [handleCreateConversation, selectedSkills],
   );
 
   const handleStarterSelect = useCallback(
@@ -363,7 +420,11 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
             placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
             introText={quickAppStarters.introText}
             message={inputMessage}
-            onCreateConversation={handleCreateConversation}
+            onCreateConversation={handleCreateFromComposer}
+            menuOverlays={skillMenuOverlay ? [skillMenuOverlay] : undefined}
+            inlineStartSlot={selectedSkillElement}
+            onInlineStartRemove={removeSelectedSkill}
+            commandMenu={commandMenu}
           >
             <StarterButtons
               starters={quickAppStarters.starters}
@@ -371,6 +432,8 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
             />
           </NewConversationComposer>
         </Suspense>
+        {skillCatalogModal}
+        {skillDetailsPanel}
       </div>
     );
   }

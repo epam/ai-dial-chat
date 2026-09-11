@@ -22,6 +22,7 @@ const makeUserMessage = (
         attachments: customContent.attachments,
         configuration_value: customContent.configuration_value,
         form_value: customContent.form_value,
+        skills: customContent.skills,
         state: customContent.state,
       },
     }),

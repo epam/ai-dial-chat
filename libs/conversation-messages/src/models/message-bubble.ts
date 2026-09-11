@@ -100,8 +100,8 @@ export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
 
 /** Shared props for user and assistant message bubble components. */
 interface BaseMessageBubbleProps {
-  /** Plain-text (or Markdown) content of the message. */
-  text: string;
+  /** Plain-text (or Markdown) content of the message. When absent, the bubble renders for `beforeContent` alone. */
+  text?: string;
   /** Color and typography overrides applied as CSS custom properties. */
   styles?: MessageBubbleStyles;
   /** Props for the `MessageActions` bar below the bubble. */
@@ -122,6 +122,17 @@ interface BaseMessageBubbleProps {
   onAttachmentRetry?: (id: string) => void;
   /** ID of the attachment currently open in the canvas panel, if any. Renders that tile's selected visual state. */
   selectedAttachmentId?: string;
+  /**
+   * Content rendered at the inline-start of the message's first text line,
+   * which word-flows after it (e.g. a used-skill chip — inline-level content
+   * no taller than a text line). The user bubble renders it inline within
+   * the text; the assistant bubble overlays it on the first markdown block's
+   * first line, which indents past it. The user bubble renders for the slot
+   * alone even when `text` is empty; an assistant message with no text
+   * renders the slot on its own line — above the streaming placeholder while
+   * the first token has not arrived yet.
+   */
+  beforeContent?: ReactNode;
 }
 
 /** Props for `UserMessageBubble`. */

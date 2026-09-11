@@ -936,6 +936,16 @@ const ChatPage = ({
 state updater, so a host may update its own state from it — for example dropping
 the deleted conversation from a list it renders.
 
+`handleSend` accepts an optional third `skills` argument (`RequestSkill[]` from
+`@epam/ai-dial-chat-shared`) merged into the outgoing message's
+`custom_content.skills` — the field is omitted when the array is empty or
+absent. `handleEditMessage` accepts an optional fifth `skills` argument:
+`undefined` preserves the message's original skills untouched (e.g. an edit
+made while the host's feature flag is off), while an array — including an empty
+one — is the skill state the edit resolved and replaces them (empty means the
+user removed the skill). A skills-only change counts as a change: it re-runs
+the generation even when the text and attachments are untouched.
+
 Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`/`isAnswerIncomplete`/`shouldRerunGenerationOnEdit`, and `getStarterConversationText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
 
 ### useAttachmentValidation

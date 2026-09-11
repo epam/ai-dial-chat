@@ -926,6 +926,23 @@ export const Header: FC<HeaderProps> = ({
     );
   };
 
+  /*
+   * The action row renders only when it has content: an empty flex child
+   * would still hold the parent's `gap-3` open, leaving dead space between
+   * the entity header and the sections below it on surfaces that hide every
+   * action (e.g. a read-only details panel).
+   */
+  const hasActionRowContent =
+    isCredentialsActionPrimary ||
+    shouldShowPrimaryAction ||
+    isDownloadActionPrimary ||
+    (isShareInActionRow && shouldShowShareAction) ||
+    (isPublishInActionRow && shouldShowUnpublish) ||
+    (isPublishInActionRow && shouldShowPublish) ||
+    (shouldShowCredentialsAction && !isCredentialsActionPrimary) ||
+    manageItems.length > 0 ||
+    isUnpublishPending;
+
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
       <EntityHeader
@@ -944,95 +961,97 @@ export const Header: FC<HeaderProps> = ({
           ) : undefined
         }
       />
-      <div className="flex flex-wrap items-center gap-2 ps-[60px]">
-        {isCredentialsActionPrimary &&
-          renderCredentialsButton(
-            isApiKeyConfigured || isOAuthLogoutState
-              ? NeutralButton
-              : PrimaryButton,
-          )}
-        {shouldShowPrimaryAction && (
-          <PrimaryButton
-            label={texts?.primaryActionLabel ?? 'Use in chat'}
-            iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
-            onClick={handleUseInChat}
-            disabled={limitStatus === CatalogLimitStatus.LimitReached}
-          />
-        )}
-        {isDownloadActionPrimary && (
-          <>
-            <PrimaryButton
-              label={texts?.downloadActionLabel ?? 'Download'}
-              iconBefore={
-                isDownloading ? (
-                  <Spinner size={DIAL_ICON_SIZE.MD} aria-hidden />
-                ) : (
-                  <IconDownload
-                    size={DIAL_ICON_SIZE.MD}
-                    aria-hidden
-                    stroke={DIAL_KIT_ICON_STROKE}
-                  />
-                )
-              }
-              onClick={handleDownloadPrimary}
-              disabled={isDownloading}
-              aria-busy={isDownloading}
-            />
-            {isDownloading && (
-              <span role="status" aria-live="polite" className="sr-only">
-                {texts?.downloadingStatusLabel ?? 'Downloading'}
-              </span>
+      {hasActionRowContent && (
+        <div className="flex flex-wrap items-center gap-2 ps-[60px]">
+          {isCredentialsActionPrimary &&
+            renderCredentialsButton(
+              isApiKeyConfigured || isOAuthLogoutState
+                ? NeutralButton
+                : PrimaryButton,
             )}
-          </>
-        )}
-        {isShareInActionRow && shouldShowShareAction && (
-          <ShareButton
-            item={item}
-            onShare={onShare}
-            shareOverlay={shareOverlay}
-            isShareVisible={isShareVisible}
-            label={texts?.shareLabel}
-          />
-        )}
-        {/* Promoted out of the Manage menu by `isPublishPrimary`, for hosts
-         * where publishing is the action owners reach for most after using an
-         * item. "Unpublish" takes the same slot once the item is published, so
-         * the row carries whichever one applies — never both. */}
-        {isPublishInActionRow && shouldShowUnpublish && (
-          <NeutralButton
-            label={texts?.unpublishLabel ?? 'Unpublish'}
-            iconBefore={
-              <IconWorldOff
-                size={DIAL_ICON_SIZE.MD}
-                aria-hidden
-                stroke={DIAL_KIT_ICON_STROKE}
+          {shouldShowPrimaryAction && (
+            <PrimaryButton
+              label={texts?.primaryActionLabel ?? 'Use in chat'}
+              iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
+              onClick={handleUseInChat}
+              disabled={limitStatus === CatalogLimitStatus.LimitReached}
+            />
+          )}
+          {isDownloadActionPrimary && (
+            <>
+              <PrimaryButton
+                label={texts?.downloadActionLabel ?? 'Download'}
+                iconBefore={
+                  isDownloading ? (
+                    <Spinner size={DIAL_ICON_SIZE.MD} aria-hidden />
+                  ) : (
+                    <IconDownload
+                      size={DIAL_ICON_SIZE.MD}
+                      aria-hidden
+                      stroke={DIAL_KIT_ICON_STROKE}
+                    />
+                  )
+                }
+                onClick={handleDownloadPrimary}
+                disabled={isDownloading}
+                aria-busy={isDownloading}
               />
-            }
-            onClick={handleOpenUnpublish}
-            onMouseEnter={handlePublishTriggerIntent}
-            onFocus={handlePublishTriggerIntent}
-          />
-        )}
-        {isPublishInActionRow && shouldShowPublish && (
-          <NeutralButton
-            label={texts?.publishLabel ?? 'Publish'}
-            iconBefore={
-              <IconWorldShare
-                size={DIAL_ICON_SIZE.MD}
-                aria-hidden
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
-            }
-            onClick={handleOpenPublish}
-            onMouseEnter={handlePublishTriggerIntent}
-            onFocus={handlePublishTriggerIntent}
-          />
-        )}
-        {shouldShowCredentialsAction &&
-          !isCredentialsActionPrimary &&
-          renderCredentialsButton(NeutralButton)}
-        {(manageItems.length > 0 || isUnpublishPending) && renderManageMenu()}
-      </div>
+              {isDownloading && (
+                <span role="status" aria-live="polite" className="sr-only">
+                  {texts?.downloadingStatusLabel ?? 'Downloading'}
+                </span>
+              )}
+            </>
+          )}
+          {isShareInActionRow && shouldShowShareAction && (
+            <ShareButton
+              item={item}
+              onShare={onShare}
+              shareOverlay={shareOverlay}
+              isShareVisible={isShareVisible}
+              label={texts?.shareLabel}
+            />
+          )}
+          {/* Promoted out of the Manage menu by `isPublishPrimary`, for hosts
+           * where publishing is the action owners reach for most after using an
+           * item. "Unpublish" takes the same slot once the item is published, so
+           * the row carries whichever one applies — never both. */}
+          {isPublishInActionRow && shouldShowUnpublish && (
+            <NeutralButton
+              label={texts?.unpublishLabel ?? 'Unpublish'}
+              iconBefore={
+                <IconWorldOff
+                  size={DIAL_ICON_SIZE.MD}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
+              onClick={handleOpenUnpublish}
+              onMouseEnter={handlePublishTriggerIntent}
+              onFocus={handlePublishTriggerIntent}
+            />
+          )}
+          {isPublishInActionRow && shouldShowPublish && (
+            <NeutralButton
+              label={texts?.publishLabel ?? 'Publish'}
+              iconBefore={
+                <IconWorldShare
+                  size={DIAL_ICON_SIZE.MD}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
+              onClick={handleOpenPublish}
+              onMouseEnter={handlePublishTriggerIntent}
+              onFocus={handlePublishTriggerIntent}
+            />
+          )}
+          {shouldShowCredentialsAction &&
+            !isCredentialsActionPrimary &&
+            renderCredentialsButton(NeutralButton)}
+          {(manageItems.length > 0 || isUnpublishPending) && renderManageMenu()}
+        </div>
+      )}
     </div>
   );
 };

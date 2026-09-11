@@ -24,18 +24,18 @@ export interface UseCommandMenuParams {
 }
 
 /**
- * State machine behind the `commandMenu` prop of `Input`: opens on the
- * keystroke that turns an empty textarea into the bare trigger prefix, stays
- * open while the value keeps matching the prefix + query shape, and closes on
- * unmatch or an explicit dismissal.
+ * State machine behind the `commandMenu` prop of `Input`: opens when an empty
+ * textarea gains the trigger — typed as the bare prefix, or pasted as any
+ * command-shaped value — stays open while the value keeps matching the
+ * prefix + query shape, and closes on unmatch or an explicit dismissal.
  */
 export const useCommandMenu = ({ config, message }: UseCommandMenuParams) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   /*
    * Latch set by an explicit dismissal (Escape / outside click) and cleared
    * once the value stops matching, so a dismissed menu reopens only after the
-   * user deletes the text and enters the prefix again — never while the value
-   * still matches.
+   * user deletes the text and enters the trigger again — typed or pasted —
+   * never while the value still matches.
    */
   const [isDismissed, setIsDismissed] = useState(false);
 
@@ -45,22 +45,29 @@ export const useCommandMenu = ({ config, message }: UseCommandMenuParams) => {
       : '';
 
   /*
-   * Opens the menu only on the keystroke that turns an empty textarea into
-   * the bare prefix. A pasted `/query` never transitions through the bare
-   * prefix, so pasting opens nothing; IME composition events are ignored,
-   * matching the component's other key handling.
+   * Opens the menu on the transition from an empty textarea into a trigger.
+   * Typing opens only on the bare prefix — the single keystroke that starts
+   * a command. A pasted `/query` never transitions through the bare prefix,
+   * so a paste (`inputType` `insertFromPaste`) instead opens on the resulting
+   * value, covering the bare prefix and any full command shape alike: the
+   * paste inserts its text untouched and only the menu opens on top of it,
+   * while any other pasted shape is left as a regular paste. A paste the
+   * attachment pipeline intercepts (`preventDefault`) never emits an input
+   * event at all. IME composition events are ignored, matching the
+   * component's other key handling.
    */
   const handleValueChange = useCallback(
-    (nextValue: string, isComposing: boolean) => {
-      if (config == null || isComposing) {
+    (nextValue: string, isComposing: boolean, inputType?: string) => {
+      if (config == null || isComposing || message !== '' || isDismissed) {
         return;
       }
 
-      if (
-        message === '' &&
-        nextValue === config.triggerPrefix &&
-        !isDismissed
-      ) {
+      const isTypedBarePrefix = nextValue === config.triggerPrefix;
+      const isPastedCommand =
+        inputType === 'insertFromPaste' &&
+        isCommandValue(nextValue, config.triggerPrefix);
+
+      if (isTypedBarePrefix || isPastedCommand) {
         setIsMenuOpen(true);
       }
     },
@@ -70,8 +77,9 @@ export const useCommandMenu = ({ config, message }: UseCommandMenuParams) => {
   /*
    * Closes on unmatch — covering observed keystrokes and unobserved value
    * changes alike (prop sync, send-clear, history navigation) — and clears
-   * the dismissal latch at the same time. Never opens: opening is
-   * keystroke-only.
+   * the dismissal latch at the same time. Never opens: opening lives in
+   * `handleValueChange` (typed bare prefix or command-shaped paste into an
+   * empty textarea).
    */
   useEffect(() => {
     if (config == null) {

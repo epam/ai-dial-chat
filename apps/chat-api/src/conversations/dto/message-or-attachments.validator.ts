@@ -8,7 +8,7 @@ import { MessageCustomContentDto } from './message-custom-content.dto';
 /**
  * Property decorator that passes when the decorated text field is a non-empty
  * string OR the DTO carries a DIAL custom payload that can stand in for text
- * (`attachments`, `form_value`, or `configuration_value`).
+ * (`attachments`, `skills`, `form_value`, or `configuration_value`).
  */
 export const IsMessageOrAttachmentsPresent = (
   validationOptions?: ValidationOptions,
@@ -28,13 +28,18 @@ export const IsMessageOrAttachmentsPresent = (
             v != null && typeof v === 'object' && Object.keys(v).length > 0;
           const hasText = typeof value === 'string' && value.trim().length > 0;
           const hasAttachments = (custom_content?.attachments?.length ?? 0) > 0;
+          const hasSkills = (custom_content?.skills?.length ?? 0) > 0;
           const hasFormValue = hasNonEmptyObject(custom_content?.form_value);
           const hasConfigurationValue = hasNonEmptyObject(
             custom_content?.configuration_value,
           );
 
           return (
-            hasText || hasAttachments || hasFormValue || hasConfigurationValue
+            hasText ||
+            hasAttachments ||
+            hasSkills ||
+            hasFormValue ||
+            hasConfigurationValue
           );
         },
         defaultMessage: (): string => {

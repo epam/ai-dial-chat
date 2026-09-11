@@ -62,6 +62,7 @@ const getMessageTextWrapper = (message: string) =>
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('MessageBubble', () => {
@@ -308,6 +309,54 @@ describe('UserMessageBubble — collapsed text', () => {
       name: 'Collapse user message',
     });
     expect(collapseButton.textContent).toContain('Less');
+  });
+});
+
+describe('UserMessageBubble — inline-start slot', () => {
+  const skillSlot = <span>/Summarizer</span>;
+
+  it('renders the slot inline inside the text paragraph, before the text', () => {
+    render(<UserMessageBubble text="Hello world" beforeContent={skillSlot} />);
+
+    const slot = screen.getByText('/Summarizer');
+    /*
+     * The slot's DOM position — inside the text paragraph, ahead of the text —
+     * is the feature under test, and its wrapper span carries no ARIA hook, so
+     * no semantic query reaches it (see spec.md's node-access exception).
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const paragraph = slot.closest('p') as HTMLParagraphElement;
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const wrapper = slot.parentElement as HTMLElement;
+
+    expect(paragraph).toBeTruthy();
+    expect(wrapper.className).toContain('me-1');
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    expect(paragraph.firstChild).toBe(wrapper);
+  });
+
+  it('renders the bubble for the slot alone when there is no text', () => {
+    const { container } = render(
+      <UserMessageBubble beforeContent={skillSlot} />,
+    );
+
+    expect(screen.getByText('/Summarizer')).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'User message' })).toBeTruthy();
+    /* Slot-only: the slot stays in flow in a plain div, with no text paragraph. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
+    expect(container.querySelector('p')).toBeNull();
+  });
+
+  it('renders no slot wrapper inside the paragraph when beforeContent is absent', () => {
+    render(<UserMessageBubble text="Hello world" />);
+
+    const paragraph = findMessageParagraph('Hello world');
+    /*
+     * The absence of a slot wrapper — a plain span with no ARIA hook — inside
+     * the paragraph cannot be queried semantically, so the check is DOM-level.
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    expect(paragraph.firstElementChild).toBeNull();
   });
 });
 
@@ -571,6 +620,112 @@ describe('AssistantMessageBubble — deployment icon', () => {
     render(<AssistantMessageBubble text="Hello" />);
     expect(screen.queryByAltText('')).toBeNull();
     expect(screen.queryByText(/GPT/)).toBeNull();
+  });
+});
+
+describe('AssistantMessageBubble — inline-start slot', () => {
+  const skillSlot = <span>/Summarizer</span>;
+
+  /*
+   * The text container carries only aria-live/aria-atomic (no role), so no
+   * semantic query reaches it — a CSS-level check with no semantic alternative.
+   */
+  const getTextContainer = (container: HTMLElement) =>
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
+    container.querySelector('[aria-live="polite"]') as HTMLElement | null;
+
+  it('overlays the slot at the inline start of the first markdown block without entering it', () => {
+    /* The overlaid slot is measured by a ResizeObserver, absent in jsdom. */
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {
+          // No-op in JSDOM.
+        }
+        unobserve() {
+          // No-op in JSDOM.
+        }
+        disconnect() {
+          // No-op in JSDOM.
+        }
+      },
+    );
+
+    const { container } = render(
+      <AssistantMessageBubble text="Hello world" beforeContent={skillSlot} />,
+    );
+
+    const textContainer = getTextContainer(container) as HTMLElement;
+    expect(textContainer).toBeTruthy();
+
+    // eslint-disable-next-line testing-library/no-node-access -- see getTextContainer comment
+    const slotWrapper = textContainer.firstElementChild as HTMLElement;
+    expect(slotWrapper.className).toContain('absolute');
+    expect(slotWrapper.className).toContain('start-0');
+    expect(slotWrapper.className).toContain('top-0');
+
+    // eslint-disable-next-line testing-library/no-node-access -- see getTextContainer comment
+    const markdownWrapper = textContainer.querySelector(
+      '.cm-bubble-markdown',
+    ) as HTMLElement | null;
+    expect(markdownWrapper).toBeTruthy();
+    /*
+     * The indent selector is scoped through the wrapper class precisely so the
+     * host-supplied slot never sits inside the markdown container it indents.
+     */
+    expect(markdownWrapper?.contains(slotWrapper)).toBe(false);
+    expect(textContainer.className).toContain(
+      '[&>.cm-bubble-markdown>div>*:first-child]',
+    );
+    expect(textContainer.className).toContain(
+      'indent-[var(--cm-bubble-first-line-indent,0px)]',
+    );
+  });
+
+  it('renders the slot in flow above the streaming placeholder while no text has arrived', () => {
+    render(
+      <AssistantMessageBubble
+        isStreaming
+        beforeContent={skillSlot}
+        labels={{ thinkingLabel: 'Thinking…' }}
+      />,
+    );
+
+    const slot = screen.getByText('/Summarizer');
+    /* The in-flow wrapper carries no ARIA hook — a CSS-level check. */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const wrapper = slot.parentElement as HTMLElement;
+    expect(wrapper.className).not.toContain('absolute');
+
+    const root = screen.getByRole('group', { name: 'Assistant message' });
+    const slotIndex = root.textContent?.indexOf('/Summarizer') ?? -1;
+    const placeholderIndex = root.textContent?.indexOf('Thinking…') ?? -1;
+    expect(slotIndex).toBeGreaterThanOrEqual(0);
+    expect(slotIndex).toBeLessThan(placeholderIndex);
+  });
+
+  it('renders the slot on its own line for a message with no text at all', () => {
+    const { container } = render(
+      <AssistantMessageBubble beforeContent={skillSlot} />,
+    );
+
+    expect(screen.getByText('/Summarizer')).toBeTruthy();
+    expect(getTextContainer(container)).toBeNull();
+  });
+
+  it('renders no slot and no indent class when beforeContent is absent', () => {
+    const { container } = render(<AssistantMessageBubble text="Hello world" />);
+
+    const textContainer = getTextContainer(container) as HTMLElement;
+    expect(textContainer).toBeTruthy();
+    expect(screen.queryByText('/Summarizer')).toBeNull();
+    expect(textContainer.className).not.toContain(
+      'indent-[var(--cm-bubble-first-line-indent,0px)]',
+    );
+    // eslint-disable-next-line testing-library/no-node-access -- see getTextContainer comment
+    expect(textContainer.firstElementChild?.className).toContain(
+      'cm-bubble-markdown',
+    );
   });
 });
 

@@ -25,6 +25,7 @@ import {
   type DisplayAttachment,
   type MessageRating,
   type Message as MessageType,
+  type RequestSkill,
   type StarterOption,
   type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
@@ -59,7 +60,15 @@ import {
   ErrorMessageNotification,
 } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
-import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
+import {
+  FC,
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useMemo,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AttachmentCanvasI18nKeys,
@@ -199,6 +208,27 @@ interface Props {
   selectedAttachmentKey?: string;
   /** Called when the user pastes text that exceeds the max length while attachments are disabled. */
   onMessageTooLong?: (length: number, max: number) => void;
+  /**
+   * Content rendered at the inline-start of the edit input's text area —
+   * the selected-skill `ChatSkill` element the host seeds from the edited
+   * message's `custom_content.skills`. Rendered only in the edit branch.
+   */
+  editInlineStartSlot?: ReactNode;
+  /**
+   * Called when Backspace is pressed with the caret collapsed at position 0
+   * while `editInlineStartSlot` content is shown — the host's
+   * remove-selected-skill gesture. Forwarded to `EditMessageInput`'s
+   * `onInlineStartRemove`.
+   */
+  onEditInlineStartRemove?: () => void;
+  /**
+   * Renders a message's `custom_content.skills` entries as `ChatSkill`
+   * history elements for the bubble's `beforeContent` slot — name and
+   * description resolution and the "View details" details panel are owned by
+   * the host's skill selector wiring. Returns `null` while the skill-usage
+   * flag is off or the message carries no skills.
+   */
+  renderHistorySkills?: (skills: RequestSkill[] | undefined) => ReactNode;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -255,6 +285,9 @@ const ConversationMessageItem: FC<Props> = ({
   onPendingAttachmentsConsumed,
   selectedAttachmentKey,
   onMessageTooLong,
+  editInlineStartSlot,
+  onEditInlineStartRemove,
+  renderHistorySkills,
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
@@ -443,6 +476,7 @@ const ConversationMessageItem: FC<Props> = ({
             <MessageBubble
               role={msg.role}
               text={msg.content}
+              beforeContent={renderHistorySkills?.(msg.custom_content?.skills)}
               styles={{ ...messageTextStyles, className: 'justify-end' }}
               attachments={allDisplayAttachments}
               labels={{
@@ -486,6 +520,8 @@ const ConversationMessageItem: FC<Props> = ({
             onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
             onAttachmentClick={handleAttachmentClick}
             onMessageTooLong={onMessageTooLong}
+            inlineStartSlot={editInlineStartSlot}
+            onInlineStartRemove={onEditInlineStartRemove}
           />
         </Suspense>
       </div>
@@ -540,11 +576,14 @@ const ConversationMessageItem: FC<Props> = ({
 
   const isUserMessage = msg.role === MessageRole.User;
 
+  const beforeContent = renderHistorySkills?.(msg.custom_content?.skills);
+
   return (
     <CitationCardProvider value={citationCard}>
       <MessageBubble
         role={msg.role}
         text={messageText}
+        beforeContent={beforeContent}
         styles={{
           ...messageTextStyles,
           className: isUserMessage ? 'justify-end' : 'justify-start',

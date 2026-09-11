@@ -557,12 +557,16 @@ export const Input: FC<InputProps> = ({
         /*
          * React types `ChangeEvent`'s `nativeEvent` as bare `Event`; the
          * runtime event behind a textarea's change is an `InputEvent`, so
-         * narrow with `instanceof` to read `isComposing` — a non-InputEvent
-         * can't be mid-composition, hence `false`.
+         * narrow with `instanceof` to read `isComposing` and `inputType` — a
+         * non-InputEvent can't be mid-composition or a paste, hence the
+         * defaults.
          */
+        const inputEvent =
+          e.nativeEvent instanceof InputEvent ? e.nativeEvent : undefined;
         handleValueChange(
           e.target.value,
-          e.nativeEvent instanceof InputEvent && e.nativeEvent.isComposing,
+          inputEvent?.isComposing ?? false,
+          inputEvent?.inputType,
         );
         onChange?.(e.target.value);
       }}
