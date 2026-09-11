@@ -15,6 +15,7 @@ import {
   MessageRating,
   MessageRole,
   type StarterOption,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback, useState } from 'react';
 import { useAttachmentUpload } from '../useAttachmentUpload/useAttachmentUpload';
@@ -71,7 +72,9 @@ export interface UseConversationHandlersParams {
 /** Return value of {@link useConversationHandlers}. */
 export interface UseConversationHandlersResult {
   handleSend: (message: string, attachments: Attachment[]) => Promise<void>;
-  handleUploadAttachment: (attachment: Attachment) => Promise<string>;
+  handleUploadAttachment: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   handleRegenerateMessage: (messageIndex: number) => void;
   handleDeleteMessage: (messageIndex: number) => void;
   handleConfirmDelete: () => void;

@@ -34,6 +34,7 @@ import {
   type Message as MessageType,
   type StarterOption,
   type ToolMenuItem,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type { ToolsChipLabels } from '@epam/ai-dial-conversation-input';
 import type {
@@ -114,7 +115,9 @@ const DialFileManagerModal = lazy(async () => {
 interface Props {
   messages: MessageType[];
   onSend: (message: string, attachments: Attachment[]) => void;
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   onStop?: () => void;
   onDeleteMessage?: (messageIndex: number) => void;
   onRegenerateMessage?: (messageIndex: number) => void;
