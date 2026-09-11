@@ -1,10 +1,4 @@
-# Spec: conversation-watch-sse
-
-## Purpose
-
-BFF endpoint and frontend integration that lets the browser subscribe to DIAL Core resource-update events for a single conversation, enabling the LLM naming detection to be push-based instead of polled.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: POST /api/v1/conversations/watch proxies DIAL Core resource subscription as SSE
 
@@ -85,50 +79,3 @@ No i18n keys, no RTL impact, no caching, no analytics events for this endpoint.
 
 - **WHEN** `res.write()` returns `false` and no `'drain'` event, close, or upstream error occurs within `SSE_DRAIN_TIMEOUT_MS`
 - **THEN** the backend cancels the upstream reader and keepalive timer and ends the response, the same as it would for an explicit client disconnect
-
----
-
-### Requirement: Frontend subscribes to conversation watch and replaces polling
-
-`watchForDisplayNameUpdate` in `ConversationsContext` SHALL:
-
-1. Call `conversationsApi.watchConversationRaw({ watchConversationBodyDto: { path } })` (generated client Raw variant) to get the `Response`, where `path` is the bucket-stripped, decode-normalized conversation path (`getConversationPath`).
-2. Read the SSE body via `response.body.getReader()` and a `TextDecoder`, splitting on `\n`.
-3. On each `data:` line: parse JSON `{ url, action, timestamp }`.
-4. On an `UPDATE` action for the subscribed URL: call `getConversation(fullConversationId)` once, where `fullConversationId` is `safeDecodeURIComponent(conversationId)` (`apps/chat/src/utils/string-utils.ts`) — the **bucket-included**, decode-normalized id — NOT the bucket-stripped `path` used in step 1. `getConversation`'s `path` query param must include the bucket to resolve correctly (see `conversations-api` spec); passing the bucket-stripped path caused a 400 from DIAL Core for Quick App conversations, whose deployment-id segment itself contains a slash (`applications/{bucket}/{appName}`).
-5. If `result.llmNamingDone === true` or `result.name?.trim() !== previousName.trim()`: call `updateConversationTitle`, `onUpdated(result.name)`, `silentRefreshConversations()`, then close the connection.
-6. On any other action or a `data:` line that does not match: continue reading.
-7. Abort the connection after `DISPLAY_NAME_WATCH_TIMEOUT_MS = 120_000` using an `AbortController` passed to the fetch.
-8. Cancel the connection when the returned cleanup function is called (component unmount).
-9. If the SSE stream ends unexpectedly before a qualifying event (e.g. server-side close): exit the read loop and complete silently — the title stays message-derived. Reconnect on network interruption is **out of scope**.
-
-The frontend SHALL NOT poll `getConversation` on an interval. Constants `DISPLAY_NAME_POLL_INTERVAL_MS` and `DISPLAY_NAME_POLL_MAX_ATTEMPTS` SHALL be removed.
-
-State ownership: `watchForDisplayNameUpdate` remains a method on `ConversationsContext`, unchanged contract (`(conversationId, previousName, onUpdated) => () => void`).
-
-No new i18n keys. No RTL impact. No analytics events. No memoisation changes beyond the existing `useCallback`.
-
-#### Scenario: Name update via SSE triggers title refresh
-
-- **WHEN** DIAL Core emits an `UPDATE` event for the watched conversation and the subsequent `getConversation` returns `llmNamingDone: true`
-- **THEN** `updateConversationTitle` is called with the new name, `onUpdated` fires, and the SSE connection is closed
-
-#### Scenario: Non-UPDATE events are ignored
-
-- **WHEN** a `CREATE` or `DELETE` event arrives on the SSE stream
-- **THEN** the frontend continues reading without calling `getConversation`
-
-#### Scenario: Timeout closes the connection
-
-- **WHEN** 120 seconds elapse without a qualifying UPDATE event
-- **THEN** the AbortController aborts the fetch and the cleanup completes silently
-
-#### Scenario: Component unmount cancels the watch
-
-- **WHEN** the `Conversation` page unmounts while a watch is open
-- **THEN** the cleanup function aborts the SSE fetch and no further state updates occur
-
-#### Scenario: getConversation on UPDATE uses the full, bucket-included id for a Quick App conversation
-
-- **WHEN** the watched conversation id is `bucket/applications/bucket/My%20App__0.0.1__title__uuid` and an `UPDATE` event arrives
-- **THEN** `watchConversationRaw` was called with the bucket-stripped, decoded path (`applications/bucket/My App__0.0.1__title__uuid`), and the subsequent `getConversation` call receives the full, bucket-included, decoded id (`bucket/applications/bucket/My App__0.0.1__title__uuid`) — not the bucket-stripped path

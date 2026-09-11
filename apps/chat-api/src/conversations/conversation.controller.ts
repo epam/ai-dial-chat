@@ -21,7 +21,13 @@ import {
   getJobTitleClaim,
   type SessionUser,
 } from '../auth/session/session.types';
-import { SSE_KEEPALIVE_PAYLOAD, startSseResponse } from '../common/utils/sse';
+import {
+  SSE_DRAIN_TIMEOUT_MS,
+  SSE_KEEPALIVE_PAYLOAD,
+  startSseResponse,
+  waitForDrain,
+  writeSseChunk,
+} from '../common/utils/sse';
 import {
   ConversationMetadataDto,
   ConversationResponseDto,
@@ -64,6 +70,23 @@ import {
 } from './utils/timezone-header';
 
 const SSE_KEEPALIVE_INTERVAL_MS = 15_000;
+
+/**
+ * Bounds per-connection buffered output for `streamCompletion`. Past this
+ * many bytes buffered in `res`, the handler stops writing to that response
+ * (marking it detached, the same as a client disconnect) without pausing or
+ * aborting the backend-owned generation loop. See
+ * `backend-owned-generation-persistence`.
+ */
+const SSE_COMPLETION_MAX_BUFFERED_BYTES = 1024 * 1024;
+
+/**
+ * Bounds per-subscriber buffered output for `attachToGeneration`. Past this
+ * many bytes buffered in a subscriber's `res`, that subscriber is detached
+ * (its own cleanup runs) without affecting the generation or any other
+ * concurrently attached subscriber. See `generation-live-replay`.
+ */
+const SSE_ATTACH_MAX_BUFFERED_BYTES = 1024 * 1024;
 
 @ApiTags('conversations')
 @Controller({ path: 'conversations', version: '1' })
@@ -313,7 +336,10 @@ export class ConversationController {
       for await (const chunk of stream) {
         if (isResponseDetached) continue;
         try {
-          res.write(chunk);
+          writeSseChunk(res, chunk);
+          if (res.writableLength > SSE_COMPLETION_MAX_BUFFERED_BYTES) {
+            isResponseDetached = true;
+          }
         } catch {
           isResponseDetached = true;
         }
@@ -394,21 +420,32 @@ export class ConversationController {
 
     startSseResponse(res);
 
-    const writeEvent = (payload: unknown): void => {
-      if (res.writableEnded) return;
-      res.write(`data: ${JSON.stringify(payload)}\n\n`);
-    };
-
-    writeEvent({ type: 'snapshot', message: attachment.assembledMessage });
-
-    const keepaliveTimer = setInterval(() => {
-      if (!res.writableEnded) res.write(SSE_KEEPALIVE_PAYLOAD);
-    }, SSE_KEEPALIVE_INTERVAL_MS);
     const finishSubscription = trackSseSubscription(
       SseSubscriptionKind.GenerationAttach,
     );
 
     let isCleanedUp = false;
+    const timers: { keepalive?: ReturnType<typeof setInterval> } = {};
+
+    const cleanup = (): void => {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
+      finishSubscription();
+      if (timers.keepalive) clearInterval(timers.keepalive);
+      attachment.emitter.off('chunk', onChunk);
+      attachment.emitter.off('terminal', onTerminal);
+      res.off('close', handleClose);
+      if (!res.writableEnded) res.end();
+    };
+
+    const writeEvent = (payload: unknown): void => {
+      if (isCleanedUp || res.writableEnded) return;
+      writeSseChunk(res, `data: ${JSON.stringify(payload)}\n\n`);
+      if (res.writableLength > SSE_ATTACH_MAX_BUFFERED_BYTES) {
+        cleanup();
+      }
+    };
+
     const onChunk = (rawChunk: unknown): void => {
       writeEvent({ type: 'chunk', chunk: rawChunk });
     };
@@ -419,16 +456,13 @@ export class ConversationController {
     const handleClose = (): void => {
       cleanup();
     };
-    const cleanup = (): void => {
-      if (isCleanedUp) return;
-      isCleanedUp = true;
-      finishSubscription();
-      clearInterval(keepaliveTimer);
-      attachment.emitter.off('chunk', onChunk);
-      attachment.emitter.off('terminal', onTerminal);
-      res.off('close', handleClose);
-      if (!res.writableEnded) res.end();
-    };
+
+    writeEvent({ type: 'snapshot', message: attachment.assembledMessage });
+    if (isCleanedUp) return;
+
+    timers.keepalive = setInterval(() => {
+      writeSseChunk(res, SSE_KEEPALIVE_PAYLOAD);
+    }, SSE_KEEPALIVE_INTERVAL_MS);
 
     /*
      * Subscribing here — synchronously, right after `attach()` read the
@@ -462,38 +496,48 @@ export class ConversationController {
     const finishSubscription = trackSseSubscription(
       SseSubscriptionKind.ConversationWatch,
     );
+
+    const abortController = new AbortController();
+    let isClientAborted = false;
+    let isReaderReleased = false;
+    let isCancelRequested = false;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+
+    const handleClose = () => {
+      isClientAborted = true;
+      abortController.abort();
+      if (isReaderReleased || isCancelRequested || !reader) {
+        return;
+      }
+
+      isCancelRequested = true;
+      void reader.cancel().catch(() => undefined);
+    };
+
+    res.on('close', handleClose);
+
     try {
       const stream = await this.conversationService.watchConversation(
         dto.path,
         at,
         bucket,
+        abortController.signal,
       );
+
+      if (isClientAborted) {
+        await stream.cancel().catch(() => undefined);
+        return;
+      }
 
       startSseResponse(res);
 
-      const reader = stream.getReader();
-
-      let isClientAborted = false;
-      let isReaderReleased = false;
-      let isCancelRequested = false;
-
-      const handleClose = () => {
-        isClientAborted = true;
-        if (isReaderReleased || isCancelRequested) {
-          return;
-        }
-
-        isCancelRequested = true;
-        void reader.cancel().catch(() => undefined);
-      };
-
-      res.on('close', handleClose);
+      reader = stream.getReader();
 
       let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
       try {
         keepaliveTimer = setInterval(() => {
           if (!isClientAborted && !res.writableEnded) {
-            res.write(SSE_KEEPALIVE_PAYLOAD);
+            writeSseChunk(res, SSE_KEEPALIVE_PAYLOAD);
           }
         }, SSE_KEEPALIVE_INTERVAL_MS);
 
@@ -503,7 +547,20 @@ export class ConversationController {
           const { done, value } = await reader.read();
           if (done) break;
 
-          res.write(value);
+          const { needsDrain } = writeSseChunk(res, value);
+          if (needsDrain) {
+            const outcome = await waitForDrain(
+              res,
+              abortController.signal,
+              SSE_DRAIN_TIMEOUT_MS,
+            );
+            if (outcome === 'timeout') {
+              isClientAborted = true;
+              void reader.cancel().catch(() => undefined);
+              break;
+            }
+            if (outcome === 'aborted') break;
+          }
         }
       } catch (err) {
         if (!isClientAborted) {
@@ -514,7 +571,6 @@ export class ConversationController {
         }
       } finally {
         if (keepaliveTimer) clearInterval(keepaliveTimer);
-        res.off('close', handleClose);
         isReaderReleased = true;
         reader.releaseLock();
         if (!res.writableEnded) {
@@ -522,6 +578,7 @@ export class ConversationController {
         }
       }
     } finally {
+      res.off('close', handleClose);
       finishSubscription();
     }
   }
