@@ -22,7 +22,10 @@ import { getConversationPath } from '../useConversationStream/conversation-path'
 import type { ConversationStateAccessor } from '../useConversationStream/useConversationStream';
 import { attachmentsToDtos } from './attachment-to-dto';
 import { createMessagePair } from './message-factory';
-import { hasActiveToolConfig, isMessageChanged } from './message-utils';
+import {
+  hasActiveToolConfig,
+  shouldRerunGenerationOnEdit,
+} from './message-utils';
 import { getStarterSubmitText } from './starter-option';
 
 /** The exact `startStream` shape `useConversationStream` returns. */
@@ -514,8 +517,9 @@ export const useConversationHandlers = ({
       const originalMessage = conversation.messages[idx];
 
       if (
-        !isMessageChanged(
-          originalMessage,
+        !shouldRerunGenerationOnEdit(
+          conversation.messages,
+          idx,
           text,
           keptDisplayAttachments,
           newAttachments,
@@ -571,10 +575,12 @@ export const useConversationHandlers = ({
 
       const updated = { ...conversation, messages: updatedMessages };
 
-      setConversation(() => {
-        conversationRef.current = updated;
-        return updated;
-      });
+      /* The ref is assigned outside the updater because startStream reads it
+       * synchronously below to seed its live-message buffer: React may defer a
+       * function updater to the next render, which would seed the buffer with
+       * the answer this edit replaces. */
+      conversationRef.current = updated;
+      setConversation(updated);
 
       const modelId = resolveModelId();
 

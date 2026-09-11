@@ -25,6 +25,8 @@ export interface SidebarPanelLabels {
   ariaLabel: string;
   /** Accessible label and tooltip for the close button. Required when `onClose` is provided. */
   closeLabel?: string;
+  /** Accessible label for the drag-to-resize handle, used when `resizable` is true. Defaults to `'Resize panel'`. */
+  resizeLabel?: string;
 }
 
 /** Combined style overrides (colors and typography) for the `SidebarPanel` component. */

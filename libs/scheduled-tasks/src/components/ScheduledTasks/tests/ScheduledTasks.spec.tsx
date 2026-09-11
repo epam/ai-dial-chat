@@ -79,7 +79,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     text: ReactNode;
     className?: string;
   }) => <span className={className}>{text}</span>,
-  DialNoDataContent: ({ title, icon }: { title: string; icon?: ReactNode }) => (
+  NoDataContent: ({ title, icon }: { title: string; icon?: ReactNode }) => (
     <div>
       {icon}
       <span>{title}</span>
