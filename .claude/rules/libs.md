@@ -28,6 +28,83 @@ Every lib under `libs/` must have these three fields in its `package.json`:
 }
 ```
 
+## `dependencies` vs `peerDependencies`
+
+A lib is a normal npm package: if it imports something at runtime, it declares
+it and npm installs it. A peer is the narrow exception — a package the **host
+also names**, where a second copy would be a bug rather than a waste.
+
+**No third-party package is a peer.** Icons, markdown, syntax highlighting,
+PDF, MCP, editors, grids — every implementation library goes in
+`dependencies` of the lib that imports it. A host installs one package and
+renders; it does not assemble a laundry list of transitive peers. Adding a
+third-party peer needs a written reason in the change's design doc.
+
+These are the peers:
+
+| Peer                               | Why                                                                                             |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `react` / `react-dom`              | one renderer per app, always                                                                    |
+| `@epam/ai-dial-chat-shared`        | the shared types/utils/context layer every host imports directly                                |
+| `@epam/ai-dial-ui-kit`             | the design-system singleton                                                                     |
+| `@epam/ai-dial-react-file-manager` | an AG-Grid-backed component a host renders itself; two AG Grid copies break module registration |
+| sibling libs under `libs/`         | **not settled** — see below                                                                     |
+
+### Sibling workspace libs are still peers, and that is not the end state
+
+A lib that composes a sibling (`sidebar` inside `conversation-panel`,
+`attachment-input` inside `conversation-input`) declares it a peer today, so an
+embedding host must install Dial packages it never imports — which issue #8719
+asks us to stop doing.
+
+Moving them to `dependencies` is blocked on tooling, not on taste.
+`tools/publish-lib.mjs` rewrites workspace-lib specs to the exact release
+version, so a published package is fine; but
+`tools/attachment-canvas-consumer-fixture` does its own, simpler manifest
+rewrite that does **not** resolve those specs. As a peer, `--legacy-peer-deps`
+skips the sibling; as a dependency, npm tries to fetch
+`@epam/ai-dial-sidebar@0.0.1` from the registry and the fixture fails with
+`ETARGET`. Since that fixture is the only place a published package is exercised
+through its real `exports` map, the move has to wait until it can pack workspace
+siblings too (or share `preparePublishPackageJson`).
+
+Until then: keep declaring siblings as peers, and do not "fix" the
+inconsistency in one lib alone — see _One package, one role_.
+
+### One package, one role
+
+A package must never be a `dependency` of one lib and a required peer of
+another. npm is then free to install two divergent copies beside the host's own,
+and the host's only escape is a `resolutions` pin. This is the exact defect that
+reached the main line: `conversation-panel` was the lone lib with
+`@epam/ai-dial-ui-kit` in `dependencies` while 26 peered it, so every embedding
+application carried
+
+```json
+"resolutions": { "@epam/ai-dial-ui-kit": "0.14.0-dev.41" }
+```
+
+`npm run validate:docs` fails on a split role, so a PR catches it.
+
+### Optional peers are for scoping an install, not for hedging
+
+`peerDependenciesMeta.optional` means _this entry point does not need the
+package_. It is the right tool when a lib has real entry points whose
+dependency sets differ — `chat-shared` (`.` / `./markdown` / `./file-manager`,
+with an entry-point-to-peer matrix in its README) and `chat-hooks` (feature
+packages a conversation-only host never installs) are the two reference cases.
+
+It is the wrong tool for a package the lib imports unconditionally: `npm
+install` then succeeds and the failure surfaces later, in the consumer's
+bundler. If a lib always imports it, it is a `dependency` — optional-but-always-
+needed is just a required peer with the warning suppressed.
+
+A lazily imported package is still a `dependency`. Lazy loading governs which
+chunk it lands in, not who installs it — `attachment-canvas` keeps its PDF and
+syntax-highlighter engines in on-demand chunks while declaring both as
+dependencies, and `tools/attachment-canvas-consumer-fixture` proves the boundary
+holds.
+
 ## Every `exports` target must be a file the build emits
 
 Nothing in this workspace resolves a lib through its own `exports` map. Every

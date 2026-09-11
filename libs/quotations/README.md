@@ -25,7 +25,6 @@ import '@epam/ai-dial-quotations/styles.css';
 - `react` ^19.0.0
 - `@epam/ai-dial-chat-shared` \*
 - `@epam/ai-dial-ui-kit` \*
-- `@epam/pdf-highlighter-kit` >=0.0.14
 
 ## Components
 

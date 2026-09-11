@@ -26,8 +26,6 @@ external to preserve the editor's dynamic boundary in consuming applications.
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-builder-form`
-- `@uiw/react-markdown-preview` — CSS only, required by `LazyMarkdownEditor`
-- `@uiw/react-md-editor` — CSS only, required by `LazyMarkdownEditor`
 
 ## Components
 

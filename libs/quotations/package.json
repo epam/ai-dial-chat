@@ -20,13 +20,13 @@
   },
   "dependencies": {
     "@tabler/icons-react": "^3.44.0",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "@epam/pdf-highlighter-kit": "^0.0.18"
   },
   "peerDependencies": {
     "react": "^19.0.0",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "*",
-    "@epam/pdf-highlighter-kit": ">=0.0.14"
+    "@epam/ai-dial-ui-kit": "*"
   },
   "nx": {
     "tags": [

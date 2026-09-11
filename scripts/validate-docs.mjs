@@ -15,9 +15,12 @@
 //   3. Unresolvable stylesheet exports — nine libs shipped
 //      `"./styles.css": "./dist/style.css"` while Vite emits `index.css`, and
 //      no in-repo consumer noticed because they all alias to `src/index.ts`.
-//   4. Broken relative links — every link to a file that no longer exists
+//   4. A package declared a dependency by one lib and a required peer by
+//      another — `@epam/ai-dial-ui-kit` was, and hosts needed a `resolutions`
+//      pin to collapse the two copies npm installed.
+//   5. Broken relative links — every link to a file that no longer exists
 //      (`docs/environment-variables-migration-guide.md` after its removal).
-//   5. Phantom exports — a name a lib README imports from its own package that
+//   6. Phantom exports — a name a lib README imports from its own package that
 //      the package does not export (`EntityBadge`, `StageType`, `QrPlaceholder`,
 //      `ConversationGroupProps`).
 //
@@ -212,7 +215,59 @@ const checkLibStylesExport = () => {
   }
 };
 
-/* ── 4. Relative markdown links resolve ── */
+/* ── 4. One package, one role across every publishable lib ── */
+
+/*
+ * A package declared a `dependency` by one lib and a required peer by another
+ * lets npm install a second, divergent copy beside the host's own, and the
+ * host's only fix is a `resolutions` pin. That is not hypothetical:
+ * `conversation-panel` was the lone lib with `@epam/ai-dial-ui-kit` in
+ * `dependencies` while 26 peered it, and every embedding host had to pin the
+ * kit to collapse the copies.
+ *
+ * Optional peers are deliberately excluded from the comparison — `chat-hooks`
+ * and `chat-shared` use them to scope installs per entry point, so a feature
+ * package being an optional peer there and a dependency of the lib that
+ * actually composes it is the intended shape, not a conflict.
+ */
+const checkDependencyRoleConsistency = () => {
+  const asDependency = new Map();
+  const asRequiredPeer = new Map();
+
+  const record = (map, name, lib) => {
+    if (!map.has(name)) map.set(name, []);
+    map.get(name).push(lib);
+  };
+
+  for (const dir of projectDirs('libs')) {
+    const pkg = readJson(`${dir}/package.json`);
+    if (!pkg?.name || !isPublishable(pkg)) continue;
+
+    const meta = pkg.peerDependenciesMeta ?? {};
+    for (const name of Object.keys(pkg.dependencies ?? {})) {
+      record(asDependency, name, pkg.name);
+    }
+    for (const name of Object.keys(pkg.peerDependencies ?? {})) {
+      if (meta[name]?.optional) continue;
+      if (name === 'react' || name === 'react-dom') continue;
+      record(asRequiredPeer, name, pkg.name);
+    }
+  }
+
+  for (const [name, dependents] of asDependency) {
+    const peers = asRequiredPeer.get(name);
+    if (!peers) continue;
+
+    fail(
+      `libs/*/package.json`,
+      `"${name}" is a dependency of ${dependents.join(', ')} but a required peer of ${peers.join(', ')} — ` +
+        'npm may then install two divergent copies and hosts need a "resolutions" pin. ' +
+        'Pick one role for the package (see .claude/rules/libs.md)',
+    );
+  }
+};
+
+/* ── 5. Relative markdown links resolve ── */
 
 const isPlaceholderLink = (target) =>
   LINK_PLACEHOLDERS.some((pattern) => pattern.test(target));
@@ -235,7 +290,7 @@ const checkLinks = (src, file) => {
 
 const lineAt = (src, index) => src.slice(0, index).split(/\r?\n/).length;
 
-/* ── 5. A lib README only imports names its package actually exports ── */
+/* ── 6. A lib README only imports names its package actually exports ── */
 
 /*
  * Resolves the names reachable through a lib's public entry point: named
@@ -337,6 +392,7 @@ if (!explicitFiles) {
   checkReadmeCoverage();
   checkLibPackageMetadata();
   checkLibStylesExport();
+  checkDependencyRoleConsistency();
 }
 
 for (const file of files) {
@@ -368,5 +424,5 @@ if (errors.length > 0) {
 
 console.log(`Documentation validation passed (${files.length} markdown files).`);
 console.log(
-  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, relative links, README imports vs public exports.',
+  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, relative links, README imports vs public exports.',
 );
