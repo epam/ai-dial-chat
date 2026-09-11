@@ -1,4 +1,4 @@
-import { DialNoDataContent } from '@epam/ai-dial-ui-kit';
+import { NoDataContent } from '@epam/ai-dial-ui-kit';
 import { memo, type FC, type ReactNode } from 'react';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
@@ -42,11 +42,11 @@ export const PanelEmptyState: FC<PanelEmptyStateProps> = memo(
 
     return (
       <div style={cssVars}>
-        <DialNoDataContent
+        <NoDataContent
           title={label}
           icon={icon && <span className={styles.icon}>{icon}</span>}
           titleClassName={mergeClasses(styles.label, labelClassName)}
-          containerClassName={containerClassName}
+          className={containerClassName}
         />
       </div>
     );

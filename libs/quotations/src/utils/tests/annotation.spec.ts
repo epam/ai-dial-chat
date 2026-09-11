@@ -1,15 +1,22 @@
 import {
   type Annotation,
   type AnnotationSelector,
+  type DocxRangeSelector,
+  type ExcelRcRangeSelector,
   type Message,
   type MessageAttachment,
   MessageRole,
   MIMEType,
   type PdfBBoxSelector,
+  type PptxRangeSelector,
 } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
+  annotationToOfficeHighlightLocations,
   getAnnotationPdfPage,
+  isDocxRangeSelector,
+  isExcelRcRangeSelector,
+  isPptxRangeSelector,
   normalizeRawAnnotations,
   resolveMessageAnnotations,
 } from '../annotation';
@@ -265,6 +272,214 @@ describe('normalizeRawAnnotations', () => {
 
     const result = normalizeRawAnnotations(raw, []);
 
+    expect(result).toHaveLength(0);
+  });
+});
+
+const docxSelector = (
+  overrides: Partial<DocxRangeSelector> = {},
+): DocxRangeSelector => ({
+  type: 'docx_text_range',
+  story: 'body',
+  path: [3, 1],
+  start: 0,
+  end: 5,
+  text: 'Hello',
+  ...overrides,
+});
+
+const pptxSelector = (
+  overrides: Partial<PptxRangeSelector> = {},
+): PptxRangeSelector => ({
+  type: 'pptx_text_range',
+  slide: 1,
+  shape_id: '7',
+  start: 0,
+  end: 5,
+  text: 'Hello',
+  ...overrides,
+});
+
+const excelSelector = (
+  overrides: Partial<ExcelRcRangeSelector> = {},
+): ExcelRcRangeSelector => ({
+  type: 'excel_rc_range',
+  sheet: 'Sheet1',
+  start: { row: 14, col: 3 },
+  ...overrides,
+});
+
+describe('isDocxRangeSelector', () => {
+  it('accepts a full docx_text_range selector', () => {
+    expect(isDocxRangeSelector(docxSelector())).toBe(true);
+  });
+
+  it('rejects a _range-suffixed selector missing the DOCX field set', () => {
+    const partial = { type: 'docx_text_range', start: 0, end: 5 };
+    expect(isDocxRangeSelector(partial as AnnotationSelector)).toBe(false);
+  });
+
+  it('does not also match a pptx_text_range selector', () => {
+    expect(isDocxRangeSelector(pptxSelector() as AnnotationSelector)).toBe(
+      false,
+    );
+  });
+});
+
+describe('isPptxRangeSelector', () => {
+  it('accepts a full pptx_text_range selector', () => {
+    expect(isPptxRangeSelector(pptxSelector())).toBe(true);
+  });
+
+  it('rejects a _range-suffixed selector missing the PPTX field set', () => {
+    const partial = { type: 'pptx_text_range', start: 0, end: 5 };
+    expect(isPptxRangeSelector(partial as AnnotationSelector)).toBe(false);
+  });
+
+  it('does not also match a docx_text_range selector', () => {
+    expect(isPptxRangeSelector(docxSelector() as AnnotationSelector)).toBe(
+      false,
+    );
+  });
+});
+
+describe('isExcelRcRangeSelector', () => {
+  it('accepts the confirmed literal', () => {
+    expect(isExcelRcRangeSelector(excelSelector())).toBe(true);
+  });
+
+  it('rejects the same fields under a different type', () => {
+    const wrongType = { ...excelSelector(), type: 'excel_range' };
+    expect(isExcelRcRangeSelector(wrongType as AnnotationSelector)).toBe(false);
+  });
+
+  it('accepts end: null and an omitted end identically', () => {
+    expect(isExcelRcRangeSelector(excelSelector({ end: null }))).toBe(true);
+    expect(isExcelRcRangeSelector(excelSelector())).toBe(true);
+  });
+});
+
+describe('annotationToOfficeHighlightLocations', () => {
+  it('normalises a valid DOCX selector with endExclusive === end (already exclusive on the wire)', () => {
+    const [location] = annotationToOfficeHighlightLocations(
+      makeAnnotation(docxSelector({ start: 5, end: 6 })),
+    );
+    expect(location).toMatchObject({ start: 5, endExclusive: 6 });
+  });
+
+  it('boundary: start: 5, end: 6 slices to exactly one character', () => {
+    const [location] = annotationToOfficeHighlightLocations(
+      makeAnnotation(docxSelector({ start: 5, end: 6, text: 'H' })),
+    );
+    expect(location).toBeDefined();
+    if (location?.type === 'docx_text_range') {
+      expect('12345H'.slice(location.start, location.endExclusive)).toBe('H');
+    }
+  });
+
+  it('boundary: start: 0, end: 10 against 10-character text is not out of bounds', () => {
+    const text = '0123456789';
+    const [location] = annotationToOfficeHighlightLocations(
+      makeAnnotation(docxSelector({ start: 0, end: 10, text })),
+    );
+    expect(location).toBeDefined();
+    if (location?.type === 'docx_text_range') {
+      expect(text.slice(location.start, location.endExclusive)).toBe(text);
+    }
+  });
+
+  it('rejects end < start', () => {
+    const result = annotationToOfficeHighlightLocations(
+      makeAnnotation(docxSelector({ start: 5, end: 3 })),
+    );
+    expect(result).toHaveLength(0);
+  });
+
+  it('rejects non-integer start and non-numeric end', () => {
+    const result = annotationToOfficeHighlightLocations(
+      makeAnnotation(
+        docxSelector({ start: 1.5 }) as unknown as DocxRangeSelector,
+      ),
+    );
+    expect(result).toHaveLength(0);
+  });
+
+  it('keeps only the valid entry in a selector array with one invalid entry', () => {
+    const result = annotationToOfficeHighlightLocations(
+      makeAnnotation([
+        docxSelector({ start: 5, end: 3 }),
+        docxSelector(),
+      ] as AnnotationSelector[]),
+    );
+    expect(result).toHaveLength(1);
+  });
+
+  it('produces one highlight with two locations for an array of two valid selectors', () => {
+    const result = annotationToOfficeHighlightLocations(
+      makeAnnotation([docxSelector(), pptxSelector()] as AnnotationSelector[]),
+    );
+    expect(result).toHaveLength(2);
+  });
+
+  it('rejects an XLSX multi-row range and accepts a same-row range', () => {
+    const multiRow = annotationToOfficeHighlightLocations(
+      makeAnnotation(
+        excelSelector({ end: { row: 15, col: 6 } }) as AnnotationSelector,
+      ),
+    );
+    expect(multiRow).toHaveLength(0);
+
+    const sameRow = annotationToOfficeHighlightLocations(
+      makeAnnotation(
+        excelSelector({ end: { row: 14, col: 6 } }) as AnnotationSelector,
+      ),
+    );
+    expect(sameRow).toHaveLength(1);
+  });
+
+  it('treats end: null and an omitted end identically as a single cell', () => {
+    const withNull = annotationToOfficeHighlightLocations(
+      makeAnnotation(excelSelector({ end: null }) as AnnotationSelector),
+    );
+    const omitted = annotationToOfficeHighlightLocations(
+      makeAnnotation(excelSelector()),
+    );
+    expect(withNull).toEqual(omitted);
+  });
+
+  it('rejects slide: 0, row: 0, col: 0, and an empty sheet', () => {
+    expect(
+      annotationToOfficeHighlightLocations(
+        makeAnnotation(pptxSelector({ slide: 0 })),
+      ),
+    ).toHaveLength(0);
+    expect(
+      annotationToOfficeHighlightLocations(
+        makeAnnotation(excelSelector({ start: { row: 0, col: 1 } })),
+      ),
+    ).toHaveLength(0);
+    expect(
+      annotationToOfficeHighlightLocations(
+        makeAnnotation(excelSelector({ start: { row: 1, col: 0 } })),
+      ),
+    ).toHaveLength(0);
+    expect(
+      annotationToOfficeHighlightLocations(
+        makeAnnotation(excelSelector({ sheet: '' })),
+      ),
+    ).toHaveLength(0);
+  });
+
+  it('produces no locations and does not throw for an annotation with no selector', () => {
+    expect(annotationToOfficeHighlightLocations(makeAnnotation())).toEqual([]);
+  });
+
+  it('lets an unrecognised type satisfy AnnotationSelector through the open branch, yielding no location', () => {
+    const result = annotationToOfficeHighlightLocations(
+      makeAnnotation({
+        type: 'something_else',
+      } as AnnotationSelector),
+    );
     expect(result).toHaveLength(0);
   });
 });

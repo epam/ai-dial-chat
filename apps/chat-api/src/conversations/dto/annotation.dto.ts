@@ -5,38 +5,109 @@ import {
 } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsIn,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
+  registerDecorator,
+  validateSync,
+  ValidationOptions,
   ValidateNested,
 } from 'class-validator';
 import { IsAttachmentUrl } from './attachment.dto';
 
 /**
+ * 1-based cell address used by an `excel_rc_range` selector's `start`/`end`,
+ * in place of the numeric character offset the other selector kinds use.
+ */
+export class CellAddressDto {
+  @ApiPropertyOptional({ description: '1-based row number' })
+  @IsOptional()
+  @IsInt()
+  row?: number;
+
+  @ApiPropertyOptional({ description: '1-based column number' })
+  @IsOptional()
+  @IsInt()
+  col?: number;
+}
+
+/**
+ * Validates `AnnotationSelectorDto.start`/`.end`, which are `number |
+ * CellAddressDto`. class-validator ANDs every `@ValidateIf` attached to a
+ * single property, so two opposing conditions on one property can never both
+ * run their guarded decorator — this constraint branches on the value's
+ * shape itself instead. The nested `validateSync` call re-runs whitelist
+ * stripping/rejection for `CellAddressDto`, since that only happens for
+ * objects actually reached during validation.
+ */
+const IsNumberOrCellAddress =
+  (validationOptions?: ValidationOptions) =>
+  (object: object, propertyName: string): void => {
+    registerDecorator({
+      name: 'isNumberOrCellAddress',
+      target: object.constructor,
+      propertyName,
+      options: validationOptions,
+      validator: {
+        validate: (value: unknown): boolean => {
+          if (typeof value === 'number') {
+            return true;
+          }
+          if (!(value instanceof CellAddressDto)) {
+            return false;
+          }
+          const errors = validateSync(value, {
+            whitelist: true,
+            forbidNonWhitelisted: true,
+          });
+          return errors.length === 0;
+        },
+        defaultMessage: (): string =>
+          `${propertyName} must be a number or a cell address ({ row, col })`,
+      },
+    });
+  };
+
+/**
  * Selector pointing to the cited region within a source: a character range,
- * a PDF bounding box, or an inline `<tag id="…">` position. Validated as an
- * open shape (`type` plus every known optional field) rather than a
+ * a PDF bounding box, an inline `<tag id="…">` position, or an Office
+ * document range (DOCX/PPTX character range, XLSX cell/range). Validated as
+ * an open shape (`type` plus every known optional field) rather than a
  * discriminated union, mirroring `AnnotationSelector` in `chat-shared`.
  */
+@ApiExtraModels(CellAddressDto)
 export class AnnotationSelectorDto {
   @ApiPropertyOptional({
     description:
-      "Selector discriminator, e.g. 'text_character_range', 'pdf_bbox', 'html_tag'",
+      "Selector discriminator, e.g. 'text_character_range', 'pdf_bbox', 'html_tag', 'excel_rc_range'",
   })
   @IsOptional()
   @IsString()
   type?: string;
 
-  @ApiPropertyOptional({ description: 'Character range start (inclusive)' })
+  @ApiPropertyOptional({
+    description:
+      'Range start: a character offset (inclusive), or a 1-based cell address for an `excel_rc_range` selector',
+    oneOf: [{ type: 'number' }, { $ref: getSchemaPath(CellAddressDto) }],
+  })
   @IsOptional()
-  @IsNumber()
-  start?: number;
+  @Type(() => CellAddressDto)
+  @IsNumberOrCellAddress()
+  start?: number | CellAddressDto;
 
-  @ApiPropertyOptional({ description: 'Character range end (inclusive)' })
+  @ApiPropertyOptional({
+    description:
+      "Range end. For `text_character_range`/`pdf_bbox`, an inclusive character offset. For `docx_text_range`/`pptx_text_range`, an already-exclusive character offset (confirmed against captured DIAL Core responses). For `excel_rc_range`, a 1-based cell address naming the range's last (inclusive) cell. `null` and omitted are equivalent",
+    nullable: true,
+    oneOf: [{ type: 'number' }, { $ref: getSchemaPath(CellAddressDto) }],
+  })
   @IsOptional()
-  @IsNumber()
-  end?: number;
+  @Type(() => CellAddressDto)
+  @IsNumberOrCellAddress()
+  end?: number | CellAddressDto | null;
 
   @ApiPropertyOptional({ description: '1-based PDF page number' })
   @IsOptional()
@@ -72,6 +143,49 @@ export class AnnotationSelectorDto {
   @IsOptional()
   @IsString()
   id?: string;
+
+  @ApiPropertyOptional({
+    description:
+      "DOCX story name a character range lives in, e.g. 'body' (opaque — no closed set is confirmed)",
+  })
+  @IsOptional()
+  @IsString()
+  story?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'DOCX source-tree element indices identifying the paragraph, matched element-wise',
+    type: [Number],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  path?: number[];
+
+  @ApiPropertyOptional({ description: '1-based PPTX slide number' })
+  @IsOptional()
+  @IsInt()
+  slide?: number;
+
+  @ApiPropertyOptional({
+    description: 'PPTX shape identifier, compared as a string',
+  })
+  @IsOptional()
+  @IsString()
+  shape_id?: string;
+
+  @ApiPropertyOptional({ description: 'XLSX sheet name, matched exactly' })
+  @IsOptional()
+  @IsString()
+  sheet?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Cited text for a DOCX/PPTX range, compared against the text resolved over `start`/`end`',
+  })
+  @IsOptional()
+  @IsString()
+  text?: string;
 }
 
 /** Identifies the part of the message (or a related resource) an annotation targets. */

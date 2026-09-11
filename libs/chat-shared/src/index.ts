@@ -37,6 +37,7 @@ export * from './constants/icon';
 export * from './constants/dial';
 export * from './constants/tag-input';
 export * from './constants/resizable-fields';
+export * from './constants/markdown-editor';
 export * from './constants/select-list';
 
 export * from './components/DeploymentIcon/DeploymentIcon';
@@ -52,6 +53,7 @@ export * from './components/EntityHeader/EntityHeader';
 export * from './components/ResourceSummary/ResourceSummary';
 export * from './components/MarkdownRenderer/Table/TableHeader';
 export * from './entry-points/markdown';
+export * from './hooks/useAvailableHeightCap';
 export * from './hooks/useIsMobile';
 
 /*

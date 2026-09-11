@@ -149,3 +149,22 @@ export const groupAnnotations = (
   ...groupAnnotationsByCitId(annotations),
   ...groupAnnotationsBySource(annotations),
 ];
+
+/**
+ * Returns every annotation in `annotations` whose `body.source.attachment.url`
+ * equals `clicked`'s, in their original order — gathering across the whole
+ * list rather than one `cit`-id group, so annotations behind other markers
+ * citing the same file are included too. Keys on URL, never on the display
+ * title, since two different files can share a title. Returns `[clicked]`
+ * when `clicked` is not itself present in `annotations` (identified by
+ * reference identity) or has no source URL.
+ */
+export const gatherSameSourceAnnotations = (
+  clicked: Annotation,
+  annotations: Annotation[],
+): Annotation[] => {
+  const url = clicked.body?.source?.attachment?.url;
+  if (url == null || !annotations.includes(clicked)) return [clicked];
+
+  return annotations.filter((a) => a.body?.source?.attachment?.url === url);
+};

@@ -128,6 +128,8 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     tableCopyMarkdownLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
+    ooxmlHighlightsLabel,
+    ooxmlHighlightNavigatedLabel,
   } = {},
   styles: stylesProp,
   codeBlockTheme,
@@ -180,6 +182,8 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         '--ac-ooxml-formula-border': colors?.ooxmlFormulaBorder,
         '--ac-ooxml-formula-bg': colors?.ooxmlFormulaBackground,
         '--ac-ooxml-formula-text': colors?.ooxmlFormulaText,
+        '--ac-ooxml-highlight-border': colors?.ooxmlHighlightBorder,
+        '--ac-ooxml-highlight-bg': colors?.ooxmlHighlightBackground,
         '--ac-json-collapsed-text': colors?.jsonCollapsedText,
         '--ac-json-collapsed-bg': colors?.jsonCollapsedBackground,
         '--ac-font-family': hasFontClassName
@@ -413,6 +417,8 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             formulaLabelClassName={
               typography?.xlsxFormulaLabelClassName ?? 'dial-italic-text'
             }
+            highlightsLabel={ooxmlHighlightsLabel}
+            highlightNavigatedLabel={ooxmlHighlightNavigatedLabel}
           />
         );
       case AttachmentContentType.Visualizer:
@@ -491,6 +497,8 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     tableCopyMarkdownLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
+    ooxmlHighlightsLabel,
+    ooxmlHighlightNavigatedLabel,
   ]);
 
   return (

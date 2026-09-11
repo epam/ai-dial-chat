@@ -1,6 +1,7 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
+  gatherSameSourceAnnotations,
   groupAnnotations,
   groupAnnotationsByCitId,
   groupAnnotationsBySource,
@@ -139,5 +140,53 @@ describe('groupAnnotations', () => {
 
   it('returns an empty array for an empty input', () => {
     expect(groupAnnotations([])).toEqual([]);
+  });
+});
+
+describe('gatherSameSourceAnnotations', () => {
+  it('never merges two annotations sharing a title but differing in URL', () => {
+    const reportA = makeCitAnnotation('a', 'files/a/report.docx');
+    const reportB = makeCitAnnotation('b', 'files/b/report.docx');
+
+    const result = gatherSameSourceAnnotations(reportA, [reportA, reportB]);
+
+    expect(result).toEqual([reportA]);
+    expect(result).not.toContain(reportB);
+  });
+
+  it('returns three html_tag annotations with distinct cit ids, two citing one file, excluding the third', () => {
+    const url = 'files/a/report.docx';
+    const first = makeCitAnnotation('e1', url);
+    const second = makeCitAnnotation('e2', url);
+    const other = makeCitAnnotation('e3', 'files/b/other.docx');
+
+    const result = gatherSameSourceAnnotations(first, [first, second, other]);
+
+    expect(result).toEqual([first, second]);
+  });
+
+  it('returns four annotations for one URL in original order with the clicked one identifiable by reference', () => {
+    const url = 'files/a/report.docx';
+    const annotations = [
+      makeCitAnnotation('e1', url),
+      makeCitAnnotation('e2', url),
+      makeCitAnnotation('e3', url),
+      makeCitAnnotation('e4', url),
+    ];
+
+    const result = gatherSameSourceAnnotations(annotations[2], annotations);
+
+    expect(result).toEqual(annotations);
+    expect(result[2]).toBe(annotations[2]);
+  });
+
+  it('returns the clicked annotation alone when absent from the supplied list', () => {
+    const url = 'files/a/report.docx';
+    const clicked = makeCitAnnotation('e1', url);
+    const other = makeCitAnnotation('e2', url);
+
+    const result = gatherSameSourceAnnotations(clicked, [other]);
+
+    expect(result).toEqual([clicked]);
   });
 });

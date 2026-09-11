@@ -6,7 +6,8 @@ import type {
   JsonCanvasContent,
   MarkdownCanvasContent,
   OoxmlCanvasContent,
-  OoxmlFileType,
+  OoxmlHighlight,
+  OoxmlHighlightLocation,
   PdfCanvasContent,
   PlainTextCanvasContent,
   VisualizerCanvasContent,
@@ -14,6 +15,9 @@ import type {
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  getOoxmlFileType,
+  OoxmlFileType,
+  OoxmlHighlightKind,
 } from '@epam/ai-dial-attachment-canvas';
 import type {
   Annotation,
@@ -30,9 +34,12 @@ import {
 import {
   annotationHighlightId,
   annotationsToPdfHighlights,
+  annotationToOfficeHighlightLocations,
+  gatherSameSourceAnnotations,
   getAnnotationPdfPage,
-  parsePdfPageReference,
   type AnnotationGroup,
+  type OfficeHighlightLocation,
+  parsePdfPageReference,
 } from '@epam/ai-dial-quotations';
 import { LRUCache } from 'lru-cache';
 import { isDialFileId } from './dial-file';
@@ -362,6 +369,99 @@ export const annotationToPdfCanvasContent = (
       ? highlightId
       : undefined,
     page: getAnnotationPdfPage(annotation),
+  };
+};
+
+/**
+ * Maps one `OfficeHighlightLocation` (quotations-owned, discriminated by the
+ * wire's own `type` string) to the `OoxmlHighlightLocation` shape
+ * `libs/attachment-canvas` renders (discriminated by its own
+ * `OoxmlHighlightKind` enum). This is the layer boundary noted in
+ * `design.md`'s architecture diagram: `libs/quotations` cannot depend on
+ * `libs/attachment-canvas` (a real circular dependency — `attachment-canvas`
+ * already depends on `quotations` for the PDF highlight path), so the
+ * translation happens here, in the one lib that already depends on both.
+ */
+const toOoxmlHighlightLocation = (
+  location: OfficeHighlightLocation,
+): OoxmlHighlightLocation => {
+  switch (location.type) {
+    case 'docx_text_range':
+      return {
+        kind: OoxmlHighlightKind.DocxTextRange,
+        story: location.story,
+        path: location.path,
+        start: location.start,
+        endExclusive: location.endExclusive,
+        text: location.text,
+      };
+    case 'pptx_text_range':
+      return {
+        kind: OoxmlHighlightKind.PptxTextRange,
+        slide: location.slide,
+        shapeId: location.shapeId,
+        start: location.start,
+        endExclusive: location.endExclusive,
+        text: location.text,
+      };
+    case 'excel_rc_range':
+      return {
+        kind: OoxmlHighlightKind.XlsxCellRange,
+        sheet: location.sheet,
+        start: location.start,
+        end: location.end,
+      };
+  }
+};
+
+/**
+ * Builds an `OoxmlCanvasContent` for a DOCX/PPTX/XLSX citation annotation,
+ * including highlights for every annotation sharing the clicked one's source
+ * document. Returns `null` when the annotation has no source attachment,
+ * the source is not a format `@silurus/ooxml` renders as DOCX/XLSX/PPTX (a
+ * CSV source returns `null` — citation highlighting targets Office documents
+ * only), or no URL resolves.
+ */
+export const annotationToOoxmlCanvasContent = (
+  annotation: Annotation,
+  annotations: Annotation[],
+  resolvers: AttachmentCanvasUrlResolvers,
+): OoxmlCanvasContent | null => {
+  const source = annotation.body?.source?.attachment;
+  if (source?.url == null) return null;
+
+  const format = getOoxmlFileType(source.title ?? source.url, source.type);
+  if (
+    format !== OoxmlFileType.Docx &&
+    format !== OoxmlFileType.Xlsx &&
+    format !== OoxmlFileType.Pptx
+  ) {
+    return null;
+  }
+
+  const url = isDialFileId(source.url)
+    ? resolvers.resolveDialFileDownloadUrl(source.url)
+    : source.url;
+  if (url == null) return null;
+
+  const sameSource = gatherSameSourceAnnotations(annotation, annotations);
+  const highlights: OoxmlHighlight[] = [];
+  let selectedHighlightId: string | undefined;
+
+  sameSource.forEach((entry, index) => {
+    const locations = annotationToOfficeHighlightLocations(entry);
+    if (locations.length === 0) return;
+
+    const id = annotationHighlightId(entry, index);
+    highlights.push({ id, locations: locations.map(toOoxmlHighlightLocation) });
+    if (entry === annotation) selectedHighlightId = id;
+  });
+
+  return {
+    type: AttachmentContentType.Ooxml,
+    url,
+    format,
+    ...(highlights.length > 0 ? { highlights, selectedHighlightId } : {}),
   };
 };
 

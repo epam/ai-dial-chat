@@ -20,7 +20,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     Left: 'left',
     Right: 'right',
   },
-  DialConditionalResizableContainer: ({
+  ConditionalResizableContainer: ({
     children,
   }: {
     children: React.ReactNode;

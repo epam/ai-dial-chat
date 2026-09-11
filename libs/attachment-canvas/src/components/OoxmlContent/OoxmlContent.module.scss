@@ -34,3 +34,33 @@
 .errorIcon {
   color: var(--ac-error-icon, var(--text-error, #ae2f2f));
 }
+
+/* Cited-location highlight. The fill stays transparent by default so the text
+ * underneath keeps its own contrast, and selected differs from unselected on
+ * two channels — border weight and opacity — so the distinction survives a
+ * colour-vision deficiency. */
+.highlight {
+  border: 1px solid
+    var(--ac-ooxml-highlight-border, var(--stroke-accent, #5c8dea));
+  background: var(--ac-ooxml-highlight-bg, transparent);
+  border-radius: 2px;
+  opacity: 0.55;
+}
+
+/* The selected citation, emphasised on both channels. */
+.highlight[data-selected='true'] {
+  border-width: 2px;
+  opacity: 1;
+}
+
+/* Cut short by the viewport, not by the end of the cited range, so the trailing
+ * edge is left open rather than implying the range stops there. Physical
+ * properties, deliberately: `rect.left`/`rect.width` are canvas geometry in
+ * increasing-x order (see OoxmlContent.tsx's `isClippedAtEnd`), not tied to the
+ * host page's `dir` — a logical property here would flip to the wrong edge
+ * under `dir="rtl"` even though the rectangle itself never moved. */
+.highlight[data-clipped='true'] {
+  border-right: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
