@@ -455,7 +455,9 @@ export const useConversationImport = ({
             { signal },
           );
           if (signal.aborted) return;
-          successNames.push(conversation.name);
+          /* The stored name, not the source one — `rebaseConversationId`
+           * sanitizes it, and the notification must name what the list shows. */
+          successNames.push(regenerated.name);
         } catch (error) {
           if (signal.aborted) return;
           if (isUnauthorizedError(error)) {

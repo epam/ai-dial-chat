@@ -16,6 +16,10 @@ import {
   useState,
 } from 'react';
 import { safeDecodeURI } from '../../shared/string-utils';
+import {
+  DEFAULT_GENERATION_CONFLICT_MESSAGE,
+  GenerationConflictError,
+} from '../create-chat-stream-api';
 import { applyChunkToMessages } from './apply-chunk';
 import {
   type BufferedGeneration,
@@ -124,6 +128,13 @@ export interface UseConversationStreamParams {
   channel?: ConversationStreamChannel;
   overlay?: ConversationStreamOverlayNotifier;
   onStopError?: (error: Error) => void;
+  /**
+   * Message shown on the message bubble when the backend rejects a completion
+   * because this conversation is already generating — the case a second
+   * browser tab of the same session hits. Defaults to
+   * {@link DEFAULT_GENERATION_CONFLICT_MESSAGE}.
+   */
+  generationConflictMessage?: string;
 }
 
 /** Return value of {@link useConversationStream}. */
@@ -167,6 +178,7 @@ export const useConversationStream = ({
   channel,
   overlay,
   onStopError,
+  generationConflictMessage = DEFAULT_GENERATION_CONFLICT_MESSAGE,
 }: UseConversationStreamParams): UseConversationStreamResult => {
   /*
    * Paths with an in-flight generation. A Set (not a boolean) so concurrent
@@ -395,6 +407,16 @@ export const useConversationStream = ({
           /* Surface the error only on the conversation the user is viewing,
            * and never over the generation that superseded this one. */
           if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
+          /*
+           * A conflict is an expected state, not a transport failure: another
+           * tab of this session is already generating into this conversation,
+           * so it gets the host-supplied explanation rather than the raw
+           * error text (issue #8688).
+           */
+          const streamErrorMessage =
+            error instanceof GenerationConflictError
+              ? generationConflictMessage
+              : error.message;
           setConversation((prev) => {
             if (!prev) return prev;
             const restored =
@@ -404,9 +426,7 @@ export const useConversationStream = ({
             const updated = {
               ...restored,
               messages: restored.messages.map((m, index) =>
-                index === messageIndex
-                  ? { ...m, streamErrorMessage: error.message }
-                  : m,
+                index === messageIndex ? { ...m, streamErrorMessage } : m,
               ),
             };
             conversationRef.current = updated;
@@ -458,6 +478,7 @@ export const useConversationStream = ({
       channel?.notifyGenerationSettled,
       overlay,
       transport,
+      generationConflictMessage,
     ],
   );
 

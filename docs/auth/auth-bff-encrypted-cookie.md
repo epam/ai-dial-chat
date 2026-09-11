@@ -109,6 +109,13 @@ type ProviderConfig = {
 };
 ```
 
+For providers configured with a host URL, that URL is the OIDC discovery
+location. The registry replaces the provisional configured issuer with the
+canonical `issuer` from the discovered provider metadata before validating
+authorization callbacks or bearer tokens. Consequently, an internal cluster
+discovery URL may safely resolve metadata whose canonical issuer is the
+externally advertised identity, while RFC 9207 issuer matching remains exact.
+
 Login URLs become `/auth/login/:providerId?callbackUrl=<app-url>`. The active provider is encoded in the session, so refresh and logout always use the correct IdP; the validated `callbackUrl` is encoded in the short-lived transaction cookie so the callback can return the browser to the correct SPA origin/page.
 
 ---

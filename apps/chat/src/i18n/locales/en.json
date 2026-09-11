@@ -30,6 +30,7 @@
     "greetingNightNoName": "Good night",
     "placeholder": "How can I help you today?",
     "streamError": "Something went wrong while generating the response.",
+    "generationConflict": "A response is already being generated in this conversation, possibly in another browser tab. Wait for it to finish or stop it before sending another message.",
     "createConversationError": "Failed to create the conversation. Please try again.",
     "conversationNotFound": "The conversation was not found.",
     "isolatedModelNotFoundTitle": "Model not available",
