@@ -119,10 +119,12 @@ const ConversationRoute: FC = () => {
   );
   const {
     skillMenuOverlay,
+    commandMenu,
     skillCatalogModal,
     skillDetailsPanel,
-    selectedSkillChips,
+    selectedSkillElement,
     selectSkill,
+    removeSelectedSkill,
   } = useSkillSelectorOverlay();
   /*
    * The Skills entry joins the Prompts entry in array order, so it renders
@@ -483,10 +485,9 @@ const ConversationRoute: FC = () => {
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
         menuOverlays={menuOverlays}
-        selectedEntities={selectedSkillChips}
-        selectedEntityChipLabels={{
-          removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
-        }}
+        inlineStartSlot={selectedSkillElement}
+        onInlineStartRemove={removeSelectedSkill}
+        commandMenu={commandMenu}
         toolsMenuItems={toolsMenuItems}
         onToolToggle={onToolToggle}
         toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}

@@ -20,6 +20,12 @@ send-time semantics of a selected skill stay app-owned.
 its own: the host supplies the `CatalogItem`, the details data, and every
 action.
 
+`ChatSkill` renders a single used skill — a `/name` ghost button whose
+interactive tooltip shows the skill's description and a "View details" action —
+identically wherever a skill appears: inside the conversation input and in the
+conversation history. Its tooltip content is the same `SkillInfoTooltipContent`
+the favorite rows render, so the skill's panel is visually one thing everywhere.
+
 ## Installation
 
 ```json
@@ -40,6 +46,39 @@ action.
 - `@tabler/icons-react` `^3.0.0`
 
 ## Components
+
+### `ChatSkill`
+
+```tsx
+import { ChatSkill } from '@epam/ai-dial-skills';
+
+<ChatSkill
+  name="my-skill"
+  path="skills/public/my-skill"
+  description={resolvedDescription}
+  isDescriptionLoading={isFetchingDescription}
+  onTooltipOpen={(path) => resolveDescription(path)}
+  onViewDetails={(path) => openDetailsPanel(path)}
+  onRemove={clearSelection}
+/>;
+```
+
+Renders one used skill: a ui-kit `GhostButton` whose visible (and accessible)
+label is `/` followed by `name`, wrapped in the ui-kit `InteractiveTooltip`
+(`asChild`, uncontrolled, 550px max panel width, kit-default Right placement).
+The tooltip's content is the shared `SkillInfoTooltipContent` — the description
+paragraph (spinner while `isDescriptionLoading` is `true`, omitted when empty)
+above the "View details" link button — so the panel matches the favorite rows
+exactly. Activating the button body does nothing beyond opening the tooltip; on
+a touch-only device the tooltip renders nothing and the button stays
+presentation-only.
+
+`onTooltipOpen` fires with the skill's `path` each time the tooltip opens
+(hover or focus) — the host's lazy-description trigger wherever the component
+renders. `onViewDetails` receives the `path` when the tooltip's "View details"
+button is clicked. The × remove control renders only when `onRemove` is
+supplied, with its accessible name from `removeLabel` (which defaults to
+"Remove {name}"); pass a function that builds a localized label.
 
 ### `FavoriteSkillsPanel`
 
@@ -63,16 +102,17 @@ the "Browse" button. When `favorites` is empty, the list area is replaced with
 an empty-state hint; the header and "Browse" button still render.
 
 Each row is wrapped in the ui-kit `InteractiveTooltip` (`asChild`, so the row
-stays the focus and click target). The tooltip opens on hover or keyboard
-focus and stays open while the pointer is on the row or the panel — leaving
-either side only schedules a close after a short grace period (300 ms), which
-entering either side cancels, so the pointer can travel between them; on a
-touch-only device it renders nothing and the row still selects on tap. Its
-content is the skill's `description` (rendered only when non-empty — the host
-resolves it lazily and may never) above a link-style "View details" button
-whose label comes from `labels.viewDetailsLabel`. While
-`isDescriptionLoading` is `true`, a spinner renders in the description's
-place; the "View details" button is reachable in every description state.
+stays the focus and click target). The tooltip is uncontrolled: the kit opens
+it on hover or keyboard focus and keeps it open while the pointer is on the
+row or the panel — including while it travels between them; on a touch-only
+device it renders nothing and the row still selects on tap. Its content is the
+skill's `description` (rendered only when non-empty — the host resolves it
+lazily and may never) above a link-style "View details" button whose label
+comes from `labels.viewDetailsLabel`. While `isDescriptionLoading` is `true`,
+a spinner renders in the description's place; the "View details" button is
+reachable in every description state. The panel content itself is rendered by
+the shared `SkillInfoTooltipContent` component (below), so a `ChatSkill`
+element shows the exact same panel.
 
 `onItemTooltipOpen` fires with the skill's id each time a row's tooltip opens
 (hover or focus); the host uses it to fetch the skill's manifest description
@@ -82,6 +122,26 @@ button is clicked.
 Clicking a row's star plays a short exit animation first, so
 `onToggleFavorite` fires ~180 ms after the click rather than synchronously.
 The list's height animates to match once the row is gone.
+
+### `SkillInfoTooltipContent`
+
+```tsx
+import { SkillInfoTooltipContent } from '@epam/ai-dial-skills';
+
+<SkillInfoTooltipContent
+  description="Summarizes long documents into bullet points."
+  viewDetailsLabel="View details"
+  onViewDetails={() => openDetailsPanel(skill.url)}
+/>;
+```
+
+The inner content of a skill's interactive tooltip, shared by
+`FavoriteSkillsPanel`'s rows and `ChatSkill`: the skill's `description`
+paragraph (a `Spinner` while `isDescriptionLoading` is `true`, omitted
+entirely when the description is empty or unresolved) above a link-style
+"View details" button (`IconEye` on its inline-start, label from
+`viewDetailsLabel`). The "View details" button is reachable in every
+description state — loading, resolved, or absent.
 
 ### `SkillDetailsSidePanel`
 
@@ -153,7 +213,7 @@ const {
   skillMenuOverlay,
   skillCatalogModal,
   skillDetailsPanel,
-  selectedSkillChips,
+  selectedSkillElement,
   selectSkill,
 }: UseSkillSelectorOverlayResult = useSkillSelectorOverlay({
   isEnabled: isSkillUsageEnabled,
@@ -163,7 +223,11 @@ const {
   favoriteIds,
   onToggleFavorite: (id) => unfavoriteSkill(id),
   fetchSkillDescription: (skillId) => fetchManifestDescription(skillId),
-  labels: { addMenuLabel: 'Skills', backLabel: 'Back' },
+  labels: {
+    addMenuLabel: 'Skills',
+    backLabel: 'Back',
+    removeSkillLabel: (name) => `Remove ${name}`,
+  },
   renderCatalogContent: (onSelect, onClose) => (
     <CatalogView onSelect={onSelect} onClose={onClose} />
   ),
@@ -182,9 +246,11 @@ stable level outside the popover. `skillDetailsPanel` renders the injected
 `detailsPanelComponent` (wrapped in `Suspense`, so a lazily loaded component
 is fine); the open state of the modal and the panel, and the wiring of "View
 details" and "Use in chat" back to selection, are the hook's.
-`selectedSkillChips` is the selected skill as input chip data — at most one
-entry, replaced on every selection — and `selectSkill` selects by resource
-URL (`skills/{bucket}/{path}`).
+`selectedSkillElement` is the selected skill as a `ChatSkill` element for the
+conversation input's `inlineStartSlot` — at most one, replaced on every
+selection, with the shared tooltip (and the same lazy description fetch as
+the rows) and a × that clears the selection — and `selectSkill` selects by
+resource URL (`skills/{bucket}/{path}`).
 
 Row descriptions are resolved lazily: the first time a row's tooltip opens,
 `fetchSkillDescription` runs for that skill, and the result (including a
@@ -217,6 +283,8 @@ shows a spinner.
 
 ```tsx
 import type {
+  ChatSkillLabels,
+  ChatSkillProps,
   FavoriteSkillItem,
   FavoriteSkillsPanelColors,
   FavoriteSkillsPanelLabels,
@@ -224,6 +292,7 @@ import type {
   SkillCatalogModalProps,
   SkillDetailsPanelComponentProps,
   SkillDetailsSidePanelProps,
+  SkillInfoTooltipContentProps,
   SkillListingEntry,
   SkillSelectorOverlayLabels,
   UseSkillSelectorOverlayOptions,

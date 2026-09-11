@@ -38,6 +38,14 @@ const root = ReactDOM.createRoot(
 root.render(
   <StrictMode>
     <RootErrorBoundary>
+      {/*
+       * The ui-kit `InteractiveTooltip` portals its panel into a host-provided
+       * container with this id (floating-ui resolves a `FloatingPortal` id via
+       * `document.getElementById`); without the container the panel silently
+       * renders nothing. Theme vars and `dir` are set on `documentElement`,
+       * so the portaled panels inherit both from here.
+       */}
+      <div id="interactive-tooltip-portal" />
       <BrowserRouter>
         <NotificationProvider>
           <NotificationContainer />
