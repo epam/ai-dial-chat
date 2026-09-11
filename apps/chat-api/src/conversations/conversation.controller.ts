@@ -291,6 +291,20 @@ export class ConversationController {
     };
     res.on('close', handleClose);
 
+    /*
+     * `streamCompletion` is an async generator, so everything it does before
+     * `onReadyToStream` — registering the generation, resolving the
+     * deployment, loading the conversation — runs on the first `next()` from
+     * the loop below, not at the call above. A rejection from that phase
+     * therefore lands here with no headers sent yet, and ending the response
+     * would flush an empty 200 that leaves the exception filter nothing to
+     * write. That is how a second browser tab submitting into a conversation
+     * that is already generating rendered an empty answer instead of the 409
+     * this endpoint documents (issue #8688). Once the stream is open the
+     * status is already committed, so a later failure ends the response as
+     * before and only the SSE transport reports it.
+     */
+    let hasFailedBeforeStreamOpened = false;
     try {
       for await (const chunk of stream) {
         if (isResponseDetached) continue;
@@ -300,9 +314,16 @@ export class ConversationController {
           isResponseDetached = true;
         }
       }
+    } catch (err) {
+      hasFailedBeforeStreamOpened = !res.headersSent;
+      throw err;
     } finally {
       res.off('close', handleClose);
-      if (!isResponseDetached && !res.writableEnded) res.end();
+      const shouldEndResponse =
+        !hasFailedBeforeStreamOpened &&
+        !isResponseDetached &&
+        !res.writableEnded;
+      if (shouldEndResponse) res.end();
     }
   }
 
