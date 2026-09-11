@@ -27,6 +27,10 @@ import {
   ConversationResponseDto,
 } from '../openapi/openapi-response.dto';
 import {
+  SseSubscriptionKind,
+  trackSseSubscription,
+} from '../telemetry/runtime-metrics';
+import {
   ConversationGenerationService,
   type GenerationTerminalEvent,
 } from './conversation-generation.service';
@@ -400,6 +404,9 @@ export class ConversationController {
     const keepaliveTimer = setInterval(() => {
       if (!res.writableEnded) res.write(SSE_KEEPALIVE_PAYLOAD);
     }, SSE_KEEPALIVE_INTERVAL_MS);
+    const finishSubscription = trackSseSubscription(
+      SseSubscriptionKind.GenerationAttach,
+    );
 
     let isCleanedUp = false;
     const onChunk = (rawChunk: unknown): void => {
@@ -415,6 +422,7 @@ export class ConversationController {
     const cleanup = (): void => {
       if (isCleanedUp) return;
       isCleanedUp = true;
+      finishSubscription();
       clearInterval(keepaliveTimer);
       attachment.emitter.off('chunk', onChunk);
       attachment.emitter.off('terminal', onTerminal);
@@ -451,60 +459,70 @@ export class ConversationController {
     @Body() dto: WatchConversationBodyDto,
   ) {
     const { at, bucket } = req.user as SessionUser;
-    const stream = await this.conversationService.watchConversation(
-      dto.path,
-      at,
-      bucket,
+    const finishSubscription = trackSseSubscription(
+      SseSubscriptionKind.ConversationWatch,
     );
-
-    startSseResponse(res);
-
-    const reader = stream.getReader();
-
-    let isClientAborted = false;
-    let isReaderReleased = false;
-    let isCancelRequested = false;
-
-    const handleClose = () => {
-      isClientAborted = true;
-      if (isReaderReleased || isCancelRequested) {
-        return;
-      }
-
-      isCancelRequested = true;
-      void reader.cancel().catch(() => undefined);
-    };
-
-    res.on('close', handleClose);
-
-    let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
     try {
-      keepaliveTimer = setInterval(() => {
-        if (!isClientAborted && !res.writableEnded) {
-          res.write(SSE_KEEPALIVE_PAYLOAD);
+      const stream = await this.conversationService.watchConversation(
+        dto.path,
+        at,
+        bucket,
+      );
+
+      startSseResponse(res);
+
+      const reader = stream.getReader();
+
+      let isClientAborted = false;
+      let isReaderReleased = false;
+      let isCancelRequested = false;
+
+      const handleClose = () => {
+        isClientAborted = true;
+        if (isReaderReleased || isCancelRequested) {
+          return;
         }
-      }, SSE_KEEPALIVE_INTERVAL_MS);
 
-      while (true) {
-        if (isClientAborted) break;
+        isCancelRequested = true;
+        void reader.cancel().catch(() => undefined);
+      };
 
-        const { done, value } = await reader.read();
-        if (done) break;
+      res.on('close', handleClose);
 
-        res.write(value);
-      }
-    } catch (err) {
-      if (!isClientAborted) {
-        this.logger.error('Error while streaming watch events to client', err);
+      let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
+      try {
+        keepaliveTimer = setInterval(() => {
+          if (!isClientAborted && !res.writableEnded) {
+            res.write(SSE_KEEPALIVE_PAYLOAD);
+          }
+        }, SSE_KEEPALIVE_INTERVAL_MS);
+
+        while (true) {
+          if (isClientAborted) break;
+
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          res.write(value);
+        }
+      } catch (err) {
+        if (!isClientAborted) {
+          this.logger.error(
+            'Error while streaming watch events to client',
+            err,
+          );
+        }
+      } finally {
+        if (keepaliveTimer) clearInterval(keepaliveTimer);
+        res.off('close', handleClose);
+        isReaderReleased = true;
+        reader.releaseLock();
+        if (!res.writableEnded) {
+          res.end();
+        }
       }
     } finally {
-      if (keepaliveTimer) clearInterval(keepaliveTimer);
-      res.off('close', handleClose);
-      isReaderReleased = true;
-      reader.releaseLock();
-      if (!res.writableEnded) {
-        res.end();
-      }
+      finishSubscription();
     }
   }
 
