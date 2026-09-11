@@ -4614,11 +4614,11 @@ export interface ModelDetailsDto {
    */
   limits?: ModelLimitsDto;
   /**
-   * Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key
-   * @type {{ [key: string]: string; }}
+   * Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds a scalar price or conditional pricing tree
+   * @type {{ [key: string]: ModelDetailsDtoPricingValue; }}
    * @memberof ModelDetailsDto
    */
-  pricing?: { [key: string]: string };
+  pricing?: { [key: string]: ModelDetailsDtoPricingValue };
   /**
    *
    * @type {DeploymentFeaturesDetailsDto}
@@ -4657,6 +4657,12 @@ export interface ModelDetailsDto {
   createdAt?: number;
 }
 /**
+ * @type ModelDetailsDtoPricingValue
+ *
+ * @export
+ */
+export type ModelDetailsDtoPricingValue = ModelPricingRateDto | string;
+/**
  *
  * @export
  * @interface ModelLimitsDto
@@ -4680,6 +4686,37 @@ export interface ModelLimitsDto {
    * @memberof ModelLimitsDto
    */
   maxCompletionTokens?: number;
+}
+/**
+ *
+ * @export
+ * @interface ModelPricingRateDto
+ */
+export interface ModelPricingRateDto {
+  /**
+   *
+   * @type {ModelPricingRateDto}
+   * @memberof ModelPricingRateDto
+   */
+  ifFalse?: ModelPricingRateDto;
+  /**
+   *
+   * @type {ModelPricingRateDto}
+   * @memberof ModelPricingRateDto
+   */
+  ifTrue?: ModelPricingRateDto;
+  /**
+   * Per-unit price for this pricing branch
+   * @type {string}
+   * @memberof ModelPricingRateDto
+   */
+  rate?: string;
+  /**
+   * Condition selecting the applicable pricing branch
+   * @type {{ [key: string]: unknown }}
+   * @memberof ModelPricingRateDto
+   */
+  test?: { [key: string]: unknown };
 }
 /**
  *

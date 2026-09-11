@@ -7696,6 +7696,26 @@
           }
         }
       },
+      "ModelPricingRateDto": {
+        "type": "object",
+        "properties": {
+          "ifFalse": {
+            "$ref": "#/components/schemas/ModelPricingRateDto"
+          },
+          "ifTrue": {
+            "$ref": "#/components/schemas/ModelPricingRateDto"
+          },
+          "rate": {
+            "type": "string",
+            "description": "Per-unit price for this pricing branch"
+          },
+          "test": {
+            "type": "object",
+            "description": "Condition selecting the applicable pricing branch",
+            "additionalProperties": true
+          }
+        }
+      },
       "ModelCapabilitiesDto": {
         "type": "object",
         "properties": {
@@ -7895,14 +7915,24 @@
           },
           "pricing": {
             "type": "object",
-            "description": "Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key",
+            "description": "Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds a scalar price or conditional pricing tree",
             "additionalProperties": {
-              "type": "string"
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/components/schemas/ModelPricingRateDto"
+                }
+              ]
             },
             "example": {
               "unit": "token",
               "prompt": "0.000003",
-              "completion": "0.000015"
+              "completion": "0.000015",
+              "cache_read": {
+                "rate": "0.000001"
+              }
             }
           },
           "features": {
