@@ -148,10 +148,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
             text={item.name}
             query={searchQuery}
             maxLines={1}
-            className={mergeClasses(
-              nameClassName,
-              'min-w-0 flex-1 text-start',
-            )}
+            className={mergeClasses(nameClassName, 'min-w-0 flex-1 text-start')}
           />
         ) : (
           <span

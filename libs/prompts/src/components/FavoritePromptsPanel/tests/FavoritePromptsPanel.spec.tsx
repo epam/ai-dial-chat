@@ -117,9 +117,8 @@ describe('FavoritePromptsPanel', () => {
     fireEvent.mouseEnter(screen.getByRole('button', { name: 'Summarizer' }));
 
     /* The kit opens the tooltip after its 400 ms hover-open delay. */
-    await waitFor(
-      () => expect(screen.getByText('Summarizes long text')).toBeTruthy(),
-      { timeout: 2000 },
-    );
+    expect(
+      await screen.findByText('Summarizes long text', {}, { timeout: 2000 }),
+    ).toBeTruthy();
   });
 });

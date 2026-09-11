@@ -394,9 +394,7 @@ export const Input: FC<InputProps> = ({
    * empty draft is a valid message and the send button mounts and enables.
    */
   const hasSendableContent =
-    message.trim().length > 0 ||
-    attachments.length > 0 ||
-    hasInlineStartSlot;
+    message.trim().length > 0 || attachments.length > 0 || hasInlineStartSlot;
   const canSend =
     hasSendableContent &&
     !hasBlockedAttachments &&
@@ -548,6 +546,7 @@ export const Input: FC<InputProps> = ({
         hasInlineStartSlot && styles.textareaIndented,
         typography?.fontClassName || 'dial-body-paragraph-text',
         'max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent outline-none [field-sizing:content]',
+        'disabled:cursor-not-allowed',
       )}
       ref={textareaRef}
       autoFocus={autoFocus}
@@ -555,7 +554,16 @@ export const Input: FC<InputProps> = ({
       onChange={(e) => {
         setMessage(e.target.value);
         historyNav.notifyChange();
-        handleValueChange(e.target.value, e.nativeEvent.isComposing);
+        /*
+         * React types `ChangeEvent`'s `nativeEvent` as bare `Event`; the
+         * runtime event behind a textarea's change is an `InputEvent`, so
+         * narrow with `instanceof` to read `isComposing` — a non-InputEvent
+         * can't be mid-composition, hence `false`.
+         */
+        handleValueChange(
+          e.target.value,
+          e.nativeEvent instanceof InputEvent && e.nativeEvent.isComposing,
+        );
         onChange?.(e.target.value);
       }}
       onKeyDown={handleKeyDown}
@@ -634,7 +642,7 @@ export const Input: FC<InputProps> = ({
     hasInlineStartSlot || hasCommandHintConfigured ? (
       <div className="relative w-full">
         {hasInlineStartSlot && (
-          <div ref={inlineStartSlotRef} className={styles.inlineStartSlot}>
+          <div ref={inlineStartSlotRef} className="absolute start-0 top-0">
             {inlineStartSlot}
           </div>
         )}
@@ -642,6 +650,7 @@ export const Input: FC<InputProps> = ({
           <span
             className={mergeClasses(
               styles.commandHint,
+              'pointer-events-none absolute start-[var(--ci-first-line-indent,0px)] top-0',
               typography?.fontClassName || 'dial-body-paragraph-text',
             )}
             aria-hidden
@@ -670,6 +679,7 @@ export const Input: FC<InputProps> = ({
       className={mergeClasses(
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
+        isInputDisabled && 'cursor-not-allowed',
         'flex w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border shadow-md',
         'focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
         attachments.length > 6 ? 'py-3 ps-3' : 'p-3',

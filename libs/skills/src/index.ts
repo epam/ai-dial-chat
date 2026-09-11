@@ -5,7 +5,10 @@ export { SkillDetailsSidePanel } from './components/SkillDetailsSidePanel/SkillD
 export { SkillInfoTooltipContent } from './components/SkillInfoTooltipContent/SkillInfoTooltipContent';
 export { useSkillSelectorOverlay } from './hooks/useSkillSelectorOverlay/useSkillSelectorOverlay';
 export { buildFavoriteSkillItem } from './models/favorite-skill-item';
-export type { ChatSkillLabels, ChatSkillProps } from './models/chat-skill-props';
+export type {
+  ChatSkillLabels,
+  ChatSkillProps,
+} from './models/chat-skill-props';
 export type {
   FavoriteSkillItem,
   SkillListingEntry,
