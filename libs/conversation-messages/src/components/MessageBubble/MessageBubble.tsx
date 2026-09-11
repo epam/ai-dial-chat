@@ -38,6 +38,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
   return (
     <AssistantMessageBubble
       {...props}
+      beforeContent={beforeContent}
       markdownComponents={markdownComponents}
       markdownUrlTransform={markdownUrlTransform}
       onAttachmentClick={onAttachmentClick}

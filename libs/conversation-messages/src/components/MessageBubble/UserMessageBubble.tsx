@@ -114,9 +114,6 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
             )}
           >
             <div className="flex min-w-0 flex-col items-start">
-              {beforeContent != null && (
-                <div className={text ? 'mb-3' : undefined}>{beforeContent}</div>
-              )}
               {text && (
                 <div
                   id={collapsibleTextId}
@@ -134,10 +131,26 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                       'whitespace-pre-wrap text-start [overflow-wrap:anywhere]',
                     )}
                   >
+                    {/*
+                     * The slot renders inline at the start of the text so the
+                     * text word-flows after it on the same line — the
+                     * conversation input's inline-start slot behaviour.
+                     * Inline placement keeps the bubble's content-sized width
+                     * and the collapse line measurement honest, which an
+                     * overlaid or floated slot would not; the wrapper supplies
+                     * the chip-to-text gap because generic slot content
+                     * carries no padding of its own. In flow when there is no
+                     * text: the bubble then renders for the slot alone and
+                     * needs its height.
+                     */}
+                    {beforeContent != null && (
+                      <span className="me-1">{beforeContent}</span>
+                    )}
                     {text}
                   </p>
                 </div>
               )}
+              {beforeContent != null && !text && <div>{beforeContent}</div>}
               {isOverflowing && (
                 <LinkButton
                   label={<>{toggleLabel}</>}

@@ -62,6 +62,14 @@ export interface UseSkillSelectorOverlayOptions {
   /** Localizable string overrides. */
   labels?: SkillSelectorOverlayLabels;
   /**
+   * Typography class applied to each history `ChatSkill` chip's label.
+   * History chips render beside the message bubble's first text line — inline
+   * within it (user bubble) or overlaid on it (assistant bubble) — so pass
+   * the class the bubbles' body text uses, keeping the chip's height matched
+   * to that line. Unset falls back to the chip's own default label class.
+   */
+  historyChipLabelClassName?: string;
+  /**
    * Renders the browse modal's picker content (e.g. a host catalog view);
    * receives the selection and close callbacks to wire into it, and is
    * mounted only while the modal is open.
@@ -134,13 +142,14 @@ export interface UseSkillSelectorOverlayResult {
    */
   removeSelectedSkill: () => void;
   /**
-   * Renders a user message's `custom_content.skills` entries as `ChatSkill`
-   * elements for a message bubble's start slot — one per entry, sharing the
-   * session description cache, the lazy-fetch first-open trigger, and the
-   * "View details" details panel with the favorite rows and the input chip.
-   * Each entry's name comes from the listing pools matched on its url,
-   * falling back to the url's last non-empty segment. Returns `null` while
-   * `isEnabled` is `false` or the array is empty.
+   * Renders a message's `custom_content.skills` entries as `ChatSkill`
+   * elements beside the message bubble's first text line, with the text
+   * word-flowing after them — one per entry, sharing the session description
+   * cache, the lazy-fetch first-open trigger, and the "View details" details
+   * panel with the favorite rows and the input chip. Each entry's name comes
+   * from the listing pools matched on its url, falling back to the url's last
+   * non-empty segment. Returns `null` while `isEnabled` is `false` or the
+   * array is empty.
    */
   renderHistorySkills: (skills: RequestSkill[] | undefined) => ReactNode;
 }

@@ -222,7 +222,7 @@ interface Props {
    */
   onEditInlineStartRemove?: () => void;
   /**
-   * Renders a user message's `custom_content.skills` entries as `ChatSkill`
+   * Renders a message's `custom_content.skills` entries as `ChatSkill`
    * history elements for the bubble's `beforeContent` slot — name and
    * description resolution and the "View details" details panel are owned by
    * the host's skill selector wiring. Returns `null` while the skill-usage
@@ -576,14 +576,7 @@ const ConversationMessageItem: FC<Props> = ({
 
   const isUserMessage = msg.role === MessageRole.User;
 
-  /*
-   * History skills render on user messages only — Core's contract also
-   * defines `skills` on assistant message custom content, but displaying
-   * assistant-referenced skills is a recorded follow-up (design D15).
-   */
-  const beforeContent = isUserMessage
-    ? renderHistorySkills?.(msg.custom_content?.skills)
-    : undefined;
+  const beforeContent = renderHistorySkills?.(msg.custom_content?.skills);
 
   return (
     <CitationCardProvider value={citationCard}>

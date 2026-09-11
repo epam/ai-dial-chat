@@ -44,6 +44,7 @@ export const useSkillSelectorOverlay = ({
   onToggleFavorite,
   fetchSkillDescription,
   labels,
+  historyChipLabelClassName,
   renderCatalogContent,
   detailsPanelComponent: DetailsPanelComponent,
 }: UseSkillSelectorOverlayOptions): UseSkillSelectorOverlayResult => {
@@ -85,6 +86,15 @@ export const useSkillSelectorOverlay = ({
   );
 
   /*
+   * Url-keyed view of `allSkills` so per-url lookups (the selected skill,
+   * history entries) are O(1) instead of a linear scan per entry per render.
+   */
+  const skillByUrl = useMemo<Map<string, SkillListingEntry>>(
+    () => new Map(allSkills.map((skill) => [skill.url, skill])),
+    [allSkills],
+  );
+
+  /*
    * Only skill items end up in the favorites list server-side, so matching on
    * `url` needs no nodeType filtering — folder URLs never appear in
    * `favoriteIds`.
@@ -109,8 +119,11 @@ export const useSkillSelectorOverlay = ({
    * (e.g. via a one-shot route state) renders once the listing settles.
    */
   const selectedSkill = useMemo(
-    () => allSkills.find((skill) => skill.url === selectedSkillId) ?? null,
-    [allSkills, selectedSkillId],
+    () =>
+      selectedSkillId == null
+        ? null
+        : (skillByUrl.get(selectedSkillId) ?? null),
+    [skillByUrl, selectedSkillId],
   );
 
   const selectSkill = useCallback((skillId: string) => {
@@ -132,10 +145,14 @@ export const useSkillSelectorOverlay = ({
   /*
    * The send-time `custom_content.skills` payload: a single `{ url }` entry
    * while a skill is selected, `undefined` otherwise so the field is omitted
-   * from the message entirely.
+   * from the message entirely. Memoized on the selection id so hosts can hold
+   * it in `useCallback`/`memo` deps without the identity churning on every
+   * render (e.g. every streaming token re-rendering the conversation view).
    */
-  const selectedSkills: RequestSkill[] | undefined =
-    selectedSkillId == null ? undefined : [{ url: selectedSkillId }];
+  const selectedSkills = useMemo<RequestSkill[] | undefined>(
+    () => (selectedSkillId == null ? undefined : [{ url: selectedSkillId }]),
+    [selectedSkillId],
+  );
 
   /*
    * Deferred condition: DIAL Core's skill listing metadata carries no
@@ -173,23 +190,35 @@ export const useSkillSelectorOverlay = ({
 
   /*
    * The selected skill's inline form: the shared tooltip content and the same
-   * lazy description fetch as the favorites rows. The element carries no
-   * remove control — removal is the input's Backspace-at-start gesture via
-   * `removeSelectedSkill` (wired to `onInlineStartRemove`). "View details"
-   * opens the same side panel the rows' action opens.
+   * lazy description fetch as the favorites rows. Memoized so the element's
+   * identity stays stable across unrelated re-renders (streaming) and the
+   * input hosting it as `inlineStartSlot` is not needlessly re-rendered. The
+   * element carries no remove control — removal is the input's
+   * Backspace-at-start gesture via `removeSelectedSkill` (wired to
+   * `onInlineStartRemove`). "View details" opens the same side panel the
+   * rows' action opens.
    */
-  const selectedSkillElement: ReactNode =
-    selectedSkill == null ? null : (
-      <ChatSkill
-        name={selectedSkill.name}
-        path={selectedSkill.url}
-        description={skillDescriptions.get(selectedSkill.url) ?? undefined}
-        isDescriptionLoading={pendingDescriptionIds.has(selectedSkill.url)}
-        onTooltipOpen={handleItemTooltipOpen}
-        onViewDetails={setDetailsSkillId}
-        labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
-      />
-    );
+  const selectedSkillElement = useMemo<ReactNode>(
+    () =>
+      selectedSkill == null ? null : (
+        <ChatSkill
+          name={selectedSkill.name}
+          path={selectedSkill.url}
+          description={skillDescriptions.get(selectedSkill.url) ?? undefined}
+          isDescriptionLoading={pendingDescriptionIds.has(selectedSkill.url)}
+          onTooltipOpen={handleItemTooltipOpen}
+          onViewDetails={setDetailsSkillId}
+          labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+        />
+      ),
+    [
+      selectedSkill,
+      skillDescriptions,
+      pendingDescriptionIds,
+      handleItemTooltipOpen,
+      panelLabels,
+    ],
+  );
 
   /*
    * History display: one `ChatSkill` per `custom_content.skills` entry,
@@ -197,7 +226,9 @@ export const useSkillSelectorOverlay = ({
    * panel. The name comes from the listing pools matched on the entry's url;
    * a url no pool carries (e.g. a skill the viewer cannot read) falls back to
    * its last non-empty segment, and its description fetch degrades silently
-   * per the cache's rules.
+   * per the cache's rules. The label class is host-supplied because the chip
+   * renders beside the bubble's first text line and its height should match
+   * that line.
    */
   const renderHistorySkills = useCallback(
     (entries: RequestSkill[] | undefined): ReactNode => {
@@ -207,14 +238,14 @@ export const useSkillSelectorOverlay = ({
 
       return entries.map((entry) => {
         const name =
-          allSkills.find((skill) => skill.url === entry.url)?.name ??
-          getSkillFallbackName(entry.url);
+          skillByUrl.get(entry.url)?.name ?? getSkillFallbackName(entry.url);
 
         return (
           <ChatSkill
             key={entry.url}
             name={name}
             path={entry.url}
+            labelClassName={historyChipLabelClassName}
             description={skillDescriptions.get(entry.url) ?? undefined}
             isDescriptionLoading={pendingDescriptionIds.has(entry.url)}
             onTooltipOpen={handleItemTooltipOpen}
@@ -225,7 +256,8 @@ export const useSkillSelectorOverlay = ({
       });
     },
     [
-      allSkills,
+      skillByUrl,
+      historyChipLabelClassName,
       skillDescriptions,
       pendingDescriptionIds,
       handleItemTooltipOpen,

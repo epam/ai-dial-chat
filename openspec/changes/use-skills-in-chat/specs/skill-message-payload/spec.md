@@ -83,12 +83,12 @@ Entering edit mode on a user message that carries `custom_content.skills` SHALL 
 
 ### Requirement: Conversation history renders the skill
 
-A user message loaded from conversation history that carries `custom_content.skills` SHALL render one `ChatSkill` element per entry (today at most one) at the inline-start of the message's content, inside the user message bubble, using the same `ChatSkill` component the conversation input uses. Hovering/focusing the element SHALL show the same interactive tooltip (description with its loading/absent states above the "View details" button), and activating "View details" SHALL open the same skill details side panel the input flow opens (on the chat route). The bubble slot the element renders in SHALL be a generic `beforeContent` ReactNode prop on `UserMessageBubble` (forwarded by `MessageBubble`) — `libs/conversation-messages` SHALL NOT know about skills. Assistant messages SHALL NOT render skills — Core's merged contract (PR #1956) defines `skills` on assistant message custom content as well ("skills referenced by the model as part of the response"), but displaying assistant-referenced skills is a recorded follow-up, out of scope here; the shared `MessageCustomContent` type covers both roles.
+A message loaded from conversation history — user or assistant — that carries `custom_content.skills` SHALL render one `ChatSkill` element per entry (today at most one) at the inline-start of the message's first text line, inside the message bubble, with the text word-flowing after it on the same line and wrapping to full width below — the same word flow the conversation input's selected-skill chip has. Hovering/focusing the element SHALL show the same interactive tooltip (description with its loading/absent states above the "View details" button), and activating "View details" SHALL open the same skill details side panel the input flow opens (on the chat route). The bubble slot the element renders in SHALL be a generic `beforeContent` ReactNode prop on the user and assistant message bubbles (forwarded by `MessageBubble`) — `libs/conversation-messages` SHALL NOT know about skills; the user bubble renders the slot inline within the text, the assistant bubble overlays it on the first markdown block's first line (which indents past the measured slot width), and the chip's label SHALL use the type-scale step the bubble's body text uses (host-supplied) so its height matches that text line.
 
 #### Scenario: History display
 
 - **WHEN** a conversation containing a message sent with a skill is opened
-- **THEN** that user message renders a `ChatSkill` element labeled `/{skill name}` at the inline-start of its content
+- **THEN** that message renders a `ChatSkill` element labeled `/{skill name}` at the inline-start of its first text line, with the message text flowing after it on that line and wrapping to full width below
 
 #### Scenario: History tooltip
 
@@ -97,7 +97,7 @@ A user message loaded from conversation history that carries `custom_content.ski
 
 #### Scenario: Messages without skills
 
-- **WHEN** a user message carries no `skills` entry
+- **WHEN** a message carries no `skills` entry
 - **THEN** its rendering is byte-identical to today (no slot content, no layout change)
 
 ---

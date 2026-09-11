@@ -10,6 +10,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { NeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
+import { useInlineStartIndent } from '../../hooks/useInlineStartIndent/useInlineStartIndent';
 import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
 import { MessageActions } from '../MessageActions/MessageActions';
 import styles from './MessageBubble.module.scss';
@@ -22,6 +23,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   hasAlwaysVisibleActions,
   isStreaming,
   attachments,
+  beforeContent,
   afterContent,
   starters,
   onSelectStarter,
@@ -61,9 +63,13 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   const visibleAttachments = isStreaming
     ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
     : (attachments ?? []);
+  const { slotRef, firstLineIndent } = useInlineStartIndent(
+    beforeContent != null && !!text,
+  );
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
     '--cm-starters-divider': colors?.startersDivider,
+    '--cm-bubble-first-line-indent': firstLineIndent,
   });
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
@@ -94,15 +100,45 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             bubbleClassName,
           )}
         >
+          {/*
+           * The slot overlays the text's first line from inside the text
+           * container — absolutely positioned at the inline-start edge, the
+           * first markdown block's first line indented past it via
+           * `--cm-bubble-first-line-indent` (the measured slot width plus a
+           * gap) — so the text word-flows after it, the conversation input's
+           * inline-start slot behaviour. Markdown's first block cannot host
+           * the slot inline (it is react-markdown output), and this bubble is
+           * full-width, so the out-of-flow overlay costs nothing here. In
+           * flow when there is no text: the slot then renders on its own
+           * line, above the streaming placeholder.
+           */}
+          {beforeContent != null && !(text || isStreaming) && (
+            <div className="min-w-0">{beforeContent}</div>
+          )}
           {(text || isStreaming) && (
             <div
               aria-live="polite"
               aria-atomic="false"
               className={mergeClasses(
                 textClass,
-                'min-w-0 max-w-full text-start',
+                'relative min-w-0 max-w-full text-start',
+                /*
+                 * `text-indent` inherits, so the selector targets the
+                 * markdown container's first block child rather than the
+                 * container (a leading list indents its every item's first
+                 * line — accepted edge). The markdown viewer renders one
+                 * container div whose first element child is the first block.
+                 */
+                beforeContent != null &&
+                  text &&
+                  '[&>div>*:first-child]:indent-[var(--cm-bubble-first-line-indent,0px)]',
               )}
             >
+              {beforeContent != null && text && (
+                <div ref={slotRef} className="absolute start-0 top-0">
+                  {beforeContent}
+                </div>
+              )}
               <MDMessageViewer
                 content={text}
                 isStreaming={isStreaming}
