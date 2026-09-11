@@ -2,8 +2,9 @@ import {
   getApiErrorDetails,
   getApiErrorStatus,
 } from '@epam/ai-dial-chat-hooks';
-import { ChangeEvent, useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SKILL_MANIFEST_FILE } from '../../constants/skills';
 import { SkillArchiveImportI18nKeys } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useSkills } from '../../context/SkillsContext';
@@ -14,13 +15,10 @@ import {
 } from '../../types/entity-notification';
 import { useOperationNotification } from '../useOperationNotification';
 
-/** Required manifest filename, matching the BFF's exact, case-sensitive check. */
-const SKILL_MANIFEST_FILE = 'SKILL.md';
-
 /**
  * Client-side UX shortcut only — the BFF is the actual authority on what it
  * accepts. Flags a `.md`-named file that isn't exactly `SKILL.md` so the
- * picker can reject it locally instead of round-tripping to the server for
+ * dialog can reject it locally instead of round-tripping to the server for
  * an outcome the client can already predict.
  */
 const isUnsupportedMarkdownFilename = (fileName: string): boolean =>
@@ -62,21 +60,27 @@ export const mapSkillArchiveImportErrorKey = (
 };
 
 interface UseSkillArchiveImportResult {
-  /** Attach to the hidden `<input type="file">` the Catalog's "Upload" action opens. */
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  /** Whether the "Upload skill" dialog is open. */
+  isDialogOpen: boolean;
   /** Current phase of the import — drives loading/success/error UI. */
   status: SkillArchiveImportStatus;
   /** Localized status sentence for an `aria-live` region; `undefined` while idle. */
   statusMessage: string | undefined;
-  /** Opens the file picker, unless an import is already in flight. */
-  triggerFilePicker: () => void;
-  /** Wire directly to the hidden input's `onChange`. */
-  handleFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  /** Localized rejection message for the drop zone; `undefined` when nothing was rejected. */
+  selectionError: string | undefined;
+  /** Opens the upload dialog, unless an import is already in flight. */
+  openDialog: () => void;
+  /** Closes the upload dialog and clears any rejection message. */
+  closeDialog: () => void;
+  /** Wire to the dialog drop zone's `onChange`. */
+  handleFilesSelected: (files: File[]) => void;
+  /** Wire to the dialog drop zone's `onReject`. */
+  handleFilesRejected: () => void;
 }
 
 /**
- * Owns the Catalog "Upload" action's whole workflow: opening the hidden file
- * picker, uploading the selected archive to `POST /api/v1/skills/import`,
+ * Owns the Catalog "Upload" action's whole workflow: opening the upload
+ * dialog, uploading the selected archive to `POST /api/v1/skills/import`,
  * raising the "Skill created" notification, and refreshing `SkillsContext`
  * so the new Skill appears without a manual reload — kept out of
  * `CatalogView` so that already-large component doesn't absorb a full async
@@ -92,7 +96,8 @@ export const useSkillArchiveImport = (): UseSkillArchiveImportResult => {
     SkillArchiveImportStatus.Idle,
   );
   const [statusMessage, setStatusMessage] = useState<string>();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectionError, setSelectionError] = useState<string>();
   const isUploadingRef = useRef(false);
 
   const importArchive = useCallback(
@@ -140,41 +145,53 @@ export const useSkillArchiveImport = (): UseSkillArchiveImportResult => {
     [notifyOperationSuccess, refetchSkills, showErrorNotification, t],
   );
 
-  const triggerFilePicker = useCallback(() => {
+  const openDialog = useCallback(() => {
     if (isUploadingRef.current) return;
-    fileInputRef.current?.click();
+    setSelectionError(undefined);
+    setIsDialogOpen(true);
   }, []);
 
+  const closeDialog = useCallback(() => {
+    setIsDialogOpen(false);
+    setSelectionError(undefined);
+  }, []);
+
+  /*
+   * Rejections are surfaced inline under the drop zone rather than as a
+   * toast: the dialog stays open so the user can pick another file without
+   * reopening it, and a toast on top of the visible error would say the same
+   * thing twice.
+   */
   const rejectUnsupportedFilename = useCallback(() => {
     setStatus(SkillArchiveImportStatus.Error);
     const message = t(SkillArchiveImportI18nKeys.ErrorUnsupportedFilename);
     setStatusMessage(message);
-    showErrorNotification({
-      title: t(SkillArchiveImportI18nKeys.ErrorTitle),
-      message,
-    });
-  }, [showErrorNotification, t]);
+    setSelectionError(message);
+  }, [t]);
 
-  const handleFileChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      /* Reset so selecting the same file again re-triggers onChange. */
-      event.target.value = '';
+  const handleFilesSelected = useCallback(
+    (files: File[]) => {
+      const file = files[0];
       if (!file) return;
       if (isUnsupportedMarkdownFilename(file.name)) {
         rejectUnsupportedFilename();
         return;
       }
+      setSelectionError(undefined);
+      setIsDialogOpen(false);
       void importArchive(file);
     },
     [importArchive, rejectUnsupportedFilename],
   );
 
   return {
-    fileInputRef,
+    isDialogOpen,
     status,
     statusMessage,
-    triggerFilePicker,
-    handleFileChange,
+    selectionError,
+    openDialog,
+    closeDialog,
+    handleFilesSelected,
+    handleFilesRejected: rejectUnsupportedFilename,
   };
 };
