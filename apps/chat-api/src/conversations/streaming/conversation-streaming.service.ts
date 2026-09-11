@@ -140,6 +140,7 @@ export class ConversationStreamingService {
     conversationPath: string,
     token: string,
     sessionBucket: string,
+    signal: AbortSignal,
   ): Promise<ReadableStream<Uint8Array>> {
     const { bucket, subPath } = resolveConversationLocation(
       qualifySessionConversationPath(conversationPath, sessionBucket),
@@ -161,6 +162,7 @@ export class ConversationStreamingService {
           Accept: 'text/event-stream',
         },
         parseAs: 'stream',
+        signal,
       })) as { response: globalThis.Response; error?: unknown };
 
       if (!result.response.ok || !result.response.body) {

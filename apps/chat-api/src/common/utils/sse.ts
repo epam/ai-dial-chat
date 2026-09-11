@@ -36,3 +36,76 @@ export const startSseResponse = (res: Response): void => {
   res.flushHeaders();
   res.write(SSE_INIT_PAYLOAD);
 };
+
+/**
+ * How long an upstream-relaying SSE handler (client-channel subscribe,
+ * conversation watch) waits for `'drain'` after `res.write()` signals
+ * backpressure before treating the connection as stalled and closing it —
+ * the same as an explicit client disconnect.
+ */
+export const SSE_DRAIN_TIMEOUT_MS = 5000;
+
+export interface SseWriteResult {
+  /** False only when the response was already ended/detached. */
+  written: boolean;
+  /** True when `res.write()` returned `false` — the caller must wait for `'drain'` before writing more. */
+  needsDrain: boolean;
+}
+
+/**
+ * Wraps `res.write()` so every SSE handler shares the same backpressure
+ * signal instead of four bespoke checks of its boolean return value.
+ */
+export const writeSseChunk = (
+  res: Response,
+  chunk: Uint8Array | string,
+): SseWriteResult => {
+  if (res.writableEnded) {
+    return { written: false, needsDrain: false };
+  }
+
+  const needsDrain = !res.write(chunk);
+  return { written: true, needsDrain };
+};
+
+/**
+ * Resolves on whichever comes first: the response's `'drain'` event, the
+ * given `signal` aborting (connection closed / upstream error), or
+ * `timeoutMs` elapsing. Always tears down its own listeners/timer before
+ * resolving, on every branch, so a caller can safely call this repeatedly
+ * across a long-lived relay loop without leaking listeners.
+ */
+export const waitForDrain = (
+  res: Response,
+  signal: AbortSignal,
+  timeoutMs: number,
+): Promise<'drained' | 'timeout' | 'aborted'> =>
+  new Promise((resolve) => {
+    let isSettled = false;
+
+    const cleanup = (): void => {
+      clearTimeout(timer);
+      res.off('drain', onDrain);
+      signal.removeEventListener('abort', onAbort);
+    };
+
+    const settle = (result: 'drained' | 'timeout' | 'aborted'): void => {
+      if (isSettled) return;
+      isSettled = true;
+      cleanup();
+      resolve(result);
+    };
+
+    const onDrain = (): void => settle('drained');
+    const onAbort = (): void => settle('aborted');
+
+    const timer = setTimeout(() => settle('timeout'), timeoutMs);
+
+    if (signal.aborted) {
+      settle('aborted');
+      return;
+    }
+
+    res.once('drain', onDrain);
+    signal.addEventListener('abort', onAbort);
+  });
