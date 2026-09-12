@@ -1,0 +1,213 @@
+#!/usr/bin/env node
+//
+// Generates docs/host-install-matrix.md — what an embedding host has to add to
+// its own package.json for each way of using these libraries.
+//
+// The scenarios are hand-written, because which packages make up "a chat
+// column" is a product decision. Everything else is computed from the
+// manifests, so the document cannot drift from them the way a hand-maintained
+// table would: `--check` fails when it has.
+//
+// Reads package.json only — no build output — so it runs in the same PR job as
+// the rest of `validate:docs`.
+//
+// Usage:
+//   node scripts/generate-install-matrix.mjs          # write the doc
+//   node scripts/generate-install-matrix.mjs --check  # fail if it is stale
+
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+
+const OUTPUT = 'docs/host-install-matrix.md';
+
+/*
+ * `optional` names the optional peers a scenario genuinely needs. npm cannot
+ * scope a dependency to an entry point, so these are the one thing a host still
+ * has to know — which is the whole reason this document exists.
+ */
+const SCENARIOS = [
+  {
+    title: 'Chat column',
+    summary:
+      'Conversation list, composer and message bubbles — the smallest useful embed.',
+    packages: [
+      '@epam/ai-dial-conversation-panel',
+      '@epam/ai-dial-conversation-input',
+      '@epam/ai-dial-conversation-messages',
+      '@epam/ai-dial-chat-hooks',
+      '@epam/ai-dial-chat-shared',
+    ],
+    /*
+     * `@epam/ai-dial-chat-hooks/conversation` imports both of these eagerly —
+     * `apply-chunk.ts` calls `normalizeRawAnnotations` from quotations — while
+     * chat-hooks declares them optional. npm therefore installs neither, and
+     * the host's bundler is where that surfaces. Listing them is the honest
+     * state; removing the need for them is tracked in #8719.
+     */
+    optional: [
+      [
+        '@epam/ai-dial-quotations',
+        'the conversation stream normalizes annotations through it',
+      ],
+      [
+        '@epam/ai-dial-chat-api-client',
+        'the conversation hooks call DIAL Core through it',
+      ],
+    ],
+  },
+  {
+    title: 'Chat column with attachments',
+    summary:
+      'Adds the attach control and the attachment strip above the composer.',
+    packages: ['@epam/ai-dial-attachment-input'],
+    inherits: 'Chat column',
+    optional: [],
+  },
+  {
+    title: 'Attachment canvas (PDF, MCP, visualizers)',
+    summary:
+      'Adds the inline viewer. Its PDF, MCP and visualizer stacks ship as dependencies of the canvas, so none of them appears below.',
+    packages: ['@epam/ai-dial-attachment-canvas'],
+    inherits: 'Chat column with attachments',
+    optional: [],
+  },
+  {
+    title: 'File manager',
+    summary:
+      'Adds `DialFileManagerShell` and `FileManagerAttachModal`, from the `@epam/ai-dial-chat-shared/file-manager` entry.',
+    packages: [],
+    inherits: 'Chat column',
+    optional: [
+      ['@epam/ai-dial-react-file-manager', 'the grid component itself'],
+      [
+        'ag-grid-community',
+        'its engine, which needs one copy per host and so stays a peer',
+      ],
+    ],
+  },
+];
+
+const manifests = new Map();
+for (const entry of readdirSync('libs', { withFileTypes: true })) {
+  if (!entry.isDirectory()) continue;
+  const file = `libs/${entry.name}/package.json`;
+  if (!existsSync(file)) continue;
+  const pkg = JSON.parse(readFileSync(file, 'utf8'));
+  if (pkg.name) manifests.set(pkg.name, pkg);
+}
+
+const ALWAYS = ['react', 'react-dom'];
+
+/* Required peers, transitively — what npm will refuse to resolve without. */
+const requiredClosure = (roots) => {
+  const seen = new Set();
+  const needed = new Set();
+  const queue = [...roots];
+
+  while (queue.length > 0) {
+    const name = queue.shift();
+    if (seen.has(name)) continue;
+    seen.add(name);
+
+    const pkg = manifests.get(name);
+    if (!pkg) continue;
+
+    const meta = pkg.peerDependenciesMeta ?? {};
+    for (const peer of Object.keys(pkg.peerDependencies ?? {})) {
+      if (meta[peer]?.optional || ALWAYS.includes(peer)) continue;
+      needed.add(peer);
+      if (manifests.has(peer)) queue.push(peer);
+    }
+  }
+
+  for (const root of roots) needed.delete(root);
+  return needed;
+};
+
+const scenarioPackages = (scenario) => {
+  const inherited = scenario.inherits
+    ? scenarioPackages(SCENARIOS.find((s) => s.title === scenario.inherits))
+    : [];
+  return [...inherited, ...scenario.packages];
+};
+
+const bullet = (name, note) =>
+  note ? `- \`${name}\` — ${note}` : `- \`${name}\``;
+
+const render = () => {
+  const lines = [
+    '# Host install matrix',
+    '',
+    'What an embedding host adds to its own `package.json`, per way of using',
+    'these libraries. Everything not listed here arrives through npm as a',
+    'dependency of the package that imports it — a host never names an icon set,',
+    'a markdown plugin, a PDF engine or a grid.',
+    '',
+    '> Generated by `scripts/generate-install-matrix.mjs` from the lib manifests.',
+    "> `npm run validate:docs` fails when it no longer matches them; don't edit it",
+    '> by hand.',
+    '',
+    `Every scenario also needs ${ALWAYS.map((n) => `\`${n}\``).join(' and ')}.`,
+    '',
+    'An entry marked **optional peer** is one npm will not install for you:',
+    'the package declaring it cannot tell which entry point you import, so it',
+    'leaves the choice to you. Miss one and `npm install` stays quiet — your',
+    'bundler is where you find out. That is why they are listed here at all.',
+    '',
+  ];
+
+  for (const scenario of SCENARIOS) {
+    const packages = scenarioPackages(scenario);
+    const closure = [...requiredClosure(packages)].sort();
+    const own = scenario.inherits ? scenario.packages : packages;
+
+    lines.push(`## ${scenario.title}`, '', scenario.summary, '');
+
+    if (scenario.inherits) {
+      lines.push(`Everything from **${scenario.inherits}**, plus:`, '');
+    }
+
+    for (const name of own.sort()) lines.push(bullet(name));
+    if (own.length === 0 && scenario.optional.length === 0) {
+      lines.push('- nothing beyond the inherited set');
+    }
+
+    const newPeers = closure.filter(
+      (name) =>
+        !packages.includes(name) &&
+        (!scenario.inherits ||
+          !requiredClosure(
+            scenarioPackages(
+              SCENARIOS.find((s) => s.title === scenario.inherits),
+            ),
+          ).has(name)),
+    );
+    for (const name of newPeers) {
+      lines.push(bullet(name, 'required peer'));
+    }
+
+    for (const [name, why] of scenario.optional) {
+      lines.push(bullet(name, `**optional peer** — ${why}`));
+    }
+
+    lines.push('');
+  }
+
+  return `${lines.join('\n')}`;
+};
+
+const rendered = render();
+
+if (process.argv.includes('--check')) {
+  const current = existsSync(OUTPUT) ? readFileSync(OUTPUT, 'utf8') : '';
+  if (current !== rendered) {
+    console.error(
+      `${OUTPUT} is out of date with the lib manifests.\n` +
+        'Run "node scripts/generate-install-matrix.mjs" and commit the result.',
+    );
+    process.exit(1);
+  }
+  console.log(`${OUTPUT} matches the lib manifests.`);
+} else {
+  writeFileSync(OUTPUT, rendered);
+  console.log(`Wrote ${OUTPUT}`);
+}

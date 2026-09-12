@@ -13,10 +13,13 @@ npm run validate:docs
 
 It verifies README coverage and H1/package identity, lib `package.json`
 metadata, that a publishable lib's `./styles.css` export matches what the build
-emits, that every relative markdown link resolves, and that every name a lib
-README imports from its own package is actually exported. `npm run lint:check`
-covers none of this; the PR workflow's `validate_agent_docs` job runs it, so a
-failure here blocks the merge.
+emits, that no package is a dependency of one lib and a required peer of
+another, that no version spec is left without an upper bound, that
+`docs/host-install-matrix.md` still matches the manifests it is generated from,
+that every relative markdown link resolves, and that every name a lib README
+imports from its own package is actually exported. `npm run lint:check` covers
+none of this; the PR workflow's `validate_agent_docs` job runs it, so a failure
+here blocks the merge.
 
 ## Update the doc in the same change
 
@@ -27,6 +30,7 @@ README behind. So the obligation is same-change, not follow-up:
 | ---------------------------------------------------------- | ----------------------------------------------------------------------- |
 | Rename, remove, or add an export in a lib's `src/index.ts` | That lib's `README.md`                                                  |
 | Add the first `.scss`/`.css` to a lib that had none        | Its `./styles.css` export and README import line ([`libs.md`](libs.md)) |
+| Change a lib's `dependencies` or `peerDependencies`        | `npm run docs:install-matrix`, then commit the regenerated doc          |
 | Rename a prop, change its type, or make it required        | Every README example that passes it                                     |
 | Add, rename, or remove an enum member                      | Every README that lists the members                                     |
 | Add or remove a lib/app, backend domain, context, or route | `docs/architecture.md` (see the Docs section of `AGENTS.md`)            |
