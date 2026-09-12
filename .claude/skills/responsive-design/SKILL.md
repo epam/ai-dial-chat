@@ -7,7 +7,7 @@ description: Responsive (mobile + desktop) layout workflow. Use whenever a UI ch
 
 ## Overview
 
-The chat app must render correctly on mobile (≤768px) and desktop (≥769px). Desktop is the historical baseline — most existing code is desktop-only. Treat **mobile-first** as the authoring default for new and changed UI: write the base classes for the smallest supported viewport and add desktop overrides via `desktop:`.
+The chat app must render correctly on mobile/tablet (≤1279px) and desktop (≥1280px). Desktop is the historical baseline — most existing code is desktop-only. Treat **mobile-first** as the authoring default for new and changed UI: write the base classes for the smallest supported viewport and add desktop overrides via `desktop:`.
 
 ## Project breakpoints
 
@@ -15,15 +15,15 @@ Defined in `tailwind.config.js` (`extend.screens`) and inherited by all lib Tail
 
 ```js
 // tailwind.config.js — extend.screens
-mobile: { max: '768px' },   // ≤768 px  — phones and small tablets
-desktop: { min: '769px' },  // ≥769 px  — tablets landscape, laptops, monitors
+mobile: { max: '1279px' },  // ≤1279 px — phones and tablets
+desktop: { min: '1280px' }, // ≥1280 px — laptops and monitors
 ```
 
-| Prefix        | Range   | When to use                          |
-| ------------- | ------- | ------------------------------------ |
-| _(no prefix)_ | always  | mobile-first base — smallest layout  |
-| `mobile:`     | ≤768 px | overrides that apply **only** mobile |
-| `desktop:`    | ≥769 px | overrides that kick in on desktop    |
+| Prefix        | Range    | When to use                                 |
+| ------------- | -------- | ------------------------------------------- |
+| _(no prefix)_ | always   | mobile-first base — smallest layout         |
+| `mobile:`     | ≤1279 px | overrides that apply **only** mobile/tablet |
+| `desktop:`    | ≥1280 px | overrides that kick in on desktop           |
 
 **`desktop:` is a min-width prefix** — styles cascade upward to all wider viewports.
 
@@ -98,14 +98,14 @@ When a Figma file has separate mobile and desktop frames:
 
 1. Fetch **both** frames in the design context call — never implement one without inspecting the other
 2. If the design provides only desktop, ask before deriving a mobile version; do not guess
-3. Map Figma's responsive frame sizes to the closest named breakpoint (375/390 → `mobile` ≤768px, 769+ → `desktop`)
+3. Map Figma's responsive frame sizes to the closest named breakpoint (375/390/768/820/900 → `mobile` ≤1279px, 1280+ → `desktop`)
 4. Capture the divergences (drawer vs. sidebar, vertical vs. horizontal toolbar, hidden sections) before writing code; these drive whether you need the hook
 
 ## Verification
 
 For any responsive change:
 
-1. **DevTools** — exercise the feature at 360 (mobile) and 769, 1280, 1920 (desktop)
+1. **DevTools** — exercise the feature at 360 and 900 (mobile/tablet) and 1280, 1920 (desktop)
 2. **Touch** — verify interactive elements work without hover (use the DevTools touch simulator)
 3. **Unit tests** — when a component branches on `useBreakpoint`, add a test per branch by mocking the hook
 4. **Lint / typecheck** — `npm exec nx lint chat`, `npm exec nx test chat` for the projects you touched
@@ -128,7 +128,7 @@ Playwright MCP is pre-configured in `.mcp.json` — no manual setup needed. It s
 1. **Navigate** to `http://localhost:4207` — the browser window opens visibly (Chrome, headed by default)
 2. **If redirected to Keycloak login**, tell the user: "A Chrome window opened — please log in so I can proceed", then wait with `mcp__playwright__browser_wait_for` (textGone: "Sign in to dial", time: 120)
 3. **Navigate to the specific page/feature** the user asked about (or the one touched by the current branch)
-4. **For each relevant viewport** — 360 and 768 for mobile, 769 and 1280 for desktop (add 1920 only if user asks):
+4. **For each relevant viewport** — 360 and 900 for mobile/tablet, 1280 and 1920 for desktop:
    - `mcp__playwright__browser_resize` to set width × height
    - Screenshot the specific screen/component under review
    - Run `mcp__playwright__browser_evaluate` to detect horizontal overflow:
@@ -146,7 +146,7 @@ Playwright MCP is pre-configured in `.mcp.json` — no manual setup needed. It s
        }))
        .slice(0, 10);
      ```
-   - On mobile widths (≤768), also check touch targets:
+   - On mobile/tablet widths (≤1279), also check touch targets:
      ```js
      [...document.querySelectorAll('button,a,[role="button"]')]
        .filter((el) => {
