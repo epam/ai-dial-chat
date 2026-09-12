@@ -11,6 +11,7 @@ import { IconChevronDown } from '@tabler/icons-react';
 import {
   memo,
   useCallback,
+  useMemo,
   useState,
   type FC,
   type KeyboardEvent,
@@ -127,42 +128,62 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
    * `aria-haspopup` switches to `dialog`), while `aria-expanded` tracks the
    * one `isOpen` state either way.
    */
-  const fieldInput = (
-    <Input
-      readOnly
-      role="combobox"
-      aria-haspopup={isMobile ? 'dialog' : 'listbox'}
-      aria-expanded={isOpen}
-      aria-labelledby={labelledById}
-      disabled={isDisabled}
-      invalid={isInvalid || Boolean(error)}
-      value={resolvedLabel ?? ''}
-      placeholder={effectivePlaceholder}
-      onKeyDown={handleTriggerKeyDown}
-      containerClassName="w-full"
-      wrapperClassName={mergeClasses('cursor-pointer', className)}
-      className="cursor-pointer"
-      iconAfter={
-        isLoading ? (
-          <Spinner
-            size={DIAL_ICON_SIZE.SM}
-            ariaLabel={t(DeploymentSelectorI18nKeys.Loading)}
-          />
-        ) : (
-          // A vertical rotation is direction-agnostic (up/down does not
-          // flip under RTL), so no `rtl:` mirroring class is needed here.
-          <IconChevronDown
-            size={DIAL_ICON_SIZE.MD}
-            className={mergeClasses(
-              'transition-transform',
-              isOpen && 'rotate-180',
-            )}
-            aria-hidden
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        )
-      }
-    />
+  /* Memoized so unrelated re-renders of the host form (keystrokes in other
+   * fields) reuse the same element object and React skips re-rendering the
+   * Input subtree — the element is slotted as `Dropdown`'s child on desktop
+   * and the wrapper's child on mobile. */
+  const fieldInput = useMemo(
+    () => (
+      <Input
+        readOnly
+        role="combobox"
+        aria-haspopup={isMobile ? 'dialog' : 'listbox'}
+        aria-expanded={isOpen}
+        aria-labelledby={labelledById}
+        disabled={isDisabled}
+        invalid={isInvalid || Boolean(error)}
+        value={resolvedLabel ?? ''}
+        placeholder={effectivePlaceholder}
+        onKeyDown={handleTriggerKeyDown}
+        containerClassName="w-full"
+        wrapperClassName={mergeClasses('cursor-pointer', className)}
+        className="cursor-pointer"
+        iconAfter={
+          isLoading ? (
+            <Spinner
+              size={DIAL_ICON_SIZE.SM}
+              ariaLabel={t(DeploymentSelectorI18nKeys.Loading)}
+            />
+          ) : (
+            // A vertical rotation is direction-agnostic (up/down does not
+            // flip under RTL), so no `rtl:` mirroring class is needed here.
+            <IconChevronDown
+              size={DIAL_ICON_SIZE.MD}
+              className={mergeClasses(
+                'transition-transform',
+                isOpen && 'rotate-180',
+              )}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          )
+        }
+      />
+    ),
+    [
+      isMobile,
+      isOpen,
+      t,
+      labelledById,
+      isDisabled,
+      isInvalid,
+      error,
+      resolvedLabel,
+      effectivePlaceholder,
+      handleTriggerKeyDown,
+      className,
+      isLoading,
+    ],
   );
 
   if (isMobile) {
