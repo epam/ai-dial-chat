@@ -634,6 +634,7 @@ The intended direction, enforced in review:
 - [Theme Customization](theme-customization.md) — theme configuration, tokens, and legacy theme migration
 - [Technical Requirements](technical-requirements.md)
 - [Responses API Integration](responses-api-integration.md)
+- [Host Install Matrix](host-install-matrix.md) — what an embedding host installs per set of libs
 - [Chat API environment variables](../apps/chat-api/README.md#environment-variables) — the full variable reference
 - [Auth subsystem](./auth/)
 - [Legacy AI DIAL Chat](https://github.com/epam/ai-dial-chat)

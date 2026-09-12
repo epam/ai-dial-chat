@@ -24,13 +24,17 @@ side by side on desktop. `UsageLimitCard` is also exported standalone for a sing
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-usage-dashboard/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react` ^19.2.7
-- `@epam/ai-dial-chat-api-client` \*
 - `@epam/ai-dial-chat-shared` \*
 - `@epam/ai-dial-ui-kit`
-- `@tabler/icons-react`
 
 ## Components
 

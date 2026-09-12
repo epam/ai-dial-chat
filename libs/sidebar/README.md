@@ -20,12 +20,17 @@ The shell owns no search field of its own — a panel that needs one renders it 
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-sidebar/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
-- `@tabler/icons-react`
 
 ## Components
 

@@ -16,13 +16,17 @@ Panel component for browsing conversation history with virtual scrolling, groupe
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-conversation-panel/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
-- `@epam/ai-dial-sidebar`
-- `@tabler/icons-react`
 
 ## Components
 

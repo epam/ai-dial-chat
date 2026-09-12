@@ -10,7 +10,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
-    "./styles.css": "./dist/style.css",
+    "./styles.css": "./dist/index.css",
     ".": {
       "@epam/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
@@ -18,12 +18,14 @@
       "default": "./dist/index.js"
     }
   },
+  "dependencies": {
+    "@tabler/icons-react": "^3.44.0",
+    "@epam/ai-dial-conversation-input": "*"
+  },
   "peerDependencies": {
     "react": "^19.0.0",
-    "@tabler/icons-react": "^3.44.0",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-conversation-input": "*",
-    "@epam/ai-dial-ui-kit": "*"
+    "@epam/ai-dial-ui-kit": "^0.14.0-dev.15"
   },
   "nx": {
     "tags": [

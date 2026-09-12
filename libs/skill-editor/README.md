@@ -28,16 +28,18 @@ external to preserve the editor's dynamic boundary in consuming applications.
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-skill-editor/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react` `^19.0.0`
-- `@epam/ai-dial-ui-kit` `*`
-- `@epam/ai-dial-react-file-manager` `^0.2.0-dev.9`
+- `@epam/ai-dial-ui-kit` `^0.14.0-dev.30`
+- `@epam/ai-dial-react-file-manager` `^0.2.0-dev.10`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-editor-builder` `*`
-- `@tabler/icons-react` `^3.0.0`
-- `@uiw/react-markdown-preview` — CSS only, required by `LazyMarkdownEditor`
-- `@uiw/react-md-editor` — CSS only, required by `LazyMarkdownEditor`
 
 ## Components
 

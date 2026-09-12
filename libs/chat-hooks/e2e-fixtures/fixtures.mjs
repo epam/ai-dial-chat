@@ -7,18 +7,18 @@ export const MINIMAL_FIXTURE = {
   peers: [],
 };
 
-/** Root re-exports require these peers to resolve before unused features are tree-shaken. */
+/*
+ * Root re-exports require these peers to resolve before unused features are
+ * tree-shaken — and a host has to install them itself, which is what makes them
+ * worth listing here.
+ *
+ * The markdown stack (`react-markdown`, `remark-*`, `rehype-*`, `katex`,
+ * `react-syntax-highlighter`, `@tabler/icons-react`) is deliberately absent:
+ * `@epam/ai-dial-chat-shared` ships it as dependencies, so npm brings it along
+ * and no consumer names it. Leaving it out is the assertion — a fixture that
+ * installed it anyway could not tell a working contract from a broken one.
+ */
 export const CHAT_SHARED_ROOT_PEERS = [
-  '@tabler/icons-react',
-  'react-syntax-highlighter',
-  'react-markdown',
-  'remark-breaks',
-  'remark-gfm',
-  'remark-math',
-  'rehype-katex',
-  'rehype-raw',
-  'rehype-sanitize',
-  'katex',
   '@epam/ai-dial-ui-kit',
   '@epam/ai-dial-react-file-manager',
   'ag-grid-community',

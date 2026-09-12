@@ -20,32 +20,31 @@ Canvas/viewer component for rendering attachment content inline — images, audi
 
 - `react`
 - `@epam/ai-dial-chat-shared`
-- `@epam/ai-dial-shared`
-- `@epam/ai-dial-sidebar`
-- `@epam/ai-dial-visualizer-connector`
 - `@epam/ai-dial-ui-kit`
-- `@epam/pdf-highlighter-kit` (`^0.0.18`)
-- `@epam/ai-dial-react-pdf-highlighter` (`^0.2.0-dev.28`)
-- `pdfjs-dist` (`^5.4.149`)
-- `@tabler/icons-react`
-- `react-json-view-lite`
-- `react-syntax-highlighter`
-- `@mcp-ui/client`
-- `@modelcontextprotocol/sdk`
 
-Every peer above — including their deep JS subpaths (e.g.
-`react-syntax-highlighter/dist/esm/...`) — is externalized in the build: the
-built package never bundles its own copy, and always defers to whatever
-version the host app itself resolves. The two PDF-related peers' vendor CSS
-subpaths (`@epam/ai-dial-react-pdf-highlighter/styles.css`,
+Everything else this package needs it installs itself, as a `dependency`: the
+PDF stack (`@epam/ai-dial-react-pdf-highlighter`, `@epam/pdf-highlighter-kit`,
+`pdfjs-dist`), the MCP stack (`@mcp-ui/client`, `@modelcontextprotocol/sdk`),
+the visualizer stack (`@epam/ai-dial-shared`,
+`@epam/ai-dial-visualizer-connector`), `@tabler/icons-react`,
+`react-json-view-lite` and `react-syntax-highlighter`. A host rendering the
+canvas names none of them, and a host that never imports this package installs
+none of them either — `@epam/ai-dial-chat-hooks` declares the canvas an
+optional peer, so the whole stack stays out of an install that does not use it.
+
+Peers and dependencies alike are externalized in the build, deep JS subpaths
+(e.g. `react-syntax-highlighter/dist/esm/...`) included: the built package
+never bundles its own copy, and always defers to whatever version the host app
+resolves. The PDF vendor CSS subpaths
+(`@epam/ai-dial-react-pdf-highlighter/styles.css`,
 `@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css`) are the one
 exception — they stay locally resolved so they can be built and split per
 [Styling](#styling) below, rather than left as unresolvable raw imports.
+
 Although this library does not import `pdfjs-dist` directly,
-`@epam/pdf-highlighter-kit` exposes it as part of the shared PDF runtime. It is
-therefore declared here as a peer too, so package managers validate that the
-host supplies the tested `^5.4.149` version instead of silently relying on a
-transitive dependency.
+`@epam/pdf-highlighter-kit` exposes it as part of the shared PDF runtime, so it
+is declared here as well — as a dependency pinning the tested `^5.4.149` line,
+rather than relying on whatever a transitive resolution happens to produce.
 
 The library uses `@silurus/ooxml` as a bundled runtime dependency. Its DOCX,
 XLSX/CSV, and PPTX entry points are loaded independently on demand, so opening

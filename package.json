@@ -46,8 +46,9 @@
     "publish:lib:coherent-release-test": "node --test tools/coherent-release-install.spec.mjs",
     "validate:agent-docs": "node scripts/validate-agent-docs.mjs",
     "validate:agent-docs:test": "node --test scripts/validate-agent-docs.spec.mjs",
-    "validate:docs": "node scripts/validate-docs.mjs",
-    "prepare": "git config core.hooksPath .githooks"
+    "validate:docs": "node scripts/validate-docs.mjs && node scripts/generate-install-matrix.mjs --check",
+    "prepare": "git config core.hooksPath .githooks",
+    "docs:install-matrix": "node scripts/generate-install-matrix.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.14.5",

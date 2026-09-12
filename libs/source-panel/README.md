@@ -16,14 +16,18 @@ Panel component for displaying conversation sources — uploaded files and gener
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-source-panel/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
-- `@epam/ai-dial-sidebar`
 - `@epam/ai-dial-conversation-input`
-- `@tabler/icons-react`
 
 ## Components
 

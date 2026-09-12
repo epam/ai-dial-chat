@@ -18,30 +18,27 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.6`) is the only mandatory peer, required by every entry point below. Every
-other peer is **optional** (`package.json#peerDependenciesMeta` marks all of them
-`optional: true`) — `npm install` succeeds with none of them present. Which ones you actually
-need to install depends on which entry point(s) you import; see the matrix below. Importing an
-entry without its documented peer installed does not fail at `npm install` — it fails later, at
-build time, when a bundler or `tsc` tries to resolve that entry's own imports.
+`react` (`^19.2.6`) and `@epam/ai-dial-ui-kit` (`^0.14.0-dev.15`) are the mandatory peers,
+required by every entry point below. The markdown stack is **not** a peer any more: the root
+entry imports it unconditionally, so this package installs it itself and a consumer never
+names it.
 
-Full peer set (the root `.` entry needs all of them; `./markdown` and `./file-manager` need
-only their own row below):
+Only the file-manager pair stays **optional** (`package.json#peerDependenciesMeta` marks it
+`optional: true`) — `npm install` succeeds without it. Importing an entry without its
+documented optional peer installed does not fail at `npm install`; it fails later, at build
+time, when a bundler or `tsc` tries to resolve that entry's own imports.
+
+Peers:
 
 - `react` ^19.2.6
-- `@tabler/icons-react` \*
-- `react-syntax-highlighter` \*
-- `react-markdown` \*
-- `remark-breaks` \*
-- `remark-gfm` \*
-- `remark-math` \*
-- `rehype-katex` \*
-- `rehype-raw` \*
-- `rehype-sanitize` \*
-- `katex` \*
-- `@epam/ai-dial-ui-kit` \*
-- `@epam/ai-dial-react-file-manager` \*
-- `ag-grid-community` \*
+- `@epam/ai-dial-ui-kit` ^0.14.0-dev.15
+- `@epam/ai-dial-react-file-manager` ^0.2.0-dev.10 \*
+- `ag-grid-community` ^35.3.0 \*
+
+Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
+`react-syntax-highlighter`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`,
+`rehype-raw`, `rehype-sanitize`, `katex`, plus the `unified` pipeline (`remark-parse`,
+`remark-rehype`, `rehype-stringify`), `classnames`, `dompurify` and `tailwind-merge`.
 
 `vitest` is used only by this package's own test files; it is not a runtime dependency of the
 published package and is intentionally absent from `peerDependencies` (excluded from
@@ -50,17 +47,20 @@ of this package already has its own test tooling, not this library's).
 
 ### Entry-point-to-peer matrix
 
-| Entry point           | Runtime peers beyond `react`                                                                                                                                                                        |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.` (root, unchanged) | every runtime peer appearing in the rows below                                                                                                                                                      |
-| `./markdown`          | `react-syntax-highlighter`, `react-markdown`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`, `rehype-raw`, `rehype-sanitize`, `katex`, `@epam/ai-dial-ui-kit`, `@tabler/icons-react` |
-| `./file-manager`      | `@epam/ai-dial-react-file-manager`, `ag-grid-community`, `@epam/ai-dial-ui-kit`                                                                                                                     |
+| Entry point      | Peers you install beyond `react`                                                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.` (root)       | `@epam/ai-dial-ui-kit`, and `@epam/ai-dial-react-file-manager` + `ag-grid-community` if you bundle the file-manager exports the root re-exports |
+| `./markdown`     | `@epam/ai-dial-ui-kit` — the markdown stack itself ships as dependencies                                                                        |
+| `./file-manager` | `@epam/ai-dial-ui-kit`, `@epam/ai-dial-react-file-manager`, `ag-grid-community`                                                                 |
 
 The build preserves source-module boundaries so consumers can remove unused features.
 The FilterTab and CodeBlockTheme packed probes verify small root-import bundles without
 markdown or file-manager implementation. Root re-exports still require the documented
-peer closure to resolve before tree-shaking. Scoped feature entries limit resolution to
-their own peer sets; they do not remove peers required by that feature.
+peer closure to resolve before tree-shaking, which is why the markdown stack is a
+dependency rather than an optional peer: the root entry imports it unconditionally, and
+an optional peer there would let `npm install` succeed and the consumer's bundler fail.
+Scoped feature entries limit resolution to their own peer sets; they do not remove peers
+required by that feature.
 
 ## Optional file-manager entry
 
@@ -85,9 +85,10 @@ import type { FileManagerController } from '@epam/ai-dial-chat-shared';
 Import `MarkdownRenderer` and its supporting exports from
 `@epam/ai-dial-chat-shared/markdown` when you want to avoid installing the file-manager peer stack
 at all (see the tree-shaking note above — this subpath is about the _install_ requirement, not
-bundle size, since a root import of the same names now produces the same output once peers are
-installed). The root entry continues to re-export the same names for backward compatibility, so
-existing root imports do not need to change.
+bundle size, since a root import of the same names now produces the same output). The markdown
+stack itself needs no install either way: it ships as dependencies of this package. The root
+entry continues to re-export the same names for backward compatibility, so existing root imports
+do not need to change.
 
 ```tsx
 import {

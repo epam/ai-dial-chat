@@ -388,16 +388,24 @@ const fetchRequiredPeerDependencies = (name, version) => {
 };
 
 /**
- * Resolves the full transitive peerDependencies closure of `directPeers` —
- * not just `@epam/ai-dial-chat-hooks`'s own documented peers, but *their*
- * peers, recursively. Modern npm may auto-install peer dependencies, but the
- * fixtures declare the closure explicitly so npm resolves one deterministic,
- * mutually compatible set. Thus
- * `@epam/ai-dial-quotations` needing `@tabler/icons-react`, or
- * `@epam/ai-dial-chat-shared` needing `@epam/ai-dial-ui-kit`, are exactly as
- * mandatory as chat-hooks' own documented peers — omitting them from a
- * fixture doesn't test "chat-hooks' peer list is sufficient," it just
- * produces a build that fails on an unrelated, undocumented specifier.
+ * Resolves the full transitive closure of `directPeers` — not just
+ * `@epam/ai-dial-chat-hooks`'s own documented peers, but what *they* pull in,
+ * recursively. Modern npm may auto-install peer dependencies, but the fixtures
+ * declare the closure explicitly so npm resolves one deterministic, mutually
+ * compatible set. Thus `@epam/ai-dial-quotations` needing
+ * `@tabler/icons-react`, or `@epam/ai-dial-chat-shared` needing
+ * `@epam/ai-dial-ui-kit`, are exactly as mandatory as chat-hooks' own
+ * documented peers — omitting them from a fixture doesn't test "chat-hooks'
+ * peer list is sufficient," it just produces a build that fails on an
+ * unrelated, undocumented specifier.
+ *
+ * `readClosureDependencies` decides what each package pulls in: required peers
+ * for anything, plus workspace siblings a workspace package declares as
+ * `dependencies`. That second half is not optional. The publish transform
+ * rewrites a workspace sibling's spec to the version being published, which
+ * here is a synthetic one that exists only as a local tarball, so a sibling
+ * left out of the closure is never packed and npm goes looking for
+ * `@epam/ai-dial-sidebar@0.0.0-packed.0` on the registry.
  *
  * The injected resolver maps workspace packages to local tarballs and
  * external packages to exact root-lockfile versions. Peer ranges decide
@@ -409,7 +417,7 @@ const fetchRequiredPeerDependencies = (name, version) => {
  */
 export const resolvePeerClosure = (
   directPeers,
-  { resolveDependencySpec, readRequiredPeerDependencies },
+  { resolveDependencySpec, readClosureDependencies },
 ) => {
   const closure = {};
   const queue = [...directPeers];
@@ -421,8 +429,8 @@ export const resolvePeerClosure = (
 
     closure[name] = resolveDependencySpec(name);
 
-    const peerDeps = readRequiredPeerDependencies(name);
-    for (const depName of Object.keys(peerDeps)) {
+    const pulledIn = readClosureDependencies(name);
+    for (const depName of Object.keys(pulledIn)) {
       if (
         IGNORED_TRANSITIVE_PEERS.has(depName) ||
         depName in closure ||
@@ -522,24 +530,42 @@ export const createFixtureDependencyResolver = ({
     return lockedVersion;
   };
 
-  const readRequiredPeerDependencies = (name) => {
+  /*
+   * Workspace siblings a workspace package composes are declared as
+   * `dependencies`, and the publish transform rewrites their specs to the
+   * version being published — here a synthetic one that exists only as a local
+   * tarball. They therefore have to be packed, exactly like a required peer.
+   * External dependencies are left out: npm installs those from the registry
+   * on the tarball's behalf without the fixture naming them.
+   */
+  const workspaceDependencies = (manifest) =>
+    Object.fromEntries(
+      Object.entries(manifest.dependencies ?? {}).filter(([name]) =>
+        workspacePackages.has(name),
+      ),
+    );
+
+  const readClosureDependencies = (name) => {
     if (requiredPeersCache.has(name)) return requiredPeersCache.get(name);
     const workspacePackage = workspacePackages.get(name);
-    const peers = workspacePackage
-      ? requiredPeerDependencies(workspacePackage.manifest)
+    const pulledIn = workspacePackage
+      ? {
+          ...requiredPeerDependencies(workspacePackage.manifest),
+          ...workspaceDependencies(workspacePackage.manifest),
+        }
       : fetchRequiredPeerDependencies(
           name,
           lockedExternalVersions.get(name) ?? resolveDependencySpec(name),
         );
-    requiredPeersCache.set(name, peers);
-    return peers;
+    requiredPeersCache.set(name, pulledIn);
+    return pulledIn;
   };
 
   return {
     resolvePeerClosure: (directPeers) =>
       resolvePeerClosure(directPeers, {
         resolveDependencySpec,
-        readRequiredPeerDependencies,
+        readClosureDependencies,
       }),
     getPackedWorkspacePeerNames: () => [...packedWorkspacePeers.keys()].sort(),
     /**

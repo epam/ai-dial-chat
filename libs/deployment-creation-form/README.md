@@ -24,9 +24,7 @@ Use it as the General step inside a builder form shell (see `@epam/ai-dial-build
 
 - `react`
 - `@epam/ai-dial-chat-shared`
-- `@epam/ai-dial-editor-builder`
 - `@epam/ai-dial-ui-kit`
-- `@tabler/icons-react`
 
 ## Components
 

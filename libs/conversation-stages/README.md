@@ -16,13 +16,18 @@ Panel component for displaying the processing stages of an agent or LLM response
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-conversation-stages/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-conversation-input`
-- `@tabler/icons-react`
 
 ## Components
 

@@ -28,12 +28,14 @@
       "default": "./dist/mapping.js"
     }
   },
+  "dependencies": {
+    "@tabler/icons-react": "^3.44.0",
+    "ag-grid-community": "^35.3.0",
+    "@epam/ai-dial-publish-panel": "*"
+  },
   "peerDependencies": {
     "react": "^19.0.0",
-    "@tabler/icons-react": "^3.0.0",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-publish-panel": "*",
-    "ag-grid-community": "35.3.0",
     "@epam/ai-dial-ui-kit": "^0.14.0-dev.30"
   },
   "nx": {

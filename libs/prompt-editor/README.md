@@ -34,7 +34,7 @@ external to preserve the editor's dynamic boundary in consuming applications.
 
 - `react` `^19.0.0`
 - `@epam/ai-dial-editor-builder` `*`
-- `@epam/ai-dial-ui-kit` `*`
+- `@epam/ai-dial-ui-kit` `^0.14.0-dev.30`
 - `@epam/ai-dial-chat-shared` `*`
 - `@tabler/icons-react` `^3.0.0`
 - `@uiw/react-markdown-preview` — CSS only, required by `LazyMarkdownEditor`

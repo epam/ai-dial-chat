@@ -35,7 +35,10 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { parseArgs } from 'util';
 import path from 'path';
 
-import { preparePublishPackageJson } from './publish-lib-package-json.mjs';
+import {
+  collectExportFilePaths,
+  preparePublishPackageJson,
+} from './publish-lib-package-json.mjs';
 
 const { readCachedProjectGraph, workspaceRoot } = devkit;
 
@@ -223,6 +226,26 @@ try {
     isWorkspaceLib,
     rawSource,
   });
+
+  /*
+   * npm publishes an exports map without checking that any of it resolves, so a
+   * target naming a file the build never emits ships as a package whose subpath
+   * throws ERR_MODULE_NOT_FOUND in every consumer. This is not hypothetical:
+   * nine libs declared "./styles.css": "./style.css" while Vite emits
+   * "index.css", and every embedding host had to add a bundler alias per
+   * package. "./package.json" is excluded — it is written just below.
+   */
+  const missingExports = [...collectExportFilePaths(json.exports)]
+    .filter((target) => target !== './package.json')
+    .filter((target) => !existsSync(path.join(outputPath, target)));
+
+  invariant(
+    missingExports.length === 0,
+    `package.json "exports" names ${missingExports.length} file(s) missing from the build output at:\n` +
+      `  ${outputPath}\n` +
+      missingExports.map((target) => `  - ${target}`).join('\n') +
+      '\nPoint each export at a file the build emits (Vite lib builds emit "index.js" / "index.css").',
+  );
 
   if (!dry) {
     try {

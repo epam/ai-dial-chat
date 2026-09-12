@@ -21,12 +21,17 @@ anywhere itself. The host decides what "select" and "submit" mean.
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-prompts/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react` `^19.0.0`
-- `@epam/ai-dial-ui-kit` `^0.13.0-dev.26`
+- `@epam/ai-dial-ui-kit` `^0.14.0-dev.15`
 - `@epam/ai-dial-chat-shared` `*`
-- `@tabler/icons-react` `^3.0.0`
 
 ## Components
 

@@ -132,14 +132,14 @@
     "@epam/ai-dial-mcp-apps": "*",
     "@epam/ai-dial-publish-panel": "*",
     "@epam/ai-dial-quotations": "*",
-    "@epam/ai-dial-react-file-manager": "*",
+    "@epam/ai-dial-react-file-manager": "^0.2.0-dev.10",
     "@epam/ai-dial-scheduled-tasks": "*",
     "@epam/ai-dial-share": "*",
     "@epam/ai-dial-skill-editor": "*",
     "@epam/ai-dial-source-panel": "*",
-    "@epam/ai-dial-ui-kit": "*",
-    "@modelcontextprotocol/sdk": "^1.27.1",
-    "@epam/pdf-highlighter-kit": ">=0.0.14",
+    "@epam/ai-dial-ui-kit": "^0.14.0-dev.15",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@epam/pdf-highlighter-kit": "^0.0.18",
     "@mcp-ui/client": "^7.1.1"
   },
   "peerDependenciesMeta": {

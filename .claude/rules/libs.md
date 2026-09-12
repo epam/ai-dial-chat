@@ -28,13 +28,182 @@ Every lib under `libs/` must have these three fields in its `package.json`:
 }
 ```
 
+## `dependencies` vs `peerDependencies`
+
+A lib is a normal npm package: if it imports something at runtime, it declares
+it and npm installs it. A peer is the narrow exception — a package the **host
+also names**, where a second copy would be a bug rather than a waste.
+
+**No third-party package is a peer.** Icons, markdown, syntax highlighting,
+PDF, MCP, editors, grids — every implementation library goes in
+`dependencies` of the lib that imports it. A host installs one package and
+renders; it does not assemble a laundry list of transitive peers. Adding a
+third-party peer needs a written reason in the change's design doc.
+
+These are the peers:
+
+| Peer                               | Why                                                                                             |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `react` / `react-dom`              | one renderer per app, always                                                                    |
+| `@epam/ai-dial-chat-shared`        | the shared types/utils/context layer every host imports directly                                |
+| `@epam/ai-dial-ui-kit`             | the design-system singleton                                                                     |
+| `@epam/ai-dial-react-file-manager` | an AG-Grid-backed component a host renders itself; two AG Grid copies break module registration |
+
+**Everything else goes in `dependencies`** — third-party implementation
+libraries, and sibling libs under `libs/` that a host never names (`sidebar`
+inside `conversation-panel`, `attachment-input` inside `conversation-input`).
+A host installs one package and renders.
+
+### A sibling lib is a dependency, and the fixture has to pack it
+
+Publishing resolves a sibling spec to the release version, which exists on the
+registry, so a published package is fine either way. The catch is local: a
+tarball packed from `dist/` names a version that was never published, so
+`npm install` on it alone dies with `ETARGET`. While siblings were peers this
+never showed, because `--legacy-peer-deps` skips peers entirely.
+
+`tools/attachment-canvas-consumer-fixture` therefore packs the transitive
+closure of a lib's workspace `dependencies` and hands every tarball to one
+`npm install`, which lets npm satisfy each spec from the local tree. If you add
+a workspace dependency to a lib the fixture covers, nothing extra is needed —
+the closure is computed from the manifests. If you make the fixture cover
+another lib, keep that behaviour.
+
+### Every version spec needs an upper bound
+
+A spec that does not cap the major accepts the next breaking release, so it
+constrains nothing that matters — npm stays silent and the host finds out at
+runtime. Declare the range the lib is actually built against, normally a caret.
+
+`"*"` is the obvious form, and it sat on `@epam/ai-dial-ui-kit` in 11 libs —
+enough for a kit major to reach a host unannounced. `">=0.0.14"` is the same
+defect written longhand, which is how `chat-hooks` accepted any
+`@epam/pdf-highlighter-kit` while every lib that actually used it wanted
+`^0.0.18`. `"latest"` and `"x"` are the same thing again.
+
+The one exception is a sibling under `libs/`: `tools/publish-lib.mjs` rewrites
+workspace-lib specs to the release version, so a placeholder there never
+reaches npm.
+
+A README that annotates a peer with a version must quote the manifest's range
+verbatim — that is the number a host copies. `npm run validate:docs` fails on
+an unbounded spec.
+
+### One package, one role
+
+A package must never be a `dependency` of one lib and a required peer of
+another. npm is then free to install two divergent copies beside the host's own,
+and the host's only escape is a `resolutions` pin. This is the exact defect that
+reached the main line: `conversation-panel` was the lone lib with
+`@epam/ai-dial-ui-kit` in `dependencies` while 26 peered it, so every embedding
+application carried
+
+```json
+"resolutions": { "@epam/ai-dial-ui-kit": "0.14.0-dev.41" }
+```
+
+`npm run validate:docs` fails on a split role, so a PR catches it.
+
+### Optional peers are for scoping an install, not for hedging
+
+`peerDependenciesMeta.optional` means _this entry point does not need the
+package_. It is the right tool when a lib has real entry points whose
+dependency sets differ — `chat-shared` (`.` / `./markdown` / `./file-manager`,
+with an entry-point-to-peer matrix in its README) and `chat-hooks` (feature
+packages a conversation-only host never installs) are the two reference cases.
+
+It is the wrong tool for a package the lib imports unconditionally: `npm
+install` then succeeds and the failure surfaces later, in the consumer's
+bundler. If a lib always imports it, it is a `dependency` — optional-but-always-
+needed is just a required peer with the warning suppressed.
+
+A lazily imported package is still a `dependency`. Lazy loading governs which
+chunk it lands in, not who installs it — `attachment-canvas` keeps its PDF and
+syntax-highlighter engines in on-demand chunks while declaring both as
+dependencies, and `tools/attachment-canvas-consumer-fixture` proves the boundary
+holds.
+
+## Every `exports` target must be a file the build emits
+
+Nothing in this workspace resolves a lib through its own `exports` map. Every
+in-repo consumer — `apps/chat`, the lib's own Vitest suite, a sibling lib —
+resolves the bare specifier straight to `src/index.ts` through a
+`resolve.alias` or the `@epam/source` condition. npm then publishes an
+`exports` map without checking that any of it resolves. So a target naming a
+file that does not exist is invisible from inside the repo, green in CI, and
+broken for every downstream host — which is exactly what happened: nine libs
+declared `"./styles.css": "./dist/style.css"` while Vite emits `index.css`,
+and every embedding application had to add a bundler alias per package
+([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)).
+
+**Vite lib builds in this workspace emit `index.*`.** `build.lib.fileName` is
+`'index'` in every `vite.config.mts`, so the outputs are `dist/index.js`,
+`dist/index.d.ts`, and — when the lib has any stylesheet — `dist/index.css`.
+There is no `style.css`. Write the manifest against those names.
+
+### The stylesheet export
+
+A lib with **any** `.scss` or `.css` under `src/` ships a stylesheet and must
+export it as `./styles.css`, placed directly after `./package.json`:
+
+```json
+{
+  "exports": {
+    "./package.json": "./package.json",
+    "./styles.css": "./dist/index.css",
+    ".": {
+      "@epam/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  }
+}
+```
+
+`import '@epam/<pkg>/styles.css'` must work with no bundler alias in the host.
+A lib with no stylesheets must not declare the export at all — an export
+pointing at a file the build never emits is the same defect in the other
+direction.
+
+Document the import in the README, directly under the Installation snippet:
+
+````md
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-example/styles.css';
+```
+````
+
+### When you add the first stylesheet to a lib
+
+A lib that had no CSS starts emitting `dist/index.css` the moment its first
+`.module.scss` lands. Add the `./styles.css` export and the README line in the
+**same change** — nothing else will tell you, since no in-repo consumer imports
+it.
+
+### What catches a mistake, and when
+
+`tools/publish-lib.mjs` verifies that every `exports` target and every
+`main`/`module`/`types` entry exists in `dist/` before it writes the
+publish-ready manifest, and aborts the publish otherwise. That is a **release**
+gate, not a PR gate — it stops a broken package from reaching npm, but it will
+not tell you during review. Get the manifest right when you write it.
+
+`tools/attachment-canvas-consumer-fixture` is the one project that installs a
+packed tarball and builds against the real `exports` map. Reach for that
+pattern when a lib's published boundary carries load beyond entry-point
+existence — lazy chunk splitting, a stylesheet that must stay free of vendor
+selectors — as `libs/attachment-canvas/tests/package-boundary/` does.
+
 ## README.md requirements
 
 Every lib under `libs/` must have a `README.md` at its root. The README must include:
 
 1. **H1 heading** — the npm package name (e.g. `# @epam/ai-dial-example`).
 2. **Overview** — a detailed paragraph explaining the lib's purpose, what problems it solves, and when to use it.
-3. **Installation** — a `package.json` snippet showing how to add the dependency.
+3. **Installation** — a `package.json` snippet showing how to add the dependency, followed by the stylesheet import when the lib ships one (see above).
 4. **Peer Dependencies** — a list of required peer deps.
 5. **Components / Hooks / Utilities** — one subsection per major export with a minimal usage example.
 
