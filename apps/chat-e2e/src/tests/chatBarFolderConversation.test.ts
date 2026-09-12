@@ -839,14 +839,13 @@ dialTest(
 
       // Create nested structure
       for (let i = 4; i > 1; i--) {
-        await chatBar.dragAndDropEntityToFolder(
-          folderConversations.getFolderByName(
-            ExpectedConstants.newFolderWithIndexTitle(i),
-          ),
-          folderConversations.getFolderByName(
-            ExpectedConstants.newFolderWithIndexTitle(i - 1),
-          ),
-        );
+        await folderConversations
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
+          .dragTo(
+            folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(i - 1),
+            ),
+          );
         if (i !== 4) {
           await folderConversations.expandFolder(
             ExpectedConstants.newFolderWithIndexTitle(i),
@@ -863,15 +862,13 @@ dialTest(
           { name: ExpectedConstants.newFolderWithIndexTitle(2) },
           'visible',
         );
-        await chatBar.dragAndDropEntityToFolder(
-          folderConversations.getFolderByName(
-            ExpectedConstants.newFolderWithIndexTitle(2),
-            2,
-          ),
-          folderConversations.getFolderByName(
-            ExpectedConstants.newFolderWithIndexTitle(4),
-          ),
-        );
+        await folderConversations
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(2), 2)
+          .dragTo(
+            folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(4),
+            ),
+          );
 
         await toastAssertion.assertToastMessage(
           ExpectedConstants.tooManyNestedFolders,
@@ -886,40 +883,54 @@ dialTest(
       },
     );
 
-    // blocked by the issue https://github.com/epam/ai-dial-chat/issues/1925
-    // await dialTest.step('Drag & drop Folder1 to Folder2 -> error appears', async () => {
-    //   await chatBar.dragAndDropEntityToFolder(
-    //     folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(3)),
-    //     folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(4))
-    //   );
-    //
-    //   const errorMessage = await errorToast.getElementContent();
-    //   expect
-    //     .soft(errorMessage, ExpectedMessages.notAllowedToMoveParentToChild)
-    //     .toBe(ExpectedConstants.notAllowedToMoveParentToChild);
-    //
-    //   await expect
-    //     .soft(
-    //       chatBar.getChildElementBySelector(ChatBarSelectors.pinnedChats()).getElementLocator()
-    //         .locator('div').locator(FolderSelectors.folderGroup).locator(FolderSelectors.folder)
-    //         .locator('div').locator(FolderSelectors.folderName).locator('span')
-    //         .getByText(ExpectedConstants.newFolderWithIndexTitle(4), {exact: true}),
-    //       ExpectedMessages.folderIsVisible
-    //     )
-    //     .toBeVisible();
-    // });
+    await dialTest.step(
+      'Drag & drop Folder1 to Folder2 -> error appears',
+      async () => {
+        // A real mouse-based drag can't land on Folder4 here: picking up
+        // Folder3 unconditionally collapses it (Folder.tsx's onDragStart),
+        // unmounting its child Folder4 before the drop lands, so the mouse
+        // ends up dropping on whatever row slides into that vacated spot
+        // instead. Dispatch the drag events directly so "drop" fires on
+        // Folder4 before React can commit that collapse.
+        await chatBar.instantDragAndDropFolder(
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(3),
+          ),
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(4),
+          ),
+        );
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.notAllowedToMoveParentToChild,
+          ExpectedMessages.notAllowedToMoveParentToChild,
+        );
+        await toast.closeToast();
+        await chatBarFolderAssertion.assertElementState(
+          folderConversations.getNestedFolder(
+            ExpectedConstants.newFolderWithIndexTitle(2),
+            ExpectedConstants.newFolderWithIndexTitle(3),
+          ),
+          'visible',
+        );
+        await folderConversations.expandFolder(
+          ExpectedConstants.newFolderWithIndexTitle(3),
+        );
+        await chatBarFolderAssertion.assertElementState(
+          folderConversations.getNestedFolder(
+            ExpectedConstants.newFolderWithIndexTitle(3),
+            ExpectedConstants.newFolderWithIndexTitle(4),
+          ),
+          'visible',
+        );
+      },
+    );
 
     await dialTest.step(
       'Drag & drop Folder to Today -> error appears',
       async () => {
-        await chatBar.dragAndDropEntityToFolder(
-          folderConversations.getFolderByName(
-            ExpectedConstants.newFolderWithIndexTitle(2),
-            2,
-          ),
-          conversations.chronologyByTitle(Chronology.today),
-        );
-
+        await folderConversations
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(2), 2)
+          .dragTo(conversations.chronologyByTitle(Chronology.today));
         await chatBarFolderAssertion.assertRootFolderState(
           { name: ExpectedConstants.newFolderWithIndexTitle(2) },
           'visible',

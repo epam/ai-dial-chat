@@ -1322,8 +1322,7 @@ dialAdminTest(
       },
     );
 
-    //blocked by the issue 6483
-    await dialAdminTest.step.skip(
+    await dialAdminTest.step(
       'Verify all files are attached: file1, file2, file3, sharedFile, publishedFile',
       async () => {
         for (const file of [file1, file2, file3, sharedFile, publishedFile]) {

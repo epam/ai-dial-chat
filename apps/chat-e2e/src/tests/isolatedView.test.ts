@@ -45,11 +45,8 @@ dialTest(
       'EPMDIAL-6401',
       'EPMDIAL-6412',
     );
-    //TODO: update when fixed https://github.com/epam/ai-dial-chat/issues/4985
     const expectedModel = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getModels().filter(
-        (m) => m.iconUrl !== undefined && !m.id.includes(':'),
-      ),
+      ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
     )!;
     const expectedModelName = expectedModel.name;
     const expectedModelIcon = iconApiHelper.getEntityIcon(expectedModel);
@@ -155,11 +152,9 @@ dialTest(
   }) => {
     setTestIds('EPMDIAL-6411');
     const attachmentName = Attachment.sunImageName;
-    //TODO: update when fixed https://github.com/epam/ai-dial-chat/issues/4985
     const expectedModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment().filter(
         (m) =>
-          !m.id.includes(':') &&
           m.inputAttachmentTypes?.length == 1 &&
           m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
       ),
