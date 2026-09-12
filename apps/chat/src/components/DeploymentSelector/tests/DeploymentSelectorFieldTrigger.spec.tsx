@@ -282,7 +282,13 @@ describe('DeploymentSelectorFieldTrigger — mobile', () => {
     const user = userEvent.setup({ delay: null });
     renderTrigger();
 
-    await user.type(screen.getByRole('combobox'), '{Enter}');
+    /* `user.type` would click first — opening the sheet, whose focus trap
+       moves focus to the close button so the Enter lands there and closes
+       it. Focusing without a click keeps focus on the combobox, which is
+       the keyboard-parity path this test exists for. */
+    const trigger = screen.getByRole('combobox');
+    trigger.focus();
+    await user.keyboard('{Enter}');
 
     expect(
       await screen.findByRole('dialog', {
