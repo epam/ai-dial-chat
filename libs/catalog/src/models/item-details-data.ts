@@ -178,8 +178,7 @@ export interface CatalogContentFolderNode {
 
 /** One node of the Content tab's hierarchical file tree — either a file or a folder. */
 export type CatalogContentTreeNode =
-  | CatalogContentFileNode
-  | CatalogContentFolderNode;
+  CatalogContentFileNode | CatalogContentFolderNode;
 
 /** A picked file's content, resolved and typed for safe read-only rendering. */
 export interface CatalogContentMarkdownPreview {

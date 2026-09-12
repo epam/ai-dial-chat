@@ -713,15 +713,15 @@ const VoiceComposer = ({
 
 **Parameters** (`UseTranscribeAudioParams`):
 
-| Name                      | Type                                                                                                 | Description                                                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `transcriptionApi`        | `Pick<TranscriptionApi, 'transcribeAudio'>`                                                              | Already-configured generated-client instance used for the ASR-model path.                                          |
-| `filesApi`                | `Pick<FilesApi, 'uploadFile'>`                                                                            | Already-configured generated-client instance used to upload the recording.                                         |
+| Name                       | Type                                                                                                           | Description                                                                                                                                                                           |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `transcriptionApi`         | `Pick<TranscriptionApi, 'transcribeAudio'>`                                                                    | Already-configured generated-client instance used for the ASR-model path.                                                                                                             |
+| `filesApi`                 | `Pick<FilesApi, 'uploadFile'>`                                                                                 | Already-configured generated-client instance used to upload the recording.                                                                                                            |
 | `transcribeWithDeployment` | `(params: { audioUrl: string; mimeType: string; deployment: string; signal: AbortSignal }) => Promise<string>` | Host-configured call for the selected-deployment path — the generated chat-completions client cannot express that endpoint's request shape, so the host supplies its own raw request. |
-| `bucket`                  | `string \| undefined \| null`                                                                             | DIAL Core bucket the recording is uploaded into.                                                                    |
-| `asrModelId`              | `string`                                                                                                  | Recognizes via `transcriptionApi` when set; otherwise `selectedDeploymentId` is used.                               |
-| `selectedDeploymentId`    | `string \| undefined \| null`                                                                             | Deployment id used for recognition when `asrModelId` is not set.                                                    |
-| `maxSizeBytes`            | `number`                                                                                                  | Recordings larger than this are rejected with `TooLarge` before upload.                                             |
+| `bucket`                   | `string \| undefined \| null`                                                                                  | DIAL Core bucket the recording is uploaded into.                                                                                                                                      |
+| `asrModelId`               | `string`                                                                                                       | Recognizes via `transcriptionApi` when set; otherwise `selectedDeploymentId` is used.                                                                                                 |
+| `selectedDeploymentId`     | `string \| undefined \| null`                                                                                  | Deployment id used for recognition when `asrModelId` is not set.                                                                                                                      |
+| `maxSizeBytes`             | `number`                                                                                                       | Recordings larger than this are rejected with `TooLarge` before upload.                                                                                                               |
 
 **Returns** (`UseTranscribeAudioResult`): `{ transcribeAudio: (file: File, signal: AbortSignal) => Promise<string> }`.
 
@@ -1767,18 +1767,20 @@ import { apSchedulerDayToJsDay } from '@epam/ai-dial-chat-hooks';
 apSchedulerDayToJsDay(0); // 1 (Monday -> JS Monday)
 ```
 
-### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes
+### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes / stripTrailingSlashes
 
-`safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment.
+`safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment, and `stripTrailingSlashes` strips trailing ones only.
 
 ```ts
 import {
   safeDecodeURI,
   stripSurroundingSlashes,
+  stripTrailingSlashes,
 } from '@epam/ai-dial-chat-hooks';
 
 safeDecodeURI('My%20File.txt'); // 'My File.txt'
 stripSurroundingSlashes('/reports/'); // 'reports'
+stripTrailingSlashes('/reports//'); // '/reports'
 ```
 
 ### isCustomAppSchema / isQuickAppSchema
@@ -3423,15 +3425,15 @@ if (!deleteDialog.isRunning) deleteDialog.close();
 
 **Returns** (`AsyncConfirmDialogControls<T>`):
 
-| Name        | Type                                                                                   | Description                                                                                      |
+| Name | Type | Description |
 | ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pending`   | `T \| null`                                                                            | The value passed to `open()`, or `null` when the dialog is closed.                               |
-| `isPending` | `boolean`                                                                              | `true` while `pending` is non-null (dialog is open).                                             |
-| `isRunning` | `boolean`                                                                              | `true` while `confirm`'s `run` callback is executing.                                            |
-| `error`     | `string \| null`                                                                       | Error message from the most recent failed `confirm`, or `null`.                                  |
-| `open`      | `(value: T, returnFocusTo?: HTMLElement                                                | null) => void`                                                                                   | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
-| `close`     | `() => void`                                                                           | Closes the dialog and clears pending + error.                                                    |
-| `confirm`   | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
+| `pending` | `T \| null` | The value passed to `open()`, or `null` when the dialog is closed. |
+| `isPending` | `boolean` | `true` while `pending` is non-null (dialog is open). |
+| `isRunning` | `boolean` | `true` while `confirm`'s `run` callback is executing. |
+| `error` | `string \| null` | Error message from the most recent failed `confirm`, or `null`. |
+| `open` | `(value: T, returnFocusTo?: HTMLElement                                                | null) => void` | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
+| `close` | `() => void` | Closes the dialog and clears pending + error. |
+| `confirm` | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
 
 ### useImportFilePicker
 

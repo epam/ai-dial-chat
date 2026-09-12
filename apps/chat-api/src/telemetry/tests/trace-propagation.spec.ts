@@ -51,8 +51,7 @@ describe('trace propagation', () => {
 
     upstreamServer = http.createServer((req, res) => {
       receivedUpstreamTraceparent = req.headers.traceparent as
-        | string
-        | undefined;
+        string | undefined;
       res.writeHead(200, { 'content-type': 'application/json' });
       res.end('{}');
     });
@@ -106,8 +105,7 @@ describe('trace propagation', () => {
       .expect(200);
 
     const responseTraceparent = response.headers['traceparent'] as
-      | string
-      | undefined;
+      string | undefined;
     expect(responseTraceparent).toBeDefined();
     expect(responseTraceparent?.split('-')[1]).toBe(inboundTraceId);
 

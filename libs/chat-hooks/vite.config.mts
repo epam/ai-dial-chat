@@ -69,7 +69,7 @@ export default defineConfig(() => ({
       name: '@epam/ai-dial-chat-hooks',
       formats: ['es' as const],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: (id: string) =>
         id === 'react-dom' ||
         id === 'react/jsx-runtime' ||

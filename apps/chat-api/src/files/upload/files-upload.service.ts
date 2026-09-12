@@ -623,7 +623,7 @@ export class FilesUploadService {
   }
 
   private buildDialUploadUrl(bucket: string, path: string): string {
-    const baseUrl = this.dialClient.baseUrl.replace(/\/+$/, '');
+    const baseUrl = StringUtils.stripTrailingSlashes(this.dialClient.baseUrl);
     return `${baseUrl}/v1/files/${encodeURIComponent(bucket)}/${encodeDialFilePath(path)}`;
   }
 

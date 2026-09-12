@@ -212,6 +212,13 @@
       "publishable"
     ],
     "targets": {
+      "build": {
+        "options": {
+          "env": {
+            "NODE_OPTIONS": "--max-old-space-size=6144"
+          }
+        }
+      },
       "publish": {
         "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
       },

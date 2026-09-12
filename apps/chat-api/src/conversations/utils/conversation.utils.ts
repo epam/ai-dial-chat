@@ -12,7 +12,6 @@ import type { CompoundNextToken } from '../types/conversation.types';
  */
 const notAllowedSymbolsRegex =
   /[:;,=/{}%&"\0\u200E\u200F\u202A-\u202E\u2066-\u2069]/gu;
-const trailingDotsRegex = /\.+$/g;
 const MAX_ENTITY_BYTES = 255;
 const CONVERSATION_NAME_SEPARATOR = '__';
 const UUID_PART_LENGTHS = [8, 4, 4, 4, 12] as const;
@@ -114,9 +113,10 @@ export const prepareEntityName = (prompt?: string): string => {
       .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
       .filter(Boolean)[0] ?? '';
 
-  return StringUtils.truncateToUtf8Bytes(clearName, MAX_ENTITY_BYTES)
-    .replace(trailingDotsRegex, '')
-    .trimEnd();
+  return StringUtils.stripTrailingChar(
+    StringUtils.truncateToUtf8Bytes(clearName, MAX_ENTITY_BYTES),
+    '.',
+  ).trimEnd();
 };
 
 export const getConversationName = (

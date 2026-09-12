@@ -877,7 +877,7 @@ export const bundleFixture = (
       `    outDir: '${outDir}',`,
       '    emptyOutDir: true,',
       "    lib: { entry: 'entry.ts', formats: ['es'], fileName: () => 'out.js' },",
-      "    rollupOptions: { external: ['react', 'react-dom', 'react/jsx-runtime'] },",
+      "    rolldownOptions: { external: ['react', 'react-dom', 'react/jsx-runtime'] },",
       '  },',
       "  logLevel: 'warn',",
       '});',

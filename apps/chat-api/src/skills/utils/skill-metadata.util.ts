@@ -1,4 +1,5 @@
 import type { components } from '@epam/ai-dial-typescript-sdk';
+import { StringUtils } from '../../common/utils/string-utils';
 import type { SkillMetadataItemDto } from '../dto/skill-metadata.dto';
 import { SkillNodeType } from '../dto/skill-node-type';
 
@@ -9,7 +10,7 @@ const joinMetadataPath = (
   name: string,
 ): string => {
   if (parentPath == null || parentPath === '') return name;
-  return `${parentPath.replace(/\/+$/, '')}/${name}`;
+  return `${StringUtils.stripTrailingSlashes(parentPath)}/${name}`;
 };
 
 /**

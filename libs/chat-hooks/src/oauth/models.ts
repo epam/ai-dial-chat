@@ -87,8 +87,7 @@ export interface ToolsetOAuthResultAcknowledgement {
  * success/failure, not resource details, back through the channel.
  */
 export type ToolsetOAuthChannelMessage =
-  | ToolsetOAuthSuccessMessage
-  | ToolsetOAuthFailureMessage;
+  ToolsetOAuthSuccessMessage | ToolsetOAuthFailureMessage;
 
 /** Result resolved by `waitForToolsetOAuthResult` to the tab that initiated the login. */
 export type ToolsetOAuthResult =

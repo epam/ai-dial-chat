@@ -61,7 +61,7 @@ export default defineConfig(() => ({
       cssFileName: 'index',
       formats: ['es' as const],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: (id: string) =>
         id === 'react-dom' ||
         id === 'react/jsx-runtime' ||

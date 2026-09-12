@@ -75,11 +75,17 @@ export const isValidSkillRelativePath = (relativePath: string): boolean => {
  * replaces every run of whitespace/invalid characters with a single hyphen,
  * and trims leading/trailing hyphens.
  */
-export const normalizeSkillName = (input: string): string =>
-  input
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+export const normalizeSkillName = (input: string): string => {
+  const hyphenated = input.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  /*
+   * Each run of invalid characters above collapses to a single hyphen, so at
+   * most one hyphen can sit at either end — trimming one character per side is
+   * enough. A `/^-+|-+$/` regex would be equivalent but quadratic: repetition
+   * anchored at `$` with an unanchored start makes the engine retry from every
+   * offset (CodeQL js/polynomial-redos).
+   */
+  return hyphenated.replace(/^-/, '').replace(/-$/, '');
+};
 
 /** Skill fields serialized into the `SKILL.md` manifest. */
 export interface SkillManifestValues {
