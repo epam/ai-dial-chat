@@ -1529,6 +1529,7 @@ dialOverlayTest(
     setTestIds,
     setIssueIds,
   }) => {
+    setIssueIds('4173');
     setTestIds('EPMDIAL-2355');
     const newEmptyConversationName = GeneratorUtil.randomString(7);
 
