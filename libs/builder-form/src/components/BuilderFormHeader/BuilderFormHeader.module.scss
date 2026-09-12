@@ -1,5 +1,8 @@
+/* Set the color for every side at once: the divider is drawn below the row
+ * at desktop and above it at mobile, so only the side with a non-zero width
+ * from the utility classes shows. */
 .header {
-  border-bottom-color: var(--bfh-border, var(--stroke-tertiary, #e0e6f0));
+  border-color: var(--bfh-border, var(--stroke-tertiary, #e0e6f0));
 }
 
 .title {

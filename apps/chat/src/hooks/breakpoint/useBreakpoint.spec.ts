@@ -69,14 +69,14 @@ describe('useBreakpoint', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns mobile when the 1024 query does not match', () => {
+  it('returns mobile when the desktop query does not match', () => {
     const { result } = renderHook(() => useBreakpoint());
     expect(result.current).toBe('mobile');
   });
 
-  it('returns desktop when the 769px query matches', () => {
-    mock.matchMedia('(min-width: 769px)');
-    mock.setWidth({ '(min-width: 769px)': true });
+  it('returns desktop when the 1280px query matches', () => {
+    mock.matchMedia('(min-width: 1280px)');
+    mock.setWidth({ '(min-width: 1280px)': true });
     const { result } = renderHook(() => useBreakpoint());
     expect(result.current).toBe('desktop');
   });
@@ -86,7 +86,7 @@ describe('useBreakpoint', () => {
     expect(result.current).toBe('mobile');
 
     act(() => {
-      mock.setWidth({ '(min-width: 769px)': true });
+      mock.setWidth({ '(min-width: 1280px)': true });
     });
 
     expect(result.current).toBe('desktop');
@@ -102,7 +102,7 @@ describe('useBreakpoint', () => {
     unmount();
 
     act(() => {
-      mock.setWidth({ '(min-width: 769px)': true });
+      mock.setWidth({ '(min-width: 1280px)': true });
     });
     // No assertion error means the unmounted hook did not call setState.
     expect(true).toBe(true);

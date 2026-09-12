@@ -710,7 +710,7 @@
       "detailsSectionTitle": "Details",
       "detailsSectionSubtitle": "Basic info about this scheduled task",
       "configurationSectionTitle": "Configuration",
-      "configurationSectionSubtitle": "Write custom instructions for this task",
+      "configurationSectionSubtitle": "Choose a skill, write custom instructions, or combine both",
       "runAtLabel": "Run at",
       "runAtRequired": "Choose a future date and time",
       "repeatLabel": "Repeat",
@@ -739,6 +739,7 @@
       "descriptionMaxLengthError": "Description must be 500 characters or fewer",
       "instructionsLabel": "Instructions",
       "promptRequired": "Instructions are required",
+      "submittingLabel": "Creating",
       "successNotification": "Scheduled task created",
       "errorNotification": "Failed to create the scheduled task"
     },

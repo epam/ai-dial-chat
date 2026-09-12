@@ -429,6 +429,7 @@ export enum ScheduledTasksI18nKeys {
   CreateDescriptionMaxLengthError = 'scheduledTasks.create.descriptionMaxLengthError',
   CreateInstructionsLabel = 'scheduledTasks.create.instructionsLabel',
   CreatePromptRequired = 'scheduledTasks.create.promptRequired',
+  CreateSubmittingLabel = 'scheduledTasks.create.submittingLabel',
   CreateSuccessNotification = 'scheduledTasks.create.successNotification',
   CreateErrorNotification = 'scheduledTasks.create.errorNotification',
   DetailRepeatsLabel = 'scheduledTasks.detail.repeatsLabel',

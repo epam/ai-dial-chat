@@ -1,13 +1,25 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
-import type { ScheduledTaskDetailViewLabels } from '../../../models/scheduled-task-detail-view-props';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type {
+  ScheduledTaskDetailViewLabels,
+  ScheduledTaskDetailViewProps,
+} from '../../../models/scheduled-task-detail-view-props';
 import type { ScheduledTaskRunItem } from '../../../models/scheduled-task-run-item';
 import { ScheduledTaskRunStatus } from '../../../types/scheduled-task-run-status';
 import { ScheduledTaskDetailView } from '../ScheduledTaskDetailView';
+
+/*
+ * Hoisted so the chat-shared mock (which vi hoists above every const here)
+ * can read it. Defaults to the desktop branch; the mobile/tab describe flips
+ * it per test.
+ */
+const { useIsMobileMock } = vi.hoisted(() => ({
+  useIsMobileMock: vi.fn((): boolean => false),
+}));
 
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   const actual =
@@ -15,6 +27,7 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   return {
     ...actual,
     MDMessageViewer: ({ content }: { content: string }) => <div>{content}</div>,
+    useIsMobile: (): boolean => useIsMobileMock(),
   };
 });
 
@@ -96,6 +109,31 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  Tabs: ({
+    tabs,
+    activeTabId,
+    onTabChange,
+    ariaLabel,
+  }: {
+    tabs: { id: string; label: string; count?: number }[];
+    activeTabId: string;
+    onTabChange: (tabId: string) => void;
+    ariaLabel?: string;
+  }) => (
+    <div role="tablist" aria-label={ariaLabel}>
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          role="tab"
+          aria-selected={tab.id === activeTabId}
+          onClick={() => onTabChange(tab.id)}
+        >
+          {tab.label}
+          {tab.count != null ? ` (${tab.count})` : ''}
+        </button>
+      ))}
+    </div>
+  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -174,7 +212,15 @@ describe('ScheduledTaskDetailView', () => {
       />,
     );
 
-    expect(screen.getByRole('heading', { name: 'Daily summary' })).toBeTruthy();
+    /*
+     * The title renders twice — inline in the header (desktop) and in the
+     * standalone row below it (mobile/tablet) — with Tailwind visibility
+     * classes picking the visible copy; jsdom applies no CSS, so both copies
+     * are present in the test DOM.
+     */
+    expect(
+      screen.getAllByRole('heading', { name: 'Daily summary' }),
+    ).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
   });
 
@@ -875,7 +921,9 @@ describe('ScheduledTaskDetailView', () => {
       expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
       expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
       expect(screen.queryByRole('switch')).toBeNull();
-      expect(screen.getByText('Deleted')).toBeTruthy();
+      // Both title copies (header + standalone mobile/tablet row) carry the
+      // chip — see the "renders the back control and title" test.
+      expect(screen.getAllByText('Deleted')).toHaveLength(2);
     });
 
     it('still renders History when the task is deleted', () => {
@@ -946,5 +994,116 @@ describe('ScheduledTaskDetailView', () => {
     );
 
     expect(screen.getByRole('listitem', { name: /Unread$/ })).toBeTruthy();
+  });
+
+  describe('ScheduledTaskDetailView — mobile/tablet tab layout', () => {
+    const buildView = (props?: Partial<ScheduledTaskDetailViewProps>) => (
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="Daily summary"
+        description="Summarize the news"
+        modelLabel="GPT-4o"
+        repeatsLabel="Every Monday 12:00"
+        runs={[buildRun()]}
+        {...props}
+      />
+    );
+    const renderView = (props?: Partial<ScheduledTaskDetailViewProps>) =>
+      render(buildView(props));
+
+    beforeEach(() => {
+      useIsMobileMock.mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      useIsMobileMock.mockReturnValue(false);
+    });
+
+    it('renders the tab row in order with Details active by default', () => {
+      renderView();
+
+      const tablist = screen.getByRole('tablist', {
+        name: 'Scheduled task sections',
+      });
+      const tabs = within(tablist).getAllByRole('tab');
+      expect(tabs.map((tab) => tab.textContent)).toEqual([
+        'Details',
+        'Configuration',
+        'History',
+      ]);
+      expect(screen.getByRole('tabpanel', { name: 'Details' })).toBeTruthy();
+      expect(screen.getByText('GPT-4o')).toBeTruthy();
+      expect(screen.queryByRole('heading', { name: 'History' })).toBeNull();
+    });
+
+    it('activating a tab swaps the visible panel and its content', async () => {
+      renderView({ runsHasMore: true, onRunsLoadMore: vi.fn() });
+
+      await userEvent.click(screen.getByRole('tab', { name: 'History' }));
+
+      expect(screen.getByRole('tabpanel', { name: 'History' })).toBeTruthy();
+      expect(
+        screen.getByRole('listitem', {
+          name: 'Succeeded today at 9:01 AM (99s)',
+        }),
+      ).toBeTruthy();
+      expect(screen.queryByText('GPT-4o')).toBeNull();
+    });
+
+    it('renders the History Show more footer inline in the flow panel', async () => {
+      renderView({ runsHasMore: true, onRunsLoadMore: vi.fn() });
+
+      await userEvent.click(screen.getByRole('tab', { name: 'History' }));
+
+      const showMore = screen.getByRole('button', { name: 'Show more' });
+      expect(showMore).toBeTruthy();
+      // The flow variant must not pin the footer inside a self-scrolling
+      // card — a CSS-level check, so direct node access is appropriate here.
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(showMore.closest('li')?.className).not.toContain('sticky');
+    });
+
+    it('renders no tab row and all three sections at the desktop breakpoint', () => {
+      useIsMobileMock.mockReturnValue(false);
+      renderView();
+
+      expect(screen.queryByRole('tablist')).toBeNull();
+      expect(screen.getByRole('heading', { name: 'Details' })).toBeTruthy();
+      expect(
+        screen.getByRole('heading', { name: 'Configuration' }),
+      ).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'History' })).toBeTruthy();
+      expect(screen.getByText('GPT-4o')).toBeTruthy();
+    });
+
+    it('renders no count badges on the tabs', () => {
+      renderView();
+
+      screen.getAllByRole('tab').forEach((tab) => {
+        expect(tab.textContent).not.toMatch(/\(\d+\)/);
+      });
+    });
+
+    it('keeps the selected tab when the viewport crosses the breakpoint and back', async () => {
+      const view = renderView();
+
+      await userEvent.click(screen.getByRole('tab', { name: 'History' }));
+      expect(screen.getByRole('tabpanel', { name: 'History' })).toBeTruthy();
+
+      useIsMobileMock.mockReturnValue(false);
+      view.rerender(buildView());
+      expect(screen.queryByRole('tablist')).toBeNull();
+      expect(screen.getByRole('heading', { name: 'History' })).toBeTruthy();
+
+      useIsMobileMock.mockReturnValue(true);
+      view.rerender(buildView());
+      expect(screen.getByRole('tabpanel', { name: 'History' })).toBeTruthy();
+      expect(
+        screen.getByRole('listitem', {
+          name: 'Succeeded today at 9:01 AM (99s)',
+        }),
+      ).toBeTruthy();
+    });
   });
 });

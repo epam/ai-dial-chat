@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-
-const MOBILE_QUERY = '(max-width: 768px)';
+import { MOBILE_MEDIA_QUERY } from '../constants/breakpoint';
 
 const resolveIsMobile = (): boolean =>
   typeof window !== 'undefined' &&
   typeof window.matchMedia === 'function' &&
-  window.matchMedia(MOBILE_QUERY).matches;
+  window.matchMedia(MOBILE_MEDIA_QUERY).matches;
 
 /** Returns whether the viewport currently matches the mobile media query, updating on resize. */
 export const useIsMobile = (): boolean => {
@@ -17,7 +16,7 @@ export const useIsMobile = (): boolean => {
       typeof window.matchMedia !== 'function'
     )
       return;
-    const mql = window.matchMedia(MOBILE_QUERY);
+    const mql = window.matchMedia(MOBILE_MEDIA_QUERY);
     const onChange = () => setIsMobile(mql.matches);
     mql.addEventListener('change', onChange);
     return () => mql.removeEventListener('change', onChange);

@@ -280,7 +280,23 @@ const renderForm = async (
   return view;
 };
 
+/* The action pair renders twice — in the header (desktop breakpoint) and in
+   the mobile sticky footer — with identical props. jsdom ignores the CSS that
+   hides one copy per breakpoint, so queries must address both. */
+const getSaveButtons = () =>
+  screen.getAllByRole('button', { name: 'Save' }) as HTMLButtonElement[];
+const getCancelButtons = () =>
+  screen.getAllByRole('button', { name: 'Cancel' });
+
 describe('ScheduledTaskCreateForm', () => {
+  it('renders the action pair in both the header and the mobile sticky footer', async () => {
+    await renderForm();
+
+    /* One copy per breakpoint surface; CSS hides the other at any width. */
+    expect(getSaveButtons()).toHaveLength(2);
+    expect(getCancelButtons()).toHaveLength(2);
+  });
+
   it('renders the host-supplied modelSelector verbatim', async () => {
     await renderForm({
       modelSelector: <button type="button">Custom model trigger</button>,
@@ -325,10 +341,7 @@ describe('ScheduledTaskCreateForm', () => {
       },
     });
 
-    expect(
-      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(false);
+    getSaveButtons().forEach((button) => expect(button.disabled).toBe(false));
   });
 
   it('respects the 500-character limit on the description field', async () => {
@@ -353,10 +366,7 @@ describe('ScheduledTaskCreateForm', () => {
       values: { ...baseValues, modelId: 'gpt-4o', prompt: 'Summarize' },
     });
 
-    expect(
-      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+    getSaveButtons().forEach((button) => expect(button.disabled).toBe(true));
   });
 
   it('disables Save when modelId is empty', async () => {
@@ -364,10 +374,7 @@ describe('ScheduledTaskCreateForm', () => {
       values: { ...baseValues, displayName: 'Daily summary' },
     });
 
-    expect(
-      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+    getSaveButtons().forEach((button) => expect(button.disabled).toBe(true));
   });
 
   it('enables Save when all required fields are filled', async () => {
@@ -380,10 +387,7 @@ describe('ScheduledTaskCreateForm', () => {
       },
     });
 
-    expect(
-      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(false);
+    getSaveButtons().forEach((button) => expect(button.disabled).toBe(false));
   });
 
   it('disables Save while isSubmitting', async () => {
@@ -397,10 +401,7 @@ describe('ScheduledTaskCreateForm', () => {
       isSubmitting: true,
     });
 
-    expect(
-      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+    getSaveButtons().forEach((button) => expect(button.disabled).toBe(true));
   });
 
   it('shows a busy affordance on Save while isSubmitting, not just a disabled button', async () => {
@@ -415,19 +416,19 @@ describe('ScheduledTaskCreateForm', () => {
     });
 
     /* The name must not drift while submitting — the spinner is decorative. */
-    const save = screen.getByRole('button', { name: 'Save' });
-    expect(save.getAttribute('aria-busy')).toBe('true');
+    getSaveButtons().forEach((button) =>
+      expect(button.getAttribute('aria-busy')).toBe('true'),
+    );
     expect(screen.getByRole('status').textContent).toBe('Saving');
   });
 
   it('leaves Save disabled but not busy when the form is merely incomplete', async () => {
     await renderForm({ values: baseValues, isSubmitting: false });
 
-    const save = screen.getByRole('button', {
-      name: 'Save',
-    }) as HTMLButtonElement;
-    expect(save.disabled).toBe(true);
-    expect(save.getAttribute('aria-busy')).toBe('false');
+    getSaveButtons().forEach((button) => {
+      expect(button.disabled).toBe(true);
+      expect(button.getAttribute('aria-busy')).toBe('false');
+    });
     expect(screen.getByRole('status').textContent).toBe('');
   });
 
@@ -491,11 +492,17 @@ describe('ScheduledTaskCreateForm', () => {
       },
     });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    /* Click every copy — header and footer — so the test also proves both
+       surfaces are wired to the same handlers. */
+    for (const cancel of getCancelButtons()) {
+      await userEvent.click(cancel);
+    }
+    for (const save of getSaveButtons()) {
+      await userEvent.click(save);
+    }
 
-    expect(onCancel).toHaveBeenCalledOnce();
-    expect(onSubmit).toHaveBeenCalledOnce();
+    expect(onCancel).toHaveBeenCalledTimes(2);
+    expect(onSubmit).toHaveBeenCalledTimes(2);
   });
 
   it('does not render a Schedule section heading', async () => {

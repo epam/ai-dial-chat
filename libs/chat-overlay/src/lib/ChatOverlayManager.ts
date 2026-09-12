@@ -17,7 +17,13 @@ import type {
 import { ChatOverlay } from './ChatOverlay';
 import { injectStyleSheet, setStyles } from './internal/dom-styles';
 
-const MOBILE_BREAKPOINT_PX = 768;
+/*
+ * Mirrors MOBILE_MAX_WIDTH_PX from @epam/ai-dial-chat-shared's breakpoint
+ * constants — this package has no dependencies, so the value is repeated
+ * here and pinned to the constant by
+ * apps/chat/src/hooks/breakpoint/breakpoint-sync.spec.ts.
+ */
+const MOBILE_BREAKPOINT_PX = 1279;
 const DEFAULT_WIDTH = 380;
 const DEFAULT_HEIGHT = 600;
 const DEFAULT_Z_INDEX = 999999;

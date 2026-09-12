@@ -16,7 +16,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type FC,
 } from 'react';
@@ -38,6 +37,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
+import { useStaleGuard } from '../../hooks/useStaleGuard';
 import {
   deleteScheduledTask,
   getScheduledTask,
@@ -74,24 +74,12 @@ const ScheduledTaskDetailPage: FC = () => {
   const [activeStatusAnnouncement, setActiveStatusAnnouncement] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const activeChangeRequestRef = useRef(0);
   /*
-   * Mirrors the latest scheduleId outside of any closure, so an in-flight
-   * pause/resume request started before navigation can detect — on
-   * resolution — that the user has since moved to a different schedule
-   * (its handleActiveChange closure was created with the old scheduleId).
+   * Supersession guard for pause/resume: a check goes stale when the page
+   * unmounts, a newer toggle begins, or the user navigates to a different
+   * schedule (this page component stays mounted across scheduleId changes).
    */
-  const currentScheduleIdRef = useRef(scheduleId);
-  useEffect(() => {
-    currentScheduleIdRef.current = scheduleId;
-  }, [scheduleId]);
-  const isMountedRef = useRef(true);
-  useEffect(
-    () => () => {
-      isMountedRef.current = false;
-    },
-    [],
-  );
+  const beginActiveChangeGuard = useStaleGuard(scheduleId);
 
   const {
     items: runDtos,
@@ -108,6 +96,14 @@ const ScheduledTaskDetailPage: FC = () => {
       setIsTaskLoading(false);
       return;
     }
+
+    /*
+     * A scheduleId change retires any in-flight pause/resume request: its
+     * stale guard resolves as stale, which skips the `finally` reset of
+     * `isActiveUpdating` — reset it here so the Active switch never stays
+     * disabled into the next task's view.
+     */
+    setIsActiveUpdating(false);
 
     const cancelled = { value: false };
 
@@ -268,12 +264,7 @@ const ScheduledTaskDetailPage: FC = () => {
 
   const handleActiveChange = useCallback(
     async (nextActive: boolean) => {
-      const requestScheduleId = scheduleId;
-      const token = ++activeChangeRequestRef.current;
-      const isStale = () =>
-        !isMountedRef.current ||
-        activeChangeRequestRef.current !== token ||
-        requestScheduleId !== currentScheduleIdRef.current;
+      const isStale = beginActiveChangeGuard();
 
       setTask((current) =>
         current ? { ...current, isActive: nextActive } : current,
@@ -282,8 +273,8 @@ const ScheduledTaskDetailPage: FC = () => {
 
       try {
         const updated = nextActive
-          ? await resumeScheduledTask(requestScheduleId)
-          : await pauseScheduledTask(requestScheduleId);
+          ? await resumeScheduledTask(scheduleId)
+          : await pauseScheduledTask(scheduleId);
         if (isStale()) return;
 
         setTask(updated);
@@ -318,7 +309,13 @@ const ScheduledTaskDetailPage: FC = () => {
         }
       }
     },
-    [scheduleId, t, showSuccessNotification, showErrorNotification],
+    [
+      scheduleId,
+      t,
+      showSuccessNotification,
+      showErrorNotification,
+      beginActiveChangeGuard,
+    ],
   );
 
   const handleDeleteClick = useCallback(() => {
