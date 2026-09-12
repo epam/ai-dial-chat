@@ -88,6 +88,8 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         tableCopyMarkdownLabel,
         tableCopiedLabel,
         tableDownloadCsvLabel,
+        ooxmlHighlightsLabel,
+        ooxmlHighlightNavigatedLabel,
       } = labels ?? {};
 
       const { isOpen, isLoading, content, fileName, closeCanvas } =
@@ -159,6 +161,8 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
             tableCopyMarkdownLabel,
             tableCopiedLabel,
             tableDownloadCsvLabel,
+            ooxmlHighlightsLabel,
+            ooxmlHighlightNavigatedLabel,
           }}
           onDownload={handleDownload}
           onCopyText={

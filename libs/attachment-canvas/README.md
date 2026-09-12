@@ -332,6 +332,61 @@ response) and `Forbidden` (HTTP `403`).
 `@silurus/ooxml`'s `XlsxSheetViewer` delimited-text mode rather than an OOXML
 workbook parser.
 
+### Office citation highlighting
+
+`OoxmlCanvasContent` optionally carries `highlights?: OoxmlHighlight[]` and
+`selectedHighlightId?: string`. Both are omitted (never `[]`) when there is
+nothing to highlight — the self-loading, no-highlight preview path is taken
+verbatim in that case. When `highlights` is present, `OoxmlContent` resolves
+rectangles from the same parsed bytes the viewer paints (a DOCX/PPTX shared
+parse; XLSX stays on its self-loading path since cell geometry lives on the
+viewer), renders every highlight, and emphasises the one matching
+`selectedHighlightId` on two channels (border weight and opacity).
+
+```tsx
+import {
+  OoxmlHighlightKind,
+  type OoxmlHighlight,
+} from '@epam/ai-dial-attachment-canvas';
+
+const highlight: OoxmlHighlight = {
+  id: 'a',
+  locations: [
+    {
+      kind: OoxmlHighlightKind.DocxTextRange,
+      story: 'body',
+      path: [3, 1],
+      start: 0,
+      endExclusive: 5,
+      text: 'Hello',
+    },
+  ],
+};
+```
+
+`OoxmlHighlightKind` discriminates `OoxmlHighlightLocation`:
+`DocxTextRange` (`OoxmlDocxHighlightLocation` — `story`, `path`, `start`,
+`endExclusive`, `text`), `PptxTextRange` (`OoxmlPptxHighlightLocation` —
+`slide`, `shapeId`, `start`, `endExclusive`, `text`), and `XlsxCellRange`
+(`OoxmlXlsxHighlightLocation` — `sheet`, `start: OoxmlCellAddress`, an
+optional `end: OoxmlCellAddress` for a same-row range). `endExclusive` on the
+DOCX/PPTX locations is already an exclusive upper bound — the caller
+producing it (`libs/chat-hooks`'s `annotationToOoxmlCanvasContent`) must not
+add 1 to the wire's `end`.
+
+Highlight colours go through the same `AttachmentCanvasColors` mechanism as
+every other themed surface: `ooxmlHighlightBorder` (defaults to
+`--stroke-accent`) and `ooxmlHighlightBackground` (defaults to `transparent`,
+so the cited text keeps its own contrast).
+
+Two labels control the highlight overlay's accessible strings:
+`ooxmlHighlightsLabel` (defaults to `'Cited locations'`, names the overlay
+`role="region"`) and `ooxmlHighlightNavigatedLabel` (defaults to
+`'Scrolled to the cited location'`, a `role="status"` announcement fired
+once per navigation). Both are threaded through
+`AttachmentCanvasLabels` → `AttachmentCanvasBodyLabels`'s `Pick` list →
+`OoxmlContent`.
+
 ## Utilities
 
 ```tsx

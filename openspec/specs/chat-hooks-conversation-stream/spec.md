@@ -23,6 +23,28 @@ an `/api` path, CSRF handling, or import an app `server-api` module.
   stoppable
 - **THEN** the only call made is `transport.stopCompletion({ generationId, path })`
 
+### Requirement: A generation conflict is shown as a host-supplied message
+When the transport reports a `GenerationConflictError` — the backend
+rejected the completion because this conversation is already generating,
+typically from another browser tab of the same session — the hook SHALL
+write its `generationConflictMessage` parameter (defaulting to
+`DEFAULT_GENERATION_CONFLICT_MESSAGE`) to the placeholder message's
+`streamErrorMessage` instead of the raw error text, and SHALL otherwise
+settle the generation exactly as any other stream error does. Every other
+error SHALL keep reporting its own `error.message`, so a transport failure
+is never disguised as a conflict.
+
+#### Scenario: Conflict shows the host's message
+- **WHEN** `onError` receives a `GenerationConflictError`
+- **THEN** the assistant placeholder's `streamErrorMessage` is the
+  `generationConflictMessage` the host supplied, and `isStreaming` /
+  `canStopStreaming` return to `false` so the composer is usable again
+
+#### Scenario: A non-conflict error is unaffected
+- **WHEN** `onError` receives any other `Error`
+- **THEN** the assistant placeholder's `streamErrorMessage` is that error's
+  own `message`
+
 ### Requirement: Per-path streaming state with stale-chunk rejection
 The hook SHALL track streaming state per conversation path (not as a
 single boolean) and SHALL reject a chunk whose generation id does not
@@ -84,6 +106,27 @@ backend's save) fires.
 - **WHEN** `handleStop` is called
 - **THEN** no reload happens until the transport's own completion signal
   fires afterward
+
+### Requirement: A superseded generation never touches shared state
+Once a newer generation has been started for a path, the terminal callbacks of
+the older generation on that path SHALL NOT clear the path's streaming state,
+report a generation end to the overlay, write a stream error into the
+conversation, or replace conversation state with the reload they fetched. The
+reload is re-checked after its round trip, because the newer generation can
+start while that reload is in flight.
+
+#### Scenario: Stopped generation completes after the user re-submitted
+- **WHEN** the user stops a generation and — while the stopped generation's
+  post-completion reload is still in flight — submits an edit that starts a
+  new generation on the same path
+- **THEN** the stopped generation's completion leaves `isStreaming` true for
+  the path and does not restore the answer it had fetched over the edited
+  messages
+
+#### Scenario: Superseded generation errors
+- **WHEN** a superseded generation's `onError` fires
+- **THEN** no `streamErrorMessage` is written onto the newer generation's
+  answer and the path stays marked as streaming
 
 ### Requirement: Optional client-channel and overlay capabilities
 The hook SHALL accept `channel` and `overlay` as independently optional

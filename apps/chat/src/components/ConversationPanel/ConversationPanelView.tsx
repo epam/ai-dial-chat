@@ -125,6 +125,7 @@ import {
 } from '../../utils/conversation-transfer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
+import { getPublishFolderLabel } from '../../utils/publish';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
 import ConversationPanelMenu from './ConversationPanelMenu';
 
@@ -1145,7 +1146,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         notifyOperationSuccess(
           NotifiableEntity.Conversation,
           EntityOperation.UnpublishRequested,
-          { name: title, folder: folderPath.split('/').pop() ?? folderPath },
+          { name: title, folder: getPublishFolderLabel(folderPath, t) },
         );
       },
       () => '',
@@ -1156,6 +1157,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     selectedUnpublishFolder,
     showPublishError,
     notifyOperationSuccess,
+    t,
   ]);
 
   const handleConfirmRevoke = useCallback(async () => {

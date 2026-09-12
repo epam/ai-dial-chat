@@ -6,6 +6,7 @@ import type {
   DisplayAttachment,
   ResponseFormat,
   ToolMenuItem,
+  UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type { TranscribeAudio } from './Voice';
@@ -94,22 +95,32 @@ export interface MenuOverlayConfig {
   backLabel?: string;
 }
 
-/** A host-selected entity rendered as a removable chip in the input's action row (e.g. a picked skill). */
-export interface SelectedEntityChip {
-  /** Unique key identifying the chip. */
-  id: string;
-  /** Chip label text. */
-  label: string;
-  /** Optional leading icon node. */
-  icon?: ReactNode;
-  /** Called when the chip's × is activated, removing the entity from the row. */
-  onRemove: () => void;
+/** Context handed to a `CommandMenuConfig`'s `renderMenu` while the menu is open. */
+export interface CommandMenuContext {
+  /** Current query: the value typed after the trigger prefix, with no whitespace or second prefix character. */
+  query: string;
+  /**
+   * Closes the menu. Pass `{ consumeQuery: true }` to also remove the trigger
+   * prefix and query from the textarea (the selection path — the `/query`
+   * text is never sent); the default close leaves the text untouched.
+   */
+  close: (options?: { consumeQuery?: boolean }) => void;
 }
 
-/** Labels for the selected-entity chips rendered in the conversation input. */
-export interface SelectedEntityChipsLabels {
-  /** Returns the accessible label for a chip's × button, which removes the entity. Receives the chip label. Defaults to `"Remove {label}"`. */
-  removeLabel?: (entityLabel: string) => string;
+/** Host-injected slash-command menu: an overlay opened by typing a trigger prefix into an empty textarea. */
+export interface CommandMenuConfig {
+  /** Prefix that opens the menu when typed as the first character of an empty textarea (e.g. `'/'`). */
+  triggerPrefix: string;
+  /** Renders the menu content for the current query. */
+  renderMenu: (ctx: CommandMenuContext) => ReactNode;
+  /**
+   * Hint rendered inside the text area immediately after the trigger prefix
+   * while the menu is open with an empty query (e.g. `'Type to filter'`), in
+   * the placeholder style. Absent renders no hint.
+   */
+  emptyQueryHint?: string;
+  /** Accessible name for the menu region. When absent, the content is rendered without a labeled wrapper. */
+  menuLabel?: string;
 }
 
 /** Props accepted by the `Input` component. */
@@ -128,8 +139,10 @@ export interface InputProps {
   onChange?: (message: string) => void;
   /** Called when the user submits a message. */
   onSend?: (message: string, attachments: Attachment[]) => Promise<void> | void;
-  /** Called immediately after an attachment is added. Returns the uploaded attachment URL. */
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  /** Called immediately after an attachment is added. Returns the uploaded attachment URL and stored name. */
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   /** Called when the user clicks the stop button during streaming. */
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button. */
@@ -319,13 +332,32 @@ export interface InputProps {
    */
   menuOverlays?: MenuOverlayConfig[];
   /**
-   * Selected entities rendered as removable chips where the tool chips
-   * render. The host owns the selection semantics; each chip's × calls that
-   * chip's own `onRemove`. Empty or absent renders no row.
+   * Host-supplied content rendered inside the text area at its inline-start;
+   * typed text starts after it on the first line and wraps at full width
+   * below. The slot's width is measured and the first text line indents past
+   * it, and the placeholder is suppressed. Absent renders the text area
+   * unchanged.
    */
-  selectedEntities?: SelectedEntityChip[];
-  /** Labels for the selected-entity chips rendered in the input. */
-  selectedEntityChipLabels?: SelectedEntityChipsLabels;
+  inlineStartSlot?: ReactNode;
+  /**
+   * Called when Backspace is pressed with the caret collapsed at position 0
+   * while `inlineStartSlot` is present — the slot's remove gesture (there is
+   * nothing to delete backwards at position 0, so the keypress is redirected
+   * to the slot and suppressed). Absent leaves Backspace with no slot-side
+   * behavior.
+   */
+  onInlineStartRemove?: () => void;
+  /**
+   * Host-injected slash-command menu. When provided, typing `triggerPrefix`
+   * as the first character of an empty textarea opens an overlay above the
+   * input; it stays open while the value keeps matching the prefix followed
+   * by a query with no whitespace or second prefix character, and closes on
+   * unmatch, Escape, or an outside click (a dismissed menu reopens only after
+   * the value stops matching and the prefix is typed again). Selection
+   * typically goes through `ctx.close({ consumeQuery: true })`, which removes
+   * the `/query` text from the textarea. Absent disables the mechanism.
+   */
+  commandMenu?: CommandMenuConfig;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */
   autoFocus?: boolean;
   /**

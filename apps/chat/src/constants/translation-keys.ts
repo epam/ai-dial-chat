@@ -9,6 +9,7 @@ export enum ChatI18nKeys {
   GreetingNight = 'chat.greetingNight',
   GreetingNightNoName = 'chat.greetingNightNoName',
   StreamError = 'chat.streamError',
+  GenerationConflict = 'chat.generationConflict',
   CreateConversationError = 'chat.createConversationError',
   ConversationNotFound = 'chat.conversationNotFound',
   /** TODO: remove in next release */
@@ -355,7 +356,9 @@ export enum PromptSelectorI18nKeys {
 export enum SkillSelectorI18nKeys {
   AddMenuLabel = 'skillSelector.addMenuLabel',
   EmptyHint = 'skillSelector.emptyHint',
+  EmptyQueryHint = 'skillSelector.emptyQueryHint',
   ModalTitle = 'skillSelector.modalTitle',
+  NoMatchingSkillsLabel = 'skillSelector.noMatchingSkillsLabel',
   ViewDetailsLabel = 'skillSelector.viewDetailsLabel',
 }
 
@@ -884,6 +887,8 @@ export enum AttachmentCanvasI18nKeys {
   XlsxFormulaLabel = 'attachmentCanvas.xlsxFormulaLabel',
   CodeContentLoadingLabel = 'attachmentCanvas.codeContentLoadingLabel',
   CodeContentErrorLabel = 'attachmentCanvas.codeContentErrorLabel',
+  OoxmlHighlightsLabel = 'attachmentCanvas.ooxmlHighlightsLabel',
+  OoxmlHighlightNavigatedLabel = 'attachmentCanvas.ooxmlHighlightNavigatedLabel',
 }
 
 export enum AnnouncementBannerI18nKeys {

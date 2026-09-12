@@ -2,6 +2,7 @@ import {
   AttachmentType,
   RequestStatus,
   type Attachment,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
@@ -822,8 +823,8 @@ describe('Input — attachment status transitions', () => {
   });
 
   it('uploads attachments immediately when they are added', async () => {
-    let resolveUpload!: (url: string) => void;
-    const uploadPromise = new Promise<string>((resolve) => {
+    let resolveUpload!: (result: UploadedAttachmentResult) => void;
+    const uploadPromise = new Promise<UploadedAttachmentResult>((resolve) => {
       resolveUpload = resolve;
     });
     const handleUploadAttachment = vi.fn(() => uploadPromise);
@@ -842,7 +843,7 @@ describe('Input — attachment status transitions', () => {
       (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
     ).toBe(true);
 
-    resolveUpload('https://example.com/doc.pdf');
+    resolveUpload({ url: 'https://example.com/doc.pdf', name: 'doc.pdf' });
 
     await waitFor(() => {
       expect(

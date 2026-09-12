@@ -119,6 +119,8 @@ export interface Message {
   deploymentId?: string;
   /* Human-readable error text from a failed stream. Present when generation ended in error — absence means generation succeeded or is still in progress. Used for both resume detection and UI error display. */
   streamErrorMessage?: string;
+  /** Set on an assistant message whose generation the user stopped; the content is whatever had streamed by then. */
+  wasStoppedByUser?: boolean;
   /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
   [key: string]: unknown;
 }
@@ -318,6 +320,14 @@ export interface DisplayAttachment {
 export interface Attachment extends DisplayAttachment {
   /** The underlying browser `File` object selected by the user. */
   file: File;
+}
+
+/** Result of successfully uploading an {@link Attachment}. */
+export interface UploadedAttachmentResult {
+  /** The DIAL Core file URL the attachment was uploaded to. */
+  url: string;
+  /** The name actually stored on DIAL Core; differs from the attachment's original name when it contained characters the storage path forbids. */
+  name: string;
 }
 
 /**

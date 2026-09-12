@@ -273,7 +273,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
             />
           }
           label={
-            <span className="flex min-w-0 flex-1 items-start gap-1.5">
+            <span className="flex min-w-0 flex-1 flex-wrap items-start gap-x-1.5 whitespace-normal">
               {query.trim() ? (
                 <Highlight
                   text={item.name}
@@ -287,12 +287,9 @@ const DeploymentSelectorPanel: FC<Props> = ({
                 />
               )}
               {item.version && (
-                /* Capped at 30% of the row so a long version truncates instead
-                   of squeezing the name out of the option. */
-                <EllipsisTooltip
-                  text={item.version}
-                  className="dial-tiny-text max-w-[30%] shrink-0 text-secondary"
-                />
+                <span className="dial-tiny-text min-w-0 break-words text-secondary">
+                  {item.version}
+                </span>
               )}
             </span>
           }

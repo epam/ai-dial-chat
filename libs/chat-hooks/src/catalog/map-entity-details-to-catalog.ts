@@ -456,7 +456,7 @@ const mapPricingDto = (
 ): ModelPricing | undefined => {
   if (pricing == null) return undefined;
 
-  const { unit } = pricing;
+  const unit = typeof pricing.unit === 'string' ? pricing.unit : undefined;
   const prices = Object.entries(pricing).flatMap(([key, value]) => {
     if (key === PRICING_UNIT_KEY) return [];
     if (typeof value !== 'string' || value.trim() === '') return [];

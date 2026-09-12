@@ -85,19 +85,26 @@ RTL: tab rendering and label alignment are handled by the ui-kit; no physical di
 
 ### Requirement: Locale-aware UpdatedAt column
 
-`DialFileManagerShell` SHALL pass `gridOptions.dateLocale` and `gridOptions.dateOptions` to format the UpdatedAt column. `dateLocale` SHALL be sourced from `i18n.language` (via `useTranslation`). `dateOptions` SHALL be fixed as `{ year: 'numeric', month: 'short', day: '2-digit' }`. These options SHALL be applied regardless of the active tab.
+`DialFileManagerShell` SHALL pass `gridOptions.dateLocale` and `gridOptions.dateOptions` to format the UpdatedAt column. `dateLocale` SHALL be sourced from `i18n.language` (via `useTranslation`). `dateOptions` SHALL be fixed as `{ year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }`, so the cell carries the modification time alongside the calendar date and the clock stays 24-hour in every locale. These options SHALL be applied regardless of the active tab, and the same options SHALL format the modified date in the file metadata popup.
 
 Items with a missing `updatedAt` SHALL display an empty cell; no error or fallback string is rendered.
+
+Sorting the UpdatedAt column SHALL order rows by the underlying `updatedAt` timestamp, not by the formatted string, so files modified on the same calendar day keep their true chronological order.
 
 #### Scenario: UpdatedAt formatted in en-US locale
 
 - **WHEN** `i18n.language` is `'en'` or `'en-US'` and a file has `updatedAt` set
-- **THEN** the UpdatedAt cell displays a date in the form "Jun 19, 2026"
+- **THEN** the UpdatedAt cell displays a date and time in the form "Jun 19, 2026, 14:35"
 
 #### Scenario: UpdatedAt formatted in Arabic locale
 
 - **WHEN** `i18n.language` is `'ar'` and a file has `updatedAt` set
-- **THEN** the UpdatedAt cell displays the date using the Arabic locale with the same format options (year numeric, month short, day 2-digit); layout follows RTL direction inherited from `<html dir="rtl">`
+- **THEN** the UpdatedAt cell displays the date and time using the Arabic locale with the same format options (year numeric, month short, day 2-digit, hour and minute 2-digit, 24-hour clock); layout follows RTL direction inherited from `<html dir="rtl">`
+
+#### Scenario: Same-day files ordered by time
+
+- **WHEN** two files were modified on the same calendar day at different times and the UpdatedAt column is sorted ascending
+- **THEN** the file with the earlier modification time is listed first
 
 #### Scenario: Missing updatedAt renders empty cell
 

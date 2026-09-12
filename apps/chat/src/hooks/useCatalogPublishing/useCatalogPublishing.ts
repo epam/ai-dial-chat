@@ -13,6 +13,7 @@ import type {
   PublishHistoryEntry,
 } from '@epam/ai-dial-publish-panel';
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
   getCatalogPublishHistory,
@@ -21,6 +22,7 @@ import {
 } from '../../server-api/publish.api';
 import { EntityOperation } from '../../types/entity-notification';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
+import { getPublishFolderLabel } from '../../utils/publish';
 import type { useOperationNotification } from '../useOperationNotification';
 
 interface UseCatalogPublishingParams {
@@ -70,6 +72,8 @@ export const useCatalogPublishing = ({
   isAdmin,
   hasPublishWriteAccess,
 }: UseCatalogPublishingParams): UseCatalogPublishingResult => {
+  const { t } = useTranslation();
+
   /*
    * Publish and Unpublish act on two different items, and each is offered
    * only on the one it applies to (GH #8691, where both landed on the wrong
@@ -200,11 +204,11 @@ export const useCatalogPublishing = ({
         EntityOperation.UnpublishRequested,
         {
           name: item.name,
-          folder: folderPath[folderPath.length - 1],
+          folder: getPublishFolderLabel(folderPath, t),
         },
       );
     },
-    [deployments, notifyOperationSuccess, showPublishError],
+    [deployments, notifyOperationSuccess, showPublishError, t],
   );
 
   const handlePublishSuccess = useCallback(
@@ -218,11 +222,11 @@ export const useCatalogPublishing = ({
         EntityOperation.PublishRequested,
         {
           name: item.name,
-          folder: folderPath[folderPath.length - 1],
+          folder: getPublishFolderLabel(folderPath, t),
         },
       );
     },
-    [deployments, rememberPublishFolder, notifyOperationSuccess],
+    [deployments, rememberPublishFolder, notifyOperationSuccess, t],
   );
 
   const handlePublishError = useCallback(

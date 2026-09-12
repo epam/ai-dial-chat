@@ -224,6 +224,7 @@ describe('rebaseConversationId', () => {
       id: 'conversations/59CAnBu6LZrtfagTrHaP2rJhuMLT3rYQS7UkWevuqKXu1dB4gL6cYw6Msobg7Kqs9j/chathub-claude4__requirements.txt',
       folderId:
         'conversations/59CAnBu6LZrtfagTrHaP2rJhuMLT3rYQS7UkWevuqKXu1dB4gL6cYw6Msobg7Kqs9j',
+      name: 'requirements.txt',
     });
     const { conversation: result, subPath } = rebaseConversationId(
       conversation,
@@ -237,6 +238,152 @@ describe('rebaseConversationId', () => {
     expect(subPath).toMatch(
       /^chathub-claude4__requirements\.txt__[0-9a-f-]{36}$/,
     );
+  });
+
+  /*
+   * Issue #8668: both chats export the *initial*, first-message-derived title
+   * in the filename and keep the current one only in `name`. The list derives
+   * a row's title from the filename for every item it does not read back, so
+   * the filename has to carry the authoritative name.
+   */
+  it("writes the conversation's own name into the filename, replacing the exported first-message title", () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-5__analyze this document and generate a test__10a6e7c8-1896-4d65-89bc-c158e23a304e',
+      folderId: 'old-bucket',
+      name: 'Self-evaluation quiz for chapter 1 on numbers',
+    });
+    const { conversation: result, subPath } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(subPath).toMatch(
+      /^gpt-5__Self-evaluation quiz for chapter 1 on numbers__[0-9a-f-]{36}$/,
+    );
+    expect(result.id).toBe(`new-bucket/${subPath}`);
+    expect(subPath).not.toContain('analyze this document');
+  });
+
+  it('replaces the title of an old-chat filename that carries no trailing uuid', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__hello',
+      folderId: 'old-bucket',
+      name: 'Greeting and assistance inquiry',
+    });
+    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
+
+    expect(subPath).toMatch(
+      /^gpt-4o__Greeting and assistance inquiry__[0-9a-f-]{36}$/,
+    );
+  });
+
+  it('keeps a title containing the __ separator intact', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__a__b__550e8400-e29b-41d4-a716-446655440000',
+      folderId: 'old-bucket',
+      name: 'left__right',
+    });
+    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
+
+    expect(subPath).toMatch(/^gpt-4o__left__right__[0-9a-f-]{36}$/);
+  });
+
+  it('preserves a versioned application deployment id and its version suffix', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/applications/app-bucket/my-app__1.0.0__what can you do?__550e8400-e29b-41d4-a716-446655440000',
+      folderId: 'old-bucket',
+      model: { id: 'applications/app-bucket/my-app__1.0.0' },
+      name: 'Capabilities overview',
+    });
+    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
+
+    expect(subPath).toMatch(
+      /^applications\/app-bucket\/my-app__1\.0\.0__Capabilities overview__[0-9a-f-]{36}$/,
+    );
+  });
+
+  it('treats a numeric title outside an applications path as a title, not a version suffix', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__1.0__550e8400-e29b-41d4-a716-446655440000',
+      folderId: 'old-bucket',
+      name: 'Number sequence inquiry',
+    });
+    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
+
+    expect(subPath).toMatch(/^gpt-4o__Number sequence inquiry__[0-9a-f-]{36}$/);
+  });
+
+  it('strips characters DIAL Core rejects from the name and stores the sanitized one', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__hello',
+      folderId: 'old-bucket',
+      name: 'Q1: revenue/cost {draft}',
+    });
+    const { conversation: result, subPath } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(subPath).toMatch(/^gpt-4o__Q1 revenuecost draft__[0-9a-f-]{36}$/);
+    /* The stored name must equal the filename title, so the list renders the
+     * same string whether or not it read the body back. */
+    expect(result.name).toBe('Q1 revenuecost draft');
+  });
+
+  it('keeps only the first non-empty line of a multi-line name', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__hello',
+      folderId: 'old-bucket',
+      name: '\n  First line  \nSecond line',
+    });
+    const { conversation: result, subPath } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(subPath).toMatch(/^gpt-4o__First line__[0-9a-f-]{36}$/);
+    expect(result.name).toBe('First line');
+  });
+
+  it('truncates a name longer than 255 utf-8 bytes', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__hello',
+      folderId: 'old-bucket',
+      name: 'a'.repeat(300),
+    });
+    const { conversation: result } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(result.name).toBe('a'.repeat(255));
+  });
+
+  it('falls back to the exported filename title when the name sanitizes to nothing', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/gpt-4o__hello__550e8400-e29b-41d4-a716-446655440000',
+      folderId: 'old-bucket',
+      name: '///',
+    });
+    const { conversation: result, subPath } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(subPath).toMatch(/^gpt-4o__hello__[0-9a-f-]{36}$/);
+    /* Nothing usable to write back, so the source name is left untouched. */
+    expect(result.name).toBe('///');
+  });
+
+  it('only re-suffixes a filename that has no __ separator at all', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/legacy-name',
+      folderId: 'old-bucket',
+      name: 'Some Name',
+    });
+    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
+
+    expect(subPath).toMatch(/^legacy-name__[0-9a-f-]{36}$/);
   });
 });
 
@@ -350,6 +497,29 @@ describe('rewriteAttachmentUrls', () => {
     );
   });
 
+  it('does not carry an unparseable anchor onto the rewritten reference', () => {
+    const conversation = makeConversation({
+      messages: [
+        makeAttachmentMessage(
+          'files/old-bucket/reports/q1.pdf#"><script>',
+          'q1.pdf',
+        ),
+      ],
+    });
+    const targetMap = new Map([
+      [
+        'files/old-bucket/reports/q1.pdf',
+        { url: 'files/new-bucket/uploads/2026-07/q1.pdf' },
+      ],
+    ]);
+
+    const result = rewriteAttachmentUrls(conversation, targetMap);
+
+    expect(result.messages[0].custom_content?.attachments?.[0].url).toBe(
+      'files/new-bucket/uploads/2026-07/q1.pdf',
+    );
+  });
+
   it('leaves unmatched attachment references untouched', () => {
     const conversation = makeConversation({
       messages: [
@@ -369,6 +539,92 @@ describe('rewriteAttachmentUrls', () => {
     expect(result.messages[0].custom_content?.attachments?.[0].url).toBe(
       'files/bucket/unmapped.png',
     );
+  });
+
+  it('rewrites a file an agent produced inside an execution stage', () => {
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant' as Conversation['messages'][number]['role'],
+          content: '',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: {
+            stages: [
+              {
+                index: 0,
+                name: 'Generate report',
+                status: null,
+                attachments: [
+                  {
+                    title: 'chart.png',
+                    url: 'files/app-bucket/appdata/chart.png',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const targetMap = new Map([
+      [
+        'files/app-bucket/appdata/chart.png',
+        { url: 'files/new-bucket/uploads/2026-07/chart.png' },
+      ],
+    ]);
+
+    const result = rewriteAttachmentUrls(conversation, targetMap);
+
+    expect(
+      result.messages[0].custom_content?.stages?.[0].attachments?.[0].url,
+    ).toBe('files/new-bucket/uploads/2026-07/chart.png');
+  });
+
+  it("rewrites a citation's source document and keeps its page anchor", () => {
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant' as Conversation['messages'][number]['role'],
+          content: '',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: {
+            annotations: [
+              {
+                body: {
+                  source: {
+                    type: 'attachment' as const,
+                    attachment: {
+                      type: 'application/pdf',
+                      url: 'files/old-bucket/sources/spec.pdf#page=7',
+                      title: 'spec.pdf',
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const targetMap = new Map([
+      [
+        'files/old-bucket/sources/spec.pdf',
+        {
+          url: 'files/new-bucket/uploads/2026-07/spec (1).pdf',
+          title: 'spec (1).pdf',
+        },
+      ],
+    ]);
+
+    const result = rewriteAttachmentUrls(conversation, targetMap);
+
+    expect(
+      result.messages[0].custom_content?.annotations?.[0].body?.source
+        ?.attachment,
+    ).toMatchObject({
+      url: 'files/new-bucket/uploads/2026-07/spec (1).pdf#page=7',
+      title: 'spec (1).pdf',
+    });
   });
 
   it('leaves messages without attachments untouched', () => {
@@ -485,6 +741,46 @@ describe('planAttachmentUploads', () => {
 
     expect(skippedNames).toEqual(['missing.pdf']);
     expect(plan.map((item) => item.allocated.fileName)).toEqual(['q1.pdf']);
+  });
+
+  it('plans an upload for a file referenced only from an execution stage', () => {
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant' as Conversation['messages'][number]['role'],
+          content: '',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: {
+            stages: [
+              {
+                index: 0,
+                name: 'Generate report',
+                status: null,
+                attachments: [
+                  {
+                    title: 'chart.png',
+                    url: 'files/app-bucket/appdata/chart.png',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const attachmentBytes = new Map([
+      ['appdata/chart.png', new Uint8Array([1])],
+    ]);
+    const allocator = createUploadPathAllocator({ date });
+
+    const { plan, skippedNames } = planAttachmentUploads(
+      conversation,
+      attachmentBytes,
+      allocator,
+    );
+
+    expect(skippedNames).toEqual([]);
+    expect(plan.map((item) => item.allocated.fileName)).toEqual(['chart.png']);
   });
 
   it('suffixes a name already present in a pre-filled allocator', () => {

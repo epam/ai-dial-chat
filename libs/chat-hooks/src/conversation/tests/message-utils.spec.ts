@@ -24,10 +24,11 @@ const userMessage = (content = 'hello'): Message => ({
   timestamp: '2024-01-01T00:00:00.000Z',
 });
 
-const assistantMessage = (content = 'hi'): Message => ({
+const assistantMessage = (content = 'hi', deploymentId?: string): Message => ({
   role: MessageRole.Assistant,
   content,
   timestamp: '2024-01-01T00:00:00.000Z',
+  ...(deploymentId != null ? { deploymentId } : {}),
 });
 
 const statusModelChanged = (newId: string): Message =>
@@ -79,8 +80,47 @@ describe('getLastDeploymentId', () => {
     expect(getLastDeploymentId([])).toBeNull();
   });
 
-  it('returns null when there are no model_changed status messages', () => {
+  it('returns null when no message records a deployment', () => {
     expect(getLastDeploymentId([userMessage(), assistantMessage()])).toBeNull();
+  });
+
+  it("returns an assistant message's own deploymentId", () => {
+    expect(
+      getLastDeploymentId([userMessage(), assistantMessage('hi', 'model-a')]),
+    ).toBe('model-a');
+  });
+
+  it('prefers a later assistant deploymentId over an earlier model_changed event', () => {
+    /*
+     * The regenerate-after-switch timeline once the truncation dropped the
+     * status marker that used to sit at the end (issue #8712): the regenerated
+     * answer is the only record of the model the user picked.
+     */
+    const messages: Message[] = [
+      userMessage(),
+      statusModelChanged('model-a'),
+      userMessage(),
+      assistantMessage('hi', 'model-b'),
+    ];
+    expect(getLastDeploymentId(messages)).toBe('model-b');
+  });
+
+  it('prefers a later model_changed event over an earlier assistant deploymentId', () => {
+    const messages: Message[] = [
+      userMessage(),
+      assistantMessage('hi', 'model-a'),
+      statusModelChanged('model-b'),
+    ];
+    expect(getLastDeploymentId(messages)).toBe('model-b');
+  });
+
+  it('skips messages that carry no deployment on the way back', () => {
+    const messages: Message[] = [
+      userMessage(),
+      assistantMessage('hi', 'model-a'),
+      userMessage(),
+    ];
+    expect(getLastDeploymentId(messages)).toBe('model-a');
   });
 
   it('returns the deployment id from the last model_changed event', () => {

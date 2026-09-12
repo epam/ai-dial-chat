@@ -67,17 +67,11 @@ export const ImportExportQueueRow: FC<ImportExportQueueRowProps> = ({
         contentClassName="!z-[80]"
       />
       {job.status === ConversationTransferJobStatus.InProgress && (
-        /*
-         * The spinner and the cancel control share one grid cell so revealing
-         * one and hiding the other shifts nothing. The button stays mounted and
-         * focusable at all times — hiding it until hover would put cancel out
-         * of reach of a keyboard.
-         */
         <div className={mergeClasses(STATUS_SLOT_CLASS, 'grid')}>
           <Spinner
             size={DIAL_ICON_SIZE.SM}
             ariaLabel={labels.jobProgressAriaLabel(job.fileName)}
-            className="col-start-1 row-start-1 opacity-100 transition-opacity group-focus-within:opacity-0 group-hover:opacity-0"
+            className="pointer-events-none col-start-1 row-start-1 opacity-100 transition-opacity group-focus-within:opacity-0 group-hover:opacity-0"
           />
           <GhostIconButton
             aria-label={labels.cancelJobAriaLabel(job.fileName)}

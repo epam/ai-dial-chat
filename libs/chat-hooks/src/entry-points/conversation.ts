@@ -28,10 +28,13 @@ export {
 } from '../conversation/useConversationHandlers/message-factory';
 export {
   hasActiveToolConfig,
+  isAnswerIncomplete,
   isMessageChanged,
+  shouldRerunGenerationOnEdit,
 } from '../conversation/useConversationHandlers/message-utils';
 export {
   getStarterConversationText,
+  getStarterDisplayText,
   getStarterSubmitText,
 } from '../conversation/useConversationHandlers/starter-option';
 export * from '../conversation/useConversationHandlers/useConversationHandlers';

@@ -1,4 +1,6 @@
+import { EventEmitter } from 'node:events';
 import http from 'node:http';
+import { Writable } from 'node:stream';
 import {
   ConflictException,
   INestApplication,
@@ -18,6 +20,7 @@ import {
 } from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
+import type { SendCompletionDto } from '../dto/send-completion.dto';
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -195,6 +198,52 @@ describe('POST /conversations/completions (integration)', () => {
       .expect(409);
   });
 
+  /*
+   * `streamCompletion` is an async generator: its body — including the
+   * `generationService.register()` call that rejects a duplicate active
+   * generation — does not run until the controller's `for await` pulls the
+   * first chunk. The rejection therefore surfaces from inside the consuming
+   * loop, after SSE headers may or may not have been sent. Before issue #8688
+   * the controller's `finally` ended the response unconditionally, flushing an
+   * empty 200 and leaving the exception filter nothing to write: a second
+   * browser tab submitting into the same conversation saw an empty LLM answer
+   * instead of a conflict.
+   */
+  it('returns 409 when the generator rejects before the stream opens', async () => {
+    mockService.streamCompletion.mockImplementation(
+      // eslint-disable-next-line require-yield
+      async function* () {
+        throw new ConflictException(
+          'A generation is already active for this conversation. Stop it before starting a new one.',
+        );
+      },
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send(VALID_COMPLETION_BODY)
+      .expect(409);
+
+    expect(res.body.message).toContain('already active');
+  });
+
+  it('ends the SSE stream without a status rewrite when the generator rejects mid-stream', async () => {
+    mockService.streamCompletion.mockImplementation(async function* (
+      ...args: unknown[]
+    ) {
+      (args[10] as () => void)();
+      yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
+      throw new Error('upstream exploded');
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send(VALID_COMPLETION_BODY)
+      .expect(200);
+
+    expect(res.text).toContain('"content":"Hi"');
+  });
+
   it('returns 400 when generationId is missing', async () => {
     const { generationId: _, ...bodyWithout } = VALID_COMPLETION_BODY;
     await request(app.getHttpServer())
@@ -308,6 +357,106 @@ describe('POST /conversations/completions (integration)', () => {
     expect(mockGenerationService.abort).not.toHaveBeenCalled();
     expect(mockGenerationService.error).not.toHaveBeenCalled();
     expect(mockGenerationService.complete).not.toHaveBeenCalled();
+  });
+
+  /*
+   * Regression check: the disconnect-during-setup path (before
+   * `onReadyToStream`/headers are sent) must keep draining the generator to
+   * completion exactly like the mid-stream disconnect above — the
+   * `writeSseChunk` swap must not change this refactor-safety guarantee.
+   */
+  it('keeps draining the generator to completion when the client disconnects before onReadyToStream fires', async () => {
+    const res = new EventEmitter() as unknown as ExpressResponse;
+    Object.assign(res, {
+      writableEnded: false,
+      setHeader: vi.fn(),
+      flushHeaders: vi.fn(),
+      write: vi.fn().mockReturnValue(true),
+      end: vi.fn(),
+    });
+
+    let reachedNaturalEnd = false;
+    mockService.streamCompletion.mockImplementation(async function* (
+      ...args: unknown[]
+    ) {
+      // Simulates the browser closing before setup finishes — no headers
+      // have been sent yet.
+      res.emit('close');
+      (args[10] as () => void)();
+      yield Buffer.from('data: [DONE]\n\n');
+      reachedNaturalEnd = true;
+    });
+
+    await new ConversationController(
+      mockService as unknown as ConversationService,
+      mockGenerationService as unknown as ConversationGenerationService,
+    ).streamCompletion(
+      { user: TEST_USER } as unknown as ExpressRequest,
+      res,
+      VALID_COMPLETION_BODY as unknown as SendCompletionDto,
+      undefined,
+    );
+
+    expect(reachedNaturalEnd).toBe(true);
+    expect(mockGenerationService.abort).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /conversations/completions — backpressure-driven detachment (direct controller)', () => {
+  const TEST_REQUEST = { user: TEST_USER } as unknown as ExpressRequest;
+
+  it('detaches the response once buffered output exceeds SSE_COMPLETION_MAX_BUFFERED_BYTES, while the generator keeps running to completion', async () => {
+    const pendingCallbacks: Array<() => void> = [];
+    const res = new Writable({
+      highWaterMark: 1024,
+      write(_chunk, _encoding, callback) {
+        // Never calls back — simulates a browser that stopped reading, so
+        // writes pile up in the internal buffer and `writableLength` grows
+        // past the threshold instead of ever draining.
+        pendingCallbacks.push(callback);
+      },
+    }) as unknown as ExpressResponse;
+    Object.assign(res, { setHeader: vi.fn(), flushHeaders: vi.fn() });
+
+    const chunkSize = 64 * 1024;
+    const totalChunks = 20; // 20 * 64 KiB = 1.25 MiB, past the 1 MiB limit
+    let reachedNaturalEnd = false;
+    const mockService = {
+      streamCompletion: vi.fn().mockImplementation(async function* (
+        ...args: unknown[]
+      ) {
+        (args[10] as () => void)();
+        for (let i = 0; i < totalChunks; i += 1) {
+          yield Buffer.alloc(chunkSize, 'x');
+        }
+        reachedNaturalEnd = true;
+      }),
+    };
+    const mockGenerationService = {
+      register: vi.fn().mockReturnValue(new AbortController()),
+      abort: vi.fn().mockReturnValue(true),
+      complete: vi.fn(),
+      error: vi.fn(),
+      getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
+    };
+
+    const controller = new ConversationController(
+      mockService as unknown as ConversationService,
+      mockGenerationService as unknown as ConversationGenerationService,
+    );
+
+    await controller.streamCompletion(
+      TEST_REQUEST,
+      res,
+      VALID_COMPLETION_BODY as unknown as SendCompletionDto,
+      undefined,
+    );
+
+    expect(reachedNaturalEnd).toBe(true);
+    // Fewer writes actually reached the underlying stream than were yielded
+    // (plus the init comment) — proof that the response was detached instead
+    // of continuing to buffer every chunk without bound.
+    expect(pendingCallbacks.length).toBeLessThan(totalChunks + 1);
   });
 });
 

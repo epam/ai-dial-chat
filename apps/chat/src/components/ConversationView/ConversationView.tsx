@@ -9,9 +9,9 @@ import {
   dialFolderPathToAttachment,
   findDeploymentByIdOrReference,
   getQuickAppConversationStarters,
-  isMessageChanged,
   isQuickAppSchema,
   referenceAttachmentToPdfCanvasContent,
+  shouldRerunGenerationOnEdit,
   useAttachmentValidation,
   useChatSettingsFormConfig,
 } from '@epam/ai-dial-chat-hooks';
@@ -34,6 +34,7 @@ import {
   type Message as MessageType,
   type StarterOption,
   type ToolMenuItem,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type { ToolsChipLabels } from '@epam/ai-dial-conversation-input';
 import type {
@@ -74,7 +75,6 @@ import {
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
   PromptSelectorI18nKeys,
-  ToolsI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -115,7 +115,9 @@ const DialFileManagerModal = lazy(async () => {
 interface Props {
   messages: MessageType[];
   onSend: (message: string, attachments: Attachment[]) => void;
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   onStop?: () => void;
   onDeleteMessage?: (messageIndex: number) => void;
   onRegenerateMessage?: (messageIndex: number) => void;
@@ -251,9 +253,11 @@ const ConversationView: FC<Props> = ({
   );
   const {
     skillMenuOverlay,
+    commandMenu,
     skillCatalogModal,
     skillDetailsPanel,
-    selectedSkillChips,
+    selectedSkillElement,
+    removeSelectedSkill,
   } = useSkillSelectorOverlay();
   /*
    * The Skills entry joins the Prompts entry in array order, so it renders
@@ -633,15 +637,20 @@ const ConversationView: FC<Props> = ({
       newAttachments: Attachment[],
     ) => {
       /*
-       * handleEditMessage no-ops if a generation is in flight or the text is
-       * unchanged (isMessageChanged mirrors that same check) — skip arming
-       * in either case so a later, unrelated update can't consume a stale index.
+       * handleEditMessage no-ops if a generation is in flight, or if nothing
+       * changed and the existing answer is complete (shouldRerunGenerationOnEdit
+       * mirrors that same check) — skip arming in either case so a later,
+       * unrelated update can't consume a stale index.
        */
-      const originalMessage = messages[messageIndex];
       if (
         !isAssistantTyping &&
-        originalMessage != null &&
-        isMessageChanged(originalMessage, text, keptAttachments, newAttachments)
+        shouldRerunGenerationOnEdit(
+          messages,
+          messageIndex,
+          text,
+          keptAttachments,
+          newAttachments,
+        )
       ) {
         armAnchor(messageIndex);
       }
@@ -1001,11 +1010,9 @@ const ConversationView: FC<Props> = ({
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
                 menuOverlays={menuOverlays}
-                selectedEntities={selectedSkillChips}
-                selectedEntityChipLabels={{
-                  removeLabel: (label) =>
-                    t(ToolsI18nKeys.RemoveTool, { label }),
-                }}
+                inlineStartSlot={selectedSkillElement}
+                onInlineStartRemove={removeSelectedSkill}
+                commandMenu={commandMenu}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
                   <UsageLimitsControl

@@ -128,6 +128,13 @@ export class ProviderRegistryService implements OnModuleInit {
           `Discovering OIDC metadata for provider: ${providerConfig.id}`,
         );
         const issuer = await Issuer.discover(providerConfig.issuer);
+        /*
+         * The configured URL is the discovery location and may be an internal
+         * cluster address. The metadata's `issuer` is the canonical identity
+         * that appears in authorization responses and tokens, so retain that
+         * value for all subsequent issuer checks.
+         */
+        providerConfig.issuer = issuer.metadata.issuer;
         const client = new issuer.Client({
           client_id: providerConfig.clientId,
           client_secret: providerConfig.clientSecret,

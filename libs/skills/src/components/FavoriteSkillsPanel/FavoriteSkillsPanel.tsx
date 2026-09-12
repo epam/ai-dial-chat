@@ -4,17 +4,13 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
-  Button,
-  ButtonAppearance,
-  ButtonVariant,
   DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
   GhostButton,
+  Highlight,
   InteractiveTooltip,
-  Spinner,
   ToggleIconButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconEye, IconStarFilled } from '@tabler/icons-react';
+import { IconStarFilled } from '@tabler/icons-react';
 import {
   useEffect,
   useLayoutEffect,
@@ -25,6 +21,7 @@ import {
 } from 'react';
 import type { FavoriteSkillItem } from '../../models/favorite-skill-item';
 import type { FavoriteSkillsPanelProps } from '../../models/favorite-skills-panel-props';
+import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
 import styles from './FavoriteSkillsPanel.module.scss';
 
 const SECTION_HEADING_CLASS_NAME = 'px-3 pb-0.5 pt-2';
@@ -35,32 +32,6 @@ const ROW_LEAVE_ANIMATION_MS = 180;
 /* Matches the max-h-72 cap on the scrollable list. */
 const LIST_MAX_HEIGHT_PX = 288;
 
-/*
- * Grace period before an unhovered tooltip panel closes, giving the pointer
- * time to cross from the row onto the panel (and back) without the panel
- * vanishing under it. Any hover or focus re-entry cancels the pending close.
- */
-const TOOLTIP_CLOSE_DELAY_MS = 300;
-
-/*
- * Fires the open notification when the tooltip panel's content mounts. The
- * kit's `InteractiveTooltip` renders its content only while open, so mounting
- * is the open event — and the only reliable one: passing `onOpenChange`
- * without `open` replaces the kit's internal open-state setter with the
- * callback, leaving the panel forever closed. Must render `null` and stay
- * first in the content so it never affects the panel's layout.
- */
-const TooltipOpenSignal: FC<{ onOpen: () => void }> = ({ onOpen }) => {
-  const onOpenRef = useRef(onOpen);
-  onOpenRef.current = onOpen;
-
-  useEffect(() => {
-    onOpenRef.current();
-  }, []);
-
-  return null;
-};
-
 /** Second-level "My Collection" panel: the user's favorite skills, or an empty-state hint, plus a "Browse" action. */
 export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
   favorites,
@@ -69,6 +40,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
   onBrowse,
   onViewDetails,
   onItemTooltipOpen,
+  searchQuery,
   labels = {},
   colors,
   nameClassName = 'dial-small-text',
@@ -81,6 +53,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
     browseLabel = 'Browse',
     removeFromFavoritesLabel = 'Remove from favorites',
     viewDetailsLabel = 'View details',
+    noMatchingSkillsLabel = 'No matching skills',
   } = labels;
 
   const cssVars = buildCssVars({
@@ -96,46 +69,21 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
     new Map<string, ReturnType<typeof setTimeout>>(),
   );
 
-  /*
-   * The row tooltip's open state is panel-controlled rather than left to the
-   * kit's internal hover logic: the kit closes the instant the pointer leaves
-   * the row-or-panel pair, which eats the panel when the pointer crosses the
-   * gap. Here, leaving either side only *schedules* a close after
-   * `TOOLTIP_CLOSE_DELAY_MS`, and entering either side cancels it. Drop this
-   * workaround (here and in `FavoritePromptsPanel`) when the ui-kit ships
-   * dropdown rows with native interactive tooltips.
-   */
-  const [openTooltipId, setOpenTooltipId] = useState<string | null>(null);
-  const tooltipCloseTimeoutRef = useRef<
-    ReturnType<typeof setTimeout> | undefined
-  >(undefined);
-
-  const cancelTooltipClose = () => {
-    clearTimeout(tooltipCloseTimeoutRef.current);
-    tooltipCloseTimeoutRef.current = undefined;
-  };
-
-  const handleTooltipOpen = (id: string) => {
-    cancelTooltipClose();
-    setOpenTooltipId(id);
-  };
-
-  const scheduleTooltipClose = () => {
-    cancelTooltipClose();
-    tooltipCloseTimeoutRef.current = setTimeout(() => {
-      setOpenTooltipId(null);
-      tooltipCloseTimeoutRef.current = undefined;
-    }, TOOLTIP_CLOSE_DELAY_MS);
-  };
-
   useEffect(() => {
     const timeouts = leaveTimeoutsRef.current;
     return () => {
       timeouts.forEach((timeout) => clearTimeout(timeout));
       timeouts.clear();
-      clearTimeout(tooltipCloseTimeoutRef.current);
     };
   }, []);
+
+  const isSearchMode = searchQuery != null;
+  const normalizedQuery = searchQuery?.toLowerCase() ?? '';
+  const visibleFavorites = isSearchMode
+    ? favorites.filter((item) =>
+        item.name.toLowerCase().includes(normalizedQuery),
+      )
+    : favorites;
 
   /*
    * Animates the scrollable list's own height as rows leave instead of
@@ -150,7 +98,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
         Math.min(listContentRef.current.scrollHeight, LIST_MAX_HEIGHT_PX),
       );
     }
-  }, [favorites]);
+  }, [favorites, searchQuery]);
 
   const handleKeyDown = (
     e: KeyboardEvent<HTMLDivElement>,
@@ -193,20 +141,25 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
         )}
         onClick={() => onSelect(item)}
         onKeyDown={(e) => handleKeyDown(e, item)}
-        onMouseEnter={() => handleTooltipOpen(item.id)}
-        onMouseLeave={scheduleTooltipClose}
-        onFocus={() => handleTooltipOpen(item.id)}
-        onBlur={scheduleTooltipClose}
       >
         <DeploymentIcon size={DIAL_ICON_SIZE.MD} initialsName={item.name} />
-        <span
-          className={mergeClasses(
-            nameClassName,
-            'min-w-0 flex-1 truncate text-start',
-          )}
-        >
-          {item.name}
-        </span>
+        {searchQuery != null ? (
+          <Highlight
+            text={item.name}
+            query={searchQuery}
+            maxLines={1}
+            className={mergeClasses(nameClassName, 'min-w-0 flex-1 text-start')}
+          />
+        ) : (
+          <span
+            className={mergeClasses(
+              nameClassName,
+              'min-w-0 flex-1 truncate text-start',
+            )}
+          >
+            {item.name}
+          </span>
+        )}
         <ToggleIconButton
           icon={
             <IconStarFilled
@@ -226,8 +179,6 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
       </div>
     );
 
-    const hasDescription = item.description != null && item.description !== '';
-
     return (
       <li
         key={item.id}
@@ -236,45 +187,25 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
         }
       >
         {/*
-         * The row stays the focus/click target (`asChild`); the tooltip only
-         * opens on hover or keyboard focus and renders nothing on touch-only
-         * devices, where tapping the row still selects the skill.
+         * The row stays the focus/click target (`asChild`); the tooltip is
+         * uncontrolled — the kit opens it on hover or keyboard focus and keeps
+         * it open while the pointer travels between the row and the panel —
+         * and renders nothing on touch-only devices, where tapping the row
+         * still selects the skill.
          */}
         <InteractiveTooltip
           asChild
-          open={openTooltipId === item.id}
           contentClassName="max-w-[550px]"
+          onOpenChange={(isOpen) => {
+            if (isOpen) onItemTooltipOpen?.(item.id);
+          }}
           content={
-            <div
-              className="flex flex-col gap-3"
-              /* Hover or focus reaching the panel cancels the close the row's leave scheduled, and vice versa. */
-              onMouseEnter={cancelTooltipClose}
-              onMouseLeave={scheduleTooltipClose}
-              onFocus={cancelTooltipClose}
-              onBlur={scheduleTooltipClose}
-            >
-              <TooltipOpenSignal onOpen={() => onItemTooltipOpen?.(item.id)} />
-              {item.isDescriptionLoading && (
-                <Spinner size={DIAL_ICON_SIZE.SM} />
-              )}
-              {!item.isDescriptionLoading && hasDescription && (
-                <p className="text-start">{item.description}</p>
-              )}
-              {/* The action is reachable regardless of the description's state — loading, resolved, or absent. */}
-              <Button
-                variant={ButtonVariant.Primary}
-                appearance={ButtonAppearance.Link}
-                label={viewDetailsLabel}
-                iconBefore={
-                  <IconEye
-                    size={DIAL_ICON_SIZE.SM}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                  />
-                }
-                onClick={() => onViewDetails(item)}
-              />
-            </div>
+            <SkillInfoTooltipContent
+              description={item.description}
+              isDescriptionLoading={item.isDescriptionLoading}
+              viewDetailsLabel={viewDetailsLabel}
+              onViewDetails={() => onViewDetails(item)}
+            />
           }
         >
           {row}
@@ -283,8 +214,52 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
     );
   };
 
+  /*
+   * In search mode an empty list is the filter's result, not the empty
+   * favorites state, so it gets its own hint — announced via aria-live since
+   * the user is typing and the change has no other confirmation. An empty
+   * query still shows every row, so it never reaches the no-matching branch.
+   */
+  const renderListBody = () => {
+    if (visibleFavorites.length > 0) {
+      return (
+        <ul className="flex flex-col gap-1 px-1 pb-1">
+          {visibleFavorites.map(renderRow)}
+        </ul>
+      );
+    }
+
+    if (isSearchMode && normalizedQuery !== '') {
+      return (
+        <p
+          role="status"
+          aria-live="polite"
+          className={mergeClasses(
+            emptyHintClassName,
+            'px-4 py-4 text-start',
+            styles.emptyHint,
+          )}
+        >
+          {noMatchingSkillsLabel}
+        </p>
+      );
+    }
+
+    return (
+      <p
+        className={mergeClasses(
+          emptyHintClassName,
+          'px-4 py-4 text-start',
+          styles.emptyHint,
+        )}
+      >
+        {emptyHintLabel}
+      </p>
+    );
+  };
+
   return (
-    <div className="flex min-w-[240px] flex-col" style={cssVars}>
+    <div className="flex w-[280px] flex-col" style={cssVars}>
       <p
         className={mergeClasses(
           headerClassName,
@@ -302,23 +277,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
         )}
         style={{ maxHeight: listHeight }}
       >
-        <div ref={listContentRef}>
-          {favorites.length > 0 ? (
-            <ul className="flex flex-col gap-1 px-1 pb-1">
-              {favorites.map(renderRow)}
-            </ul>
-          ) : (
-            <p
-              className={mergeClasses(
-                emptyHintClassName,
-                'px-4 py-4 text-start',
-                styles.emptyHint,
-              )}
-            >
-              {emptyHintLabel}
-            </p>
-          )}
-        </div>
+        <div ref={listContentRef}>{renderListBody()}</div>
       </div>
 
       <div className={mergeClasses('border-t px-2 py-3', styles.footer)}>

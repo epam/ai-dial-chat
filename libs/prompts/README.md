@@ -57,12 +57,11 @@ render.
 
 Each row with a non-empty `description` is wrapped in the ui-kit
 `InteractiveTooltip` (`asChild`, so the row stays the focus and click target).
-The tooltip opens on hover or keyboard focus and stays open while the pointer
-is on the row or the panel — leaving either side only schedules a close after
-a short grace period (300 ms), which entering either side cancels, so the
-pointer can travel between them; on a touch-only device it renders nothing
-and the row still inserts the prompt on tap. Rows without a description are
-not wrapped at all — no tooltip appears for them.
+The tooltip is uncontrolled: the kit opens it on hover or keyboard focus and
+keeps it open while the pointer is on the row or the panel — including while
+it travels between them; on a touch-only device it renders nothing and the
+row still inserts the prompt on tap. Rows without a description are not
+wrapped at all — no tooltip appears for them.
 
 Clicking a row's star plays a short exit animation first, so
 `onToggleFavorite` fires ~180 ms after the click rather than synchronously.

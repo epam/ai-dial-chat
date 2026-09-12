@@ -74,6 +74,28 @@ under the current `conversationId`'s path.
 - **THEN** the starter is held as `pendingStarterContext` instead of being
   submitted immediately, until `handleConfirmStarter` is called
 
+### Requirement: Starter text comes from the clicked button, not the group
+`getStarterSubmitText` and `getStarterDisplayText` SHALL resolve a starter's
+own `dial:widgetOptions.populateText` in preference to the `description`
+passed alongside it. `description` is the schema property's shared
+intro/question text and is constant for every button in a group, so it SHALL
+be used only as a fallback for a starter that carries no text of its own.
+`getStarterSubmitText` SHALL keep returning `''` for a submit button whose
+`populateText` is explicitly `null`; `getStarterDisplayText` SHALL fall back
+to `starter.title` in that case. `submitStarter` SHALL derive the optimistic
+user message's content from `getStarterDisplayText`.
+
+#### Scenario: Each button of a described group submits its own text
+- **WHEN** `handleButtonSelect(starter, 'button', 'Follow-Up Questions')` is
+  called for two starters with different `populateText` values
+- **THEN** each call streams that starter's own `populateText`, and neither
+  streams `'Follow-Up Questions'`
+
+#### Scenario: Description still fills in for a starter with no text
+- **WHEN** a non-submit starter has `populateText: null` and a `description`
+  is supplied
+- **THEN** `getStarterSubmitText` returns the `description`
+
 ### Requirement: Injected model resolution and navigation outcome
 The hook SHALL accept a `resolveModelId` function in place of reading
 `DeploymentsContext`/a fixed-model override directly, and an

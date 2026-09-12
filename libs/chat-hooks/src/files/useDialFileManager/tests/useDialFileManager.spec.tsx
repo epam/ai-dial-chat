@@ -1403,6 +1403,38 @@ describe('useDialFileManager', () => {
       });
     });
 
+    describe('dateOptions', () => {
+      it('formats the modification timestamp with both date and 24-hour time', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager(buildOptions({ bucket: BUCKET })),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        const formatted = new Intl.DateTimeFormat('en-GB', {
+          ...result.current.dateOptions,
+          timeZone: 'UTC',
+        }).format(new Date(Date.UTC(2026, 8, 7, 14, 35)));
+
+        /* The month abbreviation ("Sep" vs "Sept") varies by ICU version. */
+        expect(formatted).toMatch(/^07 \w+\.? 2026, 14:35$/);
+      });
+
+      it('keeps the clock 24-hour in a locale that defaults to AM/PM', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager(buildOptions({ bucket: BUCKET })),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        const formatted = new Intl.DateTimeFormat('en-US', {
+          ...result.current.dateOptions,
+          timeZone: 'UTC',
+        }).format(new Date(Date.UTC(2026, 8, 7, 14, 35)));
+
+        expect(formatted).toContain('14:35');
+        expect(formatted).not.toMatch(/[AP]M/);
+      });
+    });
+
     describe('actionLabels', () => {
       it('includes Delete on MyFiles tab', async () => {
         const { result } = renderHook(() =>

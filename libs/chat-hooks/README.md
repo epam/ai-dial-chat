@@ -145,8 +145,10 @@ const {
 // ./conversation
 import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks/conversation';
 
-/* Returns the model deployment id from the most recent `model_changed`
-   status message, or null if the conversation never switched models. */
+/* Returns the deployment the conversation was last running on — scanning
+   backwards, a `model_changed` status message's `new_deployment_id` or a
+   message's own `deploymentId`, whichever comes later. Null when the
+   conversation records neither. */
 const newDeploymentId = getLastDeploymentId(conversation.messages);
 ```
 
@@ -851,6 +853,7 @@ const ChatPage = ({
 | `channel`        | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.          |
 | `overlay`        | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.          |
 | `onStopError`    | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                         |
+| `generationConflictMessage` | `string` | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`. |
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
 
@@ -935,7 +938,38 @@ const ChatPage = ({
 state updater, so a host may update its own state from it — for example dropping
 the deleted conversation from a list it renders.
 
-Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`, and `getStarterConversationText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
+Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`/`isAnswerIncomplete`/`shouldRerunGenerationOnEdit`, and `getStarterConversationText`/`getStarterDisplayText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
+
+The three starter-text helpers share one precedence rule: a starter's own
+`dial:widgetOptions.populateText` always wins, and the schema property's shared
+`description` is only a fallback for a starter that carries no text of its own —
+otherwise every button in a described group would produce the same message.
+`getStarterSubmitText` additionally returns `''` for a submit button whose
+`populateText` is explicitly `null` ("submit no text"), and
+`getStarterDisplayText` falls back to `starter.title` in that case so the user's
+message bubble still shows the button label.
+
+```ts
+import {
+  getStarterDisplayText,
+  getStarterSubmitText,
+} from '@epam/ai-dial-chat-hooks';
+
+const starter = {
+  const: 0,
+  title: 'How does feature X work?',
+  'dial:widgetOptions': {
+    populateText:
+      'How does feature X work, and what are its configuration options?',
+    submit: true,
+    confirmationMessage: null,
+  },
+};
+
+// Both ignore the group description and use the starter's own populateText.
+getStarterSubmitText(starter, 'Follow-Up Questions');
+getStarterDisplayText(starter, 'Follow-Up Questions');
+```
 
 ### useAttachmentValidation
 
@@ -1650,6 +1684,21 @@ const { streamCompletion, stopCompletion } = createChatStreamApi({
 });
 ```
 
+`streamCompletion` reports a `409` from the completions endpoint as a `GenerationConflictError` (message defaulting to `DEFAULT_GENERATION_CONFLICT_MESSAGE`) rather than a generic transport error, so callers can present it as an expected state — the conversation is already generating, typically in another browser tab of the same session. `useConversationStream` uses that distinction to show its `generationConflictMessage`. Both the error class and the default message are exported:
+
+```ts
+import {
+  DEFAULT_GENERATION_CONFLICT_MESSAGE,
+  GenerationConflictError,
+} from '@epam/ai-dial-chat-hooks';
+
+onError: (error: Error) => {
+  if (error instanceof GenerationConflictError) {
+    showNotice(t('chat.generationConflict'));
+  }
+};
+```
+
 ### getApiErrorDetails / getApiErrorMessage / getApiErrorStatus / isConversationNotFoundError
 
 Host-agnostic API error/trace-ID normalization. Works identically for a generated-client `ResponseError` or any host's own raw-fetch request-error shape.
@@ -2084,7 +2133,7 @@ const statusMessage = createDeploymentChangedMessage('gpt-4', 'gpt-4o');
 
 ### isMessageStreaming / getLastDeploymentId / messageHasStages / getLastUserMessageToolConfiguration / normalizeResponseFormat
 
-Pure predicates/lookups over a conversation's `Message[]`: whether a message is the actively-streaming assistant response, the last deployment a `model_changed` status message recorded, whether a message carries any stages, the last user message's persisted tool-configuration value, and normalizing a legacy `responseFormat` string to the current enum.
+Pure predicates/lookups over a conversation's `Message[]`: whether a message is the actively-streaming assistant response, the deployment the conversation was last running on (the later of a `model_changed` status message's `new_deployment_id` and a message's own `deploymentId`), whether a message carries any stages, the last user message's persisted tool-configuration value, and normalizing a legacy `responseFormat` string to the current enum.
 
 ```ts
 import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks';
@@ -3164,6 +3213,30 @@ Pass the exact annotation object selected in the citation popup. The mapper find
 its group by membership (cit groups can share a URL), filters highlights to that
 annotation's PDF, and sets `page` from its first valid `pdf_bbox` body selector.
 Missing/invalid pages leave `page` unset; nonexistent highlight IDs are omitted.
+
+Office (DOCX/PPTX/XLSX) citation previews use
+`annotationToOoxmlCanvasContent(annotation, annotations, resolvers)` — the sibling
+mapper for `OoxmlCanvasContent`. Unlike the PDF mapper's `groups` parameter, it takes
+the message's full resolved annotation list and gathers same-source annotations
+across it (`gatherSameSourceAnnotations` from `@epam/ai-dial-quotations`), so a
+citation behind a different marker that cites the same document is still included.
+Returns `null` when there is no source attachment, the source is not a format
+`@silurus/ooxml` renders as DOCX/XLSX/PPTX (a CSV source returns `null` too — citation
+highlighting targets Office documents only), or no URL resolves. A missing or
+unresolvable selector still returns content — just with no `highlights` field —
+rather than `null`, so the document opens without a highlight instead of falling
+through to a plain attachment open.
+
+```ts
+import { annotationToOoxmlCanvasContent } from '@epam/ai-dial-chat-hooks';
+
+const content = annotationToOoxmlCanvasContent(
+  clickedAnnotation,
+  messageAnnotations,
+  resolvers,
+);
+if (content != null) openCanvas(content, fileName);
+```
 
 ### attachmentDtoToDisplayAttachment / attachmentDtosToDisplayAttachments / annotationToDisplayAttachment
 

@@ -2,7 +2,9 @@ import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   mergeClasses,
+  useAvailableHeightCap,
 } from '@epam/ai-dial-chat-shared';
 import {
   Input,
@@ -67,6 +69,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   styles: formStyles,
 }) => {
   const instructionsEditorId = useId();
+  const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
   const { colors, typography } = formStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const sectionTitleClassName =
@@ -407,16 +410,23 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           >
             {labels.instructionsLabel}
           </label>
-          <Suspense fallback={<Spinner />}>
-            <MarkdownEditor
-              id={instructionsEditorId}
-              value={values.prompt}
-              onChange={(value) => onFieldChange('prompt', value)}
-              height={480}
-              className={MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME}
-              theme={markdownEditorTheme}
-            />
-          </Suspense>
+          <div
+            ref={instructionsCapRef}
+            className={mergeClasses(
+              MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+              MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+            )}
+          >
+            <Suspense fallback={<Spinner />}>
+              <MarkdownEditor
+                id={instructionsEditorId}
+                value={values.prompt}
+                onChange={(value) => onFieldChange('prompt', value)}
+                height={480}
+                theme={markdownEditorTheme}
+              />
+            </Suspense>
+          </div>
           {errors.prompt && (
             <p
               className={mergeClasses(

@@ -2,7 +2,7 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  DialConditionalResizableContainer,
+  ConditionalResizableContainer,
   GhostIconButton,
   ResizableContainerSide,
 } from '@epam/ai-dial-ui-kit';
@@ -211,9 +211,10 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
         styles.panel,
       )}
     >
-      <DialConditionalResizableContainer
+      <ConditionalResizableContainer
         enabled={(resizable ?? false) && isOpen}
         side={resizableSide}
+        ariaLabel={labels.resizeLabel ?? 'Resize panel'}
         width={
           isOpen ? animationMaxWidth || currentWidthRef.current : undefined
         }
@@ -257,7 +258,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
             {children}
           </div>
         </aside>
-      </DialConditionalResizableContainer>
+      </ConditionalResizableContainer>
     </div>
   );
 };

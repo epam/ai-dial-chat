@@ -4,11 +4,7 @@ import {
   SidebarOrientation,
   SidebarPanel,
 } from '@epam/ai-dial-sidebar';
-import {
-  DialNoDataContent,
-  GhostIconButton,
-  Search,
-} from '@epam/ai-dial-ui-kit';
+import { GhostIconButton, NoDataContent, Search } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import {
   memo,
@@ -105,7 +101,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
   if (isGloballyEmpty) {
     bodyContent = (
       <div className="flex h-full items-center justify-center">
-        <DialNoDataContent title={labels.noDataLabel} />
+        <NoDataContent title={labels.noDataLabel} />
       </div>
     );
   } else {

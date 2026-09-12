@@ -1,13 +1,8 @@
-import { DeploymentIcon } from '@epam/ai-dial-chat-shared';
 import type {
+  CommandMenuConfig,
   MenuOverlayConfig,
-  SelectedEntityChip,
 } from '@epam/ai-dial-conversation-input';
-import {
-  BASE_ICON_SIZE,
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-} from '@epam/ai-dial-ui-kit';
+import { BASE_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconBlocks } from '@tabler/icons-react';
 import {
   Suspense,
@@ -17,6 +12,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { ChatSkill } from '../../components/ChatSkill/ChatSkill';
 import { FavoriteSkillsPanel } from '../../components/FavoriteSkillsPanel/FavoriteSkillsPanel';
 import { SkillCatalogModal } from '../../components/SkillCatalogModal/SkillCatalogModal';
 import {
@@ -32,9 +28,10 @@ import type {
 /**
  * Owns the Skills Add-menu flow: the favorites overlay with lazily resolved
  * row descriptions, the "Use skill" browse modal's open state, the skill
- * details side panel's open state, and the single selected skill shown as an
- * input chip. The host injects the listing data, favorites state, the
- * description fetch, labels, and the modal/panel components.
+ * details side panel's open state, and the single selected skill rendered as
+ * the input's inline `ChatSkill` element. The host injects the listing data,
+ * favorites state, the description fetch, labels, and the modal/panel
+ * components.
  */
 export const useSkillSelectorOverlay = ({
   isEnabled,
@@ -52,6 +49,7 @@ export const useSkillSelectorOverlay = ({
     addMenuLabel = 'Skills',
     backLabel = 'Back',
     catalogModalTitleLabel = 'Use skill',
+    emptyQueryHintLabel = 'Type to filter',
     panelLabels,
   } = labels ?? {};
 
@@ -106,8 +104,7 @@ export const useSkillSelectorOverlay = ({
   /*
    * Resolved from `allSkills` on every render rather than captured at
    * selection time, so a skill picked while the listing is still loading
-   * (e.g. via a one-shot route state) renders its chip once the listing
-   * settles.
+   * (e.g. via a one-shot route state) renders once the listing settles.
    */
   const selectedSkill = useMemo(
     () => allSkills.find((skill) => skill.url === selectedSkillId) ?? null,
@@ -118,26 +115,9 @@ export const useSkillSelectorOverlay = ({
     setSelectedSkillId(skillId);
   }, []);
 
-  const handleRemoveSelectedSkill = useCallback(() => {
+  const removeSelectedSkill = useCallback(() => {
     setSelectedSkillId(null);
   }, []);
-
-  const selectedSkillChips = useMemo<SelectedEntityChip[]>(() => {
-    if (selectedSkill == null) return [];
-    return [
-      {
-        id: selectedSkill.url,
-        label: selectedSkill.name,
-        icon: (
-          <DeploymentIcon
-            size={DIAL_ICON_SIZE.SM}
-            initialsName={selectedSkill.name}
-          />
-        ),
-        onRemove: handleRemoveSelectedSkill,
-      },
-    ];
-  }, [selectedSkill, handleRemoveSelectedSkill]);
 
   /*
    * Deferred condition: DIAL Core's skill listing metadata carries no
@@ -172,6 +152,26 @@ export const useSkillSelectorOverlay = ({
     },
     [skillDescriptions, fetchSkillDescription],
   );
+
+  /*
+   * The selected skill's inline form: the shared tooltip content and the same
+   * lazy description fetch as the favorites rows. The element carries no
+   * remove control — removal is the input's Backspace-at-start gesture via
+   * `removeSelectedSkill` (wired to `onInlineStartRemove`). "View details"
+   * opens the same side panel the rows' action opens.
+   */
+  const selectedSkillElement: ReactNode =
+    selectedSkill == null ? null : (
+      <ChatSkill
+        name={selectedSkill.name}
+        path={selectedSkill.url}
+        description={skillDescriptions.get(selectedSkill.url) ?? undefined}
+        isDescriptionLoading={pendingDescriptionIds.has(selectedSkill.url)}
+        onTooltipOpen={handleItemTooltipOpen}
+        onViewDetails={setDetailsSkillId}
+        labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+      />
+    );
 
   const renderOverlay = useCallback(
     (onClose: () => void): ReactNode => (
@@ -221,6 +221,55 @@ export const useSkillSelectorOverlay = ({
     [addMenuLabel, backLabel, renderOverlay],
   );
 
+  /*
+   * The slash-command menu: same favorites panel as the Add-menu overlay, but
+   * in search mode over the typed query. Every action consumes the `/query`
+   * text from the textarea first (`close({ consumeQuery: true })`), so it is
+   * never sent — including "View details", which would otherwise leave a
+   * stale query behind while the side panel opens.
+   */
+  const commandMenu = useMemo<CommandMenuConfig | undefined>(
+    () =>
+      isEnabled
+        ? {
+            triggerPrefix: '/',
+            menuLabel: addMenuLabel,
+            emptyQueryHint: emptyQueryHintLabel,
+            renderMenu: ({ query, close }) => (
+              <FavoriteSkillsPanel
+                favorites={favoriteSkillItems}
+                searchQuery={query}
+                onSelect={(item) => {
+                  close({ consumeQuery: true });
+                  selectSkill(item.id);
+                }}
+                onToggleFavorite={onToggleFavorite}
+                onBrowse={() => {
+                  close({ consumeQuery: true });
+                  setIsCatalogOpen(true);
+                }}
+                onViewDetails={(item) => {
+                  close({ consumeQuery: true });
+                  setDetailsSkillId(item.id);
+                }}
+                onItemTooltipOpen={handleItemTooltipOpen}
+                labels={panelLabels}
+              />
+            ),
+          }
+        : undefined,
+    [
+      isEnabled,
+      addMenuLabel,
+      emptyQueryHintLabel,
+      favoriteSkillItems,
+      selectSkill,
+      onToggleFavorite,
+      handleItemTooltipOpen,
+      panelLabels,
+    ],
+  );
+
   const skillCatalogModal = (
     <SkillCatalogModal
       isOpen={isCatalogOpen}
@@ -250,18 +299,22 @@ export const useSkillSelectorOverlay = ({
   if (!isEnabled) {
     return {
       skillMenuOverlay: undefined,
+      commandMenu: undefined,
       skillCatalogModal: null,
       skillDetailsPanel: null,
-      selectedSkillChips: [],
+      selectedSkillElement: null,
       selectSkill: () => undefined,
+      removeSelectedSkill: () => undefined,
     };
   }
 
   return {
     skillMenuOverlay,
+    commandMenu,
     skillCatalogModal,
     skillDetailsPanel,
-    selectedSkillChips,
+    selectedSkillElement,
     selectSkill,
+    removeSelectedSkill,
   };
 };

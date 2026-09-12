@@ -30,6 +30,7 @@
     "greetingNightNoName": "Good night",
     "placeholder": "How can I help you today?",
     "streamError": "Something went wrong while generating the response.",
+    "generationConflict": "A response is already being generated in this conversation, possibly in another browser tab. Wait for it to finish or stop it before sending another message.",
     "createConversationError": "Failed to create the conversation. Please try again.",
     "conversationNotFound": "The conversation was not found.",
     "isolatedModelNotFoundTitle": "Model not available",
@@ -323,7 +324,9 @@
   "skillSelector": {
     "addMenuLabel": "Skills",
     "emptyHint": "Star a skill to pin it here",
+    "emptyQueryHint": "Type to filter",
     "modalTitle": "Use skill",
+    "noMatchingSkillsLabel": "No matching skills",
     "viewDetailsLabel": "View details"
   },
   "notFound": {
@@ -364,7 +367,7 @@
     "deleteMessage": "Delete message",
     "regenerateResponse": "Regenerate response",
     "copyResponse": "Copy response",
-    "copyAsMarkdown": "Copy markdown",
+    "copyAsMarkdown": "Copy as Markdown",
     "copyAsCsv": "Copy as CSV",
     "openInCanvas": "Open in canvas",
     "copyAsTxt": "Copy as TXT",
@@ -967,7 +970,9 @@
     "pdfContentErrorLabel": "Failed to load the PDF viewer",
     "xlsxFormulaLabel": "Formula",
     "codeContentLoadingLabel": "Loading syntax highlighting…",
-    "codeContentErrorLabel": "Failed to load syntax highlighting"
+    "codeContentErrorLabel": "Failed to load syntax highlighting",
+    "ooxmlHighlightsLabel": "Cited locations",
+    "ooxmlHighlightNavigatedLabel": "Scrolled to the cited location"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",

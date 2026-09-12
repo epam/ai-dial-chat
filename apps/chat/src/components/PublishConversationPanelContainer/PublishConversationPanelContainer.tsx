@@ -8,6 +8,7 @@ import type { FC, RefObject } from 'react';
 import { memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ConversationPublishI18nKeys,
   PublishI18nKeys,
@@ -22,7 +23,10 @@ import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
-import { getAccessRulesLabels } from '../../utils/publish';
+import {
+  getAccessRulesLabels,
+  getPublishFolderLabel,
+} from '../../utils/publish';
 
 const EMPTY_HISTORY: PublishHistoryEntry[] = [];
 
@@ -104,7 +108,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
         EntityOperation.PublishRequested,
         {
           name: conversationTitle,
-          folder: folderPath[folderPath.length - 1],
+          folder: getPublishFolderLabel(folderPath, t),
         },
       );
     },
@@ -173,6 +177,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
           ConversationPublishI18nKeys.DuplicateFolderNameError,
         ),
         submitError: t(PublishI18nKeys.SubmitErrorCallout),
+        rootFolderLabel: t(BasicI18nKeys.Organization),
         accessRulesLabels: getAccessRulesLabels(t),
       }}
       labels={{

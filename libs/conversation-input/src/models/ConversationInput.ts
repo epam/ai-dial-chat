@@ -4,16 +4,16 @@ import type {
   DeploymentItem,
   DisplayAttachment,
   ToolMenuItem,
+  UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type {
   ChatSettingsConfig,
+  CommandMenuConfig,
   InputColors,
   InputTypography,
   MenuOverlayConfig,
   ModelSelectorLabels,
-  SelectedEntityChip,
-  SelectedEntityChipsLabels,
   SendOnEnter,
   ToolsChipLabels,
 } from './Input';
@@ -47,6 +47,12 @@ export interface ConversationInputStyles {
 export interface EditMessageInputProps {
   /** Initial message text pre-populated in the textarea. */
   message?: string;
+  /**
+   * Host-supplied content rendered inside the text area at its inline-start;
+   * typed text starts after it on the first line and wraps at full width
+   * below. Forwarded to the inner `Input`.
+   */
+  inlineStartSlot?: ReactNode;
   /** Pre-existing attachments from the original message, shown in the attachment tray. */
   initialAttachments?: DisplayAttachment[];
   /** Called when the user clicks the Cancel button. */
@@ -57,8 +63,10 @@ export interface EditMessageInputProps {
     keptAttachments: DisplayAttachment[],
     newAttachments: Attachment[],
   ) => void;
-  /** Called immediately after a new attachment is added. Returns the uploaded attachment URL. */
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  /** Called immediately after a new attachment is added. Returns the uploaded attachment URL and stored name. */
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   /** Label for the Cancel button. Defaults to `'Cancel'`. */
   cancelLabel?: string;
   /** Label for the Save & Submit button. Defaults to `'Save & Submit'`. */
@@ -164,8 +172,10 @@ export interface ConversationInputProps {
   welcomeText?: string;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
   onSend?: (message: string, attachments: Attachment[]) => void;
-  /** Called immediately after an attachment is added. Returns the uploaded attachment URL. */
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  /** Called immediately after an attachment is added. Returns the uploaded attachment URL and stored name. */
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   /** Called when the user clicks the stop button during streaming. */
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button and blocks Enter. */
@@ -361,12 +371,23 @@ export interface ConversationInputProps {
    */
   menuOverlays?: MenuOverlayConfig[];
   /**
-   * Selected entities rendered as removable chips where the tool chips
-   * render. Forwarded to the inner `Input`. Empty or absent renders no row.
+   * Host-supplied content rendered inside the text area at its inline-start;
+   * typed text starts after it on the first line and wraps at full width
+   * below. Forwarded to the inner `Input`.
    */
-  selectedEntities?: SelectedEntityChip[];
-  /** Labels for the selected-entity chips rendered in the input. Forwarded to the inner `Input`. */
-  selectedEntityChipLabels?: SelectedEntityChipsLabels;
+  inlineStartSlot?: ReactNode;
+  /**
+   * Called when Backspace is pressed with the caret collapsed at position 0
+   * while `inlineStartSlot` is present (the slot's remove gesture). Forwarded
+   * to the inner `Input`.
+   */
+  onInlineStartRemove?: () => void;
+  /**
+   * Host-injected slash-command menu: typing `triggerPrefix` as the first
+   * character of an empty textarea opens an overlay above the input with
+   * host-rendered, query-filtered content. Forwarded to the inner `Input`.
+   */
+  commandMenu?: CommandMenuConfig;
   /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
   usageLimitsSlot?: ReactNode;
   /**

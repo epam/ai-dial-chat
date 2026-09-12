@@ -322,6 +322,21 @@ describe('ImportExportQueue', () => {
         screen.getByRole('img', { name: 'Exporting export.dial' }),
       ).toBeTruthy();
     });
+
+    /*
+     * A class assertion because the defect it guards is a hit-testing one, and
+     * jsdom does not hit-test: the faded spinner's own stacking context paints
+     * it over the button they share a grid cell with, so without this class the
+     * pointer never reaches cancel at all (issue #8665).
+     */
+    it('is not covered by the spinner it shares a cell with', () => {
+      renderQueue({ jobs: [makeJob({ fileName: 'export.dial' })] });
+
+      /* The queue root is the first live region; the row's spinner is the second. */
+      const [, spinner] = screen.getAllByRole('status');
+
+      expect(spinner.className).toContain('pointer-events-none');
+    });
   });
 
   describe('header', () => {
