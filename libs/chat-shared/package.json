@@ -36,54 +36,11 @@
   },
   "peerDependencies": {
     "react": "^19.2.6",
-    "@tabler/icons-react": "^3.44.0",
-    "react-syntax-highlighter": "^16.1.1",
-    "react-markdown": "^10.1.0",
-    "remark-breaks": "^4.0.0",
-    "remark-gfm": "^4.0.1",
-    "remark-math": "^6.0.0",
-    "rehype-katex": "^7.0.1",
-    "rehype-raw": "^7.0.0",
-    "rehype-sanitize": "^6.0.0",
-    "katex": "^0.16.22",
     "@epam/ai-dial-ui-kit": "^0.14.0-dev.15",
     "@epam/ai-dial-react-file-manager": "^0.2.0-dev.10",
     "ag-grid-community": "^35.3.0"
   },
   "peerDependenciesMeta": {
-    "@tabler/icons-react": {
-      "optional": true
-    },
-    "react-syntax-highlighter": {
-      "optional": true
-    },
-    "react-markdown": {
-      "optional": true
-    },
-    "remark-breaks": {
-      "optional": true
-    },
-    "remark-gfm": {
-      "optional": true
-    },
-    "remark-math": {
-      "optional": true
-    },
-    "rehype-katex": {
-      "optional": true
-    },
-    "rehype-raw": {
-      "optional": true
-    },
-    "rehype-sanitize": {
-      "optional": true
-    },
-    "katex": {
-      "optional": true
-    },
-    "@epam/ai-dial-ui-kit": {
-      "optional": true
-    },
     "@epam/ai-dial-react-file-manager": {
       "optional": true
     },
@@ -92,9 +49,19 @@
     }
   },
   "dependencies": {
+    "@tabler/icons-react": "^3.44.0",
     "classnames": "2.5.1",
     "dompurify": "3.4.13",
+    "katex": "^0.16.22",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.1",
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
     "rehype-stringify": "^10.0.1",
+    "remark-breaks": "^4.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
     "tailwind-merge": "^3.6.0",
