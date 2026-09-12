@@ -18,8 +18,9 @@
 //   4. A package declared a dependency by one lib and a required peer by
 //      another — `@epam/ai-dial-ui-kit` was, and hosts needed a `resolutions`
 //      pin to collapse the two copies npm installed.
-//   5. A shipped `"*"` version spec — it accepts the next breaking major, so
-//      `@epam/ai-dial-ui-kit: "*"` in 11 libs constrained nothing at all.
+//   5. A shipped version spec with no upper bound — it accepts the next
+//      breaking major, so `@epam/ai-dial-ui-kit: "*"` in 11 libs and
+//      `@epam/pdf-highlighter-kit: ">=0.0.14"` constrained nothing at all.
 //   6. Broken relative links — every link to a file that no longer exists
 //      (`docs/environment-variables-migration-guide.md` after its removal).
 //   7. Phantom exports — a name a lib README imports from its own package that
@@ -269,18 +270,22 @@ const checkDependencyRoleConsistency = () => {
   }
 };
 
-/* ── 5. No published lib ships a "*" version spec ── */
+/* ── 5. No published lib ships a version spec without an upper bound ── */
 
 /*
- * `"*"` accepts every version ever published, including the next breaking
- * major, so the declaration constrains nothing — npm will not warn, and the
- * host discovers the mismatch at runtime.
+ * A spec with no upper bound accepts the next breaking major, so it constrains
+ * nothing that matters — npm will not warn, and the host discovers the
+ * mismatch at runtime. `"*"` is the obvious form; `">=0.0.14"` is the same
+ * defect written longhand, which is how `@epam/pdf-highlighter-kit` sat in
+ * `chat-hooks` while every lib that actually used it wanted `^0.0.18`.
  *
- * A `"*"` on a sibling under `libs/` is exempt: `tools/publish-lib.mjs`
- * rewrites workspace-lib specs to the release version, so that placeholder is
- * never what reaches npm. Everything else ships exactly as written.
+ * A sibling under `libs/` is exempt: `tools/publish-lib.mjs` rewrites
+ * workspace-lib specs to the release version, so such a placeholder is never
+ * what reaches npm. Everything else ships exactly as written.
  */
-const checkNoWildcardVersions = () => {
+const UNBOUNDED_RANGE = /^\s*(\*|x|latest|>=?[^<]*)$/i;
+
+const checkNoUnboundedVersions = () => {
   const workspacePackages = new Set(
     projectDirs('libs')
       .map((dir) => readJson(`${dir}/package.json`)?.name)
@@ -294,11 +299,12 @@ const checkNoWildcardVersions = () => {
 
     for (const field of ['dependencies', 'peerDependencies']) {
       for (const [name, range] of Object.entries(pkg[field] ?? {})) {
-        if (range !== '*' || workspacePackages.has(name)) continue;
+        if (workspacePackages.has(name)) continue;
+        if (range !== '' && !UNBOUNDED_RANGE.test(range)) continue;
 
         fail(
           path,
-          `"${field}.${name}" is "*", which accepts any version including the next breaking major — ` +
+          `"${field}.${name}" is "${range}", which has no upper bound and so accepts the next breaking major — ` +
             'declare the range this lib is actually built against (see .claude/rules/libs.md)',
         );
       }
@@ -432,7 +438,7 @@ if (!explicitFiles) {
   checkLibPackageMetadata();
   checkLibStylesExport();
   checkDependencyRoleConsistency();
-  checkNoWildcardVersions();
+  checkNoUnboundedVersions();
 }
 
 for (const file of files) {
@@ -464,5 +470,5 @@ if (errors.length > 0) {
 
 console.log(`Documentation validation passed (${files.length} markdown files).`);
 console.log(
-  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, wildcard version specs, relative links, README imports vs public exports.',
+  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, unbounded version specs, relative links, README imports vs public exports.',
 );

@@ -69,21 +69,25 @@ a workspace dependency to a lib the fixture covers, nothing extra is needed —
 the closure is computed from the manifests. If you make the fixture cover
 another lib, keep that behaviour.
 
-### Never declare a version as `*`
+### Every version spec needs an upper bound
 
-`"*"` accepts every version ever published, including the next breaking major,
-so the declaration constrains nothing at all — npm stays silent and the host
-finds out at runtime. Declare the range the lib is actually built against;
-`@epam/ai-dial-ui-kit` sat at `"*"` in 11 libs, which is how a kit upgrade could
-have reached a host unannounced.
+A spec that does not cap the major accepts the next breaking release, so it
+constrains nothing that matters — npm stays silent and the host finds out at
+runtime. Declare the range the lib is actually built against, normally a caret.
+
+`"*"` is the obvious form, and it sat on `@epam/ai-dial-ui-kit` in 11 libs —
+enough for a kit major to reach a host unannounced. `">=0.0.14"` is the same
+defect written longhand, which is how `chat-hooks` accepted any
+`@epam/pdf-highlighter-kit` while every lib that actually used it wanted
+`^0.0.18`. `"latest"` and `"x"` are the same thing again.
 
 The one exception is a sibling under `libs/`: `tools/publish-lib.mjs` rewrites
-workspace-lib specs to the release version, so that `"*"` is a placeholder that
-never reaches npm.
+workspace-lib specs to the release version, so a placeholder there never
+reaches npm.
 
 A README that annotates a peer with a version must quote the manifest's range
-verbatim — that is the number a host copies. `npm run validate:docs` fails on a
-shipped `"*"`.
+verbatim — that is the number a host copies. `npm run validate:docs` fails on
+an unbounded spec.
 
 ### One package, one role
 
