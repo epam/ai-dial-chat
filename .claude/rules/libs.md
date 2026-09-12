@@ -69,6 +69,22 @@ a workspace dependency to a lib the fixture covers, nothing extra is needed —
 the closure is computed from the manifests. If you make the fixture cover
 another lib, keep that behaviour.
 
+### Never declare a version as `*`
+
+`"*"` accepts every version ever published, including the next breaking major,
+so the declaration constrains nothing at all — npm stays silent and the host
+finds out at runtime. Declare the range the lib is actually built against;
+`@epam/ai-dial-ui-kit` sat at `"*"` in 11 libs, which is how a kit upgrade could
+have reached a host unannounced.
+
+The one exception is a sibling under `libs/`: `tools/publish-lib.mjs` rewrites
+workspace-lib specs to the release version, so that `"*"` is a placeholder that
+never reaches npm.
+
+A README that annotates a peer with a version must quote the manifest's range
+verbatim — that is the number a host copies. `npm run validate:docs` fails on a
+shipped `"*"`.
+
 ### One package, one role
 
 A package must never be a `dependency` of one lib and a required peer of

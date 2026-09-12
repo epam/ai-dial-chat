@@ -18,9 +18,11 @@
 //   4. A package declared a dependency by one lib and a required peer by
 //      another — `@epam/ai-dial-ui-kit` was, and hosts needed a `resolutions`
 //      pin to collapse the two copies npm installed.
-//   5. Broken relative links — every link to a file that no longer exists
+//   5. A shipped `"*"` version spec — it accepts the next breaking major, so
+//      `@epam/ai-dial-ui-kit: "*"` in 11 libs constrained nothing at all.
+//   6. Broken relative links — every link to a file that no longer exists
 //      (`docs/environment-variables-migration-guide.md` after its removal).
-//   6. Phantom exports — a name a lib README imports from its own package that
+//   7. Phantom exports — a name a lib README imports from its own package that
 //      the package does not export (`EntityBadge`, `StageType`, `QrPlaceholder`,
 //      `ConversationGroupProps`).
 //
@@ -267,7 +269,44 @@ const checkDependencyRoleConsistency = () => {
   }
 };
 
-/* ── 5. Relative markdown links resolve ── */
+/* ── 5. No published lib ships a "*" version spec ── */
+
+/*
+ * `"*"` accepts every version ever published, including the next breaking
+ * major, so the declaration constrains nothing — npm will not warn, and the
+ * host discovers the mismatch at runtime.
+ *
+ * A `"*"` on a sibling under `libs/` is exempt: `tools/publish-lib.mjs`
+ * rewrites workspace-lib specs to the release version, so that placeholder is
+ * never what reaches npm. Everything else ships exactly as written.
+ */
+const checkNoWildcardVersions = () => {
+  const workspacePackages = new Set(
+    projectDirs('libs')
+      .map((dir) => readJson(`${dir}/package.json`)?.name)
+      .filter(Boolean),
+  );
+
+  for (const dir of projectDirs('libs')) {
+    const path = `${dir}/package.json`;
+    const pkg = readJson(path);
+    if (!pkg?.name || !isPublishable(pkg)) continue;
+
+    for (const field of ['dependencies', 'peerDependencies']) {
+      for (const [name, range] of Object.entries(pkg[field] ?? {})) {
+        if (range !== '*' || workspacePackages.has(name)) continue;
+
+        fail(
+          path,
+          `"${field}.${name}" is "*", which accepts any version including the next breaking major — ` +
+            'declare the range this lib is actually built against (see .claude/rules/libs.md)',
+        );
+      }
+    }
+  }
+};
+
+/* ── 6. Relative markdown links resolve ── */
 
 const isPlaceholderLink = (target) =>
   LINK_PLACEHOLDERS.some((pattern) => pattern.test(target));
@@ -290,7 +329,7 @@ const checkLinks = (src, file) => {
 
 const lineAt = (src, index) => src.slice(0, index).split(/\r?\n/).length;
 
-/* ── 6. A lib README only imports names its package actually exports ── */
+/* ── 7. A lib README only imports names its package actually exports ── */
 
 /*
  * Resolves the names reachable through a lib's public entry point: named
@@ -393,6 +432,7 @@ if (!explicitFiles) {
   checkLibPackageMetadata();
   checkLibStylesExport();
   checkDependencyRoleConsistency();
+  checkNoWildcardVersions();
 }
 
 for (const file of files) {
@@ -424,5 +464,5 @@ if (errors.length > 0) {
 
 console.log(`Documentation validation passed (${files.length} markdown files).`);
 console.log(
-  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, relative links, README imports vs public exports.',
+  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, wildcard version specs, relative links, README imports vs public exports.',
 );
