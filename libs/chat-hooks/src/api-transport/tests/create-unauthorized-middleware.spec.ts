@@ -132,10 +132,12 @@ describe('createUnauthorizedMiddleware', () => {
       );
     global.fetch = fetchSpy;
     const notifyUnauthorized = vi.fn();
-    const refreshCsrfToken = vi.fn(async (): Promise<CsrfRefreshOutcome> => ({
-      status: 'ok',
-      token: 'fresh-token',
-    }));
+    const refreshCsrfToken = vi.fn(
+      async (): Promise<CsrfRefreshOutcome> => ({
+        status: 'ok',
+        token: 'fresh-token',
+      }),
+    );
 
     const api = new ConversationsApi(
       makeConfig(refreshCsrfToken, notifyUnauthorized),
@@ -173,10 +175,12 @@ describe('createUnauthorizedMiddleware', () => {
       .mockResolvedValueOnce(new Response(null, { status: 401 }));
     global.fetch = fetchSpy;
     const notifyUnauthorized = vi.fn();
-    const refreshCsrfToken = vi.fn(async (): Promise<CsrfRefreshOutcome> => ({
-      status: 'ok',
-      token: 'fresh-token',
-    }));
+    const refreshCsrfToken = vi.fn(
+      async (): Promise<CsrfRefreshOutcome> => ({
+        status: 'ok',
+        token: 'fresh-token',
+      }),
+    );
 
     const api = new ConversationsApi(
       makeConfig(refreshCsrfToken, notifyUnauthorized),
@@ -216,10 +220,12 @@ describe('createUnauthorizedMiddleware', () => {
       );
     global.fetch = fetchSpy;
     const notifyUnauthorized = vi.fn();
-    const refreshCsrfToken = vi.fn(async (): Promise<CsrfRefreshOutcome> => ({
-      status: 'ok',
-      token: 'fresh-token',
-    }));
+    const refreshCsrfToken = vi.fn(
+      async (): Promise<CsrfRefreshOutcome> => ({
+        status: 'ok',
+        token: 'fresh-token',
+      }),
+    );
 
     const api = new ConversationsApi(
       makeConfig(refreshCsrfToken, notifyUnauthorized),
@@ -252,10 +258,12 @@ describe('createUnauthorizedMiddleware', () => {
       .mockResolvedValueOnce(makeResponse(500, { message: 'server error' }));
     global.fetch = fetchSpy;
     const notifyUnauthorized = vi.fn();
-    const refreshCsrfToken = vi.fn(async (): Promise<CsrfRefreshOutcome> => ({
-      status: 'ok',
-      token: 'fresh-token',
-    }));
+    const refreshCsrfToken = vi.fn(
+      async (): Promise<CsrfRefreshOutcome> => ({
+        status: 'ok',
+        token: 'fresh-token',
+      }),
+    );
 
     const api = new ConversationsApi(
       makeConfig(refreshCsrfToken, notifyUnauthorized),
@@ -285,9 +293,11 @@ describe('createUnauthorizedMiddleware', () => {
       }),
     );
     const notifyUnauthorized = vi.fn();
-    const refreshCsrfToken = vi.fn(async (): Promise<CsrfRefreshOutcome> => ({
-      status: 'unauthorized',
-    }));
+    const refreshCsrfToken = vi.fn(
+      async (): Promise<CsrfRefreshOutcome> => ({
+        status: 'unauthorized',
+      }),
+    );
 
     const api = new ConversationsApi(
       makeConfig(refreshCsrfToken, notifyUnauthorized),
@@ -315,9 +325,11 @@ describe('createUnauthorizedMiddleware', () => {
       }),
     );
     const notifyUnauthorized = vi.fn();
-    const refreshCsrfToken = vi.fn(async (): Promise<CsrfRefreshOutcome> => ({
-      status: 'failed',
-    }));
+    const refreshCsrfToken = vi.fn(
+      async (): Promise<CsrfRefreshOutcome> => ({
+        status: 'failed',
+      }),
+    );
 
     const api = new ConversationsApi(
       makeConfig(refreshCsrfToken, notifyUnauthorized),

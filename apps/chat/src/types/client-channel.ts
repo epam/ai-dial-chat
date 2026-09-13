@@ -44,4 +44,5 @@ export interface PendingExternalServiceSigninEvent {
 }
 
 export type PendingSigninEvent =
-  PendingToolsetSigninEvent | PendingExternalServiceSigninEvent;
+  | PendingToolsetSigninEvent
+  | PendingExternalServiceSigninEvent;

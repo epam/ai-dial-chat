@@ -42,15 +42,17 @@ export const getQuickAppConversationStarters = (
       (starter): starter is { title: string; text: string } =>
         starter.title != null && starter.text != null,
     )
-    .map((starter, index): StarterOption => ({
-      const: index,
-      title: starter.title,
-      'dial:widgetOptions': {
-        populateText: starter.text,
-        submit: shouldSubmit,
-        confirmationMessage: null,
-      },
-    }));
+    .map(
+      (starter, index): StarterOption => ({
+        const: index,
+        title: starter.title,
+        'dial:widgetOptions': {
+          populateText: starter.text,
+          submit: shouldSubmit,
+          confirmationMessage: null,
+        },
+      }),
+    );
 
   return {
     starters,

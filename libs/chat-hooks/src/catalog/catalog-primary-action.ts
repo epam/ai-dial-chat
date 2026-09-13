@@ -37,7 +37,8 @@ export interface CatalogPrimaryActionPrompt {
 
 /** Discriminated union of catalog primary-action results. */
 export type CatalogPrimaryActionResult =
-  CatalogPrimaryActionDeployment | CatalogPrimaryActionPrompt;
+  | CatalogPrimaryActionDeployment
+  | CatalogPrimaryActionPrompt;
 
 /**
  * Resolves the primary action for a catalog item.

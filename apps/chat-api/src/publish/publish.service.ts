@@ -350,16 +350,21 @@ export class PublishService {
         );
 
         return publications
-          .map((publication): PublishHistoryEntryDto => ({
-            entityId,
-            entityType,
-            folderPath: stripPublicTargetFolder(publication.targetFolder ?? ''),
-            version,
-            publishedAt: publication.createdAt
-              ? new Date(publication.createdAt).toISOString()
-              : '',
-            publishedBy: publication.author ?? publication.displayAuthor ?? '',
-          }))
+          .map(
+            (publication): PublishHistoryEntryDto => ({
+              entityId,
+              entityType,
+              folderPath: stripPublicTargetFolder(
+                publication.targetFolder ?? '',
+              ),
+              version,
+              publishedAt: publication.createdAt
+                ? new Date(publication.createdAt).toISOString()
+                : '',
+              publishedBy:
+                publication.author ?? publication.displayAuthor ?? '',
+            }),
+          )
           .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
       },
     });

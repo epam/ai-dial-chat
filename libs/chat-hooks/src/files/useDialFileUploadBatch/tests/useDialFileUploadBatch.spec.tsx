@@ -142,7 +142,8 @@ describe('useDialFileUploadBatch', () => {
       const { result } = renderUploadBatch();
 
       let validation:
-        Awaited<ReturnType<typeof result.current.onValidateUpload>> | undefined;
+        | Awaited<ReturnType<typeof result.current.onValidateUpload>>
+        | undefined;
       await act(async () => {
         validation = await result.current.onValidateUpload(
           [{ name: 'report.pdf', fileContent: new File([], 'report.pdf') }],

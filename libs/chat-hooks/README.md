@@ -842,16 +842,16 @@ const ChatPage = ({
 
 **Parameters** (`UseConversationStreamParams`):
 
-| Name             | Type                                | Description                                                                                   |
-| ---------------- | ----------------------------------- | --------------------------------------------------------------------------------------------- |
-| `conversationId` | `string \| undefined`               | The currently displayed conversation's id.                                                    |
-| `state`          | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.      |
-| `transport`      | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                       |
-| `generation`     | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership. |
-| `channel`        | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.          |
-| `overlay`        | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.          |
-| `onStopError`    | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                         |
-| `generationConflictMessage` | `string` | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`. |
+| Name                        | Type                                | Description                                                                                                                                                                                                                                     |
+| --------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                      |
+| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                        |
+| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                         |
+| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                   |
+| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                            |
+| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                            |
+| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                           |
+| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`. |
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
 
@@ -3392,15 +3392,15 @@ if (!deleteDialog.isRunning) deleteDialog.close();
 
 **Returns** (`AsyncConfirmDialogControls<T>`):
 
-| Name | Type | Description |
+| Name        | Type                                                                                   | Description                                                                                      |
 | ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pending` | `T \| null` | The value passed to `open()`, or `null` when the dialog is closed. |
-| `isPending` | `boolean` | `true` while `pending` is non-null (dialog is open). |
-| `isRunning` | `boolean` | `true` while `confirm`'s `run` callback is executing. |
-| `error` | `string \| null` | Error message from the most recent failed `confirm`, or `null`. |
-| `open` | `(value: T, returnFocusTo?: HTMLElement                                                | null) => void` | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
-| `close` | `() => void` | Closes the dialog and clears pending + error. |
-| `confirm` | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
+| `pending`   | `T \| null`                                                                            | The value passed to `open()`, or `null` when the dialog is closed.                               |
+| `isPending` | `boolean`                                                                              | `true` while `pending` is non-null (dialog is open).                                             |
+| `isRunning` | `boolean`                                                                              | `true` while `confirm`'s `run` callback is executing.                                            |
+| `error`     | `string \| null`                                                                       | Error message from the most recent failed `confirm`, or `null`.                                  |
+| `open`      | `(value: T, returnFocusTo?: HTMLElement                                                | null) => void`                                                                                   | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
+| `close`     | `() => void`                                                                           | Closes the dialog and clears pending + error.                                                    |
+| `confirm`   | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
 
 ### useImportFilePicker
 

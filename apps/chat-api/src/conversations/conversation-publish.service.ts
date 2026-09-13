@@ -331,14 +331,19 @@ export class ConversationPublishService {
         );
 
         return publications
-          .map((publication): PublishConversationResultDto => ({
-            path: sourceUrl,
-            folderPath: stripPublicTargetFolder(publication.targetFolder ?? ''),
-            publishedAt: publication.createdAt
-              ? new Date(publication.createdAt).toISOString()
-              : '',
-            publishedBy: publication.author ?? publication.displayAuthor ?? '',
-          }))
+          .map(
+            (publication): PublishConversationResultDto => ({
+              path: sourceUrl,
+              folderPath: stripPublicTargetFolder(
+                publication.targetFolder ?? '',
+              ),
+              publishedAt: publication.createdAt
+                ? new Date(publication.createdAt).toISOString()
+                : '',
+              publishedBy:
+                publication.author ?? publication.displayAuthor ?? '',
+            }),
+          )
           .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
       },
     });

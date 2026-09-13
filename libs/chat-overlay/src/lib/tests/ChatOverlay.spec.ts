@@ -377,7 +377,8 @@ describe('ChatOverlay', () => {
     dispatchFromApp(iframe, { type: OverlayEventType.Ready });
 
     const sentMessage = postMessageSpy.mock.calls[0][0] as
-      OverlayMessageRequest | undefined;
+      | OverlayMessageRequest
+      | undefined;
     expect(sentMessage?.type).toBe(OverlayRequestType.SetOverlayOptions);
     expect(sentMessage?.payload).toEqual({
       hostDomain: window.location.origin,
@@ -433,7 +434,8 @@ describe('ChatOverlay', () => {
     dispatchFromApp(iframe, { type: OverlayEventType.Ready });
 
     const sentMessage = postMessageSpy.mock.calls[0][0] as
-      OverlayMessageRequest | undefined;
+      | OverlayMessageRequest
+      | undefined;
     expect(
       Object.hasOwn(sentMessage?.payload as object, 'authProviderUiModes'),
     ).toBe(false);

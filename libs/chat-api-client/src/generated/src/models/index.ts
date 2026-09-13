@@ -68,7 +68,8 @@ export interface AnnotationBodyDto {
  * @export
  */
 export type AnnotationBodyDtoSelector =
-  AnnotationSelectorDto | Array<AnnotationSelectorDto>;
+  | AnnotationSelectorDto
+  | Array<AnnotationSelectorDto>;
 /**
  *
  * @export
@@ -1912,7 +1913,8 @@ export interface CreatedApplicationDto {
  * @export
  */
 export type CreatedApplicationDtoDisplayName =
-  string | { [key: string]: string };
+  | string
+  | { [key: string]: string };
 /**
  *
  * @export
