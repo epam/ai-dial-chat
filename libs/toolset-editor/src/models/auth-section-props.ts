@@ -3,6 +3,7 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
 } from './toolset-form';
+import type { ToolsetOAuthLoginHandler } from './toolset-oauth-login';
 
 /** Pre-translated labels for the auth block, all optional with English defaults. */
 export interface AuthSectionLabels {
@@ -92,8 +93,12 @@ export interface AuthSectionProps {
   endpoint: string;
   /** Backend calls for login/logout/auth-settings reads, injected by the host. */
   authActions: ToolsetAuthActions;
-  /** Host OAuth callback route the popup redirects back to. */
-  oauthCallbackPath: string;
+  /**
+   * Runs the host's OAuth login flow and reports how it settled. Called
+   * synchronously from the click so the host can open a popup inside the
+   * user gesture.
+   */
+  onOAuthLogin: ToolsetOAuthLoginHandler;
   /** Shows a success notification with the given message. */
   onNotifySuccess: (message: string) => void;
   /** Shows an error notification with the given message and optional trace id. */

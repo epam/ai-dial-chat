@@ -44,6 +44,7 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useToolsetEditorOAuthLogin } from '../../hooks/toolsets/useToolsetEditorOAuthLogin';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { mcpAppsApiClient } from '../../server-api/mcp-apps';
 import {
@@ -192,6 +193,9 @@ const ToolsetEditorPage: FC = () => {
     },
     [],
   );
+
+  /* The OAuth popup flow, its callback route and credentials level are owned here, not by the editor library. */
+  const handleOAuthLogin = useToolsetEditorOAuthLogin();
 
   const authActions = useMemo<ToolsetAuthActions>(
     () => ({
@@ -438,7 +442,7 @@ const ToolsetEditorPage: FC = () => {
       buildMcpUrl={buildMcpUrl}
       listToolNames={listToolNames}
       authActions={authActions}
-      oauthCallbackPath={ROUTES.ToolsetSignIn}
+      onOAuthLogin={handleOAuthLogin}
       onNotifySuccess={notifySuccess}
       onNotifyError={notifyError}
       bucket={bucket}

@@ -91,12 +91,13 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
 
 ## Constants
 
-MCP wire-protocol constants shared by every surface that talks to an MCP server over the Streamable HTTP transport: `MCP_PROTOCOL_VERSION` (`'2024-11-05'`), `MCP_SESSION_ID_HEADER` (`'mcp-session-id'`), and `MCP_CLIENT_INFO` (`{ name: 'ai-dial-chat', version: '1.0.0' }`).
+MCP wire-protocol constants shared by every surface that talks to an MCP server over the Streamable HTTP transport: `MCP_PROTOCOL_VERSION` (`'2024-11-05'`), `MCP_SESSION_ID_HEADER` (`'mcp-session-id'`), `MCP_PROTOCOL_VERSION_HEADER` (`'mcp-protocol-version'`, sent on every request that follows a completed handshake), and `MCP_CLIENT_INFO` (`{ name: 'ai-dial-chat', version: '1.0.0' }`).
 
 ```ts
 import {
   MCP_CLIENT_INFO,
   MCP_PROTOCOL_VERSION,
+  MCP_PROTOCOL_VERSION_HEADER,
   MCP_SESSION_ID_HEADER,
 } from '@epam/ai-dial-mcp-apps';
 ```

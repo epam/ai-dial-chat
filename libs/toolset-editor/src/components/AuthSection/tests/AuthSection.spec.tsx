@@ -1,12 +1,4 @@
-import {
-  getToolsetOAuthChannelName,
-  TOOLSET_REDIRECT_STATE_KEY,
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetOAuthCallbackQuery,
-  ToolsetOAuthResultType,
-  WithLogin,
-} from '@epam/ai-dial-chat-hooks';
+import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
@@ -20,30 +12,18 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
 } from '../../../models/toolset-form';
+import type { ToolsetOAuthLoginHandler } from '../../../models/toolset-oauth-login';
+import { ToolsetOAuthLoginStatus } from '../../../models/toolset-oauth-login';
 import { AuthSection } from '../AuthSection';
 
-/** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
-const makeFakePopup = () => {
-  const store = new Map<string, string>();
-  return {
-    sessionStorage: {
-      setItem: (key: string, value: string) => store.set(key, value),
-      getItem: (key: string) => store.get(key) ?? null,
-    },
-    location: { href: '' },
-    opener: window,
-    closed: false,
-    close: vi.fn(),
-  };
-};
-
-const postOAuthResult = (flowId: string, message: Record<string, unknown>) => {
-  const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
-  channel.postMessage(message);
-  channel.close();
-};
-
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+/*
+ * Partial mock: the kit's real exports stay in place — the chat-hooks barrel
+ * pulls in `@epam/ai-dial-publish-panel`, which reads several of them at
+ * import time — while the form controls this section renders are replaced by
+ * minimal, queryable equivalents.
+ */
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   Input: ({
     value,
     onChange,
@@ -198,7 +178,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 
 const TOOLSET_ID = 'toolsets/b/my__1.0.0';
 const NEW_TOOLSET_ID = 'toolsets/b/newly-created';
-const OAUTH_CALLBACK_PATH = '/auth/toolset-signin';
 const VALID_ENDPOINT = 'https://example.com/mcp';
 
 const LOGIN_SUCCESS_MESSAGE = 'Successfully logged in.';
@@ -208,6 +187,8 @@ const LOGOUT_SUCCESS_MESSAGE = 'Successfully logged out.';
 const LOGOUT_FAILED_MESSAGE = 'Failed to log out. Please try again.';
 const POPUP_BLOCKED_MESSAGE =
   'The login popup was blocked by your browser. Please allow popups for this site and try again.';
+const OAUTH_CONFIG_MISSING_MESSAGE =
+  'The OAuth provider did not return a valid client configuration. Please check the endpoint or contact your administrator.';
 
 const authActions = {
   login: vi.fn<ToolsetAuthActions['login']>(),
@@ -216,6 +197,9 @@ const authActions = {
 } satisfies ToolsetAuthActions;
 const onNotifySuccess = vi.fn();
 const onNotifyError = vi.fn();
+const onOAuthLogin = vi
+  .fn<ToolsetOAuthLoginHandler>()
+  .mockResolvedValue({ status: ToolsetOAuthLoginStatus.Cancelled });
 
 const noneAuth = (): ToolsetAuthFormData => ({
   authenticationType: ToolsetAuthTypes.None,
@@ -259,7 +243,7 @@ const renderSection = (props: Partial<AuthSectionProps> = {}) =>
       isEditMode
       endpoint={VALID_ENDPOINT}
       authActions={authActions}
-      oauthCallbackPath={OAUTH_CALLBACK_PATH}
+      onOAuthLogin={onOAuthLogin}
       onNotifySuccess={onNotifySuccess}
       onNotifyError={onNotifyError}
       onAuthChange={vi.fn()}
@@ -270,22 +254,11 @@ const renderSection = (props: Partial<AuthSectionProps> = {}) =>
 
 describe('AuthSection', () => {
   const user = userEvent.setup({ delay: null });
-  let capturedPopup: ReturnType<typeof makeFakePopup> | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    sessionStorage.clear();
-    capturedPopup = undefined;
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { origin: 'http://localhost', href: 'http://localhost/' },
-    });
-    Object.defineProperty(window, 'open', {
-      configurable: true,
-      value: vi.fn(() => {
-        capturedPopup = makeFakePopup();
-        return capturedPopup;
-      }),
+    onOAuthLogin.mockResolvedValue({
+      status: ToolsetOAuthLoginStatus.Cancelled,
     });
   });
 
@@ -446,320 +419,171 @@ describe('AuthSection', () => {
     });
   });
 
-  describe('OAuth login redirect', () => {
-    it('opens a popup and stores redirect state in it when OAuth Log in is clicked', async () => {
-      renderSection({ auth: oauthWithConfigAuth() });
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-      expect(capturedPopup).toBeDefined();
-      const stored = capturedPopup?.sessionStorage.getItem(
-        TOOLSET_REDIRECT_STATE_KEY,
-      );
-      expect(stored).not.toBeNull();
-      const state = JSON.parse(stored as string);
-      expect(state.toolsetId).toBe(TOOLSET_ID);
-      expect(state.credentialsLevel).toBe(ToolsetCredentialsLevel.User);
-      expect(capturedPopup?.location.href).toContain(
-        'https://auth.example.com/authorize',
-      );
-    });
+  describe('OAuth login', () => {
+    /*
+     * The flow itself — popup, callback route, credentials level, channel
+     * and storage coordination — belongs to the host. These tests cover the
+     * only part this component still owns: handing the host the request and
+     * applying whatever status comes back.
+     */
+    it('hands the host the current auth state and the save continuation', async () => {
+      const onEnsureSaved = vi.fn().mockResolvedValue(NEW_TOOLSET_ID);
+      const auth = oauthWithConfigAuth();
+      const onOAuthLogin = vi
+        .fn()
+        .mockResolvedValue({ status: ToolsetOAuthLoginStatus.Cancelled });
+      renderSection({ auth, onOAuthLogin, onEnsureSaved });
 
-    it('does not open a popup when saving unsaved changes fails', async () => {
-      const onEnsureSaved = vi.fn().mockResolvedValue(false);
-      renderSection({ auth: oauthWithConfigAuth(), onEnsureSaved });
       await user.click(screen.getByRole('button', { name: 'Log in' }));
-      await waitFor(() => expect(onEnsureSaved).toHaveBeenCalledOnce());
-      expect(window.open).not.toHaveBeenCalled();
-      expect(capturedPopup).toBeUndefined();
-    });
 
-    it('does not open a popup when authorizationEndpoint is missing', async () => {
-      renderSection({
-        auth: { ...oauthWithConfigAuth(), authorizationEndpoint: '' },
+      expect(onOAuthLogin).toHaveBeenCalledWith({
+        auth,
+        ensureSaved: onEnsureSaved,
       });
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-      expect(window.open).not.toHaveBeenCalled();
-      expect(capturedPopup).toBeUndefined();
     });
 
-    it('shows a popup-blocked error notification when the browser blocks the popup', async () => {
-      vi.mocked(window.open).mockReturnValueOnce(null);
-      renderSection({ auth: oauthWithConfigAuth() });
+    it('flips the action to Log out after a successful login', async () => {
+      const onAuthChange = vi.fn();
+      renderSection({
+        auth: oauthWithConfigAuth(),
+        onAuthChange,
+        onOAuthLogin: vi
+          .fn()
+          .mockResolvedValue({ status: ToolsetOAuthLoginStatus.Success }),
+      });
+
       await user.click(screen.getByRole('button', { name: 'Log in' }));
+
+      await waitFor(() =>
+        expect(onAuthChange).toHaveBeenCalledWith({ isLoggedIn: true }),
+      );
+      expect(onNotifySuccess).toHaveBeenCalledWith(LOGIN_SUCCESS_MESSAGE);
+    });
+
+    it('merges auth fields the host resolved during the flow', async () => {
+      /*
+       * Dynamic client registration assigns the client only once the toolset
+       * exists, so the host is the first to see it.
+       */
+      const onAuthChange = vi.fn();
+      renderSection({
+        auth: oauthWithLoginDynamicAuth(),
+        onAuthChange,
+        onOAuthLogin: vi.fn().mockResolvedValue({
+          status: ToolsetOAuthLoginStatus.Success,
+          auth: { clientId: 'dcr-client-id' },
+        }),
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Log in' }));
+
+      await waitFor(() =>
+        expect(onAuthChange).toHaveBeenCalledWith({
+          clientId: 'dcr-client-id',
+        }),
+      );
+    });
+
+    it('reports a blocked popup with its own actionable message', async () => {
+      renderSection({
+        auth: oauthWithConfigAuth(),
+        onOAuthLogin: vi
+          .fn()
+          .mockResolvedValue({ status: ToolsetOAuthLoginStatus.PopupBlocked }),
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Log in' }));
+
       await waitFor(() =>
         expect(onNotifyError).toHaveBeenCalledWith(POPUP_BLOCKED_MESSAGE),
       );
     });
 
-    it('flips the action to Log out after a successful OAuth login', async () => {
-      const onAuthChange = vi.fn();
-      renderSection({ auth: oauthWithConfigAuth(), onAuthChange });
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-      const flowId = JSON.parse(
-        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
-          '{}',
-      ).state;
-
-      postOAuthResult(flowId, {
-        type: ToolsetOAuthResultType.Success,
-        toolsetId: TOOLSET_ID,
-        credentialsLevel: ToolsetCredentialsLevel.User,
+    it('reports an unusable client configuration separately from a failed login', async () => {
+      renderSection({
+        auth: oauthWithConfigAuth(),
+        onOAuthLogin: vi
+          .fn()
+          .mockResolvedValue({ status: ToolsetOAuthLoginStatus.InvalidConfig }),
       });
 
+      await user.click(screen.getByRole('button', { name: 'Log in' }));
+
       await waitFor(() =>
-        expect(onAuthChange).toHaveBeenCalledWith({ isLoggedIn: true }),
+        expect(onNotifyError).toHaveBeenCalledWith(
+          OAUTH_CONFIG_MISSING_MESSAGE,
+        ),
       );
-      expect(onNotifySuccess).toHaveBeenCalledWith(LOGIN_SUCCESS_MESSAGE);
     });
 
-    it('shows the success notification on the first attempt when the channel event is missed', async () => {
-      const onAuthChange = vi.fn();
-      renderSection({ auth: oauthWithConfigAuth(), onAuthChange });
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-
-      const callbackUrl = new URL(OAUTH_CALLBACK_PATH, window.location.origin);
-      callbackUrl.searchParams.set(
-        ToolsetOAuthCallbackQuery.Result,
-        ToolsetOAuthResultType.Success,
-      );
-      if (capturedPopup) capturedPopup.location.href = callbackUrl.toString();
-
-      await waitFor(
-        () => expect(onAuthChange).toHaveBeenCalledWith({ isLoggedIn: true }),
-        { timeout: 2000 },
-      );
-      expect(onNotifySuccess).toHaveBeenCalledWith(LOGIN_SUCCESS_MESSAGE);
-      expect(authActions.fetchAuthSettings).not.toHaveBeenCalled();
-    });
-
-    it('keeps Log in available and shows an error notification after a failed OAuth login', async () => {
-      const onAuthChange = vi.fn();
-      renderSection({ auth: oauthWithConfigAuth(), onAuthChange });
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-      const flowId = JSON.parse(
-        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
-          '{}',
-      ).state;
-
-      postOAuthResult(flowId, {
-        type: 'failure',
-        reason: 'login-request-failed',
+    it('passes the trace id of a failed login to the notification', async () => {
+      renderSection({
+        auth: oauthWithConfigAuth(),
+        onOAuthLogin: vi.fn().mockResolvedValue({
+          status: ToolsetOAuthLoginStatus.Failed,
+          traceId: 'trace-1',
+        }),
       });
 
-      await waitFor(() =>
-        expect(onNotifyError).toHaveBeenCalledWith(LOGIN_FAILED_MESSAGE),
-      );
-      expect(onAuthChange).not.toHaveBeenCalledWith({ isLoggedIn: true });
-      expect(screen.getByRole('button', { name: 'Log in' })).toBeTruthy();
-    });
-
-    it('clears the busy state without a notification when the popup is closed manually', async () => {
-      const onAuthChange = vi.fn();
-      renderSection({ auth: oauthWithConfigAuth(), onAuthChange });
       await user.click(screen.getByRole('button', { name: 'Log in' }));
 
-      if (capturedPopup) capturedPopup.closed = true;
-      window.dispatchEvent(new Event('focus'));
-
-      await waitFor(
-        () =>
-          expect(
-            (
-              screen.getByRole('button', {
-                name: 'Log in',
-              }) as HTMLButtonElement
-            ).disabled,
-          ).toBe(false),
-        { timeout: 2000 },
+      await waitFor(() =>
+        expect(onNotifyError).toHaveBeenCalledWith(
+          LOGIN_FAILED_MESSAGE,
+          'trace-1',
+        ),
       );
-      expect(onAuthChange).not.toHaveBeenCalled();
-      expect(onNotifySuccess).not.toHaveBeenCalled();
+    });
+
+    it('stays silent when the flow was cancelled', async () => {
+      const onAuthChange = vi.fn();
+      renderSection({
+        auth: oauthWithConfigAuth(),
+        onAuthChange,
+        onOAuthLogin: vi
+          .fn()
+          .mockResolvedValue({ status: ToolsetOAuthLoginStatus.Cancelled }),
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Log in' }));
+
+      /* The action returns to its idle state once the host flow settles. */
+      expect(
+        await screen.findByRole('button', { name: 'Log in' }),
+      ).toBeTruthy();
       expect(onNotifyError).not.toHaveBeenCalled();
+      expect(onNotifySuccess).not.toHaveBeenCalled();
+      expect(onAuthChange).not.toHaveBeenCalled();
     });
 
-    it('recovers a login that actually succeeded but was reported as Cancelled by a lost broadcast message', async () => {
-      const onAuthChange = vi.fn();
-      authActions.fetchAuthSettings.mockResolvedValue({
-        ...oauthWithConfigAuth(),
-        isLoggedIn: true,
-      });
-      renderSection({ auth: oauthWithConfigAuth(), onAuthChange });
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-
-      if (capturedPopup) capturedPopup.closed = true;
-      window.dispatchEvent(new Event('focus'));
-
-      await waitFor(() =>
-        expect(onAuthChange).toHaveBeenCalledWith({ isLoggedIn: true }),
+    it('blocks a second login while the host flow is still running', async () => {
+      let settle: (result: {
+        status: ToolsetOAuthLoginStatus;
+      }) => void = () => {
+        /* replaced synchronously below */
+      };
+      const onOAuthLogin = vi.fn(
+        () =>
+          new Promise<{ status: ToolsetOAuthLoginStatus }>((resolve) => {
+            settle = resolve;
+          }),
       );
-      expect(onNotifySuccess).toHaveBeenCalledWith(LOGIN_SUCCESS_MESSAGE);
+      renderSection({ auth: oauthWithConfigAuth(), onOAuthLogin });
+
+      const button = screen.getByRole('button', { name: 'Log in' });
+      await user.click(button);
+      await user.click(button);
+
+      expect(onOAuthLogin).toHaveBeenCalledOnce();
+      settle({ status: ToolsetOAuthLoginStatus.Cancelled });
     });
 
     it('enables the Log In button before the toolset is saved when the form is valid', () => {
-      renderSection({
-        auth: oauthWithConfigAuth(),
-        toolsetId: '',
-        isEditMode: false,
-      });
-      const btn = screen.getByRole('button', {
-        name: 'Log in',
-      }) as HTMLButtonElement;
-      expect(btn.disabled).toBe(false);
-    });
+      renderSection({ auth: oauthWithConfigAuth(), toolsetId: '' });
 
-    it('uses the id returned by onEnsureSaved, not a stale toolsetId prop, for the first login of a brand-new toolset', async () => {
-      const onEnsureSaved = vi.fn().mockResolvedValue(NEW_TOOLSET_ID);
-      renderSection({
-        auth: oauthWithConfigAuth(),
-        toolsetId: '',
-        isEditMode: false,
-        onEnsureSaved,
-      });
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-      await waitFor(() => expect(capturedPopup).toBeDefined());
-      const stored = capturedPopup?.sessionStorage.getItem(
-        TOOLSET_REDIRECT_STATE_KEY,
-      );
-      const state = JSON.parse(stored as string);
-      expect(state.toolsetId).toBe(NEW_TOOLSET_ID);
-    });
-  });
-
-  describe('OAuth dynamic client registration login', () => {
-    it('opens the popup synchronously, before the persist call resolves, then completes the login for a brand-new dynamically-registered toolset', async () => {
-      let resolveEnsureSaved: (value: string | false) => void = () => {
-        /* assigned before use */
-      };
-      const onEnsureSaved = vi.fn(
-        () =>
-          new Promise<string | false>((resolve) => {
-            resolveEnsureSaved = resolve;
-          }),
-      );
-      const onAuthChange = vi.fn();
-      authActions.fetchAuthSettings.mockResolvedValue({
-        ...oauthWithLoginDynamicAuth(),
-        clientId: 'dcr-client-id',
-        authorizationEndpoint: 'https://auth.example.com/authorize',
-      });
-      renderSection({
-        auth: oauthWithLoginDynamicAuth(),
-        toolsetId: '',
-        isEditMode: false,
-        onAuthChange,
-        onEnsureSaved,
-      });
-
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-
-      // Popup opens immediately, before the persist call resolves.
-      expect(capturedPopup).toBeDefined();
-      expect(authActions.fetchAuthSettings).not.toHaveBeenCalled();
-      expect(capturedPopup?.location.href).toBe('');
-
-      resolveEnsureSaved(NEW_TOOLSET_ID);
-
-      // The popup is then navigated to the authorize URL built from the
-      // fetched Core-issued client — the happy path this timing enables.
-      await waitFor(() =>
-        expect(capturedPopup?.location.href).toContain(
-          'https://auth.example.com/authorize',
-        ),
-      );
-      expect(authActions.fetchAuthSettings).toHaveBeenCalledWith(
-        NEW_TOOLSET_ID,
-      );
-      expect(onAuthChange).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'dcr-client-id' }),
-      );
-    });
-
-    it('fetches the Core-issued client and navigates the popup to the authorize URL built from it', async () => {
-      const onEnsureSaved = vi.fn().mockResolvedValue(NEW_TOOLSET_ID);
-      const onAuthChange = vi.fn();
-      authActions.fetchAuthSettings.mockResolvedValue({
-        ...oauthWithLoginDynamicAuth(),
-        clientId: 'dcr-client-id',
-        authorizationEndpoint: 'https://auth.example.com/authorize',
-      });
-      renderSection({
-        auth: oauthWithLoginDynamicAuth(),
-        toolsetId: '',
-        isEditMode: false,
-        onAuthChange,
-        onEnsureSaved,
-      });
-
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-
-      await waitFor(() =>
-        expect(capturedPopup?.location.href).toContain(
-          'https://auth.example.com/authorize',
-        ),
-      );
-      expect(capturedPopup?.location.href).toContain('client_id=dcr-client-id');
-      expect(onAuthChange).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'dcr-client-id' }),
-      );
-    });
-
-    it('shows a popup-blocked error and never persists the toolset when the popup is blocked', async () => {
-      vi.mocked(window.open).mockReturnValueOnce(null);
-      const onEnsureSaved = vi.fn();
-      renderSection({
-        auth: oauthWithLoginDynamicAuth(),
-        toolsetId: '',
-        isEditMode: false,
-        onEnsureSaved,
-      });
-
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-
-      await waitFor(() =>
-        expect(onNotifyError).toHaveBeenCalledWith(POPUP_BLOCKED_MESSAGE),
-      );
-      expect(onEnsureSaved).not.toHaveBeenCalled();
-      expect(authActions.fetchAuthSettings).not.toHaveBeenCalled();
-    });
-
-    it('shows an error and closes the popup when persisting the new toolset fails', async () => {
-      const onEnsureSaved = vi.fn().mockResolvedValue(false);
-      renderSection({
-        auth: oauthWithLoginDynamicAuth(),
-        toolsetId: '',
-        isEditMode: false,
-        onEnsureSaved,
-      });
-
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-
-      await waitFor(() => expect(capturedPopup?.close).toHaveBeenCalled());
-      expect(authActions.fetchAuthSettings).not.toHaveBeenCalled();
-    });
-
-    it('skips the extra fetch and reuses the already-known client for "With Login & Config"', async () => {
-      renderSection({ auth: oauthWithConfigAuth() });
-
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-
-      await waitFor(() => expect(capturedPopup).toBeDefined());
-      expect(authActions.fetchAuthSettings).not.toHaveBeenCalled();
-      expect(capturedPopup?.location.href).toContain(
-        'https://auth.example.com/authorize',
-      );
-    });
-
-    it('skips the extra fetch and reuses the already-known client when re-logging in on an already-saved OAuth toolset', async () => {
-      renderSection({
-        auth: { ...oauthWithConfigAuth(), withLogin: WithLogin.WithLogin },
-      });
-
-      await user.click(screen.getByRole('button', { name: 'Log in' }));
-
-      await waitFor(() => expect(capturedPopup).toBeDefined());
-      expect(authActions.fetchAuthSettings).not.toHaveBeenCalled();
-      expect(capturedPopup?.location.href).toContain(
-        'https://auth.example.com/authorize',
-      );
+      expect(
+        screen.getByRole('button', { name: 'Log in' }).hasAttribute('disabled'),
+      ).toBe(false);
     });
   });
 

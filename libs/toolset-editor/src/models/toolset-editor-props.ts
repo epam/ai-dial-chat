@@ -10,6 +10,7 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormData,
 } from './toolset-form';
+import type { ToolsetOAuthLoginHandler } from './toolset-oauth-login';
 
 /** Validation messages surfaced under the fields, all optional with English defaults. */
 export interface ToolsetEditorValidationLabels {
@@ -126,8 +127,8 @@ export interface ToolsetEditorProps {
   listToolNames?: (toolsetId: string) => Promise<string[]>;
   /** Backend calls for login/logout/auth-settings reads, injected by the host. */
   authActions: ToolsetAuthActions;
-  /** Host OAuth callback route the login popup redirects back to. */
-  oauthCallbackPath: string;
+  /** Runs the host's OAuth login flow and reports how it settled. */
+  onOAuthLogin: ToolsetOAuthLoginHandler;
   /** Shows a success notification with the given message. */
   onNotifySuccess: (message: string) => void;
   /** Shows an error notification with the given message and optional trace id. */

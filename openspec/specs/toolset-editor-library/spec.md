@@ -89,19 +89,24 @@ This is the first `libs/*` (besides the `chat-hooks` exception) dependency on `@
 - **THEN** the editor persists via `onPersist` first and every subsequent call in that login attempt uses the id the persist resolved, including the id of a toolset created by that very persist
 
 ### Requirement: Auth block operations through authActions
-The internal `AuthSection` SHALL run the login/logout/OAuth flows through the `authActions` prop and the chat-hooks OAuth helpers, preserving the popup-open-before-await ordering for the dynamic-client-registration branch (the placeholder popup is opened synchronously in the click handler, before any `onEnsureSaved`/`fetchAuthSettings` await), the double-click guard (`isAuthBusy`), and the Cancelled-result backend reconciliation (a fetched `fetchAuthSettings` result reporting `isLoggedIn: true` recovers a login the popup flow reported as cancelled). The OAuth callback route SHALL arrive as the `oauthCallbackPath` prop; notifications go through `onNotifySuccess`/`onNotifyError`. `authenticationType`/`withLogin`/`ToolsetCredentialsLevel` SHALL come from `@epam/ai-dial-chat-hooks`, never re-declared locally.
+The internal `AuthSection` SHALL run the login/logout flows through the `authActions` prop, and SHALL delegate the entire OAuth flow to the host through the `onOAuthLogin` prop — a `ToolsetOAuthLoginHandler` the component calls synchronously from the click handler, before any `await`, so the host can open its popup inside the user gesture. The popup, the OAuth callback route, the credentials level, and the redirect/channel coordination SHALL NOT live in the library; the component SHALL consume only the returned `ToolsetOAuthLoginResult` (`status`, optional resolved `auth` fields, optional `traceId`). The double-click guard (`isAuthBusy`) SHALL remain in the component. Notifications go through `onNotifySuccess`/`onNotifyError`. `authenticationType`/`withLogin`/`ToolsetCredentialsLevel` SHALL come from `@epam/ai-dial-chat-hooks`, never re-declared locally.
 
-#### Scenario: Dynamic-registration login opens the popup synchronously
-- **WHEN** a user clicks Log In on an OAuth "With login" toolset that has no client id yet
-- **THEN** the placeholder popup opens synchronously in the click handler before any awaited persist/fetch, so the browser treats it as user-triggered
+#### Scenario: The OAuth flow is handed to the host synchronously
+- **WHEN** a user clicks Log In on an OAuth toolset
+- **THEN** `onOAuthLogin` is called before the component's first `await`, receiving the current `auth` state and an `ensureSaved` continuation, so the host can open a user-triggered popup and persist the toolset itself
+
+#### Scenario: Each outcome selects its own notification
+- **WHEN** the host resolves `onOAuthLogin` with `PopupBlocked`, `InvalidConfig`, `Failed` or `Success`
+- **THEN** the component shows the matching label (`errorPopupBlocked`, `errorOAuthConfigMissing`, `errorLoginFailed` with the returned `traceId`, or `loginSuccessMessage`), and a `Cancelled` outcome shows nothing
+
+#### Scenario: Fields resolved during the flow reach the form
+- **WHEN** the host returns `auth` fields it resolved while running the flow, such as a dynamically registered `clientId`
+- **THEN** the component merges them into the form regardless of the status
 
 #### Scenario: A second click during an in-flight login is ignored
 - **WHEN** the login flow is busy (`isAuthBusy`)
-- **THEN** the Log In action is disabled and no second popup or concurrent login starts
+- **THEN** the Log In action is disabled and no second `onOAuthLogin` call starts
 
-#### Scenario: A false popup cancel is reconciled with the backend
-- **WHEN** the popup flow resolves Cancelled but a subsequent `authActions.fetchAuthSettings` reports `isLoggedIn: true`
-- **THEN** the editor marks the toolset logged in and shows the login success notification
 
 ### Requirement: Connect section gating
 The Connect toolset section SHALL render inside the Setup section only when the host supplies a `buildMcpUrl` resolver (i.e. an external core URL is configured) AND a persisted toolset id exists (edit mode, or a draft id created during the create session by Log In/Save). The composed editor resolves the URL by calling `buildMcpUrl` with the current persisted id and passes the resolved string to the internal SettingsForm; it SHALL never construct the URL itself. When either condition is absent the section SHALL NOT render.

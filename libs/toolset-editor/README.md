@@ -2,15 +2,18 @@
 
 Host-agnostic form for authoring and editing a DIAL MCP toolset: the composed
 `ToolsetEditor` (Metadata + Setup two-column layout, validation, save/persist
-orchestration, and the OAuth/API-key login flows) plus the shared `GeneralForm`
+orchestration, and the API-key login flow) plus the shared `GeneralForm`
 metadata field set that the Custom App editor also consumes.
 
 The lib is deliberately passive about everything a host owns. It holds the form
 state, the dirty-field/error state, and the draft toolset id created by the
 first persist of a create session — and nothing else: it never calls an API
 (persistence, login, logout, and auth-settings reads arrive through
-`onPersist`/`onPostSaveLogin`/`authActions`), never reads a route or context
-(navigation is `onBack`/`onSaveComplete`), never constructs the MCP connect URL
+`onPersist`/`onPostSaveLogin`/`authActions`), never runs the OAuth flow
+(`onOAuthLogin` hands the whole flow — popup, callback route, credentials
+level, redirect coordination — to the host and gets back a
+`ToolsetOAuthLoginResult`), never reads a route or context (navigation is
+`onBack`/`onSaveComplete`), never constructs the MCP connect URL
 (`buildMcpUrl` is a host resolver, because the URL depends on the draft id the
 lib itself creates), and never resolves a translation (every string arrives via
 optional `labels` groups with English defaults). Validation delegates the
@@ -23,10 +26,11 @@ are rendered by `ToolsetEditor` and are not exported. Only their `*Labels`
 types are exported so a host can type the label groups it threads into
 `ToolsetEditorProps.labels`.
 
-This is the first `libs/*` library (besides `chat-hooks` itself) that depends
-on `@epam/ai-dial-chat-hooks`: the OAuth helpers it uses are host-agnostic
-(the callback path is a parameter, no routes or i18n). The dependency is
-root-barrel only — never import a `@epam/ai-dial-chat-hooks/` subpath.
+This library depends on `@epam/ai-dial-chat-hooks` for shared form vocabulary
+only — `ToolsetAuthTypes`, `WithLogin`, `ToolsetCredentialsLevel` and
+`getApiErrorDetails`. The OAuth transport helpers live on the host side of
+`onOAuthLogin`. The dependency is root-barrel only — never import a
+`@epam/ai-dial-chat-hooks/` subpath.
 
 ## Installation
 
@@ -53,7 +57,10 @@ root-barrel only — never import a `@epam/ai-dial-chat-hooks/` subpath.
 
 ```tsx
 import { ToolsetAuthTypes } from '@epam/ai-dial-chat-hooks';
-import { getDefaultToolsetForm, ToolsetEditor } from '@epam/ai-dial-toolset-editor';
+import {
+  getDefaultToolsetForm,
+  ToolsetEditor,
+} from '@epam/ai-dial-toolset-editor';
 import type {
   ToolsetAuthActions,
   ToolsetFormData,
@@ -92,11 +99,12 @@ const ToolsetEditorPage = () => {
       onSaveComplete={() => navigate(returnUrl)}
       onBack={() => navigate(returnUrl)}
       buildMcpUrl={
-        externalCoreUrl && ((toolsetId) => `${externalCoreUrl}/mcp/${toolsetId}`)
+        externalCoreUrl &&
+        ((toolsetId) => `${externalCoreUrl}/mcp/${toolsetId}`)
       }
       listToolNames={(toolsetId) => api.listMcpToolNames(toolsetId)}
       authActions={authActions}
-      oauthCallbackPath="/toolset-auth-callback"
+      onOAuthLogin={runOAuthLogin}
       onNotifySuccess={(message) => toast(message)}
       onNotifyError={(message, requestId) => showError(message, requestId)}
       bucket={user.bucket}
@@ -271,10 +279,22 @@ Returns whether the whole editor form can be saved (name/version via
 
 ### `ToolsetTransportType`
 
-| Member | Value   | Meaning                        |
-| ------ | ------- | ------------------------------ |
-| `Http` | `'HTTP'` | Streamable HTTP MCP transport  |
+| Member | Value    | Meaning                          |
+| ------ | -------- | -------------------------------- |
+| `Http` | `'HTTP'` | Streamable HTTP MCP transport    |
 | `Sse`  | `'SSE'`  | Server-sent events MCP transport |
+
+### `ToolsetOAuthLoginStatus`
+
+How the host's OAuth flow settled, returned from `onOAuthLogin`.
+
+| Member          | Value              | The editor's reaction                             |
+| --------------- | ------------------ | ------------------------------------------------- |
+| `Success`       | `'success'`        | Marks the toolset logged in, success notification |
+| `Cancelled`     | `'cancelled'`      | Silent — nothing failed                           |
+| `PopupBlocked`  | `'popup-blocked'`  | `labels.errorPopupBlocked` notification           |
+| `InvalidConfig` | `'invalid-config'` | `labels.errorOAuthConfigMissing` notification     |
+| `Failed`        | `'failed'`         | `labels.errorLoginFailed` notification            |
 
 The auth enums the form model uses (`ToolsetAuthTypes`, `WithLogin`,
 `ToolsetCredentialsLevel`) are owned by `@epam/ai-dial-chat-hooks` and are
@@ -287,9 +307,41 @@ All types reachable through the public props are exported from the barrel:
 `settings`, `validation` groups), `GeneralFormProps`, `GeneralFormLabels`,
 `SettingsFormLabels`, `AuthSectionLabels`, `ConnectMcpUrlContentLabels`,
 `ToolsetFormData`, `ToolsetAuthFormData`, `DeploymentGeneralFormData`,
-`ToolsetFormErrors`, `ToolsetLoginRequest`, `ToolsetLogoutRequest`, and
-`ToolsetAuthActions`.
+`ToolsetFormErrors`, `ToolsetLoginRequest`, `ToolsetLogoutRequest`,
+`ToolsetAuthActions`, `ToolsetOAuthLoginHandler`, `ToolsetOAuthLoginRequest`,
+and `ToolsetOAuthLoginResult`.
 
 `ToolsetLoginRequest`/`ToolsetLogoutRequest` are structural shapes for the
 credentials bodies; a host with a generated API client maps them onto its own
 DTOs at the app edge, field by field.
+
+`onOAuthLogin` is a `ToolsetOAuthLoginHandler`. It receives the current `auth`
+state and an `ensureSaved` continuation that persists the form and resolves
+the toolset id (or `false`), and it returns a `ToolsetOAuthLoginResult` — a
+`status`, plus optional `auth` fields the flow resolved (dynamic client
+registration) and a `traceId` for a failure notification. The editor calls it
+synchronously from the click, before any `await`, so the host can open a popup
+inside the user gesture.
+
+```tsx
+const runOAuthLogin: ToolsetOAuthLoginHandler = async ({
+  auth,
+  ensureSaved,
+}) => {
+  const popup = window.open('', '_blank');
+  if (!popup) return { status: ToolsetOAuthLoginStatus.PopupBlocked };
+
+  const toolsetId = await ensureSaved();
+  if (!toolsetId) {
+    popup.close();
+    return { status: ToolsetOAuthLoginStatus.Cancelled };
+  }
+
+  const isLoggedIn = await authorize(popup, auth, toolsetId);
+  return {
+    status: isLoggedIn
+      ? ToolsetOAuthLoginStatus.Success
+      : ToolsetOAuthLoginStatus.Failed,
+  };
+};
+```

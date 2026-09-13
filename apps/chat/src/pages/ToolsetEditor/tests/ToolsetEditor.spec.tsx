@@ -70,7 +70,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
   interface StubProps {
     initialForm: { name: string };
     toolsetId: string;
-    oauthCallbackPath: string;
+    onOAuthLogin: unknown;
     labels?: { layout?: { createLabel?: string } };
     buildMcpUrl?: (toolsetId: string) => string;
     listToolNames?: (toolsetId: string) => Promise<string[]>;
@@ -101,7 +101,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
       <div>
         <span>{props.initialForm.name}</span>
         <span>{props.toolsetId}</span>
-        <span>{props.oauthCallbackPath}</span>
+        <span>{props.onOAuthLogin ? 'oauth-handler' : 'no-oauth-handler'}</span>
         <span>{props.labels?.layout?.createLabel}</span>
         <span>
           {props.buildMcpUrl
@@ -295,11 +295,12 @@ describe('ToolsetEditorPage', () => {
     expect(await screen.findByText('Previous screen')).toBeTruthy();
   });
 
-  it('threads the translated labels and the OAuth callback route into the lib editor', async () => {
+  it('threads the translated labels and the app-owned OAuth handler into the lib editor', async () => {
     renderPage();
 
     expect(await screen.findByText(ButtonsI18nKeys.Create)).toBeTruthy();
-    expect(screen.getByText(ROUTES.ToolsetSignIn)).toBeTruthy();
+    /* The callback route stays inside the handler — the lib only gets the handler itself. */
+    expect(screen.getByText('oauth-handler')).toBeTruthy();
   });
 
   it('persists a new toolset through createToolset and resolves the created id', async () => {

@@ -36,7 +36,9 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ),
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+/* Partial mock: the kit's real exports stay in place for the transitive imports that read them at module load, while the controls under test are replaced by minimal, queryable equivalents. */
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   DIAL_KIT_ICON_STROKE: 1.5,
   Input: ({
     value,
@@ -173,7 +175,7 @@ const renderSettings = (props: Partial<SettingsFormProps> = {}) =>
       toolsetId="toolsets/b/my__1.0.0"
       isEditMode
       authActions={authActions}
-      oauthCallbackPath="/auth/toolset-signin"
+      onOAuthLogin={vi.fn()}
       onNotifySuccess={vi.fn()}
       onNotifyError={vi.fn()}
       onChange={vi.fn()}

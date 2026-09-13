@@ -65,7 +65,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
   buildMcpUrl,
   listToolNames,
   authActions,
-  oauthCallbackPath,
+  onOAuthLogin,
   onNotifySuccess,
   onNotifyError,
   bucket,
@@ -405,7 +405,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
             connectUrl={connectUrl}
             listToolNames={listToolNames}
             authActions={authActions}
-            oauthCallbackPath={oauthCallbackPath}
+            onOAuthLogin={onOAuthLogin}
             onNotifySuccess={onNotifySuccess}
             onNotifyError={onNotifyError}
             onChange={handleChange}

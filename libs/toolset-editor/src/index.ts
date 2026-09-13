@@ -15,6 +15,12 @@ export type {
   SettingsFormLabels,
 } from './models/settings-form-props';
 export type { AuthSectionLabels } from './models/auth-section-props';
+export { ToolsetOAuthLoginStatus } from './models/toolset-oauth-login';
+export type {
+  ToolsetOAuthLoginHandler,
+  ToolsetOAuthLoginRequest,
+  ToolsetOAuthLoginResult,
+} from './models/toolset-oauth-login';
 export type {
   DeploymentGeneralFormData,
   ToolsetAuthActions,

@@ -30,5 +30,6 @@ export {
 export {
   MCP_CLIENT_INFO,
   MCP_PROTOCOL_VERSION,
+  MCP_PROTOCOL_VERSION_HEADER,
   MCP_SESSION_ID_HEADER,
 } from './constants/mcp-protocol';

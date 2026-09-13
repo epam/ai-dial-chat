@@ -1,14 +1,7 @@
 import {
   getApiErrorDetails,
-  initiateOAuthLogin,
-  navigateToolsetOAuthPopup,
-  openToolsetOAuthPopup,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
-  type ToolsetOAuthInitiationResult,
-  ToolsetOAuthInitiationResultType,
-  ToolsetOAuthResultType,
-  waitForToolsetOAuthResult,
   WithLogin,
 } from '@epam/ai-dial-chat-hooks';
 import { TAG_INPUT_TAG_CLASS_NAME } from '@epam/ai-dial-chat-shared';
@@ -32,10 +25,11 @@ import type {
   AuthSectionProps,
 } from '../../models/auth-section-props';
 import type {
-  ToolsetAuthFormData,
   ToolsetLoginRequest,
   ToolsetLogoutRequest,
 } from '../../models/toolset-form';
+import type { ToolsetOAuthLoginResult } from '../../models/toolset-oauth-login';
+import { ToolsetOAuthLoginStatus } from '../../models/toolset-oauth-login';
 import { isToolsetAuthValid, isValidEndpointUrl } from '../../utils/toolsets';
 
 /*
@@ -78,7 +72,7 @@ export const AuthSection: FC<AuthSectionProps> = ({
   isEditMode,
   endpoint,
   authActions,
-  oauthCallbackPath,
+  onOAuthLogin,
   onNotifySuccess,
   onNotifyError,
   onAuthChange,
@@ -108,72 +102,53 @@ export const AuthSection: FC<AuthSectionProps> = ({
   };
 
   /*
-   * Shared by both OAuth initiation paths below: waits for the popup result
-   * and applies the same success/failure/cancelled handling regardless of
-   * whether the authorize URL was built from already-known form state or
-   * from settings freshly fetched after dynamic client registration.
+   * Applies whatever the host's OAuth flow settled on. The status is the
+   * only thing this component knows about that flow — which popup opened,
+   * which route it came back through, and how the result travelled between
+   * them are all the host's business.
    */
-  const handleOAuthInitiation = async (
-    initiation: ToolsetOAuthInitiationResult,
-    savedToolsetId: string,
-  ) => {
-    if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
-      /*
-       * `InvalidConfig` means the authorize URL couldn't be built from a
-       * known-good client (e.g. Core's dynamic client registration didn't
-       * return a usable clientId/authorizationEndpoint) — distinct from a
-       * browser-blocked popup, and from a generic post-redirect login
-       * failure, so it gets its own actionable message.
-       */
-      const message =
-        initiation.type === ToolsetOAuthInitiationResultType.Blocked
-          ? (labels?.errorPopupBlocked ??
-            'The login popup was blocked by your browser. Please allow popups for this site and try again.')
-          : (labels?.errorOAuthConfigMissing ??
-            'The OAuth provider did not return a valid client configuration. Please check the endpoint or contact your administrator.');
-      onNotifyError(message);
-      return;
-    }
+  const applyOAuthResult = (result: ToolsetOAuthLoginResult) => {
+    /*
+     * Merged first, and regardless of status: dynamic client registration
+     * assigns `clientId`/`authorizationEndpoint` during the flow, and the
+     * form should show them even if authorizing then failed.
+     */
+    if (result.auth != null) onAuthChange(result.auth);
 
-    setIsAuthBusy(true);
-    const result = await waitForToolsetOAuthResult(
-      initiation.popup,
-      initiation.flowId,
-      {
-        toolsetId: savedToolsetId,
-        credentialsLevel: ToolsetCredentialsLevel.User,
-        callbackPath: oauthCallbackPath,
-      },
-    );
-    setIsAuthBusy(false);
-
-    if (result.type === ToolsetOAuthResultType.Success) {
-      onAuthChange({ isLoggedIn: true });
-      onNotifySuccess(labels?.loginSuccessMessage ?? 'Successfully logged in.');
-    } else if (result.type === ToolsetOAuthResultType.Failure) {
-      onNotifyError(
-        labels?.errorLoginFailed ??
-          'Failed to log in. Please check your credentials and try again.',
-      );
-    } else if (result.type === ToolsetOAuthResultType.Cancelled) {
-      /*
-       * Treat the backend as the final authority if popup tracking or
-       * cross-process message delivery ever still reports a false cancel.
-       * This keeps the form from showing "logged out" after a login that
-       * actually completed server-side.
-       */
-      try {
-        const refreshedAuth =
-          await authActions.fetchAuthSettings(savedToolsetId);
-        if (refreshedAuth.isLoggedIn) {
-          onAuthChange({ isLoggedIn: true });
-          onNotifySuccess(
-            labels?.loginSuccessMessage ?? 'Successfully logged in.',
-          );
-        }
-      } catch {
-        // Best-effort verification only — a genuine cancel stays silent.
-      }
+    switch (result.status) {
+      case ToolsetOAuthLoginStatus.Success:
+        onAuthChange({ isLoggedIn: true });
+        onNotifySuccess(
+          labels?.loginSuccessMessage ?? 'Successfully logged in.',
+        );
+        return;
+      case ToolsetOAuthLoginStatus.PopupBlocked:
+        onNotifyError(
+          labels?.errorPopupBlocked ??
+            'The login popup was blocked by your browser. Please allow popups for this site and try again.',
+        );
+        return;
+      case ToolsetOAuthLoginStatus.InvalidConfig:
+        /*
+         * Distinct from a blocked popup and from a generic login failure:
+         * the provider returned no client to authorize against, which is
+         * actionable in a way the other two are not.
+         */
+        onNotifyError(
+          labels?.errorOAuthConfigMissing ??
+            'The OAuth provider did not return a valid client configuration. Please check the endpoint or contact your administrator.',
+        );
+        return;
+      case ToolsetOAuthLoginStatus.Failed:
+        onNotifyError(
+          labels?.errorLoginFailed ??
+            'Failed to log in. Please check your credentials and try again.',
+          result.traceId,
+        );
+        return;
+      case ToolsetOAuthLoginStatus.Cancelled:
+        /* Nothing failed, so nothing is reported. */
+        return;
     }
   };
 
@@ -182,85 +157,20 @@ export const AuthSection: FC<AuthSectionProps> = ({
 
     if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
       /*
-       * "With Login" and no client id yet means this OAuth client relies on
-       * Core's dynamic client registration (RFC 7591), which only assigns
-       * `clientId`/`authorizationEndpoint` once the toolset is created — the
-       * pre-save `auth` form state never carries them (the fields aren't
-       * even rendered outside "With Login & Config"). Opening the popup
-       * synchronously here, before the persist/fetch awaits, keeps it a
-       * user-triggered popup rather than one browsers block as programmatic.
+       * `onOAuthLogin` is called before the first `await` in this branch, so
+       * the host can still open a popup inside the user gesture. Busy is set
+       * first for the same reason it always was: `onEnsureSaved` can resolve
+       * in a single microtask when the form is already saved, and a second
+       * click in that window would start a second concurrent login.
        */
-      const needsDynamicRegistration =
-        auth.withLogin === WithLogin.WithLogin && !auth.clientId?.trim();
-
-      if (needsDynamicRegistration) {
-        const popup = openToolsetOAuthPopup();
-        if (!popup) {
-          onNotifyError(
-            labels?.errorPopupBlocked ??
-              'The login popup was blocked by your browser. Please allow popups for this site and try again.',
-          );
-          return;
-        }
-
-        /*
-         * Set busy immediately once the popup is open — this branch has two
-         * awaits (persist, then fetch) before `handleOAuthInitiation` would
-         * otherwise set it, and `onEnsureSaved` resolves in a single
-         * microtask when the form is already saved and unchanged (it never
-         * flips `isSaving`). Without this, a second click during that window
-         * would open a second popup and start a second concurrent login.
-         * The `finally` covers every exit from this branch — the two early
-         * returns below, and both the Started and non-Started outcomes of
-         * `handleOAuthInitiation` (which already clears busy itself for the
-         * Started case, making this a harmless redundant reset).
-         */
-        setIsAuthBusy(true);
-        try {
-          const savedToolsetId = await onEnsureSaved();
-          if (!savedToolsetId) {
-            popup.close();
-            return;
-          }
-
-          let resolvedAuth: ToolsetAuthFormData;
-          try {
-            resolvedAuth = await authActions.fetchAuthSettings(savedToolsetId);
-          } catch (error) {
-            popup.close();
-            const { traceId } = await getApiErrorDetails(error);
-            onNotifyError(
-              labels?.errorLoginFailed ??
-                'Failed to log in. Please check your credentials and try again.',
-              traceId,
-            );
-            return;
-          }
-          onAuthChange(resolvedAuth);
-
-          const initiation = navigateToolsetOAuthPopup(
-            popup,
-            resolvedAuth,
-            savedToolsetId,
-            oauthCallbackPath,
-            ToolsetCredentialsLevel.User,
-          );
-          await handleOAuthInitiation(initiation, savedToolsetId);
-        } finally {
-          setIsAuthBusy(false);
-        }
-        return;
+      setIsAuthBusy(true);
+      try {
+        applyOAuthResult(
+          await onOAuthLogin({ auth, ensureSaved: onEnsureSaved }),
+        );
+      } finally {
+        setIsAuthBusy(false);
       }
-
-      const savedToolsetId = await onEnsureSaved();
-      if (!savedToolsetId) return;
-
-      const initiation = initiateOAuthLogin(
-        auth,
-        savedToolsetId,
-        oauthCallbackPath,
-      );
-      await handleOAuthInitiation(initiation, savedToolsetId);
       return;
     }
 

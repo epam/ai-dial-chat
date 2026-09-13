@@ -18,7 +18,7 @@ export const SettingsForm: FC<SettingsFormProps> = ({
   connectUrl,
   listToolNames,
   authActions,
-  oauthCallbackPath,
+  onOAuthLogin,
   onNotifySuccess,
   onNotifyError,
   onChange,
@@ -153,7 +153,7 @@ export const SettingsForm: FC<SettingsFormProps> = ({
         isEditMode={isEditMode}
         endpoint={form.endpoint}
         authActions={authActions}
-        oauthCallbackPath={oauthCallbackPath}
+        onOAuthLogin={onOAuthLogin}
         onNotifySuccess={onNotifySuccess}
         onNotifyError={onNotifyError}
         onAuthChange={onAuthChange}

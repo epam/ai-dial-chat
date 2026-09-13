@@ -6,23 +6,25 @@
 import {
   MCP_CLIENT_INFO,
   MCP_PROTOCOL_VERSION,
+  MCP_PROTOCOL_VERSION_HEADER,
   MCP_SESSION_ID_HEADER,
 } from '@epam/ai-dial-mcp-apps/constants';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
+  BadRequestException,
   ForbiddenException,
-  HttpException,
   Inject,
   Injectable,
   Logger,
-  ServiceUnavailableException,
+  NotFoundException,
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
@@ -47,6 +49,32 @@ interface JsonRpcResponse<T> {
   result?: T;
   error?: { code: number; message: string };
 }
+
+/** The subset of the MCP `initialize` result this proxy acts on. */
+interface McpInitializeResult {
+  protocolVersion?: string;
+}
+
+/** A completed Streamable HTTP handshake, replayed on every retried request. */
+interface McpSession {
+  /** Server-assigned session id; absent when the server opts out of sessions. */
+  id?: string;
+  /** Version the server negotiated in its `initialize` result. */
+  protocolVersion: string;
+}
+
+/*
+ * The Streamable HTTP transport signals a missing or invalid session at the
+ * HTTP layer, and only there: 400 when the server requires a session id the
+ * request did not carry, 404 when the id it carried has expired or was
+ * terminated. Every other failure — an upstream 5xx, a JSON-RPC error inside
+ * a 200 body, a timeout — says nothing about the session, and retrying it
+ * after a handshake would re-send a `tools/call` the server may already have
+ * executed. Narrow on purpose: the fallback exists to complete a handshake,
+ * not to retry arbitrary failures.
+ */
+const isMissingSessionError = (err: unknown): boolean =>
+  err instanceof BadRequestException || err instanceof NotFoundException;
 
 interface McpTool {
   name: string;
@@ -81,6 +109,19 @@ const parseJsonRpcSseBody = (raw: string): unknown => {
 };
 
 /**
+ * Reads a JSON-RPC message out of an MCP proxy response body, which the
+ * upstream server may send either as a single JSON object or as an SSE
+ * stream — the `Accept` header this proxy sends allows both.
+ */
+const parseJsonRpcBody = <T>(
+  raw: string,
+  contentType: string,
+): JsonRpcResponse<T> =>
+  (contentType.includes('text/event-stream')
+    ? parseJsonRpcSseBody(raw)
+    : JSON.parse(raw)) as JsonRpcResponse<T>;
+
+/**
  * Proxies DIAL Core's MCP Apps Phase 1 surface (`epam/ai-dial-core` PR #1745):
  * fetching a toolset's `ui://` resource as a raw passthrough, forwarding an
  * MCP App's self-initiated `tools/call` through Core's existing generic MCP
@@ -97,26 +138,18 @@ export class McpAppService {
   ) {}
 
   /*
-   * Core's raw-passthrough `mcp/resources` endpoint — confirmed generic across toolset and application deployments (design.md Context).
+   * Every Core MCP path is built by the SDK operation itself
+   * (`getApplicationMcpResources`, `postToolSetMcp`, `postApplicationMcp`),
+   * which is also what keeps the kind-specific prefixes straight: toolsets
+   * use `/v1/toolset/{id}/mcp`, applications `/v1/deployments/{id}/mcp`.
    *
-   * The deployment id is encoded per path segment (`toolsets/{bucket}/{name}`),
-   * never as a whole — Core's routes match the path form, and a `%2F`-encoded
-   * slash inside a single segment is rejected with 400 "Invalid request to
-   * DIAL Core". Same encoding as `deployments-details.service.ts`'s
+   * The deployment id is still encoded per path segment
+   * (`toolsets/{bucket}/{name}`), never as a whole — the SDK interpolates the
+   * id verbatim, Core's routes match the path form, and a `%2F`-encoded slash
+   * inside a single segment is rejected with 400 "Invalid request to DIAL
+   * Core". Same encoding as `deployments-details.service.ts`'s
    * `getToolSetTools` call.
    */
-  private deploymentMcpUrl(toolsetId: string): string {
-    return `${this.dialClient.baseUrl}/v1/deployments/${encodeDialResourcePath(toolsetId)}/mcp`;
-  }
-
-  /*
-   * Core's generic MCP JSON-RPC proxy is prefix-specific by deployment kind:
-   * toolsets use `/v1/toolset/{id}/mcp`, applications use `/v1/deployments/{id}/mcp`.
-   * See `rpcRequestForDeployment` for the selection logic.
-   */
-  private toolsetMcpProxyUrl(toolsetId: string): string {
-    return `${this.dialClient.baseUrl}/v1/toolset/${encodeDialResourcePath(toolsetId)}/mcp`;
-  }
 
   async getResource(
     toolsetId: string,
@@ -132,13 +165,23 @@ export class McpAppService {
       context: `get mcp-app resource for toolset "${toolsetId}"`,
       logger: this.logger,
       fetch: async () => {
-        const url = `${this.deploymentMcpUrl(toolsetId)}/resources?uri=${encodeURIComponent(resourceUri)}`;
-        const response = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: AbortSignal.timeout(TOOL_CALL_TIMEOUT_MS),
-        });
+        /*
+         * `parseAs: 'text'` keeps this a raw passthrough — the endpoint
+         * serves an HTML widget, which the generated operation types as an
+         * empty (`never`) success body, so the text is cast back here.
+         */
+        const { data, error, response } =
+          await this.dialClient.client.getApplicationMcpResources(
+            encodeDialResourcePath(toolsetId),
+            {
+              params: { query: { uri: resourceUri } },
+              headers: getBearerAuthHeaders(token),
+              parseAs: 'text',
+              signal: AbortSignal.timeout(TOOL_CALL_TIMEOUT_MS),
+            },
+          );
 
-        if (!response.ok) {
+        if (error != null) {
           mapDialHttpStatus(
             response.status,
             `get mcp-app resource for toolset "${toolsetId}"`,
@@ -152,7 +195,7 @@ export class McpAppService {
           if (value != null) headers[name] = value;
         }
 
-        return { body: await response.text(), headers };
+        return { body: (data as unknown as string) ?? '', headers };
       },
     });
   }
@@ -252,11 +295,12 @@ export class McpAppService {
    * Some MCP servers require the Streamable HTTP `initialize` handshake
    * before serving any method — a direct `tools/list` is rejected until the
    * client initializes and echoes the returned `Mcp-Session-Id` header.
-   * Fallback strategy: the RPC is attempted directly first; only on an
-   * upstream response failure is the handshake performed and the request
-   * retried once with the session id. Session ids are deliberately NOT
-   * cached across requests — a server that opts out of sessions may reject
-   * an unknown session header, so direct-first stays the safe default.
+   * Fallback strategy: the RPC is attempted directly first; only when the
+   * failure actually reports a missing or invalid session
+   * (`isMissingSessionError`) is the handshake performed and the request
+   * retried once. Session ids are deliberately NOT cached across requests —
+   * a server that opts out of sessions may reject an unknown session header,
+   * so direct-first stays the safe default.
    */
   private async rpcRequestForDeployment<T>(
     deploymentId: string,
@@ -274,25 +318,26 @@ export class McpAppService {
         params,
       );
     } catch (err) {
-      /* Core being unreachable or timing out can't be fixed by a handshake. */
-      if (
-        !(err instanceof HttpException) ||
-        err instanceof ServiceUnavailableException
-      ) {
+      /*
+       * Anything that is not a session complaint is surfaced untouched: a
+       * handshake cannot fix it, and `method` may be a side-effecting
+       * `tools/call` the server already executed.
+       */
+      if (!isMissingSessionError(err)) {
         throw err;
       }
 
-      let sessionId: string | undefined;
+      let session: McpSession | undefined;
       try {
-        sessionId = await this.initializeMcpSession(deploymentId, kind, token);
+        session = await this.initializeMcpSession(deploymentId, kind, token);
       } catch (handshakeErr) {
         this.logger.warn(
           `MCP initialize fallback for ${kind} "${deploymentId}" failed: ${handshakeErr instanceof Error ? handshakeErr.message : String(handshakeErr)}`,
         );
       }
-      if (sessionId == null) {
+      if (session == null) {
         this.logger.warn(
-          `MCP initialize for ${kind} "${deploymentId}" returned no ${MCP_SESSION_ID_HEADER} header — surfacing the original "${method}" failure`,
+          `MCP initialize for ${kind} "${deploymentId}" did not complete — surfacing the original "${method}" failure`,
         );
         throw err;
       }
@@ -303,29 +348,32 @@ export class McpAppService {
         token,
         method,
         params,
-        sessionId,
+        session,
       );
     }
   }
 
-  /** Performs the Streamable HTTP `initialize` handshake and returns the server-assigned `Mcp-Session-Id`, or `undefined` when the server opts out of sessions. */
+  /**
+   * Performs the Streamable HTTP `initialize` handshake and completes the MCP
+   * lifecycle by acknowledging it with `notifications/initialized`, as the
+   * spec requires before any other request is served. Returns the negotiated
+   * session, or `undefined` when the server answered `initialize` with a
+   * JSON-RPC error or an empty result — HTTP 200 alone does not mean the
+   * handshake succeeded.
+   *
+   * @see https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle#initialization
+   */
   private async initializeMcpSession(
     deploymentId: string,
     kind: McpDeploymentKindDto,
     token: string,
-  ): Promise<string | undefined> {
-    const url =
-      kind === McpDeploymentKindDto.Toolset
-        ? this.toolsetMcpProxyUrl(deploymentId)
-        : this.deploymentMcpUrl(deploymentId);
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json, text/event-stream',
-      },
-      body: JSON.stringify({
+  ): Promise<McpSession | undefined> {
+    const context = `mcp "initialize" for ${kind} "${deploymentId}"`;
+    const { text, response } = await this.postMcpProxy(
+      deploymentId,
+      kind,
+      token,
+      {
         jsonrpc: '2.0',
         id: 1,
         method: 'initialize',
@@ -334,38 +382,76 @@ export class McpAppService {
           capabilities: {},
           clientInfo: MCP_CLIENT_INFO,
         },
-      }),
-      signal: AbortSignal.timeout(TOOL_CALL_TIMEOUT_MS),
-    });
+      },
+      undefined,
+      context,
+    );
 
-    if (!response.ok) {
-      mapDialHttpStatus(
-        response.status,
-        `mcp "initialize" for ${kind} "${deploymentId}"`,
-        this.logger,
+    let body: JsonRpcResponse<McpInitializeResult>;
+    try {
+      body = parseJsonRpcBody<McpInitializeResult>(
+        text,
+        response.headers.get('content-type') ?? '',
       );
+    } catch (parseErr) {
+      this.logger.warn(
+        `${context} returned an unparsable body: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`,
+      );
+      return undefined;
     }
 
-    /* The initialize result body is not needed — drain it to release the connection. */
-    await response.text();
-    return response.headers.get(MCP_SESSION_ID_HEADER) ?? undefined;
+    if (body.error != null) {
+      this.logger.warn(
+        `${context} returned a JSON-RPC error: ${body.error.message}`,
+      );
+      return undefined;
+    }
+    if (body.result == null) {
+      this.logger.warn(`${context} returned no result`);
+      return undefined;
+    }
+
+    const session: McpSession = {
+      id: response.headers.get(MCP_SESSION_ID_HEADER) ?? undefined,
+      /*
+       * A server may negotiate down to a version it supports; echoing its
+       * choice back is what keeps the rest of the exchange on one version.
+       * Falling back to the requested version keeps a server that omits the
+       * field workable rather than failing the handshake over it.
+       */
+      protocolVersion: body.result.protocolVersion ?? MCP_PROTOCOL_VERSION,
+    };
+
+    await this.postMcpProxy(
+      deploymentId,
+      kind,
+      token,
+      /* A notification carries no `id` and the server answers with no body. */
+      { jsonrpc: '2.0', method: 'notifications/initialized' },
+      session,
+      `mcp "notifications/initialized" for ${kind} "${deploymentId}"`,
+    );
+
+    return session;
   }
 
-  private async rpcRequest<T>(
+  /**
+   * POSTs one JSON-RPC message through DIAL Core's MCP proxy using the shared
+   * SDK client, so the call carries the same `User-Agent` and transport
+   * configuration as every other DIAL request. The body is read as text
+   * rather than JSON because the upstream server picks the encoding per
+   * response (single JSON object or SSE stream).
+   */
+  private async postMcpProxy(
     deploymentId: string,
     kind: McpDeploymentKindDto,
     token: string,
-    method: string,
-    params: Record<string, unknown>,
-    sessionId?: string,
-  ): Promise<T> {
-    const url =
-      kind === McpDeploymentKindDto.Toolset
-        ? this.toolsetMcpProxyUrl(deploymentId)
-        : this.deploymentMcpUrl(deploymentId);
+    body: Record<string, unknown>,
+    session: McpSession | undefined,
+    context: string,
+  ): Promise<{ text: string; response: Response }> {
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      ...getBearerAuthHeaders(token),
       /*
        * MCP Streamable HTTP transport requires this on every POST —
        * confirmed via spike: Core's generic MCP proxy 406s without it,
@@ -374,35 +460,54 @@ export class McpAppService {
        */
       Accept: 'application/json, text/event-stream',
     };
-    if (sessionId != null) headers[MCP_SESSION_ID_HEADER] = sessionId;
+    if (session != null) {
+      headers[MCP_PROTOCOL_VERSION_HEADER] = session.protocolVersion;
+      if (session.id != null) headers[MCP_SESSION_ID_HEADER] = session.id;
+    }
+
+    const encodedId = encodeDialResourcePath(deploymentId);
+    const init = {
+      body,
+      headers,
+      parseAs: 'text' as const,
+      signal: AbortSignal.timeout(TOOL_CALL_TIMEOUT_MS),
+    };
+    const { data, error, response } =
+      kind === McpDeploymentKindDto.Toolset
+        ? await this.dialClient.client.postToolSetMcp(encodedId, init)
+        : await this.dialClient.client.postApplicationMcp(encodedId, init);
+
+    if (error != null) {
+      mapDialHttpStatus(response.status, context, this.logger);
+    }
+
+    return { text: (data as unknown as string) ?? '', response };
+  }
+
+  private async rpcRequest<T>(
+    deploymentId: string,
+    kind: McpDeploymentKindDto,
+    token: string,
+    method: string,
+    params: Record<string, unknown>,
+    session?: McpSession,
+  ): Promise<T> {
+    const context = `mcp "${method}" for ${kind} "${deploymentId}"`;
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method,
-          params,
-        }),
-        signal: AbortSignal.timeout(TOOL_CALL_TIMEOUT_MS),
-      });
+      const { text, response } = await this.postMcpProxy(
+        deploymentId,
+        kind,
+        token,
+        { jsonrpc: '2.0', id: 1, method, params },
+        session,
+        context,
+      );
 
-      if (!response.ok) {
-        mapDialHttpStatus(
-          response.status,
-          `mcp "${method}" for ${kind} "${deploymentId}"`,
-          this.logger,
-        );
-      }
-
-      const contentType = response.headers.get('content-type') ?? '';
-      const body = (
-        contentType.includes('text/event-stream')
-          ? parseJsonRpcSseBody(await response.text())
-          : await response.json()
-      ) as JsonRpcResponse<T>;
+      const body = parseJsonRpcBody<T>(
+        text,
+        response.headers.get('content-type') ?? '',
+      );
       if (body.error != null) {
         this.logger.warn(
           `DIAL Core's "${method}" returned a JSON-RPC error for ${kind} "${deploymentId}": ${body.error.message}`,
@@ -414,7 +519,7 @@ export class McpAppService {
     } catch (err) {
       return handleDialFetchError(
         err,
-        `mcp "${method}" for ${kind} "${deploymentId}"`,
+        context,
         this.logger,
         TOOL_CALL_TIMEOUT_MS,
       );
