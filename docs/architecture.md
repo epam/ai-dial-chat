@@ -29,7 +29,7 @@ Core principle: the chat application is assembled from a set of **independently 
 
 | Tool               | Role                                                           |
 | ------------------ | -------------------------------------------------------------- |
-| **Nx 22**          | Monorepo orchestration, task pipeline, caching, affected graph |
+| **Nx 23**          | Monorepo orchestration, task pipeline, caching, affected graph |
 | **npm workspaces** | Package management                                             |
 | **React 19**       | UI framework for all libraries and the frontend app            |
 | **NestJS 11**      | Backend API server (`apps/chat-api`)                           |
@@ -608,7 +608,7 @@ The intended direction, enforced in review:
 | #   | Decision                                                                     | Status                                       |
 | --- | ---------------------------------------------------------------------------- | -------------------------------------------- |
 | 1   | Package prefix: `@epam/*` (short form, no `ai-dial-` in package name)        | ✅ Accepted                                  |
-| 2   | Monorepo tooling: **Nx 22**                                                  | ✅ Accepted                                  |
+| 2   | Monorepo tooling: **Nx 23**                                                  | ✅ Accepted                                  |
 | 3   | Package manager: **npm workspaces**                                          | ✅ Accepted                                  |
 | 4   | UI framework: **React 19** (SPA)                                             | ✅ Accepted                                  |
 | 5   | Backend framework: **NestJS 11** (`apps/chat-api`)                           | ✅ Accepted                                  |

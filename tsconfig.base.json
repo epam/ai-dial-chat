@@ -55,6 +55,10 @@
       "@epam/ai-dial-editor-builder/*": ["./libs/editor-builder/*"],
       "@epam/ai-dial-skill-editor/*": ["./libs/skill-editor/*"],
       "@epam/ai-dial-settings-panel/*": ["./libs/settings-panel/*"]
-    }
+    },
+    "noUncheckedSideEffectImports": false,
+    "types": ["*"],
+    "esModuleInterop": false,
+    "ignoreDeprecations": "6.0"
   }
 }
