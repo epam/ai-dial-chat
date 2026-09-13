@@ -1,3 +1,4 @@
+import type { PromptParameter } from '@epam/ai-dial-chat-shared';
 import type { PromptParametersPopupLabels } from '@epam/ai-dial-prompts';
 import { lazy, memo, Suspense, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +18,7 @@ interface Props {
   promptName: string;
   content: string;
   description?: string;
-  parameters: string[];
+  parameters: PromptParameter[];
   onBack?: () => void;
   onClose: () => void;
   onCancel: () => void;
