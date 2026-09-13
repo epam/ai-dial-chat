@@ -6,6 +6,27 @@ import type {
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
+/** Status the completion endpoint returns when the conversation is already generating. */
+const GENERATION_CONFLICT_STATUS = 409;
+
+/** Fallback text of a {@link GenerationConflictError} when no message is supplied. */
+export const DEFAULT_GENERATION_CONFLICT_MESSAGE =
+  'A response is already being generated in this conversation. Wait for it to finish or stop it before sending another message.';
+
+/**
+ * Reported through `onError` when the backend rejects a completion because
+ * another generation is already active on the same conversation — what a
+ * second browser tab of the same session hits when it submits into a
+ * conversation the first tab is still generating. Distinct from a generic
+ * transport failure so callers can present it as an expected state.
+ */
+export class GenerationConflictError extends Error {
+  constructor(message: string = DEFAULT_GENERATION_CONFLICT_MESSAGE) {
+    super(message);
+    this.name = 'GenerationConflictError';
+  }
+}
+
 /** Callbacks {@link streamCompletion} reports streamed completion events through. */
 export interface ChatStreamCompletionOptions {
   onChunk: (chunk: StreamChunk) => void;
@@ -162,6 +183,10 @@ export const createChatStreamApi = (
       if (rotatedCsrf) deps.setCsrfToken(rotatedCsrf);
 
       if (!response.ok) {
+        if (response.status === GENERATION_CONFLICT_STATUS) {
+          onError(new GenerationConflictError());
+          return;
+        }
         onError(
           new Error(`Stream request failed with status ${response.status}`),
         );

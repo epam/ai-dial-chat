@@ -30,6 +30,7 @@ import packageJson from '../../package.json';
 import { isExcludedFromTelemetry } from './excluded-paths';
 import type { MetricsExporter, SingleSignalExporter } from './otel-config';
 import { parseOtelConfig } from './otel-config';
+import { initializeRuntimeMetrics } from './runtime-metrics';
 
 /*
  * `main.ts` imports this module first, before `reflect-metadata`, Nest, Express, or any DIAL
@@ -101,6 +102,7 @@ export const buildMetricReaders = (
   });
 
 let sdk: NodeSDK | undefined;
+let stopRuntimeMetrics: (() => void) | undefined;
 
 export const initializeOpenTelemetry = (
   env: NodeJS.ProcessEnv = process.env,
@@ -116,6 +118,10 @@ export const initializeOpenTelemetry = (
     metricReaders: buildMetricReaders(config.metricsExporters, env),
   });
   sdk.start();
+  if (config.metricsExporters.length > 0) {
+    stopRuntimeMetrics?.();
+    stopRuntimeMetrics = initializeRuntimeMetrics();
+  }
 };
 
 /*
@@ -128,6 +134,8 @@ export const shutdownOpenTelemetry = async (
   timeoutMs = 5000,
   shutdownFn: () => Promise<void> = () => sdk?.shutdown() ?? Promise.resolve(),
 ): Promise<void> => {
+  stopRuntimeMetrics?.();
+  stopRuntimeMetrics = undefined;
   await Promise.race([
     shutdownFn(),
     new Promise<void>((resolve) => {

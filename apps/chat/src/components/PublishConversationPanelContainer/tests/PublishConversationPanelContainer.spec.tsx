@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
+import { useAppConfig as useAppConfigMock } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { publishConversation } from '../../../server-api/conversation-publish.api';
@@ -31,6 +32,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasWriteAccess,
       isSubmitting,
       hasSubmitError,
+      author,
+      onAuthorChange,
       rules,
       onRulesChange,
       ruleSourceOptions,
@@ -47,6 +50,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasWriteAccess: boolean;
       isSubmitting: boolean;
       hasSubmitError: boolean;
+      author: string;
+      onAuthorChange: (author: string) => void;
       rules: PublicationRule[];
       onRulesChange: (rules: PublicationRule[]) => void;
       ruleSourceOptions: string[];
@@ -61,6 +66,7 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         <span>existing:{String(hasExistingPublicationInFolder)}</span>
         <span>writeAccess:{String(hasWriteAccess)}</span>
         <span>submitting:{String(isSubmitting)}</span>
+        <span>author:{author}</span>
         <span>ruleSourceOptions:{ruleSourceOptions.join(',')}</span>
         <span>rules:{rules.map((r) => r.source).join(',')}</span>
         <span>rulesLoading:{String(isRulesLoading)}</span>
@@ -78,6 +84,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         <button onClick={() => onRulesChange([...rules, mockRule])}>
           Add mock rule
         </button>
+        <button onClick={() => onAuthorChange('DIAL Team')}>Set author</button>
+        <button onClick={() => onAuthorChange('   ')}>Clear author</button>
         <button onClick={onSubmit}>Publish</button>
         <button onClick={onClose}>Close</button>
       </div>
@@ -86,6 +94,9 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
 });
 
 vi.mock('../../../hooks/publish/usePublishFolders');
+vi.mock('../../../hooks/user-profile/useUserProfile', () => ({
+  useUserProfile: () => ({ displayName: 'Daniil Pavlov' }),
+}));
 vi.mock('../../../server-api/conversation-publish.api');
 vi.mock('../../../server-api/publish-rules.api');
 vi.mock('../../../context/NotificationContext');
@@ -95,10 +106,10 @@ vi.mock('../../../hooks/publish/usePublishErrorNotification', () => ({
   usePublishErrorNotification: () => mockShowPublishError,
 }));
 
-const useAppConfigMock = vi.fn();
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => useAppConfigMock(),
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -200,6 +211,7 @@ describe('PublishConversationPanelContainer', () => {
         'my-conversation-abc',
         'Shared',
         [],
+        'Daniil Pavlov',
       );
     });
     await waitFor(() => {
@@ -246,6 +258,62 @@ describe('PublishConversationPanelContainer', () => {
     expect(mockRememberPublishFolder).not.toHaveBeenCalled();
   });
 
+  it('pre-fills the author field with the signed-in user display name', async () => {
+    await renderContainer();
+
+    expect(screen.getByText('author:Daniil Pavlov')).toBeTruthy();
+  });
+
+  it('forwards an edited author to publishConversation', async () => {
+    vi.mocked(publishConversation).mockResolvedValue({
+      path: 'conversations/bucket-123/my-conversation-abc',
+      folderPath: 'Shared',
+      publishedAt: new Date().toISOString(),
+      publishedBy: 'Test User',
+    });
+    await renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Set author' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => {
+      expect(publishConversation).toHaveBeenCalledWith(
+        'my-conversation-abc',
+        'Shared',
+        [],
+        'DIAL Team',
+      );
+    });
+  });
+
+  it('forwards a cleared author as an empty string', async () => {
+    vi.mocked(publishConversation).mockResolvedValue({
+      path: 'conversations/bucket-123/my-conversation-abc',
+      folderPath: 'Shared',
+      publishedAt: new Date().toISOString(),
+      publishedBy: 'Test User',
+    });
+    await renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Clear author' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => {
+      expect(publishConversation).toHaveBeenCalledWith(
+        'my-conversation-abc',
+        'Shared',
+        [],
+        '',
+      );
+    });
+  });
+
   it('forwards rules added in the panel to publishConversation', async () => {
     vi.mocked(publishConversation).mockResolvedValue({
       path: 'conversations/bucket-123/my-conversation-abc',
@@ -268,6 +336,7 @@ describe('PublishConversationPanelContainer', () => {
         'my-conversation-abc',
         'Shared',
         [mockRule],
+        'Daniil Pavlov',
       );
     });
   });

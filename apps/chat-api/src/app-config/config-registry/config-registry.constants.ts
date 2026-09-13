@@ -216,6 +216,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'RESPONSES_API_ENABLED',
   },
   {
+    key: 'features.skillUsageEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Client-visible kill switch for all skill-usage UI in the chat app: the catalog skill "Use in chat" primary action and the conversation input\'s Skills menu (favorites panel, browse modal, selected-skill chip). Exposed to the frontend client-config endpoint (visibility: client) because it gates UI; every entry point is hidden while false. Defaults to false — the backend contract for sending skills with completions is not designed yet, so the flag ships dark. Role-based rollout (SKILL_USAGE_ENABLED_ROLES) is not implemented — out of scope.',
+    owner: 'chat-team',
+    envVar: 'SKILL_USAGE_ENABLED',
+  },
+  {
     key: 'overlay.enabled',
     type: 'config',
     valueType: 'boolean',

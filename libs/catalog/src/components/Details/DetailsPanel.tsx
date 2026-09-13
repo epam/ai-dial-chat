@@ -207,6 +207,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onPublishExpandedPathsChange,
   publishLoadingPaths,
   hasPublishWriteAccess,
+  publishDefaultAuthor,
   onPublish,
   onPublishSuccess,
   onPublishError,
@@ -542,6 +543,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     history: publishHistory,
     folderItems: publishFolderItems,
     hasWriteAccess: hasPublishWriteAccess,
+    defaultAuthor: publishDefaultAuthor,
     onCreateFolder: onCreatePublishFolder,
     onPublish: onPublish ?? NO_OP_PUBLISH,
     onPublishSuccess: handlePublishSuccess,
@@ -1092,7 +1094,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
       <div
         style={cssVars}
         className={mergeClasses(
-          'fixed inset-0 z-40 transition-opacity duration-300',
+          'fixed inset-0 z-50 transition-opacity duration-300',
           styles.backdrop,
           isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
@@ -1235,6 +1237,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 hasWriteAccess={publishFlow.hasWriteAccess}
                 isSubmitting={publishFlow.isSubmitting}
                 hasSubmitError={publishFlow.hasSubmitError}
+                author={publishFlow.author}
+                onAuthorChange={publishFlow.setAuthor}
                 rules={publishFlow.rules}
                 onRulesChange={publishFlow.setRules}
                 ruleSourceOptions={ruleSourceOptions}
@@ -1268,6 +1272,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onOpenPublish={handleOpenPublish}
                 isUnpublishVisible={isUnpublishVisible}
                 hasPublishedFolders={hasPublishedFolders}
+                isPublishHistoryResolved={
+                  getPublishHistory == null || isPublishHistoryResolved
+                }
                 onRequestPublishHistory={requestPublishHistory}
                 onOpenUnpublish={
                   onUnpublish ? handleRequestUnpublish : undefined

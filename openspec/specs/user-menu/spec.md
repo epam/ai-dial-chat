@@ -98,7 +98,7 @@ The host SHALL pass `onSettings` only when the `settingsPageEnabled` feature fla
 
 ### Requirement: Preference groups are supplied by the host
 
-The submenus in the dropdown are not built by `UserMenu`. `useNavigationMenuGroups` (`apps/chat/src/hooks/navigation/useNavigationMenuGroups.tsx`) builds them as `NavigationMenuGroup` values — `{ id, label, icon, options }`, each option carrying `{ id, label, isActive, onSelect }` — and `Navigation` passes the non-`undefined` ones as `groups`.
+The submenus in the dropdown SHALL NOT be built by `UserMenu`. `useNavigationMenuGroups` (`apps/chat/src/hooks/navigation/useNavigationMenuGroups.tsx`) builds them as `NavigationMenuGroup` values — `{ id, label, icon, options }`, each option carrying `{ id, label, isActive, onSelect }` — and `Navigation` passes the non-`undefined` ones as `groups`.
 
 Every group SHALL be suppressed when `OverlayFeature.HideUserSettings` is enabled.
 
@@ -149,7 +149,7 @@ Note that "unaffected" is not the same as "rendered": with a single locale shipp
 
 ### Requirement: Theme selection is not offered in the user menu
 
-No Theme group is built today. `useNavigationMenuGroups` carries an explicit `TODO` recording the intent to reinstate one from `useThemeOptions`, which still exposes `hasDark`, `hasLight`, `selectedTheme`, `setTheme` and `themes` for that purpose. Only the light theme ships, so a Theme submenu would offer a single option.
+No Theme group SHALL be built today. `useNavigationMenuGroups` carries an explicit `TODO` recording the intent to reinstate one from `useThemeOptions`, which still exposes `hasDark`, `hasLight`, `selectedTheme`, `setTheme` and `themes` for that purpose. Only the light theme ships, so a Theme submenu would offer a single option.
 
 Until that group is built, the user menu SHALL NOT render a Theme item, and the resolved-versus-stored-preference behaviour of `ThemeContext` is specified by the theming documentation rather than here.
 

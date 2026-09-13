@@ -51,6 +51,7 @@ describe('DeploymentsController', () => {
       TEST_USER.bucket,
       [DeploymentInterfaceType.Chat],
       undefined,
+      undefined,
     );
   });
 
@@ -73,6 +74,7 @@ describe('DeploymentsController', () => {
       TEST_USER.bucket,
       undefined,
       true,
+      undefined,
     );
   });
 
@@ -87,6 +89,7 @@ describe('DeploymentsController', () => {
       TEST_USER.sub,
       TEST_USER.at,
       TEST_USER.bucket,
+      undefined,
       undefined,
       undefined,
     );

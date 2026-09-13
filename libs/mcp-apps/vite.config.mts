@@ -34,7 +34,7 @@ export default defineConfig(() => ({
       name: '@epam/ai-dial-mcp-apps',
       formats: ['es' as const],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [
         'react',
         'react-dom',

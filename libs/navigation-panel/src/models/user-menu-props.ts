@@ -10,8 +10,6 @@ export interface UserMenuColors {
   avatarText?: string;
   /** Menu label text color. */
   text?: string;
-  /** Check-mark color marking the active option. */
-  activeIcon?: string;
   /** Trigger background on hover. */
   triggerHoverBackground?: string;
 }

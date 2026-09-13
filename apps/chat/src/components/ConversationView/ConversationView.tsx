@@ -9,9 +9,9 @@ import {
   dialFolderPathToAttachment,
   findDeploymentByIdOrReference,
   getQuickAppConversationStarters,
-  isMessageChanged,
   isQuickAppSchema,
   referenceAttachmentToPdfCanvasContent,
+  shouldRerunGenerationOnEdit,
   useAttachmentValidation,
   useChatSettingsFormConfig,
 } from '@epam/ai-dial-chat-hooks';
@@ -34,6 +34,7 @@ import {
   type Message as MessageType,
   type StarterOption,
   type ToolMenuItem,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type { ToolsChipLabels } from '@epam/ai-dial-conversation-input';
 import type {
@@ -42,13 +43,14 @@ import type {
 } from '@epam/ai-dial-conversation-messages';
 import { useMcpAppResponseCache } from '@epam/ai-dial-mcp-apps';
 import {
+  BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconCopy } from '@tabler/icons-react';
+import { IconCopy, IconPrompt } from '@tabler/icons-react';
 import {
   FC,
   lazy,
@@ -96,6 +98,7 @@ import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymen
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
+import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
 
@@ -112,7 +115,9 @@ const DialFileManagerModal = lazy(async () => {
 interface Props {
   messages: MessageType[];
   onSend: (message: string, attachments: Attachment[]) => void;
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   onStop?: () => void;
   onDeleteMessage?: (messageIndex: number) => void;
   onRegenerateMessage?: (messageIndex: number) => void;
@@ -142,6 +147,8 @@ interface Props {
   onDuplicateConversation?: () => void;
   duplicateError?: string;
   isAudioMessageSupported?: boolean;
+  isVoiceRecordingSupported?: boolean;
+  onTranscribeAudio?: (file: File, signal: AbortSignal) => Promise<string>;
   conversation: Conversation;
   onConversationChange: (conv: Conversation) => void;
   /**
@@ -200,6 +207,8 @@ const ConversationView: FC<Props> = ({
   onDuplicateConversation,
   duplicateError,
   isAudioMessageSupported = false,
+  isVoiceRecordingSupported = false,
+  onTranscribeAudio,
   conversation,
   onConversationChange,
   fixedModel,
@@ -222,6 +231,46 @@ const ConversationView: FC<Props> = ({
     onInsertText: onInsertText ?? (() => undefined),
   });
   const { t } = useTranslation();
+  const promptsMenuOverlays = useMemo(
+    () =>
+      onInsertText && renderPromptsOverlay
+        ? [
+            {
+              key: 'prompts',
+              title: t(PromptSelectorI18nKeys.AddMenuLabel),
+              icon: (
+                <IconPrompt
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
+              renderOverlay: renderPromptsOverlay,
+            },
+          ]
+        : undefined,
+    [onInsertText, renderPromptsOverlay, t],
+  );
+  const {
+    skillMenuOverlay,
+    commandMenu,
+    skillCatalogModal,
+    skillDetailsPanel,
+    selectedSkillElement,
+    removeSelectedSkill,
+  } = useSkillSelectorOverlay();
+  /*
+   * The Skills entry joins the Prompts entry in array order, so it renders
+   * below Prompts in the `+` menu; `undefined` when both are absent keeps
+   * the `+` button's empty-menu rule intact.
+   */
+  const menuOverlays = useMemo(() => {
+    const entries = [
+      ...(promptsMenuOverlays ?? []),
+      ...(skillMenuOverlay ? [skillMenuOverlay] : []),
+    ];
+    return entries.length > 0 ? entries : undefined;
+  }, [promptsMenuOverlays, skillMenuOverlay]);
   const { language } = useLanguage();
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const isMobile = useIsMobile();
@@ -588,15 +637,20 @@ const ConversationView: FC<Props> = ({
       newAttachments: Attachment[],
     ) => {
       /*
-       * handleEditMessage no-ops if a generation is in flight or the text is
-       * unchanged (isMessageChanged mirrors that same check) — skip arming
-       * in either case so a later, unrelated update can't consume a stale index.
+       * handleEditMessage no-ops if a generation is in flight, or if nothing
+       * changed and the existing answer is complete (shouldRerunGenerationOnEdit
+       * mirrors that same check) — skip arming in either case so a later,
+       * unrelated update can't consume a stale index.
        */
-      const originalMessage = messages[messageIndex];
       if (
         !isAssistantTyping &&
-        originalMessage != null &&
-        isMessageChanged(originalMessage, text, keptAttachments, newAttachments)
+        shouldRerunGenerationOnEdit(
+          messages,
+          messageIndex,
+          text,
+          keptAttachments,
+          newAttachments,
+        )
       ) {
         armAnchor(messageIndex);
       }
@@ -900,7 +954,12 @@ const ConversationView: FC<Props> = ({
                 sendTitle={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
                 isAudioMessageSupported={isAudioMessageSupported}
+                isVoiceRecordingSupported={isVoiceRecordingSupported}
+                onTranscribeAudio={onTranscribeAudio}
+                transcribingLabel={t(VoiceRecordingI18nKeys.Transcribing)}
+                voiceErrorLabel={t(VoiceRecordingI18nKeys.Failed)}
                 micLabel={t(VoiceRecordingI18nKeys.MicLabel)}
+                recordVoiceLabel={t(VoiceRecordingI18nKeys.RecordVoiceLabel)}
                 stopRecordingLabel={t(
                   VoiceRecordingI18nKeys.StopRecordingLabel,
                 )}
@@ -950,10 +1009,10 @@ const ConversationView: FC<Props> = ({
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
-                promptsMenuOverlay={
-                  onInsertText ? renderPromptsOverlay : undefined
-                }
-                promptsMenuTitle={t(PromptSelectorI18nKeys.AddMenuLabel)}
+                menuOverlays={menuOverlays}
+                inlineStartSlot={selectedSkillElement}
+                onInlineStartRemove={removeSelectedSkill}
+                commandMenu={commandMenu}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
                   <UsageLimitsControl
@@ -1059,6 +1118,8 @@ const ConversationView: FC<Props> = ({
       {catalogModal}
       {promptCatalogModal}
       {promptParametersPopup}
+      {skillCatalogModal}
+      {skillDetailsPanel}
     </>
   );
 };

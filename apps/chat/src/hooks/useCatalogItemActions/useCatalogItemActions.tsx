@@ -27,6 +27,7 @@ import {
   CatalogI18nKeys,
   FavoritesI18nKeys,
 } from '../../constants/translation-keys';
+import { useFeatureFlag } from '../../context/AppConfigContext';
 import { getPrompt, getPublicPrompt } from '../../server-api/prompts.api';
 import { downloadSkill } from '../../server-api/skills.api';
 import {
@@ -105,6 +106,8 @@ export const useCatalogItemActions = ({
   notifyOperationSuccess,
   onLoadSkillDetailsFile,
 }: UseCatalogItemActionsParams): UseCatalogItemActionsResult => {
+  const isSkillUsageEnabled = useFeatureFlag('skillUsageEnabled');
+
   /*
    * Reads a prompt item back through whichever endpoint owns it. `item.id` is
    * always the full `prompts/{bucket}/{path}` resource path — the owner
@@ -178,6 +181,19 @@ export const useCatalogItemActions = ({
 
   const handleUseInChat = useCallback(
     async (item: CatalogItem) => {
+      /*
+       * A skill contributes behavior at send time, not a runtime or text: the
+       * pick travels to the composer's Skills menu as one-shot router state,
+       * and nothing is persisted — no deployment selection, no user-config
+       * write. This must run before the primary-action resolution below,
+       * whose non-Prompt fallback would otherwise treat the skill as a
+       * deployment and write it into `DeploymentsContext`.
+       */
+      if (item.type === CatalogEntityType.Skill) {
+        navigate(ROUTES.Root, { state: { skillId: item.id } });
+        return;
+      }
+
       /*
        * A prompt contributes text, not a runtime: it seeds the composer and
        * leaves the user's selected deployment untouched. The body travels as
@@ -325,19 +341,29 @@ export const useCatalogItemActions = ({
     [onLoadSkillDetailsFile],
   );
 
-  const isPrimaryActionVisible = useCallback((item: CatalogItem) => {
-    /*
-     * A prompt contributes text rather than a runtime, so it is always
-     * usable in chat; `supportsChat` describes a deployment's interfaces
-     * and is absent on prompt items.
-     */
-    if (item.type === CatalogEntityType.Prompt) return true;
-    return (
-      (item.type === CatalogEntityType.Model ||
-        item.type === CatalogEntityType.Agent) &&
-      item.supportsChat !== false
-    );
-  }, []);
+  const isPrimaryActionVisible = useCallback(
+    (item: CatalogItem) => {
+      /*
+       * A prompt contributes text rather than a runtime, so it is always
+       * usable in chat; `supportsChat` describes a deployment's interfaces
+       * and is absent on prompt items.
+       */
+      if (item.type === CatalogEntityType.Prompt) return true;
+      /*
+       * A skill is usable in chat while the `skillUsageEnabled` feature flag
+       * is on. Deferred condition: once the backend exposes whether the
+       * selected default model supports skills, this rule gains that signal
+       * alongside the flag instead of the flag alone.
+       */
+      if (item.type === CatalogEntityType.Skill) return isSkillUsageEnabled;
+      return (
+        (item.type === CatalogEntityType.Model ||
+          item.type === CatalogEntityType.Agent) &&
+        item.supportsChat !== false
+      );
+    },
+    [isSkillUsageEnabled],
+  );
 
   return {
     fetchPromptDto,

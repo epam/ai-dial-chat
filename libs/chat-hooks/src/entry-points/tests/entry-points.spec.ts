@@ -4,8 +4,8 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 /**
- * Guards against `entry-points/*.ts` drifting from `index.ts` (design.md
- * Risk 1): a new export added to a domain folder but forgotten in its owning
+ * Guards against `entry-points/*.ts` drifting from `index.ts`: a new export
+ * added to a domain folder but forgotten in its owning
  * entry-point barrel, or a barrel that re-exports a target `index.ts` doesn't.
  *
  * This statically parses each barrel's `export ... from '<specifier>'`
@@ -16,7 +16,10 @@ import { describe, expect, it } from 'vitest';
  * between `index.ts` and the union of every `entry-points/*.ts` file. Each
  * entry-point barrel is a verbatim copy of the subset of `index.ts`'s
  * re-export statements it owns, so the two sets are expected to be exactly
- * equal — not merely subset/superset.
+ * equal — not merely subset/superset. The one exception is a barrel that
+ * forwards another entry-point barrel's exports for backward compatibility
+ * (`./file-manager`'s `export * from './source-content';`) — see
+ * `isEntryPointForward` below.
  */
 
 const srcDir = join(__dirname, '..', '..');
@@ -73,6 +76,18 @@ const parseExportDecls = (filePath: string): ExportDecl[] => {
 const declKey = (decl: ExportDecl): string =>
   `${decl.target}::${decl.names === '*' ? '*' : decl.names.join(',')}`;
 
+/**
+ * A barrel that forwards another entry-point barrel's exports for backward
+ * compatibility (e.g. `./file-manager` doing `export * from './source-content';`
+ * after a domain moved to its own subpath) is not itself a domain re-export —
+ * `index.ts` never declares `export * from './entry-points/<name>'` directly,
+ * it re-exports the same domain file(s) that `<name>`'s own barrel does. These
+ * are excluded from the domain-coverage/no-duplicate checks below and
+ * verified separately.
+ */
+const isEntryPointForward = (decl: ExportDecl): boolean =>
+  decl.target.startsWith('entry-points/');
+
 describe('entry-point barrels stay in sync with the root barrel', () => {
   const indexDecls = parseExportDecls(join(srcDir, 'index.ts'));
   const indexKeys = new Set(indexDecls.map(declKey));
@@ -82,8 +97,8 @@ describe('entry-point barrels stay in sync with the root barrel', () => {
   );
   expect(
     entryPointFiles.length,
-    'expected 15 entry-point barrels under src/entry-points/',
-  ).toBe(15);
+    'expected 16 entry-point barrels under src/entry-points/',
+  ).toBe(16);
 
   const entryDeclsByFile = new Map(
     entryPointFiles.map((file) => [
@@ -94,7 +109,10 @@ describe('entry-point barrels stay in sync with the root barrel', () => {
 
   it('every entry-point barrel re-exports a target index.ts also re-exports, with the same shape', () => {
     for (const [file, decls] of entryDeclsByFile) {
-      const unknown = decls.map(declKey).filter((key) => !indexKeys.has(key));
+      const unknown = decls
+        .filter((decl) => !isEntryPointForward(decl))
+        .map(declKey)
+        .filter((key) => !indexKeys.has(key));
       expect(
         unknown,
         `"${file}" re-exports something index.ts doesn't (same target+shape): ${unknown.join(', ')}`,
@@ -105,7 +123,10 @@ describe('entry-point barrels stay in sync with the root barrel', () => {
   it('the union of every entry-point barrel covers every re-export index.ts declares', () => {
     const unionKeys = new Set<string>();
     for (const decls of entryDeclsByFile.values()) {
-      for (const decl of decls) unionKeys.add(declKey(decl));
+      for (const decl of decls) {
+        if (isEntryPointForward(decl)) continue;
+        unionKeys.add(declKey(decl));
+      }
     }
 
     const missing = [...indexKeys].filter((key) => !unionKeys.has(key));
@@ -119,6 +140,7 @@ describe('entry-point barrels stay in sync with the root barrel', () => {
     const owners = new Map<string, string[]>();
     for (const [file, decls] of entryDeclsByFile) {
       for (const decl of decls) {
+        if (isEntryPointForward(decl)) continue;
         const key = declKey(decl);
         owners.set(key, [...(owners.get(key) ?? []), file]);
       }
@@ -133,5 +155,17 @@ describe('entry-point barrels stay in sync with the root barrel', () => {
         .map(([key, files]) => `${key} in [${files.join(', ')}]`)
         .join('; ')}`,
     ).toEqual([]);
+  });
+
+  it('every entry-point forward points at a real sibling entry-point barrel', () => {
+    for (const [file, decls] of entryDeclsByFile) {
+      for (const decl of decls.filter(isEntryPointForward)) {
+        const targetFile = decl.target.slice('entry-points/'.length) + '.ts';
+        expect(
+          entryPointFiles,
+          `"${file}" forwards to "${decl.target}", which is not a sibling entry-point barrel`,
+        ).toContain(targetFile);
+      }
+    }
   });
 });

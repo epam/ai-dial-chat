@@ -1,6 +1,9 @@
 /** Header DIAL Core reads the originating conversation id from. */
 export const CONVERSATION_ID_HEADER = 'X-CONVERSATION-ID';
 
+/** Header DIAL Core reads the caller's job title from. */
+export const JOB_TITLE_HEADER = 'X-JOB-TITLE';
+
 /*
  * HTTP field values are bytes, not text: Node's `fetch` (undici) converts every
  * header value to a ByteString and throws
@@ -47,3 +50,12 @@ export const buildConversationIdHeaders = (
   conversationId
     ? { [CONVERSATION_ID_HEADER]: encodeHeaderValue(conversationId) }
     : {};
+
+/**
+ * Builds the `X-JOB-TITLE` header object for spreading into a DIAL Core
+ * call's `headers`, omitting it when no job title is available.
+ */
+export const buildJobTitleHeaders = (
+  jobTitle?: string,
+): Record<string, string> =>
+  jobTitle ? { [JOB_TITLE_HEADER]: encodeHeaderValue(jobTitle) } : {};

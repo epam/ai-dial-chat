@@ -10,7 +10,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   mergeClasses: (...args: (string | undefined)[]) =>
     args.filter(Boolean).join(' '),
-  DialNoDataContent: ({ title }: { title?: string }) => <span>{title}</span>,
+  NoDataContent: ({ title }: { title?: string }) => <span>{title}</span>,
 }));
 
 vi.mock('@epam/ai-dial-ui-kit/grid', () => ({

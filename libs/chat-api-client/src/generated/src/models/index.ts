@@ -38,6 +38,12 @@ export interface AcceptInvitationResponseDto {
  */
 export interface AnnotationBodyDto {
   /**
+   *
+   * @type {AnnotationBodyDtoSelector}
+   * @memberof AnnotationBodyDto
+   */
+  selector?: AnnotationBodyDtoSelector;
+  /**
    * Title of the cited source
    * @type {string}
    * @memberof AnnotationBodyDto
@@ -56,6 +62,14 @@ export interface AnnotationBodyDto {
    */
   source?: AnnotationSourceDto;
 }
+/**
+ * @type AnnotationBodyDtoSelector
+ * Location in the cited document; PDF page numbers are 1-based
+ * @export
+ */
+export type AnnotationBodyDtoSelector =
+  | AnnotationSelectorDto
+  | Array<AnnotationSelectorDto>;
 /**
  *
  * @export
@@ -88,23 +102,23 @@ export interface AnnotationDto {
  */
 export interface AnnotationSelectorDto {
   /**
-   * Selector discriminator, e.g. 'text_character_range', 'pdf_bbox', 'html_tag'
+   * Selector discriminator, e.g. 'text_character_range', 'pdf_bbox', 'html_tag', 'excel_rc_range'
    * @type {string}
    * @memberof AnnotationSelectorDto
    */
   type?: string;
   /**
-   * Character range start (inclusive)
-   * @type {number}
+   *
+   * @type {AnnotationSelectorDtoStart}
    * @memberof AnnotationSelectorDto
    */
-  start?: number;
+  start?: AnnotationSelectorDtoStart;
   /**
-   * Character range end (inclusive)
-   * @type {number}
+   *
+   * @type {AnnotationSelectorDtoEnd}
    * @memberof AnnotationSelectorDto
    */
-  end?: number;
+  end?: AnnotationSelectorDtoEnd | null;
   /**
    * 1-based PDF page number
    * @type {number}
@@ -147,7 +161,55 @@ export interface AnnotationSelectorDto {
    * @memberof AnnotationSelectorDto
    */
   id?: string;
+  /**
+   * DOCX story name a character range lives in, e.g. 'body' (opaque — no closed set is confirmed)
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  story?: string;
+  /**
+   * DOCX source-tree element indices identifying the paragraph, matched element-wise
+   * @type {Array<number>}
+   * @memberof AnnotationSelectorDto
+   */
+  path?: Array<number>;
+  /**
+   * 1-based PPTX slide number
+   * @type {number}
+   * @memberof AnnotationSelectorDto
+   */
+  slide?: number;
+  /**
+   * PPTX shape identifier, compared as a string
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  shapeId?: string;
+  /**
+   * XLSX sheet name, matched exactly
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  sheet?: string;
+  /**
+   * Cited text for a DOCX/PPTX range, compared against the text resolved over `start`/`end`
+   * @type {string}
+   * @memberof AnnotationSelectorDto
+   */
+  text?: string;
 }
+/**
+ * @type AnnotationSelectorDtoEnd
+ * Range end. For `text_character_range`/`pdf_bbox`, an inclusive character offset. For `docx_text_range`/`pptx_text_range`, an already-exclusive character offset (confirmed against captured DIAL Core responses). For `excel_rc_range`, a 1-based cell address naming the range's last (inclusive) cell. `null` and omitted are equivalent
+ * @export
+ */
+export type AnnotationSelectorDtoEnd = CellAddressDto | number;
+/**
+ * @type AnnotationSelectorDtoStart
+ * Range start: a character offset (inclusive), or a 1-based cell address for an `excel_rc_range` selector
+ * @export
+ */
+export type AnnotationSelectorDtoStart = CellAddressDto | number;
 /**
  *
  * @export
@@ -561,6 +623,25 @@ export interface AttachmentResourceDto {
    * @memberof AttachmentResourceDto
    */
   title?: string;
+}
+/**
+ *
+ * @export
+ * @interface CellAddressDto
+ */
+export interface CellAddressDto {
+  /**
+   * 1-based row number
+   * @type {number}
+   * @memberof CellAddressDto
+   */
+  row?: number;
+  /**
+   * 1-based column number
+   * @type {number}
+   * @memberof CellAddressDto
+   */
+  col?: number;
 }
 /**
  *
@@ -1555,7 +1636,7 @@ export interface CreateApplicationBodyDto {
    */
   description?: string;
   /**
-   *
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
    * @type {string}
    * @memberof CreateApplicationBodyDto
    */
@@ -4533,11 +4614,11 @@ export interface ModelDetailsDto {
    */
   limits?: ModelLimitsDto;
   /**
-   * Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key
-   * @type {{ [key: string]: string; }}
+   * Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds a scalar price or conditional pricing tree
+   * @type {{ [key: string]: ModelDetailsDtoPricingValue; }}
    * @memberof ModelDetailsDto
    */
-  pricing?: { [key: string]: string };
+  pricing?: { [key: string]: ModelDetailsDtoPricingValue };
   /**
    *
    * @type {DeploymentFeaturesDetailsDto}
@@ -4576,6 +4657,12 @@ export interface ModelDetailsDto {
   createdAt?: number;
 }
 /**
+ * @type ModelDetailsDtoPricingValue
+ *
+ * @export
+ */
+export type ModelDetailsDtoPricingValue = ModelPricingRateDto | string;
+/**
  *
  * @export
  * @interface ModelLimitsDto
@@ -4599,6 +4686,37 @@ export interface ModelLimitsDto {
    * @memberof ModelLimitsDto
    */
   maxCompletionTokens?: number;
+}
+/**
+ *
+ * @export
+ * @interface ModelPricingRateDto
+ */
+export interface ModelPricingRateDto {
+  /**
+   *
+   * @type {ModelPricingRateDto}
+   * @memberof ModelPricingRateDto
+   */
+  ifFalse?: ModelPricingRateDto;
+  /**
+   *
+   * @type {ModelPricingRateDto}
+   * @memberof ModelPricingRateDto
+   */
+  ifTrue?: ModelPricingRateDto;
+  /**
+   * Per-unit price for this pricing branch
+   * @type {string}
+   * @memberof ModelPricingRateDto
+   */
+  rate?: string;
+  /**
+   * Condition selecting the applicable pricing branch
+   * @type {{ [key: string]: unknown }}
+   * @memberof ModelPricingRateDto
+   */
+  test?: { [key: string]: unknown };
 }
 /**
  *
@@ -5005,6 +5123,12 @@ export interface PublishCatalogEntityDto {
    */
   version?: string;
   /**
+   * Display author recorded on the publication as `displayAuthor`, surfaced in the catalog as the published entity's "Hosted by" value. Omitted, blank, or whitespace-only falls back to the session's own display name, which is what every caller got before this field existed.
+   * @type {string}
+   * @memberof PublishCatalogEntityDto
+   */
+  author?: string;
+  /**
    * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
    * @type {Array<PublishRuleDto>}
    * @memberof PublishCatalogEntityDto
@@ -5023,6 +5147,12 @@ export interface PublishConversationDto {
    * @memberof PublishConversationDto
    */
   folderPath: string;
+  /**
+   * Display author recorded on the publication as `displayAuthor`. Omitted, blank, or whitespace-only falls back to the session's own display name, which is what every caller got before this field existed.
+   * @type {string}
+   * @memberof PublishConversationDto
+   */
+  author?: string;
   /**
    * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
    * @type {Array<PublishRuleDto>}
@@ -6572,7 +6702,7 @@ export interface ToolsetBodyDto {
    */
   description?: string;
   /**
-   *
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
    * @type {string}
    * @memberof ToolsetBodyDto
    */
@@ -6996,7 +7126,7 @@ export interface UpdateApplicationBodyDto {
    */
   description?: string;
   /**
-   *
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
    * @type {string}
    * @memberof UpdateApplicationBodyDto
    */

@@ -44,7 +44,7 @@ When Skills are enabled, `CatalogView` SHALL append personal `skills`, `sharedWi
 
 ### Requirement: Which actions a skill's details panel offers
 
-A skill is **not** action-free. An earlier revision of this capability suppressed every mutating and runtime action for skills; download and sharing have since shipped as capabilities of their own, and this requirement is the reconciled list. Where a row below names another capability, that capability is authoritative for the action's own behaviour — this table only fixes whether the affordance appears.
+A skill's details panel SHALL offer exactly the actions marked in the table below — a skill is **not** action-free. An earlier revision of this capability suppressed every mutating and runtime action for skills; download and sharing have since shipped as capabilities of their own, and this requirement is the reconciled list. Where a row below names another capability, that capability is authoritative for the action's own behaviour — this table only fixes whether the affordance appears.
 
 | Action | Offered for a skill? |
 |---|---|

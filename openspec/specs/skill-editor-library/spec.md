@@ -14,8 +14,8 @@ The `headerContent?: ReactNode` prop IS REMOVED from `SkillEditorProps`. It is r
 - `title: string` — heading text shown in the header
 
 #### Scenario: Consumer imports the library's public surface
-- **WHEN** `apps/chat/src/pages/SkillEditor/SkillEditor.tsx` writes `import { SkillEditor, SkillEditorValues, SkillEditorLabels, SkillFileTreeNode, SkillEditorConflict } from '@epam/ai-dial-skill-editor'`
-- **THEN** the import resolves successfully and every named type is defined
+- **WHEN** `apps/chat` is type-checked
+- **THEN** `SkillEditor`, `SkillEditorValues`, `SkillEditorLabels`, `SkillFileTreeNode`, and `SkillEditorConflict` all resolve from `@epam/ai-dial-skill-editor`
 
 #### Scenario: Internal helper is not part of the public surface
 - **WHEN** code outside `libs/skill-editor` attempts to import an unexported internal helper (e.g. a path-formatting utility used only inside the component) from `@epam/ai-dial-skill-editor`

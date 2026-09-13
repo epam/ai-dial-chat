@@ -4,16 +4,20 @@ import type {
   DeploymentItem,
   DisplayAttachment,
   ToolMenuItem,
+  UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type {
   ChatSettingsConfig,
+  CommandMenuConfig,
   InputColors,
   InputTypography,
+  MenuOverlayConfig,
   ModelSelectorLabels,
   SendOnEnter,
   ToolsChipLabels,
 } from './Input';
+import type { TranscribeAudio } from './Voice';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
 export interface ConversationInputColors {
@@ -43,6 +47,12 @@ export interface ConversationInputStyles {
 export interface EditMessageInputProps {
   /** Initial message text pre-populated in the textarea. */
   message?: string;
+  /**
+   * Host-supplied content rendered inside the text area at its inline-start;
+   * typed text starts after it on the first line and wraps at full width
+   * below. Forwarded to the inner `Input`.
+   */
+  inlineStartSlot?: ReactNode;
   /** Pre-existing attachments from the original message, shown in the attachment tray. */
   initialAttachments?: DisplayAttachment[];
   /** Called when the user clicks the Cancel button. */
@@ -53,8 +63,10 @@ export interface EditMessageInputProps {
     keptAttachments: DisplayAttachment[],
     newAttachments: Attachment[],
   ) => void;
-  /** Called immediately after a new attachment is added. Returns the uploaded attachment URL. */
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  /** Called immediately after a new attachment is added. Returns the uploaded attachment URL and stored name. */
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   /** Label for the Cancel button. Defaults to `'Cancel'`. */
   cancelLabel?: string;
   /** Label for the Save & Submit button. Defaults to `'Save & Submit'`. */
@@ -160,8 +172,10 @@ export interface ConversationInputProps {
   welcomeText?: string;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
   onSend?: (message: string, attachments: Attachment[]) => void;
-  /** Called immediately after an attachment is added. Returns the uploaded attachment URL. */
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  /** Called immediately after an attachment is added. Returns the uploaded attachment URL and stored name. */
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   /** Called when the user clicks the stop button during streaming. */
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button and blocks Enter. */
@@ -235,11 +249,21 @@ export interface ConversationInputProps {
   inputClassName?: string;
   /**
    * When `true`, the mic button is rendered and voice recording is enabled.
-   * The host app derives this from the selected deployment's `inputAttachmentTypes`.
-   * When `false` or absent, the mic button is hidden and the voice bar is never shown.
+   * The host app derives this from its recording/recognition capabilities.
+   * When `false` or absent, the dictation button is hidden.
    */
   isAudioMessageSupported?: boolean;
-  /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
+  /** Enables Record voice in the add menu when attachments are enabled. Defaults to isAudioMessageSupported. */
+  isVoiceRecordingSupported?: boolean;
+  /** Label for the audio attachment recording menu item. Defaults to 'Record voice'. */
+  recordVoiceLabel?: string;
+  /** Host-owned recognition. When supplied, the microphone button inserts draft text; Record voice always attaches audio. */
+  onTranscribeAudio?: TranscribeAudio;
+  /** Status announced while recognizing speech. Defaults to 'Transcribing audio…'. */
+  transcribingLabel?: string;
+  /** Fallback recording/recognition error. Defaults to 'Voice input failed'. */
+  voiceErrorLabel?: string;
+  /** Accessible label for the mic button. Defaults to `'Dictate'`. */
   micLabel?: string;
   /** Accessible label for the stop-recording button inside the voice bar. Defaults to `'Stop recording'`. */
   stopRecordingLabel?: string;
@@ -340,15 +364,30 @@ export interface ConversationInputProps {
   /** Labels for the tool chips rendered in the input. */
   toolsChipLabels?: ToolsChipLabels;
   /**
-   * When provided, a "Prompts" item is added to the `+` menu above "Chat
-   * settings". Its submenu (desktop flyout / mobile bottom sheet) renders
-   * this host-owned overlay, mirroring `modelPickerOverlay`.
+   * Host-injected overlay entries, rendered as `+`-menu items between the
+   * "Tools" item and "Chat settings", in array order. Each item's submenu
+   * (desktop flyout / mobile stacked bottom sheet) renders the entry's
+   * host-owned overlay, mirroring `modelPickerOverlay`.
    */
-  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
-  /** Label for the "Prompts" menu item and mobile sheet title. Defaults to `'Prompts'`. */
-  promptsMenuTitle?: string;
-  /** Accessible label for the back arrow in the mobile prompts bottom sheet. Defaults to `'Back'`. */
-  promptsBackLabel?: string;
+  menuOverlays?: MenuOverlayConfig[];
+  /**
+   * Host-supplied content rendered inside the text area at its inline-start;
+   * typed text starts after it on the first line and wraps at full width
+   * below. Forwarded to the inner `Input`.
+   */
+  inlineStartSlot?: ReactNode;
+  /**
+   * Called when Backspace is pressed with the caret collapsed at position 0
+   * while `inlineStartSlot` is present (the slot's remove gesture). Forwarded
+   * to the inner `Input`.
+   */
+  onInlineStartRemove?: () => void;
+  /**
+   * Host-injected slash-command menu: typing `triggerPrefix` as the first
+   * character of an empty textarea opens an overlay above the input with
+   * host-rendered, query-filtered content. Forwarded to the inner `Input`.
+   */
+  commandMenu?: CommandMenuConfig;
   /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
   usageLimitsSlot?: ReactNode;
   /**

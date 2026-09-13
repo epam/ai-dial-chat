@@ -5,13 +5,12 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
   DropdownItem,
   ElementSize,
   Highlight,
+  MenuItemMark,
   Search,
 } from '@epam/ai-dial-ui-kit';
-import { IconCheck } from '@tabler/icons-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import {
   MODEL_SELECTOR_SKELETON_ROW_COUNT,
@@ -38,16 +37,6 @@ export interface UseModelSelectorOptions {
   modelSelectorLabels?: ModelSelectorLabels;
   /** Class applied to the sticky search header wrapper for theming. Defaults to a `--bg-layer-raised` background. */
   searchHeaderClassName?: string;
-  /**
-   * Class applied to the currently selected menu item. Defaults to a
-   * `--bg-control-accent-alpha-active` background. The dropdown item is owned by the
-   * ui-kit and takes no `style`, so its background can only be overridden
-   * through this class or by setting `--ms-selected-item-bg` at theme level —
-   * unlike the other two, it has no entry in {@link ModelSelectorColors}.
-   */
-  selectedItemClassName?: string;
-  /** Class applied to the checkmark icon on the currently selected menu item. Defaults to a `--text-accent` color. */
-  selectedItemCheckClassName?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: ModelSelectorColors;
 }
@@ -56,8 +45,6 @@ export interface UseModelSelectorOptions {
 export interface ModelSelectorColors {
   /** Sticky search header background. Fallback: `--bg-layer-raised`. */
   searchHeaderBackground?: string;
-  /** Checkmark icon color on the selected row. Fallback: `--text-accent`. */
-  selectedItemCheck?: string;
 }
 
 /** Values returned by `useModelSelector`. */
@@ -85,8 +72,6 @@ export const useModelSelector = ({
   onDeploymentChange,
   modelSelectorLabels,
   searchHeaderClassName = styles.searchHeader,
-  selectedItemClassName = styles.selectedItem,
-  selectedItemCheckClassName = styles.selectedItemCheck,
   colors,
 }: UseModelSelectorOptions): UseModelSelectorResult => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -157,41 +142,26 @@ export const useModelSelector = ({
       }
       return [];
     }
-    return filterDeployments(deployments, searchQuery).map((item) => {
-      const isSelected = item.id === selectedDeploymentId;
-      return {
-        key: item.id,
-        label: (
-          <span
-            className="flex w-full items-center justify-between gap-2"
-            style={buildCssVars({
-              '--ms-selected-item-check': colors?.selectedItemCheck,
-            })}
-          >
-            <Highlight
-              text={getDeploymentLabel(item)}
-              query={searchQuery}
-              maxLines={1}
-            />
-            {isSelected && (
-              <IconCheck
-                size={DIAL_ICON_SIZE.SM}
-                stroke={DIAL_KIT_ICON_STROKE}
-                className={selectedItemCheckClassName}
-                aria-hidden
-              />
-            )}
-          </span>
-        ),
-        icon: buildDeploymentIcon(
-          item.iconUrl,
-          item.type,
-          item.displayName ?? item.id,
-        ),
-        onClick: () => onDeploymentChange?.(item.id),
-        className: isSelected ? selectedItemClassName : undefined,
-      };
-    });
+    return filterDeployments(deployments, searchQuery).map((item) => ({
+      key: item.id,
+      label: (
+        <Highlight
+          text={getDeploymentLabel(item)}
+          query={searchQuery}
+          maxLines={1}
+        />
+      ),
+      icon: buildDeploymentIcon(
+        item.iconUrl,
+        item.type,
+        item.displayName ?? item.id,
+      ),
+      /* The picked deployment is the menu's single choice, so the kit draws the
+         trailing check and announces the row as a radio item. */
+      mark: MenuItemMark.Check,
+      checked: item.id === selectedDeploymentId,
+      onClick: () => onDeploymentChange?.(item.id),
+    }));
   }, [
     deployments,
     isLoading,
@@ -199,9 +169,6 @@ export const useModelSelector = ({
     selectedDeploymentId,
     modelSelectorLabels,
     onDeploymentChange,
-    selectedItemClassName,
-    selectedItemCheckClassName,
-    colors?.selectedItemCheck,
   ]);
 
   const menuHeader: ReactNode = useMemo(

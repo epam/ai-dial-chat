@@ -2,8 +2,10 @@ import type { FilesApi } from '@epam/ai-dial-chat-api-client';
 import {
   AttachmentErrorReason,
   type Attachment,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback, useRef } from 'react';
+import { sanitizeFileName } from '../../files/file-name';
 
 const DEFAULT_NETWORK_ERROR_DEBOUNCE_MS = 700;
 
@@ -21,22 +23,36 @@ export interface UseAttachmentUploadParams {
 
 /** Return value of {@link useAttachmentUpload}. */
 export interface UseAttachmentUploadResult {
-  /** Uploads the given attachment's file and resolves to its DIAL Core file URL. */
-  handleUploadAttachment: (attachment: Attachment) => Promise<string>;
+  /** Uploads the given attachment's file and resolves to its DIAL Core file URL and stored name. */
+  handleUploadAttachment: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
 }
 
-/** Decodes a file name to its final path segment, stripping traversal characters. */
+/**
+ * Reduces a file name to its final `/`-path segment (guarding against
+ * directory traversal via a crafted `attachment.name`) and sanitizes any
+ * character DIAL Core's file path forbids (the same `sanitizeFileName` the
+ * DIAL file manager applies on upload) to `_`, so a name with e.g. `&` or `\`
+ * uploads and downloads under a consistent, valid path instead of being
+ * silently truncated or rejected later.
+ */
 const getSafeFileName = (fileName: string): string => {
-  const name = fileName.split(/[\\/]/).filter(Boolean).pop() ?? 'file';
-  return name.replace(/\.\.+/g, '.').replace(/^\.+/, '') || 'file';
+  const lastSegment = fileName.split('/').filter(Boolean).pop() ?? 'file';
+  const sanitized = sanitizeFileName(lastSegment)
+    .replace(/\.\.+/g, '.')
+    .replace(/^\.+/, '');
+  return sanitized || 'file';
 };
 
-/** Builds the `uploads/<YYYY-MM>/<safe-name>` DIAL Core upload path for a file. */
-const buildUploadPath = (fileName: string, date: Date = new Date()): string => {
+/** Builds the `uploads/<YYYY-MM>/<safe-name>` DIAL Core upload path for an already-sanitized file name. */
+const buildUploadPath = (
+  safeFileName: string,
+  date: Date = new Date(),
+): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
-  const encodedFileName = encodeURIComponent(getSafeFileName(fileName));
-  return `uploads/${year}-${month}/${encodedFileName}`;
+  return `uploads/${year}-${month}/${encodeURIComponent(safeFileName)}`;
 };
 
 /**
@@ -55,17 +71,18 @@ export const useAttachmentUpload = ({
   const networkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleUploadAttachment = useCallback(
-    async (attachment: Attachment): Promise<string> => {
+    async (attachment: Attachment): Promise<UploadedAttachmentResult> => {
       if (!bucket) {
         throw new Error('User bucket is not available');
       }
+      const safeName = getSafeFileName(attachment.name);
       try {
         const response = await filesApi.uploadFile({
           bucket,
-          path: buildUploadPath(attachment.name),
+          path: buildUploadPath(safeName),
           file: attachment.file,
         });
-        return response.url;
+        return { url: response.url, name: safeName };
       } catch (err) {
         if (!navigator.onLine) {
           pendingNetworkFilesRef.current.push(attachment.name);

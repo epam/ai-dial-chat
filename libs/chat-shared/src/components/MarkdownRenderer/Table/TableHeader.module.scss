@@ -1,0 +1,7 @@
+.tableHeader {
+  background: var(--cm-code-block-header-bg, var(--bg-layer-raised, #fcfcfc));
+  border-color: var(
+    --cm-markdown-border,
+    var(--cm-code-block-border, var(--stroke-secondary, #d1dbea))
+  );
+}

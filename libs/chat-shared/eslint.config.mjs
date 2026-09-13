@@ -12,6 +12,12 @@ export default [
             '{projectRoot}/eslint.config.{js,cjs,mjs,ts,cts,mts}',
             '{projectRoot}/vite.config.{js,ts,mjs,mts}',
           ],
+          /*
+           * vitest is test-only tooling shared through the workspace root's own
+           * devDependency, not a runtime dependency of the published package —
+           * it must never be a consumer-facing peerDependency.
+           */
+          ignoredDependencies: ['vitest'],
         },
       ],
     },

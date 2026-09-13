@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import type { AnnouncementItem } from '../../../models/announcement';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import AnnouncementBanner from '../AnnouncementBanner';
@@ -17,16 +18,18 @@ const { mockAppConfigState, mockDismiss } = vi.hoisted(() => ({
   mockDismiss: vi.fn(),
 }));
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({
-    status: mockAppConfigState.status,
-    config: {
-      announcementHtml: mockAppConfigState.announcementHtml,
-      announcementTitle: mockAppConfigState.announcementTitle,
-      announcementDescription: mockAppConfigState.announcementDescription,
-      announcements: mockAppConfigState.announcements,
-    },
-  }),
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
+mockUseAppConfig.mockImplementation(() => ({
+  status: mockAppConfigState.status,
+  config: {
+    announcementHtml: mockAppConfigState.announcementHtml,
+    announcementTitle: mockAppConfigState.announcementTitle,
+    announcementDescription: mockAppConfigState.announcementDescription,
+    announcements: mockAppConfigState.announcements,
+  },
 }));
 
 vi.mock(

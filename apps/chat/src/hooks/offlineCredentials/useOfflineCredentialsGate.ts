@@ -6,6 +6,7 @@ export enum OfflineCredentialsGateStatus {
   Checking = 'checking',
   Hidden = 'hidden',
   Available = 'available',
+  Unavailable = 'unavailable',
   Error = 'error',
 }
 
@@ -35,13 +36,13 @@ export interface UseOfflineCredentialsGateResult {
 }
 
 /**
- * Route-scoped offline-credentials status check for the Scheduled Tasks
- * routes (see `ScheduledTasksRouteGate`). Fires on mount and on every
- * pathname change (re-fireable per route entry, not a once-ever guard,
- * since the user can navigate in and out of Scheduled Tasks repeatedly
- * within a session), cancels the in-flight request on unmount/route change,
- * and never collapses a fetch failure into `connected: false` — a failed
- * check must not incorrectly trigger the "please log in" modal.
+ * Route-scoped offline-credentials status check for the Scheduled Tasks list
+ * route (see `ScheduledTasksPage`). Fires on mount and on every pathname
+ * change (re-fireable per route entry, not a once-ever guard, since the user
+ * can navigate in and out of Scheduled Tasks repeatedly within a session),
+ * cancels the in-flight request on unmount/route change, and never collapses
+ * a fetch failure into `connected: false` — a failed check must not
+ * incorrectly trigger the login-required banner.
  */
 export const useOfflineCredentialsGate =
   (): UseOfflineCredentialsGateResult => {
@@ -80,9 +81,11 @@ export const useOfflineCredentialsGate =
               : undefined;
 
           setStatus(
-            available && !connected
-              ? OfflineCredentialsGateStatus.Available
-              : OfflineCredentialsGateStatus.Hidden,
+            connected
+              ? OfflineCredentialsGateStatus.Hidden
+              : available
+                ? OfflineCredentialsGateStatus.Available
+                : OfflineCredentialsGateStatus.Unavailable,
           );
           setConnect(connectSettings);
           return { available, connected, connect: connectSettings };

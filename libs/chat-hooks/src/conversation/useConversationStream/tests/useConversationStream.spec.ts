@@ -3,6 +3,10 @@ import { MessageRole, type Conversation } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useRef, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  DEFAULT_GENERATION_CONFLICT_MESSAGE,
+  GenerationConflictError,
+} from '../../create-chat-stream-api';
 import type {
   ConversationStreamChannel,
   ConversationStreamOverlayNotifier,
@@ -41,6 +45,7 @@ const useHookHarness = ({
   overlay?: ConversationStreamOverlayNotifier;
   channel?: ConversationStreamChannel;
   initialConversation?: Conversation;
+  generationConflictMessage?: string;
 }) => {
   const [conversation, setConversation] = useState<Conversation | null>(
     initialConversation ?? makeConversation(),
@@ -510,6 +515,103 @@ describe('useConversationStream', () => {
     );
   });
 
+  it('ignores a superseded generation completing on the same path', async () => {
+    const { result } = renderHook(() =>
+      useHookHarness({
+        transport,
+        conversationId: 'bucket/conv',
+        initialConversation: makeConversation({
+          messages: [
+            { role: MessageRole.User, content: 'edited', timestamp: 't' },
+            { role: MessageRole.Assistant, content: '', timestamp: 't' },
+          ],
+        }),
+      }),
+    );
+
+    await act(async () => {
+      result.current.stream.startStream(
+        'bucket/conv',
+        'hi',
+        1,
+        'gpt-4o',
+        undefined,
+        'gen-1',
+      );
+    });
+    /* The stopped generation's own callbacks, captured before the re-submit
+     * replaces the harness's capturedOptions. */
+    const stoppedOptions = capturedOptions;
+
+    await act(async () => {
+      result.current.stream.startStream(
+        'bucket/conv',
+        'edited',
+        1,
+        'gpt-4o',
+        undefined,
+        'gen-2',
+        SendCompletionDtoModeEnum.Edit,
+      );
+    });
+
+    await act(async () => {
+      await stoppedOptions?.onComplete();
+    });
+
+    expect(result.current.stream.isStreaming).toBe(true);
+    expect(transport.getConversation).not.toHaveBeenCalled();
+    expect(result.current.conversation?.messages[0]?.content).toBe('edited');
+  });
+
+  it('does not write a superseded generation error onto the new answer', async () => {
+    const { result } = renderHook(() =>
+      useHookHarness({
+        transport,
+        conversationId: 'bucket/conv',
+        initialConversation: makeConversation({
+          messages: [
+            { role: MessageRole.User, content: 'edited', timestamp: 't' },
+            { role: MessageRole.Assistant, content: '', timestamp: 't' },
+          ],
+        }),
+      }),
+    );
+
+    await act(async () => {
+      result.current.stream.startStream(
+        'bucket/conv',
+        'hi',
+        1,
+        'gpt-4o',
+        undefined,
+        'gen-1',
+      );
+    });
+    const stoppedOptions = capturedOptions;
+
+    await act(async () => {
+      result.current.stream.startStream(
+        'bucket/conv',
+        'edited',
+        1,
+        'gpt-4o',
+        undefined,
+        'gen-2',
+        SendCompletionDtoModeEnum.Edit,
+      );
+    });
+
+    act(() => {
+      stoppedOptions?.onError(new Error('generation failed'));
+    });
+
+    expect(result.current.stream.isStreaming).toBe(true);
+    expect(result.current.conversation?.messages[1]?.streamErrorMessage).toBe(
+      undefined,
+    );
+  });
+
   it('reports an error only on the currently displayed conversation', () => {
     const { result } = renderHook(() =>
       useHookHarness({ transport, conversationId: 'bucket/conv' }),
@@ -525,6 +627,79 @@ describe('useConversationStream', () => {
     expect(result.current.conversation?.messages[0]?.streamErrorMessage).toBe(
       undefined,
     );
+  });
+
+  describe('generation conflict (issue #8688)', () => {
+    const conversationWithPendingAnswer = () =>
+      makeConversation({
+        messages: [
+          { role: MessageRole.User, content: 'hi', timestamp: '1' },
+          { role: MessageRole.Assistant, content: '', timestamp: '2' },
+        ],
+      });
+
+    const renderAndFail = async (
+      error: Error,
+      generationConflictMessage?: string,
+    ) => {
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: conversationWithPendingAnswer(),
+          generationConflictMessage,
+        }),
+      );
+
+      await act(async () => {
+        result.current.stream.startStream('bucket/conv', 'hi', 1, 'gpt-4o');
+      });
+      act(() => {
+        capturedOptions?.onError(error);
+      });
+
+      return result;
+    };
+
+    it('shows the host-supplied message when another tab is already generating', async () => {
+      const view = await renderAndFail(
+        new GenerationConflictError(),
+        'Already generating elsewhere.',
+      );
+
+      expect(view.current.conversation?.messages[1]?.streamErrorMessage).toBe(
+        'Already generating elsewhere.',
+      );
+    });
+
+    it('falls back to the default conflict message when the host supplies none', async () => {
+      const view = await renderAndFail(new GenerationConflictError());
+
+      expect(view.current.conversation?.messages[1]?.streamErrorMessage).toBe(
+        DEFAULT_GENERATION_CONFLICT_MESSAGE,
+      );
+    });
+
+    it('stops streaming so the composer is usable again', async () => {
+      const view = await renderAndFail(
+        new GenerationConflictError(),
+        'Already generating elsewhere.',
+      );
+
+      expect(view.current.stream.isStreaming).toBe(false);
+      expect(view.current.stream.canStopStreaming).toBe(false);
+    });
+
+    it('leaves a non-conflict error reporting its own message', async () => {
+      const view = await renderAndFail(
+        new Error('generation failed'),
+        'Already generating elsewhere.',
+      );
+
+      expect(view.current.conversation?.messages[1]?.streamErrorMessage).toBe(
+        'generation failed',
+      );
+    });
   });
 
   it('works without a client channel — passes no clientChannelId', async () => {

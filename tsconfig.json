@@ -95,6 +95,12 @@
     },
     {
       "path": "./libs/usage-dashboard"
+    },
+    {
+      "path": "./libs/skills"
     }
-  ]
+  ],
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0"
+  }
 }

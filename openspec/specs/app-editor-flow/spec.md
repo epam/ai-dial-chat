@@ -180,7 +180,7 @@ The additional-locale field labels the General step renders come from the `edito
 
 #### Scenario: Page content is not clipped below the mobile global header
 
-- **WHEN** the page renders at a mobile viewport (`≤768px`), where the app-wide mobile-only `Header` component (`apps/chat/src/components/Header/Header.tsx`) is also rendered as a sibling above the routed page content
+- **WHEN** the page renders at a mobile viewport (`≤768px`), where the app-wide mobile-only global header is also rendered as a sibling above the routed page content
 - **THEN** the page's content area still reaches the true bottom of the viewport and remains scrollable to its end — it does not get clipped by an amount equal to the global header's height
 
 #### Scenario: Clicking the Settings step before the app exists is a no-op

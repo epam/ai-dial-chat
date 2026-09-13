@@ -18,9 +18,9 @@ export interface UseHorizontalOverflowResult<TContent extends HTMLElement> {
 }
 
 /**
- * Tracks whether horizontally scrollable content extends past either logical
- * edge of its container, so a caller can render direction-aware affordances
- * (edge fades, a focusable scroll region) only while scrolling is possible.
+ * Tracks whether scrollable content extends past either logical horizontal
+ * edge, so a caller can render direction-aware affordances (edge fades, a
+ * focusable scroll region) only while scrolling is possible.
  */
 export const useHorizontalOverflow = <
   TContent extends HTMLElement,

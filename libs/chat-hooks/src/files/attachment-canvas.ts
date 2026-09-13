@@ -6,7 +6,8 @@ import type {
   JsonCanvasContent,
   MarkdownCanvasContent,
   OoxmlCanvasContent,
-  OoxmlFileType,
+  OoxmlHighlight,
+  OoxmlHighlightLocation,
   PdfCanvasContent,
   PlainTextCanvasContent,
   VisualizerCanvasContent,
@@ -14,10 +15,9 @@ import type {
 import {
   AttachmentContentType,
   AttachmentErrorType,
-  getOoxmlMimeType,
-  isHtmlPreviewable,
-  isOoxmlPreviewable,
-  isTextPreviewable,
+  getOoxmlFileType,
+  OoxmlFileType,
+  OoxmlHighlightKind,
 } from '@epam/ai-dial-attachment-canvas';
 import type {
   Annotation,
@@ -28,16 +28,18 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import {
   base64ToBlob,
-  FileExtension,
   MIMEType,
-  stripUrlQueryAndFragment,
   tryBase64ToBytes,
 } from '@epam/ai-dial-chat-shared';
 import {
   annotationHighlightId,
   annotationsToPdfHighlights,
-  parsePdfPageReference,
+  annotationToOfficeHighlightLocations,
+  gatherSameSourceAnnotations,
+  getAnnotationPdfPage,
   type AnnotationGroup,
+  type OfficeHighlightLocation,
+  parsePdfPageReference,
 } from '@epam/ai-dial-quotations';
 import { LRUCache } from 'lru-cache';
 import { isDialFileId } from './dial-file';
@@ -93,94 +95,17 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
   url,
 });
 
-/* Returns true when an external source URL should be opened in the canvas
- * rather than a new browser tab.
- *
- * Image, audio, PDF, and built-in document renderer (docx/xlsx/pptx/csv)
- * content types are trusted directly. Web-search grounding APIs do not
- * mislabel images/audio, and a
- * citation annotation's `attachment.type` is the same authoritative PDF/OOXML
- * marker the quotation canvas path (`annotationToPdfCanvasContent`) trusts —
- * such a URL commonly carries no matching extension (a citation/reference id,
- * not a file name). For other document types we rely on the URL path
- * extension — Google's grounding API labels every web reference (YouTube,
- * Forbes, etc.) as 'text/markdown', so content-type alone is unreliable
- * there. */
-/**
- * Returns the last path segment of `url` — its file name — for both absolute
- * URLs and DIAL-relative resource paths such as
- * `files/<bucket>/qa-routed-source.html`. Any query string or hash is dropped
- * and percent escapes are decoded. Returns an empty string when no segment can
- * be extracted. Used to classify a resource by extension when its display name
- * is a citation title rather than a file name.
+/*
+ * getUrlFileName, resolveExternalSourceContentType and
+ * isExternalSourcePreviewable live in `./source-content` so
+ * a consumer of only the `/source-content` entry point never resolves
+ * fetching, LRU cache initialization, or the
+ * `@epam/ai-dial-attachment-canvas`/`@epam/ai-dial-chat-shared` packages.
+ * `index.ts` and `entry-points/file-manager.ts` re-export `./source-content`
+ * directly for backward compatibility, rather than this module re-exporting
+ * it — that keeps each name owned by exactly one star-export target, since
+ * two `export *` declarations for the same name in one file silently drop it.
  */
-export const getUrlFileName = (url: string): string => {
-  let path: string;
-  try {
-    path = new URL(url).pathname;
-  } catch {
-    /* A relative DIAL resource path has no base to resolve against, so the
-     * query and hash are stripped by hand instead. */
-    path = stripUrlQueryAndFragment(url);
-  }
-  const segment = path.split('/').filter(Boolean).pop() ?? '';
-  try {
-    return decodeURIComponent(segment);
-  } catch {
-    /* Malformed percent escape — the raw segment still works for extension
-     * matching. */
-    return segment;
-  }
-};
-
-/** Returns true when `contentType` alone already trustworthily identifies an image, audio, PDF, or built-in document-renderer source. */
-const isTrustedSourceContentType = (contentType: string): boolean =>
-  contentType.startsWith('image/') ||
-  contentType.startsWith('audio/') ||
-  contentType === MIMEType.PDF ||
-  isOoxmlPreviewable('', contentType);
-
-/**
- * Returns the content type to trust for an external citation source: `contentType`
- * unchanged when it is already an image/audio/PDF/document-renderer marker,
- * otherwise the type implied by `url`'s path extension (`MIMEType.PDF` for
- * `.pdf`, the
- * canonical MIME for `.docx`/`.xlsx`/`.pptx`/`.csv`) when that extension is
- * recognized, otherwise `contentType` unchanged.
- *
- * Web-search grounding APIs label every reference — PDFs and Office documents
- * included — as `text/markdown`, so a mislabeled `contentType` must not win
- * over a recognized URL extension: doing so previously sent a PDF's raw bytes
- * into the markdown/text canvas viewer, rendering garbled text instead of
- * opening the PDF/OOXML viewer.
- */
-export const resolveExternalSourceContentType = (
-  contentType: string,
-  url: string,
-): string => {
-  if (isTrustedSourceContentType(contentType)) {
-    return contentType;
-  }
-  const fileName = getUrlFileName(url);
-  const dot = fileName.lastIndexOf('.');
-  const ext = dot === -1 ? '' : fileName.slice(dot + 1).toLowerCase();
-  if (ext === FileExtension.PDF) return MIMEType.PDF;
-  return getOoxmlMimeType(fileName) ?? contentType;
-};
-
-/** Returns true when an external (non-DIAL) source URL should be opened in the canvas rather than a new browser tab. */
-export const isExternalSourcePreviewable = (
-  contentType: string,
-  url: string,
-): boolean => {
-  const resolvedType = resolveExternalSourceContentType(contentType, url);
-  if (isTrustedSourceContentType(resolvedType)) {
-    return true;
-  }
-  const fileName = getUrlFileName(url);
-  /* 'html'/'htm' are not in TEXT_EXTENSIONS (they use HtmlContent), so both must be checked explicitly. */
-  return isTextPreviewable(fileName) || isHtmlPreviewable(fileName);
-};
 
 /*
  * Session-scoped LRU caches keyed by DIAL download URL.
@@ -410,7 +335,7 @@ export const resolveHtmlCanvasContent = async (
 
 /**
  * Builds a `PdfCanvasContent` for a PDF citation annotation, including highlights
- * for all annotations in the same source group and scroll target for the clicked one.
+ * for the clicked annotation's document within its citation group.
  * Returns `null` if the annotation has no PDF source attachment.
  */
 export const annotationToPdfCanvasContent = (
@@ -426,15 +351,117 @@ export const annotationToPdfCanvasContent = (
     : source.url;
   if (url == null) return null;
 
-  const group = groups.find((g) => g.sourceUrl === source.url);
-  const allAnnotations = group?.annotations ?? [annotation];
-  const selectedIndex = group ? group.annotations.indexOf(annotation) : 0;
+  const group = groups.find((g) => g.annotations.includes(annotation));
+  const allAnnotations = (group?.annotations ?? [annotation]).filter(
+    (entry) => entry.body?.source?.attachment?.url === source.url,
+  );
+  const selectedIndex = allAnnotations.indexOf(annotation);
+  const highlights = annotationsToPdfHighlights(allAnnotations);
+  const highlightId = annotationHighlightId(annotation, selectedIndex);
 
   return {
     type: AttachmentContentType.Pdf,
     url,
-    highlights: annotationsToPdfHighlights(allAnnotations),
-    selectedHighlightId: annotationHighlightId(annotation, selectedIndex),
+    highlights,
+    selectedHighlightId: highlights.some(
+      (highlight) => highlight.id === highlightId,
+    )
+      ? highlightId
+      : undefined,
+    page: getAnnotationPdfPage(annotation),
+  };
+};
+
+/**
+ * Maps one `OfficeHighlightLocation` (quotations-owned, discriminated by the
+ * wire's own `type` string) to the `OoxmlHighlightLocation` shape
+ * `libs/attachment-canvas` renders (discriminated by its own
+ * `OoxmlHighlightKind` enum). This is the layer boundary noted in
+ * `design.md`'s architecture diagram: `libs/quotations` cannot depend on
+ * `libs/attachment-canvas` (a real circular dependency — `attachment-canvas`
+ * already depends on `quotations` for the PDF highlight path), so the
+ * translation happens here, in the one lib that already depends on both.
+ */
+const toOoxmlHighlightLocation = (
+  location: OfficeHighlightLocation,
+): OoxmlHighlightLocation => {
+  switch (location.type) {
+    case 'docx_text_range':
+      return {
+        kind: OoxmlHighlightKind.DocxTextRange,
+        story: location.story,
+        path: location.path,
+        start: location.start,
+        endExclusive: location.endExclusive,
+        text: location.text,
+      };
+    case 'pptx_text_range':
+      return {
+        kind: OoxmlHighlightKind.PptxTextRange,
+        slide: location.slide,
+        shapeId: location.shapeId,
+        start: location.start,
+        endExclusive: location.endExclusive,
+        text: location.text,
+      };
+    case 'excel_rc_range':
+      return {
+        kind: OoxmlHighlightKind.XlsxCellRange,
+        sheet: location.sheet,
+        start: location.start,
+        end: location.end,
+      };
+  }
+};
+
+/**
+ * Builds an `OoxmlCanvasContent` for a DOCX/PPTX/XLSX citation annotation,
+ * including highlights for every annotation sharing the clicked one's source
+ * document. Returns `null` when the annotation has no source attachment,
+ * the source is not a format `@silurus/ooxml` renders as DOCX/XLSX/PPTX (a
+ * CSV source returns `null` — citation highlighting targets Office documents
+ * only), or no URL resolves.
+ */
+export const annotationToOoxmlCanvasContent = (
+  annotation: Annotation,
+  annotations: Annotation[],
+  resolvers: AttachmentCanvasUrlResolvers,
+): OoxmlCanvasContent | null => {
+  const source = annotation.body?.source?.attachment;
+  if (source?.url == null) return null;
+
+  const format = getOoxmlFileType(source.title ?? source.url, source.type);
+  if (
+    format !== OoxmlFileType.Docx &&
+    format !== OoxmlFileType.Xlsx &&
+    format !== OoxmlFileType.Pptx
+  ) {
+    return null;
+  }
+
+  const url = isDialFileId(source.url)
+    ? resolvers.resolveDialFileDownloadUrl(source.url)
+    : source.url;
+  if (url == null) return null;
+
+  const sameSource = gatherSameSourceAnnotations(annotation, annotations);
+  const highlights: OoxmlHighlight[] = [];
+  let selectedHighlightId: string | undefined;
+
+  sameSource.forEach((entry, index) => {
+    const locations = annotationToOfficeHighlightLocations(entry);
+    if (locations.length === 0) return;
+
+    const id = annotationHighlightId(entry, index);
+    highlights.push({ id, locations: locations.map(toOoxmlHighlightLocation) });
+    if (entry === annotation) selectedHighlightId = id;
+  });
+
+  return {
+    type: AttachmentContentType.Ooxml,
+    url,
+    format,
+    ...(highlights.length > 0 ? { highlights, selectedHighlightId } : {}),
   };
 };
 
@@ -473,6 +500,7 @@ export const referenceAttachmentToPdfCanvasContent = (
       },
     ],
     selectedHighlightId,
+    page: parsed.page,
   };
 };
 

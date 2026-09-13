@@ -141,15 +141,44 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
 
 ## Utilities
 
+Raw `html_tag` normalization preserves an optional `body.selector` (object or array)
+and a supplied annotation `index`. The target selector identifies the chat marker;
+the body selector identifies the location in the document. Missing selector fields
+are omitted so quote-only streaming deltas preserve an earlier page.
+
 - `groupAnnotations(annotations)` — dispatches by selector type and returns the concatenation of `groupAnnotationsByCitId` (for `html_tag` annotations) and `groupAnnotationsBySource` (for every other annotation); prefer this over calling either grouping function directly
 - `groupAnnotationsBySource(annotations)` — groups non-`html_tag` annotations by their source URL into `AnnotationGroup[]`
 - `groupAnnotationsByCitId(annotations)` — groups `html_tag`-selector annotations by `target.selector.id`, one group per distinct tag id (never collapsing two ids that cite the same document)
 - `resolveMessageAnnotations(message)` — resolves annotations from either internal or raw wire format and repairs persisted `html_tag` sources whose historical PDF fallback conflicts with a recognized URL extension
 - `normalizeRawAnnotations(raw, attachments)` — normalises raw API wire-format annotations; recognizes both the legacy `attachment_index` + `pdf_region` shape and the `html_tag` + flat `body.source.url` shape, including DOCX/XLSX/PPTX MIME inference
-- `annotationsToPdfHighlights(annotations)` — maps annotations to PDF viewer highlight entries
+- `annotationsToPdfHighlights(annotations)` — maps annotations with positive integer pages and finite coordinates to PDF viewer highlight entries; zero-area boxes are supported
+- `getAnnotationPdfPage(annotation)` — returns the first positive integer page from its `pdf_bbox` body selectors, skipping malformed entries and invalid pages; returns `undefined` when no valid page exists
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown, for offset-based (non-`html_tag`) groups only
 - `stripCitTagsWhileStreaming(content)` — hides supported paired citation elements while streaming and escapes every other `cit` shape for literal display
 - `replaceSentinelsInChildren(children, renderMarker)` — replaces sentinels with React nodes in a rendered tree
 - `getReferenceAttachmentGroups(dtos)` — maps reference-only attachments to synthetic annotation groups
 - `isReferenceOnlyAttachment(dto)` — returns true for RAG/grounding chunks without a direct URL
 - `parsePdfPageReference(url)` — parses a PDF URL with optional `#page=N` fragment
+
+### Office citation selectors
+
+`isDocxRangeSelector`, `isPptxRangeSelector`, and `isExcelRcRangeSelector` narrow an `AnnotationSelector` to its Office range shape, requiring every field the shape needs — a `_range`-suffixed selector missing a field matches no guard. `annotationToOfficeHighlightLocations(annotation)` converts `body.selector` (scalar or array) to validated `OfficeHighlightLocation[]`, skipping invalid entries without throwing.
+
+```tsx
+import {
+  annotationToOfficeHighlightLocations,
+  isDocxRangeSelector,
+  isExcelRcRangeSelector,
+  isPptxRangeSelector,
+} from '@epam/ai-dial-quotations';
+import type { OfficeHighlightLocation } from '@epam/ai-dial-quotations';
+
+const locations: OfficeHighlightLocation[] =
+  annotationToOfficeHighlightLocations(annotation);
+```
+
+`OfficeHighlightLocation` (`DocxOfficeHighlightLocation | PptxOfficeHighlightLocation | ExcelOfficeHighlightLocation`) is discriminated by the wire's own `type` string, not by `@epam/ai-dial-attachment-canvas`'s `OoxmlHighlightKind` — this lib cannot depend on `attachment-canvas` (a real circular dependency: `attachment-canvas` already depends on this lib for the PDF highlight path). `libs/chat-hooks`, which depends on both, maps `OfficeHighlightLocation[]` into `OoxmlHighlight[]`.
+
+For `DocxOfficeHighlightLocation`/`PptxOfficeHighlightLocation`, `endExclusive` is the wire's `end` copied through **unchanged** — confirmed already exclusive against captured DIAL Core responses, not `end + 1`. `ExcelOfficeHighlightLocation.end` stays the inclusive last-cell address, a distinct concept unaffected by that conversion point.
+
+`gatherSameSourceAnnotations(clicked, annotations)` returns every annotation in `annotations` whose `body.source.attachment.url` equals `clicked`'s, in original order, gathering across the whole list (not one `cit`-id group, unlike `groupAnnotationsByCitId`) — keyed on URL only, since two different files can share a display title.

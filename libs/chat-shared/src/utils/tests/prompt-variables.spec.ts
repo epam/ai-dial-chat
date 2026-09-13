@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildPromptParamDefaults,
   extractPromptParams,
   PROMPT_VARIABLE_CLASS_NAME,
   rehypePromptVariables,
@@ -123,19 +124,57 @@ describe('extractPromptParams', () => {
 
   it('returns one entry for a token repeated multiple times', () => {
     expect(extractPromptParams('{{name}}, meet {{name}} again.')).toEqual([
-      'name',
+      { name: 'name' },
     ]);
   });
 
   it('returns distinct tokens in first-occurrence order', () => {
     expect(
       extractPromptParams('{{b}} first, then {{a}}, then {{b}} again'),
-    ).toEqual(['b', 'a']);
+    ).toEqual([{ name: 'b' }, { name: 'a' }]);
   });
 
   it('ignores single-brace sequences and only matches double braces', () => {
     expect(extractPromptParams('tes test {name} prompt {{test}}')).toEqual([
-      'test',
+      { name: 'test' },
+    ]);
+  });
+
+  it('splits a name from its default value at the pipe', () => {
+    expect(extractPromptParams('Translate into {{language|Spanish}}.')).toEqual(
+      [{ name: 'language', defaultValue: 'Spanish' }],
+    );
+  });
+
+  it('reads a bare token and a defaulted one side by side', () => {
+    expect(extractPromptParams('{{tone}} and {{language|Spanish}}')).toEqual([
+      { name: 'tone' },
+      { name: 'language', defaultValue: 'Spanish' },
+    ]);
+  });
+
+  it('treats only the first pipe as the separator', () => {
+    expect(extractPromptParams('{{sep|a|b}}')).toEqual([
+      { name: 'sep', defaultValue: 'a|b' },
+    ]);
+  });
+
+  it('reads a trailing pipe as an empty default', () => {
+    expect(extractPromptParams('{{name|}}')).toEqual([
+      { name: 'name', defaultValue: '' },
+    ]);
+  });
+
+  it('takes the default from the first occurrence of a repeated name', () => {
+    expect(extractPromptParams('{{a|first}} then {{a|second}}')).toEqual([
+      { name: 'a', defaultValue: 'first' },
+    ]);
+  });
+
+  it('does not read a colon or an equals sign as a separator', () => {
+    expect(extractPromptParams('{{b:Y}} and {{c=Z}}')).toEqual([
+      { name: 'b:Y' },
+      { name: 'c=Z' },
     ]);
   });
 });
@@ -165,5 +204,43 @@ describe('resolvePromptParams', () => {
     expect(resolvePromptParams('hello {{missing}}', {})).toBe(
       'hello {{missing}}',
     );
+  });
+
+  it('substitutes a value keyed by name for a token that carries a default', () => {
+    expect(
+      resolvePromptParams('Translate into {{language|Spanish}}.', {
+        language: 'German',
+      }),
+    ).toBe('Translate into German.');
+  });
+
+  it('falls back to the token default when no value is provided', () => {
+    expect(
+      resolvePromptParams('Translate into {{language|Spanish}}.', {}),
+    ).toBe('Translate into Spanish.');
+  });
+
+  it('replaces every occurrence of a repeated defaulted token with one value', () => {
+    expect(
+      resolvePromptParams('{{a|X}} and {{a|Y}} again', { a: 'given' }),
+    ).toBe('given and given again');
+  });
+});
+
+describe('buildPromptParamDefaults', () => {
+  it('returns an empty object when no parameter carries a default', () => {
+    expect(
+      buildPromptParamDefaults([{ name: 'tone' }, { name: 'text' }]),
+    ).toEqual({});
+  });
+
+  it('keys each default by its parameter name, skipping those without one', () => {
+    expect(
+      buildPromptParamDefaults([
+        { name: 'tone' },
+        { name: 'language', defaultValue: 'Spanish' },
+        { name: 'format', defaultValue: '' },
+      ]),
+    ).toEqual({ language: 'Spanish', format: '' });
   });
 });

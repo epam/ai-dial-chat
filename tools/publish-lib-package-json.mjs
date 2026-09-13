@@ -10,10 +10,12 @@
 
 import path from 'path';
 
+// Throws rather than exiting the process, so this pure transformation stays
+// unit-testable (per this file's own docstring); `publish-lib.mjs`'s caller
+// catches the thrown error, prints it, and exits.
 function invariant(condition, message) {
   if (!condition) {
-    console.error(`\nERROR: ${message}\n`);
-    process.exit(1);
+    throw new Error(message);
   }
 }
 
@@ -24,6 +26,28 @@ const VALID_VERSION = /^\d+\.\d+\.\d+(-[\w.]+)?$/;
 // when npm publish runs from inside the dist/ directory.
 export const stripDistPrefix = (p) =>
   typeof p === 'string' && p.startsWith('./dist/') ? './' + p.slice(7) : p;
+
+// Counts how many times a top-level key literal appears in the *raw* JSON
+// text. `JSON.parse` silently keeps only the last of any duplicate key, so a
+// duplicate is invisible once the manifest has been parsed into an object —
+// this must run against the source text before parsing to catch it at all.
+export const countRawJsonKeyOccurrences = (rawSource, key) => {
+  const tokens = rawSource.match(/"(?:\\.|[^"\\])*"|[{}\[\]:]/g) ?? [];
+  let depth = 0;
+  let count = 0;
+  tokens.forEach((token, index) => {
+    if (token === '{' || token === '[') depth++;
+    else if (token === '}' || token === ']') depth--;
+    else if (
+      depth === 1 &&
+      token.startsWith('"') &&
+      tokens[index + 1] === ':' &&
+      JSON.parse(token) === key
+    )
+      count++;
+  });
+  return count;
+};
 
 // Recursively rewrite all string values inside an exports map, and drop the
 // "@epam/source" condition (an internal monorepo-only resolution hint).
@@ -50,12 +74,30 @@ export const rewriteExportsObj = (obj) => {
  * @param options.version publish version (already resolved/validated by the caller's flow)
  * @param options.projectRoot Nx project root, e.g. "libs/chat-hooks" (workspace-relative, any separator)
  * @param options.isWorkspaceLib (depName: string) => boolean
+ * @param options.rawSource the source package.json's raw text, before `JSON.parse` — when given,
+ *   used to reject a manifest with more than one "sideEffects" key rather than silently
+ *   publishing whichever value `JSON.parse` happened to keep
  */
-export const preparePublishPackageJson = (json, { version, projectRoot, isWorkspaceLib }) => {
+export const preparePublishPackageJson = (
+  json,
+  { version, projectRoot, isWorkspaceLib, rawSource },
+) => {
   invariant(
     version && (VALID_VERSION.test(version) || version === 'dev'),
     `Version did not match Semantic Versioning.\nExpected: #.#.#  |  #.#.#-pre.N  |  dev\nGot: ${version}`,
   );
+
+  if (rawSource != null) {
+    const sideEffectsKeyCount = countRawJsonKeyOccurrences(
+      rawSource,
+      'sideEffects',
+    );
+    invariant(
+      sideEffectsKeyCount <= 1,
+      `package.json declares ${sideEffectsKeyCount} "sideEffects" keys — expected at most one. ` +
+        'JSON.parse silently keeps only the last duplicate, hiding the wrong contract from anyone reading the file top-to-bottom.',
+    );
+  }
 
   // Set publish version
   json.version = version;

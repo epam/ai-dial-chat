@@ -29,7 +29,7 @@ Core principle: the chat application is assembled from a set of **independently 
 
 | Tool               | Role                                                           |
 | ------------------ | -------------------------------------------------------------- |
-| **Nx 22**          | Monorepo orchestration, task pipeline, caching, affected graph |
+| **Nx 23**          | Monorepo orchestration, task pipeline, caching, affected graph |
 | **npm workspaces** | Package management                                             |
 | **React 19**       | UI framework for all libraries and the frontend app            |
 | **NestJS 11**      | Backend API server (`apps/chat-api`)                           |
@@ -155,15 +155,25 @@ apps/chat/src/
 └── i18n/                  # i18next config + locale JSON files
 ```
 
-Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `AppsEditor`, `ToolsetEditor`, `ToolsetAuthCallback`, `PromptEditor`, `DialFileManagerPage`, `ScheduledTasksPage`, `ScheduledTasksRouteGate`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `NotFound`, and `auth/`.
+Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `AppsEditor`, `ToolsetEditor`, `ToolsetAuthCallback`, `PromptEditor`, `DialFileManagerPage`, `ScheduledTasksPage`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `NotFound`, and `auth/`.
 
 The frontend uses automatic chunk splitting. Catalog Grid imports the UI Kit's
 `/grid` entry; Markdown editor loaders use `/editors`. File-manager UI has a
 dedicated `@epam/ai-dial-chat-shared/file-manager` entry consumed inside lazy
 features, while headless file contracts stay on the shared root. Conversation
-publishing also loads on demand. The shared, catalog and publishing packages
-declare CSS/SCSS side effects, and chat-hooks declares side-effect-free JavaScript,
-so unused feature UI can be removed from root-barrel consumers. See the
+publishing also loads on demand. `chat-shared`'s markdown/KaTeX/syntax-highlighter
+stack is isolated behind a dedicated `@epam/ai-dial-chat-shared/markdown` entry
+(root keeps re-exporting it for backward compatibility); `chat-hooks`'s
+content-type-correction helpers are isolated behind `@epam/ai-dial-chat-hooks/source-content`
+(also re-exported from `./file-manager`); `catalog`'s headless item-mapping enums
+and pure functions are isolated behind `@epam/ai-dial-catalog/mapping`, separate
+from the publish-panel-attached UI on catalog's root. The shared, catalog and
+publishing packages declare CSS/SCSS side effects; `chat-hooks` declares its
+compiled JavaScript side-effect-free except for a single audited
+`package.json#sideEffects` array naming the `./oauth`/`./file-manager`
+facades and the stable preserved modules that retain module-scope `EventTarget`/`LRUCache`
+singletons — so unused feature UI can still be removed from root-barrel
+consumers. See the
 [frontend feature-loading overview](../apps/chat/README.md#feature-loading).
 
 ### State management
@@ -235,6 +245,10 @@ Behaviour applied automatically:
 
 ### SSE streaming
 
+Citation normalization preserves the inline marker's `target.selector` separately
+from the PDF location in `body.selector` through stream assembly and persistence;
+see [PDF citation metadata](../apps/chat-api/README.md#pdf-citation-metadata).
+
 `chat-stream.api.ts` handles streaming completions:
 
 - Uses `ReadableStream.getReader()` + line-by-line SSE parsing (`data: {json}`)
@@ -263,11 +277,14 @@ Configured at startup:
 - Swagger at `/api/docs` (non-production)
 - Static React SPA serving from `apps/chat/dist` for non-`/api/*` routes
 - Global prefix: `api`
+- Global in-memory cache: an explicit Keyv memory adapter with a 100-entry LRU limit and periodic expiration cleanup; see [backend caching behavior](../apps/chat-api/README.md#performance).
 - OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)
   — off by default (`OTEL_SDK_DISABLED=true`); when enabled, adds a `traceparent` response header
   on traced routes and an optional dedicated Prometheus scrape listener (default `:9464/metrics`,
-  independent of the main application port) — see `apps/chat-api/README.md`'s Observability
-  section
+  independent of the main application port). Metrics include process memory, outstanding SSE
+  operations, and generation registry size, collected in the serving process; see
+  [backend observability](../apps/chat-api/README.md#observability) and
+  [runtime memory diagnostics](../apps/chat-api/README.md#runtime-memory-diagnostics).
 
 NestJS conventions (domain structure, thin controllers, Swagger decorators, Logger, ConfigService, DTO validation) are defined in `apps/chat-api/AGENTS.md` — read it before implementing anything in `apps/chat-api/**`.
 
@@ -454,8 +471,14 @@ Browser                apps/chat-api                OIDC Provider
   │  GET /auth/callback/:id  │                            │
   │─────────────────────────▶│                            │
   │                         │◀──── token exchange ───────│
+  │                         │◀── optional UserInfo ─────▶│
   │◀────────────────────────│ Set-Cookie: session=<enc>  │
 ```
+
+For Keycloak, a missing ID-token `job_title` can be read from UserInfo after
+checking the subject. The [auth design](auth/auth-bff-encrypted-cookie.md#51-login-flow-authorization-code--pkce)
+describes claim capture and failure handling; other providers keep their
+existing ID-token path.
 
 ### Session
 
@@ -587,7 +610,7 @@ The intended direction, enforced in review:
 | #   | Decision                                                                     | Status                                       |
 | --- | ---------------------------------------------------------------------------- | -------------------------------------------- |
 | 1   | Package prefix: `@epam/*` (short form, no `ai-dial-` in package name)        | ✅ Accepted                                  |
-| 2   | Monorepo tooling: **Nx 22**                                                  | ✅ Accepted                                  |
+| 2   | Monorepo tooling: **Nx 23**                                                  | ✅ Accepted                                  |
 | 3   | Package manager: **npm workspaces**                                          | ✅ Accepted                                  |
 | 4   | UI framework: **React 19** (SPA)                                             | ✅ Accepted                                  |
 | 5   | Backend framework: **NestJS 11** (`apps/chat-api`)                           | ✅ Accepted                                  |

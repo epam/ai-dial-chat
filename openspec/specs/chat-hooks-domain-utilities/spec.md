@@ -38,11 +38,11 @@ Every file among `announcement-message.ts`, `application-schema.ts`, `browser-ti
 `@epam/ai-dial-chat-hooks` SHALL export `isDialFileId`, `resolveRelativeDialFilePath`, and `resolveDialFileBucketAndPath` with their exact current parsing behavior. `resolveDialFileDownloadUrl` and `resolveDialUrl` (which hardcode the `/api/v1/files/download` BFF path) SHALL remain in `apps/chat/src/utils/dial-file.ts`, which SHALL import the three pure functions from `@epam/ai-dial-chat-hooks` and continue re-exporting them under their current names so every existing `apps/chat` consumer's import path is unaffected.
 
 #### Scenario: `apps/chat` consumers see no import-path change
-- **WHEN** `apps/chat/src/utils/icon-path.ts` or any other current consumer imports `isDialFileId`/`resolveRelativeDialFilePath` from `../utils/dial-file` (or `./dial-file`)
-- **THEN** the import continues to resolve successfully, now to a re-export of the `@epam/ai-dial-chat-hooks` implementation
+- **WHEN** `apps/chat` is type-checked
+- **THEN** `isDialFileId`/`resolveRelativeDialFilePath` imported from `../utils/dial-file` (or `./dial-file`) resolve to a re-export of the `@epam/ai-dial-chat-hooks` implementation
 
 #### Scenario: `useAttachmentAction` consolidates onto the shared implementation
-- **WHEN** `libs/chat-hooks/src/attachment/useAttachmentAction/useAttachmentAction.ts` is inspected after this change
+- **WHEN** `libs/chat-hooks/src/attachment/useAttachmentAction/useAttachmentAction.ts` is inspected
 - **THEN** it imports `isDialFileId` from the new shared module instead of keeping its own private duplicate
 
 ### Requirement: Attachment-display mapping takes its resolvers as an explicit parameter
@@ -113,8 +113,8 @@ Every file among `announcement-message.ts`, `application-schema.ts`, `browser-ti
 `@epam/ai-dial-chat-hooks` SHALL export `prepareDownloadDestination` and the `DownloadDestinationType` it resolves to, reproducing `apps/chat/src/utils/file-download.ts`'s current decision logic exactly. `triggerBrowserDownload` (which creates and clicks a DOM `<a>` element) SHALL remain in `apps/chat/src/utils/file-download.ts`, which SHALL re-export `prepareDownloadDestination` from `@epam/ai-dial-chat-hooks` for its existing consumers' unchanged import path.
 
 #### Scenario: Existing consumers see no import-path change
-- **WHEN** `apps/chat/src/components/CatalogView/CatalogView.tsx` imports `prepareDownloadDestination` from `../../utils/file-download`
-- **THEN** the import continues to resolve successfully, now to a re-export of the `@epam/ai-dial-chat-hooks` implementation
+- **WHEN** `apps/chat` is type-checked
+- **THEN** `prepareDownloadDestination` imported by `CatalogView.tsx` from `../../utils/file-download` resolves to a re-export of the `@epam/ai-dial-chat-hooks` implementation
 
 ### Requirement: `skill.ts` and `skill-manifest.ts` resolve their `parseSkillManifest` naming collision
 
@@ -124,18 +124,10 @@ Every file among `announcement-message.ts`, `application-schema.ts`, `browser-ti
 - **WHEN** `apps/chat` imports both `parseSkillManifest` and `parseSkillManifestDocument` from `@epam/ai-dial-chat-hooks`
 - **THEN** each resolves to its own distinct, behavior-preserved implementation
 
-### Requirement: `apps/chat/src/utils/request-api-key.ts` is deleted as dead code
-
-`apps/chat/src/utils/request-api-key.ts` (`transformDateString`, `EMAIL_REGEX`) SHALL be deleted. It SHALL NOT be migrated to `@epam/ai-dial-chat-hooks`, since it has zero consumers anywhere in `apps/chat/src`.
-
-#### Scenario: No reference to the deleted file remains
-- **WHEN** the repository is inspected after this change
-- **THEN** no file imports from `apps/chat/src/utils/request-api-key` and the file does not exist
-
 ### Requirement: Host-owned `apps/chat/src/utils/` files are unaffected
 
 `collect-stream.ts`, `conversation-id-match.ts`, `conversation-stream-transport.ts`, `entity-notification.ts`, `favorites.ts`, `icon-path.ts`, `local-storage.ts`, `apply-theme-colors.ts`, `map-deployment-limits-to-catalog.ts`, `map-scheduled-task-dto.ts`, `map-scheduled-task-run-dto.ts`, `map-usage-data-to-dashboard.ts`, `map-user-usage-to-model-limits.ts`, `scheduled-task-form-validation.ts`, `signin-interrupt.ts`, `toolsets.ts`, and `attachment-network-error-notification.tsx` SHALL NOT be modified by this change, since each either touches host-owned integration state directly or has its translated output as its entire purpose with nothing left to extract.
 
 #### Scenario: No host-owned file is imported by `@epam/ai-dial-chat-hooks`
-- **WHEN** `libs/chat-hooks/src/**` is inspected after this change
+- **WHEN** `libs/chat-hooks/src/**` is inspected
 - **THEN** it contains no import of any of the listed host-owned files

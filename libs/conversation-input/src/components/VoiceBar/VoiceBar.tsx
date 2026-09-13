@@ -40,10 +40,14 @@ export interface VoiceBarProps {
   stopLabel?: string;
   /** Accessible label for the discard / cancel button. Defaults to `'Discard recording'`. */
   discardLabel?: string;
+  /** Status announced during recognition. Defaults to 'Transcribing audio…'. */
+  processingLabel?: string;
   /** CSS custom properties forwarded from the parent (e.g. `--ci-bg`, `--ci-border`). */
   style?: CSSProperties;
   /** Extra class names applied to the root element. */
   className?: string;
+  /** Render controls inside an existing input border. Defaults to false. */
+  embedded?: boolean;
 }
 
 /** Voice recording bar: scrolling waveform, stop and discard controls. */
@@ -55,8 +59,10 @@ export const VoiceBar: FC<VoiceBarProps> = ({
   onDiscard,
   stopLabel = 'Stop recording',
   discardLabel = 'Discard recording',
+  processingLabel = 'Transcribing audio…',
   style,
   className,
+  embedded = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ringBufferRef = useRef<Float32Array>(new Float32Array(RING_SIZE));
@@ -65,6 +71,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
   const scrollPxRef = useRef(0);
   const isRecording = state === VoiceRecorderState.Recording;
   const isError = state === VoiceRecorderState.Error;
+  const isProcessing = state === VoiceRecorderState.Processing;
 
   /* Draw the ring buffer as a scrolling bar histogram spanning the full canvas width.
    * Uses scrollPxRef for sub-bar-width translation so bars slide at 1 px/frame rather
@@ -188,13 +195,16 @@ export const VoiceBar: FC<VoiceBarProps> = ({
           />
         }
         aria-label={discardLabel}
+        className="mobile:min-h-11 mobile:min-w-11"
         onClick={onDiscard}
       />
       {isRecording && (
         <PrimaryIconButton
           icon={<IconPlayerStopFilled size={DIAL_ICON_SIZE.LG} aria-hidden />}
           onClick={() => onStop?.()}
+          autoFocus
           aria-label={stopLabel}
+          className="mobile:min-h-11 mobile:min-w-11"
         />
       )}
     </div>
@@ -205,8 +215,10 @@ export const VoiceBar: FC<VoiceBarProps> = ({
       <div
         style={style}
         className={mergeClasses(
-          inputStyles.wrapper,
-          'flex min-h-[64px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border px-3 shadow-md desktop:flex-row desktop:items-center desktop:gap-2 desktop:py-2',
+          'flex w-full min-w-0 flex-col justify-center gap-3 desktop:flex-row desktop:items-center desktop:gap-2',
+          !embedded && inputStyles.wrapper,
+          !embedded &&
+            'min-h-[64px] max-w-[748px] rounded-xl border px-3 shadow-md desktop:py-2',
           isError && styles.wrapperError,
         )}
       >
@@ -221,9 +233,19 @@ export const VoiceBar: FC<VoiceBarProps> = ({
               aria-hidden
             />
           )}
+          {isProcessing && (
+            <span
+              role="status"
+              aria-live="polite"
+              className="min-w-0 break-words"
+            >
+              {processingLabel}
+            </span>
+          )}
           <canvas
             ref={canvasRef}
             height={32}
+            aria-hidden
             className={mergeClasses(
               styles.waveformCanvas,
               'h-8 min-w-0 flex-1 desktop:h-6',
@@ -235,7 +257,9 @@ export const VoiceBar: FC<VoiceBarProps> = ({
       </div>
 
       {isError && errorMessage && (
-        <ErrorText text={errorMessage} className="mt-1 px-1" />
+        <div role="alert">
+          <ErrorText text={errorMessage} className="mt-1 px-1" />
+        </div>
       )}
     </div>
   );

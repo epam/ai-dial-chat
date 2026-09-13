@@ -7,10 +7,12 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
-import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
-import { buildDialFileUrl } from '../dial-resource-path.util';
+import {
+  buildDialFileUrl,
+  encodeDialFilePath,
+} from '../dial-resource-path.util';
 import type { CreateFolderResponseDto } from '../dto/create-folder.dto';
 import { FOLDER_NODE_TYPE, MARKER_NAME } from '../files.constants';
 import { markerMetadataMatches } from '../marker-metadata';
@@ -58,7 +60,7 @@ export class FilesFolderService {
         response: metaResponse,
       } = await this.dialClient.client.getFileMetadata(
         bucket,
-        encodeDialResourcePath(markerPath),
+        encodeDialFilePath(markerPath),
         {
           headers: getBearerAuthHeaders(at),
           signal: AbortSignal.timeout(this.getTimeoutMs()),

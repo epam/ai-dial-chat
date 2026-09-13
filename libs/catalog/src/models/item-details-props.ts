@@ -512,11 +512,18 @@ export interface DetailsPanelProps {
   publishLoadingPaths?: Set<string>;
   /** Resolves whether the current user can publish to a given folder path. */
   hasPublishWriteAccess?: (folderPath: string[]) => boolean;
-  /** Called with the destination folder path and current access rules when the user confirms publish/update. */
+  /**
+   * Initial value for the publish flow's display-author field, and the value
+   * it returns to on reset. Resolved by the host from the signed-in user's
+   * display name; the catalog library holds no notion of a session.
+   */
+  publishDefaultAuthor?: string;
+  /** Called with the destination folder path, current access rules, and trimmed display author when the user confirms publish/update. */
   onPublish?: (
     item: CatalogItem,
     folderPath: string[],
     rules: PublicationRule[],
+    author: string,
   ) => Promise<void>;
   /** Called after a successful publish; use this to surface a success notification. */
   onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;

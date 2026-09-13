@@ -81,6 +81,9 @@ const ModelRow = ({
     <div style={style} {...ariaAttributes}>
       <Button
         type="button"
+        /* The check icon alone is invisible to assistive tech, so the row that
+           holds the applied deployment reports itself as the current one. */
+        aria-current={isSelected ? 'true' : undefined}
         className={mergeClasses(styles.item, 'h-full w-full gap-3 px-4')}
         iconBefore={<span className={styles.itemIcon}>{modelIcon}</span>}
         label={

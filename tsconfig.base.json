@@ -36,6 +36,7 @@
       "@epam/ai-dial-catalog/*": ["./libs/catalog/*"],
       "@epam/ai-dial-prompt-editor/*": ["./libs/prompt-editor/*"],
       "@epam/ai-dial-prompts/*": ["./libs/prompts/*"],
+      "@epam/ai-dial-skills/*": ["./libs/skills/*"],
       "@epam/ai-dial-publish-panel/*": ["./libs/publish-panel/*"],
       "@epam/ai-dial-share/*": ["./libs/share/*"],
       "@epam/ai-dial-source-panel/*": ["./libs/source-panel/*"],
@@ -52,6 +53,10 @@
       "@epam/ai-dial-skill-editor/*": ["./libs/skill-editor/*"],
       "@epam/ai-dial-toolset-editor/*": ["./libs/toolset-editor/*"],
       "@epam/ai-dial-settings-panel/*": ["./libs/settings-panel/*"]
-    }
+    },
+    "noUncheckedSideEffectImports": false,
+    "types": ["*"],
+    "esModuleInterop": false,
+    "ignoreDeprecations": "6.0"
   }
 }

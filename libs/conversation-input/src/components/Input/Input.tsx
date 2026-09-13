@@ -11,6 +11,7 @@ import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  Dropdown,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
@@ -26,10 +27,15 @@ import {
   useState,
 } from 'react';
 import { useAttachments } from '../../hooks/useAttachments';
+import { useCommandMenu } from '../../hooks/useCommandMenu/useCommandMenu';
 import { useDelayedUnmount } from '../../hooks/useDelayedUnmount';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useMessageState } from '../../hooks/useMessageState';
-import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
+import {
+  useVoiceRecorder,
+  VoiceRecorderState,
+  VoiceRecordingMode,
+} from '../../hooks/useVoiceRecorder';
 import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
@@ -64,7 +70,8 @@ export const Input: FC<InputProps> = ({
   uploadingLabel,
   sendLabel,
   stopLabel,
-  micLabel = 'Record voice message',
+  micLabel = 'Dictate',
+  recordVoiceLabel = 'Record voice',
   stopRecordingLabel,
   discardRecordingLabel,
   colors,
@@ -89,6 +96,10 @@ export const Input: FC<InputProps> = ({
   isModelSelectorDisabled = false,
   isSendDisabled = false,
   isAudioMessageSupported = false,
+  isVoiceRecordingSupported = isAudioMessageSupported,
+  onTranscribeAudio,
+  transcribingLabel,
+  voiceErrorLabel,
   sendOnEnter = SendOnEnter.Enter,
   prefixAttachments = [],
   onRemovePrefixAttachment,
@@ -99,9 +110,10 @@ export const Input: FC<InputProps> = ({
   toolsMenuTitle,
   toolsBackLabel,
   toolsChipLabels,
-  promptsMenuOverlay,
-  promptsMenuTitle,
-  promptsBackLabel,
+  menuOverlays,
+  inlineStartSlot,
+  onInlineStartRemove,
+  commandMenu,
   autoFocus = false,
   messageHistory,
   onDialFileSystemClick,
@@ -118,6 +130,9 @@ export const Input: FC<InputProps> = ({
   const isMobile = useIsMobile();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const historyNav = useInputHistoryNavigation(messageHistory);
+  const hasInlineStartSlot = inlineStartSlot != null;
+  const inlineStartSlotRef = useRef<HTMLDivElement>(null);
+  const [inlineStartIndent, setInlineStartIndent] = useState(0);
 
   const cssVars = useMemo(
     () =>
@@ -136,8 +151,17 @@ export const Input: FC<InputProps> = ({
         '--ci-voice-error': colors?.voiceError,
         '--ci-voice-waveform': colors?.voiceWaveform,
         '--ci-voice-accent': colors?.voiceAccent,
+        /*
+         * Where the textarea's first text line starts (the inline-start
+         * slot's width plus a caret gap while a slot is present, unset
+         * otherwise) — shared by the first-line `text-indent` and the
+         * command-menu hint overlay so both start at the same offset.
+         */
+        '--ci-first-line-indent': hasInlineStartSlot
+          ? `calc(${inlineStartIndent}px + 4px)`
+          : undefined,
       }),
-    [colors],
+    [colors, hasInlineStartSlot, inlineStartIndent],
   );
 
   const dialFileSystemMenuItem = useMemo(
@@ -165,6 +189,80 @@ export const Input: FC<InputProps> = ({
     messageProp,
     messageRevision,
   });
+
+  const { isMenuOpen, query, dismiss, handleValueChange } = useCommandMenu({
+    config: commandMenu,
+    message,
+  });
+
+  /*
+   * The command menu's empty-query hint: while the menu is open the value is
+   * the trigger prefix plus the query, so an empty query means the textarea
+   * holds exactly the prefix — the hint renders right after it and disappears
+   * with the first query keystroke. This gates only the hint overlay itself:
+   * the textarea's wrapper below is driven by the hint's *configuration*, not
+   * the live menu state, so the hint appearing and disappearing never
+   * remounts the textarea mid-typing.
+   */
+  const hasCommandHintConfigured = commandMenu?.emptyQueryHint != null;
+  const hasCommandEmptyQueryHint =
+    hasCommandHintConfigured && isMenuOpen && query === '';
+
+  /*
+   * Selection path of the command menu: removes the `/query` text from the
+   * textarea so it is never sent, resets the draft-history state to match,
+   * and notifies the host. The consume lives here because the textarea value
+   * is owned by this component — a host-side removal would race the lib.
+   */
+  const handleCloseCommandMenu = useCallback(
+    (options?: { consumeQuery?: boolean }) => {
+      if (commandMenu == null) return;
+
+      dismiss();
+      if (!options?.consumeQuery) return;
+
+      /*
+       * A selection made by mouse moved focus to the menu row, and that row
+       * unmounts with the menu — return focus to the textarea so typing
+       * continues where the consumed `/query` left off.
+       */
+      textareaRef.current?.focus();
+
+      const consumed = `${commandMenu.triggerPrefix}${query}`;
+      if (!message.startsWith(consumed)) return;
+
+      const nextMessage = message.slice(consumed.length);
+      setMessage(nextMessage);
+      historyNav.notifyChange();
+      onChange?.(nextMessage);
+    },
+    [
+      commandMenu,
+      dismiss,
+      query,
+      message,
+      setMessage,
+      historyNav,
+      onChange,
+      textareaRef,
+    ],
+  );
+
+  useEffect(() => {
+    const slotElement = inlineStartSlotRef.current;
+    if (slotElement == null) return;
+    /*
+     * The slot's width drives the textarea's first-line `text-indent`, so it
+     * is re-measured whenever the slot's content resizes (e.g. a different
+     * element of a different width), not only when the slot first mounts.
+     */
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry != null) setInlineStartIndent(entry.contentRect.width);
+    });
+    observer.observe(slotElement);
+    return () => observer.disconnect();
+  }, [hasInlineStartSlot]);
 
   const handleExpandPastedText = useCallback(
     (text: string) => {
@@ -204,6 +302,33 @@ export const Input: FC<InputProps> = ({
     [addAttachments, buildAttachments],
   );
 
+  const focusAfterTranscriptRef = useRef(false);
+  const draftRef = useRef(message);
+  draftRef.current = message;
+  const [latestTranscript, setLatestTranscript] = useState({
+    text: '',
+    revision: 0,
+  });
+  const handleTranscript = useCallback(
+    (text: string) => {
+      const transcript = text.trim();
+      if (transcript) {
+        const draft = draftRef.current;
+        const nextMessage = `${draft}${draft && !/\s$/.test(draft) ? ' ' : ''}${transcript}`;
+        draftRef.current = nextMessage;
+        setMessage(nextMessage);
+        setLatestTranscript((previous) => ({
+          text: transcript,
+          revision: previous.revision + 1,
+        }));
+        historyNav.notifyChange();
+        onChange?.(nextMessage);
+      }
+      focusAfterTranscriptRef.current = true;
+    },
+    [setMessage, historyNav, onChange],
+  );
+
   const {
     state: voiceState,
     analyserNodeRef,
@@ -213,7 +338,21 @@ export const Input: FC<InputProps> = ({
     discardRecording,
   } = useVoiceRecorder({
     onAttachAudio: handleAttachAudio,
+    onTranscribeAudio,
+    onTranscript: handleTranscript,
+    errorLabel: voiceErrorLabel,
   });
+  const isVoiceActive = voiceState !== VoiceRecorderState.Idle;
+
+  useEffect(() => {
+    if (
+      voiceState === VoiceRecorderState.Idle &&
+      focusAfterTranscriptRef.current
+    ) {
+      focusAfterTranscriptRef.current = false;
+      textareaRef.current?.focus();
+    }
+  }, [voiceState, textareaRef]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -249,10 +388,18 @@ export const Input: FC<InputProps> = ({
     ],
   );
 
+  /*
+   * The inline-start slot (a selected skill) counts as sendable content on
+   * its own: the host's send-time payload includes it, so a skill with an
+   * empty draft is a valid message and the send button mounts and enables.
+   */
   const hasSendableContent =
-    message.trim().length > 0 || attachments.length > 0;
+    message.trim().length > 0 || attachments.length > 0 || hasInlineStartSlot;
   const canSend =
-    hasSendableContent && !hasBlockedAttachments && !isSendDisabled;
+    hasSendableContent &&
+    !hasBlockedAttachments &&
+    !isSendDisabled &&
+    !isVoiceActive;
   /*
    * Keeps the send button mounted just long enough to play its exit
    * animation (`.sendButtonExiting` in Input.module.scss) after content is
@@ -308,7 +455,7 @@ export const Input: FC<InputProps> = ({
   );
 
   const handleSend = async () => {
-    if (isSendDisabled) return;
+    if (isSendDisabled || isVoiceActive) return;
     if (message.length >= maxMessageLength) {
       onMessageTooLong?.(message.length, maxMessageLength);
       return;
@@ -332,6 +479,7 @@ export const Input: FC<InputProps> = ({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (isVoiceActive) return;
     if (!e.nativeEvent.isComposing && !isInputDisabled && !isStreaming) {
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         const cursorPos = e.currentTarget.selectionStart ?? 0;
@@ -345,6 +493,24 @@ export const Input: FC<InputProps> = ({
           setMessage(newValue);
           return;
         }
+      }
+
+      /*
+       * The slot's remove gesture: a Backspace with the caret collapsed at
+       * position 0 has nothing to delete backwards, so it is redirected to
+       * the inline-start slot instead — the standard chip-removal gesture of
+       * chat composers.
+       */
+      if (
+        e.key === 'Backspace' &&
+        hasInlineStartSlot &&
+        onInlineStartRemove != null &&
+        e.currentTarget.selectionStart === 0 &&
+        e.currentTarget.selectionEnd === 0
+      ) {
+        e.preventDefault();
+        onInlineStartRemove();
+        return;
       }
     }
 
@@ -373,28 +539,14 @@ export const Input: FC<InputProps> = ({
     addAttachments(newAttachments);
   };
 
-  if (voiceState !== 'idle') {
-    return (
-      <VoiceBar
-        state={voiceState}
-        analyserNodeRef={analyserNodeRef}
-        errorMessage={voiceError}
-        onStop={stopRecording}
-        onDiscard={discardRecording}
-        stopLabel={stopRecordingLabel}
-        discardLabel={discardRecordingLabel}
-        style={cssVars}
-        className={className}
-      />
-    );
-  }
-
   const textarea = (
     <textarea
       className={mergeClasses(
         styles.textarea,
+        hasInlineStartSlot && styles.textareaIndented,
         typography?.fontClassName || 'dial-body-paragraph-text',
         'max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent outline-none [field-sizing:content]',
+        'disabled:cursor-not-allowed',
       )}
       ref={textareaRef}
       autoFocus={autoFocus}
@@ -402,16 +554,123 @@ export const Input: FC<InputProps> = ({
       onChange={(e) => {
         setMessage(e.target.value);
         historyNav.notifyChange();
+        /*
+         * React types `ChangeEvent`'s `nativeEvent` as bare `Event`; the
+         * runtime event behind a textarea's change is an `InputEvent`, so
+         * narrow with `instanceof` to read `isComposing` — a non-InputEvent
+         * can't be mid-composition, hence `false`.
+         */
+        handleValueChange(
+          e.target.value,
+          e.nativeEvent instanceof InputEvent && e.nativeEvent.isComposing,
+        );
         onChange?.(e.target.value);
       }}
       onKeyDown={handleKeyDown}
       onPaste={handlePaste}
-      placeholder={placeholder}
+      /* The placeholder is suppressed while a slot occupies the first line: the slot itself says what the input holds. */
+      placeholder={hasInlineStartSlot ? undefined : placeholder}
       aria-label={ariaLabel}
       disabled={isInputDisabled}
+      readOnly={isVoiceActive}
       rows={1}
     />
   );
+
+  /*
+   * The command menu anchors to the textarea itself: the kit `Dropdown` runs
+   * with interactions off (`trigger={[]}`) so the controlled `open` is the
+   * only opener, keeps focus in the textarea on open (`initialFocus={-1}`)
+   * so typing continues to filter, and treats clicks inside the textarea as
+   * inside the menu (`outsidePressIgnoreRef`). `className="w-full"` offsets
+   * the kit trigger wrapper's flex display so the textarea keeps full width.
+   * `matchReferenceWidth={false}` drops the kit's default min-width equal to
+   * the textarea's width, so the overlay sizes to its rendered content
+   * instead of stretching across the whole input.
+   */
+  const commandMenuArea =
+    commandMenu == null ? (
+      textarea
+    ) : (
+      <Dropdown
+        className="w-full"
+        open={isMenuOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) dismiss();
+        }}
+        placement="top-start"
+        trigger={[]}
+        initialFocus={-1}
+        matchReferenceWidth={false}
+        outsidePressIgnoreRef={textareaRef}
+        renderOverlay={() => {
+          const menu = commandMenu.renderMenu({
+            query,
+            close: handleCloseCommandMenu,
+          });
+          if (commandMenu.menuLabel == null) {
+            return menu;
+          }
+          return (
+            <div role="group" aria-label={commandMenu.menuLabel}>
+              {menu}
+            </div>
+          );
+        }}
+      >
+        {textarea}
+      </Dropdown>
+    );
+
+  /*
+   * The inline-start slot overlays the textarea's first line from inside its
+   * container: the slot is absolutely positioned at the inline-start edge of
+   * the first line, the first text line indents past it via
+   * `--ci-first-line-indent`, and slot content whose height is one label
+   * line (the ChatSkill chip) aligns with the first text line exactly. Every
+   * following line keeps the full width (a textarea is one paragraph block,
+   * so `text-indent` applies to its first line only). The same wrapper hosts
+   * the command menu's empty-query hint overlay. The wrapper's presence is
+   * decided by configuration only — a slot is present, a hint is configured —
+   * never by live menu state: toggling an ancestor of the textarea when the
+   * menu opens or when the hint appears/disappears would remount it and throw
+   * away focus and the caret mid-typing. Without either configured the
+   * wrapper collapses to the bare textarea, byte-identical to the slot-less
+   * rendering.
+   */
+  const textareaArea =
+    hasInlineStartSlot || hasCommandHintConfigured ? (
+      <div className="relative w-full">
+        {hasInlineStartSlot && (
+          <div ref={inlineStartSlotRef} className="absolute start-0 top-0">
+            {inlineStartSlot}
+          </div>
+        )}
+        {hasCommandEmptyQueryHint && commandMenu != null && (
+          <span
+            className={mergeClasses(
+              styles.commandHint,
+              'pointer-events-none absolute start-[var(--ci-first-line-indent,0px)] top-0',
+              typography?.fontClassName || 'dial-body-paragraph-text',
+            )}
+            aria-hidden
+          >
+            {/*
+             * The invisible mirror of the trigger prefix occupies exactly the
+             * prefix's rendered width in the textarea's own typography, so
+             * the hint lands immediately after the real prefix without
+             * measuring anything. `aria-hidden`: the hint restates the open
+             * menu, which announces itself.
+             */}
+            <span className="invisible">{commandMenu.triggerPrefix}</span>
+            {commandMenu.emptyQueryHint}
+          </span>
+        )}
+        {commandMenuArea}
+      </div>
+    ) : (
+      commandMenuArea
+    );
 
   return (
     <div
@@ -420,6 +679,7 @@ export const Input: FC<InputProps> = ({
       className={mergeClasses(
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
+        isInputDisabled && 'cursor-not-allowed',
         'flex w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border shadow-md',
         'focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
         attachments.length > 6 ? 'py-3 ps-3' : 'p-3',
@@ -451,12 +711,24 @@ export const Input: FC<InputProps> = ({
           }
         />
       )}
-      {hideActionBar ? (
-        textarea
-      ) : (
+      {isVoiceActive && (
+        <VoiceBar
+          embedded
+          state={voiceState}
+          analyserNodeRef={analyserNodeRef}
+          errorMessage={voiceError}
+          onStop={stopRecording}
+          onDiscard={discardRecording}
+          stopLabel={stopRecordingLabel}
+          discardLabel={discardRecordingLabel}
+          processingLabel={transcribingLabel}
+        />
+      )}
+      {!isVoiceActive && hideActionBar && textareaArea}
+      {!isVoiceActive && !hideActionBar && (
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex w-full min-w-0 items-center self-stretch">
-            {textarea}
+            {textareaArea}
           </div>
           {!hideAddButton && (
             <div className="flex">
@@ -484,6 +756,14 @@ export const Input: FC<InputProps> = ({
                 isDisabled={isInputDisabled}
                 chatSettings={chatSettings}
                 extraMenuItems={dialFileSystemMenuItem}
+                onRecordVoice={
+                  isVoiceRecordingSupported &&
+                  isAttachmentsEnabled &&
+                  !isStreaming
+                    ? () => startRecording(VoiceRecordingMode.Attachment)
+                    : undefined
+                }
+                recordVoiceLabel={recordVoiceLabel}
                 /*
                  * The "Tools" submenu exists only to bring a dismissed chip
                  * back. With removal off every chip is always on screen, so the
@@ -494,9 +774,7 @@ export const Input: FC<InputProps> = ({
                 onToolToggle={onToolToggle}
                 toolsMenuTitle={toolsMenuTitle}
                 toolsBackLabel={toolsBackLabel}
-                promptsMenuOverlay={promptsMenuOverlay}
-                promptsMenuTitle={promptsMenuTitle}
-                promptsBackLabel={promptsBackLabel}
+                menuOverlays={menuOverlays}
               />
             </div>
           )}
@@ -562,14 +840,23 @@ export const Input: FC<InputProps> = ({
                   />
                 }
                 aria-label={micLabel}
-                className="size-[40px] flex-shrink-0"
-                onClick={startRecording}
+                tooltipProps={{ tooltip: micLabel }}
+                className="size-[40px] flex-shrink-0 mobile:min-h-11 mobile:min-w-11"
+                onClick={() => startRecording(VoiceRecordingMode.Dictation)}
                 disabled={isInputDisabled || isStreaming}
               />
             )}
           </div>
         </div>
       )}
+      <span
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <span key={latestTranscript.revision}>{latestTranscript.text}</span>
+      </span>
     </div>
   );
 };

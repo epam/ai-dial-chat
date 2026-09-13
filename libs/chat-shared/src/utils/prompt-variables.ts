@@ -1,7 +1,7 @@
 /**
- * Matches a `{{name}}` placeholder. The inner run excludes braces so a stray
- * `{{` cannot swallow the rest of the document, and it must be non-empty so a
- * literal `{{}}` stays plain text.
+ * Matches a `{{name}}` or `{{name|defaultValue}}` placeholder. The inner run
+ * excludes braces so a stray `{{` cannot swallow the rest of the document, and
+ * it must be non-empty so a literal `{{}}` stays plain text.
  */
 export const PROMPT_PARAM_PATTERN = /\{\{([^{}]+)\}\}/g;
 
@@ -80,29 +80,84 @@ export const rehypePromptVariables = () => (tree: HastNode) => {
 };
 
 /**
- * Returns the distinct `{{param}}` names found in `content`, in first-occurrence
- * order. Single-brace sequences (e.g. `{name}`) are not parameters.
+ * Separator between a parameter's name and its default value inside a token.
+ * `{{language|Spanish}}` names the parameter `language` and offers `Spanish`
+ * as its starting value. It is the form the classic chat's prompt editor
+ * documents, so prompts authored there carry it.
  */
-export const extractPromptParams = (content: string): string[] => {
-  PROMPT_PARAM_PATTERN.lastIndex = 0;
-  const seen = new Set<string>();
-  let match = PROMPT_PARAM_PATTERN.exec(content);
+export const PROMPT_PARAM_DEFAULT_SEPARATOR = '|';
 
-  while (match != null) {
-    seen.add(match[1]);
-    match = PROMPT_PARAM_PATTERN.exec(content);
-  }
+/** A `{{name}}` or `{{name|defaultValue}}` parameter read out of a prompt. */
+export interface PromptParameter {
+  /** The parameter's name — the label a host shows, and the key its value is read by. */
+  name: string;
+  /**
+   * The value the field starts with, when the token carried one. Absent for a
+   * bare `{{name}}` token.
+   */
+  defaultValue?: string;
+}
 
-  return Array.from(seen);
+/*
+ * Only the first separator splits the token, so a default may itself contain
+ * pipes (`{{sep|a|b}}` defaults to `a|b`). Neither half is trimmed: the name
+ * has to stay byte-identical to the token so substitution keeps matching it,
+ * and a default's surrounding spaces are part of what the author wrote.
+ */
+const parsePromptParam = (token: string): PromptParameter => {
+  const separatorIndex = token.indexOf(PROMPT_PARAM_DEFAULT_SEPARATOR);
+  if (separatorIndex === -1) return { name: token };
+
+  return {
+    name: token.slice(0, separatorIndex),
+    defaultValue: token.slice(separatorIndex + 1),
+  };
 };
 
 /**
- * Replaces every `{{param}}` occurrence in `content` with the matching entry
- * in `values` (keyed by parameter name). A token whose name is missing from
- * `values` is left unchanged.
+ * Returns the distinct parameters found in `content`, in first-occurrence
+ * order. Single-brace sequences (e.g. `{name}`) are not parameters. When one
+ * name appears more than once the first occurrence decides the default, so the
+ * parameter is still asked for once.
+ */
+export const extractPromptParams = (content: string): PromptParameter[] => {
+  PROMPT_PARAM_PATTERN.lastIndex = 0;
+  const byName = new Map<string, PromptParameter>();
+  let match = PROMPT_PARAM_PATTERN.exec(content);
+
+  while (match != null) {
+    const parameter = parsePromptParam(match[1]);
+    if (!byName.has(parameter.name)) byName.set(parameter.name, parameter);
+    match = PROMPT_PARAM_PATTERN.exec(content);
+  }
+
+  return Array.from(byName.values());
+};
+
+/**
+ * Replaces every parameter occurrence in `content` with the matching entry in
+ * `values` (keyed by parameter name), falling back to the token's own default
+ * value. A token with neither is left unchanged.
  */
 export const resolvePromptParams = (
   content: string,
   values: Record<string, string>,
 ): string =>
-  content.replace(PROMPT_PARAM_PATTERN, (match, name) => values[name] ?? match);
+  content.replace(PROMPT_PARAM_PATTERN, (match, token: string) => {
+    const { name, defaultValue } = parsePromptParam(token);
+    return values[name] ?? defaultValue ?? match;
+  });
+
+/**
+ * Returns the starting values for `parameters`, keyed by name — one entry per
+ * parameter that carries a default, and nothing for the rest.
+ */
+export const buildPromptParamDefaults = (
+  parameters: PromptParameter[],
+): Record<string, string> => {
+  const defaults: Record<string, string> = {};
+  for (const { name, defaultValue } of parameters) {
+    if (defaultValue != null) defaults[name] = defaultValue;
+  }
+  return defaults;
+};

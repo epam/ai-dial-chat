@@ -14,7 +14,7 @@ interface SseDelta {
   content?: string;
   responseId?: string;
   custom_content?: {
-    form_schema?: unknown;
+    form_schema?: Record<string, unknown>;
     attachments?: Attachment[];
     stages?: Stage[];
     annotations?: Annotation[];

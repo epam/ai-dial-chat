@@ -10,7 +10,10 @@ import {
 import type { Dispatch, SetStateAction } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { getApiErrorStatus } from '../api-error/api-error';
-import { stripSurroundingSlashes } from '../shared/string-utils';
+import {
+  stripSurroundingSlashes,
+  stripTrailingSlashes,
+} from '../shared/string-utils';
 import {
   nameFromPath,
   parseSkillManifest,
@@ -67,7 +70,7 @@ const resolveSkillFilePath = (
   const parentPath = item.parentPath
     ? stripSurroundingSlashes(item.parentPath)
     : '';
-  const filesRoot = `${skillPath.replace(/\/+$/g, '')}/files`;
+  const filesRoot = `${stripTrailingSlashes(skillPath)}/files`;
 
   if (parentPath === filesRoot) return item.name;
   if (parentPath.startsWith(`${filesRoot}/`)) {

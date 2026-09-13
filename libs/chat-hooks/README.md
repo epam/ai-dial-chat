@@ -8,9 +8,27 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Installation
 
-The package declares `sideEffects: false`: importing a hook or a data helper does
-not initialize unrelated feature UI. Hooks perform their work when called or in
-effects; hosts should prefer the existing feature subpaths for narrow imports.
+The package declares a single, audited `sideEffects` array — not `sideEffects: false` —
+covering exactly four compiled files: the two that actually retain observable module-scope
+state, `./dist/shared/toolset-login-events.js` (`./oauth`'s module-scope `EventTarget`
+singleton) and `./dist/files/attachment-canvas.js` (`./file-manager`'s DIAL-file blob/text LRU
+fetch caches), plus their own two subpath **entry facades**, `./dist/oauth.js` and
+`./dist/file-manager.js`. The entry facades are listed because a bare `import
+'@epam/ai-dial-chat-hooks/oauth'` (no named binding used) is otherwise eligible for whole-file
+elimination once the entry file itself carries no side-effect marking — dropping the deeper
+effect-owning file it re-exports regardless of that file's own marking. The **root** barrel
+(`./dist/index.js`) is deliberately **not** listed: no real consumer bare-imports the root with
+no named binding, and marking it forced Rollup to retain the entire root `export *` closure for
+_any_ root import (a real regression this repo's own `chat-hooks-root-safedecodeuricomponent`
+cold-load probe catches). Every other compiled file — including the root barrel and every other
+subpath — is tree-shakeable: importing a hook or a data helper from one of them does not
+initialize unrelated feature UI. The build emits one file per source module
+(`rollupOptions.output.preserveModules`) rather than merging unrelated modules into shared
+hashed chunks, so a downstream bundler can drop exactly the files a given import doesn't reach.
+`./source-content`'s classifiers (`resolveExternalSourceContentType`,
+`isExternalSourcePreviewable`, `getUrlFileName`) are pure — they do not reach `./file-manager`'s
+fetch/cache module at all. Hooks perform their work when called or in effects; hosts should
+prefer the existing feature subpaths for narrow imports.
 
 ```json
 {
@@ -76,6 +94,7 @@ whether you need to `npm install` it.
 | `./conversation-transfer` | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`                                                                                                                            | —                                                                                                                     |
 | `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                                                                 | `@epam/ai-dial-source-panel`                                                                                          |
 | `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations` | `@epam/pdf-highlighter-kit`                                                                                           |
+| `./source-content`        | —                                                                                                                                                                                       | —                                                                                                                     |
 | `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor`    | —                                                                                                                     |
 | `./skills-state`          | —                                                                                                                                                                                       | `@epam/ai-dial-chat-api-client`                                                                                       |
 | `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                                                       | `@epam/ai-dial-chat-api-client`                                                                                       |
@@ -83,7 +102,8 @@ whether you need to `npm install` it.
 | `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                                                         | `@epam/ai-dial-chat-api-client`                                                                                       |
 | `./sharing`               | `@epam/ai-dial-share`, `@epam/ai-dial-chat-api-client`                                                                                                                                  | —                                                                                                                     |
 | `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                                                            | —                                                                                                                     |
-| `./utils`                 | —                                                                                                                                                                                       | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-deployment-creation-form`                |
+| `./utils`                 | —                                                                                                                                                                                       | `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-builder-form`                            |
+| `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-api-client`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`                | —                                                                                                                     |
 
 Six of the peers above (`@epam/ai-dial-builder-form`, `@epam/ai-dial-catalog`,
 `@epam/ai-dial-chat-overlay`, `@epam/ai-dial-publish-panel`,
@@ -125,8 +145,10 @@ const {
 // ./conversation
 import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks/conversation';
 
-/* Returns the model deployment id from the most recent `model_changed`
-   status message, or null if the conversation never switched models. */
+/* Returns the deployment the conversation was last running on — scanning
+   backwards, a `model_changed` status message's `new_deployment_id` or a
+   message's own `deploymentId`, whichever comes later. Null when the
+   conversation records neither. */
 const newDeploymentId = getLastDeploymentId(conversation.messages);
 ```
 
@@ -152,6 +174,24 @@ import { sanitizeFileName } from '@epam/ai-dial-chat-hooks/file-manager';
 
 const safeName = sanitizeFileName(uploadedFile.name);
 ```
+
+`./file-manager`'s `@epam/ai-dial-attachment-canvas`/`@epam/ai-dial-quotations` peers above come
+from its own canvas-content resolvers (`resolveTextCanvasContent`, `annotationToPdfCanvasContent`,
+…) and their fetch/LRU-cache implementation — not from `./source-content`, whose classifiers
+below need neither peer.
+
+```tsx
+// ./source-content — content-type correction, no @epam/ai-dial-attachment-canvas,
+// @epam/ai-dial-chat-shared, @epam/ai-dial-react-file-manager or ag-grid-community
+import { resolveExternalSourceContentType } from '@epam/ai-dial-chat-hooks/source-content';
+
+const contentType = resolveExternalSourceContentType(rawContentType, sourceUrl);
+```
+
+`resolveExternalSourceContentType` (and `./source-content`'s other classifiers,
+`isExternalSourcePreviewable` and `getUrlFileName`) remain reachable from `./file-manager` too,
+exactly as before this split — `./file-manager` re-exports `./source-content` for backward
+compatibility, alongside the heavier canvas-content resolvers above.
 
 ```tsx
 // ./catalog
@@ -614,9 +654,82 @@ const Composer = ({
 
 **Returns** (`UseAttachmentUploadResult`): `{ handleUploadAttachment: (attachment: Attachment) => Promise<string> }` — resolves to the uploaded file's DIAL Core URL; rejects with an `Error` tagged `errorReason: AttachmentErrorReason.Network` when offline.
 
+### useTranscribeAudio
+
+Uploads a complete voice recording to DIAL Core storage and recognizes it, preferring a configured ASR model and falling back to the selected deployment, retrying transient upstream failures (429/502/503/504, honoring `Retry-After`, capped at two retries and a 90-second total wait). Error text is not this library's concern: failures reject with an `AudioTranscriptionError` carrying a translation-free `AudioTranscriptionErrorReason` — the host maps it to copy at the call site, the same pattern `useAttachmentValidation` uses for rejected files.
+
+```tsx
+import {
+  AudioTranscriptionError,
+  useTranscribeAudio,
+} from '@epam/ai-dial-chat-hooks';
+
+const VoiceComposer = ({
+  transcriptionApi,
+  filesApi,
+  transcribeWithDeployment,
+  bucket,
+  asrModelId,
+  selectedDeploymentId,
+}: {
+  transcriptionApi?: Pick<TranscriptionApi, 'transcribeAudio'>;
+  filesApi: Pick<FilesApi, 'uploadFile'>;
+  transcribeWithDeployment?: (params: {
+    audioUrl: string;
+    mimeType: string;
+    deployment: string;
+    signal: AbortSignal;
+  }) => Promise<string>;
+  bucket: string | undefined;
+  asrModelId?: string;
+  selectedDeploymentId?: string | null;
+}) => {
+  const { transcribeAudio } = useTranscribeAudio({
+    transcriptionApi,
+    filesApi,
+    transcribeWithDeployment,
+    bucket,
+    asrModelId,
+    selectedDeploymentId,
+    maxSizeBytes: 5 * 1024 * 1024,
+  });
+
+  const handleTranscribeAudio = async (file: File, signal: AbortSignal) => {
+    try {
+      return await transcribeAudio(file, signal);
+    } catch (error) {
+      if (error instanceof AudioTranscriptionError) {
+        throw new Error(translateReason(error.reason, error.limitBytes));
+      }
+      throw error;
+    }
+  };
+
+  // pass handleTranscribeAudio to a recording UI, e.g. Input's `onTranscribeAudio`
+};
+```
+
+#### API
+
+**Parameters** (`UseTranscribeAudioParams`):
+
+| Name                       | Type                                                                                                           | Description                                                                                                                                                                           |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `transcriptionApi`         | `Pick<TranscriptionApi, 'transcribeAudio'>`                                                                    | Already-configured generated-client instance used for the ASR-model path.                                                                                                             |
+| `filesApi`                 | `Pick<FilesApi, 'uploadFile'>`                                                                                 | Already-configured generated-client instance used to upload the recording.                                                                                                            |
+| `transcribeWithDeployment` | `(params: { audioUrl: string; mimeType: string; deployment: string; signal: AbortSignal }) => Promise<string>` | Host-configured call for the selected-deployment path — the generated chat-completions client cannot express that endpoint's request shape, so the host supplies its own raw request. |
+| `bucket`                   | `string \| undefined \| null`                                                                                  | DIAL Core bucket the recording is uploaded into.                                                                                                                                      |
+| `asrModelId`               | `string`                                                                                                       | Recognizes via `transcriptionApi` when set; otherwise `selectedDeploymentId` is used.                                                                                                 |
+| `selectedDeploymentId`     | `string \| undefined \| null`                                                                                  | Deployment id used for recognition when `asrModelId` is not set.                                                                                                                      |
+| `maxSizeBytes`             | `number`                                                                                                       | Recordings larger than this are rejected with `TooLarge` before upload.                                                                                                               |
+
+**Returns** (`UseTranscribeAudioResult`): `{ transcribeAudio: (file: File, signal: AbortSignal) => Promise<string> }`.
+
+`AudioTranscriptionErrorReason` is `Unavailable` (no usable ASR model or deployment configured for the current bucket), `TooLarge` (checked before upload; `AudioTranscriptionError.limitBytes` carries the limit that was exceeded), `Busy` (the upstream ASR provider stayed rate-limited or unavailable after retrying), or `Failed` (recognition failed for any other reason).
+
 ### useConversationExport / useConversationImport
 
-A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Both share the same job-queue semantics — `jobs`, `cancelJob`, `dismissJob`, `retryJob`, `dismissAll` — and report determinate per-job progress plus outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. A transfer that delivers its file but skips some attachments settles at `Warning` carrying a `warningCode`, so a partial result is distinguishable from a clean one without reading the event stream. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text. `cancelJob` and `dismissJob` differ: both abort the job's in-flight requests, but `cancelJob` leaves the job in `jobs` with status `Canceled` so the UI can keep showing it, while `dismissJob` removes it.
+A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Each imported conversation is stored under a fresh `{deploymentId}__{title}__{uuid}` path — collision-free, and with the conversation's own `name` (sanitized to what DIAL Core accepts in a resource name, and reported back that way in `onSuccess`) as the title segment rather than the first-message title the export file embedded. Both share the same job-queue semantics — `jobs`, `cancelJob`, `dismissJob`, `retryJob`, `dismissAll` — and report determinate per-job progress plus outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. A transfer that delivers its file but skips some attachments settles at `Warning` carrying a `warningCode`, so a partial result is distinguishable from a clean one without reading the event stream. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text. `cancelJob` and `dismissJob` differ: both abort the job's in-flight requests, but `cancelJob` leaves the job in `jobs` with status `Canceled` so the UI can keep showing it, while `dismissJob` removes it.
 
 ```tsx
 import { ConversationTransferErrorCode } from '@epam/ai-dial-chat-shared';
@@ -731,15 +844,16 @@ const ChatPage = ({
 
 **Parameters** (`UseConversationStreamParams`):
 
-| Name             | Type                                | Description                                                                                   |
-| ---------------- | ----------------------------------- | --------------------------------------------------------------------------------------------- |
-| `conversationId` | `string \| undefined`               | The currently displayed conversation's id.                                                    |
-| `state`          | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.      |
-| `transport`      | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                       |
-| `generation`     | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership. |
-| `channel`        | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.          |
-| `overlay`        | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.          |
-| `onStopError`    | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                         |
+| Name                        | Type                                | Description                                                                                                                                                                                                                                     |
+| --------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                      |
+| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                        |
+| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                         |
+| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                   |
+| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                            |
+| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                            |
+| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                           |
+| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`. |
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
 
@@ -824,7 +938,38 @@ const ChatPage = ({
 state updater, so a host may update its own state from it — for example dropping
 the deleted conversation from a list it renders.
 
-Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`, and `getStarterConversationText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
+Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`/`isAnswerIncomplete`/`shouldRerunGenerationOnEdit`, and `getStarterConversationText`/`getStarterDisplayText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
+
+The three starter-text helpers share one precedence rule: a starter's own
+`dial:widgetOptions.populateText` always wins, and the schema property's shared
+`description` is only a fallback for a starter that carries no text of its own —
+otherwise every button in a described group would produce the same message.
+`getStarterSubmitText` additionally returns `''` for a submit button whose
+`populateText` is explicitly `null` ("submit no text"), and
+`getStarterDisplayText` falls back to `starter.title` in that case so the user's
+message bubble still shows the button label.
+
+```ts
+import {
+  getStarterDisplayText,
+  getStarterSubmitText,
+} from '@epam/ai-dial-chat-hooks';
+
+const starter = {
+  const: 0,
+  title: 'How does feature X work?',
+  'dial:widgetOptions': {
+    populateText:
+      'How does feature X work, and what are its configuration options?',
+    submit: true,
+    confirmationMessage: null,
+  },
+};
+
+// Both ignore the group description and use the starter's own populateText.
+getStarterSubmitText(starter, 'Follow-Up Questions');
+getStarterDisplayText(starter, 'Follow-Up Questions');
+```
 
 ### useAttachmentValidation
 
@@ -1539,6 +1684,21 @@ const { streamCompletion, stopCompletion } = createChatStreamApi({
 });
 ```
 
+`streamCompletion` reports a `409` from the completions endpoint as a `GenerationConflictError` (message defaulting to `DEFAULT_GENERATION_CONFLICT_MESSAGE`) rather than a generic transport error, so callers can present it as an expected state — the conversation is already generating, typically in another browser tab of the same session. `useConversationStream` uses that distinction to show its `generationConflictMessage`. Both the error class and the default message are exported:
+
+```ts
+import {
+  DEFAULT_GENERATION_CONFLICT_MESSAGE,
+  GenerationConflictError,
+} from '@epam/ai-dial-chat-hooks';
+
+onError: (error: Error) => {
+  if (error instanceof GenerationConflictError) {
+    showNotice(t('chat.generationConflict'));
+  }
+};
+```
+
 ### getApiErrorDetails / getApiErrorMessage / getApiErrorStatus / isConversationNotFoundError
 
 Host-agnostic API error/trace-ID normalization. Works identically for a generated-client `ResponseError` or any host's own raw-fetch request-error shape.
@@ -1607,18 +1767,20 @@ import { apSchedulerDayToJsDay } from '@epam/ai-dial-chat-hooks';
 apSchedulerDayToJsDay(0); // 1 (Monday -> JS Monday)
 ```
 
-### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes
+### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes / stripTrailingSlashes
 
-`safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment.
+`safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment, and `stripTrailingSlashes` strips trailing ones only.
 
 ```ts
 import {
   safeDecodeURI,
   stripSurroundingSlashes,
+  stripTrailingSlashes,
 } from '@epam/ai-dial-chat-hooks';
 
 safeDecodeURI('My%20File.txt'); // 'My File.txt'
 stripSurroundingSlashes('/reports/'); // 'reports'
+stripTrailingSlashes('/reports//'); // '/reports'
 ```
 
 ### isCustomAppSchema / isQuickAppSchema
@@ -1973,7 +2135,7 @@ const statusMessage = createDeploymentChangedMessage('gpt-4', 'gpt-4o');
 
 ### isMessageStreaming / getLastDeploymentId / messageHasStages / getLastUserMessageToolConfiguration / normalizeResponseFormat
 
-Pure predicates/lookups over a conversation's `Message[]`: whether a message is the actively-streaming assistant response, the last deployment a `model_changed` status message recorded, whether a message carries any stages, the last user message's persisted tool-configuration value, and normalizing a legacy `responseFormat` string to the current enum.
+Pure predicates/lookups over a conversation's `Message[]`: whether a message is the actively-streaming assistant response, the deployment the conversation was last running on (the later of a `model_changed` status message's `new_deployment_id` and a message's own `deploymentId`), whether a message carries any stages, the last user message's persisted tool-configuration value, and normalizing a legacy `responseFormat` string to the current enum.
 
 ```ts
 import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks';
@@ -2278,6 +2440,28 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 toPublishEntityType(CatalogEntityType.Skill); // 'skill'
 ```
 
+### isPublicCatalogEntityId / getPublicCatalogEntityFolderPath
+
+Recognises a catalog entity id that addresses the shared `public` bucket — a
+published copy rather than the author's own source item — and reads the publish
+folder out of it. The bucket is the second path segment, so a personal folder
+named `public` is not matched, and the folder segments are decoded to the plain
+text the publish API takes.
+
+```ts
+import {
+  getPublicCatalogEntityFolderPath,
+  isPublicCatalogEntityId,
+} from '@epam/ai-dial-chat-hooks';
+
+isPublicCatalogEntityId('applications/public/Data%20Science/Revenue bot'); // true
+isPublicCatalogEntityId('applications/my-bucket/Revenue bot'); // false
+
+getPublicCatalogEntityFolderPath(
+  'applications/public/Data%20Science/Revenue bot',
+); // ['Data Science']
+```
+
 ## Prompt Utilities
 
 ### validatePromptName / validatePromptDescription / validatePromptContent / getRemainingCharacters / buildPromptPath
@@ -2397,6 +2581,95 @@ const { bytes, mimeType } = await onLoadSkillDetailsFile(fileId);
 | `onLoadContentFile`      | `(fileId: string) => Promise<string \| undefined>`                           | Loads text content for a file within the open skill package. |
 | `onLoadSkillDetailsFile` | `(fileId: string) => Promise<SkillFileContent>`                              | Downloads preview bytes; throws on HTTP error.               |
 
+The skill branch (manifest download + parse, package file listing, in-package
+file loads) is delegated to `useSkillItemDetails` below — `CatalogDetailsApi`
+extends that hook's `SkillDetailsApi` port with the deployment and prompt
+methods.
+
+### useSkillItemDetails / fetchSkillDescription
+
+The skill-scoped half of the details pipeline, for hosts that only surface
+skill details and therefore have no deployment/prompt ports to inject.
+`useCatalogItemDetails` composes it internally; consuming it directly avoids
+supplying the four unused adapter methods the full pipeline requires.
+
+```ts
+import {
+  fetchSkillDescription,
+  useSkillItemDetails,
+} from '@epam/ai-dial-chat-hooks';
+
+const { onFetchSkillDetails, onLoadContentFile, onLoadSkillDetailsFile } =
+  useSkillItemDetails({
+    api, // SkillDetailsApi — downloadSkillFile + listSkillFiles
+    skills, // SkillMetadataItemDto[] — all skills visible to the user
+    skillOverviewLabels, // SkillOverviewLabels
+  });
+
+// Fetch full details for a skill catalog item (returns undefined on failure)
+const details = await onFetchSkillDetails(skillCatalogItem);
+
+// One-shot manifest description for a listing tooltip. Returns null on an
+// unparseable id, an unreadable manifest, or a failed request — never throws.
+const description = await fetchSkillDescription(api, skill.url);
+```
+
+**Options** (`UseSkillItemDetailsOptions`): `api`
+(`SkillDetailsApi`), `skills` (`SkillMetadataItemDto[]`), and
+`skillOverviewLabels` (`SkillOverviewLabels`).
+
+**Returns** (`UseSkillItemDetailsResult`): `onFetchSkillDetails`,
+`onLoadContentFile`, and `onLoadSkillDetailsFile`, with the same shapes as
+the `useCatalogItemDetails` returns above.
+
+`fetchSkillDescription(api, skillId)` reuses the same manifest-download path
+as the full pipeline and resolves every failure to `null` so a listing
+tooltip can treat "no description" and "could not fetch" identically.
+
+### useSkillDetailsPanelData
+
+The data pipeline behind a skill details side panel, for hosts that render
+details from the skill listings directly. Resolves the selected skill across
+the personal/shared/public arrays, maps it to a `CatalogItem` with its
+ownership flags and folder prefix, fetches its details with cancellation, and
+merges the fetch result into the item. It renders nothing — pairing it with a
+details panel component (e.g. `@epam/ai-dial-skills`'s `SkillDetailsSidePanel`)
+is the host's job.
+
+```ts
+import { useSkillDetailsPanelData } from '@epam/ai-dial-chat-hooks';
+
+const {
+  detailsPanelItem,
+  isDetailsLoading,
+  isStarred,
+  onLoadSkillDetailsFile,
+} = useSkillDetailsPanelData({
+  api, // SkillDetailsApi — downloadSkillFile + listSkillFiles
+  skills, // SkillMetadataItemDto[] — the user's own skills
+  sharedWithMe, // SkillMetadataItemDto[] | undefined
+  publicSkills, // SkillMetadataItemDto[] | undefined
+  skillId, // string | null — null resolves no item
+  folderLabels, // DeploymentFolderLabels — personal/shared/public
+  skillOverviewLabels, // SkillOverviewLabels
+  favoriteIds, // ReadonlySet<string> — keyed by skill resource URL
+});
+```
+
+**Options** (`UseSkillDetailsPanelDataOptions`): `api` (`SkillDetailsApi`),
+`skills`/`sharedWithMe`/`publicSkills` (`SkillMetadataItemDto[]`, the latter
+two optional), `skillId` (`string | null`), `folderLabels`
+(`DeploymentFolderLabels`), `skillOverviewLabels` (`SkillOverviewLabels`),
+and `favoriteIds` (`ReadonlySet<string>`).
+
+**Returns** (`UseSkillDetailsPanelDataResult`): `detailsPanelItem`
+(`CatalogItem | null` — the mapped item with fetched details merged in, `null`
+while unselected or unresolved), `isDetailsLoading` (`boolean`),
+`isStarred` (`boolean`), and `onLoadSkillDetailsFile` — the same loader
+`useSkillItemDetails` returns, for previewing a file picked in the item's
+Content tab. The details fetch is keyed on the item's id and cancelled on
+change, so a favorite toggle that rebuilds the item does not refetch.
+
 ### resolveCatalogPrimaryAction
 
 Pure async resolver for the catalog's "Use" primary action. Returns a discriminated `CatalogPrimaryActionResult` — either a deployment selection or a resolved prompt with optional parameter placeholders. Does not navigate, select, or show notifications — those remain the caller's responsibility.
@@ -2477,7 +2750,7 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 | `onDeleteSuccess`                                                             | `(item: CatalogItem) => void`                               | Called after a successful delete, so the host can notify with its own entity/operation vocabulary. |
 | `labels`                                                                      | `CatalogEditNavigationLabels`                               | Localized notification and Create-menu copy, resolved by the host.                                 |
 | `onNotify`                                                                    | `(notification: CatalogEditNavigationNotification) => void` | Called to surface a host notification when a delete fails.                                         |
-| `triggerSkillArchivePicker`                                                   | `() => void`                                                | Opens the file picker used to upload a skill archive from the Create menu.                         |
+| `onSkillUploadClick`                                                          | `() => void`                                                | Called when the Create menu's Skill → Upload option is picked.                                     |
 
 `CatalogEditNavigationUrls` has one URL-builder pair per item kind — `buildPromptEditUrl(promptId)` / `buildPromptCreateUrl()`, and the same edit/create pair for `Skill`, `Toolset`, and `CustomApp` — plus `buildQuickAppEditUrl(schemaId, appId)` / `buildQuickAppCreateUrl(schemaId)`.
 
@@ -2535,7 +2808,7 @@ const { handleEdit, handleDelete, createOptions } = useCatalogEditNavigation({
   onDeleteSuccess: (item) => notifyOperationSuccess(item),
   labels,
   onNotify: showErrorNotification,
-  triggerSkillArchivePicker,
+  onSkillUploadClick: openSkillUploadDialog,
 });
 ```
 
@@ -2937,6 +3210,36 @@ clearAttachmentCache();
 
 Also exports `resolveImageCanvasContent`, `resolveTextCanvasContent`, `resolveCodeCanvasContent`, `resolveHtmlCanvasContent`, `resolveOoxmlCanvasContent`, `resolveJsonCanvasContent`, `resolveVisualizerCanvasContent`, `annotationToPdfCanvasContent`, `referenceAttachmentToPdfCanvasContent`, `hasAttachmentTextSource`, `getUrlFileName`, `isExternalSourcePreviewable`, and `resolveExternalSourceContentType` (corrects a content type that mislabels an external citation — e.g. a web-search grounding API reporting `text/markdown` for every reference — against a `.pdf`/`.docx`/`.xlsx`/`.pptx`/`.csv` URL extension).
 
+PDF citation previews use `annotationToPdfCanvasContent(annotation, groups, resolvers)`.
+Pass the exact annotation object selected in the citation popup. The mapper finds
+its group by membership (cit groups can share a URL), filters highlights to that
+annotation's PDF, and sets `page` from its first valid `pdf_bbox` body selector.
+Missing/invalid pages leave `page` unset; nonexistent highlight IDs are omitted.
+
+Office (DOCX/PPTX/XLSX) citation previews use
+`annotationToOoxmlCanvasContent(annotation, annotations, resolvers)` — the sibling
+mapper for `OoxmlCanvasContent`. Unlike the PDF mapper's `groups` parameter, it takes
+the message's full resolved annotation list and gathers same-source annotations
+across it (`gatherSameSourceAnnotations` from `@epam/ai-dial-quotations`), so a
+citation behind a different marker that cites the same document is still included.
+Returns `null` when there is no source attachment, the source is not a format
+`@silurus/ooxml` renders as DOCX/XLSX/PPTX (a CSV source returns `null` too — citation
+highlighting targets Office documents only), or no URL resolves. A missing or
+unresolvable selector still returns content — just with no `highlights` field —
+rather than `null`, so the document opens without a highlight instead of falling
+through to a plain attachment open.
+
+```ts
+import { annotationToOoxmlCanvasContent } from '@epam/ai-dial-chat-hooks';
+
+const content = annotationToOoxmlCanvasContent(
+  clickedAnnotation,
+  messageAnnotations,
+  resolvers,
+);
+if (content != null) openCanvas(content, fileName);
+```
+
 ### attachmentDtoToDisplayAttachment / attachmentDtosToDisplayAttachments / annotationToDisplayAttachment
 
 Maps Chat API message-attachment DTOs (and an annotation's source attachment) to the display-only `DisplayAttachment` model UI components consume.
@@ -3122,15 +3425,15 @@ if (!deleteDialog.isRunning) deleteDialog.close();
 
 **Returns** (`AsyncConfirmDialogControls<T>`):
 
-| Name        | Type                                                                                   | Description                                                                                      |
+| Name | Type | Description |
 | ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pending`   | `T \| null`                                                                            | The value passed to `open()`, or `null` when the dialog is closed.                               |
-| `isPending` | `boolean`                                                                              | `true` while `pending` is non-null (dialog is open).                                             |
-| `isRunning` | `boolean`                                                                              | `true` while `confirm`'s `run` callback is executing.                                            |
-| `error`     | `string \| null`                                                                       | Error message from the most recent failed `confirm`, or `null`.                                  |
-| `open`      | `(value: T, returnFocusTo?: HTMLElement                                                | null) => void`                                                                                   | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
-| `close`     | `() => void`                                                                           | Closes the dialog and clears pending + error.                                                    |
-| `confirm`   | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
+| `pending` | `T \| null` | The value passed to `open()`, or `null` when the dialog is closed. |
+| `isPending` | `boolean` | `true` while `pending` is non-null (dialog is open). |
+| `isRunning` | `boolean` | `true` while `confirm`'s `run` callback is executing. |
+| `error` | `string \| null` | Error message from the most recent failed `confirm`, or `null`. |
+| `open` | `(value: T, returnFocusTo?: HTMLElement                                                | null) => void` | Opens the dialog with `value` as the pending payload; clears any prior error. `returnFocusTo` overrides the focus-restore target, which otherwise defaults to the currently focused element. |
+| `close` | `() => void` | Closes the dialog and clears pending + error. |
+| `confirm` | `(run: (value: T) => Promise<void>, onError: (e: unknown) => string) => Promise<void>` | Executes `run(pending)`: calls `close()` on success, or sets `error = onError(thrown)` on throw. |
 
 ### useImportFilePicker
 
@@ -3302,3 +3605,32 @@ npm exec nx build ai-dial-chat-hooks
 ```sh
 npm exec nx test ai-dial-chat-hooks
 ```
+
+## Packed-package fixtures and source-vs-packed parity
+
+`e2e-fixtures/` proves the published `exports`/`peerDependenciesMeta`/`sideEffects`
+contract from the outside (packed-tarball installs into an isolated
+`node_modules`), and — since `fix-published-library-cold-load` — additionally
+compares a representative host entry's initial JS/CSS built from `libs/*/src`
+aliases against the same entry built from packed tarballs. See
+[`e2e-fixtures/README.md`](e2e-fixtures/README.md) for what each fixture
+proves and how to run the full comparison locally
+(`node libs/chat-hooks/e2e-fixtures/parity.mjs` or
+`npm exec nx run @epam/ai-dial-chat-hooks:test-packed-parity`).
+
+## Rollback
+
+`chat-hooks` is published by `tools/publish-lib.mjs`, which reads the version from this
+package's `package.json` and writes it into `dist/package.json` before `npm publish`. To roll a
+consuming host back to a previous `@epam/ai-dial-chat-hooks` release:
+
+1. Pin the host's dependency back to the previous version (e.g.
+   `"@epam/ai-dial-chat-hooks": "1.1.0-dev.410"` instead of `"1.1.0-dev.412"`).
+2. `chat-hooks` declares 17 `@epam/ai-dial-*` packages as optional peers, several of which
+   (`@epam/ai-dial-chat-shared`, `@epam/ai-dial-catalog`, `@epam/ai-dial-attachment-canvas`)
+   are themselves published from this same repository revision — revert every package from
+   this change's release set to its own matching previous version in the same host update,
+   rather than leaving a newer sibling installed against an older `chat-hooks` (or vice versa).
+3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
+   resolved version and integrity hash, rather than a partial mix of pre- and post-change
+   versions.

@@ -20,7 +20,9 @@ import {
   type ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
 import type {
+  CommandMenuConfig,
   ConversationInputStyles,
+  MenuOverlayConfig,
   ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import type { FC, ReactNode } from 'react';
@@ -95,12 +97,27 @@ interface Props {
   /** Token that forces `message` to re-apply even if its string is unchanged. */
   messageRevision?: number;
   /**
-   * When provided, adds a "Prompts" item to the `+` menu whose submenu
-   * renders this host-owned overlay, mirroring `modelPickerOverlay`.
+   * Host-injected overlay entries for the `+` menu (e.g. the Prompts
+   * selector), passed through to `ConversationInput`.
    */
-  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
-  /** Label for the "Prompts" menu item and mobile sheet title. */
-  promptsMenuTitle?: string;
+  menuOverlays?: MenuOverlayConfig[];
+  /**
+   * Host-supplied content rendered inside the text area at its inline-start
+   * (e.g. the selected skill's `ChatSkill` element), passed through to
+   * `ConversationInput`.
+   */
+  inlineStartSlot?: ReactNode;
+  /**
+   * Called when Backspace is pressed with the caret collapsed at position 0
+   * while `inlineStartSlot` is present (the skill element's remove gesture),
+   * passed through to `ConversationInput`.
+   */
+  onInlineStartRemove?: () => void;
+  /**
+   * Host-injected slash-command menu (e.g. the Skills selector), passed
+   * through to `ConversationInput`.
+   */
+  commandMenu?: CommandMenuConfig;
   inputStyles?: ConversationInputStyles;
   /** Called on first send. Rejecting shows the standard create-conversation error notification. */
   onCreateConversation: (
@@ -130,8 +147,10 @@ const NewConversationComposer: FC<Props> = ({
   introText,
   message,
   messageRevision,
-  promptsMenuOverlay,
-  promptsMenuTitle,
+  menuOverlays,
+  inlineStartSlot,
+  onInlineStartRemove,
+  commandMenu,
   inputStyles,
   onCreateConversation,
   toolsMenuItems,
@@ -243,7 +262,11 @@ const NewConversationComposer: FC<Props> = ({
     !isDialFileManagerOpen,
   );
 
-  const { isAudioMessageSupported } = useAudioTranscription({
+  const {
+    isAudioMessageSupported,
+    isVoiceRecordingSupported,
+    handleTranscribeAudio,
+  } = useAudioTranscription({
     selectedDeploymentId,
   });
 
@@ -438,7 +461,12 @@ const NewConversationComposer: FC<Props> = ({
           sendTitle={t(ChatI18nKeys.SendMessage)}
           stopLabel={t(ChatI18nKeys.StopStreaming)}
           isAudioMessageSupported={isAudioMessageSupported}
+          isVoiceRecordingSupported={isVoiceRecordingSupported}
+          onTranscribeAudio={handleTranscribeAudio}
+          transcribingLabel={t(VoiceRecordingI18nKeys.Transcribing)}
+          voiceErrorLabel={t(VoiceRecordingI18nKeys.Failed)}
           micLabel={t(VoiceRecordingI18nKeys.MicLabel)}
+          recordVoiceLabel={t(VoiceRecordingI18nKeys.RecordVoiceLabel)}
           stopRecordingLabel={t(VoiceRecordingI18nKeys.StopRecordingLabel)}
           discardRecordingLabel={t(
             VoiceRecordingI18nKeys.DiscardRecordingLabel,
@@ -469,8 +497,10 @@ const NewConversationComposer: FC<Props> = ({
           onAttachmentClick={handleAttachmentClick}
           onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
-          promptsMenuOverlay={promptsMenuOverlay}
-          promptsMenuTitle={promptsMenuTitle}
+          menuOverlays={menuOverlays}
+          inlineStartSlot={inlineStartSlot}
+          onInlineStartRemove={onInlineStartRemove}
+          commandMenu={commandMenu}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           canRemoveTools={isRemovableToolsEnabled}

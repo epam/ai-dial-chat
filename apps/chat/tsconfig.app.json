@@ -15,7 +15,8 @@
     "rootDir": "src",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "ignoreDeprecations": "6.0"
   },
   "exclude": [
     "out-tsc",
@@ -60,6 +61,9 @@
       "path": "../../libs/starter-buttons/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/skills/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/share/tsconfig.lib.json"
     },
     {
@@ -78,6 +82,9 @@
       "path": "../../libs/quotations/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/mcp-apps/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/conversation-stages/tsconfig.lib.json"
     },
     {
@@ -93,7 +100,7 @@
       "path": "../../libs/conversation-panel/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/skill-editor/tsconfig.lib.json"
+      "path": "../../libs/chat-api-client/tsconfig.lib.json"
     },
     {
       "path": "../../libs/toolset-editor/tsconfig.lib.json"
@@ -102,7 +109,7 @@
       "path": "../../libs/publish-panel/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/chat-api-client/tsconfig.lib.json"
+      "path": "../../libs/skill-editor/tsconfig.lib.json"
     },
     {
       "path": "../../libs/catalog/tsconfig.lib.json"
@@ -118,9 +125,6 @@
     },
     {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"
-    },
-    {
-      "path": "../../libs/mcp-apps/tsconfig.lib.json"
     }
   ]
 }

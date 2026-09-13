@@ -40,12 +40,32 @@ describe('useAttachmentUpload', () => {
 
     await expect(
       result.current.handleUploadAttachment(makeAttachment()),
-    ).resolves.toBe('https://example.com/file.pdf');
+    ).resolves.toEqual({
+      url: 'https://example.com/file.pdf',
+      name: 'file.pdf',
+    });
 
     expect(uploadFile).toHaveBeenCalledWith(
       expect.objectContaining({
         bucket: 'user-bucket',
         file: expect.any(File),
+      }),
+    );
+  });
+
+  it('sanitizes forbidden path characters in the file name before upload', async () => {
+    uploadFile.mockResolvedValue({ url: 'https://example.com/file.csv' });
+    const { result } = renderHook(() =>
+      useAttachmentUpload({ filesApi: fakeFilesApi, bucket: 'user-bucket' }),
+    );
+
+    await result.current.handleUploadAttachment(
+      makeAttachment('people&500000.csv'),
+    );
+
+    expect(uploadFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: expect.stringContaining('people_500000.csv'),
       }),
     );
   });

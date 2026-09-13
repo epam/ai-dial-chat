@@ -13,6 +13,7 @@ import {
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import DialFileManagerModal from '../DialFileManagerModal';
 
@@ -43,10 +44,12 @@ const { mockShowNotification } = vi.hoisted(() => ({
   mockShowNotification: vi.fn(),
 }));
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({
-    config: { fileManagerTabs: mockFileManagerTabs.value },
-  }),
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
+mockUseAppConfig.mockImplementation(() => ({
+  config: { fileManagerTabs: mockFileManagerTabs.value },
 }));
 
 vi.mock('react-i18next', () => ({

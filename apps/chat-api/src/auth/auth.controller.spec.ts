@@ -67,6 +67,7 @@ const MOCK_CLIENT = {
     .mockReturnValue('https://keycloak.example.com/auth?state=s&nonce=n'),
   callbackParams: vi.fn(),
   callback: vi.fn(),
+  userinfo: vi.fn(),
   revoke: vi.fn().mockResolvedValue(undefined),
   endSessionUrl: vi
     .fn()
@@ -265,6 +266,9 @@ describe('AuthController (integration)', () => {
   beforeEach(async () => {
     providerConfigOverride = {};
     configOverride = {};
+    MOCK_CLIENT.userinfo.mockReset().mockResolvedValue({ sub: 'user-1' });
+    MOCK_CLIENT.issuer.metadata['userinfo_endpoint'] =
+      `${PROVIDER_ISSUER}/protocol/openid-connect/userinfo`;
     app = await buildApp();
   });
 
@@ -660,6 +664,108 @@ describe('AuthController (integration)', () => {
       expect(payload.claims['roles']).toEqual(['admin']);
       expect(payload.claims['phone_number']).toBeUndefined();
       expect(payload.claims['address']).toBeUndefined();
+    });
+  });
+
+  describe('job title from Keycloak UserInfo', () => {
+    const loginAndGetClaims = async (
+      idTokenClaims: Record<string, unknown> = {},
+    ): Promise<Record<string, unknown>> => {
+      const state = 'job-title-state';
+      const txCookieValue = await makeTxCookie({
+        state,
+        nonce: 'nonce',
+        codeVerifier: 'verifier',
+        providerId: 'keycloak',
+        callbackUrl: APP_BASE,
+      });
+      MOCK_CLIENT.callbackParams.mockReturnValue({ code: 'code', state });
+      MOCK_CLIENT.callback.mockResolvedValue({
+        access_token: 'at',
+        refresh_token: 'rt',
+        expires_at: 9999999999,
+        claims: () => ({ sub: 'user-1', ...idTokenClaims }),
+      });
+
+      const callback = await request(app.getHttpServer())
+        .get(`/api/v1/auth/callback/keycloak?code=code&state=${state}`)
+        .set('Cookie', `${TX_COOKIE}=${txCookieValue}`)
+        .expect(302);
+      const cookies = [callback.headers['set-cookie']].flat() as string[];
+      const sessionCookies = cookies
+        .filter((cookie) => cookie.startsWith(COOKIE_NAME))
+        .map((cookie) => cookie.split(';')[0])
+        .join('; ');
+      const profile = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', sessionCookies)
+        .expect(200);
+      return profile.body.claims;
+    };
+
+    it('persists a UserInfo-only job title without copying other profile claims', async () => {
+      MOCK_CLIENT.userinfo.mockResolvedValue({
+        sub: 'user-1',
+        job_title: 'Lead Engineer',
+        roles: ['admin'],
+        phone_number: '+1234567890',
+      });
+
+      const claims = await loginAndGetClaims();
+
+      expect(claims).toEqual({ sub: 'user-1', job_title: 'Lead Engineer' });
+      expect(MOCK_CLIENT.userinfo).toHaveBeenCalledWith('at');
+    });
+
+    it('keeps the ID-token job title without requesting UserInfo', async () => {
+      const claims = await loginAndGetClaims({ job_title: 'Engineer' });
+
+      expect(claims['job_title']).toBe('Engineer');
+      expect(MOCK_CLIENT.userinfo).not.toHaveBeenCalled();
+    });
+
+    it.each([undefined, null, '', 42, ['Engineer']])(
+      'allows login without forwarding an unusable UserInfo job title (%j)',
+      async (jobTitle) => {
+        MOCK_CLIENT.userinfo.mockResolvedValue({
+          sub: 'user-1',
+          job_title: jobTitle,
+        });
+
+        expect(await loginAndGetClaims()).toEqual({ sub: 'user-1' });
+      },
+    );
+
+    it.each(['another-user', undefined])(
+      'ignores UserInfo when its subject does not match the ID token (%j)',
+      async (sub) => {
+        MOCK_CLIENT.userinfo.mockResolvedValue({
+          sub,
+          job_title: 'Another user job title',
+        });
+
+        expect(await loginAndGetClaims()).toEqual({ sub: 'user-1' });
+      },
+    );
+
+    it('keeps login available when the optional UserInfo request fails', async () => {
+      MOCK_CLIENT.userinfo.mockRejectedValue(new Error('UserInfo unavailable'));
+
+      expect(await loginAndGetClaims()).toEqual({ sub: 'user-1' });
+    });
+
+    it('skips UserInfo when the provider does not advertise its endpoint', async () => {
+      delete MOCK_CLIENT.issuer.metadata['userinfo_endpoint'];
+
+      expect(await loginAndGetClaims()).toEqual({ sub: 'user-1' });
+      expect(MOCK_CLIENT.userinfo).not.toHaveBeenCalled();
+    });
+
+    it('keeps other providers on their existing ID-token claim path', async () => {
+      providerConfigOverride = { id: 'auth0' };
+
+      expect(await loginAndGetClaims()).toEqual({ sub: 'user-1' });
+      expect(MOCK_CLIENT.userinfo).not.toHaveBeenCalled();
     });
   });
 

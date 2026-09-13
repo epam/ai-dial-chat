@@ -94,34 +94,32 @@ specifier already exposed by the rolled-up root and `./file-manager` declaration
   missing
 
 ### Requirement: Consistent implementation dependency delivery
-Every implementation-only dependency SHALL have exactly one delivery model: it is either (a)
-externalized in the build and declared as a `peerDependency` (optionally, per the previous
-Requirement) because the consumer's own module graph is expected to already carry it, or (b)
-bundled into the entry point(s) that use it and absent from `dependencies`,
-`peerDependencies`, and `peerDependenciesMeta` entirely. No dependency SHALL be both bundled
-into an entry's output and separately declared in a runtime dependency field.
+Runtime dependencies SHALL be externalized and declared exactly once in `dependencies` or
+`peerDependencies`. Preserved output SHALL use portable package imports, without vendored
+monorepo-relative dependency paths or duplicate bundled runtime copies. CSS is handled through
+the explicit stylesheet contract.
 
-#### Scenario: A bundled dependency is not separately installable as a duplicate
-- **WHEN** `libs/chat-hooks/package.json` (as published) is inspected for `dompurify`,
-  `lru-cache`, `mime-types`, and `yaml`
-- **THEN** none of the four appear in `dependencies`, `peerDependencies`, or
-  `peerDependenciesMeta`, and each is present, compiled in, inside the entry output(s) that
-  import it
-
-#### Scenario: A consumer that does not use zip-backed features never needs `fflate`
-- **WHEN** a consumer installs `@epam/ai-dial-chat-hooks` and imports only entries other than
-  `./conversation-transfer` and `./skill-editor`
-- **THEN** `npm install` never asks for `fflate`, and the consumer's build never references
-  it, because no entry it imports bundles or externalizes it
+#### Scenario: Implementation dependencies are installed normally
+- **WHEN** a consumer installs the package
+- **THEN** dompurify, lru-cache, mime-types, yaml and fflate resolve through declared
+  dependencies; unused implementations remain absent from lightweight bundles even though
+  their packages are installed.
 
 ### Requirement: Verified tree shaking and accurate side-effect metadata
-A production bundle built from a single dependency-light entry point SHALL contain no code or
-external `import` belonging exclusively to a dependency-heavy entry point.
-`@epam/ai-dial-chat-hooks`'s `package.json#sideEffects` SHALL cover exactly the public entry
-facades and emitted shared chunks that retain observable module-scope state, and no others;
-any future module-scope effect added to an entry SHALL be reflected in that list in the same change that introduces
-it, and SHALL be covered by a consumer test that would fail if the effect were dropped by an
-overly aggressive `sideEffects: false` elsewhere in the manifest.
+Dependency-light entries SHALL exclude unrelated feature code. `sideEffects` SHALL identify
+the OAuth/file-manager facades and stable preserved modules with required initialization.
+Root and scoped exports SHALL share module instances; metadata SHALL NOT retain an entire root
+barrel or depend on obsolete hashed chunk names.
+
+#### Scenario: Required initialization survives production bundling
+- **WHEN** a consumer explicitly imports OAuth or file-manager behavior
+- **THEN** its required event/cache initialization is retained and shared through supported
+  exports.
+
+#### Scenario: Unrelated initialization is eliminated
+- **WHEN** a consumer imports only a pure utility from root or its scoped entry
+- **THEN** the fixed-budget and semantic-exclusion probes pass without feature
+  initialization.
 
 #### Scenario: A minimal-entry production bundle excludes heavy-entry code
 - **WHEN** a consumer's bundler tree-shakes a production build that imports only
@@ -219,3 +217,29 @@ resolved value as a parameter — never construct or resolve one itself.
   entry that calls a generated DIAL Core operation is inspected
 - **THEN** the operation function itself is a parameter the hook receives, not a client the
   hook constructs, configures, or imports a singleton instance of
+
+### Requirement: Scoped and compatible hook distribution
+The package SHALL preserve existing root exports and provide independently consumable scoped
+entries with documented peers. Pure utilities and source-content classification SHALL resolve
+without unrelated feature peers and meet fixed raw/gzip budgets. Root imports SHALL meet the
+same retained-code isolation contract with their documented resolution peers installed.
+
+#### Scenario: Lightweight scoped consumer
+- **WHEN** a consumer imports safeDecodeURIComponent or source-content classification through
+  its scoped entry
+- **THEN** a packed build excludes markdown, renderer, MCP and feature-initialization code.
+
+#### Scenario: Source-content compatibility
+- **WHEN** a URL has an inherited object-property extension or a PDF URL has parameterized
+  MIME metadata
+- **THEN** classification returns a string without throwing and preserves canonical PDF
+  routing.
+
+### Requirement: Shared feature initialization
+Root and scoped imports SHALL share OAuth event and attachment-cache instances. Published
+`sideEffects` metadata SHALL retain required initialization while allowing unused features to
+be removed.
+
+#### Scenario: Root subscription and scoped emit
+- **WHEN** a consumer subscribes through root and emits through the OAuth entry
+- **THEN** the subscriber receives exactly one event from the same module instance.

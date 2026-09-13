@@ -242,3 +242,88 @@ histogram.
 - **WHEN** metrics are enabled
 - **THEN** `MetricsInterceptor`'s histogram is the only emitter of HTTP server request duration
   data points for the application
+
+### Requirement: Runtime gauges follow metrics enablement and lifecycle
+The telemetry bootstrap SHALL register runtime memory and active-operation collection callbacks
+after SDK startup only when at least one metrics exporter is enabled. Runtime gauges SHALL use
+the existing metric readers and SHALL NOT introduce a separate sampling timer, environment
+variable, or HTTP endpoint. Shutdown SHALL remove the collection callbacks.
+
+#### Scenario: Metrics enabled independently of traces and logs
+- **WHEN** the application starts with `OTEL_SDK_DISABLED=false`,
+  `OTEL_METRICS_EXPORTER=prometheus`, `OTEL_TRACES_EXPORTER=none`, and `OTEL_LOGS_EXPORTER=none`
+- **THEN** the existing Prometheus listener exposes the runtime gauges
+- **AND** trace and log export remain disabled
+
+#### Scenario: Runtime observations disabled
+- **WHEN** the SDK is disabled or `OTEL_METRICS_EXPORTER=none`
+- **THEN** runtime collection callbacks are not registered
+- **AND** metric collection does not sample process memory
+
+#### Scenario: Runtime collection stops on shutdown
+- **WHEN** the telemetry shutdown routine runs
+- **THEN** runtime collection callbacks are removed
+
+### Requirement: Memory observed inside the serving Node.js process
+The application SHALL expose the observable gauge `dial.chat.process.memory` with unit `B`,
+exported by Prometheus as `dial_chat_process_memory`. Each collection SHALL call
+`process.memoryUsage()` once in the Node.js process serving Nest requests and observe five
+points using the fixed `kind` values `rss`, `heap_used`, `heap_total`, `external`, and
+`array_buffers`, respectively mapped to `rss`, `heapUsed`, `heapTotal`, `external`, and
+`arrayBuffers`. The values SHALL be reported independently without summation because
+`arrayBuffers` is included in `external` and the memory categories overlap.
+
+#### Scenario: One consistent memory sample per collection
+- **WHEN** a metric reader collects runtime gauges
+- **THEN** all five memory points come from one `process.memoryUsage()` result
+- **AND** each point reports the corresponding byte value with its fixed `kind` attribute
+
+### Requirement: Outstanding SSE operations observed by lifecycle
+The application SHALL expose the observable gauge `dial.chat.sse.active`, exported by Prometheus
+as `dial_chat_sse_active`, with only the fixed `kind` values `client_channel`,
+`conversation_watch`, and `generation_attach`. Client-channel subscribe and conversation-watch
+operations SHALL count from before asynchronous setup until their handlers settle. Generation
+attach operations SHALL count until subscription cleanup, including after the handler returns.
+Cleanup SHALL release each operation's contribution at most once. Ordinary completion-response
+delivery SHALL NOT contribute to this SSE gauge.
+
+#### Scenario: Subscribe or watch setup is pending
+- **WHEN** a client-channel subscription or conversation watch is awaiting upstream setup
+- **THEN** its kind's gauge includes the operation
+- **AND** a client disconnect alone does not remove it while the asynchronous handler is pending
+
+#### Scenario: Subscribe or watch settles
+- **WHEN** the asynchronous handler completes or fails
+- **THEN** its contribution is removed exactly once
+
+#### Scenario: Attached generation outlives the handler
+- **WHEN** a generation attach handler returns with its subscription still active
+- **THEN** `generation_attach` continues to include that subscription
+- **AND** its contribution is removed exactly once when subscription cleanup runs
+
+#### Scenario: Shutdown releases attached generation subscriptions
+- **WHEN** the application shuts down with registered generations and attached subscriptions
+- **THEN** the generations emit a stopped terminal event
+- **AND** the attached subscriptions run their cleanup and release their gauge contributions
+
+### Requirement: Generation gauge reflects the physical registry
+The application SHALL expose the observable gauge `dial.chat.generations.active`, exported by
+Prometheus as `dial_chat_generations_active`, with no application attributes. It SHALL report
+the number of entries physically retained in the generation registry, including stopped or
+aborted entries awaiting persistence. Entry insertion, removal, replacement, and shutdown SHALL
+keep the gauge consistent with registry ownership. The gauge SHALL NOT claim to count upstream
+tasks that outlive their registry entries.
+
+#### Scenario: Generation remains registered during persistence
+- **WHEN** a stopped or aborted generation is still registered while persistence is pending
+- **THEN** it continues to contribute to the generation gauge
+
+#### Scenario: Registry entry released or replaced
+- **WHEN** an entry is removed on completion, error, stale eviction, replacement, or shutdown
+- **THEN** the removed entry no longer contributes to the gauge
+- **AND** replacement with a new entry for the same registry key does not double count the key
+
+#### Scenario: Runtime metrics do not contain unbounded identifiers
+- **WHEN** runtime memory and active-operation gauges are collected
+- **THEN** their application attributes contain only the specified fixed `kind` values, where applicable
+- **AND** they contain no user, conversation, deployment, or Kubernetes pod identifiers

@@ -2,6 +2,7 @@ import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
 import {
   buildCssVars,
   mergeClasses,
+  RESIZABLE_TEXTAREA_CLASS_NAME,
   ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -9,6 +10,7 @@ import {
   Slider,
   RadioGroup,
   RadioGroupOrientation,
+  TextareaResize,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import styles from './ChatSettingsFields.module.scss';
@@ -120,7 +122,8 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
         <Textarea
           value={systemPrompt}
           placeholder={systemPromptTooltip}
-          resize
+          className={RESIZABLE_TEXTAREA_CLASS_NAME}
+          resize={TextareaResize.Vertical}
           labelProps={{
             className: fieldLabelClassName,
             label: systemPromptLabel,

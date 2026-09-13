@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Chat API (1.0.0)",
-    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 120 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
+    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 128 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -19,7 +19,7 @@
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "baseUrl", "value": "http://localhost:3005", "type": "string" },
     { "key": "origin", "value": "http://localhost:4207", "type": "string" },
     { "key": "csrfToken", "value": "", "type": "string" },
     { "key": "providerId", "value": "local", "type": "string" },
@@ -112,7 +112,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"My App\",\n  \"type\": \"https://mydial.epam.com/custom_application_schemas/quickapps2\",\n  \"description\": \"A custom application.\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"version\": \"1.0\",\n  \"topics\": [\n    \"nlp\",\n    \"assistant\"\n  ],\n  \"applicationProperties\": {\n    \"orchestrator\": {\n      \"system_prompt\": {\n        \"type\": \"custom\",\n        \"variables\": {},\n        \"content\": \"\"\n      }\n    },\n    \"contexts\": [],\n    \"tool_sets\": []\n  },\n  \"locales\": [\n    {\n      \"language\": \"de\",\n      \"name\": \"Mein Toolset\",\n      \"description\": \"Meine Toolset-Beschreibung\"\n    }\n  ],\n  \"primaryLocale\": \"en\"\n}\n",
+              "raw": "{\n  \"name\": \"My App\",\n  \"type\": \"https://mydial.epam.com/custom_application_schemas/quickapps2\",\n  \"description\": \"A custom application.\",\n  \"iconUrl\": \"files/6FEup.../uploads/2026-06/icon.png\",\n  \"version\": \"1.0\",\n  \"topics\": [\n    \"nlp\",\n    \"assistant\"\n  ],\n  \"applicationProperties\": {\n    \"orchestrator\": {\n      \"system_prompt\": {\n        \"type\": \"custom\",\n        \"variables\": {},\n        \"content\": \"\"\n      }\n    },\n    \"contexts\": [],\n    \"tool_sets\": []\n  },\n  \"locales\": [\n    {\n      \"language\": \"de\",\n      \"name\": \"Mein Toolset\",\n      \"description\": \"Meine Toolset-Beschreibung\"\n    }\n  ],\n  \"primaryLocale\": \"en\"\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -134,7 +134,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"My App\",\n  \"description\": \"A custom application.\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"topics\": [\n    \"nlp\",\n    \"assistant\"\n  ],\n  \"version\": \"1.0.0\",\n  \"endpoint\": \"https://api.example.com/chat\",\n  \"features\": {},\n  \"inputAttachmentTypes\": [\n    \"image/png\"\n  ],\n  \"maxInputAttachments\": 5,\n  \"locales\": [\n    {\n      \"language\": \"de\",\n      \"name\": \"Mein Toolset\",\n      \"description\": \"Meine Toolset-Beschreibung\"\n    }\n  ],\n  \"primaryLocale\": \"en\"\n}\n",
+              "raw": "{\n  \"name\": \"My App\",\n  \"description\": \"A custom application.\",\n  \"iconUrl\": \"files/6FEup.../uploads/2026-06/icon.png\",\n  \"topics\": [\n    \"nlp\",\n    \"assistant\"\n  ],\n  \"version\": \"1.0.0\",\n  \"endpoint\": \"https://api.example.com/chat\",\n  \"features\": {},\n  \"inputAttachmentTypes\": [\n    \"image/png\"\n  ],\n  \"maxInputAttachments\": 5,\n  \"locales\": [\n    {\n      \"language\": \"de\",\n      \"name\": \"Mein Toolset\",\n      \"description\": \"Meine Toolset-Beschreibung\"\n    }\n  ],\n  \"primaryLocale\": \"en\"\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -249,7 +249,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"deployment\": \"gpt-4o\",\n  \"messages\": [\n    {\n      \"id\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n      \"role\": \"user\",\n      \"content\": \"Hello, how can you help me today?\",\n      \"timestamp\": \"2024-01-01T00:00:00.000Z\",\n      \"custom_content\": {\n        \"attachments\": [\n          {\n            \"index\": 0,\n            \"type\": \"type\",\n            \"title\": \"title\",\n            \"data\": \"data\",\n            \"url\": \"url\",\n            \"reference_type\": \"reference_type\",\n            \"reference_url\": \"reference_url\"\n          }\n        ],\n        \"configuration_value\": {\n          \"button\": 1\n        },\n        \"form_value\": {\n          \"field1\": \"value\",\n          \"field2\": 42\n        },\n        \"state\": {}\n      }\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 1024\n}\n",
+              "raw": "{\n  \"deployment\": \"gpt-4o\",\n  \"messages\": [\n    {\n      \"id\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n      \"role\": \"user\",\n      \"content\": \"Hello, how can you help me today?\",\n      \"timestamp\": \"2024-01-01T00:00:00.000Z\",\n      \"custom_content\": {\n        \"attachments\": [\n          {\n            \"index\": 0,\n            \"type\": \"type\",\n            \"title\": \"title\",\n            \"data\": \"data\",\n            \"url\": \"url\",\n            \"reference_type\": \"reference_type\",\n            \"reference_url\": \"reference_url\"\n          }\n        ],\n        \"stages\": [\n          {\n            \"index\": 0,\n            \"name\": \"name\",\n            \"content\": \"content\",\n            \"attachments\": [\n              {\n                \"index\": 0,\n                \"title\": \"title\",\n                \"data\": \"data\"\n              }\n            ]\n          }\n        ],\n        \"annotations\": [\n          {\n            \"index\": 0,\n            \"target\": {\n              \"selector\": {\n                \"type\": \"type\",\n                \"start\": 0,\n                \"end\": 0,\n                \"page\": 0,\n                \"x1\": 0,\n                \"y1\": 0,\n                \"x2\": 0,\n                \"y2\": 0,\n                \"tag\": \"tag\",\n                \"id\": \"{{id}}\"\n              }\n            },\n            \"body\": {\n              \"selector\": {\n                \"type\": \"type\",\n                \"start\": 0,\n                \"end\": 0,\n                \"page\": 0,\n                \"x1\": 0,\n                \"y1\": 0,\n                \"x2\": 0,\n                \"y2\": 0,\n                \"tag\": \"tag\",\n                \"id\": \"{{id}}\"\n              },\n              \"title\": \"title\",\n              \"quote\": \"quote\",\n              \"source\": {\n                \"type\": \"type\",\n                \"attachment\": {\n                  \"type\": \"type\",\n                  \"url\": \"url\",\n                  \"title\": \"title\"\n                }\n              }\n            }\n          }\n        ],\n        \"form_schema\": {},\n        \"configuration_value\": {\n          \"button\": 1\n        },\n        \"form_value\": {\n          \"field1\": \"value\",\n          \"field2\": 42\n        },\n        \"state\": {}\n      }\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 1024\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -350,7 +350,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstMessage\": \"Hello, how can you help me today?\",\n  \"deploymentId\": \"applications/catalog/Untitled%20app%201__0.0.1\",\n  \"custom_content\": {\n    \"attachments\": [\n      {\n        \"index\": 0,\n        \"type\": \"type\",\n        \"title\": \"title\",\n        \"data\": \"data\",\n        \"url\": \"url\",\n        \"reference_type\": \"reference_type\",\n        \"reference_url\": \"reference_url\"\n      }\n    ],\n    \"configuration_value\": {\n      \"button\": 1\n    },\n    \"form_value\": {\n      \"field1\": \"value\",\n      \"field2\": 42\n    },\n    \"state\": {}\n  }\n}\n",
+              "raw": "{\n  \"firstMessage\": \"Hello, how can you help me today?\",\n  \"deploymentId\": \"applications/catalog/Untitled%20app%201__0.0.1\",\n  \"custom_content\": {\n    \"attachments\": [\n      {\n        \"index\": 0,\n        \"type\": \"type\",\n        \"title\": \"title\",\n        \"data\": \"data\",\n        \"url\": \"url\",\n        \"reference_type\": \"reference_type\",\n        \"reference_url\": \"reference_url\"\n      }\n    ],\n    \"stages\": [\n      {\n        \"index\": 0,\n        \"name\": \"name\",\n        \"content\": \"content\",\n        \"attachments\": [\n          {\n            \"index\": 0,\n            \"title\": \"title\",\n            \"data\": \"data\"\n          }\n        ]\n      }\n    ],\n    \"annotations\": [\n      {\n        \"index\": 0,\n        \"target\": {\n          \"selector\": {\n            \"type\": \"type\",\n            \"start\": 0,\n            \"end\": 0,\n            \"page\": 0,\n            \"x1\": 0,\n            \"y1\": 0,\n            \"x2\": 0,\n            \"y2\": 0,\n            \"tag\": \"tag\",\n            \"id\": \"{{id}}\"\n          }\n        },\n        \"body\": {\n          \"selector\": {\n            \"type\": \"type\",\n            \"start\": 0,\n            \"end\": 0,\n            \"page\": 0,\n            \"x1\": 0,\n            \"y1\": 0,\n            \"x2\": 0,\n            \"y2\": 0,\n            \"tag\": \"tag\",\n            \"id\": \"{{id}}\"\n          },\n          \"title\": \"title\",\n          \"quote\": \"quote\",\n          \"source\": {\n            \"type\": \"type\",\n            \"attachment\": {\n              \"type\": \"type\",\n              \"url\": \"url\",\n              \"title\": \"title\"\n            }\n          }\n        }\n      }\n    ],\n    \"form_schema\": {},\n    \"configuration_value\": {\n      \"button\": 1\n    },\n    \"form_value\": {\n      \"field1\": \"value\",\n      \"field2\": 42\n    },\n    \"state\": {}\n  }\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -391,7 +391,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"conversation\": {\n    \"id\": \"test-bucket/uuid__Hello\",\n    \"folderId\": \"test-bucket\",\n    \"name\": \"Hello\",\n    \"model\": {\n      \"id\": \"anthropic.claude-v3-sonnet\"\n    },\n    \"prompt\": \"\",\n    \"temperature\": 1,\n    \"maxOutputTokens\": 4096,\n    \"messages\": [\n      {\n        \"id\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n        \"role\": \"user\",\n        \"content\": \"Hello!\",\n        \"timestamp\": \"2026-05-19T16:00:00.000Z\",\n        \"custom_content\": {\n          \"attachments\": [\n            {\n              \"index\": 0,\n              \"type\": \"type\",\n              \"title\": \"title\",\n              \"data\": \"data\",\n              \"url\": \"url\",\n              \"reference_type\": \"reference_type\",\n              \"reference_url\": \"reference_url\"\n            }\n          ],\n          \"configuration_value\": {\n            \"button\": 1\n          },\n          \"form_value\": {\n            \"field1\": \"value\",\n            \"field2\": 42\n          },\n          \"state\": {},\n          \"event_type\": \"model_changed\",\n          \"previous_deployment_id\": \"gpt-4o\",\n          \"new_deployment_id\": \"claude-3\"\n        },\n        \"streamErrorMessage\": \"You have exceeded your daily token limit.\",\n        \"responseId\": \"dial-gpt-4o-3c1a7e6e-...-uuid\",\n        \"deploymentId\": \"gpt-4o\"\n      }\n    ],\n    \"lastActivityDate\": 1779206400000,\n    \"updatedAt\": 1779206400000,\n    \"selectedAddons\": [],\n    \"assistantModelId\": \"anthropic.claude-v3-sonnet\",\n    \"responseFormat\": \"markdown\",\n    \"llmNamingDone\": false\n  }\n}\n",
+              "raw": "{\n  \"conversation\": {\n    \"id\": \"test-bucket/uuid__Hello\",\n    \"folderId\": \"test-bucket\",\n    \"name\": \"Hello\",\n    \"model\": {\n      \"id\": \"anthropic.claude-v3-sonnet\"\n    },\n    \"prompt\": \"\",\n    \"temperature\": 1,\n    \"maxOutputTokens\": 4096,\n    \"messages\": [\n      {\n        \"id\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n        \"role\": \"user\",\n        \"content\": \"Hello!\",\n        \"timestamp\": \"2026-05-19T16:00:00.000Z\",\n        \"custom_content\": {\n          \"attachments\": [\n            {\n              \"index\": 0,\n              \"type\": \"type\",\n              \"title\": \"title\",\n              \"data\": \"data\",\n              \"url\": \"url\",\n              \"reference_type\": \"reference_type\",\n              \"reference_url\": \"reference_url\"\n            }\n          ],\n          \"stages\": [\n            {\n              \"index\": 0,\n              \"name\": \"name\",\n              \"content\": \"content\",\n              \"attachments\": [\n                {\n                  \"index\": 0,\n                  \"title\": \"title\",\n                  \"data\": \"data\"\n                }\n              ]\n            }\n          ],\n          \"annotations\": [\n            {\n              \"index\": 0,\n              \"target\": {\n                \"selector\": {\n                  \"type\": \"type\",\n                  \"start\": 0,\n                  \"end\": 0,\n                  \"page\": 0,\n                  \"x1\": 0,\n                  \"y1\": 0,\n                  \"x2\": 0,\n                  \"y2\": 0,\n                  \"tag\": \"tag\",\n                  \"id\": \"{{id}}\"\n                }\n              },\n              \"body\": {\n                \"selector\": {\n                  \"type\": \"type\",\n                  \"start\": 0,\n                  \"end\": 0,\n                  \"page\": 0,\n                  \"x1\": 0,\n                  \"y1\": 0,\n                  \"x2\": 0,\n                  \"y2\": 0,\n                  \"tag\": \"tag\",\n                  \"id\": \"{{id}}\"\n                },\n                \"title\": \"title\",\n                \"quote\": \"quote\",\n                \"source\": {\n                  \"type\": \"type\",\n                  \"attachment\": {\n                    \"type\": \"type\",\n                    \"url\": \"url\",\n                    \"title\": \"title\"\n                  }\n                }\n              }\n            }\n          ],\n          \"form_schema\": {},\n          \"configuration_value\": {\n            \"button\": 1\n          },\n          \"form_value\": {\n            \"field1\": \"value\",\n            \"field2\": 42\n          },\n          \"state\": {},\n          \"event_type\": \"model_changed\",\n          \"previous_deployment_id\": \"gpt-4o\",\n          \"new_deployment_id\": \"claude-3\"\n        },\n        \"streamErrorMessage\": \"You have exceeded your daily token limit.\",\n        \"responseId\": \"dial-gpt-4o-3c1a7e6e-...-uuid\",\n        \"deploymentId\": \"gpt-4o\"\n      }\n    ],\n    \"lastActivityDate\": 1779206400000,\n    \"updatedAt\": 1779206400000,\n    \"selectedAddons\": [],\n    \"assistantModelId\": \"anthropic.claude-v3-sonnet\",\n    \"responseFormat\": \"markdown\",\n    \"llmNamingDone\": false\n  }\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -520,12 +520,17 @@
             "method": "POST",
             "header": [
               { "key": "Accept", "value": "application/json" },
+              {
+                "key": "X-Timezone",
+                "value": "Europe/Warsaw",
+                "disabled": true
+              },
               { "key": "Origin", "value": "{{origin}}" },
               { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"generationId\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n  \"path\": \"gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n  \"model\": \"anthropic.claude-v3-sonnet\",\n  \"mode\": \"append\",\n  \"message\": \"What is the capital of France?\",\n  \"messageIndex\": 3,\n  \"custom_content\": {\n    \"attachments\": [\n      {\n        \"index\": 0,\n        \"type\": \"type\",\n        \"title\": \"title\",\n        \"data\": \"data\",\n        \"url\": \"url\",\n        \"reference_type\": \"reference_type\",\n        \"reference_url\": \"reference_url\"\n      }\n    ],\n    \"configuration_value\": {\n      \"button\": 1\n    },\n    \"form_value\": {\n      \"field1\": \"value\",\n      \"field2\": 42\n    },\n    \"state\": {}\n  },\n  \"clientChannelId\": \"a1b2c3d4-e5f6-4789-a012-3456789abcde\"\n}\n",
+              "raw": "{\n  \"generationId\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n  \"path\": \"gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n  \"model\": \"anthropic.claude-v3-sonnet\",\n  \"mode\": \"append\",\n  \"message\": \"What is the capital of France?\",\n  \"messageIndex\": 3,\n  \"custom_content\": {\n    \"attachments\": [\n      {\n        \"index\": 0,\n        \"type\": \"type\",\n        \"title\": \"title\",\n        \"data\": \"data\",\n        \"url\": \"url\",\n        \"reference_type\": \"reference_type\",\n        \"reference_url\": \"reference_url\"\n      }\n    ],\n    \"stages\": [\n      {\n        \"index\": 0,\n        \"name\": \"name\",\n        \"content\": \"content\",\n        \"attachments\": [\n          {\n            \"index\": 0,\n            \"title\": \"title\",\n            \"data\": \"data\"\n          }\n        ]\n      }\n    ],\n    \"annotations\": [\n      {\n        \"index\": 0,\n        \"target\": {\n          \"selector\": {\n            \"type\": \"type\",\n            \"start\": 0,\n            \"end\": 0,\n            \"page\": 0,\n            \"x1\": 0,\n            \"y1\": 0,\n            \"x2\": 0,\n            \"y2\": 0,\n            \"tag\": \"tag\",\n            \"id\": \"{{id}}\"\n          }\n        },\n        \"body\": {\n          \"selector\": {\n            \"type\": \"type\",\n            \"start\": 0,\n            \"end\": 0,\n            \"page\": 0,\n            \"x1\": 0,\n            \"y1\": 0,\n            \"x2\": 0,\n            \"y2\": 0,\n            \"tag\": \"tag\",\n            \"id\": \"{{id}}\"\n          },\n          \"title\": \"title\",\n          \"quote\": \"quote\",\n          \"source\": {\n            \"type\": \"type\",\n            \"attachment\": {\n              \"type\": \"type\",\n              \"url\": \"url\",\n              \"title\": \"title\"\n            }\n          }\n        }\n      }\n    ],\n    \"form_schema\": {},\n    \"configuration_value\": {\n      \"button\": 1\n    },\n    \"form_value\": {\n      \"field1\": \"value\",\n      \"field2\": 42\n    },\n    \"state\": {}\n  },\n  \"clientChannelId\": \"a1b2c3d4-e5f6-4789-a012-3456789abcde\"\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -556,6 +561,28 @@
               "path": ["api", "v1", "conversations", "completions", "stop"]
             },
             "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Attach to an active generation and replay it live",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"path\": \"gpt-4o__My Chat\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/completions/attach",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations", "completions", "attach"]
+            },
+            "description": "Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Session-scoped — only the session that could stop the generation can attach to it.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         },
         {
@@ -726,6 +753,35 @@
           }
         },
         {
+          "name": "Request removal of a published conversation from a folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"folderPath\": \"Organization/Data Science/Shared chats\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/unpublish?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations", "unpublish"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Conversation path (uuid__name). May contain slashes."
+                }
+              ]
+            },
+            "description": "Submits a removal request for one already-published folder of an owned conversation by proxying DIAL Core's Publication API (`createPublication`) with a single `DELETE`-action resource. **The removal takes effect only after an administrator approves the request.** Until then the published copy stays visible to everyone who could already see it, and the folder continues to appear in the conversation’s publish history. The conversation title is re-fetched server-side and used as the publication name, so the request is legible in the admin queue.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
           "name": "Get publish history for a conversation",
           "request": {
             "method": "GET",
@@ -818,7 +874,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "deployments", "{{deployment}}", "details"]
             },
-            "description": "Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core's getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds per user; the response carries no client-facing Cache-Control so a browser never serves a stale copy of another user's cache window or of credentials that changed since the last fetch."
+            "description": "Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core's getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds per user; the response sets Cache-Control to private, no-store so browsers and intermediaries never reuse a stale copy after the active user or toolset credentials change."
           }
         }
       ]
@@ -856,7 +912,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"credentialsLevel\": \"USER\",\n  \"authenticationType\": \"API_KEY\",\n  \"apiKey\": \"apiKey\",\n  \"code\": \"code\",\n  \"redirectUri\": \"redirectUri\"\n}\n",
+              "raw": "{\n  \"credentialsLevel\": \"USER\",\n  \"authenticationType\": \"API_KEY\",\n  \"apiKey\": \"apiKey\",\n  \"code\": \"code\",\n  \"redirectUri\": \"redirectUri\",\n  \"offlineUsageConsent\": false\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -1487,7 +1543,7 @@
                 {
                   "key": "id",
                   "value": "{{id}}",
-                  "description": "Full prompt resource path to update (`prompts/{bucket}/{path}`). Use the caller's own bucket for a personal prompt, or the owner bucket reported on a shared prompt's `id`. DIAL Core still enforces access, so an id the caller has no grant for resolves to 404."
+                  "description": "Full prompt resource path to update"
                 }
               ]
             },
@@ -1511,7 +1567,7 @@
                 {
                   "key": "id",
                   "value": "{{id}}",
-                  "description": "Full prompt resource path to delete (`prompts/{bucket}/{path}`)"
+                  "description": "Full prompt resource path to delete"
                 }
               ]
             },
@@ -1535,7 +1591,7 @@
                 }
               ]
             },
-            "description": "Reads the exact DIAL resource `id` given, whether that is the caller's own bucket or another user's bucket for a prompt shared with the caller. DIAL Core authorises the read either way."
+            "description": "Reads the exact DIAL resource `id` names, whether that is the caller's own bucket or another user's bucket for a prompt shared with the caller. DIAL Core authorises the read either way."
           }
         },
         {
@@ -1666,7 +1722,7 @@
                 {
                   "key": "id",
                   "value": "{{id}}",
-                  "description": "Full prompt resource path to move (`prompts/{bucket}/{path}`)"
+                  "description": "Full prompt resource path to move"
                 }
               ]
             },
@@ -1705,6 +1761,35 @@
               ]
             },
             "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Request removal of a published catalog entity from a folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"folderPath\": \"Organization/Data Science/Published models\",\n  \"version\": \"1.2.0\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalog/{{entityType}}/{{entityId}}/unpublish",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "catalog",
+                "{{entityType}}",
+                "{{entityId}}",
+                "unpublish"
+              ]
+            },
+            "description": "Submits a removal request for one already-published folder of a catalog entity (Toolset, Application, Prompt, or Skill) by proxying DIAL Core's Publication API (`createPublication`) with a single `DELETE`-action resource. **The removal takes effect only after an administrator approves the request.** Until then the published copy stays visible to everyone who could already see it, and the folder continues to appear in the entity’s publish history. This endpoint keeps no records of its own — DIAL Core is the sole source of truth.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         },
         {
@@ -2046,7 +2131,7 @@
                 {
                   "key": "itemId",
                   "value": "applications/owner-bucket/my-app",
-                  "description": "Identifier (DIAL Core resource path) of the owned catalog item, skill, or conversation to count current recipients for."
+                  "description": "Identifier of the owned catalog item, skill, conversation, or prompt to count current recipients for — a full DIAL Core resource path."
                 }
               ]
             },
@@ -2425,6 +2510,27 @@
           }
         },
         {
+          "name": "Create a new skill from an uploaded ZIP archive or a standalone SKILL.md",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/skills/import",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "skills", "import"]
+            },
+            "description": "Accepts either a whole-skill ZIP archive or a standalone file named exactly (case-sensitive) SKILL.md in the file field, safely extracts and validates it server-side (container/structure validity, path safety, encrypted/symlink rejection, incremental decompression limits, manifest UTF-8/frontmatter checks), then creates the skill atomically via the same If-None-Match: * uploadSkillFolder call createSkill uses. The two forms are told apart by the field's exact filename, never by its declared content type. Uses the authenticated user's own bucket; a client-supplied bucket is never trusted.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
           "name": "Create a grouping folder",
           "request": {
             "method": "POST",
@@ -2550,7 +2656,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"My toolset\",\n  \"version\": \"0.0.1\",\n  \"description\": \"My toolset description\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"topics\": [\n    \"keyword1\",\n    \"keyword2\"\n  ],\n  \"locales\": [\n    {\n      \"language\": \"de\",\n      \"name\": \"Mein Toolset\",\n      \"description\": \"Meine Toolset-Beschreibung\"\n    }\n  ],\n  \"primaryLocale\": \"en\",\n  \"endpoint\": \"https://my-toolset.example.com/mcp\",\n  \"transport\": \"HTTP\",\n  \"allowedTools\": [\n    \"tool1\",\n    \"tool2\"\n  ],\n  \"reference\": \"ff5584b7-a82b-4f4f-bf42-5bf74a3893d6\",\n  \"authSettings\": {\n    \"authenticationType\": \"NONE\",\n    \"apiKeyHeader\": \"X-Api-Key\",\n    \"clientId\": \"my-client-id\",\n    \"clientSecret\": \"my-client-secret\",\n    \"authorizationEndpoint\": \"https://auth.example.com/authorize\",\n    \"tokenEndpoint\": \"https://auth.example.com/token\",\n    \"scopesSupported\": [\n      \"read\",\n      \"write\"\n    ],\n    \"redirectUri\": \"https://chat.example.com/auth/toolset-signin\",\n    \"codeChallengeMethod\": \"S256\",\n    \"codeChallenge\": \"abc123\"\n  }\n}\n",
+              "raw": "{\n  \"name\": \"My toolset\",\n  \"version\": \"0.0.1\",\n  \"description\": \"My toolset description\",\n  \"iconUrl\": \"files/6FEup.../uploads/2026-06/icon.png\",\n  \"topics\": [\n    \"keyword1\",\n    \"keyword2\"\n  ],\n  \"locales\": [\n    {\n      \"language\": \"de\",\n      \"name\": \"Mein Toolset\",\n      \"description\": \"Meine Toolset-Beschreibung\"\n    }\n  ],\n  \"primaryLocale\": \"en\",\n  \"endpoint\": \"https://my-toolset.example.com/mcp\",\n  \"transport\": \"HTTP\",\n  \"allowedTools\": [\n    \"tool1\",\n    \"tool2\"\n  ],\n  \"reference\": \"ff5584b7-a82b-4f4f-bf42-5bf74a3893d6\",\n  \"authSettings\": {\n    \"authenticationType\": \"NONE\",\n    \"apiKeyHeader\": \"X-Api-Key\",\n    \"clientId\": \"my-client-id\",\n    \"clientSecret\": \"my-client-secret\",\n    \"authorizationEndpoint\": \"https://auth.example.com/authorize\",\n    \"tokenEndpoint\": \"https://auth.example.com/token\",\n    \"scopesSupported\": [\n      \"read\",\n      \"write\"\n    ],\n    \"redirectUri\": \"https://chat.example.com/auth/toolset-signin\",\n    \"codeChallengeMethod\": \"S256\",\n    \"codeChallenge\": \"abc123\"\n  }\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -2585,7 +2691,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"My toolset\",\n  \"version\": \"0.0.1\",\n  \"description\": \"My toolset description\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"topics\": [\n    \"keyword1\",\n    \"keyword2\"\n  ],\n  \"locales\": [\n    {\n      \"language\": \"de\",\n      \"name\": \"Mein Toolset\",\n      \"description\": \"Meine Toolset-Beschreibung\"\n    }\n  ],\n  \"primaryLocale\": \"en\",\n  \"endpoint\": \"https://my-toolset.example.com/mcp\",\n  \"transport\": \"HTTP\",\n  \"allowedTools\": [\n    \"tool1\",\n    \"tool2\"\n  ],\n  \"reference\": \"ff5584b7-a82b-4f4f-bf42-5bf74a3893d6\",\n  \"authSettings\": {\n    \"authenticationType\": \"NONE\",\n    \"apiKeyHeader\": \"X-Api-Key\",\n    \"clientId\": \"my-client-id\",\n    \"clientSecret\": \"my-client-secret\",\n    \"authorizationEndpoint\": \"https://auth.example.com/authorize\",\n    \"tokenEndpoint\": \"https://auth.example.com/token\",\n    \"scopesSupported\": [\n      \"read\",\n      \"write\"\n    ],\n    \"redirectUri\": \"https://chat.example.com/auth/toolset-signin\",\n    \"codeChallengeMethod\": \"S256\",\n    \"codeChallenge\": \"abc123\"\n  }\n}\n",
+              "raw": "{\n  \"name\": \"My toolset\",\n  \"version\": \"0.0.1\",\n  \"description\": \"My toolset description\",\n  \"iconUrl\": \"files/6FEup.../uploads/2026-06/icon.png\",\n  \"topics\": [\n    \"keyword1\",\n    \"keyword2\"\n  ],\n  \"locales\": [\n    {\n      \"language\": \"de\",\n      \"name\": \"Mein Toolset\",\n      \"description\": \"Meine Toolset-Beschreibung\"\n    }\n  ],\n  \"primaryLocale\": \"en\",\n  \"endpoint\": \"https://my-toolset.example.com/mcp\",\n  \"transport\": \"HTTP\",\n  \"allowedTools\": [\n    \"tool1\",\n    \"tool2\"\n  ],\n  \"reference\": \"ff5584b7-a82b-4f4f-bf42-5bf74a3893d6\",\n  \"authSettings\": {\n    \"authenticationType\": \"NONE\",\n    \"apiKeyHeader\": \"X-Api-Key\",\n    \"clientId\": \"my-client-id\",\n    \"clientSecret\": \"my-client-secret\",\n    \"authorizationEndpoint\": \"https://auth.example.com/authorize\",\n    \"tokenEndpoint\": \"https://auth.example.com/token\",\n    \"scopesSupported\": [\n      \"read\",\n      \"write\"\n    ],\n    \"redirectUri\": \"https://chat.example.com/auth/toolset-signin\",\n    \"codeChallengeMethod\": \"S256\",\n    \"codeChallenge\": \"abc123\"\n  }\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -2624,7 +2730,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"url\": \"toolsets/encrypted-bucket/My%20toolset__0.0.1\",\n  \"credentialsLevel\": \"USER\",\n  \"authenticationType\": \"API_KEY\",\n  \"apiKey\": \"apiKey\",\n  \"code\": \"code\",\n  \"redirectUri\": \"redirectUri\"\n}\n",
+              "raw": "{\n  \"url\": \"toolsets/encrypted-bucket/My%20toolset__0.0.1\",\n  \"credentialsLevel\": \"USER\",\n  \"authenticationType\": \"API_KEY\",\n  \"apiKey\": \"apiKey\",\n  \"code\": \"code\",\n  \"redirectUri\": \"redirectUri\",\n  \"offlineUsageConsent\": false\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -2655,6 +2761,104 @@
               "path": ["api", "v1", "toolsets", "{{toolsetName}}", "logout"]
             },
             "description": "Revokes a toolset's credentials by proxying DIAL Core (POST /v1/ops/toolset/signout). When the request body omits `authenticationType`, the toolset's own stored authentication type is looked up first (same lookup as `GET /api/v1/toolsets/{toolsetName}`).\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Fetch a toolset's MCP Apps ui:// resource",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/toolsets/{{toolsetName}}/mcp-app-resource?resourceUri=ui://widget/1",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "toolsets",
+                "{{toolsetName}}",
+                "mcp-app-resource"
+              ],
+              "query": [{ "key": "resourceUri", "value": "ui://widget/1" }]
+            },
+            "description": "Raw-passthrough proxy of DIAL Core's GET /v1/deployments/{deployment_name}/mcp/resources?uri=... — the response body is Core's resource body unchanged, forwarded with Content-Type/Content-Security-Policy/X-Content-Type-Options from Core. Cached server-side for 30 seconds per toolset+resourceUri."
+          }
+        },
+        {
+          "name": "List MCP Apps-capable tools for an MCP-enabled deployment",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/toolsets/mcp-apps/tools?deploymentId=toolsets/bucket/weather__0.0.1&kind=toolset",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "toolsets", "mcp-apps", "tools"],
+              "query": [
+                {
+                  "key": "deploymentId",
+                  "value": "toolsets/bucket/weather__0.0.1",
+                  "description": "DIAL deployment identifier (toolset or application) to list MCP Apps-capable tools for."
+                },
+                {
+                  "key": "kind",
+                  "value": "toolset",
+                  "description": "Which of Core's MCP proxy route prefixes to use for this deployment."
+                }
+              ]
+            },
+            "description": "Calls DIAL Core's generic MCP JSON-RPC proxy's tools/list for the given deployment (toolset or application) and returns only the tools that declare an MCP Apps UI resource (`_meta.ui.resourceUri`)."
+          }
+        },
+        {
+          "name": "List every tool name exposed by an MCP-enabled deployment",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/toolsets/mcp-apps/tool-names?deploymentId=toolsets/bucket/weather__0.0.1&kind=toolset",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "toolsets", "mcp-apps", "tool-names"],
+              "query": [
+                {
+                  "key": "deploymentId",
+                  "value": "toolsets/bucket/weather__0.0.1",
+                  "description": "DIAL deployment identifier (toolset or application) to list MCP Apps-capable tools for."
+                },
+                {
+                  "key": "kind",
+                  "value": "toolset",
+                  "description": "Which of Core's MCP proxy route prefixes to use for this deployment."
+                }
+              ]
+            },
+            "description": "Calls DIAL Core's generic MCP JSON-RPC proxy's tools/list for the given deployment (toolset or application) and returns every tool name, unfiltered — used to populate the toolset editor's \"Allowed tools\" picker."
+          }
+        },
+        {
+          "name": "Forward an MCP App's self-initiated tool call",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"toolName\": \"refresh_data\",\n  \"arguments\": {\n    \"range\": \"7d\"\n  },\n  \"kind\": \"toolset\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/toolsets/{{toolsetName}}/mcp-app-tool-call",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "toolsets",
+                "{{toolsetName}}",
+                "mcp-app-tool-call"
+              ]
+            },
+            "description": "Validates toolName against the tools the MCP session currently exposes, then forwards a tools/call JSON-RPC request through DIAL Core's existing generic MCP proxy for this toolset. Not cached — every call is a live, potentially side-effecting tool invocation.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         }
       ]
@@ -2809,7 +3013,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"prompts/owner-bucket/Work/AI/summarize\",\n  \"isInstalled\": true\n}\n",
+              "raw": "{\n  \"id\": \"prompts/my-bucket/Work/AI/summarize\",\n  \"isInstalled\": true\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {

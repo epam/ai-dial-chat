@@ -11,7 +11,6 @@ import {
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getApiErrorStatus } from '../../api-error/api-error';
-import { safeDecodeURI } from '../../shared/string-utils';
 import {
   buildFromCache,
   fetchByTab,
@@ -238,7 +237,7 @@ export const useDialFileListing = ({
           );
           sharedRootMetaRef.current = new Map(
             flat.map((item) => [
-              safeDecodeURI(item.name),
+              item.name,
               { bucket: item.bucket ?? '', dialCorePath: item.path },
             ]),
           );
@@ -650,7 +649,7 @@ export const useDialFileListing = ({
           setIsSearching(true);
           const rootItems = cache.get('') ?? [];
           const matched = rootItems.filter((item) =>
-            safeDecodeURI(item.name).toLowerCase().includes(lowerQuery),
+            item.name.toLowerCase().includes(lowerQuery),
           );
           setSearchResults(
             matched.map((item) =>
@@ -677,7 +676,7 @@ export const useDialFileListing = ({
             );
             if (cancelled) return;
             const matched = searchItems.filter((item) =>
-              safeDecodeURI(item.name).toLowerCase().includes(lowerQuery),
+              item.name.toLowerCase().includes(lowerQuery),
             );
             setSearchResults(
               matched.map((item) =>

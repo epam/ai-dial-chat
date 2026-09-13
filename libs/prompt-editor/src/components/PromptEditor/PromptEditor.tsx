@@ -1,5 +1,11 @@
 import { EditorLayout } from '@epam/ai-dial-builder-form';
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+  mergeClasses,
+  useAvailableHeightCap,
+} from '@epam/ai-dial-chat-shared';
 import {
   Input,
   Label,
@@ -88,6 +94,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   });
   const contentLabelId = useId();
   const contentEditorId = useId();
+  const contentEditorCapRef = useAvailableHeightCap<HTMLDivElement>();
 
   /* Hosts that load asynchronously re-seed the form through `initialValues`. */
   useEffect(() => {
@@ -246,26 +253,35 @@ export const PromptEditor: FC<PromptEditorProps> = ({
               required
               className={contentLabelClassName}
             />
-            <Suspense
-              fallback={
-                <Spinner
-                  ariaLabel={
-                    labels?.contentLoadingAriaLabel ?? 'Loading prompt editor'
-                  }
-                />
-              }
+            <div
+              ref={contentEditorCapRef}
+              className={mergeClasses(
+                MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+                MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+              )}
             >
-              <MarkdownEditor
-                id={contentEditorId}
-                value={values.content}
-                onChange={(value) => setField('content', value)}
-                height={480}
-                placeholder={
-                  labels?.contentPlaceholder ?? 'Write the prompt instructions'
+              <Suspense
+                fallback={
+                  <Spinner
+                    ariaLabel={
+                      labels?.contentLoadingAriaLabel ?? 'Loading prompt editor'
+                    }
+                  />
                 }
-                theme={markdownEditorTheme}
-              />
-            </Suspense>
+              >
+                <MarkdownEditor
+                  id={contentEditorId}
+                  value={values.content}
+                  onChange={(value) => setField('content', value)}
+                  height={480}
+                  placeholder={
+                    labels?.contentPlaceholder ??
+                    'Write the prompt instructions'
+                  }
+                  theme={markdownEditorTheme}
+                />
+              </Suspense>
+            </div>
             {errors?.content != null && (
               <p
                 className={mergeClasses(

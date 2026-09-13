@@ -4,27 +4,21 @@ import {
   PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
 import {
-  Button,
   ButtonAppearance,
+  ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  Dropdown,
+  DropdownItem,
   ElementSize,
-  EllipsisTooltip,
   GhostButton,
+  MenuItemMark,
   PrimaryButton,
   Search,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconCalendarTime,
-  IconCheck,
-  IconChevronDown,
-  IconChevronUp,
-  IconPlus,
-} from '@tabler/icons-react';
-import { FC, useEffect, useRef, useState } from 'react';
+import { IconCalendarTime, IconPlus } from '@tabler/icons-react';
+import { FC, useEffect, useMemo, useRef } from 'react';
 import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../types/scheduled-tasks-sort-key';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
@@ -67,9 +61,10 @@ const findScrollParent = (el: Element | null): Element | null => {
 
 /**
  * Scheduled Tasks page shell: header with title/subtitle/create action, a
- * search + sort toolbar, and a content region that shows a loading spinner,
- * an error with retry, the empty state, a no-results state, or a flat card
- * grid, depending on `isLoading`/`error`/`items`.
+ * search + sort toolbar, an optional `banner` slot, and a content region
+ * that shows a loading spinner, an error with retry, the empty state, a
+ * no-results state, or a flat card grid, depending on
+ * `isLoading`/`error`/`items`.
  */
 export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   labels,
@@ -87,6 +82,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   skeletonCount = 6,
   onLoadMore,
   onCardClick,
+  banner,
   styles: scheduledTasksStyles,
 }) => {
   const {
@@ -106,47 +102,29 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     onSearchQueryChange(value ?? '');
   };
 
-  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
-
   /* Falls back to the control's own name so the trigger is never a button with
-   * no accessible name, which is what an unrecognised sortKey would produce. */
+   * no accessible name, which is what an unrecognised sortKey would produce —
+   * the kit's `Button` derives its `aria-label` from `label` and overrides any
+   * the caller passes, so the visible label is the only name available. */
   const activeSortLabel =
-    labels.sortOptions.find((option) => option.key === sortKey)?.label ??
+    labels.sortOptions.find((option) => option.value === sortKey)?.label ??
     labels.sortLabel;
 
   /*
-   * `selectable` is what makes each row a `menuitemcheckbox` carrying
-   * `aria-checked`, which is the only way this kit exposes "this is the sort
-   * currently in effect" to a screen reader. It also suppresses the kit's own
-   * auto-close and prepends a checkbox box, so the menu is closed explicitly
-   * below and `renderItem` replaces the row's content with a label and a
-   * trailing check — a single-choice list, not a set of checkboxes.
+   * The host passes the values alone; the marking and the click belong here,
+   * so the trigger and the menu cannot disagree about which order is applied.
    */
-  const sortItems = labels.sortOptions.map((option) => {
-    const isActiveSort = option.key === sortKey;
-
-    return {
-      ...option,
-      selectable: true,
-      checked: isActiveSort,
-      renderItem: () => (
-        <>
-          <EllipsisTooltip text={option.label} />
-          {isActiveSort && (
-            <IconCheck
-              size={DIAL_ICON_SIZE.SM}
-              stroke={DIAL_KIT_ICON_STROKE}
-              aria-hidden
-            />
-          )}
-        </>
-      ),
-      onClick: () => {
-        setIsSortMenuOpen(false);
-        onSortChange(option.key as ScheduledTasksSortKey);
-      },
-    };
-  });
+  const sortItems = useMemo<DropdownItem[]>(
+    () =>
+      labels.sortOptions.map((option) => ({
+        key: option.value,
+        label: option.label,
+        mark: MenuItemMark.Check,
+        checked: option.value === sortKey,
+        onClick: () => onSortChange(option.value as ScheduledTasksSortKey),
+      })),
+    [labels.sortOptions, sortKey, onSortChange],
+  );
 
   const statusMessage = getStatusMessage(
     isLoading,
@@ -294,35 +272,19 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           />
         </div>
         {labels.sortOptions.length > 0 && (
-          <Dropdown
+          /* The trigger shows the applied order and the menu marks it with the
+             design's trailing check. */
+          <ButtonDropdown
             items={sortItems}
-            open={isSortMenuOpen}
-            onOpenChange={setIsSortMenuOpen}
-          >
-            <Button
-              label={activeSortLabel}
-              variant={ButtonVariant.Primary}
-              appearance={ButtonAppearance.Ghost}
-              className={styles.sortButton}
-              iconAfter={
-                isSortMenuOpen ? (
-                  <IconChevronUp
-                    size={DIAL_ICON_SIZE.SM}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                  />
-                ) : (
-                  <IconChevronDown
-                    size={DIAL_ICON_SIZE.SM}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                  />
-                )
-              }
-            />
-          </Dropdown>
+            label={activeSortLabel}
+            variant={ButtonVariant.Primary}
+            appearance={ButtonAppearance.Ghost}
+            className={styles.sortButton}
+          />
         )}
       </div>
+
+      {banner}
 
       <span role="status" aria-live="polite" className="sr-only">
         {statusMessage}

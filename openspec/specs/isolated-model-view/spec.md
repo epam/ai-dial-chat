@@ -8,8 +8,7 @@
 
 ### Requirement: `isolated-model-id` query param drives a temporary isolated view
 
-`TODO: remove in next release.` A new context, `IsolatedModelViewContext`
-(`apps/chat/src/context/IsolatedModelViewContext.tsx`), SHALL be mounted in `apps/chat/src/main.tsx` inside both `BrowserRouter` and `DeploymentsProvider` (needs `useLocation()` and `useDeployments()`), and SHALL expose `useIsolatedModelView(): { isActive: boolean; isNotFound: boolean; resolvedDeploymentId: string | null }` via a `useIsolatedModelView` hook. The file SHALL carry a `// TODO: remove in next release` header comment.
+`TODO: remove in next release.` A new context, `IsolatedModelViewContext` (`apps/chat/src/context/IsolatedModelViewContext.tsx`), SHALL be mounted in `apps/chat/src/main.tsx` inside both `BrowserRouter` and `DeploymentsProvider` (needs `useLocation()` and `useDeployments()`), and SHALL expose `useIsolatedModelView(): { isActive: boolean; isNotFound: boolean; resolvedDeploymentId: string | null }` via a `useIsolatedModelView` hook. The file SHALL carry a `// TODO: remove in next release` header comment.
 
 On mount, the provider SHALL read the `isolated-model-id` query parameter from `useLocation().search`. When absent or empty, `isActive`, `isNotFound` SHALL both be `false` and `resolvedDeploymentId` SHALL be `null`; every other requirement below SHALL be a no-op. When present and non-empty, `isActive` SHALL be `true` and the provider SHALL resolve the value against `useDeployments().items` via the existing `findDeploymentByIdOrReference` helper, exposing the match's `id` as `resolvedDeploymentId`. `isNotFound` SHALL be `true` only once `useDeployments()` has finished its initial load and no matching item was found; while deployments are still loading, `isNotFound` SHALL remain `false`.
 

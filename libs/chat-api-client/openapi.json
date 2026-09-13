@@ -2652,7 +2652,7 @@
     },
     "/api/v1/conversations/publish": {
       "post": {
-        "description": "Publishes an owned conversation to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The conversation title is re-fetched server-side and used as the publication name.",
+        "description": "Publishes an owned conversation to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The conversation title is re-fetched server-side and used as the publication name. The optional `author` sets the publication’s displayed author; when it is omitted or blank the caller's own session display name is used, as it always was.",
         "operationId": "publishConversation",
         "parameters": [
           {
@@ -4249,7 +4249,15 @@
             "description": "Unexpected response from DIAL Core"
           },
           "503": {
-            "description": "DIAL Core is unreachable"
+            "description": "DIAL Core is unreachable or ASR is temporarily unavailable",
+            "headers": {
+              "Retry-After": {
+                "description": "Upstream retry delay, when provided by DIAL Core",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "summary": "Transcribe audio using the configured ASR model",
@@ -5533,7 +5541,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
-        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
+        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was.",
         "operationId": "publishCatalogEntity",
         "parameters": [
           {
@@ -6346,7 +6354,7 @@
   ],
   "servers": [
     {
-      "url": "http://localhost:3005",
+      "url": "http://localhost:5000",
       "description": "Local development"
     }
   ],
@@ -7281,6 +7289,26 @@
           }
         }
       },
+      "ModelPricingRateDto": {
+        "type": "object",
+        "properties": {
+          "ifFalse": {
+            "$ref": "#/components/schemas/ModelPricingRateDto"
+          },
+          "ifTrue": {
+            "$ref": "#/components/schemas/ModelPricingRateDto"
+          },
+          "rate": {
+            "type": "string",
+            "description": "Per-unit price for this pricing branch"
+          },
+          "test": {
+            "type": "object",
+            "description": "Condition selecting the applicable pricing branch",
+            "additionalProperties": true
+          }
+        }
+      },
       "ModelCapabilitiesDto": {
         "type": "object",
         "properties": {
@@ -7480,14 +7508,24 @@
           },
           "pricing": {
             "type": "object",
-            "description": "Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key",
+            "description": "Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds a scalar price or conditional pricing tree",
             "additionalProperties": {
-              "type": "string"
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/components/schemas/ModelPricingRateDto"
+                }
+              ]
             },
             "example": {
               "unit": "token",
               "prompt": "0.000003",
-              "completion": "0.000015"
+              "completion": "0.000015",
+              "cache_read": {
+                "rate": "0.000001"
+              }
             }
           },
           "features": {
@@ -8887,20 +8925,48 @@
           }
         }
       },
+      "CellAddressDto": {
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": "number",
+            "description": "1-based row number"
+          },
+          "col": {
+            "type": "number",
+            "description": "1-based column number"
+          }
+        }
+      },
       "AnnotationSelectorDto": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "description": "Selector discriminator, e.g. 'text_character_range', 'pdf_bbox', 'html_tag'"
+            "description": "Selector discriminator, e.g. 'text_character_range', 'pdf_bbox', 'html_tag', 'excel_rc_range'"
           },
           "start": {
-            "type": "number",
-            "description": "Character range start (inclusive)"
+            "description": "Range start: a character offset (inclusive), or a 1-based cell address for an `excel_rc_range` selector",
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "$ref": "#/components/schemas/CellAddressDto"
+              }
+            ]
           },
           "end": {
-            "type": "number",
-            "description": "Character range end (inclusive)"
+            "description": "Range end. For `text_character_range`/`pdf_bbox`, an inclusive character offset. For `docx_text_range`/`pptx_text_range`, an already-exclusive character offset (confirmed against captured DIAL Core responses). For `excel_rc_range`, a 1-based cell address naming the range's last (inclusive) cell. `null` and omitted are equivalent",
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "$ref": "#/components/schemas/CellAddressDto"
+              }
+            ]
           },
           "page": {
             "type": "number",
@@ -8929,6 +8995,33 @@
           "id": {
             "type": "string",
             "description": "Inline tag's id attribute value"
+          },
+          "story": {
+            "type": "string",
+            "description": "DOCX story name a character range lives in, e.g. 'body' (opaque — no closed set is confirmed)"
+          },
+          "path": {
+            "description": "DOCX source-tree element indices identifying the paragraph, matched element-wise",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "slide": {
+            "type": "number",
+            "description": "1-based PPTX slide number"
+          },
+          "shape_id": {
+            "type": "string",
+            "description": "PPTX shape identifier, compared as a string"
+          },
+          "sheet": {
+            "type": "string",
+            "description": "XLSX sheet name, matched exactly"
+          },
+          "text": {
+            "type": "string",
+            "description": "Cited text for a DOCX/PPTX range, compared against the text resolved over `start`/`end`"
           }
         }
       },
@@ -8972,6 +9065,20 @@
       "AnnotationBodyDto": {
         "type": "object",
         "properties": {
+          "selector": {
+            "description": "Location in the cited document; PDF page numbers are 1-based",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AnnotationSelectorDto"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AnnotationSelectorDto"
+                }
+              }
+            ]
+          },
           "title": {
             "type": "string",
             "description": "Title of the cited source"
@@ -9903,6 +10010,12 @@
             "type": "string",
             "description": "Destination folder under the Organization/public bucket, forwarded to DIAL Core as `targetFolder`.",
             "example": "Organization/Data Science/Shared chats"
+          },
+          "author": {
+            "type": "string",
+            "description": "Display author recorded on the publication as `displayAuthor`. Omitted, blank, or whitespace-only falls back to the session's own display name, which is what every caller got before this field existed.",
+            "example": "DIAL Team",
+            "maxLength": 200
           },
           "rules": {
             "description": "Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.",
@@ -11349,6 +11462,12 @@
             "type": "string",
             "description": "Optional version label. When omitted, versioned resource ids recover it from their {name}__{version} suffix; unversioned resources use an empty version.",
             "example": "1.2.0"
+          },
+          "author": {
+            "type": "string",
+            "description": "Display author recorded on the publication as `displayAuthor`, surfaced in the catalog as the published entity's \"Hosted by\" value. Omitted, blank, or whitespace-only falls back to the session's own display name, which is what every caller got before this field existed.",
+            "example": "DIAL Team",
+            "maxLength": 200
           },
           "rules": {
             "description": "Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.",

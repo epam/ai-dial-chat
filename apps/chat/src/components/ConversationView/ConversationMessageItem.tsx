@@ -1,6 +1,10 @@
-import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  AttachmentContentType,
+  useAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   annotationToDisplayAttachment,
+  annotationToOoxmlCanvasContent,
   annotationToPdfCanvasContent,
   attachmentDtosToDisplayAttachments,
   messageHasStages,
@@ -22,6 +26,7 @@ import {
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import {
   MessageBubble,
@@ -72,7 +77,10 @@ import {
   attachmentCanvasUrlResolvers,
   attachmentDisplayResolvers,
 } from '../../utils/attachment-display-resolvers';
-import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
+import {
+  resolveDialFileDownloadUrl,
+  resolveMarkdownUrl,
+} from '../../utils/dial-file';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
@@ -120,7 +128,9 @@ interface Props {
     keptAttachments: DisplayAttachment[],
     newAttachments: Attachment[],
   ) => void;
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   pendingDropFiles?: File[];
   onDropFilesConsumed?: () => void;
   deploymentLookup: Record<
@@ -261,6 +271,14 @@ const ConversationMessageItem: FC<Props> = ({
   );
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
+  const handleTableOpenInCanvas = useCallback(
+    (text: string) =>
+      openCanvas(
+        { type: AttachmentContentType.MarkdownTable, text },
+        t(ChatI18nKeys.MarkdownTableTitle),
+      ),
+    [openCanvas, t],
+  );
   const { handleAttachmentClick: handleDownload } = useAttachmentAction({
     resolveDownloadUrl: resolveDialFileDownloadUrl,
   });
@@ -306,10 +324,22 @@ const ConversationMessageItem: FC<Props> = ({
         openCanvas(pdfContent, fileName);
         return;
       }
+      const ooxmlContent = annotationToOoxmlCanvasContent(
+        annotation,
+        annotations,
+        attachmentCanvasUrlResolvers,
+      );
+      if (ooxmlContent != null) {
+        const attachment = annotation.body?.source?.attachment;
+        const rawSegment = attachment?.url?.split('/').pop() ?? '';
+        const fileName = attachment?.title ?? decodeURIComponent(rawSegment);
+        openCanvas(ooxmlContent, fileName);
+        return;
+      }
       const display = annotationToDisplayAttachment(annotation);
       if (display) handleAttachmentClick(display);
     },
-    [citationGroups, openCanvas, handleAttachmentClick],
+    [citationGroups, annotations, openCanvas, handleAttachmentClick],
   );
   const handleCitationOpenInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
@@ -525,32 +555,41 @@ const ConversationMessageItem: FC<Props> = ({
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }
+        markdownUrlTransform={
+          msg.role === MessageRole.Assistant ? resolveMarkdownUrl : undefined
+        }
         markdownClassNames={markdownClassNames}
         attachments={nonReferenceDisplayAttachments}
         isStreaming={isStreaming}
         hasAlwaysVisibleActions={!isStreaming}
-        actions={buildMessageActions(
-          msg,
-          index,
-          {
-            onEdit:
-              !isAssistantTyping && !isEditUserMessageHidden
-                ? onStartEdit
-                : undefined,
-            onHoverEdit: preloadEditInput,
-            onDelete:
-              !isAssistantTyping && !isDeleteUserMessageHidden
-                ? onDeleteMessage
-                : undefined,
-            onRegenerate: isRegenerateAssistantMessageHidden
-              ? undefined
-              : onRegenerateMessage,
-            onRate: isLikesEnabled ? onRateMessage : undefined,
-            onDislike: isLikesEnabled ? onDislikeMessage : undefined,
-          },
-          tooltips,
-          ariaLabels,
-        )}
+        actions={{
+          ...buildMessageActions(
+            msg,
+            index,
+            {
+              onEdit:
+                !isAssistantTyping && !isEditUserMessageHidden
+                  ? onStartEdit
+                  : undefined,
+              onHoverEdit: preloadEditInput,
+              onDelete:
+                !isAssistantTyping && !isDeleteUserMessageHidden
+                  ? onDeleteMessage
+                  : undefined,
+              onRegenerate: isRegenerateAssistantMessageHidden
+                ? undefined
+                : onRegenerateMessage,
+              onRate: isLikesEnabled ? onRateMessage : undefined,
+              onDislike: isLikesEnabled ? onDislikeMessage : undefined,
+            },
+            tooltips,
+            ariaLabels,
+          ),
+          /* Regenerate/copy/like/dislike stay mounted while a response streams,
+             so they have to be disabled — otherwise a second generation or a
+             rating can be triggered mid-stream. */
+          isDisabled: isAssistantTyping,
+        }}
         afterContent={
           referenceGroups.length > 0 ||
           hasStages ||
@@ -682,11 +721,19 @@ const ConversationMessageItem: FC<Props> = ({
           thinkingLabel,
           codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
           codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+          tableCopyCsvLabel: t(ButtonsI18nKeys.CopyAsCsv),
+          tableCopyTxtLabel: t(ButtonsI18nKeys.CopyAsTxt),
+          tableCopyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
+          tableCopiedLabel: t(ButtonsI18nKeys.Copied),
+          tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
+          tableOpenInCanvasLabel: t(ButtonsI18nKeys.OpenInCanvas),
+          tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
           ...statusProps,
         }}
         deploymentIconUrl={deploymentEntry?.iconUrl}
         deploymentDisplayName={deploymentEntry?.displayName}
         codeBlockTheme={codeBlockTheme}
+        tableOnOpenInCanvas={handleTableOpenInCanvas}
         onAttachmentClick={handleAttachmentClick}
         onDownloadAll={handleDownloadAll}
         selectedAttachmentId={selectedAttachmentId}

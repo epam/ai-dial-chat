@@ -191,8 +191,7 @@ status but at least one token or overall Cost limit is `Unlimited`, overall Stat
 
 ### Requirement: Aggregate period cost cards
 
-The `mapUsageDataToDashboard` utility (in `libs/usage-dashboard`, see the `usage-dashboard-lib`
-capability) SHALL map the top-level
+The `mapUsageDataToDashboard` utility (in `libs/usage-dashboard`, see the `usage-dashboard-lib` capability) SHALL map the top-level
 `dayCostStats`, `weekCostStats`, and `monthCostStats` fields from `UserLimitStatsResponseDto` into
 `UsageLimitCardData[]` for `UsageLimitCardGroup`. A period whose stats are absent or non-finite
 SHALL be omitted from the array entirely. The card title for each period SHALL be the rolling-window
@@ -230,8 +229,7 @@ display error.
 
 ### Requirement: Overall Cost period header indicators
 
-The `mapOverallCostLimitsToPeriodStatuses` utility (in `libs/usage-dashboard`, see the
-`usage-dashboard-lib` capability) SHALL normalize the top-level `dayCostStats`, `weekCostStats`, and
+The `mapOverallCostLimitsToPeriodStatuses` utility (in `libs/usage-dashboard`, see the `usage-dashboard-lib` capability) SHALL normalize the top-level `dayCostStats`, `weekCostStats`, and
 `monthCostStats` into Last 24 hours, Last 7 days, and Last 30 days header statuses. It SHALL provide
 an error icon tooltip for `LimitReached`, a warning icon tooltip for `RunningLow`, and no icon for
 `WithinLimits`, `NoLimit`, or `Unavailable`. Tooltip text SHALL name its own period. A reached
@@ -279,8 +277,7 @@ minute/hour, and Requests keys SHALL only be removed if unused elsewhere.
 
 ### Requirement: Library isolation for the adapter
 
-All DTO field selection, unlimited-sentinel checks, status thresholds, currency/number formatting,
-locale/icon resolution, and deployment joins SHALL happen inside `libs/usage-dashboard`'s transform
+All DTO field selection, unlimited-sentinel checks, status thresholds, currency/number formatting, locale/icon resolution, and deployment joins SHALL happen inside `libs/usage-dashboard`'s transform
 utilities (`mapUserUsageToModelLimits`, `mapOverallCostLimitsToPeriodStatuses`). The utilities
 accept host-owned callbacks (`resolveIconUrl`, `resolveDisplayName`) and a caller-supplied translate
 function for all user-visible strings, keeping app-specific URL construction and locale resolution

@@ -35,6 +35,66 @@ export interface HtmlTagSelector {
 }
 
 /**
+ * Selector that targets a character range inside a DOCX story. Confirmed
+ * against captured DIAL Core responses: unlike {@link TextCharacterRangeSelector},
+ * `end` is already exclusive on the wire, not inclusive.
+ */
+export interface DocxRangeSelector {
+  /** Discriminator — always `'docx_text_range'`. */
+  type: 'docx_text_range';
+  /** Name of the DOCX story the range lives in, as an opaque string (only `'body'` is confirmed upstream — no closed set). */
+  story: string;
+  /** Source-tree element indices identifying the paragraph, matched element-wise. */
+  path: number[];
+  /** Zero-based start character offset within the story's matched text. */
+  start: number;
+  /** Zero-based end character offset — already exclusive on the wire. */
+  end: number;
+  /** The cited text, expected to equal the text resolved over `[start, end)`. */
+  text: string;
+}
+
+/**
+ * Selector that targets a character range inside a single shape on one PPTX
+ * slide. Confirmed against captured DIAL Core responses: unlike
+ * {@link TextCharacterRangeSelector}, `end` is already exclusive on the wire.
+ */
+export interface PptxRangeSelector {
+  /** Discriminator — always `'pptx_text_range'`. */
+  type: 'pptx_text_range';
+  /** 1-based slide number. */
+  slide: number;
+  /** Shape identifier, compared as a string against the run's own shape id. */
+  shape_id: string;
+  /** Zero-based start character offset within the shape's matched text. */
+  start: number;
+  /** Zero-based end character offset — already exclusive on the wire. */
+  end: number;
+  /** The cited text, expected to equal the text resolved over `[start, end)`. */
+  text: string;
+}
+
+/** A 1-based cell address on an XLSX sheet. */
+export interface ExcelCellAddress {
+  /** 1-based row number. */
+  row: number;
+  /** 1-based column number. */
+  col: number;
+}
+
+/** Selector that targets one cell, or a contiguous same-row cell range, on a named XLSX sheet. */
+export interface ExcelRcRangeSelector {
+  /** Discriminator — always `'excel_rc_range'`. */
+  type: 'excel_rc_range';
+  /** Sheet name, matched exactly against the workbook's own sheet names. */
+  sheet: string;
+  /** First cell of the range. */
+  start: ExcelCellAddress;
+  /** Last (inclusive) cell of the range, on the same row as `start`. `null` and omitted both mean a single cell. */
+  end?: ExcelCellAddress | null;
+}
+
+/**
  * Discriminated union of all recognised annotation selector shapes.
  * Unknown selector types are preserved as an open record to allow forward-compatibility.
  */
@@ -42,6 +102,9 @@ export type AnnotationSelector =
   | TextCharacterRangeSelector
   | PdfBBoxSelector
   | HtmlTagSelector
+  | DocxRangeSelector
+  | PptxRangeSelector
+  | ExcelRcRangeSelector
   | { type: string; [key: string]: unknown };
 
 /** Identifies the part of the message (or a related resource) that the annotation refers to. */

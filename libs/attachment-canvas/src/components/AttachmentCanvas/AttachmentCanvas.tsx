@@ -31,6 +31,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   labels: {
     ariaLabel,
     closeLabel = 'Close',
+    resizeLabel = 'Resize panel',
     downloadLabel = 'Download',
     copyTextLabel = 'Copy text',
     copiedTextLabel = 'Copied!',
@@ -58,11 +59,19 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,
+    tableCopyCsvLabel,
+    tableCopyTxtLabel,
+    tableCopyMarkdownLabel,
+    tableCopiedLabel,
+    tableDownloadCsvLabel,
+    ooxmlHighlightsLabel,
+    ooxmlHighlightNavigatedLabel,
   },
   onDownload,
   onCopyText,
   onCopyMarkdown,
   onCopyJson,
+  tableDownloadFilename,
   isMobile = false,
   defaultWidth,
   minWidth = 600,
@@ -167,7 +176,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       isOpen={isOpen}
       orientation={SidebarOrientation.Right}
       title={fileName}
-      labels={{ ariaLabel, closeLabel }}
+      labels={{ ariaLabel, closeLabel, resizeLabel }}
       onClose={onClose}
       resizable={!isMobile}
       defaultWidth={defaultWidth}
@@ -358,9 +367,17 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           codeContentLoadingLabel,
           codeContentErrorLabel,
           codeContentRetryLabel,
+          tableCopyCsvLabel,
+          tableCopyTxtLabel,
+          tableCopyMarkdownLabel,
+          tableCopiedLabel,
+          tableDownloadCsvLabel,
+          ooxmlHighlightsLabel,
+          ooxmlHighlightNavigatedLabel,
         }}
         styles={bodyStylesProp}
         codeBlockTheme={codeBlockTheme}
+        tableDownloadFilename={tableDownloadFilename}
         loadPdf={loadPdf}
         configurePdfWorker={configurePdfWorker}
       />

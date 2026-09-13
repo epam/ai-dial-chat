@@ -86,6 +86,13 @@ the next PDF open (or an explicit retry) invokes `configurePdfWorker` again
 instead of being stuck on the first failure. When omitted,
 `@epam/pdf-highlighter-kit`'s own CDN-hosted worker fallback is used instead.
 
+### PDF page navigation
+
+`PdfCanvasContent.page` is an optional 1-based navigation target, independent of
+highlight geometry. An explicit page suppresses the wrapper's default-page-1
+fallback. It does not synchronize the vendor engine's asynchronous zoom/render
+operations; a later vendor scroll reset remains under investigation.
+
 ## Styling
 
 Import the package's base stylesheet once, alongside the component tree:
@@ -107,7 +114,7 @@ needed from the host.
 
 ### AttachmentCanvas
 
-Renders the active attachment content based on its type, inside a resizable side panel. `isOpen`, `onClose`, `content`, and `labels` are required. When `content.type` is `McpApp` and `content.onReload` is set, the header shows a reload action (labelled by `labels.mcpAppReloadLabel`, default `'Reload'`) that lets the host re-fetch the resource and re-resolve the tool result from scratch — the lib has no cache of its own, so this is purely a signal for the app layer to bypass whatever cache it keeps.
+Renders the active attachment content based on its type, inside a resizable side panel. `isOpen`, `onClose`, `content`, and `labels` are required. When `content.type` is `McpApp` and `content.onReload` is set, the header shows a reload action (labelled by `labels.mcpAppReloadLabel`, default `'Reload'`) that lets the host re-fetch the resource and re-resolve the tool result from scratch — the lib has no cache of its own, so this is purely a signal for the app layer to bypass whatever cache it keeps. When content type is `MarkdownTable`, supply the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own copy-as-CSV/TXT/Markdown and download-as-CSV actions in an inline header above the table — the same header a Markdown table renders inline in chat. The panel's own header only ever shows its close button for this content type.
 
 ```tsx
 import {
@@ -131,7 +138,7 @@ import {
 
 ### AttachmentCanvasBody
 
-Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render.
+Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render. For content type `MarkdownTable`, pass the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own inline copy/download header, same as `AttachmentCanvas`.
 
 ```tsx
 import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
@@ -145,7 +152,7 @@ import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
 
 ### AttachmentCanvasContainer
 
-Context-connected container that reads state from `AttachmentCanvasProvider` and renders `AttachmentCanvas` with download support wired up. Every prop is optional — `labels` fields all have English defaults.
+Context-connected container that reads state from `AttachmentCanvasProvider` and renders `AttachmentCanvas` with download support wired up. Every prop is optional — `labels` fields all have English defaults. Forwards the table copy/download labels and `tableDownloadFilename` to `AttachmentCanvas` for the `MarkdownTable` content type.
 
 ```tsx
 import {
@@ -305,21 +312,22 @@ const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 
 `AttachmentContentType` is the discriminant on every content descriptor.
 
-| Enum member                         | Content type               | Description                                                                                                                             |
-| ----------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `AttachmentContentType.PlainText`   | `PlainTextCanvasContent`   | Renders plain text                                                                                                                      |
-| `AttachmentContentType.Image`       | `ImageCanvasContent`       | Renders an image from a URL                                                                                                             |
-| `AttachmentContentType.Audio`       | `AudioCanvasContent`       | Renders an audio player                                                                                                                 |
-| `AttachmentContentType.Markdown`    | `MarkdownCanvasContent`    | Renders markdown text                                                                                                                   |
-| `AttachmentContentType.Json`        | `JsonCanvasContent`        | Renders a JSON tree viewer                                                                                                              |
-| `AttachmentContentType.Pdf`         | `PdfCanvasContent`         | Renders a PDF with highlight support                                                                                                    |
-| `AttachmentContentType.Ooxml`       | `OoxmlCanvasContent`       | Renders DOCX, XLSX, PPTX, or CSV with `@silurus/ooxml`; the persistent XLSX `fx` bar shows the selected cell's formula or display value |
-| `AttachmentContentType.Code`        | `CodeCanvasContent`        | Renders syntax-highlighted source                                                                                                       |
-| `AttachmentContentType.Html`        | `HtmlCanvasContent`        | Renders HTML in a sandboxed frame, or its source                                                                                        |
-| `AttachmentContentType.McpApp`     | `McpAppCanvasContent`      | Mounts a sandboxed MCP App `ui://` resource through `McpAppCanvasRenderer`                                                              |
-| `AttachmentContentType.Visualizer`  | `VisualizerCanvasContent`  | Renders a registered custom visualizer                                                                                                  |
-| `AttachmentContentType.Unsupported` | `UnsupportedCanvasContent` | Fallback for unsupported MIME types                                                                                                     |
-| `AttachmentContentType.Error`       | `ErrorCanvasContent`       | Load failure or forbidden access                                                                                                        |
+| Enum member                           | Content type                 | Description                                                                                                                             |
+| ------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `AttachmentContentType.PlainText`     | `PlainTextCanvasContent`     | Renders plain text                                                                                                                      |
+| `AttachmentContentType.Image`         | `ImageCanvasContent`         | Renders an image from a URL                                                                                                             |
+| `AttachmentContentType.Audio`         | `AudioCanvasContent`         | Renders an audio player                                                                                                                 |
+| `AttachmentContentType.Markdown`      | `MarkdownCanvasContent`      | Renders markdown text                                                                                                                   |
+| `AttachmentContentType.MarkdownTable` | `MarkdownTableCanvasContent` | Renders a Markdown table opened standalone (e.g. via a table's "open in canvas" action), with its own inline copy/download header       |
+| `AttachmentContentType.Json`          | `JsonCanvasContent`          | Renders a JSON tree viewer                                                                                                              |
+| `AttachmentContentType.Pdf`           | `PdfCanvasContent`           | Renders a PDF with highlight support and page-accurate navigation via an optional `page` field                                          |
+| `AttachmentContentType.Ooxml`         | `OoxmlCanvasContent`         | Renders DOCX, XLSX, PPTX, or CSV with `@silurus/ooxml`; the persistent XLSX `fx` bar shows the selected cell's formula or display value |
+| `AttachmentContentType.Code`          | `CodeCanvasContent`          | Renders syntax-highlighted source                                                                                                       |
+| `AttachmentContentType.Html`          | `HtmlCanvasContent`          | Renders HTML in a sandboxed frame, or its source                                                                                        |
+| `AttachmentContentType.McpApp`        | `McpAppCanvasContent`        | Mounts a sandboxed MCP App `ui://` resource through `McpAppCanvasRenderer`                                                              |
+| `AttachmentContentType.Visualizer`    | `VisualizerCanvasContent`    | Renders a registered custom visualizer                                                                                                  |
+| `AttachmentContentType.Unsupported`   | `UnsupportedCanvasContent`   | Fallback for unsupported MIME types                                                                                                     |
+| `AttachmentContentType.Error`         | `ErrorCanvasContent`         | Load failure or forbidden access                                                                                                        |
 
 `AttachmentErrorType` distinguishes the two failure kinds carried by
 `ErrorCanvasContent`: `LoadFailed` (network error or a non-`403` non-OK
@@ -329,6 +337,61 @@ response) and `Forbidden` (HTTP `403`).
 `Csv`. The public name is retained for compatibility; `Csv` uses
 `@silurus/ooxml`'s `XlsxSheetViewer` delimited-text mode rather than an OOXML
 workbook parser.
+
+### Office citation highlighting
+
+`OoxmlCanvasContent` optionally carries `highlights?: OoxmlHighlight[]` and
+`selectedHighlightId?: string`. Both are omitted (never `[]`) when there is
+nothing to highlight — the self-loading, no-highlight preview path is taken
+verbatim in that case. When `highlights` is present, `OoxmlContent` resolves
+rectangles from the same parsed bytes the viewer paints (a DOCX/PPTX shared
+parse; XLSX stays on its self-loading path since cell geometry lives on the
+viewer), renders every highlight, and emphasises the one matching
+`selectedHighlightId` on two channels (border weight and opacity).
+
+```tsx
+import {
+  OoxmlHighlightKind,
+  type OoxmlHighlight,
+} from '@epam/ai-dial-attachment-canvas';
+
+const highlight: OoxmlHighlight = {
+  id: 'a',
+  locations: [
+    {
+      kind: OoxmlHighlightKind.DocxTextRange,
+      story: 'body',
+      path: [3, 1],
+      start: 0,
+      endExclusive: 5,
+      text: 'Hello',
+    },
+  ],
+};
+```
+
+`OoxmlHighlightKind` discriminates `OoxmlHighlightLocation`:
+`DocxTextRange` (`OoxmlDocxHighlightLocation` — `story`, `path`, `start`,
+`endExclusive`, `text`), `PptxTextRange` (`OoxmlPptxHighlightLocation` —
+`slide`, `shapeId`, `start`, `endExclusive`, `text`), and `XlsxCellRange`
+(`OoxmlXlsxHighlightLocation` — `sheet`, `start: OoxmlCellAddress`, an
+optional `end: OoxmlCellAddress` for a same-row range). `endExclusive` on the
+DOCX/PPTX locations is already an exclusive upper bound — the caller
+producing it (`libs/chat-hooks`'s `annotationToOoxmlCanvasContent`) must not
+add 1 to the wire's `end`.
+
+Highlight colours go through the same `AttachmentCanvasColors` mechanism as
+every other themed surface: `ooxmlHighlightBorder` (defaults to
+`--stroke-accent`) and `ooxmlHighlightBackground` (defaults to `transparent`,
+so the cited text keeps its own contrast).
+
+Two labels control the highlight overlay's accessible strings:
+`ooxmlHighlightsLabel` (defaults to `'Cited locations'`, names the overlay
+`role="region"`) and `ooxmlHighlightNavigatedLabel` (defaults to
+`'Scrolled to the cited location'`, a `role="status"` announcement fired
+once per navigation). Both are threaded through
+`AttachmentCanvasLabels` → `AttachmentCanvasBodyLabels`'s `Pick` list →
+`OoxmlContent`.
 
 ## Utilities
 

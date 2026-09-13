@@ -19,7 +19,6 @@ import {
   type PromptOverviewLabels,
   PromptSource,
   reconcileFilterTopics,
-  type SkillOverviewLabels,
   SkillSource,
   useCatalogItemDetails,
 } from '@epam/ai-dial-chat-hooks';
@@ -32,6 +31,7 @@ import { getDeploymentDetails } from '../../server-api/deployments';
 import { getPrompt, getPublicPrompt } from '../../server-api/prompts.api';
 import { downloadSkillFile, listSkillFiles } from '../../server-api/skills.api';
 import { CATALOG_TAB_ORDER } from '../../types/catalog';
+import { buildSkillOverviewLabels } from '../../utils/catalog';
 import {
   buildDeploymentFolderLabels,
   mapDeploymentToCatalogItem,
@@ -136,21 +136,7 @@ export const useCatalogItems = ({
     [t],
   );
 
-  const skillOverviewLabels: SkillOverviewLabels = useMemo(
-    () => ({
-      whenToUseLabel: t(CatalogI18nKeys.DetailsSkillWhenToUse),
-      allowedToolsLabel: t(CatalogI18nKeys.DetailsSkillAllowedTools),
-      bundledResourcesLabel: t(CatalogI18nKeys.DetailsSkillBundledResources),
-      specificationSectionTitle: t(
-        CatalogI18nKeys.DetailsSkillSpecificationSection,
-      ),
-      authorLabel: t(CatalogI18nKeys.DetailsSkillAuthor),
-      updatedLabel: t(CatalogI18nKeys.DetailsSkillUpdated),
-      fileCountLabel: t(CatalogI18nKeys.DetailsSkillFileCount),
-      detailsSectionTitle: t(CatalogI18nKeys.DetailsSkillSection),
-    }),
-    [t],
-  );
+  const skillOverviewLabels = useMemo(() => buildSkillOverviewLabels(t), [t]);
 
   const deploymentLimitsLabels: DeploymentLimitsLabels = useMemo(
     () => ({

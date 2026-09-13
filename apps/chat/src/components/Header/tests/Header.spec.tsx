@@ -44,9 +44,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
 }));
 
-const renderHeader = (props?: Partial<ComponentProps<typeof Header>>) =>
+const renderHeader = (
+  props?: Partial<ComponentProps<typeof Header>>,
+  route = `${ROUTES.Conversations}/test`,
+) =>
   render(
-    <MemoryRouter initialEntries={[`${ROUTES.Conversations}/test`]}>
+    <MemoryRouter initialEntries={[route]}>
       <SourcesSidebarProvider>
         <Header onMenuToggle={vi.fn()} {...props} />
       </SourcesSidebarProvider>
@@ -188,6 +191,31 @@ describe('Header', () => {
     renderHeader({ onNewChat: vi.fn() });
     expect(
       screen.getByRole('button', { name: ButtonsI18nKeys.NewChat }),
+    ).toBeTruthy();
+  });
+
+  it('hides the new-conversation button on the start page', () => {
+    /*
+     * Pin the flags locally rather than leaning on the shared mock: with
+     * hide-new-conversation explicitly off, the button's absence can only come
+     * from the route gate, and a later edit to `beforeEach` cannot silently
+     * turn this into a pass for the wrong reason.
+     */
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature !== OverlayFeature.HideNewConversation,
+    );
+    renderHeader({ onNewChat: vi.fn() }, ROUTES.Root);
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.NewChat }),
+    ).toBeNull();
+  });
+
+  it('keeps the conversation-panel toggle on the start page', () => {
+    renderHeader({ onConversationPanelToggle: vi.fn() }, ROUTES.Root);
+    expect(
+      screen.getByRole('button', {
+        name: ConversationPanelI18nKeys.ToggleAriaLabel,
+      }),
     ).toBeTruthy();
   });
 });

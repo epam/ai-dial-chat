@@ -122,8 +122,10 @@ interface HeaderProps {
   isDownloadVisible?: (item: CatalogItem) => boolean;
   /**
    * Resolves whether Download renders as the primary action instead of a
-   * Manage-menu entry. Defaults to `item.type === CatalogEntityType.Skill`.
-   * An item whose Download is primary never also shows it in the Manage menu.
+   * Manage-menu entry. Defaults to a Skill whose "Use in chat" primary action
+   * is not shown (`item.type === CatalogEntityType.Skill` and no primary
+   * action). An item whose Download is primary never also shows it in the
+   * Manage menu.
    */
   isDownloadPrimary?: (item: CatalogItem) => boolean;
   /** Called when "Delete" is clicked in the Manage menu. The details panel owns the confirmation step, so this only requests it. */
@@ -179,7 +181,9 @@ interface HeaderProps {
    * Additional caller-supplied rule for whether "Unpublish" is shown,
    * combined (AND) with `hasPublishedFolders` and the presence of
    * `onOpenUnpublish`. Defaults to `true` when absent. When the entry ends up
-   * shown, it replaces "Publish" rather than joining it.
+   * shown, it replaces "Publish" rather than joining it. Supplying it also
+   * keeps the Manage trigger rendered for an item it returns `true` for while
+   * `isPublishHistoryResolved` is still `false`.
    */
   isUnpublishVisible?: (item: CatalogItem) => boolean;
   /**
@@ -189,6 +193,14 @@ interface HeaderProps {
    * entry shown without one could not do anything if clicked. Default: `false`.
    */
   hasPublishedFolders?: boolean;
+  /**
+   * Whether the panel's publish-history lookup for this item has settled.
+   * Keeps the Manage trigger rendered while an "Unpublish" entry is still
+   * pending, so an item that would have no other entry can still start the
+   * lookup that produces one. Default: `true` — a host that does not report
+   * it is treated as having nothing outstanding.
+   */
+  isPublishHistoryResolved?: boolean;
   /**
    * Starts the panel's publish-history lookup, called on hover/focus of the
    * Manage trigger and on Manage-menu open, plus on hover/focus of the publish
@@ -237,6 +249,7 @@ export const Header: FC<HeaderProps> = ({
   onOpenPublish,
   isUnpublishVisible,
   hasPublishedFolders = false,
+  isPublishHistoryResolved = true,
   onRequestPublishHistory,
   onOpenUnpublish,
   isReadonly = false,
@@ -450,6 +463,27 @@ export const Header: FC<HeaderProps> = ({
     (isUnpublishVisible?.(item) ?? true);
 
   /*
+   * The lookup that produces the "Unpublish" entry is started by hovering,
+   * focusing or opening the Manage trigger — so an item whose only entry
+   * would be "Unpublish" is deadlocked: the trigger is hidden while the menu
+   * is empty, and the menu stays empty while the trigger is hidden. A
+   * published copy under the organization's public area is exactly that item
+   * (its owner-side entries — Share, Edit, Delete, Revoke — are all gated on
+   * `isMyApp`), which is how GH #8691 left one with no action at all.
+   *
+   * So the trigger also renders while the lookup is outstanding and the host
+   * has affirmatively said this item is unpublishable. That last part is why
+   * it reads `=== true` rather than defaulting the way `shouldShowUnpublish`
+   * does: a host that supplies no rule at all gets no speculative trigger,
+   * and so keeps its current behaviour exactly.
+   */
+  const isUnpublishPending =
+    !isReadonly &&
+    !!onOpenUnpublish &&
+    !isPublishHistoryResolved &&
+    isUnpublishVisible?.(item) === true;
+
+  /*
    * "Publish" and "Unpublish" are mutually exclusive: the panel offers
    * whichever one matches the item's current state, never both at once. An
    * item with no published copy offers "Publish"; once history resolves to at
@@ -515,7 +549,8 @@ export const Header: FC<HeaderProps> = ({
   const isDownloadActionPrimary =
     isDownloadActionEnabled &&
     !isCredentialsActionPrimary &&
-    (isDownloadPrimary?.(item) ?? item.type === CatalogEntityType.Skill);
+    (isDownloadPrimary?.(item) ??
+      (item.type === CatalogEntityType.Skill && !shouldShowPrimaryAction));
   /* A promoted Download renders in the primary slot only — never duplicated in the Manage menu. */
   const shouldShowDownloadAction =
     isDownloadActionEnabled && !isDownloadActionPrimary;
@@ -996,7 +1031,7 @@ export const Header: FC<HeaderProps> = ({
         {shouldShowCredentialsAction &&
           !isCredentialsActionPrimary &&
           renderCredentialsButton(NeutralButton)}
-        {manageItems.length > 0 && renderManageMenu()}
+        {(manageItems.length > 0 || isUnpublishPending) && renderManageMenu()}
       </div>
     </div>
   );

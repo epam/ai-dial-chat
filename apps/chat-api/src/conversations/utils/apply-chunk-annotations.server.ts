@@ -1,8 +1,25 @@
-import { AnnotationDto as Annotation } from '../dto/annotation.dto';
+import {
+  AnnotationDto as Annotation,
+  AnnotationSelectorDto,
+} from '../dto/annotation.dto';
 import { AttachmentDto as Attachment } from '../dto/attachment.dto';
 
 const toNumber = (v: unknown): number | null =>
   typeof v === 'number' ? v : null;
+
+const isAnnotationSelector = (value: unknown): value is AnnotationSelectorDto =>
+  typeof value === 'object' &&
+  value !== null &&
+  !Array.isArray(value) &&
+  'type' in value &&
+  typeof value.type === 'string';
+
+const normalizeBodySelector = (
+  value: unknown,
+): AnnotationSelectorDto | AnnotationSelectorDto[] | undefined => {
+  if (Array.isArray(value)) return value.filter(isAnnotationSelector);
+  return isAnnotationSelector(value) ? value : undefined;
+};
 
 /** Normalizes the legacy `attachment_index` + `pdf_region` wire shape, resolved against the accumulated attachment list. */
 const normalizeAttachmentIndexAnnotation = (
@@ -63,8 +80,6 @@ const normalizeAttachmentIndexAnnotation = (
           title: attachment.title,
         },
       },
-    },
-    target: {
       selector: {
         type: 'pdf_bbox',
         page,
@@ -104,7 +119,7 @@ const inferAttachmentTypeFromUrl = (url: string): string => {
   }
 };
 
-/** Normalizes the `html_tag` + flat `body.source.url` wire shape (no attachment-list lookup, no `index`). */
+/** Normalizes the `html_tag` + flat `body.source.url` wire shape without attachment-list lookup, preserving optional indexes and document selectors. */
 const normalizeHtmlTagAnnotation = (
   r: Record<string, unknown>,
 ): Annotation | null => {
@@ -138,12 +153,15 @@ const normalizeHtmlTagAnnotation = (
     typeof bodyObj['title'] === 'string' ? bodyObj['title'] : undefined;
   const quote =
     typeof bodyObj['quote'] === 'string' ? bodyObj['quote'] : undefined;
+  const bodySelector = normalizeBodySelector(bodyObj['selector']);
 
   return {
+    index: toNumber(r['index']) ?? undefined,
     target: { selector: { type: 'html_tag', tag: s['tag'], id: s['id'] } },
     body: {
       title,
       quote,
+      ...(bodySelector !== undefined ? { selector: bodySelector } : {}),
       source: {
         type: 'attachment',
         attachment: { type: inferAttachmentTypeFromUrl(url), url, title },
@@ -185,7 +203,7 @@ export const normalizeRawAnnotationsServer = (
 
 /**
  * Two annotations are the same when both carry the same `index`, or — for
- * `html_tag`-selector annotations, which never carry an `index` — when both
+ * `html_tag`-selector annotations without an `index` — when both
  * have the same `target.selector.id`. Two annotations that both lack an
  * `index` and are not matching `html_tag` ids are never considered the
  * same, so distinct `html_tag` citations don't collapse into one entry.

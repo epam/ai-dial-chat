@@ -260,6 +260,43 @@ describe('useConversationImport', () => {
     });
   });
 
+  it('reports an attachment shared by several conversations as skipped once', async () => {
+    const { result } = renderImport('new-bucket');
+    uploadFile.mockRejectedValue({ response: { status: 409 } });
+    const withSharedAttachment = (name: string) =>
+      makeConversation({
+        name,
+        messages: [
+          {
+            role: 'assistant',
+            content: '',
+            timestamp: '2026-07-10T00:00:00.000Z',
+            custom_content: {
+              attachments: [
+                { title: 'q1.pdf', url: 'files/old-bucket/q1.pdf' },
+              ],
+            },
+          },
+        ],
+      });
+
+    await act(() =>
+      result.current.importConversations(
+        dialFile(
+          [withSharedAttachment('First'), withSharedAttachment('Second')],
+          { 'q1.pdf': 'pdf-bytes' },
+        ),
+      ),
+    );
+
+    expect(onWarning).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: ConversationTransferWarningCode.AttachmentSkipped,
+        names: ['q1.pdf'],
+      }),
+    );
+  });
+
   it('reports MissingBucket and fails the job when there is no bucket', async () => {
     const { result } = renderImport(undefined);
     await act(() =>

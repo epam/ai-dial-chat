@@ -12,7 +12,6 @@
       --ci-text-disabled,
       var(--text-control-disable-primary, #848e9c)
     );
-    @apply cursor-not-allowed;
   }
 }
 
@@ -23,13 +22,37 @@
     color: var(--ci-placeholder, var(--text-secondary, #57647a));
   }
 
+  &.textareaIndented {
+    /*
+     * Applied only while an inline-start slot is present: the first text line
+     * starts past the slot's measured width plus a small caret gap
+     * (`text-indent` affects the first formatted line only, so wrapped lines
+     * and lines after an explicit Enter keep the text area's full width). The
+     * slot is absolutely positioned at the first line's top edge with no
+     * block padding of its own on the text area, so slot content whose height
+     * is one label line (the ChatSkill chip) aligns with the first text line
+     * exactly.
+     */
+    text-indent: var(--ci-first-line-indent, 0px);
+  }
+
   &:disabled {
     color: var(
       --ci-text-disabled,
       var(--text-control-disable-primary, #848e9c)
     );
-    @apply cursor-not-allowed;
   }
+}
+
+/*
+ * The command menu's empty-query hint color: the placeholder token, so the
+ * hint reads as placeholder text. The hint's positioning (absolute, at the
+ * first line's text start — the same offset the first line's `text-indent`
+ * uses) and its pointer pass-through live in the Tailwind classes in
+ * `Input.tsx`.
+ */
+.commandHint {
+  color: var(--ci-placeholder, var(--text-secondary, #57647a));
 }
 
 .modelSelectorButton {
@@ -63,7 +86,6 @@
   }
 
   &.modelSelectorButtonDisabled {
-    @apply opacity-50;
     .modelSelectorCaret {
       color: var(
         --ci-model-selector-disabled-color,

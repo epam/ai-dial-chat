@@ -78,6 +78,22 @@ export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
   codeBlockCopyLabel?: string;
   /** aria-label for the code block copy button after copying. */
   codeBlockCopiedLabel?: string;
+  /** Label for copying a Markdown table as CSV. */
+  tableCopyCsvLabel?: string;
+  /** Label for copying a Markdown table as text. */
+  tableCopyTxtLabel?: string;
+  /** Label for copying a Markdown table as Markdown. */
+  tableCopyMarkdownLabel?: string;
+  /** Status announced after a Markdown table has been copied. */
+  tableCopiedLabel?: string;
+  /** Label for downloading a Markdown table as CSV. */
+  tableDownloadCsvLabel?: string;
+  /** Label for opening a Markdown table in the canvas. */
+  tableOpenInCanvasLabel?: string;
+  /** Filename used when downloading a Markdown table as CSV. */
+  tableDownloadFilename?: string;
+  /** Accessible label for a Markdown table's scrollable region. */
+  tableScrollRegionAriaLabel?: string;
   /** Fallback aria-label for the deployment icon. Defaults to `'AI'`. */
   deploymentIconFallbackLabel?: string;
 }
@@ -122,6 +138,12 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   markdownComponents?: Components;
   /** Per-element markdown typography classes. Defaults to the renderer's full-size scale; pass `COMPACT_MARKDOWN_CLASS_NAMES` for the smaller body scale. */
   markdownClassNames?: MarkdownRendererClassNames;
+  /**
+   * Rewrites markdown `href`/`src` values before they are rendered. Forwarded
+   * to `MDMessageViewer`. Hosts use this to map DIAL file ids to download URLs.
+   * Defaults to no extra rewrite.
+   */
+  markdownUrlTransform?: (url: string) => string;
   /** Quick-reply buttons rendered below the message text when non-empty. */
   starters?: StarterOption[];
   /** Fires with the clicked `StarterOption`. */
@@ -134,6 +156,8 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   deploymentDisplayName?: string;
   /** Syntax highlight theme for code blocks. Defaults to `'dark'`. */
   codeBlockTheme?: CodeBlockTheme;
+  /** Opens serialized Markdown table content in the host canvas. */
+  tableOnOpenInCanvas?: (markdown: string) => void;
   /** Localised labels for quick replies, the thinking indicator, and code block copy actions. */
   labels?: AssistantMessageBubbleLabels;
 }

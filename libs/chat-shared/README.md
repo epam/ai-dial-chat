@@ -18,20 +18,57 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
+`react` (`^19.2.6`) is the only mandatory peer, required by every entry point below. Every
+other peer is **optional** (`package.json#peerDependenciesMeta` marks all of them
+`optional: true`) — `npm install` succeeds with none of them present. Which ones you actually
+need to install depends on which entry point(s) you import; see the matrix below. Importing an
+entry without its documented peer installed does not fail at `npm install` — it fails later, at
+build time, when a bundler or `tsc` tries to resolve that entry's own imports.
+
+Full peer set (the root `.` entry needs all of them; `./markdown` and `./file-manager` need
+only their own row below):
+
 - `react` ^19.2.6
-- `@epam/ai-dial-ui-kit`
+- `@tabler/icons-react` \*
+- `react-syntax-highlighter` \*
+- `react-markdown` \*
+- `remark-breaks` \*
+- `remark-gfm` \*
+- `remark-math` \*
+- `rehype-katex` \*
+- `rehype-raw` \*
+- `rehype-sanitize` \*
+- `katex` \*
+- `@epam/ai-dial-ui-kit` \*
 - `@epam/ai-dial-react-file-manager` \*
-- `ag-grid-community` ^35.3.0
-- `@tabler/icons-react`
-- `react-markdown`
-- `remark-gfm`
-- `react-syntax-highlighter`
+- `ag-grid-community` \*
+
+`vitest` is used only by this package's own test files; it is not a runtime dependency of the
+published package and is intentionally absent from `peerDependencies` (excluded from
+`@nx/dependency-checks` via `ignoredDependencies` in `eslint.config.mjs`, since every consumer
+of this package already has its own test tooling, not this library's).
+
+### Entry-point-to-peer matrix
+
+| Entry point           | Runtime peers beyond `react`                                                                                                                                                                        |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.` (root, unchanged) | every runtime peer appearing in the rows below                                                                                                                                                      |
+| `./markdown`          | `react-syntax-highlighter`, `react-markdown`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`, `rehype-raw`, `rehype-sanitize`, `katex`, `@epam/ai-dial-ui-kit`, `@tabler/icons-react` |
+| `./file-manager`      | `@epam/ai-dial-react-file-manager`, `ag-grid-community`, `@epam/ai-dial-ui-kit`                                                                                                                     |
+
+The build preserves source-module boundaries so consumers can remove unused features.
+The FilterTab and CodeBlockTheme packed probes verify small root-import bundles without
+markdown or file-manager implementation. Root re-exports still require the documented
+peer closure to resolve before tree-shaking. Scoped feature entries limit resolution to
+their own peer sets; they do not remove peers required by that feature.
 
 ## Optional file-manager entry
 
 Import `DialFileManagerShell` and `FileManagerAttachModal` from
-`@epam/ai-dial-chat-shared/file-manager` inside a lazy feature. Their root exports
-remain compatible; headless contracts and utilities still come from the root.
+`@epam/ai-dial-chat-shared/file-manager` inside a lazy feature — or straight from root, per the
+tree-shaking behavior above; the dedicated subpath's advantage is avoiding the _install_
+requirement for peers your bundle would otherwise never resolve. Their root exports remain
+compatible; headless contracts and utilities still come from the root.
 The package declares only CSS/SCSS side effects so unused UI can be tree-shaken.
 Continue importing `@epam/ai-dial-chat-shared/styles.css` once in the host.
 
@@ -41,6 +78,23 @@ import {
   FileManagerAttachModal,
 } from '@epam/ai-dial-chat-shared/file-manager';
 import type { FileManagerController } from '@epam/ai-dial-chat-shared';
+```
+
+## Optional markdown entry
+
+Import `MarkdownRenderer` and its supporting exports from
+`@epam/ai-dial-chat-shared/markdown` when you want to avoid installing the file-manager peer stack
+at all (see the tree-shaking note above — this subpath is about the _install_ requirement, not
+bundle size, since a root import of the same names now produces the same output once peers are
+installed). The root entry continues to re-export the same names for backward compatibility, so
+existing root imports do not need to change.
+
+```tsx
+import {
+  MarkdownRenderer,
+  MarkdownCodeBlock,
+  restrainedSyntaxTheme,
+} from '@epam/ai-dial-chat-shared/markdown';
 ```
 
 ## Domain Models
@@ -65,6 +119,31 @@ import {
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
 ```
+
+### Annotation selectors
+
+`Annotation.body.selector` is an `AnnotationSelector | AnnotationSelector[]`, a discriminated union with an open forward-compatible branch. `TextCharacterRangeSelector`, `PdfBBoxSelector`, and `HtmlTagSelector` target text ranges, PDF regions, and inline `<cit>` markers respectively. `DocxRangeSelector`, `PptxRangeSelector`, and `ExcelRcRangeSelector` target Office document citations.
+
+```tsx
+import type {
+  AnnotationSelector,
+  DocxRangeSelector,
+  ExcelRcRangeSelector,
+  PptxRangeSelector,
+  TextCharacterRangeSelector,
+} from '@epam/ai-dial-chat-shared';
+
+const docx: DocxRangeSelector = {
+  type: 'docx_text_range',
+  story: 'body',
+  path: [3, 1],
+  start: 0,
+  end: 5,
+  text: 'Hello',
+};
+```
+
+**`end` convention differs by selector kind.** `TextCharacterRangeSelector.end` is inclusive. `DocxRangeSelector.end` and `PptxRangeSelector.end` are already **exclusive** on the wire — confirmed against captured DIAL Core responses, not assumed — so consumers must not add 1 before slicing. `ExcelRcRangeSelector.end` is a distinct concept: a 1-based `{ row, col }` address naming the range's last (inclusive) cell, `null`-or-omitted meaning a single cell. `DocxRangeSelector.story` is typed as an opaque `string` — only `'body'` is confirmed upstream, no closed enum exists.
 
 ### ConversationTransfer
 
@@ -133,11 +212,18 @@ FilterTab.Organization; // 'organization'
 
 Renders markdown content with GFM support (tables, task lists, strikethrough)
 and LaTeX math through KaTeX. Tables and block formulas each get their own
-horizontal scroll container, so content wider than the column stays reachable
-instead of being clipped; each container becomes a labelled, focusable
-`role="region"` only while it actually overflows. Pass
+scroll container, so content wider or taller than the available space stays
+reachable instead of being clipped; each container becomes a labelled,
+focusable `role="region"` only while it actually overflows. Pass
 `tableScrollRegionAriaLabel` and `mathScrollRegionAriaLabel` to translate those
 labels — they default to `'Scrollable table'` and `'Scrollable formula'`.
+Supplying `tableActionLabels` opts a table into copy/download actions,
+rendered through the built-in `TableHeader`. Each icon-only action has a
+UI-kit tooltip using its localized label and a stable accessible name;
+actions are hidden while `isStreaming` is true. Pass `tableOnOpenInCanvas` to
+add a fifth "Open in Canvas" action (shown only when
+`tableActionLabels.openInCanvasLabel` is also set) — it receives the table
+serialized as Markdown when activated.
 
 Plain text and unformatted messages render immediately. The KaTeX math engine
 and its stylesheet load asynchronously, and only the first time `content`
@@ -148,6 +234,9 @@ appears once that load resolves. Fenced code blocks render through
 the same way. The sanitizer allows the citation-specific `cit` element, but
 the default component renders its markup literally; a citation-aware consumer
 must explicitly override `components.cit` to turn it into interactive UI.
+Pass `urlTransform` to rewrite `href`/`src` values (for example mapping DIAL
+`files/{bucket}/{path}` ids to host download URLs) before they are rendered;
+the result still goes through react-markdown's protocol allowlist.
 
 ```tsx
 import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
@@ -155,6 +244,7 @@ import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
 <MarkdownRenderer
   content={markdownText}
   mathScrollRegionAriaLabel={t('Scrollable formula')}
+  urlTransform={resolveMarkdownUrl}
 />;
 ```
 
@@ -164,7 +254,9 @@ Renders a chat message body as markdown. `classNames` selects the type scale and
 defaults to `DEFAULT_MARKDOWN_CLASS_NAMES`; pass `COMPACT_MARKDOWN_CLASS_NAMES`
 to drop the body copy (`p`, `strong`) one step while leaving headings, code, and
 tables untouched. The component is memoised, so pass a stable reference rather
-than an inline object.
+than an inline object. It forwards the code-block and table action labels to
+`MarkdownRenderer`. Pass `urlTransform` to rewrite markdown `href`/`src` values
+the same way as `MarkdownRenderer`.
 
 ```tsx
 import {
@@ -176,6 +268,7 @@ import {
   content={message.content}
   isStreaming={isStreaming}
   classNames={isMobile ? COMPACT_MARKDOWN_CLASS_NAMES : undefined}
+  urlTransform={resolveMarkdownUrl}
 />;
 ```
 
@@ -205,10 +298,78 @@ import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
 
 ### MarkdownTable
 
-Standalone table renderer for structured markdown tables.
+Standalone table renderer for structured markdown tables. The table scrolls
+horizontally when it overflows its container; it is never height-bounded and
+grows to its natural height instead of scrolling vertically.
+Supplying `actionLabels` enables copy-as-CSV, copy-as-TXT,
+copy-as-Markdown, and download-as-CSV actions. Copy formats flatten rendered
+cell text, and CSV download includes a UTF-8 byte-order mark. Each action
+shows a UI-kit tooltip with its localized label, and actions are hidden while
+`isStreaming` is true.
+The built-in header container is `TableHeader` (see below); it renders
+automatically whenever `actionLabels` is supplied, and stays hidden otherwise.
+When `actionLabels.openInCanvasLabel` and `onOpenInCanvas` are both supplied,
+a fifth "Open in Canvas" action appears; activating it serializes the table
+with the same Markdown format `copyMarkdownLabel` uses and passes that string
+to `onOpenInCanvas`. Omitting either one hides the action — the host decides
+whether expanding a table into a canvas is meaningful for it.
 
 ```tsx
-import { MarkdownTable } from '@epam/ai-dial-chat-shared';
+import {
+  MarkdownTable,
+  type MarkdownTableActionLabels,
+} from '@epam/ai-dial-chat-shared';
+
+const tableActionLabels: MarkdownTableActionLabels = {
+  copyCsvLabel: 'Copy as CSV',
+  copyTxtLabel: 'Copy as TXT',
+  copyMarkdownLabel: 'Copy as Markdown',
+  copiedLabel: 'Copied!',
+  downloadCsvLabel: 'Download as CSV',
+};
+
+<MarkdownTable
+  classNames={{}}
+  actionLabels={tableActionLabels}
+  downloadFilename="table.csv"
+  isStreaming={false}
+  scrollRegionAriaLabel="Scrollable table"
+>
+  <thead>
+    <tr>
+      <th>Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Alpha</td>
+    </tr>
+  </tbody>
+</MarkdownTable>;
+```
+
+### TableHeader
+
+Reusable table header with optional leading content and caller-supplied
+`{ label, icon, onClick }` action descriptors. `TableHeader` renders each
+descriptor as an accessible UI-kit tooltip button; actions align to the inline
+end, so the header follows RTL direction automatically. `MarkdownTable` uses
+`TableHeader` as its built-in header whenever `actionLabels` is supplied.
+
+```tsx
+import { TableHeader } from '@epam/ai-dial-chat-shared';
+
+<TableHeader
+  actions={[
+    {
+      label: 'Export',
+      icon: <IconDownload />,
+      onClick: handleExport,
+    },
+  ]}
+>
+  Results
+</TableHeader>;
 ```
 
 ### DeploymentIcon
@@ -325,6 +486,32 @@ still accepted; new consumers should use `styles.colors`.
 
 ## Hooks
 
+### useAvailableHeightCap
+
+Measures the height still available below an element inside its nearest
+scrollable ancestor and writes it to a CSS custom property, so a user-resizable
+control can be capped at the room its form actually has instead of a fixed
+fraction of the viewport. Returns the ref to attach; the property inherits, so
+the class that reads it may target a descendant.
+
+```tsx
+import {
+  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  useAvailableHeightCap,
+} from '@epam/ai-dial-chat-shared';
+
+const editorCapRef = useAvailableHeightCap<HTMLDivElement>();
+
+<div ref={editorCapRef} className={MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME}>
+  <MarkdownEditor value={value} onChange={setValue} />
+</div>;
+```
+
+Options: `bottomGap` (pixels kept below the element, default `16`),
+`minHeight` (smallest cap written, default `200`, so a field below the
+fold stays usable) and `cssVariable` (default
+`RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`).
+
 ### useIsMobile
 
 Returns `true` when the viewport matches the mobile breakpoint.
@@ -355,11 +542,18 @@ import {
   ensureDownloadFilename,
   downloadTextFile,
   triggerBlobDownload,
+  serializeMarkdownTableRows,
+  MarkdownTableCopyFormat,
+  DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME,
+  MARKDOWN_TABLE_CSV_MIME_TYPE,
   getUtf8ByteLength,
   truncateToUtf8Bytes,
   sanitizeConversationName,
   stripTrailingDots,
   PROHIBITED_CONVERSATION_NAME_CHARS_RE,
+  extractPromptParams,
+  resolvePromptParams,
+  buildPromptParamDefaults,
 } from '@epam/ai-dial-chat-shared';
 
 // Merge conditional class names — the only supported way to compose classes
@@ -367,6 +561,17 @@ const className = mergeClasses('base-class', isActive && 'active');
 
 // Map a *Colors object to CSS custom property declarations; undefined values are dropped
 const cssVars = buildCssVars({ '--cs-text': colors?.text });
+
+// Serialize a rendered <table>'s rows to CSV/TSV/Markdown, the format MarkdownTable's own copy actions use
+const csv = serializeMarkdownTableRows(
+  Array.from(tableElement.rows),
+  MarkdownTableCopyFormat.Csv,
+);
+downloadTextFile(
+  csv,
+  DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME,
+  MARKDOWN_TABLE_CSV_MIME_TYPE,
+);
 
 // Copy markdown as both flavours: rich text for Word/Gmail/Slack, raw markdown for plain-text targets.
 // Styling travels inline, so a pasted table keeps its border, header band, dividers, and zebra rows.
@@ -404,6 +609,17 @@ stripTrailingDots('My Chat...'); // 'My Chat'
 
 // Regex of the prohibited characters (useful for testing a value before mutating it)
 PROHIBITED_CONVERSATION_NAME_CHARS_RE.test('clean name'); // false
+
+// Read the {{name}} / {{name|defaultValue}} parameters out of a prompt body,
+// distinct and in first-occurrence order
+extractPromptParams('Reply in {{language|Spanish}}, {{tone}} tone.');
+// [{ name: 'language', defaultValue: 'Spanish' }, { name: 'tone' }]
+
+// Seed a form with the defaults, keyed by parameter name
+buildPromptParamDefaults(extractPromptParams(content)); // { language: 'Spanish' }
+
+// Substitute the collected values, falling back to each token's own default
+resolvePromptParams('Reply in {{language|Spanish}}.', {}); // 'Reply in Spanish.'
 ```
 
 ## Constants
@@ -419,18 +635,30 @@ import {
   ENTITY_TYPE_COLOR,
   ENTITY_TYPE_BG_COLOR,
   TAG_INPUT_TAG_CLASS_NAME,
+  RESIZABLE_TEXTAREA_CLASS_NAME,
+  RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE,
+  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+  SELECT_LIST_MAX_HEIGHT_PX,
+  SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
 ```
 
-| Constant                                     | Purpose                                                              |
-| -------------------------------------------- | -------------------------------------------------------------------- |
-| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names       |
-| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists     |
-| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types      |
-| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders        |
-| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step    |
-| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                  |
-| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field |
+| Constant                                     | Purpose                                                               |
+| -------------------------------------------- | --------------------------------------------------------------------- |
+| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names        |
+| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists      |
+| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types       |
+| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders         |
+| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step     |
+| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                   |
+| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field  |
+| `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh` |
+| `RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`    | Custom property `useAvailableHeightCap` writes the measured cap to    |
+| `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` capping `MarkdownEditor`'s drag bar at that measured cap  |
+| `MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME`    | `className` restoring list markers in the `MarkdownEditor` preview    |
+| `SELECT_LIST_MAX_HEIGHT_PX`                  | `344`, the design's maximum select-list length, for a measured cap    |
+| `SELECT_LIST_MAX_HEIGHT_CLASS_NAME`          | `max-h-[344px]`, the same cap for an options scroll box               |
 
 ## Stylesheet
 
@@ -613,3 +841,21 @@ npm exec nx build chat-shared
 ```sh
 npm exec nx test chat-shared
 ```
+
+## Rollback
+
+`chat-shared` is published by `tools/publish-lib.mjs`, which reads the version straight from
+this package's `package.json` and writes it into `dist/package.json` before `npm publish`. To
+roll a consuming host back to a previous `@epam/ai-dial-chat-shared` release:
+
+1. Pin the host's dependency back to the previous version (e.g.
+   `"@epam/ai-dial-chat-shared": "1.1.0-dev.410"` instead of `"1.1.0-dev.412"`).
+2. Because `catalog`, `publish-panel`, and `chat-hooks` all declare `@epam/ai-dial-chat-shared`
+   as a peer and are published from the same repository revision, revert those packages to
+   their own matching previous versions in the same host update — do not leave a newer sibling
+   package installed against an older `chat-shared`, since a mismatched pair can resolve to a
+   peer range one of them no longer satisfies (e.g. the pre-`./markdown`-split `chat-shared`
+   mandated all 15 peers, while the current one only mandates `react`).
+3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
+   resolved version and integrity hash, rather than a partial mix of pre- and post-change
+   versions.

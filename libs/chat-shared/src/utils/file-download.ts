@@ -138,9 +138,10 @@ export const base64ToBlob = (data: string, mimeType: string): Blob => {
 };
 
 /** Triggers a browser download of `content` as a text file named `filename`. */
-export const downloadTextFile = (content: string, filename: string): void => {
-  triggerBlobDownload(
-    new Blob([content], { type: 'text/plain;charset=utf-8' }),
-    filename,
-  );
+export const downloadTextFile = (
+  content: string,
+  filename: string,
+  mimeType = 'text/plain;charset=utf-8',
+): void => {
+  triggerBlobDownload(new Blob([content], { type: mimeType }), filename);
 };

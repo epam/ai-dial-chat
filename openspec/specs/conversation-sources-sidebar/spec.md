@@ -155,7 +155,7 @@ The panel SHALL be considered empty when `uploaded.length === 0` AND `generated.
 When the panel is empty (per the updated definition above):
 
 - The header SHALL contain only the built-in close button; `leftActions` and `rightActions` SHALL not render search or download-all buttons.
-- The body SHALL render `DialNoDataContent` from `@epam/ai-dial-ui-kit`, centred horizontally and vertically, with `title` set to the i18n value of `basic.noData` (`"No data"`). No `icon` prop is supplied, so `DialNoDataContent` uses its default icon.
+- The body SHALL render `NoDataContent` from `@epam/ai-dial-ui-kit`, centred horizontally and vertically, with `title` set to the i18n value of `basic.noData` (`"No data"`). No `icon` prop is supplied, so `NoDataContent` uses its default icon.
 - No section headings SHALL be rendered.
 
 When the panel is not empty:
@@ -180,14 +180,14 @@ For both states:
 #### Scenario: Global empty state when no files exist and no scheduled task is active
 
 - **WHEN** `ConversationSourcesPanel` derives empty `uploaded`, `generated`, and `sources` lists AND the active conversation is not a scheduled-task conversation
-- **THEN** the body shows centred `DialNoDataContent` with the `basic.noData` title and default icon
+- **THEN** the body shows centred `NoDataContent` with the `basic.noData` title and default icon
 - **AND** no section heading is rendered
 - **AND** no search or download-all button is rendered
 
 #### Scenario: Scheduled-task conversation is never shown the global empty state
 
 - **WHEN** the active conversation is a scheduled-task conversation AND `uploaded`, `generated`, and `sources` are all empty
-- **THEN** the panel does not render `DialNoDataContent`
+- **THEN** the panel does not render `NoDataContent`
 - **AND** the History and Details sections render with their own loading/empty/error states
 
 #### Scenario: Any derived file or source switches the panel to section content

@@ -1,4 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiExtraModels,
+  ApiProperty,
+  ApiPropertyOptional,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { DeploymentItemType } from './deployment-item.dto';
 
 export class ModelCapabilitiesDto {
@@ -47,10 +52,34 @@ export class ModelLimitsDto {
 /*
  * DIAL Core quotes pricing as an open-ended map: `unit` names the billing unit
  * and every other key (`prompt`, `completion`, `cache_read`, and
- * deployment-specific ones) holds a per-unit price, so the map is forwarded
- * verbatim instead of whitelisting a fixed set of keys.
+ * deployment-specific ones) holds either a per-unit price or a conditional
+ * pricing tree, so the map is forwarded verbatim instead of whitelisting a
+ * fixed set of keys.
  */
-export type ModelPricingRecord = Record<string, string | undefined>;
+export class ModelPricingRateDto {
+  @ApiPropertyOptional({ type: () => ModelPricingRateDto })
+  ifFalse?: ModelPricingRateDto;
+
+  @ApiPropertyOptional({ type: () => ModelPricingRateDto })
+  ifTrue?: ModelPricingRateDto;
+
+  @ApiPropertyOptional({
+    description: 'Per-unit price for this pricing branch',
+  })
+  rate?: string;
+
+  @ApiPropertyOptional({
+    description: 'Condition selecting the applicable pricing branch',
+    type: 'object',
+    additionalProperties: true,
+  })
+  test?: object;
+}
+
+export type ModelPricingRecord = Record<
+  string,
+  string | ModelPricingRateDto | undefined
+>;
 
 export class ModelCatalogPropertiesDto {
   @ApiPropertyOptional({ description: 'Model provider for catalog display' })
@@ -171,6 +200,7 @@ export class DeploymentFeaturesDetailsDto {
   reasoningEfforts?: string[];
 }
 
+@ApiExtraModels(ModelPricingRateDto)
 export class ModelDetailsDto {
   @ApiPropertyOptional({ type: ModelCapabilitiesDto })
   capabilities?: ModelCapabilitiesDto;
@@ -189,10 +219,17 @@ export class ModelDetailsDto {
 
   @ApiPropertyOptional({
     description:
-      'Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds the per-unit price for that key',
+      'Pricing as reported by DIAL Core: `unit` names the billing unit and every other key holds a scalar price or conditional pricing tree',
     type: 'object',
-    additionalProperties: { type: 'string' },
-    example: { unit: 'token', prompt: '0.000003', completion: '0.000015' },
+    additionalProperties: {
+      oneOf: [{ type: 'string' }, { $ref: getSchemaPath(ModelPricingRateDto) }],
+    },
+    example: {
+      unit: 'token',
+      prompt: '0.000003',
+      completion: '0.000015',
+      cache_read: { rate: '0.000001' },
+    },
   })
   pricing?: ModelPricingRecord;
 

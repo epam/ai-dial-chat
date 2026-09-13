@@ -9,6 +9,7 @@ export enum ChatI18nKeys {
   GreetingNight = 'chat.greetingNight',
   GreetingNightNoName = 'chat.greetingNightNoName',
   StreamError = 'chat.streamError',
+  GenerationConflict = 'chat.generationConflict',
   CreateConversationError = 'chat.createConversationError',
   ConversationNotFound = 'chat.conversationNotFound',
   /** TODO: remove in next release */
@@ -30,6 +31,8 @@ export enum ChatI18nKeys {
   QuickReplyButtons = 'chat.quickReplyButtons',
   StoppedGenerating = 'chat.stoppedGenerating',
   Thinking = 'chat.thinking',
+  ScrollableTable = 'chat.scrollableTable',
+  MarkdownTableTitle = 'chat.markdownTableTitle',
   ShowMoreUserMessage = 'chat.showMoreUserMessage',
   ShowLessUserMessage = 'chat.showLessUserMessage',
 }
@@ -93,12 +96,16 @@ export enum ButtonsI18nKeys {
   Dislike = 'buttons.dislike',
   Rename = 'buttons.rename',
   Select = 'buttons.select',
+  Sort = 'buttons.sort',
   Duplicate = 'buttons.duplicate',
   EditMessage = 'buttons.editMessage',
   DeleteMessage = 'buttons.deleteMessage',
   RegenerateResponse = 'buttons.regenerateResponse',
   CopyResponse = 'buttons.copyResponse',
   CopyAsMarkdown = 'buttons.copyAsMarkdown',
+  CopyAsCsv = 'buttons.copyAsCsv',
+  OpenInCanvas = 'buttons.openInCanvas',
+  CopyAsTxt = 'buttons.copyAsTxt',
   CopyAsJson = 'buttons.copyAsJson',
   CopyText = 'buttons.copyText',
   LikeResponse = 'buttons.likeResponse',
@@ -110,6 +117,7 @@ export enum ButtonsI18nKeys {
   UseInChat = 'buttons.useInChat',
   NewChat = 'buttons.newChat',
   Download = 'buttons.download',
+  DownloadAsCsv = 'buttons.downloadAsCsv',
   LogOut = 'buttons.logOut',
   CopyLink = 'buttons.copyLink',
   CopyUrl = 'buttons.copyUrl',
@@ -345,6 +353,15 @@ export enum PromptSelectorI18nKeys {
   EnterValuePlaceholder = 'promptSelector.enterValuePlaceholder',
 }
 
+export enum SkillSelectorI18nKeys {
+  AddMenuLabel = 'skillSelector.addMenuLabel',
+  EmptyHint = 'skillSelector.emptyHint',
+  EmptyQueryHint = 'skillSelector.emptyQueryHint',
+  ModalTitle = 'skillSelector.modalTitle',
+  NoMatchingSkillsLabel = 'skillSelector.noMatchingSkillsLabel',
+  ViewDetailsLabel = 'skillSelector.viewDetailsLabel',
+}
+
 export enum NotFoundI18nKeys {
   Eyebrow = 'notFound.eyebrow',
   Title = 'notFound.title',
@@ -360,7 +377,6 @@ export enum ScheduledTasksI18nKeys {
   SearchPlaceholder = 'scheduledTasks.toolbar.searchPlaceholder',
   SearchAriaLabel = 'scheduledTasks.toolbar.searchAriaLabel',
   ClearSearchLabel = 'scheduledTasks.toolbar.clearSearchLabel',
-  SortLabel = 'scheduledTasks.toolbar.sortLabel',
   SortFirstToRun = 'scheduledTasks.toolbar.sortFirstToRun',
   SortLastToRun = 'scheduledTasks.toolbar.sortLastToRun',
   SortNewest = 'scheduledTasks.toolbar.sortNewest',
@@ -454,16 +470,14 @@ export enum ScheduledTasksI18nKeys {
   ConversationBannerTaskDetailsAriaLabel = 'scheduledTasks.conversationBanner.taskDetailsAriaLabel',
   ConversationPanelModelLabel = 'scheduledTasks.conversationPanel.modelLabel',
   ConversationPanelCurrentRunLabel = 'scheduledTasks.conversationPanel.currentRunLabel',
-  OfflineCredentialsModalTitle = 'scheduledTasks.offlineCredentialsModal.title',
-  OfflineCredentialsModalBody = 'scheduledTasks.offlineCredentialsModal.body',
-  OfflineCredentialsModalDismissButtonLabel = 'scheduledTasks.offlineCredentialsModal.dismissButtonLabel',
-  OfflineCredentialsModalCloseAriaLabel = 'scheduledTasks.offlineCredentialsModal.closeAriaLabel',
-  OfflineCredentialsModalPopupBlockedMessage = 'scheduledTasks.offlineCredentialsModal.popupBlockedMessage',
-  OfflineCredentialsModalCancelledMessage = 'scheduledTasks.offlineCredentialsModal.cancelledMessage',
-  OfflineCredentialsModalTimeoutMessage = 'scheduledTasks.offlineCredentialsModal.timeoutMessage',
-  OfflineCredentialsModalFailedMessage = 'scheduledTasks.offlineCredentialsModal.failedMessage',
-  OfflineCredentialsModalSuccessAnnouncement = 'scheduledTasks.offlineCredentialsModal.successAnnouncement',
-  OfflineCredentialsModalLoggingInAriaLabel = 'scheduledTasks.offlineCredentialsModal.loggingInAriaLabel',
+  OfflineCredentialsBannerTitle = 'scheduledTasks.offlineCredentialsBanner.title',
+  OfflineCredentialsBannerBody = 'scheduledTasks.offlineCredentialsBanner.body',
+  OfflineCredentialsBannerPopupBlockedMessage = 'scheduledTasks.offlineCredentialsBanner.popupBlockedMessage',
+  OfflineCredentialsBannerCancelledMessage = 'scheduledTasks.offlineCredentialsBanner.cancelledMessage',
+  OfflineCredentialsBannerTimeoutMessage = 'scheduledTasks.offlineCredentialsBanner.timeoutMessage',
+  OfflineCredentialsBannerFailedMessage = 'scheduledTasks.offlineCredentialsBanner.failedMessage',
+  OfflineCredentialsBannerSuccessAnnouncement = 'scheduledTasks.offlineCredentialsBanner.successAnnouncement',
+  OfflineCredentialsBannerLoggingInLabel = 'scheduledTasks.offlineCredentialsBanner.loggingInLabel',
 }
 
 export enum ConversationI18nKeys {
@@ -700,6 +714,9 @@ export enum PublishI18nKeys {
   UnpublishFailedMessage = 'publish.unpublishFailedMessage',
   UnpublishNetworkErrorMessage = 'publish.unpublishNetworkErrorMessage',
   SubmitErrorCallout = 'publish.submitErrorCallout',
+  AuthorLabel = 'publish.authorLabel',
+  AuthorPlaceholder = 'publish.authorPlaceholder',
+  AuthorHint = 'publish.authorHint',
 }
 
 export enum PublishAccessRulesI18nKeys {
@@ -776,6 +793,8 @@ export enum ConversationImportI18nKeys {
   FailedTitle = 'conversationImport.failedTitle',
   Failed = 'conversationImport.failed',
   WarningAttachmentSkipped = 'conversationImport.warningAttachmentSkipped',
+  JobWarningAttachmentSkipped = 'conversationImport.jobWarningAttachmentSkipped',
+  NameListWithRest = 'conversationImport.nameListWithRest',
   UnsupportedFormat = 'conversationImport.unsupportedFormat',
   CancelJobAriaLabel = 'conversationImport.cancelJobAriaLabel',
   JobProgressAriaLabel = 'conversationImport.jobProgressAriaLabel',
@@ -871,6 +890,8 @@ export enum AttachmentCanvasI18nKeys {
   XlsxFormulaLabel = 'attachmentCanvas.xlsxFormulaLabel',
   CodeContentLoadingLabel = 'attachmentCanvas.codeContentLoadingLabel',
   CodeContentErrorLabel = 'attachmentCanvas.codeContentErrorLabel',
+  OoxmlHighlightsLabel = 'attachmentCanvas.ooxmlHighlightsLabel',
+  OoxmlHighlightNavigatedLabel = 'attachmentCanvas.ooxmlHighlightNavigatedLabel',
 }
 
 export enum AnnouncementBannerI18nKeys {
@@ -1019,6 +1040,10 @@ export enum SkillEditorI18nKeys {
 
 export enum SkillArchiveImportI18nKeys {
   FileInputAriaLabel = 'skillArchiveImport.fileInputAriaLabel',
+  DialogTitle = 'skillArchiveImport.dialog.title',
+  DialogDropZoneLabel = 'skillArchiveImport.dialog.dropZoneLabel',
+  DialogDropZoneMobileLabel = 'skillArchiveImport.dialog.dropZoneMobileLabel',
+  DialogFormats = 'skillArchiveImport.dialog.formats',
   StatusUploading = 'skillArchiveImport.status.uploading',
   StatusSuccess = 'skillArchiveImport.status.success',
   StatusError = 'skillArchiveImport.status.error',
@@ -1156,6 +1181,12 @@ export enum ShareI18nKeys {
 
 export enum VoiceRecordingI18nKeys {
   MicLabel = 'voiceRecording.micLabel',
+  RecordVoiceLabel = 'voiceRecording.recordVoiceLabel',
+  Transcribing = 'voiceRecording.transcribing',
+  Failed = 'voiceRecording.failed',
+  Busy = 'voiceRecording.busy',
+  Unavailable = 'voiceRecording.unavailable',
+  TooLarge = 'voiceRecording.tooLarge',
   StopRecordingLabel = 'voiceRecording.stopRecordingLabel',
   DiscardRecordingLabel = 'voiceRecording.discardRecordingLabel',
 }

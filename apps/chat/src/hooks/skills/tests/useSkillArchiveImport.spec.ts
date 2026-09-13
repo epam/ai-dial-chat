@@ -1,7 +1,6 @@
 import type { SkillImportResponseDto } from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook } from '@testing-library/react';
-import { ChangeEvent } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   EntityNotificationsI18nKeys,
@@ -32,16 +31,6 @@ const IMPORT_RESPONSE: SkillImportResponseDto = {
   etag: '"abc123"',
 };
 
-const makeChangeEvent = (
-  file: File | undefined,
-): ChangeEvent<HTMLInputElement> => {
-  const target = {
-    files: file ? [file] : [],
-    value: 'C:\\fakepath\\skill.zip',
-  } as unknown as HTMLInputElement;
-  return { target } as unknown as ChangeEvent<HTMLInputElement>;
-};
-
 describe('useSkillArchiveImport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,21 +48,50 @@ describe('useSkillArchiveImport', () => {
     });
   });
 
-  it('starts idle with no status message', () => {
+  it('starts idle with the dialog closed and no status message', () => {
     const { result } = renderHook(() => useSkillArchiveImport());
 
+    expect(result.current.isDialogOpen).toBe(false);
     expect(result.current.status).toBe(SkillArchiveImportStatus.Idle);
     expect(result.current.statusMessage).toBeUndefined();
+    expect(result.current.selectionError).toBeUndefined();
+  });
+
+  it('opens the dialog instead of uploading anything', () => {
+    const { result } = renderHook(() => useSkillArchiveImport());
+
+    act(() => {
+      result.current.openDialog();
+    });
+
+    expect(result.current.isDialogOpen).toBe(true);
+    expect(mockImportSkillArchive).not.toHaveBeenCalled();
+  });
+
+  it('closes the dialog and clears the rejection message', () => {
+    const { result } = renderHook(() => useSkillArchiveImport());
+
+    act(() => {
+      result.current.openDialog();
+    });
+    act(() => {
+      result.current.handleFilesRejected();
+    });
+    act(() => {
+      result.current.closeDialog();
+    });
+
+    expect(result.current.isDialogOpen).toBe(false);
+    expect(result.current.selectionError).toBeUndefined();
   });
 
   it('uploads the selected file, notifies success, and refetches skills', async () => {
     mockImportSkillArchive.mockResolvedValue(IMPORT_RESPONSE);
     const { result } = renderHook(() => useSkillArchiveImport());
     const file = new File(['zip bytes'], 'skill.zip');
-    const event = makeChangeEvent(file);
 
     await act(async () => {
-      result.current.handleFileChange(event);
+      result.current.handleFilesSelected([file]);
       await Promise.resolve();
     });
 
@@ -87,18 +105,22 @@ describe('useSkillArchiveImport', () => {
     expect(result.current.status).toBe(SkillArchiveImportStatus.Success);
   });
 
-  it('resets the input value before invoking the import so re-selecting the same file re-triggers it', async () => {
+  it('closes the dialog once an accepted file starts uploading', async () => {
     mockImportSkillArchive.mockResolvedValue(IMPORT_RESPONSE);
     const { result } = renderHook(() => useSkillArchiveImport());
-    const file = new File(['zip bytes'], 'skill.zip');
-    const event = makeChangeEvent(file);
+
+    act(() => {
+      result.current.openDialog();
+    });
 
     await act(async () => {
-      result.current.handleFileChange(event);
+      result.current.handleFilesSelected([
+        new File(['zip bytes'], 'skill.zip'),
+      ]);
       await Promise.resolve();
     });
 
-    expect(event.target.value).toBe('');
+    expect(result.current.isDialogOpen).toBe(false);
   });
 
   it('ends in the error state, shows an error toast, and skips the success notification/refetch on failure', async () => {
@@ -108,11 +130,11 @@ describe('useSkillArchiveImport', () => {
       response: new Response(null, { status: 409 }),
     });
     const { result } = renderHook(() => useSkillArchiveImport());
-    const file = new File(['zip bytes'], 'skill.zip');
-    const event = makeChangeEvent(file);
 
     await act(async () => {
-      result.current.handleFileChange(event);
+      result.current.handleFilesSelected([
+        new File(['zip bytes'], 'skill.zip'),
+      ]);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -145,11 +167,11 @@ describe('useSkillArchiveImport', () => {
       },
     });
     const { result } = renderHook(() => useSkillArchiveImport());
-    const file = new File(['zip bytes'], 'skill.zip');
-    const event = makeChangeEvent(file);
 
     await act(async () => {
-      result.current.handleFileChange(event);
+      result.current.handleFilesSelected([
+        new File(['zip bytes'], 'skill.zip'),
+      ]);
       await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
@@ -166,34 +188,30 @@ describe('useSkillArchiveImport', () => {
     });
   });
 
-  it('does not start a second import while one is already in flight', () => {
+  it('does not reopen the dialog while an import is already in flight', () => {
     const { result } = renderHook(() => useSkillArchiveImport());
-    const clickSpy = vi.fn();
-    Object.defineProperty(result.current.fileInputRef, 'current', {
-      value: { click: clickSpy },
-      writable: true,
-    });
 
     act(() => {
-      const file = new File(['zip bytes'], 'skill.zip');
       mockImportSkillArchive.mockImplementation(
         () => new Promise(() => undefined),
       );
-      result.current.handleFileChange(makeChangeEvent(file));
+      result.current.handleFilesSelected([
+        new File(['zip bytes'], 'skill.zip'),
+      ]);
     });
 
     act(() => {
-      result.current.triggerFilePicker();
+      result.current.openDialog();
     });
 
-    expect(clickSpy).not.toHaveBeenCalled();
+    expect(result.current.isDialogOpen).toBe(false);
   });
 
   it('does nothing when no file is selected', () => {
     const { result } = renderHook(() => useSkillArchiveImport());
 
     act(() => {
-      result.current.handleFileChange(makeChangeEvent(undefined));
+      result.current.handleFilesSelected([]);
     });
 
     expect(mockImportSkillArchive).not.toHaveBeenCalled();
@@ -204,10 +222,9 @@ describe('useSkillArchiveImport', () => {
     mockImportSkillArchive.mockResolvedValue(IMPORT_RESPONSE);
     const { result } = renderHook(() => useSkillArchiveImport());
     const file = new File(['---\nname: docs-helper\n---\n'], 'SKILL.md');
-    const event = makeChangeEvent(file);
 
     await act(async () => {
-      result.current.handleFileChange(event);
+      result.current.handleFilesSelected([file]);
       await Promise.resolve();
     });
 
@@ -215,53 +232,65 @@ describe('useSkillArchiveImport', () => {
     expect(result.current.status).toBe(SkillArchiveImportStatus.Success);
   });
 
-  it('rejects a wrong-case Markdown filename locally without calling the API', () => {
+  it('rejects a wrong-case Markdown filename inline, keeping the dialog open', () => {
     const { result } = renderHook(() => useSkillArchiveImport());
-    const file = new File(['content'], 'skill.md');
-    const event = makeChangeEvent(file);
 
     act(() => {
-      result.current.handleFileChange(event);
+      result.current.openDialog();
+    });
+    act(() => {
+      result.current.handleFilesSelected([new File(['content'], 'skill.md')]);
+    });
+
+    expect(mockImportSkillArchive).not.toHaveBeenCalled();
+    expect(result.current.isDialogOpen).toBe(true);
+    expect(result.current.status).toBe(SkillArchiveImportStatus.Error);
+    expect(result.current.selectionError).toBe(
+      SkillArchiveImportI18nKeys.ErrorUnsupportedFilename,
+    );
+    expect(result.current.statusMessage).toBe(
+      SkillArchiveImportI18nKeys.ErrorUnsupportedFilename,
+    );
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('rejects any other Markdown filename without calling the API', () => {
+    const { result } = renderHook(() => useSkillArchiveImport());
+
+    act(() => {
+      result.current.handleFilesSelected([new File(['content'], 'readme.md')]);
     });
 
     expect(mockImportSkillArchive).not.toHaveBeenCalled();
     expect(result.current.status).toBe(SkillArchiveImportStatus.Error);
-    expect(result.current.statusMessage).toBe(
-      SkillArchiveImportI18nKeys.ErrorUnsupportedFilename,
-    );
-    expect(mockShowNotification).toHaveBeenCalledWith({
-      variant: NotificationVariant.Error,
-      title: SkillArchiveImportI18nKeys.ErrorTitle,
-      message: SkillArchiveImportI18nKeys.ErrorUnsupportedFilename,
-    });
-  });
-
-  it('rejects any other Markdown filename locally without calling the API', () => {
-    const { result } = renderHook(() => useSkillArchiveImport());
-    const file = new File(['content'], 'readme.md');
-    const event = makeChangeEvent(file);
-
-    act(() => {
-      result.current.handleFileChange(event);
-    });
-
-    expect(mockImportSkillArchive).not.toHaveBeenCalled();
-    expect(result.current.status).toBe(SkillArchiveImportStatus.Error);
-    expect(result.current.statusMessage).toBe(
+    expect(result.current.selectionError).toBe(
       SkillArchiveImportI18nKeys.ErrorUnsupportedFilename,
     );
   });
 
-  it('resets the input value even when the local filename check rejects the file', () => {
+  it('reports a drop the drop zone excluded by extension', () => {
     const { result } = renderHook(() => useSkillArchiveImport());
-    const file = new File(['content'], 'skill.md');
-    const event = makeChangeEvent(file);
 
     act(() => {
-      result.current.handleFileChange(event);
+      result.current.handleFilesRejected();
     });
 
-    expect(event.target.value).toBe('');
+    expect(result.current.selectionError).toBe(
+      SkillArchiveImportI18nKeys.ErrorUnsupportedFilename,
+    );
+  });
+
+  it('clears a stale rejection message when the dialog is reopened', () => {
+    const { result } = renderHook(() => useSkillArchiveImport());
+
+    act(() => {
+      result.current.handleFilesRejected();
+    });
+    act(() => {
+      result.current.openDialog();
+    });
+
+    expect(result.current.selectionError).toBeUndefined();
   });
 });
 

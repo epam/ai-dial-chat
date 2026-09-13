@@ -47,7 +47,7 @@ function makeService(callbackBaseUrl = 'https://example.com/callback') {
     get: vi.fn((key: string) =>
       key === 'AUTH_CALLBACK_BASE_URL' ? callbackBaseUrl : undefined,
     ),
-  } as unknown as ConfigService<EnvironmentVariables>;
+  } as unknown as ConfigService<EnvironmentVariables, true>;
 
   const deploymentsService = {
     invalidateListCache: vi.fn().mockResolvedValue(undefined),

@@ -22,13 +22,13 @@ import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
   DialFileManagerI18nKeys,
   FavoritesI18nKeys,
   NavigationI18nKeys,
   PublishI18nKeys,
-  SkillArchiveImportI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -49,6 +49,7 @@ import { useCatalogPublishing } from '../../hooks/useCatalogPublishing/useCatalo
 import { useCatalogSharing } from '../../hooks/useCatalogSharing/useCatalogSharing';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
+import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { deleteApplication } from '../../server-api/applications';
 import { deletePrompt } from '../../server-api/prompts.api';
@@ -66,8 +67,12 @@ import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { getCatalogSearchPlaceholder } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
-import { getAccessRulesLabels } from '../../utils/publish';
+import {
+  getAccessRulesLabels,
+  getPublishAuthorLabels,
+} from '../../utils/publish';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
+import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
@@ -143,6 +148,8 @@ const CatalogView: FC<Props> = ({
     useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
   const { user } = useUser();
+  /* The publish panel pre-fills its author field with this; the catalog lib cannot read the session itself. */
+  const { displayName } = useUserProfile();
   const isAdmin = user?.isAdmin ?? false;
   const { config } = useAppConfig();
   const dialCoreExternalUrl = config.dialCoreExternalUrl;
@@ -200,10 +207,13 @@ const CatalogView: FC<Props> = ({
   } = useSkills();
 
   const {
-    fileInputRef: skillArchiveFileInputRef,
+    isDialogOpen: isSkillArchiveDialogOpen,
     statusMessage: skillArchiveStatusMessage,
-    triggerFilePicker: triggerSkillArchivePicker,
-    handleFileChange: handleSkillArchiveFileChange,
+    selectionError: skillArchiveSelectionError,
+    openDialog: openSkillArchiveDialog,
+    closeDialog: closeSkillArchiveDialog,
+    handleFilesSelected: handleSkillArchiveFilesSelected,
+    handleFilesRejected: handleSkillArchiveFilesRejected,
   } = useSkillArchiveImport();
 
   const isLoading =
@@ -367,11 +377,14 @@ const CatalogView: FC<Props> = ({
     handlePublishError,
     handleFetchExistingRules,
     isPublishVisible,
+    isUnpublishVisible,
   } = useCatalogPublishing({
     deployments,
     rememberPublishFolder,
     notifyOperationSuccess,
     showPublishError,
+    isAdmin,
+    hasPublishWriteAccess,
   });
 
   const {
@@ -495,7 +508,7 @@ const CatalogView: FC<Props> = ({
       ),
     labels: catalogEditNavigationLabels,
     onNotify: showErrorNotification,
-    triggerSkillArchivePicker,
+    onSkillUploadClick: openSkillArchiveDialog,
   });
 
   if (!isCatalogEnabled && !isSelectorMode) {
@@ -504,14 +517,12 @@ const CatalogView: FC<Props> = ({
 
   return (
     <>
-      <input
-        ref={skillArchiveFileInputRef}
-        type="file"
-        accept=".zip,.md"
-        className="sr-only"
-        tabIndex={-1}
-        aria-label={t(SkillArchiveImportI18nKeys.FileInputAriaLabel)}
-        onChange={handleSkillArchiveFileChange}
+      <SkillArchiveUploadDialog
+        isOpen={isSkillArchiveDialogOpen}
+        errorText={skillArchiveSelectionError}
+        onClose={closeSkillArchiveDialog}
+        onFilesSelected={handleSkillArchiveFilesSelected}
+        onFilesRejected={handleSkillArchiveFilesRejected}
       />
       <span role="status" aria-live="polite" className="sr-only">
         {skillArchiveStatusMessage}
@@ -562,10 +573,11 @@ const CatalogView: FC<Props> = ({
         publishLoadingPaths={publishLoadingPaths}
         onCreatePublishFolder={onCreatePublishFolder}
         hasPublishWriteAccess={hasPublishWriteAccess}
+        publishDefaultAuthor={displayName}
         onPublish={handlePublish}
         onPublishSuccess={handlePublishSuccess}
         onUnpublish={handleUnpublish}
-        isUnpublishVisible={isPublishVisible}
+        isUnpublishVisible={isUnpublishVisible}
         onPublishError={handlePublishError}
         ruleSourceOptions={config.publicationFilterSources}
         onFetchExistingRules={handleFetchExistingRules}
@@ -578,7 +590,9 @@ const CatalogView: FC<Props> = ({
           historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
           historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
           submitError: t(PublishI18nKeys.SubmitErrorCallout),
+          rootFolderLabel: t(BasicI18nKeys.Organization),
           accessRulesLabels: getAccessRulesLabels(t),
+          ...getPublishAuthorLabels(t),
         }}
         shareOverlay={(item, onClose) => (
           <SharePopoverContainer
@@ -599,6 +613,7 @@ const CatalogView: FC<Props> = ({
           searchPlaceholder,
           noResultsTitle: (query) =>
             t(CatalogI18nKeys.NoResultsTitle, { query }),
+          sortLabel: t(ButtonsI18nKeys.Sort),
           sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),
           sortNewestLabel: t(CatalogI18nKeys.SortNewest),
           sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),

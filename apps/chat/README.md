@@ -29,6 +29,32 @@ Heavy feature engines load when their features are activated.
 - Import/export queue for moving conversations in and out
 - LLM-assisted conversation naming when the backend enables a utility model
 
+### Voice dictation
+
+With voice input enabled, the microphone button (`Dictate` tooltip) records one complete audio file. Nothing
+is uploaded or recognized during capture. After Stop, the microphone is released,
+the complete file is validated against `TRANSCRIBE_SIZE_LIMIT_BYTES` and uploaded
+once, and its transcription is appended to the existing draft. The configured ASR
+deployment takes precedence over the selected audio-capable model. Audio is not
+added to the message attachment tray, and the message is not sent automatically.
+
+The waveform replaces the textarea during recording and processing in both voice
+modes. Keyboard text entry is unavailable; the existing draft is preserved. After
+recognition the textarea returns and receives focus. Cancellation aborts pending
+requests and ignores late results; cancellation and errors preserve the draft.
+
+`Record voice` in the add menu, immediately before Chat settings, records an audio
+attachment without calling transcription. It is available when the selected model
+accepts audio, attachments and voice input are enabled, and the assistant is not
+streaming. Its file uses the existing attachment validation/upload pipeline.
+Configured ASR can enable Dictate even for a model that cannot accept audio files.
+
+Temporary recognition failures (HTTP 429, 502, 503, 504) get up to two retries of
+the same uploaded file. The app honors `Retry-After`; without it, 429/503 wait
+30 then 60 seconds, and 502/504 wait 2 then 4 seconds. Total retry waiting is
+limited to 90 seconds per recording. A longer requested delay ends processing
+with an unavailable message. Cancellation aborts both requests and retry timers.
+
 ### Entities and authoring
 
 - Catalog of models, applications, tools, prompts, and skills, with favorites,

@@ -6,7 +6,12 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
-import ReactMarkdown, { type Components, type Options } from 'react-markdown';
+import ReactMarkdown, {
+  defaultUrlTransform,
+  type Components,
+  type Options,
+  type UrlTransform,
+} from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkBreaks from 'remark-breaks';
@@ -22,6 +27,7 @@ import styles from './MarkdownRenderer.module.scss';
 import { MarkdownMathBlock } from './Math/MarkdownMathBlock';
 import {
   MarkdownTable,
+  type MarkdownTableActionLabels,
   type MarkdownTableClassNames,
 } from './Table/MarkdownTable';
 import tableStyles from './Table/MarkdownTable.module.scss';
@@ -43,9 +49,9 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   h6?: string;
   /** Classes on `<p>` elements. */
   p?: string;
-  /** Extra classes on `<ul>` (base: `list-disc ps-5`). */
+  /** Extra classes on `<ul>` (base: `list-disc ps-[2em]`). */
   ul?: string;
-  /** Extra classes on `<ol>` (base: `list-decimal ps-5`). */
+  /** Extra classes on `<ol>` (base: `list-decimal ps-[2em]`). */
   ol?: string;
   /** Typography class for `<strong>`. Defaults to `'dial-body-paragraph-semi-text'` — the semibold step matching the default `p` class. */
   strong?: string;
@@ -90,6 +96,8 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
 export interface MarkdownRendererProps {
   /** Raw markdown string to render. */
   content: string;
+  /** Classes applied to the renderer root. */
+  containerClassName?: string;
   /** When true, appended content is revealed gradually for smoother streaming updates. */
   isStreaming?: boolean;
   /** Reveal speed used while `isStreaming` is true. Defaults to 120 characters per second. */
@@ -101,6 +109,13 @@ export interface MarkdownRendererProps {
    * Use for elements not covered by `classNames`.
    */
   components?: Components;
+  /**
+   * Rewrites `href` and `src` values before they are rendered. The result is
+   * still passed through react-markdown's protocol allowlist. Hosts use this
+   * to map DIAL file ids (`files/{bucket}/{path}`) to download URLs. Defaults
+   * to no extra rewrite.
+   */
+  urlTransform?: (url: string) => string;
   /** Extra rehype plugins, applied after the built-in KaTeX pass. Defaults to none. */
   rehypePlugins?: NonNullable<Options['rehypePlugins']>;
   /**
@@ -116,6 +131,11 @@ export interface MarkdownRendererProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Color overrides applied as CSS custom properties. */
   colors?: MarkdownRendererColors;
+  /** Localized labels for Markdown table actions. Supplying them enables the action bar. */
+  tableActionLabels?: MarkdownTableActionLabels;
+  /** Filename used when downloading a Markdown table as CSV. Defaults to `'table.csv'`. */
+  tableDownloadFilename?: string;
+  tableOnOpenInCanvas?: (markdown: string) => void;
   /** Accessible label for a table's horizontally scrollable region. Defaults to `'Scrollable table'`. */
   tableScrollRegionAriaLabel?: string;
   /** Accessible label for a block formula's horizontally scrollable region. Defaults to `'Scrollable formula'`. */
@@ -281,6 +301,18 @@ const hasMathContent = (text: string): boolean =>
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
 
 /**
+ * Applies an optional host rewrite, then react-markdown's protocol allowlist.
+ * Hosts map DIAL `files/{bucket}/{path}` ids to download URLs without the
+ * renderer constructing `/api` paths itself.
+ */
+const composeUrlTransform = (
+  hostTransform: ((url: string) => string) | undefined,
+): UrlTransform => {
+  if (hostTransform == null) return defaultUrlTransform;
+  return (url) => defaultUrlTransform(hostTransform(url));
+};
+
+/**
  * Default react-markdown component overrides shared across all consumers.
  * `cit` isn't a known JSX intrinsic element (see the sanitize schema above
  * for why it's allow-listed), so it's added via a cast rather than the
@@ -343,6 +375,27 @@ const isDisplayMathElement = (node: HastElementLike | undefined): boolean => {
   );
 };
 
+/*
+ * GFM column alignment (`:---`, `---:`, `:---:`) survives the pipeline as the
+ * hast `align` property on each cell. It maps to logical text-align utilities
+ * rather than physical ones so an aligned table still flips with the document
+ * direction, like the rest of the renderer.
+ */
+const TABLE_ALIGN_CLASSES: Record<string, string> = {
+  left: 'text-start',
+  center: 'text-center',
+  right: 'text-end',
+};
+
+/** Returns the text-align class for a table cell's GFM column alignment, or `undefined` when the column is unaligned. */
+const getTableCellAlignClass = (
+  node: HastElementLike | undefined,
+): string | undefined => {
+  const align = node?.properties?.align;
+
+  return typeof align === 'string' ? TABLE_ALIGN_CLASSES[align] : undefined;
+};
+
 /** Recursively concatenates the text content of a hast node. */
 const getNodeText = (node: HastTextLike | undefined): string => {
   if (!node) return '';
@@ -356,6 +409,9 @@ interface MarkdownComponentOptions {
   codeBlockCopyLabel?: string;
   codeBlockCopiedLabel?: string;
   codeBlockTheme?: CodeBlockTheme;
+  tableActionLabels?: MarkdownTableActionLabels;
+  tableDownloadFilename?: string;
+  tableOnOpenInCanvas?: (markdown: string) => void;
   tableScrollRegionAriaLabel?: string;
   mathScrollRegionAriaLabel?: string;
 }
@@ -367,6 +423,9 @@ const buildMarkdownComponents = (
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
     codeBlockTheme,
+    tableActionLabels,
+    tableDownloadFilename,
+    tableOnOpenInCanvas,
     tableScrollRegionAriaLabel,
     mathScrollRegionAriaLabel,
   }: MarkdownComponentOptions,
@@ -385,11 +444,16 @@ const buildMarkdownComponents = (
   p: ({ children }) => (
     <p className={mergeClasses('break-words', cn.p)}>{children}</p>
   ),
+  /* An `outside` marker is painted in the list's start padding, so that padding
+     has to be wide enough for the widest marker or the marker overflows and is
+     cut off by whichever ancestor scrolls or hides overflow — at 14px a
+     two-digit `17.` already did. `2em` tracks the element's own font size and
+     holds a three-digit marker; `ul` matches it so mixed lists stay aligned. */
   ul: ({ children }) => (
-    <ul className={mergeClasses('list-disc ps-5', cn.ul)}>{children}</ul>
+    <ul className={mergeClasses('list-disc ps-[2em]', cn.ul)}>{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className={mergeClasses('list-decimal ps-5', cn.ol)}>{children}</ol>
+    <ol className={mergeClasses('list-decimal ps-[2em]', cn.ol)}>{children}</ol>
   ),
   strong: ({ children }) => (
     <strong className={cn.strong ?? 'dial-body-paragraph-semi-text'}>
@@ -483,6 +547,10 @@ const buildMarkdownComponents = (
   table: ({ children }) => (
     <MarkdownTable
       classNames={cn}
+      actionLabels={tableActionLabels}
+      downloadFilename={tableDownloadFilename}
+      onOpenInCanvas={tableOnOpenInCanvas}
+      isStreaming={isStreaming}
       scrollRegionAriaLabel={tableScrollRegionAriaLabel}
     >
       {children}
@@ -509,11 +577,12 @@ const buildMarkdownComponents = (
       </tr>
     );
   },
-  th: ({ children }) => (
+  th: ({ children, node }) => (
     <th
       scope="col"
       className={mergeClasses(
         'sticky top-0 z-[2] max-w-96 whitespace-normal break-words px-3 py-2.5 text-start',
+        getTableCellAlignClass(node),
         tableStyles.rowDivider,
         tableStyles.tableHeaderCell,
         cn.tableHeaderFont ?? 'dial-tiny-lead-semi-text',
@@ -524,10 +593,11 @@ const buildMarkdownComponents = (
       {children}
     </th>
   ),
-  td: ({ children }) => (
+  td: ({ children, node }) => (
     <td
       className={mergeClasses(
         'max-w-96 whitespace-normal px-3 py-2.5 align-top [overflow-wrap:anywhere]',
+        getTableCellAlignClass(node),
         tableStyles.rowDivider,
         cn.tableBodyCell,
         cn.tableCell,
@@ -542,16 +612,21 @@ const buildMarkdownComponents = (
 export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
   ({
     content,
+    containerClassName,
     isStreaming,
     streamCharactersPerSecond,
     classNames = EMPTY_CLASS_NAMES,
     components,
+    urlTransform,
     rehypePlugins = EMPTY_REHYPE_PLUGINS,
     thinkingLabel = 'Thinking',
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
     codeBlockTheme,
     colors,
+    tableActionLabels,
+    tableDownloadFilename,
+    tableOnOpenInCanvas,
     tableScrollRegionAriaLabel,
     mathScrollRegionAriaLabel,
   }) => {
@@ -631,6 +706,11 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       '--cm-code-inline-text': colors?.inlineCodeText,
     });
 
+    const effectiveUrlTransform = useMemo(
+      () => composeUrlTransform(urlTransform),
+      [urlTransform],
+    );
+
     const mergedComponents = useMemo(
       () => ({
         ...buildMarkdownComponents(classNames, {
@@ -638,6 +718,9 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
           codeBlockCopyLabel,
           codeBlockCopiedLabel,
           codeBlockTheme,
+          tableActionLabels,
+          tableDownloadFilename,
+          tableOnOpenInCanvas,
           tableScrollRegionAriaLabel,
           mathScrollRegionAriaLabel,
         }),
@@ -650,6 +733,9 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
         codeBlockCopyLabel,
         codeBlockCopiedLabel,
         codeBlockTheme,
+        tableActionLabels,
+        tableDownloadFilename,
+        tableOnOpenInCanvas,
         tableScrollRegionAriaLabel,
         mathScrollRegionAriaLabel,
         components,
@@ -665,11 +751,12 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     }
 
     return (
-      <div style={cssVars}>
+      <div style={cssVars} className={containerClassName}>
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
           rehypePlugins={effectiveRehypePlugins}
           components={mergedComponents}
+          urlTransform={effectiveUrlTransform}
         >
           {processedContent}
         </ReactMarkdown>

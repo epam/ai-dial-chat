@@ -15,6 +15,7 @@ import {
   MessageRating,
   MessageRole,
   type StarterOption,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback, useState } from 'react';
 import { useAttachmentUpload } from '../useAttachmentUpload/useAttachmentUpload';
@@ -22,8 +23,11 @@ import { getConversationPath } from '../useConversationStream/conversation-path'
 import type { ConversationStateAccessor } from '../useConversationStream/useConversationStream';
 import { attachmentsToDtos } from './attachment-to-dto';
 import { createMessagePair } from './message-factory';
-import { hasActiveToolConfig, isMessageChanged } from './message-utils';
-import { getStarterSubmitText } from './starter-option';
+import {
+  hasActiveToolConfig,
+  shouldRerunGenerationOnEdit,
+} from './message-utils';
+import { getStarterDisplayText, getStarterSubmitText } from './starter-option';
 
 /** The exact `startStream` shape `useConversationStream` returns. */
 export type ConversationStreamStarter = (
@@ -68,7 +72,9 @@ export interface UseConversationHandlersParams {
 /** Return value of {@link useConversationHandlers}. */
 export interface UseConversationHandlersResult {
   handleSend: (message: string, attachments: Attachment[]) => Promise<void>;
-  handleUploadAttachment: (attachment: Attachment) => Promise<string>;
+  handleUploadAttachment: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   handleRegenerateMessage: (messageIndex: number) => void;
   handleDeleteMessage: (messageIndex: number) => void;
   handleConfirmDelete: () => void;
@@ -408,7 +414,7 @@ export const useConversationHandlers = ({
     (starter: StarterOption, propertyKey?: string, description?: string) => {
       if (!conversationId || !conversation) return;
 
-      const displayText = description ?? starter.title;
+      const displayText = getStarterDisplayText(starter, description);
       const submitText = getStarterSubmitText(starter, description);
       const configurationValue = propertyKey
         ? { [propertyKey]: starter.const }
@@ -514,8 +520,9 @@ export const useConversationHandlers = ({
       const originalMessage = conversation.messages[idx];
 
       if (
-        !isMessageChanged(
-          originalMessage,
+        !shouldRerunGenerationOnEdit(
+          conversation.messages,
+          idx,
           text,
           keptDisplayAttachments,
           newAttachments,
@@ -571,10 +578,12 @@ export const useConversationHandlers = ({
 
       const updated = { ...conversation, messages: updatedMessages };
 
-      setConversation(() => {
-        conversationRef.current = updated;
-        return updated;
-      });
+      /* The ref is assigned outside the updater because startStream reads it
+       * synchronously below to seed its live-message buffer: React may defer a
+       * function updater to the next render, which would seed the buffer with
+       * the answer this edit replaces. */
+      conversationRef.current = updated;
+      setConversation(updated);
 
       const modelId = resolveModelId();
 

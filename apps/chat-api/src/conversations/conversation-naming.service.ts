@@ -27,7 +27,10 @@ import {
 } from './conversation-persistence.port';
 import { ConversationMessageRole } from './dto/conversation-message.dto';
 import { CONVERSATION_NAMING_SYSTEM_PROMPT } from './prompts/conversation-naming.prompt';
-import { prepareEntityName } from './utils/conversation.utils';
+import {
+  prepareEntityName,
+  qualifySessionConversationPath,
+} from './utils/conversation.utils';
 
 const SERVER_APP_CONFIG_CONTEXT = { appId: 'chat-api' };
 
@@ -327,7 +330,7 @@ export class ConversationNamingService {
 
     try {
       const refreshed = await this.conversationPersistence.getConversation(
-        conversationPath,
+        qualifySessionConversationPath(conversationPath, bucket),
         token,
         bucket,
       );

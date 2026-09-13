@@ -19,6 +19,7 @@ Content-Type: application/json
 
 {
   "folderPath": "Organization/Data Science/Shared chats",
+  "author": "DIAL Team",
   "rules": [
     {
       "source": "role",
@@ -28,7 +29,7 @@ Content-Type: application/json
   ]
 }
 ```
-(`rules` is optional; omitting it is equivalent to `rules: []`.)
+(`rules` is optional; omitting it is equivalent to `rules: []`. `author` is optional; omitting it, or sending it blank, is equivalent to the pre-existing session-derived behavior.)
 
 Core call made by the service (via `DialClientService.client.createPublication`):
 ```json
@@ -42,7 +43,7 @@ Core call made by the service (via `DialClientService.client.createPublication`)
       "targetUrl": "conversations/public/Organization/Data Science/Shared chats/my-conversation-abc"
     }
   ],
-  "displayAuthor": "Test User",
+  "displayAuthor": "DIAL Team",
   "rules": [
     {
       "source": "role",
@@ -52,9 +53,11 @@ Core call made by the service (via `DialClientService.client.createPublication`)
   ]
 }
 ```
-`name` SHALL be the conversation's current title, re-fetched server-side via `ConversationService` at publish time (not accepted from the request body) so a stale or client-forged title cannot be sent to Core — see design.md's Open Questions for the rationale. `targetUrl`'s final segment SHALL be the conversation resource path's own last segment (its resource name), not its title, so the destination path stays stable across renames. `displayAuthor` is resolved from the session's OIDC claims via the existing `getUserDisplayName` helper, identical to catalog publish. `rules` is the caller-supplied, validated array of access-restriction rules (`dto.rules ?? []`), passed through to Core unchanged, using the same `PublishRuleDto`/`PublishRuleFunction` shared with catalog publish (see `catalog-publish-api`'s "Publish request accepts optional access rules" requirement — the validation rules, limits, and source-allowlist rationale are identical and not repeated here).
+`name` SHALL be the conversation's current title, re-fetched server-side via `ConversationService` at publish time (not accepted from the request body) so a stale or client-forged title cannot be sent to Core — see design.md's Open Questions for the rationale. `targetUrl`'s final segment SHALL be the conversation resource path's own last segment (its resource name), not its title, so the destination path stays stable across renames. `displayAuthor` SHALL be resolved by `ConversationPublishController.publish` as `author?.trim() || getUserDisplayName(claims)` and passed as the existing single `author` string parameter to `ConversationPublishService.publish`, whose signature and its `displayAuthor: author` line SHALL remain unchanged — identical in shape to catalog publish (see `catalog-publish-api`). `rules` is the caller-supplied, validated array of access-restriction rules (`dto.rules ?? []`), passed through to Core unchanged, using the same `PublishRuleDto`/`PublishRuleFunction` shared with catalog publish (see `catalog-publish-api`'s "Publish request accepts optional access rules" requirement — the validation rules, limits, and source-allowlist rationale are identical and not repeated here).
 
-`folderPath` is validated with `class-validator` reusing `IsValidFilePath` (blocks `..`/absolute-path escapes) exactly as `PublishCatalogEntityDto` does. `path` (the conversation path) reuses `ConversationPathDto`'s existing validation. `rules` is validated exactly as in `PublishCatalogEntityDto` (same `PublishRuleDto`, same limits).
+`folderPath` is validated with `class-validator` reusing `IsValidFilePath` (blocks `..`/absolute-path escapes) exactly as `PublishCatalogEntityDto` does. `path` (the conversation path) reuses `ConversationPathDto`'s existing validation. `rules` is validated exactly as in `PublishCatalogEntityDto` (same `PublishRuleDto`, same limits). `author` is validated exactly as in `PublishCatalogEntityDto`: `@IsOptional()`, `@IsString()`, `@MaxLength(200)`, `@Matches(/^[^\p{Cc}]*$/u)`.
+
+`author` SHALL NOT affect authorization or the recorded actor. Core continues to derive the publication's `author` from the caller's bearer token, and `PublishConversationResultDto.publishedBy` SHALL continue to prefer `publication.author` over `publication.displayAuthor`.
 
 Response (201):
 ```json
@@ -65,13 +68,13 @@ Response (201):
   "publishedBy": "Test User"
 }
 ```
-(`PublishConversationResultDto` — no `version`, no `entityType`/`entityId` pair, since there is exactly one resource kind and no version dimension. The response SHALL NOT echo back `rules`, matching `catalog-publish-api`'s response contract.)
+(`PublishConversationResultDto` — no `version`, no `entityType`/`entityId` pair, since there is exactly one resource kind and no version dimension. The response SHALL NOT echo back `rules` or `author`, matching `catalog-publish-api`'s response contract.)
 
-Generated-client impact: OpenAPI `operationId: publishConversation`; request DTO `PublishConversationDto` (now including optional `rules?: PublishRuleDto[]`, reusing the same `PublishRuleDto`/`PublishRuleFunction` as `PublishCatalogEntityDto`); response DTO `PublishConversationResultDto` (unchanged). Frontend caller: `apps/chat/src/server-api/conversation-publish.api.ts` thin wrapper using the normal (non-`Raw`) generated method.
+Generated-client impact: OpenAPI `operationId: publishConversation`; request DTO `PublishConversationDto` (including optional `rules?: PublishRuleDto[]`, reusing the same `PublishRuleDto`/`PublishRuleFunction` as `PublishCatalogEntityDto`, and optional `author?: string`); response DTO `PublishConversationResultDto` (unchanged). Frontend caller: `apps/chat/src/server-api/conversation-publish.api.ts` thin wrapper using the normal (non-`Raw`) generated method, whose `publishConversation` helper SHALL take the author as a fourth positional parameter and omit the field from the request body when it is empty after trimming. Because `author` is optional, the regenerated client SHALL stay source-compatible with request literals that omit it.
 
 Rate limiting: `@Throttle({ default: { limit: 10, ttl: 60000 } })`, matching the catalog publish endpoint's write-endpoint throttle profile. Unchanged by this requirement.
 
-Authorization: caller SHALL be authenticated (existing session guard). The service SHALL resolve the bucket exclusively from the authenticated session and SHALL never accept a bucket from the request. Consequently, a path that exists only in another user's bucket is indistinguishable from a missing path and returns 404, avoiding disclosure of another user's resources. Write access to `folderPath` is enforced by DIAL Core itself when `createPublication` is called. A Core 403 SHALL map to `ForbiddenException` via `handleDialSdkError`/`mapDialHttpStatus`. This is unchanged by adding `rules`.
+Authorization: caller SHALL be authenticated (existing session guard). The service SHALL resolve the bucket exclusively from the authenticated session and SHALL never accept a bucket from the request. Consequently, a path that exists only in another user's bucket is indistinguishable from a missing path and returns 404, avoiding disclosure of another user's resources. Write access to `folderPath` is enforced by DIAL Core itself when `createPublication` is called. A Core 403 SHALL map to `ForbiddenException` via `handleDialSdkError`/`mapDialHttpStatus`. This is unchanged by adding `rules` or `author`.
 
 #### Scenario: Successful publish
 - **WHEN** an authenticated user with write access to the target folder submits a valid publish request for their own conversation
@@ -80,6 +83,18 @@ Authorization: caller SHALL be authenticated (existing session guard). The servi
 #### Scenario: Publish targets the public bucket with the conversation's resource name, not its title
 - **WHEN** `path` is `bucket-123/my-conversation-abc` and `folderPath` is `Organization/Data Science`
 - **THEN** `targetFolder` sent to Core is `public/Organization/Data Science/` and `targetUrl` is `conversations/public/Organization/Data Science/my-conversation-abc`
+
+#### Scenario: Custom author is forwarded to Core as displayAuthor
+- **WHEN** an authenticated user publishes a conversation with `author: "DIAL Team"`
+- **THEN** the `createPublication` body sent to Core carries `displayAuthor: "DIAL Team"` instead of the session-derived display name
+
+#### Scenario: Request omitting author behaves exactly as before this change
+- **WHEN** a request body has no `author` field at all, or sends it blank or whitespace-only
+- **THEN** the controller passes `getUserDisplayName(claims)` to the service and Core receives exactly the `displayAuthor` it received before this change
+
+#### Scenario: Invalid author payload is rejected with 400
+- **WHEN** `author` exceeds 200 characters or contains a control character
+- **THEN** the `ValidationPipe` rejects the request with 400 before reaching the service or Core
 
 #### Scenario: Conversation not owned by the caller
 - **WHEN** `path` does not resolve to a conversation in the caller's own bucket
@@ -112,7 +127,6 @@ Authorization: caller SHALL be authenticated (existing session guard). The servi
 #### Scenario: Invalid rules payload is rejected with 400
 - **WHEN** a request includes a malformed `rules` entry (invalid `function` enum value, empty `source`, or empty `targets`)
 - **THEN** the `ValidationPipe` rejects the request with 400 before reaching the service or Core, per the same validation contract defined in `catalog-publish-api`'s "Publish request accepts optional access rules" requirement
-
 ### Requirement: Publish history endpoint derives history from Core publications, scoped by conversation path
 
 The backend SHALL expose `GET /api/v1/conversations/publish-history?path=<conversation-path>` returning every publication this conversation path has ever been published to, most recent first. It SHALL call Core's `getPublications` with the caller's own-bucket list scope (`{ url: "publications/{bucket}/" }`) and narrow the response to publications whose `resources[].sourceUrl` is `"conversations/{bucket}/{normalizedPath}"`, sharing every corrected helper with `PublishService.getPublishHistory` (see `catalog-publish-api`): the response shape is read through `toPublicationList`, so Core's `{ publications: [...] }` envelope no longer surfaces as a 503; and the narrowing goes through `resolvePublicationsForSource`, which re-reads each `APPROVED` candidate through `getPublication` because Core's list response carries publication metadata only and no `resources` array. Each entry's `folderPath` SHALL have the `public/` prefix and trailing slash stripped, matching the existing `stripPublicTargetFolder` behavior.
