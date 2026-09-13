@@ -203,6 +203,11 @@ describe('FilesUploadService', () => {
       expect(result).toEqual({
         url: 'files/user-bucket/uploads/2026-06/IMG_4740%202.jpg',
       });
+      expect(sdkClient.uploadFile).toHaveBeenCalledWith(
+        'user-bucket',
+        'uploads/2026-06/IMG_4740%202.jpg',
+        expect.any(Object),
+      );
     });
 
     it('calls SDK with bucket, path, authorization and multipart form data', async () => {

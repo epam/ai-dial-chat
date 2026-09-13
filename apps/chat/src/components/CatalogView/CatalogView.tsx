@@ -22,13 +22,13 @@ import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
   DialFileManagerI18nKeys,
   FavoritesI18nKeys,
   NavigationI18nKeys,
   PublishI18nKeys,
-  SkillArchiveImportI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -64,9 +64,11 @@ import { CatalogQuery } from '../../types/catalog';
 import { EditorQuery } from '../../types/editor-query';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
+import { getCatalogSearchPlaceholder } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { getAccessRulesLabels } from '../../utils/publish';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
+import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
@@ -199,10 +201,13 @@ const CatalogView: FC<Props> = ({
   } = useSkills();
 
   const {
-    fileInputRef: skillArchiveFileInputRef,
+    isDialogOpen: isSkillArchiveDialogOpen,
     statusMessage: skillArchiveStatusMessage,
-    triggerFilePicker: triggerSkillArchivePicker,
-    handleFileChange: handleSkillArchiveFileChange,
+    selectionError: skillArchiveSelectionError,
+    openDialog: openSkillArchiveDialog,
+    closeDialog: closeSkillArchiveDialog,
+    handleFilesSelected: handleSkillArchiveFilesSelected,
+    handleFilesRejected: handleSkillArchiveFilesRejected,
   } = useSkillArchiveImport();
 
   const isLoading =
@@ -255,6 +260,15 @@ const CatalogView: FC<Props> = ({
 
   const { activeTab, setActiveTab } =
     useCatalogActiveTabPreference(availableTabIds);
+
+  /*
+   * Names only the entity types actually on offer, so a picker restricted to
+   * agents doesn't advertise models and toolsets the user cannot reach.
+   */
+  const searchPlaceholder = useMemo(
+    () => getCatalogSearchPlaceholder(availableTabIds, t),
+    [availableTabIds, t],
+  );
 
   const {
     folderItems: publishFolderItems,
@@ -357,11 +371,14 @@ const CatalogView: FC<Props> = ({
     handlePublishError,
     handleFetchExistingRules,
     isPublishVisible,
+    isUnpublishVisible,
   } = useCatalogPublishing({
     deployments,
     rememberPublishFolder,
     notifyOperationSuccess,
     showPublishError,
+    isAdmin,
+    hasPublishWriteAccess,
   });
 
   const {
@@ -485,7 +502,7 @@ const CatalogView: FC<Props> = ({
       ),
     labels: catalogEditNavigationLabels,
     onNotify: showErrorNotification,
-    triggerSkillArchivePicker,
+    onSkillUploadClick: openSkillArchiveDialog,
   });
 
   if (!isCatalogEnabled && !isSelectorMode) {
@@ -494,14 +511,12 @@ const CatalogView: FC<Props> = ({
 
   return (
     <>
-      <input
-        ref={skillArchiveFileInputRef}
-        type="file"
-        accept=".zip,.md"
-        className="sr-only"
-        tabIndex={-1}
-        aria-label={t(SkillArchiveImportI18nKeys.FileInputAriaLabel)}
-        onChange={handleSkillArchiveFileChange}
+      <SkillArchiveUploadDialog
+        isOpen={isSkillArchiveDialogOpen}
+        errorText={skillArchiveSelectionError}
+        onClose={closeSkillArchiveDialog}
+        onFilesSelected={handleSkillArchiveFilesSelected}
+        onFilesRejected={handleSkillArchiveFilesRejected}
       />
       <span role="status" aria-live="polite" className="sr-only">
         {skillArchiveStatusMessage}
@@ -555,7 +570,7 @@ const CatalogView: FC<Props> = ({
         onPublish={handlePublish}
         onPublishSuccess={handlePublishSuccess}
         onUnpublish={handleUnpublish}
-        isUnpublishVisible={isPublishVisible}
+        isUnpublishVisible={isUnpublishVisible}
         onPublishError={handlePublishError}
         ruleSourceOptions={config.publicationFilterSources}
         onFetchExistingRules={handleFetchExistingRules}
@@ -568,6 +583,7 @@ const CatalogView: FC<Props> = ({
           historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
           historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
           submitError: t(PublishI18nKeys.SubmitErrorCallout),
+          rootFolderLabel: t(BasicI18nKeys.Organization),
           accessRulesLabels: getAccessRulesLabels(t),
         }}
         shareOverlay={(item, onClose) => (
@@ -586,9 +602,10 @@ const CatalogView: FC<Props> = ({
           createLabel: t(ButtonsI18nKeys.Create),
           favoritesTitle: t(FavoritesI18nKeys.Title),
           browseTitle: t(ButtonsI18nKeys.Browse),
-          searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
+          searchPlaceholder,
           noResultsTitle: (query) =>
             t(CatalogI18nKeys.NoResultsTitle, { query }),
+          sortLabel: t(ButtonsI18nKeys.Sort),
           sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),
           sortNewestLabel: t(CatalogI18nKeys.SortNewest),
           sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),

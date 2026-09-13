@@ -3,8 +3,10 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
+  MenuItem,
+  MenuItemMark,
 } from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconChevronDown, IconWorld } from '@tabler/icons-react';
+import { IconChevronDown, IconWorld } from '@tabler/icons-react';
 import { FC, type KeyboardEvent, type RefObject } from 'react';
 import { ShareLinkAccess } from '../../types/share';
 import styles from '../SharePopover/SharePopover.module.scss';
@@ -126,15 +128,18 @@ export const AccessControl: FC<AccessControlProps> = ({
               {accessOptions.map((option) => {
                 const isChecked = selectedAccess === option.value;
                 return (
-                  <button
+                  /* One choice out of the list, which the design marks with a
+                     trailing check drawn by the kit's own menu row. */
+                  <MenuItem
                     key={option.value}
-                    type="button"
                     role="menuitemradio"
                     aria-checked={isChecked}
-                    className={mergeClasses(
-                      'flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-start outline-none',
-                      styles.accessMenuItem,
-                      isChecked && styles.accessMenuItemChecked,
+                    mark={MenuItemMark.Check}
+                    selected={isChecked}
+                    label={option.label}
+                    labelClassName={mergeClasses(
+                      accessMenuItemLabelClassName,
+                      styles.accessMenuItemLabel,
                     )}
                     onClick={() => {
                       onAccessChange(
@@ -144,24 +149,7 @@ export const AccessControl: FC<AccessControlProps> = ({
                       );
                       onOpenChange(false);
                     }}
-                  >
-                    <span
-                      className={mergeClasses(
-                        accessMenuItemLabelClassName,
-                        styles.accessMenuItemLabel,
-                      )}
-                    >
-                      {option.label}
-                    </span>
-                    {isChecked && (
-                      <IconCheck
-                        size={DIAL_ICON_SIZE.SM}
-                        stroke={DIAL_KIT_ICON_STROKE}
-                        className={styles.accessMenuItemCheck}
-                        aria-hidden
-                      />
-                    )}
-                  </button>
+                  />
                 );
               })}
             </div>

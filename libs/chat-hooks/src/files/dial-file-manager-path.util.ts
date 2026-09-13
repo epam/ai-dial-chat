@@ -28,12 +28,17 @@ export const normalizeVirtualPath = (value: string): string => {
   return trimmed || '/';
 };
 
+/*
+ * Virtual and API paths are already in the decoded space, so the last segment
+ * is the resource name verbatim — decoding it again would turn a name that
+ * legitimately contains a percent escape into a different name.
+ */
 export const getVirtualPathName = (
   virtualPath: string,
   fallback: string,
 ): string => {
   const segments = virtualPath.split('/').filter(Boolean);
-  return safeDecodeURI(segments[segments.length - 1] ?? fallback);
+  return segments[segments.length - 1] ?? fallback;
 };
 
 export const formatOperationFolderName = (
@@ -130,8 +135,9 @@ export const dialCorePathToRelative = (
  * DialFile.path format ("/My files/reports/q1.pdf") that ui-kit compares
  * row items against for `sharedByMePaths`/`sharedWithMeIds` gating — the
  * DIAL Core resource path ("files/{bucket}/...") is a different identifier
- * space and never matches. Decodes each path segment independently, matching
- * how buildFromCache derives virtual paths.
+ * space and never matches. The input comes from a percent-encoded DIAL Core
+ * url, so each segment is decoded independently to reach the same decoded
+ * space the listing rows live in.
  */
 export const buildSharedItemVirtualPath = (
   relativePath: string,

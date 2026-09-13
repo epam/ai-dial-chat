@@ -1,11 +1,20 @@
 import { EventEmitter } from 'node:events';
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { EnvironmentVariables } from '../config/environment.config';
+import { trackGeneration } from '../telemetry/runtime-metrics';
 import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from './dto/conversation-message.dto';
 
 const STALE_ENTRY_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const DEFAULT_MAX_GENERATION_DURATION_MS = 1_800_000; // 30 minutes
 
 export enum GenerationStatus {
   Active = 'active',
@@ -58,15 +67,66 @@ interface GenerationEntry {
   assembledMessage: ConversationMessageDto;
   /** Per-generation event bus for `generation-live-replay` attach subscribers. */
   emitter: EventEmitter;
+  /**
+   * Server-owned bound, independent of the client connection: aborts the
+   * generation if it is still `Active` after `MAX_GENERATION_DURATION_MS`.
+   * Cleared by every terminal transition (`complete`/`error`/`abort`) so a
+   * normal-speed generation never triggers it.
+   */
+  maxDurationTimer: NodeJS.Timeout;
+  /** Released when this entry is no longer retained by the registry. */
+  finishTracking: () => void;
 }
 
 @Injectable()
-export class ConversationGenerationService {
+export class ConversationGenerationService implements OnModuleDestroy {
   private readonly logger = new Logger(ConversationGenerationService.name);
   private readonly registry = new Map<string, GenerationEntry>();
+  private readonly maxGenerationDurationMs: number;
+
+  constructor(configService: ConfigService<EnvironmentVariables>) {
+    this.maxGenerationDurationMs =
+      configService.get('MAX_GENERATION_DURATION_MS', { infer: true }) ??
+      DEFAULT_MAX_GENERATION_DURATION_MS;
+  }
 
   private buildKey(sessionId: string, path: string): string {
     return `${sessionId}::${path}`;
+  }
+
+  private removeEntry(key: string, entry: GenerationEntry): void {
+    clearTimeout(entry.maxDurationTimer);
+    if (this.registry.get(key) === entry) {
+      this.registry.delete(key);
+    }
+    entry.finishTracking();
+  }
+
+  onModuleDestroy(): void {
+    for (const [key, entry] of this.registry) {
+      clearTimeout(entry.maxDurationTimer);
+      entry.status = GenerationStatus.Stopped;
+      /*
+       * Every attachment must get a terminal event to release its response and
+       * keepalive. Isolate subscribers so one failing callback cannot prevent
+       * the others from closing; raw listeners preserve EventEmitter.once.
+       */
+      for (const listener of entry.emitter.rawListeners('terminal')) {
+        try {
+          listener.call(entry.emitter, {
+            type: 'stopped',
+          } satisfies GenerationTerminalEvent);
+        } catch (error) {
+          this.logger.error(
+            'Failed to notify generation subscriber during shutdown',
+            error instanceof Error ? error.stack : undefined,
+          );
+        }
+      }
+      entry.emitter.removeAllListeners();
+      this.removeEntry(key, entry);
+      entry.abortController.abort();
+    }
   }
 
   private evictStale(): void {
@@ -74,7 +134,7 @@ export class ConversationGenerationService {
     for (const [key, entry] of this.registry) {
       if (entry.startedAt < cutoff) {
         this.logger.warn(`Evicting stale generation entry: ${key}`);
-        this.registry.delete(key);
+        this.removeEntry(key, entry);
       }
     }
   }
@@ -93,6 +153,9 @@ export class ConversationGenerationService {
         `A generation is already active for this conversation. Stop it before starting a new one.`,
       );
     }
+    if (existing) {
+      this.removeEntry(key, existing);
+    }
 
     const abortController = new AbortController();
     const emitter = new EventEmitter();
@@ -102,6 +165,15 @@ export class ConversationGenerationService {
      * removes its own listener on terminal/disconnect.
      */
     emitter.setMaxListeners(0);
+    const maxDurationTimer = setTimeout(() => {
+      const current = this.registry.get(key);
+      if (current?.generationId === generationId) {
+        this.logger.warn(
+          `Aborting generation past MAX_GENERATION_DURATION_MS: ${key}`,
+        );
+        current.abortController.abort();
+      }
+    }, this.maxGenerationDurationMs);
     this.registry.set(key, {
       generationId,
       abortController,
@@ -109,6 +181,8 @@ export class ConversationGenerationService {
       startedAt: Date.now(),
       assembledMessage: createPlaceholderMessage(),
       emitter,
+      maxDurationTimer,
+      finishTracking: trackGeneration(),
     });
     return abortController;
   }
@@ -174,21 +248,9 @@ export class ConversationGenerationService {
       return false;
     }
     entry.status = GenerationStatus.Stopped;
+    clearTimeout(entry.maxDurationTimer);
     entry.abortController.abort();
     return true;
-  }
-
-  /**
-   * Aborts the upstream relay for a client disconnect (e.g. the browser tab
-   * closed mid-stream), without marking the entry `Stopped` — unlike `abort`,
-   * this is not a user-initiated stop, so `ConversationStreamingService`'s own
-   * abandonment cleanup must still finalize it as `Error`, not `Stopped`.
-   */
-  abortSignal(sessionId: string, path: string, generationId: string): void {
-    const entry = this.registry.get(this.buildKey(sessionId, path));
-    if (entry?.generationId === generationId) {
-      entry.abortController.abort();
-    }
   }
 
   getStatus(sessionId: string, path: string): GenerationStatus | undefined {
@@ -200,12 +262,13 @@ export class ConversationGenerationService {
     const key = this.buildKey(sessionId, path);
     const entry = this.registry.get(key);
     if (entry?.generationId === generationId) {
+      clearTimeout(entry.maxDurationTimer);
       entry.status = GenerationStatus.Done;
       entry.emitter.emit('terminal', {
         type: 'done',
       } satisfies GenerationTerminalEvent);
       entry.emitter.removeAllListeners();
-      this.registry.delete(key);
+      this.removeEntry(key, entry);
     }
   }
 
@@ -224,6 +287,7 @@ export class ConversationGenerationService {
     const key = this.buildKey(sessionId, path);
     const entry = this.registry.get(key);
     if (entry?.generationId === generationId) {
+      clearTimeout(entry.maxDurationTimer);
       const wasStopped = entry.status === GenerationStatus.Stopped;
       entry.status = GenerationStatus.Error;
       entry.emitter.emit(
@@ -233,7 +297,7 @@ export class ConversationGenerationService {
           : { type: 'error', message }) satisfies GenerationTerminalEvent,
       );
       entry.emitter.removeAllListeners();
-      this.registry.delete(key);
+      this.removeEntry(key, entry);
     }
   }
 }

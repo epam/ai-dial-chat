@@ -506,11 +506,7 @@ After `deleteConversation` resolves successfully, `ConversationPanelView` SHALL 
 
 ### Requirement: A conversation the backend no longer has leaves the panel
 
-A conversation can disappear upstream while the panel still lists it — most
-commonly because deleting its last message deleted the conversation itself (see
-`chat-hooks-conversation-handlers`), but also when another tab or session
-removed it. Such a row is unusable: opening it fails and deleting it fails, so
-it SHALL NOT be left in the list.
+A conversation can disappear upstream while the panel still lists it — most commonly because deleting its last message deleted the conversation itself (see `chat-hooks-conversation-handlers`), but also when another tab or session removed it. Such a row is unusable: opening it fails and deleting it fails, so it SHALL NOT be left in the list.
 
 `ConversationsContext` SHALL therefore expose `removeConversationFromList(id)`,
 which drops a conversation from the local list without issuing a delete

@@ -9,12 +9,16 @@ import {
   dialFolderPathToAttachment,
   findDeploymentByIdOrReference,
   getQuickAppConversationStarters,
-  isMessageChanged,
   isQuickAppSchema,
   referenceAttachmentToPdfCanvasContent,
+  shouldRerunGenerationOnEdit,
   useAttachmentValidation,
   useChatSettingsFormConfig,
 } from '@epam/ai-dial-chat-hooks';
+import {
+  useMcpAppTools,
+  useOpenMcpAppCanvas,
+} from '@epam/ai-dial-chat-hooks/mcp-apps';
 import { useConversationScroll } from '@epam/ai-dial-chat-hooks/scroll-anchoring';
 import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
@@ -30,20 +34,23 @@ import {
   type Message as MessageType,
   type StarterOption,
   type ToolMenuItem,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type { ToolsChipLabels } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
+import { useMcpAppResponseCache } from '@epam/ai-dial-mcp-apps';
 import {
+  BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconCopy } from '@tabler/icons-react';
+import { IconCopy, IconPrompt } from '@tabler/icons-react';
 import {
   FC,
   lazy,
@@ -71,18 +78,19 @@ import {
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
+import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useAutoOpenMcpAppCanvas } from '../../hooks/attachment/useAutoOpenMcpAppCanvas';
-import { useOpenMcpAppCanvas } from '../../hooks/attachment/useOpenMcpAppCanvas';
+import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
-import { useMcpAppTools } from '../../hooks/conversation/useMcpAppTools';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { mcpAppsApiClient } from '../../server-api/mcp-apps';
 import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -90,6 +98,7 @@ import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymen
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
+import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
 
@@ -106,7 +115,9 @@ const DialFileManagerModal = lazy(async () => {
 interface Props {
   messages: MessageType[];
   onSend: (message: string, attachments: Attachment[]) => void;
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   onStop?: () => void;
   onDeleteMessage?: (messageIndex: number) => void;
   onRegenerateMessage?: (messageIndex: number) => void;
@@ -136,6 +147,8 @@ interface Props {
   onDuplicateConversation?: () => void;
   duplicateError?: string;
   isAudioMessageSupported?: boolean;
+  isVoiceRecordingSupported?: boolean;
+  onTranscribeAudio?: (file: File, signal: AbortSignal) => Promise<string>;
   conversation: Conversation;
   onConversationChange: (conv: Conversation) => void;
   /**
@@ -194,6 +207,8 @@ const ConversationView: FC<Props> = ({
   onDuplicateConversation,
   duplicateError,
   isAudioMessageSupported = false,
+  isVoiceRecordingSupported = false,
+  onTranscribeAudio,
   conversation,
   onConversationChange,
   fixedModel,
@@ -216,6 +231,46 @@ const ConversationView: FC<Props> = ({
     onInsertText: onInsertText ?? (() => undefined),
   });
   const { t } = useTranslation();
+  const promptsMenuOverlays = useMemo(
+    () =>
+      onInsertText && renderPromptsOverlay
+        ? [
+            {
+              key: 'prompts',
+              title: t(PromptSelectorI18nKeys.AddMenuLabel),
+              icon: (
+                <IconPrompt
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
+              renderOverlay: renderPromptsOverlay,
+            },
+          ]
+        : undefined,
+    [onInsertText, renderPromptsOverlay, t],
+  );
+  const {
+    skillMenuOverlay,
+    commandMenu,
+    skillCatalogModal,
+    skillDetailsPanel,
+    selectedSkillElement,
+    removeSelectedSkill,
+  } = useSkillSelectorOverlay();
+  /*
+   * The Skills entry joins the Prompts entry in array order, so it renders
+   * below Prompts in the `+` menu; `undefined` when both are absent keeps
+   * the `+` button's empty-menu rule intact.
+   */
+  const menuOverlays = useMemo(() => {
+    const entries = [
+      ...(promptsMenuOverlays ?? []),
+      ...(skillMenuOverlay ? [skillMenuOverlay] : []),
+    ];
+    return entries.length > 0 ? entries : undefined;
+  }, [promptsMenuOverlays, skillMenuOverlay]);
   const { language } = useLanguage();
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const isMobile = useIsMobile();
@@ -231,6 +286,7 @@ const ConversationView: FC<Props> = ({
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
+  const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -240,7 +296,30 @@ const ConversationView: FC<Props> = ({
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
-  const { openMcpAppCanvas } = useOpenMcpAppCanvas();
+  const mcpAppCache = useMcpAppResponseCache(conversation.id);
+  const mcpAppHostAdapter = useMcpAppHostAdapter('fullscreen');
+  const { closePanel } = useConversationPanel();
+  const { handleClose: closeSourcesPanel } = useSourcesSidebar();
+  const closeMcpAppCanvasBlockers = useCallback(() => {
+    closePanel();
+    closeSourcesPanel();
+  }, [closePanel, closeSourcesPanel]);
+  const mcpAppCanvasLabels = useMemo(
+    () => ({
+      title: t(AttachmentCanvasI18nKeys.McpAppTitle),
+      forbiddenErrorLabel: t(
+        AttachmentCanvasI18nKeys.McpAppForbiddenErrorLabel,
+      ),
+      loadErrorLabel: t(AttachmentCanvasI18nKeys.McpAppLoadErrorLabel),
+    }),
+    [t],
+  );
+  const { openMcpAppCanvas } = useOpenMcpAppCanvas(
+    mcpAppCache,
+    mcpAppHostAdapter,
+    mcpAppCanvasLabels,
+    closeMcpAppCanvasBlockers,
+  );
   const { openCanvas, attachmentId: selectedAttachmentKey } =
     useAttachmentCanvas();
 
@@ -285,8 +364,12 @@ const ConversationView: FC<Props> = ({
       : undefined;
   }, [items, activeDeploymentId, language]);
 
-  const mcpAppTools = useMcpAppTools(selectedDeployment, messages, toolsets);
-  useAutoOpenMcpAppCanvas(messages, mcpAppTools);
+  const mcpAppTools = useMcpAppTools(
+    mcpAppsApiClient,
+    selectedDeployment,
+    messages,
+    toolsets,
+  );
 
   const handleAttachmentValidationError = useCallback(
     ({
@@ -554,15 +637,20 @@ const ConversationView: FC<Props> = ({
       newAttachments: Attachment[],
     ) => {
       /*
-       * handleEditMessage no-ops if a generation is in flight or the text is
-       * unchanged (isMessageChanged mirrors that same check) — skip arming
-       * in either case so a later, unrelated update can't consume a stale index.
+       * handleEditMessage no-ops if a generation is in flight, or if nothing
+       * changed and the existing answer is complete (shouldRerunGenerationOnEdit
+       * mirrors that same check) — skip arming in either case so a later,
+       * unrelated update can't consume a stale index.
        */
-      const originalMessage = messages[messageIndex];
       if (
         !isAssistantTyping &&
-        originalMessage != null &&
-        isMessageChanged(originalMessage, text, keptAttachments, newAttachments)
+        shouldRerunGenerationOnEdit(
+          messages,
+          messageIndex,
+          text,
+          keptAttachments,
+          newAttachments,
+        )
       ) {
         armAnchor(messageIndex);
       }
@@ -736,7 +824,7 @@ const ConversationView: FC<Props> = ({
                     stepsLabel={stepsLabel}
                     onOpenApp={openMcpAppCanvas}
                     mcpAppTools={mcpAppTools}
-                    openCanvasLabel={t(AttachmentCanvasI18nKeys.OpenAppLabel)}
+                    mcpAppCache={mcpAppCache}
                     openedInCanvasLabel={t(
                       AttachmentCanvasI18nKeys.OpenedInCanvasLabel,
                     )}
@@ -866,7 +954,12 @@ const ConversationView: FC<Props> = ({
                 sendTitle={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
                 isAudioMessageSupported={isAudioMessageSupported}
+                isVoiceRecordingSupported={isVoiceRecordingSupported}
+                onTranscribeAudio={onTranscribeAudio}
+                transcribingLabel={t(VoiceRecordingI18nKeys.Transcribing)}
+                voiceErrorLabel={t(VoiceRecordingI18nKeys.Failed)}
                 micLabel={t(VoiceRecordingI18nKeys.MicLabel)}
+                recordVoiceLabel={t(VoiceRecordingI18nKeys.RecordVoiceLabel)}
                 stopRecordingLabel={t(
                   VoiceRecordingI18nKeys.StopRecordingLabel,
                 )}
@@ -878,6 +971,7 @@ const ConversationView: FC<Props> = ({
                 chatSettings={isChatSettingsEnabled ? chatSettings : undefined}
                 toolsMenuItems={toolsMenuItems}
                 onToolToggle={onToolToggle}
+                canRemoveTools={isRemovableToolsEnabled}
                 toolsMenuTitle={toolsMenuTitle}
                 toolsChipLabels={toolsChipLabels}
                 pendingDropFiles={!isEditActive ? pendingFiles : undefined}
@@ -915,10 +1009,10 @@ const ConversationView: FC<Props> = ({
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
-                promptsMenuOverlay={
-                  onInsertText ? renderPromptsOverlay : undefined
-                }
-                promptsMenuTitle={t(PromptSelectorI18nKeys.AddMenuLabel)}
+                menuOverlays={menuOverlays}
+                inlineStartSlot={selectedSkillElement}
+                onInlineStartRemove={removeSelectedSkill}
+                commandMenu={commandMenu}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
                   <UsageLimitsControl
@@ -1024,6 +1118,8 @@ const ConversationView: FC<Props> = ({
       {catalogModal}
       {promptCatalogModal}
       {promptParametersPopup}
+      {skillCatalogModal}
+      {skillDetailsPanel}
     </>
   );
 };

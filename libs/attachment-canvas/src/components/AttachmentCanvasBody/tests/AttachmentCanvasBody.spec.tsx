@@ -40,6 +40,7 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
 interface PdfContentMockProps {
   url: string;
   configurePdfWorker?: () => void | Promise<void>;
+  selectedPageNumber?: number;
 }
 
 vi.mock('../../PdfContent/PdfContent', () => ({
@@ -49,8 +50,27 @@ vi.mock('../../PdfContent/PdfContent', () => ({
 }));
 
 vi.mock('../../OoxmlContent/OoxmlContent', () => ({
-  OoxmlContent: ({ content }: { content: { format: string } }) => (
-    <section aria-label="ooxml-content">{content.format}</section>
+  OoxmlContent: ({
+    content,
+    formulaLabel,
+    formulaLabelClassName,
+    highlightsLabel,
+    highlightNavigatedLabel,
+  }: {
+    content: { format: string };
+    formulaLabel: string;
+    formulaLabelClassName: string;
+    highlightsLabel?: string;
+    highlightNavigatedLabel?: string;
+  }) => (
+    <section
+      aria-label="ooxml-content"
+      data-formula-label-class-name={formulaLabelClassName}
+      data-highlights-label={highlightsLabel}
+      data-highlight-navigated-label={highlightNavigatedLabel}
+    >
+      {content.format}:{formulaLabel}
+    </section>
   ),
 }));
 
@@ -170,6 +190,27 @@ describe('AttachmentCanvasBody', () => {
     expect(props.configurePdfWorker).toBe(configurePdfWorker);
   });
 
+  it('forwards content.page as selectedPageNumber to PdfContent', async () => {
+    renderBody({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:pdf-url',
+      page: 7,
+    });
+    await screen.findByRole('region', { name: 'pdf-content' });
+    const [props] = vi.mocked(PdfContent).mock.calls[0];
+    expect(props.selectedPageNumber).toBe(7);
+  });
+
+  it('leaves selectedPageNumber undefined when content.page is absent', async () => {
+    renderBody({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:pdf-url',
+    });
+    await screen.findByRole('region', { name: 'pdf-content' });
+    const [props] = vi.mocked(PdfContent).mock.calls[0];
+    expect(props.selectedPageNumber).toBeUndefined();
+  });
+
   it("announces the pdfContentLoadingLabel while PdfContent's dynamic import is pending", async () => {
     /*
      * `PdfContent` is behind `lazy()`, so even a synchronously-resolving
@@ -198,20 +239,111 @@ describe('AttachmentCanvasBody', () => {
     expect(screen.getByRole('region', { name: 'ooxml-content' })).toBeTruthy();
   });
 
-  it('exposes the OOXML background as a host-overridable CSS variable', () => {
+  it('forwards ooxmlHighlightsLabel and ooxmlHighlightNavigatedLabel to OoxmlContent', () => {
+    renderBody(
+      {
+        type: AttachmentContentType.Ooxml,
+        url: 'blob:office-url',
+        format: OoxmlFileType.Docx,
+      },
+      {
+        labels: {
+          ooxmlHighlightsLabel: 'Cited locations',
+          ooxmlHighlightNavigatedLabel: 'Scrolled to the cited location',
+        },
+      },
+    );
+
+    const region = screen.getByRole('region', { name: 'ooxml-content' });
+    expect(region.getAttribute('data-highlights-label')).toBe(
+      'Cited locations',
+    );
+    expect(region.getAttribute('data-highlight-navigated-label')).toBe(
+      'Scrolled to the cited location',
+    );
+  });
+
+  it('leaves the highlight labels undefined on OoxmlContent when omitted, so it falls back to its own defaults', () => {
+    renderBody({
+      type: AttachmentContentType.Ooxml,
+      url: 'blob:office-url',
+      format: OoxmlFileType.Docx,
+    });
+
+    const region = screen.getByRole('region', { name: 'ooxml-content' });
+    expect(region.getAttribute('data-highlights-label')).toBeNull();
+    expect(region.getAttribute('data-highlight-navigated-label')).toBeNull();
+  });
+
+  it('forwards the XLSX formula label to OoxmlContent', () => {
+    renderBody(
+      {
+        type: AttachmentContentType.Ooxml,
+        url: 'blob:office-url',
+        format: OoxmlFileType.Xlsx,
+      },
+      { labels: { xlsxFormulaLabel: 'Cell formula' } },
+    );
+
+    expect(screen.getByText('xlsx:Cell formula')).toBeTruthy();
+  });
+
+  it('forwards the default and overridden XLSX formula typography', () => {
+    const content = {
+      type: AttachmentContentType.Ooxml as const,
+      url: 'blob:office-url',
+      format: OoxmlFileType.Xlsx,
+    };
+    const view = renderBody(content);
+    expect(
+      screen
+        .getByRole('region', { name: 'ooxml-content' })
+        .getAttribute('data-formula-label-class-name'),
+    ).toBe('dial-italic-text');
+
+    view.unmount();
+    renderBody(content, {
+      styles: {
+        typography: { xlsxFormulaLabelClassName: 'custom-formula-text' },
+      },
+    });
+    expect(
+      screen
+        .getByRole('region', { name: 'ooxml-content' })
+        .getAttribute('data-formula-label-class-name'),
+    ).toBe('custom-formula-text');
+  });
+
+  it('exposes the OOXML colors as host-overridable CSS variables', () => {
     const { container } = renderBody(
       {
         type: AttachmentContentType.Ooxml,
         url: 'blob:office-url',
         format: OoxmlFileType.Docx,
       },
-      { styles: { colors: { ooxmlBackground: 'rebeccapurple' } } },
+      {
+        styles: {
+          colors: {
+            ooxmlBackground: 'rebeccapurple',
+            ooxmlFormulaBorder: 'gold',
+            ooxmlFormulaBackground: 'navy',
+            ooxmlFormulaText: 'white',
+          },
+        },
+      },
     );
 
     /* Set on the body root and inherited by OoxmlContent through the cascade. */
     // eslint-disable-next-line testing-library/no-node-access -- reading an inline CSS custom property, which has no accessible representation to query
     const root = container.firstElementChild as HTMLElement;
     expect(root.style.getPropertyValue('--ac-ooxml-bg')).toBe('rebeccapurple');
+    expect(root.style.getPropertyValue('--ac-ooxml-formula-border')).toBe(
+      'gold',
+    );
+    expect(root.style.getPropertyValue('--ac-ooxml-formula-bg')).toBe('navy');
+    expect(root.style.getPropertyValue('--ac-ooxml-formula-text')).toBe(
+      'white',
+    );
   });
 
   it('does not add its own scroll container for OOXML content', () => {

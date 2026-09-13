@@ -84,10 +84,10 @@ pre-empts every other routing; (2) custom-visualizer matching by MIME type
 against the supplied `customVisualizers`, which short-circuits all further
 routing including PDF/Markdown/JSON when content resolves; (3) plain-text
 resolution when `contentType` is empty and inline `data` is present; (4)
-Office detection from the MIME type via `getOoxmlFileType('', contentType)`;
+Office/CSV detection from the MIME type via `getOoxmlFileType('', contentType)`;
 (5) MIME-type-based routing for PDF/Markdown/JSON, falling back to an
 "unsupported" content and returning `true` when the matched resolver
-returns no content; (6) Office detection from the file name via
+returns no content; (6) Office/CSV detection from the file name via
 `getOoxmlFileType(fileName)`; (7) extension-based routing for
 `.pdf`/`.md`/`.markdown`/`.json`, returning `false` (not "unsupported") when
 the matched resolver returns no content; (8) HTML detection by either the
@@ -97,12 +97,12 @@ HTML resolution, falling back to a direct URL iframe only when nothing was
 fetched, and to "unsupported" when fetched content was rejected by the
 resolver; (11) a code resolver as the final fallback.
 
-Each Office branch sits immediately ahead of the switch keyed on the same
+Each document-renderer branch sits immediately ahead of the switch keyed on the same
 signal, so the pairing stays local; both return `true` even when the resolver
 yields nothing, opening "unsupported" content instead — the format *was*
 recognised (see the `attachment-canvas-ooxml-viewer` capability).
 
-#### Scenario: Office MIME detection pre-empts the content-type switch
+#### Scenario: Document MIME detection pre-empts the content-type switch
 
 - **WHEN** a `File` attachment's `contentType` is the canonical DOCX MIME type
 - **THEN** `resolveOoxmlContent` is called and the `contentType` switch is

@@ -51,11 +51,11 @@ interface UsePromptSelectorOverlayOptions {
 
 interface UsePromptSelectorOverlayResult {
   /**
-   * Pass directly as the `promptsMenuOverlay` prop of
-   * `ConversationInput`/`Input`. `undefined` while `OverlayFeature.Prompts` is
-   * disabled: the Add menu keys the whole Prompts row off this prop being
-   * present, so a stub renderer would leave the row in place with nothing
-   * behind it.
+   * Pass as the `renderOverlay` of the Prompts entry in the `menuOverlays`
+   * prop of `ConversationInput`/`Input`. `undefined` while
+   * `OverlayFeature.Prompts` is disabled: the host omits the entry entirely
+   * when this is `undefined`, so a stub renderer would leave the row in
+   * place with nothing behind it.
    */
   renderOverlay?: (onClose: () => void) => ReactNode;
   /** Render this element at a stable level outside the popover (e.g. next to the input). */
@@ -175,6 +175,12 @@ export function usePromptSelectorOverlay({
     [pendingPrompt, onInsertText],
   );
 
+  const pendingParameters = useMemo(
+    () =>
+      pendingPrompt != null ? extractPromptParams(pendingPrompt.content) : [],
+    [pendingPrompt],
+  );
+
   const parametersPopup = pendingPrompt != null && (
     <Suspense fallback={null}>
       <PromptParametersPopupOverlay
@@ -182,7 +188,7 @@ export function usePromptSelectorOverlay({
         promptName={pendingPrompt.name}
         content={pendingPrompt.content}
         description={pendingPrompt.description}
-        parameters={extractPromptParams(pendingPrompt.content)}
+        parameters={pendingParameters}
         onBack={openedFromBrowse ? handleBackToBrowse : undefined}
         onClose={handleClosePopup}
         onCancel={handleClosePopup}

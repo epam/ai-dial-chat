@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { TranscribeAudioDto } from '../dto/transcribe-audio.dto';
+import { TranscriptionUnavailableException } from '../transcription-unavailable.exception';
 import { TranscriptionService } from '../transcription.service';
 
 const dto: TranscribeAudioDto = {
@@ -49,5 +50,65 @@ describe('TranscriptionService', () => {
     await expect(service.transcribeAudio(dto, TOKEN)).rejects.toThrow(
       NotFoundException,
     );
+  });
+
+  it.each([429, 503])(
+    'preserves temporary unavailability and Retry-After for HTTP %i',
+    async (status) => {
+      sendChatCompletionRequest.mockResolvedValue({
+        error: 'Service is not available',
+        response: new Response(null, {
+          status,
+          headers: { 'Retry-After': '30' },
+        }),
+      });
+      await expect(service.transcribeAudio(dto, TOKEN)).rejects.toMatchObject({
+        status: 503,
+        retryAfter: '30',
+      });
+      expect(sendChatCompletionRequest).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('supports unavailable responses without Retry-After', async () => {
+    sendChatCompletionRequest.mockResolvedValue({
+      error: 'Service is not available',
+      response: new Response(null, { status: 503 }),
+    });
+    await expect(service.transcribeAudio(dto, TOKEN)).rejects.toBeInstanceOf(
+      TranscriptionUnavailableException,
+    );
+  });
+
+  it('forwards the job title in the X-JOB-TITLE header when provided', async () => {
+    sendChatCompletionRequest.mockResolvedValue({
+      data: { choices: [{ message: { content: 'hello' } }] },
+      error: undefined,
+      response: { ok: true },
+    });
+
+    await service.transcribeAudio(dto, TOKEN, 'Lead Software Engineer');
+
+    const [, options] = sendChatCompletionRequest.mock.calls[0] as [
+      string,
+      { headers: Record<string, string> },
+    ];
+    expect(options.headers['X-JOB-TITLE']).toBe('Lead Software Engineer');
+  });
+
+  it('omits the X-JOB-TITLE header when no job title is provided', async () => {
+    sendChatCompletionRequest.mockResolvedValue({
+      data: { choices: [{ message: { content: 'hello' } }] },
+      error: undefined,
+      response: { ok: true },
+    });
+
+    await service.transcribeAudio(dto, TOKEN);
+
+    const [, options] = sendChatCompletionRequest.mock.calls[0] as [
+      string,
+      { headers: Record<string, string> },
+    ];
+    expect(options.headers).not.toHaveProperty('X-JOB-TITLE');
   });
 });

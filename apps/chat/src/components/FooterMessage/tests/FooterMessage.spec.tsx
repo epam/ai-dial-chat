@@ -1,5 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  useAppConfig as mockUseAppConfig,
+  useFeatureFlag as mockUseFeatureFlag,
+} from '../../../context/tests/app-config-context-mock';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import FooterMessage from '../FooterMessage';
 
@@ -12,16 +16,18 @@ const { mockState } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({
-    status: mockState.status,
-    config: {
-      footerHtmlMessage: mockState.footerHtmlMessage,
-      appVersion: mockState.appVersion,
-    },
-  }),
-  useFeatureFlag: () => mockState.isFooterEnabled,
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
+mockUseAppConfig.mockImplementation(() => ({
+  status: mockState.status,
+  config: {
+    footerHtmlMessage: mockState.footerHtmlMessage,
+    appVersion: mockState.appVersion,
+  },
 }));
+mockUseFeatureFlag.mockImplementation(() => mockState.isFooterEnabled);
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

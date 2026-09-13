@@ -68,6 +68,8 @@ export interface MessageActionsProps {
   className?: string;
   /** Shows actions permanently instead of on group hover only. */
   isAlwaysVisible?: boolean;
+  /** Disables every action button in the toolbar. Defaults to `false`. */
+  isDisabled?: boolean;
   /** Tooltip and aria-label overrides. */
   labels?: MessageActionLabels;
   /** Fires on Edit click. User role only. */

@@ -300,6 +300,8 @@ Both adapters return the same result type to `ConversationService`:
 
 Shared logic then sets the message status and saves the conversation state.
 
+The AbortSignal behind `aborted` is driven only by an explicit user Stop (see "User-initiated stop" below) or the server-owned max-duration bound (`ConversationGenerationService`, `MAX_GENERATION_DURATION_MS`) — never by the originating browser connection closing. Generation ownership is independent of that connection: closing the tab, refreshing, or navigating away from `/api/v1/conversations/completions` has no effect on either adapter's stream: the BFF keeps consuming it to its terminal event and persists the result exactly as if the client were still connected.
+
 ### Terminal state and `[DONE]`
 
 The Responses adapter tracks one explicit terminal signal per stream instead of assuming success whenever no error was seen. A stream resolves to `completed` only when it observes a valid `response.completed` (status absent or `"completed"`) or, for legacy/non-standard upstreams only, a `data: [DONE]` marker that no earlier error signal has already claimed.

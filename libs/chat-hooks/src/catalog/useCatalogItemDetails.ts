@@ -6,17 +6,12 @@ import type {
   DeploymentDetailsDto,
   DeploymentLimitsResponseDto,
   PromptResponseDto,
-  SkillFileListResponseDto,
   SkillMetadataItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { parsePromptResourceUrl } from '../prompt/prompt-resource';
-import { SKILL_MANIFEST_FILE } from '../skill/skill';
 import type { SkillFileContent } from '../skill/skill-file-preview';
-import { parseSkillManifestDocument } from '../skill/skill-manifest';
-import { parseSkillResourceUrl } from '../skill/skill-types';
-import type { ParsedSkillResourceUrl } from '../skill/skill-types';
 import { buildDeploymentConnectApi } from './deployment-endpoint-url';
 import type { DeploymentLimitsLabels } from './map-deployment-limits-to-catalog';
 import { mapDeploymentLimitsDtoToCatalogLimits } from './map-deployment-limits-to-catalog';
@@ -30,19 +25,15 @@ import {
   isOrganisationPromptItem,
 } from './map-prompt-to-catalog-item';
 import type { PromptOverviewLabels } from './map-prompt-to-catalog-item';
-import {
-  buildSkillContentTree,
-  buildSkillOverview,
-  readSkillFileBytes,
-  readSkillManifest,
-  resolveSkillFileDownloadPath,
-  resolveSkillManifestFileId,
-} from './map-skill-to-catalog-item';
 import type { SkillOverviewLabels } from './map-skill-to-catalog-item';
 import { buildConnectApi, resolveMcpResourceKind } from './mcp-endpoint-url';
+import {
+  useSkillItemDetails,
+  type SkillDetailsApi,
+} from './useSkillItemDetails';
 
 /** Injected API port for catalog item detail fetching. Mirrors exact server-api wrapper signatures. */
-export interface CatalogDetailsApi {
+export interface CatalogDetailsApi extends SkillDetailsApi {
   /** Fetches deployment-level details for a model, agent, toolset, or application. */
   getDeploymentDetails(deploymentId: string): Promise<DeploymentDetailsDto>;
   /** Fetches rate-limit data for a deployment. */
@@ -53,25 +44,6 @@ export interface CatalogDetailsApi {
   getPrompt(id: string): Promise<PromptResponseDto>;
   /** Fetches a public (organisation) prompt by its bucket-relative path. */
   getPublicPrompt(path: string): Promise<PromptResponseDto>;
-  /** Downloads a raw skill file, returning the raw fetch `Response`. */
-  downloadSkillFile(
-    bucket: string,
-    path: string,
-    filePath: string,
-    signal?: AbortSignal,
-  ): Promise<Response>;
-  /** Lists files inside a skill package. */
-  listSkillFiles(
-    params: {
-      bucket: string;
-      filePath: string;
-      path?: string;
-      token?: string;
-      limit?: number;
-      recursive?: boolean;
-    },
-    signal?: AbortSignal,
-  ): Promise<SkillFileListResponseDto>;
 }
 
 /** Options accepted by `useCatalogItemDetails`. */
@@ -145,8 +117,12 @@ export const useCatalogItemDetails = ({
   promptOverviewLabels,
   deploymentLimitsLabels,
 }: UseCatalogItemDetailsOptions): UseCatalogItemDetailsResult => {
-  /* Tracks the last skill whose details panel was opened, for file downloads. */
-  const openSkillRef = useRef<ParsedSkillResourceUrl | null>(null);
+  /*
+   * The skill pipeline (manifest, file listing, in-package file loads) lives
+   * in the skill-scoped hook; only the dispatch on entity type stays here.
+   */
+  const { onFetchSkillDetails, onLoadContentFile, onLoadSkillDetailsFile } =
+    useSkillItemDetails({ api, skills, skillOverviewLabels });
 
   const onFetchDetails = useCallback(
     async (
@@ -166,63 +142,7 @@ export const useCatalogItemDetails = ({
       }
 
       if (item.type === CatalogEntityType.Skill) {
-        const parsed = parseSkillResourceUrl(item.id);
-        if (parsed == null) return undefined;
-
-        const { bucket, path } = parsed;
-        openSkillRef.current = parsed;
-
-        const [manifest, files] = await Promise.allSettled([
-          api
-            .downloadSkillFile(bucket, path, SKILL_MANIFEST_FILE)
-            .then(readSkillManifest),
-          api.listSkillFiles({ bucket, path, filePath: '', recursive: true }),
-        ]);
-
-        const parsedManifest =
-          manifest.status === 'fulfilled' && manifest.value != null
-            ? parseSkillManifestDocument(manifest.value)
-            : undefined;
-
-        const skill = skills.find((candidate) => candidate.url === item.id);
-
-        const overview =
-          files.status === 'fulfilled'
-            ? buildSkillOverview(
-                skill,
-                files.value.items,
-                parsedManifest?.about,
-                skillOverviewLabels,
-              )
-            : undefined;
-
-        const contentFiles =
-          files.status === 'fulfilled'
-            ? buildSkillContentTree(files.value.items, path)
-            : [];
-
-        const selectedFileId =
-          files.status === 'fulfilled'
-            ? resolveSkillManifestFileId(files.value.items, path)
-            : SKILL_MANIFEST_FILE;
-
-        if (parsedManifest == null && overview == null) return undefined;
-
-        return {
-          ...(parsedManifest != null
-            ? {
-                promptContent: {
-                  content: parsedManifest.body,
-                  ...(parsedManifest.description != null
-                    ? { description: parsedManifest.description }
-                    : {}),
-                  files: contentFiles,
-                  selectedFileId,
-                },
-              }
-            : {}),
-          ...(overview != null ? { overview } : {}),
-        };
+        return onFetchSkillDetails(item);
       }
 
       try {
@@ -281,72 +201,9 @@ export const useCatalogItemDetails = ({
       isAdmin,
       deploymentLimitsLabels,
       dialCoreExternalUrl,
-      skills,
       promptOverviewLabels,
-      skillOverviewLabels,
+      onFetchSkillDetails,
     ],
-  );
-
-  const onLoadContentFile = useCallback(
-    async (fileId: string): Promise<string | undefined> => {
-      const openSkill = openSkillRef.current;
-      if (openSkill == null) return undefined;
-
-      const filePath = resolveSkillFileDownloadPath(fileId, openSkill.path);
-      if (filePath == null) return undefined;
-
-      const response = await api.downloadSkillFile(
-        openSkill.bucket,
-        openSkill.path,
-        filePath,
-      );
-      const text = await readSkillManifest(response);
-      if (text == null) return undefined;
-
-      return filePath === SKILL_MANIFEST_FILE
-        ? parseSkillManifestDocument(text).body
-        : text;
-    },
-    [api],
-  );
-
-  const onLoadSkillDetailsFile = useCallback(
-    async (fileId: string): Promise<SkillFileContent> => {
-      const openSkill = openSkillRef.current;
-      if (openSkill == null) throw new Error('No skill details are open');
-
-      const filePath = resolveSkillFileDownloadPath(fileId, openSkill.path);
-      if (filePath == null) throw new Error('A folder cannot be previewed');
-
-      const response = await api.downloadSkillFile(
-        openSkill.bucket,
-        openSkill.path,
-        filePath,
-      );
-
-      if (!response.ok) {
-        throw Object.assign(
-          new Error(`File preview failed with status ${response.status}`),
-          { status: response.status },
-        );
-      }
-
-      const bytes = await readSkillFileBytes(response);
-      if (bytes == null) throw new Error('File exceeds the preview size limit');
-
-      const responseMimeType =
-        response.headers.get('content-type')?.split(';')[0].trim() || undefined;
-
-      return {
-        bytes,
-        /* Core commonly sends this generic value; omitting it lets the same extension inference as Skill Builder run. */
-        mimeType:
-          responseMimeType === 'application/octet-stream'
-            ? undefined
-            : responseMimeType,
-      };
-    },
-    [api],
   );
 
   return { onFetchDetails, onLoadContentFile, onLoadSkillDetailsFile };

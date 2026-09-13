@@ -1,7 +1,7 @@
 name: Deploy development
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # manual run
   workflow_run:
     workflows: ["Release Workflow"]
     types:
@@ -24,7 +24,7 @@ jobs:
             gitlab-project-id: "3016"
 
     name: Deploy to ${{ matrix.environment-name }}
-    uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@4.10.0
+    uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@4.11.0
     with:
       gitlab-project-id: ${{ matrix.gitlab-project-id }}
       environment-name: ${{ matrix.environment-name }}
@@ -47,7 +47,7 @@ jobs:
             gitlab-project-id: "3351"
 
     name: Deploy to ${{ matrix.environment-name }}
-    uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@4.10.0
+    uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@4.11.0
     with:
       gitlab-project-id: ${{ matrix.gitlab-project-id }}
       environment-name: ${{ matrix.environment-name }}

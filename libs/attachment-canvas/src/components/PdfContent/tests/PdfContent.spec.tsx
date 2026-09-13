@@ -10,6 +10,7 @@ interface DocumentPreviewMockProps {
   thumbnailPageNumbers: number[];
   onThumbnailsLoaded: (map: Map<number, string>) => void;
   onViewerReady: (api: { navigateToPage: (page: number) => void }) => void;
+  selectedPageNumber?: number;
 }
 
 interface PageThumbnailMockProps {
@@ -320,6 +321,71 @@ describe('PdfContent', () => {
         top: 0,
         behavior: 'smooth',
       });
+    });
+  });
+
+  describe('selectedPageNumber', () => {
+    it('does not reset an explicit page to page 1 when the viewer becomes ready', () => {
+      const navigateToPage = vi.fn();
+      render(
+        <PdfContent url="doc.pdf" highlights={[]} selectedPageNumber={3} />,
+      );
+      act(() => documentPreviewState.props?.onViewerReady({ navigateToPage }));
+      expect(navigateToPage).not.toHaveBeenCalled();
+    });
+    it('forwards selectedPageNumber to DocumentPreview unchanged', () => {
+      render(
+        <PdfContent url="doc.pdf" highlights={[]} selectedPageNumber={7} />,
+      );
+      expect(documentPreviewState.props?.selectedPageNumber).toBe(7);
+    });
+
+    it('initialises the page navigator from selectedPageNumber when highlights is empty', () => {
+      render(
+        <PdfContent url="doc.pdf" highlights={[]} selectedPageNumber={9} />,
+      );
+      setTotalPages(50);
+      openThumbnailsPanel();
+
+      const input = screen.getByLabelText('Page number') as HTMLInputElement;
+      expect(input.value).toBe('9');
+    });
+
+    it('prefers selectedPageNumber over a highlight with a non-matching, all-zero bounding box', () => {
+      render(
+        <PdfContent
+          url="doc.pdf"
+          highlights={[
+            {
+              id: 'other-highlight',
+              bboxes: [{ page: 2, x1: 0, y1: 0, x2: 0, y2: 0 }],
+            },
+          ]}
+          selectedHighlightId="does-not-match"
+          selectedPageNumber={6}
+        />,
+      );
+      setTotalPages(50);
+      openThumbnailsPanel();
+
+      const input = screen.getByLabelText('Page number') as HTMLInputElement;
+      expect(input.value).toBe('6');
+    });
+
+    it('falls back to the existing highlight-derived page when selectedPageNumber is absent', () => {
+      render(
+        <PdfContent
+          url="doc.pdf"
+          highlights={[makeHighlight('h1', 5)]}
+          selectedHighlightId="h1"
+        />,
+      );
+      setTotalPages(50);
+      openThumbnailsPanel();
+
+      const input = screen.getByLabelText('Page number') as HTMLInputElement;
+      expect(input.value).toBe('5');
+      expect(documentPreviewState.props?.selectedPageNumber).toBeUndefined();
     });
   });
 

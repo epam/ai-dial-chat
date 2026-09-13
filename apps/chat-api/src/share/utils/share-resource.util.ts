@@ -1,5 +1,6 @@
 import type { components } from '@epam/ai-dial-typescript-sdk';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { isPromptResourceUrl } from '../../prompts/utils/prompt-mapper.util';
 
 type ResourceKind = components['schemas']['ResourceTypes'];
@@ -158,6 +159,71 @@ export const collectConversationResourceUrls = (
         ?.attachment;
       collectAttachmentResourceUrls([attachment], resourceUrls);
     }
+  }
+
+  return [...resourceUrls];
+};
+
+/*
+ * The only `application_properties.skills[]` entry shape that references a
+ * separate DIAL resource this repo must grant access to. A quick app's
+ * `application_properties` is authored by the embedded Quick Apps editor and
+ * treated as opaque here — so this is a defensive literal match against
+ * `type === 'dial-prompt'`, not an import of the editor's `QuickApp2Config`
+ * type (which lives in the editor package, not this repo). Every other skill
+ * entry shape (`type: 'custom'`, future kinds) carries inline content or no
+ * resource url and is left alone.
+ */
+const DIAL_PROMPT_SKILL_TYPE = 'dial-prompt';
+
+interface DialPromptSkillEntry {
+  type?: unknown;
+  url?: unknown;
+}
+
+/*
+ * Collects unique prompt resource urls referenced by a quick app's
+ * `application_properties.skills[]`. Only `type: 'dial-prompt'` entries carry
+ * a separate DIAL prompt resource (`prompts/{bucket}/...`) that must be
+ * granted alongside the app; other skill kinds and the `custom` system prompt
+ * hold content inline and share nothing. `application_properties` is opaque
+ * (authored by the embedded Quick Apps editor), so the walk is defensive — a
+ * missing/malformed `skills` array yields no urls rather than throwing. Each
+ * url is stripped of `#`-fragments, rejected if it contains a `..` traversal
+ * segment, and normalized through `toShareResourceUrl` before deduping so
+ * encoded/decoded variants of the same prompt collapse to one entry.
+ */
+export const collectApplicationPromptResourceUrls = (
+  application: unknown,
+): string[] => {
+  if (!isRecord(application)) return [];
+  const properties = application.application_properties;
+  if (!isRecord(properties)) return [];
+
+  const skills = properties.skills;
+  if (!Array.isArray(skills)) return [];
+
+  const resourceUrls = new Set<string>();
+  for (const entry of skills as DialPromptSkillEntry[]) {
+    if (!isRecord(entry)) continue;
+    if (entry.type !== DIAL_PROMPT_SKILL_TYPE) continue;
+    if (typeof entry.url !== 'string') continue;
+
+    // Strip `#`-fragments — a fragment identifies a view, not a distinct resource.
+    const resourceUrl = entry.url.split('#', 1)[0];
+    if (!isPromptResourceUrl(resourceUrl)) continue;
+
+    // Normalize before dedup so encoded/decoded variants collapse to one entry.
+    const normalizedUrl = toShareResourceUrl(resourceUrl);
+
+    // Drop `..` traversal segments. Decode the full url before splitting so a
+    // `%2F`-encoded slash (e.g. `..%2F..%2Fother`) can't hide a `..` segment
+    // from the check — `encodeDialResourcePath` decodes each segment but splits
+    // on `/` first, so `%2F` inside a segment survives as a literal.
+    if (safeDecodeURIComponent(normalizedUrl).split('/').includes('..'))
+      continue;
+
+    resourceUrls.add(normalizedUrl);
   }
 
   return [...resourceUrls];

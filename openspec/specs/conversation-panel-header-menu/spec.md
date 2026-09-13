@@ -88,31 +88,41 @@ The implementation SHALL:
 
 ---
 
-### Requirement: Conversation panel header renders an overflow trigger and "Delete all conversations" dropdown item
+### Requirement: Conversation panel header renders an overflow trigger and its three dropdown items
 
-`ConversationPanelView` in `apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx` SHALL:
+`ConversationPanelMenu` in `apps/chat/src/components/ConversationPanel/ConversationPanelMenu.tsx` SHALL:
 
-1. Render a `DialIconButton` with `IconDotsVertical` and `aria-label={t(ConversationPanelI18nKeys.PanelActionsLabel)}` as the overflow trigger.
-2. Wrap the trigger in `DialDropdown` with `placement="bottom-end"` and a single item `{ key: 'delete-all', danger: true }`.
-3. Pass this node as `headerActions` to `ConversationPanel`.
+1. Render a `GhostIconButton` (`ElementSize.Small`) with `IconDotsVertical` and `aria-label={t(ConversationPanelI18nKeys.PanelActionsLabel)}` as the overflow trigger. While the menu is open the icon takes `text-accent` and the button `bg-control-accent-alpha-hover`; otherwise the icon is `text-secondary`.
+2. Wrap the trigger in `Dropdown` with `placement="bottom-end"` and exactly these items, in order:
+
+   | `key` | Label | Icon | Action |
+   |---|---|---|---|
+   | `export-all` | `ConversationExportI18nKeys.ExportAllLabel` | `IconFileArrowRight`, `text-secondary` | `onExportAll` — see `conversation-export` |
+   | `import` | `ConversationImportI18nKeys.ImportLabel` | `IconFileArrowLeft`, `text-secondary` | `onImport` — see `conversation-import` |
+   | `delete-all` | `ConversationPanelI18nKeys.DeleteAllChatsLabel` | `IconTrashX`, `text-error` | opens the confirmation popup |
+
+3. `ConversationPanelView` SHALL mount `ConversationPanelMenu` and pass its node as `headerActions` to `ConversationPanel`.
 4. Clicking the "Delete all conversations" item opens the confirmation popup; it does NOT call the API directly.
 
-The `DialDropdown` is extensible — future menu items can be added to the items array without architectural changes.
+The danger styling of the delete item is carried by `className: 'text-error'` on the item plus the `text-error` icon, not by a `danger` flag.
+
+Only `delete-all` is owned by this capability. The export and import entries are specified by `conversation-export` and `conversation-import` respectively; they are listed here so that the menu's full contents are stated in one place, because a count assertion over this dropdown necessarily sees all three.
 
 #### Scenario: overflow trigger is visible and accessible
 
 - **WHEN** `ConversationPanelView` is rendered
 - **THEN** a button with accessible name matching `ConversationPanelI18nKeys.PanelActionsLabel` is present in the panel header
 
-#### Scenario: dropdown contains exactly one item
+#### Scenario: dropdown contains exactly three items
 
 - **WHEN** the overflow trigger is activated
-- **THEN** the dropdown shows exactly one item: "Delete all conversations"
+- **THEN** the dropdown shows exactly three items, in order: "Export conversations", "Import conversations", "Delete all conversations"
+- **AND** only the last is styled as a danger action
 
 #### Scenario: clicking "Delete all conversations" opens the confirmation popup
 
 - **WHEN** the "Delete all conversations" item is clicked
-- **THEN** the `DialConfirmationPopup` becomes visible
+- **THEN** the `ConfirmationPopup` becomes visible
 - **AND** the API is NOT called
 
 #### Scenario: cancelling the popup closes it without deleting
@@ -126,7 +136,7 @@ The `DialDropdown` is extensible — future menu items can be added to the items
 
 ### Requirement: Confirmation popup prevents accidental deletion and shows loading state
 
-The `DialConfirmationPopup` SHALL:
+The `ConfirmationPopup` SHALL:
 - Use `variant={ConfirmationPopupVariant.Danger}`.
 - Display `header={t(ConversationPanelI18nKeys.DeleteAllConfirmTitle)}` and `description` containing the localized warning text.
 - Display `confirmLabel={t(ConversationPanelI18nKeys.DeleteAllConfirmButton)}` and `cancelLabel={t(ButtonsI18nKeys.Cancel)}`.
@@ -261,7 +271,7 @@ New keys:
 
 The menu and its notification SHALL be positioned logically, so both follow the writing direction:
 
-- `DialDropdown` uses `placement="bottom-end"` so the menu opens at the logical end of the trigger (left in RTL, right in LTR).
+- `Dropdown` uses `placement="bottom-end"` so the menu opens at the logical end of the trigger (left in RTL, right in LTR).
 - The `Notification` for partial error uses `start-4` (not `left-4`) in its `className`.
 
 #### Scenario: dropdown placement is logically correct in RTL
@@ -276,17 +286,17 @@ The menu and its notification SHALL be positioned logically, so both follow the 
 
 The whole delete-all flow SHALL be reachable and operable by keyboard alone:
 
-- The overflow trigger is a native `<button>` (via `DialIconButton`) and is keyboard-focusable and activatable with Enter/Space.
-- `DialDropdown` handles arrow-key navigation among items and Escape to close.
+- The overflow trigger is a native `<button>` (via `GhostIconButton`) and is keyboard-focusable and activatable with Enter/Space.
+- `Dropdown` handles arrow-key navigation among items and Escape to close.
 - After the dropdown closes (Escape or item selection), focus returns to the trigger.
-- `DialConfirmationPopup` is a modal dialog: focus is trapped while open and restored to the trigger (or to an appropriate element) on close.
+- `ConfirmationPopup` is a modal dialog: focus is trapped while open and restored to the trigger (or to an appropriate element) on close.
 - `disableConfirmButton={isDeletingAll}` provides an accessible disabled state; the button has `disabled` attribute during in-flight requests.
 - The trigger `aria-label` is translated (never hardcoded English).
 
 #### Scenario: trigger has a translated accessible label
 
 - **WHEN** `ConversationPanelView` renders
-- **THEN** the `DialIconButton` has `aria-label` equal to `t(ConversationPanelI18nKeys.PanelActionsLabel)`
+- **THEN** the `GhostIconButton` has `aria-label` equal to `t(ConversationPanelI18nKeys.PanelActionsLabel)`
 
 #### Scenario: keyboard navigation opens the dropdown
 
@@ -333,8 +343,8 @@ Tests for `deleteAllConversations` SHALL be added in a new or updated spec file 
 Tests in `apps/chat/src/components/ConversationPanel/tests/ConversationPanelView.spec.tsx` SHALL cover:
 
 - Overflow trigger renders with the accessible label from `PanelActionsLabel`.
-- Opening the dropdown shows exactly one item.
-- Clicking the item opens the confirmation popup; API is not called.
+- Opening the dropdown shows exactly three items, with "Delete all conversations" last.
+- Clicking the delete item opens the confirmation popup; API is not called.
 - Cancelling the popup calls neither the API nor `navigate`.
 - Confirming: complete success — popup closes, `navigate(ROUTES.ROOT)` called when `activeConversationId` is set.
 - Confirming: complete success with no active conversation — `navigate` not called.
@@ -351,5 +361,5 @@ Tests in `apps/chat/src/components/ConversationPanel/tests/ConversationPanelView
 #### Scenario: View suite covers the full delete-all interaction
 
 - **WHEN** the `ConversationPanelView` test suite is executed
-- **THEN** it asserts the overflow trigger, its single dropdown item, and that opening the confirmation issues no API call
+- **THEN** it asserts the overflow trigger, the three dropdown items, and that opening the confirmation issues no API call
 - **AND** it asserts each confirm outcome — complete success, partial failure, total failure, and thrown error — together with the in-flight guard against a double submit

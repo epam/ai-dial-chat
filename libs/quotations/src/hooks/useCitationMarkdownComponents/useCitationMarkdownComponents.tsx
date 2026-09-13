@@ -1,12 +1,18 @@
-import { mergeClasses, type Annotation } from '@epam/ai-dial-chat-shared';
-import { useMemo } from 'react';
+import {
+  mergeClasses,
+  type Annotation,
+  type HtmlTagSelector,
+} from '@epam/ai-dial-chat-shared';
+import { useMemo, type ReactNode } from 'react';
 import type { Components } from 'react-markdown';
 import type { CitationCardLabels } from '../../components/CitationCard/CitationCard';
 import { CitationDropdown } from '../../components/CitationDropdown/CitationDropdown';
 import type { CitationMarkerLabels } from '../../components/CitationMarker/CitationMarker';
 import {
+  escapeUnsupportedCitTags,
   injectCitationSentinels,
   replaceSentinelsInChildren,
+  stripCitTagsWhileStreaming,
 } from '../../utils/citation-injection';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 
@@ -24,19 +30,51 @@ export interface UseCitationMarkdownComponentsCallbacks {
 }
 
 /**
- * Builds react-markdown component overrides that inject citation markers into
- * rendered paragraph text at the character offsets stored in each annotation
+ * Returns the `data-id` this `html_tag` group's `<cit>` element carries, or
+ * `undefined` for a non-`html_tag` group. Narrowed via an explicit cast
+ * rather than control-flow narrowing, because `AnnotationSelector`'s open
+ * catch-all variant (`{ type: string; [key: string]: unknown }`) also
+ * satisfies `type === 'html_tag'` and would otherwise widen `.id` to `unknown`.
+ */
+const citTagId = (group: AnnotationGroup): string | undefined => {
+  const selector = group.primaryAnnotation.target?.selector;
+  return selector?.type === 'html_tag'
+    ? (selector as HtmlTagSelector).id
+    : undefined;
+};
+
+const renderCitTagAsText = (
+  dataId: string | undefined,
+  children: ReactNode,
+) => (
+  <>
+    {dataId == null ? '<cit>' : `<cit data-id="${dataId}">`}
+    {children}
+    {'</cit>'}
+  </>
+);
+
+/**
+ * Builds react-markdown component overrides that inject citation markers
+ * into rendered assistant message content: a `cit` element override for
+ * `<cit data-id="…">` tags (rendered as real elements once `rehype-raw` and
+ * the host's `rehype-sanitize` allowlist parse them — see
+ * `MarkdownRenderer`'s `baseRehypePlugins`), and `p`/`li` overrides that
+ * inject markers at the character offsets of every other annotation
  * group's primary selector.
  *
- * The `p` and `li` component overrides are stable references — they only
- * change when `groups` transitions between empty and non-empty. Citation card
- * open/close state is provided via `CitationCardContext` so that state changes
- * do not recreate the component functions, preventing ReactMarkdown from
- * unmounting and remounting the paragraph subtree on every interaction.
+ * Citation card open/close state is provided via `CitationCardContext` so
+ * that state changes do not recreate the component functions, preventing
+ * ReactMarkdown from unmounting and remounting the paragraph subtree on
+ * every interaction.
  *
- * Returns both the pre-processed content string (with sentinel placeholders
- * injected at the right offsets) and the `Components` map to pass to the
- * markdown renderer.
+ * Returns both the pre-processed content string and the `Components` map to
+ * pass to the markdown renderer. While `isStreaming` is true, complete
+ * supported `<cit data-id="…"></cit>` elements are hidden from
+ * `processedContent`; incomplete or otherwise unsupported `cit` markup is
+ * escaped and remains visible as literal text. Citation pills for supported
+ * `<cit>` elements only appear once the message has finished streaming,
+ * matching every other citation family.
  *
  * `isCompactTypography` drops the paragraph class one type-scale step, matching
  * `COMPACT_MARKDOWN_CLASS_NAMES` so cited and uncited paragraphs stay the same
@@ -46,29 +84,33 @@ export const useCitationMarkdownComponents = (
   content: string,
   groups: AnnotationGroup[],
   callbacks: UseCitationMarkdownComponentsCallbacks,
+  isStreaming = false,
   isCompactTypography = false,
 ): { processedContent: string; markdownComponents: Components } => {
   const { onPreview, onOpenInBrowser, buildLabels } = callbacks;
 
-  const processedContent = useMemo(
-    () =>
-      groups.length > 0 ? injectCitationSentinels(content, groups) : content,
+  const processedContent = useMemo(() => {
+    if (isStreaming) return stripCitTagsWhileStreaming(content);
+    const contentWithSentinels =
+      groups.length > 0 ? injectCitationSentinels(content, groups) : content;
+    return escapeUnsupportedCitTags(contentWithSentinels);
+  }, [content, groups, isStreaming]);
 
-    [content, groups],
-  );
+  const hasCitElement = processedContent.includes('<cit');
 
   const markdownComponents = useMemo((): Components => {
-    if (groups.length === 0) return {};
+    const citGroupsByTagId = new Map<string, AnnotationGroup>();
+    for (const group of groups) {
+      const tagId = citTagId(group);
+      if (tagId != null) citGroupsByTagId.set(tagId, group);
+    }
 
-    const renderMarker = (idx: number) => {
-      const group = groups[idx];
-      if (!group) return null;
-
+    const renderGroup = (group: AnnotationGroup) => {
       const { cardLabels, markerLabels } = buildLabels(group);
 
       return (
         <CitationDropdown
-          key={`citation-${group.sourceUrl}`}
+          key={`citation-${group.groupKey}`}
           group={group}
           onPreview={(annotation) => onPreview(annotation, group)}
           onOpenInBrowser={onOpenInBrowser}
@@ -78,7 +120,37 @@ export const useCitationMarkdownComponents = (
       );
     };
 
+    const renderMarker = (idx: number) => {
+      const group = groups[idx];
+      return group ? renderGroup(group) : null;
+    };
+
+    /*
+     * `cit` isn't a known JSX intrinsic element, hence the cast — `data-id`
+     * (not `id`) is the lookup attribute because `rehype-sanitize`'s default
+     * schema prefixes `id`/`name` with `user-content-` to prevent DOM
+     * clobbering; `data-*` attributes are exempt. A tag id with no matching
+     * group (annotation never arrived, or doesn't resolve) is serialized back
+     * to literal text rather than disappearing.
+     */
+    const citComponent = {
+      cit: (props: { 'data-id'?: string; children?: ReactNode }) => {
+        const group =
+          props['data-id'] != null
+            ? citGroupsByTagId.get(props['data-id'])
+            : undefined;
+        return group
+          ? renderGroup(group)
+          : renderCitTagAsText(props['data-id'], props.children);
+      },
+    } as Components;
+
+    if (groups.length === 0) {
+      return hasCitElement ? citComponent : {};
+    }
+
     return {
+      ...citComponent,
       p: ({ children, ...rest }) => (
         <p
           {...rest}
@@ -98,7 +170,14 @@ export const useCitationMarkdownComponents = (
         </li>
       ),
     };
-  }, [groups, onPreview, onOpenInBrowser, buildLabels, isCompactTypography]);
+  }, [
+    groups,
+    onPreview,
+    onOpenInBrowser,
+    buildLabels,
+    isCompactTypography,
+    hasCitElement,
+  ]);
 
   return { processedContent, markdownComponents };
 };

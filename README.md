@@ -442,6 +442,7 @@ published to npm today. Each library has its own README with its public API.
 | `@epam/ai-dial-quotations`               | [`libs/quotations`](libs/quotations)                             | Citation and annotation components, hooks, and utilities                     |
 | `@epam/ai-dial-attachment-canvas`        | [`libs/attachment-canvas`](libs/attachment-canvas)               | Viewer for attachment content — images, PDFs, JSON, markdown, code, text     |
 | `@epam/ai-dial-attachment-input`         | [`libs/attachment-input`](libs/attachment-input)                 | File input with upload validation, drag-and-drop, progress                   |
+| `@epam/ai-dial-mcp-apps`                 | [`libs/mcp-apps`](libs/mcp-apps)                                 | Host-agnostic MCP Apps message-matching/caching logic and inline preview     |
 | `@epam/ai-dial-starter-buttons`          | [`libs/starter-buttons`](libs/starter-buttons)                   | Starter prompts that overflow into a dropdown when space runs out            |
 | `@epam/ai-dial-share`                    | [`libs/share`](libs/share)                                       | Share popover UI and share-link types                                        |
 | `@epam/ai-dial-publish-panel`            | [`libs/publish-panel`](libs/publish-panel)                       | Publish-to-folder UI and state flow                                          |

@@ -27,6 +27,8 @@ export interface AttachmentCanvasContainerProps {
   maxWidth?: number;
   /** Syntax highlight color theme forwarded to MarkdownRenderer code blocks. */
   codeBlockTheme?: CodeBlockTheme;
+  /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. */
+  tableDownloadFilename?: string;
   /**
    * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
    * host app. Called once, the first time a PDF attachment is opened, and
@@ -50,6 +52,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       defaultWidth,
       maxWidth,
       codeBlockTheme,
+      tableDownloadFilename,
       configurePdfWorker,
     }) => {
       const {
@@ -76,9 +79,17 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         pdfContentLoadingLabel,
         pdfContentErrorLabel,
         pdfContentRetryLabel,
+        xlsxFormulaLabel,
         codeContentLoadingLabel,
         codeContentErrorLabel,
         codeContentRetryLabel,
+        tableCopyCsvLabel,
+        tableCopyTxtLabel,
+        tableCopyMarkdownLabel,
+        tableCopiedLabel,
+        tableDownloadCsvLabel,
+        ooxmlHighlightsLabel,
+        ooxmlHighlightNavigatedLabel,
       } = labels ?? {};
 
       const { isOpen, isLoading, content, fileName, closeCanvas } =
@@ -141,9 +152,17 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
             pdfContentLoadingLabel,
             pdfContentErrorLabel,
             pdfContentRetryLabel,
+            xlsxFormulaLabel,
             codeContentLoadingLabel,
             codeContentErrorLabel,
             codeContentRetryLabel,
+            tableCopyCsvLabel,
+            tableCopyTxtLabel,
+            tableCopyMarkdownLabel,
+            tableCopiedLabel,
+            tableDownloadCsvLabel,
+            ooxmlHighlightsLabel,
+            ooxmlHighlightNavigatedLabel,
           }}
           onDownload={handleDownload}
           onCopyText={
@@ -162,6 +181,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
               ? handleCopyJson
               : undefined
           }
+          tableDownloadFilename={tableDownloadFilename}
           isMobile={isMobile}
           defaultWidth={defaultWidth}
           maxWidth={maxWidth}

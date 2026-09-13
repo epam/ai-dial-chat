@@ -297,7 +297,7 @@ describe('useDialFileMutations', () => {
 
       expect(filesApi.createFolder).toHaveBeenCalledWith({
         bucket: BUCKET,
-        parentPath: undefined,
+        parentPath: '',
         name: 'reports',
       });
       expect(mergeCreatedFolder).toHaveBeenCalled();

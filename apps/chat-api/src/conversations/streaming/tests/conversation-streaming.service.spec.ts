@@ -99,6 +99,7 @@ describe('ConversationStreamingService', () => {
     res: ReturnType<typeof makeMockRes>,
     clientChannelId?: string,
     timezone?: string,
+    jobTitle?: string,
   ) => {
     const stream = service.streamCompletion(
       conversationPath,
@@ -120,6 +121,7 @@ describe('ConversationStreamingService', () => {
       'user1',
       clientChannelId,
       timezone,
+      jobTitle,
     );
     for await (const chunk of stream) {
       res.write(chunk);
@@ -218,6 +220,7 @@ describe('ConversationStreamingService', () => {
       streamChunks = [': keepalive\n\n'],
       clientChannelId?: string,
       timezone?: string,
+      jobTitle?: string,
     ) => {
       vi.spyOn(
         service['dialClient'].client,
@@ -255,6 +258,7 @@ describe('ConversationStreamingService', () => {
         res as never,
         clientChannelId,
         timezone,
+        jobTitle,
       );
       return { sendSpy, res };
     };
@@ -309,6 +313,60 @@ describe('ConversationStreamingService', () => {
       expect(sendSpy.mock.calls[0][1].headers).toMatchObject({
         'X-CONVERSATION-ID': baseConversation.id,
       });
+    });
+
+    it('forwards the job title as X-JOB-TITLE for Chat Completions', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+        undefined,
+        CompletionMode.Append,
+        [': keepalive\n\n'],
+        undefined,
+        undefined,
+        'Lead Software Engineer',
+      );
+
+      expect(sendSpy.mock.calls[0][1].headers).toMatchObject({
+        'X-JOB-TITLE': 'Lead Software Engineer',
+      });
+    });
+
+    it('omits X-JOB-TITLE for Chat Completions when no job title is provided', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(sendSpy.mock.calls[0][1].headers).not.toHaveProperty(
+        'X-JOB-TITLE',
+      );
     });
 
     it('percent-encodes non-Latin-1 characters in X-CONVERSATION-ID so the request reaches DIAL Core', async () => {
@@ -580,6 +638,52 @@ describe('ConversationStreamingService', () => {
       expect(sendSpy).not.toHaveBeenCalled();
       expect(res.getWritten()).toContain('Hello');
       expect(res.getWritten()).toContain('data: [DONE]');
+    });
+
+    it('forwards the job title as X-JOB-TITLE for the Responses API', async () => {
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: { features: { responsesApi: true } },
+      });
+      const createResponseSpy = vi
+        .spyOn(mockDialClient.client, 'createResponse')
+        .mockResolvedValue({
+          response: new Response(
+            textToStream([
+              'data: {"type":"response.completed","response":{"id":"resp-1","status":"completed"}}\n\n',
+            ]),
+            { status: 200 },
+          ),
+        } as never);
+
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+        undefined,
+        CompletionMode.Append,
+        [': keepalive\n\n'],
+        undefined,
+        undefined,
+        'Lead Software Engineer',
+      );
+
+      expect(createResponseSpy.mock.calls[0][0].headers).toMatchObject({
+        'X-JOB-TITLE': 'Lead Software Engineer',
+      });
     });
 
     it('resolves the feature flag via FeatureFlagsService.isEnabled with the fixed server context', async () => {
@@ -1415,7 +1519,7 @@ describe('ConversationStreamingService', () => {
       );
     });
 
-    it('finalizes as an error and releases the registry entry when the consumer abandons the stream mid-generation (e.g. client disconnect)', async () => {
+    it('finalizes as an error and releases the registry entry when the consumer is abandoned for a reason other than a relay terminal outcome (defensive backstop)', async () => {
       vi.spyOn(
         service['dialClient'].client,
         'getConversation',
@@ -1466,10 +1570,15 @@ describe('ConversationStreamingService', () => {
       );
 
       /*
-       * Mirrors ConversationController.streamCompletion abandoning its
-       * `for await` on client disconnect: `break` here triggers the JS
-       * runtime to call `.return()` on `stream`, the same way an early exit
-       * from the controller's consuming loop would.
+       * `ConversationController.streamCompletion` no longer abandons its
+       * consuming loop merely because the downstream response closed (see
+       * backend-owned-generation-persistence) — it keeps calling `.next()`
+       * to the generator's natural end regardless of disconnect. This test
+       * instead exercises the `finally` block's remaining, genuinely
+       * defensive purpose: some other caller (or an unexpected failure)
+       * abandons the generator before the relay reaches a terminal
+       * outcome. `break` here triggers the JS runtime to call `.return()`
+       * on `stream`, the same way any such abandonment would.
        */
       for await (const _chunk of stream) {
         break;
@@ -1491,7 +1600,7 @@ describe('ConversationStreamingService', () => {
       expect(partialSave.messages.at(-1)?.streamErrorMessage).toBe('');
     });
 
-    it('does not finalize twice when the relay reaches a normal terminal outcome', async () => {
+    it("reaches Done and finalizes exactly once when the consumer drains to the relay's natural terminal outcome — the same unconditional-drain path the controller now uses after the downstream response has detached (e.g. a client disconnect)", async () => {
       vi.spyOn(
         service['dialClient'].client,
         'getConversation',

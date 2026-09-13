@@ -64,13 +64,11 @@ export const restrainedSyntaxTheme: PrismStyleMap = {
 
   'code.keyword': {
     ...VIOLET,
-    background: 'var(--text-visual-violet-1, #7C3AED)',
     borderRadius: '5px',
     padding: '1px 5px',
   },
   'keyword.code': {
     ...VIOLET,
-    background: 'var(--text-visual-violet-1, #7C3AED)',
     borderRadius: '5px',
     padding: '1px 5px',
   },

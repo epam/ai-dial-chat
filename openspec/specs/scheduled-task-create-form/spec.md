@@ -292,7 +292,7 @@ The lib remains presentational: it performs no timezone conversion, no i18n, and
 
 #### Scenario: Lib still has no host or integration imports
 
-- **WHEN** `libs/scheduled-tasks` source is statically analyzed after this change
+- **WHEN** `libs/scheduled-tasks` source is statically analyzed
 - **THEN** it contains no new imports of `apps/chat/*`, `@epam/chat-api-client`, `server-api`, routing, feature-flag, notification, deployments, auth, env, or analytics modules
 
 ### Requirement: Create-task page validates and converts the activity window to UTC boundaries

@@ -60,7 +60,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onClick={onClick}
     />
   ),
-  DialNoDataContent: ({ title }: { title: string }) => <div>{title}</div>,
+  NoDataContent: ({ title }: { title: string }) => <div>{title}</div>,
   EllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
   Search: ({
     placeholder,

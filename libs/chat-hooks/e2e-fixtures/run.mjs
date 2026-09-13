@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Packed-package consumer fixture runner (design.md D5, tasks.md §6). Wired
+ * Packed-package consumer fixture runner. Wired
  * as the `@epam/ai-dial-chat-hooks:test-packed` Nx target, which runs this
  * after `build` so `dist/` is fresh.
  *
@@ -101,6 +101,7 @@ const runFixture = (
   { name, subpath, peers, expectFailure, failureMustName },
   tarballPath,
   dependencyResolver,
+  externalPeerOverrides,
 ) => {
   const dir = createFixtureDir(tmpRoot, name);
   const steps = [];
@@ -112,6 +113,7 @@ const runFixture = (
     reactTypesVersion,
     peers,
     dependencyResolver,
+    externalPeerOverrides,
   });
 
   try {
@@ -226,6 +228,19 @@ const main = () => {
     `Dependency plan: workspace peers use local tarballs at ${FIXTURE_PACKAGE_VERSION}; external peers use exact package-lock.json versions.\n`,
   );
 
+  /*
+   * Pin every declared optional peer's *external* (non-workspace) name to
+   * this workspace's own lockfile-resolved version, applied uniformly to
+   * every fixture. Without this, npm's own opportunistic optional-peer
+   * resolution can hit an ERESOLVE between two installed packages that each
+   * declare the same external package as an optional peer with incompatible
+   * ranges (see harness.mjs's `resolveExternalPeerOverrides` doc comment) —
+   * even though the fixture never asked for that package at all.
+   */
+  const externalPeerOverrides = dependencyResolver.resolveExternalPeerOverrides(
+    Object.keys(packedArtifact.publishedManifest.peerDependenciesMeta ?? {}),
+  );
+
   let fixtureDefs = allFixtureDefs;
   if (selectedFixtureNames) {
     fixtureDefs = fixtureDefs.filter((def) =>
@@ -239,14 +254,21 @@ const main = () => {
   const results = new Map();
   for (const def of fixtureDefs) {
     console.info(`Running fixture: ${def.name} (./${def.subpath})...`);
-    const result = runFixture(def, tarballPath, dependencyResolver);
+    const result = runFixture(
+      def,
+      tarballPath,
+      dependencyResolver,
+      externalPeerOverrides,
+    );
     results.set(def.name, result);
     console.info(`  ${result.pass ? 'PASS' : 'FAIL'}`);
   }
 
-  // Task 6.6: the minimal fixture's bundle must retain neither side-effect
-  // symbol; each named heavy fixture's bundle must retain its own. Skipped
-  // (not failed) for a fixture `--only` excluded from this run.
+  /*
+   * The minimal fixture must retain neither side-effect marker; each heavy
+   * fixture must retain its own. Checks for fixtures excluded by --only
+   * are skipped.
+   */
   const sideEffectResults = [
     {
       check: 'published sideEffects covers every audited emitted chunk',

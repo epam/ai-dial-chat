@@ -217,6 +217,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {icon}
     </button>
   ),
+}));
+
+vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
   LazyMarkdownEditor: () =>
     Promise.resolve({
       MarkdownEditor: ({

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines how skills surface as first-class items in the catalog: the overlay feature key that gates the entire skill surface, how skill items merge into `CatalogView`'s item list, why every mutating and runtime action is suppressed for a skill, and the listing's failure, i18n, RTL, and accessibility contract.
+Defines how skills surface as first-class items in the catalog: the overlay feature key that gates the entire skill surface, how skill items merge into `CatalogView`'s item list, which actions the details panel offers for a skill and which it withholds, and the listing's failure, i18n, RTL, and accessibility contract.
 
 ## Requirements
 
@@ -42,9 +42,25 @@ When Skills are enabled, `CatalogView` SHALL append personal `skills`, `sharedWi
 
 ---
 
-### Requirement: Unsupported actions are hidden for a skill
+### Requirement: Which actions a skill's details panel offers
 
-Skills SHALL continue to hide Use in chat, Share, Download, Delete, Unshare, and Revoke access. No Skill entry is added to the Create dropdown by this capability. Edit is available when `item.isEditable` is true. Publish is available only when `item.isMyApp` is true; shared-with-me and public skills SHALL remain unpublishable even when `canEdit` is true. `CatalogView.handleEdit` SHALL navigate to `/skill-editor?id=<full skill resource URL>&returnUrl=/catalog`.
+A skill's details panel SHALL offer exactly the actions marked in the table below — a skill is **not** action-free. An earlier revision of this capability suppressed every mutating and runtime action for skills; download and sharing have since shipped as capabilities of their own, and this requirement is the reconciled list. Where a row below names another capability, that capability is authoritative for the action's own behaviour — this table only fixes whether the affordance appears.
+
+| Action | Offered for a skill? |
+|---|---|
+| Use in chat | Never — a skill is not a runtime target |
+| Download | Always (whole-archive download) — see `skill-archive-download` |
+| Share | Only when `item.isMyApp` — see `skill-sharing` |
+| Edit | When `item.isEditable` |
+| Publish | Only when `item.isMyApp` |
+| Delete | For a skill the account owns |
+| Unshare / Revoke access | Per the shared catalog rules, not suppressed by type |
+
+`isDownloadVisible` returns `true` for `CatalogEntityType.Skill` unconditionally. `isShareVisible` returns `Boolean(item.isMyApp)` for a skill: a skill shared to the current user with `WRITE` (`isEditable: true`) must not become re-shareable merely from holding that permission — only the owner shares. Publish follows the same ownership rule, so shared-with-me and public skills SHALL remain unpublishable even when `canEdit` is true.
+
+A personal skill therefore shows Download, Share, Edit, Publish and Delete. That is the correct panel, not a leak of unsupported actions.
+
+No Skill entry is added to the Create dropdown by this capability. `CatalogView.handleEdit` SHALL navigate to `/skill-editor?id=<full skill resource URL>&returnUrl=/catalog`.
 
 The decision remains at the app edge through `CatalogItem.isEditable` and `CatalogView`'s callbacks; `libs/catalog` gains no bucket, permission, route, or generated-client knowledge.
 

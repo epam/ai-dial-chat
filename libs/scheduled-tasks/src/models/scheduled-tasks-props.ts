@@ -1,4 +1,5 @@
-import { DropdownItem } from '@epam/ai-dial-ui-kit';
+import { SelectOption } from '@epam/ai-dial-ui-kit';
+import type { ReactNode } from 'react';
 import type { ScheduledTasksSortKey } from '../types/scheduled-tasks-sort-key';
 import type { ScheduledTaskCardGridLabels } from './scheduled-task-card-grid-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
@@ -17,10 +18,14 @@ export interface ScheduledTasksLabels {
   searchAriaLabel: string;
   /** Accessible label for the toolbar search input's clear action. */
   clearSearchLabel: string;
-  /** Accessible label for the toolbar sort control. */
+  /** The sort control's own name, prepended to its accessible name. */
   sortLabel: string;
-  /** Options rendered in the sort control's dropdown. */
-  sortOptions: DropdownItem[];
+  /**
+   * Values the sort menu lists; each `value` is a `ScheduledTasksSortKey`.
+   * Only the values — the component owns which one is marked as applied and
+   * what a click does.
+   */
+  sortOptions: SelectOption[];
   /** Message shown when the fetched task list is empty. */
   emptyStateLabel: string;
   /** Message shown when `searchQuery` filters every task out. */
@@ -100,6 +105,8 @@ export interface ScheduledTasksProps {
   onLoadMore?: () => void;
   /** Called with a task id when the user activates a card's body. Omit to render cards with no added interactive root semantics. */
   onCardClick?: (id: string) => void;
+  /** Content rendered between the search/sort toolbar and the content region (e.g. a status banner). Renders nothing when omitted. */
+  banner?: ReactNode;
   /** Style overrides. */
   styles?: ScheduledTasksStyles;
 }

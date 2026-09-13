@@ -97,4 +97,32 @@ describe('ToolsChips', () => {
 
     expect(container.innerHTML).toBe('');
   });
+
+  describe('ToolsChips — canRemove is false', () => {
+    it('renders no × button, leaving the chip as the only control', () => {
+      renderChips([buildTool('web-search', 'Web Search', false)], {
+        canRemove: false,
+      });
+
+      expect(
+        screen.queryByRole('button', { name: 'Remove Web Search' }),
+      ).toBeNull();
+      expect(screen.getAllByRole('button')).toHaveLength(1);
+    });
+
+    it('still toggles the tool when the chip is clicked', async () => {
+      const onToolToggle = vi.fn();
+      renderChips([buildTool('web-search', 'Web Search', true)], {
+        canRemove: false,
+        onToolToggle,
+      });
+
+      const chip = screen.getByRole('button', { name: 'Web Search' });
+      expect(chip.getAttribute('aria-pressed')).toBe('true');
+
+      await userEvent.click(chip);
+
+      expect(onToolToggle).toHaveBeenCalledWith('web-search');
+    });
+  });
 });

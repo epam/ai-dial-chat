@@ -61,7 +61,7 @@ const renderEditNavigation = (
   const refetchDeployments = vi.fn().mockResolvedValue(undefined);
   const onDeleteSuccess = vi.fn();
   const onNotify = vi.fn();
-  const triggerSkillArchivePicker = vi.fn();
+  const onSkillUploadClick = vi.fn();
   const view = renderHook(() =>
     useCatalogEditNavigation({
       deployments: [],
@@ -84,7 +84,7 @@ const renderEditNavigation = (
       onDeleteSuccess,
       labels,
       onNotify,
-      triggerSkillArchivePicker,
+      onSkillUploadClick,
       ...overrides,
     }),
   );
@@ -101,7 +101,7 @@ const renderEditNavigation = (
     refetchDeployments,
     onDeleteSuccess,
     onNotify,
-    triggerSkillArchivePicker,
+    onSkillUploadClick,
   };
 };
 
@@ -479,7 +479,7 @@ describe('useCatalogEditNavigation', () => {
     });
 
     it('offers no nested children other than Write instructions and Upload under Skill', () => {
-      const { result, triggerSkillArchivePicker } = renderEditNavigation();
+      const { result, onSkillUploadClick } = renderEditNavigation();
 
       const skillOption = result.current.createOptions.find(
         (option) => option.key === 'skill',
@@ -493,7 +493,7 @@ describe('useCatalogEditNavigation', () => {
         (child) => child.key === 'skill-upload',
       );
       uploadOption?.onClick?.({ key: 'skill-upload', domEvent: {} as never });
-      expect(triggerSkillArchivePicker).toHaveBeenCalledOnce();
+      expect(onSkillUploadClick).toHaveBeenCalledOnce();
     });
   });
 });

@@ -16,6 +16,8 @@ export * from '../conversation/useConversationLookupMaps/useConversationLookupMa
 export * from '../conversation/useConversationPanelItems/useConversationPanelItems';
 export * from '../conversation/useImportFilePicker/useImportFilePicker';
 export * from '../conversation/useAttachmentUpload/useAttachmentUpload';
+export * from '../conversation/useTranscribeAudio/audio-transcription-error';
+export * from '../conversation/useTranscribeAudio/useTranscribeAudio';
 export {
   attachmentsToDtos,
   attachmentToDto,
@@ -26,10 +28,13 @@ export {
 } from '../conversation/useConversationHandlers/message-factory';
 export {
   hasActiveToolConfig,
+  isAnswerIncomplete,
   isMessageChanged,
+  shouldRerunGenerationOnEdit,
 } from '../conversation/useConversationHandlers/message-utils';
 export {
   getStarterConversationText,
+  getStarterDisplayText,
   getStarterSubmitText,
 } from '../conversation/useConversationHandlers/starter-option';
 export * from '../conversation/useConversationHandlers/useConversationHandlers';

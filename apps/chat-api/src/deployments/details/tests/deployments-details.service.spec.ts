@@ -405,7 +405,7 @@ describe('DeploymentsDetailsService', () => {
             unit: 'token',
             prompt: '0.01',
             completion: '0.03',
-            cache_read: '0.001',
+            cache_read: { rate: '0.001' },
           },
           catalog_properties: {
             provider: 'Provider',
@@ -447,7 +447,7 @@ describe('DeploymentsDetailsService', () => {
             unit: 'token',
             prompt: '0.01',
             completion: '0.03',
-            cache_read: '0.001',
+            cache_read: { rate: '0.001' },
           },
           catalogProperties: {
             provider: 'Provider',

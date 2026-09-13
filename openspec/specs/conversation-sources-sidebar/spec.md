@@ -155,7 +155,7 @@ The panel SHALL be considered empty when `uploaded.length === 0` AND `generated.
 When the panel is empty (per the updated definition above):
 
 - The header SHALL contain only the built-in close button; `leftActions` and `rightActions` SHALL not render search or download-all buttons.
-- The body SHALL render `DialNoDataContent` from `@epam/ai-dial-ui-kit`, centred horizontally and vertically, with `title` set to the i18n value of `basic.noData` (`"No data"`). No `icon` prop is supplied, so `DialNoDataContent` uses its default icon.
+- The body SHALL render `NoDataContent` from `@epam/ai-dial-ui-kit`, centred horizontally and vertically, with `title` set to the i18n value of `basic.noData` (`"No data"`). No `icon` prop is supplied, so `NoDataContent` uses its default icon.
 - No section headings SHALL be rendered.
 
 When the panel is not empty:
@@ -180,14 +180,14 @@ For both states:
 #### Scenario: Global empty state when no files exist and no scheduled task is active
 
 - **WHEN** `ConversationSourcesPanel` derives empty `uploaded`, `generated`, and `sources` lists AND the active conversation is not a scheduled-task conversation
-- **THEN** the body shows centred `DialNoDataContent` with the `basic.noData` title and default icon
+- **THEN** the body shows centred `NoDataContent` with the `basic.noData` title and default icon
 - **AND** no section heading is rendered
 - **AND** no search or download-all button is rendered
 
 #### Scenario: Scheduled-task conversation is never shown the global empty state
 
 - **WHEN** the active conversation is a scheduled-task conversation AND `uploaded`, `generated`, and `sources` are all empty
-- **THEN** the panel does not render `DialNoDataContent`
+- **THEN** the panel does not render `NoDataContent`
 - **AND** the History and Details sections render with their own loading/empty/error states
 
 #### Scenario: Any derived file or source switches the panel to section content
@@ -267,16 +267,16 @@ For both states:
 
 **Content type resolution** — `resolveExternalSourceContentType(contentType, url)` exported from `libs/chat-hooks/src/files/attachment-canvas.ts`:
 
-- Returns `contentType` unchanged if it already trustworthily identifies the source: it starts with `'image/'`, starts with `'audio/'`, equals `MIMEType.PDF` (`'application/pdf'`), or `isOoxmlPreviewable('', contentType)` (from `@epam/ai-dial-attachment-canvas`) recognizes it as a canonical DOCX/XLSX/PPTX MIME type.
-- Otherwise, extracts the last path segment of `url` (ignoring query string and fragment): if its extension after the last `.` is `'pdf'` (`FileExtension.PDF`), returns `MIMEType.PDF`; otherwise, if `getOoxmlMimeType(fileName)` (from `@epam/ai-dial-attachment-canvas`) recognizes a `.docx`/`.xlsx`/`.pptx` extension, returns that format's canonical OOXML MIME type. Either case **overrides** the reported `contentType`.
+- Returns `contentType` unchanged if it already trustworthily identifies the source: it starts with `'image/'`, starts with `'audio/'`, equals `MIMEType.PDF` (`'application/pdf'`), or `isOoxmlPreviewable('', contentType)` (from `@epam/ai-dial-attachment-canvas`) recognizes it as a canonical DOCX/XLSX/PPTX/CSV MIME type.
+- Otherwise, extracts the last path segment of `url` (ignoring query string and fragment): if its extension after the last `.` is `'pdf'` (`FileExtension.PDF`), returns `MIMEType.PDF`; otherwise, if `getOoxmlMimeType(fileName)` (from `@epam/ai-dial-attachment-canvas`) recognizes a `.docx`/`.xlsx`/`.pptx`/`.csv` extension, returns that format's canonical MIME type. Either case **overrides** the reported `contentType`.
 - Otherwise returns `contentType` unchanged.
 
-This override exists because some web-search grounding APIs (e.g. Google Vertex AI) label every web reference — YouTube, news articles, blog posts, PDFs, and Office documents alike — with `content-type: text/markdown` regardless of actual content. Without it, a mislabelled PDF's or Office document's `contentType` would win over its `.pdf`/`.docx`/`.xlsx`/`.pptx` URL extension when building the `DisplayAttachment`, routing the canvas into the markdown/text viewer, which renders the file's raw bytes as garbled text instead of opening the PDF/OOXML viewer. The `DisplayAttachment` built in step 2 above uses this resolved content type (not the raw `QuotationSource.contentType`) for both its `contentType` and `type` (`AttachmentType.Image` vs `AttachmentType.File`) fields.
+This override exists because some web-search grounding APIs (e.g. Google Vertex AI) label every web reference — YouTube, news articles, blog posts, PDFs, Office documents, and CSV files alike — with `content-type: text/markdown` regardless of actual content. Without it, the reported `contentType` would win over a recognized document extension when building the `DisplayAttachment`, routing the canvas into the markdown/text viewer instead of the PDF or `@silurus/ooxml` renderer. The `DisplayAttachment` built in step 2 above uses this resolved content type (not the raw `QuotationSource.contentType`) for both its `contentType` and `type` (`AttachmentType.Image` vs `AttachmentType.File`) fields.
 
 **Previewability test** — `isExternalSourcePreviewable(contentType, url)` exported from `libs/chat-hooks/src/files/attachment-canvas.ts`, built on `resolveExternalSourceContentType`:
 
-- Resolves the effective content type via `resolveExternalSourceContentType(contentType, url)`. Returns `true` if the resolved type starts with `'image/'`, starts with `'audio/'`, equals `MIMEType.PDF`, or `isOoxmlPreviewable('', resolvedType)` recognizes it as a canonical OOXML MIME type.
-- Otherwise, extracts the last path segment of `url` and returns `true` when `isTextPreviewable(fileName)` or `isHtmlPreviewable(fileName)` from `@epam/ai-dial-attachment-canvas` returns `true` — covers `.md`, `.markdown`, `.json`, `.txt`, `.xml`, `.csv`, `.html`/`.htm`, and all other plain-text formats the canvas text renderer supports.
+- Resolves the effective content type via `resolveExternalSourceContentType(contentType, url)`. Returns `true` if the resolved type starts with `'image/'`, starts with `'audio/'`, equals `MIMEType.PDF`, or `isOoxmlPreviewable('', resolvedType)` recognizes it as a canonical DOCX/XLSX/PPTX/CSV MIME type.
+- Otherwise, extracts the last path segment of `url` and returns `true` when `isTextPreviewable(fileName)` or `isHtmlPreviewable(fileName)` from `@epam/ai-dial-attachment-canvas` returns `true` — covers `.md`, `.markdown`, `.json`, `.txt`, `.xml`, `.html`/`.htm`, and all other plain-text formats the canvas text renderer supports.
 - Returns `false` on invalid URLs or a last path segment with no file extension.
 
 Image and audio content types, and an already-correct PDF or OOXML content type, are trusted directly because web-search grounding APIs do not mislabel images/audio (or, for PDF/OOXML, because a citation annotation's own `attachment.type` field — the same authoritative marker `annotationToPdfCanvasContent` trusts — is reliable even when the source's URL carries no matching extension, e.g. an opaque citation/reference id rather than a file name).

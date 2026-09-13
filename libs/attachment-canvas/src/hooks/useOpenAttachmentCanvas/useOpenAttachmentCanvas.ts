@@ -66,7 +66,7 @@ export interface UseOpenAttachmentCanvasResolvers {
   resolvePdfContent(
     attachment: DisplayAttachment,
   ): Promise<PdfCanvasContent | ErrorCanvasContent | null>;
-  /** Resolves an attachment's OOXML (Word/Excel/PowerPoint) content for the given format. Returns `null` if unavailable. */
+  /** Resolves an attachment's OOXML or CSV content for the given `@silurus/ooxml` format. Returns `null` if unavailable. */
   resolveOoxmlContent(
     attachment: DisplayAttachment,
     format: OoxmlFileType,

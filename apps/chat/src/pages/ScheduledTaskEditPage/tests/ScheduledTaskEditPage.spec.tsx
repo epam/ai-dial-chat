@@ -4,15 +4,17 @@ import { type ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
+import {
+  useAppConfig as useAppConfigMock,
+  useFeatureFlag as useFeatureFlagMock,
+} from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import ScheduledTaskEditPage from '../ScheduledTaskEditPage';
 
-const useFeatureFlagMock = vi.fn();
-const useAppConfigMock = vi.fn();
-vi.mock('../../../context/AppConfigContext', () => ({
-  useFeatureFlag: (key: string) => useFeatureFlagMock(key),
-  useAppConfig: () => useAppConfigMock(),
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 
 const useDeploymentsMock = vi.fn();
 vi.mock('../../../context/DeploymentsContext', () => ({

@@ -7,7 +7,12 @@ import {
   mapDialHttpStatus,
 } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import {
+  APPLICATION_RESOURCE_PREFIX,
+  parseDialApplicationResource,
+} from '../../common/utils/dial-application-resource';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { EnvironmentVariables } from '../../config/environment.config';
 import { PUBLIC_BUCKET } from '../../conversations/constants/conversation.constants';
 import { resolveConversationLocation } from '../../conversations/utils/conversation.utils';
@@ -23,6 +28,7 @@ import { ShareLinkResponseDto } from '../dto/share-link-response.dto';
 import {
   CONVERSATION_RESOURCE_PREFIX,
   FILE_RESOURCE_PREFIX,
+  collectApplicationPromptResourceUrls,
   collectConversationResourceUrls,
   getInvitationRoutePath,
   isAlreadyOwnedError,
@@ -85,8 +91,26 @@ export class ShareInvitationService {
     sessionBucket: string,
     resourceUrl: string,
   ): Promise<string[]> {
-    if (!resourceUrl.startsWith(CONVERSATION_RESOURCE_PREFIX)) return [];
+    if (resourceUrl.startsWith(CONVERSATION_RESOURCE_PREFIX)) {
+      return this.getConversationRelatedResourceUrls(
+        accessToken,
+        sessionBucket,
+        resourceUrl,
+      );
+    }
 
+    if (resourceUrl.startsWith(APPLICATION_RESOURCE_PREFIX)) {
+      return this.getApplicationRelatedResourceUrls(accessToken, resourceUrl);
+    }
+
+    return [];
+  }
+
+  private async getConversationRelatedResourceUrls(
+    accessToken: string,
+    sessionBucket: string,
+    resourceUrl: string,
+  ): Promise<string[]> {
     const conversationPath = resourceUrl.slice(
       CONVERSATION_RESOURCE_PREFIX.length,
     );
@@ -132,6 +156,79 @@ export class ShareInvitationService {
     });
   }
 
+  /*
+   * Loads a quick app's `application_properties` and returns the prompt
+   * resource urls it references via `skills[]` (`type: 'dial-prompt'`), so the
+   * attached prompts are granted alongside the app itself — otherwise the
+   * recipient hits "Access denied to the prompt" when they open the shared
+   * app (issue #8529). Reuses the same `applications/{bucket}/{path}` →
+   * `getCustomApplication` resolution `buildApplicationDetails` uses.
+   *
+   * Best-effort: the pre-read MUST NOT block sharing the application itself.
+   * Before this related-resource lookup existed, an `applications/...` itemId
+   * could be shared as long as `shareResource` succeeded — the app itself was
+   * never gated on a prior read. Any failure here (network error, upstream
+   * error, empty body, malformed `application_properties`) is logged as a
+   * warning and degrades to sharing the application alone, so a transient
+   * DIAL Core hiccup or token issue on the pre-read never regresses the
+   * baseline "share the app" path. The attached prompts are an enhancement
+   * on top of that baseline, not a precondition for it.
+   *
+   * Same cross-bucket rule as conversations: DIAL Core rejects a single share
+   * request mixing more than one owning bucket, and the caller cannot grant
+   * access to a prompt in another user's private bucket, so a referenced
+   * prompt whose bucket is neither the app's own nor the public/organization
+   * bucket is silently dropped rather than failing the whole share.
+   */
+  private async getApplicationRelatedResourceUrls(
+    accessToken: string,
+    resourceUrl: string,
+  ): Promise<string[]> {
+    const resource = parseDialApplicationResource(resourceUrl);
+    if (resource == null) return [];
+
+    let result;
+    try {
+      result = await this.dialClient.client.getCustomApplication(
+        resource.bucket,
+        resource.path,
+        { headers: getBearerAuthHeaders(accessToken) },
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Failed to load application resources before sharing resourceUrl=${resourceUrl}; sharing without related prompts`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      return [];
+    }
+
+    if (result.error != null || result.data == null) {
+      this.logger.warn(
+        `DIAL Core returned ${
+          result.error != null
+            ? `an error (status ${result.response?.status})`
+            : 'an empty body'
+        } for resourceUrl=${resourceUrl}; sharing without related prompts`,
+      );
+      return [];
+    }
+
+    return collectApplicationPromptResourceUrls(result.data).filter((url) => {
+      /*
+       * `collectApplicationPromptResourceUrls` normalizes each url through
+       * `toShareResourceUrl`, so the bucket segment read here is the encoded
+       * form (e.g. `My%20Bucket`). `resource.bucket` is the raw bucket
+       * segment from the application's itemId, which may itself be encoded or
+       * unencoded depending on the caller. Decode both before comparing so a
+       * percent-encoded bucket name (S3-style) matches regardless of which
+       * side carries the encoding.
+       */
+      const promptBucket = safeDecodeURIComponent(getResourceBucket(url));
+      const appBucket = safeDecodeURIComponent(resource.bucket);
+      return promptBucket === appBucket || promptBucket === PUBLIC_BUCKET;
+    });
+  }
+
   /**
    * Creates a share link for a DIAL Core resource (catalog entity, prompt, or conversation).
    *
@@ -152,9 +249,21 @@ export class ShareInvitationService {
       bucket,
       resourceUrl,
     );
+    /*
+     * Each related url is normalized through `toShareResourceUrl` for the same
+     * reason the primary `itemId` is: a prompt resource url may be stored in
+     * `application_properties.skills[].url` in the raw, human-readable form
+     * (e.g. `prompts/owner-bucket/My prompt`) that DIAL Core rejects with 400
+     * when sent unencoded. `toShareResourceUrl` encodes prompt urls and passes
+     * every other kind through unchanged; `encodeDialResourcePath` is
+     * idempotent, so already-encoded urls are not double-encoded.
+     */
     const requestBody = {
       invitationType: 'LINK' as const,
-      resources: [resourceUrl, ...relatedResourceUrls].map((url) => ({
+      resources: [
+        resourceUrl,
+        ...relatedResourceUrls.map(toShareResourceUrl),
+      ].map((url) => ({
         url,
         permissions,
       })),

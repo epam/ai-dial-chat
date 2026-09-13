@@ -26,6 +26,24 @@ const ATTACHMENT: DisplayAttachment = {
   status: RequestStatus.Idle,
 };
 
+const TABLE_MARKDOWN = '| A | B |\n| - | - |\n| 1 | 2 |';
+
+const TABLE_ACTION_LABELS = {
+  copyCsvLabel: 'Copy as CSV',
+  copyTxtLabel: 'Copy as TXT',
+  copyMarkdownLabel: 'Copy as Markdown',
+  copiedLabel: 'Copied!',
+  downloadCsvLabel: 'Download as CSV',
+};
+
+const ASSISTANT_TABLE_LABELS = {
+  tableCopyCsvLabel: TABLE_ACTION_LABELS.copyCsvLabel,
+  tableCopyTxtLabel: TABLE_ACTION_LABELS.copyTxtLabel,
+  tableCopyMarkdownLabel: TABLE_ACTION_LABELS.copyMarkdownLabel,
+  tableCopiedLabel: TABLE_ACTION_LABELS.copiedLabel,
+  tableDownloadCsvLabel: TABLE_ACTION_LABELS.downloadCsvLabel,
+};
+
 const findMessageParagraph = (message: string) =>
   screen.getByText((_, element) => {
     return element?.tagName === 'P' && element.textContent === message;
@@ -382,6 +400,94 @@ describe('AssistantMessageBubble — attachments', () => {
     expect(screen.getByRole('table')).toBeTruthy();
   });
 
+  it('forwards table action labels to completed assistant tables', () => {
+    render(
+      <AssistantMessageBubble
+        text={TABLE_MARKDOWN}
+        labels={ASSISTANT_TABLE_LABELS}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Copy as CSV' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy as TXT' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Copy as Markdown' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Download as CSV' }),
+    ).toBeTruthy();
+  });
+
+  it('hides table actions while an assistant message is streaming', () => {
+    render(
+      <AssistantMessageBubble
+        text={TABLE_MARKDOWN}
+        isStreaming
+        labels={ASSISTANT_TABLE_LABELS}
+      />,
+    );
+
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('renders assistant tables without actions when labels are absent', () => {
+    render(<AssistantMessageBubble text={TABLE_MARKDOWN} />);
+
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('forwards tableOnOpenInCanvas to the table, calling it with the serialized Markdown', async () => {
+    /* The action button's Tooltip mounts via floating-ui, which requires
+     * IntersectionObserver — absent by default in jsdom. */
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe() {
+          // No-op in JSDOM.
+        }
+        unobserve() {
+          // No-op in JSDOM.
+        }
+        disconnect() {
+          // No-op in JSDOM.
+        }
+      },
+    );
+    const tableOnOpenInCanvas = vi.fn();
+
+    render(
+      <AssistantMessageBubble
+        text={TABLE_MARKDOWN}
+        labels={{
+          ...ASSISTANT_TABLE_LABELS,
+          tableOpenInCanvasLabel: 'Open in canvas',
+        }}
+        tableOnOpenInCanvas={tableOnOpenInCanvas}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open in canvas' }));
+
+    expect(tableOnOpenInCanvas).toHaveBeenCalledWith(
+      '| A | B |\n| :-- | :-- |\n| 1 | 2 |',
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it('does not render Open in Canvas when tableOnOpenInCanvas is absent', () => {
+    render(
+      <AssistantMessageBubble
+        text={TABLE_MARKDOWN}
+        labels={{
+          ...ASSISTANT_TABLE_LABELS,
+          tableOpenInCanvasLabel: 'Open in canvas',
+        }}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Open in canvas' })).toBeNull();
+  });
+
   it('renders an attachment tray when attachments are provided', () => {
     render(
       <AssistantMessageBubble
@@ -427,6 +533,23 @@ describe('AssistantMessageBubble — attachments', () => {
       />,
     );
     expect(screen.queryByRole('button', { name: /remove/i })).toBeNull();
+  });
+});
+
+describe('AssistantMessageBubble — markdown URLs', () => {
+  it('rewrites markdown image src through markdownUrlTransform', () => {
+    render(
+      <AssistantMessageBubble
+        text="![chart](files/bucket/chart.png)"
+        markdownUrlTransform={(url) =>
+          url.startsWith('files/') ? `/dl/${url.slice('files/'.length)}` : url
+        }
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'chart' }).getAttribute('src')).toBe(
+      '/dl/bucket/chart.png',
+    );
   });
 });
 

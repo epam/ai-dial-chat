@@ -29,19 +29,36 @@ export { useCitationMarkdownComponents } from './hooks/useCitationMarkdownCompon
 export type { UseCitationMarkdownComponentsCallbacks } from './hooks/useCitationMarkdownComponents/useCitationMarkdownComponents';
 
 // Utils
-export { groupAnnotationsBySource } from './utils/group-annotations-by-source';
+export {
+  gatherSameSourceAnnotations,
+  groupAnnotations,
+  groupAnnotationsByCitId,
+  groupAnnotationsBySource,
+} from './utils/group-annotations-by-source';
 export type { AnnotationGroup } from './utils/group-annotations-by-source';
 
 export {
-  annotationsToPdfHighlights,
   annotationHighlightId,
+  annotationsToPdfHighlights,
+  annotationToOfficeHighlightLocations,
+  getAnnotationPdfPage,
+  isDocxRangeSelector,
+  isExcelRcRangeSelector,
+  isPptxRangeSelector,
   normalizeRawAnnotations,
   resolveMessageAnnotations,
 } from './utils/annotation';
+export type {
+  DocxOfficeHighlightLocation,
+  ExcelOfficeHighlightLocation,
+  OfficeHighlightLocation,
+  PptxOfficeHighlightLocation,
+} from './models/office-highlight';
 
 export {
   injectCitationSentinels,
   replaceSentinelsInChildren,
+  stripCitTagsWhileStreaming,
 } from './utils/citation-injection';
 
 export {

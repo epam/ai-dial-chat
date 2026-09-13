@@ -45,8 +45,10 @@ export interface ToolsChipsProps {
   items: ToolMenuItem[];
   /** Called with the tool id when a chip body is clicked. */
   onToolToggle: (toolId: string) => void;
-  /** Called with the tool id when the chip's × is clicked, to drop it from the row. */
+  /** Called with the tool id when the chip's × is clicked, to drop it from the row. Ignored while `canRemove` is `false`. */
   onToolDismiss: (toolId: string) => void;
+  /** When `false`, chips render without a × and cannot be dropped from the row. Defaults to `true`. */
+  canRemove?: boolean;
   /** Returns the accessible label for a chip's × button. Defaults to `"Remove {toolLabel}"`. */
   removeLabel?: (toolLabel: string) => string;
   /** Typography overrides for the chip text. */
@@ -58,12 +60,14 @@ export interface ToolsChipsProps {
 /**
  * Toggle chips for the tools the active deployment exposes, rendered inside the
  * conversation input. Clicking a chip flips the tool between neutral (off) and
- * accent (on) styling; clicking its × drops the chip from the row.
+ * accent (on) styling; when `canRemove` is set, clicking its × drops the chip
+ * from the row.
  */
 export const ToolsChips: FC<ToolsChipsProps> = ({
   items,
   onToolToggle,
   onToolDismiss,
+  canRemove = true,
   removeLabel = defaultRemoveLabel,
   typography,
   colors,
@@ -92,7 +96,8 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
           className={mergeClasses(
             styles.chip,
             item.isSelected && styles.chipSelected,
-            'flex min-w-0 items-center gap-1.5 rounded-full border py-1 pe-1 ps-2 transition-colors',
+            'flex min-w-0 items-center gap-1.5 rounded-full border py-1 transition-colors',
+            canRemove ? 'pe-1 ps-2' : 'px-2',
           )}
         >
           <button
@@ -117,17 +122,19 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
               {item.label}
             </span>
           </button>
-          <button
-            type="button"
-            onClick={() => onToolDismiss(item.id)}
-            aria-label={removeLabel(item.label)}
-            className={mergeClasses(
-              styles.chipClose,
-              'flex shrink-0 items-center rounded p-0.5 transition-colors',
-            )}
-          >
-            <IconX size={12} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
-          </button>
+          {canRemove && (
+            <button
+              type="button"
+              onClick={() => onToolDismiss(item.id)}
+              aria-label={removeLabel(item.label)}
+              className={mergeClasses(
+                styles.chipClose,
+                'flex shrink-0 items-center rounded p-0.5 transition-colors',
+              )}
+            >
+              <IconX size={12} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
+            </button>
+          )}
         </div>
       ))}
     </div>

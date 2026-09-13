@@ -10,6 +10,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
   role,
   onAttachmentClick,
   markdownComponents,
+  markdownUrlTransform,
   ...props
 }) => {
   if (role === MessageRole.Status) {
@@ -33,6 +34,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
     <AssistantMessageBubble
       {...props}
       markdownComponents={markdownComponents}
+      markdownUrlTransform={markdownUrlTransform}
       onAttachmentClick={onAttachmentClick}
     />
   );

@@ -71,6 +71,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     onViewModeChange,
     sortKey,
     sortOptions = [],
+    onSortChange,
   }: {
     title?: string;
     query: string;
@@ -82,7 +83,8 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     onMyAppsChange?: (isActive: boolean) => void;
     onViewModeChange?: (mode: CatalogViewMode) => void;
     sortKey?: string;
-    sortOptions?: { key: string; label: string; onClick?: () => void }[];
+    sortOptions?: { value: string; label: string }[];
+    onSortChange?: (sortKey: string) => void;
   }) => (
     <div>
       <span>{title ?? 'Browse'}</span>
@@ -113,7 +115,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
         List view
       </button>
       {sortOptions.map((option) => (
-        <button key={option.key} onClick={option.onClick}>
+        <button key={option.value} onClick={() => onSortChange?.(option.value)}>
           Sort {option.label}
         </button>
       ))}
@@ -815,14 +817,39 @@ describe('Catalog', () => {
             type: CatalogEntityType.Agent,
             topics: ['Free'],
           }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
         ]}
         favorites={[]}
       />,
     );
 
     expect(screen.getByRole('tab', { name: /Agents/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Prompts/i })).toBeTruthy();
     expect(screen.queryByRole('tab', { name: /Models/i })).toBeNull();
     expect(screen.getByRole('button', { name: 'Free' })).toBeTruthy();
+  });
+
+  it('renders no tab row when every item shares one entity type', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Agent }),
+          makeItem('2', 'GPT', { type: CatalogEntityType.Agent }),
+        ]}
+        favorites={[]}
+      />,
+    );
+
+    expect(screen.queryByRole('tablist')).toBeNull();
+    expect(
+      screen.getByRole('grid', { name: 'catalog grid' }).textContent,
+    ).toContain('2 items');
+  });
+
+  it('renders no tab row when items are empty', () => {
+    render(<Catalog items={[]} favorites={[]} />);
+
+    expect(screen.queryByRole('tablist')).toBeNull();
   });
 
   it('calls onActiveTabChange with the clicked tab id', async () => {

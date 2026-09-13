@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  HttpStatus,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -25,6 +26,9 @@ function makeService(callbackBaseUrl = 'https://example.com/callback') {
     client: {
       shareResource: vi.fn(),
       getConversation: vi.fn().mockResolvedValue(okResponse({ messages: [] })),
+      getCustomApplication: vi
+        .fn()
+        .mockResolvedValue(okResponse({ application_properties: {} })),
       getInvitation: vi.fn(),
     },
     baseUrl: 'http://dial-core',
@@ -537,6 +541,385 @@ describe('ShareInvitationService', () => {
           access: [ShareAccess.View],
         }),
       ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
+  describe('createShareLink — application attached prompts', () => {
+    it('shares a dial-prompt skill referenced by a quick app alongside the app', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
+        okResponse({
+          application_properties: {
+            skills: [
+              { type: 'dial-prompt', url: 'prompts/owner-bucket/My prompt' },
+            ],
+          },
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'applications/owner-bucket/My%20App__1.0',
+        access: [ShareAccess.View],
+      });
+
+      expect(dialClient.client.getCustomApplication).toHaveBeenCalledWith(
+        'owner-bucket',
+        'My%20App__1.0',
+        { headers: { Authorization: 'Bearer token-abc' } },
+      );
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/owner-bucket/My%20App__1.0',
+              permissions: ['READ'],
+            },
+            {
+              url: 'prompts/owner-bucket/My%20prompt',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('shares each unique dial-prompt skill once, ignoring non-prompt skills', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
+        okResponse({
+          application_properties: {
+            skills: [
+              { type: 'dial-prompt', url: 'prompts/owner-bucket/first' },
+              { type: 'dial-prompt', url: 'prompts/owner-bucket/first' },
+              { type: 'dial-prompt', url: 'prompts/owner-bucket/second' },
+              { type: 'custom', content: 'inline system prompt' },
+            ],
+          },
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'applications/owner-bucket/my-app__1.0',
+        access: [ShareAccess.View, ShareAccess.Edit],
+      });
+
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/owner-bucket/my-app__1.0',
+              permissions: ['READ', 'WRITE'],
+            },
+            {
+              url: 'prompts/owner-bucket/first',
+              permissions: ['READ', 'WRITE'],
+            },
+            {
+              url: 'prompts/owner-bucket/second',
+              permissions: ['READ', 'WRITE'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('drops a referenced prompt left in a different private bucket than the app', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
+        okResponse({
+          application_properties: {
+            skills: [
+              { type: 'dial-prompt', url: 'prompts/owner-bucket/mine' },
+              {
+                type: 'dial-prompt',
+                url: 'prompts/other-user-bucket/theirs',
+              },
+            ],
+          },
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'applications/owner-bucket/my-app__1.0',
+        access: [ShareAccess.View],
+      });
+
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/owner-bucket/my-app__1.0',
+              permissions: ['READ'],
+            },
+            {
+              url: 'prompts/owner-bucket/mine',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('keeps a referenced prompt in the public/organization bucket', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
+        okResponse({
+          application_properties: {
+            skills: [
+              { type: 'dial-prompt', url: 'prompts/owner-bucket/mine' },
+              { type: 'dial-prompt', url: 'prompts/public/shared' },
+            ],
+          },
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'applications/owner-bucket/my-app__1.0',
+        access: [ShareAccess.View],
+      });
+
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/owner-bucket/my-app__1.0',
+              permissions: ['READ'],
+            },
+            {
+              url: 'prompts/owner-bucket/mine',
+              permissions: ['READ'],
+            },
+            {
+              url: 'prompts/public/shared',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('keeps a referenced prompt whose bucket segment is percent-encoded', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
+        okResponse({
+          application_properties: {
+            skills: [
+              {
+                type: 'dial-prompt',
+                url: 'prompts/my%20bucket/my-prompt',
+              },
+            ],
+          },
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'applications/my%20bucket/my-app__1.0',
+        access: [ShareAccess.View],
+      });
+
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/my%20bucket/my-app__1.0',
+              permissions: ['READ'],
+            },
+            {
+              url: 'prompts/my%20bucket/my-prompt',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('shares no related resources when the app has no dial-prompt skills', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
+        okResponse({
+          application_properties: {
+            orchestrator: {
+              system_prompt: { type: 'custom', variables: {}, content: '' },
+            },
+            skills: [],
+            contexts: [],
+            tool_sets: [],
+          },
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'applications/owner-bucket/my-app__1.0',
+        access: [ShareAccess.View],
+      });
+
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/owner-bucket/my-app__1.0',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('shares no related resources when the app has no application_properties', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
+        okResponse({}),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'applications/owner-bucket/my-app__1.0',
+        access: [ShareAccess.View],
+      });
+
+      expect(dialClient.client.getCustomApplication).toHaveBeenCalledOnce();
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/owner-bucket/my-app__1.0',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('shares the app alone when the application pre-read rejects, without blocking the share', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockRejectedValue(
+        new TypeError('network error'),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      const result = await service.createShareLink(
+        'token-abc',
+        'session-bucket',
+        {
+          itemId: 'applications/owner-bucket/my-app__1.0',
+          access: [ShareAccess.View],
+        },
+      );
+
+      expect(shareSpy).toHaveBeenCalledOnce();
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/owner-bucket/my-app__1.0',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+      expect(result.url).toBe('https://example.com/catalog/shared/app');
+    });
+
+    it('shares the app alone when the application pre-read returns an upstream error, without blocking the share', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
+        errResponse(HttpStatus.NOT_FOUND),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      const result = await service.createShareLink(
+        'token-abc',
+        'session-bucket',
+        {
+          itemId: 'applications/owner-bucket/my-app__1.0',
+          access: [ShareAccess.View],
+        },
+      );
+
+      expect(shareSpy).toHaveBeenCalledOnce();
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/owner-bucket/my-app__1.0',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+      expect(result.url).toBe('https://example.com/catalog/shared/app');
+    });
+
+    it('shares no related resources when the application lookup returns no data', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
+        okResponse(null),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'applications/owner-bucket/my-app__1.0',
+        access: [ShareAccess.View],
+      });
+
+      expect(shareSpy).toHaveBeenCalledOnce();
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/owner-bucket/my-app__1.0',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
     });
   });
 

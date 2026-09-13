@@ -242,6 +242,38 @@ describe('DeploymentsListingService', () => {
       );
     });
 
+    it('forwards the job title in the X-JOB-TITLE header on cache miss', async () => {
+      const { service, sdkClient } = makeService();
+
+      await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+        undefined,
+        false,
+        'Lead Software Engineer',
+      );
+
+      expect(sdkClient.listDeployments).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'X-JOB-TITLE': 'Lead Software Engineer',
+          }),
+        }),
+      );
+    });
+
+    it('omits the X-JOB-TITLE header when no job title is provided', async () => {
+      const { service, sdkClient } = makeService();
+
+      await service.listDeployments('user1', 'token', 'bucket-1');
+
+      const call = sdkClient.listDeployments.mock.calls[0][0] as {
+        headers: Record<string, string>;
+      };
+      expect(call.headers).not.toHaveProperty('X-JOB-TITLE');
+    });
+
     it('maps application_type_schema_id to applicationTypeSchemaId for application deployments', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({

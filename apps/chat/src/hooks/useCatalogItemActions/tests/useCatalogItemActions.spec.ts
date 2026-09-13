@@ -30,6 +30,14 @@ vi.mock('../../../utils/file-download', () => ({
   triggerBrowserDownload: vi.fn(),
 }));
 
+/* The hook reads the `skillUsageEnabled` feature flag through the app config
+ * context; the shared mock's flag-off default matches the global mock style
+ * used by every other spec that stubs AppConfigContext. */
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
+
 /* Only the download trigger is stubbed; the mappers still need the real helpers. */
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),

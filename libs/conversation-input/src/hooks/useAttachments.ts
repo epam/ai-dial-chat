@@ -2,7 +2,10 @@ import {
   MAX_UPLOADS_PER_MINUTE,
   generateAttachmentId,
 } from '@epam/ai-dial-attachment-input';
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type {
+  Attachment,
+  UploadedAttachmentResult,
+} from '@epam/ai-dial-chat-shared';
 import {
   AttachmentErrorReason,
   AttachmentType,
@@ -15,8 +18,10 @@ import { runAtRate } from '../utils/concurrency';
 interface UseAttachmentsParams {
   /** Attachments pre-populated in the tray on mount. */
   initialAttachments: Attachment[];
-  /** Called immediately after an attachment is added. Resolves with the uploaded URL. */
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  /** Called immediately after an attachment is added. Resolves with the uploaded URL and stored name. */
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   /** Called whenever the attachment list changes. */
   onAttachmentsChange?: (attachments: Attachment[]) => void;
   /**
@@ -168,11 +173,11 @@ export const useAttachments = ({
       );
 
       try {
-        const url = await onUploadAttachment(attachment);
+        const { url, name } = await onUploadAttachment(attachment);
         updateAttachments((current) =>
           current.map((item) =>
             item.id === attachment.id
-              ? { ...item, status: RequestStatus.Idle, url }
+              ? { ...item, status: RequestStatus.Idle, url, name }
               : item,
           ),
         );

@@ -23,6 +23,7 @@ import { Input } from '../Input/Input';
 /** Inline edit-message form: pre-populated textarea, existing attachment tray, and Save/Cancel actions. */
 export const EditMessageInput: FC<EditMessageInputProps> = ({
   message,
+  inlineStartSlot,
   initialAttachments = [],
   onCancel,
   onSave,
@@ -140,6 +141,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
       {/* Bordered box — contains kept attachments, new attachments, and the textarea */}
       <Input
         message={message}
+        inlineStartSlot={inlineStartSlot}
         ariaLabel={ariaLabel}
         hideActionBar
         pendingDropFiles={pendingDropFiles}

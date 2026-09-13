@@ -164,7 +164,7 @@ The old `GET /api/v1/config` endpoint SHALL be removed in the same PR that intro
 
 #### Scenario: Generated client type includes both fields
 
-- **WHEN** `npm run openapi` is run after this change
+- **WHEN** `npm run openapi` is run
 - **THEN** the generated `ClientConfigResponse` type's `config` property includes `overlayEnabled: boolean` and `overlayAllowedOrigins: string[]`
 
 #### Scenario: overlayAllowedOrigins never leaks server-only origins
@@ -194,7 +194,7 @@ The old `GET /api/v1/config` endpoint SHALL be removed in the same PR that intro
 
 #### Scenario: Generated client type includes the new field
 
-- **WHEN** `npm run openapi` is run after this change
+- **WHEN** `npm run openapi` is run
 - **THEN** the generated `ClientConfigResponse` type's `config` property includes `enabledUiFeatures: string[] | null`
 
 #### Scenario: Response never includes unrecognized entries
@@ -252,7 +252,7 @@ The old `GET /api/v1/config` endpoint SHALL be removed in the same PR that intro
 
 #### Scenario: Generated client type includes the new field
 
-- **WHEN** `npm run openapi` is run after this change
+- **WHEN** `npm run openapi` is run
 - **THEN** the generated `ClientConfigResponse` type's `config` property includes `publicationFilterSources: string[]`
 
 ### Requirement: Frontend AppConfigContext exposes publicationFilterSources with a safe default

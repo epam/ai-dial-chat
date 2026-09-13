@@ -19,6 +19,7 @@ const makeGroup = (): AnnotationGroup => {
     },
   };
   return {
+    groupKey: 'https://example.com/a',
     sourceUrl: 'https://example.com/a',
     sourceName: 'livescience.com',
     annotations: [annotation],

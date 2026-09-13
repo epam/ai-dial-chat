@@ -108,3 +108,54 @@ describe('Input — tool chips', () => {
     expect(screen.getByRole('button', { name: 'Web Search' })).toBeTruthy();
   });
 });
+
+describe('Input — tool chips with canRemoveTools off', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseIsMobile.mockReturnValue(false);
+  });
+
+  it('renders every chip without a × control', () => {
+    render(
+      <Input
+        onSend={vi.fn()}
+        canRemoveTools={false}
+        toolsMenuItems={[buildTool('deep_research', 'Deep Research')]}
+        onToolToggle={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Deep Research' })).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Remove Deep Research' }),
+    ).toBeNull();
+  });
+
+  it('drops the + button when tools are the only thing its menu would offer', () => {
+    render(
+      <Input
+        onSend={vi.fn()}
+        hideAttachFile
+        canRemoveTools={false}
+        toolsMenuItems={[buildTool('deep_research', 'Deep Research')]}
+        onToolToggle={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Deep Research' })).toBeTruthy();
+  });
+
+  it('keeps the + button when the menu still has other entries', () => {
+    render(
+      <Input
+        onSend={vi.fn()}
+        canRemoveTools={false}
+        toolsMenuItems={[buildTool('deep_research', 'Deep Research')]}
+        onToolToggle={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Add' })).toBeTruthy();
+  });
+});

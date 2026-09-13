@@ -178,6 +178,12 @@ export interface ConversationPanelProps {
   styles?: ConversationPanelStyles;
   /** Extra class name(s) merged onto the panel root element. */
   className?: string;
+  /**
+   * Renders the panel as a drawer that slides over the content instead of
+   * collapsing its width beside it. Set it when `className` positions the panel
+   * over the page. Defaults to `false`.
+   */
+  isOverlay?: boolean;
   /** Builds dropdown actions for a row. When absent or empty, no action trigger is rendered. */
   getActions?: (item: ConversationItem) => DropdownItem[];
   /** Called when a row action menu opens; receives the trigger button. */

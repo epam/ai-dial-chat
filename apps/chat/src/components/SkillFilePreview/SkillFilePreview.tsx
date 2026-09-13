@@ -51,6 +51,7 @@ export const SkillFilePreview: FC<Props> = ({ path }) => {
             AttachmentCanvasI18nKeys.PdfHideThumbnailsLabel,
           ),
           pdfPageNumberLabel: t(AttachmentCanvasI18nKeys.PdfPageNumberLabel),
+          xlsxFormulaLabel: t(AttachmentCanvasI18nKeys.XlsxFormulaLabel),
         }}
         codeBlockTheme={
           currentTheme === ThemeId.Dark

@@ -56,7 +56,7 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 - **THEN** it returns the raw `Response` obtained via the generated client's `Raw` method, unconsumed
 
 #### Scenario: `apps/chat` composes the factory with its own singleton
-- **WHEN** `apps/chat/src/server-api/files.api.ts` is inspected after this change
+- **WHEN** `apps/chat/src/server-api/files.api.ts` is inspected
 - **THEN** it calls `createFilesApiClient` with the app's configured `filesApi` singleton and its own `uploadFileWithProgress`, and re-exports the returned functions under their existing names so `dial-files-api.adapter.ts` and `usePublishFolders.ts` require no changes
 
 ### Requirement: Upload-with-progress is a factory over an injected XHR factory and host capabilities
@@ -107,6 +107,10 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 - **WHEN** the completion `fetch` resolves with a non-2xx status, or resolves with no readable body
 - **THEN** `onError` is invoked and no chunk callbacks fire
 
+#### Scenario: A 409 is reported as a distinguishable generation conflict
+- **WHEN** the completion `fetch` resolves with `409` — the conversation already has an active generation, typically started by another browser tab of the same session
+- **THEN** `onError` is invoked with a `GenerationConflictError` (defaulting to `DEFAULT_GENERATION_CONFLICT_MESSAGE`) rather than the generic `Stream request failed with status …` error, so callers can present it as an expected state
+
 #### Scenario: Timezone header is present only when a timezone resolves
 - **WHEN** `deps.getTimezone` is omitted or returns an empty value
 - **THEN** the completion request omits the `X-Timezone` header entirely, matching the pre-move behavior
@@ -132,7 +136,7 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 - **THEN** the returned promise rejects, allowing the caller (`resumeIfAwaitingGeneration`) to fall back to `watchConversation`
 
 #### Scenario: `apps/chat` composes the concrete transport
-- **WHEN** `apps/chat/src/utils/conversation-stream-transport.ts` is inspected after this change
+- **WHEN** `apps/chat/src/utils/conversation-stream-transport.ts` is inspected
 - **THEN** it supplies `attachToGeneration` backed by `apps/chat/src/server-api/chat-stream.api.ts`'s implementation, which issues a raw `fetch POST` against the app's configured completions-attach endpoint with `credentials: 'include'` and the current CSRF token, matching the existing `streamCompletion`/`watchConversation` implementation pattern in that module
 
 ### Requirement: API error and trace parsing are host-agnostic public exports

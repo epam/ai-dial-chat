@@ -1,14 +1,20 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+  mergeClasses,
+  useAvailableHeightCap,
+} from '@epam/ai-dial-chat-shared';
 import { EditorLayout } from '@epam/ai-dial-editor-builder';
 import {
   Input,
   Label,
-  LazyMarkdownEditor,
   NeutralButton,
   PrimaryButton,
   Spinner,
   Textarea,
 } from '@epam/ai-dial-ui-kit';
+import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
  * it here, rather than eagerly from the host app's entry point, keeps this
@@ -88,6 +94,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   });
   const contentLabelId = useId();
   const contentEditorId = useId();
+  const contentEditorCapRef = useAvailableHeightCap<HTMLDivElement>();
 
   /* Hosts that load asynchronously re-seed the form through `initialValues`. */
   useEffect(() => {
@@ -246,26 +253,35 @@ export const PromptEditor: FC<PromptEditorProps> = ({
               required
               className={contentLabelClassName}
             />
-            <Suspense
-              fallback={
-                <Spinner
-                  ariaLabel={
-                    labels?.contentLoadingAriaLabel ?? 'Loading prompt editor'
-                  }
-                />
-              }
+            <div
+              ref={contentEditorCapRef}
+              className={mergeClasses(
+                MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+                MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+              )}
             >
-              <MarkdownEditor
-                id={contentEditorId}
-                value={values.content}
-                onChange={(value) => setField('content', value)}
-                height={480}
-                placeholder={
-                  labels?.contentPlaceholder ?? 'Write the prompt instructions'
+              <Suspense
+                fallback={
+                  <Spinner
+                    ariaLabel={
+                      labels?.contentLoadingAriaLabel ?? 'Loading prompt editor'
+                    }
+                  />
                 }
-                theme={markdownEditorTheme}
-              />
-            </Suspense>
+              >
+                <MarkdownEditor
+                  id={contentEditorId}
+                  value={values.content}
+                  onChange={(value) => setField('content', value)}
+                  height={480}
+                  placeholder={
+                    labels?.contentPlaceholder ??
+                    'Write the prompt instructions'
+                  }
+                  theme={markdownEditorTheme}
+                />
+              </Suspense>
+            </div>
             {errors?.content != null && (
               <p
                 className={mergeClasses(

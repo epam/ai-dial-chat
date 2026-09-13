@@ -98,9 +98,55 @@ describe('AddAttachmentButton — tools submenu', () => {
       await user.keyboard(key);
 
       expect(
-        await screen.findByRole('menuitem', { name: 'Deep Research' }),
+        await screen.findByRole('menuitemcheckbox', { name: 'Deep Research' }),
       ).toBeTruthy();
       expect(toolsTrigger.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('reflects isSelected as aria-checked on the desktop tool row', async () => {
+      const user = userEvent.setup();
+      render(
+        <AddAttachmentButton
+          {...baseProps}
+          onAttachClick={vi.fn()}
+          toolsMenuItems={[{ ...singleToolItem, isSelected: true }]}
+          onToolToggle={vi.fn()}
+          toolsMenuTitle="Tools"
+        />,
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Add' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Tools' }));
+
+      const row = await screen.findByRole('menuitemcheckbox', {
+        name: 'Deep Research',
+      });
+      expect(row.getAttribute('aria-checked')).toBe('true');
+    });
+
+    it('keeps the Tools submenu open after a tool is toggled', async () => {
+      const user = userEvent.setup();
+      const handleToggle = vi.fn();
+      render(
+        <AddAttachmentButton
+          {...baseProps}
+          onAttachClick={vi.fn()}
+          toolsMenuItems={[singleToolItem]}
+          onToolToggle={handleToggle}
+          toolsMenuTitle="Tools"
+        />,
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Add' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Tools' }));
+      await user.click(
+        await screen.findByRole('menuitemcheckbox', { name: 'Deep Research' }),
+      );
+
+      expect(handleToggle).toHaveBeenCalledWith('deep_research');
+      expect(
+        screen.getByRole('menuitemcheckbox', { name: 'Deep Research' }),
+      ).toBeTruthy();
     });
 
     it('closes only the Tools submenu with Escape and returns focus to its trigger', async () => {
@@ -121,7 +167,7 @@ describe('AddAttachmentButton — tools submenu', () => {
       });
       toolsTrigger.focus();
       await user.keyboard('{Enter}');
-      const toolItem = await screen.findByRole('menuitem', {
+      const toolItem = await screen.findByRole('menuitemcheckbox', {
         name: 'Deep Research',
       });
       toolItem.focus();
@@ -129,7 +175,7 @@ describe('AddAttachmentButton — tools submenu', () => {
       await user.keyboard('{Escape}');
 
       expect(
-        screen.queryByRole('menuitem', { name: 'Deep Research' }),
+        screen.queryByRole('menuitemcheckbox', { name: 'Deep Research' }),
       ).toBeNull();
       expect(
         screen.getByRole('menuitem', { name: 'Attach file' }),

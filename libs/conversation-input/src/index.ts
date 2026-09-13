@@ -11,11 +11,15 @@ export type {
   EditMessageInputProps,
 } from './models/ConversationInput';
 export { SendOnEnter } from './models/Input';
+export type { TranscribeAudio } from './models/Voice';
 export type {
   ChatSettingsValues,
+  CommandMenuConfig,
+  CommandMenuContext,
   InputColors,
   InputProps,
   InputTypography,
+  MenuOverlayConfig,
   ToolsChipLabels,
 } from './models/Input';
 

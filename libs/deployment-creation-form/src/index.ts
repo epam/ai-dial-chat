@@ -26,6 +26,7 @@ export type {
 export { DeploymentCreationFieldErrorCode } from './models/validation';
 export {
   NAME_PATTERN,
+  SEMVER_VERSION_PATTERN,
   VERSION_PATTERN,
   validateDeploymentCreationFields,
 } from './utils/validate-deployment-creation-fields';

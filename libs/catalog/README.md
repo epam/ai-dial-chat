@@ -19,12 +19,49 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit`
+- `@epam/ai-dial-ui-kit` ^0.14.0-dev.30 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
+- `@epam/ai-dial-publish-panel` (the Publish flow rendered from `DetailsPanel`'s Manage menu)
 - `@tabler/icons-react`
 - `ag-grid-community@35.3.0`
 
+Both `@epam/ai-dial-chat-shared` and `@epam/ai-dial-publish-panel` are kept
+external by the library build — a consumer's own bundler resolves them, so
+installing both is required rather than optional.
+
+## Entry points
+
+`@epam/ai-dial-catalog` publishes a `./mapping` subpath alongside the root
+(`.`) entry: `CredentialsLevel`, `CredentialsBadgeState`, `CredentialStatus`,
+`CredentialsUiState`, `ToolsetAuthenticationType`, `CatalogSortKey`,
+`CatalogItem`, `CatalogItemCredentials`, `filterCatalogItems`,
+`getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`,
+`getCredentialsBadgeState`, `getCredentialsUiState`, and `getSignedInLevel` —
+the headless enums and pure item-mapping functions a host can use (e.g. to
+sort/filter/tab a catalog item list, or read a toolset's credential state)
+without resolving `@epam/ai-dial-publish-panel`, `@epam/ai-dial-react-file-manager`,
+or any catalog editor/publish UI:
+
+```tsx
+import {
+  CredentialsLevel,
+  filterCatalogItems,
+} from '@epam/ai-dial-catalog/mapping';
+```
+
+The root entry keeps re-exporting every one of these names for backward
+compatibility — importing them from `@epam/ai-dial-catalog` directly still
+works exactly as before, and (unlike a monolithic pre-bundled root) a
+production bundler tree-shakes a root import of only these mapping names down
+to the same graph `./mapping` produces, since `package.json#sideEffects` marks
+every JS module side-effect free; importing `Catalog` from the root still
+pulls in the full publish/editor UI as before.
+
 ## Components
+
+The list view imports Grid through `@epam/ai-dial-ui-kit/grid`. Library builds
+keep UI Kit root and subpath imports external. JavaScript is tree-shakeable;
+CSS/SCSS imports remain side effects. Load catalog UI through a host lazy boundary.
 
 ### Catalog
 
@@ -107,6 +144,11 @@ also yields more card columns (4 instead of 3 once the grid area passes
 
 #### Controlling tabs and Topics options independently of `items`
 
+The entity-type tab row appears only when `items` span **two or more** types: a
+single tab is not a choice, so a catalog restricted to one entity type (an
+agent picker, a prompt picker) renders no tab row at all. The active tab still
+resolves to that one type, so the grid is unaffected.
+
 By default the entity-type tabs and the Topics filter's option list are both
 derived from `items` — the same list the grid renders. A host that narrows
 `items` for the grid (e.g. filtering by a selected category-tree node) would
@@ -172,6 +214,24 @@ Pass `query` so each card highlights the matched text — the grid forwards it t
 Set `isFullWidth` when the grid is rendered without the 1180 px content cap. It
 only sharpens the column-count guess used for the first paint; the measured
 container width always wins afterwards.
+
+### Card
+
+Single catalog item card, exported for hosts composing their own grid or list.
+
+```tsx
+import { Card } from '@epam/ai-dial-catalog';
+
+<Card
+  item={item}
+  query={searchQuery}
+  onClick={handleItemClick}
+  onToggle={handleToggleFavorite}
+  initialIsStarred={isFavorited}
+/>;
+```
+
+The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's fixed 2-line clamp; they appear normally in the About tab. Links render as real `<a>` elements and activate independently without triggering the card's own `onClick` handler; clicks on other description content still open the card details.
 
 ### ListView
 
@@ -263,6 +323,34 @@ import {
 <InfoCard item={item} variant={DetailsConfirmationVariant.Danger} />
 ```
 
+### DetailsPanel
+
+The right-anchored details panel `Catalog` opens internally, exported for
+hosts composing it into other surfaces (e.g. a chat route's skill details side
+panel). Only `item`, `isOpen`, and `onClose` are required; every action is
+opt-in and hidden when its prop is absent, and mounting it never mounts the
+catalog page chrome — the host owns the item, the details fetch, and the
+action handlers. Skills open on the content-first tab; prompts and deployments
+open on their usual first tab.
+
+```tsx
+import { DetailsPanel } from '@epam/ai-dial-catalog';
+import type { CatalogItem } from '@epam/ai-dial-catalog';
+
+<DetailsPanel
+  item={item}
+  isOpen={isDetailsOpen}
+  onClose={closeDetails}
+  isStarred={item.isUserFavorite}
+  onToggleFavorite={(id, isStarred) => toggleFavorite(id, isStarred)}
+  onUseInChat={(item: CatalogItem) => attachToChat(item)}
+  texts={{ primaryActionLabel: 'Use in chat' }}
+/>;
+```
+
+See `DetailsPanelProps` (and its `texts` / `styles` overrides) in the Types
+section below; a skills-scoped wrapper lives in `@epam/ai-dial-skills`.
+
 ## Enums
 
 ```tsx
@@ -324,6 +412,14 @@ two: an item with no published copy offers `Publish`, an item with a published
 folder offers `Unpublish`, so publishing an already-published item a second
 time means unpublishing it first. Because the history lookup is lazy, the entry
 may start as `Publish` and swap once the response lands.
+
+Supplying `isUnpublishVisible` does one more thing: for an item it returns
+`true` for, the Manage trigger renders while the history lookup is still
+outstanding, even when that leaves the menu momentarily empty. Without this an
+item whose only entry would be `Unpublish` could never show one, because the
+lookup that produces it is started by hovering, focusing or opening that same
+trigger. A host that supplies no rule keeps the plain "hidden while empty"
+behaviour.
 
 Its body depends on how many folders history resolved to: one folder is named in static copy with confirm enabled
 immediately, while several render as a single-select radio group with confirm
@@ -641,6 +737,9 @@ import type {
   ApiResource,
   CatalogItemApiDetails,
   CatalogItemPromptContent,
+  DetailsPanelProps,
+  ItemDetailsStyles,
+  ItemDetailsTexts,
   ToolDefinition,
   PricingRow,
   UsageLimitRow,
@@ -674,3 +773,19 @@ const sorted = sortCatalogItems(filtered, CatalogSortKey.NameAZ);
 const tabs = buildCatalogTabs(items);
 const topicOptions = getTopicOptions(items);
 ```
+
+## Rollback
+
+`catalog` is published by `tools/publish-lib.mjs`, which reads the version from this package's
+`package.json` and writes it into `dist/package.json` before `npm publish`. To roll a consuming
+host back to a previous `@epam/ai-dial-catalog` release:
+
+1. Pin the host's dependency back to the previous version (e.g.
+   `"@epam/ai-dial-catalog": "1.1.0-dev.410"` instead of `"1.1.0-dev.412"`).
+2. `catalog` declares `@epam/ai-dial-chat-shared` and `@epam/ai-dial-publish-panel` as peers
+   and is published from the same repository revision as both — revert those packages to their
+   own matching previous versions in the same host update, rather than leaving a newer sibling
+   installed against an older `catalog` (or vice versa).
+3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
+   resolved version and integrity hash, rather than a partial mix of pre- and post-change
+   versions.

@@ -1,4 +1,10 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+  mergeClasses,
+  useAvailableHeightCap,
+} from '@epam/ai-dial-chat-shared';
 import { EditorLayout } from '@epam/ai-dial-editor-builder';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { DialFoldersTree } from '@epam/ai-dial-react-file-manager';
@@ -11,13 +17,13 @@ import {
   ErrorText,
   GhostButton,
   Input,
-  LazyMarkdownEditor,
   NeutralButton,
   PrimaryButton,
   Spinner,
   Textarea,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
+import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 import { IconPlus, IconTrashX } from '@tabler/icons-react';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
@@ -55,6 +61,7 @@ type MarkdownEditorComponent = ComponentType<{
   value: string;
   onChange: (value: string) => void;
   height?: number;
+  className?: string;
   placeholder?: string;
   theme?: EditorThemes;
 }>;
@@ -99,6 +106,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     description: initialValues?.description ?? '',
     instructions: initialValues?.instructions ?? '',
   });
+  const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
   const seededInitialValuesRef = useRef(initialValues);
   const isReseeding = seededInitialValuesRef.current !== initialValues;
   const seededFilesRef = useRef<SkillFileTreeNode[]>(files);
@@ -491,28 +499,38 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                     </span>
                     <span className="dial-tiny-text text-error">*</span>
                   </span>
-                  <Suspense
-                    fallback={
-                      <Spinner
-                        ariaLabel={t.instructionsLoadingAriaLabel ?? 'Loading'}
-                      />
-                    }
+                  <div
+                    ref={instructionsCapRef}
+                    className={mergeClasses(
+                      MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+                      MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+                    )}
                   >
-                    <LazyMarkdown
-                      value={values.instructions}
-                      onChange={(value) =>
-                        setValues((prev) => ({
-                          ...prev,
-                          instructions: value,
-                        }))
+                    <Suspense
+                      fallback={
+                        <Spinner
+                          ariaLabel={
+                            t.instructionsLoadingAriaLabel ?? 'Loading'
+                          }
+                        />
                       }
-                      theme={instructionsEditorTheme}
-                      placeholder={
-                        t.instructionsPlaceholder ??
-                        'Write the skill instructions in Markdown'
-                      }
-                    />
-                  </Suspense>
+                    >
+                      <LazyMarkdown
+                        value={values.instructions}
+                        onChange={(value) =>
+                          setValues((prev) => ({
+                            ...prev,
+                            instructions: value,
+                          }))
+                        }
+                        theme={instructionsEditorTheme}
+                        placeholder={
+                          t.instructionsPlaceholder ??
+                          'Write the skill instructions in Markdown'
+                        }
+                      />
+                    </Suspense>
+                  </div>
                   {errors?.instructions != null && (
                     <ErrorText text={errors.instructions} />
                   )}

@@ -8,6 +8,10 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
+Requires UI Kit ^0.14.0-dev.30 or later with the public `/editors` entry.
+The Markdown loader uses that entry, and library builds keep UI Kit subpaths
+external to preserve the editor's dynamic boundary in consuming applications.
+
 ```json
 {
   "dependencies": {
@@ -30,9 +34,11 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ### ScheduledTasks
 
-Page shell: header with title/subtitle/create action, a search + sort toolbar, and a content region that shows a loading spinner, an error with retry, the empty state, a no-results state, or a section-grouped card grid, depending on `isLoading`/`error`/`items`.
+Page shell: header with title/subtitle/create action, a search + sort toolbar, an optional `banner` slot, and a content region that shows a loading spinner, an error with retry, the empty state, a no-results state, or a section-grouped card grid, depending on `isLoading`/`error`/`items`.
 
 The sort control's trigger shows the active option's label, falling back to `labels.sortLabel` when `sortKey` matches no option. Inside the menu each option is a `menuitemcheckbox` whose `aria-checked` marks the sort currently in effect, with a check icon carrying the same meaning visually; picking one reports through `onSortChange` and closes the menu. The lib never sorts `items` — it renders them in the order it receives them.
+
+`banner` renders between the toolbar and the content region, in every content-region state (loading, error, empty, populated). It is opaque `ReactNode` content — the host app decides what it contains (e.g. a status notice); the lib attaches no behavior or styling to it beyond layout placement.
 
 ```tsx
 import {
@@ -51,8 +57,8 @@ import {
     clearSearchLabel: 'Clear scheduled tasks search',
     sortLabel: 'Sort',
     sortOptions: [
-      { key: ScheduledTasksSortKey.FirstToRun, label: 'First to run' },
-      { key: ScheduledTasksSortKey.LastToRun, label: 'Last to run' },
+      { value: ScheduledTasksSortKey.FirstToRun, label: 'First to run' },
+      { value: ScheduledTasksSortKey.LastToRun, label: 'Last to run' },
     ],
     emptyStateLabel: 'No scheduled tasks yet',
     noResultsLabel: 'No results',
@@ -65,6 +71,7 @@ import {
   sortKey={ScheduledTasksSortKey.FirstToRun}
   onSortChange={() => {}}
   items={[]}
+  banner={<div>Log in required to run scheduled tasks offline.</div>}
 />;
 ```
 

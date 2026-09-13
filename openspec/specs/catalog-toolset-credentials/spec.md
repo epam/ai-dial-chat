@@ -10,7 +10,7 @@ The Catalog Details Panel SHALL show a credentials action for `Toolset` items wh
 `authenticationType` is not `NONE`, and SHALL show no credentials action (button, section, or
 logged-out warning icon) for toolsets whose `authenticationType` is `NONE`. The action label and behavior SHALL be
 resolved from four states, matching the legacy Marketplace decision tree:
-- **Manage credentials**: the current user is an admin and the toolset is public.
+- **Manage credentials** / **Manage API keys**: the current user is an admin and the toolset is public. The label depends on the toolset's own `authenticationType`: an `ApiKey` toolset reads **"Manage API keys"**, every other authenticating type reads **"Manage credentials"**. Both resolve through the same `manageCredentialsActionLabel` override, which receives the `authenticationType` and defaults to that pair — so an assertion on this state MUST branch on the authentication type rather than expecting the generic wording.
 - **Login with my creds**: the user is not an admin, the toolset is public, and the user is not
   personally (`USER`-level) signed in.
 - **Log in**: none of the above, and the toolset is not signed in at `USER` or `GLOBAL` level.
@@ -25,6 +25,11 @@ English text.
 - **WHEN** a user opens the Details Panel for a toolset with `authenticationType: NONE`
 - **THEN** no credentials button, section, or logged-out warning icon is rendered anywhere in
   the panel or on its card/list row
+
+#### Scenario: Admin on a public API-key toolset sees Manage API keys
+- **GIVEN** the current user is an admin and the toolset is public with `authenticationType: ApiKey`
+- **WHEN** the Details Panel is opened
+- **THEN** the credentials action reads "Manage API keys", not "Manage credentials"
 
 #### Scenario: Admin on public toolset sees Manage credentials
 - **WHEN** an admin user opens the Details Panel for a public toolset with `authenticationType`

@@ -7,7 +7,12 @@ import {
   type Message,
 } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { hasActiveToolConfig, isMessageChanged } from '../message-utils';
+import {
+  hasActiveToolConfig,
+  isAnswerIncomplete,
+  isMessageChanged,
+  shouldRerunGenerationOnEdit,
+} from '../message-utils';
 
 const userMessage = (content = 'hello'): Message => ({
   role: MessageRole.User,
@@ -109,5 +114,80 @@ describe('hasActiveToolConfig', () => {
 
   it('returns true when at least one entry is present', () => {
     expect(hasActiveToolConfig({ web: true })).toBe(true);
+  });
+});
+
+describe('isAnswerIncomplete', () => {
+  const answer = (overrides: Partial<Message> = {}): Message => ({
+    role: MessageRole.Assistant,
+    content: 'answer',
+    timestamp: '2024-01-01T00:00:00.000Z',
+    ...overrides,
+  });
+
+  it('returns false for a completed answer', () => {
+    expect(isAnswerIncomplete(answer())).toBe(false);
+  });
+
+  it('returns true when there is no answer at all', () => {
+    expect(isAnswerIncomplete(undefined)).toBe(true);
+  });
+
+  it('returns true when the answer is not an assistant message', () => {
+    expect(isAnswerIncomplete(userMessage())).toBe(true);
+  });
+
+  it('returns true when the user stopped the answer', () => {
+    expect(isAnswerIncomplete(answer({ wasStoppedByUser: true }))).toBe(true);
+  });
+
+  it('returns true when the answer ended with a stream error', () => {
+    expect(isAnswerIncomplete(answer({ streamErrorMessage: '' }))).toBe(true);
+  });
+});
+
+describe('shouldRerunGenerationOnEdit', () => {
+  const stoppedAnswer: Message = {
+    role: MessageRole.Assistant,
+    content: 'Partial',
+    timestamp: '2024-01-01T00:00:00.000Z',
+    wasStoppedByUser: true,
+  };
+
+  const completedAnswer: Message = {
+    role: MessageRole.Assistant,
+    content: 'Full answer',
+    timestamp: '2024-01-01T00:00:00.000Z',
+  };
+
+  it('returns false when nothing changed and the answer is complete', () => {
+    const messages = [userMessage('hello'), completedAnswer];
+    expect(shouldRerunGenerationOnEdit(messages, 0, 'hello', [], [])).toBe(
+      false,
+    );
+  });
+
+  it('returns true when the text changed', () => {
+    const messages = [userMessage('hello'), completedAnswer];
+    expect(shouldRerunGenerationOnEdit(messages, 0, 'world', [], [])).toBe(
+      true,
+    );
+  });
+
+  it('returns true when nothing changed but the answer was stopped', () => {
+    const messages = [userMessage('hello'), stoppedAnswer];
+    expect(shouldRerunGenerationOnEdit(messages, 0, 'hello', [], [])).toBe(
+      true,
+    );
+  });
+
+  it('returns true when the edited message has no answer yet', () => {
+    expect(
+      shouldRerunGenerationOnEdit([userMessage('hello')], 0, 'hello', [], []),
+    ).toBe(true);
+  });
+
+  it('returns false when the index holds no message', () => {
+    expect(shouldRerunGenerationOnEdit([], 0, 'hello', [], [])).toBe(false);
   });
 });

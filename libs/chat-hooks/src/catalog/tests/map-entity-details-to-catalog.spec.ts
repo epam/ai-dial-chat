@@ -119,6 +119,7 @@ describe('mapEntityDetailsToCatalogDetails', () => {
       unit?: string;
       prompt?: string;
       completion?: string;
+      cache_read?: string | { rate?: string };
     }) => {
       const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
         {
@@ -175,6 +176,16 @@ describe('mapEntityDetailsToCatalogDetails', () => {
       expect(mapPricingRows({ unit: 'token', prompt: 'Free' })).toEqual([
         { label: 'Input tokens', price: 'Free' },
       ]);
+    });
+
+    it('ignores structured conditional prices in the flat pricing view', () => {
+      expect(
+        mapPricingRows({
+          unit: 'token',
+          prompt: '0.000003',
+          cache_read: { rate: '0.000001' },
+        }),
+      ).toEqual([{ label: 'Input tokens', price: '$3/M tokens' }]);
     });
 
     it('omits the Pricing tab when the deployment reports no pricing', () => {

@@ -57,7 +57,7 @@ The system SHALL let a user export one conversation, without attachments, from t
 
 ### Requirement: Export a single conversation with attachments as a `.dial` ZIP
 
-The system SHALL let a user export one conversation, with attachments, producing a `.dial` ZIP archive (built with `fflate`) that contains the conversation's JSON v5 envelope plus every referenced attachment file. Each attachment SHALL be fetched through the existing file-download BFF endpoint (`GET /api/v1/files/download`), and placed inside the archive under a `res/<relative-path>/<filename>` layout. Attachment fetches SHALL run with a bounded parallelism of at most 5 concurrent requests. This path SHALL create a queue job (see the export-queue requirement) because it is a potentially long operation; the app remains fully usable while it runs. The downloaded file SHALL be named per the file-naming requirement.
+The system SHALL let a user export one conversation, with attachments, producing a `.dial` ZIP archive (built with `fflate`) that contains the conversation's JSON v5 envelope plus every referenced attachment file. The set of referenced files SHALL be collected from every place a message can carry one — `custom_content.attachments`, the attachments of each entry in `custom_content.stages` (how an agent returns a generated file), and the `body.source.attachment` of each entry in `custom_content.annotations` (a citation source document) — reading both `url` and `reference_url`, mirroring the set the backend share flow grants access to. A trailing `#…` display anchor (e.g. a PDF `#page=N`) SHALL be stripped before a reference is resolved to `{bucket, path}`, since it is not part of the stored resource path. Each attachment SHALL be fetched through the existing file-download BFF endpoint (`GET /api/v1/files/download`), and placed inside the archive under a `res/<relative-path>/<filename>` layout. Attachment fetches SHALL run with a bounded parallelism of at most 5 concurrent requests. This path SHALL create a queue job (see the export-queue requirement) because it is a potentially long operation; the app remains fully usable while it runs. The downloaded file SHALL be named per the file-naming requirement.
 
 #### Scenario: ZIP export bundles conversation and attachments
 
@@ -70,6 +70,18 @@ The system SHALL let a user export one conversation, with attachments, producing
 - **GIVEN** a conversation referencing 12 attachments
 - **WHEN** the ZIP export runs
 - **THEN** no more than 5 attachment download requests are in flight at any moment
+
+#### Scenario: Stage and citation files are bundled too
+
+- **GIVEN** a conversation whose assistant turn produced a file inside an execution stage and cites a source document through an annotation
+- **WHEN** the ZIP export runs
+- **THEN** both files are fetched and written under `res/…` alongside the message-level attachments
+
+#### Scenario: A reference carrying a display anchor resolves to the file itself
+
+- **GIVEN** a citation referencing `files/{bucket}/sources/spec.pdf#page=7`
+- **WHEN** the ZIP export runs
+- **THEN** the download is requested for `sources/spec.pdf` (without `#page=7`) and the archive entry is `res/sources/spec.pdf`
 
 #### Scenario: A failed attachment is skipped with a warning
 
@@ -145,8 +157,8 @@ The system SHALL name downloaded files from a fixed template combined with the c
 
 The conversation panel library (`libs/conversation-panel`) SHALL remain host-agnostic: it SHALL NOT know about export, API endpoints, download triggering, or i18n. The app SHALL surface export through two entry points wired at the app edge:
 
-1. A per-conversation "Export" item added to the `DropdownItem[]` returned by the app's `getActions` callback in `apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx` (the library's `ConversationRow` renders whatever items the app supplies). This item SHALL use the ui-kit's native nested-item support (`DropdownItem.children`) to expose a hover-revealed submenu with two items, "with attachments" and "without attachments" — mirroring the existing "Language"/"Keyboard shortcuts" submenu pattern in `apps/chat/src/components/Navigation/UserMenu.tsx`. The parent "Export" item SHALL NOT have its own `onClick` and SHALL NOT open a modal/popup; each child item's `onClick` starts the corresponding export directly.
-2. An "Export all conversations" item added to the panel header overflow menu. That menu is the app component `apps/chat/src/components/ConversationPanel/ConversationPanelHeaderMenu.tsx` (currently exposing only "Delete all chats"), which is injected into the library via the opaque `headerActions` slot (see `conversation-panel-header-menu`). Activating it starts export-all directly.
+1. A per-conversation "Export" item added to the `DropdownItem[]` returned by the app's `getActions` callback in `apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx` (the library's `ConversationRow` renders whatever items the app supplies). This item SHALL use the ui-kit's native nested-item support (`DropdownItem.children`) to expose a hover-revealed submenu with two items, "with attachments" and "without attachments" — mirroring the submenu pattern the user menu uses for its preference groups (`libs/navigation-panel/src/components/UserMenu/UserMenu.tsx`, which maps each `NavigationMenuGroup` onto `DropdownItem.children`). The parent "Export" item SHALL NOT have its own `onClick` and SHALL NOT open a modal/popup; each child item's `onClick` starts the corresponding export directly.
+2. An "Export all conversations" item added to the panel header overflow menu. That menu is the app component `apps/chat/src/components/ConversationPanel/ConversationPanelMenu.tsx`, which is injected into the library via the opaque `headerActions` slot (see `conversation-panel-header-menu` for the menu’s full contents — export first, then import, then the danger-styled "Delete all conversations"). Activating it starts export-all directly.
 
 The transient export state (the job queue, each job's status and step-count progress) SHALL be owned by a dedicated app-level hook that consumes `useConversationExport` from `@epam/ai-dial-chat-hooks`; the queue is rendered by the `ImportExportQueue` component from `@epam/ai-dial-conversation-panel` (see `conversation-panel-transfer-queue-ui`), which the app supplies with `jobs`, `onDismiss`/`onRetry`/`onClose` callbacks, and a translated `labels` object — the app builds the labels object via `useTranslation` and passes it down; the queue component itself has no i18n import. All host/API knowledge stays outside the lib boundary. The `getActions` callback SHALL remain memoized (`useCallback`) so conversation rows do not re-render on every parent render. The export entry points and the queue panel itself SHALL NOT use a modal/popup (`DialPopup` or similar) — see the export-queue requirement for the non-modal design; the sole exception is the queue's own panel-level close confirmation (see the confirmation requirement below), which deliberately uses a confirmation dialog when closing would abort or discard unfinished work.
 

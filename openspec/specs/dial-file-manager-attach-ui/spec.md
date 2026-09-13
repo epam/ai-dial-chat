@@ -30,7 +30,7 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 - `visibleColumns` changes per tab (see `file-manager-tabs` spec).
 - `actionLabels` includes `Delete` only when `activeTab === DialFileManagerTabs.MyFiles`.
 - `dateLocale` is `i18n.language`.
-- `dateOptions` is `{ year: 'numeric', month: 'short', day: '2-digit' }`.
+- `dateOptions` is `{ year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }`.
 - `selectionMode`, `additionalGridOptions`, and row-selectability logic are unchanged from current implementation.
 
 `gridOptions` SHALL be recomputed (via `useMemo`) whenever `activeTab`, `downloadLabel`, or `deleteLabel` changes.

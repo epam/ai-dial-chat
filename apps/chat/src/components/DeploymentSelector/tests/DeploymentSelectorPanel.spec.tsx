@@ -45,27 +45,48 @@ const renderPanel = (
   );
 
 describe('DeploymentSelectorPanel — long version', () => {
-  it('caps the version at 30% of the row so it cannot overlap the name', () => {
-    renderPanel([
-      {
-        ...makeItem('model-1', CatalogEntityType.Model),
-        version: 'With Google Search Grounding',
-      },
-    ]);
+  const longVersionItem = {
+    ...makeItem('model-1', CatalogEntityType.Model),
+    version: 'With Google Search Grounding',
+  };
+
+  it('gives the version the row width the name leaves instead of a fixed fraction of it', () => {
+    renderPanel([longVersionItem]);
 
     const version = screen.getByText('With Google Search Grounding');
-    expect(version.className).toContain('max-w-[30%]');
-    expect(version.className).toContain('shrink-0');
+    /* Asserting CSS-level layout (not text/role) has no semantic query
+       equivalent — this repo's spec conventions carve out this exact case. */
+    expect(version.className).not.toContain('max-w-');
+    expect(version.className).not.toContain('truncate');
+  });
+
+  it('wraps the version onto its own line rather than truncating it to a hover-only tooltip', () => {
+    renderPanel([longVersionItem]);
+
+    const version = screen.getByText('With Google Search Grounding');
+    expect(version.className).toContain('break-words');
+    /* The wrap rule lives on the name+version wrapper, which the version text
+       node is the only stable handle on. */
+    expect(version.parentElement?.className).toContain('flex-wrap');
+  });
+
+  it('keeps the whole version in the row so it is readable without hovering', () => {
+    renderPanel([longVersionItem]);
+
+    expect(
+      screen.getByRole('menuitemradio', {
+        name: /model-1 With Google Search Grounding/,
+      }),
+    ).toBeTruthy();
   });
 
   it('renders no version element when the item has an empty version', () => {
     renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
 
-    /* Asserting the absence of a CSS-level styling class (not text/role) has
-       no semantic query equivalent — this repo's spec conventions carve out
-       this exact case for container/document.querySelector. */
+    /* Absence of the version element is only observable through the class that
+       styles it, since an empty version has no text to query by. */
     // eslint-disable-next-line testing-library/no-node-access
-    expect(document.querySelector('.max-w-\\[30\\%\\]')).toBeNull();
+    expect(document.querySelector('.dial-tiny-text')).toBeNull();
   });
 });
 
@@ -73,19 +94,19 @@ describe('DeploymentSelectorPanel', () => {
   it('shows a favorited Application in the list', () => {
     renderPanel([makeItem('app-1', CatalogEntityType.Agent)]);
 
-    expect(screen.getByRole('button', { name: /app-1/ })).toBeTruthy();
+    expect(screen.getByRole('menuitemradio', { name: /app-1/ })).toBeTruthy();
   });
 
   it('shows a favorited Model in the list', () => {
     renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
 
-    expect(screen.getByRole('button', { name: /model-1/ })).toBeTruthy();
+    expect(screen.getByRole('menuitemradio', { name: /model-1/ })).toBeTruthy();
   });
 
   it('shows a favorited Agent in the list', () => {
     renderPanel([makeItem('agent-1', CatalogEntityType.Agent)]);
 
-    expect(screen.getByRole('button', { name: /agent-1/ })).toBeTruthy();
+    expect(screen.getByRole('menuitemradio', { name: /agent-1/ })).toBeTruthy();
   });
 
   it.each([CatalogEntityType.Toolset, CatalogEntityType.Skill])(
@@ -94,7 +115,7 @@ describe('DeploymentSelectorPanel', () => {
       renderPanel([makeItem('non-talkable-1', type)]);
 
       expect(
-        screen.queryByRole('button', { name: /non-talkable-1/ }),
+        screen.queryByRole('menuitemradio', { name: /non-talkable-1/ }),
       ).toBeNull();
     },
   );
@@ -106,9 +127,11 @@ describe('DeploymentSelectorPanel', () => {
       makeItem('toolset-1', CatalogEntityType.Toolset),
     ]);
 
-    expect(screen.getByRole('button', { name: /model-1/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /app-1/ })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /toolset-1/ })).toBeNull();
+    expect(screen.getByRole('menuitemradio', { name: /model-1/ })).toBeTruthy();
+    expect(screen.getByRole('menuitemradio', { name: /app-1/ })).toBeTruthy();
+    expect(
+      screen.queryByRole('menuitemradio', { name: /toolset-1/ }),
+    ).toBeNull();
   });
 
   describe('currently-selected (not favorited) model', () => {
@@ -121,7 +144,9 @@ describe('DeploymentSelectorPanel', () => {
       });
 
       expect(screen.getByText('Currently selected')).toBeTruthy();
-      expect(screen.getByRole('button', { name: /claude-opus/ })).toBeTruthy();
+      expect(
+        screen.getByRole('menuitemradio', { name: /claude-opus/ }),
+      ).toBeTruthy();
     });
 
     it('does not duplicate the row when the selected model is already a favorite', () => {
@@ -132,7 +157,7 @@ describe('DeploymentSelectorPanel', () => {
 
       expect(screen.queryByText('Currently selected')).toBeNull();
       expect(
-        screen.getAllByRole('button', { name: /claude-opus/ }),
+        screen.getAllByRole('menuitemradio', { name: /claude-opus/ }),
       ).toHaveLength(1);
     });
 
@@ -186,7 +211,9 @@ describe('DeploymentSelectorPanel', () => {
         onClose,
       });
 
-      await user.click(screen.getByRole('button', { name: /claude-opus/ }));
+      await user.click(
+        screen.getByRole('menuitemradio', { name: /claude-opus/ }),
+      );
 
       expect(onSelect).toHaveBeenCalledWith('claude-opus');
       expect(onClose).toHaveBeenCalledOnce();
@@ -209,7 +236,7 @@ describe('DeploymentSelectorPanel', () => {
         selectedItem: makeItem('conversation-model', CatalogEntityType.Model),
       });
 
-      const rows = screen.getAllByRole('button', {
+      const rows = screen.getAllByRole('menuitemradio', {
         name: /default-model|favorite-model/,
       });
       expect(rows[0].textContent).toContain('default-model');
@@ -222,7 +249,7 @@ describe('DeploymentSelectorPanel', () => {
       renderPanel([pinnedItem], { pinnedItem });
 
       expect(
-        screen.getAllByRole('button', { name: /default-model/ }),
+        screen.getAllByRole('menuitemradio', { name: /default-model/ }),
       ).toHaveLength(1);
     });
 
@@ -258,7 +285,9 @@ describe('DeploymentSelectorPanel', () => {
       );
 
       expect(onToggleFavorite).not.toHaveBeenCalled();
-      expect(screen.getByRole('button', { name: /gpt-4o/ })).toBeTruthy();
+      expect(
+        screen.getByRole('menuitemradio', { name: /gpt-4o/ }),
+      ).toBeTruthy();
     });
 
     it('calls onToggleFavorite with false once the exit animation finishes', async () => {

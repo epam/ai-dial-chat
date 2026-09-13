@@ -119,12 +119,21 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     pdfContentLoadingLabel,
     pdfContentErrorLabel,
     pdfContentRetryLabel,
+    xlsxFormulaLabel = 'Formula',
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,
+    tableCopyCsvLabel,
+    tableCopyTxtLabel,
+    tableCopyMarkdownLabel,
+    tableCopiedLabel,
+    tableDownloadCsvLabel,
+    ooxmlHighlightsLabel,
+    ooxmlHighlightNavigatedLabel,
   } = {},
   styles: stylesProp,
   codeBlockTheme,
+  tableDownloadFilename,
   loadPdf,
   hidePdfToolbar = false,
   configurePdfWorker,
@@ -170,6 +179,11 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         '--ac-json-toggle-icon': colors?.jsonToggleIcon,
         '--ac-json-toggle-icon-hover': colors?.jsonToggleIconHover,
         '--ac-ooxml-bg': colors?.ooxmlBackground,
+        '--ac-ooxml-formula-border': colors?.ooxmlFormulaBorder,
+        '--ac-ooxml-formula-bg': colors?.ooxmlFormulaBackground,
+        '--ac-ooxml-formula-text': colors?.ooxmlFormulaText,
+        '--ac-ooxml-highlight-border': colors?.ooxmlHighlightBorder,
+        '--ac-ooxml-highlight-bg': colors?.ooxmlHighlightBackground,
         '--ac-json-collapsed-text': colors?.jsonCollapsedText,
         '--ac-json-collapsed-bg': colors?.jsonCollapsedBackground,
         '--ac-font-family': hasFontClassName
@@ -208,6 +222,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
       case AttachmentContentType.Code:
       case AttachmentContentType.Html:
         return 'h-full overflow-hidden';
+      case AttachmentContentType.Markdown:
+      case AttachmentContentType.MarkdownTable:
+        return 'flex h-full min-h-0 flex-col overflow-hidden p-4';
       default:
         return 'h-full overflow-auto p-4';
     }
@@ -255,7 +272,34 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             content={content.text}
             isStreaming={false}
             codeBlockTheme={codeBlockTheme}
-            classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
+            containerClassName="flex h-full min-h-0 flex-col"
+            classNames={{
+              ...DEFAULT_MARKDOWN_CLASS_NAMES,
+              tableWrapper: 'my-0 max-h-full',
+              tableScrollContainer: 'max-h-full',
+            }}
+          />
+        );
+      case AttachmentContentType.MarkdownTable:
+        return (
+          <MarkdownRenderer
+            content={content.text}
+            isStreaming={false}
+            codeBlockTheme={codeBlockTheme}
+            containerClassName="flex h-full min-h-0 flex-col"
+            classNames={{
+              ...DEFAULT_MARKDOWN_CLASS_NAMES,
+              tableWrapper: 'my-0 max-h-full',
+              tableScrollContainer: 'max-h-full',
+            }}
+            tableActionLabels={{
+              copyCsvLabel: tableCopyCsvLabel,
+              copyTxtLabel: tableCopyTxtLabel,
+              copyMarkdownLabel: tableCopyMarkdownLabel,
+              copiedLabel: tableCopiedLabel,
+              downloadCsvLabel: tableDownloadCsvLabel,
+            }}
+            tableDownloadFilename={tableDownloadFilename}
           />
         );
       case AttachmentContentType.Json:
@@ -347,6 +391,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
               url={content.url}
               highlights={content.highlights ?? []}
               selectedHighlightId={content.selectedHighlightId}
+              selectedPageNumber={content.page}
               loadPdf={loadPdf}
               hideHeader={hidePdfToolbar}
               configurePdfWorker={configurePdfWorker}
@@ -368,6 +413,12 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             content={content}
             fileName={fileName}
             loadErrorLabel={loadErrorLabel}
+            formulaLabel={xlsxFormulaLabel}
+            formulaLabelClassName={
+              typography?.xlsxFormulaLabelClassName ?? 'dial-italic-text'
+            }
+            highlightsLabel={ooxmlHighlightsLabel}
+            highlightNavigatedLabel={ooxmlHighlightNavigatedLabel}
           />
         );
       case AttachmentContentType.Visualizer:
@@ -413,6 +464,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     content,
     typography?.fontClassName,
     typography?.jsonClassName,
+    typography?.xlsxFormulaLabelClassName,
     fileName,
     codeBlockTheme,
     unsupportedLabel,
@@ -422,6 +474,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     htmlFrameBlockedLabel,
     htmlOpenInNewTabLabel,
     isHtmlSourceView,
+    tableDownloadFilename,
     loadPdf,
     hidePdfToolbar,
     configurePdfWorker,
@@ -432,12 +485,20 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     pdfContentLoadingLabel,
     pdfContentErrorLabel,
     pdfContentRetryLabel,
+    xlsxFormulaLabel,
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,
     PdfContent,
     pdfRetryKey,
     handleRetryPdf,
+    tableCopyCsvLabel,
+    tableCopyTxtLabel,
+    tableCopyMarkdownLabel,
+    tableCopiedLabel,
+    tableDownloadCsvLabel,
+    ooxmlHighlightsLabel,
+    ooxmlHighlightNavigatedLabel,
   ]);
 
   return (

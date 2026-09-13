@@ -110,6 +110,18 @@ Clicking Save & Submit (or pressing Enter in the textarea) SHALL update the mess
 - **THEN** the AI is re-triggered with the updated message and attachments
 - **THEN** a new streaming assistant response begins
 
+#### Scenario: Unchanged message whose answer never completed
+- **WHEN** the user submits an edit without changing the text or attachments,
+  and the answer below it is missing, was stopped by the user, or ended with a
+  stream error
+- **THEN** the generation is re-run for that message, because the point of
+  re-submitting an unchanged message is to replace the incomplete answer
+
+#### Scenario: Unchanged message whose answer is complete
+- **WHEN** the user submits an edit without changing the text or attachments
+  and the answer below it completed normally
+- **THEN** edit mode is exited and no new generation starts
+
 #### Scenario: Other edits silently cancelled on submit
 - **WHEN** the user submits an edit while other messages are also in edit mode
 - **THEN** all other edit areas are silently exited without any confirmation or notification

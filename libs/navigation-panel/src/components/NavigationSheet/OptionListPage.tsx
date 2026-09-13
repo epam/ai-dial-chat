@@ -27,6 +27,9 @@ export const OptionListPage: FC<OptionListPageProps> = memo(
             label={option.label}
             icon={option.icon}
             textClassName={textClassName}
+            /* The applied value is the current one of the group; the design
+               marks it with the trailing check, not with a tint. */
+            isCurrent={option.isActive}
             trailing={
               option.isActive ? (
                 <IconCheck

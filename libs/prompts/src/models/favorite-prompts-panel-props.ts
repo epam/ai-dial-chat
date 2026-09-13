@@ -14,8 +14,6 @@ export interface FavoritePromptsPanelLabels {
 
 /** CSS custom-property overrides for the favorites panel. */
 export interface FavoritePromptsPanelColors {
-  /** Background color of a row on hover. Defaults to `--bg-layer-sunken`. */
-  rowHoverBackground?: string;
   /** Text color of the "My Collection" header. Defaults to `--text-tertiary`. */
   headerText?: string;
   /** Text color of the empty-favorites hint. Defaults to `--text-icon-tertiary`. */

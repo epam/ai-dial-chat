@@ -1,5 +1,5 @@
-import { FileManagerGridRow } from '@epam/ai-dial-react-file-manager';
-import {
+import type { FileManagerGridRow } from '@epam/ai-dial-react-file-manager';
+import type {
   CellEditingStartedEvent,
   GridApi,
   IRowNode,

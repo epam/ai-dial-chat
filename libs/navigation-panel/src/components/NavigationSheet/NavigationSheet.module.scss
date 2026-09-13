@@ -21,6 +21,28 @@
   }
 }
 
+/* The in-navigation state of the design's Menu-item spec: the same faint accent
+   tint as a selected row, with the label and its icon in the accent colour. */
+.rowActive {
+  color: var(--np-sheet-row-active-text, var(--text-accent, #1d4ed8));
+  background: var(
+    --np-sheet-row-active-bg,
+    var(--bg-control-accent-alpha, #2764d90f)
+  );
+
+  &:hover,
+  &:focus-visible {
+    background: var(
+      --np-sheet-row-active-bg-hover,
+      var(--bg-control-accent-alpha-hover, #2764d924)
+    );
+  }
+
+  .rowIcon {
+    color: inherit;
+  }
+}
+
 .rowIcon {
   color: var(--np-sheet-icon, var(--text-secondary, #57647a));
 }

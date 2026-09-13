@@ -529,7 +529,7 @@ const AuthSection: FC<Props> = ({
         aria-label={t(ToolsetEditorI18nKeys.AuthSectionTitle)}
         value={auth.authenticationType}
         onChange={(type) => handleSelectType(type as ToolsetAuthTypes)}
-        segmentClassName="px-2 !flex-none !min-w-0"
+        segmentClassName="px-2"
         items={[
           ToolsetAuthTypes.None,
           ToolsetAuthTypes.OAuth,

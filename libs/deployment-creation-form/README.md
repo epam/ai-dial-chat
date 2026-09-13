@@ -42,7 +42,9 @@ import { AvatarPickerModal } from '@epam/ai-dial-deployment-creation-form';
   onAttach={(result) => {
     const [file] = result.files;
     const attachment = file
-      ? dialFileToAttachment(file, bucket, { resolvePreviewUrl: resolveCatalogIconUrl })
+      ? dialFileToAttachment(file, bucket, {
+          resolvePreviewUrl: resolveCatalogIconUrl,
+        })
       : null;
     if (attachment?.url) handleChange({ iconUrl: attachment.url });
     setIsAvatarPickerOpen(false);
@@ -151,11 +153,12 @@ import {
   DeploymentCreationFieldErrorCode,
   NAME_PATTERN,
   VERSION_PATTERN,
+  SEMVER_VERSION_PATTERN,
 } from '@epam/ai-dial-deployment-creation-form';
 
 const codes = validateDeploymentCreationFields(values, {
   validateNamePattern: true,
-  validateVersionPattern: true,
+  validateVersionPattern: true, // or: SEMVER_VERSION_PATTERN for a stricter check
 });
 
 const errors = {
@@ -167,8 +170,12 @@ const errors = {
 ```
 
 `NAME_PATTERN` allows letters, digits, spaces, underscores, dots, and dashes;
-`VERSION_PATTERN` allows letters, digits, dots, underscores, and dashes. Both are
-exported so a host can pre-filter input with the same rule the validator applies.
+`VERSION_PATTERN` (the default when `validateVersionPattern: true`) allows
+letters, digits, dots, underscores, and dashes. Pass a `RegExp` instead of
+`true` — e.g. `SEMVER_VERSION_PATTERN`, which requires one or more
+dot-separated numeric segments (`0.0.1`, `2.0`) — for a host that needs a
+stricter version format. All three are exported so a host can pre-filter
+input with the same rule the validator applies.
 
 ## Enums
 

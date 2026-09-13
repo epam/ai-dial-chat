@@ -10,17 +10,33 @@ Define how deployment-provided tool toggles are shown in the conversation input,
 
 The system SHALL derive the available tools from the selected deployment's configuration schema alone. Every boolean-typed property (explicit `"type": "boolean"`, or no `type` with a boolean `default`) of `selectedDeploymentConfiguration.properties` is one tool, in schema order.
 
-Tools SHALL be surfaced in two places whenever the derived list is non-empty:
-1. As a row of chips rendered directly in the conversation input — every tool, selected or not. Each chip carries two controls: the chip body toggles the tool (`aria-pressed` reflects the state), and a × button drops the chip from the row, turning the tool off if it was on. Dismissal is view state of the input: the chip returns when the tool is switched on again from the `+` menu, and every dismissal is forgotten when the deployment offers a different tool list.
-2. As a "Tools" item in the conversation input `+` menu (desktop submenu / mobile bottom sheet).
+Tools SHALL always be surfaced as a row of chips rendered directly in the conversation input — every tool, selected or not, in schema order. The chip body toggles the tool and `aria-pressed` reflects the state.
+
+Whether a chip can additionally be taken off the input is governed by the `removable-tools` UI feature (`OverlayFeature.RemovableTools`), which is in `DEFAULT_ENABLED_UI_FEATURES`:
+
+- **`removable-tools` enabled** — each chip additionally carries a × button that drops it from the row, turning the tool off if it was on. Dismissal is view state of the input: the chip returns when the tool is switched on again from the `+` menu, and every dismissal is forgotten when the deployment offers a different tool list. The `+` menu additionally renders a "Tools" item (desktop submenu / mobile bottom sheet).
+- **`removable-tools` disabled** — every chip is a persistent toggle. No chip renders a ×, no dismissal state exists, and the `+` menu SHALL NOT render a "Tools" item, since there is nothing to bring back. Where tools are the only content that menu would hold — attachments, chat settings and prompts all unavailable, as in a typical overlay embed — the `+` button SHALL NOT render at all.
 
 When the schema is absent or contains no boolean property, neither the chip row nor the "Tools" menu item SHALL render, and the `+` menu SHALL behave as if the feature did not exist.
 
-No operator configuration gates this: there is no env var and no client-config value involved.
+Beyond `removable-tools`, no operator configuration gates this: there is no env var and no client-config value that turns the tools themselves on or off.
 
 #### Scenario: Schema exposes a boolean property — tools visible
 - **WHEN** the deployment configuration schema contains `properties.deep_research` with `type: "boolean"`
-- **THEN** the conversation input renders a "Deep research" toggle chip AND the `+` menu renders a "Tools" item
+- **THEN** the conversation input renders a "Deep research" toggle chip
+
+#### Scenario: removable-tools enabled — chip is dismissible and the menu offers Tools
+- **WHEN** `isEnabled('removable-tools')` is `true` AND the schema exposes `properties.deep_research`
+- **THEN** the "Deep research" chip renders a × button AND the `+` menu renders a "Tools" item
+
+#### Scenario: removable-tools disabled — chip is a persistent toggle
+- **WHEN** `isEnabled('removable-tools')` is `false` AND the schema exposes `properties.deep_research`
+- **THEN** the "Deep research" chip renders with no × button
+- **AND** the `+` menu renders no "Tools" item
+
+#### Scenario: removable-tools disabled and tools are the menu's only content — no `+` button
+- **WHEN** `isEnabled('removable-tools')` is `false` AND attachments, chat settings and the prompts overlay are all unavailable
+- **THEN** the input renders the tool chips and no `+` button
 
 #### Scenario: Schema exposes several boolean properties — one chip each
 - **WHEN** the schema contains `properties.deep_research` and `properties.web_search`, both boolean
@@ -218,8 +234,9 @@ Whenever a completion mode creates or replaces a user message, the backend SHALL
 The `libs/conversation-input` library SHALL render the tools submenu entirely from props:
 - `toolsMenuItems: ToolMenuItem[]` — resolved tool items with `id`, `label`, `icon: ReactNode`, `isSelected: boolean`.
 - `onToolToggle: (toolId: string) => void` — callback to toggle a tool.
+- `canRemoveTools?: boolean` — whether chips are dismissible, defaulting to `true`.
 
-The library SHALL NOT import or reference: deployment configuration schemas, app config, env vars, server-api modules, generated API clients, or any app-level context/provider.
+The library SHALL NOT read the `removable-tools` UI feature itself, nor import or reference: deployment configuration schemas, app config, env vars, server-api modules, generated API clients, or any app-level context/provider. Resolving `OverlayFeature.RemovableTools` into the `canRemoveTools` boolean is the app's job, done at the same `useUiFeature` call sites that already gate `chat-settings` and `input-files`.
 
 #### Scenario: Empty tools array — no menu item rendered
 - **WHEN** `toolsMenuItems` is an empty array or undefined
@@ -298,13 +315,19 @@ This prevents unnecessary re-renders of `AddAttachmentButton` and its children o
 
 ### Requirement: Feature gating decision
 
-This feature SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`, and SHALL NOT be gated by any operator config value. Visibility is controlled solely by the deployment schema containing at least one boolean property (capability = supported).
+Whether tools exist at all SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`, and SHALL NOT be gated by any operator config value. Their visibility is controlled solely by the deployment schema containing at least one boolean property (capability = supported).
+
+Only their *removability* is gated, by the `removable-tools` UI feature. Turning it off never hides a tool — it removes the add/remove affordances around one.
 
 No role-based restriction applies.
 
-#### Scenario: No feature flag and no config check
+#### Scenario: Tool visibility checks the schema alone
 - **WHEN** the app evaluates whether to show tools
 - **THEN** it checks only the deployment configuration schema — not `features.*` flags and not any client-config value
+
+#### Scenario: removable-tools never hides a tool
+- **WHEN** `isEnabled('removable-tools')` is `false` and the schema exposes two boolean properties
+- **THEN** both tool chips still render, and both still toggle
 
 ---
 

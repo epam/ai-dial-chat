@@ -59,9 +59,9 @@ The library SHALL export a hook `useConversationScroll<T>(params: { messages: T[
 ### Requirement: Behavior parity with the extracted `apps/chat` hook
 The extraction SHALL NOT change `apps/chat`'s observable scroll/anchor behavior. `apps/chat`'s conversation view SHALL consume `useConversationScroll` from `@epam/ai-dial-chat-hooks` instead of a local copy, passing its existing `Message[]` array directly (no adapter/mapping required).
 
-#### Scenario: Existing apps/chat test suite still passes
-- **WHEN** the test suite that previously lived at `apps/chat/src/hooks/conversation/tests/useConversationScroll.spec.tsx` is moved and adapted to import from `@epam/ai-dial-chat-hooks`
-- **THEN** all its existing assertions (anchor scrolling, spacer clamping, scroll-button visibility, bottom-follow on non-streaming updates) pass unchanged against the extracted hook
+#### Scenario: The scroll-anchoring test suite passes against the library hook
+- **WHEN** the `useConversationScroll` test suite runs against the implementation exported from `@epam/ai-dial-chat-hooks`
+- **THEN** all its assertions (anchor scrolling, spacer clamping, scroll-button visibility, bottom-follow on non-streaming updates) pass
 
 #### Scenario: No duplicate implementation remains
 - **WHEN** the extraction is complete

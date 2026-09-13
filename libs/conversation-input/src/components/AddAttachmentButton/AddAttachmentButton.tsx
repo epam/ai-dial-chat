@@ -12,13 +12,13 @@ import {
   Dropdown,
   ElementSize,
   GhostIconButton,
+  MenuItemMark,
 } from '@epam/ai-dial-ui-kit';
 import {
-  IconCheck,
+  IconMicrophone,
   IconChevronRight,
   IconPaperclip,
   IconPlus,
-  IconPrompt,
   IconSettings,
   IconTool,
 } from '@tabler/icons-react';
@@ -29,7 +29,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import type { ChatSettingsConfig } from '../../models/Input';
+import type { ChatSettingsConfig, MenuOverlayConfig } from '../../models/Input';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import { ChatSettingsBottomSheet } from '../ChatSettingsBottomSheet/ChatSettingsBottomSheet';
@@ -53,6 +53,10 @@ export interface ExtraMenuItem {
 interface AddAttachmentButtonProps {
   /** Callback invoked when the user picks "Attach file". When absent, the "Attach file" item is not rendered. */
   onAttachClick?: () => void;
+  /** Starts recording an audio attachment immediately, before the settings item. */
+  onRecordVoice?: () => void;
+  /** Label for the audio recording item. Defaults to 'Record voice'. */
+  recordVoiceLabel?: string;
   /** Label for the "Attach file" menu item. */
   attachLabel: string;
   /** Aria-label for the + trigger button. */
@@ -80,26 +84,22 @@ interface AddAttachmentButtonProps {
   /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
   toolsBackLabel?: string;
   /**
-   * When provided, adds a "Prompts" item above "Chat settings" whose submenu
-   * (desktop flyout / mobile bottom sheet) renders this host-owned overlay.
-   * On desktop this is a real nested `Dropdown` submenu (via `renderSubMenu`)
-   * that stays open alongside the main attachment menu, mirroring how the
-   * "Tools" item's submenu behaves. Receives a callback the overlay calls to
-   * close the whole menu once selection is complete.
+   * Host-injected overlay entries, rendered as menu items between the
+   * "Tools" item and "Chat settings", in array order. Each item's submenu
+   * (desktop flyout / mobile stacked bottom sheet) renders the entry's
+   * host-owned overlay. On desktop this is a real nested `Dropdown` submenu
+   * (via `renderSubMenu`) that stays open alongside the main attachment
+   * menu, mirroring how the "Tools" item's submenu behaves. Each overlay's
+   * `renderOverlay` receives a callback to close the whole menu once
+   * selection is complete.
    */
-  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
-  /** Label for the "Prompts" menu item and mobile sheet title. Defaults to `'Prompts'`. */
-  promptsMenuTitle?: string;
-  /** Accessible label for the back arrow in the mobile prompts bottom sheet. Defaults to `'Back'`. */
-  promptsBackLabel?: string;
+  menuOverlays?: MenuOverlayConfig[];
   /** Color overrides. */
   colors?: AddAttachmentButtonColors;
 }
 
 /** Color overrides for `AddAttachmentButton`, applied as CSS custom properties with app theme fallbacks. */
 export interface AddAttachmentButtonColors {
-  /** Checkmark icon color for a selected tool in the Tools submenu. Fallback: `--text-accent`. */
-  selectedToolIcon?: string;
   /** Icon color for each tool row in the Tools submenu. Fallback: `--text-secondary`. */
   toolIcon?: string;
   /** Chevron icon color on the mobile "Tools"/"Chat settings" rows. Fallback: `--text-secondary`. */
@@ -109,6 +109,8 @@ export interface AddAttachmentButtonColors {
 /** "+" trigger button that opens an attachment/settings menu (desktop dropdown or mobile bottom sheet). */
 export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   onAttachClick,
+  onRecordVoice,
+  recordVoiceLabel = 'Record voice',
   attachLabel,
   addMenuTitle,
   menuTitle,
@@ -122,48 +124,35 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   onToolToggle,
   toolsMenuTitle = 'Tools',
   toolsBackLabel = 'Back',
-  promptsMenuOverlay,
-  promptsMenuTitle = 'Prompts',
-  promptsBackLabel = 'Back',
+  menuOverlays,
   colors,
 }) => {
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
   const [isToolsSheetOpen, setIsToolsSheetOpen] = useState(false);
-  const [isPromptsSheetOpen, setIsPromptsSheetOpen] = useState(false);
+  const [openMenuOverlayKey, setOpenMenuOverlayKey] = useState<string | null>(
+    null,
+  );
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
 
   const cssVars = useMemo(
     () =>
       buildCssVars({
-        '--aab-selected-tool-icon': colors?.selectedToolIcon,
         '--aab-tool-icon': colors?.toolIcon,
         '--aab-chevron-icon': colors?.chevronIcon,
       }),
-    [colors?.selectedToolIcon, colors?.toolIcon, colors?.chevronIcon],
+    [colors?.toolIcon, colors?.chevronIcon],
   );
 
   const hasTools = toolsMenuItems.length > 0 && onToolToggle != null;
+  const hasMenuOverlays = menuOverlays != null && menuOverlays.length > 0;
 
   const toolsSubmenuChildren = useMemo(
     () =>
       toolsMenuItems.map((item) => ({
         key: item.id,
-        label: (
-          <span className="flex flex-1 items-center gap-2">
-            <span className="flex-1">{item.label}</span>
-            {item.isSelected && (
-              <IconCheck
-                size={BASE_ICON_SIZE}
-                style={cssVars}
-                className={styles.selectedToolIcon}
-                aria-hidden
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
-            )}
-          </span>
-        ),
+        label: item.label,
         icon: (
           <span
             style={cssVars}
@@ -172,6 +161,9 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             {item.icon}
           </span>
         ),
+        selectable: true,
+        mark: MenuItemMark.Check,
+        checked: item.isSelected,
         onClick: () => onToolToggle?.(item.id),
       })),
     [toolsMenuItems, onToolToggle, cssVars],
@@ -235,52 +227,62 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             },
           ]
         : []),
-      ...(promptsMenuOverlay != null
+      ...(menuOverlays ?? []).map((overlay) => ({
+        key: overlay.key,
+        label: overlay.title,
+        icon: overlay.icon,
+        onClick: isMobile
+          ? () => {
+              setOpenMenuOverlayKey(overlay.key);
+              setIsSheetOpen(false);
+            }
+          : () => undefined,
+        ...(isMobile
+          ? {
+              iconAfter: (
+                <IconChevronRight
+                  size={BASE_ICON_SIZE}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  style={cssVars}
+                  className={mergeClasses(
+                    'rtl:scale-x-[-1]',
+                    styles.chevronIcon,
+                  )}
+                  aria-hidden
+                />
+              ),
+            }
+          : {
+              /*
+               * The ui-kit only treats an item as submenu-capable (caret,
+               * hover/keyboard open, floating panel) when `children` is a
+               * non-empty array; `renderSubMenu` alone does not open a
+               * submenu, it only overrides what's rendered *inside* one
+               * once that gate passes. This placeholder is never rendered
+               * (renderSubMenu fully replaces the submenu content).
+               */
+              children: [{ key: `${overlay.key}-panel`, label: '' }],
+              renderSubMenu: () =>
+                overlay.renderOverlay(() => setIsDesktopMenuOpen(false)),
+            }),
+      })),
+      ...(onRecordVoice != null
         ? [
             {
-              key: 'prompts',
-              label: promptsMenuTitle,
+              key: 'record-voice',
+              label: recordVoiceLabel,
               icon: (
-                <IconPrompt
+                <IconMicrophone
                   size={BASE_ICON_SIZE}
                   aria-hidden
                   stroke={DIAL_KIT_ICON_STROKE}
                 />
               ),
-              onClick: isMobile
-                ? () => {
-                    setIsPromptsSheetOpen(true);
-                    setIsSheetOpen(false);
-                  }
-                : () => undefined,
-              ...(isMobile
-                ? {
-                    iconAfter: (
-                      <IconChevronRight
-                        size={BASE_ICON_SIZE}
-                        stroke={DIAL_KIT_ICON_STROKE}
-                        style={cssVars}
-                        className={mergeClasses(
-                          'rtl:scale-x-[-1]',
-                          styles.chevronIcon,
-                        )}
-                        aria-hidden
-                      />
-                    ),
-                  }
-                : {
-                    /*
-                     * The ui-kit only treats an item as submenu-capable (caret,
-                     * hover/keyboard open, floating panel) when `children` is a
-                     * non-empty array; `renderSubMenu` alone does not open a
-                     * submenu, it only overrides what's rendered *inside* one
-                     * once that gate passes. This placeholder is never rendered
-                     * (renderSubMenu fully replaces the submenu content).
-                     */
-                    children: [{ key: 'prompts-panel', label: '' }],
-                    renderSubMenu: () =>
-                      promptsMenuOverlay(() => setIsDesktopMenuOpen(false)),
-                  }),
+              onClick: () => {
+                setIsSheetOpen(false);
+                setIsDesktopMenuOpen(false);
+                onRecordVoice();
+              },
             },
           ]
         : []),
@@ -316,14 +318,15 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
     [
       attachLabel,
       onAttachClick,
+      onRecordVoice,
+      recordVoiceLabel,
       chatSettings,
       extraMenuItems,
       isMobile,
       hasTools,
       toolsMenuTitle,
       toolsSubmenuChildren,
-      promptsMenuOverlay,
-      promptsMenuTitle,
+      menuOverlays,
       cssVars,
     ],
   );
@@ -336,10 +339,8 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       placement="bottom-start"
       listClassName={listClassName}
       items={menuItems}
-      open={promptsMenuOverlay != null ? isDesktopMenuOpen : undefined}
-      onOpenChange={
-        promptsMenuOverlay != null ? setIsDesktopMenuOpen : undefined
-      }
+      open={hasMenuOverlays ? isDesktopMenuOpen : undefined}
+      onOpenChange={hasMenuOverlays ? setIsDesktopMenuOpen : undefined}
     >
       <GhostIconButton
         icon={
@@ -400,22 +401,23 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               onToolToggle={onToolToggle}
             />
           )}
-          {promptsMenuOverlay != null && (
+          {menuOverlays?.map((overlay) => (
             <BottomSheetShell
-              isOpen={isPromptsSheetOpen}
-              title={promptsMenuTitle}
+              key={overlay.key}
+              isOpen={openMenuOverlayKey === overlay.key}
+              title={overlay.title}
               closeLabel={menuCloseLabel}
               onBack={() => {
-                setIsPromptsSheetOpen(false);
+                setOpenMenuOverlayKey(null);
                 setIsSheetOpen(true);
               }}
-              backLabel={promptsBackLabel}
-              onClose={() => setIsPromptsSheetOpen(false)}
+              backLabel={overlay.backLabel ?? 'Back'}
+              onClose={() => setOpenMenuOverlayKey(null)}
               style={style}
             >
-              {promptsMenuOverlay(() => setIsPromptsSheetOpen(false))}
+              {overlay.renderOverlay(() => setOpenMenuOverlayKey(null))}
             </BottomSheetShell>
-          )}
+          ))}
           {chatSettings != null && (
             <ChatSettingsBottomSheet
               isOpen={isChatSettingsOpen}

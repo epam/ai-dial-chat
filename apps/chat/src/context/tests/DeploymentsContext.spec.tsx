@@ -8,6 +8,10 @@ import * as deploymentDetailsApi from '../../server-api/deployments';
 import * as deploymentsApi from '../../server-api/deployments.api';
 import * as toolsetsApi from '../../server-api/toolsets';
 import { DeploymentsProvider, useDeployments } from '../DeploymentsContext';
+import {
+  useAppConfig as mockUseAppConfig,
+  useFeatureFlag as mockUseFeatureFlag,
+} from './app-config-context-mock';
 import { createNotificationContextValue } from './notification-context-mock';
 
 const contextMocks = vi.hoisted(() => ({
@@ -28,19 +32,21 @@ vi.mock('../auth/UserContext', () => ({
     user: contextMocks.userSub ? { sub: contextMocks.userSub } : null,
   }),
 }));
-vi.mock('../AppConfigContext', () => ({
-  useAppConfig: () => ({
-    config: {
-      defaultDeploymentId: contextMocks.defaultDeploymentId,
-    },
-  }),
-  useFeatureFlag: (key: string) => {
-    if (key === 'defaultDeploymentPinned') {
-      return contextMocks.isDefaultDeploymentPinned;
-    }
-    return false;
+vi.mock(
+  '../AppConfigContext',
+  async () => import('./app-config-context-mock'),
+);
+mockUseAppConfig.mockImplementation(() => ({
+  config: {
+    defaultDeploymentId: contextMocks.defaultDeploymentId,
   },
 }));
+mockUseFeatureFlag.mockImplementation((key?: string) => {
+  if (key === 'defaultDeploymentPinned') {
+    return contextMocks.isDefaultDeploymentPinned;
+  }
+  return false;
+});
 vi.mock('../UserConfigContext', () => ({
   useUserConfig: () => ({
     selectedDeploymentId: contextMocks.selectedDeploymentId,

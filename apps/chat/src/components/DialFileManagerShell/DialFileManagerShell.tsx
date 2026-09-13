@@ -2,7 +2,7 @@ import type { UseDialFileManagerResult } from '@epam/ai-dial-chat-hooks';
 import {
   DialFileManagerShell as SharedDialFileManagerShell,
   type DialFileManagerShellProps,
-} from '@epam/ai-dial-chat-shared';
+} from '@epam/ai-dial-chat-shared/file-manager';
 import { memo, type FC } from 'react';
 
 type Props = Omit<DialFileManagerShellProps, 'controller'> & {

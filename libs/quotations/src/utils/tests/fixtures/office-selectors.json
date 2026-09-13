@@ -1,0 +1,444 @@
+{
+  "_readme": "Three real dial-document responses captured 2026-09-10, confirming all three Office selector discriminators and the offset semantics for each. CONFIRMED: type discriminators are 'docx_text_range', 'pptx_text_range', 'excel_rc_range'. CONFIRMED, contradicting design.md's original D3 assumption: for docx_text_range and pptx_text_range, `end` is already EXCLUSIVE on the wire — every sample satisfies `end - start === text.length` exactly (verified computationally, not just by inspection). Do NOT apply an end+1 conversion for these two kinds. excel_rc_range's `end` is a distinct concept (a 1-based cell address, the last cell of the range) and remains inclusive, unaffected by this finding.",
+  "responses": [
+    {
+      "_confirms": "excel_rc_range discriminator and its inclusive cell-address end",
+      "id": "3d75030c-0cc6-4309-8b2c-fa774d76c01b",
+      "role": "assistant",
+      "content": "The documented remote endpoint for the Marp Agent application is https://pawapo.iwamot.com/mcp <cit data-id=\"f44fd8\"></cit>.",
+      "timestamp": "2026-09-10T14:45:25.561Z",
+      "deploymentId": "applications/public/dial-document-app__1.0.1",
+      "responseId": "349c7eb7-269e-4190-99db-6444c75f57b6",
+      "custom_content": {
+        "stages": [
+          {
+            "index": 0,
+            "name": "convertion document mcp_apps_catalogue_2026-09-10.xlsx",
+            "status": "completed",
+            "content": "Converted to 37117 characters of Markdown."
+          },
+          {
+            "index": 1,
+            "name": "convertion document annotation-api-slides.pptx",
+            "status": "completed",
+            "content": "Converted to 2784 characters of Markdown."
+          },
+          {
+            "index": 2,
+            "name": "convertion document zpvu_v2r (2).docx",
+            "status": "completed",
+            "content": "Converted to 2172 characters of Markdown."
+          },
+          {
+            "index": 3,
+            "name": "asking gemini-3.5-flash",
+            "status": "completed"
+          }
+        ],
+        "annotations": [
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "f44fd8" }
+            },
+            "body": {
+              "title": "mcp_apps_catalogue_2026-09-10.xlsx",
+              "quote": "| Marp Agent | MCP Apps | https://pawapo.iwamot.com/mcp | Documented no-auth endpoint or self-host; experimental. | https://github.com/iwamot/marp-agent-mcp | Documented only; not handshake- or runtime-tested. |",
+              "selector": [
+                {
+                  "type": "excel_rc_range",
+                  "sheet": "Remote endpoints",
+                  "start": { "row": 9, "col": 1 },
+                  "end": { "row": 9, "col": 6 }
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/mcp_apps_catalogue_2026-09-10.xlsx",
+                  "title": "mcp_apps_catalogue_2026-09-10.xlsx"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_confirms": "pptx_text_range discriminator and its exclusive end",
+      "id": "d2c4540c-c40d-4fc0-8c9a-c6fce204dc2c",
+      "role": "assistant",
+      "content": "The documents outline several use cases for an annotation API, including a RAG use case <cit data-id=\"fcec32\"></cit>, a Web search tool use case <cit data-id=\"f92d23\"></cit>, an Object detection use case <cit data-id=\"b60e92\"></cit>, and a Proof-reading use case <cit data-id=\"185299\"></cit>.",
+      "timestamp": "2026-09-10T14:47:25.139Z",
+      "deploymentId": "applications/public/dial-document-app__1.0.1",
+      "responseId": "8dd7021d-0fd3-435e-bac6-7bff79b5d9e3",
+      "custom_content": {
+        "stages": [
+          {
+            "index": 0,
+            "name": "convertion document annotation-api-slides.pptx",
+            "status": "completed",
+            "content": "Converted to 2784 characters of Markdown."
+          },
+          {
+            "index": 1,
+            "name": "asking gemini-3.5-flash",
+            "status": "completed"
+          }
+        ],
+        "annotations": [
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "fcec32" }
+            },
+            "body": {
+              "title": "annotation-api-slides.pptx",
+              "quote": "RAG use case",
+              "selector": [
+                {
+                  "type": "pptx_text_range",
+                  "slide": 1,
+                  "shape_id": "2",
+                  "start": 0,
+                  "end": 12,
+                  "text": "RAG use case"
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/annotation-api-slides.pptx",
+                  "title": "annotation-api-slides.pptx"
+                }
+              }
+            }
+          },
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "f92d23" }
+            },
+            "body": {
+              "title": "annotation-api-slides.pptx",
+              "quote": "Web search tool use case",
+              "selector": [
+                {
+                  "type": "pptx_text_range",
+                  "slide": 2,
+                  "shape_id": "2",
+                  "start": 0,
+                  "end": 24,
+                  "text": "Web search tool use case"
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/annotation-api-slides.pptx",
+                  "title": "annotation-api-slides.pptx"
+                }
+              }
+            }
+          },
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "b60e92" }
+            },
+            "body": {
+              "title": "annotation-api-slides.pptx",
+              "quote": "Object detection use case",
+              "selector": [
+                {
+                  "type": "pptx_text_range",
+                  "slide": 3,
+                  "shape_id": "14",
+                  "start": 0,
+                  "end": 25,
+                  "text": "Object detection use case"
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/annotation-api-slides.pptx",
+                  "title": "annotation-api-slides.pptx"
+                }
+              }
+            }
+          },
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "185299" }
+            },
+            "body": {
+              "title": "annotation-api-slides.pptx",
+              "quote": "Proof-reading use case",
+              "selector": [
+                {
+                  "type": "pptx_text_range",
+                  "slide": 4,
+                  "shape_id": "5",
+                  "start": 0,
+                  "end": 22,
+                  "text": "Proof-reading use case"
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/annotation-api-slides.pptx",
+                  "title": "annotation-api-slides.pptx"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_confirms": "docx_text_range discriminator and its exclusive end, including a non-zero start",
+      "id": "bfa5b72e-4b91-4954-9f63-19ae9df8c206",
+      "role": "assistant",
+      "content": "This document is a sample application form for obtaining a certificate confirming the issuance of a Belarusian driver's license <cit data-id=\"c0a840\"></cit>. The application is submitted to the corresponding diplomatic mission of Belarus in Poland depending on the applicant's voivodeship of residence <cit data-id=\"ab0e3b\"></cit><cit data-id=\"57f286\"></cit><cit data-id=\"009847\"></cit>. The applicant can request to receive the certificate at an address in Poland <cit data-id=\"cc7029\"></cit>. Required attachments include a photocopy of an identity document <cit data-id=\"9d2e62\"></cit>, a photocopy of the driving license <cit data-id=\"94bfb2\"></cit>, and proof of payment of a 50 euro consular fee <cit data-id=\"4b9c25\"></cit>.",
+      "timestamp": "2026-09-10T14:49:25.753Z",
+      "deploymentId": "applications/public/dial-document-app__1.0.1",
+      "responseId": "b9087a70-6a5e-44e0-b3a7-d7f942eef428",
+      "custom_content": {
+        "stages": [
+          {
+            "index": 0,
+            "name": "convertion document zpvu_v2r (2).docx",
+            "status": "completed",
+            "content": "Converted to 2172 characters of Markdown."
+          },
+          {
+            "index": 1,
+            "name": "asking gemini-3.5-flash",
+            "status": "completed"
+          }
+        ],
+        "annotations": [
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "c0a840" }
+            },
+            "body": {
+              "title": "zpvu_v2r (2).docx",
+              "quote": "прошу выдать справку, подтверждающую факт выдачи мне белорусским компетентным органом водительского удостоверения",
+              "selector": [
+                {
+                  "type": "docx_text_range",
+                  "story": "body",
+                  "path": [15],
+                  "start": 110,
+                  "end": 223,
+                  "text": "прошу выдать справку, подтверждающую факт выдачи мне белорусским компетентным органом водительского удостоверения"
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/zpvu_v2r%20(2).docx",
+                  "title": "zpvu_v2r (2).docx"
+                }
+              }
+            }
+          },
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "ab0e3b" }
+            },
+            "body": {
+              "title": "zpvu_v2r (2).docx",
+              "quote": "(для лиц, проживающих на территориях воеводств: Wielkopolskie, Zachodniopomorskie, Kujawsko-Pomorskie, Łódzkie, Lubuskie, Mazowieckie, Małopolskie, Dolnośląskie, Opolskie, Pomorskie, Świętokrzyskie, Śląskie)",
+              "selector": [
+                {
+                  "type": "docx_text_range",
+                  "story": "body",
+                  "path": [4],
+                  "start": 0,
+                  "end": 207,
+                  "text": "(для лиц, проживающих на территориях воеводств: Wielkopolskie, Zachodniopomorskie, Kujawsko-Pomorskie, Łódzkie, Lubuskie, Mazowieckie, Małopolskie, Dolnośląskie, Opolskie, Pomorskie, Świętokrzyskie, Śląskie)"
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/zpvu_v2r%20(2).docx",
+                  "title": "zpvu_v2r (2).docx"
+                }
+              }
+            }
+          },
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "57f286" }
+            },
+            "body": {
+              "title": "zpvu_v2r (2).docx",
+              "quote": "(для лиц, проживающих на территориях воеводств: Podlaskie, Warmińsko-Mazurskie)",
+              "selector": [
+                {
+                  "type": "docx_text_range",
+                  "story": "body",
+                  "path": [7],
+                  "start": 0,
+                  "end": 79,
+                  "text": "(для лиц, проживающих на территориях воеводств: Podlaskie, Warmińsko-Mazurskie)"
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/zpvu_v2r%20(2).docx",
+                  "title": "zpvu_v2r (2).docx"
+                }
+              }
+            }
+          },
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "009847" }
+            },
+            "body": {
+              "title": "zpvu_v2r (2).docx",
+              "quote": "(для лиц, проживающих на территориях воеводств: Lubelskie, Podkarpackie)",
+              "selector": [
+                {
+                  "type": "docx_text_range",
+                  "story": "body",
+                  "path": [11],
+                  "start": 0,
+                  "end": 72,
+                  "text": "(для лиц, проживающих на территориях воеводств: Lubelskie, Podkarpackie)"
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/zpvu_v2r%20(2).docx",
+                  "title": "zpvu_v2r (2).docx"
+                }
+              }
+            }
+          },
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "cc7029" }
+            },
+            "body": {
+              "title": "zpvu_v2r (2).docx",
+              "quote": "Справку прошу выслать по адресу в Польше:",
+              "selector": [
+                {
+                  "type": "docx_text_range",
+                  "story": "body",
+                  "path": [20],
+                  "start": 0,
+                  "end": 41,
+                  "text": "Справку прошу выслать по адресу в Польше:"
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/zpvu_v2r%20(2).docx",
+                  "title": "zpvu_v2r (2).docx"
+                }
+              }
+            }
+          },
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "9d2e62" }
+            },
+            "body": {
+              "title": "zpvu_v2r (2).docx",
+              "quote": "Приложение: ксерокопия документа, удостоверяющего личность",
+              "selector": [
+                {
+                  "type": "docx_text_range",
+                  "story": "body",
+                  "path": [23],
+                  "start": 0,
+                  "end": 58,
+                  "text": "Приложение: ксерокопия документа, удостоверяющего личность"
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/zpvu_v2r%20(2).docx",
+                  "title": "zpvu_v2r (2).docx"
+                }
+              }
+            }
+          },
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "94bfb2" }
+            },
+            "body": {
+              "title": "zpvu_v2r (2).docx",
+              "quote": "ксерокопия водительского удостоверения (с оборотом);",
+              "selector": [
+                {
+                  "type": "docx_text_range",
+                  "story": "body",
+                  "path": [24],
+                  "start": 0,
+                  "end": 52,
+                  "text": "ксерокопия водительского удостоверения (с оборотом);"
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/zpvu_v2r%20(2).docx",
+                  "title": "zpvu_v2r (2).docx"
+                }
+              }
+            }
+          },
+          {
+            "target": {
+              "selector": { "type": "html_tag", "tag": "cit", "id": "4b9c25" }
+            },
+            "body": {
+              "title": "zpvu_v2r (2).docx",
+              "quote": "подтверждение оплаты консульского сбора в размере 50 евро.",
+              "selector": [
+                {
+                  "type": "docx_text_range",
+                  "story": "body",
+                  "path": [25],
+                  "start": 0,
+                  "end": 58,
+                  "text": "подтверждение оплаты консульского сбора в размере 50 евро."
+                }
+              ],
+              "source": {
+                "type": "attachment",
+                "attachment": {
+                  "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  "url": "files/6By4GofuFvWFzB2WZRdmGvG9Qa9heuo4E1DkiZPaeT7ApzUK2tUfMBNX6LZDG3beNY/uploads/2026-09/zpvu_v2r%20(2).docx",
+                  "title": "zpvu_v2r (2).docx"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

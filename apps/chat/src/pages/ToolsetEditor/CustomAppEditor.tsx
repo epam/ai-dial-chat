@@ -13,6 +13,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import {
   DeploymentCreationFieldErrorCode,
+  SEMVER_VERSION_PATTERN,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
 import { ConfirmationPopup, Spinner, StepStatus } from '@epam/ai-dial-ui-kit';
@@ -262,7 +263,7 @@ const CustomAppEditor: FC = () => {
     }
 
     const generalCodes = validateDeploymentCreationFields(generalForm, {
-      validateVersionPattern: true,
+      validateVersionPattern: SEMVER_VERSION_PATTERN,
     });
     if (
       generalCodes.version === DeploymentCreationFieldErrorCode.InvalidFormat

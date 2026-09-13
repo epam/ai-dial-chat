@@ -33,12 +33,14 @@ describe('OOXML download', () => {
     vi.clearAllMocks();
   });
 
-  it.each([OoxmlFileType.Docx, OoxmlFileType.Xlsx, OoxmlFileType.Pptx])(
-    'reports %s content as downloadable',
-    (format) => {
-      expect(isDownloadable(ooxmlContent(format))).toBe(true);
-    },
-  );
+  it.each([
+    OoxmlFileType.Docx,
+    OoxmlFileType.Xlsx,
+    OoxmlFileType.Pptx,
+    OoxmlFileType.Csv,
+  ])('reports %s content as downloadable', (format) => {
+    expect(isDownloadable(ooxmlContent(format))).toBe(true);
+  });
 
   it('downloads OOXML content through an anchor download of its url', () => {
     downloadAttachmentContent(ooxmlContent(), 'report.docx');
@@ -63,6 +65,7 @@ describe('OOXML download', () => {
     [OoxmlFileType.Docx, 'docx'],
     [OoxmlFileType.Xlsx, 'xlsx'],
     [OoxmlFileType.Pptx, 'pptx'],
+    [OoxmlFileType.Csv, 'csv'],
   ])(
     'appends .%s to a title with no extension, even though the content url is an extensionless blob url',
     (format, ext) => {

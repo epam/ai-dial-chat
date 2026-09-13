@@ -1,5 +1,6 @@
 {
   "basic": {
+    "loading": "Loading…",
     "searchPlaceholder": "Search...",
     "clearSearch": "Clear search",
     "noResults": "No results found",
@@ -29,6 +30,7 @@
     "greetingNightNoName": "Good night",
     "placeholder": "How can I help you today?",
     "streamError": "Something went wrong while generating the response.",
+    "generationConflict": "A response is already being generated in this conversation, possibly in another browser tab. Wait for it to finish or stop it before sending another message.",
     "createConversationError": "Failed to create the conversation. Please try again.",
     "conversationNotFound": "The conversation was not found.",
     "isolatedModelNotFoundTitle": "Model not available",
@@ -48,6 +50,8 @@
     "quickReplyButtons": "Quick reply buttons",
     "stoppedGenerating": "You stopped generating the response",
     "thinking": "Thinking",
+    "scrollableTable": "Scrollable table",
+    "markdownTableTitle": "Table",
     "showMoreUserMessage": "Show full user message",
     "showLessUserMessage": "Collapse user message"
   },
@@ -90,7 +94,14 @@
     "removeFromFavoritesLabel": "Remove from favorites"
   },
   "catalog": {
-    "searchPlaceholder": "Search models, tools, agents…",
+    "searchPlaceholder": "Search {{entities}}…",
+    "searchEntity": {
+      "models": "models",
+      "applications": "agents",
+      "toolsets": "toolsets",
+      "prompts": "prompts",
+      "skills": "skills"
+    },
     "noResultsTitle": "No results for \"{{query}}\"",
     "sorts": {
       "recentlyUpdated": "Recently Updated",
@@ -310,6 +321,14 @@
     "detailsLabel": "Details",
     "enterValuePlaceholder": "Enter value"
   },
+  "skillSelector": {
+    "addMenuLabel": "Skills",
+    "emptyHint": "Star a skill to pin it here",
+    "emptyQueryHint": "Type to filter",
+    "modalTitle": "Use skill",
+    "noMatchingSkillsLabel": "No matching skills",
+    "viewDetailsLabel": "View details"
+  },
   "notFound": {
     "eyebrow": "404",
     "title": "Page not found",
@@ -329,6 +348,7 @@
     "save": "Save",
     "saving": "Saving",
     "select": "Select",
+    "sort": "Sort",
     "close": "Close",
     "apply": "Apply",
     "edit": "Edit",
@@ -347,7 +367,10 @@
     "deleteMessage": "Delete message",
     "regenerateResponse": "Regenerate response",
     "copyResponse": "Copy response",
-    "copyAsMarkdown": "Copy markdown",
+    "copyAsMarkdown": "Copy as Markdown",
+    "copyAsCsv": "Copy as CSV",
+    "openInCanvas": "Open in canvas",
+    "copyAsTxt": "Copy as TXT",
     "copyAsJson": "Copy JSON",
     "copyText": "Copy text",
     "likeResponse": "Like response",
@@ -355,11 +378,13 @@
     "useInChat": "Use in chat",
     "newChat": "New chat",
     "download": "Download",
+    "downloadAsCsv": "Download as CSV",
     "logOut": "Log out",
     "copyLink": "Copy link",
     "copyUrl": "Copy URL",
     "logIn": "Log in",
     "retry": "Retry",
+    "reload": "Reload",
     "publish": "Publish",
     "unpublish": "Unpublish",
     "manage": "Manage",
@@ -550,6 +575,9 @@
     "failedTitle": "Error",
     "failed": "{{names}} was not imported. Please try again.",
     "warningAttachmentSkipped": "{{names}} could not be uploaded and were skipped.",
+    "jobWarningAttachmentSkipped": "Some attachments could not be uploaded and were skipped.",
+    "nameListWithRest_one": "{{names}} and {{count}} other",
+    "nameListWithRest_other": "{{names}} and {{count}} others",
     "unsupportedFormat": "This file could not be imported. Please choose a valid export file.",
     "cancelJobAriaLabel": "Cancel importing \"{{fileName}}\"",
     "jobProgressAriaLabel": "Importing \"{{fileName}}\"",
@@ -650,7 +678,6 @@
       "searchPlaceholder": "Search scheduled tasks...",
       "searchAriaLabel": "Search scheduled tasks by name",
       "clearSearchLabel": "Clear scheduled tasks search",
-      "sortLabel": "Sort",
       "sortFirstToRun": "First to run",
       "sortLastToRun": "Last to run",
       "sortNewest": "Newest",
@@ -762,17 +789,15 @@
       "modelLabel": "Model",
       "currentRunLabel": "Current run"
     },
-    "offlineCredentialsModal": {
-      "title": "Log in required for scheduled tasks",
-      "body": "To run your scheduled tasks automatically, you need to log in once so they can keep running without you present.",
-      "dismissButtonLabel": "Not now",
-      "closeAriaLabel": "Close login required dialog",
+    "offlineCredentialsBanner": {
+      "title": "Log in required.",
+      "body": "Scheduled tasks need authorization to run offline.",
       "popupBlockedMessage": "The login popup was blocked by your browser. Please allow popups and try again.",
       "cancelledMessage": "Login was cancelled.",
       "timeoutMessage": "The login attempt timed out. Please try again.",
       "failedMessage": "Login failed. Please try again.",
       "successAnnouncement": "You're logged in. Scheduled tasks can now run automatically.",
-      "loggingInAriaLabel": "Logging in…"
+      "loggingInLabel": "Logging in…"
     }
   },
   "dialFileManager": {
@@ -932,8 +957,8 @@
     "htmlOpenInNewTab": "Open in new tab",
     "htmlViewSource": "View source",
     "htmlViewRendered": "View rendered",
-    "openAppLabel": "Open App",
     "openedInCanvasLabel": "Opened in Canvas",
+    "expandAppLabel": "Expand app",
     "mcpAppTitle": "MCP App",
     "mcpAppLoadErrorLabel": "Failed to load MCP App",
     "mcpAppForbiddenErrorLabel": "You don't have permission to access this MCP App",
@@ -943,8 +968,11 @@
     "pdfPageNumberLabel": "Page number",
     "pdfContentLoadingLabel": "Loading the PDF viewer…",
     "pdfContentErrorLabel": "Failed to load the PDF viewer",
+    "xlsxFormulaLabel": "Formula",
     "codeContentLoadingLabel": "Loading syntax highlighting…",
-    "codeContentErrorLabel": "Failed to load syntax highlighting"
+    "codeContentErrorLabel": "Failed to load syntax highlighting",
+    "ooxmlHighlightsLabel": "Cited locations",
+    "ooxmlHighlightNavigatedLabel": "Scrolled to the cited location"
   },
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
@@ -1040,7 +1068,7 @@
       "namePlaceholder": "Enter application name",
       "descriptionPlaceholder": "Describe your application",
       "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
-      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
+      "versionInvalid": "Version format is invalid (example: 0.0.1)"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
@@ -1063,7 +1091,8 @@
     "general": {
       "namePlaceholder": "Enter name",
       "descriptionPlaceholder": "Describe what this toolset does",
-      "topicsPlaceholder": "Add tags, comma separated"
+      "topicsPlaceholder": "Add tags, comma separated",
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settings": {
       "endpointCaption": "The HTTPS address where the server accepts MCP requests.",
@@ -1136,9 +1165,15 @@
     "offlineUsageConsentHint": "Required for scheduled and background runs."
   },
   "voiceRecording": {
-    "micLabel": "Record voice message",
+    "micLabel": "Dictate",
+    "recordVoiceLabel": "Record voice",
+    "transcribing": "Transcribing audio…",
+    "failed": "Could not transcribe audio. Please try recording again.",
+    "busy": "Speech recognition is temporarily unavailable. Please try again later. Your draft has been kept.",
+    "unavailable": "Voice input is not available.",
+    "tooLarge": "Audio exceeds the {{limit}} byte limit.",
     "stopRecordingLabel": "Stop recording",
-    "discardRecordingLabel": "Discard recording"
+    "discardRecordingLabel": "Cancel pending recording"
   },
   "tools": {
     "menuTitle": "Tools",
@@ -1292,6 +1327,12 @@
   },
   "skillArchiveImport": {
     "fileInputAriaLabel": "Upload a skill ZIP archive or a SKILL.md file",
+    "dialog": {
+      "title": "Upload skill",
+      "dropZoneLabel": "Drag and drop it or click here to upload",
+      "dropZoneMobileLabel": "Click here to upload",
+      "formats": "File formats .zip and SKILL.md"
+    },
     "status": {
       "uploading": "Uploading skill…",
       "success": "Skill uploaded successfully.",

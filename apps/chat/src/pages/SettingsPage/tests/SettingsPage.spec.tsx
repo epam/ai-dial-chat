@@ -2,14 +2,17 @@ import * as useUsageDataModule from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BasicI18nKeys } from '../../../constants/translation-keys';
+import {
+  useFeatureFlag as mockUseFeatureFlag,
+} from '../../../context/tests/app-config-context-mock';
 import { createDeploymentsContextValue } from '../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import SettingsPage from '../SettingsPage';
 
-const mockUseFeatureFlag = vi.fn();
-vi.mock('../../../context/AppConfigContext', () => ({
-  useFeatureFlag: (key: string) => mockUseFeatureFlag(key),
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),

@@ -11,6 +11,7 @@ import {
   AttachmentContentType,
   AttachmentErrorType,
   OoxmlFileType,
+  OoxmlHighlightKind,
 } from '../types/attachment-canvas';
 
 /** Content payload for plain-text attachments. */
@@ -37,6 +38,14 @@ export interface MarkdownCanvasContent {
   text: string;
 }
 
+/** Content payload for a Markdown table opened standalone (e.g. via a table's "open in canvas" action). */
+export interface MarkdownTableCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.MarkdownTable;
+  /** The table serialized back to Markdown syntax. */
+  text: string;
+}
+
 /** Content payload for JSON file attachments. */
 export interface JsonCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
@@ -55,16 +64,88 @@ export interface PdfCanvasContent {
   highlights?: InputHighlightData[];
   /** ID of the highlight to scroll to and select on initial load. */
   selectedHighlightId?: string;
+  /** 1-based page to navigate to on initial load, independent of highlight geometry. */
+  page?: number;
 }
 
-/** Content payload for Office Open XML document attachments. */
+/** A cited character range inside a DOCX story, addressed by story name and source-tree path. */
+export interface OoxmlDocxHighlightLocation {
+  /** Discriminates this location within `OoxmlHighlightLocation`. */
+  kind: OoxmlHighlightKind.DocxTextRange;
+  /** Name of the DOCX story the range lives in, as an opaque string (only `'body'` is confirmed upstream). */
+  story: string;
+  /** Source-tree element indices identifying the paragraph, matched element-wise. */
+  path: number[];
+  /** Inclusive start character offset within the story's matched text. */
+  start: number;
+  /** Exclusive end character offset, already converted from the wire's inclusive `end`. */
+  endExclusive: number;
+  /** The cited text, compared against the text resolved over `[start, endExclusive)`. */
+  text: string;
+}
+
+/** A cited character range inside a single shape on one PPTX slide. */
+export interface OoxmlPptxHighlightLocation {
+  /** Discriminates this location within `OoxmlHighlightLocation`. */
+  kind: OoxmlHighlightKind.PptxTextRange;
+  /** 1-based slide number. */
+  slide: number;
+  /** Shape identifier, compared as a string against the run's own `shapeId`. */
+  shapeId: string;
+  /** Inclusive start character offset within the shape's matched text. */
+  start: number;
+  /** Exclusive end character offset, already converted from the wire's inclusive `end`. */
+  endExclusive: number;
+  /** The cited text, compared against the text resolved over `[start, endExclusive)`. */
+  text: string;
+}
+
+/** A 1-based cell address, matching `@silurus/ooxml`'s own `CellAddress`. */
+export interface OoxmlCellAddress {
+  /** 1-based row number. */
+  row: number;
+  /** 1-based column number. */
+  col: number;
+}
+
+/** A cited cell, or contiguous same-row cell range, on a named XLSX sheet. */
+export interface OoxmlXlsxHighlightLocation {
+  /** Discriminates this location within `OoxmlHighlightLocation`. */
+  kind: OoxmlHighlightKind.XlsxCellRange;
+  /** Sheet name, matched exactly against the workbook's own sheet names. */
+  sheet: string;
+  /** First cell of the range. 1-based, passed to the viewer unconverted. */
+  start: OoxmlCellAddress;
+  /** Last cell of the range, on the same row as `start`. Omitted for a single cell. */
+  end?: OoxmlCellAddress;
+}
+
+/** A cited location inside an Office document, in document coordinates. */
+export type OoxmlHighlightLocation =
+  | OoxmlDocxHighlightLocation
+  | OoxmlPptxHighlightLocation
+  | OoxmlXlsxHighlightLocation;
+
+/** One citation's highlight: the locations it resolved to, under a stable id. */
+export interface OoxmlHighlight {
+  /** Stable id, used to mark exactly one highlight selected. */
+  id: string;
+  /** One or more locations — a single citation may carry several selectors. */
+  locations: OoxmlHighlightLocation[];
+}
+
+/** Content payload for OOXML document and CSV spreadsheet attachments. */
 export interface OoxmlCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
   type: AttachmentContentType.Ooxml;
-  /** Resolved download URL or object URL for the OOXML file. */
+  /** Resolved download URL or object URL for the source file. */
   url: string;
-  /** The document format used to select the format-specific renderer. */
+  /** The document format used to select and configure the format-specific renderer. */
   format: OoxmlFileType;
+  /** Cited locations to draw over the document. Omitted, never `[]`, when there is nothing to highlight. */
+  highlights?: OoxmlHighlight[];
+  /** Id of the highlight to navigate to and emphasise. Omitted when the clicked citation resolved to no location. */
+  selectedHighlightId?: string;
 }
 
 /** Content payload for audio file attachments. */
@@ -133,6 +214,8 @@ export interface McpAppCanvasContent {
   hostContext?: McpUiHostContext;
   /** Forwards a `tools/call` request issued by the mounted app to the owning MCP session via the app layer. */
   onToolCall: (name: string, args: unknown) => Promise<CallToolResult>;
+  /** Re-fetches the resource and re-resolves the tool result from scratch, bypassing any cache the app layer keeps. Shows a reload action in the canvas header when provided; omit to hide it. */
+  onReload?: () => void;
 }
 
 /** Content payload for attachments whose format cannot be previewed. */
@@ -161,6 +244,7 @@ export type AttachmentCanvasContent =
   | ImageCanvasContent
   | AudioCanvasContent
   | MarkdownCanvasContent
+  | MarkdownTableCanvasContent
   | JsonCanvasContent
   | PdfCanvasContent
   | OoxmlCanvasContent
@@ -203,8 +287,18 @@ export interface AttachmentCanvasColors {
   jsonToggleIcon?: string;
   /** Expand/collapse triangle color on hover. Defaults to `--text-primary`. */
   jsonToggleIconHover?: string;
-  /** Background color of the OOXML (DOCX/XLSX/PPTX) viewer surface and its loading/error overlay. Defaults to `--bg-layer-raised`. */
+  /** Background color of the OOXML/CSV viewer surface and its loading/error overlay. Defaults to `--bg-layer-raised`. */
   ooxmlBackground?: string;
+  /** Border color of the XLSX formula panel and value field. Defaults to `--stroke-secondary`. */
+  ooxmlFormulaBorder?: string;
+  /** Background color of the XLSX formula value field. Defaults to `--bg-layer-base`. */
+  ooxmlFormulaBackground?: string;
+  /** Text color of the XLSX formula panel. Defaults to `--text-primary`. */
+  ooxmlFormulaText?: string;
+  /** Border color of a cited-location highlight rectangle. Defaults to `--stroke-accent`. */
+  ooxmlHighlightBorder?: string;
+  /** Fill color of a cited-location highlight rectangle. Defaults to `transparent`, so the cited text keeps its own contrast. */
+  ooxmlHighlightBackground?: string;
   /** Text color of the collapsed-content ellipsis. Defaults to `--text-secondary`. */
   jsonCollapsedText?: string;
   /** Background color of the collapsed-content ellipsis. Defaults to `--bg-layer-raised`. */
@@ -230,6 +324,8 @@ export interface AttachmentCanvasTypography {
   fontClassName?: string;
   /** CSS utility class applied to the JSON tree viewer. Defaults to `'dial-code-text'`. */
   jsonClassName?: string;
+  /** CSS utility class applied to the decorative XLSX `fx` label. Defaults to `'dial-italic-text'`. */
+  xlsxFormulaLabelClassName?: string;
 }
 
 /** Style override prop for `AttachmentCanvasBody`'s content-rendering area. */
@@ -261,6 +357,8 @@ export interface AttachmentCanvasLabels {
   ariaLabel: string;
   /** Accessible label for the close button. Defaults to `'Close'`. */
   closeLabel?: string;
+  /** Accessible label for the panel's drag-to-resize handle. Defaults to `'Resize panel'`. */
+  resizeLabel?: string;
   /** Message shown in the canvas body when the content type is `Unsupported`. Defaults to `'Preview is not supported for this file'`. */
   unsupportedLabel?: string;
   /** Message shown in the canvas body when content type is `Error` with `errorType: LoadFailed`. Defaults to `'Failed to load file'`. */
@@ -291,6 +389,8 @@ export interface AttachmentCanvasLabels {
   htmlViewSourceLabel?: string;
   /** Tooltip and `aria-label` for the toggle button when the source view is active (clicking switches back to rendered). Defaults to `'View rendered'`. */
   htmlViewRenderedLabel?: string;
+  /** Tooltip and accessible label for the MCP App reload button. Only shown when content type is `McpApp` and `content.onReload` is provided. Defaults to `'Reload'`. */
+  mcpAppReloadLabel?: string;
   /** Accessible name for the PDF viewer's floating thumbnails panel region. Defaults to `'Thumbnails'`. */
   pdfThumbnailsLabel?: string;
   /** Accessible label for the FAB button that opens the PDF thumbnails panel. Defaults to `'Show thumbnails'`. */
@@ -305,12 +405,28 @@ export interface AttachmentCanvasLabels {
   pdfContentErrorLabel?: string;
   /** Label and accessible name for the retry control shown alongside `pdfContentErrorLabel`. Defaults to `'Retry'`. */
   pdfContentRetryLabel?: string;
+  /** Accessible label for the active XLSX cell's formula panel. Defaults to `'Formula'`. */
+  xlsxFormulaLabel?: string;
   /** Accessible status text announced while the syntax-highlighter engine's dynamic import is loading. Defaults to `'Loading…'`. */
   codeContentLoadingLabel?: string;
   /** Message shown when the syntax-highlighter engine's dynamic import fails to load. Defaults to `'Failed to load content'`. */
   codeContentErrorLabel?: string;
   /** Label and accessible name for the retry control shown alongside `codeContentErrorLabel`. Defaults to `'Retry'`. */
   codeContentRetryLabel?: string;
+  /** Label for copying a Markdown table as CSV. */
+  tableCopyCsvLabel?: string;
+  /** Label for copying a Markdown table as text. */
+  tableCopyTxtLabel?: string;
+  /** Label for copying a Markdown table as Markdown. */
+  tableCopyMarkdownLabel?: string;
+  /** Status announced after a Markdown table has been copied. */
+  tableCopiedLabel?: string;
+  /** Label for downloading a Markdown table as CSV. */
+  tableDownloadCsvLabel?: string;
+  /** Accessible name for the OOXML citation-highlights overlay region. Defaults to `'Cited locations'`. */
+  ooxmlHighlightsLabel?: string;
+  /** Status announced once navigation to the selected OOXML citation highlight completes. Defaults to `'Scrolled to the cited location'`. */
+  ooxmlHighlightNavigatedLabel?: string;
 }
 
 /** Props for the AttachmentCanvas component. */
@@ -335,6 +451,8 @@ export interface AttachmentCanvasProps {
   onCopyMarkdown?: () => void;
   /** Called when the user activates the copy-JSON button. When omitted the button is hidden. Only relevant when content type is `Json`. */
   onCopyJson?: () => void;
+  /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. */
+  tableDownloadFilename?: string;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. */
   isMobile?: boolean;
   /** Initial panel width in pixels (when resizable). Defaults to `min(maxWidth, 2/3 of viewport width)`. */
@@ -385,9 +503,17 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'pdfContentLoadingLabel'
   | 'pdfContentErrorLabel'
   | 'pdfContentRetryLabel'
+  | 'xlsxFormulaLabel'
   | 'codeContentLoadingLabel'
   | 'codeContentErrorLabel'
   | 'codeContentRetryLabel'
+  | 'tableCopyCsvLabel'
+  | 'tableCopyTxtLabel'
+  | 'tableCopyMarkdownLabel'
+  | 'tableCopiedLabel'
+  | 'tableDownloadCsvLabel'
+  | 'ooxmlHighlightsLabel'
+  | 'ooxmlHighlightNavigatedLabel'
 >;
 
 /** Props for the `AttachmentCanvasBody` component. */
@@ -411,6 +537,8 @@ export interface AttachmentCanvasBodyProps {
   styles?: AttachmentCanvasBodyStyles;
   /** Syntax highlight color theme forwarded to MarkdownRenderer/CodeContent code blocks. */
   codeBlockTheme?: CodeBlockTheme;
+  /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. Only relevant when content type is `MarkdownTable`. */
+  tableDownloadFilename?: string;
   /**
    * Fetches a PDF file by URL and returns its bytes as a `Blob`. Used when
    * content type is `Pdf` to load the file before rendering. Defaults to a

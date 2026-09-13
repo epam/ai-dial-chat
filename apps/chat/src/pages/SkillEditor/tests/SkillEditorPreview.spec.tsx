@@ -50,30 +50,26 @@ vi.mock('../../../hooks/attachment/useCustomVisualizers', () => ({
   useCustomVisualizers: () => [],
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
-  return {
-    ...actual,
-    LazyMarkdownEditor: () =>
-      Promise.resolve({
-        MarkdownEditor: ({
-          value,
-          onChange,
-          placeholder,
-        }: {
-          value: string;
-          onChange: (value: string) => void;
-          placeholder?: string;
-        }) => (
-          <textarea
-            placeholder={placeholder}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-          />
-        ),
-      }),
-  };
-});
+vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
+  LazyMarkdownEditor: () =>
+    Promise.resolve({
+      MarkdownEditor: ({
+        value,
+        onChange,
+        placeholder,
+      }: {
+        value: string;
+        onChange: (value: string) => void;
+        placeholder?: string;
+      }) => (
+        <textarea
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ),
+    }),
+}));
 
 // jsdom has no layout engine, so floating-ui's tooltip positioning (used by
 // GhostIconButton's tooltipProps) needs this browser-only API stubbed.

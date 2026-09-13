@@ -65,7 +65,7 @@ All app-level strings are in `AttachmentCanvasI18nKeys` (`apps/chat/src/constant
 | `UnsupportedLabel` | `"Preview is not supported for this file"` |
 | `LoadErrorLabel` | `"Failed to load file"` |
 | `ForbiddenErrorLabel` | `"You don't have permission to access this file"` |
-| `CopyAsMarkdown` | `"Copy markdown"` |
+| `CopyAsMarkdown` | `"Copy as Markdown"` |
 | `Copied` | `"Copied!"` |
 | `HtmlFrameBlocked` | `"This page cannot be displayed in preview"` |
 | `HtmlOpenInNewTab` | `"Open in new tab"` |
@@ -110,8 +110,8 @@ For `AttachmentType.File` attachments, `openFileCanvas` (`libs/attachment-canvas
 | `text/markdown` MIME | `resolveMarkdownCanvasContent` | `MarkdownCanvasContent` |
 | `application/json` MIME | `resolveJsonCanvasContent` | `JsonCanvasContent` or `PlainTextCanvasContent` |
 | `application/pdf` MIME | `resolvePdfCanvasContent` | `PdfCanvasContent` |
-| DOCX/XLSX/PPTX MIME (`getOoxmlFileType('', contentType)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
-| `docx`, `xlsx`, `pptx` extension (`getOoxmlFileType(fileName)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
+| DOCX/XLSX/PPTX/CSV MIME (`getOoxmlFileType('', contentType)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
+| `docx`, `xlsx`, `pptx`, `csv` extension (`getOoxmlFileType(fileName)`) | `resolveOoxmlCanvasContent` | `OoxmlCanvasContent` |
 | `md`, `markdown` extension | `resolveMarkdownCanvasContent` | `MarkdownCanvasContent` |
 | `json` extension | `resolveJsonCanvasContent` | `JsonCanvasContent` or `PlainTextCanvasContent` (parse failure) |
 | `pdf` extension | `resolvePdfCanvasContent` | `PdfCanvasContent` |
@@ -122,7 +122,7 @@ For `AttachmentType.File` attachments, `openFileCanvas` (`libs/attachment-canvas
 
 Extension checks for `md`/`markdown` and `json` run *before* the generic `isTextPreviewable` branch. The `html`/`htm` branch runs before the generic `isTextPreviewable` branch. The `isTextPreviewable` branch routes to `resolveCodeCanvasContent` (returning `CodeCanvasContent`) rather than `resolveTextCanvasContent`.
 
-Each Office check sits immediately ahead of the switch keyed on the same signal — the MIME one before the `contentType` switch, the extension one before the `ext` switch — and both return `true` even when their resolver yields nothing, opening `Unsupported` content instead, because the format *was* recognised (see the `attachment-canvas-ooxml-viewer` capability).
+Each document-renderer check sits immediately ahead of the switch keyed on the same signal — the MIME one before the `contentType` switch, the extension one before the `ext` switch — and both return `true` even when their resolver yields nothing, opening `Unsupported` content instead, because the format *was* recognised (see the `attachment-canvas-ooxml-viewer` capability).
 
 ---
 
@@ -205,7 +205,7 @@ Precedence (via `resolveAttachmentText`): inline base64 `attachment.data` (decod
 - Code blocks use the app's current theme (`codeBlockTheme` prop on `AttachmentCanvasContainer` → forwarded to `MarkdownRenderer`).
 - `MarkdownRenderer` uses logical Tailwind classes (`ps/pe`, `ms/me`, `border-s/e`) internally; no extra RTL handling needed at the canvas layer.
 
-#### Copy markdown button
+#### Copy as Markdown button
 
 - An `IconMarkdown` button is shown to the **left** of the download button in `rightActions` when `content.type === Markdown`.
 - After a successful click the icon switches to `IconCheck` for 2 s, then reverts. The toggle state is managed inside `AttachmentCanvas` (same pattern as `MessageActions`).
@@ -761,6 +761,147 @@ When the registry is empty or no entry matches, `openFileCanvas` behaves exactly
 
 - **WHEN** `configurePdfWorker` is not supplied
 - **THEN** `DocumentPreview` mounts immediately using the existing CDN-hosted worker fallback, unchanged from current behavior
+
+### Requirement: PDF citation preview navigates to the annotation's referenced page independent of highlight geometry
+
+When opening a PDF citation or a reference-only PDF-page chip in the attachment canvas, the panel SHALL navigate to the page specified by the triggering annotation's/reference's page number, whether or not that page's bounding box is renderable as a visible highlight.
+
+`PdfCanvasContent` (`libs/attachment-canvas/src/models/attachment-canvas.ts`) SHALL include an optional `page?: number` field — a 1-based page to navigate to on initial load, independent of `highlights`/`selectedHighlightId`.
+
+`annotationToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL set `page` from the clicked annotation's own `body.selector` (single object or array), taking the first `pdf_bbox` entry with an integer `page >= 1`, skipping malformed entries and invalid pages; otherwise `page` is `undefined`. This selection SHALL use the exact annotation the caller passes in (the annotation the user clicked/selected within a grouped citation), never the group's `primaryAnnotation`, and SHALL NOT derive the page from `body.title` or any other display text.
+
+`referenceAttachmentToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL likewise set `page` to the parsed page fragment when a reference-only PDF URL carries one (e.g. `files/{bucket}/report.pdf#page=81`).
+
+`PdfContent` (`libs/attachment-canvas/src/components/PdfContent/PdfContent.tsx`) SHALL accept a `selectedPageNumber?: number` prop, forward it directly to the vendor `DocumentPreview`'s own `selectedPageNumber` prop, and prefer it over the highlight-bbox lookup when initialising and syncing its internal `selectedPage` state (which also drives the thumbnails panel's scroll position). `AttachmentCanvasBody` SHALL pass `content.page` as this prop when rendering `PdfCanvasContent`.
+
+The mapper SHALL find the group by exact annotation membership, not source URL alone, and include highlights only from that group's annotations for the selected PDF. It SHALL omit a selected highlight ID when no generated highlight matches. Highlight generation SHALL ignore malformed selectors, invalid pages, and non-finite coordinates, while retaining valid zero-area boxes. Download behavior and non-PDF routing SHALL remain unchanged.
+
+The wrapper SHALL NOT schedule its default-page-1 fallback when an explicit page or selected highlight is present. This prevents wrapper-originated resets; asynchronous vendor auto-zoom resets remain a diagnostic investigation, not a verified fix in this change.
+
+**i18n**: none — no new user-visible strings.
+**RTL**: none — no new UI; page navigation is an internal viewer scroll operation.
+**Feature flag**: none.
+
+#### Scenario: Citation with page 1 opens page 1
+
+- **WHEN** the user clicks Preview for a PDF citation whose annotation has a `pdf_bbox` selector with `page: 1`
+- **THEN** the canvas opens with `PdfCanvasContent.page === 1` and the viewer navigates to page 1
+
+#### Scenario: Citation with page 3 opens page 3
+
+- **WHEN** the user clicks Preview for a PDF citation whose annotation has a `pdf_bbox` selector with `page: 3`
+- **THEN** the canvas opens with `PdfCanvasContent.page === 3` and the viewer navigates to page 3
+
+#### Scenario: Navigation succeeds with an all-zero bounding box
+
+- **WHEN** the clicked annotation's `pdf_bbox` selector has `x1: 0, y1: 0, x2: 0, y2: 0` and `page: 5`
+- **THEN** `PdfCanvasContent.page` is `5` and the viewer navigates to page 5, even though no visible highlight rectangle is rendered for that annotation
+
+#### Scenario: Valid non-zero bounding boxes still render as highlights
+
+- **WHEN** the clicked annotation's `pdf_bbox` selector has non-zero coordinates
+- **THEN** `PdfCanvasContent.highlights`/`selectedHighlightId` are populated exactly as before, and the highlight renders at its bounding box in addition to the viewer navigating to `page`
+
+#### Scenario: Two citations for the same PDF at different pages open their respective pages
+
+- **WHEN** the user previews one citation with `page: 2` and then, in the same canvas session, a second citation for the same source PDF with `page: 9`
+- **THEN** each preview's `PdfCanvasContent.page` matches its own annotation's page, and the viewer navigates to page 2 then page 9 respectively
+
+#### Scenario: A grouped citation opens the page of the currently selected annotation, not the group's primary annotation
+
+- **WHEN** a citation group contains annotations for pages 2 and 7 of the same PDF, the group's `primaryAnnotation` is the page-2 entry, and the user has switched the popup to the page-7 annotation before clicking Preview
+- **THEN** `annotationToPdfCanvasContent` is called with the page-7 annotation and returns `PdfCanvasContent.page === 7`
+
+#### Scenario: Missing or invalid page data falls back to the existing default
+
+- **WHEN** the clicked annotation has no `pdf_bbox` selector, or its `page` is missing, non-integer, or less than 1
+- **THEN** `getAnnotationPdfPage` returns `undefined`, `PdfCanvasContent.page` is `undefined`, and the canvas falls back to the existing default behavior (page 1) without throwing
+
+#### Scenario: Reference-only PDF-page reference also navigates independent of highlight geometry
+
+- **WHEN** a reference-only attachment's `reference_url` is `files/{bucket}/report.pdf#page=81`
+- **THEN** `referenceAttachmentToPdfCanvasContent` returns `PdfCanvasContent.page === 81` in addition to its existing zero-area invisible highlight, and the viewer navigates to page 81
+
+#### Scenario: Non-PDF citations and plain PDF previews are unaffected
+
+- **WHEN** an annotation's source attachment is not `application/pdf`, or a PDF is opened directly (not through a citation) with no page data
+- **THEN** `PdfCanvasContent.page` is not set by this requirement's logic, and the existing preview/open behavior for that content type is unchanged
+
+#### Scenario: Malformed entries precede a valid page
+
+- **WHEN** body selectors contain null, a non-positive page, and then a valid `pdf_bbox` with page 7
+- **THEN** page 7 is selected without throwing
+
+#### Scenario: Separate markers share a PDF and a group includes another PDF
+
+- **WHEN** a selected annotation belongs to the second cit group, both groups cite the same PDF, and its group also cites a different PDF
+- **THEN** preview highlights come only from the selected group's matching PDF annotations, and the selected highlight exists when valid geometry is available
+
+#### Scenario: Explicit page without a highlight survives wrapper readiness
+
+- **WHEN** the viewer reports readiness for page 3 with no selected highlight
+- **THEN** the wrapper does not schedule or invoke its page-1 fallback
+
+### Requirement: Office citation preview navigates to and highlights the annotation's cited location
+
+When opening a citation whose source attachment is a DOCX, XLSX, or PPTX file, the attachment canvas SHALL open that document, navigate to the cited location, and mark the clicked annotation's highlight selected — mirroring the PDF requirement above that navigation happens whether or not the cited region is renderable as a visible highlight.
+
+`apps/chat/src/components/ConversationView/ConversationMessageItem.tsx` SHALL extend `handleCitationPreview` with one additional branch, ordered so existing behaviour is unchanged:
+
+1. `annotationToPdfCanvasContent` — unchanged, still first.
+2. **New**: `annotationToOoxmlCanvasContent`, attempted only when the PDF mapper returned `null`. When it returns non-`null`, the canvas opens with that content and the same `fileName` derivation the PDF branch already uses (`attachment.title`, falling back to the decoded last URL segment).
+3. `annotationToDisplayAttachment` + `handleAttachmentClick` — unchanged, still the final fallback, now reached only when neither mapper resolves.
+
+The clicked annotation SHALL be the one whose highlight is selected, never the group's `primaryAnnotation` — the same rule the PDF path already follows when a grouped citation's popup has been switched to another annotation.
+
+The annotation list passed to the Office mapper SHALL be the message's resolved annotation list, not a single `AnnotationGroup`, so annotations citing the same document from behind other `cit` markers are included. Same-source identity SHALL be the source attachment URL, never the display title.
+
+`handleCitationPreview` SHALL remain wrapped in `useCallback`, and its dependency list SHALL be updated to include whatever the new branch reads.
+
+Download behaviour, the citation popup's close-on-Preview behaviour, PDF citation preview, ordinary Office preview opened outside a citation, and CSV preview SHALL all remain unchanged.
+
+A citation whose Office source has no resolvable selector at all (a legacy annotation, or one a backend once stripped) SHALL still open the document with no highlight, rather than falling through to the plain-attachment path — the Office mapper returns non-`null` content whenever the format resolves and a URL resolves, independent of whether any selector produced a highlight.
+
+**i18n**: no new strings at this call site; the two new accessibility strings are declared by the `office-annotation-highlighting` capability and supplied to `AttachmentCanvas` alongside the existing `attachmentCanvas.*` labels.
+**RTL**: none at this call site — no new UI; navigation is an internal viewer scroll operation.
+**Feature flag**: none. The OOXML viewer is not gated behind `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES`, and this change follows that precedent.
+**Memoisation**: `useCallback` on the handler, `useMemo` on any derived annotation list, matching the existing `citationGroups` memoisation.
+**Telemetry**: none.
+
+#### Scenario: A DOCX citation opens with a selected highlight
+
+- **WHEN** the user clicks Preview on a citation whose source is a `.docx` file with a valid DOCX range selector
+- **THEN** the canvas opens the document, scrolls to the cited page, and that annotation's highlight is rendered selected
+
+#### Scenario: A PPTX citation opens on the cited slide
+
+- **WHEN** the user clicks Preview on a citation with a PPTX range selector for slide 4
+- **THEN** the canvas opens the deck and scrolls to slide 4
+
+#### Scenario: An XLSX citation opens on the cited sheet and cell
+
+- **WHEN** the user clicks Preview on a citation with an `excel_rc_range` selector for sheet `'Q3'`, row 14, column 3
+- **THEN** the canvas opens the workbook, switches to `'Q3'`, scrolls that cell into view, and highlights it
+
+#### Scenario: A grouped Office citation previews the selected annotation, not the primary one
+
+- **WHEN** a citation group holds annotations for pages 2 and 9 of one DOCX, the primary is the page-2 entry, and the user has switched the popup to the page-9 annotation before clicking Preview
+- **THEN** the mapper receives the page-9 annotation and the canvas navigates to page 9 with that highlight selected
+
+#### Scenario: An Office citation with no resolvable selector still opens the document
+
+- **WHEN** the citation's source is a `.pptx` file whose selector is malformed, or absent entirely
+- **THEN** the canvas opens the deck with no highlight, and the plain-attachment fallback is not used
+
+#### Scenario: PDF citations are unaffected
+
+- **WHEN** the user clicks Preview on a PDF citation
+- **THEN** `annotationToPdfCanvasContent` resolves it exactly as before and the Office mapper is never consulted
+
+#### Scenario: A CSV citation falls through to the existing path
+
+- **WHEN** the citation's source is a `.csv` file
+- **THEN** both mappers return `null` and the existing `annotationToDisplayAttachment` fallback handles it as it does today
 
 ### Requirement: PDF and code content surfaces provide accessible loading, error, and retry states
 

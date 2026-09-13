@@ -123,6 +123,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     conversations,
     duplicateConversation,
     updateConversationTitle,
+    bumpConversationActivity,
     watchForDisplayNameUpdate,
     removeConversationFromList,
   } = useConversations();
@@ -139,7 +140,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   });
   const notifiedLoadedConversationIdRef = useRef<string | null>(null);
 
-  const { isAudioMessageSupported } = useAudioTranscription({
+  const {
+    isAudioMessageSupported,
+    isVoiceRecordingSupported,
+    handleTranscribeAudio,
+  } = useAudioTranscription({
     selectedDeploymentId: currentSelectedItemId,
   });
 
@@ -294,7 +299,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   }, [showErrorNotification, t]);
 
   const {
-    startStream,
+    startStream: startConversationStream,
     handleStop,
     resumeIfAwaitingGeneration,
     restoreBufferedGeneration,
@@ -308,7 +313,22 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     channel,
     overlay,
     onStopError: handleStopError,
+    generationConflictMessage: t(ChatI18nKeys.GenerationConflict),
   });
+
+  /*
+   * Every generation this page can launch — send, regenerate, edit and the
+   * auto-continue on load — funnels through startStream, so bumping the
+   * sidebar entry here reorders the list by latest activity right away
+   * instead of leaving it stale until the next full re-fetch.
+   */
+  const startStream = useCallback<typeof startConversationStream>(
+    (streamedConversationId, ...rest) => {
+      bumpConversationActivity(streamedConversationId);
+      startConversationStream(streamedConversationId, ...rest);
+    },
+    [bumpConversationActivity, startConversationStream],
+  );
 
   useEffect(() => {
     return () => {
@@ -667,6 +687,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           onDuplicateConversation={handleDuplicateConversation}
           duplicateError={duplicateError ?? undefined}
           isAudioMessageSupported={isAudioMessageSupported}
+          isVoiceRecordingSupported={isVoiceRecordingSupported}
+          onTranscribeAudio={handleTranscribeAudio}
           conversation={conversation}
           onConversationChange={handleConversationChange}
           inputContent={pendingInputContent.value}

@@ -32,6 +32,14 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   return { ...actual, triggerBlobDownload: vi.fn() };
 });
 
+const readBlobAsText = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(blob);
+  });
+
 const makeConversation = (
   overrides: Partial<Conversation> = {},
 ): Conversation => ({
@@ -122,6 +130,37 @@ describe('useConversationExport', () => {
     );
   });
 
+  it('strips attachment references from a without-attachments export', async () => {
+    const { result } = renderExport();
+    getConversation.mockResolvedValue(
+      makeConversation({
+        messages: [
+          {
+            role: 'user' as Conversation['messages'][number]['role'],
+            content: 'Take a look',
+            timestamp: '2026-07-10T00:00:00.000Z',
+            custom_content: {
+              attachments: [{ title: 'q1.pdf', url: 'files/bucket-a/q1.pdf' }],
+            },
+          },
+        ],
+      }),
+    );
+
+    await act(() =>
+      result.current.exportSingle(
+        'bucket-a/gpt-4o__My Chat',
+        'My Chat',
+        ConversationExportMode.WithoutAttachments,
+      ),
+    );
+
+    const [blob] = vi.mocked(triggerBlobDownload).mock.calls[0];
+    const envelope = JSON.parse(await readBlobAsText(blob as Blob));
+    expect(envelope.history[0].messages[0].content).toBe('Take a look');
+    expect(envelope.history[0].messages[0].custom_content).toBeUndefined();
+  });
+
   it('supports multiple concurrent jobs with independent status', async () => {
     const { result } = renderExport();
     getConversation.mockImplementation(
@@ -184,6 +223,63 @@ describe('useConversationExport', () => {
 
     expect(downloadFileRaw).toHaveBeenCalledOnce();
     expect(onSuccess).toHaveBeenCalledOnce();
+    expect(onWarning).not.toHaveBeenCalled();
+  });
+
+  it('fetches the files an agent produced inside a stage and a citation cites', async () => {
+    const { result } = renderExport();
+    getConversation.mockResolvedValue(
+      makeConversation({
+        messages: [
+          {
+            role: 'assistant' as Conversation['messages'][number]['role'],
+            content: '',
+            timestamp: '2026-07-10T00:00:00.000Z',
+            custom_content: {
+              stages: [
+                {
+                  index: 0,
+                  name: 'Generate report',
+                  status: null,
+                  attachments: [
+                    { title: 'chart.png', url: 'files/app-bucket/chart.png' },
+                  ],
+                },
+              ],
+              annotations: [
+                {
+                  body: {
+                    source: {
+                      type: 'attachment' as const,
+                      attachment: {
+                        type: 'application/pdf',
+                        url: 'files/bucket-a/spec.pdf#page=7',
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    );
+    downloadFileRaw.mockResolvedValue({
+      raw: { arrayBuffer: async () => new TextEncoder().encode('bin').buffer },
+    });
+
+    await act(() =>
+      result.current.exportSingle(
+        'bucket-a/gpt-4o__My Chat',
+        'My Chat',
+        ConversationExportMode.WithAttachments,
+      ),
+    );
+
+    expect(downloadFileRaw.mock.calls.map((call) => call[0])).toEqual([
+      { bucket: 'app-bucket', path: 'chart.png' },
+      { bucket: 'bucket-a', path: 'spec.pdf' },
+    ]);
     expect(onWarning).not.toHaveBeenCalled();
   });
 

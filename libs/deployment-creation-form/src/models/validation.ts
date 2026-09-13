@@ -20,6 +20,11 @@ export interface DeploymentCreationFormErrorCodes {
 export interface DeploymentCreationFormValidationOptions {
   /** Whether to reject a name containing characters outside `NAME_PATTERN`. */
   validateNamePattern?: boolean;
-  /** Whether to reject a non-empty version containing characters outside `VERSION_PATTERN`. */
-  validateVersionPattern?: boolean;
+  /**
+   * Whether to reject a non-empty version that doesn't match a pattern.
+   * `true` checks against the default `VERSION_PATTERN`; passing a `RegExp`
+   * checks against that pattern instead (e.g. `SEMVER_VERSION_PATTERN` for a
+   * host that requires a strict dot-separated numeric version).
+   */
+  validateVersionPattern?: boolean | RegExp;
 }

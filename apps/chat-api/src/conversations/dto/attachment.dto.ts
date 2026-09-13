@@ -22,7 +22,7 @@ const MIME_TYPE_PATTERN =
 const INVALID_PERCENT_ENCODING = /%(?![0-9a-fA-F]{2})/;
 const ENCODED_PATH_SEPARATOR_OR_DOT = /%(?:2e|2f|5c)/i;
 
-const IsAttachmentUrl = (validationOptions?: ValidationOptions) => {
+export const IsAttachmentUrl = (validationOptions?: ValidationOptions) => {
   return (object: object, propertyName: string) => {
     registerDecorator({
       name: 'isAttachmentUrl',

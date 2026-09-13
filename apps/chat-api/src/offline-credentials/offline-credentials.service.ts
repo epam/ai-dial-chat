@@ -40,7 +40,7 @@ export class OfflineCredentialsService {
       });
       if (response.error) {
         this.logger.debug(
-          `DIAL Core offline-credentials status error: status=${response.response.status} body=${JSON.stringify(response.error)}`,
+          `DIAL Core getOfflineCredentials response: status=${response.response.status} error=${JSON.stringify(response.error)}`,
         );
         return mapDialHttpStatus(
           response.response.status,
@@ -52,7 +52,7 @@ export class OfflineCredentialsService {
       }
 
       this.logger.debug(
-        `DIAL Core offline-credentials status raw response: ${JSON.stringify(response.data)}`,
+        `DIAL Core getOfflineCredentials response: status=${response.response.status} data=${JSON.stringify(response.data)}`,
       );
       const mapped = mapDialOfflineCredentialsToDto(response.data);
       this.logger.debug(
@@ -87,6 +87,9 @@ export class OfflineCredentialsService {
         headers: authHeaders,
         body: dialBody,
       });
+      this.logger.debug(
+        `DIAL Core offlineCredentialsSignIn response: status=${response.response.status} data=${JSON.stringify(response.data)} errorPresent=${response.error != null}`,
+      );
       if (response.error) {
         return mapDialHttpStatus(
           response.response.status,

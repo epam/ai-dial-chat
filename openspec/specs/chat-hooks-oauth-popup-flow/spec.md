@@ -217,7 +217,7 @@ type-check against a lib signature.
 
 #### Scenario: App constants keep only their editor-only members
 
-- **WHEN** `apps/chat/src/constants/toolsets.ts` is migrated
+- **WHEN** `apps/chat/src/constants/toolsets.ts` is inspected
 - **THEN** it retains exactly the members the lib does not own — `ToolsetTransportType`,
   `ToolsetEditorSteps`, `ToolsetEditorQuery`, `AUTH_TYPE_OPTIONS`, and the default-toolset
   constants — and re-exports none of the moved declarations

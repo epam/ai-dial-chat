@@ -1,9 +1,31 @@
 import { PublishAccessRulesLabels } from '@epam/ai-dial-publish-panel';
 import type { TFunction } from 'i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   PublishAccessRulesI18nKeys,
 } from '../constants/translation-keys';
+
+/**
+ * Display name of a publish target folder, for notification copy.
+ *
+ * The Organization root is the whole public bucket and so has no path segments;
+ * taking the last segment of its path yields an empty string, which rendered as
+ * `folder ""` in the confirmation. It falls back to the same root label the
+ * publish panel's folder tree shows for that node.
+ *
+ * Accepts either the `string[]` segments the publish panel hands its callbacks
+ * or the already-joined path kept in publish history.
+ */
+export const getPublishFolderLabel = (
+  folderPath: string | string[],
+  t: TFunction,
+): string => {
+  const segments = Array.isArray(folderPath)
+    ? folderPath
+    : folderPath.split('/');
+  return segments[segments.length - 1] || t(BasicI18nKeys.Organization);
+};
 
 /** Builds the translated `accessRulesLabels` overrides shared by every publish panel host (catalog, conversation). */
 export const getAccessRulesLabels = (

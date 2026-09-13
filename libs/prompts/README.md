@@ -50,6 +50,14 @@ tooltip), and the "Browse" button. When `favorites` is empty, the list area is
 replaced with an empty-state hint; the header and "Browse" button still
 render.
 
+Each row with a non-empty `description` is wrapped in the ui-kit
+`InteractiveTooltip` (`asChild`, so the row stays the focus and click target).
+The tooltip is uncontrolled: the kit opens it on hover or keyboard focus and
+keeps it open while the pointer is on the row or the panel — including while
+it travels between them; on a touch-only device it renders nothing and the
+row still inserts the prompt on tap. Rows without a description are not
+wrapped at all — no tooltip appears for them.
+
 Clicking a row's star plays a short exit animation first, so
 `onToggleFavorite` fires ~180 ms after the click rather than synchronously.
 The list's height animates to match once the row is gone.
@@ -84,6 +92,13 @@ it hides the header's back chevron, matching the direct-from-favorite entry
 point. `extractPromptParams`/`resolvePromptParams` live in
 `@epam/ai-dial-chat-shared`, alongside the `{{param}}` grammar this component
 renders inline via `MarkdownWithPlaceholders`.
+
+`parameters` is a `PromptParameter[]` — each entry a `name` and an optional
+`defaultValue`, which `extractPromptParams` reads out of the prompt body. A
+token written as `{{language|Spanish}}` labels its field `language` and opens
+it holding `Spanish`, so confirming without typing submits the default; a bare
+`{{tone}}` opens empty, as before. Every field stays required, so a parameter
+without a default still has to be filled before Submit enables.
 
 ## Types
 

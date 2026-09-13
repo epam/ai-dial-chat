@@ -12,6 +12,7 @@ import {
   IconDownload,
   IconEye,
   IconMarkdown,
+  IconRefresh,
 } from '@tabler/icons-react';
 import { type FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import type { AttachmentCanvasProps } from '../../models/attachment-canvas';
@@ -30,6 +31,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   labels: {
     ariaLabel,
     closeLabel = 'Close',
+    resizeLabel = 'Resize panel',
     downloadLabel = 'Download',
     copyTextLabel = 'Copy text',
     copiedTextLabel = 'Copied!',
@@ -45,6 +47,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     htmlOpenInNewTabLabel = 'Open in new tab',
     htmlViewSourceLabel = 'View source',
     htmlViewRenderedLabel = 'View rendered',
+    mcpAppReloadLabel = 'Reload',
     pdfThumbnailsLabel,
     pdfShowThumbnailsLabel,
     pdfHideThumbnailsLabel,
@@ -52,14 +55,23 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     pdfContentLoadingLabel,
     pdfContentErrorLabel,
     pdfContentRetryLabel,
+    xlsxFormulaLabel,
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,
+    tableCopyCsvLabel,
+    tableCopyTxtLabel,
+    tableCopyMarkdownLabel,
+    tableCopiedLabel,
+    tableDownloadCsvLabel,
+    ooxmlHighlightsLabel,
+    ooxmlHighlightNavigatedLabel,
   },
   onDownload,
   onCopyText,
   onCopyMarkdown,
   onCopyJson,
+  tableDownloadFilename,
   isMobile = false,
   defaultWidth,
   minWidth = 600,
@@ -154,13 +166,17 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     content.type === AttachmentContentType.Json;
   const showDownload =
     !isLoading && onDownload != null && isDownloadable(content);
+  const showReload =
+    !isLoading &&
+    content.type === AttachmentContentType.McpApp &&
+    content.onReload != null;
 
   return (
     <SidebarPanel
       isOpen={isOpen}
       orientation={SidebarOrientation.Right}
       title={fileName}
-      labels={{ ariaLabel, closeLabel }}
+      labels={{ ariaLabel, closeLabel, resizeLabel }}
       onClose={onClose}
       resizable={!isMobile}
       defaultWidth={defaultWidth}
@@ -185,8 +201,27 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         showCopyText ||
         showCopyMarkdown ||
         showCopyJson ||
-        showDownload ? (
+        showDownload ||
+        showReload ? (
           <>
+            {showReload && (
+              <GhostIconButton
+                icon={
+                  <IconRefresh
+                    size={DIAL_ICON_SIZE.LG}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
+                  />
+                }
+                aria-label={mcpAppReloadLabel}
+                tooltipProps={{ tooltip: mcpAppReloadLabel }}
+                onClick={
+                  content.type === AttachmentContentType.McpApp
+                    ? content.onReload
+                    : undefined
+                }
+              />
+            )}
             {showHtmlToggle && (
               <GhostIconButton
                 icon={
@@ -328,12 +363,21 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           pdfContentLoadingLabel,
           pdfContentErrorLabel,
           pdfContentRetryLabel,
+          xlsxFormulaLabel,
           codeContentLoadingLabel,
           codeContentErrorLabel,
           codeContentRetryLabel,
+          tableCopyCsvLabel,
+          tableCopyTxtLabel,
+          tableCopyMarkdownLabel,
+          tableCopiedLabel,
+          tableDownloadCsvLabel,
+          ooxmlHighlightsLabel,
+          ooxmlHighlightNavigatedLabel,
         }}
         styles={bodyStylesProp}
         codeBlockTheme={codeBlockTheme}
+        tableDownloadFilename={tableDownloadFilename}
         loadPdf={loadPdf}
         configurePdfWorker={configurePdfWorker}
       />

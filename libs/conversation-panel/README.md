@@ -30,6 +30,11 @@ Panel component for browsing conversation history with virtual scrolling, groupe
 
 Root component. Renders the full panel with header, search, tab filters, grouped list, and empty states.
 
+`isOpen` animates the panel's layout width so it pushes the content beside it.
+When the host positions the panel over the content instead — via `className`, as
+the mobile layout does — pass `isOverlay` so the panel slides in and out at full
+width rather than collapsing in place.
+
 ```tsx
 import { ConversationPanel } from '@epam/ai-dial-conversation-panel';
 import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';

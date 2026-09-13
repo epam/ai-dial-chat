@@ -1092,7 +1092,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
       <div
         style={cssVars}
         className={mergeClasses(
-          'fixed inset-0 z-40 transition-opacity duration-300',
+          'fixed inset-0 z-50 transition-opacity duration-300',
           styles.backdrop,
           isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
@@ -1268,6 +1268,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onOpenPublish={handleOpenPublish}
                 isUnpublishVisible={isUnpublishVisible}
                 hasPublishedFolders={hasPublishedFolders}
+                isPublishHistoryResolved={
+                  getPublishHistory == null || isPublishHistoryResolved
+                }
                 onRequestPublishHistory={requestPublishHistory}
                 onOpenUnpublish={
                   onUnpublish ? handleRequestUnpublish : undefined

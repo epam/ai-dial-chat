@@ -41,10 +41,14 @@ describe('ProviderRegistryService', () => {
   let discoverSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    discoverSpy = vi.spyOn(Issuer, 'discover').mockResolvedValue({
-      Client: class {},
-      metadata: {},
-    } as unknown as Issuer<never>);
+    discoverSpy = vi
+      .spyOn(Issuer, 'discover')
+      .mockImplementation(async (discoveryUrl: string) => {
+        return {
+          Client: class {},
+          metadata: { issuer: discoveryUrl },
+        } as unknown as Issuer<never>;
+      });
   });
 
   afterEach(() => {
@@ -279,6 +283,29 @@ describe('ProviderRegistryService', () => {
       // eslint-disable-next-line testing-library/await-async-queries -- ProviderRegistryService.findByIssuer is synchronous, not an async testing-library query
       const entry = svc.findByIssuer(config.issuer);
       expect(entry?.config.id).toBe('keycloak');
+    });
+
+    it('matches the canonical issuer returned by discovery when the discovery URL is internal', async () => {
+      const internalDiscoveryUrl = 'http://keycloak.internal:8080/realms/test';
+      const canonicalIssuer = 'https://login.example.com/auth/realms/test';
+      discoverSpy.mockResolvedValueOnce({
+        Client: class {},
+        metadata: { issuer: canonicalIssuer },
+      } as unknown as Issuer<never>);
+
+      const module = await buildModule({
+        ...KEYCLOAK_ENV,
+        AUTH_KEYCLOAK_HOST: internalDiscoveryUrl,
+      });
+      await module.init();
+      const svc = module.get(ProviderRegistryService);
+
+      expect(discoverSpy).toHaveBeenCalledWith(internalDiscoveryUrl);
+      expect(svc.getProvider('keycloak').config.issuer).toBe(canonicalIssuer);
+      // eslint-disable-next-line testing-library/await-async-queries -- ProviderRegistryService.findByIssuer is synchronous, not an async testing-library query
+      expect(svc.findByIssuer(canonicalIssuer)?.config.id).toBe('keycloak');
+      // eslint-disable-next-line testing-library/await-async-queries -- ProviderRegistryService.findByIssuer is synchronous, not an async testing-library query
+      expect(svc.findByIssuer(internalDiscoveryUrl)).toBeUndefined();
     });
 
     it('resolves an Azure AD v1 issuer to the registered v2 provider for the same tenant', async () => {

@@ -250,8 +250,14 @@ export const useDialFileMutations = ({
           : { bucket, path: parentApiPath };
       try {
         const created = await filesApi.createFolder({
+          /*
+           * At the bucket root `targetParentPath` is the empty string, and it
+           * is sent as such rather than being dropped: the API contract states
+           * the key as "empty for root", so an omitted key and an empty one are
+           * the same folder but not the same request.
+           */
           bucket: targetBucket,
-          parentPath: targetParentPath || undefined,
+          parentPath: targetParentPath,
           name,
         });
         mergeCreatedFolder(

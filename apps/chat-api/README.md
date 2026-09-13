@@ -31,6 +31,17 @@ the endpoints `apps/chat` consumes.
 - 📊 Request metrics logging
 - 🔭 OpenTelemetry traces, logs, and Prometheus-compatible metrics (opt-in, see [Observability](#observability))
 
+## PDF citation metadata
+
+Citation messages retain two independent selectors: `target.selector` associates
+an inline `<cit data-id="...">` marker, while optional `body.selector` identifies
+a PDF location. The body selector accepts an object or an array, including
+`{ type: 'pdf_bbox', page: 3, x1: 0, y1: 0, x2: 0, y2: 0 }` with 1-based pages.
+Raw annotation normalization preserves this field and supplied annotation indexes
+through stream assembly and persistence. Later quote-only deltas retain the
+earlier selector. The same optional field is part of the validated conversation
+message DTO and generated OpenAPI client.
+
 ## Prerequisites
 
 - Node.js 24+
@@ -169,11 +180,13 @@ setting is read at Core startup, so restart DIAL Core after changing it.
 | `SKILL_TRANSFER_TIMEOUT_MS`             | `60000`                        | Timeout for all skills-domain DIAL Core requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `SKILL_ARCHIVE_UPLOAD_MAX_BYTES`        | `20971520`                     | Maximum size (bytes) of the compressed ZIP archive accepted by `POST /api/v1/skills/import` before extraction (default 20 MB); rejected with 413. Distinct from `SKILL_UPLOAD_MAX_TOTAL_BYTES`, which bounds decompressed content                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `ASR_MODEL`                             | —                              | Deployment ID of a dedicated speech-to-text model. When set (together with the `voice-input` feature), the mic button is always shown and recorded audio is transcribed by this model via `POST /api/v1/transcription`. When absent, the mic button is shown only for deployments whose `inputAttachmentTypes` include an audio MIME type, and transcription is handled by the selected chat deployment.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `TRANSCRIBE_SIZE_LIMIT_BYTES`           | `5242880`                      | Maximum audio file size (in bytes) accepted for transcription. The frontend rejects recordings larger than this before upload. Default is 5 MB.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `TRANSCRIBE_SIZE_LIMIT_BYTES`           | `5242880`                      | Maximum audio file size (in bytes) accepted for transcription. The frontend applies this limit to the complete recording before upload. Default is 5 MB.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `UTILITY_MODEL`                         | —                              | Deployment ID of a utility model for server-side tasks (e.g. LLM conversation naming). Not exposed to the frontend. Required together with `DIAL_API_KEY` and `LLM_CONVERSATION_NAMING_ENABLED=true` to enable automatic title generation after the first assistant reply.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `LLM_CONVERSATION_NAMING_ENABLED`       | `false`                        | When `true` and `UTILITY_MODEL` is set, the backend asynchronously renames conversations after the first assistant reply using the utility model.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `UTILITY_NAMING_TIMEOUT_MS`             | `10000`                        | Timeout in milliseconds for utility-model conversation naming requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `RESPONSES_API_ENABLED`                 | `false`                        | Server-only kill switch for routing eligible generations through the OpenAI Responses API. Even when a deployment reports `features.responsesApi=true`, Responses is only used when this is also `true`; otherwise Chat Completions is used. Not exposed to the frontend. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `SKILL_USAGE_ENABLED`                   | `false`                        | Client-visible feature flag gating all skill-usage UI in the chat app: the catalog skill "Use in chat" primary action and the conversation input's Skills menu (favorites panel, browse modal, selected-skill chip). While `false`, every skill-usage entry point is hidden. Defaults to `false` — the backend contract for sending skills with completions is not designed yet, so the flag ships dark. Role-based rollout (`SKILL_USAGE_ENABLED_ROLES`) is not implemented — out of scope. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `MAX_GENERATION_DURATION_MS`            | `1800000`                      | Maximum time (milliseconds) an active generation may occupy the in-memory generation registry before the backend forcibly aborts it, persists the partial response as an `Error` outcome, and releases the registry entry. Independent of the client connection — closing/refreshing/navigating away from the originating browser tab has no effect on the generation, so this timeout is what bounds a stalled upstream stream that never reaches `[DONE]`/error (default 30 min).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `DEFAULT_DEPLOYMENT_PINNED`             | `false`                        | Client-visible feature flag. When `true`, `DEFAULT_DEPLOYMENT` takes priority over the user's persisted deployment for new conversations and is pinned to the top of the picker. When `false`, the existing user-preference precedence and alphabetical ordering remain unchanged. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `FEATURED_MODEL_IDS`                    | —                              | Comma-separated list of model (or application) IDs to mark as featured in the catalog. Matching is exact and case-sensitive against the item's `id` field. Example: `chat-hub-v2,gpt-4o,dial-rag`. Takes effect on the next service restart; changing it without a restart has no effect.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `HIDDEN_ENTITY_TAGS`                    | `[]`                           | Comma-separated topic tags marking models and toolsets that stay hidden in the Catalog while remaining visible in the Quick App 2.0 form. Example: `internal,experimental`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -237,6 +250,12 @@ Every `AUTH_{PROVIDER_TYPE}_HOST` variable (`AUTH_AUTH0_HOST`, `AUTH_GITLAB_HOST
 - a full URL whose scheme is used as given — `http://keycloak.internal:8080/realms/dial` — which is how a provider reachable only over plain HTTP (an in-cluster Keycloak, a local test instance) is configured.
 
 A trailing slash is normalised away. A scheme other than `http` or `https` fails boot with an error naming the variable.
+
+The configured host is used as the OIDC discovery location. After discovery,
+Chat uses the canonical `issuer` returned by the provider metadata for callback
+and token issuer validation. This allows an in-cluster discovery URL to return
+the provider's externally advertised issuer without causing a false issuer
+mismatch; the canonical issuer remains subject to strict validation.
 
 **Auth0** (`id: auth0`)
 
@@ -491,6 +510,20 @@ controller or DTO, run `npm run openapi` and `npm run openapi:check` — handler
 names become the generated SDK's method names, so name them like
 `listModels` / `getCurrentUser`.
 
+### Transcription availability
+
+`POST /api/v1/transcription` maps upstream 429 and 503 responses to HTTP 503 and
+forwards the upstream `Retry-After` header when present. Other upstream errors use
+the shared DIAL error mapper. The frontend retries recognition of the same file;
+the backend does not add a second retry loop.
+
+In the local Core implementation, `Service is not available` is produced by the
+upstream balancer when all upstream states have status 429. Check Core logs for
+`Upstream ... limit hit` and the ASR provider's quotas/capacity. Dictation submits one
+complete recording after Stop. Retries handle temporary unavailability but do not
+increase provider quotas. The configured deployment can be valid even when some
+recognition requests receive this response.
+
 ## Project Structure
 
 ```
@@ -553,10 +586,13 @@ property so a client failure can be correlated with server traces and logs.
 
 ### Performance
 
-- **Caching**: In-memory caching for theme configuration and icons (5-minute TTL)
+- **Caching**: One in-memory LRU cache per backend process, limited to 100 entries across services. The default TTL is 5 minutes; service-specific TTLs override it. Expired entries are removed on access and swept every 60 seconds even if never accessed again. The sweep timer and cached values are released when the application closes. Values retain their original types and references, including binary theme icons; the limit counts entries, not bytes.
 - **Cache-Control Headers**: HTTP caching directives for browser/CDN caching
 - **Request Timeouts**: Configurable timeouts for external service calls with AbortController
 - **Metrics Logging**: Request duration and status tracking for monitoring
+- **SSE stream lifecycle**: All four SSE-writing handlers share the backpressure helper in `common/utils/sse.ts` (`writeSseChunk`/`waitForDrain`) instead of ignoring `res.write()`'s return value.
+  - `client-channel/subscribe` and `conversations/watch` relay an upstream DIAL Core stream. Each constructs its `AbortController` and registers `res.on('close', ...)` **before** the first `await` of upstream setup, so a browser disconnect during that await aborts the pending upstream call immediately instead of only being observed once it resolves. While relaying, a `res.write()` that returns `false` pauses further upstream reads until `'drain'`, the response closing, an upstream error, or `SSE_DRAIN_TIMEOUT_MS` (5000ms) elapses — whichever comes first. If the timeout elapses first, the connection is treated as stalled: the upstream reader is cancelled and the response ends, the same as an explicit disconnect.
+  - `conversations/completions` (`streamCompletion`) and `conversations/completions/attach` (`attachToGeneration`) never pause or abort their backend-owned generation for a slow client. After each write, if the response's buffered bytes (`res.writableLength`) exceed `SSE_COMPLETION_MAX_BUFFERED_BYTES` / `SSE_ATTACH_MAX_BUFFERED_BYTES` (1 MiB each), the handler stops writing to that one response (marking it detached / running its existing cleanup) while the generation keeps running and persists normally — see `docs/` for the generation-independent-of-connection guarantee.
 
 ## Testing
 
@@ -663,6 +699,8 @@ processors, no additional listening port, and no outbound network calls for tele
   response status code. `MetricsInterceptor` records exactly one data point per request, except
   `GET /api/health` (still logged, never recorded) — see `telemetry/excluded-paths.ts`, the same
   exclusion list `otel-sdk.ts` uses for tracing.
+  Runtime gauges report the serving Node.js process's memory, active SSE operations, and
+  generation registry size; see [Runtime memory diagnostics](#runtime-memory-diagnostics).
 - **Prometheus endpoint**: when the `prometheus` metrics exporter is selected, a dedicated,
   unauthenticated HTTP listener starts (default `127.0.0.1:9464`, path `/metrics`), entirely
   independent of the main application port — no new business-API route, no interaction with
@@ -674,7 +712,7 @@ processors, no additional listening port, and no outbound network calls for tele
 - **Shutdown**: `main.ts` calls `app.enableShutdownHooks()`; `TelemetryShutdownService` (a Nest
   `OnApplicationShutdown` provider) flushes and shuts down all telemetry processors, bounded by
   an internal timeout (default 5s) so a hung exporter or unreachable collector can never block
-  container termination.
+  container termination. Runtime metric collection callbacks are removed on shutdown.
 - **Failure mode**: an unreachable OTLP collector never crashes the process, blocks a response,
   or fails a request — it surfaces only as exporter-level warning logs from the OpenTelemetry
   SDK's own retry/backoff logic.
@@ -705,6 +743,83 @@ validator schema only covers application-owned configuration; these are read in
 
 **Not supported**: `OTEL_EXPORTER_OTLP_PROTOCOL` (and per-signal variants) is not read — the
 protocol is fixed to `http/protobuf` in code via the `*-otlp-http` exporter packages.
+
+### Runtime memory diagnostics
+
+To collect memory and active-operation metrics without enabling trace or log export, set these
+existing environment variables on the backend process and restart it:
+
+```dotenv
+OTEL_SDK_DISABLED=false
+OTEL_METRICS_EXPORTER=prometheus
+OTEL_TRACES_EXPORTER=none
+OTEL_LOGS_EXPORTER=none
+```
+
+Scrape the existing `http://127.0.0.1:9464/metrics` listener from the pod's network namespace.
+For a Prometheus scraper outside the pod, also set `OTEL_EXPORTER_PROMETHEUS_HOST=0.0.0.0`,
+configure its scrape target for port `9464`, path `/metrics`, and restrict access with the
+deployment's NetworkPolicy. This unauthenticated listener remains separate from the application
+port. Metrics can also be sent through the existing `otlp` exporter configuration.
+
+| OpenTelemetry instrument              | Prometheus series              | Meaning                                                                                                                                                        |
+| ------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dial.chat.process.memory` (unit `B`) | `dial_chat_process_memory`     | Bytes from one `process.memoryUsage()` call in the Node.js process serving Nest requests, once per metric collection. Each memory `kind` is a separate series. |
+| `dial.chat.sse.active`                | `dial_chat_sse_active`         | Outstanding SSE operations for each `kind`, including setup and cleanup as described below.                                                                    |
+| `dial.chat.generations.active`        | `dial_chat_generations_active` | Number of entries physically retained in the process's generation registry. No application labels.                                                             |
+
+Memory `kind` values are `rss`, `heap_used`, `heap_total`, `external`, and `array_buffers`,
+corresponding to Node.js's `rss`, `heapUsed`, `heapTotal`, `external`, and `arrayBuffers` fields.
+`heap_used` measures used JavaScript heap; `heap_total` measures allocated
+JavaScript heap; `external` includes native memory associated with JavaScript objects;
+`array_buffers` includes `ArrayBuffer`/`SharedArrayBuffer` allocations and Node.js `Buffer`
+storage. **`array_buffers` is already included in `external`**. RSS describes resident memory
+for the whole process, and these series overlap: do not sum them into a total. A pod memory
+panel may also include other containers or memory outside this process.
+
+`client_channel` and `conversation_watch` start counting before the asynchronous subscribe/watch
+setup and stop when the handler settles. If the client has already disconnected but upstream
+work has not finished, the operation remains counted. `generation_attach` counts the attached
+subscription until its cleanup runs, even after its handler returns. These counts are not a
+count of open browser connections. Ordinary completion-response delivery is not part of the
+SSE gauge; registered generations have their own gauge. On application shutdown, registered
+generations emit a stopped terminal event so attached subscriptions can run their cleanup.
+
+The generation gauge includes stopped or aborted entries while persistence is still pending.
+Entries stop contributing when they are removed on completion, error, stale eviction,
+replacement, or shutdown. It measures the registry, not every upstream task that might still
+be running after its entry was removed. Neither operation gauge includes user, conversation,
+or deployment identifiers.
+
+Runtime collection callbacks are registered after SDK startup only when a metrics exporter is
+enabled, and removed on shutdown. They sample during exporter collection rather than starting
+another sampling timer. Disabling the SDK or setting `OTEL_METRICS_EXPORTER=none` disables these
+runtime observations. These metrics help correlate retained memory with active work; adding
+them does not itself fix memory leaks.
+
+For Grafana, the following PromQL keeps each pod and memory kind separate. These examples
+assume the Prometheus scrape configuration adds a `pod` label and the dashboard has a `$pod`
+variable; the application does not add Kubernetes labels. Add your deployment's `job`,
+`namespace`, or `cluster` selectors as needed.
+
+```promql
+dial_chat_process_memory{pod=~"$pod"}
+```
+
+Use the panel's bytes unit and legend `{{pod}} {{kind}}`. Compare it with two count panels:
+
+```promql
+dial_chat_sse_active{pod=~"$pod"}
+```
+
+```promql
+dial_chat_generations_active{pod=~"$pod"}
+```
+
+Use legends `{{pod}} {{kind}}` and `{{pod}}`, respectively. Growing `heap_used` with stable
+operation counts directs investigation toward retained JavaScript objects; growing `external`
+or `array_buffers` directs it toward buffers. A rising RSS alone cannot establish a JavaScript
+heap leak.
 
 ### Local verification
 

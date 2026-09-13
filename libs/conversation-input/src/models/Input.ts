@@ -6,8 +6,10 @@ import type {
   DisplayAttachment,
   ResponseFormat,
   ToolMenuItem,
+  UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
+import type { TranscribeAudio } from './Voice';
 
 /** Controls which key combination submits the message in the `Input` component. */
 export enum SendOnEnter {
@@ -79,6 +81,48 @@ export interface ToolsChipLabels {
   removeLabel?: (toolLabel: string) => string;
 }
 
+/** A host-injected overlay entry for the `+` menu: a menu item whose submenu renders host-owned content. */
+export interface MenuOverlayConfig {
+  /** Unique key identifying the entry; also keys the mobile sheet's open state. */
+  key: string;
+  /** Menu-item label and mobile sheet title. */
+  title: string;
+  /** Icon node rendered to the left of the menu-item label. */
+  icon: ReactNode;
+  /** Renders the overlay panel content. Receives a callback the panel calls to close the whole menu once selection is complete. */
+  renderOverlay: (onClose: () => void) => ReactNode;
+  /** Accessible label for the back arrow in the mobile stacked bottom sheet. Defaults to `'Back'`. */
+  backLabel?: string;
+}
+
+/** Context handed to a `CommandMenuConfig`'s `renderMenu` while the menu is open. */
+export interface CommandMenuContext {
+  /** Current query: the value typed after the trigger prefix, with no whitespace or second prefix character. */
+  query: string;
+  /**
+   * Closes the menu. Pass `{ consumeQuery: true }` to also remove the trigger
+   * prefix and query from the textarea (the selection path — the `/query`
+   * text is never sent); the default close leaves the text untouched.
+   */
+  close: (options?: { consumeQuery?: boolean }) => void;
+}
+
+/** Host-injected slash-command menu: an overlay opened by typing a trigger prefix into an empty textarea. */
+export interface CommandMenuConfig {
+  /** Prefix that opens the menu when typed as the first character of an empty textarea (e.g. `'/'`). */
+  triggerPrefix: string;
+  /** Renders the menu content for the current query. */
+  renderMenu: (ctx: CommandMenuContext) => ReactNode;
+  /**
+   * Hint rendered inside the text area immediately after the trigger prefix
+   * while the menu is open with an empty query (e.g. `'Type to filter'`), in
+   * the placeholder style. Absent renders no hint.
+   */
+  emptyQueryHint?: string;
+  /** Accessible name for the menu region. When absent, the content is rendered without a labeled wrapper. */
+  menuLabel?: string;
+}
+
 /** Props accepted by the `Input` component. */
 export interface InputProps {
   /**
@@ -95,8 +139,10 @@ export interface InputProps {
   onChange?: (message: string) => void;
   /** Called when the user submits a message. */
   onSend?: (message: string, attachments: Attachment[]) => Promise<void> | void;
-  /** Called immediately after an attachment is added. Returns the uploaded attachment URL. */
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  /** Called immediately after an attachment is added. Returns the uploaded attachment URL and stored name. */
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   /** Called when the user clicks the stop button during streaming. */
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button. */
@@ -226,11 +272,21 @@ export interface InputProps {
   isSendDisabled?: boolean;
   /**
    * When `true`, the mic button is rendered and voice recording is enabled.
-   * Derived by the host app from the selected deployment's `inputAttachmentTypes`.
-   * When `false` or absent, the mic button is hidden and the voice bar is never shown.
+   * Derived by the host app from its recording/recognition capabilities.
+   * When `false` or absent, the dictation button is hidden.
    */
   isAudioMessageSupported?: boolean;
-  /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
+  /** Enables Record voice in the add menu when attachments are enabled. Defaults to isAudioMessageSupported. */
+  isVoiceRecordingSupported?: boolean;
+  /** Label for the audio attachment recording menu item. Defaults to 'Record voice'. */
+  recordVoiceLabel?: string;
+  /** Host-owned recognition. When supplied, the microphone button inserts draft text; Record voice always attaches audio. */
+  onTranscribeAudio?: TranscribeAudio;
+  /** Status announced while recognizing speech. Defaults to 'Transcribing audio…'. */
+  transcribingLabel?: string;
+  /** Fallback recording/recognition error. Defaults to 'Voice input failed'. */
+  voiceErrorLabel?: string;
+  /** Accessible label for the mic button. Defaults to `'Dictate'`. */
   micLabel?: string;
   /** Accessible label for the stop-recording button inside the voice bar. Defaults to `'Stop recording'`. */
   stopRecordingLabel?: string;
@@ -256,6 +312,12 @@ export interface InputProps {
   toolsMenuItems?: ToolMenuItem[];
   /** Called when a tool row is toggled. Receives the tool id. */
   onToolToggle?: (toolId: string) => void;
+  /**
+   * When `false`, every tool chip is a persistent on/off toggle: chips render
+   * without a ×, and the `+` menu carries no "Tools" item, since there is
+   * nothing to bring back. Defaults to `true`.
+   */
+  canRemoveTools?: boolean;
   /** Label for the "Tools" menu item and mobile sheet title. Defaults to `'Tools'`. */
   toolsMenuTitle?: string;
   /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
@@ -263,15 +325,39 @@ export interface InputProps {
   /** Labels for the tool chips rendered in the input. */
   toolsChipLabels?: ToolsChipLabels;
   /**
-   * When provided, a "Prompts" item is added to the `+` menu above "Chat
-   * settings". Its submenu (desktop flyout / mobile bottom sheet) renders
-   * this host-owned overlay, mirroring `modelPickerOverlay`.
+   * Host-injected overlay entries, rendered as `+`-menu items between the
+   * "Tools" item and "Chat settings", in array order. Each item's submenu
+   * (desktop flyout / mobile stacked bottom sheet) renders the entry's
+   * host-owned overlay, mirroring `modelPickerOverlay`.
    */
-  promptsMenuOverlay?: (onClose: () => void) => ReactNode;
-  /** Label for the "Prompts" menu item and mobile sheet title. Defaults to `'Prompts'`. */
-  promptsMenuTitle?: string;
-  /** Accessible label for the back arrow in the mobile prompts bottom sheet. Defaults to `'Back'`. */
-  promptsBackLabel?: string;
+  menuOverlays?: MenuOverlayConfig[];
+  /**
+   * Host-supplied content rendered inside the text area at its inline-start;
+   * typed text starts after it on the first line and wraps at full width
+   * below. The slot's width is measured and the first text line indents past
+   * it, and the placeholder is suppressed. Absent renders the text area
+   * unchanged.
+   */
+  inlineStartSlot?: ReactNode;
+  /**
+   * Called when Backspace is pressed with the caret collapsed at position 0
+   * while `inlineStartSlot` is present — the slot's remove gesture (there is
+   * nothing to delete backwards at position 0, so the keypress is redirected
+   * to the slot and suppressed). Absent leaves Backspace with no slot-side
+   * behavior.
+   */
+  onInlineStartRemove?: () => void;
+  /**
+   * Host-injected slash-command menu. When provided, typing `triggerPrefix`
+   * as the first character of an empty textarea opens an overlay above the
+   * input; it stays open while the value keeps matching the prefix followed
+   * by a query with no whitespace or second prefix character, and closes on
+   * unmatch, Escape, or an outside click (a dismissed menu reopens only after
+   * the value stops matching and the prefix is typed again). Selection
+   * typically goes through `ctx.close({ consumeQuery: true })`, which removes
+   * the `/query` text from the textarea. Absent disables the mechanism.
+   */
+  commandMenu?: CommandMenuConfig;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */
   autoFocus?: boolean;
   /**

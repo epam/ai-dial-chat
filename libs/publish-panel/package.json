@@ -5,12 +5,16 @@
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
-    "./styles.css": "./dist/style.css",
+    "./styles.css": "./dist/index.css",
     ".": {
       "@epam/source": "./src/index.ts",
       "types": "./dist/index.d.ts",

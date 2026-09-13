@@ -5,17 +5,27 @@
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
-    "./styles.css": "./dist/style.css",
+    "./styles.css": "./dist/index.css",
     ".": {
       "@epam/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./mapping": {
+      "@epam/source": "./src/entry-points/mapping.ts",
+      "types": "./dist/entry-points/mapping.d.ts",
+      "import": "./dist/mapping.js",
+      "default": "./dist/mapping.js"
     }
   },
   "peerDependencies": {
@@ -24,7 +34,7 @@
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-publish-panel": "*",
     "ag-grid-community": "35.3.0",
-    "@epam/ai-dial-ui-kit": "^0.14.0-dev.15"
+    "@epam/ai-dial-ui-kit": "^0.14.0-dev.30"
   },
   "nx": {
     "tags": [

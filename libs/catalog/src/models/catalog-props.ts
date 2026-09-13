@@ -37,6 +37,8 @@ export interface CatalogTitles {
    * Default: (q) => `No results for "${q}"`.
    */
   noResultsTitle?: (query: string) => string;
+  /** The sort control's own name, prepended to its accessible name. Default: 'Sort'. */
+  sortLabel?: string;
   /** Label for the "Recently Updated" sort option. Default: 'Recently Updated'. */
   sortRecentlyUpdatedLabel?: string;
   /** Label for the "Newest" sort option. Default: 'Newest'. */
@@ -55,8 +57,9 @@ export interface CatalogTitles {
   ariaLabel?: string;
   /**
    * Display labels for entity-type filter tabs. Only types present in `items`
-   * are shown. Defaults: Model → 'Model', Agent → 'Agent', Toolset → 'Toolset',
-   * Skill → 'Skill', Mcp → 'MCP'.
+   * are shown, and the row is hidden entirely when fewer than two types are
+   * present. Defaults: Model → 'Models', Agent → 'Agents',
+   * Toolset → 'Toolsets', Skill → 'Skills', Prompt → 'Prompts'.
    */
   tabLabels?: Partial<Record<CatalogEntityType, string>>;
   /** Label for the filter button when nothing is filtered. Default: 'From'. */
@@ -77,7 +80,8 @@ export interface CatalogProps {
   items: CatalogItem[];
   /**
    * Externally-controlled entity-type tab list. When omitted, `Catalog`
-   * derives tabs internally from `items` via `buildCatalogTabs`.
+   * derives tabs internally from `items` via `buildCatalogTabs`. Fewer than
+   * two tabs renders no tab row.
    *
    * Lets a host compute tabs from a wider item set than `items` — e.g. so a
    * host that narrows `items` for grid display (by a category-tree

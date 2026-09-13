@@ -49,7 +49,7 @@ export default defineConfig(() => ({
         'react-dom',
         'react/jsx-runtime',
         '@epam/ai-dial-builder-form',
-        '@epam/ai-dial-ui-kit',
+        /^@epam\/ai-dial-ui-kit(?:\/|$)/,
         '@epam/ai-dial-chat-shared',
         '@tabler/icons-react',
         '@uiw/react-markdown-preview',

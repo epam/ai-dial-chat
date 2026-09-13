@@ -16,6 +16,10 @@ import {
   useState,
 } from 'react';
 import { safeDecodeURI } from '../../shared/string-utils';
+import {
+  DEFAULT_GENERATION_CONFLICT_MESSAGE,
+  GenerationConflictError,
+} from '../create-chat-stream-api';
 import { applyChunkToMessages } from './apply-chunk';
 import {
   type BufferedGeneration,
@@ -124,6 +128,13 @@ export interface UseConversationStreamParams {
   channel?: ConversationStreamChannel;
   overlay?: ConversationStreamOverlayNotifier;
   onStopError?: (error: Error) => void;
+  /**
+   * Message shown on the message bubble when the backend rejects a completion
+   * because this conversation is already generating — the case a second
+   * browser tab of the same session hits. Defaults to
+   * {@link DEFAULT_GENERATION_CONFLICT_MESSAGE}.
+   */
+  generationConflictMessage?: string;
 }
 
 /** Return value of {@link useConversationStream}. */
@@ -167,6 +178,7 @@ export const useConversationStream = ({
   channel,
   overlay,
   onStopError,
+  generationConflictMessage = DEFAULT_GENERATION_CONFLICT_MESSAGE,
 }: UseConversationStreamParams): UseConversationStreamResult => {
   /*
    * Paths with an in-flight generation. A Set (not a boolean) so concurrent
@@ -185,6 +197,8 @@ export const useConversationStream = ({
   /* Generation ids stopped by the user — onComplete emits notifyStopGenerating's
    * counterpart (nothing) instead of notifyGenerationEnd for these. */
   const stoppedGenerationIdsRef = useRef<Set<string>>(new Set());
+  /** Newest generation id started for each path — see `isSuperseded` in `startStream`. */
+  const latestGenerationIdsRef = useRef<Map<string, string>>(new Map());
 
   /*
    * The host component isn't necessarily remounted when navigating between
@@ -241,6 +255,7 @@ export const useConversationStream = ({
       const conversationPath = getConversationPath(currentConversationId);
       activeGenerationIdRef.current = genId;
       activeGenerationPathRef.current = conversationPath;
+      latestGenerationIdsRef.current.set(conversationPath, genId);
       setStoppablePath(conversationPath);
 
       /*
@@ -255,6 +270,17 @@ export const useConversationStream = ({
       } else if (mode === SendCompletionDtoModeEnum.Edit) {
         serverMessageIndex = messageIndex - 1;
       }
+
+      /*
+       * True once a newer generation has been started on this path: the user
+       * stopped this one and immediately re-submitted (Stop re-enables
+       * edit/regenerate as soon as the stopped stream closes, while this
+       * generation's conversation reload is still in flight). A superseded
+       * generation must not clear the new one's streaming state, report its
+       * end, or overwrite the conversation with the answer it had fetched.
+       */
+      const isSuperseded = (): boolean =>
+        latestGenerationIdsRef.current.get(conversationPath) !== genId;
 
       const controller = startGeneration(conversationPath, genId);
       const initialMessage = conversationRef.current?.messages[messageIndex];
@@ -320,7 +346,7 @@ export const useConversationStream = ({
           ) {
             bufferedGenerationsRef.current.delete(conversationPath);
           }
-          removeStreamingPath(conversationPath);
+          if (!isSuperseded()) removeStreamingPath(conversationPath);
           if (activeGenerationIdRef.current === genId) {
             activeGenerationIdRef.current = null;
             activeGenerationPathRef.current = null;
@@ -330,9 +356,12 @@ export const useConversationStream = ({
           channel?.notifyGenerationSettled?.();
           if (stoppedGenerationIdsRef.current.has(genId)) {
             stoppedGenerationIdsRef.current.delete(genId);
-          } else {
+          } else if (!isSuperseded()) {
             overlay?.notifyGenerationEnd?.();
           }
+          /* The generation that superseded this one owns the displayed state
+           * and reloads it when it settles. */
+          if (isSuperseded()) return;
           /*
            * Only refresh displayed state if the user is still viewing this
            * conversation; otherwise leave the currently-shown chat untouched.
@@ -352,7 +381,9 @@ export const useConversationStream = ({
             const refreshed = await transport.getConversation(
               safeDecodeURI(currentConversationId),
             );
-            if (!isPathDisplayed(conversationPath)) return;
+            /* Re-checked after the round trip: a re-submit during it makes this
+             * reload stale — it would restore the answer the user just replaced. */
+            if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
             setConversation(refreshed);
             conversationRef.current = refreshed;
           } catch {
@@ -365,7 +396,7 @@ export const useConversationStream = ({
           const buffered =
             currentBuffer?.generationId === genId ? currentBuffer : undefined;
           if (buffered) bufferedGenerationsRef.current.delete(conversationPath);
-          removeStreamingPath(conversationPath);
+          if (!isSuperseded()) removeStreamingPath(conversationPath);
           if (activeGenerationIdRef.current === genId) {
             activeGenerationIdRef.current = null;
             activeGenerationPathRef.current = null;
@@ -373,8 +404,19 @@ export const useConversationStream = ({
           }
           completeGeneration(conversationPath, genId);
           channel?.notifyGenerationSettled?.();
-          // Surface the error only on the conversation the user is viewing.
-          if (!isPathDisplayed(conversationPath)) return;
+          /* Surface the error only on the conversation the user is viewing,
+           * and never over the generation that superseded this one. */
+          if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
+          /*
+           * A conflict is an expected state, not a transport failure: another
+           * tab of this session is already generating into this conversation,
+           * so it gets the host-supplied explanation rather than the raw
+           * error text (issue #8688).
+           */
+          const streamErrorMessage =
+            error instanceof GenerationConflictError
+              ? generationConflictMessage
+              : error.message;
           setConversation((prev) => {
             if (!prev) return prev;
             const restored =
@@ -384,9 +426,7 @@ export const useConversationStream = ({
             const updated = {
               ...restored,
               messages: restored.messages.map((m, index) =>
-                index === messageIndex
-                  ? { ...m, streamErrorMessage: error.message }
-                  : m,
+                index === messageIndex ? { ...m, streamErrorMessage } : m,
               ),
             };
             conversationRef.current = updated;
@@ -438,6 +478,7 @@ export const useConversationStream = ({
       channel?.notifyGenerationSettled,
       overlay,
       transport,
+      generationConflictMessage,
     ],
   );
 

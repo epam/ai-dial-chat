@@ -1,9 +1,5 @@
-.row {
-  &:hover,
-  &:focus-visible {
-    background: var(--fp-row-hover-bg, var(--bg-layer-sunken, #eef1f7));
-  }
-}
+/* The rows are the kit's `MenuItem`, which owns their rest, hover and focus
+   treatments; only the star and the surrounding chrome are themed here. */
 
 .header {
   color: var(--fp-header-text, var(--text-tertiary, #848e9c));

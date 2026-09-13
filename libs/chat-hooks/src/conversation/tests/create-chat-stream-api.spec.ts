@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createChatStreamApi } from '../create-chat-stream-api';
+import {
+  createChatStreamApi,
+  DEFAULT_GENERATION_CONFLICT_MESSAGE,
+  GenerationConflictError,
+} from '../create-chat-stream-api';
 
 let csrfToken: string | null = null;
 const getCsrfToken = () => csrfToken;
@@ -80,6 +84,36 @@ describe('createChatStreamApi', () => {
         onError: () => resolve(),
       });
     });
+
+  const failStreamRequest = (): Promise<Error> =>
+    new Promise<Error>((resolve) => {
+      const { streamCompletion } = makeApi();
+      streamCompletion('gpt-4o__Hello__uuid', 'hello', 'gpt-4o', {
+        onChunk: vi.fn(),
+        onComplete: () => resolve(new Error('completed unexpectedly')),
+        onError: resolve,
+      });
+    });
+
+  /* A second browser tab submitting into a conversation that is already
+   * generating gets a 409 from the completion endpoint (issue #8688). */
+  it('reports a 409 completion response as a GenerationConflictError', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 409 }));
+
+    const error = await failStreamRequest();
+
+    expect(error).toBeInstanceOf(GenerationConflictError);
+    expect(error.message).toBe(DEFAULT_GENERATION_CONFLICT_MESSAGE);
+  });
+
+  it('reports any other non-OK completion response as a plain transport error', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 502 }));
+
+    const error = await failStreamRequest();
+
+    expect(error).not.toBeInstanceOf(GenerationConflictError);
+    expect(error.message).toBe('Stream request failed with status 502');
+  });
 
   it('sends the current browser timezone with each completion request', async () => {
     fetchMock.mockResolvedValue(

@@ -28,7 +28,10 @@ import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { StringUtils } from '../../common/utils/string-utils';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
-import { buildDialFileUrl } from '../dial-resource-path.util';
+import {
+  buildDialFileUrl,
+  encodeDialFilePath,
+} from '../dial-resource-path.util';
 import type {
   UploadArchiveEntryResultDto,
   UploadArchiveResponseDto,
@@ -621,7 +624,7 @@ export class FilesUploadService {
 
   private buildDialUploadUrl(bucket: string, path: string): string {
     const baseUrl = this.dialClient.baseUrl.replace(/\/+$/, '');
-    return `${baseUrl}/v1/files/${encodeURIComponent(bucket)}/${encodeDialResourcePath(path)}`;
+    return `${baseUrl}/v1/files/${encodeURIComponent(bucket)}/${encodeDialFilePath(path)}`;
   }
 
   private async removeArchiveUploadTempDirectory(

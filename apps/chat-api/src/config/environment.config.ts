@@ -777,6 +777,20 @@ export class EnvironmentVariables {
   RESPONSES_API_ENABLED?: boolean = false;
 
   @IsOptional()
+  @Transform(({ obj, key }) => {
+    /* Reads the raw source value (not `value`, which class-transformer's
+     * enableImplicitConversion may have already coerced to `true` for any
+     * non-empty string, including the literal string "false") so an env var
+     * explicitly set to "false"/"0"/"no" parses to `false` as intended. */
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  SKILL_USAGE_ENABLED?: boolean = false;
+
+  @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];
     return String(value)
@@ -917,4 +931,17 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1)
   SKILL_ARCHIVE_UPLOAD_MAX_BYTES?: number = 20_971_520;
+
+  /*
+   * Server-owned bound on how long an active generation may occupy the
+   * in-memory registry (see openspec/specs/generation-registry/spec.md),
+   * independent of the originating browser connection — a disconnect no
+   * longer aborts a generation, so this timer is what protects against a
+   * stalled upstream stream that never reaches a terminal event.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  MAX_GENERATION_DURATION_MS?: number = 1_800_000;
 }

@@ -193,6 +193,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {required && ' *'}
     </span>
   ),
+}));
+
+vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
   LazyMarkdownEditor: () =>
     Promise.resolve({
       MarkdownEditor: ({

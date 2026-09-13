@@ -11,6 +11,10 @@ import {
   NavigationI18nKeys,
   SettingsI18nKeys,
 } from '../../../constants/translation-keys';
+import {
+  useAppConfig as useAppConfigMock,
+  useFeatureFlag as useFeatureFlagMock,
+} from '../../../context/tests/app-config-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import { AuthStatus } from '../../../types/auth-status';
 import { UserConfigStatus } from '../../../types/user-config-status';
@@ -54,6 +58,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ElementSize: { Standard: 'standard' },
   DropdownItemType: { PlainText: 'plainText', Divider: 'divider' },
+  MenuItemMark: { Check: 'check', Highlight: 'highlight' },
   mergeClasses: (...classes: (string | undefined)[]) =>
     classes.filter(Boolean).join(' '),
   Tooltip: ({ children }: { children: ReactNode }) => children,
@@ -118,12 +123,10 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentThemeFavicon: undefined }),
 }));
 
-const useAppConfigMock = vi.fn();
-const useFeatureFlagMock = vi.fn();
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => useAppConfigMock(),
-  useFeatureFlag: (key: string) => useFeatureFlagMock(key),
-}));
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 
 const useUserMock = vi.fn();
 vi.mock('../../../context/auth/UserContext', () => ({

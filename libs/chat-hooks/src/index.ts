@@ -26,6 +26,8 @@ export * from './catalog/catalog-primary-action';
 export * from './catalog/useCatalogEditNavigation/useCatalogEditNavigation';
 export * from './catalog/useCatalogItemDetails';
 export * from './catalog/useCatalogToolsetCredentials/useCatalogToolsetCredentials';
+export * from './catalog/useSkillItemDetails';
+export * from './catalog/useSkillDetailsPanelData/useSkillDetailsPanelData';
 export * from './catalog/useFavoriteEntitiesState/useFavoriteEntitiesState';
 export * from './catalog/usePublishFolders/usePublishFolders';
 export * from './conversation/announcement-message';
@@ -71,6 +73,8 @@ export * from './conversation/useConversationLookupMaps/useConversationLookupMap
 export * from './conversation/useConversationPanelItems/useConversationPanelItems';
 export * from './conversation/useImportFilePicker/useImportFilePicker';
 export * from './conversation/useAttachmentUpload/useAttachmentUpload';
+export * from './conversation/useTranscribeAudio/audio-transcription-error';
+export * from './conversation/useTranscribeAudio/useTranscribeAudio';
 export * from './conversation/useConversationExport/useConversationExport';
 export {
   attachmentsToDtos,
@@ -82,10 +86,13 @@ export {
 } from './conversation/useConversationHandlers/message-factory';
 export {
   hasActiveToolConfig,
+  isAnswerIncomplete,
   isMessageChanged,
+  shouldRerunGenerationOnEdit,
 } from './conversation/useConversationHandlers/message-utils';
 export {
   getStarterConversationText,
+  getStarterDisplayText,
   getStarterSubmitText,
 } from './conversation/useConversationHandlers/starter-option';
 export * from './conversation/useConversationHandlers/useConversationHandlers';
@@ -106,6 +113,7 @@ export * from './files/create-files-api';
 export * from './files/create-upload-file-with-progress';
 export * from './files/annotation';
 export * from './files/attachment-canvas';
+export * from './files/source-content';
 export * from './files/attachment-dto-to-display';
 export * from './files/dial-file';
 export * from './files/dial-file-to-attachment';
@@ -142,6 +150,22 @@ export * from './useShareRecipientsCount/useShareRecipientsCount';
 export * from './useToolsMenu/useToolsMenu';
 export * from './usage/useUsageData/useUsageData';
 export * from './useViewportWidth/useViewportWidth';
+export {
+  createMcpAppsApiClient,
+  McpAppResourceFetchError,
+  type McpAppsApiClient,
+  type McpAppToolSummary,
+} from './mcp-apps/mcp-apps-api-client';
+export { useMcpAppTools } from './mcp-apps/useMcpAppTools/useMcpAppTools';
+export {
+  useMcpAppHostContext,
+  type McpAppHostContextParams,
+} from './mcp-apps/useMcpAppHostContext/useMcpAppHostContext';
+export { useMcpAppHostAdapter } from './mcp-apps/useMcpAppHostAdapter/useMcpAppHostAdapter';
+export {
+  useOpenMcpAppCanvas,
+  type UseOpenMcpAppCanvasLabels,
+} from './mcp-apps/useOpenMcpAppCanvas/useOpenMcpAppCanvas';
 
 /*
  * The canonical hook lives in `@epam/ai-dial-chat-shared`, co-located with the

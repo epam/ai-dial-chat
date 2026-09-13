@@ -166,6 +166,22 @@ describe('downloadTextFile', () => {
 
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
   });
+
+  it('uses the supplied MIME type for the downloaded blob', () => {
+    vi.useFakeTimers();
+    const createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(
+      () => undefined,
+    );
+
+    downloadTextFile('Name,Value', 'table.csv', 'text/csv;charset=utf-8');
+
+    const blob = createObjectURL.mock.calls[0]?.[0] as Blob;
+    expect(blob.type).toBe('text/csv;charset=utf-8');
+  });
 });
 
 describe('tryBase64ToBytes', () => {

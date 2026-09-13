@@ -82,4 +82,12 @@ describe('UploadFileDto', () => {
     });
     expect(errors).toHaveLength(0);
   });
+
+  it('rejects a path containing &', async () => {
+    const errors = await validateDto({
+      bucket: 'my-bucket',
+      path: 'Metrology&UnitConversionPresentation(1).pptx',
+    });
+    expect(errors.some((e) => e.property === 'path')).toBe(true);
+  });
 });

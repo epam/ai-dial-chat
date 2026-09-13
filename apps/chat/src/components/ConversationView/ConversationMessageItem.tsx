@@ -1,6 +1,10 @@
-import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  AttachmentContentType,
+  useAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   annotationToDisplayAttachment,
+  annotationToOoxmlCanvasContent,
   annotationToPdfCanvasContent,
   attachmentDtosToDisplayAttachments,
   messageHasStages,
@@ -22,6 +26,7 @@ import {
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
+  type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import {
   MessageBubble,
@@ -30,10 +35,19 @@ import {
 } from '@epam/ai-dial-conversation-messages';
 import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 import {
+  McpAppInlinePreview,
+  findMcpAppForMessage,
+  mcpAppCanvasKey,
+  resolveMcpAppToolCallSeed,
+  type McpAppResponseCache,
+  type McpAppToolCallSeed,
+  type McpAppToolRef,
+} from '@epam/ai-dial-mcp-apps';
+import {
   CitationCardProvider,
   CitationDropdown,
   getReferenceAttachmentGroups,
-  groupAnnotationsBySource,
+  groupAnnotations,
   isReferenceOnlyAttachment,
   useAnnotations,
   useCitationCard,
@@ -43,12 +57,12 @@ import {
 import {
   DIAL_KIT_ICON_STROKE,
   ErrorMessageNotification,
-  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  AttachmentCanvasI18nKeys,
   AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -56,20 +70,17 @@ import {
   CitationsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
-import type { McpAppToolCallSeed } from '../../hooks/attachment/useOpenMcpAppCanvas';
-import type { McpAppToolRef } from '../../hooks/conversation/useMcpAppTools';
+import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
 import {
   attachmentCanvasUrlResolvers,
   attachmentDisplayResolvers,
 } from '../../utils/attachment-display-resolvers';
-import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
 import {
-  findMcpAppForMessage,
-  mcpAppCanvasKey,
-  resolveMcpAppToolCallSeed,
-} from '../../utils/mcp-app';
+  resolveDialFileDownloadUrl,
+  resolveMarkdownUrl,
+} from '../../utils/dial-file';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
@@ -117,7 +128,9 @@ interface Props {
     keptAttachments: DisplayAttachment[],
     newAttachments: Attachment[],
   ) => void;
-  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  onUploadAttachment?: (
+    attachment: Attachment,
+  ) => Promise<UploadedAttachmentResult>;
   pendingDropFiles?: File[];
   onDropFilesConsumed?: () => void;
   deploymentLookup: Record<
@@ -141,7 +154,7 @@ interface Props {
   thinkingLabel: string;
   executedLabel: string;
   stepsLabel: (count: number) => string;
-  /** Called with the message's matched MCP App tool (its canvas key, and a toolInput/toolResult seed) when the user activates the "Open App" message action, or when it auto-opens. Omit to hide the action entirely. */
+  /** Called with the message's matched MCP App tool (its canvas key, and a toolInput/toolResult seed) when the user activates the inline preview's expand-to-canvas button. Omit to hide the inline preview entirely. */
   onOpenApp?: (
     match: McpAppToolRef,
     canvasKey?: string,
@@ -149,9 +162,9 @@ interface Props {
   ) => void;
   /** The active deployment's tools that declare an MCP Apps UI resource. */
   mcpAppTools: McpAppToolRef[];
-  /** Visible label for the "Open App" message action. */
-  openCanvasLabel?: string;
-  /** Label shown instead of the "Open App" button when this message's canvas is the one currently open. */
+  /** Shared with `useOpenMcpAppCanvas` so switching between the inline preview and the full canvas for the same message reuses one fetch. */
+  mcpAppCache: McpAppResponseCache;
+  /** Label shown instead of the inline MCP App preview when this message's canvas is the one currently open. */
   openedInCanvasLabel?: string;
   /** Called when the user clicks the preview button on a PDF citation. */
   onPreviewReference?: (annotation: Annotation) => void;
@@ -225,7 +238,7 @@ const ConversationMessageItem: FC<Props> = ({
   stepsLabel,
   onOpenApp,
   mcpAppTools,
-  openCanvasLabel,
+  mcpAppCache,
   openedInCanvasLabel,
   onPreviewReference,
   validateAttachment,
@@ -258,6 +271,14 @@ const ConversationMessageItem: FC<Props> = ({
   );
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
+  const handleTableOpenInCanvas = useCallback(
+    (text: string) =>
+      openCanvas(
+        { type: AttachmentContentType.MarkdownTable, text },
+        t(ChatI18nKeys.MarkdownTableTitle),
+      ),
+    [openCanvas, t],
+  );
   const { handleAttachmentClick: handleDownload } = useAttachmentAction({
     resolveDownloadUrl: resolveDialFileDownloadUrl,
   });
@@ -279,7 +300,7 @@ const ConversationMessageItem: FC<Props> = ({
 
   const annotations = useAnnotations(msg, isStreaming);
   const citationGroups = useMemo(
-    () => groupAnnotationsBySource(annotations),
+    () => groupAnnotations(annotations),
     [annotations],
   );
   const citationCard = useCitationCard();
@@ -303,10 +324,22 @@ const ConversationMessageItem: FC<Props> = ({
         openCanvas(pdfContent, fileName);
         return;
       }
+      const ooxmlContent = annotationToOoxmlCanvasContent(
+        annotation,
+        annotations,
+        attachmentCanvasUrlResolvers,
+      );
+      if (ooxmlContent != null) {
+        const attachment = annotation.body?.source?.attachment;
+        const rawSegment = attachment?.url?.split('/').pop() ?? '';
+        const fileName = attachment?.title ?? decodeURIComponent(rawSegment);
+        openCanvas(ooxmlContent, fileName);
+        return;
+      }
       const display = annotationToDisplayAttachment(annotation);
       if (display) handleAttachmentClick(display);
     },
-    [citationGroups, openCanvas, handleAttachmentClick],
+    [citationGroups, annotations, openCanvas, handleAttachmentClick],
   );
   const handleCitationOpenInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
@@ -354,6 +387,7 @@ const ConversationMessageItem: FC<Props> = ({
       msg.content,
       citationGroups,
       citationCallbacks,
+      isStreaming,
       isCompactTypography,
     );
   const referenceGroups = useMemo(
@@ -383,6 +417,16 @@ const ConversationMessageItem: FC<Props> = ({
     if (attachment)
       openAnnotationAttachment(attachment, resolveDialFileDownloadUrl);
   }, []);
+
+  const mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools, isStreaming);
+  const mcpAppToolCallSeed = useMemo(
+    () =>
+      mcpAppMatch
+        ? resolveMcpAppToolCallSeed(msg, mcpAppMatch.toolName)
+        : undefined,
+    [msg, mcpAppMatch],
+  );
+  const mcpAppHostAdapter = useMcpAppHostAdapter('inline');
 
   const selectedAttachmentKeyPrefix = `${index}:`;
   const selectedAttachmentId = selectedAttachmentKey?.startsWith(
@@ -449,7 +493,6 @@ const ConversationMessageItem: FC<Props> = ({
   }
 
   const hasStages = messageHasStages(msg);
-  const mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools);
   const mcpAppKey = mcpAppMatch ? mcpAppCanvasKey(index) : undefined;
   const isMcpAppOpenedInCanvas =
     mcpAppKey != null && selectedAttachmentKey === mcpAppKey;
@@ -512,32 +555,41 @@ const ConversationMessageItem: FC<Props> = ({
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }
+        markdownUrlTransform={
+          msg.role === MessageRole.Assistant ? resolveMarkdownUrl : undefined
+        }
         markdownClassNames={markdownClassNames}
         attachments={nonReferenceDisplayAttachments}
         isStreaming={isStreaming}
         hasAlwaysVisibleActions={!isStreaming}
-        actions={buildMessageActions(
-          msg,
-          index,
-          {
-            onEdit:
-              !isAssistantTyping && !isEditUserMessageHidden
-                ? onStartEdit
-                : undefined,
-            onHoverEdit: preloadEditInput,
-            onDelete:
-              !isAssistantTyping && !isDeleteUserMessageHidden
-                ? onDeleteMessage
-                : undefined,
-            onRegenerate: isRegenerateAssistantMessageHidden
-              ? undefined
-              : onRegenerateMessage,
-            onRate: isLikesEnabled ? onRateMessage : undefined,
-            onDislike: isLikesEnabled ? onDislikeMessage : undefined,
-          },
-          tooltips,
-          ariaLabels,
-        )}
+        actions={{
+          ...buildMessageActions(
+            msg,
+            index,
+            {
+              onEdit:
+                !isAssistantTyping && !isEditUserMessageHidden
+                  ? onStartEdit
+                  : undefined,
+              onHoverEdit: preloadEditInput,
+              onDelete:
+                !isAssistantTyping && !isDeleteUserMessageHidden
+                  ? onDeleteMessage
+                  : undefined,
+              onRegenerate: isRegenerateAssistantMessageHidden
+                ? undefined
+                : onRegenerateMessage,
+              onRate: isLikesEnabled ? onRateMessage : undefined,
+              onDislike: isLikesEnabled ? onDislikeMessage : undefined,
+            },
+            tooltips,
+            ariaLabels,
+          ),
+          /* Regenerate/copy/like/dislike stay mounted while a response streams,
+             so they have to be disabled — otherwise a second generation or a
+             rating can be triggered mid-stream. */
+          isDisabled: isAssistantTyping,
+        }}
         afterContent={
           referenceGroups.length > 0 ||
           hasStages ||
@@ -556,7 +608,7 @@ const ConversationMessageItem: FC<Props> = ({
                       ) != null;
                     return (
                       <CitationDropdown
-                        key={group.sourceUrl}
+                        key={group.groupKey}
                         group={group}
                         onPreview={
                           isPdfPagePreviewable ? onPreviewReference : undefined
@@ -628,15 +680,20 @@ const ConversationMessageItem: FC<Props> = ({
                     </span>
                   </div>
                 ) : (
-                  <PrimaryButton
-                    label={openCanvasLabel}
-                    onClick={() =>
-                      onOpenApp(
-                        mcpAppMatch,
-                        mcpAppKey,
-                        resolveMcpAppToolCallSeed(msg, mcpAppMatch.toolName),
-                      )
+                  <McpAppInlinePreview
+                    match={mcpAppMatch}
+                    toolCall={mcpAppToolCallSeed}
+                    cache={mcpAppCache}
+                    cacheKey={mcpAppCanvasKey(index)}
+                    hostAdapter={mcpAppHostAdapter}
+                    onExpand={() =>
+                      onOpenApp(mcpAppMatch, mcpAppKey, mcpAppToolCallSeed)
                     }
+                    expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
+                    reloadAriaLabel={t(ButtonsI18nKeys.Reload)}
+                    loadErrorLabel={t(
+                      AttachmentCanvasI18nKeys.McpAppLoadErrorLabel,
+                    )}
                   />
                 ))}
               {msg.streamErrorMessage != null && (
@@ -664,11 +721,19 @@ const ConversationMessageItem: FC<Props> = ({
           thinkingLabel,
           codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
           codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+          tableCopyCsvLabel: t(ButtonsI18nKeys.CopyAsCsv),
+          tableCopyTxtLabel: t(ButtonsI18nKeys.CopyAsTxt),
+          tableCopyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
+          tableCopiedLabel: t(ButtonsI18nKeys.Copied),
+          tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
+          tableOpenInCanvasLabel: t(ButtonsI18nKeys.OpenInCanvas),
+          tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
           ...statusProps,
         }}
         deploymentIconUrl={deploymentEntry?.iconUrl}
         deploymentDisplayName={deploymentEntry?.displayName}
         codeBlockTheme={codeBlockTheme}
+        tableOnOpenInCanvas={handleTableOpenInCanvas}
         onAttachmentClick={handleAttachmentClick}
         onDownloadAll={handleDownloadAll}
         selectedAttachmentId={selectedAttachmentId}
