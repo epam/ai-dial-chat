@@ -5,9 +5,16 @@ import {
   IsArray,
   IsOptional,
   IsString,
+  Matches,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
+import {
+  CONTROL_CHARACTERS_MESSAGE,
+  DISPLAY_AUTHOR_MAX_LENGTH,
+  NO_CONTROL_CHARACTERS,
+} from './publish-author';
 import { PublishRuleDto } from './publish-rule.dto';
 
 /**
@@ -15,6 +22,10 @@ import { PublishRuleDto } from './publish-rule.dto';
  * DIAL Core's Publication API has no version concept. Callers may supply a
  * display version; the service otherwise recovers one from versioned resource
  * ids and leaves unversioned Prompt/Skill publications empty.
+ *
+ * `author` is likewise optional: it sets the publication's `displayAuthor`,
+ * which the catalog shows as "Hosted by". Omitting it keeps the pre-existing
+ * behaviour of attributing the publication to whoever submitted it.
  */
 export class PublishCatalogEntityDto {
   @ApiProperty({
@@ -34,6 +45,18 @@ export class PublishCatalogEntityDto {
   @IsOptional()
   @IsString()
   version?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Display author recorded on the publication as `displayAuthor`, surfaced in the catalog as the published entity\'s "Hosted by" value. Omitted, blank, or whitespace-only falls back to the session\'s own display name, which is what every caller got before this field existed.',
+    example: 'DIAL Team',
+    maxLength: DISPLAY_AUTHOR_MAX_LENGTH,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(DISPLAY_AUTHOR_MAX_LENGTH)
+  @Matches(NO_CONTROL_CHARACTERS, { message: CONTROL_CHARACTERS_MESSAGE })
+  author?: string;
 
   @ApiPropertyOptional({
     description:

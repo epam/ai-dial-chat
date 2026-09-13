@@ -72,6 +72,13 @@ export interface StandalonePublishPanelProps {
    * allowed (catalog default) or blocked (conversations). Default `true`.
    */
   allowReplace?: boolean;
+  /**
+   * Display author recorded on the publication. Forwarded to
+   * {@link PublishPanel} unmodified; an empty value never blocks submission.
+   */
+  author: string;
+  /** Called with the next author value on every edit. */
+  onAuthorChange: (author: string) => void;
   /** Current access rules, combined with AND. */
   rules: PublicationRule[];
   /** Called with the full next rules array on add, remove, or clear. */
@@ -138,6 +145,8 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   isSubmitting,
   hasSubmitError = false,
   allowReplace = true,
+  author,
+  onAuthorChange,
   rules,
   onRulesChange,
   ruleSourceOptions,
@@ -356,6 +365,8 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
               isSubmitting={isSubmitting}
               hasSubmitError={hasSubmitError}
               allowReplace={allowReplace}
+              author={author}
+              onAuthorChange={onAuthorChange}
               rules={rules}
               onRulesChange={onRulesChange}
               ruleSourceOptions={ruleSourceOptions}

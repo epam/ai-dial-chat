@@ -89,11 +89,27 @@ export interface UsePublishFlowOptions<TItem extends PublishFlowItem> {
    * error callout is surfaced.
    */
   onCreateFolder?: (parentPath: string[], name: string) => void | Promise<void>;
-  /** Called with the destination folder path and current rules when the user confirms publish/update. */
+  /**
+   * Initial value for the publication's display author, and the value
+   * `reset` restores.
+   *
+   * The hook cannot resolve this itself: who the signed-in user is, is host
+   * knowledge, and this library holds no notion of a session. The host
+   * passes its own resolved display name here. It may arrive after the first
+   * render (a profile still loading) or change (a different session), which
+   * is why {@link UsePublishFlowResult.author} re-syncs from it while the
+   * user has not edited the field.
+   *
+   * Defaults to `''`, which leaves the decision entirely to the host's own
+   * publish call.
+   */
+  defaultAuthor?: string;
+  /** Called with the destination folder path, current rules, and trimmed display author when the user confirms publish/update. */
   onPublish: (
     item: TItem,
     folderPath: string[],
     rules: PublicationRule[],
+    author: string,
   ) => Promise<void>;
   /** Called after a successful publish; the host surfaces its own success notification. */
   onPublishSuccess?: (item: TItem, folderPath: string[]) => void;
@@ -151,6 +167,13 @@ export interface UsePublishFlowResult {
   rules: PublicationRule[];
   /** Replaces the current rules; used by manual add/remove/clear actions. */
   setRules: (rules: PublicationRule[]) => void;
+  /**
+   * Current display author for the publication — the host-supplied
+   * `defaultAuthor` until the user edits it.
+   */
+  author: string;
+  /** Replaces the current display author; marks the field as user-edited, so `defaultAuthor` no longer overwrites it. */
+  setAuthor: (author: string) => void;
   /** Whether `onFetchExistingRules` is currently resolving for the selected folder. */
   isRulesLoading: boolean;
   /** Whether the most recent `onFetchExistingRules` call failed. `rules` is left unchanged when this is `true`. */
@@ -165,6 +188,7 @@ export const usePublishFlow = <
   history,
   folderItems: initialFolderItems,
   hasWriteAccess: resolveWriteAccess = () => true,
+  defaultAuthor = '',
   onCreateFolder,
   onPublish,
   onPublishSuccess,
@@ -181,6 +205,26 @@ export const usePublishFlow = <
   const [rules, setRules] = useState<PublicationRule[]>([]);
   const [isRulesLoading, setIsRulesLoading] = useState(false);
   const [hasRulesLoadError, setHasRulesLoadError] = useState(false);
+  const [author, setAuthorState] = useState(defaultAuthor);
+  /*
+   * Seeding `author` once would strand the field empty whenever the host's
+   * display name resolves after the first render; syncing it on every
+   * `defaultAuthor` change would wipe what the user typed. Tracking whether
+   * the user has touched the field is what makes the sync one-way and
+   * one-shot.
+   */
+  const [isAuthorEdited, setIsAuthorEdited] = useState(false);
+  useEffect(() => {
+    if (isAuthorEdited) {
+      return;
+    }
+    setAuthorState(defaultAuthor);
+  }, [defaultAuthor, isAuthorEdited]);
+
+  const setAuthor = useCallback((next: string) => {
+    setIsAuthorEdited(true);
+    setAuthorState(next);
+  }, []);
 
   useEffect(() => {
     if (selectedFolderPath == null) {
@@ -249,7 +293,7 @@ export const usePublishFlow = <
     setIsSubmitting(true);
     setHasSubmitError(false);
     try {
-      await onPublish(item, selectedFolderPath, rules);
+      await onPublish(item, selectedFolderPath, rules, author.trim());
       onPublishSuccess?.(item, selectedFolderPath);
       return true;
     } catch (error) {
@@ -260,6 +304,7 @@ export const usePublishFlow = <
       setIsSubmitting(false);
     }
   }, [
+    author,
     item,
     onPublish,
     onPublishError,
@@ -274,7 +319,9 @@ export const usePublishFlow = <
     setHasSubmitError(false);
     setRules([]);
     setHasRulesLoadError(false);
-  }, [initialFolderItems]);
+    setAuthorState(defaultAuthor);
+    setIsAuthorEdited(false);
+  }, [defaultAuthor, initialFolderItems]);
 
   return {
     folderItems,
@@ -291,6 +338,8 @@ export const usePublishFlow = <
     reset,
     rules,
     setRules,
+    author,
+    setAuthor,
     isRulesLoading,
     hasRulesLoadError,
   };

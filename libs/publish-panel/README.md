@@ -53,8 +53,25 @@ import { PublishPanel } from '@epam/ai-dial-publish-panel';
   hasExistingPublicationInFolder={false}
   hasWriteAccess
   isSubmitting={false}
+  author={author}
+  onAuthorChange={setAuthor}
+  rules={rules}
+  onRulesChange={setRules}
+  ruleSourceOptions={['title', 'roles', 'dial_roles']}
 />;
 ```
+
+`author` is the publication's display author, rendered as a text field between
+the folder tree and the access-rules section. It is a controlled value like
+`rules`: pass `usePublishFlow`'s `author`/`setAuthor` straight through. An
+empty author is a valid state and never blocks submission — the host decides
+what an unset author means (both AI DIAL Chat hosts omit the field from the
+publish request so the backend falls back to the session's own display name).
+The library resolves nothing about the signed-in user itself; the prefill
+arrives through `usePublishFlow`'s `defaultAuthor`.
+
+Override its copy through `labels.authorLabel`, `labels.authorPlaceholder`, and
+`labels.authorHint`.
 
 Add `type` (and optionally `iconUrl`) to `resource` to get the richer entity
 summary row — icon, type label, name, and a current-version tag — rendered by
@@ -97,6 +114,11 @@ import { StandalonePublishPanel } from '@epam/ai-dial-publish-panel';
   hasExistingPublicationInFolder={false}
   hasWriteAccess
   isSubmitting={false}
+  author={author}
+  onAuthorChange={setAuthor}
+  rules={rules}
+  onRulesChange={setRules}
+  ruleSourceOptions={['title', 'roles', 'dial_roles']}
   onClose={handleClose}
   onSubmit={handleSubmit}
 />;
@@ -163,7 +185,7 @@ import { PublishHistoryList } from '@epam/ai-dial-publish-panel';
 
 ### usePublishFlow
 
-Manages all state for the Publish flow: folder selection, optimistic local folder creation with rollback, existing-publication detection, and submit handling.
+Manages all state for the Publish flow: folder selection, optimistic local folder creation with rollback, existing-publication detection, access rules, the display author, and submit handling.
 
 ```tsx
 import { usePublishFlow } from '@epam/ai-dial-publish-panel';
@@ -172,7 +194,8 @@ const publishFlow = usePublishFlow({
   item,
   history,
   folderItems,
-  onPublish: async (item, folderPath) => {
+  defaultAuthor: currentUserDisplayName,
+  onPublish: async (item, folderPath, rules, author) => {
     /* ... */
   },
   onPublishSuccess: (item, folderPath) => {
@@ -183,6 +206,14 @@ const publishFlow = usePublishFlow({
   },
 });
 ```
+
+`defaultAuthor` seeds the returned `author` and is what `reset()` restores.
+The library holds no notion of a session, so the host resolves the signed-in
+user's display name and passes it here. It may resolve after the first render:
+while the user has not edited the field, a later `defaultAuthor` replaces the
+current value; once `setAuthor` has been called, it no longer does.
+`handleSubmit` forwards the trimmed `author` to `onPublish` as its fourth
+argument.
 
 ## Utilities
 
