@@ -642,6 +642,11 @@ export enum SettingsI18nKeys {
   KeyboardShortcuts = 'settings.keyboardShortcuts',
   ShortcutEnter = 'settings.shortcutEnter',
   ShortcutMetaEnter = 'settings.shortcutMetaEnter',
+  Preferences = 'settings.preferences',
+  PreferencesDescription = 'settings.preferencesDescription',
+  DefaultAgent = 'settings.defaultAgent',
+  DefaultAgentOptionDefault = 'settings.defaultAgentOptionDefault',
+  DefaultAgentOptionLastUsed = 'settings.defaultAgentOptionLastUsed',
 }
 
 export enum ConversationPanelI18nKeys {

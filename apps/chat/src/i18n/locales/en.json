@@ -615,7 +615,12 @@
     "themeSystem": "System",
     "keyboardShortcuts": "Keyboard shortcuts",
     "shortcutEnter": "Enter — send message, Shift+Enter — new line",
-    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter — new line"
+    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter — new line",
+    "preferences": "Preferences",
+    "preferencesDescription": "Personalize how the chat looks and behaves.",
+    "defaultAgent": "Default agent for new chats",
+    "defaultAgentOptionDefault": "Default agent",
+    "defaultAgentOptionLastUsed": "Last used agent"
   },
   "attachments": {
     "downloadFile": "Download file",

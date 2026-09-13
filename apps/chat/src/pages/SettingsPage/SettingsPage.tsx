@@ -8,7 +8,10 @@ import { SettingsTabs } from '../../types/settings-tabs';
 const SettingsPage: FC = () => {
   const { t } = useTranslation();
   const { items, tabComponents } = useSettingsTabConfig();
-  const [activeTab, setActiveTab] = useState<SettingsTabs>(SettingsTabs.Usage);
+
+  const [activeTab, setActiveTab] = useState<SettingsTabs>(
+    SettingsTabs.Preferences,
+  );
 
   const ActiveTabComponent = tabComponents[activeTab];
 
