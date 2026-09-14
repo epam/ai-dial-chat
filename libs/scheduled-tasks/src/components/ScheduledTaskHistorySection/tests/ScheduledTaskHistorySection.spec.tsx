@@ -7,8 +7,8 @@ import type {
   ScheduledTaskHistorySectionProps,
 } from '../../../models/scheduled-task-history-section-props';
 import type { ScheduledTaskRunItem } from '../../../models/scheduled-task-run-item';
-import { ScheduledTaskRunStatus } from '../../../types/scheduled-task-run-status';
 import { ScheduledTaskHistorySectionVariant } from '../../../types/scheduled-task-history-section-variant';
+import { ScheduledTaskRunStatus } from '../../../types/scheduled-task-run-status';
 import { ScheduledTaskHistorySection } from '../ScheduledTaskHistorySection';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({

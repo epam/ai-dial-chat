@@ -181,6 +181,8 @@ interface Props {
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
   isAttachmentsEnabled?: boolean;
+  /** Forwarded to `EditMessageInput`: narrows the long-paste-to-attachment conversion to models whose attachment types accept `text/plain`. */
+  isTextAttachmentsAllowed?: boolean;
   /** Renders message text one type-scale step down. The host sets it on narrow viewports. */
   isCompactTypography?: boolean;
   maximumAttachmentsAmount?: number;
@@ -273,6 +275,7 @@ const ConversationMessageItem: FC<Props> = ({
   onPreviewReference,
   validateAttachment,
   isAttachmentsEnabled,
+  isTextAttachmentsAllowed,
   isCompactTypography = false,
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
@@ -510,6 +513,7 @@ const ConversationMessageItem: FC<Props> = ({
             onDropFilesConsumed={onDropFilesConsumed}
             validateAttachment={validateAttachment}
             isAttachmentsEnabled={isAttachmentsEnabled}
+            isTextAttachmentsAllowed={isTextAttachmentsAllowed}
             maximumAttachmentsAmount={maximumAttachmentsAmount}
             onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
             hideAttachFile={hideAttachFile}

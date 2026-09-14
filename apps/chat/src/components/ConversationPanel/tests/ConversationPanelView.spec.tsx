@@ -717,8 +717,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
   it('confirm button is disabled during in-flight request', async () => {
     let resolveDelete:
-      | ((result: ConversationDeletionResultDto) => void)
-      | undefined;
+      ((result: ConversationDeletionResultDto) => void) | undefined;
     const pendingPromise = new Promise<ConversationDeletionResultDto>(
       (resolve) => {
         resolveDelete = resolve;
@@ -769,8 +768,7 @@ describe('ConversationPanelView — delete-all header action', () => {
 
   it('cancel is a no-op while deletion is in progress', async () => {
     let resolveDelete:
-      | ((result: ConversationDeletionResultDto) => void)
-      | undefined;
+      ((result: ConversationDeletionResultDto) => void) | undefined;
     const pendingPromise = new Promise<ConversationDeletionResultDto>(
       (resolve) => {
         resolveDelete = resolve;

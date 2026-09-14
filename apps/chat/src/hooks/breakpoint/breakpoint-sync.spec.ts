@@ -1,10 +1,10 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { describe, expect, it } from 'vitest';
 import {
   DESKTOP_BREAKPOINT_PX,
   MOBILE_MAX_WIDTH_PX,
 } from '@epam/ai-dial-chat-shared';
+import { describe, expect, it } from 'vitest';
 
 /*
  * The responsive boundary is single-sourced in chat-shared's breakpoint

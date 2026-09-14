@@ -1,5 +1,5 @@
-import type { ScheduledTaskRunStatus } from '../types/scheduled-task-run-status';
 import type { ScheduledTaskHistorySectionVariant } from '../types/scheduled-task-history-section-variant';
+import type { ScheduledTaskRunStatus } from '../types/scheduled-task-run-status';
 import type { ScheduledTaskRunItem } from './scheduled-task-run-item';
 
 /** Localized labels used by the {@link ScheduledTaskHistorySection} component. */

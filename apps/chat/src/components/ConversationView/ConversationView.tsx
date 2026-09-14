@@ -2,7 +2,10 @@ import {
   useAttachmentCanvas,
   useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import { FileDndOverlay } from '@epam/ai-dial-attachment-input';
+import {
+  FileDndOverlay,
+  isMimeTypeAllowed,
+} from '@epam/ai-dial-attachment-input';
 import {
   AttachmentValidationErrorReason,
   dialFilesToAttachments,
@@ -441,6 +444,17 @@ const ConversationView: FC<Props> = ({
     allowedMimeTypes: selectedDeployment?.inputAttachmentTypes ?? [],
     onValidationError: handleAttachmentValidationError,
   });
+
+  /*
+   * A long plain-text paste converts to a `text/plain` attachment only on
+   * models whose attachment types accept one (`text/plain`, `text/*`, or an
+   * all-types wildcard); an image-only model would reject the converted
+   * attachment.
+   */
+  const isTextAttachmentsAllowed = isMimeTypeAllowed(
+    'text/plain',
+    inputAttachmentTypes,
+  );
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
     isAttachmentsAllowed,
@@ -940,6 +954,11 @@ const ConversationView: FC<Props> = ({
                         ? isAttachmentsAllowed
                         : undefined
                     }
+                    isTextAttachmentsAllowed={
+                      selectedDeployment != null
+                        ? isTextAttachmentsAllowed
+                        : undefined
+                    }
                     maximumAttachmentsAmount={
                       selectedDeployment?.maxInputAttachments
                     }
@@ -1092,6 +1111,11 @@ const ConversationView: FC<Props> = ({
                 }
                 isAttachmentsEnabled={
                   selectedDeployment != null ? isAttachmentsAllowed : undefined
+                }
+                isTextAttachmentsAllowed={
+                  selectedDeployment != null
+                    ? isTextAttachmentsAllowed
+                    : undefined
                 }
                 maximumAttachmentsAmount={
                   selectedDeployment?.maxInputAttachments

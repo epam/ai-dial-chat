@@ -13,8 +13,7 @@ const { mockShowNotification, capturedInputProps } = vi.hoisted(() => ({
   mockShowNotification: vi.fn(),
   capturedInputProps: {
     onSend: undefined as
-      | ((message: string, attachments: never[]) => Promise<void>)
-      | undefined,
+      ((message: string, attachments: never[]) => Promise<void>) | undefined,
   },
 }));
 
