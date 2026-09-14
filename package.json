@@ -129,6 +129,8 @@
     "@epam/ai-dial-visualizer-connector": "0.48.0",
     "@epam/pdf-highlighter-kit": "^0.0.18",
     "@mcp-ui/client": "^7.1.1",
+    "@monaco-editor/react": "^4.7.0",
+    "monaco-editor": "^0.55.1",
     "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
