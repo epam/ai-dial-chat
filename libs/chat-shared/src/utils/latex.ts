@@ -29,6 +29,12 @@ const MATH_SUFFIX_REGEX = /[\^_\\]/y;
  */
 const MATH_RELATION_REGEX =
   /(?:[<>]|\\(?:le|leq|ll|ge|geq|gg|ne|neq|approx|equiv|sim|simeq|cong|in|notin|subset|subseteq|supset|supseteq|to|rightarrow|leftarrow|mapsto|implies|iff)\b)/y;
+/**
+ * LaTeX markup no price carries: a control sequence (`\frac`, `\iff`) or a
+ * sub/superscript. `\$` and `\{` are deliberately not control sequences here — an
+ * escaped dollar or brace is what a price inside a formula already looks like.
+ */
+const MATH_MARKUP_REGEX = /\\[a-zA-Z]|[\^_]/;
 
 /** Converts single-dollar mhchem expressions (`$\ce{...}$`, `$\pu{...}$`) to the double-dollar form KaTeX expects. */
 const escapeMhchem = (text: string): string => {
@@ -252,6 +258,27 @@ const canClose = (
 };
 
 /**
+ * Whether the `$` at `open` starts a span that reads as a formula in spite of its
+ * currency-shaped opening: `$1 - \frac{3}{p} < 1$` looks like money for exactly one
+ * character, and escaping that delimiter strands its partner, so the whole formula
+ * reaches the reader as source.
+ *
+ * Only the next delimiter is considered a candidate closer, because {@link canClose}
+ * rejects any body holding a `$` this pass leaves literal — no later delimiter can
+ * close this span. The test is the body's markup, not the prose around it: a price
+ * list (`$500 + $200 = $850`) carries no control sequence between two delimiters.
+ */
+const opensFormula = (
+  content: string,
+  open: number,
+  close: number | undefined,
+  replacements: Map<number, string>,
+): boolean =>
+  close !== undefined &&
+  canClose(content, open, close, replacements) &&
+  MATH_MARKUP_REGEX.test(content.slice(open + 1, close));
+
+/**
  * Escapes currency-looking dollar signs and converts single-dollar LaTeX math delimiters
  * (`$...$`) to the double-dollar form (`$$...$$`) that `remark-math`/KaTeX render, leaving
  * code blocks and already-escaped `\$` untouched. Display blocks are re-fenced so a
@@ -262,6 +289,9 @@ const canClose = (
  * currency pass, because declining to open a formula on one `$` while leaving its partner
  * free to open the next one shifts every pairing along the line — which is how
  * `$0 < x$ and then $y \in H$` used to typeset the English words and print the formulas.
+ * For the same reason a currency-shaped opening is weighed against the span it would
+ * open, not against the few characters after the amount: `$1 - \frac{3}{p} < 1$` reads as
+ * a price for one character and as LaTeX for the rest of the line.
  *
  * The `\(...\)`/`\[...\]` delimiters LLMs commonly emit are deliberately left as-is: they are
  * recognized directly by `micromark-extension-llm-math`, which the consuming app's bundler
@@ -285,8 +315,17 @@ export const preprocessLaTeX = (content: string): string => {
   for (let i = 0; i < positions.length; i++) {
     const position = positions[i];
     const amountEnd = measureAmount(processed, position);
+    /* The span-wide look is asked only of a `$` that would open one: while a span is
+       already open this `$` is a candidate closer, and its own body is the prose
+       before it — `\frac{$1,200 - $1,000}{$1,000}` holds a control sequence between
+       every pair of prices without any of them being a formula. */
+    const isMoney =
+      amountEnd !== -1 &&
+      isMoneyLike(processed, amountEnd) &&
+      (open !== -1 ||
+        !opensFormula(processed, position, positions[i + 1], replacements));
 
-    if (amountEnd !== -1 && isMoneyLike(processed, amountEnd)) {
+    if (isMoney) {
       replacements.set(position, '\\$');
 
       /* A bare `$2$` declines both of its delimiters, so refusing to open a formula
