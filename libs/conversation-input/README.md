@@ -59,6 +59,34 @@ textarea keeps its content. A paste at or above the cap also reports through
 `onMessageTooLong` when attachments are disabled, since there the pasted text
 lands inline rather than becoming an attachment.
 
+`message` and `textInsertion` are two different ways to write into the textarea,
+and they are not interchangeable. `message` sets the value: the textarea resyncs
+to it whenever the string changes, or whenever `messageRevision` changes if the
+string is the same — so anything the user had typed is gone. `textInsertion` puts
+its `text` in at the caret each time its `revision` changes and leaves the rest of
+the draft alone; the edit is made through the browser's editing pipeline, so the
+native undo shortcut reverts it. Use `message` to seed or reset the composer, and
+`textInsertion` for anything the user triggers while a draft may already exist —
+a prompt picked from a library, a snippet, a slash-command expansion.
+
+```tsx
+import type { TextInsertion } from '@epam/ai-dial-conversation-input';
+
+const [insertion, setInsertion] = useState<TextInsertion>({
+  text: '',
+  revision: 0,
+});
+
+const handlePromptPicked = (text: string) =>
+  setInsertion((prev) => ({ text, revision: prev.revision + 1 }));
+
+<ConversationInput textInsertion={insertion} onSend={handleSend} />;
+```
+
+The `revision` is what performs the insert, so bumping it re-inserts the same
+string. The value present on mount is never inserted — only a later change to
+`revision` is.
+
 `removeLabel` and `retryLabel` are the accessible names of the remove and
 retry buttons on each attachment card in the tray. They default to English
 (`'Remove attachment'` / `'Retry upload'`); pass translated strings so the two

@@ -270,12 +270,18 @@ NestJS 11 server. Entry: `apps/chat-api/src/main.ts`.
 
 Configured at startup:
 
-- `helmet` — security headers (CSP, HSTS, etc.)
+- `helmet` — security headers (CSP, HSTS, etc.). Generic responses do not allow
+  WebAssembly. App-owned frontend middleware gives chat HTML a fresh style nonce
+  and its required WebAssembly permission, while the PDF worker receives a
+  separate worker policy. `CSP_MODE` controls report-only rollout versus strict
+  enforcement; see [CSP configuration](../apps/chat-api/README.md#content-security-policy).
 - `ValidationPipe` — whitelist + `forbidNonWhitelisted` + `transform`
 - URI versioning — business endpoints at `/api/v{N}/{resource}`
 - CORS with `credentials: true`
 - Swagger at `/api/docs` (non-production)
-- Static React SPA serving from `apps/chat/dist` for non-`/api/*` routes
+- Static assets from `apps/chat/dist` and nonce-bearing React SPA HTML for
+  non-`/api/*` routes (`app/static-assets.ts`). HTML templates are cached in memory;
+  HTML responses use `no-store` with a fresh nonce, while asset caching is unchanged.
 - Global prefix: `api`
 - Global in-memory cache: an explicit Keyv memory adapter with a 100-entry LRU limit and periodic expiration cleanup; see [backend caching behavior](../apps/chat-api/README.md#performance).
 - OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)

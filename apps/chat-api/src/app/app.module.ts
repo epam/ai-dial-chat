@@ -1,8 +1,7 @@
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { AppConfigModule } from '../app-config/app-config.module';
 import { ApplicationSchemasModule } from '../application-schemas/application-schemas.module';
 import { ApplicationsModule } from '../applications/applications.module';
@@ -10,7 +9,6 @@ import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
 import { ClientChannelModule } from '../client-channel/client-channel.module';
 import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
-import { EnvironmentVariables } from '../config/environment.config';
 import { validate } from '../config/validation';
 import { ConversationModule } from '../conversations/conversation.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
@@ -33,7 +31,6 @@ import { TranscriptionModule } from '../transcription/transcription.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { AppController } from './app.controller';
 import { createAppCacheOptions } from './cache.config';
-import { createServeStaticOptions } from './static-assets';
 
 @Module({
   imports: [
@@ -46,15 +43,6 @@ import { createServeStaticOptions } from './static-assets';
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: createAppCacheOptions,
-    }),
-    ServeStaticModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService<EnvironmentVariables, true>) =>
-        createServeStaticOptions({
-          overlaySandboxEnabled: configService.get('OVERLAY_SANDBOX_ENABLED', {
-            infer: true,
-          }),
-        }),
     }),
     DialCoreModule,
     AppConfigModule,

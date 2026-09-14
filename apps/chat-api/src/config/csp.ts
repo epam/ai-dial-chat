@@ -1,5 +1,20 @@
 import type { HelmetOptions } from 'helmet';
 
+export enum CspMode {
+  ReportOnly = 'report-only',
+  Enforce = 'enforce',
+}
+
+export const CSP_NONCE_PLACEHOLDER = '__DIAL_CSP_NONCE__';
+
+interface CspOptions {
+  nonce?: string;
+  allowWasm?: boolean;
+  allowInlineStyles?: boolean;
+  reportOnly?: boolean;
+  reportUri?: string;
+}
+
 export const buildFrameSrcDirective = (
   allowedIframeOrigins: string[],
 ): string[] => ["'self'", ...allowedIframeOrigins];
@@ -43,20 +58,37 @@ export const buildPermissionsPolicyHeader = (
 export const createHelmetOptions = (
   allowedIframeOrigins: string[],
   secureTransport = true,
+  {
+    nonce,
+    allowWasm = false,
+    allowInlineStyles = false,
+    reportOnly = false,
+    reportUri,
+  }: CspOptions = {},
 ): HelmetOptions => ({
   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
   contentSecurityPolicy: {
+    reportOnly,
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      baseUri: ["'self'"],
+      objectSrc: ["'none'"],
+      styleSrc: [
+        "'self'",
+        'https://fonts.googleapis.com',
+        ...(allowInlineStyles ? ["'unsafe-inline'"] : []),
+        ...(!allowInlineStyles && nonce ? [`'nonce-${nonce}'`] : []),
+      ],
+      styleSrcAttr: [allowInlineStyles ? "'unsafe-inline'" : "'none'"],
       /* `data:` covers fonts the bundler inlines as base64 data URIs. */
       fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
       scriptSrc: [
         "'self'",
-        /* Allows the attachment canvas to compile its same-origin OOXML WASM
-         * parsers without enabling arbitrary JavaScript evaluation. */
-        "'wasm-unsafe-eval'",
+        /* This permission belongs to the executing document/worker, never
+         * to the API response returning document bytes or a WASM binary. */
+        ...(allowWasm ? ["'wasm-unsafe-eval'"] : []),
       ],
+      scriptSrcAttr: ["'none'"],
       workerSrc: ["'self'", 'blob:'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
       mediaSrc: ["'self'", 'blob:'],
@@ -64,6 +96,7 @@ export const createHelmetOptions = (
       frameSrc: buildFrameSrcDirective(allowedIframeOrigins),
       frameAncestors: buildFrameAncestorsDirective(allowedIframeOrigins),
       upgradeInsecureRequests: secureTransport ? [] : null,
+      ...(reportUri ? { reportUri: [reportUri], reportTo: ['csp'] } : {}),
     },
   },
   frameguard: allowedIframeOrigins.length > 0 ? false : undefined,

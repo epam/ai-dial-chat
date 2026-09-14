@@ -167,7 +167,6 @@ const getThumbnailPageNumbers = (): number[] => {
 describe('PdfContent', () => {
   beforeEach(() => {
     documentPreviewState.props = undefined;
-    Element.prototype.scrollTo = vi.fn();
     vi.useFakeTimers();
     // Run rAF callbacks synchronously so a scroll's setScrollTop lands
     // before the test's next assertion, without depending on whether this
@@ -267,7 +266,7 @@ describe('PdfContent', () => {
         />,
       );
       setTotalPages(50);
-      expect(Element.prototype.scrollTo).not.toHaveBeenCalled();
+      expect(screen.queryByRole('region', { name: 'Thumbnails' })).toBeNull();
     });
 
     it('scrolls the panel to a target computed from (selectedPage - 1) * itemHeight, centered', () => {
@@ -283,10 +282,8 @@ describe('PdfContent', () => {
 
       // itemHeight fallback = 172, jsdom clientHeight = 0:
       // top = (5 - 1) * 172 - 0 / 2 + 172 / 2 = 774
-      expect(Element.prototype.scrollTo).toHaveBeenCalledWith({
-        top: 774,
-        behavior: 'smooth',
-      });
+      const panel = screen.getByRole('region', { name: 'Thumbnails' });
+      expect(panel.scrollTop).toBe(774);
     });
 
     it('computes an unclamped target when the panel is short relative to the row height', () => {
@@ -296,10 +293,8 @@ describe('PdfContent', () => {
 
       // itemHeight fallback = 172, jsdom clientHeight = 0:
       // top = (1 - 1) * 172 - 0 / 2 + 172 / 2 = 86
-      expect(Element.prototype.scrollTo).toHaveBeenCalledWith({
-        top: 86,
-        behavior: 'smooth',
-      });
+      const panel = screen.getByRole('region', { name: 'Thumbnails' });
+      expect(panel.scrollTop).toBe(86);
     });
 
     it('clamps the scroll target to 0 when it would otherwise be negative', () => {
@@ -317,10 +312,7 @@ describe('PdfContent', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /^loading-1$/ }));
 
-      expect(Element.prototype.scrollTo).toHaveBeenLastCalledWith({
-        top: 0,
-        behavior: 'smooth',
-      });
+      expect(panel.scrollTop).toBe(0);
     });
   });
 
@@ -402,10 +394,8 @@ describe('PdfContent', () => {
       expect(input.value).toBe('12');
       // Commits the same way a thumbnail click does: scrolls the panel to
       // the newly selected page — top = (12 - 1) * 172 + 172 / 2 = 1978.
-      expect(Element.prototype.scrollTo).toHaveBeenLastCalledWith({
-        top: 1978,
-        behavior: 'smooth',
-      });
+      const panel = screen.getByRole('region', { name: 'Thumbnails' });
+      expect(panel.scrollTop).toBe(1978);
     });
 
     it('resets to the current page when the committed value is out of range', () => {

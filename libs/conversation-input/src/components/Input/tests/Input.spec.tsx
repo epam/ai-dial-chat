@@ -1075,3 +1075,124 @@ describe('Input — message length cap', () => {
     expect(onMessageTooLong).not.toHaveBeenCalled();
   });
 });
+
+/* Issue #8754: a picked prompt used to arrive on the `message` channel, which
+ * replaces the whole textarea value, so any draft was destroyed with no undo. */
+describe('Input — textInsertion', () => {
+  const renderWithInsertion = (revision: number, text: string) =>
+    render(<Input textInsertion={{ text, revision }} />);
+
+  it('does not insert the text it was mounted with', () => {
+    renderWithInsertion(1, 'Prompt body');
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+    expect(textarea.value).toBe('');
+  });
+
+  it('keeps the typed draft and inserts at the caret', () => {
+    const { rerender } = renderWithInsertion(0, '');
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+    fireEvent.change(textarea, { target: { value: 'my draft' } });
+    textarea.setSelectionRange(3, 3);
+    rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
+
+    expect(textarea.value).toBe('my PROMPTdraft');
+  });
+
+  it('appends when the caret sits at the end of the draft', () => {
+    const { rerender } = renderWithInsertion(0, '');
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+    fireEvent.change(textarea, { target: { value: 'draft ' } });
+    textarea.setSelectionRange(6, 6);
+    rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
+
+    expect(textarea.value).toBe('draft PROMPT');
+  });
+
+  it('replaces the selection rather than the whole draft', () => {
+    const { rerender } = renderWithInsertion(0, '');
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+    fireEvent.change(textarea, { target: { value: 'keep drop keep' } });
+    textarea.setSelectionRange(5, 9);
+    rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
+
+    expect(textarea.value).toBe('keep PROMPT keep');
+  });
+
+  it('reports the merged value through onChange', () => {
+    const handleChange = vi.fn();
+    const { rerender } = render(
+      <Input
+        textInsertion={{ text: '', revision: 0 }}
+        onChange={handleChange}
+      />,
+    );
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+    fireEvent.change(textarea, { target: { value: 'draft ' } });
+    textarea.setSelectionRange(6, 6);
+    handleChange.mockClear();
+    rerender(
+      <Input
+        textInsertion={{ text: 'PROMPT', revision: 1 }}
+        onChange={handleChange}
+      />,
+    );
+
+    expect(handleChange).toHaveBeenCalledWith('draft PROMPT');
+  });
+
+  it('inserts the same text again when only the revision changes', () => {
+    const { rerender } = renderWithInsertion(0, '');
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+    rerender(<Input textInsertion={{ text: 'AB', revision: 1 }} />);
+    rerender(<Input textInsertion={{ text: 'AB', revision: 2 }} />);
+
+    expect(textarea.value).toBe('ABAB');
+  });
+
+  it('returns focus to the textarea so the user can keep typing', () => {
+    const { rerender } = renderWithInsertion(0, '');
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+    fireEvent.change(textarea, { target: { value: 'ab' } });
+    textarea.setSelectionRange(1, 1);
+    textarea.blur();
+    rerender(<Input textInsertion={{ text: 'XY', revision: 1 }} />);
+
+    /* eslint-disable-next-line testing-library/no-node-access -- focus is the assertion; no semantic query exposes the active element */
+    expect(document.activeElement).toBe(textarea);
+    expect(textarea.value).toBe('aXYb');
+  });
+
+  /* The native path is what makes the insert undoable; jsdom has no
+   * execCommand, so the production branch is only reachable with a stub. */
+  it('uses the browser editing command so the insert lands on the native undo stack', () => {
+    const execCommand = vi.fn().mockReturnValue(true);
+    vi.stubGlobal('document', document);
+    document.execCommand = execCommand;
+
+    try {
+      const { rerender } = renderWithInsertion(0, '');
+      rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
+
+      expect(execCommand).toHaveBeenCalledWith('insertText', false, 'PROMPT');
+    } finally {
+      delete (document as Partial<Document>).execCommand;
+    }
+  });
+
+  it('leaves the draft alone when the inserted text is empty', () => {
+    const { rerender } = renderWithInsertion(0, '');
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+    fireEvent.change(textarea, { target: { value: 'draft' } });
+    rerender(<Input textInsertion={{ text: '', revision: 1 }} />);
+
+    expect(textarea.value).toBe('draft');
+  });
+});

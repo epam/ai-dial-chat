@@ -232,6 +232,11 @@ const items: ConversationItem[] = [
     title: 'Shared chat',
     source: FilterTab.Shared,
   },
+  {
+    id: 'c6',
+    title: 'Org chat',
+    source: FilterTab.Organization,
+  },
 ];
 
 describe('ConversationPanel', () => {
@@ -409,5 +414,41 @@ describe('ConversationPanel', () => {
     expect(
       screen.getByTestId('search-wrapper').classList.contains('rounded-xl'),
     ).toBe(true);
+  });
+
+  it('drops conversations whose source is in hiddenSources from every group', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        hiddenSources={[FilterTab.Organization]}
+      />,
+    );
+    expect(screen.queryByText('Org chat')).toBeNull();
+    expect(screen.getByText('First chat')).toBeTruthy();
+  });
+
+  it('omits the hidden source tab from the filter row', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        hiddenSources={[FilterTab.Organization]}
+      />,
+    );
+    expect(screen.queryByText('Organization')).toBeNull();
+    expect(screen.getAllByText('Shared').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shows empty label when every conversation is hidden by hiddenSources', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[items[5]]}
+        hiddenSources={[FilterTab.Organization]}
+      />,
+    );
+    expect(screen.queryByRole('listitem')).toBeNull();
+    expect(screen.getAllByText('No conversations yet')).toBeTruthy();
   });
 });

@@ -7,7 +7,7 @@ TBD - created by archiving change add-conversation-unshare. Update Purpose after
 
 `DiscardSharedCatalogItemDto.itemId` (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts`) SHALL additionally accept `conversations/{bucket}/{path}` alongside the existing `applications/{bucket}/{path}` and `toolsets/{bucket}/{path}` forms. The `@Matches` allowlist pattern is widened from `^(?:applications|toolsets)\/...` to `^(?:applications|toolsets|conversations)\/...`; `IsValidFilePath`, `IsNotEmpty`, and `MaxLength(2048)` are unchanged. `ShareController`'s `@ApiOperation` description for this endpoint is updated to state it discards access to "a catalog entity (application or toolset) or a conversation".
 
-No new NestJS endpoint, controller handler, or generated-client operationId is introduced — the existing `discardSharedCatalogItem` operation now documents and accepts a broader `itemId` shape. `ShareService.discardShared` requires no code change: it already forwards `itemId` through unmodified as `{ resources: [{ url: itemId }] }` to DIAL Core's `discardSharedResources`, with no type-specific branching.
+No new NestJS endpoint, controller handler, or generated-client operationId is introduced — the existing `discardSharedCatalogItem` operation now documents and accepts a broader `itemId` shape. `ShareManagementService.discardShared` (`apps/chat-api/src/share/management/share-management.service.ts`) requires no code change: it already forwards `itemId` through unmodified as `{ resources: [{ url: itemId }] }` to DIAL Core's `discardSharedResources`, with no type-specific branching.
 
 **Example request:**
 ```http
@@ -51,7 +51,7 @@ Content-Type: application/json
 
 ### Requirement: No server-side list cache invalidation is introduced for conversations
 
-`ShareService.discardShared` SHALL NOT gain a new conversations-list cache invalidation call. `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` continue to run unconditionally after every successful discard, regardless of the discarded resource's type — this is a pre-existing, per-user (not per-resource) invalidation and remains a harmless no-op for a conversation-shaped `itemId` since it does not touch conversation state. Consistency of the frontend's shared-with-me conversation list after a discard is achieved entirely by the client calling `refreshConversations()` (see `conversation-unshare-flow`), not by any BFF-side cache.
+`ShareManagementService.discardShared` SHALL NOT gain a new conversations-list cache invalidation call. `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` continue to run unconditionally after every successful discard, regardless of the discarded resource's type — this is a pre-existing, per-user (not per-resource) invalidation and remains a harmless no-op for a conversation-shaped `itemId` since it does not touch conversation state. Consistency of the frontend's shared-with-me conversation list after a discard is achieved entirely by the client calling `refreshConversations()` (see `conversation-unshare-flow`), not by any BFF-side cache.
 
 If a server-side conversations list cache is introduced in the future, this requirement's assumption (no such cache exists) becomes stale and the discard flow must be revisited to add invalidation — this is called out here specifically so that future change is discoverable by searching for `discardShared` callers.
 

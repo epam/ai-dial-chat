@@ -16,6 +16,27 @@ The app uses automatic chunk splitting, UI Kit `/grid` and `/editors` imports,
 the shared `/file-manager` entry and a lazy conversation publishing panel.
 Heavy feature engines load when their features are activated.
 
+## Content Security Policy
+
+Production HTML is served by `chat-api` with a fresh style nonce. Vite inserts
+the nonce placeholder and metadata. The app-owned build adapter in
+`tools/vite/csp-nonce.mjs` adds that nonce to style elements created by the
+installed OOXML, UI Kit, and file-manager distributions and the local overlay
+style helper. This covers their independently bundled grid runtimes without
+loading those features eagerly. It does not patch browser DOM APIs or authorize
+HTML-supplied styles. Published libraries remain independent of this host
+configuration.
+
+Deploy this build together with the backend. See the backend's
+[CSP rollout and reporting settings](../chat-api/README.md#content-security-policy).
+The Vite development server does not enforce the production policy; validate
+using built assets served by the backend before enabling enforcement.
+
+Run `npm exec -- nx run @epam/chat:test-csp-browser` to build a fixture with the
+actual application Vite configuration and check the installed UI Kit grid, file
+manager, PDF/DOCX/XLSX previews, and rejected injections in Chromium under strict CSP.
+The test requires the Playwright Chromium browser (`npm exec -- playwright install chromium`).
+
 ## Features
 
 ### Conversations
@@ -234,10 +255,10 @@ shape — is in
 
 `tailwind.config.js` defines exactly two named screens:
 
-| Screen    | Query              |
-| --------- | ------------------ |
-| `mobile`  | `max-width: 768px` |
-| `desktop` | `min-width: 769px` |
+| Screen    | Query               |
+| --------- | ------------------- |
+| `mobile`  | `max-width: 1279px` |
+| `desktop` | `min-width: 1280px` |
 
 Do not introduce `sm:`/`md:`/`lg:`/`xl:` or tablet variants. When a component
 must branch in JavaScript, use `useBreakpoint` / `useIsMobile` from

@@ -3,16 +3,14 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   GhostIconButton,
-  NeutralButton,
-  PrimaryButton,
-  Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { FC } from 'react';
 import type { BuilderFormHeaderProps } from '../../models/builder-form-header-props';
+import { BuilderFormActions } from '../BuilderFormActions/BuilderFormActions';
 import styles from './BuilderFormHeader.module.scss';
 
-/** Builder form page header: a back control, the form title, and cancel/submit actions. */
+/** Builder form page header: a back control, the form title, and the cancel/submit actions (desktop breakpoint only — mobile shows them in the container's sticky footer, and the row's divider above the row instead of below it). */
 export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
   labels,
   onBack,
@@ -37,7 +35,13 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        'flex h-16 items-center justify-between gap-6 border-b px-8',
+        /*
+         * The divider flips sides per breakpoint: below the row at desktop
+         * (a conventional header bar), and above it at mobile, where the
+         * row reads as the first row of the form content sitting under the
+         * app shell's floating header rather than as a page bar.
+         */
+        'flex h-16 items-center justify-between gap-6 border-t px-4 desktop:border-b desktop:border-t-0 desktop:px-8',
         styles.header,
       )}
     >
@@ -58,34 +62,20 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
           {labels.title}
         </h1>
       </div>
-      <div className="flex items-center gap-2">
-        <NeutralButton
-          label={labels.cancelButtonLabel}
-          onClick={onCancel}
-          disabled={isCancelDisabled}
-        />
-        {/*
-         * The submit button is disabled both while a submit is in flight and
-         * while the form is simply incomplete, so `disabled` alone cannot tell
-         * the two apart. The spinner, `aria-busy` and the live region below
-         * are what distinguish "working" from "not ready yet".
-         *
-         * The spinner is hidden from assistive tech so the button keeps
-         * `submitButtonLabel` as its accessible name — a name that changed
-         * mid-submit would be read as a different control.
-         */}
-        <PrimaryButton
-          label={labels.submitButtonLabel}
-          onClick={onSubmit}
-          disabled={isSubmitDisabled}
-          aria-busy={isSubmitting}
-          iconBefore={
-            isSubmitting ? (
-              <span aria-hidden>
-                <Spinner size={DIAL_ICON_SIZE.SM} />
-              </span>
-            ) : undefined
-          }
+      {/*
+       * The action pair is hidden below the desktop breakpoint, where the
+       * container's sticky footer renders its own copy — CSS cannot move a
+       * single instance between the top of the page and the bottom, so
+       * exactly one copy is visible (and tabbable) at any width.
+       */}
+      <div className="hidden items-center gap-2 desktop:flex">
+        <BuilderFormActions
+          labels={labels}
+          onCancel={onCancel}
+          onSubmit={onSubmit}
+          isCancelDisabled={isCancelDisabled}
+          isSubmitDisabled={isSubmitDisabled}
+          isSubmitting={isSubmitting}
         />
       </div>
 

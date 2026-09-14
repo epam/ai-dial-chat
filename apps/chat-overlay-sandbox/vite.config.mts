@@ -2,11 +2,16 @@
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
+import {
+  CSP_NONCE_PLACEHOLDER,
+  trustedStyleNoncePlugin,
+} from '../../tools/vite/csp-nonce.mjs';
 
 const OVERLAY_SANDBOX_BASE_PATH = '/overlay-sandbox/';
 
 export default defineConfig(({ command }) => ({
   root: import.meta.dirname,
+  html: { cspNonce: CSP_NONCE_PLACEHOLDER },
   base: command === 'serve' ? '/' : OVERLAY_SANDBOX_BASE_PATH,
   cacheDir: '../../node_modules/.vite/apps/chat-overlay-sandbox',
   server: {
@@ -17,7 +22,7 @@ export default defineConfig(({ command }) => ({
     port: 4300,
     host: 'localhost',
   },
-  plugins: [react()],
+  plugins: [trustedStyleNoncePlugin(), react()],
   resolve: {
     alias: {
       '@epam/ai-dial-chat-overlay': path.resolve(

@@ -189,6 +189,31 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 
 ---
 
+### Requirement: `hiddenSources` fully excludes matching conversations, not just their tab
+
+`ConversationPanel` SHALL accept an optional `hiddenSources?: FilterTab[]` prop. When non-empty, any conversation whose `source` is included in `hiddenSources` SHALL be dropped before tab filtering, search filtering, and grouping — so it never appears under any tab (including `All`), never contributes to a group heading (e.g. "Organization"), and is excluded from drag-and-drop's allowed-groups computation. The corresponding tab pill(s) in `FilterTabs` SHALL also be omitted from the row entirely. This differs from `isFilterTabsHidden`, which only hides the tab row while every source's conversations remain visible under `All`.
+
+`FilterTabs` (the tab-row sub-component) accepts the same `hiddenSources?: FilterTab[]` prop and filters its rendered tabs by it; `ConversationPanel` forwards its own `hiddenSources` prop unchanged.
+
+#### Scenario: A conversation with a hidden source is absent everywhere
+
+- **GIVEN** `hiddenSources={[FilterTab.Organization]}` and a conversation with `source: FilterTab.Organization`
+- **WHEN** the panel renders with the `All` tab active
+- **THEN** that conversation is not shown, and no "Organization" group heading appears
+
+#### Scenario: The hidden source's tab pill is omitted
+
+- **GIVEN** `hiddenSources={[FilterTab.Organization]}`
+- **WHEN** the filter tab row renders
+- **THEN** the "Organization" pill is not rendered, while the other tabs render normally
+
+#### Scenario: hiddenSources absent or empty changes nothing
+
+- **WHEN** `hiddenSources` is omitted or `[]`
+- **THEN** all four tabs render and every source's conversations are shown exactly as before this prop existed
+
+---
+
 ### Requirement: Panel rows expose per-item actions (pin, rename, delete, share)
 
 `ConversationPanel` SHALL accept `getActions?: (item: ConversationHistoryItem) => DropdownItem[]` and `actionsLabel?: string` (English default: `"More actions"`). When `getActions` returns a non-empty array for a row, an ellipsis trigger button is rendered on that row; activating it opens a dropdown built from the returned `DropdownItem[]`. When `getActions` is omitted or returns an empty array, no trigger is rendered.
