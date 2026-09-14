@@ -1104,9 +1104,9 @@
       "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settings": {
-      "endpointCaption": "The HTTPS address where the server accepts MCP requests.",
+      "endpointCaption": "The HTTPS address where the server accepts MCP requests. Choose the transport under Protocol below.",
       "endpointRequired": "Endpoint is required",
-      "endpointInvalid": "Enter a valid http(s) or sse URL",
+      "endpointInvalid": "Enter a valid http(s) URL",
       "protocolLabel": "Protocol",
       "allowedToolsLabel": "Allowed tools",
       "allowedToolsPlaceholder": "Add tools, comma separated",

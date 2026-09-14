@@ -99,12 +99,18 @@ The `EditorLayout` root SHALL use `className="flex min-h-0 flex-1 flex-col"` (`f
 The Setup section SHALL allow editing the endpoint URL, the transport protocol (HTTP or SSE), the allowed tools (tag input), and the authentication settings (key-header, API key, OAuth client-id/secret/endpoints). The authentication block SHALL use the same visual style as the existing Settings step authentication section. The Setup section SHALL NOT contain any name, version, description, locales, or icon fields.
 
 #### Scenario: Valid endpoint URL
-- **WHEN** a user enters a well-formed `http(s)://` or `sse://` endpoint URL
+- **WHEN** a user enters a well-formed `http(s)://` endpoint URL
 - **THEN** the field is accepted with no validation error
 
 #### Scenario: Invalid endpoint URL
 - **WHEN** a user enters a malformed endpoint URL
 - **THEN** the system shows a URL validation error and blocks the save
+
+#### Scenario: Endpoint using the sse:// scheme
+- **WHEN** a user selects the SSE protocol and enters an `sse://` endpoint URL
+- **THEN** the system shows the same URL validation error and blocks the save, because DIAL
+  Core stores only `http`/`https` endpoints and the transport is carried by the Protocol
+  field rather than the URL scheme
 
 ### Requirement: Settings step connection fields
 The Connect toolset section SHALL render inside the Setup `EditorSection` at the bottom of the Setup content, below the authentication block, when the toolset being edited has a persisted id (edit mode, or the draft id created by a create-session Log In/Save) and the host supplies a `buildMcpUrl` resolver (the app builds it from `config.dialCoreExternalUrl`). In fresh create mode the section SHALL NOT render (no persisted id exists until Log In or Save). The section SHALL contain a title "Connect toolset", a description, and a "Copy URL" button that copies the toolset's MCP endpoint URL to the clipboard and shows transient "Copied!" feedback announced via `aria-live="polite"`.

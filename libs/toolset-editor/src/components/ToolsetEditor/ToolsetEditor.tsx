@@ -213,8 +213,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
           validationLabels?.endpointRequired ?? 'Endpoint is required';
       } else if (!isValidEndpointUrl(data.endpoint)) {
         nextErrors.endpoint =
-          validationLabels?.endpointInvalid ??
-          'Enter a valid http(s) or sse URL';
+          validationLabels?.endpointInvalid ?? 'Enter a valid http(s) URL';
       }
       if (!data.auth.isLoggedIn) {
         if (data.auth.authenticationType === ToolsetAuthTypes.ApiKey) {
@@ -248,16 +247,14 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
             !isValidEndpointUrl(data.auth.authorizationEndpoint)
           ) {
             nextErrors.authorizationEndpoint =
-              validationLabels?.endpointInvalid ??
-              'Enter a valid http(s) or sse URL';
+              validationLabels?.endpointInvalid ?? 'Enter a valid http(s) URL';
           }
           if (
             data.auth.tokenEndpoint?.trim() &&
             !isValidEndpointUrl(data.auth.tokenEndpoint)
           ) {
             nextErrors.tokenEndpoint =
-              validationLabels?.endpointInvalid ??
-              'Enter a valid http(s) or sse URL';
+              validationLabels?.endpointInvalid ?? 'Enter a valid http(s) URL';
           }
         }
       }

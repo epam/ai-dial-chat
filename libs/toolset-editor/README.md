@@ -222,11 +222,14 @@ appending a numeric suffix when the candidate is taken.
 import { isValidEndpointUrl } from '@epam/ai-dial-toolset-editor';
 
 isValidEndpointUrl('https://mcp.example.com/sse'); // true
+isValidEndpointUrl('sse://mcp.example.com'); // false
 isValidEndpointUrl('ftp://mcp.example.com'); // false
 ```
 
-Validates a toolset endpoint URL: `http(s)` or `sse` scheme, parseable, no
-trailing `.` or `//`.
+Validates a toolset endpoint URL: `http(s)` scheme, parseable, no trailing `.`
+or `//`. An `sse://` URL is invalid — DIAL Core stores only `http`/`https`
+endpoints, and the SSE transport is selected through the form's `protocol`
+field, not through the URL scheme.
 
 ### `normalizeReturnedEndpointUrl`
 

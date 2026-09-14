@@ -23,7 +23,7 @@ export interface ConnectMcpUrlContentLabels {
 export interface SettingsFormLabels {
   /** Label for the endpoint field. Defaults to `'Endpoint'`. */
   endpointLabel?: string;
-  /** Caption under the endpoint field. Defaults to `'The HTTPS address where the server accepts MCP requests.'`. */
+  /** Caption under the endpoint field. Defaults to `'The HTTPS address where the server accepts MCP requests. Choose the transport under Protocol below.'`. */
   endpointCaption?: string;
   /** Placeholder for the endpoint field. Defaults to `'https://...'`. */
   endpointPlaceholder?: string;
