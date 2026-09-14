@@ -132,9 +132,16 @@ const ConversationRoute: FC = () => {
     skillCatalogModal,
     skillDetailsPanel,
     selectedSkillElement,
+    selectedSkills,
     selectSkill,
     removeSelectedSkill,
   } = useSkillSelectorOverlay();
+  /*
+   * The first message's skills payload comes from the overlay hook. On a
+   * successful create this route navigates away and unmounts (clearing the
+   * selection with it); on failure the create promise rejects and the
+   * selection survives for the retry.
+   */
   /*
    * The Skills entry joins the Prompts entry in array order, so it renders
    * below Prompts in the `+` menu; `undefined` when both are flag-disabled
@@ -366,6 +373,8 @@ const ConversationRoute: FC = () => {
         selectedItemId,
         attachmentDtos,
         hasToolConfig ? toolConfigurationValue : undefined,
+        undefined,
+        selectedSkills,
       );
       // TODO: remove in next release
       const isolatedName =
@@ -399,6 +408,7 @@ const ConversationRoute: FC = () => {
       toolConfigurationValue,
       isIsolatedView,
       isolatedModelId,
+      selectedSkills,
     ],
   );
 

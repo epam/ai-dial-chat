@@ -2,6 +2,7 @@ import type {
   AttachmentDto,
   ConversationResponseDto,
 } from '@epam/ai-dial-chat-api-client';
+import type { RequestSkill } from '@epam/ai-dial-chat-shared';
 import { conversationsApi } from './api-client';
 
 export const createConversation = (
@@ -10,22 +11,29 @@ export const createConversation = (
   attachments?: AttachmentDto[],
   configurationValue?: Record<string, unknown>,
   formValue?: Record<string, unknown>,
+  skills?: RequestSkill[],
 ) =>
   conversationsApi.createConversation({
     createConversationDto: {
       firstMessage,
       deploymentId,
-      ...(attachments?.length || configurationValue || formValue
-        ? {
-            custom_content: {
-              ...(attachments?.length ? { attachments } : {}),
-              ...(configurationValue
-                ? { configuration_value: configurationValue }
-                : {}),
-              ...(formValue ? { form_value: formValue } : {}),
-            },
-          }
-        : {}),
+      ...(
+        attachments?.length ||
+        configurationValue ||
+        formValue ||
+        skills?.length
+          ? {
+              custom_content: {
+                ...(attachments?.length ? { attachments } : {}),
+                ...(configurationValue
+                  ? { configuration_value: configurationValue }
+                  : {}),
+                ...(formValue ? { form_value: formValue } : {}),
+                ...(skills?.length ? { skills } : {}),
+              },
+            }
+          : {}
+      ),
     },
   });
 

@@ -73,6 +73,16 @@ export interface StatusMessageCustomContent {
   new_deployment_id: string;
 }
 
+/**
+ * A skill referenced from `custom_content.skills` — DIAL Core's `RequestSkill`
+ * schema (PR #1956): an object with a non-blank `url`; Core rejects any other
+ * entry shape (e.g. a bare string) with 400.
+ */
+export interface RequestSkill {
+  /** The skill's resource URL (`skills/{bucket}/{path}`) — the same form the skill listing and `CatalogItem.id` use. */
+  url: string;
+}
+
 /** Extra DIAL API payload attached to a message. */
 export interface MessageCustomContent {
   /** Files or media items associated with this message. */
@@ -98,6 +108,12 @@ export interface MessageCustomContent {
    * stateful-app contract. Overwritten (not merged) by each new streaming delta.
    */
   state?: Record<string, unknown>;
+  /**
+   * Skills used with this message; each entry carries the skill's resource URL.
+   * Present on user requests and, per Core's contract, on assistant responses
+   * ("skills referenced by the model as part of the response").
+   */
+  skills?: RequestSkill[];
 }
 
 /** A single message in a conversation. */

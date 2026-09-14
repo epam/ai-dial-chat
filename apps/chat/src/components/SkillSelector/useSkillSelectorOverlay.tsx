@@ -20,6 +20,7 @@ import {
 import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useSkills } from '../../context/SkillsContext';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { downloadSkillFile } from '../../server-api/skills.api';
 
 const CatalogView = lazy(async () => {
@@ -57,6 +58,7 @@ const renderCatalogContent = (
 export const useSkillSelectorOverlay = (): UseSkillSelectorOverlayResult => {
   const isEnabled = useFeatureFlag('skillUsageEnabled');
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const { skills, sharedWithMe, publicSkills } = useSkills();
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
 
@@ -97,6 +99,15 @@ export const useSkillSelectorOverlay = (): UseSkillSelectorOverlayResult => {
     [t],
   );
 
+  /*
+   * The history chip renders beside the message bubble's first text line, so
+   * its label uses the same type-scale step as that text — both steps share a
+   * 24px line height, keeping the chip's height matched to the line.
+   */
+  const historyChipLabelClassName = isMobile
+    ? 'dial-small-paragraph-text'
+    : 'dial-body-text';
+
   return useHostAgnosticSkillSelectorOverlay({
     isEnabled,
     skills,
@@ -106,6 +117,7 @@ export const useSkillSelectorOverlay = (): UseSkillSelectorOverlayResult => {
     onToggleFavorite: handleToggleFavorite,
     fetchSkillDescription: handleFetchSkillDescription,
     labels,
+    historyChipLabelClassName,
     renderCatalogContent,
     detailsPanelComponent: SkillDetailsPanelContainer,
   });

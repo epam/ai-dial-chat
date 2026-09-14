@@ -24,6 +24,7 @@ import { Input } from '../Input/Input';
 export const EditMessageInput: FC<EditMessageInputProps> = ({
   message,
   inlineStartSlot,
+  onInlineStartRemove,
   initialAttachments = [],
   onCancel,
   onSave,
@@ -142,6 +143,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
       <Input
         message={message}
         inlineStartSlot={inlineStartSlot}
+        onInlineStartRemove={onInlineStartRemove}
         ariaLabel={ariaLabel}
         hideActionBar
         pendingDropFiles={pendingDropFiles}
