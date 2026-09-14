@@ -615,6 +615,8 @@ const RevokeAccessMenuItem = ({
 
 Uploads an attachment's file to DIAL Core storage against an already-configured `FilesApi` instance, coalescing a burst of offline/network upload failures into a single debounced callback rather than firing one notification per failed file.
 
+Uploads go to `uploads/<YYYY-MM>/` in `create-only` mode and never replace an existing file: a name already used in this session, or one the server reports as taken, gets a ` (1)`, ` (2)`, … suffix instead. The stored name comes back in the result, so a caller that displays `attachment.name` should replace it with the returned one.
+
 ```tsx
 import { useAttachmentUpload } from '@epam/ai-dial-chat-hooks';
 
@@ -652,7 +654,7 @@ const Composer = ({
 | `onNetworkError` | `(fileNames: string[]) => void` | Called once per debounce window with all filenames that failed while offline. |
 | `debounceMs`     | `number`                        | Debounce window for coalescing offline-failure batches. Defaults to `700`.    |
 
-**Returns** (`UseAttachmentUploadResult`): `{ handleUploadAttachment: (attachment: Attachment) => Promise<string> }` — resolves to the uploaded file's DIAL Core URL; rejects with an `Error` tagged `errorReason: AttachmentErrorReason.Network` when offline.
+**Returns** (`UseAttachmentUploadResult`): `{ handleUploadAttachment: (attachment: Attachment) => Promise<UploadedAttachmentResult> }` — resolves to `{ url, name }`, the uploaded file's DIAL Core URL and the name it was actually stored under; rejects with an `Error` tagged `errorReason: AttachmentErrorReason.Network` when offline.
 
 ### useTranscribeAudio
 
