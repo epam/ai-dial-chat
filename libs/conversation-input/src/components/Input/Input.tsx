@@ -800,23 +800,6 @@ export const Input: FC<InputProps> = ({
             </div>
           )}
           <div className="ms-auto flex flex-shrink-0 items-center gap-2">
-            {shouldShowMicButton && (
-              <GhostIconButton
-                icon={
-                  <IconMicrophone
-                    size={DIAL_ICON_SIZE.LG}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                  />
-                }
-                aria-label={micLabel}
-                tooltipProps={{ tooltip: micLabel }}
-                className="size-[40px] flex-shrink-0 mobile:min-h-11 mobile:min-w-11"
-                onClick={() => startRecording(VoiceRecordingMode.Dictation)}
-                disabled={isInputDisabled || isStreaming}
-              />
-            )}
-
             {renderFooterActions ? (
               renderFooterActions({ canSend, onSend: handleSend })
             ) : (
@@ -836,6 +819,24 @@ export const Input: FC<InputProps> = ({
                   onPickerToggle={() => setIsPickerOpen((prev) => !prev)}
                   onPickerOpenChange={setIsPickerOpen}
                 />
+                {shouldShowMicButton && (
+                  <GhostIconButton
+                    icon={
+                      <IconMicrophone
+                        size={DIAL_ICON_SIZE.LG}
+                        stroke={DIAL_KIT_ICON_STROKE}
+                        aria-hidden
+                      />
+                    }
+                    aria-label={micLabel}
+                    tooltipProps={{ tooltip: micLabel }}
+                    className="size-[40px] flex-shrink-0 mobile:min-h-11 mobile:min-w-11"
+                    onClick={() =>
+                      startRecording(VoiceRecordingMode.Dictation)
+                    }
+                    disabled={isInputDisabled || isStreaming}
+                  />
+                )}
                 {isStreaming && onStop ? (
                   <StopButton onStop={onStop} ariaLabel={stopLabel} />
                 ) : (
