@@ -48,6 +48,7 @@ These are the peers:
 | `@epam/ai-dial-chat-shared`        | the shared types/utils/context layer every host imports directly                                |
 | `@epam/ai-dial-ui-kit`             | the design-system singleton                                                                     |
 | `@epam/ai-dial-react-file-manager` | an AG-Grid-backed component a host renders itself; two AG Grid copies break module registration |
+| `@epam/ai-dial-chat-hooks`         | a host installs it as a scenario root of its own, and its hooks hold the conversation state     |
 
 **Everything else goes in `dependencies`** — third-party implementation
 libraries, and sibling libs under `libs/` that a host never names (`sidebar`
