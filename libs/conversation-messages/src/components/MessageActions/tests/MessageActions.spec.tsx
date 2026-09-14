@@ -243,6 +243,7 @@ describe('MessageActions', () => {
 
   it('renders nothing when no action handler is provided', () => {
     const { container } = render(<MessageActions />);
+    // eslint-disable-next-line testing-library/no-node-access
     expect(container.firstElementChild).toBeNull();
     expect(screen.queryByRole('toolbar')).toBeNull();
   });

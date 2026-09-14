@@ -723,7 +723,7 @@ describe('AssistantMessageBubble — inline-start slot', () => {
     expect(textContainer.className).not.toContain(
       'indent-[var(--cm-bubble-first-line-indent,0px)]',
     );
-    // eslint-disable-next-line testing-library/no-node-access -- see getTextContainer comment
+
     expect(textContainer.firstElementChild?.className).toContain(
       'cm-bubble-markdown',
     );

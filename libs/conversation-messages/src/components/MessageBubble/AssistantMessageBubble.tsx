@@ -142,9 +142,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                  * host-supplied slot content of any element type must never
                  * receive the indent.
                  */
-                beforeContent != null &&
-                  text &&
-                  FIRST_LINE_INDENT_CLASS_NAME,
+                beforeContent != null && text && FIRST_LINE_INDENT_CLASS_NAME,
               )}
             >
               {beforeContent != null && text && (
