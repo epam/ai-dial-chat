@@ -1,5 +1,8 @@
 import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
-import { FileDndOverlay } from '@epam/ai-dial-attachment-input';
+import {
+  FileDndOverlay,
+  isMimeTypeAllowed,
+} from '@epam/ai-dial-attachment-input';
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import {
   AttachmentValidationErrorReason,
@@ -245,6 +248,17 @@ const NewConversationComposer: FC<Props> = ({
     allowedMimeTypes: resolvedSelectedDeployment?.inputAttachmentTypes ?? [],
     onValidationError: handleAttachmentValidationError,
   });
+
+  /*
+   * A long plain-text paste converts to a `text/plain` attachment only on
+   * models whose attachment types accept one (`text/plain`, `text/*`, or an
+   * all-types wildcard); an image-only model would reject the converted
+   * attachment.
+   */
+  const isTextAttachmentsAllowed = isMimeTypeAllowed(
+    'text/plain',
+    inputAttachmentTypes,
+  );
 
   const handleNetworkUploadError = useCallback(
     (filenames: string[]) => {
@@ -498,6 +512,9 @@ const NewConversationComposer: FC<Props> = ({
           }
           isAttachmentsEnabled={
             selectedDeployment != null ? isAttachmentsAllowed : undefined
+          }
+          isTextAttachmentsAllowed={
+            selectedDeployment != null ? isTextAttachmentsAllowed : undefined
           }
           maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
           onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}

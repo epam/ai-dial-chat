@@ -281,21 +281,21 @@ When `validateAttachment` is not provided, existing behaviour is unchanged.
 
 ---
 
-### Requirement: Input suppresses text-to-attachment paste conversion when attachments are disabled
+### Requirement: Input suppresses text-to-attachment paste conversion when a text attachment would be rejected
 
-`ConversationInputProps`, `InputProps`, and `EditMessageInputProps` SHALL accept an optional `isAttachmentsEnabled?: boolean` prop. When absent the value defaults to `true` (no change in behaviour).
+`ConversationInputProps`, `InputProps`, and `EditMessageInputProps` SHALL accept optional `isAttachmentsEnabled?: boolean` and `isTextAttachmentsAllowed?: boolean` props. When absent each defaults to `true` (no change in behaviour).
 
-When `isAttachmentsEnabled` is `false`, the `useClipboardPaste` handler SHALL NOT convert long pasted plain text into a `text/plain` attachment. The text SHALL be inserted inline into the textarea as if no threshold existed. Image clipboard items (pasted screenshots) are unaffected — they still convert to `AttachmentType.Image` attachments and proceed through the normal `validateAttachment` path.
+The `useClipboardPaste` handler SHALL convert long pasted plain text into a `text/plain` attachment only when both `isAttachmentsEnabled` and `isTextAttachmentsAllowed` are `true`. When either is `false`, the text SHALL be inserted inline into the textarea as if no threshold existed. Image clipboard items (pasted screenshots) are unaffected by either flag — they still convert to `AttachmentType.Image` attachments and proceed through the normal `validateAttachment` path.
 
-The host app is responsible for setting `isAttachmentsEnabled` based on whether the selected deployment supports attachments:
-- When no deployment is selected, the prop is omitted (undefined → `true`), allowing conversion.
-- When a deployment is selected, the host passes `isAttachmentsEnabled={isAttachmentsAllowed}` where `isAttachmentsAllowed` is derived from `selectedDeployment.inputAttachmentTypes` being non-empty.
+The host app is responsible for resolving both props from the selected deployment:
+- When no deployment is selected, both props are omitted (undefined → `true`), allowing conversion.
+- When a deployment is selected, the host passes `isAttachmentsEnabled={isAttachmentsAllowed}` where `isAttachmentsAllowed` is derived from `selectedDeployment.inputAttachmentTypes` being non-empty, and `isTextAttachmentsAllowed={isMimeTypeAllowed('text/plain', inputAttachmentTypes)}` — `true` when the list accepts `text/plain` (an explicit `text/plain` entry, the `text/*` wildcard, or a global `*` / `*/*` entry), `false` when the model accepts only other kinds of attachments (e.g. images only).
 
 `selectedDeployment` here is the BFF's `DeploymentItemDto`, so the field is
 `inputAttachmentTypes`. In a raw DIAL Core payload the same field is
 `input_attachment_types` — see the note in `attachment-unsupported-type-error`.
 
-This prevents the erroneous "Attachments not supported" error banner that appeared when a user pasted a long prompt into the input while a model with no attachment support was selected.
+This prevents two erroneous banners: the "Attachments not supported" notification when a user pasted a long prompt while a model with no attachment support was selected, and the "File extension not supported" notification when a model that accepts only non-text attachments (e.g. images only) auto-converted a long paste into a `text/plain` attachment that the model's own validation rejects.
 
 #### Scenario: Long pasted text on a model without attachment support stays inline
 
@@ -305,23 +305,31 @@ This prevents the erroneous "Attachments not supported" error banner that appear
 - **AND** no attachment card is created
 - **AND** no "Attachments not supported" notification appears
 
-#### Scenario: Long pasted text on a model with attachment support is converted normally
+#### Scenario: Long pasted text on a model that accepts only non-text attachments stays inline
 
-- **WHEN** `isAttachmentsEnabled` is `true` (default)
+- **WHEN** `isAttachmentsEnabled` is `true` and `isTextAttachmentsAllowed` is `false` (e.g. `inputAttachmentTypes: ['image/png']`)
+- **AND** the user pastes plain text longer than `pasteTextThreshold` characters
+- **THEN** the text is inserted into the textarea normally
+- **AND** no attachment card is created
+- **AND** no "File extension not supported" notification appears
+
+#### Scenario: Long pasted text on a model that accepts text attachments is converted normally
+
+- **WHEN** `isAttachmentsEnabled` and `isTextAttachmentsAllowed` are both `true` (the default, or an explicit `text/plain` / `text/*` / all-types entry in `inputAttachmentTypes`)
 - **AND** the user pastes plain text longer than `pasteTextThreshold` characters
 - **THEN** the text is converted to a `text/plain` attachment and shown as an attachment card
 - **AND** the textarea receives no text (paste is intercepted)
 
-#### Scenario: Pasted image is unaffected by isAttachmentsEnabled
+#### Scenario: Pasted image is unaffected by the suppression flags
 
-- **WHEN** `isAttachmentsEnabled` is `false`
+- **WHEN** either `isAttachmentsEnabled` or `isTextAttachmentsAllowed` is `false`
 - **AND** the user pastes an image from the clipboard (no plain text in the clipboard)
 - **THEN** the image is still converted to an `AttachmentType.Image` attachment
 - **AND** the normal `validateAttachment` path runs for the image attachment
 
 #### Scenario: No deployment selected — conversion is not suppressed
 
-- **WHEN** `isAttachmentsEnabled` is `undefined` (no deployment selected)
+- **WHEN** `isAttachmentsEnabled` and `isTextAttachmentsAllowed` are both `undefined` (no deployment selected)
 - **AND** the user pastes plain text longer than `pasteTextThreshold` characters
 - **THEN** the text is converted to a `text/plain` attachment (default behaviour)
 
@@ -336,17 +344,19 @@ content so the user can shorten it. `maxMessageLength` is the cap on message tex
 separate rule from `pasteTextThreshold`, which only decides when pasted text becomes an
 attachment.
 
-When `isAttachmentsEnabled` is `false` and the user pastes plain text whose length is ≥
+When the paste-to-attachment conversion is disabled (`isAttachmentsEnabled` or
+`isTextAttachmentsAllowed` is `false`) and the user pastes plain text whose length is ≥
 `maxMessageLength`, the `Input` component SHALL additionally call
 `onMessageTooLong(length, maxMessageLength)` at paste time. The pasted text is still
 inserted inline — the component does NOT call `preventDefault`. The host app is responsible
 for surfacing the error to the user (e.g. via a notification).
 
-The paste-time warning is deliberately limited to `isAttachmentsEnabled === false`. When
-attachments are enabled, an over-threshold paste becomes an attachment and leaves the inline
-text untouched, and an under-threshold paste is at most `pasteTextThreshold` characters and
-so cannot reach the cap on its own. Text already in the textarea plus a below-threshold
-paste can exceed the cap; that case is caught by the send-time gate, not at paste time.
+The paste-time warning is deliberately limited to configurations where the paste cannot
+become an attachment. When the conversion is enabled, an over-threshold paste becomes an
+attachment and leaves the inline text untouched, and an under-threshold paste is at most
+`pasteTextThreshold` characters and so cannot reach the cap on its own. Text already in the
+textarea plus a below-threshold paste can exceed the cap; that case is caught by the
+send-time gate, not at paste time.
 
 This applies to every surface that embeds `Input`:
 
@@ -386,6 +396,12 @@ This applies to every surface that embeds `Input`:
 - **WHEN** the user pastes text of length ≥ `maxMessageLength`
 - **THEN** `onMessageTooLong(length, maxMessageLength)` is called and the text is inserted inline
 
+#### Scenario: Paste reaches the cap while text attachments are not allowed
+
+- **GIVEN** `isAttachmentsEnabled` is `true` and `isTextAttachmentsAllowed` is `false`
+- **WHEN** the user pastes text of length ≥ `maxMessageLength`
+- **THEN** `onMessageTooLong(length, maxMessageLength)` is called and the text is inserted inline
+
 #### Scenario: Paste below the cap while attachments are disabled
 
 - **GIVEN** `isAttachmentsEnabled` is `false`
@@ -393,9 +409,9 @@ This applies to every surface that embeds `Input`:
 - **THEN** `onMessageTooLong` is NOT called at paste time and the text is inserted inline normally
 - **AND** this holds even when the pasted length is at or above `pasteTextThreshold`
 
-#### Scenario: Paste over the attachment threshold while attachments are enabled
+#### Scenario: Paste over the attachment threshold while the conversion is enabled
 
-- **GIVEN** `isAttachmentsEnabled` is `true`
+- **GIVEN** the paste-to-attachment conversion is enabled (`isAttachmentsEnabled` and `isTextAttachmentsAllowed` both `true`)
 - **WHEN** the user pastes text longer than `pasteTextThreshold`
 - **THEN** the pasted text is converted to an attachment as usual and `onMessageTooLong` is NOT called at paste time
 

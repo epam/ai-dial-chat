@@ -975,6 +975,23 @@ describe('Input — pasted attachment expand', () => {
       );
     });
   });
+
+  /*
+   * An attachments-enabled model that does not accept text/plain (e.g. an
+   * image-only model) must not convert the paste — the converted attachment
+   * would fail validation with "File extension not supported".
+   */
+  it('does not convert a long paste to an attachment when text attachments are not allowed', () => {
+    render(<Input pasteTextThreshold={5} isTextAttachmentsAllowed={false} />);
+    const text = 'This is long enough to otherwise become a pasted attachment';
+
+    pasteText(screen.getByRole('textbox'), text);
+
+    expect(
+      screen.queryByRole('button', { name: 'Download attachment' }),
+    ).toBeNull();
+    expect(screen.queryByRole('list', { name: 'Attached files' })).toBeNull();
+  });
 });
 
 describe('Input — message length cap', () => {
@@ -1073,6 +1090,32 @@ describe('Input — message length cap', () => {
     });
 
     expect(onMessageTooLong).not.toHaveBeenCalled();
+  });
+
+  /*
+   * When the paste cannot become an attachment (text attachments not allowed),
+   * it lands inline, so the paste itself is the only chance to report the cap.
+   */
+  it('warns at paste time when text attachments are not allowed', () => {
+    const onMessageTooLong = vi.fn();
+    render(
+      <Input
+        isAttachmentsEnabled
+        isTextAttachmentsAllowed={false}
+        maxMessageLength={MAX}
+        pasteTextThreshold={2}
+        onMessageTooLong={onMessageTooLong}
+      />,
+    );
+
+    fireEvent.paste(screen.getByRole('textbox'), {
+      clipboardData: {
+        items: [] as unknown as DataTransferItemList,
+        getData: () => 'x'.repeat(MAX + 5),
+      },
+    });
+
+    expect(onMessageTooLong).toHaveBeenCalledWith(MAX + 5, MAX);
   });
 });
 

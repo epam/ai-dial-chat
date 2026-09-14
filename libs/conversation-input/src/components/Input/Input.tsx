@@ -126,6 +126,7 @@ export const Input: FC<InputProps> = ({
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
   isAttachmentsEnabled = true,
+  isTextAttachmentsAllowed = true,
   usageLimitsSlot,
   onMessageTooLong,
 }) => {
@@ -360,23 +361,32 @@ export const Input: FC<InputProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  /*
+   * A long plain-text paste becomes a `text/plain` attachment only when the
+   * selected model would accept one: `isAttachmentsEnabled` says attachments
+   * are supported at all, `isTextAttachmentsAllowed` says a `text/plain`
+   * attachment would pass the host's validation. On a model that accepts
+   * only other kinds of attachments (e.g. images only), converting the paste
+   * would produce an attachment the model rejects.
+   */
+  const isPasteAsAttachmentEnabled =
+    isAttachmentsEnabled && isTextAttachmentsAllowed;
   const { handlePaste: handleClipboardPaste } = useClipboardPaste(
     addAttachments,
-    isAttachmentsEnabled ? pasteTextThreshold : Infinity,
+    isPasteAsAttachmentEnabled ? pasteTextThreshold : Infinity,
   );
 
   const handlePaste = useCallback(
     (e: ClipboardEvent<HTMLTextAreaElement>) => {
       /*
-       * Deliberately narrower than the send gate above. With attachments
-       * enabled an over-threshold paste is converted to an attachment and
-       * never reaches the textarea, so warning here would be about text the
-       * user did not paste inline; an under-threshold paste is at most
-       * pasteTextThreshold characters and cannot reach the cap on its own.
-       * Existing text plus a small paste crossing the cap is not visible from
-       * the pasted string's length at all — the send gate catches that.
+       * Deliberately narrower than the send gate above. When a paste becomes
+       * an attachment it never reaches the textarea, so warning here would be
+       * about text the user did not paste inline; an under-threshold paste is
+       * at most pasteTextThreshold characters and cannot reach the cap on its
+       * own. Existing text plus a small paste crossing the cap is not visible
+       * from the pasted string's length at all — the send gate catches that.
        */
-      if (!isAttachmentsEnabled) {
+      if (!isPasteAsAttachmentEnabled) {
         const text = e.clipboardData.getData('text/plain');
         if (text.length >= maxMessageLength) {
           onMessageTooLong?.(text.length, maxMessageLength);
@@ -385,7 +395,7 @@ export const Input: FC<InputProps> = ({
       handleClipboardPaste(e);
     },
     [
-      isAttachmentsEnabled,
+      isPasteAsAttachmentEnabled,
       maxMessageLength,
       onMessageTooLong,
       handleClipboardPaste,

@@ -52,12 +52,20 @@ import { ConversationInput } from '@epam/ai-dial-conversation-input';
 `pasteTextThreshold` (default `4000`) and `maxMessageLength` (default `50000`)
 are two separate rules. `pasteTextThreshold` is the character count above which
 pasted plain text becomes an attachment instead of inline content — it applies
-only when attachments are supported. `maxMessageLength` caps the message text:
-sending at or above it is blocked on **every** model regardless of attachment
-support, `onMessageTooLong(length, maxMessageLength)` fires instead, and the
-textarea keeps its content. A paste at or above the cap also reports through
-`onMessageTooLong` when attachments are disabled, since there the pasted text
-lands inline rather than becoming an attachment.
+only when a text attachment would be accepted, i.e. when both
+`isAttachmentsEnabled` (default `true`) and `isTextAttachmentsAllowed`
+(default `true`) hold. The host resolves `isTextAttachmentsAllowed` from the
+selected model's allowed attachment MIME types — `true` when they accept
+`text/plain` (`text/plain` itself, `text/*`, or `*/*`), `false` for models that
+accept only other kinds of attachments (e.g. images only), so a long paste
+there inserts inline instead of becoming an attachment the model would reject.
+`maxMessageLength` caps the message text: sending at or above it is blocked on
+**every** model regardless of attachment support,
+`onMessageTooLong(length, maxMessageLength)` fires instead, and the textarea
+keeps its content. A paste at or above the cap also reports through
+`onMessageTooLong` when the paste-to-attachment conversion is disabled (either
+flag `false`), since there the pasted text lands inline rather than becoming an
+attachment.
 
 `message` and `textInsertion` are two different ways to write into the textarea,
 and they are not interchangeable. `message` sets the value: the textarea resyncs

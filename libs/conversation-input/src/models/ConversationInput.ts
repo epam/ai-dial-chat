@@ -111,9 +111,19 @@ export interface EditMessageInputProps {
   /**
    * When `false`, long pasted plain text is inserted inline instead of being
    * converted to a text attachment. Set to `false` when the selected model
-   * does not support attachments. Defaults to `true`.
+   * does not support attachments. Forwarded to the inner `Input`.
    */
   isAttachmentsEnabled?: boolean;
+  /**
+   * When `false`, long pasted plain text is inserted inline instead of being
+   * converted to a text attachment even while `isAttachmentsEnabled` is `true`.
+   * The host resolves it from the selected model's allowed attachment MIME
+   * types: `true` when they accept `text/plain` (a `text/plain` entry, the
+   * `text/*` wildcard, or an all-types wildcard), `false` for models that
+   * accept only other kinds of attachments (e.g. images only). Forwarded to
+   * the inner `Input`. Defaults to `true`.
+   */
+  isTextAttachmentsAllowed?: boolean;
   /** Maximum total kept-plus-new attachments; unlimited when `undefined`, `0`, or non-finite. */
   maximumAttachmentsAmount?: number;
   /** Called when adding a batch would exceed `maximumAttachmentsAmount`. */
@@ -147,14 +157,16 @@ export interface EditMessageInputProps {
   /**
    * Maximum character count for the message text. Sending text at or above this
    * length triggers `onMessageTooLong` instead of being accepted, on every model.
-   * Pasting text that long additionally triggers it when `isAttachmentsEnabled`
-   * is `false`. Separate from `pasteTextThreshold`, which only decides when a
+   * Pasting text that long additionally triggers it when the paste-to-attachment
+   * conversion is disabled (`isAttachmentsEnabled` or `isTextAttachmentsAllowed`
+   * is `false`). Separate from `pasteTextThreshold`, which only decides when a
    * paste becomes an attachment. Defaults to `50000`.
    */
   maxMessageLength?: number;
   /**
    * Called when the user sends text whose length is ≥ `maxMessageLength`, and when
-   * they paste text that long while `isAttachmentsEnabled` is `false`. A blocked
+   * they paste text that long while the paste-to-attachment conversion is disabled
+   * (`isAttachmentsEnabled` or `isTextAttachmentsAllowed` is `false`). A blocked
    * send leaves the textarea's content in place; a paste is still inserted inline.
    * The host is responsible for surfacing the error to the user.
    */
@@ -213,8 +225,9 @@ export interface ConversationInputProps {
   /**
    * Maximum character count for the message text. Sending text at or above this
    * length triggers `onMessageTooLong` instead of being accepted, on every model.
-   * Pasting text that long additionally triggers it when `isAttachmentsEnabled`
-   * is `false`. Separate from `pasteTextThreshold`, which only decides when a
+   * Pasting text that long additionally triggers it when the paste-to-attachment
+   * conversion is disabled (`isAttachmentsEnabled` or `isTextAttachmentsAllowed`
+   * is `false`). Separate from `pasteTextThreshold`, which only decides when a
    * paste becomes an attachment. Defaults to `50000`.
    */
   maxMessageLength?: number;
@@ -329,9 +342,19 @@ export interface ConversationInputProps {
   /**
    * When `false`, long pasted plain text is inserted inline instead of being
    * converted to a text attachment. Set to `false` when the selected model
-   * does not support attachments. Defaults to `true`.
+   * does not support attachments. Forwarded to the inner `Input`.
    */
   isAttachmentsEnabled?: boolean;
+  /**
+   * When `false`, long pasted plain text is inserted inline instead of being
+   * converted to a text attachment even while `isAttachmentsEnabled` is `true`.
+   * The host resolves it from the selected model's allowed attachment MIME
+   * types: `true` when they accept `text/plain` (a `text/plain` entry, the
+   * `text/*` wildcard, or an all-types wildcard), `false` for models that
+   * accept only other kinds of attachments (e.g. images only). Forwarded to
+   * the inner `Input`. Defaults to `true`.
+   */
+  isTextAttachmentsAllowed?: boolean;
   /**
    * Maximum number of attachments allowed in the input tray. Undefined, `0`,
    * or non-finite values mean there is no count limit.
@@ -408,7 +431,8 @@ export interface ConversationInputProps {
   usageLimitsSlot?: ReactNode;
   /**
    * Called when the user sends text whose length is ≥ `maxMessageLength`, and when
-   * they paste text that long while `isAttachmentsEnabled` is `false`. A blocked
+   * they paste text that long while the paste-to-attachment conversion is disabled
+   * (`isAttachmentsEnabled` or `isTextAttachmentsAllowed` is `false`). A blocked
    * send leaves the textarea's content in place; a paste is still inserted inline.
    * The host is responsible for surfacing the error to the user.
    */
