@@ -109,10 +109,27 @@ export class HeaderTokenStrategy implements AuthStrategy {
       claims.iss,
     );
 
+    /*
+     * `sub` is the server-verified identity that generation ownership is
+     * derived from (`generation-principal-ownership`). Coercing an absent
+     * claim to `''` would collapse every such caller of one provider into a
+     * single owner, so reject instead — and reject before resolving the
+     * bucket, so an unusable token costs no DIAL Core round trip.
+     */
+    const sub = verifiedClaims['sub'];
+    if (typeof sub !== 'string' || !sub) {
+      throw new UnauthorizedException({
+        code: AuthErrorCode.HeaderTokenInvalid,
+        error: 'Unauthorized',
+        message: 'Token is missing a "sub" claim',
+        statusCode: 401,
+      });
+    }
+
     const bucket = await this.resolveBucket(token);
 
     return {
-      sub: String(verifiedClaims.sub ?? ''),
+      sub,
       providerId: entry.config.id,
       claims: verifiedClaims as Record<string, unknown>,
       at: token,

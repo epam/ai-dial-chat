@@ -1,8 +1,4 @@
-## Purpose
-
-The endpoint and behaviour for cancelling an in-flight generation and persisting the partial answer.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Stop endpoint cancels an active generation
 
@@ -27,12 +23,3 @@ The backend SHALL expose `POST /api/v1/conversations/completions/stop` validated
 
 - **WHEN** the posted `generationId` + `path` match an active generation owned by a different principal
 - **THEN** the endpoint returns 404 and that generation keeps running
-
-### Requirement: Stopped generation persists a partial answer
-
-When `abort` cancels the upstream stream, the streaming request SHALL catch the abort, flag the partial assistant message `wasStoppedByUser: true`, save it, and close the response.
-
-#### Scenario: Partial answer saved with the stopped flag
-
-- **WHEN** a generation is stopped after producing some tokens
-- **THEN** the saved conversation contains the partial assistant message flagged `wasStoppedByUser: true`

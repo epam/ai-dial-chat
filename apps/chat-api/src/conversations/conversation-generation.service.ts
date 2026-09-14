@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import {
   ConflictException,
@@ -14,6 +15,8 @@ import {
 } from './dto/conversation-message.dto';
 
 const STALE_ENTRY_TTL_MS = 30 * 60 * 1000; // 30 minutes
+/* Enough digest to correlate one principal's entries across log lines. */
+const OWNER_DIGEST_LENGTH = 12;
 const DEFAULT_MAX_GENERATION_DURATION_MS = 1_800_000; // 30 minutes
 
 export enum GenerationStatus {
@@ -46,6 +49,19 @@ export interface GenerationAttachment {
   emitter: EventEmitter;
 }
 
+/*
+ * Under header authentication the owner key contains the caller's OIDC
+ * subject, so it must never reach a log line verbatim
+ * (`generation-principal-ownership`). Operators keep the ability to correlate
+ * a principal's entries through the digest; the subject itself does not leave
+ * the process.
+ */
+const digestOwnerKey = (ownerKey: string): string =>
+  createHash('sha256')
+    .update(ownerKey)
+    .digest('hex')
+    .slice(0, OWNER_DIGEST_LENGTH);
+
 const createPlaceholderMessage = (): ConversationMessageDto => ({
   role: ConversationMessageRole.Assistant,
   content: '',
@@ -76,8 +92,30 @@ interface GenerationEntry {
   maxDurationTimer: NodeJS.Timeout;
   /** Released when this entry is no longer retained by the registry. */
   finishTracking: () => void;
+  /**
+   * Pre-rendered, subject-free identification of this entry for log lines:
+   * the conversation path plus a truncated digest of the owner key. The
+   * registry key itself must never be logged — under header authentication
+   * its owner half is the caller's OIDC subject
+   * (`generation-principal-ownership`) — and it is never parsed back into its
+   * components, so the label is built once at `register` from the values the
+   * caller supplied.
+   */
+  logLabel: string;
 }
 
+/**
+ * In-memory registry of active generations, keyed by `` `${ownerKey}::${path}` ``.
+ *
+ * `ownerKey` is an **opaque principal key**, not a session id: the caller
+ * resolves it through `resolvePrincipalKey`
+ * (`apps/chat-api/src/auth/session/principal-key.ts`), which yields the cookie
+ * session id for a cookie-authenticated caller and the verified
+ * (`providerId`, `sub`) pair for a header-authenticated one. This service
+ * never inspects the authentication mode and never derives the key itself —
+ * it only uses it as a map key. See `generation-registry` and
+ * `generation-principal-ownership`.
+ */
 @Injectable()
 export class ConversationGenerationService implements OnModuleDestroy {
   private readonly logger = new Logger(ConversationGenerationService.name);
@@ -90,8 +128,8 @@ export class ConversationGenerationService implements OnModuleDestroy {
       DEFAULT_MAX_GENERATION_DURATION_MS;
   }
 
-  private buildKey(sessionId: string, path: string): string {
-    return `${sessionId}::${path}`;
+  private buildKey(ownerKey: string, path: string): string {
+    return `${ownerKey}::${path}`;
   }
 
   private removeEntry(key: string, entry: GenerationEntry): void {
@@ -133,20 +171,20 @@ export class ConversationGenerationService implements OnModuleDestroy {
     const cutoff = Date.now() - STALE_ENTRY_TTL_MS;
     for (const [key, entry] of this.registry) {
       if (entry.startedAt < cutoff) {
-        this.logger.warn(`Evicting stale generation entry: ${key}`);
+        this.logger.warn(`Evicting stale generation entry: ${entry.logLabel}`);
         this.removeEntry(key, entry);
       }
     }
   }
 
   register(
-    sessionId: string,
+    ownerKey: string,
     path: string,
     generationId: string,
   ): AbortController {
     this.evictStale();
 
-    const key = this.buildKey(sessionId, path);
+    const key = this.buildKey(ownerKey, path);
     const existing = this.registry.get(key);
     if (existing?.status === GenerationStatus.Active) {
       throw new ConflictException(
@@ -160,7 +198,7 @@ export class ConversationGenerationService implements OnModuleDestroy {
     const abortController = new AbortController();
     const emitter = new EventEmitter();
     /*
-     * Multiple tabs of the same login can all attach to the same generation
+     * Multiple clients of the same principal can all attach to the same generation
      * (generation-live-replay) — unbounded on purpose, each subscriber
      * removes its own listener on terminal/disconnect.
      */
@@ -169,7 +207,7 @@ export class ConversationGenerationService implements OnModuleDestroy {
       const current = this.registry.get(key);
       if (current?.generationId === generationId) {
         this.logger.warn(
-          `Aborting generation past MAX_GENERATION_DURATION_MS: ${key}`,
+          `Aborting generation past MAX_GENERATION_DURATION_MS: ${current.logLabel}`,
         );
         current.abortController.abort();
       }
@@ -183,6 +221,7 @@ export class ConversationGenerationService implements OnModuleDestroy {
       emitter,
       maxDurationTimer,
       finishTracking: trackGeneration(),
+      logLabel: `path=${path} owner=${digestOwnerKey(ownerKey)}`,
     });
     return abortController;
   }
@@ -195,12 +234,12 @@ export class ConversationGenerationService implements OnModuleDestroy {
    * nothing.
    */
   seedAssembledMessage(
-    sessionId: string,
+    ownerKey: string,
     path: string,
     generationId: string,
     message: ConversationMessageDto,
   ): void {
-    const entry = this.registry.get(this.buildKey(sessionId, path));
+    const entry = this.registry.get(this.buildKey(ownerKey, path));
     if (!entry || entry.generationId !== generationId) return;
     entry.assembledMessage = message;
   }
@@ -211,13 +250,13 @@ export class ConversationGenerationService implements OnModuleDestroy {
    * currently-attached late subscriber.
    */
   applyChunk(
-    sessionId: string,
+    ownerKey: string,
     path: string,
     generationId: string,
     rawChunk: unknown,
     message: ConversationMessageDto,
   ): void {
-    const entry = this.registry.get(this.buildKey(sessionId, path));
+    const entry = this.registry.get(this.buildKey(ownerKey, path));
     if (!entry || entry.generationId !== generationId) return;
     entry.assembledMessage = message;
     entry.emitter.emit('chunk', rawChunk);
@@ -226,19 +265,19 @@ export class ConversationGenerationService implements OnModuleDestroy {
   /**
    * Synchronously returns the current assembled-message snapshot and the
    * emitter to subscribe to, or `undefined` when no active generation exists
-   * for this session+path — including when one existed but already
+   * for this ownerKey+path — including when one existed but already
    * finalized. Callers MUST attach their listener in the same synchronous
    * step as reading `assembledMessage` (no `await` in between), so no chunk
    * emitted concurrently can land in the gap between the two.
    */
-  attach(sessionId: string, path: string): GenerationAttachment | undefined {
-    const entry = this.registry.get(this.buildKey(sessionId, path));
+  attach(ownerKey: string, path: string): GenerationAttachment | undefined {
+    const entry = this.registry.get(this.buildKey(ownerKey, path));
     if (!entry) return undefined;
     return { assembledMessage: entry.assembledMessage, emitter: entry.emitter };
   }
 
-  abort(sessionId: string, path: string, generationId: string): boolean {
-    const key = this.buildKey(sessionId, path);
+  abort(ownerKey: string, path: string, generationId: string): boolean {
+    const key = this.buildKey(ownerKey, path);
     const entry = this.registry.get(key);
     if (
       !entry ||
@@ -253,13 +292,13 @@ export class ConversationGenerationService implements OnModuleDestroy {
     return true;
   }
 
-  getStatus(sessionId: string, path: string): GenerationStatus | undefined {
-    const key = this.buildKey(sessionId, path);
+  getStatus(ownerKey: string, path: string): GenerationStatus | undefined {
+    const key = this.buildKey(ownerKey, path);
     return this.registry.get(key)?.status;
   }
 
-  complete(sessionId: string, path: string, generationId: string): void {
-    const key = this.buildKey(sessionId, path);
+  complete(ownerKey: string, path: string, generationId: string): void {
+    const key = this.buildKey(ownerKey, path);
     const entry = this.registry.get(key);
     if (entry?.generationId === generationId) {
       clearTimeout(entry.maxDurationTimer);
@@ -279,12 +318,12 @@ export class ConversationGenerationService implements OnModuleDestroy {
    * an error.
    */
   error(
-    sessionId: string,
+    ownerKey: string,
     path: string,
     generationId: string,
     message?: string,
   ): void {
-    const key = this.buildKey(sessionId, path);
+    const key = this.buildKey(ownerKey, path);
     const entry = this.registry.get(key);
     if (entry?.generationId === generationId) {
       clearTimeout(entry.maxDurationTimer);

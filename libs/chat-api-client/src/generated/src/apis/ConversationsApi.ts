@@ -124,7 +124,7 @@ export interface WatchConversationRequest {
  */
 export class ConversationsApi extends runtime.BaseAPI {
   /**
-   * Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Session-scoped — only the session that could stop the generation can attach to it.
+   * Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.
    * Attach to an active generation and replay it live
    */
   async attachToGenerationRaw(
@@ -161,7 +161,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Session-scoped — only the session that could stop the generation can attach to it.
+   * Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.
    * Attach to an active generation and replay it live
    */
   async attachToGeneration(

@@ -5,6 +5,7 @@ import { MeterProvider, MetricReader } from '@opentelemetry/sdk-metrics';
 import type { Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
+import { AuthSource } from '../../auth/auth-source.enum';
 import { ClientChannelController } from '../../client-channel/client-channel.controller';
 import { ClientChannelService } from '../../client-channel/client-channel.service';
 import { ConversationGenerationService } from '../../conversations/conversation-generation.service';
@@ -39,8 +40,11 @@ class TestResponse extends EventEmitter {
 
 const SSE_ATTACH_MAX_BUFFERED_BYTES = 1024 * 1024;
 
+const OWNER_KEY = 'c:test-session';
+
 const request = {
   user: { at: 'test-token', bucket: 'test-bucket', sid: 'test-session' },
+  authSource: AuthSource.Cookie,
 } as unknown as Request;
 
 describe('SSE subscription metrics', () => {
@@ -319,7 +323,7 @@ describe('SSE subscription metrics', () => {
 
       try {
         const service = generationModule.get(ConversationGenerationService);
-        service.register('test-session', 'test-path', 'test-generation');
+        service.register(OWNER_KEY, 'test-path', 'test-generation');
         await generationModule
           .get(ConversationController)
           .attachToGeneration(request, response as unknown as Response, {

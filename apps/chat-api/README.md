@@ -242,6 +242,15 @@ Alongside the encrypted session cookie, the BFF can optionally authenticate requ
 | `AUTH_HEADER_TOKEN_JWKS_CACHE_TTL_SECONDS`   | `600`   | How long a provider's remote JWK set is cached before being refreshed.                                                                       |
 | `AUTH_HEADER_TOKEN_BUCKET_CACHE_TTL_SECONDS` | `60`    | TTL for the DIAL Core bucket resolved for a header-authenticated caller, cached by a hash of the token.                                      |
 
+A verified token must carry a non-empty `sub` claim. One that passes issuer allowlisting, provider matching and signature/time verification but has no `sub` (or an empty one) is rejected with `401` / `AUTH_HEADER_TOKEN_INVALID`, because `sub` is the server-verified identity the BFF derives per-caller state from.
+
+**Chat generation under header auth.** `POST /api/v1/conversations/completions`, `.../completions/stop` and `.../completions/attach` all work for a header-authenticated caller. Two consequences operators should plan for:
+
+- **All clients of one (`providerId`, `sub`) are a single generation owner.** A bearer request carries no server-issued session artifact, so the subject is the finest identity the server can verify — distinguishing one client of a subject from another would mean trusting a client-asserted value. So for one conversation path only one generation is active across all of that subject's clients: a second concurrent start gets `409`, and any of them can stop or attach to the running one. This mirrors how multiple browser tabs of a single cookie session already behave. A different `sub`, or the same `sub` from a different `providerId`, is a different principal and gets `404` — the same answer as a path with no generation at all.
+- **The token captured at generation start is used for the whole generation.** `streamCompletion` captures the access token once, at request start, and reuses it for the upstream relay _and_ the persistence writes that follow. Because the BFF performs no server-side refresh for header callers by contract, a token that expires mid-generation fails that generation. `MAX_GENERATION_DURATION_MS` bounds how long a captured token can be in flight, so size token lifetime against it.
+
+Ownership does not depend on the token itself — it is derived from `providerId` + `sub` — so renewing an access token mid-generation keeps the caller's ability to stop and attach to what it started.
+
 #### Auth provider environment variables
 
 Each identity provider is configured through its own set of discrete environment variables, following the `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` convention. A provider is registered only when its `CLIENT_ID` variable is set; an unconfigured provider is silently skipped. If `CLIENT_ID` is set but another field that provider requires is missing, the application fails to boot with an error naming the missing variable. The provider's `id` (used in `/api/v1/auth/login/<id>` and in the `/api/v1/auth/providers` response) is fixed in code and cannot be overridden. Only one instance of each provider type is supported.

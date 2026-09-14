@@ -58,7 +58,7 @@ When `AUTH_HEADER_TOKEN_ENABLED` is `true`, the system SHALL authenticate reques
 
 The `aud` claim is deliberately **not** constrained: the trust boundary here is the pair of checks that the issuer is on the operator's `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS` allowlist **and** that a provider is registered for it, after which DIAL Core itself authorizes the token. Constraining `aud` would additionally require operators to enumerate every client id allowed to call the BFF.
 
-The order of checks SHALL be: decode the token unverified to read `iss`; reject an undecodable token; reject a token with no `iss`; reject an issuer absent from `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`; reject an allowlisted issuer with no registered provider; then verify the signature and time claims. Reading `iss` before verification is safe because it is only used to select which JWKS to verify against, and the allowlist is consulted before any key is fetched. When resolving the registered provider for an Azure AD tenant, an `iss` claim in the Azure AD v1 format (`https://sts.windows.net/{tenant}/`) SHALL be treated as equivalent to the same tenant's v2 format (`https://login.microsoftonline.com/{tenant}/v2.0`) if no provider is registered under the exact issuer string presented.
+The order of checks SHALL be: decode the token unverified to read `iss`; reject an undecodable token; reject a token with no `iss`; reject an issuer absent from `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`; reject an allowlisted issuer with no registered provider; then verify the signature and time claims; and finally reject a token whose verified claims carry no `sub`, or whose `sub` is an empty string. The `sub` claim SHALL NOT be coerced to an empty string: it is the server-verified identity that `generation-principal-ownership` derives generation ownership from, so an empty subject would collapse every such caller of one provider into a single owner. Reading `iss` before verification is safe because it is only used to select which JWKS to verify against, and the allowlist is consulted before any key is fetched. When resolving the registered provider for an Azure AD tenant, an `iss` claim in the Azure AD v1 format (`https://sts.windows.net/{tenant}/`) SHALL be treated as equivalent to the same tenant's v2 format (`https://login.microsoftonline.com/{tenant}/v2.0`) if no provider is registered under the exact issuer string presented.
 
 #### Scenario: Valid token from a registered, allowlisted issuer authenticates the request
 
@@ -114,6 +114,12 @@ The order of checks SHALL be: decode the token unverified to read `iss`; reject 
 
 - **WHEN** `AUTH_HEADER_TOKEN_ENABLED` is `false` (the default) and a request carries an `Authorization: Bearer <token>` header along with a valid session cookie
 - **THEN** the request is authenticated via the session cookie exactly as it would be with no `Authorization` header present, and the header's token is never parsed or verified
+
+
+#### Scenario: A verified token with no `sub` claim is rejected as invalid
+
+- **WHEN** a request carries a bearer token that passes issuer allowlisting, provider matching, and signature/time verification, but whose verified claims contain no `sub` (or a `sub` that is an empty string)
+- **THEN** the response is `401` with error code `AUTH_HEADER_TOKEN_INVALID`, and `req.user` is never populated with an empty subject
 
 ### Requirement: JWKS caching, not per-request fetch
 
@@ -211,3 +217,19 @@ The system SHALL NOT attempt token refresh for a header-authenticated request, a
 
 - **WHEN** the OpenAPI document is generated via `npm run openapi`
 - **THEN** the `components.securitySchemes` object contains both a cookie-based `session` scheme and a `bearer` HTTP scheme with `scheme: bearer` and `bearerFormat: JWT`
+
+### Requirement: No endpoint rejects a header-authenticated caller for lacking a session artifact
+
+`SessionUser.sid` and `SessionUser.csrf` are absent by design for a header-authenticated caller, because no session is created for one. No endpoint SHALL therefore reject an otherwise-authorized request solely because one of those fields is absent, and no endpoint SHALL treat their absence as a reason to return `401`.
+
+Server-side state that needs a stable per-caller identity SHALL derive it from verified identity data per `generation-principal-ownership`, not from `sid`.
+
+#### Scenario: A business endpoint does not demand a cookie session
+
+- **WHEN** a request authenticated as `AuthSource.Header` reaches any non-public endpoint the caller is authorized for
+- **THEN** the endpoint does not respond `401` on the grounds that `SessionUser.sid` or `SessionUser.csrf` is absent
+
+#### Scenario: The generation endpoints are reachable under header auth
+
+- **WHEN** a header-authenticated caller posts to `POST /api/v1/conversations/completions`, `POST /api/v1/conversations/completions/stop`, or `POST /api/v1/conversations/completions/attach`
+- **THEN** the request is handled on its merits — succeeding, or failing with the endpoint's own documented `404`/`409`/`5xx` — and is never rejected with `401` for the absence of a cookie-authenticated session

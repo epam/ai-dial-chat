@@ -8,6 +8,8 @@ import type {
 } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthSource } from '../../auth/auth-source.enum';
+import type { SessionUser } from '../../auth/session/session.types';
 import { ConversationGenerationService } from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
@@ -25,6 +27,17 @@ const TEST_USER = {
   claims: {},
   csrf: 'test-csrf',
 };
+
+/* A bearer caller carries no `sid`/`csrf` — no session is created for one. */
+const HEADER_USER: SessionUser = {
+  sub: 'header-sub',
+  providerId: 'keycloak',
+  at: 'header-access-token',
+  bucket: 'test-bucket',
+  claims: {},
+};
+
+const COOKIE_OWNER_KEY = `c:${TEST_USER.sid}`;
 
 const PATH = 'test-bucket/gpt-4o__Hello__uuid';
 const GEN_ID = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
@@ -55,6 +68,7 @@ describe('POST /conversations/completions/attach (integration)', () => {
     app.use(
       (req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
         req.user = TEST_USER;
+        req.authSource = AuthSource.Cookie;
         next();
       },
     );
@@ -84,8 +98,8 @@ describe('POST /conversations/completions/attach (integration)', () => {
   });
 
   it('returns 404 when the generation already finished before attach arrives', async () => {
-    generationService.register(TEST_USER.sid, PATH, GEN_ID);
-    generationService.complete(TEST_USER.sid, PATH, GEN_ID);
+    generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
+    generationService.complete(COOKIE_OWNER_KEY, PATH, GEN_ID);
 
     await request(app.getHttpServer())
       .post('/conversations/completions/attach')
@@ -101,9 +115,9 @@ describe('POST /conversations/completions/attach (integration)', () => {
   });
 
   it('delivers a snapshot, then live chunks, then a terminal event, in order', async () => {
-    generationService.register(TEST_USER.sid, PATH, GEN_ID);
+    generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
     generationService.seedAssembledMessage(
-      TEST_USER.sid,
+      COOKIE_OWNER_KEY,
       PATH,
       GEN_ID,
       makeMessage(''),
@@ -115,13 +129,13 @@ describe('POST /conversations/completions/attach (integration)', () => {
 
     setTimeout(() => {
       generationService.applyChunk(
-        TEST_USER.sid,
+        COOKIE_OWNER_KEY,
         PATH,
         GEN_ID,
         { choices: [{ delta: { content: 'Hi' } }] },
         makeMessage('Hi'),
       );
-      generationService.complete(TEST_USER.sid, PATH, GEN_ID);
+      generationService.complete(COOKIE_OWNER_KEY, PATH, GEN_ID);
     }, 20);
 
     const res = await reqPromise.expect(200);
@@ -137,9 +151,9 @@ describe('POST /conversations/completions/attach (integration)', () => {
   });
 
   it('emits a stopped terminal event when the generation was stopped by the user', async () => {
-    generationService.register(TEST_USER.sid, PATH, GEN_ID);
+    generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
     generationService.seedAssembledMessage(
-      TEST_USER.sid,
+      COOKIE_OWNER_KEY,
       PATH,
       GEN_ID,
       makeMessage(''),
@@ -150,8 +164,8 @@ describe('POST /conversations/completions/attach (integration)', () => {
       .send({ path: PATH });
 
     setTimeout(() => {
-      generationService.abort(TEST_USER.sid, PATH, GEN_ID);
-      generationService.error(TEST_USER.sid, PATH, GEN_ID);
+      generationService.abort(COOKIE_OWNER_KEY, PATH, GEN_ID);
+      generationService.error(COOKIE_OWNER_KEY, PATH, GEN_ID);
     }, 20);
 
     const res = await reqPromise.expect(200);
@@ -159,9 +173,9 @@ describe('POST /conversations/completions/attach (integration)', () => {
   });
 
   it('supports two concurrent subscribers on the same generation, each with their own snapshot', async () => {
-    generationService.register(TEST_USER.sid, PATH, GEN_ID);
+    generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
     generationService.seedAssembledMessage(
-      TEST_USER.sid,
+      COOKIE_OWNER_KEY,
       PATH,
       GEN_ID,
       makeMessage(''),
@@ -176,13 +190,13 @@ describe('POST /conversations/completions/attach (integration)', () => {
 
     setTimeout(() => {
       generationService.applyChunk(
-        TEST_USER.sid,
+        COOKIE_OWNER_KEY,
         PATH,
         GEN_ID,
         { choices: [{ delta: { content: 'Hi' } }] },
         makeMessage('Hi'),
       );
-      generationService.complete(TEST_USER.sid, PATH, GEN_ID);
+      generationService.complete(COOKIE_OWNER_KEY, PATH, GEN_ID);
     }, 20);
 
     const [res1, res2] = await Promise.all([
@@ -194,5 +208,115 @@ describe('POST /conversations/completions/attach (integration)', () => {
     expect(res1.text).toContain('"type":"done"');
     expect(res2.text).toContain('"content":"Hi"');
     expect(res2.text).toContain('"type":"done"');
+  });
+});
+
+describe('POST /conversations/completions/attach — header-authenticated caller', () => {
+  let app: INestApplication;
+  let generationService: ConversationGenerationService;
+  let principal: SessionUser;
+  const HEADER_OWNER_KEY = `h:${HEADER_USER.providerId}:${HEADER_USER.sub}`;
+
+  beforeEach(async () => {
+    principal = HEADER_USER;
+    const mockService = { streamCompletion: vi.fn() };
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [ConversationController],
+      providers: [
+        { provide: ConversationService, useValue: mockService },
+        { provide: ConfigService, useValue: { get: vi.fn() } },
+        ConversationGenerationService,
+      ],
+    }).compile();
+
+    app = module.createNestApplication();
+    app.use(
+      (req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
+        req.user = principal;
+        req.authSource = AuthSource.Header;
+        next();
+      },
+    );
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
+    await app.init();
+    await app.listen(0, '127.0.0.1');
+
+    generationService = app.get(ConversationGenerationService);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  /*
+   * A non-owning principal gets the same `404` as a path with no generation at
+   * all, disclosing nothing about the running one
+   * (`generation-principal-ownership`).
+   */
+  it('returns 404 and opens no stream for a non-owning principal', async () => {
+    generationService.register(HEADER_OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(
+      HEADER_OWNER_KEY,
+      PATH,
+      GEN_ID,
+      makeMessage('secret so far'),
+    );
+
+    /* Same sub, different provider — a different principal. */
+    principal = {
+      ...HEADER_USER,
+      providerId: 'another-provider',
+    };
+
+    const res = await request(app.getHttpServer())
+      .post('/conversations/completions/attach')
+      .send({ path: PATH })
+      .expect(404);
+
+    expect(res.headers['content-type']).not.toContain('text/event-stream');
+    expect(res.text).not.toContain('secret so far');
+    expect(res.text).not.toContain('snapshot');
+  });
+
+  it('replays snapshot, live chunks and one terminal event for the bearer principal', async () => {
+    generationService.register(HEADER_OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(
+      HEADER_OWNER_KEY,
+      PATH,
+      GEN_ID,
+      makeMessage(''),
+    );
+
+    const reqPromise = request(app.getHttpServer())
+      .post('/conversations/completions/attach')
+      .send({ path: PATH });
+
+    setTimeout(() => {
+      generationService.applyChunk(
+        HEADER_OWNER_KEY,
+        PATH,
+        GEN_ID,
+        { choices: [{ delta: { content: 'Hi' } }] },
+        makeMessage('Hi'),
+      );
+      generationService.complete(HEADER_OWNER_KEY, PATH, GEN_ID);
+    }, 20);
+
+    const res = await reqPromise.expect(200);
+
+    const snapshotIdx = res.text.indexOf('"type":"snapshot"');
+    const chunkIdx = res.text.indexOf('"type":"chunk"');
+    const doneIdx = res.text.indexOf('"type":"done"');
+    expect(snapshotIdx).toBeGreaterThanOrEqual(0);
+    expect(chunkIdx).toBeGreaterThan(snapshotIdx);
+    expect(doneIdx).toBeGreaterThan(chunkIdx);
   });
 });
