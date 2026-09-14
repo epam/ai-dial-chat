@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadGatewayException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialSdkError } from '../../../common/dial/dial-error.mapper';
 import type { DialClientService } from '../../../dial/dial-client.service';
@@ -148,6 +148,185 @@ describe('ConversationListingService', () => {
           },
         }),
       );
+    });
+
+    it('returns conversations beyond the first thousand when pagination is omitted', async () => {
+      const firstPage = Array.from({ length: 1000 }, (_, index) => ({
+        url: `conversations/test-bucket/early-${index}`,
+        nodeType: 'FILE',
+        updatedAt: index,
+        permissions: ['READ', 'WRITE'],
+      }));
+      const latest = {
+        url: 'conversations/test-bucket/gpt-5__latest',
+        nodeType: 'FILE',
+        updatedAt: 2000,
+        permissions: ['READ', 'WRITE'],
+      };
+      const getMetadata = vi
+        .spyOn(mockDialClient.client, 'getConversationMetadata')
+        .mockImplementation((bucket, _path, options) => {
+          if (bucket === 'public') {
+            return Promise.resolve({ data: { items: [] } }) as never;
+          }
+          const cursor = options?.params?.query?.token;
+          return Promise.resolve({
+            data: cursor
+              ? { items: [latest] }
+              : { items: firstPage, nextToken: 'page-2' },
+          }) as never;
+        });
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toHaveLength(1001);
+      expect(result.items[0].id).toBe(latest.url);
+      expect(result.nextToken).toBeUndefined();
+      expect(getMetadata).toHaveBeenCalledWith('test-bucket', '', {
+        headers: { Authorization: 'Bearer test-token' },
+        params: {
+          query: {
+            recursive: true,
+            limit: 1000,
+            token: 'page-2',
+            permissions: true,
+          },
+        },
+      });
+      expect(
+        getMetadata.mock.calls.filter(([bucket]) => bucket === 'public'),
+      ).toHaveLength(1);
+      expect(mockUserConfigService.getPinnedIds).toHaveBeenCalledOnce();
+      expect(
+        mockScheduledTaskUnreadService.getViewedIds,
+      ).toHaveBeenCalledOnce();
+      expect(mockDialClient.client.getSharedResources).toHaveBeenCalledOnce();
+      expect(mockDialClient.client.getConversation).toHaveBeenCalledTimes(20);
+    });
+
+    it('follows public cursors independently and continues through empty pages', async () => {
+      mockUserConfigService.getPinnedIds.mockResolvedValue([
+        'conversations/test-bucket/owned',
+      ]);
+      const getMetadata = vi
+        .spyOn(mockDialClient.client, 'getConversationMetadata')
+        .mockImplementation((bucket, _path, options) => {
+          if (bucket === 'test-bucket') {
+            return Promise.resolve({
+              data: {
+                items: [
+                  {
+                    url: 'conversations/test-bucket/owned',
+                    nodeType: 'FILE',
+                    updatedAt: 10,
+                    permissions: ['READ', 'WRITE'],
+                  },
+                ],
+              },
+            }) as never;
+          }
+          const cursor = options?.params?.query?.token;
+          const data =
+            cursor === 'public-3'
+              ? {
+                  items: [
+                    {
+                      url: 'conversations/public/latest',
+                      nodeType: 'FILE',
+                      updatedAt: 20,
+                    },
+                  ],
+                }
+              : { items: [], nextToken: cursor ? 'public-3' : 'public-2' };
+          return Promise.resolve({ data }) as never;
+        });
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toMatchObject([
+        {
+          id: 'conversations/public/latest',
+          publishedWithMe: true,
+          isReadonly: true,
+        },
+        {
+          id: 'conversations/test-bucket/owned',
+          isPinned: true,
+          isReadonly: false,
+        },
+      ]);
+      expect(result.nextToken).toBeUndefined();
+      expect(
+        getMetadata.mock.calls.filter(([bucket]) => bucket === 'test-bucket'),
+      ).toHaveLength(1);
+      expect(
+        getMetadata.mock.calls
+          .filter(([bucket]) => bucket === 'public')
+          .map(([, , options]) => options?.params?.query?.token),
+      ).toEqual([undefined, 'public-2', 'public-3']);
+    });
+
+    it('fails instead of returning a partial personal history when a later page fails', async () => {
+      const failure = new BadGatewayException();
+      vi.mocked(handleDialSdkError).mockImplementation(() => {
+        throw failure;
+      });
+      vi.spyOn(
+        mockDialClient.client,
+        'getConversationMetadata',
+      ).mockImplementation((bucket, _path, options) => {
+        if (bucket === 'public')
+          return Promise.resolve({ data: { items: [] } }) as never;
+        return Promise.resolve(
+          options?.params?.query?.token
+            ? { error: {}, response: new Response(null, { status: 502 }) }
+            : {
+                data: {
+                  items: [
+                    {
+                      url: 'conversations/test-bucket/first',
+                      nodeType: 'FILE',
+                    },
+                  ],
+                  nextToken: 'page-2',
+                },
+              },
+        ) as never;
+      });
+
+      await expect(
+        service.listConversations('test-token', 'test-bucket'),
+      ).rejects.toBe(failure);
+    });
+
+    it('stops when Core repeats a personal-bucket cursor', async () => {
+      vi.mocked(handleDialSdkError).mockImplementation((error) => {
+        throw error;
+      });
+      const getMetadata = vi
+        .spyOn(mockDialClient.client, 'getConversationMetadata')
+        .mockImplementation(
+          (bucket) =>
+            Promise.resolve({
+              data:
+                bucket === 'public'
+                  ? { items: [] }
+                  : { items: [], nextToken: 'repeated' },
+            }) as never,
+        );
+
+      await expect(
+        service.listConversations('test-token', 'test-bucket'),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+      expect(
+        getMetadata.mock.calls.filter(([bucket]) => bucket === 'test-bucket'),
+      ).toHaveLength(2);
     });
 
     it('enriches display names for at most the most recently updated owned items', async () => {
@@ -891,6 +1070,7 @@ describe('ConversationListingService', () => {
       const result = await service.listConversations(
         'test-token',
         'test-bucket',
+        100,
       );
 
       expect(result.nextToken).toBeDefined();
@@ -1017,6 +1197,7 @@ describe('ConversationListingService', () => {
       const result = await service.listConversations(
         'test-token',
         'test-bucket',
+        100,
       );
 
       expect(result.nextToken).toBeDefined();

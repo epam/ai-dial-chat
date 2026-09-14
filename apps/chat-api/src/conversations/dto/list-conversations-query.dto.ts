@@ -11,11 +11,11 @@ import {
 
 export class ListConversationsQueryDto {
   @ApiPropertyOptional({
-    description: 'Maximum number of conversations to return.',
+    description:
+      'Maximum number of conversations per bucket page. Omit both limit and nextToken to return the complete history; the BFF follows Core cursors in batches of 1000. With nextToken only, the page size defaults to 100.',
     example: 100,
     minimum: 1,
     maximum: 1000,
-    default: 100,
   })
   @IsOptional()
   @IsInt()
@@ -26,7 +26,7 @@ export class ListConversationsQueryDto {
 
   @ApiPropertyOptional({
     description:
-      'Pagination cursor returned in the previous response as `nextToken`. Omit for the first page.',
+      'Pagination cursor returned in the previous response as `nextToken`. Set limit without nextToken for the first page; omit both to return the complete history.',
     example: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9',
   })
   @IsOptional()

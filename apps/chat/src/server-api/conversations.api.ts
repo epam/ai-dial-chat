@@ -75,7 +75,7 @@ export const listConversations = (
 ) =>
   conversationsApi.listConversations(
     {
-      limit: params?.limit ?? 1000,
+      limit: params?.limit,
       nextToken: params?.nextToken,
     },
     ...(signal ? [{ signal }] : []),

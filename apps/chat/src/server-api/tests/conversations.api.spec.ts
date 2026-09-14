@@ -115,7 +115,7 @@ describe('listConversations', () => {
     vi.restoreAllMocks();
   });
 
-  it('requests up to 1000 conversations by default', async () => {
+  it('requests the complete history by omitting pagination by default', async () => {
     const spy = vi
       .spyOn(conversationsApi, 'listConversations')
       .mockResolvedValue({ items: [] });
@@ -123,9 +123,8 @@ describe('listConversations', () => {
     await listConversations();
 
     expect(spy).toHaveBeenCalledWith({
-      limit: 1000,
+      limit: undefined,
       nextToken: undefined,
-      path: undefined,
     });
   });
 
@@ -139,7 +138,6 @@ describe('listConversations', () => {
     expect(spy).toHaveBeenCalledWith({
       limit: 50,
       nextToken: undefined,
-      path: undefined,
     });
   });
 
@@ -152,7 +150,7 @@ describe('listConversations', () => {
     await listConversations({}, controller.signal);
 
     expect(spy).toHaveBeenCalledWith(
-      { limit: 1000, nextToken: undefined, path: undefined },
+      { limit: undefined, nextToken: undefined },
       { signal: controller.signal },
     );
   });
