@@ -41,7 +41,7 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
     <div
       role="group"
       aria-label={labels.groupAriaLabel ?? 'Filter chats'}
-      className="flex flex-nowrap gap-2 px-3 py-2"
+      className="flex flex-nowrap gap-1 px-3 py-2"
     >
       {TABS.filter(({ value }) => !hiddenSources?.includes(value)).map(
         ({ value, labelKey }) => (
