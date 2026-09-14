@@ -96,23 +96,29 @@ const getSkeletonsByVariant = (
   );
 
 describe('Input', () => {
-  it('should hide send button when textarea is empty', () => {
+  it('should disable send button when textarea is empty', () => {
     render(<Input />);
-    expect(screen.queryByLabelText('Send message')).toBeNull();
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(true);
   });
 
-  it('should show send button when user types non-whitespace text', () => {
+  it('should enable send button when user types non-whitespace text', () => {
     render(<Input />);
     const textarea = screen.getByRole('textbox');
     fireEvent.change(textarea, { target: { value: 'Hello' } });
-    expect(screen.getByLabelText('Send message')).toBeTruthy();
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(false);
   });
 
-  it('should keep send button hidden for whitespace-only input', () => {
+  it('should keep send button disabled for whitespace-only input', () => {
     render(<Input />);
     const textarea = screen.getByRole('textbox');
     fireEvent.change(textarea, { target: { value: '   ' } });
-    expect(screen.queryByLabelText('Send message')).toBeNull();
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(true);
   });
 
   it('should pre-populate textarea with initialMessage', () => {
@@ -277,13 +283,17 @@ describe('Input', () => {
     expect(screen.getByText('doc')).toBeTruthy();
   });
 
-  it('should show send button when only an attachment is present and no text', () => {
+  it('should enable send button when only an attachment is present and no text', () => {
     render(<Input />);
-    expect(screen.queryByLabelText('Send message')).toBeNull();
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(true);
     const fileInput = getFileInput();
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
-    expect(screen.getByLabelText('Send message')).toBeTruthy();
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(false);
   });
 
   it('should call onSend with empty text and the attachment on Enter when no text is typed', () => {
@@ -495,7 +505,7 @@ describe('Input — model selector', () => {
       screen
         .getAllByRole('button')
         .filter((button) => (button as HTMLButtonElement).disabled),
-    ).toHaveLength(7);
+    ).toHaveLength(8);
   });
 
   it('shows error label as disabled item when deployments is empty', () => {

@@ -40,7 +40,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           {welcomeText}
         </h1>
       )}
-      <div className="relative w-full max-w-[748px]">
+      <div className="relative w-full max-w-[700px]">
         <Input
           placeholder={placeholder}
           isStreaming={isStreaming}

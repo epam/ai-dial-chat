@@ -30,7 +30,7 @@ The mic button and the voice bar that replaces the conversation input while a re
 
 ### Requirement: Voice bar replaces conversation input during recording
 
-The voice bar SHALL replace the textarea inside the existing input border for both dictation and attachment recording, beginning when microphone permission is requested. The draft SHALL remain in `useMessageState` while its textarea is unmounted. Existing attachment cards and any welcome heading SHALL remain present. The waveform SHALL occupy the first input content row below any attachment tray; the add/model/send action row SHALL be unavailable. Processing and error states SHALL continue to withhold the textarea until the voice session closes.
+The voice bar SHALL replace the textarea inside the existing input border for both dictation and attachment recording, beginning when microphone permission is requested. The draft SHALL remain in `useMessageState` while its textarea is unmounted. Existing attachment cards and any welcome heading SHALL remain present. The waveform SHALL occupy the first input content row below any attachment tray; the model/send action row SHALL be unavailable, but the voice bar's own attach-file control SHALL remain available (see Requirement: Attach a file during recording). Processing and error states SHALL continue to withhold the textarea until the voice session closes.
 
 #### Scenario: Recording starts from either entry point
 
@@ -46,7 +46,8 @@ The voice bar SHALL replace the textarea inside the existing input border for bo
 #### Scenario: Stop in dictation mode
 
 - **WHEN** the user presses Stop
-- **THEN** the microphone is released after the final recorder events and processing status is displayed while recognition is pending
+- **THEN** the microphone is released after the final recorder events, the waveform freezes at its last drawn state, and a processing spinner replaces the stop control while recognition is pending
+- **AND** discard remains available to cancel the pending recognition
 - **AND** successful recognition restores the textarea with appended text and focus
 
 #### Scenario: Stop in attachment mode
@@ -82,16 +83,14 @@ The waveform SHALL use the existing 200-slot ring buffer, 3 px bars and 1 px gap
 
 ### Requirement: Canvas sizing
 
-The waveform `<canvas>` element SHALL be:
-- `h-8` (32 px) on mobile breakpoints.
-- `h-6` (24 px) on desktop breakpoints, to fit alongside the voice bar's controls on one row.
+The waveform `<canvas>` element SHALL be 26 px tall at every viewport width, matching the single-line textarea's line-height (`dial-body-paragraph-text`, 26px), so the input's overall height does not change when recording starts or stops.
 
-A `ResizeObserver` SHALL be attached to the canvas so that the histogram redraws at the correct pixel width whenever the flex layout changes (e.g. on breakpoint change). Resizing SHALL NOT reset the ring buffer; it only redraws the existing buffer content at the new width.
+A `ResizeObserver` SHALL be attached to the canvas so that the histogram redraws at the correct pixel width whenever the flex layout changes. Resizing SHALL NOT reset the ring buffer; it only redraws the existing buffer content at the new width.
 
-#### Scenario: Canvas height follows the breakpoint
+#### Scenario: No height jump when recording starts
 
-- **WHEN** the voice bar is rendered at a mobile viewport and then at a desktop viewport
-- **THEN** the canvas is `h-8` on mobile and `h-6` on desktop
+- **WHEN** the host input is at its collapsed single-line height and the user starts recording
+- **THEN** the voice bar's total content height (waveform row plus controls row) matches the collapsed input's height, and the input does not visibly grow or shrink
 
 #### Scenario: A resize redraws without losing history
 
@@ -99,19 +98,35 @@ A `ResizeObserver` SHALL be attached to the canvas so that the histogram redraws
 - **THEN** the `ResizeObserver` triggers a redraw at the new pixel width
 - **AND** the already-captured waveform history remains in the ring buffer
 
-### Requirement: Mobile layout — waveform full-width, buttons on separate line
+### Requirement: Waveform full-width, buttons on separate line at every viewport width
 
-At the project's mobile breakpoint (up to 768 px), the first voice-bar row SHALL contain the dot and waveform, and the second row SHALL contain the controls aligned to the inline end. The discard control SHALL precede the filled stop-square control during recording; only discard SHALL remain during processing or error. These controls SHALL have at least 44 px touch targets. At desktop widths (from 769 px), waveform and controls SHALL share a row. Layout SHALL inherit document direction and use logical alignment; the waveform's time animation SHALL retain its existing direction.
+At every viewport width, the first voice-bar row SHALL contain the dot and waveform spanning the full width, and the second row SHALL contain the attach-file control aligned to the inline start and the discard/stop/spinner controls aligned to the inline end. The discard control SHALL precede the filled stop-square control during recording; only discard and the processing spinner SHALL remain during processing, and only discard SHALL remain during error. These controls SHALL have at least 44 px touch targets. Layout SHALL inherit document direction and use logical alignment; the waveform's time animation SHALL retain its existing direction.
 
-#### Scenario: Mobile recording
+#### Scenario: Recording at any width
 
-- **WHEN** either mode records at 360 px width
-- **THEN** the waveform fills the first row, controls occupy the next row, and no textarea or horizontal overflow is present
+- **WHEN** either mode records at any viewport width, mobile or desktop
+- **THEN** the waveform fills the first row, the attach control and discard/stop/spinner controls occupy the next row, and no textarea or horizontal overflow is present
 
-#### Scenario: Desktop recording
+---
 
-- **WHEN** either mode records at a desktop width
-- **THEN** the waveform and controls share the first content row in place of the textarea
+### Requirement: Attach a file during recording
+
+The voice bar's second row SHALL render, at its inline start, the same attach-file control (`+`, including its menu) used by the normal footer's add button — not a separate reduced control. It SHALL be disabled while the recorder is anything but actively Recording, so it cannot be used to interrupt a pending transcription, and SHALL otherwise follow the same visibility rules as the footer's add button (hidden when attachments are disabled, `hideAttachFile`, or the add button is hidden entirely) and respect the input-disabled state.
+
+#### Scenario: Attach while actively recording
+
+- **WHEN** the user activates the `+` control while Recording
+- **THEN** the same attach menu as the normal footer opens, any selected file is added to the attachment tray, and the voice session continues unaffected
+
+#### Scenario: Attach disabled while processing
+
+- **WHEN** the recorder is awaiting recognition (Processing) or in Error
+- **THEN** the `+` control is rendered but disabled
+
+#### Scenario: Attach control hidden
+
+- **WHEN** the host has no attach-file capability for the input
+- **THEN** the `+` control is absent from the voice bar's second row
 
 ---
 
@@ -142,7 +157,7 @@ The app SHALL pass translated labels to the library using `voiceRecording.micLab
 #### Scenario: Processing feedback
 
 - **WHEN** Dictate is awaiting recognition
-- **THEN** its processing label is announced politely and cancellation remains available
+- **THEN** a spinner replaces the stop control, its accessible name is announced politely via the spinner's status role, and cancellation remains available
 
 #### Scenario: Transcript delivered
 
