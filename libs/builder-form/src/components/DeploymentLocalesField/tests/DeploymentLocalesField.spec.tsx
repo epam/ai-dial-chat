@@ -45,6 +45,51 @@ const renderField = (
 describe('DeploymentLocalesField', () => {
   const user = userEvent.setup({ delay: null });
 
+  it('renders nothing when there are no selectable languages', () => {
+    const { container } = render(
+      <DeploymentLocalesField
+        value={[]}
+        onChange={vi.fn()}
+        availableLocaleOptions={[]}
+        labels={labels}
+      />,
+    );
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('renders nothing when there are no selectable languages, even with stored locales', () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <DeploymentLocalesField
+        value={[
+          {
+            id: 'locale-de',
+            language: 'de',
+            name: 'Mein Toolset',
+            description: '',
+          },
+        ]}
+        onChange={onChange}
+        availableLocaleOptions={[]}
+        labels={labels}
+      />,
+    );
+    expect(container.innerHTML).toBe('');
+    // Hiding the control must not clear the stored entries.
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('marks both the language and the name field as required', async () => {
+    renderField();
+    await user.click(screen.getByRole('button', { name: 'Add locales' }));
+    expect(
+      screen.getByRole('combobox', { name: 'Language (required)' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('textbox', { name: 'Name (required)' }),
+    ).toBeTruthy();
+  });
+
   it('hides the summary text when no additional locales are configured', () => {
     renderField();
     expect(screen.queryByText(/Locales:/)).toBeNull();
