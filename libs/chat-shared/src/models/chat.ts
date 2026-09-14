@@ -342,7 +342,7 @@ export interface Attachment extends DisplayAttachment {
 export interface UploadedAttachmentResult {
   /** The DIAL Core file URL the attachment was uploaded to. */
   url: string;
-  /** The name actually stored on DIAL Core; differs from the attachment's original name when it contained characters the storage path forbids. */
+  /** The name actually stored on DIAL Core; differs from the attachment's original name when it contained characters the storage path forbids, or when a ` (n)` suffix was needed to avoid replacing an existing file. */
   name: string;
 }
 
