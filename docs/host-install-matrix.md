@@ -26,8 +26,6 @@ Conversation list, composer and message bubbles — the smallest useful embed.
 - `@epam/ai-dial-conversation-messages`
 - `@epam/ai-dial-conversation-panel`
 - `@epam/ai-dial-ui-kit` — required peer
-- `@epam/ai-dial-quotations` — **optional peer** — the conversation stream normalizes annotations through it
-- `@epam/ai-dial-chat-api-client` — **optional peer** — the conversation hooks call DIAL Core through it
 
 ## Chat column with attachments
 

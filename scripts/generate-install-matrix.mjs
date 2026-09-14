@@ -37,22 +37,17 @@ const SCENARIOS = [
       '@epam/ai-dial-chat-shared',
     ],
     /*
-     * `@epam/ai-dial-chat-hooks/conversation` imports both of these eagerly —
-     * `apply-chunk.ts` calls `normalizeRawAnnotations` from quotations — while
-     * chat-hooks declares them optional. npm therefore installs neither, and
-     * the host's bundler is where that surfaces. Listing them is the honest
-     * state; removing the need for them is tracked in #8719.
+     * `@epam/ai-dial-quotations` and `@epam/ai-dial-chat-api-client` used to be
+     * listed here, because `@epam/ai-dial-chat-hooks/conversation` imported
+     * both eagerly while chat-hooks declared them optional: npm installed
+     * neither, and the host's bundler was where that surfaced. Both are gone
+     * now, for different reasons (#8719) — chat-hooks ships the generated
+     * client as a `dependency`, and the annotation normalizer that entry took
+     * from quotations moved to `@epam/ai-dial-chat-shared`, so the conversation
+     * entry never reaches the citation stack. This scenario's list is the whole
+     * install.
      */
-    optional: [
-      [
-        '@epam/ai-dial-quotations',
-        'the conversation stream normalizes annotations through it',
-      ],
-      [
-        '@epam/ai-dial-chat-api-client',
-        'the conversation hooks call DIAL Core through it',
-      ],
-    ],
+    optional: [],
   },
   {
     title: 'Chat column with attachments',

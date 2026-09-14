@@ -24,9 +24,11 @@ entry imports it unconditionally, so this package installs it itself and a consu
 names it.
 
 Only the file-manager pair stays **optional** (`package.json#peerDependenciesMeta` marks it
-`optional: true`) — `npm install` succeeds without it. Importing an entry without its
-documented optional peer installed does not fail at `npm install`; it fails later, at build
-time, when a bundler or `tsc` tries to resolve that entry's own imports.
+`optional: true`) — `npm install` succeeds without it, and only the `./file-manager` entry
+needs it: no other entry, the root included, imports either package anywhere but in type
+position. Importing an entry without its documented optional peer installed does not fail at
+`npm install`; it fails later, at build time, when a bundler or `tsc` tries to resolve that
+entry's own imports.
 
 Peers:
 
@@ -47,28 +49,36 @@ of this package already has its own test tooling, not this library's).
 
 ### Entry-point-to-peer matrix
 
-| Entry point      | Peers you install beyond `react`                                                                                                                |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.` (root)       | `@epam/ai-dial-ui-kit`, and `@epam/ai-dial-react-file-manager` + `ag-grid-community` if you bundle the file-manager exports the root re-exports |
-| `./markdown`     | `@epam/ai-dial-ui-kit` — the markdown stack itself ships as dependencies                                                                        |
-| `./file-manager` | `@epam/ai-dial-ui-kit`, `@epam/ai-dial-react-file-manager`, `ag-grid-community`                                                                 |
+| Entry point      | Peers you install beyond `react`                                                |
+| ---------------- | ------------------------------------------------------------------------------- |
+| `.` (root)       | `@epam/ai-dial-ui-kit`                                                          |
+| `./markdown`     | `@epam/ai-dial-ui-kit` — the markdown stack itself ships as dependencies        |
+| `./file-manager` | `@epam/ai-dial-ui-kit`, `@epam/ai-dial-react-file-manager`, `ag-grid-community` |
 
 The build preserves source-module boundaries so consumers can remove unused features.
 The FilterTab and CodeBlockTheme packed probes verify small root-import bundles without
-markdown or file-manager implementation. Root re-exports still require the documented
-peer closure to resolve before tree-shaking, which is why the markdown stack is a
-dependency rather than an optional peer: the root entry imports it unconditionally, and
-an optional peer there would let `npm install` succeed and the consumer's bundler fail.
-Scoped feature entries limit resolution to their own peer sets; they do not remove peers
-required by that feature.
+markdown or file-manager implementation.
+
+A root re-export still has to **resolve** before tree-shaking can drop it, which is why
+the markdown stack is a dependency rather than an optional peer: the root entry imports
+it unconditionally, and an optional peer there would let `npm install` succeed and the
+consumer's bundler fail. The same rule is why the root entry stops short of the two
+grid-rendering components: they live behind `./file-manager` so that the optional pair
+above is genuinely optional for a host that imports anything else from this package
+([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)). Scoped feature
+entries limit resolution to their own peer sets; they do not remove peers required by
+that feature.
 
 ## Optional file-manager entry
 
-Import `DialFileManagerShell` and `FileManagerAttachModal` from
-`@epam/ai-dial-chat-shared/file-manager` inside a lazy feature — or straight from root, per the
-tree-shaking behavior above; the dedicated subpath's advantage is avoiding the _install_
-requirement for peers your bundle would otherwise never resolve. Their root exports remain
-compatible; headless contracts and utilities still come from the root.
+`DialFileManagerShell` and `FileManagerAttachModal` are imported from
+`@epam/ai-dial-chat-shared/file-manager`, ideally inside a lazy feature. This subpath is the
+only place they are exported: it is what keeps the _install_ requirement for
+`@epam/ai-dial-react-file-manager` and `ag-grid-community` on hosts that actually render the
+grid. Their headless contracts — `FileManagerController`, both label interfaces,
+`DialFileManagerVariant`, `DialFileManagerActionProfile`, `AttachResult`, the path helpers and
+`useGridEditingScroll` — still come from the root, so a host can type its props without
+reaching this entry.
 The package declares only CSS/SCSS side effects so unused UI can be tree-shaken.
 Continue importing `@epam/ai-dial-chat-shared/styles.css` once in the host.
 
@@ -83,12 +93,11 @@ import type { FileManagerController } from '@epam/ai-dial-chat-shared';
 ## Optional markdown entry
 
 Import `MarkdownRenderer` and its supporting exports from
-`@epam/ai-dial-chat-shared/markdown` when you want to avoid installing the file-manager peer stack
-at all (see the tree-shaking note above — this subpath is about the _install_ requirement, not
-bundle size, since a root import of the same names now produces the same output). The markdown
-stack itself needs no install either way: it ships as dependencies of this package. The root
-entry continues to re-export the same names for backward compatibility, so existing root imports
-do not need to change.
+`@epam/ai-dial-chat-shared/markdown` when you want the narrowest surface for a
+markdown-only host. There is nothing left to avoid by doing so: the markdown stack ships
+as dependencies of this package, and the root entry no longer reaches the grid either, so
+a root import of the same names installs and bundles the same thing. The root entry
+continues to re-export these names, so existing root imports do not need to change.
 
 ```tsx
 import {
@@ -143,6 +152,27 @@ const docx: DocxRangeSelector = {
   text: 'Hello',
 };
 ```
+
+#### Wire-format normalization
+
+Annotations arrive in two shapes, and this package owns the conversion to the model above, so a host that only streams a conversation needs nothing from `@epam/ai-dial-quotations` for it.
+
+```tsx
+import {
+  isAnnotationSelector,
+  normalizePersistedHtmlTagAttachmentType,
+  normalizeRawAnnotations,
+} from '@epam/ai-dial-chat-shared';
+
+const annotations = normalizeRawAnnotations(
+  rawWireAnnotations,
+  message.custom_content?.attachments ?? [],
+);
+```
+
+- `normalizeRawAnnotations(raw, attachments)` — converts `message.custom_fields.annotations` entries to `Annotation[]`. Recognizes the legacy `attachment_index` + `pdf_region` shape (resolved against `attachments`, converted to a `pdf_bbox` selector) and the `html_tag` + flat `body.source.url` shape, inferring DOCX/XLSX/PPTX MIME types from the URL. Entries matching neither shape are dropped.
+- `normalizePersistedHtmlTagAttachmentType(annotation)` — repairs a stored `html_tag` annotation whose source was labelled PDF by an older normalizer when the URL's extension says otherwise. Returns a new annotation; the input is not mutated.
+- `isAnnotationSelector(value)` — the type guard `AnnotationSelector`'s open catch-all branch makes necessary before narrowing by `type`.
 
 **`end` convention differs by selector kind.** `TextCharacterRangeSelector.end` is inclusive. `DocxRangeSelector.end` and `PptxRangeSelector.end` are already **exclusive** on the wire — confirmed against captured DIAL Core responses, not assumed — so consumers must not add 1 before slicing. `ExcelRcRangeSelector.end` is a distinct concept: a 1-based `{ row, col }` address naming the range's last (inclusive) cell, `null`-or-omitted meaning a single cell. `DocxRangeSelector.story` is typed as an opaque `string` — only `'body'` is confirmed upstream, no closed enum exists.
 
@@ -673,18 +703,20 @@ import '@epam/ai-dial-chat-shared/styles.css';
 
 Shared file-manager surface: the `DialFileManagerShell` component, its supporting modals, a headless scroll hook, and the contracts consumed by `@epam/ai-dial-chat-hooks`'s `useDialFileManager`. All i18n strings are resolved by the host and passed as props — the components never call `useTranslation`.
 
+The two components that render the grid — `DialFileManagerShell` and `FileManagerAttachModal` — are exported from the **`./file-manager` entry only**, because they are what makes `@epam/ai-dial-react-file-manager` (and its `ag-grid-community` peer) something your bundler has to resolve. Everything else here — the controller and label contracts, the variant enums, `AttachResult`, the path helpers, `useGridEditingScroll`, and the two grid-free modals — comes from the root entry and touches the grid in type position only.
+
 ### DialFileManagerShell
 
 Full-featured file-manager grid (backed by `@epam/ai-dial-react-file-manager`) that binds a `FileManagerController` to the complete set of file-management actions. The shell owns the grid rendering, search, upload progress modal, operation loader modal, and bulk-action toolbar. Tabs, active tab, selection, destination picker, and browser-download callback are explicit host props.
 
 ```tsx
 import {
-  DialFileManagerShell,
   type FileManagerController,
   type DialFileManagerShellLabels,
   DialFileManagerVariant,
   DialFileManagerActionProfile,
 } from '@epam/ai-dial-chat-shared';
+import { DialFileManagerShell } from '@epam/ai-dial-chat-shared/file-manager';
 
 <DialFileManagerShell
   controller={controller} // FileManagerController
@@ -731,11 +763,13 @@ Controlled attach modal that composes `DialFileManagerShell` with selection stat
 
 ```tsx
 import {
-  FileManagerAttachModal,
-  type FileManagerAttachModalProps,
   type FileManagerAttachModalLabels,
   type AttachResult,
 } from '@epam/ai-dial-chat-shared';
+import {
+  FileManagerAttachModal,
+  type FileManagerAttachModalProps,
+} from '@epam/ai-dial-chat-shared/file-manager';
 
 <FileManagerAttachModal
   isOpen={isOpen}

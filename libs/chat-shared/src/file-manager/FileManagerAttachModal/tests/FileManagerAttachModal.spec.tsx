@@ -12,10 +12,8 @@ import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
 } from '../../file-manager-variant';
-import {
-  FileManagerAttachModal,
-  type FileManagerAttachModalLabels,
-} from '../FileManagerAttachModal';
+import type { FileManagerAttachModalLabels } from '../../labels';
+import { FileManagerAttachModal } from '../FileManagerAttachModal';
 
 vi.mock('../../DialFileManagerShell/DialFileManagerShell', async () => {
   const { DialFileManagerTabs: Tabs } =

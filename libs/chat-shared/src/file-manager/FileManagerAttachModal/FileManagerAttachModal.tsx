@@ -15,18 +15,8 @@ import {
   type DialFileManagerActionProfile,
   type DialFileManagerVariant,
 } from '../file-manager-variant';
-import type { DialFileManagerShellLabels } from '../labels';
+import type { FileManagerAttachModalLabels } from '../labels';
 import { isHiddenPath } from '../path';
-
-/** Labels for `FileManagerAttachModal`. Extends the shell labels with attach-specific strings. */
-export interface FileManagerAttachModalLabels extends DialFileManagerShellLabels {
-  /** Title displayed in the Popup header. */
-  title: string;
-  /** Label for the primary Attach button. */
-  attachLabel: string;
-  /** Optional subtitle shown below the title (e.g. allowed types / size). Pass `null` to hide. */
-  headerDescription?: string | null;
-}
 
 /** Props accepted by `FileManagerAttachModal`. */
 export interface FileManagerAttachModalProps {

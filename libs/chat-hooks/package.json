@@ -114,6 +114,7 @@
     }
   },
   "dependencies": {
+    "@epam/ai-dial-chat-api-client": "*",
     "dompurify": "3.4.15",
     "fflate": "^0.8.3",
     "lru-cache": "^10.4.3",
@@ -126,7 +127,6 @@
     "@epam/ai-dial-attachment-input": "*",
     "@epam/ai-dial-builder-form": "*",
     "@epam/ai-dial-catalog": "*",
-    "@epam/ai-dial-chat-api-client": "*",
     "@epam/ai-dial-chat-overlay": "*",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-mcp-apps": "*",
@@ -153,9 +153,6 @@
       "optional": true
     },
     "@epam/ai-dial-catalog": {
-      "optional": true
-    },
-    "@epam/ai-dial-chat-api-client": {
       "optional": true
     },
     "@epam/ai-dial-chat-overlay": {

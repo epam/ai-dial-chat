@@ -561,9 +561,24 @@ export const createFixtureDependencyResolver = ({
     return pulledIn;
   };
 
+  /*
+   * The packed package's own workspace `dependencies` seed the closure
+   * alongside the fixture's declared peers. A fixture never names them — that
+   * is the point of a dependency — but the publish transform rewrites each
+   * sibling's spec to the synthetic version being packed, which exists only as
+   * a local tarball, so a sibling left unpacked sends npm to the registry for
+   * `@epam/ai-dial-quotations@0.0.0-packed.0` and the install dies with
+   * `ETARGET` before anything is verified.
+   */
+  const ownWorkspaceDependencies = Object.keys(
+    workspaceDependencies(
+      workspacePackages.get('@epam/ai-dial-chat-hooks')?.manifest ?? {},
+    ),
+  );
+
   return {
     resolvePeerClosure: (directPeers) =>
-      resolvePeerClosure(directPeers, {
+      resolvePeerClosure([...directPeers, ...ownWorkspaceDependencies], {
         resolveDependencySpec,
         readClosureDependencies,
       }),
