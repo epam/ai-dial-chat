@@ -809,8 +809,7 @@ dialTest(
       },
     );
 
-    //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/6109
-    await dialTest.step.skip(
+    await dialTest.step(
       'Open "Attach files" modal from request input and verify folder content can be checked',
       async () => {
         await attachmentDropdownMenu.selectMenuOption(

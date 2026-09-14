@@ -117,8 +117,7 @@ dialAdminTest(
       },
     );
 
-    //TODO: blocked by issue https://github.com/epam/ai-dial-chat/issues/4031
-    await dialTest.step.skip('Search sub-folder by name', async () => {
+    await dialTest.step('Search sub-folder by name', async () => {
       await selectFolderManagerModalFoldersTree.expandFolder(
         { isFilesListingTriggered: false },
         parentFolder,
@@ -127,7 +126,7 @@ dialAdminTest(
         .getSearch()
         .inputField.fillInInput(subFolderSearchTerm);
       await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
-        organizationFolderNames[2],
+        subFolder,
         'visible',
       );
     });
@@ -148,8 +147,8 @@ dialAdminTest(
         await selectFolderManagerModalNavigationPanel
           .getSearch()
           .inputField.fillInInput('');
-        await selectFolderManagerModalGrid
-          .gridRowByNameCell(folderToPublish)
+        await selectFolderManagerModalFoldersTree
+          .folderByPath(folderToPublish)
           .click();
         await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,

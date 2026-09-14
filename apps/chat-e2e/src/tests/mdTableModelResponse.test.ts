@@ -205,8 +205,7 @@ dialTest(
       },
     );
 
-    //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/6235
-    await dialTest.step.skip(
+    await dialTest.step(
       `Click on 'Copy text' btn and verify the response is copied without markdown`,
       async () => {
         const copied = await dialHomePage.captureNextClipboardWrite(() =>

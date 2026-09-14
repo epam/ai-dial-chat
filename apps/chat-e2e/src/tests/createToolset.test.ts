@@ -268,9 +268,9 @@ dialTest(
             expectedShortDescription: shortDescription,
             expectedLongDescription: longDescription,
             expectedTopics: topicsToSelect,
-            //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4998
+            //TODO: issue to fix
             // expectedAuthor: toolsetEntity.author,
-            //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3218
+            //TODO: issue to fix
             // expectedReleaseDade: toolsetEntity.releaseDate,
           },
         );
@@ -373,8 +373,7 @@ dialTest(
             expectedShortDescription: shortDescription,
             expectedLongDescription: longDescription,
             expectedTopics: topicsToSelect,
-            //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4998
-            // expectedAuthor: toolsetEntity.author,
+            expectedAuthor: toolsetEntity.author,
             expectedReleaseDate: toolsetEntity.releaseDate,
           },
         );
