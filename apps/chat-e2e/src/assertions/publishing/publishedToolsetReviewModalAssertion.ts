@@ -39,9 +39,9 @@ export class PublishedToolsetReviewModalAssertion extends BasePublishedEntityRev
       );
     }
     if (attributesToVerify.expectedAllowedTools) {
-      await this.assertElementInnerText(
+      await this.assertElementText(
         this.publishedEntityReviewModal.allowedTools,
-        attributesToVerify.expectedAllowedTools,
+        attributesToVerify.expectedAllowedTools.join(''),
       );
     }
   }

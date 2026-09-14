@@ -1960,7 +1960,7 @@ dialTest(
       },
     );
 
-    // TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/6483
+    // TODO: the issue is still reproduced https://github.com/epam/ai-dial-chat/issues/6483
     await dialTest.step.skip(
       'EPMDIAL-6575: After rename it from tree context menu folder stays selected',
       async () => {

@@ -48,6 +48,7 @@ dialTest(
       talkToAgentDialog,
       talkToAgentDialogAssertion,
       entityDetailsModalAssertion,
+      modelApiHelper,
       entityEditorGeneralInfoPreviewCard,
       navigationPanel,
       externalAppEditorAppSettingsPreviewCard,
@@ -285,14 +286,13 @@ dialTest(
       await entityDetailsModalAssertion.assertEntityName(appEntity.name);
       await entityDetailsModalAssertion.assertEntityVersion(appEntity.version!);
       await entityDetailsModalAssertion.assertEntityAuthor(currentUsername);
-      //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3218
-      // const configApp = await modelApiHelper.getAgentByNameAndVersion({
-      //   name: appEntity.name,
-      //   version: appEntity.version,
-      // });
-      // await agentDetailsModalAssertion.assertApplicationReleaseDate(
-      //   configApp.createdAt!,
-      // );
+      const configApp = await modelApiHelper.getAgentByNameAndVersion({
+        name: appEntity.name,
+        version: appEntity.version,
+      });
+      await entityDetailsModalAssertion.assertEntityReleaseDate(
+        configApp.createdAt!,
+      );
       await entityDetailsModalAssertion.assertElementState(
         entityDetailsModal.openInNewTabButton,
         'visible',
