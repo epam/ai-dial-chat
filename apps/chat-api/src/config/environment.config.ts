@@ -13,6 +13,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { CspMode } from './csp';
 
 export enum ApplicationLogLevel {
   Debug = 'debug',
@@ -32,6 +33,22 @@ export const IFRAME_ORIGIN_PATTERN =
   /^(https?):\/\/(?:\*\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*(?::\d+)?$/;
 
 export class EnvironmentVariables {
+  @IsOptional()
+  @IsEnum(CspMode)
+  CSP_MODE?: CspMode = CspMode.ReportOnly;
+
+  @IsOptional()
+  @IsUrl({
+    require_tld: false,
+    require_protocol: true,
+    protocols: ['https'],
+    disallow_auth: true,
+  })
+  @Matches(/^https:\/\/[^\s";,\\<>#]+$/, {
+    message: 'CSP_REPORT_URI must be an HTTPS URL safe for CSP headers',
+  })
+  CSP_REPORT_URI?: string;
+
   @IsOptional()
   @IsEnum(ApplicationLogLevel)
   LOG_LEVEL?: ApplicationLogLevel;

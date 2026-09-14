@@ -22,6 +22,7 @@ import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import 'reflect-metadata';
 import { AppModule } from './app/app.module';
+import { createFrontendMiddleware } from './app/static-assets';
 import { clearLegacyCookies } from './auth/cookies/cookie-options';
 import { TraceparentErrorFilter } from './common/filters/traceparent-error.filter';
 import {
@@ -150,6 +151,19 @@ async function bootstrap() {
     credentials: true,
     exposedHeaders: ['X-CSRF-Token', 'X-DIAL-CLIENT-CHANNEL-ID', 'traceparent'],
   });
+
+  app.use(
+    await createFrontendMiddleware({
+      allowedIframeOrigins: allowedIframeOrigins ?? [],
+      secureTransport,
+      cspMode: configService.get('CSP_MODE', { infer: true }),
+      reportUri: configService.get('CSP_REPORT_URI', { infer: true }),
+      overlaySandboxEnabled: configService.get('OVERLAY_SANDBOX_ENABLED', {
+        infer: true,
+      }),
+      apiPrefix: configService.get('API_PREFIX', { infer: true }),
+    }),
+  );
 
   const port = process.env.PORT || 5000;
   await app.listen(port);
