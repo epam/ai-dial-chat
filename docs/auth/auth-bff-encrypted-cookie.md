@@ -337,7 +337,20 @@ Key properties:
   the diagram above) — cookie-authenticated requests are completely unaffected.
 - **`SessionUser.sid`/`csrf` are optional** — absent for a header-authenticated caller,
   since no session was created for it. `GET /auth/me` omits `X-CSRF-Token` for such
-  callers; `POST /auth/logout` is a no-op success (no session to clear).
+  callers; `POST /auth/logout` is a no-op success (no session to clear). **No endpoint may
+  reject a header-authenticated caller on the grounds that `sid` (or `csrf`) is absent.**
+  Server-side state that needs a stable per-caller identity derives it from verified
+  identity instead: `resolvePrincipalKey`
+  (`apps/chat-api/src/auth/session/principal-key.ts`) returns `c:<sid>` under cookie auth
+  and `h:<providerId>:<sub>` under header auth, and that key — not `sid` — is what owns an
+  in-flight generation (`generation-principal-ownership`). All three completion endpoints
+  (`completions`, `completions/stop`, `completions/attach`) are therefore reachable under
+  header auth.
+- **A verified token with no `sub` is rejected.** After signature and time verification,
+  `HeaderTokenStrategy` rejects claims carrying no `sub`, or a `sub` that is the empty
+  string, with `401` / `AUTH_HEADER_TOKEN_INVALID`. The claim is never coerced to `''`: it
+  is the server-verified identity generation ownership is derived from, so an empty subject
+  would collapse every such caller of one provider into a single owner.
 
 ---
 

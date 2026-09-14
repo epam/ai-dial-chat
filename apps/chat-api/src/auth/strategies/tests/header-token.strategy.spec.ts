@@ -56,6 +56,19 @@ async function makeToken(
     .sign(privateKey);
 }
 
+/* `sub` is omitted entirely, rather than set to a value — the claim is absent. */
+async function makeTokenWithoutSub(
+  privateKey: KeyLike,
+  kid: string,
+): Promise<string> {
+  return new SignJWT({ email: 'u@example.com' })
+    .setProtectedHeader({ alg: 'RS256', kid })
+    .setIssuer(ISSUER)
+    .setIssuedAt()
+    .setExpirationTime('1h')
+    .sign(privateKey);
+}
+
 describe('HeaderTokenStrategy', () => {
   let strategy: HeaderTokenStrategy;
   let registry: {
@@ -154,6 +167,47 @@ describe('HeaderTokenStrategy', () => {
       });
       expect(user?.sid).toBeUndefined();
       expect(user?.csrf).toBeUndefined();
+    });
+
+    it('resolves the sub of a normal token unchanged', async () => {
+      const token = await makeToken(privateKey, kid, { sub: 'subject-42' });
+      const req = makeReq({ authorization: `Bearer ${token}` });
+
+      const user = await strategy.authenticate(req, {} as never);
+
+      expect(user?.sub).toBe('subject-42');
+    });
+
+    /*
+     * `sub` is the identity generation ownership is derived from
+     * (`generation-principal-ownership`); coercing an absent claim to `''`
+     * would collapse every such caller of one provider into a single owner.
+     */
+    it.each([
+      ['no sub claim at all', undefined],
+      ['an empty-string sub', ''],
+    ])('rejects a verified token with %s', async (_case, sub) => {
+      const token =
+        sub === undefined
+          ? await makeTokenWithoutSub(privateKey, kid)
+          : await makeToken(privateKey, kid, { sub });
+      const req = makeReq({ authorization: `Bearer ${token}` });
+
+      let error: unknown;
+      try {
+        await strategy.authenticate(req, {} as never);
+      } catch (caught) {
+        error = caught;
+      }
+
+      expect(error).toBeInstanceOf(UnauthorizedException);
+      expect((error as UnauthorizedException).getResponse()).toMatchObject({
+        code: AuthErrorCode.HeaderTokenInvalid,
+        message: 'Token is missing a "sub" claim',
+        statusCode: 401,
+      });
+      /* Rejected before the bucket round trip, so DIAL Core is never called. */
+      expect(bucketService.getUserBucket).not.toHaveBeenCalled();
     });
 
     it('rejects an expired token with AUTH_HEADER_TOKEN_EXPIRED', async () => {

@@ -16,6 +16,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
 import { FEATURE_KEY_METADATA } from '../../app-config/feature-flags/require-feature.decorator';
+import { AuthSource } from '../../auth/auth-source.enum';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
@@ -90,6 +91,7 @@ describe('ConversationController (integration)', () => {
     app.use(
       (req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
         req.user = TEST_USER;
+        req.authSource = AuthSource.Cookie;
         next();
       },
     );
@@ -282,6 +284,7 @@ describe('ConversationController (integration)', () => {
       realApp.use(
         (req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
           req.user = TEST_USER;
+          req.authSource = AuthSource.Cookie;
           next();
         },
       );

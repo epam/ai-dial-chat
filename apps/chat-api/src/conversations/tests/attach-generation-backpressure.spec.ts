@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import type { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 import { describe, expect, it, vi } from 'vitest';
+import { AuthSource } from '../../auth/auth-source.enum';
 import { ConversationGenerationService } from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
@@ -42,6 +43,7 @@ class FakeAttachResponse extends EventEmitter {
 }
 
 const SID = 'test-sid';
+const OWNER_KEY = `c:${SID}`;
 const PATH = 'test-bucket/gpt-4o__Hello__uuid';
 const GEN_ID = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
 
@@ -68,12 +70,20 @@ const makeController = (): {
 describe('attachToGeneration — per-subscriber backpressure', () => {
   it('detaches a slow subscriber once its buffered output exceeds the limit, while a well-behaved concurrent subscriber and the generation continue unaffected', async () => {
     const { controller, generationService } = makeController();
-    generationService.register(SID, PATH, GEN_ID);
-    generationService.seedAssembledMessage(SID, PATH, GEN_ID, makeMessage(''));
+    generationService.register(OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(
+      OWNER_KEY,
+      PATH,
+      GEN_ID,
+      makeMessage(''),
+    );
 
     const slowRes = new FakeAttachResponse(false);
     const fastRes = new FakeAttachResponse(true);
-    const req = { user: { sid: SID } } as unknown as Request;
+    const req = {
+      user: { sid: SID },
+      authSource: AuthSource.Cookie,
+    } as unknown as Request;
 
     await Promise.all([
       controller.attachToGeneration(req, slowRes as unknown as Response, {
@@ -88,7 +98,7 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
     const bigChunk = 'x'.repeat(100 * 1024);
     for (let i = 0; i < 12; i += 1) {
       generationService.applyChunk(
-        SID,
+        OWNER_KEY,
         PATH,
         GEN_ID,
         { choices: [{ delta: { content: bigChunk } }] },
@@ -100,7 +110,7 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
     expect(slowRes.end).toHaveBeenCalledOnce();
     expect(fastRes.writableEnded).toBe(false);
 
-    generationService.complete(SID, PATH, GEN_ID);
+    generationService.complete(OWNER_KEY, PATH, GEN_ID);
 
     expect(fastRes.writableEnded).toBe(true);
     expect(

@@ -1,24 +1,4 @@
-# generation-live-replay Specification
-
-## Purpose
-
-Backend-side buffering and multicast of an active generation's in-flight
-assistant message, exposed through the `POST /api/v1/conversations/completions/attach`
-SSE endpoint so a late-joining client (e.g. after a hard refresh mid-generation)
-can snapshot the currently assembled message and then receive the remaining
-live chunks and terminal event, without having watched the generation from its
-start.
-
-## Requirements
-
-### Requirement: Backend retains in-flight assistant message content per active generation
-
-`ConversationGenerationService`'s registry entry (`apps/chat-api/src/conversations/conversation-generation.service.ts`) SHALL retain the current assembled assistant `ConversationMessageDto` for each active generation, updated every time `ConversationStreamingService.streamCompletion`'s relay loop (`relayModelCompletion` or `ResponsesAdapter.stream`) applies a chunk via `applyChunkToMessage`. This retained content SHALL include merged `custom_content.stages`, matching exactly what the assembled message would contain if inspected at that instant.
-
-#### Scenario: Assembled message reflects the latest chunk
-
-- **WHEN** a chunk is applied to the in-flight assistant message during an active generation
-- **THEN** the registry entry's retained assembled message reflects that chunk's content immediately, before the next chunk is processed
+## MODIFIED Requirements
 
 ### Requirement: Late subscribers can attach to an active generation by conversation path
 
@@ -73,26 +53,3 @@ The endpoint SHALL support more than one concurrent subscriber for the same acti
 
 - **WHEN** the attach request targets a path on which a different principal has an active generation
 - **THEN** the endpoint responds `404` and opens no SSE stream, disclosing nothing about that generation's existence
-
-### Requirement: Attach subscribers are cleaned up on client disconnect
-
-Unlike `ConversationController.streamCompletion` (which has no client-disconnect handling, by design, so a closed tab does not stop generation), the attach endpoint SHALL detect client disconnect (`res.on('close', ...)`) and remove its listener from the generation's emitter, so listener count reflects only currently-connected subscribers.
-
-The attach endpoint SHALL also detach a subscriber whose response cannot keep up with generation output, without pausing or slowing the generation itself (the generation continues to run and to update the retained assembled message regardless of any attached subscriber's write speed). On each `chunk`/terminal write, the handler SHALL check `res.writableLength` (Node's count of bytes currently buffered for that response) after calling `res.write()`; if it exceeds `SSE_ATTACH_MAX_BUFFERED_BYTES` (1 MiB), the handler SHALL treat the subscriber as unable to keep up and run the same cleanup as a client disconnect (remove its `chunk`/`terminal` listeners, clear its keepalive timer, end its response, release its `dial_chat_sse_active{kind="generation_attach"}` contribution) without emitting further chunks to it.
-
-#### Scenario: Client disconnects mid-attach
-
-- **WHEN** an attached client's connection closes before the generation reaches a terminal state
-- **THEN** the backend removes that subscriber's listener and performs no further writes to its (closed) response, and the generation itself continues unaffected
-
-#### Scenario: A slow attach subscriber is detached without affecting the generation
-
-- **GIVEN** an attach subscriber whose response cannot drain as fast as chunks are produced
-- **WHEN** that subscriber's buffered output (`res.writableLength`) exceeds `SSE_ATTACH_MAX_BUFFERED_BYTES` after a write
-- **THEN** the backend detaches that subscriber (removes its listeners, clears its keepalive timer, ends its response) while the generation and any other concurrently attached subscriber continue receiving chunks and the eventual terminal event unaffected
-
-#### Scenario: A well-behaved attach subscriber is never detached for backpressure
-
-- **GIVEN** an attach subscriber whose response reads chunks promptly (buffered output stays under `SSE_ATTACH_MAX_BUFFERED_BYTES`)
-- **WHEN** the generation produces any number of chunks before reaching a terminal state
-- **THEN** the subscriber receives every chunk and the terminal event, and is never detached for backpressure

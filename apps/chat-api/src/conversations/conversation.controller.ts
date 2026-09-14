@@ -13,10 +13,10 @@ import {
   Query,
   Req,
   Res,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
+import { resolvePrincipalKey } from '../auth/session/principal-key';
 import {
   getJobTitleClaim,
   type SessionUser,
@@ -97,21 +97,6 @@ export class ConversationController {
     private readonly conversationService: ConversationService,
     private readonly generationService: ConversationGenerationService,
   ) {}
-
-  /**
-   * The generation registry is keyed by session id, so every endpoint that
-   * registers, attaches to, or aborts a generation requires a
-   * cookie-authenticated session — `SessionUser.sid` is only absent for
-   * header-authenticated callers, which have no session to key on.
-   */
-  private requireSessionId(user: SessionUser): string {
-    if (!user.sid) {
-      throw new UnauthorizedException(
-        'This endpoint requires a cookie-authenticated session',
-      );
-    }
-    return user.sid;
-  }
 
   @Post()
   @HttpCode(201)
@@ -273,7 +258,8 @@ export class ConversationController {
   @ApiResponse({ status: 404, description: 'Conversation not found' })
   @ApiResponse({
     status: 409,
-    description: 'Another generation is already active for this conversation',
+    description:
+      'Another generation is already active for this conversation and principal',
   })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
@@ -285,7 +271,7 @@ export class ConversationController {
   ): Promise<void> {
     const user = req.user as SessionUser;
     const { at, bucket, claims, sub } = user;
-    const sid = this.requireSessionId(user);
+    const ownerKey = resolvePrincipalKey(user, req.authSource);
     const timezone = assertValidOptionalTimezone(timezoneHeader);
     const stream = this.conversationService.streamCompletion(
       dto.path,
@@ -297,7 +283,7 @@ export class ConversationController {
       dto.messageIndex,
       dto.model,
       dto.custom_content,
-      sid,
+      ownerKey,
       () => startSseResponse(res),
       sub,
       dto.clientChannelId,
@@ -364,16 +350,19 @@ export class ConversationController {
   @ApiResponse({
     status: 404,
     description:
-      'No active generation found for the given path and generationId',
+      'No active generation found for this principal for the given path and generationId',
   })
   async stopCompletion(
     @Req() req: Request,
     @Res() res: Response,
     @Body() dto: StopCompletionDto,
   ): Promise<void> {
-    const sid = this.requireSessionId(req.user as SessionUser);
+    const ownerKey = resolvePrincipalKey(
+      req.user as SessionUser,
+      req.authSource,
+    );
     const aborted = this.generationService.abort(
-      sid,
+      ownerKey,
       dto.path,
       dto.generationId,
     );
@@ -391,7 +380,7 @@ export class ConversationController {
     operationId: 'attachToGeneration',
     summary: 'Attach to an active generation and replay it live',
     description:
-      'Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Session-scoped — only the session that could stop the generation can attach to it.',
+      'Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.',
   })
   @ApiResponse({
     status: 200,
@@ -403,15 +392,18 @@ export class ConversationController {
   @ApiResponse({
     status: 404,
     description:
-      'No active generation found for the given path in this session — including one that already finished',
+      'No active generation found for the given path for this principal — including one that already finished',
   })
   async attachToGeneration(
     @Req() req: Request,
     @Res() res: Response,
     @Body() dto: AttachGenerationDto,
   ): Promise<void> {
-    const sid = this.requireSessionId(req.user as SessionUser);
-    const attachment = this.generationService.attach(sid, dto.path);
+    const ownerKey = resolvePrincipalKey(
+      req.user as SessionUser,
+      req.authSource,
+    );
+    const attachment = this.generationService.attach(ownerKey, dto.path);
     if (!attachment) {
       throw new NotFoundException(
         'No active generation found for the given path',
