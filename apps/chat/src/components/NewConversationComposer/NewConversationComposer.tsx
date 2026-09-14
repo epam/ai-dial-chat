@@ -23,6 +23,7 @@ import type {
   CommandMenuConfig,
   ConversationInputStyles,
   MenuOverlayConfig,
+  TextInsertion,
   ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import type { FC, ReactNode } from 'react';
@@ -97,6 +98,12 @@ interface Props {
   /** Token that forces `message` to re-apply even if its string is unchanged. */
   messageRevision?: number;
   /**
+   * Text inserted at the composer's caret whenever its `revision` changes.
+   * Unlike `message` it keeps whatever the user has already typed, and it is
+   * undoable.
+   */
+  inputInsertion?: TextInsertion;
+  /**
    * Host-injected overlay entries for the `+` menu (e.g. the Prompts
    * selector), passed through to `ConversationInput`.
    */
@@ -147,6 +154,7 @@ const NewConversationComposer: FC<Props> = ({
   introText,
   message,
   messageRevision,
+  inputInsertion,
   menuOverlays,
   inlineStartSlot,
   onInlineStartRemove,
@@ -420,6 +428,7 @@ const NewConversationComposer: FC<Props> = ({
           onAttachmentsChange={handleAttachmentsChange}
           message={message}
           messageRevision={messageRevision}
+          textInsertion={inputInsertion}
           welcomeText={getTimeOfDayGreeting(
             new Date().getHours(),
             {
