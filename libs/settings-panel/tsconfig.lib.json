@@ -16,7 +16,8 @@
     "moduleResolution": "bundler",
     "lib": ["dom"],
     "forceConsistentCasingInFileNames": true,
-    "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo"
+    "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
+    "ignoreDeprecations": "6.0"
   },
   "exclude": [
     "out-tsc",

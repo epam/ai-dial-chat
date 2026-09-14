@@ -342,47 +342,46 @@ describe('Navigation user menu', () => {
     expect(screen.queryByText(ButtonsI18nKeys.LogOut)).toBeNull();
   });
 
-  it('offers the language and keyboard-shortcut settings groups by default', () => {
-    renderNavigation();
-    expect(screen.getByText(SettingsI18nKeys.Language)).toBeTruthy();
-    expect(screen.getByText(SettingsI18nKeys.KeyboardShortcuts)).toBeTruthy();
-  });
+  /*
+   * The desktop user menu carries the locale picker when more than one locale
+   * ships; theme and "Default agent for new chats" live only in the Settings page's
+   * Preferences tab. The keyboard shortcut group goes to the mobile sheet —
+   * covered by the "reaches the keyboard-shortcut options through the profile
+   * page" test below, which opens the sheet.
+   */
+  it('offers the language group in the user menu when several locales ship', () => {
+    expect(supportedLanguages.length).toBeGreaterThan(1);
 
-  it('drops both settings groups when hide-user-settings is enabled', () => {
-    mockUseUiFeature.mockImplementation(
-      (feature) => feature === OverlayFeature.HideUserSettings,
-    );
     renderNavigation();
-    expect(screen.queryByText(SettingsI18nKeys.Language)).toBeNull();
-    expect(screen.queryByText(SettingsI18nKeys.KeyboardShortcuts)).toBeNull();
-  });
 
-  it('keeps the language group when only hide-keyboard-shortcuts is enabled', () => {
-    mockUseUiFeature.mockImplementation(
-      (feature) => feature === OverlayFeature.HideKeyboardShortcuts,
-    );
-    renderNavigation();
     expect(screen.getByText(SettingsI18nKeys.Language)).toBeTruthy();
-    expect(screen.queryByText(SettingsI18nKeys.KeyboardShortcuts)).toBeNull();
   });
 
   it('drops the language group when only one locale ships', () => {
     supportedLanguages.splice(1);
+
     renderNavigation();
+
     expect(screen.queryByText(SettingsI18nKeys.Language)).toBeNull();
-    expect(screen.getByText(SettingsI18nKeys.KeyboardShortcuts)).toBeTruthy();
   });
 
-  it('hides the Settings entry when the Settings page flag is off', () => {
+  it('drops the language group when hide-user-settings is enabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideUserSettings,
+    );
+
     renderNavigation();
 
-    expect(screen.queryByText(BasicI18nKeys.Settings)).toBeNull();
-    expect(useFeatureFlagMock).toHaveBeenCalledWith('settingsPageEnabled');
+    expect(screen.queryByText(SettingsI18nKeys.Language)).toBeNull();
   });
 
-  it('shows the Settings entry when the Settings page flag is on', () => {
-    useFeatureFlagMock.mockReturnValue(true);
+  it('offers no theme submenu in the user menu', () => {
+    renderNavigation();
 
+    expect(screen.queryByText(SettingsI18nKeys.Theme)).toBeNull();
+  });
+
+  it('always shows the Settings entry — it is no longer behind a flag', () => {
     renderNavigation();
 
     expect(screen.getByText(BasicI18nKeys.Settings)).toBeTruthy();
@@ -423,8 +422,8 @@ describe('Navigation mobile sheet', () => {
   it('reaches the keyboard-shortcut options through the profile page', async () => {
     const user = userEvent.setup();
     renderNavigation({ isOpen: true });
-    /* The rail's user menu carries the same group labels, so scope the queries
-       to the sheet dialog. */
+    /* The sheet is now the only surface carrying these labels, but scope the
+       queries to its dialog anyway so this stays unambiguous. */
     const sheet = within(screen.getByRole('dialog'));
 
     await user.click(

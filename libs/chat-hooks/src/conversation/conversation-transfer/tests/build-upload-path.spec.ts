@@ -147,6 +147,13 @@ describe('createUploadPathAllocator', () => {
     expect(allocator.allocate('report.pdf').fileName).toBe('report (1).pdf');
   });
 
+  it('hands a released name back to the next allocation', () => {
+    const allocator = createUploadPathAllocator({ date });
+    const first = allocator.allocate('report.pdf');
+    allocator.release(first.fileName);
+    expect(allocator.allocate('report.pdf').fileName).toBe('report.pdf');
+  });
+
   it('sanitizes the requested name before probing for collisions', () => {
     const allocator = createUploadPathAllocator({ date });
     expect(allocator.allocate('report.pdf').fileName).toBe('report.pdf');

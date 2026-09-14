@@ -10,10 +10,18 @@
  * inline style so the canvas presentation always fills its container;
  * `!important` is required since the library sets the style from JS, not a
  * stylesheet, so normal specificity can't win against it.
+ *
+ * The `max-width`/`max-height` resets are part of the same override, not a
+ * redundancy: an app-requested `containerDimensions` clamp (`maxWidth`/
+ * `maxHeight`, applied inline by `applyContainerDimensions`) is a separate
+ * property from `width`/`height`, so forcing `100%` alone would still leave
+ * the fullscreen iframe shrunk to whatever ceiling the app asked for inline.
  */
 .fullscreenFrame :global(iframe) {
   width: 100% !important;
   height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
 }
 
 .statusLabel {

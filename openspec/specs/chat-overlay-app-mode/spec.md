@@ -254,7 +254,7 @@ Overlay mode SHALL NOT change the embedded app's accessibility or RTL behavior �
 
 ### Requirement: getConversations returns the current in-memory list, no forced refresh
 
-`GET_CONVERSATIONS` SHALL be answered with `{ conversations: <ConversationsContext.conversations mapped to OverlayConversation[]> }` using whatever is currently loaded in `ConversationsContext` at the time the request is handled — it SHALL NOT trigger a `refreshConversations()` call, and SHALL NOT attempt pagination beyond `ConversationsContext`'s existing single-page (`limit: 1000`) load.
+`GET_CONVERSATIONS` SHALL be answered with `{ conversations: <ConversationsContext.conversations mapped to OverlayConversation[]> }` using whatever is currently loaded in `ConversationsContext` at the time the request is handled — it SHALL NOT trigger a `refreshConversations()` call or additional pagination requests. `ConversationsContext` loads the complete history through the BFF by omitting `limit` and `nextToken`; the BFF follows DIAL Core pagination before returning the list.
 
 #### Scenario: Reflects the currently loaded list
 

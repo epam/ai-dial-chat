@@ -294,7 +294,9 @@ describe('createUnauthorizedMiddleware', () => {
     );
     const notifyUnauthorized = vi.fn();
     const refreshCsrfToken = vi.fn(
-      async (): Promise<CsrfRefreshOutcome> => ({ status: 'unauthorized' }),
+      async (): Promise<CsrfRefreshOutcome> => ({
+        status: 'unauthorized',
+      }),
     );
 
     const api = new ConversationsApi(
@@ -324,7 +326,9 @@ describe('createUnauthorizedMiddleware', () => {
     );
     const notifyUnauthorized = vi.fn();
     const refreshCsrfToken = vi.fn(
-      async (): Promise<CsrfRefreshOutcome> => ({ status: 'failed' }),
+      async (): Promise<CsrfRefreshOutcome> => ({
+        status: 'failed',
+      }),
     );
 
     const api = new ConversationsApi(

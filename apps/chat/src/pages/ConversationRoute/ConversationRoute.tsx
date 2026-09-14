@@ -86,10 +86,19 @@ const ConversationRoute: FC = () => {
   const routeSkillId = (state as { skillId?: string } | null)?.skillId;
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const [inputMessageRevision, setInputMessageRevision] = useState(0);
+  /*
+   * A picked prompt is inserted at the caret rather than written to
+   * `inputMessage`, so it cannot discard a draft the user has already typed on
+   * this screen (issue #8754). The route-state seeding below still replaces,
+   * because it arrives with a fresh navigation onto an empty composer.
+   */
+  const [inputInsertion, setInputInsertion] = useState({
+    revision: 0,
+    text: '',
+  });
 
   const handleInsertText = useCallback((text: string) => {
-    setInputMessage(text);
-    setInputMessageRevision((prev) => prev + 1);
+    setInputInsertion((prev) => ({ revision: prev.revision + 1, text }));
   }, []);
   const {
     renderOverlay: renderPromptsOverlay,
@@ -123,9 +132,16 @@ const ConversationRoute: FC = () => {
     skillCatalogModal,
     skillDetailsPanel,
     selectedSkillElement,
+    selectedSkills,
     selectSkill,
     removeSelectedSkill,
   } = useSkillSelectorOverlay();
+  /*
+   * The first message's skills payload comes from the overlay hook. On a
+   * successful create this route navigates away and unmounts (clearing the
+   * selection with it); on failure the create promise rejects and the
+   * selection survives for the retry.
+   */
   /*
    * The Skills entry joins the Prompts entry in array order, so it renders
    * below Prompts in the `+` menu; `undefined` when both are flag-disabled
@@ -228,6 +244,7 @@ const ConversationRoute: FC = () => {
   useEffect(() => {
     if (routePromptContent == null) return;
     setInputMessage(routePromptContent);
+    setInputMessageRevision((prev) => prev + 1);
     navigate(pathname, { replace: true, state: null });
   }, [routePromptContent, navigate, pathname]);
 
@@ -356,6 +373,8 @@ const ConversationRoute: FC = () => {
         selectedItemId,
         attachmentDtos,
         hasToolConfig ? toolConfigurationValue : undefined,
+        undefined,
+        selectedSkills,
       );
       // TODO: remove in next release
       const isolatedName =
@@ -389,6 +408,7 @@ const ConversationRoute: FC = () => {
       toolConfigurationValue,
       isIsolatedView,
       isolatedModelId,
+      selectedSkills,
     ],
   );
 
@@ -482,6 +502,7 @@ const ConversationRoute: FC = () => {
         introText={starterIntroText}
         message={inputMessage}
         messageRevision={inputMessageRevision}
+        inputInsertion={inputInsertion}
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
         menuOverlays={menuOverlays}

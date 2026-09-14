@@ -107,7 +107,7 @@ other node requires the user to confirm a popup before
 "Upload from device" as an Add action; it does not support creating an empty
 file or folder.
 
-The header is rendered by `EditorLayout` (from `@epam/ai-dial-editor-builder`).
+The header is rendered by `EditorLayout` (from `@epam/ai-dial-builder-form`).
 Pass `onBack` (called when the back arrow is activated), `title` (the page
 heading), and optionally `backAriaLabel` (accessible label for the arrow,
 defaults to `'Back'`). The header, including the back arrow, Cancel/Create

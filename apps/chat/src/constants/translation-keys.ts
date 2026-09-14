@@ -429,6 +429,7 @@ export enum ScheduledTasksI18nKeys {
   CreateDescriptionMaxLengthError = 'scheduledTasks.create.descriptionMaxLengthError',
   CreateInstructionsLabel = 'scheduledTasks.create.instructionsLabel',
   CreatePromptRequired = 'scheduledTasks.create.promptRequired',
+  CreateSubmittingLabel = 'scheduledTasks.create.submittingLabel',
   CreateSuccessNotification = 'scheduledTasks.create.successNotification',
   CreateErrorNotification = 'scheduledTasks.create.errorNotification',
   DetailRepeatsLabel = 'scheduledTasks.detail.repeatsLabel',
@@ -642,6 +643,11 @@ export enum SettingsI18nKeys {
   KeyboardShortcuts = 'settings.keyboardShortcuts',
   ShortcutEnter = 'settings.shortcutEnter',
   ShortcutMetaEnter = 'settings.shortcutMetaEnter',
+  Preferences = 'settings.preferences',
+  PreferencesDescription = 'settings.preferencesDescription',
+  DefaultAgent = 'settings.defaultAgent',
+  DefaultAgentOptionDefault = 'settings.defaultAgentOptionDefault',
+  DefaultAgentOptionLastUsed = 'settings.defaultAgentOptionLastUsed',
 }
 
 export enum ConversationPanelI18nKeys {
@@ -714,6 +720,9 @@ export enum PublishI18nKeys {
   UnpublishFailedMessage = 'publish.unpublishFailedMessage',
   UnpublishNetworkErrorMessage = 'publish.unpublishNetworkErrorMessage',
   SubmitErrorCallout = 'publish.submitErrorCallout',
+  AuthorLabel = 'publish.authorLabel',
+  AuthorPlaceholder = 'publish.authorPlaceholder',
+  AuthorHint = 'publish.authorHint',
 }
 
 export enum PublishAccessRulesI18nKeys {

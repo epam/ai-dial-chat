@@ -92,6 +92,7 @@ describe('useCatalogPublishing', () => {
         makeCatalogItem(),
         ['Organization', 'Data Science'],
         [],
+        '',
       );
 
       expect(publishCatalogEntity).toHaveBeenCalledWith(
@@ -104,6 +105,96 @@ describe('useCatalogPublishing', () => {
         },
       );
     });
+
+    it('sends an edited author with the publish request', async () => {
+      vi.mocked(publishCatalogEntity).mockResolvedValue({
+        entityId: 'tool-abc123',
+        entityType: 'toolset',
+        folderPath: 'Organization/Data Science',
+        version: '1.2.0',
+        publishedAt: '2026-07-13T10:00:00.000Z',
+        publishedBy: 'user@example.com',
+      });
+      const { result } = renderPublishing();
+
+      await result.current.handlePublish(
+        makeCatalogItem(),
+        ['Organization', 'Data Science'],
+        [],
+        'DIAL Team',
+      );
+
+      expect(publishCatalogEntity).toHaveBeenCalledWith(
+        'toolset',
+        'tool-abc123',
+        {
+          folderPath: 'Organization/Data Science',
+          version: '1.2.0',
+          author: 'DIAL Team',
+          rules: [],
+        },
+      );
+    });
+
+    it('trims the author before sending it', async () => {
+      vi.mocked(publishCatalogEntity).mockResolvedValue({
+        entityId: 'tool-abc123',
+        entityType: 'toolset',
+        folderPath: 'Organization/Data Science',
+        version: '1.2.0',
+        publishedAt: '2026-07-13T10:00:00.000Z',
+        publishedBy: 'user@example.com',
+      });
+      const { result } = renderPublishing();
+
+      await result.current.handlePublish(
+        makeCatalogItem(),
+        ['Organization', 'Data Science'],
+        [],
+        '  DIAL Team  ',
+      );
+
+      expect(publishCatalogEntity).toHaveBeenCalledWith(
+        'toolset',
+        'tool-abc123',
+        expect.objectContaining({ author: 'DIAL Team' }),
+      );
+    });
+
+    it.each([
+      ['empty', ''],
+      ['whitespace-only', '   '],
+    ])(
+      'omits the author key entirely when it is %s, so the backend falls back',
+      async (_label, author) => {
+        vi.mocked(publishCatalogEntity).mockResolvedValue({
+          entityId: 'tool-abc123',
+          entityType: 'toolset',
+          folderPath: 'Organization/Data Science',
+          version: '1.2.0',
+          publishedAt: '2026-07-13T10:00:00.000Z',
+          publishedBy: 'user@example.com',
+        });
+        const { result } = renderPublishing();
+
+        await result.current.handlePublish(
+          makeCatalogItem(),
+          ['Organization', 'Data Science'],
+          [],
+          author,
+        );
+
+        expect(publishCatalogEntity).toHaveBeenCalledWith(
+          'toolset',
+          'tool-abc123',
+          {
+            folderPath: 'Organization/Data Science',
+            version: '1.2.0',
+            rules: [],
+          },
+        );
+      },
+    );
 
     it('publishes an owned skill without sending a synthetic version', async () => {
       vi.mocked(publishCatalogEntity).mockResolvedValue({
@@ -124,6 +215,7 @@ describe('useCatalogPublishing', () => {
         }),
         ['Organization', 'Data Science'],
         [],
+        '',
       );
 
       expect(publishCatalogEntity).toHaveBeenCalledWith(
@@ -195,6 +287,7 @@ describe('useCatalogPublishing', () => {
         makeCatalogItem(),
         ['Organization', 'Data Science'],
         rules,
+        '',
       );
 
       expect(publishCatalogEntity).toHaveBeenCalledWith(
@@ -228,7 +321,12 @@ describe('useCatalogPublishing', () => {
       const { result } = renderPublishing();
 
       await expect(
-        result.current.handlePublish(makeCatalogItem(), ['Organization'], []),
+        result.current.handlePublish(
+          makeCatalogItem(),
+          ['Organization'],
+          [],
+          '',
+        ),
       ).rejects.toThrow('Forbidden');
     });
 

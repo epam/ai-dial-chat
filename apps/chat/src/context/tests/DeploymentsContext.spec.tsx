@@ -1,12 +1,15 @@
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeploymentSelectorI18nKeys } from '../../constants/translation-keys';
+import { useDefaultAgentPreference } from '../../hooks/default-agent/useDefaultAgentPreference';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
 import * as deploymentDetailsApi from '../../server-api/deployments';
 import * as deploymentsApi from '../../server-api/deployments.api';
 import * as toolsetsApi from '../../server-api/toolsets';
+import { DefaultAgentMode } from '../../types/default-agent';
+import { StorageKey } from '../../types/storage-key';
 import { DeploymentsProvider, useDeployments } from '../DeploymentsContext';
 import {
   useAppConfig as mockUseAppConfig,
@@ -32,10 +35,7 @@ vi.mock('../auth/UserContext', () => ({
     user: contextMocks.userSub ? { sub: contextMocks.userSub } : null,
   }),
 }));
-vi.mock(
-  '../AppConfigContext',
-  async () => import('./app-config-context-mock'),
-);
+vi.mock('../AppConfigContext', async () => import('./app-config-context-mock'));
 mockUseAppConfig.mockImplementation(() => ({
   config: {
     defaultDeploymentId: contextMocks.defaultDeploymentId,
@@ -1397,6 +1397,150 @@ describe('DeploymentsContext', () => {
         mockItem1.id,
         mockItem2.id,
       ]);
+    });
+  });
+
+  describe('start chat with preference', () => {
+    /*
+     * The preference is read through the real useDefaultAgentPreference hook,
+     * so these drive it via localStorage rather than mocking the hook — that
+     * keeps the storage key, the default and the precedence under one test.
+     */
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    const renderDeployments = () =>
+      renderHook(() => useDeployments(), { wrapper: DeploymentsProvider });
+
+    it('prefers a named agent over a pinned operator default', async () => {
+      localStorage.setItem(StorageKey.DefaultAgent, mockItem2.id);
+      contextMocks.isDefaultDeploymentPinned = true;
+      contextMocks.defaultDeploymentId = mockItem1.id;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    it('resolves DefaultAgent to the operator default even when it is not pinned', async () => {
+      localStorage.setItem(
+        StorageKey.DefaultAgent,
+        DefaultAgentMode.DefaultAgent,
+      );
+      contextMocks.isDefaultDeploymentPinned = false;
+      contextMocks.defaultDeploymentId = mockItem1.id;
+      contextMocks.selectedDeploymentId = mockItem2.id;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem1.id);
+    });
+
+    it('falls through to the persisted user-config selection by default', async () => {
+      contextMocks.selectedDeploymentId = mockItem2.id;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    it('falls through when the preference names a deployment that no longer exists', async () => {
+      localStorage.setItem(StorageKey.DefaultAgent, 'retired-model');
+      contextMocks.selectedDeploymentId = mockItem2.id;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+      expect(localStorage.getItem(StorageKey.DefaultAgent)).toBe(
+        'retired-model',
+      );
+    });
+
+    it('falls through when DefaultAgent is set but no operator default is configured', async () => {
+      localStorage.setItem(
+        StorageKey.DefaultAgent,
+        DefaultAgentMode.DefaultAgent,
+      );
+      contextMocks.defaultDeploymentId = null;
+      contextMocks.selectedDeploymentId = mockItem2.id;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    it('keeps an in-session pick over the preference across a refetch', async () => {
+      localStorage.setItem(StorageKey.DefaultAgent, mockItem1.id);
+      contextMocks.setSelectedDeployment.mockImplementation(
+        async (id: string | null) => {
+          contextMocks.selectedDeploymentId = id;
+        },
+      );
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      await act(async () => {
+        result.current.setSelectedItemId(mockItem2.id);
+      });
+
+      await act(async () => {
+        await result.current.refetchDeployments();
+      });
+
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    it('does not recreate restoreDefaultSelection when the preference changes', async () => {
+      const { result } = renderHook(
+        () => ({
+          deployments: useDeployments(),
+          defaultAgent: useDefaultAgentPreference(),
+        }),
+        { wrapper: DeploymentsProvider },
+      );
+
+      await waitFor(() =>
+        expect(result.current.deployments.isLoading).toBe(false),
+      );
+      const restoreDefaultSelection =
+        result.current.deployments.restoreDefaultSelection;
+
+      act(() => result.current.defaultAgent.setPreference(mockItem2.id));
+
+      expect(result.current.defaultAgent.preference).toBe(mockItem2.id);
+      expect(result.current.deployments.restoreDefaultSelection).toBe(
+        restoreDefaultSelection,
+      );
+    });
+
+    it('applies a preference changed mid-session on the next restoreDefaultSelection', async () => {
+      const { result } = renderHook(
+        () => ({
+          deployments: useDeployments(),
+          defaultAgent: useDefaultAgentPreference(),
+        }),
+        { wrapper: DeploymentsProvider },
+      );
+
+      await waitFor(() =>
+        expect(result.current.deployments.isLoading).toBe(false),
+      );
+
+      act(() => result.current.defaultAgent.setPreference(mockItem2.id));
+      act(() => result.current.deployments.restoreDefaultSelection());
+
+      expect(result.current.deployments.selectedItemId).toBe(mockItem2.id);
     });
   });
 });

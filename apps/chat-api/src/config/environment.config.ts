@@ -13,6 +13,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { CspMode } from './csp';
 
 export enum ApplicationLogLevel {
   Debug = 'debug',
@@ -32,6 +33,22 @@ export const IFRAME_ORIGIN_PATTERN =
   /^(https?):\/\/(?:\*\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*(?::\d+)?$/;
 
 export class EnvironmentVariables {
+  @IsOptional()
+  @IsEnum(CspMode)
+  CSP_MODE?: CspMode = CspMode.ReportOnly;
+
+  @IsOptional()
+  @IsUrl({
+    require_tld: false,
+    require_protocol: true,
+    protocols: ['https'],
+    disallow_auth: true,
+  })
+  @Matches(/^https:\/\/[^\s";,\\<>#]+$/, {
+    message: 'CSP_REPORT_URI must be an HTTPS URL safe for CSP headers',
+  })
+  CSP_REPORT_URI?: string;
+
   @IsOptional()
   @IsEnum(ApplicationLogLevel)
   LOG_LEVEL?: ApplicationLogLevel;
@@ -820,26 +837,6 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   SCHEDULED_TASKS_ENABLED_ROLES?: string[] = [];
-
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null) return undefined;
-    if (typeof value === 'boolean') return value;
-    return !['false', '0', 'no'].includes(String(value).toLowerCase());
-  })
-  @IsBoolean()
-  SETTINGS_PAGE_ENABLED?: boolean = false;
-
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null || value === '') return [];
-    return String(value)
-      .split(',')
-      .map((s: string) => s.trim())
-      .filter((s: string) => s.length > 0);
-  })
-  @IsString({ each: true })
-  SETTINGS_PAGE_ENABLED_ROLES?: string[] = [];
 
   @IsOptional()
   @Transform(({ obj, key }) => {

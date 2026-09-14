@@ -14,7 +14,7 @@ Prompt share links: how `POST /api/v1/share` qualifies a bucket-relative prompt 
 
 `CatalogView.isShareVisible` SHALL return `true` for a Prompt item only when `item.isMyApp` is true.
 
-A prompt SHALL offer edit access, the same as Agent/Skill/Toolset — `CatalogEntityType.Prompt` is a member of `EDITABLE_ACCESS_TYPES`. `ShareService.createShareLink` maps `ShareAccess.Edit` to DIAL Core's `['READ', 'WRITE']` permissions for any resource type, prompts included, so there is no backend restriction backing a view-only default.
+A prompt SHALL offer edit access, the same as Agent/Skill/Toolset — `CatalogEntityType.Prompt` is a member of `EDITABLE_ACCESS_TYPES`. `ShareInvitationService.createShareLink` maps `ShareAccess.Edit` to DIAL Core's `['READ', 'WRITE']` permissions for any resource type, prompts included, so there is no backend restriction backing a view-only default.
 
 #### Scenario: A prompt share request carries no resource kind
 

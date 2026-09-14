@@ -21,12 +21,17 @@ class PingController {
 const createTestApp = async (
   allowedIframeOrigins: string[],
   secureTransport = true,
+  cspOptions?: Parameters<typeof createHelmetOptions>[2],
 ): Promise<INestApplication> => {
   @Module({ controllers: [PingController] })
   class CspTestModule {}
 
   const app = await NestFactory.create(CspTestModule, { logger: false });
-  app.use(helmet(createHelmetOptions(allowedIframeOrigins, secureTransport)));
+  app.use(
+    helmet(
+      createHelmetOptions(allowedIframeOrigins, secureTransport, cspOptions),
+    ),
+  );
   await app.init();
   await app.listen(0, '127.0.0.1');
   return app;
@@ -102,7 +107,7 @@ describe('Helmet security headers', () => {
   });
 
   it('allows OOXML WebAssembly parsers without enabling JavaScript eval', async () => {
-    app = await createTestApp([]);
+    app = await createTestApp([], true, { allowWasm: true });
     const response = await request(app.getHttpServer())
       .get('/ping')
       .expect(200);
@@ -112,6 +117,33 @@ describe('Helmet security headers', () => {
     );
     expect(response.headers['content-security-policy']).not.toContain(
       "'unsafe-eval'",
+    );
+  });
+
+  it('does not allow inline code or WebAssembly on generic responses', async () => {
+    app = await createTestApp([]);
+    const response = await request(app.getHttpServer())
+      .get('/ping')
+      .expect(200);
+    const policy = response.headers['content-security-policy'];
+    expect(policy).not.toMatch(
+      /'unsafe-inline'|'unsafe-eval'|'wasm-unsafe-eval'/,
+    );
+    expect(policy).toContain("script-src-attr 'none'");
+    expect(policy).toContain("style-src-attr 'none'");
+    expect(policy).toContain("object-src 'none'");
+    expect(policy).toContain("base-uri 'self'");
+  });
+
+  it('allows the approved style nonce without authorizing inline scripts', async () => {
+    app = await createTestApp([], true, { nonce: 'approved-nonce' });
+    const response = await request(app.getHttpServer())
+      .get('/ping')
+      .expect(200);
+    const directives = response.headers['content-security-policy'].split(';');
+    expect(directives).toContain("script-src 'self'");
+    expect(directives).toContain(
+      "style-src 'self' https://fonts.googleapis.com 'nonce-approved-nonce'",
     );
   });
 

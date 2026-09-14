@@ -63,6 +63,34 @@ textarea keeps its content. A paste at or above the cap also reports through
 `onMessageTooLong` when attachments are disabled, since there the pasted text
 lands inline rather than becoming an attachment.
 
+`message` and `textInsertion` are two different ways to write into the textarea,
+and they are not interchangeable. `message` sets the value: the textarea resyncs
+to it whenever the string changes, or whenever `messageRevision` changes if the
+string is the same — so anything the user had typed is gone. `textInsertion` puts
+its `text` in at the caret each time its `revision` changes and leaves the rest of
+the draft alone; the edit is made through the browser's editing pipeline, so the
+native undo shortcut reverts it. Use `message` to seed or reset the composer, and
+`textInsertion` for anything the user triggers while a draft may already exist —
+a prompt picked from a library, a snippet, a slash-command expansion.
+
+```tsx
+import type { TextInsertion } from '@epam/ai-dial-conversation-input';
+
+const [insertion, setInsertion] = useState<TextInsertion>({
+  text: '',
+  revision: 0,
+});
+
+const handlePromptPicked = (text: string) =>
+  setInsertion((prev) => ({ text, revision: prev.revision + 1 }));
+
+<ConversationInput textInsertion={insertion} onSend={handleSend} />;
+```
+
+The `revision` is what performs the insert, so bumping it re-inserts the same
+string. The value present on mount is never inserted — only a later change to
+`revision` is.
+
 `removeLabel` and `retryLabel` are the accessible names of the remove and
 retry buttons on each attachment card in the tray. They default to English
 (`'Remove attachment'` / `'Retry upload'`); pass translated strings so the two
@@ -99,6 +127,8 @@ Stop finalizes the file and releases the microphone before awaiting recognition.
 Set `isAudioMessageSupported` to show the microphone. Pass translated `transcribingLabel` (default `Transcribing audio…`) and `voiceErrorLabel` (default `Voice input failed`) for processing status and fallback failures, plus the existing microphone/stop/discard labels.
 
 Base text input with auto-resize and keyboard shortcut handling. Use directly when a stripped-down input is needed — `ConversationInput` wraps it with the app-facing props it needs. The layout is always two rows: the textarea on its own full-width row, and the action bar (`+` button, tools chips, model selector, send/stop, mic) below it. Pass `hideActionBar` to render only the textarea and the attachment tray.
+
+`commandMenu` (on both `Input` and `ConversationInput`) mounts a host-injected slash-command menu. When provided, typing the configured `triggerPrefix` as the first character of an empty textarea opens an overlay above the input — as does pasting into an empty textarea a value that is exactly the prefix, or the prefix plus a whitespace-free query (`/` and `/test` trigger; `/s sdf`, multi-line content, or any paste into a non-empty textarea insert as a regular paste and open nothing). The menu stays open while the value keeps matching the prefix followed by a query with no whitespace or second prefix character, and closes on unmatch, Escape, or an outside click; selection typically goes through `ctx.close({ consumeQuery: true })`, which removes the `/query` text from the textarea.
 
 ```tsx
 import { Input } from '@epam/ai-dial-conversation-input';

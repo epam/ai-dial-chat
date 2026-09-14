@@ -15,7 +15,7 @@ Tools SHALL always be surfaced as a row of chips rendered directly in the conver
 Whether a chip can additionally be taken off the input is governed by the `removable-tools` UI feature (`OverlayFeature.RemovableTools`), which is in `DEFAULT_ENABLED_UI_FEATURES`:
 
 - **`removable-tools` enabled** — each chip additionally carries a × button that drops it from the row, turning the tool off if it was on. Dismissal is view state of the input: the chip returns when the tool is switched on again from the `+` menu, and every dismissal is forgotten when the deployment offers a different tool list. The `+` menu additionally renders a "Tools" item (desktop submenu / mobile bottom sheet).
-- **`removable-tools` disabled** — every chip is a persistent toggle. No chip renders a ×, no dismissal state exists, and the `+` menu SHALL NOT render a "Tools" item, since there is nothing to bring back. Where tools are the only content that menu would hold — attachments, chat settings and prompts all unavailable, as in a typical overlay embed — the `+` button SHALL NOT render at all.
+- **`removable-tools` disabled** — every chip is a persistent toggle. No chip renders a ×, no dismissal state exists, and the `+` menu SHALL NOT render a "Tools" item, since there is nothing to bring back. Where tools are the only content that menu would hold — attachments, chat settings, and every overlay-menu entry (prompts, and skills when the `skillUsageEnabled` flag is on) all unavailable, as in a typical overlay embed — the `+` button SHALL NOT render at all.
 
 When the schema is absent or contains no boolean property, neither the chip row nor the "Tools" menu item SHALL render, and the `+` menu SHALL behave as if the feature did not exist.
 
@@ -35,8 +35,12 @@ Beyond `removable-tools`, no operator configuration gates this: there is no env 
 - **AND** the `+` menu renders no "Tools" item
 
 #### Scenario: removable-tools disabled and tools are the menu's only content — no `+` button
-- **WHEN** `isEnabled('removable-tools')` is `false` AND attachments, chat settings and the prompts overlay are all unavailable
+- **WHEN** `isEnabled('removable-tools')` is `false` AND attachments, chat settings, the prompts overlay, and the skills overlay (when `skillUsageEnabled` is enabled) are all unavailable
 - **THEN** the input renders the tool chips and no `+` button
+
+#### Scenario: Skills overlay alone keeps the `+` button rendered
+- **WHEN** `isEnabled('removable-tools')` is `false` AND attachments and chat settings are unavailable AND `skillUsageEnabled` is enabled
+- **THEN** the `+` button renders, because the Skills overlay-menu entry is menu content
 
 #### Scenario: Schema exposes several boolean properties — one chip each
 - **WHEN** the schema contains `properties.deep_research` and `properties.web_search`, both boolean

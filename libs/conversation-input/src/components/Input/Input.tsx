@@ -31,6 +31,7 @@ import { useCommandMenu } from '../../hooks/useCommandMenu/useCommandMenu';
 import { useDelayedUnmount } from '../../hooks/useDelayedUnmount';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useMessageState } from '../../hooks/useMessageState';
+import { useTextInsertion } from '../../hooks/useTextInsertion';
 import {
   useVoiceRecorder,
   VoiceRecorderState,
@@ -52,6 +53,7 @@ const SEND_BUTTON_EXIT_MS = 160;
 export const Input: FC<InputProps> = ({
   message: messageProp = '',
   messageRevision,
+  textInsertion,
   onSend,
   onUploadAttachment,
   onStop,
@@ -189,6 +191,8 @@ export const Input: FC<InputProps> = ({
     messageProp,
     messageRevision,
   });
+
+  useTextInsertion({ insertion: textInsertion, textareaRef });
 
   const { isMenuOpen, query, dismiss, handleValueChange } = useCommandMenu({
     config: commandMenu,
@@ -557,12 +561,16 @@ export const Input: FC<InputProps> = ({
         /*
          * React types `ChangeEvent`'s `nativeEvent` as bare `Event`; the
          * runtime event behind a textarea's change is an `InputEvent`, so
-         * narrow with `instanceof` to read `isComposing` — a non-InputEvent
-         * can't be mid-composition, hence `false`.
+         * narrow with `instanceof` to read `isComposing` and `inputType` — a
+         * non-InputEvent can't be mid-composition or a paste, hence the
+         * defaults.
          */
+        const inputEvent =
+          e.nativeEvent instanceof InputEvent ? e.nativeEvent : undefined;
         handleValueChange(
           e.target.value,
-          e.nativeEvent instanceof InputEvent && e.nativeEvent.isComposing,
+          inputEvent?.isComposing ?? false,
+          inputEvent?.inputType,
         );
         onChange?.(e.target.value);
       }}

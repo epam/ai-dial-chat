@@ -222,7 +222,14 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
       case AttachmentContentType.Code:
       case AttachmentContentType.Html:
         return 'h-full overflow-hidden';
+      /*
+       * A markdown document flows as tall as its content, so the body root is
+       * the scroller. `MarkdownTable` is the opposite case — a single table
+       * that fills the panel and scrolls inside its own wrapper — so it keeps
+       * the clipped flex column.
+       */
       case AttachmentContentType.Markdown:
+        return 'h-full overflow-auto p-4';
       case AttachmentContentType.MarkdownTable:
         return 'flex h-full min-h-0 flex-col overflow-hidden p-4';
       default:
@@ -272,12 +279,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             content={content.text}
             isStreaming={false}
             codeBlockTheme={codeBlockTheme}
-            containerClassName="flex h-full min-h-0 flex-col"
-            classNames={{
-              ...DEFAULT_MARKDOWN_CLASS_NAMES,
-              tableWrapper: 'my-0 max-h-full',
-              tableScrollContainer: 'max-h-full',
-            }}
+            classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
           />
         );
       case AttachmentContentType.MarkdownTable:

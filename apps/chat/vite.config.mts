@@ -3,9 +3,14 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
+import {
+  CSP_NONCE_PLACEHOLDER,
+  trustedStyleNoncePlugin,
+} from '../../tools/vite/csp-nonce.mjs';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
+  html: { cspNonce: CSP_NONCE_PLACEHOLDER },
   cacheDir: '../../node_modules/.vite/apps/chat',
   server: {
     port: 4207,
@@ -21,7 +26,7 @@ export default defineConfig(() => ({
     port: 4207,
     host: 'localhost',
   },
-  plugins: [react(), svgr()],
+  plugins: [trustedStyleNoncePlugin(), react(), svgr()],
   resolve: {
     alias: {
       /* remark-math resolves math delimiters through micromark-extension-math, which only
@@ -172,10 +177,6 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/share/src/index.ts',
       ),
-      '@epam/ai-dial-deployment-creation-form': path.resolve(
-        import.meta.dirname,
-        '../../libs/deployment-creation-form/src/index.ts',
-      ),
       '@epam/ai-dial-scheduled-tasks': path.resolve(
         import.meta.dirname,
         '../../libs/scheduled-tasks/src/index.ts',
@@ -188,13 +189,13 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/builder-form/src/index.ts',
       ),
-      '@epam/ai-dial-editor-builder': path.resolve(
-        import.meta.dirname,
-        '../../libs/editor-builder/src/index.ts',
-      ),
       '@epam/ai-dial-skill-editor': path.resolve(
         import.meta.dirname,
         '../../libs/skill-editor/src/index.ts',
+      ),
+      '@epam/ai-dial-toolset-editor': path.resolve(
+        import.meta.dirname,
+        '../../libs/toolset-editor/src/index.ts',
       ),
       '@epam/ai-dial-prompt-editor': path.resolve(
         import.meta.dirname,

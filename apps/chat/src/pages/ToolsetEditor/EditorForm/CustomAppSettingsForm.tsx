@@ -1,7 +1,4 @@
-import {
-  isValidAbsoluteUrl,
-  isValidFeaturesData,
-} from '@epam/ai-dial-chat-hooks';
+import { isValidFeaturesData } from '@epam/ai-dial-chat-hooks';
 import {
   RESIZABLE_TEXTAREA_CLASS_NAME,
   TAG_INPUT_TAG_CLASS_NAME,
@@ -13,7 +10,7 @@ import {
   TextareaResize,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MIME_TYPE_REGEX } from '../../../constants/custom-apps';
 import { CustomAppI18nKeys } from '../../../constants/translation-keys';
@@ -26,61 +23,60 @@ interface Props {
   form: CustomAppFormData;
   errors: CustomAppFormErrors;
   onChange: (patch: Partial<CustomAppFormData>) => void;
+  onCompletionUrlBlur: () => void;
 }
 
-const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
+const CustomAppSettingsForm: FC<Props> = ({
+  form,
+  errors,
+  onChange,
+  onCompletionUrlBlur,
+}) => {
   const { t } = useTranslation();
-  const [mimeError, setMimeError] = useState<string | undefined>(undefined);
-  const [featuresDataError, setFeaturesDataError] = useState<
-    string | undefined
-  >(undefined);
-  const [completionUrlError, setCompletionUrlError] = useState<
-    string | undefined
-  >(undefined);
+
+  /*
+   * Validity of these two fields is a pure function of the current value, so
+   * they are derived on every render instead of being cached in local state.
+   * The form unmounts whenever the wizard switches back to the General step;
+   * state-held errors would be dropped while the invalid value — owned by the
+   * parent — survives, leaving the field silently unhighlighted on return.
+   */
+  const featuresDataError = useMemo(
+    () =>
+      form.featuresData.trim() && !isValidFeaturesData(form.featuresData)
+        ? t(CustomAppI18nKeys.FeaturesDataInvalid)
+        : undefined,
+    [form.featuresData, t],
+  );
+
+  const mimeError = useMemo(
+    () =>
+      form.inputAttachmentTypes.some((tag) => !MIME_TYPE_REGEX.test(tag))
+        ? t(CustomAppI18nKeys.InvalidMimeType)
+        : undefined,
+    [form.inputAttachmentTypes, t],
+  );
 
   const handleAttachmentTypesChange = useCallback(
     (inputAttachmentTypes: string[]) => {
-      const hasInvalid = inputAttachmentTypes.some(
-        (tag) => !MIME_TYPE_REGEX.test(tag),
-      );
-      setMimeError(
-        hasInvalid ? t(CustomAppI18nKeys.InvalidMimeType) : undefined,
-      );
       onChange({ inputAttachmentTypes });
     },
-    [onChange, t],
+    [onChange],
   );
 
   const handleFeaturesDataChange = useCallback(
     (value: string) => {
       onChange({ featuresData: value });
-      setFeaturesDataError(
-        value.trim() && !isValidFeaturesData(value)
-          ? t(CustomAppI18nKeys.FeaturesDataInvalid)
-          : undefined,
-      );
     },
-    [onChange, t],
+    [onChange],
   );
 
   const handleCompletionUrlChange = useCallback(
     (value?: string) => {
       onChange({ completionUrl: value ?? '' });
-      setCompletionUrlError(undefined);
     },
     [onChange],
   );
-
-  const handleCompletionUrlBlur = useCallback(() => {
-    const trimmed = form.completionUrl.trim();
-    if (!trimmed) {
-      setCompletionUrlError(t(CustomAppI18nKeys.CompletionUrlRequired));
-    } else if (!isValidAbsoluteUrl(trimmed)) {
-      setCompletionUrlError(t(CustomAppI18nKeys.CompletionUrlInvalid));
-    } else {
-      setCompletionUrlError(undefined);
-    }
-  }, [form.completionUrl, t]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -137,14 +133,14 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
         id="custom-app-completion-url"
         value={form.completionUrl}
         onChange={handleCompletionUrlChange}
-        onBlur={handleCompletionUrlBlur}
+        onBlur={onCompletionUrlBlur}
         labelProps={{
           label: t(CustomAppI18nKeys.CompletionUrlLabel),
           required: true,
         }}
         placeholder={t(CustomAppI18nKeys.TypeChatCompletionURL)}
-        error={completionUrlError ?? errors.completionUrl ?? undefined}
-        invalid={!!completionUrlError || !!errors.completionUrl || undefined}
+        error={errors.completionUrl ?? undefined}
+        invalid={!!errors.completionUrl || undefined}
       />
     </div>
   );

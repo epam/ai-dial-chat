@@ -1,3 +1,15 @@
 .container {
   background: var(--bfc-bg, var(--bg-layer-base, #f5f7fa));
 }
+
+/* Mobile-only sticky action footer: pinned over the scrolling form, so it
+ * needs an opaque background (the container background token, so it blends
+ * with the page) and an elevation shadow, exactly as specified. The footer
+ * is desktop:hidden, and at the desktop breakpoint the header's border-b is
+ * the divider instead. */
+.footer {
+  background: var(--bfc-bg, var(--bg-layer-base, #f5f7fa));
+  box-shadow:
+    0 2px 12px 0 var(--shadow-xs-2, #161b2d08),
+    0 2px 6px 0 var(--shadow-xs-1, #2764d933);
+}

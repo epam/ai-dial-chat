@@ -1,3 +1,5 @@
+import type { PromptParameter } from '@epam/ai-dial-chat-shared';
+
 /** Localizable string labels for the prompt-parameters popup component. */
 export interface PromptParametersPopupLabels {
   /** Dialog title. Defaults to `'Prompt parameters'`. */
@@ -37,10 +39,12 @@ export interface PromptParametersPopupProps {
   /** Short summary shown above the divider in the Details column. Omitted when empty. */
   description?: string;
   /**
-   * Distinct `{{param}}` names found in `content`, in first-occurrence order.
-   * One required field is rendered per entry.
+   * Distinct parameters found in `content`, in first-occurrence order — as
+   * returned by `extractPromptParams`. One required field is rendered per
+   * entry, labelled with the parameter's name and starting out holding its
+   * `defaultValue` when it has one.
    */
-  parameters: string[];
+  parameters: PromptParameter[];
   /**
    * Called to return to the previous screen (the browse modal). When omitted,
    * no back chevron is rendered — the popup was opened directly from a favorite.

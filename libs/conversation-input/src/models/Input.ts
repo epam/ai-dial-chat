@@ -107,9 +107,9 @@ export interface CommandMenuContext {
   close: (options?: { consumeQuery?: boolean }) => void;
 }
 
-/** Host-injected slash-command menu: an overlay opened by typing a trigger prefix into an empty textarea. */
+/** Host-injected slash-command menu: an overlay opened by entering a trigger prefix into an empty textarea — typed or pasted. */
 export interface CommandMenuConfig {
-  /** Prefix that opens the menu when typed as the first character of an empty textarea (e.g. `'/'`). */
+  /** Prefix that opens the menu when entered into an empty textarea (e.g. `'/'`) — typed as its first character, or arriving in a paste whose result is the prefix alone or with a whitespace-free query. */
   triggerPrefix: string;
   /** Renders the menu content for the current query. */
   renderMenu: (ctx: CommandMenuContext) => ReactNode;
@@ -121,6 +121,14 @@ export interface CommandMenuConfig {
   emptyQueryHint?: string;
   /** Accessible name for the menu region. When absent, the content is rendered without a labeled wrapper. */
   menuLabel?: string;
+}
+
+/** One-shot text hand-off that the `Input` inserts at the caret. */
+export interface TextInsertion {
+  /** Text inserted at the caret, replacing whatever is selected. */
+  text: string;
+  /** Token that performs the insertion; bump it to insert the same text again. */
+  revision: number;
 }
 
 /** Props accepted by the `Input` component. */
@@ -135,6 +143,13 @@ export interface InputProps {
    * when `message` itself is the same string as before.
    */
   messageRevision?: number;
+  /**
+   * Text inserted at the caret each time its `revision` changes, leaving the
+   * surrounding draft intact. Unlike `message`, this never replaces what the
+   * user has written, and it is made through the browser's editing pipeline so
+   * the native undo shortcut reverts it.
+   */
+  textInsertion?: TextInsertion;
   /** Called on every keystroke with the current textarea value. */
   onChange?: (message: string) => void;
   /** Called when the user submits a message. */
@@ -349,13 +364,18 @@ export interface InputProps {
   onInlineStartRemove?: () => void;
   /**
    * Host-injected slash-command menu. When provided, typing `triggerPrefix`
-   * as the first character of an empty textarea opens an overlay above the
-   * input; it stays open while the value keeps matching the prefix followed
-   * by a query with no whitespace or second prefix character, and closes on
-   * unmatch, Escape, or an outside click (a dismissed menu reopens only after
-   * the value stops matching and the prefix is typed again). Selection
-   * typically goes through `ctx.close({ consumeQuery: true })`, which removes
-   * the `/query` text from the textarea. Absent disables the mechanism.
+   * as the first character of an empty textarea — or pasting into an empty
+   * textarea a value that is exactly the prefix, or the prefix plus a
+   * whitespace-free, prefix-free query — opens an overlay above the input;
+   * it stays open while the value keeps matching the prefix followed by a
+   * query with no whitespace or second prefix character, and closes on
+   * unmatch, Escape, or an outside click (a dismissed menu reopens only
+   * after the value stops matching and the trigger is typed or pasted
+   * again). Any other pasted value, and any paste into a non-empty
+   * textarea, inserts as a regular paste and opens nothing. Selection
+   * typically goes through `ctx.close({ consumeQuery: true })`, which
+   * removes the `/query` text from the textarea. Absent disables the
+   * mechanism.
    */
   commandMenu?: CommandMenuConfig;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */

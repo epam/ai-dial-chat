@@ -1,6 +1,6 @@
 {
   "name": "@epam/ai-dial-builder-form",
-  "description": "Presentational builder form components for composing and editing DIAL entities",
+  "description": "Presentational builder form shells, editor layouts, and shared deployment field sets for composing and editing DIAL entities",
   "version": "0.0.1",
   "license": "Apache-2.0",
   "private": true,

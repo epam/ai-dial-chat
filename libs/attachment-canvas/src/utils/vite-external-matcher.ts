@@ -19,6 +19,7 @@ export const EXTERNAL_PEER_NAMES = [
   'react-syntax-highlighter',
   '@mcp-ui/client',
   '@modelcontextprotocol/sdk',
+  '@modelcontextprotocol/ext-apps',
   'pdfjs-dist',
 ] as const;
 

@@ -70,6 +70,84 @@ describe('useAttachmentUpload', () => {
     );
   });
 
+  it('uploads in create-only mode so an existing file is never replaced', async () => {
+    uploadFile.mockResolvedValue({ url: 'https://example.com/file.pdf' });
+    const { result } = renderHook(() =>
+      useAttachmentUpload({ filesApi: fakeFilesApi, bucket: 'user-bucket' }),
+    );
+
+    await result.current.handleUploadAttachment(makeAttachment());
+
+    expect(uploadFile).toHaveBeenCalledWith(
+      expect.objectContaining({ uploadMode: 'create-only' }),
+    );
+  });
+
+  it('gives two same-named attachments distinct upload paths', async () => {
+    uploadFile.mockResolvedValue({ url: 'https://example.com/file.png' });
+    const { result } = renderHook(() =>
+      useAttachmentUpload({ filesApi: fakeFilesApi, bucket: 'user-bucket' }),
+    );
+
+    const first = await result.current.handleUploadAttachment(
+      makeAttachment('Screenshot.png'),
+    );
+    const second = await result.current.handleUploadAttachment(
+      makeAttachment('Screenshot.png'),
+    );
+
+    expect(first.name).toBe('Screenshot.png');
+    expect(second.name).toBe('Screenshot (1).png');
+    expect(uploadFile.mock.calls[0][0].path).not.toBe(
+      uploadFile.mock.calls[1][0].path,
+    );
+  });
+
+  it('retries on the next free name when the server reports a conflict', async () => {
+    uploadFile
+      .mockRejectedValueOnce({ response: { status: 409 } })
+      .mockResolvedValue({ url: 'https://example.com/file.png' });
+    const { result } = renderHook(() =>
+      useAttachmentUpload({ filesApi: fakeFilesApi, bucket: 'user-bucket' }),
+    );
+
+    await expect(
+      result.current.handleUploadAttachment(makeAttachment('Screenshot.png')),
+    ).resolves.toEqual({
+      url: 'https://example.com/file.png',
+      name: 'Screenshot (1).png',
+    });
+    expect(uploadFile).toHaveBeenCalledTimes(2);
+  });
+
+  it('gives up and rethrows once the conflict retry limit is exhausted', async () => {
+    uploadFile.mockRejectedValue({ response: { status: 409 } });
+    const { result } = renderHook(() =>
+      useAttachmentUpload({ filesApi: fakeFilesApi, bucket: 'user-bucket' }),
+    );
+
+    await expect(
+      result.current.handleUploadAttachment(makeAttachment('Screenshot.png')),
+    ).rejects.toMatchObject({ response: { status: 409 } });
+    expect(uploadFile).toHaveBeenCalledTimes(6);
+  });
+
+  it('reuses the name of a failed upload for the next attempt', async () => {
+    uploadFile.mockRejectedValueOnce(new Error('server error'));
+    const { result } = renderHook(() =>
+      useAttachmentUpload({ filesApi: fakeFilesApi, bucket: 'user-bucket' }),
+    );
+
+    await expect(
+      result.current.handleUploadAttachment(makeAttachment('Screenshot.png')),
+    ).rejects.toThrow('server error');
+
+    uploadFile.mockResolvedValue({ url: 'https://example.com/file.png' });
+    await expect(
+      result.current.handleUploadAttachment(makeAttachment('Screenshot.png')),
+    ).resolves.toMatchObject({ name: 'Screenshot.png' });
+  });
+
   it('rejects when no bucket is available', async () => {
     const { result } = renderHook(() =>
       useAttachmentUpload({ filesApi: fakeFilesApi, bucket: undefined }),

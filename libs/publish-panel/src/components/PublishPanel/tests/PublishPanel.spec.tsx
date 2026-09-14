@@ -99,6 +99,8 @@ const renderPanel = (props?: Partial<ComponentProps<typeof PublishPanel>>) =>
       hasExistingPublicationInFolder={false}
       hasWriteAccess={true}
       isSubmitting={false}
+      author=""
+      onAuthorChange={vi.fn()}
       rules={[]}
       onRulesChange={vi.fn()}
       ruleSourceOptions={['title', 'role', 'dial_roles']}
@@ -323,6 +325,85 @@ describe('PublishPanel', () => {
       });
       expect(container.textContent).toContain(
         "You don't have permission to publish to Public bucket.",
+      );
+    });
+  });
+  describe('author field', () => {
+    it('renders with the default English label, placeholder and hint', () => {
+      renderPanel();
+
+      const field = screen.getByRole('textbox', { name: /Author/ });
+      expect(field.getAttribute('placeholder')).toBe('Author name');
+      expect(
+        screen.getByText(
+          'Shown as the publication’s author. Defaults to you — replace it to credit a team instead.',
+        ),
+      ).toBeTruthy();
+    });
+
+    it('renders the supplied author value', () => {
+      renderPanel({ author: 'DIAL Team' });
+
+      expect(screen.getByRole('textbox', { name: /Author/ })).toHaveProperty(
+        'value',
+        'DIAL Team',
+      );
+    });
+
+    it('calls onAuthorChange as the user types', async () => {
+      const onAuthorChange = vi.fn();
+      renderPanel({ onAuthorChange });
+
+      await userEvent.type(
+        screen.getByRole('textbox', { name: /Author/ }),
+        'D',
+      );
+
+      expect(onAuthorChange).toHaveBeenCalledWith('D');
+    });
+
+    it('caps the field at the backend author limit', () => {
+      renderPanel();
+
+      expect(
+        screen
+          .getByRole('textbox', { name: /Author/ })
+          .getAttribute('maxlength'),
+      ).toBe('200');
+    });
+
+    it('disables the field while a publish request is in flight', () => {
+      renderPanel({ isSubmitting: true });
+
+      expect(
+        (screen.getByRole('textbox', { name: /Author/ }) as HTMLInputElement)
+          .disabled,
+      ).toBe(true);
+    });
+
+    it('applies label overrides from the labels prop', () => {
+      renderPanel({
+        labels: {
+          authorLabel: 'Автор',
+          authorPlaceholder: 'Имя автора',
+          authorHint: 'Кто стоит за публикацией',
+        },
+      });
+
+      const field = screen.getByRole('textbox', { name: /Автор/ });
+      expect(field.getAttribute('placeholder')).toBe('Имя автора');
+      expect(screen.getByText('Кто стоит за публикацией')).toBeTruthy();
+    });
+
+    it('renders between the destination folder section and the access rules', () => {
+      const { container } = renderPanel();
+      const text = container.textContent ?? '';
+
+      expect(text.indexOf('Publish to folder')).toBeLessThan(
+        text.indexOf('Author'),
+      );
+      expect(text.indexOf('Author')).toBeLessThan(
+        text.indexOf('Allow access if all match'),
       );
     });
   });

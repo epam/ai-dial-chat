@@ -175,6 +175,12 @@ export function usePromptSelectorOverlay({
     [pendingPrompt, onInsertText],
   );
 
+  const pendingParameters = useMemo(
+    () =>
+      pendingPrompt != null ? extractPromptParams(pendingPrompt.content) : [],
+    [pendingPrompt],
+  );
+
   const parametersPopup = pendingPrompt != null && (
     <Suspense fallback={null}>
       <PromptParametersPopupOverlay
@@ -182,7 +188,7 @@ export function usePromptSelectorOverlay({
         promptName={pendingPrompt.name}
         content={pendingPrompt.content}
         description={pendingPrompt.description}
-        parameters={extractPromptParams(pendingPrompt.content)}
+        parameters={pendingParameters}
         onBack={openedFromBrowse ? handleBackToBrowse : undefined}
         onClose={handleClosePopup}
         onCancel={handleClosePopup}

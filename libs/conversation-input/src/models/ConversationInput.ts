@@ -15,6 +15,7 @@ import type {
   MenuOverlayConfig,
   ModelSelectorLabels,
   SendOnEnter,
+  TextInsertion,
   ToolsChipLabels,
 } from './Input';
 import type { TranscribeAudio } from './Voice';
@@ -53,6 +54,12 @@ export interface EditMessageInputProps {
    * below. Forwarded to the inner `Input`.
    */
   inlineStartSlot?: ReactNode;
+  /**
+   * Called when Backspace is pressed with the caret collapsed at position 0
+   * while `inlineStartSlot` content is shown (the slot's remove gesture).
+   * Forwarded to the inner `Input`.
+   */
+  onInlineStartRemove?: () => void;
   /** Pre-existing attachments from the original message, shown in the attachment tray. */
   initialAttachments?: DisplayAttachment[];
   /** Called when the user clicks the Cancel button. */
@@ -168,6 +175,13 @@ export interface ConversationInputProps {
    * when `message` itself is the same string as before.
    */
   messageRevision?: number;
+  /**
+   * Text inserted at the caret each time its `revision` changes, leaving the
+   * surrounding draft intact. Unlike `message`, this never replaces what the
+   * user has written, and it is made through the browser's editing pipeline so
+   * the native undo shortcut reverts it.
+   */
+  textInsertion?: TextInsertion;
   /** Optional welcome heading rendered above the input. */
   welcomeText?: string;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
@@ -384,8 +398,10 @@ export interface ConversationInputProps {
   onInlineStartRemove?: () => void;
   /**
    * Host-injected slash-command menu: typing `triggerPrefix` as the first
-   * character of an empty textarea opens an overlay above the input with
-   * host-rendered, query-filtered content. Forwarded to the inner `Input`.
+   * character of an empty textarea — or pasting into an empty textarea a
+   * value that is exactly the prefix, or the prefix plus a whitespace-free
+   * query — opens an overlay above the input with host-rendered,
+   * query-filtered content. Forwarded to the inner `Input`.
    */
   commandMenu?: CommandMenuConfig;
   /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */

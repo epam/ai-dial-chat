@@ -38,7 +38,7 @@ const cache = useMcpAppResponseCache(conversationId);
 
 ### `useMcpAppInlinePreview`
 
-Fetches an MCP App's `ui://` resource and resolves its seeded tool result for a compact inline preview.
+Fetches an MCP App's `ui://` resource and resolves its seeded tool result for a compact inline preview. The optional sixth argument is forwarded to the mounted app's `ui/request-display-mode` handler — this hook has no opinion on surface switching, so the host decides what a mode request does.
 
 ```tsx
 import { useMcpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
@@ -49,6 +49,7 @@ const { status, content, reload } = useMcpAppInlinePreview(
   cache,
   cacheKey,
   hostAdapter,
+  onRequestDisplayMode,
 );
 ```
 
@@ -56,7 +57,7 @@ const { status, content, reload } = useMcpAppInlinePreview(
 
 ### `McpAppInlinePreview`
 
-Renders a compact, always-visible preview of a message's matched MCP App, with a reload button and an expand-to-canvas button.
+Renders a compact, always-visible preview of a message's matched MCP App, with a header strip above the preview frame (styled like the code block header in `@epam/ai-dial-chat-shared`'s Markdown renderer — small ghost icon buttons in a bordered `min-h-10` header) carrying a reload button and an expand-to-canvas button. An app's `ui/request-display-mode` request for `'fullscreen'` expands into the canvas via `onExpand` — the same surface the expand button opens; any other requested mode keeps the preview, and the app is answered with `'inline'`.
 
 ```tsx
 import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
@@ -70,6 +71,7 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
   onExpand={handleExpand}
   expandAriaLabel="Open in full view"
   reloadAriaLabel="Reload"
+  actionsGroupAriaLabel="MCP app actions"
   loadErrorLabel="Failed to load app"
 />;
 ```
@@ -82,6 +84,25 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
 - `computeMcpAppSeedKey(toolCall)` — identifies which seed a cache entry was resolved from.
 - `collectToolCallNames(messages)` — collects every real tool-call name seen across a conversation's messages.
 - `mcpAppCanvasKey(messageIndex)` — stable per-message cache/canvas key.
+
+## Constants
+
+MCP wire-protocol constants shared by every surface that talks to an MCP server over the Streamable HTTP transport: `MCP_PROTOCOL_VERSION` (`'2024-11-05'`), `MCP_SESSION_ID_HEADER` (`'mcp-session-id'`), `MCP_PROTOCOL_VERSION_HEADER` (`'mcp-protocol-version'`, sent on every request that follows a completed handshake), and `MCP_CLIENT_INFO` (`{ name: 'ai-dial-chat', version: '1.0.0' }`).
+
+```ts
+import {
+  MCP_CLIENT_INFO,
+  MCP_PROTOCOL_VERSION,
+  MCP_PROTOCOL_VERSION_HEADER,
+  MCP_SESSION_ID_HEADER,
+} from '@epam/ai-dial-mcp-apps';
+```
+
+Non-React consumers (`apps/chat-api`'s MCP proxy) import the same constants through the React-free `./constants` entry point instead of the barrel, so they never pull the React-peered barrel:
+
+```ts
+import { MCP_PROTOCOL_VERSION } from '@epam/ai-dial-mcp-apps/constants';
+```
 
 ## Types
 

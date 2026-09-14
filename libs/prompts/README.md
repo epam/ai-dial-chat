@@ -98,6 +98,13 @@ point. `extractPromptParams`/`resolvePromptParams` live in
 `@epam/ai-dial-chat-shared`, alongside the `{{param}}` grammar this component
 renders inline via `MarkdownWithPlaceholders`.
 
+`parameters` is a `PromptParameter[]` — each entry a `name` and an optional
+`defaultValue`, which `extractPromptParams` reads out of the prompt body. A
+token written as `{{language|Spanish}}` labels its field `language` and opens
+it holding `Spanish`, so confirming without typing submits the default; a bare
+`{{tone}}` opens empty, as before. Every field stays required, so a parameter
+without a default still has to be filled before Submit enables.
+
 ## Types
 
 ```tsx

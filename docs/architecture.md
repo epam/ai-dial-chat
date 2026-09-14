@@ -29,7 +29,7 @@ Core principle: the chat application is assembled from a set of **independently 
 
 | Tool               | Role                                                           |
 | ------------------ | -------------------------------------------------------------- |
-| **Nx 22**          | Monorepo orchestration, task pipeline, caching, affected graph |
+| **Nx 23**          | Monorepo orchestration, task pipeline, caching, affected graph |
 | **npm workspaces** | Package management                                             |
 | **React 19**       | UI framework for all libraries and the frontend app            |
 | **NestJS 11**      | Backend API server (`apps/chat-api`)                           |
@@ -99,8 +99,8 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-sidebar`                  | `sidebar`                  | Resizable sidebar shell — header, search, empty state                                                                                                                                                                                                                                                                                                                                                                          |
 | `@epam/ai-dial-source-panel`             | `source-panel`             | Conversation sources — uploaded files and generated citations                                                                                                                                                                                                                                                                                                                                                                  |
 | `@epam/ai-dial-quotations`               | `quotations`               | Citation and annotation components, hooks, and utilities                                                                                                                                                                                                                                                                                                                                                                       |
-| `@epam/ai-dial-attachment-canvas`        | `attachment-canvas`        | Viewer for attachments — images, PDFs, DOCX/XLSX/PPTX, JSON, markdown, text                                                                                                                                                                                                                                                                                                                                                    |
-| `@epam/ai-dial-mcp-apps`                 | `mcp-apps`                 | Host-agnostic MCP Apps building blocks — message/tool-call matching, the response cache, and the inline preview hook/component, shared with `apps/chat`'s full-width MCP App canvas                                                                                                                                                                                                                                            |
+| `@epam/ai-dial-toolset-editor`           | `toolset-editor`           | Host-agnostic toolset editor — composed `ToolsetEditor`, shared `GeneralForm`, validation and form utils, injected auth/persist callbacks; first lib peer on `chat-hooks` (root barrel)                                                                                                                                                                                                                                        |
+| `@epam/ai-dial-mcp-apps`                 | `mcp-apps`                 | Host-agnostic MCP Apps building blocks — message/tool-call matching, the response cache, and the inline preview hook/component, shared with `apps/chat`'s full-width MCP App canvas; also owns the shared MCP wire-protocol constants, exported both from the barrel and via a React-free `./constants` subpath that `apps/chat-api`'s MCP proxy imports (the backend's only dependency on a workspace frontend lib) |
 | `@epam/ai-dial-attachment-canvas`        | `attachment-canvas`        | Viewer for attachments — images, PDFs, DOCX/XLSX/PPTX, CSV spreadsheets, JSON, markdown, text                                                                                                                                                                                                                                                                                                                                  |
 | `@epam/ai-dial-attachment-input`         | `attachment-input`         | File input with upload validation, drag-and-drop, progress                                                                                                                                                                                                                                                                                                                                                                     |
 | `@epam/ai-dial-starter-buttons`          | `starter-buttons`          | Starter prompts that overflow into a dropdown when space runs out                                                                                                                                                                                                                                                                                                                                                              |
@@ -126,6 +126,8 @@ Libraries must stay free of host and external-system knowledge: no REST paths, g
 `@epam/ai-dial-chat-api-client` is the generated-client exception: it is generated from the backend's OpenAPI document and exists to carry endpoint paths and DTOs. Do not hand-edit it; applications normally consume it through `apps/chat/src/server-api`.
 
 `libs/chat-hooks` has a narrower exception: hooks may depend on the generated client's types and operation signatures and accept an already-configured client instance. The library must not construct or configure that client or acquire any other host-owned integration knowledge.
+
+`@epam/ai-dial-toolset-editor` is the first other lib that depends on `chat-hooks`: it peers on it for the host-agnostic OAuth helpers (`src/oauth/` — callback path is a parameter, no routes or i18n) and imports the root barrel only, never a subpath. This does not extend to other libs; a new lib needing those helpers should raise it in review rather than assume the exception generalizes.
 
 The styling contract every UI lib follows — CSS variable naming, what belongs in `.module.scss` versus Tailwind, the `styles={{ colors, typography }}` prop shape, and the checks that catch inert styles — is in [`openspec/lib-styling-guide.md`](../openspec/lib-styling-guide.md). `libs/conversation-input` is the reference implementation.
 
@@ -153,7 +155,29 @@ apps/chat/src/
 └── i18n/                  # i18next config + locale JSON files
 ```
 
-Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `AppsEditor`, `ToolsetEditor`, `ToolsetAuthCallback`, `PromptEditor`, `DialFileManagerPage`, `ScheduledTasksPage`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `NotFound`, and `auth/`.
+Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `AppsEditor`, `ToolsetEditor`, `ToolsetAuthCallback`, `PromptEditor`, `DialFileManagerPage`, `ScheduledTasksPage`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `SettingsPage`, `NotFound`, and `auth/`.
+
+`SettingsPage` is always available — it is behind no feature flag. It renders a
+vertical tab rail via `@epam/ai-dial-settings-panel`, with the tab list declared
+in `hooks/useSettingsTabConfig.tsx` — adding a tab is one `SettingsTabs` enum
+member plus one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
+`Preferences` is the tab selected on arrival, so `GET /api/v1/user/usage` is not requested until
+the user opens `Usage`.
+`PreferencesTab` hosts the language, keyboard-shortcut and "Default agent for new chats"
+preferences. A theme row is implemented but **commented out**, parked for an
+upcoming theming feature — which is why `useThemeOptions` and the
+`settings.theme*` i18n keys exist with no live caller. The "Default agent for
+new chats" row renders only while `DEFAULT_DEPLOYMENT_PINNED` is on, since the
+pin is what gives its "Default agent" option something to refer to; in a default
+deployment (flag off) only the keyboard-shortcut row is visible. The language row renders
+only once more than one locale is registered, which is not the case in a default
+build.
+
+The desktop `UserMenu` keeps a locale submenu (same gating, same
+`useLanguage().changeLanguage`, so the two language surfaces cannot disagree) but
+offers no theme, keyboard-shortcut or "Default agent for new chats" submenu. The mobile
+`NavigationSheet` keeps the keyboard-shortcut group, because it has no Settings
+entry point of its own.
 
 The frontend uses automatic chunk splitting. Catalog Grid imports the UI Kit's
 `/grid` entry; Markdown editor loaders use `/editors`. File-manager UI has a
@@ -190,7 +214,7 @@ Current implementation uses **React Context** with no external state library. Th
 | `OverlayContext`              | Embedded-mode handshake, request routing to page-level bridges, event emission to the host                                                                                                                                                                                                                                                                                                                            |
 | `ConversationsContext`        | Conversation list, selection, and mutations                                                                                                                                                                                                                                                                                                                                                                           |
 | `GenerationContext`           | In-flight generation state for the active conversation                                                                                                                                                                                                                                                                                                                                                                |
-| `DeploymentsContext`          | Available deployments and the selected one                                                                                                                                                                                                                                                                                                                                                                            |
+| `DeploymentsContext`          | Available deployments and the selected one. A new chat's deployment resolves in `resolveInitialSelection`, in this order: an explicit in-session pick → the user's "Default agent for new chats" preference when it names a catalog deployment → the operator default when that preference is `default-agent` (regardless of the `defaultDeploymentPinned` flag) → the operator default when pinned → the persisted `selectedDeploymentId` → the first catalog item |
 | `PromptsContext`              | Prompt list and mutations                                                                                                                                                                                                                                                                                                                                                                                             |
 | `SkillsContext`               | Skill list and mutations                                                                                                                                                                                                                                                                                                                                                                                              |
 | `ConversationPanelContext`    | Conversation sidebar open/collapsed state                                                                                                                                                                                                                                                                                                                                                                             |
@@ -268,12 +292,18 @@ NestJS 11 server. Entry: `apps/chat-api/src/main.ts`.
 
 Configured at startup:
 
-- `helmet` — security headers (CSP, HSTS, etc.)
+- `helmet` — security headers (CSP, HSTS, etc.). Generic responses do not allow
+  WebAssembly. App-owned frontend middleware gives chat HTML a fresh style nonce
+  and its required WebAssembly permission, while the PDF worker receives a
+  separate worker policy. `CSP_MODE` controls report-only rollout versus strict
+  enforcement; see [CSP configuration](../apps/chat-api/README.md#content-security-policy).
 - `ValidationPipe` — whitelist + `forbidNonWhitelisted` + `transform`
 - URI versioning — business endpoints at `/api/v{N}/{resource}`
 - CORS with `credentials: true`
 - Swagger at `/api/docs` (non-production)
-- Static React SPA serving from `apps/chat/dist` for non-`/api/*` routes
+- Static assets from `apps/chat/dist` and nonce-bearing React SPA HTML for
+  non-`/api/*` routes (`app/static-assets.ts`). HTML templates are cached in memory;
+  HTML responses use `no-store` with a fresh nonce, while asset caching is unchanged.
 - Global prefix: `api`
 - Global in-memory cache: an explicit Keyv memory adapter with a 100-entry LRU limit and periodic expiration cleanup; see [backend caching behavior](../apps/chat-api/README.md#performance).
 - OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)
@@ -373,6 +403,8 @@ prefix is fixed in `auth.controller.ts`, not derived from `API_PREFIX`.
 #### Conversations (`/api/v1/conversations`)
 
 No endpoint in this domain carries a per-route rate limit — repo-wide rate limiting was removed from `apps/chat-api`.
+
+`GET /api/v1/conversations/list` returns the complete history when both `limit` and `nextToken` are omitted. The BFF follows personal and public bucket cursors independently in batches of 1000, adds shared conversations once, and sorts the combined list by latest activity before bounded display-name enrichment. The conversation panel uses this full-history mode. An explicit `limit` or `nextToken` requests one page per bucket and returns a compound continuation cursor; with only `nextToken`, the page size is 100. A failed personal page fails the request rather than returning a truncated history; public and shared sources remain best-effort.
 
 | Method   | Path                                       | Description                                                                             |
 | -------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |
@@ -608,7 +640,7 @@ The intended direction, enforced in review:
 | #   | Decision                                                                     | Status                                       |
 | --- | ---------------------------------------------------------------------------- | -------------------------------------------- |
 | 1   | Package prefix: `@epam/*` (short form, no `ai-dial-` in package name)        | ✅ Accepted                                  |
-| 2   | Monorepo tooling: **Nx 22**                                                  | ✅ Accepted                                  |
+| 2   | Monorepo tooling: **Nx 23**                                                  | ✅ Accepted                                  |
 | 3   | Package manager: **npm workspaces**                                          | ✅ Accepted                                  |
 | 4   | UI framework: **React 19** (SPA)                                             | ✅ Accepted                                  |
 | 5   | Backend framework: **NestJS 11** (`apps/chat-api`)                           | ✅ Accepted                                  |
@@ -624,6 +656,8 @@ The intended direction, enforced in review:
 | 15  | CSRF: per-session token, validated via `X-CSRF-Token` header + origin check  | ✅ Accepted                                  |
 | 16  | Embedding: iframe + `postMessage` via `@epam/ai-dial-chat-overlay`           | ✅ Accepted                                  |
 | 17  | Module boundaries enforced by lint tags                                      | ❓ Open — wildcard constraint today          |
+| 18  | User preferences persist in `localStorage`, not the server user-config file  | ✅ Accepted — theme, language, keyboard shortcut and "Default agent for new chats" are all per-browser; they do not follow the user across devices |
+| 19  | `DEFAULT_DEPLOYMENT_PINNED` both **offers** the "Default agent for new chats" control and is **outranked** by it | ✅ Accepted — the row renders only while an agent is pinned (the pin is what makes its "Default agent" option mean anything), and an explicitly chosen agent then beats the pin. The pin still beats the *implicit* last-used preference, which is what its description refers to. Both halves live in `resolveInitialSelection` + `PreferencesTab`'s visibility rule |
 
 ---
 

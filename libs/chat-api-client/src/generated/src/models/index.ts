@@ -68,8 +68,7 @@ export interface AnnotationBodyDto {
  * @export
  */
 export type AnnotationBodyDtoSelector =
-  | AnnotationSelectorDto
-  | Array<AnnotationSelectorDto>;
+  AnnotationSelectorDto | Array<AnnotationSelectorDto>;
 /**
  *
  * @export
@@ -1154,6 +1153,12 @@ export interface ConversationMessageCustomContentDto {
    */
   state?: object;
   /**
+   * Skills used with this message, each entry carrying the skill resource URL (DIAL Core PR #1956)
+   * @type {Array<RequestSkillDto>}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  skills?: Array<RequestSkillDto>;
+  /**
    * Status event discriminator when role is status
    * @type {string}
    * @memberof ConversationMessageCustomContentDto
@@ -1913,8 +1918,7 @@ export interface CreatedApplicationDto {
  * @export
  */
 export type CreatedApplicationDtoDisplayName =
-  | string
-  | { [key: string]: string };
+  string | { [key: string]: string };
 /**
  *
  * @export
@@ -4453,6 +4457,12 @@ export interface MessageCustomContentDto {
    * @memberof MessageCustomContentDto
    */
   state?: object;
+  /**
+   * Skills used with this message, each entry carrying the skill resource URL (DIAL Core PR #1956)
+   * @type {Array<RequestSkillDto>}
+   * @memberof MessageCustomContentDto
+   */
+  skills?: Array<RequestSkillDto>;
 }
 /**
  *
@@ -5123,6 +5133,12 @@ export interface PublishCatalogEntityDto {
    */
   version?: string;
   /**
+   * Display author recorded on the publication as `displayAuthor`, surfaced in the catalog as the published entity's "Hosted by" value. Omitted, blank, or whitespace-only falls back to the session's own display name, which is what every caller got before this field existed.
+   * @type {string}
+   * @memberof PublishCatalogEntityDto
+   */
+  author?: string;
+  /**
    * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
    * @type {Array<PublishRuleDto>}
    * @memberof PublishCatalogEntityDto
@@ -5141,6 +5157,12 @@ export interface PublishConversationDto {
    * @memberof PublishConversationDto
    */
   folderPath: string;
+  /**
+   * Display author recorded on the publication as `displayAuthor`. Omitted, blank, or whitespace-only falls back to the session's own display name, which is what every caller got before this field existed.
+   * @type {string}
+   * @memberof PublishConversationDto
+   */
+  author?: string;
   /**
    * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
    * @type {Array<PublishRuleDto>}
@@ -5565,6 +5587,19 @@ export const ReportClientChannelDtoResultEnum = {
 export type ReportClientChannelDtoResultEnum =
   (typeof ReportClientChannelDtoResultEnum)[keyof typeof ReportClientChannelDtoResultEnum];
 
+/**
+ *
+ * @export
+ * @interface RequestSkillDto
+ */
+export interface RequestSkillDto {
+  /**
+   * The skill's resource URL (skills/{bucket}/{path})
+   * @type {string}
+   * @memberof RequestSkillDto
+   */
+  url: string;
+}
 /**
  *
  * @export

@@ -34,8 +34,7 @@ const OverlayTestCtx = (
 
 const overlayMocks = vi.hoisted(() => ({
   current: undefined as
-    | { notifyConversationLoaded: ReturnType<typeof vi.fn> }
-    | undefined,
+    { notifyConversationLoaded: ReturnType<typeof vi.fn> } | undefined,
   notifyConversationLoaded: vi.fn(),
 }));
 
@@ -61,24 +60,38 @@ vi.mock(
   }),
 );
 const mockOpenParametersPopup = vi.fn();
+/* Captured so a test can play the role of the prompt picker and hand text back
+   through the route's own `onInsertText`. */
+let capturedOnInsertText: ((text: string) => void) | undefined;
 vi.mock('../../components/PromptSelector/usePromptSelectorOverlay', () => ({
-  usePromptSelectorOverlay: () => ({
-    renderOverlay: vi.fn(),
-    promptCatalogModal: null,
-    parametersPopup: null,
-    openParametersPopup: mockOpenParametersPopup,
-  }),
+  usePromptSelectorOverlay: ({
+    onInsertText,
+  }: {
+    onInsertText: (text: string) => void;
+  }) => {
+    capturedOnInsertText = onInsertText;
+    return {
+      renderOverlay: vi.fn(),
+      promptCatalogModal: null,
+      parametersPopup: null,
+      openParametersPopup: mockOpenParametersPopup,
+    };
+  },
 }));
 /* The real hook needs SkillsProvider/FavoriteApplicationsContext, which this
- * harness does not mount; the stub mirrors its flag-off shape
- * (`useFeatureFlag` is mocked to `false` above). */
+ * harness does not mount; the stub mirrors its flag-off shape. */
 vi.mock('../../components/SkillSelector/useSkillSelectorOverlay', () => ({
   useSkillSelectorOverlay: () => ({
     skillMenuOverlay: undefined,
+    commandMenu: undefined,
     skillCatalogModal: null,
     skillDetailsPanel: null,
-    selectedSkillChips: [],
+    selectedSkillElement: null,
+    selectedSkillPath: null,
+    selectedSkills: undefined,
     selectSkill: vi.fn(),
+    removeSelectedSkill: vi.fn(),
+    renderHistorySkills: () => null,
   }),
 }));
 vi.mock(
@@ -174,6 +187,7 @@ vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
       selectedDeploymentId,
       isInputDisabled,
       message,
+      textInsertion,
       sendOnEnter,
     }: {
       onSend?: (msg: string, att: never[]) => Promise<void> | void;
@@ -185,6 +199,7 @@ vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
       selectedDeploymentId?: string | null;
       isInputDisabled?: boolean;
       message?: string;
+      textInsertion?: { text: string; revision: number };
       sendOnEnter?: string;
     }) => (
       <div>
@@ -198,6 +213,12 @@ vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
           {String(isInputDisabled ?? false)}
         </output>
         <output aria-label="Input message">{message ?? ''}</output>
+        <output aria-label="Input insertion">
+          {textInsertion?.revision ? textInsertion.text : ''}
+        </output>
+        <output aria-label="Input insertion revision">
+          {textInsertion?.revision ?? 'none'}
+        </output>
         <output aria-label="Send on enter">{sendOnEnter ?? 'none'}</output>
         <button
           type="button"
@@ -506,6 +527,8 @@ describe('ConversationRoute', () => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
         'Hello',
         'gpt-4o',
+        undefined,
+        undefined,
         undefined,
         undefined,
       );
@@ -1159,7 +1182,53 @@ describe('ConversationRoute', () => {
         'gpt-4o',
         undefined,
         undefined,
+        undefined,
+        undefined,
       );
+    });
+  });
+
+  /* Issue #8754: a picked prompt arrived on the composer's `message` channel,
+   * which replaces the whole textarea value, so a draft typed before opening the
+   * picker was destroyed with no way to get it back. The caret-insert mechanics
+   * themselves live in the Input component's own suite. */
+  describe('inserting a picked prompt', () => {
+    const renderAndWaitForPicker = async () => {
+      renderRoute();
+      await waitFor(() => expect(capturedOnInsertText).toBeDefined());
+    };
+
+    it('hands the prompt to the composer on the insert channel', async () => {
+      await renderAndWaitForPicker();
+
+      act(() => capturedOnInsertText?.('Prompt body'));
+
+      expect(screen.getByLabelText('Input insertion').textContent).toBe(
+        'Prompt body',
+      );
+    });
+
+    it('does not write the prompt to the channel that replaces the draft', async () => {
+      await renderAndWaitForPicker();
+
+      act(() => capturedOnInsertText?.('Prompt body'));
+
+      expect(screen.getByLabelText('Input message').textContent).toBe('');
+    });
+
+    it('re-inserts the same prompt when it is picked twice', async () => {
+      await renderAndWaitForPicker();
+
+      act(() => capturedOnInsertText?.('Prompt body'));
+      expect(
+        screen.getByLabelText('Input insertion revision').textContent,
+      ).toBe('1');
+
+      act(() => capturedOnInsertText?.('Prompt body'));
+
+      expect(
+        screen.getByLabelText('Input insertion revision').textContent,
+      ).toBe('2');
     });
   });
 

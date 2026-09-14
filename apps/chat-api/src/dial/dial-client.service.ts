@@ -2,16 +2,24 @@ import { createSDK } from '@epam/ai-dial-typescript-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { resolveAppVersion } from '../common/utils/app-version';
+import { StringUtils } from '../common/utils/string-utils';
 import { EnvironmentVariables } from '../config/environment.config';
 
 const USER_AGENT_PRODUCT = 'ai-dial-chat';
 const UNSUPPORTED_USER_AGENT_VERSION_CHARACTERS = /[^A-Za-z0-9._-]+/g;
-const EDGE_USER_AGENT_VERSION_SEPARATORS = /^-+|-+$/g;
 
 const normalizeUserAgentVersion = (version: string): string => {
-  const normalized = version
-    .replace(UNSUPPORTED_USER_AGENT_VERSION_CHARACTERS, '-')
-    .replace(EDGE_USER_AGENT_VERSION_SEPARATORS, '');
+  /*
+   * Hyphens are allowed characters, so a version may legitimately carry a run
+   * of them at either end — they are trimmed by index scan rather than a
+   * `/^-+|-+$/` regex, whose `-+$` alternative has an unanchored start and so
+   * costs quadratic time on a mostly-hyphen version (CodeQL
+   * js/polynomial-redos).
+   */
+  const normalized = StringUtils.stripSurroundingChar(
+    version.replace(UNSUPPORTED_USER_AGENT_VERSION_CHARACTERS, '-'),
+    '-',
+  );
 
   return normalized || 'unknown';
 };

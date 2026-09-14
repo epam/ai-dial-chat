@@ -36,6 +36,11 @@ ALLOWED_IFRAME_ORIGINS=https://<chat-host>
 The deployed sandbox embeds `window.location.origin`, so no separate sandbox
 image or runtime host variable is required.
 
+Its HTML receives a fresh style nonce from `chat-api`; the application build
+adapts the overlay's generated styles to use it. The sandbox follows
+[`CSP_MODE`](../chat-api/README.md#content-security-policy), and its own HTML
+does not allow WebAssembly. The embedded chat document has its own policy.
+
 The **Provider auth UI mode case** accepts two deployment-specific provider
 IDs and lets you apply `OverlayAuthUiMode.External` or
 `OverlayAuthUiMode.SameWindow` through `auth.providerUiModes`. Sign out of the

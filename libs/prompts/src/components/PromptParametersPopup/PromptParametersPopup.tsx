@@ -2,6 +2,7 @@ import { AppIdentity, ContentTab, DeploymentSize } from '@epam/ai-dial-catalog';
 import {
   CatalogEntityType,
   buildCssVars,
+  buildPromptParamDefaults,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -14,7 +15,7 @@ import {
   Textarea,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft } from '@tabler/icons-react';
-import { useId, useMemo, useState, type FC } from 'react';
+import { useId, useState, type FC } from 'react';
 import type { PromptParametersPopupProps } from '../../models/prompt-parameters-popup-props';
 import styles from './PromptParametersPopup.module.scss';
 
@@ -50,7 +51,25 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
     submitLabel = 'Confirm',
   } = labels;
 
-  const [values, setValues] = useState<Record<string, string>>({});
+  const parametersKey = parameters
+    .map(({ name, defaultValue }) => `${name}\u0000${defaultValue ?? ''}`)
+    .join('\u0001');
+
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    buildPromptParamDefaults(parameters),
+  );
+  const [seededKey, setSeededKey] = useState(parametersKey);
+
+  /*
+   * Re-seed during render (React's "adjust state when a prop changes") when the
+   * popup is handed a different set of parameters, so reopening a prompt offers
+   * its defaults again rather than whatever was typed the previous time.
+   */
+  if (seededKey !== parametersKey) {
+    setSeededKey(parametersKey);
+    setValues(buildPromptParamDefaults(parameters));
+  }
+
   const fieldIdPrefix = useId();
 
   const cssVars = buildCssVars({
@@ -58,10 +77,7 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
     '--pp-card-border': colors?.cardBorder,
   });
 
-  const isSubmitDisabled = useMemo(
-    () => parameters.some((name) => !values[name]?.trim()),
-    [parameters, values],
-  );
+  const isSubmitDisabled = parameters.some(({ name }) => !values[name]?.trim());
 
   const handleSubmit = () => {
     if (isSubmitDisabled) return;
@@ -127,7 +143,7 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
             <h2 className={mergeClasses(parametersLabelClassName, 'm-0')}>
               {parametersLabel}
             </h2>
-            {parameters.map((name) => {
+            {parameters.map(({ name }) => {
               const fieldId = `${fieldIdPrefix}-${name}`;
               return (
                 <Textarea

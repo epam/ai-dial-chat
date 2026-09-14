@@ -22,6 +22,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DeploymentSelectorI18nKeys } from '../constants/translation-keys';
+import { useDefaultAgentPreference } from '../hooks/default-agent/useDefaultAgentPreference';
 import { useLanguage } from '../hooks/language/useLanguage';
 import { getApplicationSchemas } from '../server-api/application-schemas';
 import {
@@ -30,6 +31,7 @@ import {
 } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
 import { listToolsets } from '../server-api/toolsets';
+import { DefaultAgentMode } from '../types/default-agent';
 import { resolveLocalizedText } from '../utils/locale';
 import { useAppConfig, useFeatureFlag } from './AppConfigContext';
 import { useUser } from './auth/UserContext';
@@ -148,20 +150,51 @@ const sortToolsets = (
   });
 };
 
+const isDefaultAgentSentinel = (value: string): boolean =>
+  value === DefaultAgentMode.DefaultAgent ||
+  value === DefaultAgentMode.LastUsedAgent;
+
+/*
+ * `pinnedDefaultId` is the operator default only when `defaultDeploymentPinned`
+ * is on; `configuredDefaultId` is that default regardless of pinning. They are
+ * separate parameters because the two new preference steps need opposite
+ * things: a user who explicitly asks for "Default agent" should get it whether
+ * or not the operator pinned it, while the pre-existing step 4 must stay gated
+ * on the pin.
+ *
+ * `DefaultAgentMode.LastUsedAgent` has no step of its own — it is the
+ * fall-through produced by skipping steps 2 and 3, landing on `userConfigId`,
+ * which is what "last used" already meant before this preference existed.
+ */
 const resolveInitialSelection = (
   deployments: DeploymentItemDto[],
   inMemoryId: string | null,
   userConfigId: string | null,
-  operatorDefaultId: string | null,
+  pinnedDefaultId: string | null,
+  defaultAgent: string,
+  configuredDefaultId: string | null,
 ): string | null => {
   if (inMemoryId != null && deployments.some((d) => d.id === inMemoryId)) {
     return inMemoryId;
   }
   if (
-    operatorDefaultId != null &&
-    deployments.some((d) => d.id === operatorDefaultId)
+    !isDefaultAgentSentinel(defaultAgent) &&
+    deployments.some((d) => d.id === defaultAgent)
   ) {
-    return operatorDefaultId;
+    return defaultAgent;
+  }
+  if (
+    defaultAgent === DefaultAgentMode.DefaultAgent &&
+    configuredDefaultId != null &&
+    deployments.some((d) => d.id === configuredDefaultId)
+  ) {
+    return configuredDefaultId;
+  }
+  if (
+    pinnedDefaultId != null &&
+    deployments.some((d) => d.id === pinnedDefaultId)
+  ) {
+    return pinnedDefaultId;
   }
   if (userConfigId != null && deployments.some((d) => d.id === userConfigId)) {
     return userConfigId;
@@ -226,6 +259,19 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const isDefaultDeploymentPinned = useFeatureFlag('defaultDeploymentPinned');
   const isDefaultDeploymentPinnedRef = useRef(isDefaultDeploymentPinned);
   const selectionExplicitlySetRef = useRef(false);
+  /*
+   * The "Default agent for new chats" preference is read through a ref for the same reason
+   * as the refs above, and one more: `restoreDefaultSelection` must keep a
+   * stable identity (see the comment on `itemsRef` below). Adding the
+   * preference to that callback's dependency array would re-fire
+   * ConversationRoute's mount effect every time the user changes it.
+   */
+  const { preference: defaultAgent } = useDefaultAgentPreference();
+  const defaultAgentRef = useRef(defaultAgent);
+
+  useEffect(() => {
+    defaultAgentRef.current = defaultAgent;
+  }, [defaultAgent]);
 
   useEffect(() => {
     languageRef.current = language;
@@ -320,6 +366,8 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
             prev,
             userConfigSelectedIdRef.current,
             effectivePinnedId,
+            defaultAgentRef.current,
+            defaultDeploymentIdRef.current,
           ),
         );
       }
@@ -347,6 +395,11 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
    * available after the catalog. Explicit user and conversation selections are
    * preserved, while a provisional fallback can still be replaced by the
    * configured priority.
+   *
+   * Unlike `restoreDefaultSelection`, this is a dependency-driven effect rather
+   * than a stable callback, so it reads live values and lists them as deps —
+   * including the "Default agent for new chats" preference, so changing it while no explicit
+   * selection has been made re-resolves immediately.
    */
   useEffect(() => {
     if (selectionExplicitlySetRef.current || rawDeployments.length === 0)
@@ -356,12 +409,15 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       null,
       userConfigSelectedId,
       isDefaultDeploymentPinned ? appConfig.defaultDeploymentId : null,
+      defaultAgent,
+      appConfig.defaultDeploymentId,
     );
     if (resolved != null) setSelectedItemIdState(resolved);
   }, [
     userConfigSelectedId,
     appConfig.defaultDeploymentId,
     isDefaultDeploymentPinned,
+    defaultAgent,
     rawDeployments,
   ]);
 
@@ -543,6 +599,8 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       null,
       userConfigSelectedIdRef.current,
       effectiveDefaultDeploymentId,
+      defaultAgentRef.current,
+      defaultDeploymentIdRef.current,
     );
     if (resolved != null) setSelectedItemIdState(resolved);
   }, []);
